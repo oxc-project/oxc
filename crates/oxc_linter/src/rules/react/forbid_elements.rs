@@ -125,6 +125,7 @@ declare_oxc_lint!(
     restriction,
     config = ForbidElementsConfig,
     version = "0.16.11",
+    short_description = "Allows you to configure a list of forbidden elements and to specify their desired replacements.",
 );
 
 impl Rule for ForbidElements {

@@ -5,23 +5,31 @@ use oxlint::{
     lsp::run_lsp,
 };
 
-#[tokio::main]
-async fn main() -> CliRunResult {
+fn main() -> CliRunResult {
     // Parse command line arguments from std::env::args()
     let command = lint_command().run();
 
     // Both LSP and CLI use `tracing` for logging
     init_tracing();
 
-    // If --lsp flag is set, run the language server
+    // If --lsp flag is set, run the language server.
+    //
+    // The language server is the only path that needs an async runtime, so the Tokio runtime is
+    // created here rather than via `#[tokio::main]`. The CLI lint path is fully synchronous
+    // (Rayon-based); `#[tokio::main]` would otherwise spawn one idle Tokio worker thread per core
+    // on every lint invocation.
     if command.lsp {
-        run_lsp(
-            None,
-            #[cfg(feature = "napi")]
-            None,
-        )
-        .await;
-        return CliRunResult::LintSucceeded;
+        let runtime =
+            tokio::runtime::Runtime::new().expect("Failed to build the Tokio runtime for the LSP");
+        return runtime.block_on(async {
+            run_lsp(
+                None,
+                #[cfg(feature = "napi")]
+                None,
+            )
+            .await;
+            CliRunResult::LintSucceeded
+        });
     }
 
     init_miette();

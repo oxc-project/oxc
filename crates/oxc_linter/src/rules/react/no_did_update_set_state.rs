@@ -75,7 +75,8 @@ declare_oxc_lint!(
     react,
     correctness,
     config = AllowedOrDisallowInFunc,
-    version = "1.62.0"
+    version = "1.62.0",
+    short_description = "Disallow usage of `setState` in `componentDidUpdate`.",
 );
 
 impl Rule for NoDidUpdateSetState {

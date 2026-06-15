@@ -470,6 +470,7 @@ pub use crate::rules::react::no_will_update_set_state::NoWillUpdateSetState as R
 pub use crate::rules::react::only_export_components::OnlyExportComponents as ReactOnlyExportComponents;
 pub use crate::rules::react::prefer_es6_class::PreferEs6Class as ReactPreferEs6Class;
 pub use crate::rules::react::prefer_function_component::PreferFunctionComponent as ReactPreferFunctionComponent;
+pub use crate::rules::react::react_compiler::ReactCompiler as ReactReactCompiler;
 pub use crate::rules::react::react_in_jsx_scope::ReactInJsxScope as ReactReactInJsxScope;
 pub use crate::rules::react::require_render_return::RequireRenderReturn as ReactRequireRenderReturn;
 pub use crate::rules::react::rules_of_hooks::RulesOfHooks as ReactRulesOfHooks;
@@ -605,11 +606,13 @@ pub use crate::rules::unicorn::escape_case::EscapeCase as UnicornEscapeCase;
 pub use crate::rules::unicorn::explicit_length_check::ExplicitLengthCheck as UnicornExplicitLengthCheck;
 pub use crate::rules::unicorn::filename_case::FilenameCase as UnicornFilenameCase;
 pub use crate::rules::unicorn::import_style::ImportStyle as UnicornImportStyle;
+pub use crate::rules::unicorn::max_nested_calls::MaxNestedCalls as UnicornMaxNestedCalls;
 pub use crate::rules::unicorn::new_for_builtins::NewForBuiltins as UnicornNewForBuiltins;
 pub use crate::rules::unicorn::no_abusive_eslint_disable::NoAbusiveEslintDisable as UnicornNoAbusiveEslintDisable;
 pub use crate::rules::unicorn::no_accessor_recursion::NoAccessorRecursion as UnicornNoAccessorRecursion;
 pub use crate::rules::unicorn::no_anonymous_default_export::NoAnonymousDefaultExport as UnicornNoAnonymousDefaultExport;
 pub use crate::rules::unicorn::no_array_callback_reference::NoArrayCallbackReference as UnicornNoArrayCallbackReference;
+pub use crate::rules::unicorn::no_array_fill_with_reference_type::NoArrayFillWithReferenceType as UnicornNoArrayFillWithReferenceType;
 pub use crate::rules::unicorn::no_array_for_each::NoArrayForEach as UnicornNoArrayForEach;
 pub use crate::rules::unicorn::no_array_method_this_argument::NoArrayMethodThisArgument as UnicornNoArrayMethodThisArgument;
 pub use crate::rules::unicorn::no_array_reduce::NoArrayReduce as UnicornNoArrayReduce;
@@ -811,6 +814,7 @@ pub use crate::rules::vue::no_deprecated_events_api::NoDeprecatedEventsApi as Vu
 pub use crate::rules::vue::no_deprecated_model_definition::NoDeprecatedModelDefinition as VueNoDeprecatedModelDefinition;
 pub use crate::rules::vue::no_deprecated_props_default_this::NoDeprecatedPropsDefaultThis as VueNoDeprecatedPropsDefaultThis;
 pub use crate::rules::vue::no_deprecated_vue_config_keycodes::NoDeprecatedVueConfigKeycodes as VueNoDeprecatedVueConfigKeycodes;
+pub use crate::rules::vue::no_dupe_keys::NoDupeKeys as VueNoDupeKeys;
 pub use crate::rules::vue::no_export_in_script_setup::NoExportInScriptSetup as VueNoExportInScriptSetup;
 pub use crate::rules::vue::no_expose_after_await::NoExposeAfterAwait as VueNoExposeAfterAwait;
 pub use crate::rules::vue::no_import_compiler_macros::NoImportCompilerMacros as VueNoImportCompilerMacros;
@@ -1294,6 +1298,7 @@ pub enum RuleEnum {
     ReactOnlyExportComponents(ReactOnlyExportComponents),
     ReactPreferEs6Class(ReactPreferEs6Class),
     ReactPreferFunctionComponent(ReactPreferFunctionComponent),
+    ReactReactCompiler(ReactReactCompiler),
     ReactReactInJsxScope(ReactReactInJsxScope),
     ReactRequireRenderReturn(ReactRequireRenderReturn),
     ReactRulesOfHooks(ReactRulesOfHooks),
@@ -1319,11 +1324,13 @@ pub enum RuleEnum {
     UnicornExplicitLengthCheck(UnicornExplicitLengthCheck),
     UnicornFilenameCase(UnicornFilenameCase),
     UnicornImportStyle(UnicornImportStyle),
+    UnicornMaxNestedCalls(UnicornMaxNestedCalls),
     UnicornNewForBuiltins(UnicornNewForBuiltins),
     UnicornNoAbusiveEslintDisable(UnicornNoAbusiveEslintDisable),
     UnicornNoAccessorRecursion(UnicornNoAccessorRecursion),
     UnicornNoAnonymousDefaultExport(UnicornNoAnonymousDefaultExport),
     UnicornNoArrayCallbackReference(UnicornNoArrayCallbackReference),
+    UnicornNoArrayFillWithReferenceType(UnicornNoArrayFillWithReferenceType),
     UnicornNoArrayForEach(UnicornNoArrayForEach),
     UnicornNoArrayMethodThisArgument(UnicornNoArrayMethodThisArgument),
     UnicornNoArrayReduce(UnicornNoArrayReduce),
@@ -1659,6 +1666,7 @@ pub enum RuleEnum {
     VueNoDeprecatedModelDefinition(VueNoDeprecatedModelDefinition),
     VueNoDeprecatedPropsDefaultThis(VueNoDeprecatedPropsDefaultThis),
     VueNoDeprecatedVueConfigKeycodes(VueNoDeprecatedVueConfigKeycodes),
+    VueNoDupeKeys(VueNoDupeKeys),
     VueNoExportInScriptSetup(VueNoExportInScriptSetup),
     VueNoExposeAfterAwait(VueNoExposeAfterAwait),
     VueNoImportCompilerMacros(VueNoImportCompilerMacros),
@@ -2181,7 +2189,8 @@ const REACT_NO_WILL_UPDATE_SET_STATE_ID: usize = REACT_NO_UNSTABLE_NESTED_COMPON
 const REACT_ONLY_EXPORT_COMPONENTS_ID: usize = REACT_NO_WILL_UPDATE_SET_STATE_ID + 1usize;
 const REACT_PREFER_ES_6_CLASS_ID: usize = REACT_ONLY_EXPORT_COMPONENTS_ID + 1usize;
 const REACT_PREFER_FUNCTION_COMPONENT_ID: usize = REACT_PREFER_ES_6_CLASS_ID + 1usize;
-const REACT_REACT_IN_JSX_SCOPE_ID: usize = REACT_PREFER_FUNCTION_COMPONENT_ID + 1usize;
+const REACT_REACT_COMPILER_ID: usize = REACT_PREFER_FUNCTION_COMPONENT_ID + 1usize;
+const REACT_REACT_IN_JSX_SCOPE_ID: usize = REACT_REACT_COMPILER_ID + 1usize;
 const REACT_REQUIRE_RENDER_RETURN_ID: usize = REACT_REACT_IN_JSX_SCOPE_ID + 1usize;
 const REACT_RULES_OF_HOOKS_ID: usize = REACT_REQUIRE_RENDER_RETURN_ID + 1usize;
 const REACT_SELF_CLOSING_COMP_ID: usize = REACT_RULES_OF_HOOKS_ID + 1usize;
@@ -2212,13 +2221,16 @@ const UNICORN_ESCAPE_CASE_ID: usize = UNICORN_ERROR_MESSAGE_ID + 1usize;
 const UNICORN_EXPLICIT_LENGTH_CHECK_ID: usize = UNICORN_ESCAPE_CASE_ID + 1usize;
 const UNICORN_FILENAME_CASE_ID: usize = UNICORN_EXPLICIT_LENGTH_CHECK_ID + 1usize;
 const UNICORN_IMPORT_STYLE_ID: usize = UNICORN_FILENAME_CASE_ID + 1usize;
-const UNICORN_NEW_FOR_BUILTINS_ID: usize = UNICORN_IMPORT_STYLE_ID + 1usize;
+const UNICORN_MAX_NESTED_CALLS_ID: usize = UNICORN_IMPORT_STYLE_ID + 1usize;
+const UNICORN_NEW_FOR_BUILTINS_ID: usize = UNICORN_MAX_NESTED_CALLS_ID + 1usize;
 const UNICORN_NO_ABUSIVE_ESLINT_DISABLE_ID: usize = UNICORN_NEW_FOR_BUILTINS_ID + 1usize;
 const UNICORN_NO_ACCESSOR_RECURSION_ID: usize = UNICORN_NO_ABUSIVE_ESLINT_DISABLE_ID + 1usize;
 const UNICORN_NO_ANONYMOUS_DEFAULT_EXPORT_ID: usize = UNICORN_NO_ACCESSOR_RECURSION_ID + 1usize;
 const UNICORN_NO_ARRAY_CALLBACK_REFERENCE_ID: usize =
     UNICORN_NO_ANONYMOUS_DEFAULT_EXPORT_ID + 1usize;
-const UNICORN_NO_ARRAY_FOR_EACH_ID: usize = UNICORN_NO_ARRAY_CALLBACK_REFERENCE_ID + 1usize;
+const UNICORN_NO_ARRAY_FILL_WITH_REFERENCE_TYPE_ID: usize =
+    UNICORN_NO_ARRAY_CALLBACK_REFERENCE_ID + 1usize;
+const UNICORN_NO_ARRAY_FOR_EACH_ID: usize = UNICORN_NO_ARRAY_FILL_WITH_REFERENCE_TYPE_ID + 1usize;
 const UNICORN_NO_ARRAY_METHOD_THIS_ARGUMENT_ID: usize = UNICORN_NO_ARRAY_FOR_EACH_ID + 1usize;
 const UNICORN_NO_ARRAY_REDUCE_ID: usize = UNICORN_NO_ARRAY_METHOD_THIS_ARGUMENT_ID + 1usize;
 const UNICORN_NO_ARRAY_REVERSE_ID: usize = UNICORN_NO_ARRAY_REDUCE_ID + 1usize;
@@ -2594,7 +2606,8 @@ const VUE_NO_DEPRECATED_PROPS_DEFAULT_THIS_ID: usize =
     VUE_NO_DEPRECATED_MODEL_DEFINITION_ID + 1usize;
 const VUE_NO_DEPRECATED_VUE_CONFIG_KEYCODES_ID: usize =
     VUE_NO_DEPRECATED_PROPS_DEFAULT_THIS_ID + 1usize;
-const VUE_NO_EXPORT_IN_SCRIPT_SETUP_ID: usize = VUE_NO_DEPRECATED_VUE_CONFIG_KEYCODES_ID + 1usize;
+const VUE_NO_DUPE_KEYS_ID: usize = VUE_NO_DEPRECATED_VUE_CONFIG_KEYCODES_ID + 1usize;
+const VUE_NO_EXPORT_IN_SCRIPT_SETUP_ID: usize = VUE_NO_DUPE_KEYS_ID + 1usize;
 const VUE_NO_EXPOSE_AFTER_AWAIT_ID: usize = VUE_NO_EXPORT_IN_SCRIPT_SETUP_ID + 1usize;
 const VUE_NO_IMPORT_COMPILER_MACROS_ID: usize = VUE_NO_EXPOSE_AFTER_AWAIT_ID + 1usize;
 const VUE_NO_LIFECYCLE_AFTER_AWAIT_ID: usize = VUE_NO_IMPORT_COMPILER_MACROS_ID + 1usize;
@@ -3146,6 +3159,7 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(_) => REACT_ONLY_EXPORT_COMPONENTS_ID,
             Self::ReactPreferEs6Class(_) => REACT_PREFER_ES_6_CLASS_ID,
             Self::ReactPreferFunctionComponent(_) => REACT_PREFER_FUNCTION_COMPONENT_ID,
+            Self::ReactReactCompiler(_) => REACT_REACT_COMPILER_ID,
             Self::ReactReactInJsxScope(_) => REACT_REACT_IN_JSX_SCOPE_ID,
             Self::ReactRequireRenderReturn(_) => REACT_REQUIRE_RENDER_RETURN_ID,
             Self::ReactRulesOfHooks(_) => REACT_RULES_OF_HOOKS_ID,
@@ -3175,11 +3189,15 @@ impl RuleEnum {
             Self::UnicornExplicitLengthCheck(_) => UNICORN_EXPLICIT_LENGTH_CHECK_ID,
             Self::UnicornFilenameCase(_) => UNICORN_FILENAME_CASE_ID,
             Self::UnicornImportStyle(_) => UNICORN_IMPORT_STYLE_ID,
+            Self::UnicornMaxNestedCalls(_) => UNICORN_MAX_NESTED_CALLS_ID,
             Self::UnicornNewForBuiltins(_) => UNICORN_NEW_FOR_BUILTINS_ID,
             Self::UnicornNoAbusiveEslintDisable(_) => UNICORN_NO_ABUSIVE_ESLINT_DISABLE_ID,
             Self::UnicornNoAccessorRecursion(_) => UNICORN_NO_ACCESSOR_RECURSION_ID,
             Self::UnicornNoAnonymousDefaultExport(_) => UNICORN_NO_ANONYMOUS_DEFAULT_EXPORT_ID,
             Self::UnicornNoArrayCallbackReference(_) => UNICORN_NO_ARRAY_CALLBACK_REFERENCE_ID,
+            Self::UnicornNoArrayFillWithReferenceType(_) => {
+                UNICORN_NO_ARRAY_FILL_WITH_REFERENCE_TYPE_ID
+            }
             Self::UnicornNoArrayForEach(_) => UNICORN_NO_ARRAY_FOR_EACH_ID,
             Self::UnicornNoArrayMethodThisArgument(_) => UNICORN_NO_ARRAY_METHOD_THIS_ARGUMENT_ID,
             Self::UnicornNoArrayReduce(_) => UNICORN_NO_ARRAY_REDUCE_ID,
@@ -3555,6 +3573,7 @@ impl RuleEnum {
             Self::VueNoDeprecatedModelDefinition(_) => VUE_NO_DEPRECATED_MODEL_DEFINITION_ID,
             Self::VueNoDeprecatedPropsDefaultThis(_) => VUE_NO_DEPRECATED_PROPS_DEFAULT_THIS_ID,
             Self::VueNoDeprecatedVueConfigKeycodes(_) => VUE_NO_DEPRECATED_VUE_CONFIG_KEYCODES_ID,
+            Self::VueNoDupeKeys(_) => VUE_NO_DUPE_KEYS_ID,
             Self::VueNoExportInScriptSetup(_) => VUE_NO_EXPORT_IN_SCRIPT_SETUP_ID,
             Self::VueNoExposeAfterAwait(_) => VUE_NO_EXPOSE_AFTER_AWAIT_ID,
             Self::VueNoImportCompilerMacros(_) => VUE_NO_IMPORT_COMPILER_MACROS_ID,
@@ -4102,6 +4121,7 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::NAME,
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::NAME,
             Self::ReactPreferFunctionComponent(_) => ReactPreferFunctionComponent::NAME,
+            Self::ReactReactCompiler(_) => ReactReactCompiler::NAME,
             Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::NAME,
             Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::NAME,
             Self::ReactRulesOfHooks(_) => ReactRulesOfHooks::NAME,
@@ -4131,11 +4151,15 @@ impl RuleEnum {
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::NAME,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::NAME,
             Self::UnicornImportStyle(_) => UnicornImportStyle::NAME,
+            Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::NAME,
             Self::UnicornNewForBuiltins(_) => UnicornNewForBuiltins::NAME,
             Self::UnicornNoAbusiveEslintDisable(_) => UnicornNoAbusiveEslintDisable::NAME,
             Self::UnicornNoAccessorRecursion(_) => UnicornNoAccessorRecursion::NAME,
             Self::UnicornNoAnonymousDefaultExport(_) => UnicornNoAnonymousDefaultExport::NAME,
             Self::UnicornNoArrayCallbackReference(_) => UnicornNoArrayCallbackReference::NAME,
+            Self::UnicornNoArrayFillWithReferenceType(_) => {
+                UnicornNoArrayFillWithReferenceType::NAME
+            }
             Self::UnicornNoArrayForEach(_) => UnicornNoArrayForEach::NAME,
             Self::UnicornNoArrayMethodThisArgument(_) => UnicornNoArrayMethodThisArgument::NAME,
             Self::UnicornNoArrayReduce(_) => UnicornNoArrayReduce::NAME,
@@ -4501,6 +4525,7 @@ impl RuleEnum {
             Self::VueNoDeprecatedModelDefinition(_) => VueNoDeprecatedModelDefinition::NAME,
             Self::VueNoDeprecatedPropsDefaultThis(_) => VueNoDeprecatedPropsDefaultThis::NAME,
             Self::VueNoDeprecatedVueConfigKeycodes(_) => VueNoDeprecatedVueConfigKeycodes::NAME,
+            Self::VueNoDupeKeys(_) => VueNoDupeKeys::NAME,
             Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::NAME,
             Self::VueNoExposeAfterAwait(_) => VueNoExposeAfterAwait::NAME,
             Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::NAME,
@@ -5074,6 +5099,7 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::CATEGORY,
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::CATEGORY,
             Self::ReactPreferFunctionComponent(_) => ReactPreferFunctionComponent::CATEGORY,
+            Self::ReactReactCompiler(_) => ReactReactCompiler::CATEGORY,
             Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::CATEGORY,
             Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::CATEGORY,
             Self::ReactRulesOfHooks(_) => ReactRulesOfHooks::CATEGORY,
@@ -5105,11 +5131,15 @@ impl RuleEnum {
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::CATEGORY,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::CATEGORY,
             Self::UnicornImportStyle(_) => UnicornImportStyle::CATEGORY,
+            Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::CATEGORY,
             Self::UnicornNewForBuiltins(_) => UnicornNewForBuiltins::CATEGORY,
             Self::UnicornNoAbusiveEslintDisable(_) => UnicornNoAbusiveEslintDisable::CATEGORY,
             Self::UnicornNoAccessorRecursion(_) => UnicornNoAccessorRecursion::CATEGORY,
             Self::UnicornNoAnonymousDefaultExport(_) => UnicornNoAnonymousDefaultExport::CATEGORY,
             Self::UnicornNoArrayCallbackReference(_) => UnicornNoArrayCallbackReference::CATEGORY,
+            Self::UnicornNoArrayFillWithReferenceType(_) => {
+                UnicornNoArrayFillWithReferenceType::CATEGORY
+            }
             Self::UnicornNoArrayForEach(_) => UnicornNoArrayForEach::CATEGORY,
             Self::UnicornNoArrayMethodThisArgument(_) => UnicornNoArrayMethodThisArgument::CATEGORY,
             Self::UnicornNoArrayReduce(_) => UnicornNoArrayReduce::CATEGORY,
@@ -5505,6 +5535,7 @@ impl RuleEnum {
             Self::VueNoDeprecatedModelDefinition(_) => VueNoDeprecatedModelDefinition::CATEGORY,
             Self::VueNoDeprecatedPropsDefaultThis(_) => VueNoDeprecatedPropsDefaultThis::CATEGORY,
             Self::VueNoDeprecatedVueConfigKeycodes(_) => VueNoDeprecatedVueConfigKeycodes::CATEGORY,
+            Self::VueNoDupeKeys(_) => VueNoDupeKeys::CATEGORY,
             Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::CATEGORY,
             Self::VueNoExposeAfterAwait(_) => VueNoExposeAfterAwait::CATEGORY,
             Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::CATEGORY,
@@ -6053,6 +6084,7 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::FIX,
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::FIX,
             Self::ReactPreferFunctionComponent(_) => ReactPreferFunctionComponent::FIX,
+            Self::ReactReactCompiler(_) => ReactReactCompiler::FIX,
             Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::FIX,
             Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::FIX,
             Self::ReactRulesOfHooks(_) => ReactRulesOfHooks::FIX,
@@ -6082,11 +6114,15 @@ impl RuleEnum {
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::FIX,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::FIX,
             Self::UnicornImportStyle(_) => UnicornImportStyle::FIX,
+            Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::FIX,
             Self::UnicornNewForBuiltins(_) => UnicornNewForBuiltins::FIX,
             Self::UnicornNoAbusiveEslintDisable(_) => UnicornNoAbusiveEslintDisable::FIX,
             Self::UnicornNoAccessorRecursion(_) => UnicornNoAccessorRecursion::FIX,
             Self::UnicornNoAnonymousDefaultExport(_) => UnicornNoAnonymousDefaultExport::FIX,
             Self::UnicornNoArrayCallbackReference(_) => UnicornNoArrayCallbackReference::FIX,
+            Self::UnicornNoArrayFillWithReferenceType(_) => {
+                UnicornNoArrayFillWithReferenceType::FIX
+            }
             Self::UnicornNoArrayForEach(_) => UnicornNoArrayForEach::FIX,
             Self::UnicornNoArrayMethodThisArgument(_) => UnicornNoArrayMethodThisArgument::FIX,
             Self::UnicornNoArrayReduce(_) => UnicornNoArrayReduce::FIX,
@@ -6452,6 +6488,7 @@ impl RuleEnum {
             Self::VueNoDeprecatedModelDefinition(_) => VueNoDeprecatedModelDefinition::FIX,
             Self::VueNoDeprecatedPropsDefaultThis(_) => VueNoDeprecatedPropsDefaultThis::FIX,
             Self::VueNoDeprecatedVueConfigKeycodes(_) => VueNoDeprecatedVueConfigKeycodes::FIX,
+            Self::VueNoDupeKeys(_) => VueNoDupeKeys::FIX,
             Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::FIX,
             Self::VueNoExposeAfterAwait(_) => VueNoExposeAfterAwait::FIX,
             Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::FIX,
@@ -7112,6 +7149,7 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::documentation(),
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::documentation(),
             Self::ReactPreferFunctionComponent(_) => ReactPreferFunctionComponent::documentation(),
+            Self::ReactReactCompiler(_) => ReactReactCompiler::documentation(),
             Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::documentation(),
             Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::documentation(),
             Self::ReactRulesOfHooks(_) => ReactRulesOfHooks::documentation(),
@@ -7151,6 +7189,7 @@ impl RuleEnum {
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::documentation(),
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::documentation(),
             Self::UnicornImportStyle(_) => UnicornImportStyle::documentation(),
+            Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::documentation(),
             Self::UnicornNewForBuiltins(_) => UnicornNewForBuiltins::documentation(),
             Self::UnicornNoAbusiveEslintDisable(_) => {
                 UnicornNoAbusiveEslintDisable::documentation()
@@ -7161,6 +7200,9 @@ impl RuleEnum {
             }
             Self::UnicornNoArrayCallbackReference(_) => {
                 UnicornNoArrayCallbackReference::documentation()
+            }
+            Self::UnicornNoArrayFillWithReferenceType(_) => {
+                UnicornNoArrayFillWithReferenceType::documentation()
             }
             Self::UnicornNoArrayForEach(_) => UnicornNoArrayForEach::documentation(),
             Self::UnicornNoArrayMethodThisArgument(_) => {
@@ -7659,6 +7701,7 @@ impl RuleEnum {
             Self::VueNoDeprecatedVueConfigKeycodes(_) => {
                 VueNoDeprecatedVueConfigKeycodes::documentation()
             }
+            Self::VueNoDupeKeys(_) => VueNoDupeKeys::documentation(),
             Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::documentation(),
             Self::VueNoExposeAfterAwait(_) => VueNoExposeAfterAwait::documentation(),
             Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::documentation(),
@@ -8950,6 +8993,8 @@ impl RuleEnum {
                 ReactPreferFunctionComponent::config_schema(generator)
                     .or_else(|| ReactPreferFunctionComponent::schema(generator))
             }
+            Self::ReactReactCompiler(_) => ReactReactCompiler::config_schema(generator)
+                .or_else(|| ReactReactCompiler::schema(generator)),
             Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::config_schema(generator)
                 .or_else(|| ReactReactInJsxScope::schema(generator)),
             Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::config_schema(generator)
@@ -9022,6 +9067,8 @@ impl RuleEnum {
                 .or_else(|| UnicornFilenameCase::schema(generator)),
             Self::UnicornImportStyle(_) => UnicornImportStyle::config_schema(generator)
                 .or_else(|| UnicornImportStyle::schema(generator)),
+            Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::config_schema(generator)
+                .or_else(|| UnicornMaxNestedCalls::schema(generator)),
             Self::UnicornNewForBuiltins(_) => UnicornNewForBuiltins::config_schema(generator)
                 .or_else(|| UnicornNewForBuiltins::schema(generator)),
             Self::UnicornNoAbusiveEslintDisable(_) => {
@@ -9039,6 +9086,10 @@ impl RuleEnum {
             Self::UnicornNoArrayCallbackReference(_) => {
                 UnicornNoArrayCallbackReference::config_schema(generator)
                     .or_else(|| UnicornNoArrayCallbackReference::schema(generator))
+            }
+            Self::UnicornNoArrayFillWithReferenceType(_) => {
+                UnicornNoArrayFillWithReferenceType::config_schema(generator)
+                    .or_else(|| UnicornNoArrayFillWithReferenceType::schema(generator))
             }
             Self::UnicornNoArrayForEach(_) => UnicornNoArrayForEach::config_schema(generator)
                 .or_else(|| UnicornNoArrayForEach::schema(generator)),
@@ -10005,6 +10056,9 @@ impl RuleEnum {
                 VueNoDeprecatedVueConfigKeycodes::config_schema(generator)
                     .or_else(|| VueNoDeprecatedVueConfigKeycodes::schema(generator))
             }
+            Self::VueNoDupeKeys(_) => {
+                VueNoDupeKeys::config_schema(generator).or_else(|| VueNoDupeKeys::schema(generator))
+            }
             Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::config_schema(generator)
                 .or_else(|| VueNoExportInScriptSetup::schema(generator)),
             Self::VueNoExposeAfterAwait(_) => VueNoExposeAfterAwait::config_schema(generator)
@@ -10527,6 +10581,7 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(_) => "react",
             Self::ReactPreferEs6Class(_) => "react",
             Self::ReactPreferFunctionComponent(_) => "react",
+            Self::ReactReactCompiler(_) => "react",
             Self::ReactReactInJsxScope(_) => "react",
             Self::ReactRequireRenderReturn(_) => "react",
             Self::ReactRulesOfHooks(_) => "react",
@@ -10552,11 +10607,13 @@ impl RuleEnum {
             Self::UnicornExplicitLengthCheck(_) => "unicorn",
             Self::UnicornFilenameCase(_) => "unicorn",
             Self::UnicornImportStyle(_) => "unicorn",
+            Self::UnicornMaxNestedCalls(_) => "unicorn",
             Self::UnicornNewForBuiltins(_) => "unicorn",
             Self::UnicornNoAbusiveEslintDisable(_) => "unicorn",
             Self::UnicornNoAccessorRecursion(_) => "unicorn",
             Self::UnicornNoAnonymousDefaultExport(_) => "unicorn",
             Self::UnicornNoArrayCallbackReference(_) => "unicorn",
+            Self::UnicornNoArrayFillWithReferenceType(_) => "unicorn",
             Self::UnicornNoArrayForEach(_) => "unicorn",
             Self::UnicornNoArrayMethodThisArgument(_) => "unicorn",
             Self::UnicornNoArrayReduce(_) => "unicorn",
@@ -10886,6 +10943,7 @@ impl RuleEnum {
             Self::VueNoDeprecatedModelDefinition(_) => "vue",
             Self::VueNoDeprecatedPropsDefaultThis(_) => "vue",
             Self::VueNoDeprecatedVueConfigKeycodes(_) => "vue",
+            Self::VueNoDupeKeys(_) => "vue",
             Self::VueNoExportInScriptSetup(_) => "vue",
             Self::VueNoExposeAfterAwait(_) => "vue",
             Self::VueNoImportCompilerMacros(_) => "vue",
@@ -12340,6 +12398,9 @@ impl RuleEnum {
             Self::ReactPreferFunctionComponent(_) => Ok(Self::ReactPreferFunctionComponent(
                 ReactPreferFunctionComponent::from_configuration(value)?,
             )),
+            Self::ReactReactCompiler(_) => {
+                Ok(Self::ReactReactCompiler(ReactReactCompiler::from_configuration(value)?))
+            }
             Self::ReactReactInJsxScope(_) => {
                 Ok(Self::ReactReactInJsxScope(ReactReactInJsxScope::from_configuration(value)?))
             }
@@ -12423,6 +12484,9 @@ impl RuleEnum {
             Self::UnicornImportStyle(_) => {
                 Ok(Self::UnicornImportStyle(UnicornImportStyle::from_configuration(value)?))
             }
+            Self::UnicornMaxNestedCalls(_) => {
+                Ok(Self::UnicornMaxNestedCalls(UnicornMaxNestedCalls::from_configuration(value)?))
+            }
             Self::UnicornNewForBuiltins(_) => {
                 Ok(Self::UnicornNewForBuiltins(UnicornNewForBuiltins::from_configuration(value)?))
             }
@@ -12438,6 +12502,11 @@ impl RuleEnum {
             Self::UnicornNoArrayCallbackReference(_) => Ok(Self::UnicornNoArrayCallbackReference(
                 UnicornNoArrayCallbackReference::from_configuration(value)?,
             )),
+            Self::UnicornNoArrayFillWithReferenceType(_) => {
+                Ok(Self::UnicornNoArrayFillWithReferenceType(
+                    UnicornNoArrayFillWithReferenceType::from_configuration(value)?,
+                ))
+            }
             Self::UnicornNoArrayForEach(_) => {
                 Ok(Self::UnicornNoArrayForEach(UnicornNoArrayForEach::from_configuration(value)?))
             }
@@ -13507,6 +13576,9 @@ impl RuleEnum {
                     VueNoDeprecatedVueConfigKeycodes::from_configuration(value)?,
                 ))
             }
+            Self::VueNoDupeKeys(_) => {
+                Ok(Self::VueNoDupeKeys(VueNoDupeKeys::from_configuration(value)?))
+            }
             Self::VueNoExportInScriptSetup(_) => Ok(Self::VueNoExportInScriptSetup(
                 VueNoExportInScriptSetup::from_configuration(value)?,
             )),
@@ -14044,6 +14116,7 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(rule) => rule.to_configuration(),
             Self::ReactPreferEs6Class(rule) => rule.to_configuration(),
             Self::ReactPreferFunctionComponent(rule) => rule.to_configuration(),
+            Self::ReactReactCompiler(rule) => rule.to_configuration(),
             Self::ReactReactInJsxScope(rule) => rule.to_configuration(),
             Self::ReactRequireRenderReturn(rule) => rule.to_configuration(),
             Self::ReactRulesOfHooks(rule) => rule.to_configuration(),
@@ -14069,11 +14142,13 @@ impl RuleEnum {
             Self::UnicornExplicitLengthCheck(rule) => rule.to_configuration(),
             Self::UnicornFilenameCase(rule) => rule.to_configuration(),
             Self::UnicornImportStyle(rule) => rule.to_configuration(),
+            Self::UnicornMaxNestedCalls(rule) => rule.to_configuration(),
             Self::UnicornNewForBuiltins(rule) => rule.to_configuration(),
             Self::UnicornNoAbusiveEslintDisable(rule) => rule.to_configuration(),
             Self::UnicornNoAccessorRecursion(rule) => rule.to_configuration(),
             Self::UnicornNoAnonymousDefaultExport(rule) => rule.to_configuration(),
             Self::UnicornNoArrayCallbackReference(rule) => rule.to_configuration(),
+            Self::UnicornNoArrayFillWithReferenceType(rule) => rule.to_configuration(),
             Self::UnicornNoArrayForEach(rule) => rule.to_configuration(),
             Self::UnicornNoArrayMethodThisArgument(rule) => rule.to_configuration(),
             Self::UnicornNoArrayReduce(rule) => rule.to_configuration(),
@@ -14405,6 +14480,7 @@ impl RuleEnum {
             Self::VueNoDeprecatedModelDefinition(rule) => rule.to_configuration(),
             Self::VueNoDeprecatedPropsDefaultThis(rule) => rule.to_configuration(),
             Self::VueNoDeprecatedVueConfigKeycodes(rule) => rule.to_configuration(),
+            Self::VueNoDupeKeys(rule) => rule.to_configuration(),
             Self::VueNoExportInScriptSetup(rule) => rule.to_configuration(),
             Self::VueNoExposeAfterAwait(rule) => rule.to_configuration(),
             Self::VueNoImportCompilerMacros(rule) => rule.to_configuration(),
@@ -14888,6 +14964,7 @@ impl RuleEnum {
                 Self::ReactOnlyExportComponents(rule) => rule.run(node, ctx),
                 Self::ReactPreferEs6Class(rule) => rule.run(node, ctx),
                 Self::ReactPreferFunctionComponent(rule) => rule.run(node, ctx),
+                Self::ReactReactCompiler(rule) => rule.run(node, ctx),
                 Self::ReactReactInJsxScope(rule) => rule.run(node, ctx),
                 Self::ReactRequireRenderReturn(rule) => rule.run(node, ctx),
                 Self::ReactRulesOfHooks(rule) => rule.run(node, ctx),
@@ -14913,11 +14990,13 @@ impl RuleEnum {
                 Self::UnicornExplicitLengthCheck(rule) => rule.run(node, ctx),
                 Self::UnicornFilenameCase(rule) => rule.run(node, ctx),
                 Self::UnicornImportStyle(rule) => rule.run(node, ctx),
+                Self::UnicornMaxNestedCalls(rule) => rule.run(node, ctx),
                 Self::UnicornNewForBuiltins(rule) => rule.run(node, ctx),
                 Self::UnicornNoAbusiveEslintDisable(rule) => rule.run(node, ctx),
                 Self::UnicornNoAccessorRecursion(rule) => rule.run(node, ctx),
                 Self::UnicornNoAnonymousDefaultExport(rule) => rule.run(node, ctx),
                 Self::UnicornNoArrayCallbackReference(rule) => rule.run(node, ctx),
+                Self::UnicornNoArrayFillWithReferenceType(rule) => rule.run(node, ctx),
                 Self::UnicornNoArrayForEach(rule) => rule.run(node, ctx),
                 Self::UnicornNoArrayMethodThisArgument(rule) => rule.run(node, ctx),
                 Self::UnicornNoArrayReduce(rule) => rule.run(node, ctx),
@@ -15249,6 +15328,7 @@ impl RuleEnum {
                 Self::VueNoDeprecatedModelDefinition(rule) => rule.run(node, ctx),
                 Self::VueNoDeprecatedPropsDefaultThis(rule) => rule.run(node, ctx),
                 Self::VueNoDeprecatedVueConfigKeycodes(rule) => rule.run(node, ctx),
+                Self::VueNoDupeKeys(rule) => rule.run(node, ctx),
                 Self::VueNoExportInScriptSetup(rule) => rule.run(node, ctx),
                 Self::VueNoExposeAfterAwait(rule) => rule.run(node, ctx),
                 Self::VueNoImportCompilerMacros(rule) => rule.run(node, ctx),
@@ -15725,6 +15805,7 @@ impl RuleEnum {
                 Self::ReactOnlyExportComponents(rule) => rule.run(node, ctx),
                 Self::ReactPreferEs6Class(rule) => rule.run(node, ctx),
                 Self::ReactPreferFunctionComponent(rule) => rule.run(node, ctx),
+                Self::ReactReactCompiler(rule) => rule.run(node, ctx),
                 Self::ReactReactInJsxScope(rule) => rule.run(node, ctx),
                 Self::ReactRequireRenderReturn(rule) => rule.run(node, ctx),
                 Self::ReactRulesOfHooks(rule) => rule.run(node, ctx),
@@ -15750,11 +15831,13 @@ impl RuleEnum {
                 Self::UnicornExplicitLengthCheck(rule) => rule.run(node, ctx),
                 Self::UnicornFilenameCase(rule) => rule.run(node, ctx),
                 Self::UnicornImportStyle(rule) => rule.run(node, ctx),
+                Self::UnicornMaxNestedCalls(rule) => rule.run(node, ctx),
                 Self::UnicornNewForBuiltins(rule) => rule.run(node, ctx),
                 Self::UnicornNoAbusiveEslintDisable(rule) => rule.run(node, ctx),
                 Self::UnicornNoAccessorRecursion(rule) => rule.run(node, ctx),
                 Self::UnicornNoAnonymousDefaultExport(rule) => rule.run(node, ctx),
                 Self::UnicornNoArrayCallbackReference(rule) => rule.run(node, ctx),
+                Self::UnicornNoArrayFillWithReferenceType(rule) => rule.run(node, ctx),
                 Self::UnicornNoArrayForEach(rule) => rule.run(node, ctx),
                 Self::UnicornNoArrayMethodThisArgument(rule) => rule.run(node, ctx),
                 Self::UnicornNoArrayReduce(rule) => rule.run(node, ctx),
@@ -16086,6 +16169,7 @@ impl RuleEnum {
                 Self::VueNoDeprecatedModelDefinition(rule) => rule.run(node, ctx),
                 Self::VueNoDeprecatedPropsDefaultThis(rule) => rule.run(node, ctx),
                 Self::VueNoDeprecatedVueConfigKeycodes(rule) => rule.run(node, ctx),
+                Self::VueNoDupeKeys(rule) => rule.run(node, ctx),
                 Self::VueNoExportInScriptSetup(rule) => rule.run(node, ctx),
                 Self::VueNoExposeAfterAwait(rule) => rule.run(node, ctx),
                 Self::VueNoImportCompilerMacros(rule) => rule.run(node, ctx),
@@ -16569,6 +16653,7 @@ impl RuleEnum {
                 Self::ReactOnlyExportComponents(rule) => rule.run_once(ctx),
                 Self::ReactPreferEs6Class(rule) => rule.run_once(ctx),
                 Self::ReactPreferFunctionComponent(rule) => rule.run_once(ctx),
+                Self::ReactReactCompiler(rule) => rule.run_once(ctx),
                 Self::ReactReactInJsxScope(rule) => rule.run_once(ctx),
                 Self::ReactRequireRenderReturn(rule) => rule.run_once(ctx),
                 Self::ReactRulesOfHooks(rule) => rule.run_once(ctx),
@@ -16594,11 +16679,13 @@ impl RuleEnum {
                 Self::UnicornExplicitLengthCheck(rule) => rule.run_once(ctx),
                 Self::UnicornFilenameCase(rule) => rule.run_once(ctx),
                 Self::UnicornImportStyle(rule) => rule.run_once(ctx),
+                Self::UnicornMaxNestedCalls(rule) => rule.run_once(ctx),
                 Self::UnicornNewForBuiltins(rule) => rule.run_once(ctx),
                 Self::UnicornNoAbusiveEslintDisable(rule) => rule.run_once(ctx),
                 Self::UnicornNoAccessorRecursion(rule) => rule.run_once(ctx),
                 Self::UnicornNoAnonymousDefaultExport(rule) => rule.run_once(ctx),
                 Self::UnicornNoArrayCallbackReference(rule) => rule.run_once(ctx),
+                Self::UnicornNoArrayFillWithReferenceType(rule) => rule.run_once(ctx),
                 Self::UnicornNoArrayForEach(rule) => rule.run_once(ctx),
                 Self::UnicornNoArrayMethodThisArgument(rule) => rule.run_once(ctx),
                 Self::UnicornNoArrayReduce(rule) => rule.run_once(ctx),
@@ -16930,6 +17017,7 @@ impl RuleEnum {
                 Self::VueNoDeprecatedModelDefinition(rule) => rule.run_once(ctx),
                 Self::VueNoDeprecatedPropsDefaultThis(rule) => rule.run_once(ctx),
                 Self::VueNoDeprecatedVueConfigKeycodes(rule) => rule.run_once(ctx),
+                Self::VueNoDupeKeys(rule) => rule.run_once(ctx),
                 Self::VueNoExportInScriptSetup(rule) => rule.run_once(ctx),
                 Self::VueNoExposeAfterAwait(rule) => rule.run_once(ctx),
                 Self::VueNoImportCompilerMacros(rule) => rule.run_once(ctx),
@@ -17406,6 +17494,7 @@ impl RuleEnum {
                 Self::ReactOnlyExportComponents(rule) => rule.run_once(ctx),
                 Self::ReactPreferEs6Class(rule) => rule.run_once(ctx),
                 Self::ReactPreferFunctionComponent(rule) => rule.run_once(ctx),
+                Self::ReactReactCompiler(rule) => rule.run_once(ctx),
                 Self::ReactReactInJsxScope(rule) => rule.run_once(ctx),
                 Self::ReactRequireRenderReturn(rule) => rule.run_once(ctx),
                 Self::ReactRulesOfHooks(rule) => rule.run_once(ctx),
@@ -17431,11 +17520,13 @@ impl RuleEnum {
                 Self::UnicornExplicitLengthCheck(rule) => rule.run_once(ctx),
                 Self::UnicornFilenameCase(rule) => rule.run_once(ctx),
                 Self::UnicornImportStyle(rule) => rule.run_once(ctx),
+                Self::UnicornMaxNestedCalls(rule) => rule.run_once(ctx),
                 Self::UnicornNewForBuiltins(rule) => rule.run_once(ctx),
                 Self::UnicornNoAbusiveEslintDisable(rule) => rule.run_once(ctx),
                 Self::UnicornNoAccessorRecursion(rule) => rule.run_once(ctx),
                 Self::UnicornNoAnonymousDefaultExport(rule) => rule.run_once(ctx),
                 Self::UnicornNoArrayCallbackReference(rule) => rule.run_once(ctx),
+                Self::UnicornNoArrayFillWithReferenceType(rule) => rule.run_once(ctx),
                 Self::UnicornNoArrayForEach(rule) => rule.run_once(ctx),
                 Self::UnicornNoArrayMethodThisArgument(rule) => rule.run_once(ctx),
                 Self::UnicornNoArrayReduce(rule) => rule.run_once(ctx),
@@ -17767,6 +17858,7 @@ impl RuleEnum {
                 Self::VueNoDeprecatedModelDefinition(rule) => rule.run_once(ctx),
                 Self::VueNoDeprecatedPropsDefaultThis(rule) => rule.run_once(ctx),
                 Self::VueNoDeprecatedVueConfigKeycodes(rule) => rule.run_once(ctx),
+                Self::VueNoDupeKeys(rule) => rule.run_once(ctx),
                 Self::VueNoExportInScriptSetup(rule) => rule.run_once(ctx),
                 Self::VueNoExposeAfterAwait(rule) => rule.run_once(ctx),
                 Self::VueNoImportCompilerMacros(rule) => rule.run_once(ctx),
@@ -18381,6 +18473,7 @@ impl RuleEnum {
                 Self::ReactOnlyExportComponents(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactPreferEs6Class(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactPreferFunctionComponent(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::ReactReactCompiler(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactReactInJsxScope(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactRequireRenderReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactRulesOfHooks(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -18416,6 +18509,7 @@ impl RuleEnum {
                 Self::UnicornExplicitLengthCheck(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornFilenameCase(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornImportStyle(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::UnicornMaxNestedCalls(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornNewForBuiltins(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornNoAbusiveEslintDisable(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornNoAccessorRecursion(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -18423,6 +18517,9 @@ impl RuleEnum {
                     rule.run_on_jest_node(jest_node, ctx)
                 }
                 Self::UnicornNoArrayCallbackReference(rule) => {
+                    rule.run_on_jest_node(jest_node, ctx)
+                }
+                Self::UnicornNoArrayFillWithReferenceType(rule) => {
                     rule.run_on_jest_node(jest_node, ctx)
                 }
                 Self::UnicornNoArrayForEach(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -18868,6 +18965,7 @@ impl RuleEnum {
                 Self::VueNoDeprecatedVueConfigKeycodes(rule) => {
                     rule.run_on_jest_node(jest_node, ctx)
                 }
+                Self::VueNoDupeKeys(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoExportInScriptSetup(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoExposeAfterAwait(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoImportCompilerMacros(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -19476,6 +19574,7 @@ impl RuleEnum {
                 Self::ReactOnlyExportComponents(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactPreferEs6Class(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactPreferFunctionComponent(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::ReactReactCompiler(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactReactInJsxScope(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactRequireRenderReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactRulesOfHooks(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -19511,6 +19610,7 @@ impl RuleEnum {
                 Self::UnicornExplicitLengthCheck(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornFilenameCase(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornImportStyle(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::UnicornMaxNestedCalls(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornNewForBuiltins(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornNoAbusiveEslintDisable(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornNoAccessorRecursion(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -19518,6 +19618,9 @@ impl RuleEnum {
                     rule.run_on_jest_node(jest_node, ctx)
                 }
                 Self::UnicornNoArrayCallbackReference(rule) => {
+                    rule.run_on_jest_node(jest_node, ctx)
+                }
+                Self::UnicornNoArrayFillWithReferenceType(rule) => {
                     rule.run_on_jest_node(jest_node, ctx)
                 }
                 Self::UnicornNoArrayForEach(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -19963,6 +20066,7 @@ impl RuleEnum {
                 Self::VueNoDeprecatedVueConfigKeycodes(rule) => {
                     rule.run_on_jest_node(jest_node, ctx)
                 }
+                Self::VueNoDupeKeys(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoExportInScriptSetup(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoExposeAfterAwait(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoImportCompilerMacros(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -20441,6 +20545,7 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(rule) => rule.should_run(ctx),
             Self::ReactPreferEs6Class(rule) => rule.should_run(ctx),
             Self::ReactPreferFunctionComponent(rule) => rule.should_run(ctx),
+            Self::ReactReactCompiler(rule) => rule.should_run(ctx),
             Self::ReactReactInJsxScope(rule) => rule.should_run(ctx),
             Self::ReactRequireRenderReturn(rule) => rule.should_run(ctx),
             Self::ReactRulesOfHooks(rule) => rule.should_run(ctx),
@@ -20466,11 +20571,13 @@ impl RuleEnum {
             Self::UnicornExplicitLengthCheck(rule) => rule.should_run(ctx),
             Self::UnicornFilenameCase(rule) => rule.should_run(ctx),
             Self::UnicornImportStyle(rule) => rule.should_run(ctx),
+            Self::UnicornMaxNestedCalls(rule) => rule.should_run(ctx),
             Self::UnicornNewForBuiltins(rule) => rule.should_run(ctx),
             Self::UnicornNoAbusiveEslintDisable(rule) => rule.should_run(ctx),
             Self::UnicornNoAccessorRecursion(rule) => rule.should_run(ctx),
             Self::UnicornNoAnonymousDefaultExport(rule) => rule.should_run(ctx),
             Self::UnicornNoArrayCallbackReference(rule) => rule.should_run(ctx),
+            Self::UnicornNoArrayFillWithReferenceType(rule) => rule.should_run(ctx),
             Self::UnicornNoArrayForEach(rule) => rule.should_run(ctx),
             Self::UnicornNoArrayMethodThisArgument(rule) => rule.should_run(ctx),
             Self::UnicornNoArrayReduce(rule) => rule.should_run(ctx),
@@ -20800,6 +20907,7 @@ impl RuleEnum {
             Self::VueNoDeprecatedModelDefinition(rule) => rule.should_run(ctx),
             Self::VueNoDeprecatedPropsDefaultThis(rule) => rule.should_run(ctx),
             Self::VueNoDeprecatedVueConfigKeycodes(rule) => rule.should_run(ctx),
+            Self::VueNoDupeKeys(rule) => rule.should_run(ctx),
             Self::VueNoExportInScriptSetup(rule) => rule.should_run(ctx),
             Self::VueNoExposeAfterAwait(rule) => rule.should_run(ctx),
             Self::VueNoImportCompilerMacros(rule) => rule.should_run(ctx),
@@ -21457,6 +21565,7 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::IS_TSGOLINT_RULE,
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::IS_TSGOLINT_RULE,
             Self::ReactPreferFunctionComponent(_) => ReactPreferFunctionComponent::IS_TSGOLINT_RULE,
+            Self::ReactReactCompiler(_) => ReactReactCompiler::IS_TSGOLINT_RULE,
             Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::IS_TSGOLINT_RULE,
             Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::IS_TSGOLINT_RULE,
             Self::ReactRulesOfHooks(_) => ReactRulesOfHooks::IS_TSGOLINT_RULE,
@@ -21496,6 +21605,7 @@ impl RuleEnum {
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::IS_TSGOLINT_RULE,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::IS_TSGOLINT_RULE,
             Self::UnicornImportStyle(_) => UnicornImportStyle::IS_TSGOLINT_RULE,
+            Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::IS_TSGOLINT_RULE,
             Self::UnicornNewForBuiltins(_) => UnicornNewForBuiltins::IS_TSGOLINT_RULE,
             Self::UnicornNoAbusiveEslintDisable(_) => {
                 UnicornNoAbusiveEslintDisable::IS_TSGOLINT_RULE
@@ -21506,6 +21616,9 @@ impl RuleEnum {
             }
             Self::UnicornNoArrayCallbackReference(_) => {
                 UnicornNoArrayCallbackReference::IS_TSGOLINT_RULE
+            }
+            Self::UnicornNoArrayFillWithReferenceType(_) => {
+                UnicornNoArrayFillWithReferenceType::IS_TSGOLINT_RULE
             }
             Self::UnicornNoArrayForEach(_) => UnicornNoArrayForEach::IS_TSGOLINT_RULE,
             Self::UnicornNoArrayMethodThisArgument(_) => {
@@ -22004,6 +22117,7 @@ impl RuleEnum {
             Self::VueNoDeprecatedVueConfigKeycodes(_) => {
                 VueNoDeprecatedVueConfigKeycodes::IS_TSGOLINT_RULE
             }
+            Self::VueNoDupeKeys(_) => VueNoDupeKeys::IS_TSGOLINT_RULE,
             Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::IS_TSGOLINT_RULE,
             Self::VueNoExposeAfterAwait(_) => VueNoExposeAfterAwait::IS_TSGOLINT_RULE,
             Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::IS_TSGOLINT_RULE,
@@ -22581,6 +22695,7 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::VERSION,
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::VERSION,
             Self::ReactPreferFunctionComponent(_) => ReactPreferFunctionComponent::VERSION,
+            Self::ReactReactCompiler(_) => ReactReactCompiler::VERSION,
             Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::VERSION,
             Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::VERSION,
             Self::ReactRulesOfHooks(_) => ReactRulesOfHooks::VERSION,
@@ -22612,11 +22727,15 @@ impl RuleEnum {
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::VERSION,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::VERSION,
             Self::UnicornImportStyle(_) => UnicornImportStyle::VERSION,
+            Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::VERSION,
             Self::UnicornNewForBuiltins(_) => UnicornNewForBuiltins::VERSION,
             Self::UnicornNoAbusiveEslintDisable(_) => UnicornNoAbusiveEslintDisable::VERSION,
             Self::UnicornNoAccessorRecursion(_) => UnicornNoAccessorRecursion::VERSION,
             Self::UnicornNoAnonymousDefaultExport(_) => UnicornNoAnonymousDefaultExport::VERSION,
             Self::UnicornNoArrayCallbackReference(_) => UnicornNoArrayCallbackReference::VERSION,
+            Self::UnicornNoArrayFillWithReferenceType(_) => {
+                UnicornNoArrayFillWithReferenceType::VERSION
+            }
             Self::UnicornNoArrayForEach(_) => UnicornNoArrayForEach::VERSION,
             Self::UnicornNoArrayMethodThisArgument(_) => UnicornNoArrayMethodThisArgument::VERSION,
             Self::UnicornNoArrayReduce(_) => UnicornNoArrayReduce::VERSION,
@@ -23012,6 +23131,7 @@ impl RuleEnum {
             Self::VueNoDeprecatedModelDefinition(_) => VueNoDeprecatedModelDefinition::VERSION,
             Self::VueNoDeprecatedPropsDefaultThis(_) => VueNoDeprecatedPropsDefaultThis::VERSION,
             Self::VueNoDeprecatedVueConfigKeycodes(_) => VueNoDeprecatedVueConfigKeycodes::VERSION,
+            Self::VueNoDupeKeys(_) => VueNoDupeKeys::VERSION,
             Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::VERSION,
             Self::VueNoExposeAfterAwait(_) => VueNoExposeAfterAwait::VERSION,
             Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::VERSION,
@@ -23602,6 +23722,7 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::HAS_CONFIG,
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::HAS_CONFIG,
             Self::ReactPreferFunctionComponent(_) => ReactPreferFunctionComponent::HAS_CONFIG,
+            Self::ReactReactCompiler(_) => ReactReactCompiler::HAS_CONFIG,
             Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::HAS_CONFIG,
             Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::HAS_CONFIG,
             Self::ReactRulesOfHooks(_) => ReactRulesOfHooks::HAS_CONFIG,
@@ -23635,11 +23756,15 @@ impl RuleEnum {
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::HAS_CONFIG,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::HAS_CONFIG,
             Self::UnicornImportStyle(_) => UnicornImportStyle::HAS_CONFIG,
+            Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::HAS_CONFIG,
             Self::UnicornNewForBuiltins(_) => UnicornNewForBuiltins::HAS_CONFIG,
             Self::UnicornNoAbusiveEslintDisable(_) => UnicornNoAbusiveEslintDisable::HAS_CONFIG,
             Self::UnicornNoAccessorRecursion(_) => UnicornNoAccessorRecursion::HAS_CONFIG,
             Self::UnicornNoAnonymousDefaultExport(_) => UnicornNoAnonymousDefaultExport::HAS_CONFIG,
             Self::UnicornNoArrayCallbackReference(_) => UnicornNoArrayCallbackReference::HAS_CONFIG,
+            Self::UnicornNoArrayFillWithReferenceType(_) => {
+                UnicornNoArrayFillWithReferenceType::HAS_CONFIG
+            }
             Self::UnicornNoArrayForEach(_) => UnicornNoArrayForEach::HAS_CONFIG,
             Self::UnicornNoArrayMethodThisArgument(_) => {
                 UnicornNoArrayMethodThisArgument::HAS_CONFIG
@@ -24055,6 +24180,7 @@ impl RuleEnum {
             Self::VueNoDeprecatedVueConfigKeycodes(_) => {
                 VueNoDeprecatedVueConfigKeycodes::HAS_CONFIG
             }
+            Self::VueNoDupeKeys(_) => VueNoDupeKeys::HAS_CONFIG,
             Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::HAS_CONFIG,
             Self::VueNoExposeAfterAwait(_) => VueNoExposeAfterAwait::HAS_CONFIG,
             Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::HAS_CONFIG,
@@ -24604,6 +24730,7 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::INFO,
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::INFO,
             Self::ReactPreferFunctionComponent(_) => ReactPreferFunctionComponent::INFO,
+            Self::ReactReactCompiler(_) => ReactReactCompiler::INFO,
             Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::INFO,
             Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::INFO,
             Self::ReactRulesOfHooks(_) => ReactRulesOfHooks::INFO,
@@ -24633,11 +24760,15 @@ impl RuleEnum {
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::INFO,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::INFO,
             Self::UnicornImportStyle(_) => UnicornImportStyle::INFO,
+            Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::INFO,
             Self::UnicornNewForBuiltins(_) => UnicornNewForBuiltins::INFO,
             Self::UnicornNoAbusiveEslintDisable(_) => UnicornNoAbusiveEslintDisable::INFO,
             Self::UnicornNoAccessorRecursion(_) => UnicornNoAccessorRecursion::INFO,
             Self::UnicornNoAnonymousDefaultExport(_) => UnicornNoAnonymousDefaultExport::INFO,
             Self::UnicornNoArrayCallbackReference(_) => UnicornNoArrayCallbackReference::INFO,
+            Self::UnicornNoArrayFillWithReferenceType(_) => {
+                UnicornNoArrayFillWithReferenceType::INFO
+            }
             Self::UnicornNoArrayForEach(_) => UnicornNoArrayForEach::INFO,
             Self::UnicornNoArrayMethodThisArgument(_) => UnicornNoArrayMethodThisArgument::INFO,
             Self::UnicornNoArrayReduce(_) => UnicornNoArrayReduce::INFO,
@@ -25003,6 +25134,7 @@ impl RuleEnum {
             Self::VueNoDeprecatedModelDefinition(_) => VueNoDeprecatedModelDefinition::INFO,
             Self::VueNoDeprecatedPropsDefaultThis(_) => VueNoDeprecatedPropsDefaultThis::INFO,
             Self::VueNoDeprecatedVueConfigKeycodes(_) => VueNoDeprecatedVueConfigKeycodes::INFO,
+            Self::VueNoDupeKeys(_) => VueNoDupeKeys::INFO,
             Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::INFO,
             Self::VueNoExposeAfterAwait(_) => VueNoExposeAfterAwait::INFO,
             Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::INFO,
@@ -25485,6 +25617,7 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(rule) => rule.types_info(),
             Self::ReactPreferEs6Class(rule) => rule.types_info(),
             Self::ReactPreferFunctionComponent(rule) => rule.types_info(),
+            Self::ReactReactCompiler(rule) => rule.types_info(),
             Self::ReactReactInJsxScope(rule) => rule.types_info(),
             Self::ReactRequireRenderReturn(rule) => rule.types_info(),
             Self::ReactRulesOfHooks(rule) => rule.types_info(),
@@ -25510,11 +25643,13 @@ impl RuleEnum {
             Self::UnicornExplicitLengthCheck(rule) => rule.types_info(),
             Self::UnicornFilenameCase(rule) => rule.types_info(),
             Self::UnicornImportStyle(rule) => rule.types_info(),
+            Self::UnicornMaxNestedCalls(rule) => rule.types_info(),
             Self::UnicornNewForBuiltins(rule) => rule.types_info(),
             Self::UnicornNoAbusiveEslintDisable(rule) => rule.types_info(),
             Self::UnicornNoAccessorRecursion(rule) => rule.types_info(),
             Self::UnicornNoAnonymousDefaultExport(rule) => rule.types_info(),
             Self::UnicornNoArrayCallbackReference(rule) => rule.types_info(),
+            Self::UnicornNoArrayFillWithReferenceType(rule) => rule.types_info(),
             Self::UnicornNoArrayForEach(rule) => rule.types_info(),
             Self::UnicornNoArrayMethodThisArgument(rule) => rule.types_info(),
             Self::UnicornNoArrayReduce(rule) => rule.types_info(),
@@ -25844,6 +25979,7 @@ impl RuleEnum {
             Self::VueNoDeprecatedModelDefinition(rule) => rule.types_info(),
             Self::VueNoDeprecatedPropsDefaultThis(rule) => rule.types_info(),
             Self::VueNoDeprecatedVueConfigKeycodes(rule) => rule.types_info(),
+            Self::VueNoDupeKeys(rule) => rule.types_info(),
             Self::VueNoExportInScriptSetup(rule) => rule.types_info(),
             Self::VueNoExposeAfterAwait(rule) => rule.types_info(),
             Self::VueNoImportCompilerMacros(rule) => rule.types_info(),
@@ -26319,6 +26455,7 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(rule) => rule.run_info(),
             Self::ReactPreferEs6Class(rule) => rule.run_info(),
             Self::ReactPreferFunctionComponent(rule) => rule.run_info(),
+            Self::ReactReactCompiler(rule) => rule.run_info(),
             Self::ReactReactInJsxScope(rule) => rule.run_info(),
             Self::ReactRequireRenderReturn(rule) => rule.run_info(),
             Self::ReactRulesOfHooks(rule) => rule.run_info(),
@@ -26344,11 +26481,13 @@ impl RuleEnum {
             Self::UnicornExplicitLengthCheck(rule) => rule.run_info(),
             Self::UnicornFilenameCase(rule) => rule.run_info(),
             Self::UnicornImportStyle(rule) => rule.run_info(),
+            Self::UnicornMaxNestedCalls(rule) => rule.run_info(),
             Self::UnicornNewForBuiltins(rule) => rule.run_info(),
             Self::UnicornNoAbusiveEslintDisable(rule) => rule.run_info(),
             Self::UnicornNoAccessorRecursion(rule) => rule.run_info(),
             Self::UnicornNoAnonymousDefaultExport(rule) => rule.run_info(),
             Self::UnicornNoArrayCallbackReference(rule) => rule.run_info(),
+            Self::UnicornNoArrayFillWithReferenceType(rule) => rule.run_info(),
             Self::UnicornNoArrayForEach(rule) => rule.run_info(),
             Self::UnicornNoArrayMethodThisArgument(rule) => rule.run_info(),
             Self::UnicornNoArrayReduce(rule) => rule.run_info(),
@@ -26678,6 +26817,7 @@ impl RuleEnum {
             Self::VueNoDeprecatedModelDefinition(rule) => rule.run_info(),
             Self::VueNoDeprecatedPropsDefaultThis(rule) => rule.run_info(),
             Self::VueNoDeprecatedVueConfigKeycodes(rule) => rule.run_info(),
+            Self::VueNoDupeKeys(rule) => rule.run_info(),
             Self::VueNoExportInScriptSetup(rule) => rule.run_info(),
             Self::VueNoExposeAfterAwait(rule) => rule.run_info(),
             Self::VueNoImportCompilerMacros(rule) => rule.run_info(),
@@ -27245,6 +27385,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::ReactOnlyExportComponents(ReactOnlyExportComponents::default()),
         RuleEnum::ReactPreferEs6Class(ReactPreferEs6Class::default()),
         RuleEnum::ReactPreferFunctionComponent(ReactPreferFunctionComponent::default()),
+        RuleEnum::ReactReactCompiler(ReactReactCompiler::default()),
         RuleEnum::ReactReactInJsxScope(ReactReactInJsxScope::default()),
         RuleEnum::ReactRequireRenderReturn(ReactRequireRenderReturn::default()),
         RuleEnum::ReactRulesOfHooks(ReactRulesOfHooks::default()),
@@ -27274,11 +27415,15 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::UnicornExplicitLengthCheck(UnicornExplicitLengthCheck::default()),
         RuleEnum::UnicornFilenameCase(UnicornFilenameCase::default()),
         RuleEnum::UnicornImportStyle(UnicornImportStyle::default()),
+        RuleEnum::UnicornMaxNestedCalls(UnicornMaxNestedCalls::default()),
         RuleEnum::UnicornNewForBuiltins(UnicornNewForBuiltins::default()),
         RuleEnum::UnicornNoAbusiveEslintDisable(UnicornNoAbusiveEslintDisable::default()),
         RuleEnum::UnicornNoAccessorRecursion(UnicornNoAccessorRecursion::default()),
         RuleEnum::UnicornNoAnonymousDefaultExport(UnicornNoAnonymousDefaultExport::default()),
         RuleEnum::UnicornNoArrayCallbackReference(UnicornNoArrayCallbackReference::default()),
+        RuleEnum::UnicornNoArrayFillWithReferenceType(
+            UnicornNoArrayFillWithReferenceType::default(),
+        ),
         RuleEnum::UnicornNoArrayForEach(UnicornNoArrayForEach::default()),
         RuleEnum::UnicornNoArrayMethodThisArgument(UnicornNoArrayMethodThisArgument::default()),
         RuleEnum::UnicornNoArrayReduce(UnicornNoArrayReduce::default()),
@@ -27644,6 +27789,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VueNoDeprecatedModelDefinition(VueNoDeprecatedModelDefinition::default()),
         RuleEnum::VueNoDeprecatedPropsDefaultThis(VueNoDeprecatedPropsDefaultThis::default()),
         RuleEnum::VueNoDeprecatedVueConfigKeycodes(VueNoDeprecatedVueConfigKeycodes::default()),
+        RuleEnum::VueNoDupeKeys(VueNoDupeKeys::default()),
         RuleEnum::VueNoExportInScriptSetup(VueNoExportInScriptSetup::default()),
         RuleEnum::VueNoExposeAfterAwait(VueNoExposeAfterAwait::default()),
         RuleEnum::VueNoImportCompilerMacros(VueNoImportCompilerMacros::default()),

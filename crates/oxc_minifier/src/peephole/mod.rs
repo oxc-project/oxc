@@ -32,7 +32,7 @@ use crate::{ReusableTraverseCtx, Traverse, TraverseCtx, minifier_traverse::trave
 
 pub use self::normalize::{Normalize, NormalizeOptions};
 
-/// Stateless peephole optimizer. The `dce` flag and `changed` state are stored in `MinifierState`.
+/// Stateless peephole optimizer. The `dce` flag and the mutation signal are stored in `MinifierState`.
 pub struct PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
@@ -162,11 +162,11 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
     fn enter_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         ctx.state.symbol_values.reset();
         ctx.state.proto_write_symbols.clear();
-        ctx.state.changed = false;
     }
 
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        if ctx.state.changed {
+        // Transitional: removed in the incremental-scoping PR together with the collector gate.
+        if ctx.state.was_mutated() {
             // Walk the live AST to collect data the peephole pass left stale:
             // - Live `IdentifierReference` IDs, so dead references can be batch-pruned
             //   from each symbol's reference list (individual deletion via
@@ -225,8 +225,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                     if let Statement::IfStatement(if_stmt) = stmt
                         && let Some(folded_stmt) = Self::try_minimize_if(if_stmt, ctx)
                     {
-                        *stmt = folded_stmt;
-                        ctx.state.changed = true;
+                        ctx.replace_statement(stmt, folded_stmt);
                     }
                 }
                 Statement::WhileStatement(s) => {
@@ -381,8 +380,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                     Self::minimize_expression_in_boolean_context(&mut logical_expr.test, ctx);
                     if let Some(changed) = Self::minimize_conditional_expression(logical_expr, ctx)
                     {
-                        *expr = changed;
-                        ctx.state.changed = true;
+                        ctx.replace_expression(expr, changed);
                     }
                     Self::try_fold_conditional_expression(expr, ctx);
                 }

@@ -47,6 +47,7 @@ declare_oxc_lint!(
     style,
     pending,
     version = "0.0.19",
+    short_description = "Disallows destructuring values from an array in ways that are difficult to read.",
 );
 
 fn is_unreadable_array_destructuring<T, U>(elements: &Vec<Option<T>>, rest: Option<&U>) -> bool {

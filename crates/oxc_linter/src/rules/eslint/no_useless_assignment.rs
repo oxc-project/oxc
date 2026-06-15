@@ -44,8 +44,6 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
-    /// /* eslint no-useless-assignment: "error" */
-    ///
     /// function fn1() {
     ///   let v = 'used';
     ///   doSomething(v);
@@ -73,7 +71,6 @@ declare_oxc_lint!(
     ///
     /// Examples of **correct** code for this rule:
     /// ```js
-    ///
     /// function fn1() {
     ///   let v = 'used';
     ///   doSomething(v);
@@ -103,6 +100,7 @@ declare_oxc_lint!(
     eslint,
     nursery,
     version = "1.59.0",
+    short_description = "Disallow variable assignments when the value is not used.",
 );
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

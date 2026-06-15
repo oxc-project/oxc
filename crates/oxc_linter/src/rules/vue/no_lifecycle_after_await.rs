@@ -70,6 +70,7 @@ declare_oxc_lint!(
     vue,
     correctness,
     version = "1.39.0",
+    short_description = "Disallow asynchronously registered lifecycle hooks.",
 );
 
 const LIFECYCLE_HOOKS: &[&str] = &[

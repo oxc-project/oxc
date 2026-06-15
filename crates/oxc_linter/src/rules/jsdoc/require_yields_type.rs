@@ -43,6 +43,7 @@ declare_oxc_lint!(
     jsdoc,
     pedantic,
     version = "1.65.0",
+    short_description = "Requires a type on the `@yields` tag.",
 );
 
 impl Rule for RequireYieldsType {

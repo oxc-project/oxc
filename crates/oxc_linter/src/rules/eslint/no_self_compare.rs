@@ -38,6 +38,7 @@ declare_oxc_lint!(
     pedantic, // The code is not wrong if it is intended to check for NaNs, which is the majority of
               // the case.
     version = "0.0.3",
+    short_description = "Disallow comparisons where both sides are exactly the same.",
 );
 
 impl Rule for NoSelfCompare {

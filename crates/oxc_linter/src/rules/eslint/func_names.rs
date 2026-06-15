@@ -221,6 +221,7 @@ declare_oxc_lint!(
     conditional_fix_suggestion,
     config = FuncNames,
     version = "0.7.0",
+    short_description = "Require or disallow named function expressions.",
 );
 
 impl Rule for FuncNames {

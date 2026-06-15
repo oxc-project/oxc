@@ -143,8 +143,8 @@ impl<'a> PeepholeOptimizations {
                 ConstantValue::Boolean(_) | ConstantValue::Undefined | ConstantValue::Null => true,
             }
         {
-            *expr = ctx.value_to_expr(expr.span(), cv.clone());
-            ctx.state.changed = true;
+            let new_expr = ctx.value_to_expr(expr.span(), cv.clone());
+            ctx.replace_expression(expr, new_expr);
         }
     }
 }

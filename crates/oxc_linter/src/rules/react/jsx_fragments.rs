@@ -104,6 +104,7 @@ declare_oxc_lint!(
     fix,
     config = FragmentMode,
     version = "1.12.0",
+    short_description = "Enforces the shorthand or standard form for React Fragments.",
 );
 
 impl Rule for JsxFragments {

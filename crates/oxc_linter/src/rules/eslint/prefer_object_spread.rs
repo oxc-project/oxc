@@ -72,6 +72,7 @@ declare_oxc_lint!(
     style,
     fix,
     version = "0.15.9",
+    short_description = "Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead.",
 );
 
 impl Rule for PreferObjectSpread {

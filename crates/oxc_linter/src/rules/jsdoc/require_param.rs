@@ -114,6 +114,7 @@ declare_oxc_lint!(
     pending,
     config = RequireParamConfig,
     version = "0.4.3",
+    short_description = "Requires that all function parameters are documented with JSDoc `@param` tags.",
 );
 
 impl Rule for RequireParam {

@@ -18,9 +18,20 @@ impl<'a> PeepholeOptimizations {
         alternate: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let mut cond_expr = ctx.ast.conditional_expression(span, test, consequent, alternate);
-        Self::minimize_conditional_expression(&mut cond_expr, ctx)
-            .unwrap_or_else(|| Expression::ConditionalExpression(ctx.ast.alloc(cond_expr)))
+        // Wrap the fresh conditional in an `Expression` slot so that, if the
+        // fold returns a replacement, it is routed through
+        // `ctx.replace_expression` like every other slot replacement. The
+        // discarded transient `ConditionalExpression` leaves refs in its
+        // untouched slots (e.g. the leftover `b` in `b == null ? c : b` ->
+        // `b ?? c`), which the incremental-scoping follow-up reclaims at this
+        // slot.
+        let mut as_expr = ctx.ast.expression_conditional(span, test, consequent, alternate);
+        let Expression::ConditionalExpression(cond_box) = &mut as_expr else { unreachable!() };
+        let folded = Self::minimize_conditional_expression(cond_box, ctx);
+        if let Some(new_expr) = folded {
+            ctx.replace_expression(&mut as_expr, new_expr);
+        }
+        as_expr
     }
 
     /// `MangleIfExpr`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L2745>
@@ -521,10 +532,11 @@ impl<'a> PeepholeOptimizations {
             ctx,
         ) {
             if !matches!(expr, Expression::ChainExpression(_)) {
-                *expr = ctx.ast.expression_chain(
+                let new_expr = ctx.ast.expression_chain(
                     expr.span(),
                     expr.take_in(ctx.ast).into_chain_element().unwrap(),
                 );
+                ctx.replace_expression(expr, new_expr);
             }
             true
         } else {
@@ -543,7 +555,8 @@ impl<'a> PeepholeOptimizations {
             Expression::StaticMemberExpression(e) => {
                 if e.object.is_specific_id(target_id_name) {
                     e.optional = true;
-                    e.object = expr_to_inject.take_in(ctx.ast);
+                    let new_object = expr_to_inject.take_in(ctx.ast);
+                    ctx.replace_expression(&mut e.object, new_object);
                     return true;
                 }
                 if Self::inject_optional_chaining_if_matched_inner(
@@ -558,7 +571,8 @@ impl<'a> PeepholeOptimizations {
             Expression::ComputedMemberExpression(e) => {
                 if e.object.is_specific_id(target_id_name) {
                     e.optional = true;
-                    e.object = expr_to_inject.take_in(ctx.ast);
+                    let new_object = expr_to_inject.take_in(ctx.ast);
+                    ctx.replace_expression(&mut e.object, new_object);
                     return true;
                 }
                 if Self::inject_optional_chaining_if_matched_inner(
@@ -573,7 +587,8 @@ impl<'a> PeepholeOptimizations {
             Expression::CallExpression(e) => {
                 if e.callee.is_specific_id(target_id_name) {
                     e.optional = true;
-                    e.callee = expr_to_inject.take_in(ctx.ast);
+                    let new_callee = expr_to_inject.take_in(ctx.ast);
+                    ctx.replace_expression(&mut e.callee, new_callee);
                     return true;
                 }
                 if Self::inject_optional_chaining_if_matched_inner(
@@ -589,7 +604,8 @@ impl<'a> PeepholeOptimizations {
                 ChainElement::StaticMemberExpression(e) => {
                     if e.object.is_specific_id(target_id_name) {
                         e.optional = true;
-                        e.object = expr_to_inject.take_in(ctx.ast);
+                        let new_object = expr_to_inject.take_in(ctx.ast);
+                        ctx.replace_expression(&mut e.object, new_object);
                         return true;
                     }
                     if Self::inject_optional_chaining_if_matched_inner(
@@ -604,7 +620,8 @@ impl<'a> PeepholeOptimizations {
                 ChainElement::ComputedMemberExpression(e) => {
                     if e.object.is_specific_id(target_id_name) {
                         e.optional = true;
-                        e.object = expr_to_inject.take_in(ctx.ast);
+                        let new_object = expr_to_inject.take_in(ctx.ast);
+                        ctx.replace_expression(&mut e.object, new_object);
                         return true;
                     }
                     if Self::inject_optional_chaining_if_matched_inner(
@@ -619,7 +636,8 @@ impl<'a> PeepholeOptimizations {
                 ChainElement::CallExpression(e) => {
                     if e.callee.is_specific_id(target_id_name) {
                         e.optional = true;
-                        e.callee = expr_to_inject.take_in(ctx.ast);
+                        let new_callee = expr_to_inject.take_in(ctx.ast);
+                        ctx.replace_expression(&mut e.callee, new_callee);
                         return true;
                     }
                     if Self::inject_optional_chaining_if_matched_inner(

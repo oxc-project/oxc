@@ -65,6 +65,7 @@ declare_oxc_lint!(
     pedantic,
     conditional_dangerous_fix,
     version = "0.0.20",
+    short_description = "Prefers `Array#flat()` over legacy techniques to flatten arrays.",
 );
 
 impl Rule for PreferArrayFlat {

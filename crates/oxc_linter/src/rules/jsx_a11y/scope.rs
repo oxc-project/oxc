@@ -48,6 +48,7 @@ declare_oxc_lint!(
     correctness,
     fix,
     version = "0.0.19",
+    short_description = "The scope prop should be used only on `<th>` elements.",
 );
 
 impl Rule for Scope {

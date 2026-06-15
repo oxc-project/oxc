@@ -51,6 +51,7 @@ declare_oxc_lint!(
     correctness,
     suggestion,
     version = "0.2.18",
+    short_description = "Disallow using `await` in `Promise` method parameters.",
 );
 
 impl Rule for NoAwaitInPromiseMethods {

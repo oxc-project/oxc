@@ -30,7 +30,11 @@ pub struct MinifierState<'a> {
     /// setters that make subsequent property writes side-effectful.
     pub proto_write_symbols: FxHashSet<SymbolId>,
 
-    pub changed: bool,
+    /// Set when a typed helper mutates the AST. Private by design: the only
+    /// writers are the helpers on `MinifierTraverseCtx`; the only reader is
+    /// the fixed-point loop driver via `take_mutated()` (plus the transitional
+    /// `was_mutated()` collector gate).
+    mutated: bool,
 
     /// Scratch buffer reused by `try_fold_concat` to build template literal
     /// quasis without allocating a fresh `String` per call.
@@ -52,9 +56,28 @@ impl MinifierState<'_> {
             symbol_values: SymbolValues::new(scoping.symbols_len()),
             class_symbols_stack: ClassSymbolsStack::new(),
             proto_write_symbols: FxHashSet::default(),
-            changed: false,
+            mutated: false,
             concat_scratch: String::new(),
         }
+    }
+
+    /// Returns whether the AST was mutated since the last call, and resets.
+    /// Read and reset are one operation so the signal cannot be cleared
+    /// anywhere except at its single consumption point.
+    pub(crate) fn take_mutated(&mut self) -> bool {
+        std::mem::take(&mut self.mutated)
+    }
+
+    /// Record that a typed helper mutated the AST.
+    pub(crate) fn record_mutation(&mut self) {
+        self.mutated = true;
+    }
+
+    /// Non-consuming read of the mutation signal.
+    ///
+    /// Transitional: removed in the incremental-scoping PR together with the collector gate.
+    pub(crate) fn was_mutated(&self) -> bool {
+        self.mutated
     }
 }
 

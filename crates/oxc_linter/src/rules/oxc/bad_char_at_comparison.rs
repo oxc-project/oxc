@@ -48,6 +48,7 @@ declare_oxc_lint!(
     oxc,
     correctness,
     version = "0.0.22",
+    short_description = "This rule warns when the return value of the `charAt` method is used to compare a string of length greater than 1.",
 );
 
 impl Rule for BadCharAtComparison {

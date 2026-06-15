@@ -61,6 +61,7 @@ declare_oxc_lint!(
     style,
     conditional_fix,
     version = "0.7.0",
+    short_description = "Disallow `parseInt()` and `Number.parseInt()` in favor of binary, octal, and hexadecimal literals.",
 );
 
 impl Rule for PreferNumericLiterals {

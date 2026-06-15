@@ -10,8 +10,14 @@ use oxc_span::Span;
 use oxc_str::CompactStr;
 use oxc_syntax::identifier::is_identifier_name;
 use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+    utils::deserialize_regex_vec,
+};
 
 fn catch_error_name_diagnostic(
     caught_ident: &str,
@@ -27,14 +33,16 @@ fn catch_error_name_diagnostic(
 #[derive(Debug, Default, Clone)]
 pub struct CatchErrorName(Box<CatchErrorNameConfig>);
 
-#[derive(Debug, Clone, JsonSchema)]
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct CatchErrorNameConfig {
     /// A list of patterns to ignore when checking `catch` variable names. The pattern
     /// can be a string or regular expression.
+    #[serde(default, deserialize_with = "deserialize_regex_vec")]
     ignore: Vec<Regex>,
     /// The name to use for error variables in `catch` blocks. You can customize it
     /// to something other than `'error'` (e.g., `'exception'`).
+    #[serde(default = "default_error_name", deserialize_with = "deserialize_error_name")]
     name: CompactStr,
 }
 
@@ -48,8 +56,22 @@ impl std::ops::Deref for CatchErrorName {
 
 impl Default for CatchErrorNameConfig {
     fn default() -> Self {
-        Self { ignore: vec![], name: CompactStr::new_const("error") }
+        Self { ignore: vec![], name: default_error_name() }
     }
+}
+
+fn default_error_name() -> CompactStr {
+    CompactStr::new_const("error")
+}
+
+fn deserialize_error_name<'de, D>(deserializer: D) -> Result<CompactStr, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let name = String::deserialize(deserializer)?;
+    let name = name.trim();
+
+    if is_identifier_name(name) { Ok(CompactStr::from(name)) } else { Ok(default_error_name()) }
 }
 
 declare_oxc_lint!(
@@ -96,33 +118,14 @@ declare_oxc_lint!(
     fix,
     config = CatchErrorNameConfig,
     version = "0.0.14",
+    short_description = "This rule enforces consistent and descriptive naming for error variables in `catch` statements, preventing the use of vague names like `badName` or `_` when the error is used.",
 );
 
 impl Rule for CatchErrorName {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let ignored_names = value
-            .get(0)
-            .and_then(|v| v.get("ignore"))
-            .and_then(serde_json::Value::as_array)
-            .unwrap_or(&vec![])
-            .iter()
-            .filter_map(serde_json::Value::as_str)
-            .filter_map(|x| Regex::new(x).ok())
-            .collect::<Vec<Regex>>();
-
-        let allowed_name = CompactStr::from(
-            value
-                .get(0)
-                .and_then(|v| v.get("name"))
-                .and_then(serde_json::Value::as_str)
-                .and_then(|name| {
-                    let name = name.trim();
-                    is_identifier_name(name).then_some(name)
-                })
-                .unwrap_or("error"),
-        );
-
-        Ok(Self(Box::new(CatchErrorNameConfig { ignore: ignored_names, name: allowed_name })))
+        serde_json::from_value::<DefaultRuleConfig<CatchErrorNameConfig>>(value)
+            .map(DefaultRuleConfig::into_inner)
+            .map(|config| Self(Box::new(config)))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

@@ -94,6 +94,7 @@ declare_oxc_lint!(
     suggestion,
     config = InteractiveSupportsFocusConfig,
     version = "1.63.0",
+    short_description = "Enforce that elements with interactive roles and interaction handlers (mouse or key press) must be focusable.",
 );
 
 impl Rule for InteractiveSupportsFocus {

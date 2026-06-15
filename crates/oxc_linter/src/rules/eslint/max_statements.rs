@@ -210,6 +210,7 @@ declare_oxc_lint!(
     style,
     config = MaxStatementsConfig,
     version = "1.35.0",
+    short_description = "Enforce a maximum number of statements in a function.",
 );
 
 impl Rule for MaxStatements {
