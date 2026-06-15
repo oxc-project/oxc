@@ -108,13 +108,13 @@ impl<'a> PeepholeOptimizations {
             BinaryOperator::Equality => {}
             _ => return,
         }
-        *expr = if b {
+        let new_expr = if b {
             e.left.take_in(ctx.ast)
         } else {
             let argument = e.left.take_in(ctx.ast);
             ctx.ast.expression_unary(e.span, UnaryOperator::LogicalNot, argument)
         };
-        ctx.state.changed = true;
+        ctx.replace_expression(expr, new_expr);
     }
 
     /// Compress `foo == true` into `foo == 1`.
@@ -130,23 +130,23 @@ impl<'a> PeepholeOptimizations {
             return;
         }
         if let Some(ConstantValue::Boolean(left_bool)) = e.left.evaluate_value(ctx) {
-            e.left = ctx.ast.expression_numeric_literal(
+            let new_left = ctx.ast.expression_numeric_literal(
                 e.left.span(),
                 if left_bool { 1.0 } else { 0.0 },
                 None,
                 NumberBase::Decimal,
             );
-            ctx.state.changed = true;
+            ctx.replace_expression(&mut e.left, new_left);
             return;
         }
         if let Some(ConstantValue::Boolean(right_bool)) = e.right.evaluate_value(ctx) {
-            e.right = ctx.ast.expression_numeric_literal(
+            let new_right = ctx.ast.expression_numeric_literal(
                 e.right.span(),
                 if right_bool { 1.0 } else { 0.0 },
                 None,
                 NumberBase::Decimal,
             );
-            ctx.state.changed = true;
+            ctx.replace_expression(&mut e.right, new_right);
         }
     }
 
@@ -204,9 +204,9 @@ impl<'a> PeepholeOptimizations {
         reference.flags_mut().insert(ReferenceFlags::Read);
 
         let new_op = logical_expr.operator.to_assignment_operator();
+        let new_right = logical_expr.right.take_in(ctx.ast);
         expr.operator = new_op;
-        expr.right = logical_expr.right.take_in(ctx.ast);
-        ctx.state.changed = true;
+        ctx.replace_expression(&mut expr.right, new_right);
     }
 
     /// Compress `a = a + b` to `a += b`
@@ -226,9 +226,9 @@ impl<'a> PeepholeOptimizations {
 
         Self::mark_assignment_target_as_read(&expr.left, ctx);
 
+        let new_right = binary_expr.right.take_in(ctx.ast);
         expr.operator = new_op;
-        expr.right = binary_expr.right.take_in(ctx.ast);
-        ctx.state.changed = true;
+        ctx.replace_expression(&mut expr.right, new_right);
     }
 
     /// Compress `a -= 1` to `--a` and `a -= -1` to `++a`
@@ -254,7 +254,7 @@ impl<'a> PeepholeOptimizations {
         };
         let Some(target) = e.left.as_simple_assignment_target_mut() else { return };
         let target = target.take_in(ctx.ast);
-        *expr = ctx.ast.expression_update(e.span, operator, true, target);
-        ctx.state.changed = true;
+        let new_expr = ctx.ast.expression_update(e.span, operator, true, target);
+        ctx.replace_expression(expr, new_expr);
     }
 }

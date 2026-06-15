@@ -67,13 +67,26 @@ impl<'a> PeepholeOptimizations {
 
     pub fn remove_unused_variable_declaration(
         mut stmt: Statement<'a>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Option<Statement<'a>> {
         let Statement::VariableDeclaration(var_decl) = &mut stmt else { return Some(stmt) };
         if !Self::can_remove_unused_declarators(ctx) {
             return Some(stmt);
         }
-        var_decl.declarations.retain(|decl| !Self::should_remove_unused_declarator(decl, ctx));
+        var_decl.declarations.retain_mut(|decl| {
+            if Self::should_remove_unused_declarator(decl, ctx) {
+                // Mark refs in the discarded init as dead so the per-pass
+                // scoping refresh removes them. The `retain_mut` predicate
+                // silently drops the declarator, so we lose the chance to
+                // walk it via `replace_*`.
+                if let Some(init) = &decl.init {
+                    ctx.drop_expression(init);
+                }
+                false
+            } else {
+                true
+            }
+        });
         if var_decl.declarations.is_empty() {
             return None;
         }
@@ -95,8 +108,8 @@ impl<'a> PeepholeOptimizations {
         if !ctx.scoping().symbol_is_unused(symbol_id) {
             return;
         }
-        *stmt = ctx.ast.statement_empty(f.span);
-        ctx.state.changed = true;
+        let new_stmt = ctx.ast.statement_empty(f.span);
+        ctx.replace_statement(stmt, new_stmt);
     }
 
     pub fn remove_unused_class_declaration(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -122,8 +135,7 @@ impl<'a> PeepholeOptimizations {
                 ctx.ast.statement_expression(c.span, expr)
             }
         }) {
-            *stmt = changed;
-            ctx.state.changed = true;
+            ctx.replace_statement(stmt, changed);
         }
     }
 
@@ -176,8 +188,8 @@ impl<'a> PeepholeOptimizations {
             if ctx.scoping().symbol_is_unused(
                 import_decl.specifiers.as_ref().unwrap().first().unwrap().local().symbol_id(),
             ) {
-                *stmt = ctx.ast.statement_empty(import_decl.span);
-                ctx.state.changed = true;
+                let new_stmt = ctx.ast.statement_empty(import_decl.span);
+                ctx.replace_statement(stmt, new_stmt);
             }
 
             return;
@@ -201,12 +213,12 @@ impl<'a> PeepholeOptimizations {
         });
 
         if specifiers.len() != original_len {
-            ctx.state.changed = true;
+            ctx.notice_change();
         }
 
         if specifiers.is_empty() {
             import_decl.specifiers = None;
-            ctx.state.changed = true;
+            ctx.notice_change();
         }
     }
 }
