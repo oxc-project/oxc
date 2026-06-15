@@ -1310,7 +1310,6 @@ pub enum RuleEnum {
     ReactPerfJsxNoNewArrayAsProp(ReactPerfJsxNoNewArrayAsProp),
     ReactPerfJsxNoNewFunctionAsProp(ReactPerfJsxNoNewFunctionAsProp),
     ReactPerfJsxNoNewObjectAsProp(ReactPerfJsxNoNewObjectAsProp),
-    UnicornMaxNestedCalls(UnicornMaxNestedCalls),
     UnicornCatchErrorName(UnicornCatchErrorName),
     UnicornConsistentAssert(UnicornConsistentAssert),
     UnicornConsistentDateClone(UnicornConsistentDateClone),
@@ -1325,6 +1324,7 @@ pub enum RuleEnum {
     UnicornExplicitLengthCheck(UnicornExplicitLengthCheck),
     UnicornFilenameCase(UnicornFilenameCase),
     UnicornImportStyle(UnicornImportStyle),
+    UnicornMaxNestedCalls(UnicornMaxNestedCalls),
     UnicornNewForBuiltins(UnicornNewForBuiltins),
     UnicornNoAbusiveEslintDisable(UnicornNoAbusiveEslintDisable),
     UnicornNoAccessorRecursion(UnicornNoAccessorRecursion),
@@ -2203,8 +2203,7 @@ const REACT_PERF_JSX_NO_NEW_FUNCTION_AS_PROP_ID: usize =
     REACT_PERF_JSX_NO_NEW_ARRAY_AS_PROP_ID + 1usize;
 const REACT_PERF_JSX_NO_NEW_OBJECT_AS_PROP_ID: usize =
     REACT_PERF_JSX_NO_NEW_FUNCTION_AS_PROP_ID + 1usize;
-const UNICORN_MAX_NESTED_CALLS_ID: usize = REACT_PERF_JSX_NO_NEW_OBJECT_AS_PROP_ID + 1usize;
-const UNICORN_CATCH_ERROR_NAME_ID: usize = UNICORN_MAX_NESTED_CALLS_ID + 1usize;
+const UNICORN_CATCH_ERROR_NAME_ID: usize = REACT_PERF_JSX_NO_NEW_OBJECT_AS_PROP_ID + 1usize;
 const UNICORN_CONSISTENT_ASSERT_ID: usize = UNICORN_CATCH_ERROR_NAME_ID + 1usize;
 const UNICORN_CONSISTENT_DATE_CLONE_ID: usize = UNICORN_CONSISTENT_ASSERT_ID + 1usize;
 const UNICORN_CONSISTENT_EMPTY_ARRAY_SPREAD_ID: usize = UNICORN_CONSISTENT_DATE_CLONE_ID + 1usize;
@@ -2222,7 +2221,8 @@ const UNICORN_ESCAPE_CASE_ID: usize = UNICORN_ERROR_MESSAGE_ID + 1usize;
 const UNICORN_EXPLICIT_LENGTH_CHECK_ID: usize = UNICORN_ESCAPE_CASE_ID + 1usize;
 const UNICORN_FILENAME_CASE_ID: usize = UNICORN_EXPLICIT_LENGTH_CHECK_ID + 1usize;
 const UNICORN_IMPORT_STYLE_ID: usize = UNICORN_FILENAME_CASE_ID + 1usize;
-const UNICORN_NEW_FOR_BUILTINS_ID: usize = UNICORN_IMPORT_STYLE_ID + 1usize;
+const UNICORN_MAX_NESTED_CALLS_ID: usize = UNICORN_IMPORT_STYLE_ID + 1usize;
+const UNICORN_NEW_FOR_BUILTINS_ID: usize = UNICORN_MAX_NESTED_CALLS_ID + 1usize;
 const UNICORN_NO_ABUSIVE_ESLINT_DISABLE_ID: usize = UNICORN_NEW_FOR_BUILTINS_ID + 1usize;
 const UNICORN_NO_ACCESSOR_RECURSION_ID: usize = UNICORN_NO_ABUSIVE_ESLINT_DISABLE_ID + 1usize;
 const UNICORN_NO_ANONYMOUS_DEFAULT_EXPORT_ID: usize = UNICORN_NO_ACCESSOR_RECURSION_ID + 1usize;
@@ -3171,7 +3171,6 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(_) => REACT_PERF_JSX_NO_NEW_ARRAY_AS_PROP_ID,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => REACT_PERF_JSX_NO_NEW_FUNCTION_AS_PROP_ID,
             Self::ReactPerfJsxNoNewObjectAsProp(_) => REACT_PERF_JSX_NO_NEW_OBJECT_AS_PROP_ID,
-            Self::UnicornMaxNestedCalls(_) => UNICORN_MAX_NESTED_CALLS_ID,
             Self::UnicornCatchErrorName(_) => UNICORN_CATCH_ERROR_NAME_ID,
             Self::UnicornConsistentAssert(_) => UNICORN_CONSISTENT_ASSERT_ID,
             Self::UnicornConsistentDateClone(_) => UNICORN_CONSISTENT_DATE_CLONE_ID,
@@ -3190,6 +3189,7 @@ impl RuleEnum {
             Self::UnicornExplicitLengthCheck(_) => UNICORN_EXPLICIT_LENGTH_CHECK_ID,
             Self::UnicornFilenameCase(_) => UNICORN_FILENAME_CASE_ID,
             Self::UnicornImportStyle(_) => UNICORN_IMPORT_STYLE_ID,
+            Self::UnicornMaxNestedCalls(_) => UNICORN_MAX_NESTED_CALLS_ID,
             Self::UnicornNewForBuiltins(_) => UNICORN_NEW_FOR_BUILTINS_ID,
             Self::UnicornNoAbusiveEslintDisable(_) => UNICORN_NO_ABUSIVE_ESLINT_DISABLE_ID,
             Self::UnicornNoAccessorRecursion(_) => UNICORN_NO_ACCESSOR_RECURSION_ID,
@@ -4133,7 +4133,6 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::NAME,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => ReactPerfJsxNoNewFunctionAsProp::NAME,
             Self::ReactPerfJsxNoNewObjectAsProp(_) => ReactPerfJsxNoNewObjectAsProp::NAME,
-            Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::NAME,
             Self::UnicornCatchErrorName(_) => UnicornCatchErrorName::NAME,
             Self::UnicornConsistentAssert(_) => UnicornConsistentAssert::NAME,
             Self::UnicornConsistentDateClone(_) => UnicornConsistentDateClone::NAME,
@@ -4152,6 +4151,7 @@ impl RuleEnum {
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::NAME,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::NAME,
             Self::UnicornImportStyle(_) => UnicornImportStyle::NAME,
+            Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::NAME,
             Self::UnicornNewForBuiltins(_) => UnicornNewForBuiltins::NAME,
             Self::UnicornNoAbusiveEslintDisable(_) => UnicornNoAbusiveEslintDisable::NAME,
             Self::UnicornNoAccessorRecursion(_) => UnicornNoAccessorRecursion::NAME,
@@ -5111,7 +5111,6 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::CATEGORY,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => ReactPerfJsxNoNewFunctionAsProp::CATEGORY,
             Self::ReactPerfJsxNoNewObjectAsProp(_) => ReactPerfJsxNoNewObjectAsProp::CATEGORY,
-            Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::CATEGORY,
             Self::UnicornCatchErrorName(_) => UnicornCatchErrorName::CATEGORY,
             Self::UnicornConsistentAssert(_) => UnicornConsistentAssert::CATEGORY,
             Self::UnicornConsistentDateClone(_) => UnicornConsistentDateClone::CATEGORY,
@@ -5132,6 +5131,7 @@ impl RuleEnum {
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::CATEGORY,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::CATEGORY,
             Self::UnicornImportStyle(_) => UnicornImportStyle::CATEGORY,
+            Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::CATEGORY,
             Self::UnicornNewForBuiltins(_) => UnicornNewForBuiltins::CATEGORY,
             Self::UnicornNoAbusiveEslintDisable(_) => UnicornNoAbusiveEslintDisable::CATEGORY,
             Self::UnicornNoAccessorRecursion(_) => UnicornNoAccessorRecursion::CATEGORY,
@@ -6096,7 +6096,6 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::FIX,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => ReactPerfJsxNoNewFunctionAsProp::FIX,
             Self::ReactPerfJsxNoNewObjectAsProp(_) => ReactPerfJsxNoNewObjectAsProp::FIX,
-            Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::FIX,
             Self::UnicornCatchErrorName(_) => UnicornCatchErrorName::FIX,
             Self::UnicornConsistentAssert(_) => UnicornConsistentAssert::FIX,
             Self::UnicornConsistentDateClone(_) => UnicornConsistentDateClone::FIX,
@@ -6115,6 +6114,7 @@ impl RuleEnum {
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::FIX,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::FIX,
             Self::UnicornImportStyle(_) => UnicornImportStyle::FIX,
+            Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::FIX,
             Self::UnicornNewForBuiltins(_) => UnicornNewForBuiltins::FIX,
             Self::UnicornNoAbusiveEslintDisable(_) => UnicornNoAbusiveEslintDisable::FIX,
             Self::UnicornNoAccessorRecursion(_) => UnicornNoAccessorRecursion::FIX,
@@ -7167,7 +7167,6 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewObjectAsProp(_) => {
                 ReactPerfJsxNoNewObjectAsProp::documentation()
             }
-            Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::documentation(),
             Self::UnicornCatchErrorName(_) => UnicornCatchErrorName::documentation(),
             Self::UnicornConsistentAssert(_) => UnicornConsistentAssert::documentation(),
             Self::UnicornConsistentDateClone(_) => UnicornConsistentDateClone::documentation(),
@@ -7190,6 +7189,7 @@ impl RuleEnum {
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::documentation(),
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::documentation(),
             Self::UnicornImportStyle(_) => UnicornImportStyle::documentation(),
+            Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::documentation(),
             Self::UnicornNewForBuiltins(_) => UnicornNewForBuiltins::documentation(),
             Self::UnicornNoAbusiveEslintDisable(_) => {
                 UnicornNoAbusiveEslintDisable::documentation()
@@ -9025,8 +9025,6 @@ impl RuleEnum {
                 ReactPerfJsxNoNewObjectAsProp::config_schema(generator)
                     .or_else(|| ReactPerfJsxNoNewObjectAsProp::schema(generator))
             }
-            Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::config_schema(generator)
-                .or_else(|| UnicornMaxNestedCalls::schema(generator)),
             Self::UnicornCatchErrorName(_) => UnicornCatchErrorName::config_schema(generator)
                 .or_else(|| UnicornCatchErrorName::schema(generator)),
             Self::UnicornConsistentAssert(_) => UnicornConsistentAssert::config_schema(generator)
@@ -9069,6 +9067,8 @@ impl RuleEnum {
                 .or_else(|| UnicornFilenameCase::schema(generator)),
             Self::UnicornImportStyle(_) => UnicornImportStyle::config_schema(generator)
                 .or_else(|| UnicornImportStyle::schema(generator)),
+            Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::config_schema(generator)
+                .or_else(|| UnicornMaxNestedCalls::schema(generator)),
             Self::UnicornNewForBuiltins(_) => UnicornNewForBuiltins::config_schema(generator)
                 .or_else(|| UnicornNewForBuiltins::schema(generator)),
             Self::UnicornNoAbusiveEslintDisable(_) => {
@@ -10593,7 +10593,6 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(_) => "react_perf",
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => "react_perf",
             Self::ReactPerfJsxNoNewObjectAsProp(_) => "react_perf",
-            Self::UnicornMaxNestedCalls(_) => "unicorn",
             Self::UnicornCatchErrorName(_) => "unicorn",
             Self::UnicornConsistentAssert(_) => "unicorn",
             Self::UnicornConsistentDateClone(_) => "unicorn",
@@ -10608,6 +10607,7 @@ impl RuleEnum {
             Self::UnicornExplicitLengthCheck(_) => "unicorn",
             Self::UnicornFilenameCase(_) => "unicorn",
             Self::UnicornImportStyle(_) => "unicorn",
+            Self::UnicornMaxNestedCalls(_) => "unicorn",
             Self::UnicornNewForBuiltins(_) => "unicorn",
             Self::UnicornNoAbusiveEslintDisable(_) => "unicorn",
             Self::UnicornNoAccessorRecursion(_) => "unicorn",
@@ -12434,9 +12434,6 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewObjectAsProp(_) => Ok(Self::ReactPerfJsxNoNewObjectAsProp(
                 ReactPerfJsxNoNewObjectAsProp::from_configuration(value)?,
             )),
-            Self::UnicornMaxNestedCalls(_) => {
-                Ok(Self::UnicornMaxNestedCalls(UnicornMaxNestedCalls::from_configuration(value)?))
-            }
             Self::UnicornCatchErrorName(_) => {
                 Ok(Self::UnicornCatchErrorName(UnicornCatchErrorName::from_configuration(value)?))
             }
@@ -12486,6 +12483,9 @@ impl RuleEnum {
             }
             Self::UnicornImportStyle(_) => {
                 Ok(Self::UnicornImportStyle(UnicornImportStyle::from_configuration(value)?))
+            }
+            Self::UnicornMaxNestedCalls(_) => {
+                Ok(Self::UnicornMaxNestedCalls(UnicornMaxNestedCalls::from_configuration(value)?))
             }
             Self::UnicornNewForBuiltins(_) => {
                 Ok(Self::UnicornNewForBuiltins(UnicornNewForBuiltins::from_configuration(value)?))
@@ -14128,7 +14128,6 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.to_configuration(),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.to_configuration(),
             Self::ReactPerfJsxNoNewObjectAsProp(rule) => rule.to_configuration(),
-            Self::UnicornMaxNestedCalls(rule) => rule.to_configuration(),
             Self::UnicornCatchErrorName(rule) => rule.to_configuration(),
             Self::UnicornConsistentAssert(rule) => rule.to_configuration(),
             Self::UnicornConsistentDateClone(rule) => rule.to_configuration(),
@@ -14143,6 +14142,7 @@ impl RuleEnum {
             Self::UnicornExplicitLengthCheck(rule) => rule.to_configuration(),
             Self::UnicornFilenameCase(rule) => rule.to_configuration(),
             Self::UnicornImportStyle(rule) => rule.to_configuration(),
+            Self::UnicornMaxNestedCalls(rule) => rule.to_configuration(),
             Self::UnicornNewForBuiltins(rule) => rule.to_configuration(),
             Self::UnicornNoAbusiveEslintDisable(rule) => rule.to_configuration(),
             Self::UnicornNoAccessorRecursion(rule) => rule.to_configuration(),
@@ -14976,7 +14976,6 @@ impl RuleEnum {
                 Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.run(node, ctx),
                 Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.run(node, ctx),
                 Self::ReactPerfJsxNoNewObjectAsProp(rule) => rule.run(node, ctx),
-                Self::UnicornMaxNestedCalls(rule) => rule.run(node, ctx),
                 Self::UnicornCatchErrorName(rule) => rule.run(node, ctx),
                 Self::UnicornConsistentAssert(rule) => rule.run(node, ctx),
                 Self::UnicornConsistentDateClone(rule) => rule.run(node, ctx),
@@ -14991,6 +14990,7 @@ impl RuleEnum {
                 Self::UnicornExplicitLengthCheck(rule) => rule.run(node, ctx),
                 Self::UnicornFilenameCase(rule) => rule.run(node, ctx),
                 Self::UnicornImportStyle(rule) => rule.run(node, ctx),
+                Self::UnicornMaxNestedCalls(rule) => rule.run(node, ctx),
                 Self::UnicornNewForBuiltins(rule) => rule.run(node, ctx),
                 Self::UnicornNoAbusiveEslintDisable(rule) => rule.run(node, ctx),
                 Self::UnicornNoAccessorRecursion(rule) => rule.run(node, ctx),
@@ -15817,7 +15817,6 @@ impl RuleEnum {
                 Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.run(node, ctx),
                 Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.run(node, ctx),
                 Self::ReactPerfJsxNoNewObjectAsProp(rule) => rule.run(node, ctx),
-                Self::UnicornMaxNestedCalls(rule) => rule.run(node, ctx),
                 Self::UnicornCatchErrorName(rule) => rule.run(node, ctx),
                 Self::UnicornConsistentAssert(rule) => rule.run(node, ctx),
                 Self::UnicornConsistentDateClone(rule) => rule.run(node, ctx),
@@ -15832,6 +15831,7 @@ impl RuleEnum {
                 Self::UnicornExplicitLengthCheck(rule) => rule.run(node, ctx),
                 Self::UnicornFilenameCase(rule) => rule.run(node, ctx),
                 Self::UnicornImportStyle(rule) => rule.run(node, ctx),
+                Self::UnicornMaxNestedCalls(rule) => rule.run(node, ctx),
                 Self::UnicornNewForBuiltins(rule) => rule.run(node, ctx),
                 Self::UnicornNoAbusiveEslintDisable(rule) => rule.run(node, ctx),
                 Self::UnicornNoAccessorRecursion(rule) => rule.run(node, ctx),
@@ -16665,7 +16665,6 @@ impl RuleEnum {
                 Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.run_once(ctx),
                 Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.run_once(ctx),
                 Self::ReactPerfJsxNoNewObjectAsProp(rule) => rule.run_once(ctx),
-                Self::UnicornMaxNestedCalls(rule) => rule.run_once(ctx),
                 Self::UnicornCatchErrorName(rule) => rule.run_once(ctx),
                 Self::UnicornConsistentAssert(rule) => rule.run_once(ctx),
                 Self::UnicornConsistentDateClone(rule) => rule.run_once(ctx),
@@ -16680,6 +16679,7 @@ impl RuleEnum {
                 Self::UnicornExplicitLengthCheck(rule) => rule.run_once(ctx),
                 Self::UnicornFilenameCase(rule) => rule.run_once(ctx),
                 Self::UnicornImportStyle(rule) => rule.run_once(ctx),
+                Self::UnicornMaxNestedCalls(rule) => rule.run_once(ctx),
                 Self::UnicornNewForBuiltins(rule) => rule.run_once(ctx),
                 Self::UnicornNoAbusiveEslintDisable(rule) => rule.run_once(ctx),
                 Self::UnicornNoAccessorRecursion(rule) => rule.run_once(ctx),
@@ -17506,7 +17506,6 @@ impl RuleEnum {
                 Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.run_once(ctx),
                 Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.run_once(ctx),
                 Self::ReactPerfJsxNoNewObjectAsProp(rule) => rule.run_once(ctx),
-                Self::UnicornMaxNestedCalls(rule) => rule.run_once(ctx),
                 Self::UnicornCatchErrorName(rule) => rule.run_once(ctx),
                 Self::UnicornConsistentAssert(rule) => rule.run_once(ctx),
                 Self::UnicornConsistentDateClone(rule) => rule.run_once(ctx),
@@ -17521,6 +17520,7 @@ impl RuleEnum {
                 Self::UnicornExplicitLengthCheck(rule) => rule.run_once(ctx),
                 Self::UnicornFilenameCase(rule) => rule.run_once(ctx),
                 Self::UnicornImportStyle(rule) => rule.run_once(ctx),
+                Self::UnicornMaxNestedCalls(rule) => rule.run_once(ctx),
                 Self::UnicornNewForBuiltins(rule) => rule.run_once(ctx),
                 Self::UnicornNoAbusiveEslintDisable(rule) => rule.run_once(ctx),
                 Self::UnicornNoAccessorRecursion(rule) => rule.run_once(ctx),
@@ -18487,7 +18487,6 @@ impl RuleEnum {
                     rule.run_on_jest_node(jest_node, ctx)
                 }
                 Self::ReactPerfJsxNoNewObjectAsProp(rule) => rule.run_on_jest_node(jest_node, ctx),
-                Self::UnicornMaxNestedCalls(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornCatchErrorName(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornConsistentAssert(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornConsistentDateClone(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -18510,6 +18509,7 @@ impl RuleEnum {
                 Self::UnicornExplicitLengthCheck(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornFilenameCase(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornImportStyle(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::UnicornMaxNestedCalls(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornNewForBuiltins(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornNoAbusiveEslintDisable(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornNoAccessorRecursion(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -19588,7 +19588,6 @@ impl RuleEnum {
                     rule.run_on_jest_node(jest_node, ctx)
                 }
                 Self::ReactPerfJsxNoNewObjectAsProp(rule) => rule.run_on_jest_node(jest_node, ctx),
-                Self::UnicornMaxNestedCalls(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornCatchErrorName(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornConsistentAssert(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornConsistentDateClone(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -19611,6 +19610,7 @@ impl RuleEnum {
                 Self::UnicornExplicitLengthCheck(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornFilenameCase(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornImportStyle(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::UnicornMaxNestedCalls(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornNewForBuiltins(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornNoAbusiveEslintDisable(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornNoAccessorRecursion(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -20557,7 +20557,6 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.should_run(ctx),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.should_run(ctx),
             Self::ReactPerfJsxNoNewObjectAsProp(rule) => rule.should_run(ctx),
-            Self::UnicornMaxNestedCalls(rule) => rule.should_run(ctx),
             Self::UnicornCatchErrorName(rule) => rule.should_run(ctx),
             Self::UnicornConsistentAssert(rule) => rule.should_run(ctx),
             Self::UnicornConsistentDateClone(rule) => rule.should_run(ctx),
@@ -20572,6 +20571,7 @@ impl RuleEnum {
             Self::UnicornExplicitLengthCheck(rule) => rule.should_run(ctx),
             Self::UnicornFilenameCase(rule) => rule.should_run(ctx),
             Self::UnicornImportStyle(rule) => rule.should_run(ctx),
+            Self::UnicornMaxNestedCalls(rule) => rule.should_run(ctx),
             Self::UnicornNewForBuiltins(rule) => rule.should_run(ctx),
             Self::UnicornNoAbusiveEslintDisable(rule) => rule.should_run(ctx),
             Self::UnicornNoAccessorRecursion(rule) => rule.should_run(ctx),
@@ -21583,7 +21583,6 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewObjectAsProp(_) => {
                 ReactPerfJsxNoNewObjectAsProp::IS_TSGOLINT_RULE
             }
-            Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::IS_TSGOLINT_RULE,
             Self::UnicornCatchErrorName(_) => UnicornCatchErrorName::IS_TSGOLINT_RULE,
             Self::UnicornConsistentAssert(_) => UnicornConsistentAssert::IS_TSGOLINT_RULE,
             Self::UnicornConsistentDateClone(_) => UnicornConsistentDateClone::IS_TSGOLINT_RULE,
@@ -21606,6 +21605,7 @@ impl RuleEnum {
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::IS_TSGOLINT_RULE,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::IS_TSGOLINT_RULE,
             Self::UnicornImportStyle(_) => UnicornImportStyle::IS_TSGOLINT_RULE,
+            Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::IS_TSGOLINT_RULE,
             Self::UnicornNewForBuiltins(_) => UnicornNewForBuiltins::IS_TSGOLINT_RULE,
             Self::UnicornNoAbusiveEslintDisable(_) => {
                 UnicornNoAbusiveEslintDisable::IS_TSGOLINT_RULE
@@ -22707,7 +22707,6 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::VERSION,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => ReactPerfJsxNoNewFunctionAsProp::VERSION,
             Self::ReactPerfJsxNoNewObjectAsProp(_) => ReactPerfJsxNoNewObjectAsProp::VERSION,
-            Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::VERSION,
             Self::UnicornCatchErrorName(_) => UnicornCatchErrorName::VERSION,
             Self::UnicornConsistentAssert(_) => UnicornConsistentAssert::VERSION,
             Self::UnicornConsistentDateClone(_) => UnicornConsistentDateClone::VERSION,
@@ -22728,6 +22727,7 @@ impl RuleEnum {
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::VERSION,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::VERSION,
             Self::UnicornImportStyle(_) => UnicornImportStyle::VERSION,
+            Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::VERSION,
             Self::UnicornNewForBuiltins(_) => UnicornNewForBuiltins::VERSION,
             Self::UnicornNoAbusiveEslintDisable(_) => UnicornNoAbusiveEslintDisable::VERSION,
             Self::UnicornNoAccessorRecursion(_) => UnicornNoAccessorRecursion::VERSION,
@@ -23734,7 +23734,6 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::HAS_CONFIG,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => ReactPerfJsxNoNewFunctionAsProp::HAS_CONFIG,
             Self::ReactPerfJsxNoNewObjectAsProp(_) => ReactPerfJsxNoNewObjectAsProp::HAS_CONFIG,
-            Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::HAS_CONFIG,
             Self::UnicornCatchErrorName(_) => UnicornCatchErrorName::HAS_CONFIG,
             Self::UnicornConsistentAssert(_) => UnicornConsistentAssert::HAS_CONFIG,
             Self::UnicornConsistentDateClone(_) => UnicornConsistentDateClone::HAS_CONFIG,
@@ -23757,6 +23756,7 @@ impl RuleEnum {
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::HAS_CONFIG,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::HAS_CONFIG,
             Self::UnicornImportStyle(_) => UnicornImportStyle::HAS_CONFIG,
+            Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::HAS_CONFIG,
             Self::UnicornNewForBuiltins(_) => UnicornNewForBuiltins::HAS_CONFIG,
             Self::UnicornNoAbusiveEslintDisable(_) => UnicornNoAbusiveEslintDisable::HAS_CONFIG,
             Self::UnicornNoAccessorRecursion(_) => UnicornNoAccessorRecursion::HAS_CONFIG,
@@ -24742,7 +24742,6 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::INFO,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => ReactPerfJsxNoNewFunctionAsProp::INFO,
             Self::ReactPerfJsxNoNewObjectAsProp(_) => ReactPerfJsxNoNewObjectAsProp::INFO,
-            Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::INFO,
             Self::UnicornCatchErrorName(_) => UnicornCatchErrorName::INFO,
             Self::UnicornConsistentAssert(_) => UnicornConsistentAssert::INFO,
             Self::UnicornConsistentDateClone(_) => UnicornConsistentDateClone::INFO,
@@ -24761,6 +24760,7 @@ impl RuleEnum {
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::INFO,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::INFO,
             Self::UnicornImportStyle(_) => UnicornImportStyle::INFO,
+            Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::INFO,
             Self::UnicornNewForBuiltins(_) => UnicornNewForBuiltins::INFO,
             Self::UnicornNoAbusiveEslintDisable(_) => UnicornNoAbusiveEslintDisable::INFO,
             Self::UnicornNoAccessorRecursion(_) => UnicornNoAccessorRecursion::INFO,
@@ -25629,7 +25629,6 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.types_info(),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.types_info(),
             Self::ReactPerfJsxNoNewObjectAsProp(rule) => rule.types_info(),
-            Self::UnicornMaxNestedCalls(rule) => rule.types_info(),
             Self::UnicornCatchErrorName(rule) => rule.types_info(),
             Self::UnicornConsistentAssert(rule) => rule.types_info(),
             Self::UnicornConsistentDateClone(rule) => rule.types_info(),
@@ -25644,6 +25643,7 @@ impl RuleEnum {
             Self::UnicornExplicitLengthCheck(rule) => rule.types_info(),
             Self::UnicornFilenameCase(rule) => rule.types_info(),
             Self::UnicornImportStyle(rule) => rule.types_info(),
+            Self::UnicornMaxNestedCalls(rule) => rule.types_info(),
             Self::UnicornNewForBuiltins(rule) => rule.types_info(),
             Self::UnicornNoAbusiveEslintDisable(rule) => rule.types_info(),
             Self::UnicornNoAccessorRecursion(rule) => rule.types_info(),
@@ -26467,7 +26467,6 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.run_info(),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.run_info(),
             Self::ReactPerfJsxNoNewObjectAsProp(rule) => rule.run_info(),
-            Self::UnicornMaxNestedCalls(rule) => rule.run_info(),
             Self::UnicornCatchErrorName(rule) => rule.run_info(),
             Self::UnicornConsistentAssert(rule) => rule.run_info(),
             Self::UnicornConsistentDateClone(rule) => rule.run_info(),
@@ -26482,6 +26481,7 @@ impl RuleEnum {
             Self::UnicornExplicitLengthCheck(rule) => rule.run_info(),
             Self::UnicornFilenameCase(rule) => rule.run_info(),
             Self::UnicornImportStyle(rule) => rule.run_info(),
+            Self::UnicornMaxNestedCalls(rule) => rule.run_info(),
             Self::UnicornNewForBuiltins(rule) => rule.run_info(),
             Self::UnicornNoAbusiveEslintDisable(rule) => rule.run_info(),
             Self::UnicornNoAccessorRecursion(rule) => rule.run_info(),
@@ -27397,7 +27397,6 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::ReactPerfJsxNoNewArrayAsProp(ReactPerfJsxNoNewArrayAsProp::default()),
         RuleEnum::ReactPerfJsxNoNewFunctionAsProp(ReactPerfJsxNoNewFunctionAsProp::default()),
         RuleEnum::ReactPerfJsxNoNewObjectAsProp(ReactPerfJsxNoNewObjectAsProp::default()),
-        RuleEnum::UnicornMaxNestedCalls(UnicornMaxNestedCalls::default()),
         RuleEnum::UnicornCatchErrorName(UnicornCatchErrorName::default()),
         RuleEnum::UnicornConsistentAssert(UnicornConsistentAssert::default()),
         RuleEnum::UnicornConsistentDateClone(UnicornConsistentDateClone::default()),
@@ -27416,6 +27415,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::UnicornExplicitLengthCheck(UnicornExplicitLengthCheck::default()),
         RuleEnum::UnicornFilenameCase(UnicornFilenameCase::default()),
         RuleEnum::UnicornImportStyle(UnicornImportStyle::default()),
+        RuleEnum::UnicornMaxNestedCalls(UnicornMaxNestedCalls::default()),
         RuleEnum::UnicornNewForBuiltins(UnicornNewForBuiltins::default()),
         RuleEnum::UnicornNoAbusiveEslintDisable(UnicornNoAbusiveEslintDisable::default()),
         RuleEnum::UnicornNoAccessorRecursion(UnicornNoAccessorRecursion::default()),

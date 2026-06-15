@@ -1,10 +1,11 @@
+use schemars::JsonSchema;
+use serde::Deserialize;
+use serde_json::Value;
+
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use schemars::JsonSchema;
-use serde::Deserialize;
-use serde_json::Value;
 
 use crate::{
     AstNode,
@@ -95,6 +96,20 @@ declare_oxc_lint!(
 );
 
 impl Rule for MaxNestedCalls {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        if let Some(max) = value
+            .get(0)
+            .and_then(Value::as_number)
+            .and_then(serde_json::Number::as_u64)
+            .and_then(|v| u32::try_from(v).ok())
+        {
+            Ok(Self { max })
+        } else {
+            serde_json::from_value::<DefaultRuleConfig<Self>>(value)
+                .map(DefaultRuleConfig::into_inner)
+        }
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if !matches!(node.kind(), AstKind::CallExpression(_) | AstKind::NewExpression(_)) {
             return;
@@ -132,20 +147,6 @@ impl Rule for MaxNestedCalls {
 
         if depth > self.max {
             ctx.diagnostic(max_nested_calls_diagnostic(self.max, node.span()));
-        }
-    }
-
-    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        if let Some(max) = value
-            .get(0)
-            .and_then(Value::as_number)
-            .and_then(serde_json::Number::as_u64)
-            .and_then(|v| u32::try_from(v).ok())
-        {
-            Ok(Self { max })
-        } else {
-            serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-                .map(DefaultRuleConfig::into_inner)
         }
     }
 }
