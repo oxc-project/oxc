@@ -3839,7 +3839,13 @@ export interface NoRestSpreadPropertiesOptions {
   objectSpreadMessage?: string;
 }
 export interface PreferArrowCallbackConfig {
+  /**
+   * If this option is set to `true`, named function expressions are allowed.
+   */
   allowNamedFunctions?: boolean;
+  /**
+   * If this option is set to `false`, function expressions that reference `this` are reported even when they are not bound to a `this` value.
+   */
   allowUnboundThis?: boolean;
 }
 export interface PreferConstConfig {

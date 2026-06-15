@@ -15707,12 +15707,16 @@
       "type": "object",
       "properties": {
         "allowNamedFunctions": {
+          "description": "If this option is set to `true`, named function expressions are allowed.",
           "default": false,
-          "type": "boolean"
+          "type": "boolean",
+          "markdownDescription": "If this option is set to `true`, named function expressions are allowed."
         },
         "allowUnboundThis": {
+          "description": "If this option is set to `false`, function expressions that reference `this` are reported even when they are not bound to a `this` value.",
           "default": true,
-          "type": "boolean"
+          "type": "boolean",
+          "markdownDescription": "If this option is set to `false`, function expressions that reference `this` are reported even when they are not bound to a `this` value."
         }
       },
       "additionalProperties": false
