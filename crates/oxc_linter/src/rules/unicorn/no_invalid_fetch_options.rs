@@ -56,6 +56,7 @@ declare_oxc_lint!(
     unicorn,
     correctness,
     version = "0.15.12",
+    short_description = "Disallow invalid options in `fetch()` and `new Request()`.",
 );
 
 impl Rule for NoInvalidFetchOptions {

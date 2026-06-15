@@ -76,6 +76,7 @@ declare_oxc_lint!(
     correctness,
     fix,
     version = "0.0.6",
+    short_description = "Disallow extra non-null assertions.",
 );
 
 impl Rule for NoExtraNonNullAssertion {

@@ -72,6 +72,7 @@ declare_oxc_lint!(
     pedantic,
     suggestion,
     version = "0.0.4",
+    short_description = "Disallow lexical declarations in case clauses.",
 );
 
 impl Rule for NoCaseDeclarations {

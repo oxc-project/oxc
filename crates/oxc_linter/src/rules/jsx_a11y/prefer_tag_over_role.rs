@@ -46,6 +46,7 @@ declare_oxc_lint!(
     jsx_a11y,
     correctness,
     version = "0.1.1",
+    short_description = "Enforces using semantic HTML tags over `role` attribute.",
 );
 
 impl PreferTagOverRole {

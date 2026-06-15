@@ -136,6 +136,7 @@ declare_oxc_lint!(
     restriction,
     config = ExplicitFunctionReturnTypeConfig,
     version = "0.4.4",
+    short_description = "This rule enforces that functions have an explicit return type annotation.",
 );
 
 fn explicit_function_return_type_diagnostic(span: Span) -> OxcDiagnostic {

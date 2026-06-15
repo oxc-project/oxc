@@ -42,6 +42,7 @@ declare_oxc_lint!(
     style,
     suggestion,
     version = "0.0.15",
+    short_description = "This rule finds ternary expressions that can be simplified to a logical operator.",
 );
 
 impl Rule for PreferLogicalOperatorOverTernary {

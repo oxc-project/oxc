@@ -463,6 +463,7 @@ pub(crate) mod react {
     pub mod only_export_components;
     pub mod prefer_es6_class;
     pub mod prefer_function_component;
+    pub mod react_compiler;
     pub mod react_in_jsx_scope;
     pub mod require_render_return;
     pub mod rules_of_hooks;
@@ -501,6 +502,7 @@ pub(crate) mod unicorn {
     pub mod no_accessor_recursion;
     pub mod no_anonymous_default_export;
     pub mod no_array_callback_reference;
+    pub mod no_array_fill_with_reference_type;
     pub mod no_array_for_each;
     pub mod no_array_method_this_argument;
     pub mod no_array_reduce;
@@ -861,6 +863,7 @@ pub(crate) mod vue {
     pub mod no_deprecated_model_definition;
     pub mod no_deprecated_props_default_this;
     pub mod no_deprecated_vue_config_keycodes;
+    pub mod no_dupe_keys;
     pub mod no_export_in_script_setup;
     pub mod no_expose_after_await;
     pub mod no_import_compiler_macros;

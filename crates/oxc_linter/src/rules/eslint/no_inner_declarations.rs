@@ -78,6 +78,7 @@ declare_oxc_lint!(
     pedantic,
     config = NoInnerDeclarations,
     version = "0.0.5",
+    short_description = "Disallow variable or function declarations in nested blocks.",
 );
 
 impl Rule for NoInnerDeclarations {

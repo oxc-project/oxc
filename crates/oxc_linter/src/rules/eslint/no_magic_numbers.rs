@@ -246,6 +246,7 @@ declare_oxc_lint!(
     pending, // TODO: enforceConst, probably copy from https://github.com/oxc-project/oxc/pull/5144
     config = NoMagicNumbersConfig,
     version = "0.9.3",
+    short_description = "Disallow magic numbers.",
 );
 
 #[derive(Debug)]

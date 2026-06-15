@@ -136,6 +136,7 @@ declare_oxc_lint!(
     pedantic,
     config = NoWarningCommentsConfigJson,
     version = "1.24.0",
+    short_description = "Disallows warning comments such as TODO, FIXME, XXX in code.",
 );
 
 impl Rule for NoWarningComments {

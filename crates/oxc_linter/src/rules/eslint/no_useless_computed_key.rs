@@ -118,6 +118,7 @@ declare_oxc_lint!(
     conditional_fix,
     config = NoUselessComputedKey,
     version = "1.16.0",
+    short_description = "Disallow unnecessary computed property keys in objects and classes.",
 );
 
 impl Rule for NoUselessComputedKey {

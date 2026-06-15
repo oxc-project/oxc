@@ -93,6 +93,7 @@ declare_oxc_lint!(
     correctness,
     config = NoIrregularWhitespaceConfig,
     version = "0.1.1",
+    short_description = "Disallows the use of irregular whitespace characters in the code.",
 );
 
 /// Check if a character is irregular whitespace for linting purposes.

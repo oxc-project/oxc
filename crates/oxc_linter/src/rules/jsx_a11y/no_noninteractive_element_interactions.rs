@@ -141,6 +141,7 @@ declare_oxc_lint!(
     correctness,
     config = NoNoninteractiveElementInteractionsConfig,
     version = "1.65.0",
+    short_description = "Prevents non-interactive HTML elements and elements with non-interactive ARIA roles from being assigned mouse or keyboard event handlers.",
 );
 
 impl Rule for NoNoninteractiveElementInteractions {

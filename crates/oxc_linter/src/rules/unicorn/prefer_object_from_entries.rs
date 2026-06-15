@@ -84,13 +84,10 @@ declare_oxc_lint!(
     pending,
     config = PreferObjectFromEntriesConfig,
     version = "0.16.12",
+    short_description = "Encourages using `Object.fromEntries` when converting an array of key-value pairs into an object.",
 );
 
 impl Rule for PreferObjectFromEntries {
-    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
-    }
-
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else { return };
 
@@ -236,6 +233,12 @@ impl Rule for PreferObjectFromEntries {
                 call_expr_member_expr_property_span(call_expr),
             ));
         }
+    }
+
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<PreferObjectFromEntriesConfig>>(value)
+            .map(DefaultRuleConfig::into_inner)
+            .map(|config| Self(Box::new(config)))
     }
 }
 

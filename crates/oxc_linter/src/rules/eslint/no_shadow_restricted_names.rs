@@ -96,6 +96,7 @@ declare_oxc_lint!(
     correctness,
     config = NoShadowRestrictedNamesConfig,
     version = "0.0.3",
+    short_description = "Disallows the redefining of global variables such as `undefined`, `NaN`, `Infinity`, `eval`, `globalThis` and `arguments`.",
 );
 
 impl Rule for NoShadowRestrictedNames {

@@ -21,7 +21,7 @@ pub struct NoDangerWithChildren;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallows when a DOM element is using both `children` and `dangerouslySetInnerHTML` properties.
+    /// Disallows DOM elements from using both `children` and `dangerouslySetInnerHTML` properties.
     ///
     /// ### Why is this bad?
     ///
@@ -48,6 +48,7 @@ declare_oxc_lint!(
     react,
     correctness,
     version = "0.9.6",
+    short_description = "Disallows DOM elements from using both `children` and `dangerouslySetInnerHTML` properties.",
 );
 
 impl Rule for NoDangerWithChildren {

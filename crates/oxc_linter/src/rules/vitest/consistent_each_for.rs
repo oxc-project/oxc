@@ -169,6 +169,7 @@ declare_oxc_lint!(
     style,
     config = ConsistentEachForJson,
     version = "1.39.0",
+    short_description = "Enforce consistency in whether `.each` or `.for` is used to create parameterized tests.",
 );
 
 impl Rule for ConsistentEachFor {

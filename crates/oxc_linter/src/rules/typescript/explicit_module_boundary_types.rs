@@ -169,6 +169,7 @@ declare_oxc_lint!(
     restriction,
     config = ExplicitModuleBoundaryTypesConfig,
     version = "1.9.0",
+    short_description = "Require explicit return and argument types on exported functions' and classes' public class methods.",
 );
 
 impl Rule for ExplicitModuleBoundaryTypes {

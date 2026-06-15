@@ -53,6 +53,7 @@ declare_oxc_lint!(
     style,
     fix,
     version = "1.57.0",
+    short_description = "Enforce using `toBe(true)` and `toBe(false)` over matchers that coerce types to boolean.",
 );
 
 impl Rule for PreferStrictBooleanMatchers {

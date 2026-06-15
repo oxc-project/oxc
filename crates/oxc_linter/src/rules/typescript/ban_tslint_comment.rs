@@ -39,6 +39,7 @@ declare_oxc_lint!(
     style,
     fix,
     version = "0.2.9",
+    short_description = "This rule disallows `tslint:<rule-flag>` comments.",
 );
 
 static ENABLE_DISABLE_REGEX: Lazy<Regex> =

@@ -62,6 +62,7 @@ declare_oxc_lint!(
     vue,
     correctness,
     version = "1.37.0",
+    short_description = "Disallow `this` usage in a `beforeRouteEnter` method.",
 );
 
 impl Rule for NoThisInBeforeRouteEnter {

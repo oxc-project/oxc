@@ -561,6 +561,65 @@
         "disallow-in-func"
       ]
     },
+    "AltTextConfigSchema": {
+      "type": "object",
+      "properties": {
+        "area": {
+          "description": "Custom components to check for alt text on `area` elements.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Custom components to check for alt text on `area` elements."
+        },
+        "elements": {
+          "description": "Custom components to check for alt text on any of the supported elements.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AltTextElements"
+          },
+          "markdownDescription": "Custom components to check for alt text on any of the supported elements."
+        },
+        "img": {
+          "description": "Custom components to check for alt text on `img` elements.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Custom components to check for alt text on `img` elements."
+        },
+        "input[type=\"image\"]": {
+          "description": "Custom components to check for alt text on `input[type=\"image\"]` elements.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Custom components to check for alt text on `input[type=\"image\"]` elements."
+        },
+        "object": {
+          "description": "Custom components to check for alt text on `object` elements.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Custom components to check for alt text on `object` elements."
+        }
+      },
+      "additionalProperties": false
+    },
+    "AltTextElements": {
+      "type": "string",
+      "enum": [
+        "img",
+        "object",
+        "area",
+        "input[type=\"image\"]"
+      ]
+    },
     "AlwaysNever": {
       "type": "string",
       "enum": [
@@ -791,6 +850,42 @@
       },
       "additionalProperties": false
     },
+    "Assert": {
+      "oneOf": [
+        {
+          "description": "Assert that the label uses `htmlFor` to associate a control.",
+          "type": "string",
+          "enum": [
+            "htmlFor"
+          ],
+          "markdownDescription": "Assert that the label uses `htmlFor` to associate a control."
+        },
+        {
+          "description": "Assert that the label has a nested control",
+          "type": "string",
+          "enum": [
+            "nesting"
+          ],
+          "markdownDescription": "Assert that the label has a nested control"
+        },
+        {
+          "description": "Assert that the label uses both `htmlFor` and nesting for associating a control",
+          "type": "string",
+          "enum": [
+            "both"
+          ],
+          "markdownDescription": "Assert that the label uses both `htmlFor` and nesting for associating a control"
+        },
+        {
+          "description": "Assert that the label uses either `htmlFor` or nesting for associating a control",
+          "type": "string",
+          "enum": [
+            "either"
+          ],
+          "markdownDescription": "Assert that the label uses either `htmlFor` or nesting for associating a control"
+        }
+      ]
+    },
     "AssertionStyle": {
       "oneOf": [
         {
@@ -836,6 +931,54 @@
         }
       },
       "additionalProperties": false
+    },
+    "BanConfigValue": {
+      "description": "Represents the different ways a ban config can be specified in JSON.\nCan be:\n- `true` - ban with default message\n- A string - ban with custom message\n- An object with `message` and optional `fixWith` and `suggest`",
+      "anyOf": [
+        {
+          "description": "`\"TypeName\": true` - ban with default message\nNote: Only `true` is valid; `false` would fail to deserialize and be ignored.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/True"
+            }
+          ],
+          "markdownDescription": "`\"TypeName\": true` - ban with default message\nNote: Only `true` is valid; `false` would fail to deserialize and be ignored."
+        },
+        {
+          "description": "`\"TypeName\": \"message\"` - ban with custom message",
+          "type": "string",
+          "markdownDescription": "`\"TypeName\": \"message\"` - ban with custom message"
+        },
+        {
+          "description": "`\"TypeName\": { \"message\": \"...\", \"fixWith\": \"...\", \"suggest\": [\"...\"] }` - full config",
+          "type": "object",
+          "properties": {
+            "fixWith": {
+              "description": "Replacement type for automatic fixing. Applied directly with `--fix`.",
+              "default": null,
+              "type": "string",
+              "markdownDescription": "Replacement type for automatic fixing. Applied directly with `--fix`."
+            },
+            "message": {
+              "description": "Custom message explaining why the type is banned.",
+              "default": null,
+              "type": "string",
+              "markdownDescription": "Custom message explaining why the type is banned."
+            },
+            "suggest": {
+              "description": "Suggested replacement types for manual review. Shown as editor suggestions.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "markdownDescription": "Suggested replacement types for manual review. Shown as editor suggestions."
+            }
+          },
+          "additionalProperties": false,
+          "markdownDescription": "`\"TypeName\": { \"message\": \"...\", \"fixWith\": \"...\", \"suggest\": [\"...\"] }` - full config"
+        }
+      ],
+      "markdownDescription": "Represents the different ways a ban config can be specified in JSON.\nCan be:\n- `true` - ban with default message\n- A string - ban with custom message\n- An object with `message` and optional `fixWith` and `suggest`"
     },
     "BanTsCommentConfig": {
       "description": "This rule allows you to specify how different TypeScript directive comments\nshould be handled.\n\nFor each directive (`@ts-expect-error`, `@ts-ignore`, `@ts-nocheck`, `@ts-check`), you can choose one of the following options:\n- `true`: Disallow the directive entirely, preventing its use in the entire codebase.\n- `false`: Allow the directive without any restrictions.\n- `\"allow-with-description\"`: Allow the directive only if it is followed by a description explaining its use. The description must meet the minimum length specified by `minimumDescriptionLength`.\n- `{ \"descriptionFormat\": \"<regex>\" }`: Allow the directive only if the description matches the specified regex pattern.\n\nFor example:\n```json\n{\n\"ts-expect-error\": \"allow-with-description\",\n\"ts-ignore\": true,\n\"ts-nocheck\": { \"descriptionFormat\": \"^: TS\\\\d+ because .+$\" },\n\"ts-check\": false,\n\"minimumDescriptionLength\": 3\n}\n```",
@@ -1549,6 +1692,75 @@
       },
       "additionalProperties": false
     },
+    "ControlHasAssociatedLabelConfig": {
+      "type": "object",
+      "properties": {
+        "controlComponents": {
+          "description": "Custom JSX components to be treated as interactive controls.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Custom JSX components to be treated as interactive controls."
+        },
+        "depth": {
+          "description": "Maximum depth to search for an accessible label within the element.\nDefaults to `2`.",
+          "default": 2,
+          "type": "integer",
+          "format": "uint8",
+          "minimum": 0.0,
+          "markdownDescription": "Maximum depth to search for an accessible label within the element.\nDefaults to `2`."
+        },
+        "ignoreElements": {
+          "description": "Elements to ignore.\nDefaults to `[\"audio\", \"canvas\", \"embed\", \"input\", \"textarea\", \"tr\", \"video\"]`.",
+          "default": [
+            "audio",
+            "canvas",
+            "embed",
+            "input",
+            "textarea",
+            "tr",
+            "video"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Elements to ignore.\nDefaults to `[\"audio\", \"canvas\", \"embed\", \"input\", \"textarea\", \"tr\", \"video\"]`."
+        },
+        "ignoreRoles": {
+          "description": "Interactive roles to ignore.\nDefaults to `[\"grid\", \"listbox\", \"menu\", \"menubar\", \"radiogroup\", \"row\", \"tablist\", \"toolbar\", \"tree\", \"treegrid\"]`.",
+          "default": [
+            "grid",
+            "listbox",
+            "menu",
+            "menubar",
+            "radiogroup",
+            "row",
+            "tablist",
+            "toolbar",
+            "tree",
+            "treegrid"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Interactive roles to ignore.\nDefaults to `[\"grid\", \"listbox\", \"menu\", \"menubar\", \"radiogroup\", \"row\", \"tablist\", \"toolbar\", \"tree\", \"treegrid\"]`."
+        },
+        "labelAttributes": {
+          "description": "Additional attributes to check for accessible label text.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Additional attributes to check for accessible label text."
+        }
+      },
+      "additionalProperties": false
+    },
     "CountThis": {
       "oneOf": [
         {
@@ -1844,6 +2056,13 @@
       },
       "additionalProperties": false
     },
+    "DistractingElement": {
+      "type": "string",
+      "enum": [
+        "marquee",
+        "blink"
+      ]
+    },
     "DotNotationConfig": {
       "type": "object",
       "properties": {
@@ -1904,7 +2123,7 @@
         "accessor-pairs": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -1917,14 +2136,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "array-callback-return": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -1937,14 +2156,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "arrow-body-style": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -1960,7 +2179,7 @@
                 }
               ],
               "maxItems": 3,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -1970,7 +2189,7 @@
         "capitalized-comments": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -1986,14 +2205,14 @@
                 }
               ],
               "maxItems": 3,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "class-methods-use-this": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2006,14 +2225,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "complexity": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2033,7 +2252,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -2043,7 +2262,7 @@
         "curly": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2059,14 +2278,14 @@
                 }
               ],
               "maxItems": 3,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "default-case": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2079,7 +2298,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -2092,7 +2311,7 @@
         "eqeqeq": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2108,7 +2327,7 @@
                 }
               ],
               "maxItems": 3,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -2121,7 +2340,7 @@
         "func-names": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2137,14 +2356,14 @@
                 }
               ],
               "maxItems": 3,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "func-style": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2160,14 +2379,14 @@
                 }
               ],
               "maxItems": 3,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "getter-return": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2180,14 +2399,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "grouped-accessor-pairs": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2203,7 +2422,7 @@
                 }
               ],
               "maxItems": 3,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -2213,7 +2432,7 @@
         "id-length": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2226,14 +2445,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "id-match": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2249,14 +2468,14 @@
                 }
               ],
               "maxItems": 3,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "import/consistent-type-specifier-style": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2269,7 +2488,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -2288,7 +2507,7 @@
         "import/first": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2301,7 +2520,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -2311,7 +2530,7 @@
         "import/max-dependencies": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2324,7 +2543,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -2334,7 +2553,7 @@
         "import/namespace": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2347,14 +2566,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "import/newline-after-import": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2367,14 +2586,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "import/no-absolute-path": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2387,7 +2606,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -2397,7 +2616,7 @@
         "import/no-anonymous-default-export": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2410,14 +2629,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "import/no-commonjs": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2430,14 +2649,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "import/no-cycle": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2450,7 +2669,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -2460,7 +2679,7 @@
         "import/no-duplicates": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2473,14 +2692,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "import/no-dynamic-require": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2493,7 +2712,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -2518,7 +2737,7 @@
         "import/no-namespace": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2531,14 +2750,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "import/no-nodejs-modules": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2551,7 +2770,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -2564,7 +2783,7 @@
         "import/no-unassigned-import": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2577,7 +2796,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -2587,7 +2806,7 @@
         "import/prefer-default-export": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2600,7 +2819,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -2610,7 +2829,7 @@
         "init-declarations": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2626,14 +2845,14 @@
                 }
               ],
               "maxItems": 3,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "jest/consistent-test-it": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2646,14 +2865,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "jest/expect-expect": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2666,14 +2885,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "jest/max-expects": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2686,14 +2905,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "jest/max-nested-describe": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2706,7 +2925,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -2728,7 +2947,7 @@
         "jest/no-deprecated-functions": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2741,7 +2960,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -2763,7 +2982,7 @@
         "jest/no-hooks": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2776,7 +2995,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -2792,7 +3011,7 @@
         "jest/no-large-snapshots": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2805,7 +3024,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -2815,7 +3034,7 @@
         "jest/no-restricted-jest-methods": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2828,14 +3047,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "jest/no-restricted-matchers": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2848,14 +3067,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "jest/no-standalone-expect": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2868,7 +3087,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -2902,7 +3121,7 @@
         "jest/prefer-ending-with-an-expect": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2915,7 +3134,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -2925,7 +3144,7 @@
         "jest/prefer-expect-assertions": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2938,7 +3157,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -2954,7 +3173,7 @@
         "jest/prefer-importing-jest-globals": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2967,7 +3186,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -2986,7 +3205,7 @@
         "jest/prefer-snapshot-hint": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2999,7 +3218,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -3030,7 +3249,7 @@
         "jest/require-hook": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3043,7 +3262,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -3053,7 +3272,7 @@
         "jest/require-top-level-describe": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3066,7 +3285,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -3076,7 +3295,7 @@
         "jest/valid-expect": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3089,7 +3308,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -3108,7 +3327,7 @@
         "jsdoc/check-tag-names": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3121,14 +3340,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "jsdoc/empty-tags": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3141,7 +3360,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -3151,7 +3370,7 @@
         "jsdoc/no-defaults": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3164,7 +3383,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -3195,7 +3414,7 @@
         "jsdoc/require-returns": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3208,7 +3427,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -3227,7 +3446,7 @@
         "jsdoc/require-yields": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3240,7 +3459,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -3251,12 +3470,29 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "jsx-a11y/alt-text": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/AltTextConfigSchema"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "jsx-a11y/anchor-ambiguous-text": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3269,7 +3505,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -3291,7 +3527,7 @@
         "jsx-a11y/aria-role": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3304,7 +3540,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -3314,7 +3550,7 @@
         "jsx-a11y/autocomplete-valid": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3327,7 +3563,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -3335,12 +3571,29 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "jsx-a11y/control-has-associated-label": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ControlHasAssociatedLabelConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "jsx-a11y/heading-has-content": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3353,7 +3606,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -3364,12 +3617,29 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "jsx-a11y/img-redundant-alt": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ImgRedundantAltConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "jsx-a11y/interactive-supports-focus": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3382,23 +3652,57 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "jsx-a11y/label-has-associated-control": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/LabelHasAssociatedControlConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "jsx-a11y/lang": {
           "$ref": "#/definitions/RuleNoConfig"
         },
         "jsx-a11y/media-has-caption": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/MediaHasCaptionConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "jsx-a11y/mouse-events-have-key-events": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3411,7 +3715,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -3424,7 +3728,7 @@
         "jsx-a11y/no-autofocus": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3437,20 +3741,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "jsx-a11y/no-distracting-elements": {
-          "$ref": "#/definitions/DummyRule"
-        },
-        "jsx-a11y/no-interactive-element-to-noninteractive-role": {
-          "$ref": "#/definitions/DummyRule"
-        },
-        "jsx-a11y/no-noninteractive-element-interactions": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3459,21 +3757,61 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "$ref": "#/definitions/NoNoninteractiveElementInteractionsConfig"
+                  "$ref": "#/definitions/NoDistractingElementsConfig"
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
-        "jsx-a11y/no-noninteractive-element-to-interactive-role": {
+        "jsx-a11y/no-interactive-element-to-noninteractive-role": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoInteractiveElementToNoninteractiveRoleConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
+        "jsx-a11y/no-noninteractive-element-interactions": {
           "$ref": "#/definitions/DummyRule"
+        },
+        "jsx-a11y/no-noninteractive-element-to-interactive-role": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoNoninteractiveElementToInteractiveRoleConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "jsx-a11y/no-noninteractive-tabindex": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3486,14 +3824,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "jsx-a11y/no-redundant-roles": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3506,14 +3844,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "jsx-a11y/no-static-element-interactions": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3526,7 +3864,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -3548,7 +3886,7 @@
         "logical-assignment-operators": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3564,14 +3902,14 @@
                 }
               ],
               "maxItems": 3,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "max-classes-per-file": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3591,14 +3929,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "max-depth": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3618,14 +3956,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "max-lines": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3645,14 +3983,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "max-lines-per-function": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3672,14 +4010,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "max-nested-callbacks": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3699,14 +4037,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "max-params": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3726,14 +4064,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "max-statements": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3753,14 +4091,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "new-cap": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3773,7 +4111,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -3855,7 +4193,7 @@
         "no-bitwise": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3868,7 +4206,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -3887,7 +4225,7 @@
         "no-cond-assign": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3900,14 +4238,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "no-console": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3920,7 +4258,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -3933,7 +4271,7 @@
         "no-constant-condition": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3946,7 +4284,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -3983,7 +4321,7 @@
         "no-duplicate-imports": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3996,14 +4334,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "no-else-return": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4016,14 +4354,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "no-empty": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4036,7 +4374,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -4046,7 +4384,7 @@
         "no-empty-function": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4059,14 +4397,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "no-empty-pattern": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4079,7 +4417,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -4092,7 +4430,7 @@
         "no-eval": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4105,7 +4443,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -4115,7 +4453,7 @@
         "no-extend-native": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4128,7 +4466,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -4138,7 +4476,7 @@
         "no-extra-boolean-cast": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4151,7 +4489,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -4161,7 +4499,7 @@
         "no-fallthrough": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4174,7 +4512,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -4184,7 +4522,7 @@
         "no-global-assign": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4197,14 +4535,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "no-implicit-coercion": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4217,14 +4555,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "no-implicit-globals": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4237,7 +4575,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -4250,7 +4588,7 @@
         "no-inline-comments": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4263,14 +4601,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "no-inner-declarations": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4286,14 +4624,14 @@
                 }
               ],
               "maxItems": 3,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "no-invalid-regexp": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4306,14 +4644,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "no-irregular-whitespace": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4326,7 +4664,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -4339,7 +4677,7 @@
         "no-labels": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4352,7 +4690,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -4371,7 +4709,7 @@
         "no-magic-numbers": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4384,14 +4722,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "no-misleading-character-class": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4404,14 +4742,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "no-multi-assign": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4424,7 +4762,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -4461,7 +4799,7 @@
         "no-param-reassign": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4474,14 +4812,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "no-plusplus": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4494,14 +4832,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "no-promise-executor-return": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4514,7 +4852,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -4527,7 +4865,7 @@
         "no-redeclare": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4540,7 +4878,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -4550,7 +4888,7 @@
         "no-restricted-exports": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4563,7 +4901,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -4579,7 +4917,7 @@
         "no-return-assign": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4592,7 +4930,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -4602,7 +4940,7 @@
         "no-self-assign": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4615,7 +4953,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -4625,7 +4963,7 @@
         "no-sequences": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4638,7 +4976,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -4648,7 +4986,7 @@
         "no-shadow": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4661,14 +4999,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "no-shadow-restricted-names": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4681,7 +5019,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -4706,7 +5044,7 @@
         "no-undef": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4719,7 +5057,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -4729,7 +5067,7 @@
         "no-underscore-dangle": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4742,7 +5080,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -4755,7 +5093,7 @@
         "no-unneeded-ternary": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4768,7 +5106,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -4781,7 +5119,7 @@
         "no-unsafe-negation": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4794,14 +5132,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "no-unsafe-optional-chaining": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4814,14 +5152,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "no-unused-expressions": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4834,7 +5172,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -4847,7 +5185,7 @@
         "no-unused-vars": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4860,14 +5198,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "no-use-before-define": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4880,7 +5218,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -4899,7 +5237,7 @@
         "no-useless-computed-key": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4912,7 +5250,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -4925,7 +5263,7 @@
         "no-useless-escape": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4938,14 +5276,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "no-useless-rename": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4958,7 +5296,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -4971,7 +5309,7 @@
         "no-void": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4984,14 +5322,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "no-warning-comments": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5004,7 +5342,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -5020,7 +5358,7 @@
         "node/handle-callback-err": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5033,7 +5371,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -5049,7 +5387,7 @@
         "node/no-process-env": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5062,14 +5400,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "object-shorthand": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5085,14 +5423,14 @@
                 }
               ],
               "maxItems": 3,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "operator-assignment": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5105,7 +5443,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -5160,7 +5498,7 @@
         "oxc/no-async-endpoint-handlers": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5173,14 +5511,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "oxc/no-barrel-file": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5193,7 +5531,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -5203,7 +5541,7 @@
         "oxc/no-map-spread": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5216,14 +5554,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "oxc/no-optional-chaining": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5236,14 +5574,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "oxc/no-rest-spread-properties": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5256,7 +5594,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -5275,7 +5613,7 @@
         "prefer-arrow-callback": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5288,14 +5626,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "prefer-const": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5308,7 +5646,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -5333,7 +5671,7 @@
         "prefer-promise-reject-errors": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5346,14 +5684,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "prefer-regex-literals": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5366,7 +5704,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -5382,7 +5720,7 @@
         "preserve-caught-error": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5395,14 +5733,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "promise/always-return": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5415,7 +5753,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -5425,7 +5763,7 @@
         "promise/catch-or-return": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5438,14 +5776,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "promise/no-callback-in-promise": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5458,7 +5796,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -5474,7 +5812,7 @@
         "promise/no-promise-in-callback": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5487,7 +5825,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -5497,7 +5835,7 @@
         "promise/no-return-wrap": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5510,14 +5848,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "promise/param-names": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5530,7 +5868,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -5540,7 +5878,7 @@
         "promise/prefer-await-to-then": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5553,7 +5891,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -5563,7 +5901,7 @@
         "promise/spec-only": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5576,7 +5914,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -5586,7 +5924,7 @@
         "radix": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5599,14 +5937,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react-perf/jsx-no-jsx-as-prop": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5619,14 +5957,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react-perf/jsx-no-new-array-as-prop": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5639,14 +5977,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react-perf/jsx-no-new-function-as-prop": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5659,17 +5997,34 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react-perf/jsx-no-new-object-as-prop": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ReactPerfConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "react/button-has-type": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5682,14 +6037,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react/checked-requires-onchange-or-readonly": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5702,14 +6057,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react/display-name": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5722,17 +6077,34 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react/exhaustive-deps": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ExhaustiveDepsConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "react/forbid-component-props": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5745,14 +6117,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react/forbid-dom-props": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5765,14 +6137,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react/forbid-elements": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5785,7 +6157,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -5795,7 +6167,7 @@
         "react/hook-use-state": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5808,7 +6180,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -5818,7 +6190,7 @@
         "react/jsx-boolean-value": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5834,17 +6206,34 @@
                 }
               ],
               "maxItems": 3,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react/jsx-curly-brace-presence": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/JsxCurlyBracePresenceConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "react/jsx-filename-extension": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5857,14 +6246,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react/jsx-fragments": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5877,17 +6266,34 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react/jsx-handler-names": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/JsxHandlerNamesConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "react/jsx-key": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5900,14 +6306,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react/jsx-max-depth": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5920,7 +6326,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -5936,7 +6342,7 @@
         "react/jsx-no-literals": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5949,7 +6355,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -5959,7 +6365,7 @@
         "react/jsx-no-target-blank": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5972,7 +6378,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -5982,7 +6388,7 @@
         "react/jsx-no-useless-fragment": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5995,14 +6401,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react/jsx-pascal-case": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6015,7 +6421,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -6025,7 +6431,7 @@
         "react/jsx-props-no-spreading": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6038,7 +6444,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -6060,7 +6466,7 @@
         "react/no-did-mount-set-state": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6073,14 +6479,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react/no-did-update-set-state": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6093,7 +6499,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -6109,7 +6515,7 @@
         "react/no-multi-comp": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6122,7 +6528,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -6147,7 +6553,7 @@
         "react/no-string-refs": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6160,7 +6566,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -6173,7 +6579,7 @@
         "react/no-unknown-property": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6186,14 +6592,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react/no-unsafe": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6206,14 +6612,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react/no-unstable-nested-components": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6226,14 +6632,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react/no-will-update-set-state": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6246,14 +6652,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react/only-export-components": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6266,14 +6672,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react/prefer-es6-class": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6286,14 +6692,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react/prefer-function-component": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6306,7 +6712,27 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
+            }
+          ]
+        },
+        "react/react-compiler": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ReactCompilerConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
             }
           ]
         },
@@ -6322,7 +6748,7 @@
         "react/self-closing-comp": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6335,14 +6761,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react/state-in-constructor": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6355,14 +6781,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react/style-prop-object": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6375,7 +6801,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -6388,7 +6814,7 @@
         "require-unicode-regexp": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6401,7 +6827,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -6411,7 +6837,7 @@
         "sort-imports": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6424,14 +6850,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "sort-keys": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6447,14 +6873,14 @@
                 }
               ],
               "maxItems": 3,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "sort-vars": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6467,7 +6893,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -6480,7 +6906,7 @@
         "typescript/array-type": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6493,7 +6919,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -6503,7 +6929,7 @@
         "typescript/ban-ts-comment": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6516,7 +6942,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -6529,7 +6955,7 @@
         "typescript/class-literal-property-style": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6542,14 +6968,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/consistent-generic-constructors": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6562,14 +6988,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/consistent-indexed-object-style": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6582,14 +7008,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/consistent-return": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6602,14 +7028,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/consistent-type-assertions": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6622,14 +7048,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/consistent-type-definitions": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6642,14 +7068,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/consistent-type-exports": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6662,14 +7088,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/consistent-type-imports": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6682,14 +7108,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/dot-notation": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6702,14 +7128,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/explicit-function-return-type": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6722,14 +7148,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/explicit-member-accessibility": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6742,14 +7168,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/explicit-module-boundary-types": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6762,14 +7188,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/method-signature-style": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6782,7 +7208,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -6792,7 +7218,7 @@
         "typescript/no-base-to-string": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6805,7 +7231,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -6815,7 +7241,7 @@
         "typescript/no-confusing-void-expression": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6828,14 +7254,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/no-deprecated": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6848,7 +7274,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -6858,7 +7284,7 @@
         "typescript/no-duplicate-type-constituents": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6871,7 +7297,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -6881,7 +7307,7 @@
         "typescript/no-empty-interface": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6894,14 +7320,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/no-empty-object-type": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6914,14 +7340,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/no-explicit-any": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6934,7 +7360,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -6944,7 +7370,7 @@
         "typescript/no-extraneous-class": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6957,14 +7383,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/no-floating-promises": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6977,7 +7403,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -6993,7 +7419,7 @@
         "typescript/no-inferrable-types": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7006,14 +7432,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/no-invalid-void-type": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7026,14 +7452,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/no-meaningless-void-operator": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7046,7 +7472,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -7056,7 +7482,7 @@
         "typescript/no-misused-promises": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7069,14 +7495,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/no-misused-spread": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7089,7 +7515,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -7099,7 +7525,7 @@
         "typescript/no-namespace": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7112,7 +7538,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -7131,7 +7557,7 @@
         "typescript/no-require-imports": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7144,17 +7570,34 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/no-restricted-types": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoRestrictedTypesConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "typescript/no-this-alias": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7167,14 +7610,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/no-unnecessary-boolean-literal-compare": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7187,14 +7630,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/no-unnecessary-condition": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7207,7 +7650,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -7226,7 +7669,7 @@
         "typescript/no-unnecessary-type-assertion": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7239,7 +7682,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -7273,7 +7716,7 @@
         "typescript/no-unsafe-member-access": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7286,7 +7729,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -7317,7 +7760,7 @@
         "typescript/only-throw-error": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7330,14 +7773,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/parameter-properties": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7350,7 +7793,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -7375,7 +7818,7 @@
         "typescript/prefer-literal-enum-member": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7388,7 +7831,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -7398,7 +7841,7 @@
         "typescript/prefer-nullish-coalescing": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7411,14 +7854,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/prefer-optional-chain": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7431,14 +7874,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/prefer-promise-reject-errors": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7451,14 +7894,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/prefer-readonly": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7471,14 +7914,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/prefer-readonly-parameter-types": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7491,7 +7934,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -7507,7 +7950,7 @@
         "typescript/prefer-string-starts-ends-with": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7520,7 +7963,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -7530,7 +7973,7 @@
         "typescript/promise-function-async": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7543,7 +7986,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -7553,7 +7996,7 @@
         "typescript/require-array-sort-compare": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7566,7 +8009,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -7576,7 +8019,7 @@
         "typescript/restrict-plus-operands": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7589,14 +8032,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/restrict-template-expressions": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7609,14 +8052,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/return-await": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7629,14 +8072,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/strict-boolean-expressions": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7649,14 +8092,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/strict-void-return": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7669,14 +8112,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/switch-exhaustiveness-check": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7689,14 +8132,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/triple-slash-reference": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7709,14 +8152,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/unbound-method": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7729,14 +8172,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/unified-signatures": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7749,7 +8192,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -7759,7 +8202,7 @@
         "unicode-bom": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7772,14 +8215,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "unicorn/catch-error-name": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7792,7 +8235,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -7811,7 +8254,7 @@
         "unicorn/consistent-function-scoping": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7824,7 +8267,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -7846,7 +8289,7 @@
         "unicorn/explicit-length-check": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7859,7 +8302,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -7867,7 +8310,24 @@
           "$ref": "#/definitions/DummyRule"
         },
         "unicorn/import-style": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ImportStyleConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "unicorn/new-for-builtins": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -7884,6 +8344,9 @@
         "unicorn/no-array-callback-reference": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "unicorn/no-array-fill-with-reference-type": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "unicorn/no-array-for-each": {
           "$ref": "#/definitions/RuleNoConfig"
         },
@@ -7893,7 +8356,7 @@
         "unicorn/no-array-reduce": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7906,14 +8369,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "unicorn/no-array-reverse": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7926,14 +8389,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "unicorn/no-array-sort": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7946,7 +8409,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -7977,7 +8440,7 @@
         "unicorn/no-instanceof-builtins": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7990,7 +8453,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -8027,7 +8490,7 @@
         "unicorn/no-null": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8040,7 +8503,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -8065,7 +8528,7 @@
         "unicorn/no-typeof-undefined": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8078,7 +8541,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -8118,7 +8581,7 @@
         "unicorn/no-useless-promise-resolve-reject": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8131,7 +8594,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -8144,7 +8607,7 @@
         "unicorn/no-useless-undefined": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8157,7 +8620,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -8189,7 +8652,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "unicorn/prefer-at": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PreferAtConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "unicorn/prefer-bigint-literals": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -8230,7 +8710,7 @@
         "unicorn/prefer-export-from": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8243,7 +8723,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -8289,7 +8769,7 @@
         "unicorn/prefer-number-properties": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8302,14 +8782,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "unicorn/prefer-object-from-entries": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8322,7 +8802,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -8353,7 +8833,7 @@
         "unicorn/prefer-single-call": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8366,7 +8846,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -8391,7 +8871,7 @@
         "unicorn/prefer-structured-clone": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8404,14 +8884,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "unicorn/prefer-ternary": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8424,7 +8904,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -8437,7 +8917,7 @@
         "unicorn/relative-url-style": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8450,7 +8930,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -8472,7 +8952,7 @@
         "unicorn/switch-case-braces": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8485,7 +8965,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -8495,7 +8975,7 @@
         "unicorn/text-encoding-identifier-case": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8508,7 +8988,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -8518,7 +8998,7 @@
         "use-isnan": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8531,14 +9011,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "valid-typeof": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8551,7 +9031,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -8561,7 +9041,7 @@
         "vitest/consistent-each-for": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8574,14 +9054,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "vitest/consistent-test-filename": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8594,14 +9074,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "vitest/consistent-test-it": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8614,14 +9094,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "vitest/consistent-vitest-vi": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8634,14 +9114,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "vitest/expect-expect": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8654,7 +9134,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -8664,7 +9144,7 @@
         "vitest/max-expects": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8677,14 +9157,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "vitest/max-nested-describe": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8697,7 +9177,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -8728,7 +9208,7 @@
         "vitest/no-hooks": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8741,7 +9221,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -8760,7 +9240,7 @@
         "vitest/no-large-snapshots": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8773,7 +9253,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -8783,7 +9263,7 @@
         "vitest/no-restricted-matchers": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8796,14 +9276,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "vitest/no-restricted-vi-methods": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8816,14 +9296,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "vitest/no-standalone-expect": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8836,7 +9316,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -8879,7 +9359,7 @@
         "vitest/prefer-expect-assertions": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8892,7 +9372,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -8911,7 +9391,7 @@
         "vitest/prefer-import-in-mock": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8924,7 +9404,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -8943,7 +9423,7 @@
         "vitest/prefer-snapshot-hint": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8956,7 +9436,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -8999,7 +9479,7 @@
         "vitest/require-hook": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9012,7 +9492,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -9022,7 +9502,7 @@
         "vitest/require-mock-type-parameters": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9035,7 +9515,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -9048,7 +9528,7 @@
         "vitest/require-top-level-describe": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9061,7 +9541,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -9071,7 +9551,7 @@
         "vitest/valid-expect": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9084,7 +9564,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -9100,7 +9580,7 @@
         "vue/component-definition-name-casing": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9113,14 +9593,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "vue/define-emits-declaration": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9133,14 +9613,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "vue/define-props-declaration": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9153,14 +9633,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "vue/define-props-destructuring": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9173,14 +9653,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "vue/max-props": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9193,14 +9673,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "vue/next-tick-style": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9213,7 +9693,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -9238,7 +9718,7 @@
         "vue/no-deprecated-model-definition": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9251,7 +9731,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -9260,6 +9740,26 @@
         },
         "vue/no-deprecated-vue-config-keycodes": {
           "$ref": "#/definitions/RuleNoConfig"
+        },
+        "vue/no-dupe-keys": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoDupeKeys"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "vue/no-export-in-script-setup": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -9282,7 +9782,7 @@
         "vue/no-reserved-component-names": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9295,14 +9795,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "vue/no-reserved-keys": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9315,14 +9815,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "vue/no-reserved-props": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9335,7 +9835,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -9357,7 +9857,7 @@
         "vue/prop-name-casing": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9373,7 +9873,7 @@
                 }
               ],
               "maxItems": 3,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -9386,7 +9886,7 @@
         "vue/require-direct-export": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9399,7 +9899,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -9421,7 +9921,7 @@
         "vue/return-in-computed-property": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9434,7 +9934,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -9456,7 +9956,7 @@
         "yoda": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9472,7 +9972,7 @@
                 }
               ],
               "maxItems": 3,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         }
@@ -9617,6 +10117,17 @@
             }
           ],
           "markdownDescription": "Configuration for whether to allow/disallow comparisons against `null`,\ne.g. `foo == null` or `foo != null`"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ExhaustiveDepsConfig": {
+      "type": "object",
+      "properties": {
+        "additionalHooks": {
+          "description": "Optionally provide a regex of additional hooks to check.",
+          "type": "string",
+          "markdownDescription": "Optionally provide a regex of additional hooks to check."
         }
       },
       "additionalProperties": false
@@ -10506,6 +11017,36 @@
       "additionalProperties": false,
       "markdownDescription": "Options for ignoring specific primitive types."
     },
+    "ImgRedundantAltConfig": {
+      "type": "object",
+      "properties": {
+        "components": {
+          "description": "JSX element types to validate (component names) where the rule applies.\nFor example, `[\"img\", \"Image\"]`.",
+          "default": [
+            "img"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "JSX element types to validate (component names) where the rule applies.\nFor example, `[\"img\", \"Image\"]`."
+        },
+        "words": {
+          "description": "Words considered redundant in alt text that should trigger a warning.",
+          "default": [
+            "image",
+            "photo",
+            "picture"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Words considered redundant in alt text that should trigger a warning."
+        }
+      },
+      "additionalProperties": false
+    },
     "ImportKind": {
       "type": "string",
       "enum": [
@@ -10514,6 +11055,51 @@
         "multiple",
         "single"
       ]
+    },
+    "ImportStyleConfig": {
+      "type": "object",
+      "properties": {
+        "checkDynamicImport": {
+          "description": "Whether dynamic import expressions are checked.\n\nSet this to `false` to skip calls such as `await import(\"module\")`.\n\nWith the default configuration, examples of **incorrect** code:\n```js\nasync () => {\nconst {red} = await import(\"chalk\");\n};\n```\n\nExamples of **correct** code:\n```js\nasync () => {\nconst {default: chalk} = await import(\"chalk\");\n};\n```",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Whether dynamic import expressions are checked.\n\nSet this to `false` to skip calls such as `await import(\"module\")`.\n\nWith the default configuration, examples of **incorrect** code:\n```js\nasync () => {\nconst {red} = await import(\"chalk\");\n};\n```\n\nExamples of **correct** code:\n```js\nasync () => {\nconst {default: chalk} = await import(\"chalk\");\n};\n```"
+        },
+        "checkExportFrom": {
+          "description": "Whether export-from declarations are checked.\n\nThis is disabled by default. Set this to `true` to check declarations like\n`export ... from \"module\"`.\n\nWith `{ \"checkExportFrom\": true }`, examples of **incorrect** code:\n```js\nexport * from \"node:util\";\n```\n\nExamples of **correct** code:\n```js\nexport {promisify} from \"node:util\";\n```",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether export-from declarations are checked.\n\nThis is disabled by default. Set this to `true` to check declarations like\n`export ... from \"module\"`.\n\nWith `{ \"checkExportFrom\": true }`, examples of **incorrect** code:\n```js\nexport * from \"node:util\";\n```\n\nExamples of **correct** code:\n```js\nexport {promisify} from \"node:util\";\n```"
+        },
+        "checkImport": {
+          "description": "Whether static import declarations are checked.\n\nSet this to `false` to skip `import ... from \"module\"` and side-effect imports like\n`import \"module\"`.\n\nWith the default configuration, examples of **incorrect** code:\n```js\nimport {red} from \"chalk\";\n```\n\nExamples of **correct** code:\n```js\nimport chalk from \"chalk\";\n```",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Whether static import declarations are checked.\n\nSet this to `false` to skip `import ... from \"module\"` and side-effect imports like\n`import \"module\"`.\n\nWith the default configuration, examples of **incorrect** code:\n```js\nimport {red} from \"chalk\";\n```\n\nExamples of **correct** code:\n```js\nimport chalk from \"chalk\";\n```"
+        },
+        "checkRequire": {
+          "description": "Whether CommonJS `require()` calls are checked.\n\nSet this to `false` to skip `require(\"module\")` calls completely.\n\nWith the default configuration, examples of **incorrect** code:\n```js\nconst util = require(\"node:util\");\n```\n\nExamples of **correct** code:\n```js\nconst {promisify} = require(\"node:util\");\n```",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Whether CommonJS `require()` calls are checked.\n\nSet this to `false` to skip `require(\"module\")` calls completely.\n\nWith the default configuration, examples of **incorrect** code:\n```js\nconst util = require(\"node:util\");\n```\n\nExamples of **correct** code:\n```js\nconst {promisify} = require(\"node:util\");\n```"
+        },
+        "extendDefaultStyles": {
+          "description": "Whether `styles` extends or replaces the built-in module preferences.\n\nWhen this is `true`, entries in `styles` are merged with the default preferences. For\nexample, `{ \"styles\": { \"path\": { \"named\": true } } }` allows named imports from\n`path` while leaving its default import style allowed. When this is `false`, only modules\nconfigured in `styles` are checked.\n\nWith `{ \"extendDefaultStyles\": false, \"styles\": {} }`, examples of **correct** code:\n```js\nimport {red} from \"chalk\";\n```",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Whether `styles` extends or replaces the built-in module preferences.\n\nWhen this is `true`, entries in `styles` are merged with the default preferences. For\nexample, `{ \"styles\": { \"path\": { \"named\": true } } }` allows named imports from\n`path` while leaving its default import style allowed. When this is `false`, only modules\nconfigured in `styles` are checked.\n\nWith `{ \"extendDefaultStyles\": false, \"styles\": {} }`, examples of **correct** code:\n```js\nimport {red} from \"chalk\";\n```"
+        },
+        "styles": {
+          "description": "Per-module import style preferences.\n\nEach key is a module specifier. Set the value to `false` to disable checking for the\nmodule, or to an object that allows one or more import styles. The available styles are\n`unassigned`, `default`, `namespace`, and `named`. When `extendDefaultStyles` is `true`,\nthese entries extend the built-in defaults instead of replacing them.\n\nThe default module preferences are default imports for `chalk`, `path`, and `node:path`,\nand named imports for `util` and `node:util`.\n\nWith `{ \"styles\": { \"node:util\": { \"named\": true, \"default\": false } } }`,\nexamples of **incorrect** code:\n```js\nimport util from \"node:util\";\n```\n\nExamples of **correct** code:\n```js\nimport {promisify} from \"node:util\";\n```",
+          "default": {},
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/ModuleStylesOverride"
+          },
+          "markdownDescription": "Per-module import style preferences.\n\nEach key is a module specifier. Set the value to `false` to disable checking for the\nmodule, or to an object that allows one or more import styles. The available styles are\n`unassigned`, `default`, `namespace`, and `named`. When `extendDefaultStyles` is `true`,\nthese entries extend the built-in defaults instead of replacing them.\n\nThe default module preferences are default imports for `chalk`, `path`, and `node:path`,\nand named imports for `util` and `node:util`.\n\nWith `{ \"styles\": { \"node:util\": { \"named\": true, \"default\": false } } }`,\nexamples of **incorrect** code:\n```js\nimport util from \"node:util\";\n```\n\nExamples of **correct** code:\n```js\nimport {promisify} from \"node:util\";\n```"
+        }
+      },
+      "additionalProperties": false
     },
     "InitDeclarations": {
       "type": "array",
@@ -10747,6 +11333,60 @@
       },
       "additionalProperties": false
     },
+    "JsxCurlyBracePresence": {
+      "type": "object",
+      "properties": {
+        "children": {
+          "description": "Whether to enforce or disallow curly braces for child content of a JSX element.\n\n- `never` will disallow unnecessary curly braces, e.g. this will be preferred: `<Foo>I love oxlint</Foo>`\n- `always` will force the usage of curly braces like this, in all cases: `<Foo>{'I love oxlint'}</Foo>`\n- `ignore` will allow either style for child content.",
+          "default": "never",
+          "allOf": [
+            {
+              "$ref": "#/definitions/JsxCurlyBracePresenceMode"
+            }
+          ],
+          "markdownDescription": "Whether to enforce or disallow curly braces for child content of a JSX element.\n\n- `never` will disallow unnecessary curly braces, e.g. this will be preferred: `<Foo>I love oxlint</Foo>`\n- `always` will force the usage of curly braces like this, in all cases: `<Foo>{'I love oxlint'}</Foo>`\n- `ignore` will allow either style for child content."
+        },
+        "propElementValues": {
+          "description": "When set to `ignore` or `never`, this JSX code is allowed (or enforced):\n`<App prop=<div /> />;`\n\nWhen set to `always`, the curly braces are required for prop values that are\nJSX elements: `<App prop={<div />} />;`\n\n**Note**: it is _highly_ recommended that you set `propElementValues` to `always`.\nThe ability to omit curly braces around prop values that are JSX elements is obscure, and\nintentionally undocumented, and should not be relied upon.",
+          "default": "ignore",
+          "allOf": [
+            {
+              "$ref": "#/definitions/JsxCurlyBracePresenceMode"
+            }
+          ],
+          "markdownDescription": "When set to `ignore` or `never`, this JSX code is allowed (or enforced):\n`<App prop=<div /> />;`\n\nWhen set to `always`, the curly braces are required for prop values that are\nJSX elements: `<App prop={<div />} />;`\n\n**Note**: it is _highly_ recommended that you set `propElementValues` to `always`.\nThe ability to omit curly braces around prop values that are JSX elements is obscure, and\nintentionally undocumented, and should not be relied upon."
+        },
+        "props": {
+          "description": "Whether to enforce or disallow curly braces for props on JSX elements.\n\n- `never` will disallow unnecessary curly braces, e.g. this will be preferred: `<Foo foo=\"bar\" />`\n- `always` will force the usage of curly braces like this, in all cases: `<Foo foo={'bar'} />`\n- `ignore` will allow either style for prop values.",
+          "default": "never",
+          "allOf": [
+            {
+              "$ref": "#/definitions/JsxCurlyBracePresenceMode"
+            }
+          ],
+          "markdownDescription": "Whether to enforce or disallow curly braces for props on JSX elements.\n\n- `never` will disallow unnecessary curly braces, e.g. this will be preferred: `<Foo foo=\"bar\" />`\n- `always` will force the usage of curly braces like this, in all cases: `<Foo foo={'bar'} />`\n- `ignore` will allow either style for prop values."
+        }
+      },
+      "additionalProperties": false
+    },
+    "JsxCurlyBracePresenceConfig": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/JsxCurlyBracePresenceMode"
+        },
+        {
+          "$ref": "#/definitions/JsxCurlyBracePresence"
+        }
+      ]
+    },
+    "JsxCurlyBracePresenceMode": {
+      "type": "string",
+      "enum": [
+        "always",
+        "never",
+        "ignore"
+      ]
+    },
     "JsxFilenameExtensionAllowMode": {
       "oneOf": [
         {
@@ -10796,6 +11436,61 @@
           "default": false,
           "type": "boolean",
           "markdownDescription": "If enabled, files that do not contain code (i.e. are empty, contain only whitespaces or comments) will not be rejected."
+        }
+      },
+      "additionalProperties": false
+    },
+    "JsxHandlerNamesConfig": {
+      "type": "object",
+      "properties": {
+        "checkInlineFunction": {
+          "description": "Whether to check for inline functions in JSX attributes.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to check for inline functions in JSX attributes."
+        },
+        "checkLocalVariables": {
+          "description": "Whether to check for local variables in JSX attributes.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to check for local variables in JSX attributes."
+        },
+        "eventHandlerPrefix": {
+          "description": "Event handler prefixes to check against.",
+          "default": "handle",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "boolean",
+              "const": false
+            }
+          ],
+          "markdownDescription": "Event handler prefixes to check against."
+        },
+        "eventHandlerPropPrefix": {
+          "description": "Event handler prop prefixes to check against.",
+          "default": "on",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "boolean",
+              "const": false
+            }
+          ],
+          "markdownDescription": "Event handler prop prefixes to check against."
+        },
+        "ignoreComponentNames": {
+          "description": "Component names to ignore when checking for event handler prefixes.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Component names to ignore when checking for event handler prefixes."
         }
       },
       "additionalProperties": false
@@ -11016,6 +11711,63 @@
             }
           ],
           "markdownDescription": "`html` set to `ignore` will ignore all html jsx tags like `div`, `img` etc. Default is set to `enforce`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "LabelHasAssociatedControlConfig": {
+      "type": "object",
+      "properties": {
+        "assert": {
+          "description": "The type of association required between the label and the control.",
+          "default": "either",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Assert"
+            }
+          ],
+          "markdownDescription": "The type of association required between the label and the control."
+        },
+        "controlComponents": {
+          "description": "Custom JSX components to be treated as form controls.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Custom JSX components to be treated as form controls."
+        },
+        "depth": {
+          "description": "Maximum depth to search for a nested control.",
+          "default": 2,
+          "type": "integer",
+          "format": "uint8",
+          "minimum": 0.0,
+          "markdownDescription": "Maximum depth to search for a nested control."
+        },
+        "labelAttributes": {
+          "description": "Attributes to check for accessible label text.",
+          "default": [
+            "alt",
+            "aria-label",
+            "aria-labelledby"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Attributes to check for accessible label text."
+        },
+        "labelComponents": {
+          "description": "Custom JSX components to be treated as labels.",
+          "default": [
+            "label"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Custom JSX components to be treated as labels."
         }
       },
       "additionalProperties": false
@@ -11347,6 +12099,45 @@
       },
       "additionalProperties": false
     },
+    "MediaHasCaptionConfig": {
+      "type": "object",
+      "properties": {
+        "audio": {
+          "description": "Element names to treat as `<audio>` elements",
+          "default": [
+            "audio"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Element names to treat as `<audio>` elements"
+        },
+        "track": {
+          "description": "Element names to treat as `<track>` elements",
+          "default": [
+            "track"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Element names to treat as `<track>` elements"
+        },
+        "video": {
+          "description": "Element names to treat as `<video>` elements",
+          "default": [
+            "video"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Element names to treat as `<video>` elements"
+        }
+      },
+      "additionalProperties": false
+    },
     "MemberNames": {
       "oneOf": [
         {
@@ -11425,6 +12216,46 @@
         "public",
         "public readonly",
         "readonly"
+      ]
+    },
+    "ModuleStylesOverride": {
+      "oneOf": [
+        {
+          "type": "boolean",
+          "enum": [
+            false
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "default": {
+              "description": "Whether default imports or whole-module `require()` assignments are allowed for this module.\n\nWith `{ \"styles\": { \"chalk\": { \"default\": true } } }`, this is valid:\n```js\nimport chalk from \"chalk\";\n```",
+              "default": null,
+              "type": "boolean",
+              "markdownDescription": "Whether default imports or whole-module `require()` assignments are allowed for this module.\n\nWith `{ \"styles\": { \"chalk\": { \"default\": true } } }`, this is valid:\n```js\nimport chalk from \"chalk\";\n```"
+            },
+            "named": {
+              "description": "Whether named imports or destructured `require()` calls are allowed for this module.\n\nWith `{ \"styles\": { \"node:util\": { \"named\": true } } }`, this is valid:\n```js\nimport {promisify} from \"node:util\";\n```",
+              "default": null,
+              "type": "boolean",
+              "markdownDescription": "Whether named imports or destructured `require()` calls are allowed for this module.\n\nWith `{ \"styles\": { \"node:util\": { \"named\": true } } }`, this is valid:\n```js\nimport {promisify} from \"node:util\";\n```"
+            },
+            "namespace": {
+              "description": "Whether namespace imports or whole-module `require()` assignments are allowed for this module.\n\nWith `{ \"styles\": { \"node:fs\": { \"namespace\": true } } }`, this is valid:\n```js\nimport * as fs from \"node:fs\";\n```",
+              "default": null,
+              "type": "boolean",
+              "markdownDescription": "Whether namespace imports or whole-module `require()` assignments are allowed for this module.\n\nWith `{ \"styles\": { \"node:fs\": { \"namespace\": true } } }`, this is valid:\n```js\nimport * as fs from \"node:fs\";\n```"
+            },
+            "unassigned": {
+              "description": "Whether side-effect imports or unassigned dynamic imports/requires are allowed for this module.\n\nWith `{ \"styles\": { \"polyfill\": { \"unassigned\": true } } }`, this is valid:\n```js\nimport \"polyfill\";\n```",
+              "default": null,
+              "type": "boolean",
+              "markdownDescription": "Whether side-effect imports or unassigned dynamic imports/requires are allowed for this module.\n\nWith `{ \"styles\": { \"polyfill\": { \"unassigned\": true } } }`, this is valid:\n```js\nimport \"polyfill\";\n```"
+            }
+          },
+          "additionalProperties": false
+        }
       ]
     },
     "MouseEventsHaveKeyEventsConfig": {
@@ -12039,6 +12870,38 @@
       },
       "additionalProperties": false
     },
+    "NoDistractingElementsConfig": {
+      "type": "object",
+      "properties": {
+        "elements": {
+          "description": "List of distracting elements to check for.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DistractingElement"
+          },
+          "markdownDescription": "List of distracting elements to check for."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoDupeKeys": {
+      "$ref": "#/definitions/NoDupeKeysConfig"
+    },
+    "NoDupeKeysConfig": {
+      "type": "object",
+      "properties": {
+        "groups": {
+          "description": "Additional group names to search for duplicate keys in, on top of the\nbuilt-in `props`, `computed`, `data`, `methods` and `setup` groups.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Additional group names to search for duplicate keys in, on top of the\nbuilt-in `props`, `computed`, `data`, `methods` and `setup` groups."
+        }
+      },
+      "additionalProperties": false
+    },
     "NoDuplicateImports": {
       "type": "object",
       "properties": {
@@ -12571,6 +13434,15 @@
         }
       ]
     },
+    "NoInteractiveElementToNoninteractiveRoleConfig": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
     "NoInvalidRegexpConfig": {
       "type": "object",
       "properties": {
@@ -12941,46 +13813,8 @@
       },
       "additionalProperties": false
     },
-    "NoNoninteractiveElementInteractionsConfig": {
+    "NoNoninteractiveElementToInteractiveRoleConfig": {
       "type": "object",
-      "properties": {
-        "handlers": {
-          "description": "An array of event handler names that should trigger this rule.",
-          "default": [
-            "onError",
-            "onLoad",
-            "onKeyPress",
-            "onKeyDown",
-            "onKeyUp",
-            "onFocus",
-            "onBlur",
-            "onClick",
-            "onContextMenu",
-            "onDblClick",
-            "onDoubleClick",
-            "onDrag",
-            "onDragEnd",
-            "onDragEnter",
-            "onDragExit",
-            "onDragLeave",
-            "onDragOver",
-            "onDragStart",
-            "onDrop",
-            "onMouseDown",
-            "onMouseEnter",
-            "onMouseLeave",
-            "onMouseMove",
-            "onMouseOut",
-            "onMouseOver",
-            "onMouseUp"
-          ],
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "markdownDescription": "An array of event handler names that should trigger this rule."
-        }
-      },
       "additionalProperties": {
         "type": "array",
         "items": {
@@ -13319,6 +14153,21 @@
         ]
       }
     },
+    "NoRestrictedTypesConfig": {
+      "type": "object",
+      "properties": {
+        "types": {
+          "description": "A mapping of type names to ban configurations.",
+          "default": {},
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/BanConfigValue"
+          },
+          "markdownDescription": "A mapping of type names to ban configurations."
+        }
+      },
+      "additionalProperties": false
+    },
     "NoReturnAssignMode": {
       "oneOf": [
         {
@@ -13367,10 +14216,10 @@
       "type": "object",
       "properties": {
         "allowInParentheses": {
-          "description": "If this option is set to `false`, this rule disallows the comma operator\neven when the expression sequence is explicitly wrapped in parentheses.\nDefault is `true`.",
+          "description": "If this option is set to `false`, this rule disallows the comma operator\neven when the expression sequence is explicitly wrapped in parentheses.",
           "default": true,
           "type": "boolean",
-          "markdownDescription": "If this option is set to `false`, this rule disallows the comma operator\neven when the expression sequence is explicitly wrapped in parentheses.\nDefault is `true`."
+          "markdownDescription": "If this option is set to `false`, this rule disallows the comma operator\neven when the expression sequence is explicitly wrapped in parentheses."
         }
       },
       "additionalProperties": false
@@ -14827,12 +15676,12 @@
     "Prefer": {
       "oneOf": [
         {
-          "description": "Will enforce that you always use `import type Foo from '...'` except referenced by metadata of decorators.",
+          "description": "Enforces that you always use `import type Foo from '...'`, except when referenced by decorator metadata.",
           "type": "string",
           "enum": [
             "type-imports"
           ],
-          "markdownDescription": "Will enforce that you always use `import type Foo from '...'` except referenced by metadata of decorators."
+          "markdownDescription": "Enforces that you always use `import type Foo from '...'`, except when referenced by decorator metadata."
         },
         {
           "description": "Will enforce that you always use `import Foo from '...'`",
@@ -14864,6 +15713,27 @@
         "allowUnboundThis": {
           "default": true,
           "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "PreferAtConfig": {
+      "type": "object",
+      "properties": {
+        "checkAllIndexAccess": {
+          "description": "Check all index access, not just special patterns like `array.length - 1`.\nWhen enabled, `array[0]`, `array[1]`, etc. will also be flagged.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Check all index access, not just special patterns like `array.length - 1`.\nWhen enabled, `array[0]`, `array[1]`, etc. will also be flagged."
+        },
+        "getLastElementFunctions": {
+          "description": "List of function names to treat as \"get last element\" functions.\nThese functions will be checked for `.at(-1)` usage.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "List of function names to treat as \"get last element\" functions.\nThese functions will be checked for `.at(-1)` usage."
         }
       },
       "additionalProperties": false
@@ -15478,6 +16348,18 @@
           "markdownDescription": "Only require the radix parameter when necessary."
         }
       ]
+    },
+    "ReactCompilerConfig": {
+      "type": "object",
+      "properties": {
+        "reportAllBailouts": {
+          "description": "Also report compiler bail-outs — places where React Compiler skipped a\ncomponent or hook (for example because of unsupported syntax) without\nfinding a rule violation. These do not indicate incorrect code, only\ncode that the compiler declined to optimize.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Also report compiler bail-outs — places where React Compiler skipped a\ncomponent or hook (for example because of unsupported syntax) without\nfinding a rule violation. These do not indicate incorrect code, only\ncode that the compiler declined to optimize."
+        }
+      },
+      "additionalProperties": false
     },
     "ReactPerfConfig": {
       "type": "object",
@@ -16398,6 +17280,12 @@
         }
       },
       "additionalProperties": false
+    },
+    "True": {
+      "type": "boolean",
+      "enum": [
+        true
+      ]
     },
     "TypeOrValueSpecifier": {
       "description": "Type or value specifier for matching specific declarations\n\nSupports four types of specifiers:\n\n1. **String specifier** (deprecated): Universal match by name\n```json\n\"Promise\"\n```\n\n2. **File specifier**: Match types/values declared in local files\n```json\n{ \"from\": \"file\", \"name\": \"MyType\" }\n{ \"from\": \"file\", \"name\": [\"Type1\", \"Type2\"] }\n{ \"from\": \"file\", \"name\": \"MyType\", \"path\": \"./types.ts\" }\n```\n\n3. **Lib specifier**: Match TypeScript built-in lib types\n```json\n{ \"from\": \"lib\", \"name\": \"Promise\" }\n{ \"from\": \"lib\", \"name\": [\"Promise\", \"PromiseLike\"] }\n```\n\n4. **Package specifier**: Match types/values from npm packages\n```json\n{ \"from\": \"package\", \"name\": \"Observable\", \"package\": \"rxjs\" }\n{ \"from\": \"package\", \"name\": [\"Observable\", \"Subject\"], \"package\": \"rxjs\" }\n```",

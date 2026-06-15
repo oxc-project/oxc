@@ -88,6 +88,7 @@ declare_oxc_lint!(
     conditional_suggestion,
     config = NoConsoleConfig,
     version = "0.0.13",
+    short_description = "Disallow the use of console.",
 );
 
 impl Rule for NoConsole {

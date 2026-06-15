@@ -11,12 +11,14 @@ use convert_scope::convert_scope_info;
 use diagnostics::compile_result_to_diagnostics;
 use prefilter::{has_react_like_functions, has_resource_management_declarations};
 use react_compiler::entrypoint::compile_result::LoggerEvent;
-use react_compiler_hir::environment_config::EnvironmentConfig;
-use rustc_hash::FxHashSet;
-// Re-exported so integrations needn't depend on the upstream `react_compiler` crate.
+
+// Re-exported so integrations needn't depend on the upstream `react_compiler` crates.
 pub use react_compiler::entrypoint::plugin_options::{
     CompilerTarget, DynamicGatingConfig, GatingConfig, PluginOptions,
 };
+pub use react_compiler_hir::environment_config::EnvironmentConfig;
+
+use rustc_hash::FxHashSet;
 
 /// [`PluginOptions`] with the compiler's standard defaults (it has no `Default`).
 /// Override fields with struct-update syntax: `PluginOptions { ..default_plugin_options() }`.

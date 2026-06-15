@@ -185,6 +185,7 @@ declare_oxc_lint!(
     suspicious,
     config = AlwaysReturnConfig,
     version = "1.13.0",
+    short_description = "Require returning inside each `then()` to create readable and reusable Promise chains.",
 );
 
 const PROCESS_METHODS: [&str; 2] = ["exit", "abort"];

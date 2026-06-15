@@ -61,6 +61,7 @@ declare_oxc_lint!(
     pedantic,
     conditional_fix,
     version = "0.0.18",
+    short_description = "Use `.dataset` on DOM elements over `getAttribute(…)`, `.setAttribute(…)`, `.removeAttribute(…)` and `.hasAttribute(…)`.",
 );
 
 impl Rule for PreferDomNodeDataset {

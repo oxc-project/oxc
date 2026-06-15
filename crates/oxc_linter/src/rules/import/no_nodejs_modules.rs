@@ -80,6 +80,7 @@ declare_oxc_lint!(
     style,
     config = NoNodejsModulesConfig,
     version = "1.43.0",
+    short_description = "Forbid the use of Node.js built-in modules.",
 );
 
 impl Rule for NoNodejsModules {

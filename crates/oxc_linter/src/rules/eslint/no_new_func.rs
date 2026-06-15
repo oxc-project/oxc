@@ -31,7 +31,7 @@ pub struct NoNewFunc;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// The rule disallow `new` operators with the `Function` object.
+    /// Disallow `new` operators with the `Function` object.
     ///
     /// ### Why is this bad?
     ///
@@ -59,6 +59,7 @@ declare_oxc_lint!(
     eslint,
     style,
     version = "0.9.2",
+    short_description = "Disallow `new` operators with the `Function` object.",
 );
 
 impl Rule for NoNewFunc {
