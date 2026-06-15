@@ -80,12 +80,13 @@ export type CurlyType = "all" | "multi" | "multi-line" | "multi-or-nest";
 export type CurlyConsistent = "consistent";
 export type CompareType = "always" | "smart";
 export type NullType = "always" | "never" | "ignore";
-export type DummyRule = AllowWarnDeny | [AllowWarnDeny, ...unknown[]];
+export type FuncNameMatchingMode = "always" | "never";
 export type FuncNamesConfigType = "always" | "as-needed" | "never";
 export type Style = "expression" | "declaration";
 export type NamedExports = "ignore" | "expression" | "declaration";
 export type PairOrder = "anyOrder" | "getBeforeSet" | "setBeforeGet";
 export type Mode = "prefer-top-level" | "prefer-inline";
+export type DummyRule = AllowWarnDeny | [AllowWarnDeny, ...unknown[]];
 export type AbsoluteFirst = "absolute-first" | "disable-absolute-first";
 export type MaxDependenciesConfigJson = number | MaxDependenciesConfig;
 export type Target = "single" | "any";
@@ -829,7 +830,7 @@ export interface DummyRuleMap {
   "block-scoped-var"?: RuleNoConfig;
   "capitalized-comments"?: RuleNoConfig | [AllowWarnDeny, AlwaysNever] | [AllowWarnDeny, AlwaysNever, OptionsJsonEnum];
   "class-methods-use-this"?: RuleNoConfig | [AllowWarnDeny, ClassMethodsUseThisConfig];
-  complexity?: RuleNoConfig | [AllowWarnDeny, number | ComplexityConfig];
+  complexity?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, ComplexityConfig]);
   "constructor-super"?: RuleNoConfig;
   curly?: RuleNoConfig | [AllowWarnDeny, CurlyType] | [AllowWarnDeny, CurlyType, CurlyConsistent];
   "default-case"?: RuleNoConfig | [AllowWarnDeny, DefaultCaseConfig];
@@ -837,7 +838,14 @@ export interface DummyRuleMap {
   "default-param-last"?: RuleNoConfig;
   eqeqeq?: RuleNoConfig | [AllowWarnDeny, CompareType] | [AllowWarnDeny, CompareType, EqeqeqOptions];
   "for-direction"?: RuleNoConfig;
-  "func-name-matching"?: DummyRule;
+  "func-name-matching"?:
+    | RuleNoConfig
+    | (
+        | [AllowWarnDeny, FuncNameMatchingMode]
+        | [AllowWarnDeny, FuncNameMatchingMode, FuncNameMatchingConfig]
+        | [AllowWarnDeny, FuncNameMatchingMode]
+        | [AllowWarnDeny, FuncNameMatchingConfig]
+      );
   "func-names"?:
     | RuleNoConfig
     | [AllowWarnDeny, FuncNamesConfigType]
@@ -1014,13 +1022,13 @@ export interface DummyRuleMap {
     | RuleNoConfig
     | [AllowWarnDeny, AlwaysNever]
     | [AllowWarnDeny, AlwaysNever, LogicalAssignmentOperatorsConfig];
-  "max-classes-per-file"?: RuleNoConfig | [AllowWarnDeny, number | MaxClassesPerFileConfig];
-  "max-depth"?: RuleNoConfig | [AllowWarnDeny, number | MaxDepth];
-  "max-lines"?: RuleNoConfig | [AllowWarnDeny, number | MaxLinesConfig];
-  "max-lines-per-function"?: RuleNoConfig | [AllowWarnDeny, number | MaxLinesPerFunctionConfig];
-  "max-nested-callbacks"?: RuleNoConfig | [AllowWarnDeny, number | MaxNestedCallbacks];
-  "max-params"?: RuleNoConfig | [AllowWarnDeny, number | MaxParamsConfig];
-  "max-statements"?: RuleNoConfig | [AllowWarnDeny, number | MaxStatementsConfig];
+  "max-classes-per-file"?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, MaxClassesPerFileConfig]);
+  "max-depth"?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, MaxDepth]);
+  "max-lines"?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, MaxLinesConfig]);
+  "max-lines-per-function"?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, MaxLinesPerFunctionConfig]);
+  "max-nested-callbacks"?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, MaxNestedCallbacks]);
+  "max-params"?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, MaxParamsConfig]);
+  "max-statements"?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, MaxStatementsConfig]);
   "new-cap"?: RuleNoConfig | [AllowWarnDeny, NewCapConfig];
   "nextjs/google-font-display"?: RuleNoConfig;
   "nextjs/google-font-preconnect"?: RuleNoConfig;
@@ -1799,6 +1807,16 @@ export interface EqeqeqOptions {
    * e.g. `foo == null` or `foo != null`
    */
   null?: NullType;
+}
+export interface FuncNameMatchingConfig {
+  /**
+   * If `considerPropertyDescriptor` is set to `true`, the check will take into account the use of `Object.create`, `Object.defineProperty`, `Object.defineProperties`, and `Reflect.defineProperty`.
+   */
+  considerPropertyDescriptor?: boolean;
+  /**
+   * If `includeCommonJSModuleExports` is set to `true`, `module.exports` and `module["exports"]` will be checked by this rule.
+   */
+  includeCommonJSModuleExports?: boolean;
 }
 export interface FuncNamesGeneratorsConfig {
   /**
