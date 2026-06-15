@@ -287,7 +287,7 @@ impl NoUnusedVars {
 
                 if let Some(declaration) = declaration {
                     Self::report_with_fix_mode(self.fix.imports, ctx, diagnostic, |fixer| {
-                        self.remove_unused_import_declaration(fixer, symbol, declaration)
+                        self.remove_unused_import_declaration(fixer, ctx, symbol, declaration)
                     });
                 } else {
                     ctx.diagnostic(diagnostic);
