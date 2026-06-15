@@ -135,19 +135,19 @@ impl<'a> Minifier {
                 } else {
                     compressor.build_with_scoping(program, scoping, options)
                 };
-                (stats, iterations)
+                (Some(stats), iterations)
             })
             .unwrap_or_default();
         let (scoping, class_private_mappings) = self
             .options
             .mangle
             .map(|options| {
-                let mut semantic = SemanticBuilder::new()
-                    .with_build_nodes(true)
-                    .with_stats(stats)
-                    .with_class_table(true)
-                    .build(program)
-                    .semantic;
+                let mut builder =
+                    SemanticBuilder::new().with_build_nodes(true).with_class_table(true);
+                if let Some(stats) = stats {
+                    builder = builder.with_stats(stats);
+                }
+                let mut semantic = builder.build(program).semantic;
                 let class_private_mappings = Mangler::default()
                     .with_options(options)
                     .build_with_semantic(&mut semantic, program);

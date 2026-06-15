@@ -374,12 +374,14 @@ impl<'a> SemanticBuilder<'a> {
         #[cfg(debug_assertions)]
         self.unused_labels.assert_empty();
 
+        let node_count = self.node_store.node_count();
         let semantic = Semantic {
             source_text: self.source_text,
             source_type: self.source_type,
             comments: &program.comments,
             irregular_whitespaces: [].into(),
             nodes: self.node_store.into_nodes(),
+            node_count,
             scoping: self.scoping,
             classes: self.class_table_builder.build(),
             #[cfg(feature = "jsdoc")]
