@@ -58,7 +58,7 @@ const plugin: Plugin = {
       const program = parse(path, code);
 
       // Set of call expression nodes that have been inlined
-      const inlinedCallExprs = new Set<object>();
+      const inlinedCallExprs = new Set<ESTree.CallExpression>();
 
       /**
        * Convert offset to line number.
