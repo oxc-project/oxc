@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.136.0] - 2026-06-15
+
+### 🐛 Bug Fixes
+
+- 52d0c31 transformer: Replace ambient dot defines (#23231) (camc314)
+
 ## [0.133.0] - 2026-05-26
 
 ### 🐛 Bug Fixes
