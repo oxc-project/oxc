@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 69/69 (100.00%)
 Positive Passed: 69/69 (100.00%)
-Negative Passed: 147/147 (100.00%)
+Negative Passed: 149/149 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -360,6 +360,23 @@ Negative Passed: 147/147 (100.00%)
  1 │ type T<X> = X extends infer string ? string : never;
    ·                             ──────
    ╰────
+
+  × Adjacent JSX elements must be wrapped in an enclosing tag.
+   ╭─[misc/fail/jsx-adjacent-elements.jsx:3:3]
+ 2 │   <div />
+ 3 │   <span />
+   ·   ─
+ 4 │ );
+   ╰────
+  help: Did you want a JSX fragment `<>...</>`?
+
+  × Adjacent JSX elements must be wrapped in an enclosing tag.
+   ╭─[misc/fail/jsx-element-followed-by-less-than.jsx:6:19]
+ 5 │ // JSX element as unwrapped adjacent JSX, and oxc follows them for consistency.
+ 6 │ const a = <div /> < 5;
+   ·                   ─
+   ╰────
+  help: Did you want a JSX fragment `<>...</>`?
 
   × Unexpected JSX expression
    ╭─[misc/fail/jsx-in-js.js:1:20]
