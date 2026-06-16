@@ -9016,6 +9016,9 @@
         "unicorn/prefer-node-protocol": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "unicorn/prefer-number-coercion": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "unicorn/prefer-number-properties": {
           "anyOf": [
             {
