@@ -402,9 +402,8 @@ pub(super) fn is_pure_global_method_call(object: &str, method: &str) -> bool {
         "Number" => matches!(method, "isFinite" | "isInteger" | "isNaN" | "isSafeInteger" | "parseFloat" | "parseInt"),
         // Only `Object.is` is unconditionally pure. The introspection methods
         // (`keys`, `getOwnPropertyDescriptor`, ...) can trigger Proxy traps on their
-        // target (see `proxy_sensitive_arg_index`), and `Object.create` reads its
-        // `properties` argument; both are handled in
-        // `CallExpression::may_have_side_effects`.
+        // target, and `Object.create` reads its `properties` argument; both are
+        // handled in `CallExpression::may_have_side_effects`.
         "Object" => method == "is",
         "String" => matches!(method, "fromCharCode" | "fromCodePoint" | "raw"),
         "Symbol" => matches!(method, "for" | "keyFor"),
@@ -412,25 +411,6 @@ pub(super) fn is_pure_global_method_call(object: &str, method: &str) -> bool {
         _ if is_typed_array_constructor(object) => method == "of",
         _ => false,
     }
-}
-
-/// Whether a global method call is pure *except* for Proxy traps fired on its
-/// first argument.
-///
-/// These `Object` methods introspect their first argument via internal methods a
-/// Proxy can trap (`[[OwnPropertyKeys]]`, `[[GetOwnProperty]]`, `[[GetPrototypeOf]]`,
-/// `[[IsExtensible]]`), but — unlike `Object.values`/`entries` — they never invoke
-/// `[[Get]]`, so they run no getter on a plain object. They also throw on a
-/// `null`/`undefined` target; the caller handles both the Proxy and throw checks.
-///
-/// `Object.is` is unconditionally pure; `Object.create` and `Object.values`/
-/// `entries` are handled separately, not here.
-#[rustfmt::skip]
-pub(super) fn is_proxy_sensitive_object_method(object: &str, method: &str) -> bool {
-    matches!((object, method), ("Object",
-        "getOwnPropertyDescriptor" | "getOwnPropertyDescriptors"
-        | "getOwnPropertyNames" | "getOwnPropertySymbols" | "getPrototypeOf"
-        | "hasOwn" | "isExtensible" | "isFrozen" | "isSealed" | "keys"))
 }
 
 /// Whether the property read on a known global is side-effect-free.
