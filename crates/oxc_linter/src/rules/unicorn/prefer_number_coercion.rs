@@ -173,20 +173,22 @@ fn test() {
         "Number.parseInt((value), 10);",
     ];
 
+    let fix = vec![
+        ("parseFloat(value);", "Number(value);"),
+        ("parseFloat(a + b);", "Number(a + b);"),
+        ("Number.parseFloat(value);", "Number(value);"),
+        ("Number['parseFloat'](value);", "Number(value);"),
+        ("parseInt(value, 10);", "Math.trunc(Number(value));"),
+        ("parseInt(getValue(), 10);", "Math.trunc(Number(getValue()));"),
+        ("parseInt(parseInt(value, 10), 10);", "Math.trunc(Number(parseInt(value, 10)));"),
+        ("parseInt(value as string, 10);", "Math.trunc(Number(value as string));"),
+        ("Number.parseInt(value, 10);", "Math.trunc(Number(value));"),
+        ("parseInt(value, 10.0);", "Math.trunc(Number(value));"),
+        ("(parseInt)(value, 10);", "Math.trunc(Number(value));"),
+        ("Number.parseInt((value), 10);", "Math.trunc(Number((value)));"),
+    ];
+
     Tester::new(PreferNumberCoercion::NAME, PreferNumberCoercion::PLUGIN, pass, fail)
-        .expect_fix(vec![
-            ("parseFloat(value);", "Number(value);"),
-            ("parseFloat(a + b);", "Number(a + b);"),
-            ("Number.parseFloat(value);", "Number(value);"),
-            ("Number['parseFloat'](value);", "Number(value);"),
-            ("parseInt(value, 10);", "Math.trunc(Number(value));"),
-            ("parseInt(getValue(), 10);", "Math.trunc(Number(getValue()));"),
-            ("parseInt(parseInt(value, 10), 10);", "Math.trunc(Number(parseInt(value, 10)));"),
-            ("parseInt(value as string, 10);", "Math.trunc(Number(value as string));"),
-            ("Number.parseInt(value, 10);", "Math.trunc(Number(value));"),
-            ("parseInt(value, 10.0);", "Math.trunc(Number(value));"),
-            ("(parseInt)(value, 10);", "Math.trunc(Number(value));"),
-            ("Number.parseInt((value), 10);", "Math.trunc(Number((value)));"),
-        ])
+        .expect_fix(fix)
         .test_and_snapshot();
 }
