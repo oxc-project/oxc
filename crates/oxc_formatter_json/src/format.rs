@@ -2,7 +2,7 @@ use oxc_allocator::Allocator;
 use oxc_ast::ast::Expression;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter_core::{
-    Buffer, Document, Format, FormatState, Formatted, VecBuffer,
+    Buffer, Document, Format, FormatContext, FormatState, Formatted, VecBuffer,
     builders::{hard_line_break, text},
     write,
 };
@@ -12,21 +12,21 @@ use oxc_syntax::identifier::ZWNBSP;
 use crate::{
     comments::write_trailing_inside_comments,
     context::JsonFormatContext,
-    options::JsonFormatOptions,
+    options::{JsonFormatOptions, JsonVariant},
     parse::parse_json,
-    print::{FmtJsonValue, JsonFormatter},
+    print::{FmtJsonStringifyValue, FmtJsonValue, JsonFormatter},
 };
 
-/// Parse `source` as JSON and build its formatter IR.
+/// Parse `source_text` as JSON and build its formatter IR.
 ///
 /// # Errors
-/// Returns an [`OxcDiagnostic`] when the parser rejects `source`.
+/// Returns an [`OxcDiagnostic`] when the parser rejects `source_text`.
 pub fn format<'a>(
     allocator: &'a Allocator,
-    source: &str,
+    source_text: &str,
     options: JsonFormatOptions,
 ) -> Result<Formatted<'a, JsonFormatContext<'a>>, OxcDiagnostic> {
-    let parsed = parse_json(allocator, source, options.variant)?;
+    let parsed = parse_json(allocator, source_text, options.variant)?;
 
     let context = JsonFormatContext::new(
         options,
@@ -38,8 +38,8 @@ pub fn format<'a>(
     // TODO: Use `with_capacity` for perf, like `oxc_formatter` does
     let mut buffer = VecBuffer::new(&mut state);
 
-    // BOM detection runs on the original `source`; `wrapped_source` may prepend `(`.
-    let has_bom = source.starts_with(ZWNBSP);
+    // BOM detection runs on the original `source_text`; `wrapped_source` may prepend `(`.
+    let has_bom = source_text.starts_with(ZWNBSP);
     write!(&mut buffer, FormatJsonRoot { expression: parsed.expression, has_bom });
 
     let elements = buffer.into_vec();
@@ -71,7 +71,11 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FormatJsonRoot<'a, '_> {
         }
 
         let trailing_anchor = if let Some(expression) = self.expression {
-            FmtJsonValue { expression }.fmt(f);
+            if f.context().options().variant == JsonVariant::JsonStringify {
+                FmtJsonStringifyValue { expression }.fmt(f);
+            } else {
+                FmtJsonValue { expression }.fmt(f);
+            }
             expression.span().end
         } else {
             // Comments-only source: emit pending comments from the start of the source

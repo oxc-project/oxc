@@ -64,6 +64,7 @@ declare_oxc_lint!(
     pedantic,
     conditional_fix,
     version = "0.0.15",
+    short_description = "Prefer `.querySelector()` over `.getElementById()`, and `.querySelectorAll()` over `.getElementsByClassName()` and `.getElementsByTagName()`.",
 );
 
 impl Rule for PreferQuerySelector {

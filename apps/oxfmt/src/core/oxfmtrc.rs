@@ -57,12 +57,14 @@ pub struct FormatConfig {
     // ============================================================================================
     /// Indent lines with tabs instead of spaces.
     ///
+    /// - Languages: All
     /// - Default: `false`
     /// - Overrides `.editorconfig.indent_style`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub use_tabs: Option<bool>,
     /// Specify the number of spaces per indentation-level.
     ///
+    /// - Languages: All
     /// - Default: `2`
     /// - Overrides `.editorconfig.indent_size` (falls back to `.editorconfig.tab_width`)
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -71,6 +73,7 @@ pub struct FormatConfig {
     ///
     /// NOTE: `"auto"` is not supported.
     ///
+    /// - Languages: All
     /// - Default: `"lf"`
     /// - Overrides `.editorconfig.end_of_line`
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -79,6 +82,7 @@ pub struct FormatConfig {
     ///
     /// If you don't want line wrapping when formatting Markdown, you can set the `proseWrap` option to disable it.
     ///
+    /// - Languages: All
     /// - Default: `100`
     /// - Overrides `.editorconfig.max_line_length`
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -88,17 +92,20 @@ pub struct FormatConfig {
     ///
     /// For JSX, you can set the `jsxSingleQuote` option.
     ///
+    /// - Languages: JS, JSX, TS, TSX, CSS, Less, SCSS, Markdown, MDX, YAML, Handlebars, Svelte
     /// - Default: `false`
     /// - Overrides `.editorconfig.quote_type`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub single_quote: Option<bool>,
     /// Use single quotes instead of double quotes in JSX.
     ///
+    /// - Languages: JSX, TSX
     /// - Default: `false`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub jsx_single_quote: Option<bool>,
     /// Change when properties in objects are quoted.
     ///
+    /// - Languages: JS, JSX, TS, TSX
     /// - Default: `"as-needed"`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub quote_props: Option<QuotePropsConfig>,
@@ -106,27 +113,32 @@ pub struct FormatConfig {
     ///
     /// A single-line array, for example, never gets trailing commas.
     ///
+    /// - Languages: JS, JSX, TS, TSX, JSONC, JSON5, TOML, CSS, Less, SCSS, YAML
     /// - Default: `"all"`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub trailing_comma: Option<TrailingCommaConfig>,
     /// Print semicolons at the ends of statements.
     ///
+    /// - Languages: JS, JSX, TS, TSX
     /// - Default: `true`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub semi: Option<bool>,
     /// Include parentheses around a sole arrow function parameter.
     ///
+    /// - Languages: JS, JSX, TS, TSX
     /// - Default: `"always"`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub arrow_parens: Option<ArrowParensConfig>,
     /// Print spaces between brackets in object literals.
     ///
+    /// - Languages: JS, JSX, TS, TSX, JSON, JSONC, JSON5, GraphQL, YAML
     /// - Default: `true`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub bracket_spacing: Option<bool>,
     /// Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,
     /// instead of being alone on the next line (does not apply to self closing elements).
     ///
+    /// - Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte
     /// - Default: `false`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub bracket_same_line: Option<bool>,
@@ -135,11 +147,13 @@ pub struct FormatConfig {
     /// By default, formats objects as multi-line if there is a newline prior to the first property.
     /// Authors can use this heuristic to contextually improve readability, though it has some downsides.
     ///
+    /// - Languages: JS, JSX, TS, TSX, JSON, JSONC, JSON5
     /// - Default: `"preserve"`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub object_wrap: Option<ObjectWrapConfig>,
     /// Enforce single attribute per line in HTML, Vue, and JSX.
     ///
+    /// - Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte
     /// - Default: `false`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub single_attribute_per_line: Option<bool>,
@@ -163,8 +177,7 @@ pub struct FormatConfig {
 
     /// Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.
     ///
-    /// NOTE: XXX-in-JS support is incomplete.
-    ///
+    /// - Languages: JS, JSX, TS, TSX, HTML, Vue, Angular, Svelte, Markdown, MDX (languages with embedded code)
     /// - Default: `"auto"`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub embedded_language_formatting: Option<EmbeddedLanguageFormattingConfig>,
@@ -178,16 +191,19 @@ pub struct FormatConfig {
     /// To wrap prose to the print width, change this option to "always".
     /// If you want to force all prose blocks to be on a single line and rely on editor/viewer soft wrapping instead, you can use "never".
     ///
+    /// - Languages: Markdown, MDX, YAML
     /// - Default: `"preserve"`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub prose_wrap: Option<ProseWrapConfig>,
     /// Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.
     ///
+    /// - Languages: HTML, Angular, Vue, Handlebars, Svelte
     /// - Default: `"css"`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub html_whitespace_sensitivity: Option<HtmlWhitespaceSensitivityConfig>,
     /// Whether or not to indent the code inside `<script>` and `<style>` tags in Vue files.
     ///
+    /// - Languages: Vue
     /// - Default: `false`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub vue_indent_script_and_style: Option<bool>,
@@ -197,6 +213,7 @@ pub struct FormatConfig {
     // ============================================================================================
     /// Whether to insert a final newline at the end of the file.
     ///
+    /// - Languages: All
     /// - Default: `true`
     /// - Overrides `.editorconfig.insert_final_newline`
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -209,6 +226,7 @@ pub struct FormatConfig {
     ///
     /// Pass `true` or an object to enable with defaults, or omit/set `false` to disable.
     ///
+    /// - Languages: JS, JSX, TS, TSX
     /// - Default: Disabled
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(alias = "experimentalSortImports")]
@@ -220,6 +238,7 @@ pub struct FormatConfig {
     /// But we believe it is clearer and easier to navigate.
     /// For details, see each field's documentation.
     ///
+    /// - Languages: JSON (`package.json` only)
     /// - Default: `true`
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(alias = "experimentalSortPackageJson")]
@@ -233,6 +252,7 @@ pub struct FormatConfig {
     ///
     /// Pass `true` or an object to enable with defaults, or omit/set `false` to disable.
     ///
+    /// - Languages: JS, JSX, TS, TSX, HTML, Vue, Angular, Handlebars, CSS, SCSS, Less, Svelte
     /// - Default: Disabled
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(alias = "experimentalTailwindcss")]
@@ -246,6 +266,7 @@ pub struct FormatConfig {
     ///
     /// Pass `true` or an object to enable with defaults, or omit/set `false` to disable.
     ///
+    /// - Languages: JS, JSX, TS, TSX
     /// - Default: Disabled
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub jsdoc: Option<JsdocUserConfig>,
@@ -260,6 +281,7 @@ pub struct FormatConfig {
     /// but Oxfmt does NOT bundle or auto-install it.
     /// You must install `svelte` yourself in your project, formatting will fail at runtime otherwise.
     ///
+    /// - Languages: Svelte
     /// - Default: Disabled
     #[serde(skip_serializing_if = "Option::is_none")]
     pub svelte: Option<SvelteUserConfig>,

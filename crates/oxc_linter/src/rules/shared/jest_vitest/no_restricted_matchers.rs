@@ -3,15 +3,17 @@ use std::path::Path;
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
+use oxc_str::CompactStr;
 use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
 use crate::{
     context::LintContext,
+    rule::DefaultRuleConfig,
     utils::{
         JestFnKind, KnownMemberExpressionProperty, PossibleJestNode, is_type_of_jest_fn_call,
-        parse_expect_jest_fn_call,
+        object_with_nullable_string_schema, parse_expect_jest_fn_call,
     },
 };
 
@@ -91,21 +93,17 @@ pub struct NoRestrictedMatchersConfig {
     /// A map of restricted matchers/modifiers to custom messages.
     /// The key is the matcher/modifier name (e.g., "toBeFalsy", "resolves", "not.toHaveBeenCalledWith").
     /// The value is an optional custom message to display when the matcher/modifier is used.
-    pub restricted_matchers: FxHashMap<String, String>,
+    #[schemars(schema_with = "object_with_nullable_string_schema")]
+    #[serde(flatten)]
+    pub restricted_matchers: FxHashMap<String, Option<CompactStr>>,
 }
 
 const MODIFIER_NAME: [&str; 3] = ["not", "rejects", "resolves"];
 
 impl NoRestrictedMatchersConfig {
-    #[expect(clippy::unnecessary_wraps)]
     pub fn from_configuration(value: &serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let restricted_matchers = value
-            .get(0)
-            .and_then(serde_json::Value::as_object)
-            .map(Self::compile_restricted_matchers)
-            .unwrap_or_default();
-
-        Ok(NoRestrictedMatchersConfig { restricted_matchers })
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value.clone())
+            .map(DefaultRuleConfig::into_inner)
     }
 
     pub fn run<'a>(&self, possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
@@ -139,10 +137,10 @@ impl NoRestrictedMatchersConfig {
 
         for (restriction, message) in &self.restricted_matchers {
             if Self::check_restriction(chain_call.as_str(), restriction.as_str()) {
-                if message.is_empty() {
-                    ctx.diagnostic(restricted_chain(&chain_call, span));
-                } else {
+                if let Some(message) = message {
                     ctx.diagnostic(restricted_chain_with_message(&chain_call, message, span));
+                } else {
+                    ctx.diagnostic(restricted_chain(&chain_call, span));
                 }
             }
         }
@@ -156,16 +154,5 @@ impl NoRestrictedMatchersConfig {
         } else {
             chain_call == restriction
         }
-    }
-
-    pub fn compile_restricted_matchers(
-        matchers: &serde_json::Map<String, serde_json::Value>,
-    ) -> FxHashMap<String, String> {
-        matchers
-            .iter()
-            .map(|(key, value)| {
-                (String::from(key), String::from(value.as_str().unwrap_or_default()))
-            })
-            .collect()
     }
 }

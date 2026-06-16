@@ -72,6 +72,14 @@ impl<'a> TriviaBuilder<'a> {
     }
 
     pub fn add_irregular_whitespace(&mut self, start: u32, end: u32) {
+        // The irregular whitespaces array is ordered; only add if not added before, to avoid
+        // duplicates when the parser looks ahead (e.g. `peek_token`) and rewinds, then re-lexes the
+        // same whitespace. Same approach as `add_comment`.
+        if let Some(last) = self.irregular_whitespaces.last()
+            && start <= last.start
+        {
+            return;
+        }
         self.irregular_whitespaces.push(Span::new(start, end));
     }
 
@@ -398,7 +406,7 @@ mod test {
         let allocator = Allocator::default();
         let source_type = SourceType::default();
         let ret = Parser::new(&allocator, source_text, source_type).parse();
-        assert!(ret.errors.is_empty());
+        assert!(ret.diagnostics.is_empty());
         ret.program.comments.iter().copied().collect::<Vec<_>>()
     }
 

@@ -137,6 +137,7 @@ declare_oxc_lint!(
     fix,
     config = NumericSeparatorsStyleConfig,
     version = "0.0.19",
+    short_description = "Enforces a convention of grouping digits using numeric separators.",
 );
 
 impl Rule for NumericSeparatorsStyle {

@@ -116,6 +116,8 @@ fn generate_imports() -> TokenStream {
             utils::PossibleJestNode,
             AstNode
         };
+        #[cfg(feature = "ruledocs")]
+        use crate::rule::RuleInfo;
         use oxc_semantic::AstTypesBitset;
     }
 }
@@ -265,6 +267,14 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
         .map(|rule| {
             let enum_name = make_enum_ident(rule);
             quote! { Self::#enum_name(_) => #enum_name::HAS_CONFIG }
+        })
+        .collect();
+
+    let info_arms: Vec<TokenStream> = rule_entries
+        .iter()
+        .map(|rule| {
+            let enum_name = make_enum_ident(rule);
+            quote! { Self::#enum_name(_) => #enum_name::INFO }
         })
         .collect();
 
@@ -420,6 +430,20 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
                 match self {
                     #(#has_config_arms),*
                 }
+            }
+
+            /// Additional information about this rule.
+            #[cfg(feature = "ruledocs")]
+            pub fn info(&self) -> RuleInfo {
+                match self {
+                    #(#info_arms),*
+                }
+            }
+
+            /// A short, one-line summary of what this rule does.
+            #[cfg(feature = "ruledocs")]
+            pub fn short_description(&self) -> &'static str {
+                self.info().short_description
             }
 
             pub fn types_info(&self) -> Option<&'static AstTypesBitset> {

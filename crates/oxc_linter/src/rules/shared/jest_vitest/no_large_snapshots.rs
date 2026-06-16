@@ -15,7 +15,7 @@ use crate::{
     utils::{PossibleJestNode, iter_possible_jest_call_node, parse_expect_jest_fn_call},
 };
 
-fn no_snapshot(line_count: usize, span: Span) -> OxcDiagnostic {
+fn no_snapshot(line_count: u32, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Snapshot is too long.")
         .with_help(format!(
             "Expected to not encounter a Jest or Vitest snapshot but one was found that is {line_count} lines long"
@@ -23,7 +23,7 @@ fn no_snapshot(line_count: usize, span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-fn too_long_snapshot(line_limit: usize, line_count: usize, span: Span) -> OxcDiagnostic {
+fn too_long_snapshot(line_limit: u32, line_count: u32, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Snapshot is too long.")
         .with_help(format!(
             "Expected Jest or Vitest snapshot to be no longer than {line_limit} lines but it was {line_count} lines long"
@@ -114,12 +114,12 @@ line 4
 ";
 
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoLargeSnapshotsConfig {
     /// Maximum number of lines allowed for external snapshot files.
-    pub max_size: usize,
+    pub max_size: u32,
     /// Maximum number of lines allowed for inline snapshots.
-    pub inline_max_size: usize,
+    pub inline_max_size: u32,
     /// A map of snapshot file paths to arrays of snapshot names that are allowed to exceed the size limit.
     /// Snapshot names can be specified as regular expressions.
     pub allowed_snapshots: FxHashMap<CompactStr, Vec<CompactStr>>,
@@ -140,14 +140,14 @@ impl NoLargeSnapshotsConfig {
             .and_then(|c| c.get("maxSize"))
             .and_then(serde_json::Value::as_number)
             .and_then(serde_json::Number::as_u64)
-            .and_then(|v| usize::try_from(v).ok())
+            .and_then(|v| u32::try_from(v).ok())
             .unwrap_or(50);
 
         let inline_max_size = config
             .and_then(|c| c.get("inlineMaxSize"))
             .and_then(serde_json::Value::as_number)
             .and_then(serde_json::Number::as_u64)
-            .and_then(|v| usize::try_from(v).ok())
+            .and_then(|v| u32::try_from(v).ok())
             .unwrap_or(max_size);
 
         let allowed_snapshots = config
@@ -276,10 +276,11 @@ impl NoLargeSnapshotsConfig {
         })
     }
 
-    fn get_line_count(span: Span, ctx: &LintContext) -> usize {
+    #[expect(clippy::cast_possible_truncation)] // the line count can't be over u32::MAX, because the source code is already limited by u32::MAX.
+    fn get_line_count(span: Span, ctx: &LintContext) -> u32 {
         let start = span.start as usize;
         let end = span.end as usize;
-        ctx.source_text()[start..=end].lines().count() - 1
+        ctx.source_text()[start..=end].lines().count() as u32 - 1
     }
 
     pub fn compile_allowed_snapshots(

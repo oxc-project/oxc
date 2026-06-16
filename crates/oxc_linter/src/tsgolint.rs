@@ -12,7 +12,7 @@ use oxc_allocator::Allocator;
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 
-use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic, Severity};
+use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic, Severity};
 use oxc_span::{SourceType, Span};
 
 use super::{AllowWarnDeny, ConfigStore, DisableDirectives, ResolvedLinterState, read_to_string};
@@ -257,10 +257,15 @@ impl TsGoLintState {
                         .map(|st| if st.is_javascript() { st.with_jsx(true) } else { st });
                     let fix_result = Fixer::new(&source_text, messages, source_type).fix();
 
-                    if fix_result.fixed {
-                        file_system
-                            .write_file(&path, &fix_result.fixed_code)
-                            .expect("Failed to write fixed file");
+                    if fix_result.fixed
+                        && let Err(error) = file_system.write_file(&path, &fix_result.fixed_code)
+                    {
+                        sender_for_fixes
+                            .send(vec![Error::new(OxcDiagnostic::error(format!(
+                                "Failed to write file {} with error \"{error}\"",
+                                path.display()
+                            )))])
+                            .expect("Failed to send diagnostics");
                     }
 
                     if fix_result.messages.is_empty() {
@@ -1361,9 +1366,9 @@ mod test {
             message.error.code,
             OxcCode { scope: Some("typescript".into()), number: Some("some_rule".into()) }
         );
-        assert!(message.error.labels.as_ref().is_some());
-        assert_eq!(message.error.labels.as_ref().unwrap().len(), 1);
-        assert_eq!(message.error.labels.as_ref().unwrap()[0], LabeledSpan::new(None, 0, 10));
+        assert!(!message.error.labels.is_empty());
+        assert_eq!(message.error.labels.len(), 1);
+        assert_eq!(message.error.labels[0], LabeledSpan::new(None, 0, 10));
         assert_eq!(message.error.help, Some("Some help".into()));
         assert!(message.fixes.is_empty());
     }
@@ -1524,8 +1529,8 @@ mod test {
 
         let message = Message::from_tsgo_lint_diagnostic(diagnostic, "Some text over 10 bytes.");
 
-        assert!(message.error.labels.is_some());
-        let labels = message.error.labels.as_ref().unwrap();
+        assert!(!message.error.labels.is_empty());
+        let labels = &message.error.labels;
         assert_eq!(labels.len(), 3);
         assert_eq!(labels[0], LabeledSpan::new(Some("Label 1".into()), 0, 5));
         assert_eq!(labels[1], LabeledSpan::new(Some("Label 2".into()), 5, 5));

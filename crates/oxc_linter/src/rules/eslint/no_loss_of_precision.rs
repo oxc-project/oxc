@@ -25,7 +25,7 @@ pub struct NoLossOfPrecision;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow precision loss of number literal.
+    /// Disallow precision loss in numeric literals.
     ///
     /// ### Why is this bad?
     ///
@@ -85,6 +85,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     version = "0.0.7",
+    short_description = "Disallow precision loss in numeric literals.",
 );
 
 impl Rule for NoLossOfPrecision {

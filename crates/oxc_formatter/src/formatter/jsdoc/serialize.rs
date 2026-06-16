@@ -500,12 +500,6 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
     }
 }
 
-/// Trim trailing whitespace from an owned `String` in place, avoiding a reallocation.
-pub(super) fn truncate_trim_end(s: &mut String) {
-    let trimmed_len = s.trim_end().len();
-    s.truncate(trimmed_len);
-}
-
 /// Join an iterator of string slices with a separator, avoiding an intermediate `Vec`.
 /// Uses `size_hint()` for a rough capacity estimate to reduce reallocations.
 pub(super) fn join_iter<'a>(iter: impl Iterator<Item = &'a str>, sep: &str) -> String {

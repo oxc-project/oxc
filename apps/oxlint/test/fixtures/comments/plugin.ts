@@ -26,8 +26,13 @@ const testCommentsRule: Rule = {
     for (const comment of comments) {
       // Check getting `range` / `loc` properties twice results in same objects
       const { range, loc } = comment;
-      assert(range === comment.range);
-      assert(loc === comment.loc);
+      assert(comment.range === range);
+      assert(comment.loc === loc);
+
+      // Cloning comment with spread should include `loc` and it should be the same object
+      const clone = { ...comment };
+      assert(Object.hasOwn(clone, "loc"));
+      assert(clone.loc === loc);
 
       // Check `getRange` and `getLoc` return the same objects too
       assert(sourceCode.getRange(comment) === range);

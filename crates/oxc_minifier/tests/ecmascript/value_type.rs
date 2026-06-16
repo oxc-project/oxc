@@ -33,7 +33,7 @@ fn test_with_global_variables(
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
     assert!(!ret.panicked, "{source_text}");
-    assert!(ret.errors.is_empty(), "{source_text}");
+    assert!(ret.diagnostics.is_empty(), "{source_text}");
 
     let global_reference_checker = GlobalReferenceChecker { global_variable_names };
 

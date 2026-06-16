@@ -91,8 +91,8 @@ mod test {
         for (source, source_type, expected_counts) in cases {
             let allocator = Allocator::default();
             let ret = Parser::new(&allocator, source, source_type).parse();
-            assert!(ret.errors.is_empty());
-            let semantic = SemanticBuilder::new().build(&ret.program).semantic;
+            assert!(ret.diagnostics.is_empty());
+            let semantic = SemanticBuilder::new_linter().build(&ret.program).semantic;
             let comments = semantic.comments();
 
             assert_eq!(

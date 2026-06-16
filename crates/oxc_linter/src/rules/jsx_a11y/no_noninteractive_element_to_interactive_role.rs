@@ -14,7 +14,7 @@ use crate::{
     AstNode,
     context::LintContext,
     globals::HTML_TAG,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{
         get_element_type, has_jsx_prop_ignore_case, is_interactive_role, is_non_interactive_element,
     },
@@ -69,7 +69,7 @@ fn default_allowed_roles() -> FxHashMap<CompactStr, Vec<CompactStr>> {
     map
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct NoNoninteractiveElementToInteractiveRole(
     Box<NoNoninteractiveElementToInteractiveRoleConfig>,
 );
@@ -89,14 +89,13 @@ struct NoNoninteractiveElementToInteractiveRoleConfig {
     ///   "fieldset": ["radiogroup", "presentation"]
     /// }
     /// ```
+    #[serde(flatten)]
     allowed_roles: FxHashMap<CompactStr, Vec<CompactStr>>,
 }
 
-impl Default for NoNoninteractiveElementToInteractiveRole {
+impl Default for NoNoninteractiveElementToInteractiveRoleConfig {
     fn default() -> Self {
-        Self(Box::new(NoNoninteractiveElementToInteractiveRoleConfig {
-            allowed_roles: default_allowed_roles(),
-        }))
+        Self { allowed_roles: default_allowed_roles() }
     }
 }
 
@@ -142,10 +141,15 @@ declare_oxc_lint!(
     jsx_a11y,
     correctness,
     config = NoNoninteractiveElementToInteractiveRoleConfig,
-    version = "1.64.0"
+    version = "1.64.0",
+    short_description = "Disallow using an interactive WAI-ARIA role on a non-interactive HTML element.",
 );
 
 impl Rule for NoNoninteractiveElementToInteractiveRole {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::JSXOpeningElement(jsx_el) = node.kind() else {
             return;
@@ -193,27 +197,6 @@ impl Rule for NoNoninteractiveElementToInteractiveRole {
             ));
         }
     }
-
-    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let Some(config) = value.get(0) else {
-            return Ok(Self::default());
-        };
-
-        let Some(obj) = config.as_object() else {
-            return Ok(Self::default());
-        };
-
-        let mut allowed_roles = FxHashMap::default();
-        for (element, roles_value) in obj {
-            if let Some(roles_arr) = roles_value.as_array() {
-                let roles: Vec<CompactStr> =
-                    roles_arr.iter().filter_map(|v| v.as_str().map(CompactStr::new)).collect();
-                allowed_roles.insert(CompactStr::new(element), roles);
-            }
-        }
-
-        Ok(Self(Box::new(NoNoninteractiveElementToInteractiveRoleConfig { allowed_roles })))
-    }
 }
 
 #[test]
@@ -229,6 +212,12 @@ fn test() {
                 }
             } }
         })
+    }
+
+    fn custom_allowed_roles_config() -> serde_json::Value {
+        serde_json::json!([{
+            "table": ["grid"],
+        }])
     }
 
     // Default config uses recommended allowed roles.
@@ -350,6 +339,7 @@ fn test() {
         (r#"<li role="treeitem" />"#, None, None),
         (r#"<fieldset role="radiogroup" />"#, None, None),
         (r#"<fieldset role="presentation" />"#, None, None),
+        (r#"<table role="grid" />"#, Some(custom_allowed_roles_config()), None),
     ];
 
     let fail = vec![
@@ -436,6 +426,7 @@ fn test() {
         (r#"<thead role="menuitem" />"#, None, None),
         // Custom component mapped via settings to non-interactive element
         (r#"<Article role="button" />"#, None, Some(components_settings())),
+        (r#"<table role="button" />"#, Some(custom_allowed_roles_config()), None),
     ];
 
     // Strict mode tests: recommended allowed overrides become invalid.

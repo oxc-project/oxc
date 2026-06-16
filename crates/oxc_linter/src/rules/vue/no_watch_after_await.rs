@@ -30,7 +30,7 @@ pub struct NoWatchAfterAwait;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow asynchronously registered `watch`.
+    /// Disallow asynchronously-registered `watch`.
     ///
     /// ### Why is this bad?
     ///
@@ -69,6 +69,7 @@ declare_oxc_lint!(
     vue,
     correctness,
     version = "1.67.0",
+    short_description = "Disallow asynchronously-registered `watch`.",
 );
 
 const WATCH_FUNCTIONS: &[&str] = &["watch", "watchEffect"];
@@ -231,7 +232,7 @@ fn test() {
                   export default {
                     async setup() {
                       watch(foo, () => { /* ... */ }) // ok
-            
+
                       await doSomething()
                     }
                   }
@@ -280,7 +281,7 @@ fn test() {
                   export default {
                     async _setup() {
                       await doSomething()
-            
+
                       onMounted(() => { /* ... */ }) // error
                     }
                   }
@@ -430,7 +431,7 @@ fn test() {
                   export default {
                     async setup() {
                       await doSomething()
-            
+
                       watch(foo, () => { /* ... */ }) // error
                     }
                   }
@@ -447,7 +448,7 @@ fn test() {
                   export default {
                     async setup() {
                       await doSomething()
-            
+
                       watchEffect(() => { /* ... */ })
                       watch(foo, () => { /* ... */ })
                     }

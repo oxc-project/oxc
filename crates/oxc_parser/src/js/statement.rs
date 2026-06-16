@@ -42,10 +42,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let is_ambient_block = (is_top_level || in_ts_namespace_body) && self.ctx.has_ambient();
         let mut reported_ambient_statement = false;
 
-        // Check if we need to track potential await reparsing.
-        // This is only needed in unambiguous mode at top level when not in await context.
-        let mut track_await_reparse =
-            is_top_level && self.source_type.is_unambiguous() && !self.ctx.has_await();
+        // In unambiguous mode, top-level `await` parses as an identifier until ESM
+        // syntax commits to the Module goal.
+        let track_await_reparse = is_top_level && self.source_type.is_unambiguous();
 
         let mut expecting_directives = true;
         while !self.has_fatal_error() {
@@ -53,33 +52,30 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 break;
             }
 
-            // Eagerly commit to Module goal on `export` so the statement is parsed
-            // under `Await` on the first pass; otherwise the reparse below runs it
-            // again and the export binding gets recorded twice.
-            // `import` is not eager: TypeScript's `import name = ns.foo` is a
-            // script-compatible namespace alias, not module syntax.
-            if track_await_reparse
-                && (self.module_record_builder.has_module_syntax() || self.at(Kind::Export))
-            {
-                track_await_reparse = false;
-                self.ctx = self.ctx.and_await(true);
-            }
-
-            // Take checkpoint for every statement when tracking await reparse.
-            // We reset the flag and only store the checkpoint if an await identifier
-            // was actually encountered during parsing.
-            let checkpoint = if track_await_reparse {
-                self.state.encountered_await_identifier = false;
-                Some((statements.len(), self.checkpoint()))
+            // Commit once module syntax is detected (`export` commits eagerly in
+            // `parse_export_declaration`; `has_module_syntax()` excludes TS's
+            // script-compatible `import x = ns.foo`). Until committed, checkpoint each
+            // statement so an `await` identifier in it can be reparsed.
+            let checkpoint = if track_await_reparse && !self.ctx.has_await() {
+                if self.module_record_builder.has_module_syntax() {
+                    self.ctx = self.ctx.and_await(true);
+                    None
+                } else {
+                    self.state.encountered_await_identifier = false;
+                    Some((statements.len(), self.checkpoint()))
+                }
             } else {
                 None
             };
 
             let stmt = self.parse_statement_list_item(stmt_ctx);
 
-            // Store checkpoint only if await identifier was encountered
+            // Don't reparse a module declaration: `export` already committed to the
+            // Module goal while parsing, so reparsing would record the export twice.
+            // e.g. `@foo export default class C { x = await + 1 }`
             if let Some((stmt_index, checkpoint)) = checkpoint
                 && self.state.encountered_await_identifier
+                && !stmt.is_module_declaration()
             {
                 self.state.potential_await_reparse.push((stmt_index, checkpoint));
             }
@@ -188,7 +184,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             | Kind::Global
                 if self.is_ts && self.at_start_of_ts_declaration() =>
             {
-                self.parse_ts_declaration_statement(self.start_span())
+                self.parse_ts_declaration_statement(self.start_span(), stmt_ctx)
             }
             _ => self.parse_expression_or_labeled_statement(),
         };
@@ -395,10 +391,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Kind::Let => {
                 // `for (let`
                 let start_span = self.start_span();
-                let checkpoint = self.checkpoint();
-                self.bump_any(); // bump `let`
                 // disallow `for (let in ...`
-                if self.cur_kind().is_after_let() {
+                if self.lexer.peek_token().kind().is_after_let() {
+                    self.bump_any(); // bump `let`
                     return self.parse_variable_declaration_for_statement(
                         span,
                         start_span,
@@ -408,7 +403,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     );
                 }
                 // Should be a relatively cold branch, since most tokens after `let` will be allowed in most files
-                self.rewind(checkpoint);
             }
             _ => {}
         }
@@ -697,7 +691,24 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let span = self.start_span();
         self.bump_any(); // advance `switch`
         let discriminant = self.parse_paren_expression();
-        let cases = self.parse_normal_list(Kind::LCurly, Kind::RCurly, Self::parse_switch_case);
+        // A `switch` may contain at most one `default` clause. Track the first one
+        // and report only the first duplicate, all in the single parsing pass.
+        let mut first_default: Option<Span> = None;
+        let mut reported_duplicate = false;
+        let cases = self.parse_normal_list(Kind::LCurly, Kind::RCurly, |p| {
+            let case = p.parse_switch_case();
+            if case.test.is_none() {
+                match first_default {
+                    None => first_default = Some(case.span),
+                    Some(first_span) if !reported_duplicate => {
+                        p.error(diagnostics::switch_multiple_default_clause(first_span, case.span));
+                        reported_duplicate = true;
+                    }
+                    Some(_) => {}
+                }
+            }
+            case
+        });
         self.ast.statement_switch(self.end_span(span), discriminant, cases)
     }
 
@@ -825,29 +836,25 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Parse import statement or import expression.
     fn parse_import_statement(&mut self) -> Statement<'a> {
-        let checkpoint = self.checkpoint();
         let span = self.start_span();
-        self.bump_any();
-        if matches!(self.cur_kind(), Kind::Dot | Kind::LParen) {
-            // Parse the whole expression `import.meta.url` so a rewind is required.
-            self.rewind(checkpoint);
+        if matches!(self.lexer.peek_token().kind(), Kind::Dot | Kind::LParen) {
+            // Parse the whole expression `import.meta.url`.
             self.parse_expression_or_labeled_statement()
         } else {
+            self.bump_any(); // bump `import`
             self.parse_import_declaration(span, self.ctx.has_top_level())
         }
     }
 
     /// Parse statements that start with `sync`.
     fn parse_async_statement(&mut self, span: u32, stmt_ctx: StatementContext) -> Statement<'a> {
-        let checkpoint = self.checkpoint();
-        self.bump_any(); // bump `async`
-        let token = self.cur_token();
+        let token = self.lexer.peek_token();
         if token.kind() == Kind::Function && !token.is_on_new_line() {
+            self.bump_any(); // bump `async`
             return self.parse_function_declaration(span, /* async */ true, stmt_ctx);
         }
-        self.rewind(checkpoint);
         if self.is_ts && self.at_start_of_ts_declaration() {
-            return self.parse_ts_declaration_statement(span);
+            return self.parse_ts_declaration_statement(span, stmt_ctx);
         }
         self.parse_expression_or_labeled_statement()
     }

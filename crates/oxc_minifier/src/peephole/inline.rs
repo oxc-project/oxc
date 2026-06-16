@@ -2,6 +2,7 @@ use crate::generated::ancestor::Ancestor;
 use oxc_ast::ast::*;
 use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, ConstantValue};
 use oxc_span::GetSpan;
+use oxc_syntax::{scope::ScopeId, symbol::SymbolId};
 
 use crate::TraverseCtx;
 
@@ -11,15 +12,76 @@ impl<'a> PeepholeOptimizations {
     pub fn init_symbol_value(decl: &VariableDeclarator<'a>, ctx: &mut TraverseCtx<'a>) {
         let BindingPattern::BindingIdentifier(ident) = &decl.id else { return };
         let Some(symbol_id) = ident.symbol_id.get() else { return };
-        let value = if decl.kind.is_var() || Self::is_for_statement_init(ctx) {
-            // - Skip constant value inlining for `var` declarations, due to TDZ problems.
-            // - Set None for for statement initializers as the value of these are set by the for statement.
+        let value = if Self::is_for_statement_init(ctx) {
+            // for-statement initializers have their value set by the for statement itself.
+            None
+        } else if decl.kind.is_var() && !Self::is_hoisted_var_inlineable(decl, symbol_id, ctx) {
+            // `var` is hoisted: reads before the initializer line see `undefined`.
+            // Skip unless the safety predicate proves no such read exists.
             None
         } else {
             decl.init.as_ref().map_or(Some(ConstantValue::Undefined), |e| e.evaluate_value(ctx))
         };
         let is_fresh_value = decl.init.as_ref().is_some_and(Self::is_fresh_value_expression);
         ctx.init_value(symbol_id, value, is_fresh_value);
+    }
+
+    /// Predicate for inlining a hoisted `var x = <literal>;`. True when no read
+    /// can observe `x` as its hoisted `undefined`:
+    /// - the declarator sits at the current body's top scope and that body is
+    ///   still in its declarative prelude;
+    /// - it has an initializer (uninitialized `var foo;` would inline to
+    ///   `undefined`, which churns existing tests for marginal benefit);
+    /// - script-mode top-level vars are excluded (they alias the global object);
+    /// - at program scope, if the module loads any other module (`import`,
+    ///   `export … from`, `export * from`), skip: a cyclic importer can call
+    ///   into our exports and observe any var our exported functions/classes
+    ///   close over, regardless of export status;
+    /// - exactly one read, and it sits inside a nested function/arrow body
+    ///   (multi-use and same-call-frame reads are handled by
+    ///   `inline_identifier_reference`'s small-value rule or by
+    ///   `substitute_single_use_symbol`).
+    ///
+    /// Limitation: the constant is recorded here at the declarator's exit, so a
+    /// reader in a function declared *before* the var in source order has
+    /// already been visited and won't be inlined. Safe but suboptimal; the
+    /// common "flag declared at the top" pattern is unaffected.
+    fn is_hoisted_var_inlineable(
+        decl: &VariableDeclarator<'a>,
+        symbol_id: SymbolId,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
+        if decl.init.is_none() || Self::keep_top_level_var_in_script_mode(ctx) {
+            return false;
+        }
+        // `body_unsafe` is set by a preceding non-declarative statement, and the
+        // program root additionally starts unsafe when the module has loaders
+        // (see `enter_program`) — so this one check covers the cyclic-import gate.
+        let &(body_scope, body_unsafe) = ctx.state.body_unsafe_stack.last();
+        if body_unsafe || ctx.current_scope_id() != body_scope {
+            return false;
+        }
+        // Exactly one read, and it crosses a function boundary.
+        let mut reads = ctx.scoping().get_resolved_references(symbol_id).filter(|r| r.is_read());
+        let Some(read) = reads.next() else { return false };
+        reads.next().is_none()
+            && Self::read_crosses_function_boundary(read.scope_id(), body_scope, ctx)
+    }
+
+    /// True if the scope chain from `read_scope` to `body_scope` (exclusive of
+    /// `body_scope`) crosses any `Function` scope. `substitute_single_use_symbol`
+    /// only walks adjacent statements within the same call frame, so this is
+    /// the gap our path fills.
+    fn read_crosses_function_boundary(
+        read_scope: ScopeId,
+        body_scope: ScopeId,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
+        let scoping = ctx.scoping();
+        scoping
+            .scope_ancestors(read_scope)
+            .take_while(|&s| s != body_scope)
+            .any(|s| scoping.scope_flags(s).is_function())
     }
 
     /// Check if an expression creates a fresh value that cannot alias another binding
@@ -143,8 +205,8 @@ impl<'a> PeepholeOptimizations {
                 ConstantValue::Boolean(_) | ConstantValue::Undefined | ConstantValue::Null => true,
             }
         {
-            *expr = ctx.value_to_expr(expr.span(), cv.clone());
-            ctx.state.changed = true;
+            let new_expr = ctx.value_to_expr(expr.span(), cv.clone());
+            ctx.replace_expression(expr, new_expr);
         }
     }
 }

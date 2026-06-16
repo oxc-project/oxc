@@ -65,10 +65,11 @@ jobs:
           save-if: ${{ github.ref_name == 'main' }}
           shared-key: miri-windows
 
-      # `--lib --bins --tests` omits doctests, which Miri can't run
-      # https://github.com/oxc-project/oxc/pull/11092
       - name: Test oxc_allocator with Miri
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
         shell: bash
+        # Enable strict provenance checks
+        env:
+          MIRIFLAGS: -Zmiri-strict-provenance
         run: |
-          cargo +"${MIRI_TOOLCHAIN}" miri test --lib --bins --tests --all-features -p oxc_allocator
+          cargo +"${MIRI_TOOLCHAIN}" miri test --all-features -p oxc_allocator

@@ -72,6 +72,7 @@ declare_oxc_lint!(
     vue,
     correctness,
     version = "1.67.0",
+    short_description = "Enforce that a `return` statement is present in `emits` validators (in Vue.js 3.0.0+).",
 );
 
 impl Rule for ReturnInEmitsValidator {

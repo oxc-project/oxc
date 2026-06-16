@@ -68,7 +68,8 @@ declare_oxc_lint!(
     vue,
     correctness,
     fix,
-    version = "next",
+    version = "1.68.0",
+    short_description = "Require `props` type values to be a constructor function (e.g. `String`, `Number`, `Boolean`) rather than a string, number, or other literal.",
 );
 
 impl Rule for RequirePropTypeConstructor {

@@ -10,7 +10,10 @@ use oxc_semantic::{ScopeFlags, ScopeId};
 use oxc_span::SPAN;
 use oxc_traverse::Ancestor;
 
-use crate::{Helper, common::helper_loader::helper_call_expr, context::TraverseCtx};
+use crate::{
+    Helper, common::helper_loader::helper_call_expr, context::TraverseCtx,
+    utils::sync_function_symbol_flags,
+};
 
 use super::{
     ClassProperties,
@@ -61,6 +64,7 @@ impl<'a> ClassProperties<'a> {
         function.span = *span;
         function.id = Some(temp_binding.create_binding_identifier(ctx));
         function.r#type = FunctionType::FunctionDeclaration;
+        sync_function_symbol_flags(&function, ctx);
 
         // Change parent scope of function to current scope id and remove
         // strict mode flag if parent scope is not strict mode.

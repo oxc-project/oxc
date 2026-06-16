@@ -286,6 +286,7 @@ declare_oxc_lint!(
     conditional_fix,
     config = PreserveCaughtErrorOptions,
     version = "1.16.0",
+    short_description = "Enforces that when re-throwing an error in a catch block, the original error is preserved using the 'cause' property.",
 );
 impl PreserveCaughtError {
     fn check_try_statement<'a>(&self, try_stmt: &'a TryStatement<'a>, ctx: &LintContext<'a>) {
@@ -750,7 +751,6 @@ fn test() {
             None,
         ),
         // Throws a new Error, cause property is present but value is a different identifier
-        // Note: This should actually be a valid case since e === err, but still reporting as it's hard to track.
         (
             r#"try {
                         doSomething();

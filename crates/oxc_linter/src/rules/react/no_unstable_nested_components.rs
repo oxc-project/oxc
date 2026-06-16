@@ -113,6 +113,7 @@ declare_oxc_lint!(
     none,
     config = NoUnstableNestedComponentsConfig,
     version = "1.66.0",
+    short_description = "Disallows defining React components inside other components.",
 );
 
 impl Rule for NoUnstableNestedComponents {

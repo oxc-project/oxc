@@ -30,7 +30,7 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// Coding for the keyboard is important for users with physical disabilities who cannot use a mouse, AT compatibility, and screenreader users.
+    /// Coding for the keyboard is important for users with physical disabilities who cannot use a mouse, AT compatibility, and screen reader users.
     /// This does not apply for interactive or hidden elements.
     ///
     /// ### Examples
@@ -48,6 +48,7 @@ declare_oxc_lint!(
     jsx_a11y,
     correctness,
     version = "0.2.1",
+    short_description = "Enforce onClick is accompanied by at least one of the following: onKeyUp, onKeyDown, onKeyPress.",
 );
 
 impl Rule for ClickEventsHaveKeyEvents {

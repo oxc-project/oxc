@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 67/67 (100.00%)
-Positive Passed: 67/67 (100.00%)
-Negative Passed: 140/140 (100.00%)
+AST Parsed     : 69/69 (100.00%)
+Positive Passed: 69/69 (100.00%)
+Negative Passed: 149/149 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -355,18 +355,42 @@ Negative Passed: 140/140 (100.00%)
    ·                    ╰── `from` expected
    ╰────
 
+  × TS(2368): Type parameter name cannot be 'string'
+   ╭─[misc/fail/infer-reserved-type-name.ts:1:29]
+ 1 │ type T<X> = X extends infer string ? string : never;
+   ·                             ──────
+   ╰────
+
+  × Adjacent JSX elements must be wrapped in an enclosing tag.
+   ╭─[misc/fail/jsx-adjacent-elements.jsx:3:3]
+ 2 │   <div />
+ 3 │   <span />
+   ·   ─
+ 4 │ );
+   ╰────
+  help: Did you want a JSX fragment `<>...</>`?
+
+  × Adjacent JSX elements must be wrapped in an enclosing tag.
+   ╭─[misc/fail/jsx-element-followed-by-less-than.jsx:6:19]
+ 5 │ // JSX element as unwrapped adjacent JSX, and oxc follows them for consistency.
+ 6 │ const a = <div /> < 5;
+   ·                   ─
+   ╰────
+  help: Did you want a JSX fragment `<>...</>`?
+
   × Unexpected JSX expression
    ╭─[misc/fail/jsx-in-js.js:1:20]
  1 │ export const foo = <Foo />;
-   ·                    ───────
+   ·                    ─
    ╰────
   help: JSX syntax is disabled and should be enabled via the parser options
 
-  × Unexpected token
+  × Unexpected JSX expression
    ╭─[misc/fail/jsx-like-in-js.js:1:20]
  1 │ export const foo = <Foo;
    ·                    ─
    ╰────
+  help: JSX syntax is disabled and should be enabled via the parser options
 
   × The keyword 'let' is reserved
    ╭─[misc/fail/let-member-expression.js:4:1]
@@ -3548,6 +3572,30 @@ Negative Passed: 140/140 (100.00%)
    ╰────
   help: Remove the `?`
 
+  × The keyword 'await' is reserved
+    ╭─[misc/fail/oxc-22684.js:9:7]
+  8 │ export default class C {
+  9 │   x = await + 1;
+    ·       ─────
+ 10 │ }
+    ╰────
+
+  × TS(1255): A definite assignment assertion '!' is not permitted in this context.
+   ╭─[misc/fail/oxc-23170.ts:2:16]
+ 1 │ declare class AmbientAccessor {
+ 2 │   accessor prop!: string;
+   ·                ─
+ 3 │ }
+   ╰────
+
+  × TS(1255): A definite assignment assertion '!' is not permitted in this context.
+   ╭─[misc/fail/oxc-23170.ts:6:25]
+ 5 │ abstract class AbstractAccessor {
+ 6 │   abstract accessor prop!: string;
+   ·                         ─
+ 7 │ }
+   ╰────
+
   × Empty parenthesized expression
    ╭─[misc/fail/oxc-232.js:1:5]
  1 │ x = (/* a */)
@@ -3819,6 +3867,20 @@ Negative Passed: 140/140 (100.00%)
    ╰────
   help: Add an identifier after '?.'
 
+  × TS(2398): 'constructor' cannot be used as a parameter property name.
+   ╭─[misc/fail/oxc-ts-2398.ts:1:29]
+ 1 │ class A {constructor(public constructor){}}
+   ·                             ───────────
+ 2 │ class B {constructor(readonly constructor){}}
+   ╰────
+
+  × TS(2398): 'constructor' cannot be used as a parameter property name.
+   ╭─[misc/fail/oxc-ts-2398.ts:2:31]
+ 1 │ class A {constructor(public constructor){}}
+ 2 │ class B {constructor(readonly constructor){}}
+   ·                               ───────────
+   ╰────
+
   × Invalid rest element target in destructuring assignment
    ╭─[misc/fail/rest-assignment-target.js:1:6]
  1 │ ({...[]} = {});
@@ -3858,3 +3920,27 @@ Negative Passed: 140/140 (100.00%)
  3 │ }
    ╰────
   help: If this is intended to be the condition for the switch statement, add `case` before it.
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[misc/fail/ts-unerasable-as-chained.ts:4:33]
+ 3 │ // so the trailing `*` still makes the assertion impossible to erase. Syntax error.
+ 4 │ const x = 1 + 1 as any as number * 2;
+   ·                                 ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[misc/fail/ts-unerasable-as.ts:4:26]
+ 3 │ // trailing `*` binds tighter than the leading `+`. This is a syntax error.
+ 4 │ const x = 1 + 1 as number * 2;
+   ·                          ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[misc/fail/ts-unerasable-satisfies.ts:4:33]
+ 3 │ // is a syntax error.
+ 4 │ const x = 1 + 1 satisfies number * 2;
+   ·                                 ▲
+   ╰────
+  help: Try inserting a semicolon here

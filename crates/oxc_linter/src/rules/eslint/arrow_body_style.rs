@@ -44,19 +44,29 @@ fn unexpected_block_with_unknown_help_diagnostic(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, PartialEq, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 enum Mode {
+    /// Enforces no braces where they can be omitted (default).
     #[default]
     AsNeeded,
+    /// Enforces braces around the function body.
     Always,
+    /// Enforces no braces around the function body (constrains arrow functions to the role of returning an expression).
     Never,
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(default)]
-pub struct ArrowBodyStyle(Mode, ArrowBodyStyleConfig);
+pub struct ArrowBodyStyle(
+    /// Controls when braces are required around arrow function bodies.
+    Mode,
+    /// Additional options for the `as-needed` mode.
+    ArrowBodyStyleConfig,
+);
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct ArrowBodyStyleConfig {
+    /// Requires braces and an explicit return for object literals. This option only applies when
+    /// the first option is `"as-needed"`.
     require_return_for_object_literal: bool,
 }
 
@@ -72,32 +82,6 @@ declare_oxc_lint!(
     ///
     /// Inconsistent use of block vs. concise bodies makes code harder to read.
     /// Concise bodies are limited to a single expression, whose value is implicitly returned.
-    ///
-    /// ### Options
-    ///
-    /// First option:
-    /// - Type: `string`
-    /// - Enum: `"always"`, `"as-needed"`, `"never"`
-    /// - Default: `"as-needed"`
-    ///
-    /// Possible values:
-    /// * `never` enforces no braces around the function body (constrains arrow functions to the role of returning an expression)
-    /// * `always` enforces braces around the function body
-    /// * `as-needed` enforces no braces where they can be omitted (default)
-    ///
-    /// Second option:
-    /// - Type: `object`
-    /// - Properties:
-    ///     - `requireReturnForObjectLiteral`: `boolean` (default: `false`) - requires braces and an explicit return for object literals.
-    ///
-    /// Note: This option only applies when the first option is `"as-needed"`.
-    ///
-    /// Example configuration:
-    /// ```json
-    /// {
-    ///     "arrow-body-style": ["error", "as-needed", { "requireReturnForObjectLiteral": true }]
-    /// }
-    /// ```
     ///
     /// ### Examples
     ///
@@ -196,6 +180,7 @@ declare_oxc_lint!(
     fix,
     config = ArrowBodyStyle,
     version = "1.4.0",
+    short_description = "Enforce consistent use of braces in arrow functions.",
 );
 
 impl Rule for ArrowBodyStyle {
@@ -258,14 +243,15 @@ impl ArrowBodyStyle {
         match mode {
             Mode::Never => {
                 // Mode::Never: report any block body
-                if body.statements.is_empty() {
+                if body.is_empty() {
                     // TODO: implement a fix for empty block bodies
                     ctx.diagnostic(unexpected_empty_block_diagnostic(body.span));
                     return;
                 }
 
                 // Check if we can fix (single return with argument)
-                if body.statements.len() == 1
+                if body.directives.is_empty()
+                    && body.statements.len() == 1
                     && let Statement::ReturnStatement(return_statement) = &body.statements[0]
                     && let Some(return_arg) = &return_statement.argument
                 {
@@ -285,7 +271,7 @@ impl ArrowBodyStyle {
                 // Cannot auto-fix other cases
                 ctx.diagnostic(unexpected_block_with_unknown_help_diagnostic(body.span));
             }
-            Mode::AsNeeded if body.statements.len() == 1 => {
+            Mode::AsNeeded if body.directives.is_empty() && body.statements.len() == 1 => {
                 if let Statement::ReturnStatement(return_statement) = &body.statements[0] {
                     // Skip if requireReturnForObjectLiteral and returning an object
                     if self.1.require_return_for_object_literal
@@ -567,6 +553,7 @@ fn test() {
             "var foo = () => { return { bar: 0 }; };",
             Some(serde_json::json!(["as-needed", { "requireReturnForObjectLiteral": true }])),
         ),
+        (r#"var foo = () => { "use strict"; return 0; };"#, None),
     ];
 
     let fail = vec![
@@ -730,6 +717,8 @@ fn test() {
         ("var foo = () => { return {a: 1}.b + c && d };", Some(serde_json::json!(["as-needed"]))),
         ("var foo = () => { return {a: 1}.b.c + d };", Some(serde_json::json!(["as-needed"]))),
         ("var foo = () => { return {a: 1}.b() + c };", Some(serde_json::json!(["as-needed"]))),
+        (r#"var foo = () => { "use strict"; return 0; };"#, Some(serde_json::json!(["never"]))),
+        (r#"var foo = () => { "use strict"; };"#, Some(serde_json::json!(["never"]))),
     ];
 
     let fix = vec![
@@ -1103,6 +1092,16 @@ var foo = () =>
             "const a = () => { return/* comment */1; };",
             "const a = () =>  /* comment */1 ;",
             Some(serde_json::json!(["as-needed"])),
+        ),
+        (
+            r#"var foo = () => { "use strict"; return 0; };"#,
+            r#"var foo = () => { "use strict"; return 0; };"#,
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            r#"var foo = () => { "use strict"; };"#,
+            r#"var foo = () => { "use strict"; };"#,
+            Some(serde_json::json!(["never"])),
         ),
     ];
 

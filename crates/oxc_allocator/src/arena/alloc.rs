@@ -200,13 +200,13 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     ///
     /// #[derive(Clone, Debug, Eq, PartialEq)]
     /// struct Sheep {
-    ///     name: String,
+    ///     name: &'static str,
     /// }
     ///
     /// let originals = [
-    ///     Sheep { name: "Alice".into() },
-    ///     Sheep { name: "Bob".into() },
-    ///     Sheep { name: "Cathy".into() },
+    ///     Sheep { name: "Alice" },
+    ///     Sheep { name: "Bob" },
+    ///     Sheep { name: "Cathy" },
     /// ];
     ///
     /// let arena = Arena::new();
@@ -329,9 +329,14 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     /// ```
     /// # use oxc_allocator::arena::Arena;
     ///
+    /// #[derive(Clone, Debug, Eq, PartialEq)]
+    /// struct Sheep {
+    ///     name: &'static str,
+    /// }
+    ///
     /// let arena = Arena::new();
-    /// let s: String = "Hello Arena!".to_string();
-    /// let x: &[String] = arena.alloc_slice_fill_clone(2, &s);
+    /// let s = Sheep { name: "Flossy" };
+    /// let x: &[Sheep] = arena.alloc_slice_fill_clone(2, &s);
     /// assert_eq!(x.len(), 2);
     /// assert_eq!(&x[0], &s);
     /// assert_eq!(&x[1], &s);

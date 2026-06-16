@@ -101,7 +101,7 @@ pub(super) fn is_error_constructor(name: &str) -> bool {
 }
 
 #[rustfmt::skip]
-pub(super) fn is_typed_array_constructor(name: &str) -> bool {
+pub fn is_typed_array_constructor(name: &str) -> bool {
     matches!(name, "Int8Array" | "Uint8Array" | "Uint8ClampedArray"
             | "Int16Array" | "Uint16Array" | "Int32Array" | "Uint32Array"
             | "Float32Array" | "Float64Array" | "BigInt64Array" | "BigUint64Array")

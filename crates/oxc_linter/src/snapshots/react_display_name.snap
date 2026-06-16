@@ -401,3 +401,13 @@ source: crates/oxc_linter/src/tester.rs
    ·       ────────
    ╰────
   help: Add a `displayName` property to the component.
+
+  ⚠ react(display-name): Component definition is missing display name.
+   ╭─[display_name.tsx:2:32]
+ 1 │     
+ 2 │ ╭─▶                 export default function Hello() {
+ 3 │ │                       return <div>Hello {this.props.name}</div>;
+ 4 │ ╰─▶                 }
+ 5 │                 
+   ╰────
+  help: Add a `displayName` property to the component.

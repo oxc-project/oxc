@@ -14,9 +14,9 @@ use crate::{AstNode, context::LintContext, rule::Rule, utils::is_same_expression
 
 fn prefer_for_of_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
-        "Expected a `for-of` loop instead of a `for` loop with this simple iteration.",
+        "Expected a `for...of` loop instead of a `for` loop with this simple iteration.",
     )
-    .with_help("Consider using a for-of loop for this simple iteration.")
+    .with_help("Consider using a `for...of` loop for this simple iteration.")
     .with_label(span)
 }
 
@@ -26,12 +26,12 @@ pub struct PreferForOf;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforces the use of for-of loop instead of a for loop with a simple iteration.
+    /// Enforces the use of a `for...of` loop instead of a `for` loop with simple iteration.
     ///
     /// ### Why is this bad?
     ///
-    /// Using a for loop with a simple iteration over an array can be replaced with a more concise
-    /// and readable for-of loop. For-of loops are easier to read and less error-prone, as they
+    /// Using a `for` loop with a simple iteration over an array can be replaced with a more concise
+    /// and readable `for...of` loop. `for...of` loops are easier to read and less error-prone, as they
     /// eliminate the need for an index variable and manual array access.
     ///
     /// ### Examples
@@ -54,6 +54,7 @@ declare_oxc_lint!(
     style,
     pending,
     version = "0.2.16",
+    short_description = "Enforces the use of a `for...of` loop instead of a `for` loop with simple iteration.",
 );
 
 trait ExpressionExt {

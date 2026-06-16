@@ -1,9 +1,9 @@
-commit: e5509e21
+commit: 7964e22f
 
 parser_typescript Summary:
 AST Parsed     : 9779/9779 (100.00%)
 Positive Passed: 9779/9779 (100.00%)
-Negative Passed: 1628/2640 (61.67%)
+Negative Passed: 1642/2640 (62.20%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -217,8 +217,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/defaultValue
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/defaultValueInFunctionOverload1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/defaultValueInFunctionTypes.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/definiteAssignmentWithErrorStillStripped.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/deleteOperator1.ts
 
@@ -720,8 +718,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/optionalPara
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/optionalParamReferencingOtherParams3.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/optionalSetterParam.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/orderMattersForSignatureGroupIdentity.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/overloadAssignmentCompat.ts
@@ -741,8 +737,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/overloadsInD
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/overshifts.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/parameterDecoratorsEmitCrash.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/parameterPropertyInConstructor3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/pathMappingBasedModuleResolution_rootImport_aliasWithRoot_realRootFile.ts
 
@@ -900,15 +894,11 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/this_inside-
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/topLevelLambda.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/typeAliasDeclarationEmit3.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/typeCheckingInsideFunctionExpressionInArray.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/typeGuardConstructorClassAndNumber.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/typeGuardConstructorDerivedClass.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/typeInterfaceDeclarationsInBlockStatements1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/typeOfEnumAndVarRedeclarations.ts
 
@@ -1083,8 +1073,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/constEnum
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/constEnums/constEnumPropertyAccess2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/constEnums/importElisionConstEnumMerge1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/controlFlow/assertionTypePredicates1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/controlFlow/controlFlowAliasing.ts
 
@@ -1404,10 +1392,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressio
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormInstanceOf.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormThisMember.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormThisMemberErrors.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardRedundancy.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardsInIfStatement.ts
@@ -1421,8 +1405,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressio
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardsWithInstanceOfByConstructorSignature.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardsWithInstanceOfBySymbolHasInstance.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typePredicateOnVariableDeclaration01.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeSatisfaction/typeSatisfaction_optionalMemberConformance.ts
 
@@ -1728,12 +1710,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Accessors/parserAccessors3.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Accessors/parserGetAccessorWithTypeParameters1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Accessors/parserSetAccessorWithTypeAnnotation1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Accessors/parserSetAccessorWithTypeParameters1.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClass2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration12.ts
@@ -1765,8 +1741,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessor1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration17.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration2.ts
 
@@ -2001,8 +1975,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/typ
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/propertyAccessOnTypeParameterWithConstraints4.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/propertyAccessOnTypeParameterWithConstraints5.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/typeParameterConstModifiers.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/typesWithDuplicateTypeParameters.ts
 
@@ -5946,6 +5918,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  2 │ 
    ╰────
 
+  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
+   ╭─[typescript/tests/cases/compiler/definiteAssignmentWithErrorStillStripped.ts:2:6]
+ 1 │ class C {
+ 2 │     p!;
+   ·      ─
+ 3 │ }
+   ╰────
+
   × Delete of an unqualified identifier in strict mode.
    ╭─[typescript/tests/cases/compiler/deleteOperatorInStrictMode.ts:3:8]
  2 │ var a;
@@ -7673,6 +7653,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
   help: Remove these parameters here
 
+  × TS(1095): A 'set' accessor cannot have a return type annotation.
+   ╭─[typescript/tests/cases/compiler/gettersAndSettersErrors.ts:7:29]
+ 6 │     public get Goo(v:string):string {return null;} // error - getters must not have a parameter
+ 7 │     public set Goo(v:string):string {} // error - setters must not specify a return type
+   ·                             ───────
+ 8 │ }
+   ╰────
+
   × Identifier `Foo` has already been declared
    ╭─[typescript/tests/cases/compiler/gettersAndSettersErrors.ts:3:16]
  2 │     public get Foo() { return "foo";} // ok
@@ -8382,12 +8370,13 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  2 │ var v = <string>undefined;
    ╰────
 
-  × Unexpected token
+  × Unexpected JSX expression
    ╭─[typescript/tests/cases/compiler/jsFileCompilationTypeAssertions.ts:2:9]
  1 │ 0 as number;
  2 │ var v = <string>undefined;
    ·         ─
    ╰────
+  help: JSX syntax is disabled and should be enabled via the parser options
 
   × Expected `,` or `)` but found `:`
    ╭─[typescript/tests/cases/compiler/jsFileCompilationTypeOfParameter.ts:1:13]
@@ -10212,6 +10201,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  12 │     ?(): any; //err
     ╰────
 
+  × TS(1051): A 'set' accessor cannot have an optional parameter.
+   ╭─[typescript/tests/cases/compiler/optionalSetterParam.ts:3:20]
+ 2 │ 
+ 3 │     public set bar(param?:any) { }
+   ·                    ──────────
+ 4 │ }
+   ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/compiler/overloadConsecutiveness.ts:3:14]
  2 │ 
@@ -10328,6 +10325,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  3 │     constructor(public names: string);
    ·                 ────────────────────
  4 │     constructor(public names: string, public ages: number) {
+   ╰────
+
+  × TS(2398): 'constructor' cannot be used as a parameter property name.
+   ╭─[typescript/tests/cases/compiler/parameterPropertyInConstructor3.ts:2:22]
+ 1 │ class Foo {
+ 2 │   constructor(public constructor: string) {}
+   ·                      ───────────
+ 3 │ }
    ╰────
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
@@ -10636,45 +10641,50 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ╰────
   help: Did you mean to write 'undefined | null | undefined'?
 
-  × Unexpected token
+  × Unexpected JSX expression
    ╭─[typescript/tests/cases/compiler/parseJsxElementInUnaryExpressionNoCrash1.ts:1:2]
  1 │ ~< <
    ·  ─
    ╰────
+  help: JSX syntax is disabled and should be enabled via the parser options
 
   × Unexpected JSX expression
    ╭─[typescript/tests/cases/compiler/parseJsxElementInUnaryExpressionNoCrash2.ts:1:2]
  1 │ ~<></> <
-   ·  ─────
+   ·  ─
    ╰────
   help: JSX syntax is disabled and should be enabled via the parser options
 
-  × Unexpected token
+  × Unexpected JSX expression
    ╭─[typescript/tests/cases/compiler/parseJsxElementInUnaryExpressionNoCrash3.ts:1:2]
  1 │ !< {:>
    ·  ─
    ╰────
+  help: JSX syntax is disabled and should be enabled via the parser options
 
-  × Unexpected token
+  × Unexpected JSX expression
    ╭─[typescript/tests/cases/compiler/parseUnaryExpressionNoTypeAssertionInJsx1.ts:2:13]
  1 │ const x = "oops";
  2 │ const y = + <number> x;
    ·             ─
    ╰────
+  help: JSX syntax is disabled and should be enabled via the parser options
 
-  × Unexpected token
+  × Unexpected JSX expression
    ╭─[typescript/tests/cases/compiler/parseUnaryExpressionNoTypeAssertionInJsx2.ts:2:13]
  1 │ const x = "oops";
  2 │ const y = + <> x;
    ·             ─
    ╰────
+  help: JSX syntax is disabled and should be enabled via the parser options
 
-  × Unexpected token
+  × Unexpected JSX expression
    ╭─[typescript/tests/cases/compiler/parseUnaryExpressionNoTypeAssertionInJsx3.ts:2:13]
  1 │ const x = "oops";
  2 │ const y = + <1234> x;
    ·             ─
    ╰────
+  help: JSX syntax is disabled and should be enabled via the parser options
 
   × Unexpected token
    ╭─[typescript/tests/cases/compiler/parseUnaryExpressionNoTypeAssertionInJsx4.ts:5:14]
@@ -11625,7 +11635,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
   help: Remove this `?`. The default value is an empty array
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
    ╭─[typescript/tests/cases/compiler/restParamAsOptional.ts:2:16]
  1 │ function f(...x?) { }
  2 │ function f2(...x = []) { }
@@ -12971,22 +12981,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  12 │         }
     ╰────
 
-  × Keywords cannot contain escape characters
-    ╭─[typescript/tests/cases/compiler/switchStatementsWithMultipleDefaults.ts:25:13]
- 24 │             default:    // Error, third 'default' clause
- 25 │             def\u0061ult: // Error, fourth 'default' clause.
-    ·             ────────────
- 26 │             // Errors on fifth-seventh
-    ╰────
-
-  × TS(1108): A 'return' statement can only be used within a function body.
-    ╭─[typescript/tests/cases/compiler/switchStatementsWithMultipleDefaults.ts:27:22]
- 26 │             // Errors on fifth-seventh
- 27 │             default: return;
-    ·                      ──────
- 28 │             default: default:
-    ╰────
-
   × TS(1113): A 'default' clause cannot appear more than once in a 'switch' statement.
    ╭─[typescript/tests/cases/compiler/switchStatementsWithMultipleDefaults.ts:6:5]
  5 │         case 2:
@@ -13009,6 +13003,22 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  21 │ ├─▶                 break;
     · ╰──── Another 'default' clause cannot appear here.
  22 │                 case 10000:
+    ╰────
+
+  × Keywords cannot contain escape characters
+    ╭─[typescript/tests/cases/compiler/switchStatementsWithMultipleDefaults.ts:25:13]
+ 24 │             default:    // Error, third 'default' clause
+ 25 │             def\u0061ult: // Error, fourth 'default' clause.
+    ·             ────────────
+ 26 │             // Errors on fifth-seventh
+    ╰────
+
+  × TS(1108): A 'return' statement can only be used within a function body.
+    ╭─[typescript/tests/cases/compiler/switchStatementsWithMultipleDefaults.ts:27:22]
+ 26 │             // Errors on fifth-seventh
+ 27 │             default: return;
+    ·                      ──────
+ 28 │             default: default:
     ╰────
 
   × TS(1113): A 'default' clause cannot appear more than once in a 'switch' statement.
@@ -13396,6 +13406,33 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    · ╰── A newline is not expected here
    ╰────
 
+  × Declaration cannot appear in a single-statement context
+   ╭─[typescript/tests/cases/compiler/typeAliasDeclarationEmit3.ts:3:9]
+ 2 │     for (let i = 0; i < 1; i++)
+ 3 │         type foo = [];
+   ·         ──────────────
+ 4 │         console.log('f1');
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Declaration cannot appear in a single-statement context
+    ╭─[typescript/tests/cases/compiler/typeAliasDeclarationEmit3.ts:9:9]
+  8 │     while (true)
+  9 │         type foo = [];
+    ·         ──────────────
+ 10 │         console.log('f2');
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Declaration cannot appear in a single-statement context
+    ╭─[typescript/tests/cases/compiler/typeAliasDeclarationEmit3.ts:15:9]
+ 14 │     if (true)
+ 15 │         type foo = [];
+    ·         ──────────────
+ 16 │         console.log('f3');
+    ╰────
+  help: Wrap this declaration in a block statement
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/compiler/typeAliasDeclareKeywordNewlines.ts:5:8]
  4 │ // The following is invalid but should declare a type alias named 'T1':
@@ -13404,6 +13441,25 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  6 │ T1 = null;
    ╰────
   help: Try inserting a semicolon here
+
+  × Declaration cannot appear in a single-statement context
+   ╭─[typescript/tests/cases/compiler/typeInterfaceDeclarationsInBlockStatements1.ts:4:13]
+ 3 │ function f1() {
+ 4 │   if (true) type s = string;
+   ·             ────────────────
+ 5 │   console.log("" as s);
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Declaration cannot appear in a single-statement context
+    ╭─[typescript/tests/cases/compiler/typeInterfaceDeclarationsInBlockStatements1.ts:17:5]
+ 16 │       if (true)
+ 17 │ ╭─▶     interface s {
+ 18 │ │         length: number;
+ 19 │ ╰─▶     }
+ 20 │       console.log("" as s);
+    ╰────
+  help: Wrap this declaration in a block statement
 
   × TS(2457): Type alias name cannot be 'undefined'
    ╭─[typescript/tests/cases/compiler/typeNamedUndefined1.ts:3:17]
@@ -16972,6 +17028,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  29 │ }
     ╰────
 
+  × TS(18019): 'abstract' modifier cannot be used with a private identifier.
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:32:14]
+ 31 │ abstract class B {
+ 32 │     abstract #quux = 3;      // Error
+    ·              ─────
+ 33 │ }
+    ╰────
+
   × TS(1267): Property '#quux' cannot have an initializer because it is marked abstract.
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:32:14]
  31 │ abstract class B {
@@ -16994,14 +17058,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  26 │     declare set #whatProp(value: number)         // Error
     ·                 ─────────
  27 │     async get #asyncProp() { return 1; }         // Error
-    ╰────
-
-  × TS(18019): 'abstract' modifier cannot be used with a private identifier.
-    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:32:14]
- 31 │ abstract class B {
- 32 │     abstract #quux = 3;      // Error
-    ·              ─────
- 33 │ }
     ╰────
 
   × Private identifier '#prop' is not allowed outside class bodies
@@ -17422,6 +17478,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  12 │ };
     ╰────
 
+  × TS(1255): A definite assignment assertion '!' is not permitted in this context.
+    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/derivedUninitializedPropertyDeclaration.ts:12:21]
+ 11 │ class BDBang extends A {
+ 12 │     declare property!: any; // ! is not allowed, this is an ambient declaration
+    ·                     ─
+ 13 │ }
+    ╰────
+
   × TS(1031): 'declare' modifier cannot appear on class elements of this kind.
     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/derivedUninitializedPropertyDeclaration.ts:15:5]
  14 │ class BOther extends A {
@@ -17767,6 +17831,110 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
   help: Only 'readonly' modifier is allowed here.
 
+  × TS(1228): A type predicate is only allowed in return type position for functions and methods.
+     ╭─[typescript/tests/cases/conformance/controlFlow/assertionTypePredicates1.ts:157:37]
+ 156 │ 
+ 157 │ declare let Q1: new (x: unknown) => x is string;
+     ·                                     ───────────
+ 158 │ declare let Q2: new (x: boolean) => asserts x;
+     ╰────
+
+  × TS(1228): A type predicate is only allowed in return type position for functions and methods.
+     ╭─[typescript/tests/cases/conformance/controlFlow/assertionTypePredicates1.ts:158:37]
+ 157 │ declare let Q1: new (x: unknown) => x is string;
+ 158 │ declare let Q2: new (x: boolean) => asserts x;
+     ·                                     ─────────
+ 159 │ declare let Q3: new (x: unknown) => asserts x is string;
+     ╰────
+
+  × TS(1228): A type predicate is only allowed in return type position for functions and methods.
+     ╭─[typescript/tests/cases/conformance/controlFlow/assertionTypePredicates1.ts:159:37]
+ 158 │ declare let Q2: new (x: boolean) => asserts x;
+ 159 │ declare let Q3: new (x: unknown) => asserts x is string;
+     ·                                     ───────────────────
+ 160 │ 
+     ╰────
+
+  × TS(1228): A type predicate is only allowed in return type position for functions and methods.
+     ╭─[typescript/tests/cases/conformance/controlFlow/assertionTypePredicates1.ts:162:15]
+ 161 │ declare class Wat {
+ 162 │     get p1(): this is string;
+     ·               ──────────────
+ 163 │     set p1(x: this is string);
+     ╰────
+
+  × TS(1228): A type predicate is only allowed in return type position for functions and methods.
+     ╭─[typescript/tests/cases/conformance/controlFlow/assertionTypePredicates1.ts:163:15]
+ 162 │     get p1(): this is string;
+ 163 │     set p1(x: this is string);
+     ·               ──────────────
+ 164 │     get p2(): asserts this is string;
+     ╰────
+
+  × TS(1228): A type predicate is only allowed in return type position for functions and methods.
+     ╭─[typescript/tests/cases/conformance/controlFlow/assertionTypePredicates1.ts:164:15]
+ 163 │     set p1(x: this is string);
+ 164 │     get p2(): asserts this is string;
+     ·               ──────────────────────
+ 165 │     set p2(x: asserts this is string);
+     ╰────
+
+  × TS(1228): A type predicate is only allowed in return type position for functions and methods.
+     ╭─[typescript/tests/cases/conformance/controlFlow/assertionTypePredicates1.ts:165:15]
+ 164 │     get p2(): asserts this is string;
+ 165 │     set p2(x: asserts this is string);
+     ·               ──────────────────────
+ 166 │ }
+     ╰────
+
+  × TS(1263): Declarations with initializers cannot also have definite assignment assertions.
+    ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertions.ts:20:6]
+ 19 │ class C3 {
+ 20 │     a! = 1;
+    ·      ─
+ 21 │     b!: number = 1;
+    ╰────
+
+  × TS(1263): Declarations with initializers cannot also have definite assignment assertions.
+    ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertions.ts:21:6]
+ 20 │     a! = 1;
+ 21 │     b!: number = 1;
+    ·      ─
+ 22 │     static c!: number;
+    ╰────
+
+  × TS(1255): A definite assignment assertion '!' is not permitted in this context.
+    ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertions.ts:22:13]
+ 21 │     b!: number = 1;
+ 22 │     static c!: number;
+    ·             ─
+ 23 │     d!;
+    ╰────
+
+  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
+    ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertions.ts:23:6]
+ 22 │     static c!: number;
+ 23 │     d!;
+    ·      ─
+ 24 │ }
+    ╰────
+
+  × TS(1255): A definite assignment assertion '!' is not permitted in this context.
+    ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertions.ts:29:6]
+ 28 │ declare class C4 {
+ 29 │     a!: number;
+    ·      ─
+ 30 │ }
+    ╰────
+
+  × TS(1255): A definite assignment assertion '!' is not permitted in this context.
+    ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertions.ts:35:15]
+ 34 │ abstract class C5 {
+ 35 │     abstract a!: number;
+    ·               ─
+ 36 │ }
+    ╰────
+
   × TS(1264): Declarations with definite assignment assertions must also have type annotations.
     ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertions.ts:69:10]
  68 │ function f4() {
@@ -17789,6 +17957,30 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  71 │     let c!: number = 1;
     ·          ─
  72 │ }
+    ╰────
+
+  × TS(1255): A definite assignment assertion '!' is not permitted in this context.
+    ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertions.ts:76:15]
+ 75 │ 
+ 76 │ declare let v1!: number;
+    ·               ─
+ 77 │ declare var v2!: number;
+    ╰────
+
+  × TS(1255): A definite assignment assertion '!' is not permitted in this context.
+    ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertions.ts:77:15]
+ 76 │ declare let v1!: number;
+ 77 │ declare var v2!: number;
+    ·               ─
+ 78 │ 
+    ╰────
+
+  × TS(1255): A definite assignment assertion '!' is not permitted in this context.
+    ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertions.ts:80:7]
+ 79 │ declare namespace foo {
+ 80 │     var v!: number;
+    ·          ─
+ 81 │ }
     ╰────
 
   × Expected `,` or `}` but found `!`
@@ -18052,6 +18244,38 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  4 │         baz = yield 1,
    ╰────
   help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × TS(2431): Enum name cannot be 'any'
+   ╭─[typescript/tests/cases/conformance/enums/enumErrors.ts:2:6]
+ 1 │ // Enum named with PredefinedTypes
+ 2 │ enum any { }
+   ·      ───
+ 3 │ enum number { }
+   ╰────
+
+  × TS(2431): Enum name cannot be 'number'
+   ╭─[typescript/tests/cases/conformance/enums/enumErrors.ts:3:6]
+ 2 │ enum any { }
+ 3 │ enum number { }
+   ·      ──────
+ 4 │ enum string { }
+   ╰────
+
+  × TS(2431): Enum name cannot be 'string'
+   ╭─[typescript/tests/cases/conformance/enums/enumErrors.ts:4:6]
+ 3 │ enum number { }
+ 4 │ enum string { }
+   ·      ──────
+ 5 │ enum boolean { }
+   ╰────
+
+  × TS(2431): Enum name cannot be 'boolean'
+   ╭─[typescript/tests/cases/conformance/enums/enumErrors.ts:5:6]
+ 4 │ enum string { }
+ 5 │ enum boolean { }
+   ·      ───────
+ 6 │ 
+   ╰────
 
   × Expected `,` or `}` but found `;`
     ╭─[typescript/tests/cases/conformance/enums/enumErrors.ts:48:18]
@@ -18820,7 +19044,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ╰────
   help: Remove this `?`. The default value is an empty array
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[typescript/tests/cases/conformance/es6/destructuring/destructuringParameterDeclaration4.ts:15:16]
  14 │ function a3(...b?) { }            // Error, can't be optional
  15 │ function a4(...b = [1,2,3]) { }   // Error, can't have initializer
@@ -22290,6 +22514,100 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ╰────
   help: Try inserting a semicolon here
 
+  × TS(1228): A type predicate is only allowed in return type position for functions and methods.
+   ╭─[typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormThisMember.ts:4:10]
+ 3 │     export class FileSystemObject {
+ 4 │         isFSO: this is FileSystemObject;
+   ·                ────────────────────────
+ 5 │         get isFile(): this is File {
+   ╰────
+
+  × TS(1228): A type predicate is only allowed in return type position for functions and methods.
+   ╭─[typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormThisMember.ts:5:17]
+ 4 │         isFSO: this is FileSystemObject;
+ 5 │         get isFile(): this is File {
+   ·                       ────────────
+ 6 │             return this instanceof File;
+   ╰────
+
+  × TS(1228): A type predicate is only allowed in return type position for functions and methods.
+    ╭─[typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormThisMember.ts:11:22]
+ 10 │         }
+ 11 │         get isDirectory(): this is Directory {
+    ·                            ─────────────────
+ 12 │             return this instanceof Directory;
+    ╰────
+
+  × TS(1228): A type predicate is only allowed in return type position for functions and methods.
+    ╭─[typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormThisMember.ts:14:16]
+ 13 │         }
+ 14 │         isNetworked: this is (Networked & this);
+    ·                      ──────────────────────────
+ 15 │         constructor(public path: string) {}
+    ╰────
+
+  × TS(1228): A type predicate is only allowed in return type position for functions and methods.
+    ╭─[typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormThisMember.ts:57:13]
+ 56 │         target: T;
+ 57 │         isLeader: this is (GenericLeadGuard<T>);
+    ·                   ─────────────────────────────
+ 58 │         isFollower: this is GenericFollowerGuard<T>;
+    ╰────
+
+  × TS(1228): A type predicate is only allowed in return type position for functions and methods.
+    ╭─[typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormThisMember.ts:58:15]
+ 57 │         isLeader: this is (GenericLeadGuard<T>);
+ 58 │         isFollower: this is GenericFollowerGuard<T>;
+    ·                     ───────────────────────────────
+ 59 │     }
+    ╰────
+
+  × TS(1228): A type predicate is only allowed in return type position for functions and methods.
+    ╭─[typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormThisMember.ts:70:19]
+ 69 │     interface SpecificGuard {
+ 70 │         isMoreSpecific: this is MoreSpecificGuard;
+    ·                         ─────────────────────────
+ 71 │     }
+    ╰────
+
+  × TS(1228): A type predicate is only allowed in return type position for functions and methods.
+   ╭─[typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormThisMemberErrors.ts:4:10]
+ 3 │     export class FileSystemObject {
+ 4 │         isFSO: this is FileSystemObject;
+   ·                ────────────────────────
+ 5 │         get isFile(): this is File {
+   ╰────
+
+  × TS(1228): A type predicate is only allowed in return type position for functions and methods.
+   ╭─[typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormThisMemberErrors.ts:5:17]
+ 4 │         isFSO: this is FileSystemObject;
+ 5 │         get isFile(): this is File {
+   ·                       ────────────
+ 6 │             return this instanceof File;
+   ╰────
+
+  × TS(1228): A type predicate is only allowed in return type position for functions and methods.
+    ╭─[typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormThisMemberErrors.ts:11:22]
+ 10 │         }
+ 11 │         get isDirectory(): this is Directory {
+    ·                            ─────────────────
+ 12 │             return this instanceof Directory;
+    ╰────
+
+  × TS(1228): A type predicate is only allowed in return type position for functions and methods.
+    ╭─[typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormThisMemberErrors.ts:14:16]
+ 13 │         }
+ 14 │         isNetworked: this is (Networked & this);
+    ·                      ──────────────────────────
+ 15 │         constructor(public path: string) {}
+    ╰────
+
+  × TS(1228): A type predicate is only allowed in return type position for functions and methods.
+   ╭─[typescript/tests/cases/conformance/expressions/typeGuards/typePredicateOnVariableDeclaration01.ts:1:8]
+ 1 │ var x: this is string;
+   ·        ──────────────
+   ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/conformance/expressions/typeGuards/typePredicateOnVariableDeclaration02.ts:1:9]
  1 │ var y: z is number;
@@ -23169,6 +23487,37 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
   help: Only 'readonly' modifier is allowed here.
 
+  × TS(2427): Interface name cannot be 'any'
+   ╭─[typescript/tests/cases/conformance/interfaces/interfaceDeclarations/interfacesWithPredefinedTypesAsNames.ts:1:11]
+ 1 │ interface any { }
+   ·           ───
+ 2 │ interface number { }
+   ╰────
+
+  × TS(2427): Interface name cannot be 'number'
+   ╭─[typescript/tests/cases/conformance/interfaces/interfaceDeclarations/interfacesWithPredefinedTypesAsNames.ts:2:11]
+ 1 │ interface any { }
+ 2 │ interface number { }
+   ·           ──────
+ 3 │ interface string { }
+   ╰────
+
+  × TS(2427): Interface name cannot be 'string'
+   ╭─[typescript/tests/cases/conformance/interfaces/interfaceDeclarations/interfacesWithPredefinedTypesAsNames.ts:3:11]
+ 2 │ interface number { }
+ 3 │ interface string { }
+   ·           ──────
+ 4 │ interface boolean { }
+   ╰────
+
+  × TS(2427): Interface name cannot be 'boolean'
+   ╭─[typescript/tests/cases/conformance/interfaces/interfaceDeclarations/interfacesWithPredefinedTypesAsNames.ts:4:11]
+ 3 │ interface string { }
+ 4 │ interface boolean { }
+   ·           ───────
+ 5 │ interface void {}
+   ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/conformance/interfaces/interfaceDeclarations/interfacesWithPredefinedTypesAsNames.ts:5:10]
  4 │ interface boolean { }
@@ -23675,19 +24024,21 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  5 │ }
    ╰────
 
-  × Unexpected token
-   ╭─[typescript/tests/cases/conformance/jsx/tsxErrorRecovery2.tsx:4:7]
+  × Adjacent JSX elements must be wrapped in an enclosing tag.
+   ╭─[typescript/tests/cases/conformance/jsx/tsxErrorRecovery2.tsx:4:1]
  3 │ <div></div>
  4 │ <div></div>
-   ·       ─
+   · ─
    ╰────
+  help: Did you want a JSX fragment `<>...</>`?
 
-  × Unexpected token
-   ╭─[typescript/tests/cases/conformance/jsx/tsxErrorRecovery3.tsx:4:7]
+  × Adjacent JSX elements must be wrapped in an enclosing tag.
+   ╭─[typescript/tests/cases/conformance/jsx/tsxErrorRecovery3.tsx:4:1]
  3 │ <div></div>
  4 │ <div></div>
-   ·       ─
+   · ─
    ╰────
+  help: Did you want a JSX fragment `<>...</>`?
 
   × Expected corresponding closing tag for JSX fragment.
     ╭─[typescript/tests/cases/conformance/jsx/tsxFragmentErrors.tsx:9:7]
@@ -23699,12 +24050,13 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  10 │ 
     ╰────
 
-  × Unexpected token
-    ╭─[typescript/tests/cases/conformance/jsx/tsxFragmentErrors.tsx:11:2]
+  × Adjacent JSX elements must be wrapped in an enclosing tag.
+    ╭─[typescript/tests/cases/conformance/jsx/tsxFragmentErrors.tsx:11:1]
  10 │ 
  11 │ <>eof   // Error
-    ·  ─
+    · ─
     ╰────
+  help: Did you want a JSX fragment `<>...</>`?
 
   × Unexpected token. Did you mean `{'>'}` or `&gt;`?
    ╭─[typescript/tests/cases/conformance/jsx/tsxGenericArrowFunctionParsing.tsx:8:17]
@@ -24337,6 +24689,30 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                  ──────
    ╰────
   help: Remove parameters except the first one here
+
+  × TS(1094): An accessor cannot have type parameters.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Accessors/parserGetAccessorWithTypeParameters1.ts:2:10]
+ 1 │ class C {
+ 2 │   get foo<T>() { }
+   ·          ───
+ 3 │ }
+   ╰────
+
+  × TS(1095): A 'set' accessor cannot have a return type annotation.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Accessors/parserSetAccessorWithTypeAnnotation1.ts:2:14]
+ 1 │ class C {
+ 2 │    set foo(v): number {
+   ·              ────────
+ 3 │    }
+   ╰────
+
+  × TS(1094): An accessor cannot have type parameters.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Accessors/parserSetAccessorWithTypeParameters1.ts:2:11]
+ 1 │ class C {
+ 2 │    set foo<T>(v) { }
+   ·           ───
+ 3 │ }
+   ╰────
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ArrowFunctionExpressions/parserArrowFunctionExpression1.ts:1:10]
@@ -25833,6 +26209,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  3 │ }
    ╰────
 
+  × TS(1051): A 'set' accessor cannot have an optional parameter.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration17.ts:2:12]
+ 1 │ class C {
+ 2 │    set Foo(a?: number) { }
+   ·            ──────────
+ 3 │ }
+   ╰────
+
   × A 'set' accessor cannot have rest parameter.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration18.ts:2:12]
  1 │ class C {
@@ -26075,7 +26459,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  3 │ }
    ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList10.ts:2:11]
  1 │ class C {
  2 │    foo(...bar = 0) { }
@@ -28697,6 +29081,24 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  4 │ label: enum E {}
    ╰────
 
+  × Declaration cannot appear in a single-statement context
+   ╭─[typescript/tests/cases/conformance/statements/labeledStatements/labeledStatementWithLabel.ts:4:8]
+ 3 │ label: async function gen1() { }
+ 4 │ label: enum E {}
+   ·        ─────────
+ 5 │ label: interface I {}
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Declaration cannot appear in a single-statement context
+   ╭─[typescript/tests/cases/conformance/statements/labeledStatements/labeledStatementWithLabel.ts:5:8]
+ 4 │ label: enum E {}
+ 5 │ label: interface I {}
+   ·        ──────────────
+ 6 │ label: class C { }
+   ╰────
+  help: Wrap this declaration in a block statement
+
   × Invalid class declaration
    ╭─[typescript/tests/cases/conformance/statements/labeledStatements/labeledStatementWithLabel.ts:6:8]
  5 │ label: interface I {}
@@ -28731,6 +29133,24 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  4 │ label: enum E {}
    ╰────
 
+  × Declaration cannot appear in a single-statement context
+   ╭─[typescript/tests/cases/conformance/statements/labeledStatements/labeledStatementWithLabel_es2015.ts:4:8]
+ 3 │ label: async function gen1() { }
+ 4 │ label: enum E {}
+   ·        ─────────
+ 5 │ label: interface I {}
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Declaration cannot appear in a single-statement context
+   ╭─[typescript/tests/cases/conformance/statements/labeledStatements/labeledStatementWithLabel_es2015.ts:5:8]
+ 4 │ label: enum E {}
+ 5 │ label: interface I {}
+   ·        ──────────────
+ 6 │ label: class C { }
+   ╰────
+  help: Wrap this declaration in a block statement
+
   × Invalid class declaration
    ╭─[typescript/tests/cases/conformance/statements/labeledStatements/labeledStatementWithLabel_es2015.ts:6:8]
  5 │ label: interface I {}
@@ -28764,6 +29184,24 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·        ─────────────────────
  5 │ label: enum E {}
    ╰────
+
+  × Declaration cannot appear in a single-statement context
+   ╭─[typescript/tests/cases/conformance/statements/labeledStatements/labeledStatementWithLabel_strict.ts:5:8]
+ 4 │ label: async function gen1() { }
+ 5 │ label: enum E {}
+   ·        ─────────
+ 6 │ label: interface I {}
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Declaration cannot appear in a single-statement context
+   ╭─[typescript/tests/cases/conformance/statements/labeledStatements/labeledStatementWithLabel_strict.ts:6:8]
+ 5 │ label: enum E {}
+ 6 │ label: interface I {}
+   ·        ──────────────
+ 7 │ label: class C { }
+   ╰────
+  help: Wrap this declaration in a block statement
 
   × Invalid class declaration
    ╭─[typescript/tests/cases/conformance/statements/labeledStatements/labeledStatementWithLabel_strict.ts:7:8]
@@ -30134,6 +30572,38 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  15 │ 
     ╰────
 
+  × TS(2457): Type alias name cannot be 'any'
+   ╭─[typescript/tests/cases/conformance/types/typeAliases/reservedNamesInAliases.ts:2:6]
+ 1 │ interface I {}
+ 2 │ type any = I;
+   ·      ───
+ 3 │ type number = I;
+   ╰────
+
+  × TS(2457): Type alias name cannot be 'number'
+   ╭─[typescript/tests/cases/conformance/types/typeAliases/reservedNamesInAliases.ts:3:6]
+ 2 │ type any = I;
+ 3 │ type number = I;
+   ·      ──────
+ 4 │ type boolean = I;
+   ╰────
+
+  × TS(2457): Type alias name cannot be 'boolean'
+   ╭─[typescript/tests/cases/conformance/types/typeAliases/reservedNamesInAliases.ts:4:6]
+ 3 │ type number = I;
+ 4 │ type boolean = I;
+   ·      ───────
+ 5 │ type string = I;
+   ╰────
+
+  × TS(2457): Type alias name cannot be 'string'
+   ╭─[typescript/tests/cases/conformance/types/typeAliases/reservedNamesInAliases.ts:5:6]
+ 4 │ type boolean = I;
+ 5 │ type string = I;
+   ·      ──────
+ 6 │ type void = I;
+   ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/conformance/types/typeAliases/reservedNamesInAliases.ts:6:5]
  5 │ type string = I;
@@ -30221,6 +30691,22 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  24 │ type T21 = typeof Array<string>;  // new (...) => string[]
     ╰────
 
+  × TS(1277): 'const' modifier can only appear on a type parameter of a function, method or class
+    ╭─[typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/typeParameterConstModifiers.ts:49:14]
+ 48 │ 
+ 49 │ interface I1<const T> { x: T }  // Error
+    ·              ───────
+ 50 │ 
+    ╰────
+
+  × TS(1277): 'const' modifier can only appear on a type parameter of a function, method or class
+    ╭─[typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/typeParameterConstModifiers.ts:55:9]
+ 54 │ 
+ 55 │ type T1<const T> = T;  // Error
+    ·         ───────
+ 56 │ 
+    ╰────
+
   × TS(1273): 'public' modifier cannot be used on a type parameter.
     ╭─[typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/varianceAnnotations.ts:95:10]
  94 │ 
@@ -30248,6 +30734,22 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
   help: Remove the duplicate modifier.
 
   × TS(1274): 'in' modifier can only appear on a type parameter of a class, interface or type alias.
+     ╭─[typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/varianceAnnotations.ts:100:21]
+  99 │ 
+ 100 │ declare function f1<in T>(x: T): void;  // Error
+     ·                     ──
+ 101 │ declare function f2<out T>(): T;  // Error
+     ╰────
+
+  × TS(1274): 'out' modifier can only appear on a type parameter of a class, interface or type alias.
+     ╭─[typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/varianceAnnotations.ts:101:21]
+ 100 │ declare function f1<in T>(x: T): void;  // Error
+ 101 │ declare function f2<out T>(): T;  // Error
+     ·                     ───
+ 102 │ 
+     ╰────
+
+  × TS(1274): 'in' modifier can only appear on a type parameter of a class, interface or type alias.
      ╭─[typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/varianceAnnotations.ts:104:5]
  103 │ class C {
  104 │     in a = 0;  // Error
@@ -30261,22 +30763,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  105 │     out b = 0;  // Error
      ·     ───
  106 │ }
-     ╰────
-
-  × TS(1274): 'in' modifier can only appear on a type parameter of a class, interface or type alias.
-     ╭─[typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/varianceAnnotations.ts:100:21]
-  99 │ 
- 100 │ declare function f1<in T>(x: T): void;  // Error
-     ·                     ────
- 101 │ declare function f2<out T>(): T;  // Error
-     ╰────
-
-  × TS(1274): 'out' modifier can only appear on a type parameter of a class, interface or type alias.
-     ╭─[typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/varianceAnnotations.ts:101:21]
- 100 │ declare function f1<in T>(x: T): void;  // Error
- 101 │ declare function f2<out T>(): T;  // Error
-     ·                     ─────
- 102 │ 
      ╰────
 
   × Identifier expected. 'in' is a reserved word that cannot be used here.

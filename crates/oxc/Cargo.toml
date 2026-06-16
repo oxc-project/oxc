@@ -1,6 +1,6 @@
 [package]
 name = "oxc"
-version = "0.133.0"
+version = "0.136.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -59,6 +59,8 @@ full = [
 
 semantic = ["oxc_semantic"]
 transformer = ["oxc_transformer", "oxc_transformer_plugins"]
+# Experimental React Compiler pass; off by default (pulls the heavy `oxc_react_compiler` dep).
+react_compiler = ["transformer", "oxc_transformer/react_compiler"]
 minifier = ["oxc_mangler", "oxc_minifier"]
 codegen = ["oxc_codegen", "oxc_codegen/sourcemap"]
 mangler = ["oxc_mangler"]

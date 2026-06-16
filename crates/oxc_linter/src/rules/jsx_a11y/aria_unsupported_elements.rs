@@ -40,6 +40,7 @@ declare_oxc_lint!(
     correctness,
     fix,
     version = "0.1.1",
+    short_description = "Enforces that reserved DOM elements do not contain ARIA roles, states, or properties.",
 );
 
 #[derive(Debug, Default, Clone)]

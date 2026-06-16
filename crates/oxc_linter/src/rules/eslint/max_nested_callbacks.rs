@@ -14,7 +14,7 @@ use crate::{
     rule::{DefaultRuleConfig, Rule},
 };
 
-fn max_nested_callbacks_diagnostic(num: usize, max: usize, span: Span) -> OxcDiagnostic {
+fn max_nested_callbacks_diagnostic(num: u32, max: u32, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Too many nested callbacks ({num}). Maximum allowed is {max}."))
         .with_help("Reduce nesting with promises or refactoring your code.")
         .with_label(span)
@@ -24,14 +24,26 @@ fn max_nested_callbacks_diagnostic(num: usize, max: usize, span: Span) -> OxcDia
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct MaxNestedCallbacks {
     /// The `max` enforces a maximum depth that callbacks can be nested.
-    max: usize,
+    max: u32,
 }
 
-const DEFAULT_MAX_NESTED_CALLBACKS: usize = 10;
+const DEFAULT_MAX_NESTED_CALLBACKS: u32 = 10;
 
 impl Default for MaxNestedCallbacks {
     fn default() -> Self {
         Self { max: DEFAULT_MAX_NESTED_CALLBACKS }
+    }
+}
+
+#[cfg(feature = "ruledocs")]
+impl MaxNestedCallbacks {
+    #[expect(clippy::unnecessary_wraps)]
+    pub fn config_schema(
+        r#gen: &mut schemars::r#gen::SchemaGenerator,
+    ) -> Option<schemars::schema::Schema> {
+        let mut schema = r#gen.subschema_for::<Self>();
+        crate::utils::number_as_object_schema(r#gen, &mut schema, None);
+        Some(schema)
     }
 }
 
@@ -89,9 +101,11 @@ declare_oxc_lint!(
     pedantic,
     config = MaxNestedCallbacks,
     version = "0.15.12",
+    short_description = "Enforce a maximum depth that callbacks can be nested.",
 );
 
 impl Rule for MaxNestedCallbacks {
+    #[expect(clippy::cast_possible_truncation)] // the length of nested ancestors can't be over u32::MAX, because the source code is already limited by u32::MAX.
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::Function(f) if f.is_function_declaration() => {}
@@ -106,7 +120,7 @@ impl Rule for MaxNestedCallbacks {
                 .nodes()
                 .ancestors(node.id())
                 .filter(|node| is_callback(node, ctx))
-                .count();
+                .count() as u32;
             if depth > self.max {
                 ctx.diagnostic(max_nested_callbacks_diagnostic(depth, self.max, node.span()));
             }
@@ -118,7 +132,7 @@ impl Rule for MaxNestedCallbacks {
             .get(0)
             .and_then(Value::as_number)
             .and_then(serde_json::Number::as_u64)
-            .and_then(|v| usize::try_from(v).ok())
+            .and_then(|v| u32::try_from(v).ok())
         {
             Ok(Self { max })
         } else {

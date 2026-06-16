@@ -70,6 +70,7 @@ declare_oxc_lint!(
     restriction,
     pending,  // TODO: Remove second argument, Spread argument is possible not supported
     version = "1.15.0",
+    short_description = "Disallow passing multiple arguments to scoped slots.",
 );
 
 impl Rule for NoMultipleSlotArgs {

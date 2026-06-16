@@ -31,7 +31,7 @@ fn img_redundant_alt_diagnostic(span: Span) -> OxcDiagnostic {
 pub struct ImgRedundantAlt(Box<ImgRedundantAltConfig>);
 
 #[derive(Debug, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct ImgRedundantAltConfig {
     /// JSX element types to validate (component names) where the rule applies.
     /// For example, `["img", "Image"]`.
@@ -104,6 +104,7 @@ declare_oxc_lint!(
     correctness,
     config = ImgRedundantAltConfig,
     version = "0.0.19",
+    short_description = "Enforce that `img` alt attributes do not contain redundant words like \"image\", \"picture\", or \"photo\".",
 );
 
 impl Rule for ImgRedundantAlt {

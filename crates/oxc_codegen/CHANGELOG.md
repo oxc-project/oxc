@@ -4,6 +4,57 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.136.0] - 2026-06-15
+
+### 💥 BREAKING CHANGES
+
+- 7a24911 codegen: [**BREAKING**] Borrow sourcemaps from codegen (#23422) (Boshen)
+
+### 🐛 Bug Fixes
+
+- f5721c2 codegen: Preserve parentheses around `intrinsic` type reference (#23156) (Boshen)
+
+### ⚡ Performance
+
+- e89729b codegen: Accept one-shot wrap closures (#23265) (camc314)
+
+## [0.135.0] - 2026-06-08
+
+### 💥 BREAKING CHANGES
+
+- 4c35362 ast: [**BREAKING**] Add `AstBuilder::template_element_escape_raw` and `template_element_escape_raw_with_lone_surrogates` methods (#23047) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 556acdc codegen: Parenthesize TS-cast assignment targets (#23112) (Boshen)
+- 37169ff codegen: Don't emit space between postfix `--` and `>` when minifying (#23036) (Boshen)
+- a4b1bf7 codegen: Drop redundant whitespace in minified TypeScript output (#23038) (Boshen)
+- 325c94f codegen: Tighten conditional-type and constructor-type whitespace when minifying (#23033) (Boshen)
+- 90180b8 codegen: Drop space after `:` in function return type when minifying (#23028) (Boshen)
+- 28467ce codegen: Don't emit space before a postfix update operand when minifying (#23027) (Boshen)
+- cb29926 codegen: Drop redundant space after `export default` when minifying (#23024) (Boshen)
+- 62965ae codegen: Drop redundant space after `else` when minifying (#23025) (Boshen)
+- 184edef codegen: Print space before `const`/`declare` enum modifier (#23013) (Boshen)
+- 597ed85 codegen: Parenthesize `let`/`async` for-of head target (#23008) (Boshen)
+- 8b631bf codegen: Remove stray space before mapped type value colon (#23010) (Boshen)
+- c08407e codegen: Don't over-parenthesize `in` inside an arrow in a for-init (#23009) (Boshen)
+- 600cd6f codegen: Parenthesize lower-precedence `TSInstantiationExpression` operand (#23007) (Boshen)
+- 187e1a5 codegen: Don't leak space after comment-only JSX expression container (#23006) (Boshen)
+- 294c473 codegen: Don't over-parenthesize `TSTypeAssertion` operand (#23004) (Boshen)
+- 786d96f codegen: Give `TSTypeAssertion` unary precedence (#23002) (Boshen)
+- d727b6b codegen: Parenthesize `await` expression as base of `**` (#23001) (Boshen)
+- 67dfa08 codegen: Keep parentheses around `new` callees containing a call (#22997) (Boshen)
+
+## [0.134.0] - 2026-06-01
+
+### 🚀 Features
+
+- 9c71f2e ast, codegen, formatter: Add `WithClauseKeyword::as_str` helper and use it (#22791) (camc314)
+
+### 🐛 Bug Fixes
+
+- c645615 parser: Reject incompatible class member modifiers (#22843) (Boshen)
+
 ## [0.133.0] - 2026-05-26
 
 ### 🐛 Bug Fixes

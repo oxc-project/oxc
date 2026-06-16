@@ -49,6 +49,7 @@ declare_oxc_lint!(
     style,
     fix,
     version = "1.34.0",
+    short_description = "Suggests using `toHaveBeenCalled()` or `not.toHaveBeenCalled()` over `toHaveBeenCalledTimes(0)` or `toBeCalledTimes(0)`.",
 );
 
 impl Rule for PreferToHaveBeenCalled {

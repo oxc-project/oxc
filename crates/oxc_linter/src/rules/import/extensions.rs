@@ -146,7 +146,7 @@ impl PathGroupOverride {
 /// **Default behavior (no configuration)**: All imports - of all kinds - pass.
 /// Unconfigured file extensions are ignored, to avoid false positives.
 #[derive(Debug, Clone, JsonSchema, Serialize, Default)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct ExtensionsConfig {
     /// Whether to ignore package imports when enforcing extension rules.
     ///
@@ -474,6 +474,7 @@ declare_oxc_lint!(
     restriction,
     config = ExtensionsConfig,
     version = "1.2.0",
+    short_description = "Enforce consistent use of file extensions in import paths.",
 );
 
 impl Rule for Extensions {

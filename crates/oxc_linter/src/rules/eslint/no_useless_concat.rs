@@ -53,6 +53,7 @@ declare_oxc_lint!(
     suspicious,
     pending, // TODO: Make a suggestion fixer for this rule.
     version = "0.4.2",
+    short_description = "Disallow unnecessary concatenation of literals or template literals.",
 );
 
 impl Rule for NoUselessConcat {

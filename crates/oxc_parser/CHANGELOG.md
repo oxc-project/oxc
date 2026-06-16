@@ -4,6 +4,96 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.136.0] - 2026-06-15
+
+### 🚀 Features
+
+- 1d3af58 parser: Add TS2398 parameter property diagnostic (#23216) (camc314)
+- e5050c0 parser: Improve diagnostic for rest initializer (#23205) (camc314)
+- e7374fe parser: Report error for `const` modifier on interface type parameter (#23173) (camc314)
+- a7c1c9b parser: Report ambient definite variable assertions (#23165) (camc314)
+- d169fcd parser: Report invalid class definite assertions (#23164) (camc314)
+- 00244d8 parser: Report definite property initializer errors (#23160) (camc314)
+
+### 🐛 Bug Fixes
+
+- 8edd234 parser: Report accessor definite assertion on token (#23203) (camc314)
+- e89f81d parser: Don't emit TS1477 for parenthesized instantiation expression (#23147) (Boshen)
+- 8a04149 parser: Reject module-referencing imports/exports in a namespace body (#22829) (Boshen)
+
+### ⚡ Performance
+
+- 2783295 parser: Table-driven operator precedence lookup (#23346) (Boshen)
+- 231d5de parser: Single-match member expression dispatch (#23347) (Boshen)
+- a6c11fa parser: Force-inline read_non_decimal to fold per-digit number dispatch (#23157) (Boshen)
+- d74964c parser: Store class definite assertion offset (#23170) (camc314)
+- f0fda4d parser: Shrink-wrap cold diagnostic tails out of hot frames (#23159) (Boshen)
+- a082180 parser: Store definite assertion offset (#23167) (camc314)
+- b435c6a parser: Skip checkpoint for `infer T extends U` constraint in disallow context (#23128) (Boshen)
+- 7464dce parser: Peek instead of checkpoint/rewind for `export default` modifier (#23124) (Boshen)
+- 80a9a32 parser: Fast-path single-keyword TS declarations (#23083) (Boshen)
+- b7b08ce parser: Peek once for the static modifier disambiguation (#23079) (Boshen)
+- e7e07a3 parser: Fold unary dispatch into a single match (#23076) (Boshen)
+
+### 📚 Documentation
+
+- 026f1ae parser: Add `AGENTS.md` test guidance for agents (#23440) (camc314)
+- e6bdfd4 lexer: Correct reference link for `byte_handlers!` (#23313) (Dunqing)
+
+## [0.135.0] - 2026-06-08
+
+### 💥 BREAKING CHANGES
+
+- 4c35362 ast: [**BREAKING**] Add `AstBuilder::template_element_escape_raw` and `template_element_escape_raw_with_lone_surrogates` methods (#23047) (overlookmotel)
+
+### 🚀 Features
+
+- 5b8dd68 parser: Report TS1255 for invalid class definite assertions (#22917) (camc314)
+
+### 🐛 Bug Fixes
+
+- cf53285 parser: Report reserved type-declaration names in the parser (#23035) (Boshen)
+- c543154 parser: Report comma operator in JSX expression in the parser (#23030) (Boshen)
+- 95dd3a2 parser: Report `import type` alias to a non-external reference in the parser (#23032) (Boshen)
+- 6da876e parser: Report `abstract` private class field in the parser (#23029) (Boshen)
+- 989230a parser: Report compound assignment to non-simple target in the parser (#23022) (Boshen)
+- 06f367c parser: Report `super.#field` private access in the parser (#23014) (Boshen)
+- 4d722e0 parser: Report duplicate switch `default` clause in the parser (#23012) (Boshen)
+- 1295882 parser: Report `new.target` and `import.meta` syntax errors in the parser (#23003) (Boshen)
+- 17e7cf3 parser: Disallow unerasable `as`/`satisfies` assertions (#22986) (Boshen)
+- beb46d3 parser: Commit to module goal on decorated exports (#22941) (Boshen)
+
+### ⚡ Performance
+
+- 7d89909 parser: Peek instead of lookahead for yield disambiguation (#23071) (Boshen)
+- bf872f0 parser: Skip arrow lookahead for a parenthesized literal (#23070) (Boshen)
+- d19fc54 parser: Guard type-argument speculation behind an angle-token check (#23069) (Boshen)
+- 8eb5507 parser: Skip redundant member-rest re-scan on call entry (#23068) (Boshen)
+- 883dfc1 parser: Skip parse_call_expression_rest when no call follows (#23063) (Boshen)
+- b171153 parser: Peek before the await-using lookahead (#23059) (Boshen)
+- 56f21bd parser: Use peek_token for the TS `asserts` type predicate (#23058) (Boshen)
+- 68805ac parser: Use peek_token instead of checkpoint/rewind for single-token decisions (#23056) (Boshen)
+
+## [0.134.0] - 2026-06-01
+
+### 🐛 Bug Fixes
+
+- cf5769c parser: Reject TypeScript declarations in single-statement context (#22827) (Boshen)
+- c360fb6 parser: Reject generators in ambient contexts and overload signatures (TS1221/TS1222) (#22848) (Boshen)
+- cc60d8d parser: Reject invalid index signature parameter types (TS1268/TS1337) (#22852) (Boshen)
+- 3d13e29 parser: Reject `declare` in an already-ambient context (TS1038) (#22850) (Boshen)
+- 5152854 parser: Reject statements in ambient contexts (TS1036) (#22849) (Boshen)
+- 4f9afc5 parser: Reject `export as namespace` inside a namespace body (TS1316) (#22846) (Boshen)
+- 2eafea6 parser: Reject function implementations in ambient contexts (TS1183) (#22845) (Boshen)
+- c645615 parser: Reject incompatible class member modifiers (#22843) (Boshen)
+- 276b78b parser: Reject module-referencing imports/exports in a namespace body (#22836) (Boshen)
+- 842ed1c parser: Parse `class implements` with `implements` as the class name (#22801) (Boshen)
+
+### ⚡ Performance
+
+- 7e3a567 parser: Reuse cached token kind in delimited-list loops (#22841) (Boshen)
+- 9e741c2 parser: Use peek_token instead of lookahead on the modifier path (#22842) (Boshen)
+
 ## [0.133.0] - 2026-05-26
 
 ### 🚀 Features

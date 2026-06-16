@@ -11,24 +11,36 @@ use serde_json::Value;
 use crate::rule::DefaultRuleConfig;
 use crate::{AstNode, ast_util::is_function_node, context::LintContext, rule::Rule};
 
-fn max_depth_diagnostic(num: usize, max: usize, span: Span) -> OxcDiagnostic {
+fn max_depth_diagnostic(num: u32, max: u32, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Blocks are nested too deeply ({num}). Maximum allowed is {max}."))
         .with_help("Consider refactoring your code.")
         .with_label(span)
 }
 
-const DEFAULT_MAX_DEPTH: usize = 4;
+const DEFAULT_MAX_DEPTH: u32 = 4;
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct MaxDepth {
     /// The `max` enforces a maximum depth that blocks can be nested
-    max: usize,
+    max: u32,
 }
 
 impl Default for MaxDepth {
     fn default() -> Self {
         Self { max: DEFAULT_MAX_DEPTH }
+    }
+}
+
+#[cfg(feature = "ruledocs")]
+impl MaxDepth {
+    #[expect(clippy::unnecessary_wraps)]
+    pub fn config_schema(
+        r#gen: &mut schemars::r#gen::SchemaGenerator,
+    ) -> Option<schemars::schema::Schema> {
+        let mut schema = r#gen.subschema_for::<Self>();
+        crate::utils::number_as_object_schema(r#gen, &mut schema, None);
+        Some(schema)
     }
 }
 
@@ -94,6 +106,7 @@ declare_oxc_lint!(
     pedantic,
     config = MaxDepth,
     version = "0.15.12",
+    short_description = "Enforce a maximum depth that blocks can be nested.",
 );
 
 impl Rule for MaxDepth {
@@ -102,16 +115,16 @@ impl Rule for MaxDepth {
             .get(0)
             .and_then(Value::as_number)
             .and_then(serde_json::Number::as_u64)
-            .and_then(|v| usize::try_from(v).ok())
+            .and_then(|v| u32::try_from(v).ok())
         {
             Ok(MaxDepth { max })
         } else {
-            Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-                .unwrap_or_default()
-                .into_inner())
+            serde_json::from_value::<DefaultRuleConfig<Self>>(value)
+                .map(DefaultRuleConfig::into_inner)
         }
     }
 
+    #[expect(clippy::cast_possible_truncation)] // the length of ancestors can't be over u32::MAX, because the source code is already limited by u32::MAX.
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if should_count(node, ctx.nodes()) {
             let depth = 1 + ctx
@@ -119,7 +132,7 @@ impl Rule for MaxDepth {
                 .ancestors(node.id())
                 .take_while(|node| !should_stop(node))
                 .filter(|node| should_count(node, ctx.nodes()))
-                .count();
+                .count() as u32;
             if depth > self.max {
                 ctx.diagnostic(max_depth_diagnostic(depth, self.max, node.span()));
             }

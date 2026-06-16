@@ -454,19 +454,19 @@ impl LanguageServer for Backend {
         for file_event in &params.changes {
             // We do not expect multiple changes from the same workspace folder.
             // If we should consider it, we need to map the events to the workers first,
-            // to only restart the internal linter / diagnostics for once
-            let Some(worker) = self.worker_manager.get_worker_for_uri(&file_event.uri).await else {
-                continue;
-            };
-            let (diagnostics, registrations, unregistrations) = worker
-                .did_change_watched_files(file_event, &mut needs_diagnostics_refresh, fs)
-                .await;
+            // to only restart the internal linter / diagnostics for once.
+            // A change can affect multiple workspaces if the file is in a shared location, for example a config file in the home directory.
+            for worker in self.worker_manager.read_workspace_workers().await.iter() {
+                let (diagnostics, registrations, unregistrations) = worker
+                    .did_change_watched_files(file_event, &mut needs_diagnostics_refresh, fs)
+                    .await;
 
-            if let Some(diagnostics) = diagnostics {
-                new_diagnostics.extend(diagnostics);
+                if let Some(diagnostics) = diagnostics {
+                    new_diagnostics.extend(diagnostics);
+                }
+                removing_registrations.extend(unregistrations);
+                adding_registrations.extend(registrations);
             }
-            removing_registrations.extend(unregistrations);
-            adding_registrations.extend(registrations);
         }
 
         if diagnostic_mode == DiagnosticMode::Push && !new_diagnostics.is_empty() {

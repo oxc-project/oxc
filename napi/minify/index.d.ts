@@ -34,7 +34,7 @@ export interface CompressOptions {
    *
    * @default 'esnext'
    *
-   * @see [esbuild#target](https://esbuild.github.io/api/#target)
+   * @see [oxc#target](https://oxc.rs/docs/guide/usage/transformer/lowering#target)
    */
   target?: string | Array<string>
   /**

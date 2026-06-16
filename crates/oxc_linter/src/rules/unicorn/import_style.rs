@@ -296,6 +296,7 @@ declare_oxc_lint!(
     none,
     config = ImportStyleConfig,
     version = "1.67.0",
+    short_description = "Enforce specific import styles per module.",
 );
 
 impl Rule for ImportStyle {

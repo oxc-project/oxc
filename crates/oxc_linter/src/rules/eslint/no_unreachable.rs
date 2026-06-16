@@ -72,6 +72,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     version = "0.4.4",
+    short_description = "Disallow unreachable code after `return`, `throw`, `continue`, and `break` statements.",
 );
 
 impl Rule for NoUnreachable {
@@ -162,6 +163,13 @@ impl Rule for NoUnreachable {
                         | EdgeType::Finalize
                         // Explicit `Error` can also be reachable if we encounter an error in the loop.
                         | EdgeType::Error(ErrorEdgeKind::Explicit) => true,
+
+                        // This block can still be reachable through another control-flow path.
+                        EdgeType::Normal | EdgeType::Jump
+                            if e.source() != loop_.1 && !unreachables[e.source().index()] =>
+                        {
+                            true
+                        }
 
                         // If we have an incoming `Jump` and it is from a `Break` instruction,
                         // We know with high confidence that we are visiting a reachable block.
@@ -406,6 +414,14 @@ fn test() {
             b();
         }
         ",
+        "
+        function foo() {
+            if (Math.random() === 0.5) {
+                while (true) { return 'greetings!'; }
+            }
+            return 'Hello, tsdown!';
+        }
+        ",
     ];
 
     let fail = vec![
@@ -478,6 +494,7 @@ fn test() {
             }
         }
         ",
+        "function foo() { while (true) { return ''; } return ''; }",
     ];
 
     Tester::new(NoUnreachable::NAME, NoUnreachable::PLUGIN, pass, fail).test_and_snapshot();

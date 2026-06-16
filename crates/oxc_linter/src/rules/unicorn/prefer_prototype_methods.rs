@@ -54,6 +54,7 @@ declare_oxc_lint!(
     pedantic,
     fix,
     version = "0.0.21",
+    short_description = "This rule prefers borrowing methods from the prototype instead of the instance.",
 );
 
 impl Rule for PreferPrototypeMethods {

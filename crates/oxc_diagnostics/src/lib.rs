@@ -64,7 +64,108 @@ pub type Severity = miette::Severity;
 pub type Result<T> = std::result::Result<T, OxcDiagnostic>;
 
 use miette::{Diagnostic, SourceCode};
-pub use miette::{GraphicalReportHandler, GraphicalTheme, LabeledSpan, NamedSource};
+pub use miette::{GraphicalReportHandler, GraphicalTheme, LabeledSpan, Labels, NamedSource};
+
+/// A collection of [`OxcDiagnostic`]s.
+///
+/// A drop-in replacement for `Vec<OxcDiagnostic>` that can additionally report
+/// whether it holds any [errors](Severity::Error) or [warnings](Severity::Warning).
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+pub struct Diagnostics(Vec<OxcDiagnostic>);
+
+impl Diagnostics {
+    pub fn new() -> Self {
+        Self(Vec::new())
+    }
+
+    /// `true` if any diagnostic has [error](Severity::Error) severity.
+    pub fn has_errors(&self) -> bool {
+        self.0.iter().any(|diagnostic| diagnostic.severity == Severity::Error)
+    }
+
+    /// `true` if any diagnostic has [warning](Severity::Warning) severity.
+    pub fn has_warnings(&self) -> bool {
+        self.0.iter().any(|diagnostic| diagnostic.severity == Severity::Warning)
+    }
+
+    /// Iterate over the [error](Severity::Error)-severity diagnostics.
+    pub fn errors(&self) -> impl Iterator<Item = &OxcDiagnostic> {
+        self.0.iter().filter(|diagnostic| diagnostic.severity == Severity::Error)
+    }
+
+    /// Iterate over the [warning](Severity::Warning)-severity diagnostics.
+    pub fn warnings(&self) -> impl Iterator<Item = &OxcDiagnostic> {
+        self.0.iter().filter(|diagnostic| diagnostic.severity == Severity::Warning)
+    }
+
+    pub fn into_vec(self) -> Vec<OxcDiagnostic> {
+        self.0
+    }
+
+    pub fn push(&mut self, diagnostic: OxcDiagnostic) {
+        self.0.push(diagnostic);
+    }
+
+    pub fn extend(&mut self, diagnostics: impl IntoIterator<Item = OxcDiagnostic>) {
+        self.0.extend(diagnostics);
+    }
+}
+
+impl Deref for Diagnostics {
+    type Target = Vec<OxcDiagnostic>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for Diagnostics {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl From<Vec<OxcDiagnostic>> for Diagnostics {
+    fn from(diagnostics: Vec<OxcDiagnostic>) -> Self {
+        Self(diagnostics)
+    }
+}
+
+impl From<OxcDiagnostic> for Diagnostics {
+    fn from(diagnostic: OxcDiagnostic) -> Self {
+        Self(vec![diagnostic])
+    }
+}
+
+impl From<Diagnostics> for Vec<OxcDiagnostic> {
+    fn from(diagnostics: Diagnostics) -> Self {
+        diagnostics.0
+    }
+}
+
+impl FromIterator<OxcDiagnostic> for Diagnostics {
+    fn from_iter<T: IntoIterator<Item = OxcDiagnostic>>(iter: T) -> Self {
+        Self(iter.into_iter().collect())
+    }
+}
+
+impl IntoIterator for Diagnostics {
+    type Item = OxcDiagnostic;
+    type IntoIter = std::vec::IntoIter<OxcDiagnostic>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}
+
+impl<'a> IntoIterator for &'a Diagnostics {
+    type Item = &'a OxcDiagnostic;
+    type IntoIter = std::slice::Iter<'a, OxcDiagnostic>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.iter()
+    }
+}
 
 /// Describes an error or warning that occurred.
 ///
@@ -115,7 +216,7 @@ impl Display for OxcCode {
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct OxcDiagnosticInner {
     pub message: Cow<'static, str>,
-    pub labels: Option<Vec<LabeledSpan>>,
+    pub labels: Labels,
     pub help: Option<Cow<'static, str>>,
     pub note: Option<Cow<'static, str>>,
     pub severity: Severity,
@@ -133,16 +234,16 @@ impl std::error::Error for OxcDiagnostic {}
 
 impl Diagnostic for OxcDiagnostic {
     /// The secondary help message.
-    fn help<'a>(&'a self) -> Option<Box<dyn Display + 'a>> {
-        self.help.as_ref().map(Box::new).map(|c| c as Box<dyn Display>)
+    fn help(&self) -> Option<Cow<'_, str>> {
+        self.help.as_deref().map(Cow::Borrowed)
     }
 
     /// A note for the diagnostic.
     ///
     /// Similar to rustc - intended for additional explanation and information,
     /// e.g. why an error was emitted, how to turn it off.
-    fn note<'a>(&'a self) -> Option<Box<dyn Display + 'a>> {
-        self.note.as_ref().map(Box::new).map(|c| c as Box<dyn Display>)
+    fn note(&self) -> Option<Cow<'_, str>> {
+        self.note.as_deref().map(Cow::Borrowed)
     }
 
     /// The severity level of this diagnostic.
@@ -153,24 +254,20 @@ impl Diagnostic for OxcDiagnostic {
     }
 
     /// Labels covering problematic portions of source code.
-    fn labels(&self) -> Option<Box<dyn Iterator<Item = LabeledSpan> + '_>> {
-        self.labels
-            .as_ref()
-            .map(|ls| ls.iter().cloned())
-            .map(Box::new)
-            .map(|b| b as Box<dyn Iterator<Item = LabeledSpan>>)
+    fn labels(&self) -> Labels {
+        self.labels.clone()
     }
 
     /// An error code uniquely identifying this diagnostic.
     ///
     /// Note that codes may be scoped, which will be rendered as `scope(code)`.
-    fn code<'a>(&'a self) -> Option<Box<dyn Display + 'a>> {
-        self.code.is_some().then(|| Box::new(&self.code) as Box<dyn Display>)
+    fn code(&self) -> Option<Cow<'_, str>> {
+        self.code.is_some().then(|| Cow::Owned(self.code.to_string()))
     }
 
     /// A URL that provides more information about the problem that occurred.
-    fn url<'a>(&'a self) -> Option<Box<dyn Display + 'a>> {
-        self.url.as_ref().map(Box::new).map(|c| c as Box<dyn Display>)
+    fn url(&self) -> Option<Cow<'_, str>> {
+        self.url.as_deref().map(Cow::Borrowed)
     }
 }
 
@@ -180,7 +277,7 @@ impl OxcDiagnostic {
         Self {
             inner: OxcDiagnosticInner {
                 message: message.into(),
-                labels: None,
+                labels: Labels::None,
                 note: None,
                 help: None,
                 severity: Severity::Error,
@@ -195,7 +292,7 @@ impl OxcDiagnostic {
         Self {
             inner: OxcDiagnosticInner {
                 message: message.into(),
-                labels: None,
+                labels: Labels::None,
                 help: None,
                 note: None,
                 severity: Severity::Warning,
@@ -310,7 +407,7 @@ impl OxcDiagnostic {
     /// [`oxc_span::Span`]: https://docs.rs/oxc_span/latest/oxc_span/struct.Span.html
     /// [`label`]: https://docs.rs/oxc_span/latest/oxc_span/struct.Span.html#method.label
     pub fn with_label<T: Into<LabeledSpan>>(mut self, label: T) -> Self {
-        self.inner.labels = Some(vec![label.into()]);
+        self.inner.labels = Labels::One([label.into()]);
         self
     }
 
@@ -331,15 +428,13 @@ impl OxcDiagnostic {
         mut self,
         labels: T,
     ) -> Self {
-        self.inner.labels = Some(labels.into_iter().map(Into::into).collect());
+        self.inner.labels = labels.into_iter().map(Into::into).collect();
         self
     }
 
     /// Add a label to this diagnostic without clobbering existing labels.
     pub fn and_label<T: Into<LabeledSpan>>(mut self, label: T) -> Self {
-        let mut labels = self.inner.labels.unwrap_or_default();
-        labels.push(label.into());
-        self.inner.labels = Some(labels);
+        self.inner.labels.push(label.into());
         self
     }
 
@@ -348,9 +443,7 @@ impl OxcDiagnostic {
         mut self,
         labels: T,
     ) -> Self {
-        let mut all_labels = self.inner.labels.unwrap_or_default();
-        all_labels.extend(labels.into_iter().map(Into::into));
-        self.inner.labels = Some(all_labels);
+        self.inner.labels.extend(labels.into_iter().map(Into::into));
         self
     }
 

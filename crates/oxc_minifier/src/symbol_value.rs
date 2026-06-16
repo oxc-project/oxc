@@ -1,6 +1,6 @@
 use oxc_ecmascript::constant_evaluation::ConstantValue;
 use oxc_index::IndexVec;
-use oxc_syntax::{scope::ScopeId, symbol::SymbolId};
+use oxc_syntax::symbol::SymbolId;
 
 #[derive(Debug)]
 pub struct SymbolValue<'a> {
@@ -23,8 +23,6 @@ pub struct SymbolValue<'a> {
     /// True for function/class declarations and variable declarations initialized
     /// with object/array/function/class literals.
     pub is_fresh_value: bool,
-
-    pub scope_id: ScopeId,
 }
 
 /// Per-symbol scratch store indexed by `SymbolId`.

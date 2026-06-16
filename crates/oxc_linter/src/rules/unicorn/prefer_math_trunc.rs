@@ -48,6 +48,7 @@ declare_oxc_lint!(
     pedantic,
     suggestion,
     version = "0.0.18",
+    short_description = "Enforce the use of `Math.trunc` instead of bitwise operators.",
 );
 
 impl Rule for PreferMathTrunc {

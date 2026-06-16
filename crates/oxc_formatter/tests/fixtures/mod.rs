@@ -2,14 +2,13 @@ use std::path::Path;
 
 use oxc_allocator::Allocator;
 use oxc_formatter::{
-    ArrowParentheses, BracketSameLine, Formatter, JsFormatOptions, JsdocOptions, QuoteProperties,
-    QuoteStyle, Semicolons, TrailingCommas, get_parse_options,
+    ArrowParentheses, BracketSameLine, BracketSpacing, JsFormatOptions, JsdocOptions,
+    QuoteProperties, QuoteStyle, Semicolons, TrailingCommas,
 };
 use oxc_formatter_core::{
-    BracketSpacing, IndentStyle, IndentWidth, LineEnding, LineWidth,
+    IndentStyle, IndentWidth, LineEnding, LineWidth,
     test_support::{FixtureFormatter, OptionSet, build_fixture_snapshot},
 };
-use oxc_parser::Parser;
 use oxc_span::SourceType;
 
 struct JsHarness;
@@ -122,11 +121,11 @@ impl FixtureFormatter for JsHarness {
     fn format(source: &str, path: &Path, options: &Self::Options) -> String {
         let source_type = SourceType::from_path(path).unwrap();
         let allocator = Allocator::default();
-        let ret =
-            Parser::new(&allocator, source, source_type).with_options(get_parse_options()).parse();
-        assert!(ret.errors.is_empty());
-
-        Formatter::new(&allocator, options.clone()).build(&ret.program)
+        oxc_formatter::format(&allocator, source, source_type, options.clone(), None)
+            .unwrap()
+            .print()
+            .unwrap()
+            .into_code()
     }
 }
 

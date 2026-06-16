@@ -70,6 +70,7 @@ declare_oxc_lint!(
     fix,
     config = NoArraySort,
     version = "1.15.0",
+    short_description = "Prefer using `Array#toSorted()` over `Array#sort()`.",
 );
 
 impl Rule for NoArraySort {

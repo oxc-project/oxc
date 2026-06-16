@@ -1,4 +1,3 @@
-use convert_case::{Boundary, Case, Converter};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -15,7 +14,7 @@ use crate::{
     context::LintContext,
     frameworks::FrameworkOptions,
     rule::{DefaultRuleConfig, Rule},
-    utils::{find_property, is_vue_component_options_object},
+    utils::{find_property, is_vue_component_options_object, vue_casing},
 };
 
 fn component_definition_name_casing_diagnostic(
@@ -83,7 +82,8 @@ declare_oxc_lint!(
     style,
     fix,
     config = CaseType,
-    version = "next",
+    version = "1.68.0",
+    short_description = "Enforce specific casing for component definition names.",
 );
 
 impl Rule for ComponentDefinitionNameCasing {
@@ -187,134 +187,11 @@ fn extract_convertible(expr: &Expression<'_>) -> Option<(String, Span)> {
     }
 }
 
-// Mirror of upstream `eslint-plugin-vue` lib/utils/casing.js to guarantee
-// identical detection / conversion semantics.
-
-fn has_symbols(s: &str) -> bool {
-    // [!"#%&'()*+,./:;<=>?@[\]^`{|}] — without " ", "$", "-" and "_"
-    s.chars().any(|c| {
-        matches!(
-            c,
-            '!' | '"'
-                | '#'
-                | '%'
-                | '&'
-                | '\''
-                | '('
-                | ')'
-                | '*'
-                | '+'
-                | ','
-                | '.'
-                | '/'
-                | ':'
-                | ';'
-                | '<'
-                | '='
-                | '>'
-                | '?'
-                | '@'
-                | '['
-                | '\\'
-                | ']'
-                | '^'
-                | '`'
-                | '{'
-                | '|'
-                | '}'
-        )
-    })
-}
-
-fn has_upper(s: &str) -> bool {
-    s.chars().any(|c| c.is_ascii_uppercase())
-}
-
-fn is_pascal_case(s: &str) -> bool {
-    !has_symbols(s)
-        && !s.chars().next().is_some_and(|c| c.is_ascii_lowercase())
-        && !s.chars().any(|c| matches!(c, '-' | '_') || c.is_whitespace())
-}
-
-fn is_kebab_case(s: &str) -> bool {
-    if has_upper(s) || has_symbols(s) || s.starts_with('-') {
-        return false;
-    }
-    if s.contains('_') || s.contains("--") || s.chars().any(char::is_whitespace) {
-        return false;
-    }
-    true
-}
-
 fn check_case(s: &str, case_type: CaseType) -> bool {
     match case_type {
-        CaseType::PascalCase => is_pascal_case(s),
-        CaseType::KebabCase => is_kebab_case(s),
+        CaseType::PascalCase => vue_casing::is_pascal_case(s),
+        CaseType::KebabCase => vue_casing::is_kebab_case(s),
     }
-}
-
-fn capitalize(s: &str) -> String {
-    let mut chars = s.chars();
-    match chars.next() {
-        Some(c) => c.to_uppercase().collect::<String>() + chars.as_str(),
-        None => String::new(),
-    }
-}
-
-fn is_regex_word(c: char) -> bool {
-    c.is_ascii_alphanumeric() || c == '_'
-}
-
-fn regex_word_before_upper(graphemes: &[&str]) -> bool {
-    let Some(prev) = graphemes.first().and_then(|s| s.chars().next()) else {
-        return false;
-    };
-    let Some(current) = graphemes.get(1).and_then(|s| s.chars().next()) else {
-        return false;
-    };
-    is_regex_word(prev) && current.is_ascii_uppercase()
-}
-
-/// `camelCase(str)` mirrors upstream:
-/// - if PascalCase: lowercase the first char
-/// - else: replace `[-_](\w)` with `\w` uppercased
-fn camel_case(s: &str) -> String {
-    if is_pascal_case(s) {
-        let mut chars = s.chars();
-        return match chars.next() {
-            Some(c) => c.to_lowercase().collect::<String>() + chars.as_str(),
-            None => String::new(),
-        };
-    }
-
-    let mut out = String::with_capacity(s.len());
-    let mut chars = s.chars().peekable();
-    while let Some(c) = chars.next() {
-        if matches!(c, '-' | '_')
-            && let Some(next) = chars.peek()
-            && is_regex_word(*next)
-        {
-            if let Some(next) = chars.next() {
-                out.extend(next.to_uppercase());
-            }
-        } else {
-            out.push(c);
-        }
-    }
-    out
-}
-
-fn pascal_case(s: &str) -> String {
-    capitalize(&camel_case(s))
-}
-
-fn kebab_case(s: &str) -> String {
-    let word_before_upper =
-        Boundary::Custom { condition: regex_word_before_upper, start: 1, len: 0 };
-    Converter::new()
-        .set_boundaries(&[Boundary::Underscore, word_before_upper])
-        .to_case(Case::Kebab)
-        .convert(s)
 }
 
 /// Mirror of `getExactConverter(name)(str)`. Returns `None` when the
@@ -324,8 +201,8 @@ fn kebab_case(s: &str) -> String {
 /// that the diagnostic is emitted without an autofix.
 fn exact_convert(s: &str, case_type: CaseType) -> Option<String> {
     let converted = match case_type {
-        CaseType::PascalCase => pascal_case(s),
-        CaseType::KebabCase => kebab_case(s),
+        CaseType::PascalCase => vue_casing::pascal_case(s),
+        CaseType::KebabCase => vue_casing::kebab_case(s),
     };
     if check_case(&converted, case_type) { Some(converted) } else { None }
 }
