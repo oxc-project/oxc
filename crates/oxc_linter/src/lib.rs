@@ -262,10 +262,9 @@ fn execute_rules<'a, const TIMINGS: bool>(
             }
 
             if should_run_on_jest_node {
-                for jest_node in iter_possible_jest_call_node_with_global_package(
-                    semantic,
-                    jest_global_package,
-                ) {
+                for jest_node in
+                    iter_possible_jest_call_node_with_global_package(semantic, jest_global_package)
+                {
                     let timing_stat = get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);
                     rule.run_on_jest_node::<TIMINGS>(&jest_node, ctx, timing_stat);
                 }
