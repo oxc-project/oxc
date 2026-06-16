@@ -111,6 +111,14 @@ fn check_unicorn_prefer_spread<'a>(
 
             let member_expr_obj = member_expr.object().without_parentheses();
 
+            // Skip receivers that are statically known not to be arrays (e.g. string/number
+            // literals, template literals, `x.join()`). `"foo".slice()` returns a string, so the
+            // `[...x]` rewrite would change both value and type. Mirrors the `concat` arm and
+            // eslint-plugin-unicorn (which bails via `isNotArray`).
+            if is_not_array(member_expr_obj, ctx) {
+                return;
+            }
+
             if matches!(
                 member_expr_obj,
                 Expression::ArrayExpression(_) | Expression::ThisExpression(_)
@@ -362,6 +370,11 @@ fn test() {
         "array.slice(0, array.length)",
         "array.slice(0, 0)",
         "array.notSlice()",
+        // Non-array receivers must not be reported/auto-fixed: `"foo".slice()` returns a string,
+        // so `[..."foo"]` would be `["f","o","o"]` (different value and type). Matches
+        // eslint-plugin-unicorn, which bails on non-array receivers via `isNotArray`.
+        r#""".slice()"#,
+        r#""foo".slice()"#,
         "[...foo].slice()",
         "[foo].slice()",
         "arrayBuffer.slice()",
@@ -577,7 +590,6 @@ fn test() {
         "(scopeManager?.scopes).slice()",
         "bar()
             foo.slice()",
-        r#""".slice()"#,
         "array.slice(0)",
         "array.slice(0b0)",
         "array.slice(0.00)",
