@@ -884,8 +884,10 @@
       "type": "object",
       "properties": {
         "requireReturnForObjectLiteral": {
+          "description": "Requires braces and an explicit return for object literals. This option only applies when\nthe first option is `\"as-needed\"`.",
           "default": false,
-          "type": "boolean"
+          "type": "boolean",
+          "markdownDescription": "Requires braces and an explicit return for object literals. This option only applies when\nthe first option is `\"as-needed\"`."
         }
       },
       "additionalProperties": false
@@ -12521,11 +12523,31 @@
       ]
     },
     "Mode2": {
-      "type": "string",
-      "enum": [
-        "as-needed",
-        "always",
-        "never"
+      "oneOf": [
+        {
+          "description": "Enforces no braces where they can be omitted (default).",
+          "type": "string",
+          "enum": [
+            "as-needed"
+          ],
+          "markdownDescription": "Enforces no braces where they can be omitted (default)."
+        },
+        {
+          "description": "Enforces braces around the function body.",
+          "type": "string",
+          "enum": [
+            "always"
+          ],
+          "markdownDescription": "Enforces braces around the function body."
+        },
+        {
+          "description": "Enforces no braces around the function body (constrains arrow functions to the role of returning an expression).",
+          "type": "string",
+          "enum": [
+            "never"
+          ],
+          "markdownDescription": "Enforces no braces around the function body (constrains arrow functions to the role of returning an expression)."
+        }
       ]
     },
     "Modifier": {
