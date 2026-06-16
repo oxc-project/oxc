@@ -70,6 +70,78 @@ impl<'a> PeepholeOptimizations {
         None
     }
 
+    /// A body-level statement is "declarative" if executing it cannot run user
+    /// code that observes a subsequent hoisted `var x = <literal>;` as
+    /// `undefined`. Module loaders (`import`, `export * from`, `export … from`)
+    /// can evaluate foreign modules but only observe our bindings on an actual
+    /// cycle — handled at program scope by starting the root prelude unsafe when
+    /// the module has loaders (see `enter_program`).
+    /// Type-only declarations (`type`, `interface`) are erased and never run.
+    fn is_declarative_body_statement(stmt: &Statement<'a>) -> bool {
+        match stmt {
+            Statement::EmptyStatement(_)
+            | Statement::ImportDeclaration(_)
+            | Statement::ExportAllDeclaration(_) => true,
+            // `export { foo }`, `export { foo } from './x'`, `export type T = …` —
+            // no executable code at the statement itself. The cyclic-eval hazard
+            // from a `from` source is gated separately at program scope (see
+            // `enter_program`).
+            Statement::ExportNamedDeclaration(e) => {
+                e.declaration.as_ref().is_none_or(Self::is_declarative_declaration)
+            }
+            // `export default function() {}` is hoisted; `export default <expr>`
+            // or `export default class C extends … {}` runs user code.
+            Statement::ExportDefaultDeclaration(e) => {
+                matches!(&e.declaration, ExportDefaultDeclarationKind::FunctionDeclaration(_))
+            }
+            // Bare declarations route through the shared classifier; anything else
+            // (blocks, expressions, control flow) can run user code.
+            _ => stmt.as_declaration().is_some_and(Self::is_declarative_declaration),
+        }
+    }
+
+    /// A `Declaration` runs no user code at evaluation: function/type/interface
+    /// declarations are inert, and a `var`/`let`/`const` is declarative only when
+    /// every declarator is a simple binding with a literal (or no) initializer.
+    /// Classes, enums, and TS modules run user code, so they are not declarative.
+    fn is_declarative_declaration(decl: &Declaration<'a>) -> bool {
+        match decl {
+            Declaration::FunctionDeclaration(_)
+            | Declaration::TSTypeAliasDeclaration(_)
+            | Declaration::TSInterfaceDeclaration(_) => true,
+            Declaration::VariableDeclaration(decl) => {
+                Self::is_declarative_variable_declaration(decl)
+            }
+            _ => false,
+        }
+    }
+
+    /// A `VariableDeclaration` is declarative when every declarator is a simple
+    /// `BindingIdentifier` (no destructuring / defaults / computed keys, all of
+    /// which can run user code) with either no initializer or a primitive
+    /// literal initializer.
+    fn is_declarative_variable_declaration(decl: &VariableDeclaration<'a>) -> bool {
+        decl.declarations.iter().all(Self::is_declarative_variable_declarator)
+    }
+
+    /// Note: only AST `Literal`s qualify. Constant-but-non-literal initializers
+    /// (`-1`, `void 0`, `1 + 2`) run no user code either, but conservatively end
+    /// the prelude here — a missed optimization, never a correctness risk.
+    fn is_declarative_variable_declarator(decl: &VariableDeclarator<'a>) -> bool {
+        matches!(decl.id, BindingPattern::BindingIdentifier(_))
+            && decl.init.as_ref().is_none_or(Expression::is_literal)
+    }
+
+    /// Mark the current function/program body as no longer in its declarative
+    /// prelude. No-op if the flag is already set, or if `current_scope_id` is
+    /// some inner scope (a block/for/etc.) — those don't end the prelude.
+    fn mark_current_body_unsafe(ctx: &mut TraverseCtx<'a>) {
+        let &(body_scope, body_unsafe) = ctx.state.body_unsafe_stack.last();
+        if !body_unsafe && body_scope == ctx.current_scope_id() {
+            ctx.state.body_unsafe_stack.last_mut().1 = true;
+        }
+    }
+
     /// Checks if a member expression's base object may be mutated.
     ///
     /// This is used to prevent incorrect transformations like:
@@ -360,11 +432,34 @@ impl<'a> PeepholeOptimizations {
 }
 
 impl<'a> Traverse<'a> for PeepholeOptimizations {
-    fn enter_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         ctx.state.symbol_values.reset();
         ctx.state.proto_write_symbols.clear();
+        // Any module loader (`import`, `export * from`, `export … from`) can, on a
+        // cycle, evaluate a foreign module that observes a not-yet-assigned binding
+        // our exports close over. So the program root starts its prelude "unsafe"
+        // when the body has any loader — bailing every program-scope var inline.
+        // Loaders are hoisted, so scan the whole body (an import may follow a
+        // leading var); the result never changes across passes.
+        let module_has_loaders = program
+            .body
+            .iter()
+            .any(|s| s.as_module_declaration().is_some_and(|m| m.source().is_some()));
+        // `enter`/`exit_function_body` are balanced, so the stack is back to its
+        // single program-root entry by the next pass; reset it in place rather
+        // than reallocating (matching the `reset`/`clear` above).
+        *ctx.state.body_unsafe_stack.last_mut() =
+            (ctx.scoping().root_scope_id(), module_has_loaders);
         // `PassDirty` is managed by the `Compressor` driver via
         // `flush_pass_dirty`, not reset per traversal.
+    }
+
+    fn enter_function_body(&mut self, _body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
+        ctx.state.body_unsafe_stack.push((ctx.current_scope_id(), false));
+    }
+
+    fn exit_function_body(&mut self, _body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
+        ctx.state.body_unsafe_stack.pop();
     }
 
     fn exit_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -441,6 +536,12 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
             }
             Self::try_fold_expression_stmt(stmt, ctx);
         }
+
+        // Maintain the per-body declarative-prelude flag used by
+        // `is_hoisted_var_inlineable`.
+        if !Self::is_declarative_body_statement(stmt) {
+            Self::mark_current_body_unsafe(ctx);
+        }
     }
 
     fn exit_for_statement(&mut self, stmt: &mut ForStatement<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -475,6 +576,14 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         ctx: &mut TraverseCtx<'a>,
     ) {
         Self::init_symbol_value(decl, ctx);
+        // Per-declarator update of the body-unsafe flag. Catches multi-declarator
+        // statements (`var [x=call()] = '', flag = true;`, possibly produced by
+        // join-vars) where an earlier declarator runs user code via a
+        // destructuring default or non-literal init — the per-statement check
+        // would fire too late for subsequent declarators' `init_symbol_value`.
+        if !Self::is_declarative_variable_declarator(decl) {
+            Self::mark_current_body_unsafe(ctx);
+        }
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {

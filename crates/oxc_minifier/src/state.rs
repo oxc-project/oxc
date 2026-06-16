@@ -6,7 +6,7 @@ use oxc_data_structures::stack::NonEmptyStack;
 use oxc_semantic::Scoping;
 use oxc_span::SourceType;
 use oxc_str::Str;
-use oxc_syntax::symbol::SymbolId;
+use oxc_syntax::{scope::ScopeId, symbol::SymbolId};
 
 use crate::{CompressOptions, symbol_value::SymbolValues};
 
@@ -66,6 +66,17 @@ pub struct MinifierState<'a> {
     /// setters that make subsequent property writes side-effectful.
     pub proto_write_symbols: FxHashSet<SymbolId>,
 
+    /// One frame per enclosing function body (program root at the bottom).
+    /// `(body_scope, body_unsafe)`. While `body_unsafe` is false, the next
+    /// `var x = <literal>;` whose declarator sits at `body_scope` is safe to
+    /// inline despite hoisting. A preceding non-declarative statement sets it;
+    /// the program root additionally starts unsafe when the module has any
+    /// loader (`import` / `export … from` / `export * from`), since a cyclic
+    /// importer could observe a not-yet-assigned binding our exports close over.
+    /// Pushed by `enter_function_body`, popped by `exit_function_body`. See
+    /// `init_symbol_value`.
+    pub body_unsafe_stack: NonEmptyStack<(ScopeId, bool)>,
+
     /// Set when a typed helper mutates the AST. Private by design: the only
     /// writers are the helpers on `MinifierTraverseCtx`; the only reader is
     /// the fixed-point loop driver via `take_mutated()`.
@@ -98,6 +109,7 @@ impl<'a> MinifierState<'a> {
             symbol_values: SymbolValues::new(scoping.symbols_len()),
             class_symbols_stack: ClassSymbolsStack::new(),
             proto_write_symbols: FxHashSet::default(),
+            body_unsafe_stack: NonEmptyStack::new((scoping.root_scope_id(), false)),
             mutated: false,
             dirty: PassDirty::new(scoping.references_len(), allocator),
             concat_scratch: String::new(),
