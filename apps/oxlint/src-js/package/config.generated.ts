@@ -1659,6 +1659,7 @@ export interface DummyRuleMap {
   "vue/max-props"?: RuleNoConfig | [AllowWarnDeny, MaxProps];
   "vue/next-tick-style"?: RuleNoConfig | [AllowWarnDeny, NextTickOption];
   "vue/no-arrow-functions-in-watch"?: RuleNoConfig;
+  "vue/no-async-in-computed-properties"?: RuleNoConfig | [AllowWarnDeny, NoAsyncInComputedPropertiesConfig];
   "vue/no-computed-properties-in-data"?: RuleNoConfig;
   "vue/no-deprecated-data-object-declaration"?: RuleNoConfig;
   "vue/no-deprecated-delete-set"?: RuleNoConfig;
@@ -6107,6 +6108,14 @@ export interface MaxProps {
    * The maximum number of props allowed in a Vue SFC.
    */
   maxProps?: number;
+}
+export interface NoAsyncInComputedPropertiesConfig {
+  /**
+   * Names of identifiers whose member-call chains (`.then` / `.catch` / `.finally`)
+   * should be ignored. Useful for libraries like Zod where `.catch(default)` is
+   * a builder API, not a Promise method.
+   */
+  ignoredObjectNames?: string[];
 }
 export interface NoDeprecatedModelDefinitionConfig {
   /**
