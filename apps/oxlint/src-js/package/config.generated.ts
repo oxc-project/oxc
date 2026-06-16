@@ -963,7 +963,7 @@ export interface DummyRuleMap {
   "jsdoc/implements-on-classes"?: RuleNoConfig;
   "jsdoc/no-defaults"?: RuleNoConfig | [AllowWarnDeny, NoDefaultsConfig];
   "jsdoc/require-param"?: DummyRule;
-  "jsdoc/require-param-description"?: RuleNoConfig;
+  "jsdoc/require-param-description"?: RuleNoConfig | [AllowWarnDeny, RequireParamDescriptionConfig];
   "jsdoc/require-param-name"?: RuleNoConfig;
   "jsdoc/require-param-type"?: RuleNoConfig | [AllowWarnDeny, RequireParamTypeConfig];
   "jsdoc/require-property"?: RuleNoConfig;
@@ -2374,6 +2374,18 @@ export interface NoDefaultsConfig {
    * If true, report the presence of optional param names (square brackets) on `@param` tags.
    */
   noOptionalParamNames?: boolean;
+}
+export interface RequireParamDescriptionConfig {
+  /**
+   * The description string to set by default for destructured roots. Defaults to "The root object".
+   */
+  defaultDestructuredRootDescription?: string;
+  /**
+   * Whether to set a default destructured root description.
+   * For example, you may wish to avoid manually having to set the description for a @param corresponding to a destructured root object as it should always be the same type of object.
+   * Uses `defaultDestructuredRootDescription` for the description string. Defaults to `false`.
+   */
+  setDefaultDestructuredRootDescription?: boolean;
 }
 export interface RequireParamTypeConfig {
   /**
