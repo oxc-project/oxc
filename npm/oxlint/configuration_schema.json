@@ -9950,6 +9950,26 @@
         "vue/no-arrow-functions-in-watch": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "vue/no-async-in-computed-properties": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoAsyncInComputedProperties"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "vue/no-computed-properties-in-data": {
           "$ref": "#/definitions/RuleNoConfig"
         },
@@ -12928,6 +12948,25 @@
             "type": "string"
           },
           "markdownDescription": "An array of names that are allowed to be async."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoAsyncInComputedProperties": {
+      "$ref": "#/definitions/NoAsyncInComputedPropertiesConfig"
+    },
+    "NoAsyncInComputedPropertiesConfig": {
+      "type": "object",
+      "properties": {
+        "ignoredObjectNames": {
+          "description": "Names of identifiers whose member-call chains (`.then` / `.catch` / `.finally`)\nshould be ignored. Useful for libraries like Zod where `.catch(default)` is\na builder API, not a Promise method.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true,
+          "markdownDescription": "Names of identifiers whose member-call chains (`.then` / `.catch` / `.finally`)\nshould be ignored. Useful for libraries like Zod where `.catch(default)` is\na builder API, not a Promise method."
         }
       },
       "additionalProperties": false
