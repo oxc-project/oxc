@@ -783,7 +783,7 @@ fn test() {
             "
                   <script setup>
                   import { computed } from 'vue'
-            
+
                   const numberWithCatch = computed(() => z.number().catch(42))
                   </script>",
             Some(serde_json::json!([{ "ignoredObjectNames": ["z"] }])),
@@ -811,7 +811,7 @@ fn test() {
                   <script setup lang="ts">
                   import { computed } from 'vue'
                   import { z } from 'zod'
-            
+
                   const foo = computed(() => z.a?.['b'].c!.d.method().catch(err => err).finally(() => {}))
                   </script>"#,
             Some(serde_json::json!([{ "ignoredObjectNames": ["z"] }])),
@@ -1446,7 +1446,7 @@ fn test() {
             "
                     <script setup>
                     import {computed} from 'vue'
-            
+
                     const deepCall = computed(() => z.a.b.c.d().e().f().catch())
                     </script>
                   ",

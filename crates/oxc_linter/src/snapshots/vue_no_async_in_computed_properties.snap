@@ -762,7 +762,7 @@ assertion_line: 490
 
   ⚠ vue(no-async-in-computed-properties): Unexpected asynchronous action in computed function.
    ╭─[no_async_in_computed_properties.tsx:5:53]
- 4 │             
+ 4 │
  5 │                     const deepCall = computed(() => z.a.b.c.d().e().f().catch())
    ·                                                     ───────────────────────────
  6 │                     </script>
