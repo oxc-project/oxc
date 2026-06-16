@@ -116,7 +116,7 @@ declare_oxc_lint!(
     correctness,
     none,
     config = NoAsyncInComputedProperties,
-    version = "1.71.0",
+    version = "next",
     short_description = "Disallow asynchronous actions in computed properties.",
 );
 
