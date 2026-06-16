@@ -27,7 +27,6 @@ const NO_VERIFIED_VALID_SCHEMA: [&str; 14] = [
     "unicorn/numeric-separators-style", // missing options #23383
     "jsx_a11y/no-noninteractive-element-interactions", // TS Generation generates ts 2411 error
     "import/extensions",
-    "react/jsx-no-script-url",
 ];
 
 /// Should this rule be skipped for config schema generation?

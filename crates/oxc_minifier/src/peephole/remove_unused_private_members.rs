@@ -52,9 +52,12 @@ impl<'a> PeepholeOptimizations {
                 }
             };
             if !keep {
-                // The element is being silently dropped from the vector
-                // without a slot-replacement helper, so record the drop
-                // explicitly for the fixed-point loop driver.
+                // The element is being silently dropped from the vector. Walk
+                // its subtree so identifier references inside (e.g. a method
+                // body) are recorded in `PassDirty::dead_refs` and pruned by
+                // `flush_pass_dirty`. Without this, refs leak across passes
+                // and break idempotency. `drop_class_element` also records a
+                // mutation for the fixed-point loop driver.
                 ctx.drop_class_element(element);
             }
             keep

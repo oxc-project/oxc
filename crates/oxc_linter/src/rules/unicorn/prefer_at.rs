@@ -159,7 +159,6 @@ impl PreferAt {
             }
         } else if self.check_all_index_access
             && let Some(index) = get_positive_index(&computed.expression)
-            && index != 0
         {
             ctx.diagnostic_with_fix(prefer_at_diagnostic(computed.span(), "[index]"), |fixer| {
                 if is_arguments_object(&computed.object) {
@@ -782,7 +781,7 @@ fn test() {
         ("function foo() {return _.last(arguments)}", None),
         // checkAllIndexAccess: true, generated dynamically so not picked up by rulegen.
         // TODO: Fix these.
-        // ("array[0]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        ("array[0]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
         ("array[1]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
         // ("array[5 + 9]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
         // (
@@ -832,6 +831,7 @@ fn test() {
         ("lodash.last(array)", "array.at(-1)", None),
         // Edge cases with very large numbers
         ("array[array.length - 9007199254740992]", "array.at(-9007199254740992)", None),
+        ("array[0]", "array.at(0)", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
         ("_.last([] as [])", "([] as []).at(-1)", None),
         ("_.last([1, 2, 3] as const)", "([1, 2, 3] as const).at(-1)", None),
         // `arguments` is not an Array, so `.at()` is not guaranteed to exist.
