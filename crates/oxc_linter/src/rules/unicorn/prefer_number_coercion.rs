@@ -136,14 +136,12 @@ fn parse_target(callee: &Expression, ctx: &LintContext) -> Option<ParseTarget> {
 }
 
 fn is_base_10(expression: Option<&Expression>) -> bool {
-    let Some(expression) = expression else {
-        return false;
-    };
-
-    match expression.without_parentheses() {
-        Expression::NumericLiteral(literal) => literal.value == 10.0,
-        _ => false,
+    if let Some(expression) = expression
+        && expression.is_number_value(10.0)
+    {
+        return true;
     }
+    false
 }
 
 #[test]
