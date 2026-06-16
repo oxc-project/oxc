@@ -88,10 +88,22 @@ impl Rule for PreferDateNow {
                         call_expr.arguments.first().and_then(Argument::as_expression)
                     && is_new_date(expr.get_inner_expression())
                 {
-                    ctx.diagnostic_with_fix(
-                        prefer_date_now_over_number_date_object(call_expr.span),
-                        |fixer| fixer.replace(call_expr.span, "Date.now()"),
-                    );
+                    if ident.name == "Number" {
+                        // `Number(new Date())` and `Date.now()` are both `number`, so the whole
+                        // call can be replaced.
+                        ctx.diagnostic_with_fix(
+                            prefer_date_now_over_number_date_object(call_expr.span),
+                            |fixer| fixer.replace(call_expr.span, "Date.now()"),
+                        );
+                    } else {
+                        // `BigInt(new Date())` is a `bigint`; replacing the whole call with
+                        // `Date.now()` would change it to a `number`. Only the inner `new Date()`
+                        // is redundant, so fix to `BigInt(Date.now())` (matches eslint-plugin-unicorn).
+                        let new_date_span = expr.get_inner_expression().span();
+                        ctx.diagnostic_with_fix(prefer_date_now(new_date_span), |fixer| {
+                            fixer.replace(new_date_span, "Date.now()")
+                        });
+                    }
                 }
             }
             AstKind::UnaryExpression(unary_expr) => {
@@ -226,14 +238,14 @@ fn test() {
         ("new Date().getTime()", "Date.now()"),
         ("new Date().valueOf()", "Date.now()"),
         ("Number(new Date())", "Date.now()"),
-        ("BigInt(new Date())", "Date.now()"),
+        ("BigInt(new Date())", "BigInt(Date.now())"),
         ("(new Date() as number).getTime()", "Date.now()"),
         ("(new Date().valueOf() as string)", "(Date.now() as string)"),
         ("(new Date()     ).     getTime()", "Date.now()"),
         ("(new Date().valueOf()       )", "(Date.now()       )"),
         ("Number(new Date()        )", "Date.now()"),
-        ("BigInt(new             Date());", "Date.now();"),
-        ("BigInt(new Date());", "Date.now();"),
+        ("BigInt(new             Date());", "BigInt(Date.now());"),
+        ("BigInt(new Date());", "BigInt(Date.now());"),
     ];
 
     Tester::new(PreferDateNow::NAME, PreferDateNow::PLUGIN, pass, fail)

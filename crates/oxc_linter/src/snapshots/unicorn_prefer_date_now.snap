@@ -51,10 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Change to `Date.now()`.
 
-  ⚠ unicorn(prefer-date-now): Prefer `Date.now()` over `Number(new Date())`
-   ╭─[prefer_date_now.tsx:1:26]
+  ⚠ unicorn(prefer-date-now): Prefer `Date.now()` over `new Date()`
+   ╭─[prefer_date_now.tsx:1:41]
  1 │ const tsBigInt = /* 1 */ BigInt(/* 2 */ new /* 3 */ Date( /* 4 */ ) /* 5 */) /* 6 */
-   ·                          ───────────────────────────────────────────────────
+   ·                                         ───────────────────────────
    ╰────
   help: Change to `Date.now()`.
 
