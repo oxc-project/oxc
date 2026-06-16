@@ -123,6 +123,16 @@ fn test_new_constructor_side_effect() {
     // Element side effects are preserved when the pure construction is dropped.
     test("new Set([foo(), bar()])", "foo(), bar();");
     test("new Map([[foo(), bar()]])", "foo(), bar();");
+    // A string is a valid iterable of values for `Set`, but `Map`/`WeakSet`/`WeakMap`
+    // require `[k, v]` entries / object keys, so a non-empty string argument throws and
+    // is kept. An empty string yields no entries and stays pure for all of them.
+    test(r#"new Set("ab")"#, "");
+    test(r#"new Map("")"#, "");
+    test(r#"new WeakSet("")"#, "");
+    test(r#"new WeakMap("")"#, "");
+    test_same(r#"new Map("ab")"#);
+    test_same(r#"new WeakSet("ab")"#);
+    test_same(r#"new WeakMap("ab")"#);
     test("new Set(null)", "");
     test("new Set(undefined)", "");
     test("new Set(void 0)", "");

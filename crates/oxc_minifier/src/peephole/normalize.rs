@@ -334,14 +334,24 @@ impl<'a> Normalize {
                     ValueType::Object,
                 ],
             ),
-            "Set" | "Map" | "WeakSet" | "WeakMap" => (
+            // `Set` accepts any iterable of values, so a string argument is pure.
+            "Set" => (
+                false,
+                false,
+                &[ValueType::Number, ValueType::Boolean, ValueType::BigInt, ValueType::Object],
+            ),
+            // `Map`/`WeakSet`/`WeakMap` need `[k, v]` entries / object keys, so a string
+            // argument throws (`new Map("ab")` — `"a"` is not an entry; `new WeakSet("a")`
+            // — `"a"` is not an object). Only `null`/`undefined` (empty) and the
+            // array-literal forms handled above are pure for these.
+            "Map" | "WeakSet" | "WeakMap" => (
                 false,
                 false,
                 &[
                     ValueType::Number,
                     ValueType::Boolean,
                     ValueType::BigInt,
-                    ValueType::Boolean,
+                    ValueType::String,
                     ValueType::Object,
                 ],
             ),
@@ -411,6 +421,21 @@ impl<'a> Normalize {
                                 .all(|el| matches!(el, ArrayExpressionElement::ArrayExpression(_))),
                             _ => false,
                         }
+                    }
+                }
+                Some(Expression::StringLiteral(str_lit)) => {
+                    // A string is an iterable of its characters. For constructors that
+                    // don't list `String` as throwing (e.g. `Set`, `AggregateError`,
+                    // `Number`) it is pure. `Map`/`WeakSet`/`WeakMap` list `String`
+                    // because their entries must be `[k, v]` pairs / object keys, so a
+                    // non-empty string throws -- but an empty string yields no entries
+                    // and is still pure. (`DataView` also lists `String` and throws even
+                    // on the empty string, as it needs an `ArrayBuffer`.)
+                    if one_arg_throws_error.contains(&ValueType::String) {
+                        str_lit.value.is_empty()
+                            && matches!(ident.name.as_str(), "Map" | "WeakSet" | "WeakMap")
+                    } else {
+                        true
                     }
                 }
                 Some(e) => {
