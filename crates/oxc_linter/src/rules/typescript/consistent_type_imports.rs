@@ -91,7 +91,7 @@ enum FixStyle {
 #[derive(Default, Debug, Clone, JsonSchema, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
 enum Prefer {
-    /// Will enforce that you always use `import type Foo from '...'` except referenced by metadata of decorators.
+    /// Enforces that you always use `import type Foo from '...'`, except when referenced by decorator metadata.
     #[default]
     TypeImports,
     /// Will enforce that you always use `import Foo from '...'`
@@ -182,6 +182,7 @@ declare_oxc_lint!(
     conditional_fix,
     config = ConsistentTypeImportsConfig,
     version = "0.5.2",
+    short_description = "Enforce consistent usage of type imports.",
 );
 
 impl Rule for ConsistentTypeImports {

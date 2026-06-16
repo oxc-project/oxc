@@ -4,6 +4,31 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.136.0] - 2026-06-15
+
+### 💥 BREAKING CHANGES
+
+- bb0ed44 transformer: [**BREAKING**] Disable styled-components transpileTemplateLiterals by default (#23171) (Boshen)
+
+### 🚀 Features
+
+- 6c0bdf0 transformer/react-refresh: Support `module.property.useHook()` (#23190) (Dunqing)
+- ec266bb transformer: Run React Compiler as a feature-gated transform pass (#23201) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 2c28748 transformer/class: Parent generated constructors to class scope (#23222) (camc314)
+
+### 📚 Documentation
+
+- 09755ac transformer: Add `AGENTS.md` test guidance for agents (#23439) (camc314)
+
+## [0.135.0] - 2026-06-08
+
+### 💥 BREAKING CHANGES
+
+- 4c35362 ast: [**BREAKING**] Add `AstBuilder::template_element_escape_raw` and `template_element_escape_raw_with_lone_surrogates` methods (#23047) (overlookmotel)
+
 ## [0.133.0] - 2026-05-26
 
 ### 🚀 Features

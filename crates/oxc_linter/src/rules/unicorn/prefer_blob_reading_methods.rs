@@ -57,6 +57,7 @@ declare_oxc_lint!(
     pedantic,
     pending,
     version = "0.0.16",
+    short_description = "Recommends using `Blob#text()` and `Blob#arrayBuffer()` over `FileReader#readAsText()` and `FileReader#readAsArrayBuffer()`.",
 );
 
 impl Rule for PreferBlobReadingMethods {

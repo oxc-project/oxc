@@ -80,6 +80,7 @@ declare_oxc_lint!(
     style,
     suggestion,
     version = "0.0.20",
+    short_description = "Prefer modern DOM APIs like `replaceWith` and `before` over older methods like `replaceChild` and `insertBefore`.",
 );
 
 impl Rule for PreferModernDomApis {

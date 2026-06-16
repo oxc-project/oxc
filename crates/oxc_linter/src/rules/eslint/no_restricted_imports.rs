@@ -554,6 +554,7 @@ declare_oxc_lint!(
     // indicate that this rule has configuration and avoid errors.
     config = Value,
     version = "0.15.0",
+    short_description = "Disallow specified modules when loaded by `import`.",
 );
 
 fn add_configuration_path_from_object(

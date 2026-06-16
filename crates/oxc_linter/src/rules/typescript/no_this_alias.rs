@@ -98,6 +98,7 @@ declare_oxc_lint!(
     correctness,
     config = NoThisAliasConfig,
     version = "0.0.7",
+    short_description = "Disallow aliasing of `this`.",
 );
 
 impl Rule for NoThisAlias {

@@ -29,7 +29,7 @@ pub type ByteHandler<C> = unsafe fn(&mut Lexer<'_, C>) -> Kind;
 pub type ByteHandlers<C> = [ByteHandler<C>; 256];
 
 /// Macro to create a lookup table mapping any incoming byte to a handler function defined below.
-/// <https://github.com/ratel-rust/ratel-core/blob/v0.7.0/ratel/src/lexer/mod.rs>
+/// <https://github.com/ratel-rust/ratel-core/blob/e55a1310ba69a3f5ce2a9a6eef643feced02ac08/ratel/src/lexer/mod.rs>
 #[rustfmt::skip]
 macro_rules! byte_handlers {
     () => {

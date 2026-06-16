@@ -4,12 +4,15 @@ use oxc_ast::{
     AstKind,
     ast::{
         CallExpression, ExportDefaultDeclarationKind, Expression, IdentifierReference,
-        ObjectExpression, ObjectProperty, ObjectPropertyKind,
+        ObjectExpression, ObjectProperty, ObjectPropertyKind, TSSignature, TSType, TSTypeName,
     },
 };
 use oxc_span::GetSpan;
 
-use crate::{AstNode, ContextSubHost, LintContext, frameworks::FrameworkOptions};
+use crate::{
+    AstNode, ContextSubHost, LintContext, ast_util::get_declaration_from_reference_id,
+    frameworks::FrameworkOptions, module_record::ImportImportName,
+};
 
 // These sets mirror eslint-plugin-vue's `vue/no-reserved-component-names`.
 // `globals::HTML_TAG` has a broader DOM/ARIA scope and different message
@@ -328,6 +331,29 @@ pub fn is_vue_component_options_call(call_expr: &CallExpression<'_>) -> bool {
     matches!(prop_name, "component" | "mixin")
 }
 
+/// Check whether the identifier is imported as `nextTick` or aliased from `'vue'`.
+pub fn is_vue_next_tick_import(ident: &IdentifierReference, ctx: &LintContext<'_>) -> bool {
+    let scoping = ctx.scoping();
+    let Some(symbol_id) = scoping.get_reference(ident.reference_id()).symbol_id() else {
+        return false;
+    };
+    for entry in &ctx.module_record().import_entries {
+        if entry.module_request.name() != "vue" {
+            continue;
+        }
+        let ImportImportName::Name(name_span) = &entry.import_name else {
+            continue;
+        };
+        if name_span.name() != "nextTick" {
+            continue;
+        }
+        if scoping.get_root_binding(entry.local_name.name().into()) == Some(symbol_id) {
+            return true;
+        }
+    }
+    false
+}
+
 /// Finds the first `ObjectProperty` whose static key matches `name` in the given object.
 /// `SpreadElement` entries are skipped.
 pub fn find_property<'a, 'b>(
@@ -338,4 +364,57 @@ pub fn find_property<'a, 'b>(
         let ObjectPropertyKind::ObjectProperty(obj_prop) = prop else { return None };
         obj_prop.key.is_specific_static_name(name).then_some(obj_prop.as_ref())
     })
+}
+
+/// Walks a `defineProps<T>()` type argument and invokes `f` for every member
+/// signature it contains, mirroring eslint-plugin-vue's `flattenTypeNodes`:
+/// unions, intersections and `interface`/`type` references are resolved
+/// recursively down to their signatures. `f` receives every `TSSignature`
+/// member (including non-property kinds), leaving the caller to pick out what
+/// it needs.
+pub fn for_each_define_props_type_signature<'a>(
+    ts_type: &TSType<'a>,
+    ctx: &LintContext<'a>,
+    f: &mut dyn FnMut(&TSSignature<'a>),
+) {
+    match ts_type {
+        TSType::TSTypeLiteral(literal) => {
+            for signature in &literal.members {
+                f(signature);
+            }
+        }
+        TSType::TSUnionType(union) => {
+            for member in &union.types {
+                for_each_define_props_type_signature(member, ctx, f);
+            }
+        }
+        TSType::TSIntersectionType(intersection) => {
+            for member in &intersection.types {
+                for_each_define_props_type_signature(member, ctx, f);
+            }
+        }
+        TSType::TSTypeReference(type_ref) => {
+            let TSTypeName::IdentifierReference(ident) = &type_ref.type_name else { return };
+            if !ctx.scoping().get_reference(ident.reference_id()).is_type() {
+                return;
+            }
+            let Some(declaration) =
+                get_declaration_from_reference_id(ident.reference_id(), ctx.semantic())
+            else {
+                return;
+            };
+            match declaration.kind() {
+                AstKind::TSInterfaceDeclaration(interface) => {
+                    for signature in &interface.body.body {
+                        f(signature);
+                    }
+                }
+                AstKind::TSTypeAliasDeclaration(alias) => {
+                    for_each_define_props_type_signature(&alias.type_annotation, ctx, f);
+                }
+                _ => {}
+            }
+        }
+        _ => {}
+    }
 }

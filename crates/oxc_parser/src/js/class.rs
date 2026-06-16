@@ -81,8 +81,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         } else {
             None
         };
+        // A class name may not be a reserved type name, but only in TypeScript
+        // (`class string {}` is valid JavaScript).
+        if self.is_ts
+            && let Some(id) = &id
+        {
+            self.check_reserved_type_name(id, "Class");
+        }
 
-        let type_parameters = if self.is_ts { self.parse_ts_type_parameters() } else { None };
+        let type_parameters =
+            if self.is_ts { self.parse_ts_type_parameters_with_variance() } else { None };
         let (extends, implements) = self.parse_heritage_clause();
         let mut super_class = None;
         let mut super_type_parameters = None;
@@ -371,8 +379,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ///    `StatementList`[~Yield, +Await, ~Return]
     fn parse_class_static_block(&mut self, span: u32) -> ClassElement<'a> {
         self.bump_any(); // bump `static`
-        let block =
-            self.context(Context::Await, Context::Yield | Context::Return, Self::parse_block);
+        let block = self.context(
+            Context::Await | Context::NewTarget,
+            Context::Yield | Context::Return,
+            Self::parse_block,
+        );
         self.ast.class_element_static_block(self.end_span(span), block.unbox().body)
     }
 
@@ -382,12 +393,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         span: u32,
         key: PropertyKey<'a>,
         computed: bool,
-        definite: bool,
+        definite: Option<u32>,
         modifiers: &Modifiers,
         decorators: Vec<'a, Decorator<'a>>,
     ) -> ClassElement<'a> {
         let type_annotation = if self.is_ts { self.parse_ts_type_annotation() } else { None };
-        let value = self.eat(Kind::Eq).then(|| self.parse_assignment_expression_or_higher());
+        // `new.target` is allowed in a class accessor field initializer.
+        let value = self.eat(Kind::Eq).then(|| {
+            self.context_add(Context::NewTarget, Self::parse_assignment_expression_or_higher)
+        });
         self.asi();
         let r#type = if modifiers.contains(ModifierKind::Abstract) {
             AccessorPropertyType::TSAbstractAccessorProperty
@@ -408,13 +422,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             true,
             diagnostics::accessor_modifier,
         );
-        if definite
+        if let Some(definite_token_start) = definite
             && ((self.ctx.has_ambient() && !modifiers.contains(ModifierKind::Declare))
                 || r#type.is_abstract())
         {
-            self.error(diagnostics::definite_assignment_assertion_not_permitted(
-                self.end_span(span),
-            ));
+            self.error(diagnostics::definite_assignment_assertion_not_permitted(Span::sized(
+                definite_token_start,
+                1,
+            )));
         }
         self.ast.class_element_accessor_property(
             self.end_span(span),
@@ -426,7 +441,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             computed,
             modifiers.contains(ModifierKind::Static),
             modifiers.contains(ModifierKind::Override),
-            definite,
+            definite.is_some(),
             modifiers.accessibility(),
         )
     }
@@ -571,9 +586,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             );
         }
 
-        let definite = self.eat(Kind::Bang);
+        let is_definite = self.eat(Kind::Bang);
+        let definite = is_definite.then_some(self.prev_token_end - 1);
 
-        if definite && let Some(optional_span) = optional_span {
+        if is_definite && let Some(optional_span) = optional_span {
             self.error(diagnostics::optional_definite_property(optional_span.expand_right(1)));
         }
 
@@ -639,15 +655,20 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         name: PropertyKey<'a>,
         computed: bool,
         optional_span: Option<Span>,
-        definite: bool,
+        definite: Option<u32>,
         modifiers: &Modifiers,
         decorators: Vec<'a, Decorator<'a>>,
     ) -> ClassElement<'a> {
         let type_annotation = if self.is_ts { self.parse_ts_type_annotation() } else { None };
         // Initializer[+In, ?Yield, ?Await]opt
-        let initializer = self
-            .eat(Kind::Eq)
-            .then(|| self.context(Context::In, Context::Yield | Context::Await, Self::parse_expr));
+        // `new.target` is allowed in a class field initializer.
+        let initializer = self.eat(Kind::Eq).then(|| {
+            self.context(
+                Context::In | Context::NewTarget,
+                Context::Yield | Context::Await,
+                Self::parse_expr,
+            )
+        });
 
         // Handle trailing `;` or newline
         let cur_token = self.cur_token();
@@ -673,6 +694,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.error(diagnostics::static_prototype(span));
             }
         }
+        if r#abstract && name.is_private_identifier() {
+            self.error(diagnostics::abstract_with_private_identifier(name.span()));
+        }
         if r#abstract && initializer.is_some() {
             let (name, span) = name.prop_name().unwrap_or_else(|| {
                 let span = name.span();
@@ -688,10 +712,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 initializer.span(),
             ));
         }
-        if definite && (self.ctx.has_ambient() || r#abstract) {
-            self.error(diagnostics::definite_assignment_assertion_not_permitted(
-                self.end_span(span),
-            ));
+        if let Some(definite_token_start) = definite {
+            let definite_span = Span::sized(definite_token_start, 1);
+            if initializer.is_some() {
+                self.error(diagnostics::variable_declarator_definite(definite_span));
+            } else if type_annotation.is_none() {
+                self.error(diagnostics::variable_declarator_definite_type_assertion(definite_span));
+            } else if self.ctx.has_ambient() || r#static || r#abstract {
+                self.error(diagnostics::definite_assignment_assertion_not_permitted(definite_span));
+            }
         }
         self.ast.class_element_property_definition(
             self.end_span(span),
@@ -705,7 +734,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             modifiers.contains(ModifierKind::Declare),
             modifiers.contains(ModifierKind::Override),
             optional_span.is_some(),
-            definite,
+            definite.is_some(),
             modifiers.contains(ModifierKind::Readonly),
             modifiers.accessibility(),
         )

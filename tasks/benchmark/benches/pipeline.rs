@@ -1,17 +1,57 @@
 use std::path::Path;
 
-use oxc_allocator::Allocator;
+use oxc::{
+    CompilerInterface,
+    codegen::CodegenOptions,
+    mangler::MangleOptions,
+    minifier::CompressOptions,
+    transformer::TransformOptions,
+    transformer_plugins::{InjectGlobalVariablesConfig, InjectImport, ReplaceGlobalDefinesConfig},
+};
 use oxc_benchmark::{BenchmarkId, Criterion, criterion_group, criterion_main};
-use oxc_codegen::{Codegen, CodegenOptions};
-use oxc_mangler::{MangleOptions, Mangler};
-use oxc_minifier::{CompressOptions, Compressor};
-use oxc_parser::Parser;
-use oxc_semantic::SemanticBuilder;
 use oxc_tasks_common::TestFiles;
-use oxc_transformer::{TransformOptions, Transformer};
 
-/// Benchmark the complete compilation pipeline:
-/// allocate -> parse -> semantic -> transform -> minify -> mangle -> codegen -> drop
+/// A [`CompilerInterface`] that runs the complete compilation pipeline:
+/// parse -> semantic -> transform -> define -> inject -> minify -> mangle -> codegen.
+struct PipelineCompiler {
+    transform: TransformOptions,
+    define: ReplaceGlobalDefinesConfig,
+    inject: InjectGlobalVariablesConfig,
+    compress: CompressOptions,
+    mangle: MangleOptions,
+    codegen: CodegenOptions,
+}
+
+impl CompilerInterface for PipelineCompiler {
+    fn transform_options(&self) -> Option<&TransformOptions> {
+        Some(&self.transform)
+    }
+
+    fn define_options(&self) -> Option<ReplaceGlobalDefinesConfig> {
+        Some(self.define.clone())
+    }
+
+    fn inject_options(&self) -> Option<InjectGlobalVariablesConfig> {
+        Some(self.inject.clone())
+    }
+
+    fn compress_options(&self) -> Option<CompressOptions> {
+        Some(self.compress.clone())
+    }
+
+    fn mangle_options(&self) -> Option<MangleOptions> {
+        Some(self.mangle)
+    }
+
+    fn codegen_options(&self) -> Option<CodegenOptions> {
+        Some(self.codegen.clone())
+    }
+
+    fn check_semantic_error(&self) -> bool {
+        false
+    }
+}
+
 fn bench_pipeline(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("pipeline");
 
@@ -19,57 +59,27 @@ fn bench_pipeline(criterion: &mut Criterion) {
         let id = BenchmarkId::from_parameter(&file.file_name);
         let source_text = &file.source_text;
         let source_type = file.source_type;
+        let source_path = Path::new(&file.file_name);
 
-        // Create `Allocator` outside of `bench_function`, so same allocator is used for
-        // both the warmup and measurement phases
-        let mut allocator = Allocator::default();
+        // `compile` creates its own `Allocator` and keeps no state between runs,
+        // so the compiler and its options can be built once and reused.
+        let mut compiler = PipelineCompiler {
+            transform: TransformOptions::from_target("esnext").unwrap(),
+            define: ReplaceGlobalDefinesConfig::new(&[("process.env.NODE_ENV", "'production'")])
+                .unwrap(),
+            inject: InjectGlobalVariablesConfig::new(vec![InjectImport::named_specifier(
+                "node:buffer",
+                Some("Buffer"),
+                "Buffer",
+            )]),
+            compress: CompressOptions::smallest(),
+            mangle: MangleOptions::default(),
+            codegen: CodegenOptions::default(),
+        };
 
         group.bench_function(id, |b| {
-            b.iter_with_setup_wrapper(|runner| {
-                // Reset allocator at start of each iteration
-                allocator.reset();
-
-                // Create options inside the closure to avoid move issues
-                let transform_options = TransformOptions::from_target("esnext").unwrap();
-                let compress_options = CompressOptions::smallest();
-                let mangle_options = MangleOptions::default();
-                let codegen_options = CodegenOptions::default();
-
-                runner.run(|| {
-                    // Parse
-                    let parser_ret = Parser::new(&allocator, source_text, source_type).parse();
-                    let mut program = parser_ret.program;
-
-                    // Semantic
-                    let scoping = SemanticBuilder::new()
-                        .with_excess_capacity(2.0)
-                        .with_enum_eval(true)
-                        .build(&program)
-                        .semantic
-                        .into_scoping();
-
-                    // Transform
-                    let transformer_ret = Transformer::new(
-                        &allocator,
-                        Path::new(&file.file_name),
-                        &transform_options,
-                    )
-                    .build_with_scoping(scoping, &mut program);
-                    let _scoping = transformer_ret.scoping;
-
-                    // Compress (minify) - rebuilds semantic internally
-                    Compressor::new(&allocator).build(&mut program, compress_options);
-
-                    // Mangle - rebuilds semantic internally
-                    let mangler_ret = Mangler::new().with_options(mangle_options).build(&program);
-
-                    // Codegen
-                    Codegen::new()
-                        .with_options(codegen_options)
-                        .with_scoping(Some(mangler_ret.scoping))
-                        .with_private_member_mappings(Some(mangler_ret.class_private_mappings))
-                        .build(&program)
-                });
+            b.iter(|| {
+                compiler.compile(source_text, source_type, source_path);
             });
         });
     }

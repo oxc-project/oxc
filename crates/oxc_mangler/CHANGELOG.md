@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.135.0] - 2026-06-08
+
+### 🚀 Features
+
+- 85efabf semantic: Make building the class table optional, off by default (#22862) (Boshen)
+
 ## [0.127.0] - 2026-04-20
 
 ### 🐛 Bug Fixes

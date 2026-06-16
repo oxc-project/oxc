@@ -1,0 +1,36 @@
+---
+source: crates/oxc_formatter_json/tests/fixtures/mod.rs
+---
+==================== Input ====================
+{
+  "workspaces": {
+    "packages/test-dev-server/tests/fixtures/*": {
+      "entry": ["dev.config.mjs", "src/*.js"] // no @rolldown/test-dev-server plugin
+    }
+  }
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+{
+  "workspaces": {
+    "packages/test-dev-server/tests/fixtures/*": {
+      "entry": ["dev.config.mjs", "src/*.js"] // no @rolldown/test-dev-server plugin
+    }
+  }
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+{
+  "workspaces": {
+    "packages/test-dev-server/tests/fixtures/*": {
+      "entry": ["dev.config.mjs", "src/*.js"] // no @rolldown/test-dev-server plugin
+    }
+  }
+}
+
+===================== End =====================

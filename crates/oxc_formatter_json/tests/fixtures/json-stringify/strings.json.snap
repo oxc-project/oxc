@@ -1,0 +1,47 @@
+---
+source: crates/oxc_formatter_json/tests/fixtures/mod.rs
+---
+==================== Input ====================
+[
+  'single',
+  "double",
+  'I can use "double quotes" here',
+  "ģ䕧 \xFF \0 / \/",
+  ``,
+  `foo`,
+  `
+  multiple-line
+`,
+  `\u{1F409}\`'"\${}`
+]
+
+==================== Output ====================
+---------------------------------------------
+{ printWidth: 80, variant: "json-stringify" }
+---------------------------------------------
+[
+  "single",
+  "double",
+  "I can use \"double quotes\" here",
+  "ģ䕧 ÿ \u0000 / /",
+  "",
+  "foo",
+  "\n  multiple-line\n",
+  "🐉`'\"${}"
+]
+
+----------------------------------------------
+{ printWidth: 100, variant: "json-stringify" }
+----------------------------------------------
+[
+  "single",
+  "double",
+  "I can use \"double quotes\" here",
+  "ģ䕧 ÿ \u0000 / /",
+  "",
+  "foo",
+  "\n  multiple-line\n",
+  "🐉`'\"${}"
+]
+
+===================== End =====================

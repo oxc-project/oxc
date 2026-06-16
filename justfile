@@ -174,7 +174,6 @@ new-rule name plugin='eslint':
   just linter-schema-json
   just linter-config-ts
   just fmt
-  cargo insta test -p website_linter --accept
 
 # Update test cases for an existing lint rule from upstream
 update-rule-tests name plugin='eslint':

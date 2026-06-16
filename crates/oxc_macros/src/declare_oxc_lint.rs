@@ -33,6 +33,8 @@ pub struct LintRuleMeta {
     config: Option<Path>,
     /// The version of oxlint in which this rule was first available.
     version: LitStr,
+    /// A short, one-line summary of what the rule does.
+    short_description: Option<LitStr>,
 }
 
 impl Parse for LintRuleMeta {
@@ -106,6 +108,7 @@ impl Parse for LintRuleMeta {
         let mut fix: Option<Ident> = None;
         let mut config: Option<Path> = None;
         let mut version: Option<LitStr> = None;
+        let mut short_description: Option<LitStr> = None;
 
         // remaining options are `key = value` pairs, with the exception of
         // fix kinds. Those can be short-handed to just the fix kind
@@ -150,6 +153,11 @@ impl Parse for LintRuleMeta {
                 "version" => {
                     input.parse::<Token!(=)>()?;
                     version.replace(input.parse()?);
+                }
+                // short_description = "One-line summary."
+                "short_description" => {
+                    input.parse::<Token!(=)>()?;
+                    short_description.replace(input.parse()?);
                 }
                 _ => {
                     if input.peek(Token!(=)) || fix.is_some() {
@@ -204,6 +212,7 @@ impl Parse for LintRuleMeta {
             used_in_test: false,
             config,
             version,
+            short_description,
         })
     }
 }
@@ -224,6 +233,7 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
         used_in_test,
         config,
         version,
+        short_description,
     } = metadata;
 
     let canonical_name = rule_name_converter().convert(name.to_string());
@@ -250,7 +260,7 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
         None
     } else {
         Some(quote! {
-            use crate::{rule::{RuleCategory, RuleMeta, RuleFixMeta, RuleRunner}, fixer::FixKind};
+            use crate::{rule::{RuleCategory, RuleMeta, RuleInfo, RuleFixMeta, RuleRunner}, fixer::FixKind};
             use oxc_semantic::AstTypesBitset;
         })
     };
@@ -303,6 +313,14 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
         }
     };
 
+    let info_const = short_description.map(|short_description| {
+        quote! {
+            const INFO: RuleInfo = RuleInfo {
+                short_description: #short_description,
+            };
+        }
+    });
+
     let output = quote! {
         #import_statement
 
@@ -324,6 +342,8 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
             #config_schema
 
             #version_const
+
+            #info_const
         }
     };
 

@@ -49,6 +49,7 @@ declare_oxc_lint!(
     correctness,
     dangerous_suggestion,
     version = "0.0.16",
+    short_description = "Disallow `new Array()`.",
 );
 
 impl Rule for NoNewArray {

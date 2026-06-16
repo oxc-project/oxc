@@ -45,29 +45,32 @@ declare_oxc_lint!(
     suspicious,
     pending,
     version = "0.6.1",
+    short_description = "Disallow non-null assertion in locations that may be confusing.",
 );
 
 fn not_need_no_confusing_non_null_assertion_diagnostic(op_str: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
-            "Confusing combinations of non-null assertion and equal test like \"a! {op_str} b\", which looks very similar to not equal \"a !{op_str} b\"."
+        r"Confusing combinations of non-null assertion and equal test like `a! {op_str} b`, which looks very similar to not equal `a !{op_str} b`."
     ))
-    .with_help("Remove the \"!\", or prefix the \"=\" with it.")
+    .with_help(r"Remove the `!`, or prefix the `=` with it.")
     .with_label(span)
 }
 
 fn wrap_up_no_confusing_non_null_assertion_diagnostic(op_str: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
-        "Confusing combinations of non-null assertion and equal test like \"a! {op_str} b\", which looks very similar to not equal \"a !{op_str} b\"."
+        r"Confusing combinations of non-null assertion and equal test like `a! {op_str} b`, which looks very similar to not equal `a !{op_str} b`."
     ))
-    .with_help("Wrap left-hand side in parentheses to avoid putting non-null assertion \"!\" and \"=\" together.")
+    .with_help(
+        r"Wrap left-hand side in parentheses to avoid putting non-null assertion `!` and `=` together.",
+    )
     .with_label(span)
 }
 
 fn confusing_non_null_assignment_assertion_diagnostic(op_str: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
-            "Confusing combinations of non-null assertion and assignment like \"a! {op_str} b\", which looks very similar to not equal \"a !{op_str} b\"."
+        r"Confusing combinations of non-null assertion and assignment like `a! {op_str} b`, which looks very similar to not equal `a !{op_str} b`."
     ))
-    .with_help("Remove the \"!\", or wrap the left-hand side in parentheses.")
+    .with_help(r"Remove the `!`, or wrap the left-hand side in parentheses.")
     .with_label(span)
 }
 

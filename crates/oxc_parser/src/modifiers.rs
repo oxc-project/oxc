@@ -568,16 +568,23 @@ impl<C: Config> ParserImpl<'_, C> {
                 return None;
             }
             self.bump_any();
-        } else if
-        // we're at the start of a static block
-        (stop_on_start_of_class_static_block
-            && kind == Kind::Static
-            && self.lexer.peek_token().kind() == Kind::LCurly)
-            // we may be at the start of a static block
-            || (kind == Kind::Static && seen_modifier_kinds.contains(ModifierKind::Static))
+        } else if kind == Kind::Static {
+            // ClassStaticBlock : `static { ClassStaticBlockBody }`   e.g. `static { x = 1; }`
+            // member named `static`                                  e.g. `static() {}`, `static = 1`, `static;`
+            // repeated `static`                                      e.g. `static static x`
+            //
+            // Peek once and reuse it — `peek_token` is not cached, so checking `== LCurly` separately
+            // from the peek inside `next_token_can_follow_modifier` re-lexed this token twice.
+            let next_kind = self.lexer.peek_token().kind();
+            if (stop_on_start_of_class_static_block && next_kind == Kind::LCurly)
+                || seen_modifier_kinds.contains(ModifierKind::Static)
+                || !Self::can_follow_modifier(next_kind)
+            {
+                return None;
+            }
+            self.bump_any();
+        } else if !self.parse_any_contextual_modifier() {
             // next token is not a modifier
-            || (!self.parse_any_contextual_modifier())
-        {
             return None;
         }
         Some(self.modifier(kind, span_start))

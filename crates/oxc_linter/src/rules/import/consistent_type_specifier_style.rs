@@ -59,7 +59,7 @@ pub struct ConsistentTypeSpecifierStyle(Mode);
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule either enforces or bans the use of inline type-only markers for named imports.
+    /// Enforces or bans the use of inline type-only markers for named imports.
     ///
     /// ### Why is this bad?
     ///
@@ -98,6 +98,7 @@ declare_oxc_lint!(
     conditional_fix,
     config = Mode,
     version = "0.16.11",
+    short_description = "Enforces or bans the use of inline type-only markers for named imports.",
 );
 
 impl Rule for ConsistentTypeSpecifierStyle {

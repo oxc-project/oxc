@@ -362,7 +362,7 @@ pub fn is_multiline_template_starting_on_same_line(
     };
 
     template.quasis.iter().any(|quasi| source_text.contains_newline(quasi.span))
-        && !source_text.has_newline_before(start)
+        && !source_text.has_line_terminator_before(start)
 }
 
 /// Returns `true` if the expression is an HTML embed template that should be hugged.

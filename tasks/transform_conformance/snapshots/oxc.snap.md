@@ -1,6 +1,6 @@
-commit: d9fe348c
+commit: 1fb0b771
 
-Passed: 237/395
+Passed: 239/397
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -63,7 +63,7 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), R
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(10)]
 
 
-# babel-plugin-transform-typescript (24/60)
+# babel-plugin-transform-typescript (23/60)
 * allow-declare-fields-false/input.ts
 Unresolved references mismatch:
 after transform: ["dce"]
@@ -139,6 +139,28 @@ rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "Phase":
 after transform: SymbolId(0): SymbolFlags(ConstEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+* declare-and-definite-with-initializer/input.ts
+
+  x TS(1263): Declarations with initializers cannot also have definite
+  | assignment assertions.
+   ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/declare-and-definite-with-initializer/input.ts:8:16]
+ 7 | class DefiniteExample {
+ 8 |    readonly bar! = "test";
+   :                ^
+ 9 |    readonly foo! = 1;
+   `----
+
+
+  x TS(1263): Declarations with initializers cannot also have definite
+  | assignment assertions.
+    ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/declare-and-definite-with-initializer/input.ts:9:16]
+  8 |    readonly bar! = "test";
+  9 |    readonly foo! = 1;
+    :                ^
+ 10 | }
+    `----
+
 
 * elimination-declare/input.ts
 Bindings mismatch:
@@ -637,18 +659,12 @@ after transform: ["dce"]
 rebuilt        : []
 
 * use-define-for-class-fields-without-class-properties/input.ts
-Scope parent mismatch:
-after transform: ScopeId(12): Some(ScopeId(0))
-rebuilt        : ScopeId(2): Some(ScopeId(1))
-Scope parent mismatch:
-after transform: ScopeId(17): Some(ScopeId(0))
-rebuilt        : ScopeId(12): Some(ScopeId(11))
 Unresolved reference IDs mismatch for "dce":
 after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(4), ReferenceId(9), ReferenceId(12), ReferenceId(14), ReferenceId(17)]
 rebuilt        : [ReferenceId(5)]
 
 
-# babel-plugin-transform-react-jsx (49/52)
+# babel-plugin-transform-react-jsx (51/54)
 * refresh/import-after-component/input.js
 Missing ScopeId
 Missing ReferenceId: "useFoo"
@@ -663,7 +679,7 @@ x Output mismatch
 x Output mismatch
 
 
-# legacy-decorators (9/105)
+# legacy-decorators (10/105)
 * oxc/accessor/input.ts
 x Output mismatch
 
@@ -686,11 +702,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["PropertyDescriptor", "babelHelpers"]
 rebuilt        : ["babelHelpers", "property"]
-
-* oxc/accessor-use-define-for-class-fields/input.ts
-Scope parent mismatch:
-after transform: ScopeId(5): Some(ScopeId(0))
-rebuilt        : ScopeId(2): Some(ScopeId(1))
 
 * oxc/accessor-with-class-properties/input.ts
 Bindings mismatch:

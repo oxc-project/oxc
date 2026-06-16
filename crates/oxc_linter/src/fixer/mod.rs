@@ -273,13 +273,13 @@ pub struct Message {
 }
 
 impl Message {
-    #[expect(clippy::cast_possible_truncation)] // for `as u32`
     pub fn new(error: OxcDiagnostic, fixes: PossibleFixes) -> Self {
         let span = error
             .labels
-            .as_ref()
-            .and_then(|labels| labels.iter().find(|span| span.primary()).or_else(|| labels.first()))
-            .map(|span| Span::new(span.offset() as u32, (span.offset() + span.len()) as u32))
+            .iter()
+            .find(|span| span.primary())
+            .or_else(|| error.labels.first())
+            .map(|span| Span::new(span.offset(), span.offset() + span.len()))
             .unwrap_or_default();
 
         Self { error, span, fixes, fixed: false, section_offset: 0, rule: None }
@@ -303,10 +303,8 @@ impl Message {
 
         self.span = self.span.move_right(offset);
 
-        if let Some(labels) = &mut self.error.labels {
-            for label in labels {
-                label.set_span_offset(label.offset().saturating_add(offset as usize));
-            }
+        for label in &mut self.error.labels {
+            label.set_span_offset(label.offset().saturating_add(offset));
         }
 
         match &mut self.fixes {
@@ -453,9 +451,9 @@ impl<'a> Fixer<'a> {
                 })
                 .parse();
             debug_assert!(
-                parse_result.errors.is_empty() && !parse_result.panicked,
+                parse_result.diagnostics.is_empty() && !parse_result.panicked,
                 "Linter fixer produced invalid syntax.\n\nInput code: \n```\n{source_text}\n```\n\nFixed code: \n```\n{output}\n```\n\nParse errors: {:?}",
-                parse_result.errors
+                parse_result.diagnostics
             );
         }
 
