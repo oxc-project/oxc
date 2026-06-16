@@ -301,7 +301,8 @@ fn is_vue_computed_call(call: &CallExpression<'_>, ctx: &LintContext<'_>) -> boo
 }
 
 const PROMISE_FUNCTIONS: &[&str] = &["then", "catch", "finally"];
-const PROMISE_METHODS: &[&str] = &["all", "race", "reject", "resolve"];
+const PROMISE_METHODS: &[&str] =
+    &["all", "allSettled", "any", "race", "reject", "resolve", "try", "withResolvers"];
 const TIMED_FUNCTIONS: &[&str] =
     &["setTimeout", "setInterval", "setImmediate", "requestAnimationFrame"];
 
@@ -1446,7 +1447,6 @@ fn test() {
             "
                     <script setup>
                     import {computed} from 'vue'
-
                     const deepCall = computed(() => z.a.b.c.d().e().f().catch())
                     </script>
                   ",
@@ -1454,6 +1454,70 @@ fn test() {
             None,
             Some(PathBuf::from("test.vue")),
         ), // { parser, "sourceType": "module", "ecmaVersion": 2020 },
+        (
+            "
+<script>
+                    export default {
+                      computed: {
+                        foo: function () {
+                          return Promise.allSettled([])
+                        }
+                      }
+                    }
+                  </script>
+",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ), // languageOptions,
+        (
+            "
+<script>
+                    export default {
+                      computed: {
+                        foo: function () {
+                          return Promise.any([])
+                        }
+                      }
+                    }
+                  </script>
+",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ), // languageOptions,
+        (
+            "
+<script>
+                    export default {
+                      computed: {
+                        foo: function () {
+                          return Promise.try([])
+                        }
+                      }
+                    }
+                  </script>
+",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ), // languageOptions,
+        (
+            "
+<script>
+                    export default {
+                      computed: {
+                        foo: function () {
+                          return Promise.withResolvers([])
+                        }
+                      }
+                    }
+                  </script>
+",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ), // languageOptions,
     ];
 
     Tester::new(NoAsyncInComputedProperties::NAME, NoAsyncInComputedProperties::PLUGIN, pass, fail)

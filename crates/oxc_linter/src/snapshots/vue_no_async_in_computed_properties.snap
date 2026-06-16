@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 490
 ---
 
   ⚠ vue(no-async-in-computed-properties): Unexpected async function declaration in "foo" computed property.
@@ -761,9 +760,41 @@ assertion_line: 490
    ╰────
 
   ⚠ vue(no-async-in-computed-properties): Unexpected asynchronous action in computed function.
-   ╭─[no_async_in_computed_properties.tsx:5:53]
- 4 │
- 5 │                     const deepCall = computed(() => z.a.b.c.d().e().f().catch())
+   ╭─[no_async_in_computed_properties.tsx:4:53]
+ 3 │                     import {computed} from 'vue'
+ 4 │                     const deepCall = computed(() => z.a.b.c.d().e().f().catch())
    ·                                                     ───────────────────────────
- 6 │                     </script>
+ 5 │                     </script>
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected asynchronous action in "foo" computed property.
+   ╭─[no_async_in_computed_properties.tsx:6:34]
+ 5 │                         foo: function () {
+ 6 │                           return Promise.allSettled([])
+   ·                                  ──────────────────────
+ 7 │                         }
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected asynchronous action in "foo" computed property.
+   ╭─[no_async_in_computed_properties.tsx:6:34]
+ 5 │                         foo: function () {
+ 6 │                           return Promise.any([])
+   ·                                  ───────────────
+ 7 │                         }
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected asynchronous action in "foo" computed property.
+   ╭─[no_async_in_computed_properties.tsx:6:34]
+ 5 │                         foo: function () {
+ 6 │                           return Promise.try([])
+   ·                                  ───────────────
+ 7 │                         }
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected asynchronous action in "foo" computed property.
+   ╭─[no_async_in_computed_properties.tsx:6:34]
+ 5 │                         foo: function () {
+ 6 │                           return Promise.withResolvers([])
+   ·                                  ─────────────────────────
+ 7 │                         }
    ╰────
