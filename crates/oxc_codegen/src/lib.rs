@@ -908,11 +908,15 @@ impl<'a> Codegen<'a> {
 
         // Track the best candidate found so far
         if num.fract() == 0.0 {
-            // For integers, check hex format and other optimizations
-            let hex_candidate = format!("0x{:x}", num as u128);
-            if hex_candidate.len() < best_candidate.len() {
+            // For integers, prefer hex only when it's shorter. Compute the hex length without
+            // allocating (each hex digit covers 4 bits) and only build the string when hex wins —
+            // for most integers decimal is shorter, so the `format!` is skipped entirely.
+            let int = num as u128;
+            let hex_len = 2 + if int == 0 { 1 } else { (int.ilog2() / 4 + 1) as usize };
+            if hex_len < best_candidate.len() {
                 is_hex = true;
-                best_candidate = hex_candidate.into();
+                best_candidate = format!("0x{int:x}").into();
+                debug_assert_eq!(best_candidate.len(), hex_len);
             }
         }
         // Check for scientific notation optimizations for numbers starting with ".0"
