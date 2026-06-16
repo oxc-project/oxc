@@ -953,6 +953,71 @@ mod test {
     }
 
     #[test]
+    fn new_dynamic_import() {
+        let allocator = Allocator::default();
+        let source_type = SourceType::from_path(Path::new("test.mjs")).unwrap();
+
+        // `import(...)` is a `CallExpression`, so it cannot be the operand of `new` — directly or
+        // through a member-access chain, which keeps it a `CallExpression`. The phased
+        // `import.source(...)` / `import.defer(...)` call forms are `CallExpression`s too.
+        let errors = [
+            "new import('mod')",
+            "new import('mod').prop",
+            "new import('mod')['prop']",
+            "new import('mod').a.b.c",
+            "new import.source('mod').prop",
+            "new import.defer('mod').prop",
+        ];
+        for source in errors {
+            let ret = Parser::new(&allocator, source, source_type).parse();
+            assert!(!ret.diagnostics.is_empty(), "expected a syntax error for `{source}`");
+        }
+
+        // Valid: a parenthesized import is a primary expression, `import.meta` is a meta property
+        // (not an import call), and member access on the call without `new` is fine.
+        let valid = [
+            "new (import('mod')).prop",
+            "new (import('mod'))",
+            "new import.meta.foo",
+            "import('mod').prop",
+        ];
+        for source in valid {
+            let ret = Parser::new(&allocator, source, source_type).parse();
+            assert!(
+                ret.diagnostics.is_empty(),
+                "expected no syntax error for `{source}`, got {:?}",
+                ret.diagnostics
+            );
+        }
+
+        // The TypeScript non-null `!` and instantiation `<T>` operators are type-only and erase to
+        // nothing, so they don't rescue the construct: `new import('mod')!.prop` still erases to the
+        // invalid `new import('mod').prop`. But `import.meta` stays a meta property through them.
+        let ts = SourceType::from_path(Path::new("test.ts")).unwrap();
+        let ts_errors = [
+            "new import('mod')!",
+            "new import('mod')!.prop",
+            "new import('mod').prop!",
+            "new import('mod')!['prop']",
+            "new import('mod')<T>.prop",
+            "new import.source('mod')!.prop",
+        ];
+        for source in ts_errors {
+            let ret = Parser::new(&allocator, source, ts).parse();
+            assert!(!ret.diagnostics.is_empty(), "expected a syntax error for `{source}`");
+        }
+        let ts_valid = ["new import.meta!.foo", "new (import('mod'))!.prop"];
+        for source in ts_valid {
+            let ret = Parser::new(&allocator, source, ts).parse();
+            assert!(
+                ret.diagnostics.is_empty(),
+                "expected no syntax error for `{source}`, got {:?}",
+                ret.diagnostics
+            );
+        }
+    }
+
+    #[test]
     fn directives() {
         let allocator = Allocator::default();
         let source_type = SourceType::default();

@@ -1019,8 +1019,28 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.ast.vec()
         };
 
-        if is_import && matches!(callee, Expression::ImportExpression(_)) {
-            self.error(diagnostics::new_dynamic_import(self.end_span(rhs_span)));
+        // `ImportCall` is a `CallExpression`, so it cannot be the operand of `new`. This holds
+        // through member access on the call (`new import('mod').prop`), which keeps it a
+        // `CallExpression`, and through the type-only `!` / `<T>` wrappers, which erase to nothing
+        // (`new import('mod')!.prop` strips to `new import('mod').prop`). Walk past all of these to
+        // find the import call at the base. `is_import` distinguishes `new import('mod')` (error)
+        // from `new (import('mod'))` (valid), and excludes `new import.meta.foo` (the base is a
+        // `MetaProperty`, not an import call).
+        if is_import {
+            let mut base = &callee;
+            loop {
+                base = match base {
+                    Expression::StaticMemberExpression(expr) => &expr.object,
+                    Expression::ComputedMemberExpression(expr) => &expr.object,
+                    Expression::PrivateFieldExpression(expr) => &expr.object,
+                    Expression::TSNonNullExpression(expr) => &expr.expression,
+                    Expression::TSInstantiationExpression(expr) => &expr.expression,
+                    _ => break,
+                };
+            }
+            if matches!(base, Expression::ImportExpression(_)) {
+                self.error(diagnostics::new_dynamic_import(self.end_span(rhs_span)));
+            }
         }
 
         if matches!(callee, Expression::Super(_)) {
