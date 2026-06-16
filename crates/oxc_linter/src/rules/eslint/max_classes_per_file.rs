@@ -133,7 +133,13 @@ impl Rule for MaxClassesPerFile {
     }
 
     fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
-        ctx.semantic().classes().len() > 0
+        let classes = ctx.semantic().classes();
+        let max = usize::try_from(self.max).unwrap_or(usize::MAX);
+        if self.ignore_expressions {
+            return classes.declarations.len() > max;
+        }
+
+        classes.len() > max
     }
 }
 
