@@ -75,7 +75,7 @@ declare_oxc_lint!(
     RequireParamType,
     jsdoc,
     pedantic,
-    pending,
+    fix,
     config = RequireParamTypeConfig,
     version = "0.4.4",
     short_description = "Requires that each `@param` tag has a type value (within curly brackets).",
@@ -139,12 +139,20 @@ impl Rule for RequireParamType {
 
                 if self.0.set_default_destructured_root_type
                     && is_destructured_root
-                    && name_part.is_some()
+                    && let Some(name_part) = name_part
                 {
-                    ctx.diagnostic(missing_root_type_diagnostic(
-                        tag.kind.span,
-                        &self.0.default_destructured_root_type,
-                    ));
+                    ctx.diagnostic_with_fix(
+                        missing_root_type_diagnostic(
+                            tag.kind.span,
+                            &self.0.default_destructured_root_type,
+                        ),
+                        |fixer| {
+                            fixer.insert_text_before_range(
+                                name_part.span,
+                                format!("{{{}}} ", self.0.default_destructured_root_type),
+                            )
+                        },
+                    );
                 } else {
                     ctx.diagnostic(missing_type_diagnostic(tag.kind.span));
                 }
@@ -304,5 +312,28 @@ fn test() {
         ),
     ];
 
-    Tester::new(RequireParamType::NAME, RequireParamType::PLUGIN, pass, fail).test_and_snapshot();
+    let fix = vec![
+        (
+            "/** @param root */\nfunction quux ({bar}) {}",
+            "/** @param {object} root */\nfunction quux ({bar}) {}",
+            Some(serde_json::json!([{ "setDefaultDestructuredRootType": true }])),
+        ),
+        (
+            "/** @param root */\nfunction quux ({bar}) {}",
+            "/** @param {CustomType} root */\nfunction quux ({bar}) {}",
+            Some(serde_json::json!([{
+                "defaultDestructuredRootType": "CustomType",
+                "setDefaultDestructuredRootType": true
+            }])),
+        ),
+        (
+            "/** @param {number} foo\n * @param root */\nfunction quux (foo, {bar}) {}",
+            "/** @param {number} foo\n * @param {object} root */\nfunction quux (foo, {bar}) {}",
+            Some(serde_json::json!([{ "setDefaultDestructuredRootType": true }])),
+        ),
+    ];
+
+    Tester::new(RequireParamType::NAME, RequireParamType::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }
