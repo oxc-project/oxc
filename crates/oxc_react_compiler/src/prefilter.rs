@@ -34,9 +34,9 @@ fn is_component_wrapper(callee: &Expression) -> bool {
     }
 }
 
-struct ReactLikeVisitor {
+struct ReactLikeVisitor<'a> {
     found: bool,
-    current_name: Option<String>,
+    current_name: Option<&'a str>,
 }
 
 struct ResourceManagementVisitor {
@@ -56,14 +56,14 @@ impl<'a> Visit<'a> for ResourceManagementVisitor {
     }
 }
 
-impl<'a> Visit<'a> for ReactLikeVisitor {
+impl<'a> Visit<'a> for ReactLikeVisitor<'a> {
     fn visit_variable_declarator(&mut self, decl: &VariableDeclarator<'a>) {
         if self.found {
             return;
         }
 
         let name = match &decl.id {
-            oxc_ast::ast::BindingPattern::BindingIdentifier(ident) => Some(ident.name.to_string()),
+            oxc_ast::ast::BindingPattern::BindingIdentifier(ident) => Some(ident.name.as_str()),
             _ => None,
         };
 
@@ -83,7 +83,7 @@ impl<'a> Visit<'a> for ReactLikeVisitor {
         }
 
         let name = match &expr.left {
-            AssignmentTarget::AssignmentTargetIdentifier(ident) => Some(ident.name.to_string()),
+            AssignmentTarget::AssignmentTargetIdentifier(ident) => Some(ident.name.as_str()),
             _ => None,
         };
 
