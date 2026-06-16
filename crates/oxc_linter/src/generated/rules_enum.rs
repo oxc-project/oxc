@@ -696,6 +696,7 @@ pub use crate::rules::unicorn::prefer_module::PreferModule as UnicornPreferModul
 pub use crate::rules::unicorn::prefer_native_coercion_functions::PreferNativeCoercionFunctions as UnicornPreferNativeCoercionFunctions;
 pub use crate::rules::unicorn::prefer_negative_index::PreferNegativeIndex as UnicornPreferNegativeIndex;
 pub use crate::rules::unicorn::prefer_node_protocol::PreferNodeProtocol as UnicornPreferNodeProtocol;
+pub use crate::rules::unicorn::prefer_number_coercion::PreferNumberCoercion as UnicornPreferNumberCoercion;
 pub use crate::rules::unicorn::prefer_number_properties::PreferNumberProperties as UnicornPreferNumberProperties;
 pub use crate::rules::unicorn::prefer_object_from_entries::PreferObjectFromEntries as UnicornPreferObjectFromEntries;
 pub use crate::rules::unicorn::prefer_optional_catch_binding::PreferOptionalCatchBinding as UnicornPreferOptionalCatchBinding;
@@ -1415,6 +1416,7 @@ pub enum RuleEnum {
     UnicornPreferNativeCoercionFunctions(UnicornPreferNativeCoercionFunctions),
     UnicornPreferNegativeIndex(UnicornPreferNegativeIndex),
     UnicornPreferNodeProtocol(UnicornPreferNodeProtocol),
+    UnicornPreferNumberCoercion(UnicornPreferNumberCoercion),
     UnicornPreferNumberProperties(UnicornPreferNumberProperties),
     UnicornPreferObjectFromEntries(UnicornPreferObjectFromEntries),
     UnicornPreferOptionalCatchBinding(UnicornPreferOptionalCatchBinding),
@@ -2329,7 +2331,8 @@ const UNICORN_PREFER_NATIVE_COERCION_FUNCTIONS_ID: usize = UNICORN_PREFER_MODULE
 const UNICORN_PREFER_NEGATIVE_INDEX_ID: usize =
     UNICORN_PREFER_NATIVE_COERCION_FUNCTIONS_ID + 1usize;
 const UNICORN_PREFER_NODE_PROTOCOL_ID: usize = UNICORN_PREFER_NEGATIVE_INDEX_ID + 1usize;
-const UNICORN_PREFER_NUMBER_PROPERTIES_ID: usize = UNICORN_PREFER_NODE_PROTOCOL_ID + 1usize;
+const UNICORN_PREFER_NUMBER_COERCION_ID: usize = UNICORN_PREFER_NODE_PROTOCOL_ID + 1usize;
+const UNICORN_PREFER_NUMBER_PROPERTIES_ID: usize = UNICORN_PREFER_NUMBER_COERCION_ID + 1usize;
 const UNICORN_PREFER_OBJECT_FROM_ENTRIES_ID: usize = UNICORN_PREFER_NUMBER_PROPERTIES_ID + 1usize;
 const UNICORN_PREFER_OPTIONAL_CATCH_BINDING_ID: usize =
     UNICORN_PREFER_OBJECT_FROM_ENTRIES_ID + 1usize;
@@ -3305,6 +3308,7 @@ impl RuleEnum {
             }
             Self::UnicornPreferNegativeIndex(_) => UNICORN_PREFER_NEGATIVE_INDEX_ID,
             Self::UnicornPreferNodeProtocol(_) => UNICORN_PREFER_NODE_PROTOCOL_ID,
+            Self::UnicornPreferNumberCoercion(_) => UNICORN_PREFER_NUMBER_COERCION_ID,
             Self::UnicornPreferNumberProperties(_) => UNICORN_PREFER_NUMBER_PROPERTIES_ID,
             Self::UnicornPreferObjectFromEntries(_) => UNICORN_PREFER_OBJECT_FROM_ENTRIES_ID,
             Self::UnicornPreferOptionalCatchBinding(_) => UNICORN_PREFER_OPTIONAL_CATCH_BINDING_ID,
@@ -4264,6 +4268,7 @@ impl RuleEnum {
             }
             Self::UnicornPreferNegativeIndex(_) => UnicornPreferNegativeIndex::NAME,
             Self::UnicornPreferNodeProtocol(_) => UnicornPreferNodeProtocol::NAME,
+            Self::UnicornPreferNumberCoercion(_) => UnicornPreferNumberCoercion::NAME,
             Self::UnicornPreferNumberProperties(_) => UnicornPreferNumberProperties::NAME,
             Self::UnicornPreferObjectFromEntries(_) => UnicornPreferObjectFromEntries::NAME,
             Self::UnicornPreferOptionalCatchBinding(_) => UnicornPreferOptionalCatchBinding::NAME,
@@ -5253,6 +5258,7 @@ impl RuleEnum {
             }
             Self::UnicornPreferNegativeIndex(_) => UnicornPreferNegativeIndex::CATEGORY,
             Self::UnicornPreferNodeProtocol(_) => UnicornPreferNodeProtocol::CATEGORY,
+            Self::UnicornPreferNumberCoercion(_) => UnicornPreferNumberCoercion::CATEGORY,
             Self::UnicornPreferNumberProperties(_) => UnicornPreferNumberProperties::CATEGORY,
             Self::UnicornPreferObjectFromEntries(_) => UnicornPreferObjectFromEntries::CATEGORY,
             Self::UnicornPreferOptionalCatchBinding(_) => {
@@ -6229,6 +6235,7 @@ impl RuleEnum {
             }
             Self::UnicornPreferNegativeIndex(_) => UnicornPreferNegativeIndex::FIX,
             Self::UnicornPreferNodeProtocol(_) => UnicornPreferNodeProtocol::FIX,
+            Self::UnicornPreferNumberCoercion(_) => UnicornPreferNumberCoercion::FIX,
             Self::UnicornPreferNumberProperties(_) => UnicornPreferNumberProperties::FIX,
             Self::UnicornPreferObjectFromEntries(_) => UnicornPreferObjectFromEntries::FIX,
             Self::UnicornPreferOptionalCatchBinding(_) => UnicornPreferOptionalCatchBinding::FIX,
@@ -7343,6 +7350,7 @@ impl RuleEnum {
             }
             Self::UnicornPreferNegativeIndex(_) => UnicornPreferNegativeIndex::documentation(),
             Self::UnicornPreferNodeProtocol(_) => UnicornPreferNodeProtocol::documentation(),
+            Self::UnicornPreferNumberCoercion(_) => UnicornPreferNumberCoercion::documentation(),
             Self::UnicornPreferNumberProperties(_) => {
                 UnicornPreferNumberProperties::documentation()
             }
@@ -9361,6 +9369,10 @@ impl RuleEnum {
                 UnicornPreferNodeProtocol::config_schema(generator)
                     .or_else(|| UnicornPreferNodeProtocol::schema(generator))
             }
+            Self::UnicornPreferNumberCoercion(_) => {
+                UnicornPreferNumberCoercion::config_schema(generator)
+                    .or_else(|| UnicornPreferNumberCoercion::schema(generator))
+            }
             Self::UnicornPreferNumberProperties(_) => {
                 UnicornPreferNumberProperties::config_schema(generator)
                     .or_else(|| UnicornPreferNumberProperties::schema(generator))
@@ -10712,6 +10724,7 @@ impl RuleEnum {
             Self::UnicornPreferNativeCoercionFunctions(_) => "unicorn",
             Self::UnicornPreferNegativeIndex(_) => "unicorn",
             Self::UnicornPreferNodeProtocol(_) => "unicorn",
+            Self::UnicornPreferNumberCoercion(_) => "unicorn",
             Self::UnicornPreferNumberProperties(_) => "unicorn",
             Self::UnicornPreferObjectFromEntries(_) => "unicorn",
             Self::UnicornPreferOptionalCatchBinding(_) => "unicorn",
@@ -12802,6 +12815,9 @@ impl RuleEnum {
             Self::UnicornPreferNodeProtocol(_) => Ok(Self::UnicornPreferNodeProtocol(
                 UnicornPreferNodeProtocol::from_configuration(value)?,
             )),
+            Self::UnicornPreferNumberCoercion(_) => Ok(Self::UnicornPreferNumberCoercion(
+                UnicornPreferNumberCoercion::from_configuration(value)?,
+            )),
             Self::UnicornPreferNumberProperties(_) => Ok(Self::UnicornPreferNumberProperties(
                 UnicornPreferNumberProperties::from_configuration(value)?,
             )),
@@ -14251,6 +14267,7 @@ impl RuleEnum {
             Self::UnicornPreferNativeCoercionFunctions(rule) => rule.to_configuration(),
             Self::UnicornPreferNegativeIndex(rule) => rule.to_configuration(),
             Self::UnicornPreferNodeProtocol(rule) => rule.to_configuration(),
+            Self::UnicornPreferNumberCoercion(rule) => rule.to_configuration(),
             Self::UnicornPreferNumberProperties(rule) => rule.to_configuration(),
             Self::UnicornPreferObjectFromEntries(rule) => rule.to_configuration(),
             Self::UnicornPreferOptionalCatchBinding(rule) => rule.to_configuration(),
@@ -15100,6 +15117,7 @@ impl RuleEnum {
                 Self::UnicornPreferNativeCoercionFunctions(rule) => rule.run(node, ctx),
                 Self::UnicornPreferNegativeIndex(rule) => rule.run(node, ctx),
                 Self::UnicornPreferNodeProtocol(rule) => rule.run(node, ctx),
+                Self::UnicornPreferNumberCoercion(rule) => rule.run(node, ctx),
                 Self::UnicornPreferNumberProperties(rule) => rule.run(node, ctx),
                 Self::UnicornPreferObjectFromEntries(rule) => rule.run(node, ctx),
                 Self::UnicornPreferOptionalCatchBinding(rule) => rule.run(node, ctx),
@@ -15942,6 +15960,7 @@ impl RuleEnum {
                 Self::UnicornPreferNativeCoercionFunctions(rule) => rule.run(node, ctx),
                 Self::UnicornPreferNegativeIndex(rule) => rule.run(node, ctx),
                 Self::UnicornPreferNodeProtocol(rule) => rule.run(node, ctx),
+                Self::UnicornPreferNumberCoercion(rule) => rule.run(node, ctx),
                 Self::UnicornPreferNumberProperties(rule) => rule.run(node, ctx),
                 Self::UnicornPreferObjectFromEntries(rule) => rule.run(node, ctx),
                 Self::UnicornPreferOptionalCatchBinding(rule) => rule.run(node, ctx),
@@ -16791,6 +16810,7 @@ impl RuleEnum {
                 Self::UnicornPreferNativeCoercionFunctions(rule) => rule.run_once(ctx),
                 Self::UnicornPreferNegativeIndex(rule) => rule.run_once(ctx),
                 Self::UnicornPreferNodeProtocol(rule) => rule.run_once(ctx),
+                Self::UnicornPreferNumberCoercion(rule) => rule.run_once(ctx),
                 Self::UnicornPreferNumberProperties(rule) => rule.run_once(ctx),
                 Self::UnicornPreferObjectFromEntries(rule) => rule.run_once(ctx),
                 Self::UnicornPreferOptionalCatchBinding(rule) => rule.run_once(ctx),
@@ -17633,6 +17653,7 @@ impl RuleEnum {
                 Self::UnicornPreferNativeCoercionFunctions(rule) => rule.run_once(ctx),
                 Self::UnicornPreferNegativeIndex(rule) => rule.run_once(ctx),
                 Self::UnicornPreferNodeProtocol(rule) => rule.run_once(ctx),
+                Self::UnicornPreferNumberCoercion(rule) => rule.run_once(ctx),
                 Self::UnicornPreferNumberProperties(rule) => rule.run_once(ctx),
                 Self::UnicornPreferObjectFromEntries(rule) => rule.run_once(ctx),
                 Self::UnicornPreferOptionalCatchBinding(rule) => rule.run_once(ctx),
@@ -18665,6 +18686,7 @@ impl RuleEnum {
                 }
                 Self::UnicornPreferNegativeIndex(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornPreferNodeProtocol(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::UnicornPreferNumberCoercion(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornPreferNumberProperties(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornPreferObjectFromEntries(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornPreferOptionalCatchBinding(rule) => {
@@ -19767,6 +19789,7 @@ impl RuleEnum {
                 }
                 Self::UnicornPreferNegativeIndex(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornPreferNodeProtocol(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::UnicornPreferNumberCoercion(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornPreferNumberProperties(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornPreferObjectFromEntries(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornPreferOptionalCatchBinding(rule) => {
@@ -20687,6 +20710,7 @@ impl RuleEnum {
             Self::UnicornPreferNativeCoercionFunctions(rule) => rule.should_run(ctx),
             Self::UnicornPreferNegativeIndex(rule) => rule.should_run(ctx),
             Self::UnicornPreferNodeProtocol(rule) => rule.should_run(ctx),
+            Self::UnicornPreferNumberCoercion(rule) => rule.should_run(ctx),
             Self::UnicornPreferNumberProperties(rule) => rule.should_run(ctx),
             Self::UnicornPreferObjectFromEntries(rule) => rule.should_run(ctx),
             Self::UnicornPreferOptionalCatchBinding(rule) => rule.should_run(ctx),
@@ -21778,6 +21802,7 @@ impl RuleEnum {
             }
             Self::UnicornPreferNegativeIndex(_) => UnicornPreferNegativeIndex::IS_TSGOLINT_RULE,
             Self::UnicornPreferNodeProtocol(_) => UnicornPreferNodeProtocol::IS_TSGOLINT_RULE,
+            Self::UnicornPreferNumberCoercion(_) => UnicornPreferNumberCoercion::IS_TSGOLINT_RULE,
             Self::UnicornPreferNumberProperties(_) => {
                 UnicornPreferNumberProperties::IS_TSGOLINT_RULE
             }
@@ -22873,6 +22898,7 @@ impl RuleEnum {
             }
             Self::UnicornPreferNegativeIndex(_) => UnicornPreferNegativeIndex::VERSION,
             Self::UnicornPreferNodeProtocol(_) => UnicornPreferNodeProtocol::VERSION,
+            Self::UnicornPreferNumberCoercion(_) => UnicornPreferNumberCoercion::VERSION,
             Self::UnicornPreferNumberProperties(_) => UnicornPreferNumberProperties::VERSION,
             Self::UnicornPreferObjectFromEntries(_) => UnicornPreferObjectFromEntries::VERSION,
             Self::UnicornPreferOptionalCatchBinding(_) => {
@@ -23909,6 +23935,7 @@ impl RuleEnum {
             }
             Self::UnicornPreferNegativeIndex(_) => UnicornPreferNegativeIndex::HAS_CONFIG,
             Self::UnicornPreferNodeProtocol(_) => UnicornPreferNodeProtocol::HAS_CONFIG,
+            Self::UnicornPreferNumberCoercion(_) => UnicornPreferNumberCoercion::HAS_CONFIG,
             Self::UnicornPreferNumberProperties(_) => UnicornPreferNumberProperties::HAS_CONFIG,
             Self::UnicornPreferObjectFromEntries(_) => UnicornPreferObjectFromEntries::HAS_CONFIG,
             Self::UnicornPreferOptionalCatchBinding(_) => {
@@ -24900,6 +24927,7 @@ impl RuleEnum {
             }
             Self::UnicornPreferNegativeIndex(_) => UnicornPreferNegativeIndex::INFO,
             Self::UnicornPreferNodeProtocol(_) => UnicornPreferNodeProtocol::INFO,
+            Self::UnicornPreferNumberCoercion(_) => UnicornPreferNumberCoercion::INFO,
             Self::UnicornPreferNumberProperties(_) => UnicornPreferNumberProperties::INFO,
             Self::UnicornPreferObjectFromEntries(_) => UnicornPreferObjectFromEntries::INFO,
             Self::UnicornPreferOptionalCatchBinding(_) => UnicornPreferOptionalCatchBinding::INFO,
@@ -25766,6 +25794,7 @@ impl RuleEnum {
             Self::UnicornPreferNativeCoercionFunctions(rule) => rule.types_info(),
             Self::UnicornPreferNegativeIndex(rule) => rule.types_info(),
             Self::UnicornPreferNodeProtocol(rule) => rule.types_info(),
+            Self::UnicornPreferNumberCoercion(rule) => rule.types_info(),
             Self::UnicornPreferNumberProperties(rule) => rule.types_info(),
             Self::UnicornPreferObjectFromEntries(rule) => rule.types_info(),
             Self::UnicornPreferOptionalCatchBinding(rule) => rule.types_info(),
@@ -26605,6 +26634,7 @@ impl RuleEnum {
             Self::UnicornPreferNativeCoercionFunctions(rule) => rule.run_info(),
             Self::UnicornPreferNegativeIndex(rule) => rule.run_info(),
             Self::UnicornPreferNodeProtocol(rule) => rule.run_info(),
+            Self::UnicornPreferNumberCoercion(rule) => rule.run_info(),
             Self::UnicornPreferNumberProperties(rule) => rule.run_info(),
             Self::UnicornPreferObjectFromEntries(rule) => rule.run_info(),
             Self::UnicornPreferOptionalCatchBinding(rule) => rule.run_info(),
@@ -27558,6 +27588,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         ),
         RuleEnum::UnicornPreferNegativeIndex(UnicornPreferNegativeIndex::default()),
         RuleEnum::UnicornPreferNodeProtocol(UnicornPreferNodeProtocol::default()),
+        RuleEnum::UnicornPreferNumberCoercion(UnicornPreferNumberCoercion::default()),
         RuleEnum::UnicornPreferNumberProperties(UnicornPreferNumberProperties::default()),
         RuleEnum::UnicornPreferObjectFromEntries(UnicornPreferObjectFromEntries::default()),
         RuleEnum::UnicornPreferOptionalCatchBinding(UnicornPreferOptionalCatchBinding::default()),

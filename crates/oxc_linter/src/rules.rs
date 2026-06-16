@@ -587,6 +587,7 @@ pub(crate) mod unicorn {
     pub mod prefer_native_coercion_functions;
     pub mod prefer_negative_index;
     pub mod prefer_node_protocol;
+    pub mod prefer_number_coercion;
     pub mod prefer_number_properties;
     pub mod prefer_object_from_entries;
     pub mod prefer_optional_catch_binding;
