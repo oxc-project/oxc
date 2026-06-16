@@ -647,6 +647,14 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ unicorn(prefer-at): Prefer `.at()` over `[index]`.
    ╭─[prefer_at.tsx:1:1]
+ 1 │ array[0]
+   · ────────
+   ╰────
+  help: Use `.at()` for index access.
+  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
+
+  ⚠ unicorn(prefer-at): Prefer `.at()` over `[index]`.
+   ╭─[prefer_at.tsx:1:1]
  1 │ array[1]
    · ────────
    ╰────
