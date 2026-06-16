@@ -565,6 +565,27 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    /// Wrap `expr` as `(0, expr)` so an access that
+    /// [`Self::should_keep_indirect_access`] flagged stays indirect.
+    ///
+    /// The shape is load-bearing: `remove_sequence_expression`'s idempotency
+    /// gate recognizes exactly a 2-element sequence whose head `is_number_0`.
+    /// Sibling fold sites in `fold_constants.rs` / `try_fold_conditional_expression`
+    /// still build it inline; migrating them here is welcome.
+    pub fn preserve_indirect_access(
+        span: Span,
+        expr: Expression<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        ctx.ast.expression_sequence(
+            span,
+            ctx.ast.vec_from_array([
+                ctx.ast.expression_numeric_literal(span, 0.0, None, NumberBase::Decimal),
+                expr,
+            ]),
+        )
+    }
+
     pub fn remove_dead_code_exit_class_body(body: &mut ClassBody<'a>, _ctx: &mut TraverseCtx<'a>) {
         body.body.retain(|e| !matches!(e, ClassElement::StaticBlock(s) if s.body.is_empty()));
     }

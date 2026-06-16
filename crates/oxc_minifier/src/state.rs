@@ -1,6 +1,7 @@
 use oxc_ecmascript::constant_evaluation::ConstantValue;
 use rustc_hash::{FxHashMap, FxHashSet};
 
+use oxc_allocator::{Allocator, BitSet};
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_semantic::Scoping;
 use oxc_span::SourceType;
@@ -8,6 +9,41 @@ use oxc_str::Str;
 use oxc_syntax::symbol::SymbolId;
 
 use crate::{CompressOptions, symbol_value::SymbolValues};
+
+/// Dirty data accumulated by the `replace_*` / `drop_*` helper calls between
+/// two consumption points. Live from `MinifierState::new` so the pre-loop
+/// `Normalize` pass records drops through the same typed helpers as the
+/// peephole loop; consumed and re-initialized by `flush_pass_dirty` in the
+/// `Compressor` driver after `Normalize` and after every peephole pass.
+pub struct PassDirty<'a> {
+    /// `ReferenceId`s whose AST node has been removed and not re-installed
+    /// in any later mutation this pass.
+    ///
+    /// Arena-allocated bitset sized to the program's `references_len()` at
+    /// construction / the previous flush. A `BitSet` (rather than an
+    /// `FxHashSet`) keeps the per-ident cost on the `DropDiff` hot path to
+    /// a direct array store instead of a hash + heap insert.
+    ///
+    /// INVARIANT (the "capacity guard", relied on by `DropDiff`,
+    /// `Scoping::retain_resolved_references_excluding`, and the over-prune
+    /// debug assert): references minted MID-pass have indices beyond the
+    /// bitset's capacity and are treated as live everywhere — never marked,
+    /// never excluded. Conservative: such a reference stays in its symbol's
+    /// list until callers rebuild scoping (a missed optimization, never a
+    /// correctness issue). `Normalize` mints no references, so a capacity
+    /// taken at construction is exact for the first pass.
+    pub(crate) dead_refs: BitSet<'a>,
+
+    /// At least one direct `eval(...)` call was dropped this pass. Gates
+    /// the small `LiveDirectEvalCollector` walk at flush time.
+    pub(crate) eval_dropped: bool,
+}
+
+impl<'a> PassDirty<'a> {
+    pub fn new(references_len: usize, allocator: &'a Allocator) -> Self {
+        Self { dead_refs: BitSet::new_in(references_len, allocator), eval_dropped: false }
+    }
+}
 
 pub struct MinifierState<'a> {
     pub source_type: SourceType,
@@ -32,21 +68,27 @@ pub struct MinifierState<'a> {
 
     /// Set when a typed helper mutates the AST. Private by design: the only
     /// writers are the helpers on `MinifierTraverseCtx`; the only reader is
-    /// the fixed-point loop driver via `take_mutated()` (plus the transitional
-    /// `was_mutated()` collector gate).
+    /// the fixed-point loop driver via `take_mutated()`.
     mutated: bool,
+
+    /// Per-pass dirty accumulator populated by `replace_*` / `drop_*` helpers
+    /// as subtrees are removed. Consumed by `flush_pass_dirty` in the
+    /// `Compressor` driver (pre-loop and after each mutated pass) to drive
+    /// the incremental scoping refresh.
+    pub(crate) dirty: PassDirty<'a>,
 
     /// Scratch buffer reused by `try_fold_concat` to build template literal
     /// quasis without allocating a fresh `String` per call.
     pub concat_scratch: String,
 }
 
-impl MinifierState<'_> {
+impl<'a> MinifierState<'a> {
     pub fn new(
         source_type: SourceType,
         options: CompressOptions,
         dce: bool,
         scoping: &Scoping,
+        allocator: &'a Allocator,
     ) -> Self {
         Self {
             source_type,
@@ -57,6 +99,7 @@ impl MinifierState<'_> {
             class_symbols_stack: ClassSymbolsStack::new(),
             proto_write_symbols: FxHashSet::default(),
             mutated: false,
+            dirty: PassDirty::new(scoping.references_len(), allocator),
             concat_scratch: String::new(),
         }
     }
@@ -71,13 +114,6 @@ impl MinifierState<'_> {
     /// Record that a typed helper mutated the AST.
     pub(crate) fn record_mutation(&mut self) {
         self.mutated = true;
-    }
-
-    /// Non-consuming read of the mutation signal.
-    ///
-    /// Transitional: removed in the incremental-scoping PR together with the collector gate.
-    pub(crate) fn was_mutated(&self) -> bool {
-        self.mutated
     }
 }
 

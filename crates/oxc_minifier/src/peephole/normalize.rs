@@ -55,12 +55,11 @@ impl<'a> Traverse<'a> for Normalize {
     }
 
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+        // No console handling here: `exit_expression` has already rewritten
+        // every console call (statement position included) to `void 0`.
         stmts.retain(|stmt| match stmt {
             Statement::EmptyStatement(_) => false,
             Statement::DebuggerStatement(_) if ctx.state.options.drop_debugger => false,
-            Statement::ExpressionStatement(expr) if ctx.state.options.drop_console => {
-                !Self::is_console_expression(&expr.expression)
-            }
             _ => true,
         });
     }
@@ -88,21 +87,22 @@ impl<'a> Traverse<'a> for Normalize {
         if let Expression::ParenthesizedExpression(paren_expr) = expr {
             *expr = paren_expr.expression.take_in(ctx.ast);
         }
+        // Handled outside the match below so the replacement can go through
+        // `ctx.replace_expression`, which walks the dropped call (its
+        // argument subtrees may contain resolved references) into `PassDirty`.
+        if ctx.state.options.drop_console
+            && let Expression::CallExpression(call_expr) = &*expr
+            && Self::is_console_call_expression(call_expr)
+        {
+            let new_expr = ctx.ast.void_0(call_expr.span);
+            ctx.replace_expression(expr, new_expr);
+            return;
+        }
         if let Some(e) = match expr {
             Expression::Identifier(ident) => Self::try_compress_identifier(ident, ctx),
             Expression::UnaryExpression(e) if e.operator.is_void() => {
                 Self::fold_void_ident(e, ctx);
                 None
-            }
-            Expression::ArrowFunctionExpression(e) => {
-                Self::recover_arrow_expression_after_drop_console(e, ctx);
-                None
-            }
-            Expression::CallExpression(call_expr)
-                if ctx.state.options.drop_console
-                    && Self::is_console_call_expression(call_expr) =>
-            {
-                Some(ctx.ast.void_0(call_expr.span))
             }
             Expression::StaticMemberExpression(e) => Self::fold_number_nan_to_nan(e, ctx),
             _ => None,
@@ -129,19 +129,6 @@ impl<'a> Traverse<'a> for Normalize {
 impl<'a> Normalize {
     pub fn new(options: NormalizeOptions) -> Self {
         Self { options }
-    }
-
-    fn recover_arrow_expression_after_drop_console(
-        expr: &mut ArrowFunctionExpression<'a>,
-        ctx: &TraverseCtx<'a>,
-    ) {
-        if ctx.state.options.drop_console && expr.expression && expr.body.is_empty() {
-            expr.expression = false;
-        }
-    }
-
-    fn is_console_expression(expr: &Expression<'_>) -> bool {
-        matches!(expr, Expression::CallExpression(call_expr) if Self::is_console_call_expression(call_expr))
     }
 
     fn is_console_call_expression(call_expr: &CallExpression<'_>) -> bool {
@@ -244,13 +231,19 @@ impl<'a> Normalize {
         false
     }
 
-    fn fold_void_ident(e: &mut UnaryExpression<'a>, ctx: &TraverseCtx<'a>) {
+    fn fold_void_ident(e: &mut UnaryExpression<'a>, ctx: &mut TraverseCtx<'a>) {
         debug_assert!(e.operator.is_void());
         let Expression::Identifier(ident) = &e.argument else { return };
         if ident.is_global_reference(ctx.scoping()) {
             return;
         }
-        e.argument = ctx.ast.expression_numeric_literal(ident.span, 0.0, None, NumberBase::Decimal);
+        // `replace_expression` walks the dropped ident into `PassDirty`, so
+        // its resolved reference is pruned by the driver's pre-loop
+        // `flush_pass_dirty`, before pass 1 — otherwise the symbol would
+        // look referenced forever.
+        let new_arg =
+            ctx.ast.expression_numeric_literal(ident.span, 0.0, None, NumberBase::Decimal);
+        ctx.replace_expression(&mut e.argument, new_arg);
     }
 
     fn fold_number_nan_to_nan(

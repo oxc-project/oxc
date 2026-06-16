@@ -532,6 +532,21 @@ fn test_fold_is_object_and_not_null() {
 }
 
 #[test]
+fn test_fold_is_object_and_not_null_minted_then_dropped() {
+    // Exercises the same-pass mint-then-drop flow through `DropDiff`'s
+    // capacity guard: `substitute_is_object_and_not_null` mints fresh
+    // references (indices beyond the pass bitset's capacity) at
+    // `exit_expression`, then the unreachable statement containing them is
+    // dropped at `exit_statements` in the same pass. The guard must treat
+    // the minted refs as live (conservative — callers rebuild scoping), not
+    // panic.
+    test(
+        "function f(a) { return 1; if (typeof a === 'object' && a !== null) b(a); } f();",
+        "function f(a) { return 1; }",
+    );
+}
+
+#[test]
 fn test_swap_binary_expressions() {
     test_same("v = a === 0");
     test("v = 0 === a", "v = a === 0");

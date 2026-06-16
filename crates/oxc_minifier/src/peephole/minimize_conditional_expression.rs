@@ -19,12 +19,11 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         // Wrap the fresh conditional in an `Expression` slot so that, if the
-        // fold returns a replacement, it is routed through
-        // `ctx.replace_expression` like every other slot replacement. The
-        // discarded transient `ConditionalExpression` leaves refs in its
-        // untouched slots (e.g. the leftover `b` in `b == null ? c : b` ->
-        // `b ?? c`), which the incremental-scoping follow-up reclaims at this
-        // slot.
+        // fold returns a replacement, `ctx.replace_expression` can walk the
+        // mutated transient conditional and mark its leaked refs dead. Without
+        // the slot wrapping, refs left in untouched slots of the discarded
+        // transient `ConditionalExpression` (e.g. the leftover `b` in
+        // `b == null ? c : b` -> `b ?? c`) would never reach `PassDirty`.
         let mut as_expr = ctx.ast.expression_conditional(span, test, consequent, alternate);
         let Expression::ConditionalExpression(cond_box) = &mut as_expr else { unreachable!() };
         let folded = Self::minimize_conditional_expression(cond_box, ctx);
@@ -460,7 +459,13 @@ impl<'a> PeepholeOptimizations {
         if ctx.expr_eq(&expr.alternate, &expr.consequent) {
             // "/* @__PURE__ */ a() ? b : b" => "b"
             if !expr.test.may_have_side_effects(ctx) {
-                return Some(expr.consequent.take_in(ctx.ast));
+                let result_expr = expr.consequent.take_in(ctx.ast);
+                // "(a ? eval : eval)(x)" => "(0, eval)(x)" — the bare branch
+                // would form a direct eval call / rebind a member call's `this`.
+                if Self::should_keep_indirect_access(&result_expr, ctx) {
+                    return Some(Self::preserve_indirect_access(expr.span, result_expr, ctx));
+                }
+                return Some(result_expr);
             }
 
             // "a ? b : b" => "a, b"
