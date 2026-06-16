@@ -1,0 +1,95 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 490
+---
+
+  ⚠ unicorn(prefer-number-coercion): Prefer `Number(value)`.
+   ╭─[prefer_number_coercion.tsx:1:1]
+ 1 │ parseFloat(value);
+   · ─────────────────
+   ╰────
+  help: Replace this call with `Number(value)`.
+
+  ⚠ unicorn(prefer-number-coercion): Prefer `Number(a + b)`.
+   ╭─[prefer_number_coercion.tsx:1:1]
+ 1 │ parseFloat(a + b);
+   · ─────────────────
+   ╰────
+  help: Replace this call with `Number(a + b)`.
+
+  ⚠ unicorn(prefer-number-coercion): Prefer `Number(value)`.
+   ╭─[prefer_number_coercion.tsx:1:1]
+ 1 │ Number.parseFloat(value);
+   · ────────────────────────
+   ╰────
+  help: Replace this call with `Number(value)`.
+
+  ⚠ unicorn(prefer-number-coercion): Prefer `Number(value)`.
+   ╭─[prefer_number_coercion.tsx:1:1]
+ 1 │ Number['parseFloat'](value);
+   · ───────────────────────────
+   ╰────
+  help: Replace this call with `Number(value)`.
+
+  ⚠ unicorn(prefer-number-coercion): Prefer `Math.trunc(Number(value))`.
+   ╭─[prefer_number_coercion.tsx:1:1]
+ 1 │ parseInt(value, 10);
+   · ───────────────────
+   ╰────
+  help: Replace this call with `Math.trunc(Number(value))`.
+
+  ⚠ unicorn(prefer-number-coercion): Prefer `Math.trunc(Number(getValue()))`.
+   ╭─[prefer_number_coercion.tsx:1:1]
+ 1 │ parseInt(getValue(), 10);
+   · ────────────────────────
+   ╰────
+  help: Replace this call with `Math.trunc(Number(getValue()))`.
+
+  ⚠ unicorn(prefer-number-coercion): Prefer `Math.trunc(Number(parseInt(value, 10)))`.
+   ╭─[prefer_number_coercion.tsx:1:1]
+ 1 │ parseInt(parseInt(value, 10), 10);
+   · ─────────────────────────────────
+   ╰────
+  help: Replace this call with `Math.trunc(Number(parseInt(value, 10)))`.
+
+  ⚠ unicorn(prefer-number-coercion): Prefer `Math.trunc(Number(value))`.
+   ╭─[prefer_number_coercion.tsx:1:10]
+ 1 │ parseInt(parseInt(value, 10), 10);
+   ·          ───────────────────
+   ╰────
+  help: Replace this call with `Math.trunc(Number(value))`.
+
+  ⚠ unicorn(prefer-number-coercion): Prefer `Math.trunc(Number(value as string))`.
+   ╭─[prefer_number_coercion.tsx:1:1]
+ 1 │ parseInt(value as string, 10);
+   · ─────────────────────────────
+   ╰────
+  help: Replace this call with `Math.trunc(Number(value as string))`.
+
+  ⚠ unicorn(prefer-number-coercion): Prefer `Math.trunc(Number(value))`.
+   ╭─[prefer_number_coercion.tsx:1:1]
+ 1 │ Number.parseInt(value, 10);
+   · ──────────────────────────
+   ╰────
+  help: Replace this call with `Math.trunc(Number(value))`.
+
+  ⚠ unicorn(prefer-number-coercion): Prefer `Math.trunc(Number(value))`.
+   ╭─[prefer_number_coercion.tsx:1:1]
+ 1 │ parseInt(value, 10.0);
+   · ─────────────────────
+   ╰────
+  help: Replace this call with `Math.trunc(Number(value))`.
+
+  ⚠ unicorn(prefer-number-coercion): Prefer `Math.trunc(Number(value))`.
+   ╭─[prefer_number_coercion.tsx:1:1]
+ 1 │ (parseInt)(value, 10);
+   · ─────────────────────
+   ╰────
+  help: Replace this call with `Math.trunc(Number(value))`.
+
+  ⚠ unicorn(prefer-number-coercion): Prefer `Math.trunc(Number((value)))`.
+   ╭─[prefer_number_coercion.tsx:1:1]
+ 1 │ Number.parseInt((value), 10);
+   · ────────────────────────────
+   ╰────
+  help: Replace this call with `Math.trunc(Number((value)))`.
