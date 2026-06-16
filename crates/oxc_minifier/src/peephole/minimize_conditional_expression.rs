@@ -377,10 +377,6 @@ impl<'a> PeepholeOptimizations {
             }
         }
 
-        // Evaluate the consequent/alternate once and reuse for both the boolean-fold and number-fold
-        // checks below. `evaluate_value` is a recursive AST walk; the two folds previously evaluated
-        // each operand twice. Nothing mutates the operands between the two folds (the boolean fold only
-        // mutates when it `return`s), so the cached values are still valid for the number fold.
         let consequent_value = expr.consequent.evaluate_value(ctx);
         let alternate_value = expr.alternate.evaluate_value(ctx);
 
