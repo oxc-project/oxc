@@ -10,7 +10,7 @@ use base54::base54;
 use oxc_allocator::{Allocator, BitSet, HashSet, Vec};
 use oxc_ast::ast::{Declaration, Program, Statement};
 use oxc_data_structures::inline_string::InlineString;
-use oxc_semantic::{AstNodes, Reference, Scoping, Semantic, SemanticBuilder, SymbolId};
+use oxc_semantic::{AstNodes, Reference, Scoping, Semantic, SemanticBuilder, Stats, SymbolId};
 use oxc_span::SourceType;
 use oxc_str::{CompactStr, Ident, Str};
 
@@ -199,6 +199,9 @@ pub struct ManglerReturn {
 /// - slot 3: `bar`
 pub struct Mangler<'t> {
     options: MangleOptions,
+    /// Statistics from a prior semantic build of the same program, used to
+    /// pre-allocate the semantic data [`Mangler::build`] constructs.
+    stats: Option<Stats>,
     /// An allocator meant to be used for temporary allocations during mangling.
     /// It can be cleared after mangling is done, to free up memory for subsequent
     /// files or other operations.
@@ -209,6 +212,7 @@ impl Default for Mangler<'_> {
     fn default() -> Self {
         Self {
             options: MangleOptions::default(),
+            stats: None,
             temp_allocator: TempAllocator::Owned(Allocator::default()),
         }
     }
@@ -267,6 +271,7 @@ impl<'t> Mangler<'t> {
     pub fn new_with_temp_allocator(temp_allocator: &'t Allocator) -> Self {
         Self {
             options: MangleOptions::default(),
+            stats: None,
             temp_allocator: TempAllocator::Borrowed(temp_allocator),
         }
     }
@@ -277,15 +282,25 @@ impl<'t> Mangler<'t> {
         self
     }
 
+    /// Provide statistics from a prior semantic analysis of the same program
+    /// (see [`Semantic::stats`]) to pre-allocate the semantic data [`Mangler::build`]
+    /// constructs, avoiding the full-AST counting pass `SemanticBuilder` otherwise
+    /// performs.
+    #[must_use]
+    pub fn with_stats(mut self, stats: Stats) -> Self {
+        self.stats = Some(stats);
+        self
+    }
+
     /// Mangles the program. The resulting SymbolTable contains the mangled symbols - `program` is not modified.
     /// Pass the symbol table to oxc_codegen to generate the mangled code.
     #[must_use]
     pub fn build(self, program: &Program<'_>) -> ManglerReturn {
-        let mut semantic = SemanticBuilder::new()
-            .with_build_nodes(true)
-            .with_class_table(true)
-            .build(program)
-            .semantic;
+        let mut builder = SemanticBuilder::new().with_build_nodes(true).with_class_table(true);
+        if let Some(stats) = self.stats {
+            builder = builder.with_stats(stats);
+        }
+        let mut semantic = builder.build(program).semantic;
         let class_private_mappings = self.build_with_semantic(&mut semantic, program);
         ManglerReturn { scoping: semantic.into_scoping(), class_private_mappings }
     }

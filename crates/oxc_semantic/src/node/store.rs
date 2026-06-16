@@ -61,8 +61,6 @@ impl<'a> AstNodeStore<'a> {
     }
 
     /// Number of nodes allocated so far. Source of truth, valid in both modes.
-    /// Only used by the debug-only stats accuracy check.
-    #[cfg(debug_assertions)]
     #[inline]
     pub fn node_count(&self) -> u32 {
         self.node_count
