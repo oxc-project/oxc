@@ -66,9 +66,9 @@ console.log(x); // TDZ violation
 let x = 1;
 ```
 
-### No errors from Array/String Maximum Length
+### No errors from Array/String/TypedArray Maximum Length
 
-Creating strings or arrays that exceed maximum length can be moved or removed.
+Creating strings, arrays, or typed arrays that exceed maximum length can be moved or removed.
 
 ```javascript
 // The minifier may change when this error occurs:
@@ -78,6 +78,8 @@ try {
   console.log("caught");
 }
 ```
+
+This also lets an unused `new Int8Array(n)` (or any TypedArray) with a numeric-literal `n` be dropped: a valid length allocates a zeroed buffer with no observable effect, and a too-large literal only throws a maximum-length `RangeError`. A non-literal, negative (`new Int8Array(-1)`), `BigInt` (`new Int8Array(0n)`), or object argument is kept.
 
 ### No side effects from extending a class
 

@@ -963,9 +963,9 @@ export interface DummyRuleMap {
   "jsdoc/implements-on-classes"?: RuleNoConfig;
   "jsdoc/no-defaults"?: RuleNoConfig | [AllowWarnDeny, NoDefaultsConfig];
   "jsdoc/require-param"?: DummyRule;
-  "jsdoc/require-param-description"?: RuleNoConfig;
+  "jsdoc/require-param-description"?: RuleNoConfig | [AllowWarnDeny, RequireParamDescriptionConfig];
   "jsdoc/require-param-name"?: RuleNoConfig;
-  "jsdoc/require-param-type"?: RuleNoConfig;
+  "jsdoc/require-param-type"?: RuleNoConfig | [AllowWarnDeny, RequireParamTypeConfig];
   "jsdoc/require-property"?: RuleNoConfig;
   "jsdoc/require-property-description"?: RuleNoConfig;
   "jsdoc/require-property-name"?: RuleNoConfig;
@@ -1274,7 +1274,13 @@ export interface DummyRuleMap {
   "react/jsx-no-constructed-context-values"?: RuleNoConfig;
   "react/jsx-no-duplicate-props"?: RuleNoConfig;
   "react/jsx-no-literals"?: RuleNoConfig | [AllowWarnDeny, JsxNoLiteralsConfig];
-  "react/jsx-no-script-url"?: DummyRule;
+  "react/jsx-no-script-url"?:
+    | RuleNoConfig
+    | (
+        | [AllowWarnDeny, JsxNoScriptUrlComponent[]]
+        | [AllowWarnDeny, JsxNoScriptUrlComponent[], JsxNoScriptUrlOptions]
+        | [AllowWarnDeny, JsxNoScriptUrlOptions]
+      );
   "react/jsx-no-target-blank"?: RuleNoConfig | [AllowWarnDeny, JsxNoTargetBlank];
   "react/jsx-no-undef"?: RuleNoConfig;
   "react/jsx-no-useless-fragment"?: RuleNoConfig | [AllowWarnDeny, JsxNoUselessFragment];
@@ -1540,6 +1546,7 @@ export interface DummyRuleMap {
   "unicorn/prefer-native-coercion-functions"?: RuleNoConfig;
   "unicorn/prefer-negative-index"?: RuleNoConfig;
   "unicorn/prefer-node-protocol"?: RuleNoConfig;
+  "unicorn/prefer-number-coercion"?: RuleNoConfig;
   "unicorn/prefer-number-properties"?: RuleNoConfig | [AllowWarnDeny, PreferNumberPropertiesConfig];
   "unicorn/prefer-object-from-entries"?: RuleNoConfig | [AllowWarnDeny, PreferObjectFromEntriesConfig];
   "unicorn/prefer-optional-catch-binding"?: RuleNoConfig;
@@ -1653,6 +1660,7 @@ export interface DummyRuleMap {
   "vue/max-props"?: RuleNoConfig | [AllowWarnDeny, MaxProps];
   "vue/next-tick-style"?: RuleNoConfig | [AllowWarnDeny, NextTickOption];
   "vue/no-arrow-functions-in-watch"?: RuleNoConfig;
+  "vue/no-async-in-computed-properties"?: RuleNoConfig | [AllowWarnDeny, NoAsyncInComputedPropertiesConfig];
   "vue/no-computed-properties-in-data"?: RuleNoConfig;
   "vue/no-deprecated-data-object-declaration"?: RuleNoConfig;
   "vue/no-deprecated-delete-set"?: RuleNoConfig;
@@ -1729,6 +1737,10 @@ export interface ArrayCallbackReturn {
   checkForEach?: boolean;
 }
 export interface ArrowBodyStyleConfig {
+  /**
+   * Requires braces and an explicit return for object literals. This option only applies when
+   * the first option is `"as-needed"`.
+   */
   requireReturnForObjectLiteral?: boolean;
 }
 export interface CommentConfigJson {
@@ -2362,6 +2374,28 @@ export interface NoDefaultsConfig {
    * If true, report the presence of optional param names (square brackets) on `@param` tags.
    */
   noOptionalParamNames?: boolean;
+}
+export interface RequireParamDescriptionConfig {
+  /**
+   * The description string to set by default for destructured roots. Defaults to "The root object".
+   */
+  defaultDestructuredRootDescription?: string;
+  /**
+   * Whether to set a default destructured root description.
+   * For example, you may wish to avoid manually having to set the description for a @param corresponding to a destructured root object as it should always be the same type of object.
+   * Uses `defaultDestructuredRootDescription` for the description string. Defaults to `false`.
+   */
+  setDefaultDestructuredRootDescription?: boolean;
+}
+export interface RequireParamTypeConfig {
+  /**
+   * The type string to set by default for destructured roots. Defaults to "object".
+   */
+  defaultDestructuredRootType?: string;
+  /**
+   * Whether to set a default destructured root type. For example, you may wish to avoid manually having to set the type for a `@param` corresponding to a destructured root object as it is always going to be an object. Uses `defaultDestructuredRootType` for the type string. Defaults to `false`.
+   */
+  setDefaultDestructuredRootType?: boolean;
 }
 export interface RequireReturnsConfig {
   /**
@@ -4432,6 +4466,22 @@ export interface ElementOverrideOptions {
    */
   restrictedAttributes?: string[];
 }
+export interface JsxNoScriptUrlComponent {
+  /**
+   * Component name.
+   */
+  name: string;
+  /**
+   * List of properties that should be validated.
+   */
+  props: string[];
+}
+export interface JsxNoScriptUrlOptions {
+  /**
+   * Whether to include components from settings.
+   */
+  includeFromSettings?: boolean;
+}
 export interface JsxNoTargetBlank {
   /**
    * Whether to allow referrers.
@@ -6081,6 +6131,14 @@ export interface MaxProps {
    * The maximum number of props allowed in a Vue SFC.
    */
   maxProps?: number;
+}
+export interface NoAsyncInComputedPropertiesConfig {
+  /**
+   * Names of identifiers whose member-call chains (`.then` / `.catch` / `.finally`)
+   * should be ignored. Useful for libraries like Zod where `.catch(default)` is
+   * a builder API, not a Promise method.
+   */
+  ignoredObjectNames?: string[];
 }
 export interface NoDeprecatedModelDefinitionConfig {
   /**

@@ -65,27 +65,34 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    /// Filter unused declarators out of a `KeepVar`-synthesized `var`
+    /// statement. Both callers pass `KeepVar` output: a TRANSIENT statement
+    /// that is not (yet) part of the live tree, whose declarators never
+    /// carry initializers (`KeepVar` hoists names only).
+    ///
+    /// Because the statement is transient and init-less, removing a
+    /// declarator discards no references and must NOT record a mutation or
+    /// route through the `drop_*` helpers: if the caller then skips
+    /// installation (e.g. `try_fold_if`'s already-canonical slot), nothing
+    /// in the live AST changed this pass, and a spurious mutation spins the
+    /// fixed-point loop past its iteration guard (bluebird.js, monitor-oxc).
+    /// Installing — or declining to install — the filtered statement is the
+    /// caller's mutation event.
     pub fn remove_unused_variable_declaration(
         mut stmt: Statement<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) -> Option<Statement<'a>> {
         let Statement::VariableDeclaration(var_decl) = &mut stmt else { return Some(stmt) };
         if !Self::can_remove_unused_declarators(ctx) {
             return Some(stmt);
         }
-        var_decl.declarations.retain_mut(|decl| {
-            if Self::should_remove_unused_declarator(decl, ctx) {
-                // Mark refs in the discarded init as dead so the per-pass
-                // scoping refresh removes them. The `retain_mut` predicate
-                // silently drops the declarator, so we lose the chance to
-                // walk it via `replace_*`.
-                if let Some(init) = &decl.init {
-                    ctx.drop_expression(init);
-                }
-                false
-            } else {
-                true
-            }
+        var_decl.declarations.retain(|decl| {
+            debug_assert!(
+                decl.init.is_none(),
+                "callers must pass KeepVar output (init-less declarators); a declarator \
+                 with an init would need a `drop_*` walk for its references"
+            );
+            !Self::should_remove_unused_declarator(decl, ctx)
         });
         if var_decl.declarations.is_empty() {
             return None;

@@ -884,8 +884,10 @@
       "type": "object",
       "properties": {
         "requireReturnForObjectLiteral": {
+          "description": "Requires braces and an explicit return for object literals. This option only applies when\nthe first option is `\"as-needed\"`.",
           "default": false,
-          "type": "boolean"
+          "type": "boolean",
+          "markdownDescription": "Requires braces and an explicit return for object literals. This option only applies when\nthe first option is `\"as-needed\"`."
         }
       },
       "additionalProperties": false
@@ -3492,13 +3494,47 @@
           "$ref": "#/definitions/DummyRule"
         },
         "jsdoc/require-param-description": {
-          "$ref": "#/definitions/RuleNoConfig"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/RequireParamDescriptionConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "jsdoc/require-param-name": {
           "$ref": "#/definitions/RuleNoConfig"
         },
         "jsdoc/require-param-type": {
-          "$ref": "#/definitions/RuleNoConfig"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/RequireParamTypeConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "jsdoc/require-property": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -6548,7 +6584,47 @@
           ]
         },
         "react/jsx-no-script-url": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/JsxNoScriptUrlComponent"
+                      }
+                    },
+                    {
+                      "$ref": "#/definitions/JsxNoScriptUrlOptions"
+                    }
+                  ],
+                  "maxItems": 3,
+                  "minItems": 2
+                },
+                {
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
+                    },
+                    {
+                      "$ref": "#/definitions/JsxNoScriptUrlOptions"
+                    }
+                  ],
+                  "maxItems": 2,
+                  "minItems": 2
+                }
+              ]
+            }
+          ]
         },
         "react/jsx-no-target-blank": {
           "anyOf": [
@@ -8974,6 +9050,9 @@
         "unicorn/prefer-node-protocol": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "unicorn/prefer-number-coercion": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "unicorn/prefer-number-properties": {
           "anyOf": [
             {
@@ -9907,6 +9986,26 @@
         },
         "vue/no-arrow-functions-in-watch": {
           "$ref": "#/definitions/RuleNoConfig"
+        },
+        "vue/no-async-in-computed-properties": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoAsyncInComputedProperties"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "vue/no-computed-properties-in-data": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -11818,6 +11917,41 @@
       "additionalProperties": false,
       "markdownDescription": "The options shared between the top-level config and each `elementOverrides` entry."
     },
+    "JsxNoScriptUrlComponent": {
+      "type": "object",
+      "required": [
+        "name",
+        "props"
+      ],
+      "properties": {
+        "name": {
+          "description": "Component name.",
+          "type": "string",
+          "markdownDescription": "Component name."
+        },
+        "props": {
+          "description": "List of properties that should be validated.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "List of properties that should be validated."
+        }
+      },
+      "additionalProperties": false
+    },
+    "JsxNoScriptUrlOptions": {
+      "type": "object",
+      "properties": {
+        "includeFromSettings": {
+          "description": "Whether to include components from settings.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to include components from settings."
+        }
+      },
+      "additionalProperties": false
+    },
     "JsxNoTargetBlank": {
       "type": "object",
       "properties": {
@@ -12446,11 +12580,31 @@
       ]
     },
     "Mode2": {
-      "type": "string",
-      "enum": [
-        "as-needed",
-        "always",
-        "never"
+      "oneOf": [
+        {
+          "description": "Enforces no braces where they can be omitted (default).",
+          "type": "string",
+          "enum": [
+            "as-needed"
+          ],
+          "markdownDescription": "Enforces no braces where they can be omitted (default)."
+        },
+        {
+          "description": "Enforces braces around the function body.",
+          "type": "string",
+          "enum": [
+            "always"
+          ],
+          "markdownDescription": "Enforces braces around the function body."
+        },
+        {
+          "description": "Enforces no braces around the function body (constrains arrow functions to the role of returning an expression).",
+          "type": "string",
+          "enum": [
+            "never"
+          ],
+          "markdownDescription": "Enforces no braces around the function body (constrains arrow functions to the role of returning an expression)."
+        }
       ]
     },
     "Modifier": {
@@ -12831,6 +12985,25 @@
             "type": "string"
           },
           "markdownDescription": "An array of names that are allowed to be async."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoAsyncInComputedProperties": {
+      "$ref": "#/definitions/NoAsyncInComputedPropertiesConfig"
+    },
+    "NoAsyncInComputedPropertiesConfig": {
+      "type": "object",
+      "properties": {
+        "ignoredObjectNames": {
+          "description": "Names of identifiers whose member-call chains (`.then` / `.catch` / `.finally`)\nshould be ignored. Useful for libraries like Zod where `.catch(default)` is\na builder API, not a Promise method.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true,
+          "markdownDescription": "Names of identifiers whose member-call chains (`.then` / `.catch` / `.finally`)\nshould be ignored. Useful for libraries like Zod where `.catch(default)` is\na builder API, not a Promise method."
         }
       },
       "additionalProperties": false
@@ -16776,6 +16949,42 @@
           "default": false,
           "type": "boolean",
           "markdownDescription": "Also require type parameters for `importActual` and `importMock`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "RequireParamDescriptionConfig": {
+      "type": "object",
+      "properties": {
+        "defaultDestructuredRootDescription": {
+          "description": "The description string to set by default for destructured roots. Defaults to \"The root object\".",
+          "default": "The root object",
+          "type": "string",
+          "markdownDescription": "The description string to set by default for destructured roots. Defaults to \"The root object\"."
+        },
+        "setDefaultDestructuredRootDescription": {
+          "description": "Whether to set a default destructured root description.\nFor example, you may wish to avoid manually having to set the description for a @param corresponding to a destructured root object as it should always be the same type of object.\nUses `defaultDestructuredRootDescription` for the description string. Defaults to `false`.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to set a default destructured root description.\nFor example, you may wish to avoid manually having to set the description for a @param corresponding to a destructured root object as it should always be the same type of object.\nUses `defaultDestructuredRootDescription` for the description string. Defaults to `false`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "RequireParamTypeConfig": {
+      "type": "object",
+      "properties": {
+        "defaultDestructuredRootType": {
+          "description": "The type string to set by default for destructured roots. Defaults to \"object\".",
+          "default": "object",
+          "type": "string",
+          "markdownDescription": "The type string to set by default for destructured roots. Defaults to \"object\"."
+        },
+        "setDefaultDestructuredRootType": {
+          "description": "Whether to set a default destructured root type. For example, you may wish to avoid manually having to set the type for a `@param` corresponding to a destructured root object as it is always going to be an object. Uses `defaultDestructuredRootType` for the type string. Defaults to `false`.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to set a default destructured root type. For example, you may wish to avoid manually having to set the type for a `@param` corresponding to a destructured root object as it is always going to be an object. Uses `defaultDestructuredRootType` for the type string. Defaults to `false`."
         }
       },
       "additionalProperties": false

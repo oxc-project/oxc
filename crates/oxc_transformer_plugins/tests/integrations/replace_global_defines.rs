@@ -19,8 +19,15 @@ pub fn test(source_text: &str, expected: &str, config: &ReplaceGlobalDefinesConf
     let mut scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
     let ret = ReplaceGlobalDefines::new(&allocator, config.clone()).build(scoping, &mut program);
     assert_eq!(ret.changed, source_text != expected);
-    // Use the updated scoping, instead of recreating one.
-    scoping = ret.scoping;
+    // Mirror the pipeline in crates/oxc/src/compiler.rs: it treats scoping as
+    // dirty whenever ReplaceGlobalDefines changed the AST (`scoping_dirty |=
+    // ret.changed`) and rebuilds it before DCE. Reuse RGD's scoping only on
+    // the unchanged path.
+    scoping = if ret.changed {
+        SemanticBuilder::new().build(&program).semantic.into_scoping()
+    } else {
+        ret.scoping
+    };
     AssertAst.visit_program(&program);
     // Run DCE, to align pipeline in crates/oxc/src/compiler.rs
     Compressor::new(&allocator).dead_code_elimination_with_scoping(
@@ -299,6 +306,20 @@ fn replace_with_undefined() {
 fn declare_const() {
     let config = config(&[("IS_PROD", "true")]);
     test("declare const IS_PROD: boolean; if (IS_PROD) {} foo(IS_PROD)", "foo(true)", &config);
+}
+
+#[test]
+fn declare_const_assignment_target_bailout() {
+    // `IS_PROD = 0` cannot be rewritten to `true = 0` (literals are not valid
+    // assignment targets), so the LHS replacement bails out and the original
+    // identifier stays in the AST, its reference intact — downstream DCE must
+    // not treat IS_PROD as unused and drop the `declare const`.
+    let config = config(&[("IS_PROD", "true")]);
+    test(
+        "declare const IS_PROD: boolean; IS_PROD = 0;",
+        "declare const IS_PROD: boolean; IS_PROD = 0;",
+        &config,
+    );
 }
 
 #[test]

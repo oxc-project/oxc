@@ -747,22 +747,30 @@ impl<'a> PeepholeOptimizations {
     ///
     /// - `foo${1}bar${i}` => `foo1bar${i}`
     pub fn inline_template_literal(t: &mut TemplateLiteral<'a>, ctx: &mut TraverseCtx<'a>) {
-        let has_expr_to_inline = t
-            .expressions
-            .iter()
-            .any(|expr| !expr.may_have_side_effects(ctx) && expr.to_js_string(ctx).is_some());
-        if !has_expr_to_inline {
+        // Single pass: compute the side-effect / `to_js_string` checks once (previously they ran in an
+        // `.any()` pre-scan and then again in the drain loop) and collect the inline-able expressions
+        // as `(index, value)`. Bail out cheaply when there is nothing to inline, leaving
+        // `t.expressions` untouched (no drain, no allocation — `inline_exprs` only allocates on push).
+        let mut inline_exprs = Vec::new();
+        for (idx, expr) in t.expressions.iter().enumerate() {
+            if !expr.may_have_side_effects(ctx)
+                && let Some(str) = expr.to_js_string(ctx)
+            {
+                inline_exprs.push((idx, str));
+            }
+        }
+        if inline_exprs.is_empty() {
             return;
         }
 
-        let mut inline_exprs = Vec::with_capacity(t.expressions.len());
-        let mut kept = ctx.ast.vec_with_capacity(t.expressions.len());
+        // Rebuild `expressions`, dropping the inline-able ones (their indices are in ascending order)
+        // without recomputing the checks above.
+        let mut kept = ctx.ast.vec_with_capacity(t.expressions.len() - inline_exprs.len());
+        let mut inline_idxs = inline_exprs.iter().map(|(idx, _)| *idx).peekable();
         for (idx, expr) in t.expressions.drain(..).enumerate() {
-            if expr.may_have_side_effects(ctx) {
-                kept.push(expr);
-            } else if let Some(str) = expr.to_js_string(ctx) {
+            if inline_idxs.peek() == Some(&idx) {
+                inline_idxs.next();
                 ctx.drop_expression(&expr);
-                inline_exprs.push((idx, str));
             } else {
                 kept.push(expr);
             }

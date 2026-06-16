@@ -44,19 +44,29 @@ fn unexpected_block_with_unknown_help_diagnostic(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, PartialEq, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 enum Mode {
+    /// Enforces no braces where they can be omitted (default).
     #[default]
     AsNeeded,
+    /// Enforces braces around the function body.
     Always,
+    /// Enforces no braces around the function body (constrains arrow functions to the role of returning an expression).
     Never,
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(default)]
-pub struct ArrowBodyStyle(Mode, ArrowBodyStyleConfig);
+pub struct ArrowBodyStyle(
+    /// Controls when braces are required around arrow function bodies.
+    Mode,
+    /// Additional options for the `as-needed` mode.
+    ArrowBodyStyleConfig,
+);
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct ArrowBodyStyleConfig {
+    /// Requires braces and an explicit return for object literals. This option only applies when
+    /// the first option is `"as-needed"`.
     require_return_for_object_literal: bool,
 }
 
@@ -72,32 +82,6 @@ declare_oxc_lint!(
     ///
     /// Inconsistent use of block vs. concise bodies makes code harder to read.
     /// Concise bodies are limited to a single expression, whose value is implicitly returned.
-    ///
-    /// ### Options
-    ///
-    /// First option:
-    /// - Type: `string`
-    /// - Enum: `"always"`, `"as-needed"`, `"never"`
-    /// - Default: `"as-needed"`
-    ///
-    /// Possible values:
-    /// * `never` enforces no braces around the function body (constrains arrow functions to the role of returning an expression)
-    /// * `always` enforces braces around the function body
-    /// * `as-needed` enforces no braces where they can be omitted (default)
-    ///
-    /// Second option:
-    /// - Type: `object`
-    /// - Properties:
-    ///     - `requireReturnForObjectLiteral`: `boolean` (default: `false`) - requires braces and an explicit return for object literals.
-    ///
-    /// Note: This option only applies when the first option is `"as-needed"`.
-    ///
-    /// Example configuration:
-    /// ```json
-    /// {
-    ///     "arrow-body-style": ["error", "as-needed", { "requireReturnForObjectLiteral": true }]
-    /// }
-    /// ```
     ///
     /// ### Examples
     ///

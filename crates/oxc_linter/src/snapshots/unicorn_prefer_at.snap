@@ -268,6 +268,22 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ unicorn(prefer-at): Prefer `.at()` over `slice()[0]`.
    ╭─[prefer_at.tsx:1:1]
+ 1 │ array.slice(-1)[0]
+   · ──────────────────
+   ╰────
+  help: Use `.at()` for index access.
+  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
+
+  ⚠ unicorn(prefer-at): Prefer `.at()` over `slice()[0]`.
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ array.slice(-1)[0]
+   · ──────────────────
+   ╰────
+  help: Use `.at()` for index access.
+  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
+
+  ⚠ unicorn(prefer-at): Prefer `.at()` over `slice()[0]`.
+   ╭─[prefer_at.tsx:1:1]
  1 │ array?.slice(-1)[0]
    · ───────────────────
    ╰────
@@ -647,6 +663,14 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ unicorn(prefer-at): Prefer `.at()` over `[index]`.
    ╭─[prefer_at.tsx:1:1]
+ 1 │ array[0]
+   · ────────
+   ╰────
+  help: Use `.at()` for index access.
+  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
+
+  ⚠ unicorn(prefer-at): Prefer `.at()` over `[index]`.
+   ╭─[prefer_at.tsx:1:1]
  1 │ array[1]
    · ────────
    ╰────
@@ -655,8 +679,104 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ unicorn(prefer-at): Prefer `.at()` over `[index]`.
    ╭─[prefer_at.tsx:1:1]
+ 1 │ array[5 + 9]
+   · ────────────
+   ╰────
+  help: Use `.at()` for index access.
+  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
+
+  ⚠ unicorn(prefer-at): Prefer `.at()` over `[index]`.
+   ╭─[prefer_at.tsx:1:18]
+ 1 │ const offset = 5;array[offset + 9]
+   ·                  ─────────────────
+   ╰────
+  help: Use `.at()` for index access.
+  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
+
+  ⚠ unicorn(prefer-at): Prefer `.at()` over `[index]`.
+   ╭─[prefer_at.tsx:1:20]
+ 1 │ const offset = -10;array[offset + 9]
+   ·                    ─────────────────
+   ╰────
+  help: Use `.at()` for index access.
+  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
+
+  ⚠ unicorn(prefer-at): Prefer `.at()` over `[index]`.
+   ╭─[prefer_at.tsx:1:1]
  1 │ array[array.length - 1]
    · ───────────────────────
+   ╰────
+  help: Use `.at()` for index access.
+  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
+
+  ⚠ unicorn(prefer-at): Prefer `.at()` over `charAt()`.
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ string.charAt(9)
+   · ────────────────
+   ╰────
+  help: Use `.at()` for index access.
+  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
+
+  ⚠ unicorn(prefer-at): Prefer `.at()` over `charAt()`.
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ string.charAt(5 + 9)
+   · ────────────────────
+   ╰────
+  help: Use `.at()` for index access.
+  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
+
+  ⚠ unicorn(prefer-at): Prefer `.at()` over `charAt()`.
+   ╭─[prefer_at.tsx:1:18]
+ 1 │ const offset = 5;string.charAt(offset + 9)
+   ·                  ─────────────────────────
+   ╰────
+  help: Use `.at()` for index access.
+  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
+
+  ⚠ unicorn(prefer-at): Prefer `.at()` over `charAt()`.
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ string.charAt(unknown)
+   · ──────────────────────
+   ╰────
+  help: Use `.at()` for index access.
+  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
+
+  ⚠ unicorn(prefer-at): Prefer `.at()` over `charAt()`.
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ string.charAt(-1)
+   · ─────────────────
+   ╰────
+  help: Use `.at()` for index access.
+  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
+
+  ⚠ unicorn(prefer-at): Prefer `.at()` over `charAt()`.
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ string.charAt(1.5)
+   · ──────────────────
+   ╰────
+  help: Use `.at()` for index access.
+  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
+
+  ⚠ unicorn(prefer-at): Prefer `.at()` over `charAt()`.
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ string.charAt(1n)
+   · ─────────────────
+   ╰────
+  help: Use `.at()` for index access.
+  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
+
+  ⚠ unicorn(prefer-at): Prefer `.at()` over `charAt()`.
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ string.charAt(string.length - 1)
+   · ────────────────────────────────
+   ╰────
+  help: Use `.at()` for index access.
+  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
+
+  ⚠ unicorn(prefer-at): Prefer `.at()` over `charAt()`.
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ foo.charAt(bar.length - 1)
+   · ──────────────────────────
    ╰────
   help: Use `.at()` for index access.
   note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at

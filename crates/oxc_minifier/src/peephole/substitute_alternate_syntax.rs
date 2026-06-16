@@ -478,7 +478,7 @@ impl<'a> PeepholeOptimizations {
         left: &Expression<'a>,
         right: &Expression<'a>,
         span: Span,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
         inversed: bool,
     ) -> Option<Expression<'a>> {
         let pair = Self::commutative_pair(
@@ -546,18 +546,42 @@ impl<'a> PeepholeOptimizations {
             return None;
         }
 
-        let mut new_left_expr = typeof_binary_expr.clone_in_with_semantic_ids(ctx.ast.allocator);
+        // The replacement must not alias `ReferenceId`s from the dropped subtree:
+        // `replace_expression` walks the old tree and marks its references dead,
+        // so a reused id would be pruned from scoping while still live in the
+        // program. Mint fresh references (same name, same resolution) instead.
+        let typeof_symbol_id =
+            ctx.scoping().get_reference(typeof_id_ref.reference_id()).symbol_id();
+        let is_null_symbol_id =
+            ctx.scoping().get_reference(is_null_id_ref.reference_id()).symbol_id();
+
+        // Plain `clone_in` resets every `reference_id` to `None`, making id
+        // aliasing structurally impossible; the loop below installs the one
+        // fresh reference the clone needs.
+        let mut new_left_expr = typeof_binary_expr.clone_in(ctx.ast.allocator);
         if let Expression::BinaryExpression(new_left_expr_binary) = &mut new_left_expr {
             new_left_expr_binary.operator =
                 if inversed { BinaryOperator::Inequality } else { BinaryOperator::Equality };
+            let fresh_reference_id =
+                ctx.create_reference(typeof_id_ref.name, typeof_symbol_id, ReferenceFlags::Read);
+            let BinaryExpression { left, right, .. } = &mut **new_left_expr_binary;
+            for operand in [left, right] {
+                if let Expression::UnaryExpression(unary) = operand
+                    && unary.operator == UnaryOperator::Typeof
+                    && let Expression::Identifier(id) = &mut unary.argument
+                {
+                    id.reference_id.set(Some(fresh_reference_id));
+                }
+            }
         } else {
             unreachable!();
         }
 
-        let is_null_id_ref = ctx.ast.expression_identifier_with_reference_id(
+        let is_null_id_ref = ctx.create_ident_expr(
             is_null_id_ref.span,
             is_null_id_ref.name,
-            is_null_id_ref.reference_id(),
+            is_null_symbol_id,
+            ReferenceFlags::Read,
         );
 
         let new_right_expr = if inversed {
@@ -956,14 +980,22 @@ impl<'a> PeepholeOptimizations {
 
             let new_decl =
                 ctx.ast.variable_declarator(SPAN, var_init.kind, r_id_pat, NONE, Some(arr), false);
+            // The old declarators (`e`, `a`, and `r`'s original init) are
+            // replaced wholesale — walk them so refs inside (e.g. `e` in
+            // `Array(e > 1 ? e - 1 : 0)`) reach `PassDirty`. The moved-out
+            // `r` binding and `arguments` ident left id-less dummies behind.
+            for decl in &var_init.declarations {
+                ctx.drop_variable_declarator(decl);
+            }
             var_init.declarations = ctx.ast.vec1(new_decl);
         } else {
             // `for (var; 0;)` with an empty `VariableDeclaration` is invalid JS when printed and
             // makes `try_fold_for` hoist a bogus `var;`. Use `for (; 0;)` instead so dead-code
-            // folding becomes an empty statement.
-            // `for_stmt.init` is `Option<ForStatementInit>` — no typed helper for that
-            // enum slot yet. The `replace_statement` for `for_stmt.body`
-            // below records a mutation, covering this drop's mutation signal.
+            // folding becomes an empty statement. Walk the dropped
+            // declarators so their refs reach `PassDirty`.
+            for decl in &var_init.declarations {
+                ctx.drop_variable_declarator(decl);
+            }
             for_stmt.init = None;
         }
         if let Some(old) = for_stmt.test.take() {
