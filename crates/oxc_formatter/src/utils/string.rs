@@ -82,7 +82,14 @@ impl CleanedStringLiteralText<'_> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for CleanedStringLiteralText<'a> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        text(f.allocator().alloc_str(&self.text)).fmt(f);
+        // In the common case the literal needs no normalization, so `text` borrows a slice of the
+        // source (`Cow::Borrowed`) which already outlives the buffer; pass it straight through and
+        // only copy into the arena for the owned (normalized) case.
+        let text_str: &'a str = match &self.text {
+            Cow::Borrowed(borrowed) => borrowed,
+            Cow::Owned(owned) => f.allocator().alloc_str(owned),
+        };
+        text(text_str).fmt(f);
     }
 }
 
