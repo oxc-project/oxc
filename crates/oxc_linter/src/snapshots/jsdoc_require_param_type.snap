@@ -36,7 +36,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ──────
  5 │                        * @param {boolean} baz
    ╰────
-  help: Add root type to `@param`.
+  help: Add {object} to `@param` tag.
 
   ⚠ jsdoc(require-param-type): Missing JSDoc `@param` type.
    ╭─[require_param_type.tsx:4:17]
