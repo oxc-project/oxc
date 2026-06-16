@@ -44,12 +44,12 @@ fn unexpected_block_with_unknown_help_diagnostic(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, PartialEq, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 enum Mode {
-    /// Enforce no braces where they can be omitted (default).
+    /// Enforces no braces where they can be omitted (default).
     #[default]
     AsNeeded,
-    /// Enforces braces around the function body
+    /// Enforces braces around the function body.
     Always,
-    /// Enforces no braces around the function body (constrains arrow functions to the role of returning an expression)
+    /// Enforces no braces around the function body (constrains arrow functions to the role of returning an expression).
     Never,
 }
 

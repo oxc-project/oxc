@@ -12525,28 +12525,28 @@
     "Mode2": {
       "oneOf": [
         {
-          "description": "Enforce no braces where they can be omitted.",
+          "description": "Enforces no braces where they can be omitted (default).",
           "type": "string",
           "enum": [
             "as-needed"
           ],
-          "markdownDescription": "Enforce no braces where they can be omitted."
+          "markdownDescription": "Enforces no braces where they can be omitted (default)."
         },
         {
-          "description": "Enforces braces around the function body",
+          "description": "Enforces braces around the function body.",
           "type": "string",
           "enum": [
             "always"
           ],
-          "markdownDescription": "Enforces braces around the function body"
+          "markdownDescription": "Enforces braces around the function body."
         },
         {
-          "description": "Enforces no braces around the function body (constrains arrow functions to the role of returning an expression)",
+          "description": "Enforces no braces around the function body (constrains arrow functions to the role of returning an expression).",
           "type": "string",
           "enum": [
             "never"
           ],
-          "markdownDescription": "Enforces no braces around the function body (constrains arrow functions to the role of returning an expression)"
+          "markdownDescription": "Enforces no braces around the function body (constrains arrow functions to the role of returning an expression)."
         }
       ]
     },
