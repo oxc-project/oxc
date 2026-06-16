@@ -119,18 +119,40 @@ fn test_new_constructor_side_effect() {
     test("new Date(undefined)", "");
     test_same("new Date(x)");
     test("new Set()", "");
-    // test("new Set([a, b, c])", "");
+    test("new Set([1, 2, 3])", "");
+    // Element side effects are preserved when the pure construction is dropped.
+    test("new Set([foo(), bar()])", "foo(), bar();");
+    test("new Map([[foo(), bar()]])", "foo(), bar();");
     test("new Set(null)", "");
     test("new Set(undefined)", "");
     test("new Set(void 0)", "");
     test_same("new Set(x)");
     test("new Map()", "");
+    test("new Map([[1, 2], [3, 4]])", "");
     test("new Map(null)", "");
     test("new Map(undefined)", "");
     test("new Map(void 0)", "");
-    // test_same("new Map([x])");
     test_same("new Map(x)");
-    // test("new Map([[a, b], [c, d]])", "");
+    // Map entries must be array literals, otherwise they are not iterable and throw.
+    test_same("new Map([x])");
+    test_same("new Map([1, 2])");
+    // WeakSet/WeakMap keys must be objects, so array-literal args throw.
+    test_same("new WeakSet([1])");
+    test_same("new WeakMap([[1, 2]])");
+    // Typed arrays allocate a zeroed buffer with no user code for a numeric-literal
+    // length: a valid length is pure, and a too-large length is a max-length
+    // RangeError the minifier is allowed to drop (see docs/ASSUMPTIONS.md).
+    test("new Int8Array()", "");
+    test("new Uint8Array()", "");
+    test("new Int8Array(8)", "");
+    test("new Int8Array(1024)", "");
+    // Kept: `-1` throws a negative-length RangeError, `0n` throws a TypeError, an
+    // object arg can run user code, and a shadowed `Int8Array` is not the builtin.
+    test_same("new Int8Array(-1)");
+    test_same("new Int8Array(0n)");
+    test_same("new Int8Array(x)");
+    test_same("new Int8Array([1, 2])");
+    test_same("var Int8Array; new Int8Array()");
 }
 
 #[test]

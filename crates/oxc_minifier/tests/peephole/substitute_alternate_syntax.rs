@@ -262,20 +262,26 @@ fn test_fold_new_expressions() {
 
 #[test]
 fn test_compress_typed_array_constructor() {
-    test("new Int8Array(0)", "new Int8Array()");
-    test("new Uint8Array(0)", "new Uint8Array()");
-    test("new Uint8ClampedArray(0)", "new Uint8ClampedArray()");
-    test("new Int16Array(0)", "new Int16Array()");
-    test("new Uint16Array(0)", "new Uint16Array()");
-    test("new Int32Array(0)", "new Int32Array()");
-    test("new Uint32Array(0)", "new Uint32Array()");
-    test("new Float32Array(0)", "new Float32Array()");
-    test("new Float64Array(0)", "new Float64Array()");
-    test("new BigInt64Array(0)", "new BigInt64Array()");
-    test("new BigUint64Array(0)", "new BigUint64Array()");
+    // `new Int8Array(0)` is equivalent to `new Int8Array()`: the `0` arg is folded
+    // away and the pure empty construction is dropped when its result is unused.
+    test("new Int8Array(0)", "");
+    test("new Uint8Array(0)", "");
+    test("new Uint8ClampedArray(0)", "");
+    test("new Int16Array(0)", "");
+    test("new Uint16Array(0)", "");
+    test("new Int32Array(0)", "");
+    test("new Uint32Array(0)", "");
+    test("new Float32Array(0)", "");
+    test("new Float64Array(0)", "");
+    test("new BigInt64Array(0)", "");
+    test("new BigUint64Array(0)", "");
+    test("new Int8Array()", "");
+    // A numeric-literal length is pure (or a droppable max-length RangeError).
+    test("new Int8Array(8)", "");
 
+    // Not optimized when shadowed, or with a negative / non-literal / extra length.
     test_same("var Int8Array; new Int8Array(0)");
-    test_same("new Int8Array(1)");
+    test_same("new Int8Array(-1)");
     test_same("new Int8Array(a)");
     test_same("new Int8Array(0, a)");
 }

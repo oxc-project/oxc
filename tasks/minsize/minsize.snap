@@ -1,7 +1,7 @@
            | Oxc        | ESBuild    | Oxc        | ESBuild    |
 Original   | minified   | minified   | gzip       | gzip       | Iterations | File      
 -------------------------------------------------------------------------------------
-72.14 kB   | 23.18 kB   | 23.70 kB   | 8.38 kB    | 8.54 kB    |          2 | react.development.js 
+72.14 kB   | 23.14 kB   | 23.70 kB   | 8.36 kB    | 8.54 kB    |          2 | react.development.js 
 
 173.90 kB  | 59.40 kB   | 59.82 kB   | 19.15 kB   | 19.33 kB   |          2 | moment.js  
 

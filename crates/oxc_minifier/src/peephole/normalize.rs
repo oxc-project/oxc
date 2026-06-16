@@ -3,7 +3,7 @@ use oxc_allocator::{TakeIn, Vec};
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
     constant_evaluation::{DetermineValueType, ValueType},
-    side_effects::is_valid_regexp,
+    side_effects::{is_typed_array_constructor, is_valid_regexp},
 };
 use oxc_semantic::IsGlobalReference;
 use oxc_syntax::scope::ScopeFlags;
@@ -355,6 +355,30 @@ impl<'a> Normalize {
                 }
                 return;
             }
+            // Typed arrays allocate a zeroed buffer and run no user code when the
+            // length argument is a non-negative numeric literal: it is either a valid
+            // length (pure) or too large, which throws a maximum-length `RangeError`
+            // that the minifier is allowed to drop (see `docs/ASSUMPTIONS.md`). The
+            // value must be checked explicitly because constant folding can turn `-1`
+            // into a negative-valued `NumericLiteral`. Other arguments are kept:
+            // `new Int8Array(-1)` throws a negative-length `RangeError`,
+            // `new Int8Array(0n)` throws a `TypeError` (BigInt), and an object argument
+            // can run user code via `Symbol.iterator` / `valueOf`. The 0-arg and
+            // `0`-literal forms (the latter folded to 0-arg by
+            // `substitute_typed_array_constructor`) are both covered, so the result is
+            // idempotent regardless of fold order.
+            name if is_typed_array_constructor(name) => {
+                let safe_length = new_expr.arguments.is_empty()
+                    || (new_expr.arguments.len() == 1
+                        && matches!(
+                            new_expr.arguments[0].as_expression(),
+                            Some(Expression::NumericLiteral(lit)) if lit.value >= 0.0
+                        ));
+                if safe_length && Self::can_set_pure(ident, ctx) {
+                    new_expr.pure = true;
+                }
+                return;
+            }
             _ => return,
         };
 
@@ -366,7 +390,28 @@ impl<'a> Normalize {
             0 if !zero_arg_throws_error => true,
             1 => match new_expr.arguments[0].as_expression() {
                 Some(Expression::ArrayExpression(array_expr)) => {
-                    array_expr.elements.is_empty() && !one_arg_array_throws_error
+                    if one_arg_array_throws_error {
+                        false
+                    } else if array_expr.elements.is_empty() {
+                        true
+                    } else {
+                        // A non-empty array literal is iterated via the built-in
+                        // array iterator (side-effect-free; element side effects are
+                        // preserved when the call is dropped). Only `Set`/`Map` accept
+                        // arbitrary entries: `Set` takes any values; `Map` requires
+                        // every entry to be an array literal (`new Map([1])` throws —
+                        // `1` is not iterable). `WeakSet`/`WeakMap` are excluded —
+                        // their keys must be objects, so `new WeakSet([1])` /
+                        // `new WeakMap([[1, 2]])` throw.
+                        match ident.name.as_str() {
+                            "Set" => true,
+                            "Map" => array_expr
+                                .elements
+                                .iter()
+                                .all(|el| matches!(el, ArrayExpressionElement::ArrayExpression(_))),
+                            _ => false,
+                        }
+                    }
                 }
                 Some(e) => {
                     if let Expression::NewExpression(new_expr) = e {
