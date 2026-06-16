@@ -9,9 +9,10 @@ use crate::{
 
 use super::known_globals::{
     is_error_constructor, is_known_global_constructor, is_known_global_identifier,
-    is_known_global_property, is_known_global_property_deep, is_pure_callable_constructor,
-    is_pure_collection_constructor, is_pure_global_function, is_pure_global_method_call,
-    is_typed_array_constructor, is_unconditionally_pure_constructor, is_valid_regexp,
+    is_known_global_property, is_known_global_property_deep, is_proxy_sensitive_object_method,
+    is_pure_callable_constructor, is_pure_collection_constructor, is_pure_global_function,
+    is_pure_global_method_call, is_typed_array_constructor, is_unconditionally_pure_constructor,
+    is_valid_regexp,
 };
 use super::{MayHaveSideEffects, PropertyReadSideEffects, context::MayHaveSideEffectsContext};
 
@@ -601,6 +602,51 @@ impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
 
         if is_pure_global_method_call(object.name.as_str(), name) {
             return self.arguments.iter().any(|e| e.may_have_side_effects(ctx));
+        }
+
+        // Object introspection methods (`keys`, `getOwnPropertyDescriptor`, ...) are
+        // pure except that a `Proxy` target makes them fire observable traps, and a
+        // `null`/`undefined` target makes them throw. They are side-effect-free only
+        // when the target is provably neither.
+        if is_proxy_sensitive_object_method(object.name.as_str(), name) {
+            // An argument with its own side effects (e.g. inline `new Proxy(...)`) — keep.
+            if self.arguments.iter().any(|e| e.may_have_side_effects(ctx)) {
+                return true;
+            }
+            // Missing or spread target → `undefined` receiver → `ToObject` throws.
+            let Some(arg) = self.arguments.first().and_then(Argument::as_expression) else {
+                return true;
+            };
+            let value_type = arg.value_type(ctx);
+            // `null`/`undefined` → `ToObject` throws a TypeError; keep the call.
+            if value_type.is_null_or_undefined() {
+                return true;
+            }
+            // With property reads assumed pure, the Proxy-trap concern is waived.
+            if ctx.property_read_side_effects() == PropertyReadSideEffects::None {
+                return false;
+            }
+            // Otherwise pure only when the target is a determined, non-Proxy value (a
+            // literal object/array, or a primitive `ToObject` wraps without user code).
+            // An undetermined value could be a Proxy whose trap is observable.
+            return value_type.is_undetermined();
+        }
+
+        // `Object.create(proto)` allocates an object with prototype `proto`; it runs no
+        // user code and is pure when `proto` is provably an object or `null` (otherwise
+        // it throws a TypeError) and there is no `properties` argument (which would be
+        // read via `[[OwnPropertyKeys]]`/`[[Get]]`).
+        if object.name == "Object" && name == "create" {
+            if self.arguments.iter().any(|e| e.may_have_side_effects(ctx)) {
+                return true;
+            }
+            if self.arguments.len() == 1
+                && let Some(arg) = self.arguments[0].as_expression()
+                && matches!(arg.value_type(ctx), ValueType::Object | ValueType::Null)
+            {
+                return false;
+            }
+            return true;
         }
 
         true
