@@ -4,7 +4,7 @@ use smallvec::SmallVec;
 
 use oxc_allocator::{GetAddress, UnstableAddress};
 use oxc_ast::{AstKind, ast::*};
-use oxc_ecmascript::{BoundNames, IsSimpleParameterList};
+use oxc_ecmascript::BoundNames;
 use oxc_span::GetSpan;
 use oxc_str::Ident;
 use oxc_syntax::{node::NodeId, scope::ScopeFlags, scope::ScopeId, symbol::SymbolFlags};
@@ -250,23 +250,13 @@ impl<'a> Binder<'a> for FormalParameter<'a> {
     // Binds the FormalParameter of a function or method.
     fn bind(&self, builder: &mut SemanticBuilder<'a>) {
         let parent_kind = builder.ancestry().parent_kind();
-        let AstKind::FormalParameters(parameters) = parent_kind else { unreachable!() };
+        let AstKind::FormalParameters(_) = parent_kind else { unreachable!() };
 
         let includes = SymbolFlags::FunctionScopedVariable;
 
-        let is_not_allowed_duplicate_parameters = matches!(
-                parameters.kind,
-                // ArrowFormalParameters: UniqueFormalParameters
-                FormalParameterKind::ArrowFormalParameters |
-                // UniqueFormalParameters : FormalParameters
-                // * It is a Syntax Error if BoundNames of FormalParameters contains any duplicate elements.
-                FormalParameterKind::UniqueFormalParameters
-            ) ||
-            // Multiple occurrences of the same BindingIdentifier in a FormalParameterList is only allowed for functions which have simple parameter lists and which are not defined in strict mode code.
-            builder.strict_mode() ||
-            // FormalParameters : FormalParameterList
-            // * It is a Syntax Error if IsSimpleParameterList of FormalParameterList is false and BoundNames of FormalParameterList contains any duplicate elements.
-            !parameters.is_simple_parameter_list();
+        // Per-list invariant, computed once in `SemanticBuilder::visit_formal_parameters`
+        // (avoids the O(n) `is_simple_parameter_list` scan per parameter → O(n²) per list).
+        let is_not_allowed_duplicate_parameters = builder.current_params_disallow_duplicates;
 
         let excludes = if is_not_allowed_duplicate_parameters {
             SymbolFlags::FunctionScopedVariable | SymbolFlags::FunctionScopedVariableExcludes
@@ -285,23 +275,13 @@ impl<'a> Binder<'a> for FormalParameterRest<'a> {
     // Binds the FormalParameter of a function or method.
     fn bind(&self, builder: &mut SemanticBuilder<'a>) {
         let parent_kind = builder.ancestry().parent_kind();
-        let AstKind::FormalParameters(parameters) = parent_kind else { unreachable!() };
+        let AstKind::FormalParameters(_) = parent_kind else { unreachable!() };
 
         let includes = SymbolFlags::FunctionScopedVariable;
 
-        let is_not_allowed_duplicate_parameters = matches!(
-                parameters.kind,
-                // ArrowFormalParameters: UniqueFormalParameters
-                FormalParameterKind::ArrowFormalParameters |
-                // UniqueFormalParameters : FormalParameters
-                // * It is a Syntax Error if BoundNames of FormalParameters contains any duplicate elements.
-                FormalParameterKind::UniqueFormalParameters
-            ) ||
-            // Multiple occurrences of the same BindingIdentifier in a FormalParameterList is only allowed for functions which have simple parameter lists and which are not defined in strict mode code.
-            builder.strict_mode() ||
-            // FormalParameters : FormalParameterList
-            // * It is a Syntax Error if IsSimpleParameterList of FormalParameterList is false and BoundNames of FormalParameterList contains any duplicate elements.
-            !parameters.is_simple_parameter_list();
+        // Per-list invariant, computed once in `SemanticBuilder::visit_formal_parameters`
+        // (avoids the O(n) `is_simple_parameter_list` scan per parameter → O(n²) per list).
+        let is_not_allowed_duplicate_parameters = builder.current_params_disallow_duplicates;
 
         let excludes = if is_not_allowed_duplicate_parameters {
             SymbolFlags::FunctionScopedVariable | SymbolFlags::FunctionScopedVariableExcludes

@@ -9,13 +9,14 @@ use rustc_hash::FxHashMap;
 
 use oxc_allocator::Address;
 use oxc_ast::{AstKind, ast::*};
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::{Visit, walk::walk_formal_parameters};
 #[cfg(feature = "cfg")]
 use oxc_cfg::{
     ControlFlowGraphBuilder, CtxCursor, CtxFlags, EdgeType, ErrorEdgeKind, InstructionKind,
     IterationInstructionKind, ReturnInstructionKind,
 };
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
+use oxc_ecmascript::IsSimpleParameterList;
 use oxc_span::{SourceType, Span};
 use oxc_str::{Ident, IdentHashMap};
 use oxc_syntax::{
@@ -83,6 +84,13 @@ pub struct SemanticBuilder<'a> {
     pub(crate) current_function_node_id: NodeId,
     pub(crate) module_instance_state_cache: FxHashMap<Address, ModuleInstanceState>,
     current_reference_flags: ReferenceFlags,
+    /// Whether the current `FormalParameters` list disallows duplicate parameter names
+    /// (arrow/unique params, strict mode, or a non-simple parameter list). Computed ONCE
+    /// per list in `visit_formal_parameters` and read by `FormalParameter` /
+    /// `FormalParameterRest` `bind`, instead of recomputing `is_simple_parameter_list`
+    /// (an O(n) scan of the whole list) inside every parameter's `bind` — which made
+    /// binding an n-parameter list O(n²).
+    pub(crate) current_params_disallow_duplicates: bool,
     /// Symbols that have been hoisted out of a scope (e.g. `var` declarations hoisted to
     /// the enclosing function scope, or Annex B function declarations hoisted to the var scope).
     /// Keyed by the **original** scope the symbol was declared in, so that future declarations
@@ -151,6 +159,7 @@ impl<'a> SemanticBuilder<'a> {
             source_type: SourceType::default(),
             errors: RefCell::new(Diagnostics::new()),
             current_reference_flags: ReferenceFlags::empty(),
+            current_params_disallow_duplicates: false,
             current_scope_id,
             current_function_node_id: NodeId::ROOT,
             module_instance_state_cache: FxHashMap::default(),
@@ -2497,6 +2506,26 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_span(&element.span);
         self.visit_binding_pattern(&element.argument);
         self.leave_node(kind);
+    }
+
+    fn visit_formal_parameters(&mut self, it: &FormalParameters<'a>) {
+        // Compute the duplicate-parameter rule ONCE per list — it is a per-list
+        // invariant (depends only on the list kind, strict mode, and whether the
+        // list is simple). Recomputing `is_simple_parameter_list` (an O(n) scan)
+        // inside every parameter's `bind` made binding an n-parameter list O(n²).
+        // Save/restore so a nested parameter list (e.g. a default-value arrow) does
+        // not clobber the enclosing list's value. `strict_mode()` is stable here:
+        // the function scope is already entered and no scope is entered between this
+        // point and the per-parameter `bind`s inside `walk_formal_parameters`.
+        let saved = self.current_params_disallow_duplicates;
+        self.current_params_disallow_duplicates = matches!(
+            it.kind,
+            FormalParameterKind::ArrowFormalParameters
+                | FormalParameterKind::UniqueFormalParameters
+        ) || self.strict_mode()
+            || !it.is_simple_parameter_list();
+        walk_formal_parameters(self, it);
+        self.current_params_disallow_duplicates = saved;
     }
 
     fn visit_formal_parameter(&mut self, param: &FormalParameter<'a>) {
