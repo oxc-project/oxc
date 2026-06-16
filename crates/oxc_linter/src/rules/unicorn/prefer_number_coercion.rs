@@ -72,7 +72,10 @@ impl Rule for PreferNumberCoercion {
                 let Some(second_argument) = call_expr.arguments.get(1) else {
                     return;
                 };
-                if !is_base_10(second_argument.as_expression()) {
+                if !second_argument
+                    .as_expression()
+                    .is_some_and(|expression| expression.is_number_value(10.0))
+                {
                     return;
                 }
             }
@@ -135,15 +138,6 @@ fn parse_target(callee: &Expression, ctx: &LintContext) -> Option<ParseTarget> {
     }
 }
 
-fn is_base_10(expression: Option<&Expression>) -> bool {
-    if let Some(expression) = expression
-        && expression.is_number_value(10.0)
-    {
-        return true;
-    }
-    false
-}
-
 #[test]
 fn test() {
     use crate::tester::Tester;
@@ -187,14 +181,8 @@ fn test() {
             ("Number['parseFloat'](value);", "Number(value);"),
             ("parseInt(value, 10);", "Math.trunc(Number(value));"),
             ("parseInt(getValue(), 10);", "Math.trunc(Number(getValue()));"),
-            (
-                "parseInt(parseInt(value, 10), 10);",
-                "Math.trunc(Number(parseInt(value, 10)));",
-            ),
-            (
-                "parseInt(value as string, 10);",
-                "Math.trunc(Number(value as string));",
-            ),
+            ("parseInt(parseInt(value, 10), 10);", "Math.trunc(Number(parseInt(value, 10)));"),
+            ("parseInt(value as string, 10);", "Math.trunc(Number(value as string));"),
             ("Number.parseInt(value, 10);", "Math.trunc(Number(value));"),
             ("parseInt(value, 10.0);", "Math.trunc(Number(value));"),
             ("(parseInt)(value, 10);", "Math.trunc(Number(value));"),
