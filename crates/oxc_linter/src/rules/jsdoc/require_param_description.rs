@@ -140,7 +140,7 @@ impl Rule for RequireParamDescription {
 
                 if self.0.set_default_destructured_root_description
                     && is_destructured_root
-                    && let Some(name_part) = name_part
+                    && name_part.is_some()
                 {
                     ctx.diagnostic(missing_root_description_diagnostic(tag.kind.span));
                 } else {
