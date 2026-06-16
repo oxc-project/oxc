@@ -97,8 +97,12 @@ pub fn transform<'a>(
 
     let file = convert_program(program, source_text);
     let scope_info = convert_scope_info(&semantic, program);
-    let result =
-        react_compiler::entrypoint::program::compile_program(file, scope_info.clone(), options);
+    // `compile_program` consumes `scope_info`, but `build_rename_plan` (below) only needs these two
+    // fields afterwards. Clone just those instead of the whole `ScopeInfo` (which would also deep-clone
+    // `scopes` and its per-scope `HashMap<String, _>` binding-name keys, plus several other maps).
+    let rename_bindings = scope_info.bindings.clone();
+    let rename_refs = scope_info.ref_node_id_to_binding.clone();
+    let result = react_compiler::entrypoint::program::compile_program(file, scope_info, options);
 
     let diagnostics = compile_result_to_diagnostics(&result);
     let (program_ast, events, renames) = match result {
@@ -114,7 +118,7 @@ pub fn transform<'a>(
     };
 
     // Rename plan maps source positions of uncompiled references to new names.
-    let rename_plan = build_rename_plan(&scope_info, &renames);
+    let rename_plan = build_rename_plan(&rename_bindings, &rename_refs, &renames);
 
     let compiled_program = program_ast.map(|file: react_compiler_ast::File| {
         let mut compiled =

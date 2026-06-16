@@ -6,17 +6,19 @@
 //! Apply the React Compiler's binding renames to identifiers in uncompiled
 //! sibling code (compiled functions already carry the renamed identifiers).
 
+use indexmap::IndexMap;
 use oxc_ast::ast::*;
 use oxc_ast_visit::VisitMut;
 use oxc_ast_visit::walk_mut;
 use react_compiler::entrypoint::compile_result::BindingRenameInfo;
+use react_compiler_ast::scope::BindingData;
 use react_compiler_ast::scope::BindingId;
-use react_compiler_ast::scope::ScopeInfo;
 use rustc_hash::FxHashMap;
 
 /// Map each `span.start` of a renamed-binding reference to its new name.
 pub fn build_rename_plan(
-    scope_info: &ScopeInfo,
+    bindings: &[BindingData],
+    ref_node_id_to_binding: &IndexMap<u32, BindingId>,
     renames: &[BindingRenameInfo],
 ) -> FxHashMap<u32, String> {
     if renames.is_empty() {
@@ -27,7 +29,7 @@ pub fn build_rename_plan(
         renames.iter().map(|rename| (rename.declaration_start, rename)).collect();
 
     let mut renamed_bindings: FxHashMap<BindingId, String> = FxHashMap::default();
-    for binding in &scope_info.bindings {
+    for binding in bindings {
         let Some(rename) =
             binding.declaration_start.and_then(|start| renames_by_declaration.get(&start))
         else {
@@ -43,11 +45,10 @@ pub fn build_rename_plan(
     }
 
     // `ref_node_id_to_binding` is node-id keyed; in OXC node_id == span.start.
-    scope_info
-        .ref_node_id_to_binding
+    ref_node_id_to_binding
         .iter()
         .filter_map(|(&position, binding_id)| {
-            if scope_info.bindings[binding_id.0 as usize].declaration_start == Some(position) {
+            if bindings[binding_id.0 as usize].declaration_start == Some(position) {
                 return None;
             }
             renamed_bindings.get(binding_id).map(|renamed| (position, renamed.clone()))
