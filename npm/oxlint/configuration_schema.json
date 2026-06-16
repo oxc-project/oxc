@@ -6548,7 +6548,47 @@
           ]
         },
         "react/jsx-no-script-url": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/JsxNoScriptUrlComponent"
+                      }
+                    },
+                    {
+                      "$ref": "#/definitions/JsxNoScriptUrlOptions"
+                    }
+                  ],
+                  "maxItems": 3,
+                  "minItems": 2
+                },
+                {
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
+                    },
+                    {
+                      "$ref": "#/definitions/JsxNoScriptUrlOptions"
+                    }
+                  ],
+                  "maxItems": 2,
+                  "minItems": 2
+                }
+              ]
+            }
+          ]
         },
         "react/jsx-no-target-blank": {
           "anyOf": [
@@ -11817,6 +11857,41 @@
       },
       "additionalProperties": false,
       "markdownDescription": "The options shared between the top-level config and each `elementOverrides` entry."
+    },
+    "JsxNoScriptUrlComponent": {
+      "type": "object",
+      "required": [
+        "name",
+        "props"
+      ],
+      "properties": {
+        "name": {
+          "description": "Component name.",
+          "type": "string",
+          "markdownDescription": "Component name."
+        },
+        "props": {
+          "description": "List of properties that should be validated.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "List of properties that should be validated."
+        }
+      },
+      "additionalProperties": false
+    },
+    "JsxNoScriptUrlOptions": {
+      "type": "object",
+      "properties": {
+        "includeFromSettings": {
+          "description": "Whether to include components from settings.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to include components from settings."
+        }
+      },
+      "additionalProperties": false
     },
     "JsxNoTargetBlank": {
       "type": "object",

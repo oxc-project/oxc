@@ -1274,7 +1274,13 @@ export interface DummyRuleMap {
   "react/jsx-no-constructed-context-values"?: RuleNoConfig;
   "react/jsx-no-duplicate-props"?: RuleNoConfig;
   "react/jsx-no-literals"?: RuleNoConfig | [AllowWarnDeny, JsxNoLiteralsConfig];
-  "react/jsx-no-script-url"?: DummyRule;
+  "react/jsx-no-script-url"?:
+    | RuleNoConfig
+    | (
+        | [AllowWarnDeny, JsxNoScriptUrlComponent[]]
+        | [AllowWarnDeny, JsxNoScriptUrlComponent[], JsxNoScriptUrlOptions]
+        | [AllowWarnDeny, JsxNoScriptUrlOptions]
+      );
   "react/jsx-no-target-blank"?: RuleNoConfig | [AllowWarnDeny, JsxNoTargetBlank];
   "react/jsx-no-undef"?: RuleNoConfig;
   "react/jsx-no-useless-fragment"?: RuleNoConfig | [AllowWarnDeny, JsxNoUselessFragment];
@@ -4431,6 +4437,22 @@ export interface ElementOverrideOptions {
    * An array of unique attribute names where string literals should be restricted. Only the specified attributes will be checked for string literals when this option is used. Note: When noAttributeStrings is true, this option is ignored at the root level.
    */
   restrictedAttributes?: string[];
+}
+export interface JsxNoScriptUrlComponent {
+  /**
+   * Component name.
+   */
+  name: string;
+  /**
+   * List of properties that should be validated.
+   */
+  props: string[];
+}
+export interface JsxNoScriptUrlOptions {
+  /**
+   * Whether to include components from settings.
+   */
+  includeFromSettings?: boolean;
 }
 export interface JsxNoTargetBlank {
   /**
