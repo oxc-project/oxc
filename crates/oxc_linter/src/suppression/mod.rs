@@ -144,6 +144,7 @@ impl SuppressionManager {
         diff_manager: Arc<DiffManager>,
         tx_error: &DiagnosticSender,
         cwd: &Path,
+        ignore_unused_suppressions: bool,
     ) -> Result<(), OxcDiagnostic> {
         // Nothing to do if there's no suppression file and we're not creating one
         if self.suppressions_by_file.is_none() && !self.suppress_all {
@@ -167,7 +168,8 @@ impl SuppressionManager {
             self.write()
         } else {
             // Read-only mode: report diagnostics for any differences
-            let (errors, has_unused) = Self::compute_diagnostics(&static_map, &runtime_map);
+            let (errors, has_unused) =
+                Self::compute_diagnostics(&static_map, &runtime_map, ignore_unused_suppressions);
             if !errors.is_empty() {
                 let diagnostics =
                     DiagnosticService::wrap_diagnostics(cwd, Path::new(""), "", errors);
@@ -246,6 +248,7 @@ impl SuppressionManager {
     fn compute_diagnostics(
         static_map: &StaticSuppressionMap,
         runtime_map: &FxHashMap<Filename, FileSuppressionsMap>,
+        ignore_unused_suppressions: bool,
     ) -> (Vec<OxcDiagnostic>, bool) {
         let mut has_unused = false;
         let mut has_new = false;
@@ -296,7 +299,7 @@ impl SuppressionManager {
 
         let mut errors = vec![];
 
-        if has_unused {
+        if has_unused && !ignore_unused_suppressions {
             errors.push(
                 OxcDiagnostic::error("There are suppressions that do not occur anymore.")
                     .with_help("Run `oxlint --prune-suppressions` to remove unused suppressions."),

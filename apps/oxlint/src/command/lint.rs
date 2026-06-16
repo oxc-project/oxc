@@ -82,6 +82,10 @@ pub struct SuppressionOptions {
     /// Remove entries for violations that no longer exist
     #[bpaf(switch, hide)]
     pub prune_suppressions: bool,
+
+    /// Ignore unused suppressions when calculating the exit code
+    #[bpaf(switch, hide)]
+    pub pass_on_unpruned_suppressions: bool,
 }
 
 impl LintCommand {
@@ -802,6 +806,7 @@ mod lint_options {
         let options = get_lint_options("--suppress-all");
         assert!(options.suppression_options.suppress_all);
         assert!(!options.suppression_options.prune_suppressions);
+        assert!(!options.suppression_options.pass_on_unpruned_suppressions);
     }
 
     #[test]
@@ -809,6 +814,15 @@ mod lint_options {
         let options = get_lint_options("--prune-suppressions");
         assert!(options.suppression_options.prune_suppressions);
         assert!(!options.suppression_options.suppress_all);
+        assert!(!options.suppression_options.pass_on_unpruned_suppressions);
+    }
+
+    #[test]
+    fn pass_on_unpruned_suppressions() {
+        let options = get_lint_options("--pass-on-unpruned-suppressions");
+        assert!(options.suppression_options.pass_on_unpruned_suppressions);
+        assert!(!options.suppression_options.suppress_all);
+        assert!(!options.suppression_options.prune_suppressions);
     }
 
     #[test]

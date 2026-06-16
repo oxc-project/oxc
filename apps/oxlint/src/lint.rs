@@ -512,7 +512,12 @@ impl CliRunner {
             }
         }
 
-        let result = suppression_manager.finalize(diff_manager, &tx_error, &cwd);
+        let result = suppression_manager.finalize(
+            diff_manager,
+            &tx_error,
+            &cwd,
+            suppression_options.pass_on_unpruned_suppressions,
+        );
         let suppress_all_succeeded = suppression_options.suppress_all && result.is_ok();
 
         drop(tx_error);
@@ -547,7 +552,7 @@ impl CliRunner {
             return CliRunResult::LintSucceeded;
         }
 
-        if has_unpruned_suppressions {
+        if has_unpruned_suppressions && !suppression_options.pass_on_unpruned_suppressions {
             return CliRunResult::LintUnprunedSuppressions;
         }
 
@@ -2007,6 +2012,44 @@ mod suppression {
         assert!(
             matches!(result, CliRunResult::LintUnprunedSuppressions),
             "Expected LintUnprunedSuppressions (exit code 2), got {result:?}"
+        );
+    }
+
+    #[test]
+    #[cfg_attr(target_endian = "big", ignore = "disabled on big-endian")]
+    fn test_pass_on_unpruned_suppressions_exit_code() {
+        let args = &["--pass-on-unpruned-suppressions"];
+        let (stdout, result) = Tester::new()
+            .with_cwd("fixtures/suppression/decreased_violations_are_reported".into())
+            .test_output(args);
+        assert!(
+            matches!(result, CliRunResult::LintSucceeded),
+            "Expected LintSucceeded with --pass-on-unpruned-suppressions, got {result:?}"
+        );
+        assert!(
+            !stdout.contains("There are suppressions that do not occur anymore."),
+            "Unused suppression diagnostic should be hidden with --pass-on-unpruned-suppressions.\nOutput: {stdout}"
+        );
+    }
+
+    #[test]
+    #[cfg_attr(target_endian = "big", ignore = "disabled on big-endian")]
+    fn test_pass_on_unpruned_suppressions_keeps_new_violations_failing() {
+        let args = &["--pass-on-unpruned-suppressions", "--type-aware", "--type-check"];
+        let (stdout, result) = Tester::new()
+            .with_cwd("fixtures/suppression/fixed_violations_are_reported".into())
+            .test_output(args);
+        assert!(
+            matches!(result, CliRunResult::LintFoundErrors),
+            "Expected LintFoundErrors when new violations remain, got {result:?}"
+        );
+        assert!(
+            !stdout.contains("There are suppressions that do not occur anymore."),
+            "Unused suppression diagnostic should be hidden with --pass-on-unpruned-suppressions.\nOutput: {stdout}"
+        );
+        assert!(
+            stdout.contains("Found 3 warnings and 2 errors."),
+            "Expected remaining new violations to affect the output summary.\nOutput: {stdout}"
         );
     }
 
