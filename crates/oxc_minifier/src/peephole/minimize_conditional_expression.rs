@@ -377,16 +377,29 @@ impl<'a> PeepholeOptimizations {
             }
         }
 
+        // Evaluate the consequent/alternate once and reuse for both the boolean-fold and number-fold
+        // checks below. `evaluate_value` is a recursive AST walk; the two folds previously evaluated
+        // each operand twice. Nothing mutates the operands between the two folds (the boolean fold only
+        // mutates when it `return`s), so the cached values are still valid for the number fold.
+        let consequent_value = expr.consequent.evaluate_value(ctx);
+        let alternate_value = expr.alternate.evaluate_value(ctx);
+
         // "a ? true : false" => "!!a"
         // "a ? false : true" => "!a"
         match (
-            expr.consequent
-                .evaluate_value(ctx)
-                .and_then(ConstantValue::into_boolean)
+            consequent_value
+                .as_ref()
+                .and_then(|v| match v {
+                    ConstantValue::Boolean(b) => Some(*b),
+                    _ => None,
+                })
                 .filter(|_| !expr.consequent.may_have_side_effects(ctx)),
-            expr.alternate
-                .evaluate_value(ctx)
-                .and_then(ConstantValue::into_boolean)
+            alternate_value
+                .as_ref()
+                .and_then(|v| match v {
+                    ConstantValue::Boolean(b) => Some(*b),
+                    _ => None,
+                })
                 .filter(|_| !expr.alternate.may_have_side_effects(ctx)),
         ) {
             (Some(true), Some(false)) => {
@@ -406,12 +419,10 @@ impl<'a> PeepholeOptimizations {
         // "a ? 1 : 0" => "+a" (if a is boolean) or "+!!a" (if no parens needed)
         // "a ? 0 : 1" => "+!a" (if no parens needed)
         match (
-            expr.consequent
-                .evaluate_value(ctx)
+            consequent_value
                 .and_then(ConstantValue::into_number)
                 .filter(|_| !expr.consequent.may_have_side_effects(ctx)),
-            expr.alternate
-                .evaluate_value(ctx)
+            alternate_value
                 .and_then(ConstantValue::into_number)
                 .filter(|_| !expr.alternate.may_have_side_effects(ctx)),
         ) {
