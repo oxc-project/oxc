@@ -4,10 +4,11 @@ use itertools::Itertools;
 use keep_names::collect_name_symbols;
 use oxc_index::IndexVec;
 use oxc_syntax::class::ClassId;
+use oxc_syntax::scope::ScopeId;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use base54::base54;
-use oxc_allocator::{Allocator, BitSet, HashSet, Vec};
+use oxc_allocator::{Allocator, BitSet, HashMap, HashSet, Vec};
 use oxc_ast::ast::{Declaration, Program, Statement};
 use oxc_data_structures::inline_string::InlineString;
 use oxc_semantic::{AstNodes, Reference, Scoping, Semantic, SemanticBuilder, SymbolId};
@@ -433,6 +434,68 @@ impl<'t> Mangler<'t> {
     }
 }
 
+/// If `symbol_id` is a hoisted function-scoped binding (a `var`/function declared inside a
+/// descendant block) whose declaration and every reference are confined to a single immediate
+/// child scope of `binding_scope`, and it is neither captured by a nested function nor reachable
+/// from a direct-`eval` scope, returns that child scope. Such a binding's live range is limited
+/// to the child's subtree, so it can safely share a mangled name with a binding confined to a
+/// *different* child scope.
+///
+/// Returns `None` for body-proper bindings, `let`/`const` (block-scoped; bound where declared and
+/// illegal to co-name), bindings spanning multiple child branches, captured bindings, or
+/// eval-adjacent bindings.
+fn confined_child_branch(
+    scoping: &Scoping,
+    ast_nodes: &AstNodes,
+    symbol_id: SymbolId,
+    binding_scope: ScopeId,
+) -> Option<ScopeId> {
+    // Only hoisted bindings have a declaration node in a *descendant* scope. `let`/`const` are
+    // bound where declared (declaration scope == binding scope), so this rejects them.
+    let declared_scope = ast_nodes.get_node(scoping.symbol_declaration(symbol_id)).scope_id();
+    if declared_scope == binding_scope {
+        return None;
+    }
+    let mut branch: Option<ScopeId> = None;
+    let use_scopes = iter::once(declared_scope)
+        .chain(scoping.get_resolved_references(symbol_id).map(Reference::scope_id))
+        .chain(
+            scoping
+                .symbol_redeclarations(symbol_id)
+                .iter()
+                .map(|r| ast_nodes.get_node(r.declaration).scope_id()),
+        );
+    for use_scope in use_scopes {
+        // Walk from the use up to `binding_scope`; `child` ends as the immediate child of
+        // `binding_scope` on that path. A function or direct-eval scope in between makes the
+        // binding observable outside its child subtree, so bail.
+        let mut child: Option<ScopeId> = None;
+        let mut reached = false;
+        for ancestor in scoping.scope_ancestors(use_scope) {
+            if ancestor == binding_scope {
+                reached = true;
+                break;
+            }
+            let flags = scoping.scope_flags(ancestor);
+            if flags.is_function() || flags.contains_direct_eval() {
+                return None;
+            }
+            child = Some(ancestor);
+        }
+        // `child == None` means the use is in `binding_scope` itself (body-proper).
+        if !reached {
+            return None;
+        }
+        let child = child?;
+        match branch {
+            None => branch = Some(child),
+            Some(existing) if existing == child => {}
+            Some(_) => return None,
+        }
+    }
+    branch
+}
+
 fn is_special_name(name: &str) -> bool {
     matches!(name, "arguments")
 }
@@ -540,6 +603,12 @@ impl<'a, 's> SlotAssignment<'a, 's> {
         let mut reusable_slots = Vec::new_in(allocator);
         // Pre-computed BitSet for ancestor membership tests - reused across iterations
         let mut ancestor_set = BitSet::new_in(scoping.scopes_len(), allocator);
+        // Scratch for intra-scope `var` slot merging (see `confined_child_branch`).
+        // `group_of[i]` is the slot-group of `tmp_bindings[i]`; bindings in one group share a slot.
+        let root_scope_id = scoping.root_scope_id();
+        let mut group_of: Vec<usize> = Vec::with_capacity_in(scoping.symbols_len(), allocator);
+        let mut branch_col: HashMap<ScopeId, usize> = HashMap::new_in(allocator);
+        let mut col_group: HashMap<usize, usize> = HashMap::new_in(allocator);
 
         // Walk down the scope tree and assign a slot number for each symbol. Doing it as a scope
         // walk (rather than a flat symbol loop) generates better code.
@@ -566,6 +635,43 @@ impl<'a, 's> SlotAssignment<'a, 's> {
             }
             tmp_bindings.sort_unstable();
 
+            // Assign each binding to a slot *group*. Normally identity (one group per binding),
+            // but a function-scoped `var` confined to a single child scope and not captured may
+            // share a group — hence a slot and name — with such a `var` in a *different* child
+            // scope: their live ranges are disjoint, so co-naming them is a legal `var`/`var`
+            // redeclaration. The k-th confined binding of each child scope shares a column/group.
+            // Done in this pass (not post-hoc) so slot count, liveness union, and numbering stay
+            // identical on re-minification, keeping mangling idempotent. `let`/`const` are bound
+            // where declared and never qualify.
+            group_of.clear();
+            let mut num_groups = 0usize;
+            if scope_id == root_scope_id {
+                group_of.extend(0..tmp_bindings.len());
+                num_groups = tmp_bindings.len();
+            } else {
+                branch_col.clear();
+                col_group.clear();
+                for &symbol_id in &tmp_bindings {
+                    let group = if let Some(branch) =
+                        confined_child_branch(scoping, ast_nodes, symbol_id, scope_id)
+                    {
+                        let col = branch_col.entry(branch).or_insert(0);
+                        let c = *col;
+                        *col += 1;
+                        *col_group.entry(c).or_insert_with(|| {
+                            let g = num_groups;
+                            num_groups += 1;
+                            g
+                        })
+                    } else {
+                        let g = num_groups;
+                        num_groups += 1;
+                        g
+                    };
+                    group_of.push(group);
+                }
+            }
+
             let mut slot = slot_liveness.len();
 
             reusable_slots.clear();
@@ -580,11 +686,11 @@ impl<'a, 's> SlotAssignment<'a, 's> {
                         #[expect(clippy::cast_possible_truncation)]
                         |(slot, _)| slot as Slot,
                     )
-                    .take(tmp_bindings.len()),
+                    .take(num_groups),
             );
 
             // The number of new slots that needs to be allocated.
-            let remaining_count = tmp_bindings.len() - reusable_slots.len();
+            let remaining_count = num_groups - reusable_slots.len();
             // There cannot be more slots than there are symbols, and `SymbolId` is a `u32`,
             // so truncation is not possible here
             #[expect(clippy::cast_possible_truncation)]
@@ -605,7 +711,10 @@ impl<'a, 's> SlotAssignment<'a, 's> {
             }
 
             let scope_id_index = scope_id.index();
-            for (&symbol_id, &assigned_slot) in tmp_bindings.iter().zip(&reusable_slots) {
+            for (pos, &symbol_id) in tmp_bindings.iter().enumerate() {
+                // Bindings in the same group resolve to the same slot; the liveness walks below
+                // then union into that slot's bitset.
+                let assigned_slot = reusable_slots[group_of[pos]];
                 slots[symbol_id.index()] = assigned_slot;
 
                 // `var` is hoisted, so include the scope where it is declared
