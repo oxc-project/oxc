@@ -153,6 +153,7 @@ export type Location = "start" | "anywhere";
 export type HandleCallbackErrConfig = string;
 export type ShorthandType = "always" | "methods" | "properties" | "consistent" | "consistent-as-needed" | "never";
 export type Destructuring = "any" | "all";
+export type PreferDestructuringOption = PreferDestructuringTargetOption | PreferDestructuringAssignmentConfig;
 export type TerminationMethod = string | string[];
 export type RadixType = "always" | "as-needed";
 export type NativeAllowList = AllKeyword | string[];
@@ -1217,7 +1218,10 @@ export interface DummyRuleMap {
   "oxc/uninvoked-array-callback"?: RuleNoConfig;
   "prefer-arrow-callback"?: RuleNoConfig | [AllowWarnDeny, PreferArrowCallbackConfig];
   "prefer-const"?: RuleNoConfig | [AllowWarnDeny, PreferConstConfig];
-  "prefer-destructuring"?: DummyRule;
+  "prefer-destructuring"?:
+    | RuleNoConfig
+    | [AllowWarnDeny, PreferDestructuringOption]
+    | [AllowWarnDeny, PreferDestructuringOption, PreferDestructuringRenamedPropertiesConfig];
   "prefer-exponentiation-operator"?: RuleNoConfig;
   "prefer-named-capture-group"?: RuleNoConfig;
   "prefer-numeric-literals"?: RuleNoConfig;
@@ -3926,6 +3930,17 @@ export interface PreferConstConfig {
    * This is mainly useful for preventing conflicts with the `typescript/no-use-before-define` rule.
    */
   ignoreReadBeforeAssign?: boolean;
+}
+export interface PreferDestructuringTargetOption {
+  array?: boolean;
+  object?: boolean;
+}
+export interface PreferDestructuringAssignmentConfig {
+  AssignmentExpression?: PreferDestructuringTargetOption;
+  VariableDeclarator?: PreferDestructuringTargetOption;
+}
+export interface PreferDestructuringRenamedPropertiesConfig {
+  enforceForRenamedProperties?: boolean;
 }
 export interface PreferPromiseRejectErrors {
   /**
