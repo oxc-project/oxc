@@ -24,7 +24,7 @@ impl<'s, C: Config, F: Formatter> ESTreeSequenceSerializer<'s, C, F> {
     pub(super) fn new(mut serializer: &'s mut ESTreeSerializer<C, F>) -> Self {
         // Push item to `trace_path`. It will be replaced with a `TracePathPart::Index`
         // when serializing each item in the sequence, and popped off again in `end` method.
-        if C::FIXES {
+        if serializer.config.fixes() {
             serializer.trace_path.push(TracePathPart::DUMMY);
         }
 
@@ -38,7 +38,7 @@ impl<C: Config, F: Formatter> SequenceSerializer for ESTreeSequenceSerializer<'_
     /// Serialize sequence entry.
     fn serialize_element<T: ESTree + ?Sized>(&mut self, value: &T) {
         // Update last item in trace path to current sequence index
-        if C::FIXES {
+        if self.serializer.config.fixes() {
             *self.serializer.trace_path.last_mut() = TracePathPart::Index(self.len);
         }
 
@@ -57,7 +57,7 @@ impl<C: Config, F: Formatter> SequenceSerializer for ESTreeSequenceSerializer<'_
     /// Finish serializing sequence.
     fn end(mut self) {
         // Pop entry for this sequence from `trace_path`
-        if C::FIXES {
+        if self.serializer.config.fixes() {
             // SAFETY: `trace_path` is pushed to in `new`, which is only way to create an `ESTreeSequenceSerializer`.
             // This method consumes the `ESTreeSequenceSerializer`, so this method can't be called more
             // times than `new`. So there must be an item to pop.

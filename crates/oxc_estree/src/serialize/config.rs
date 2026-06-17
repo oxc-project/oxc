@@ -1,11 +1,12 @@
 /// Trait for configs for AST serialization.
 pub trait Config {
-    /// `true` if output should contain TS fields
-    const INCLUDE_TS_FIELDS: bool;
-    /// `true` if should record paths to `Literal` nodes that need fixing on JS side
-    const FIXES: bool;
-
     fn new(ranges: bool) -> Self;
+
+    /// `true` if output should contain TS fields.
+    fn include_ts_fields(&self) -> bool;
+
+    /// `true` if should record paths to `Literal` nodes that need fixing on JS side.
+    fn fixes(&self) -> bool;
 
     /// Get whether output should contain `range` fields.
     fn ranges(&self) -> bool;
@@ -18,12 +19,19 @@ pub struct ConfigTS {
 }
 
 impl Config for ConfigTS {
-    const INCLUDE_TS_FIELDS: bool = true;
-    const FIXES: bool = false;
-
     #[inline(always)]
     fn new(ranges: bool) -> Self {
         Self { ranges }
+    }
+
+    #[inline(always)]
+    fn include_ts_fields(&self) -> bool {
+        true
+    }
+
+    #[inline(always)]
+    fn fixes(&self) -> bool {
+        false
     }
 
     #[inline(always)]
@@ -39,12 +47,19 @@ pub struct ConfigJS {
 }
 
 impl Config for ConfigJS {
-    const INCLUDE_TS_FIELDS: bool = false;
-    const FIXES: bool = false;
-
     #[inline(always)]
     fn new(ranges: bool) -> Self {
         Self { ranges }
+    }
+
+    #[inline(always)]
+    fn include_ts_fields(&self) -> bool {
+        false
+    }
+
+    #[inline(always)]
+    fn fixes(&self) -> bool {
+        false
     }
 
     #[inline(always)]
@@ -60,12 +75,19 @@ pub struct ConfigFixesTS {
 }
 
 impl Config for ConfigFixesTS {
-    const INCLUDE_TS_FIELDS: bool = true;
-    const FIXES: bool = true;
-
     #[inline(always)]
     fn new(ranges: bool) -> Self {
         Self { ranges }
+    }
+
+    #[inline(always)]
+    fn include_ts_fields(&self) -> bool {
+        true
+    }
+
+    #[inline(always)]
+    fn fixes(&self) -> bool {
+        true
     }
 
     #[inline(always)]
@@ -81,12 +103,19 @@ pub struct ConfigFixesJS {
 }
 
 impl Config for ConfigFixesJS {
-    const INCLUDE_TS_FIELDS: bool = false;
-    const FIXES: bool = true;
-
     #[inline(always)]
     fn new(ranges: bool) -> Self {
         Self { ranges }
+    }
+
+    #[inline(always)]
+    fn include_ts_fields(&self) -> bool {
+        false
+    }
+
+    #[inline(always)]
+    fn fixes(&self) -> bool {
+        true
     }
 
     #[inline(always)]

@@ -33,9 +33,6 @@ pub trait ESTree {
 
 /// Trait for serializers.
 pub trait Serializer {
-    /// `true` if output should contain TS fields.
-    const INCLUDE_TS_FIELDS: bool;
-
     /// `true` if serializer's formatter produces compact JSON (not pretty-printed JSON).
     const IS_COMPACT: bool = Self::Formatter::IS_COMPACT;
 
@@ -46,6 +43,9 @@ pub trait Serializer {
     type StructSerializer: StructSerializer;
     /// Type of sequence serializer this serializer uses.
     type SequenceSerializer: SequenceSerializer;
+
+    /// Get whether output should contain TS fields.
+    fn include_ts_fields(&self) -> bool;
 
     /// Get whether output should contain `range` fields.
     fn ranges(&self) -> bool;
@@ -133,13 +133,17 @@ impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
     /// The `value` field of these nodes cannot be serialized to JSON, because JSON doesn't support
     /// `BigInt`s or `RegExp`s. The `fixes` paths can be used on JS side to locate these nodes
     /// and set their `value` fields correctly.
+    ///
+    /// # Panics
+    ///
+    /// Panics if serializer's config does not enable fixes.
     pub fn serialize_with_fixes<T: ESTree>(mut self, node: &T) -> String {
-        const {
-            assert!(
-                C::FIXES,
-                "Cannot call `serialize_with_fixes` on a serializer without fixes enabled"
-            );
-        }
+        // For the built-in configs in this crate, `fixes()` is `#[inline(always)]` and returns a constant,
+        // so compiler will remove this assertion when fixes are enabled
+        assert!(
+            self.config.fixes(),
+            "Cannot call `serialize_with_fixes` on a serializer without fixes enabled"
+        );
 
         self.buffer.print_str("{\"node\":\n");
 
@@ -173,12 +177,15 @@ impl<C: Config, F: Formatter> Default for ESTreeSerializer<C, F> {
 }
 
 impl<'s, C: Config, F: Formatter> Serializer for &'s mut ESTreeSerializer<C, F> {
-    /// `true` if output should contain TS fields
-    const INCLUDE_TS_FIELDS: bool = C::INCLUDE_TS_FIELDS;
-
     type Formatter = F;
     type StructSerializer = ESTreeStructSerializer<'s, C, F>;
     type SequenceSerializer = ESTreeSequenceSerializer<'s, C, F>;
+
+    /// Get whether output should contain TS fields.
+    #[inline(always)]
+    fn include_ts_fields(&self) -> bool {
+        self.config.include_ts_fields()
+    }
 
     /// Get whether output should contain `range` fields.
     #[inline(always)]
@@ -204,7 +211,7 @@ impl<'s, C: Config, F: Formatter> Serializer for &'s mut ESTreeSerializer<C, F> 
     /// These nodes cannot be serialized to JSON, because JSON doesn't support `BigInt`s or `RegExp`s.
     /// "Fix paths" can be used on JS side to locate these nodes and set their `value` fields correctly.
     fn record_fix_path(&mut self) {
-        if !C::FIXES {
+        if !self.config.fixes() {
             return;
         }
 

@@ -193,7 +193,7 @@ impl ESTree for ProgramConverter<'_, '_> {
         state.serialize_field("sourceType", &program.source_type.module_kind());
         state.serialize_field("hashbang", &program.hashbang);
 
-        let span = if S::INCLUDE_TS_FIELDS {
+        let span = if state.include_ts_fields() {
             Span::new(get_ts_start_span(program), program.span.end)
         } else {
             program.span

@@ -27,13 +27,26 @@ use u32_string::U32String;
 struct TokenSerializerConfig;
 
 impl ESTreeConfig for TokenSerializerConfig {
-    const INCLUDE_TS_FIELDS: bool = false;
-    const FIXES: bool = false;
-
     #[expect(clippy::inline_always)] // It's a no-op
     #[inline(always)]
     fn new(_ranges: bool) -> Self {
         Self
+    }
+
+    // Never include TS fields, so always return `false`.
+    // `#[inline(always)]` to ensure compiler removes dead code resulting from the static value.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    fn include_ts_fields(&self) -> bool {
+        false
+    }
+
+    // Never record fixes, so always return `false`.
+    // `#[inline(always)]` to ensure compiler removes dead code resulting from the static value.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    fn fixes(&self) -> bool {
+        false
     }
 
     // Never include ranges, so always return `false`.
