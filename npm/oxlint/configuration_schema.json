@@ -15674,7 +15674,6 @@
         },
         "onlyIfContainsSeparator": {
           "description": "Only enforce the rule when the numeric literal already contains a separator (`_`).\n\nWhen `true`, numbers without separators are left as-is; when `false` (default),\ngrouping will be enforced for eligible numbers even if they don't include separators yet.",
-          "default": null,
           "type": "boolean",
           "markdownDescription": "Only enforce the rule when the numeric literal already contains a separator (`_`).\n\nWhen `true`, numbers without separators are left as-is; when `false` (default),\ngrouping will be enforced for eligible numbers even if they don't include separators yet."
         }
@@ -15710,7 +15709,6 @@
         },
         "onlyIfContainsSeparator": {
           "description": "Only enforce the rule when the numeric literal already contains a separator (`_`).\n\nWhen `true`, numbers without separators are left as-is; when `false` (default),\ngrouping will be enforced for eligible numbers even if they don't include separators yet.",
-          "default": null,
           "type": "boolean",
           "markdownDescription": "Only enforce the rule when the numeric literal already contains a separator (`_`).\n\nWhen `true`, numbers without separators are left as-is; when `false` (default),\ngrouping will be enforced for eligible numbers even if they don't include separators yet."
         }

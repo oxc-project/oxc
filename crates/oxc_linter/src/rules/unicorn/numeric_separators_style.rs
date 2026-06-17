@@ -81,6 +81,7 @@ struct NumericBaseConfig {
     ///
     /// When `true`, numbers without separators are left as-is; when `false` (default),
     /// grouping will be enforced for eligible numbers even if they don't include separators yet.
+    #[serde(skip_serializing_if = "Option::is_none")]
     only_if_contains_separator: Option<bool>,
     /// The number of digits per group when inserting numeric separators.
     /// For example, a `groupLength` of 3 formats `1234567` as `1_234_567`.
