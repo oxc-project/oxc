@@ -215,8 +215,7 @@ fn test() {
         (r"void.0", r"void 0"),
         (r"function foo(){void.0.toString()}", r"function foo(){void (0).toString()}"),
         (r"function foo(){void.0+.1;}", r"function foo(){void 0+.1;}"),
-        // Keywords beyond return/throw/typeof/void must also get a space (previously produced
-        // broken output like `case0` / `await0`):
+        ("ôTest(0.)", "ôTest(0)"),
         (r"switch (x) { case.0: break; }", r"switch (x) { case 0: break; }"),
         (r"function foo(){do.0;while(x)}", r"function foo(){do 0;while(x)}"),
         (r"for (const x of.0);", r"for (const x of 0);"),
@@ -225,7 +224,6 @@ fn test() {
         (r"async function foo(){await.0}", r"async function foo(){await 0}"),
         (r"function* foo(){yield.0}", r"function* foo(){yield 0}"),
         (r"delete.0", r"delete 0"),
-        ("ôTest(0.)", "ôTest(0)"),
     ];
 
     Tester::new(NoZeroFractions::NAME, NoZeroFractions::PLUGIN, pass, fail)
