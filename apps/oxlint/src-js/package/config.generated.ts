@@ -1193,7 +1193,14 @@ export interface DummyRuleMap {
   "node/global-require"?: RuleNoConfig;
   "node/handle-callback-err"?: RuleNoConfig | [AllowWarnDeny, HandleCallbackErrConfig];
   "node/no-exports-assign"?: RuleNoConfig;
-  "node/no-mixed-requires"?: RuleNoConfig;
+  "node/no-mixed-requires"?:
+    | RuleNoConfig
+    | (
+        | [AllowWarnDeny, boolean]
+        | [AllowWarnDeny, boolean, NoMixedRequiresOptions]
+        | [AllowWarnDeny, boolean]
+        | [AllowWarnDeny, NoMixedRequiresOptions]
+      );
   "node/no-new-require"?: RuleNoConfig;
   "node/no-path-concat"?: RuleNoConfig;
   "node/no-process-env"?: RuleNoConfig | [AllowWarnDeny, NoProcessEnvConfig];
@@ -3849,6 +3856,10 @@ export interface NoWarningCommentsConfigJson {
   decoration?: string[];
   location?: Location;
   terms?: string[];
+}
+export interface NoMixedRequiresOptions {
+  allowCall?: boolean;
+  grouping?: boolean;
 }
 export interface NoProcessEnvConfig {
   /**

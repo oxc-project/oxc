@@ -5620,7 +5620,57 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "node/no-mixed-requires": {
-          "$ref": "#/definitions/RuleNoConfig"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
+                    },
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "$ref": "#/definitions/NoMixedRequiresOptions"
+                    }
+                  ],
+                  "maxItems": 3,
+                  "minItems": 2
+                },
+                {
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
+                    },
+                    {
+                      "type": "boolean"
+                    }
+                  ],
+                  "maxItems": 2,
+                  "minItems": 2
+                },
+                {
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
+                    },
+                    {
+                      "$ref": "#/definitions/NoMixedRequiresOptions"
+                    }
+                  ],
+                  "maxItems": 2,
+                  "minItems": 2
+                }
+              ]
+            }
+          ]
         },
         "node/no-new-require": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -14191,6 +14241,20 @@
             "$ref": "#/definitions/TypeOrValueSpecifier"
           },
           "markdownDescription": "An array of type or value specifiers that are allowed to be spread\neven if they would normally be flagged as misused."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoMixedRequiresOptions": {
+      "type": "object",
+      "properties": {
+        "allowCall": {
+          "default": false,
+          "type": "boolean"
+        },
+        "grouping": {
+          "default": false,
+          "type": "boolean"
         }
       },
       "additionalProperties": false

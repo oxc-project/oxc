@@ -142,14 +142,15 @@ declare_oxc_lint!(
     NoMixedRequires,
     node,
     style,
-    config = NoMixedRequires,
+    config = MixedTupleRuleConfig<bool, NoMixedRequiresOptions>,
     version = "next",
     short_description = "Disallow `require` calls to be mixed with regular variable declarations.",
 );
 
 impl Rule for NoMixedRequires {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<NoMixedRequires>(value)
+        serde_json::from_value::<MixedTupleRuleConfig<bool, NoMixedRequiresOptions>>(value)
+            .map(NoMixedRequires)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -188,7 +189,7 @@ fn get_declaration_type(init: Option<&Expression>, allow_call: bool) -> Declarat
     }
 
     if let Some(member) = init.as_member_expression() {
-        return get_declaration_type(Some(&member.object()), allow_call);
+        return get_declaration_type(Some(member.object()), allow_call);
     }
 
     DeclarationType::Other
@@ -196,7 +197,7 @@ fn get_declaration_type(init: Option<&Expression>, allow_call: bool) -> Declarat
 
 fn infer_module_type(init: &Expression) -> ModuleType {
     if let Some(member) = init.as_member_expression() {
-        return infer_module_type(&member.object());
+        return infer_module_type(member.object());
     }
 
     let Expression::CallExpression(call) = init else {
@@ -222,7 +223,7 @@ fn infer_module_type(init: &Expression) -> ModuleType {
         return ModuleType::Core;
     }
 
-    if value.starts_with("./") || value.starts_with("../") || value.starts_with("/") {
+    if value.starts_with("./") || value.starts_with("../") || value.starts_with('/') {
         return ModuleType::File;
     }
 
