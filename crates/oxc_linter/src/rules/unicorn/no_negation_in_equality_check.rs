@@ -95,8 +95,9 @@ impl Rule for NoNegationInEqualityCheck {
                     let right_text = ctx.source_range(binary_expr.right.span());
                     let first_char = argument_text.chars().next();
 
-                    let is_asi_hazard = ast_util::could_be_asi_hazard(node, ctx)
-                        && matches!(first_char, Some('(' | '['));
+                    let is_asi_hazard = first_char
+                        .is_some_and(ast_util::could_start_asi_continuation)
+                        && ast_util::could_be_asi_hazard(node, ctx);
 
                     let char_before = if unary_start > 0 {
                         source_text[..unary_start].chars().next_back()
@@ -242,6 +243,13 @@ fn test() {
         ("if (x) {} else ![a].b === c", "if (x) {} else [a].b !== c"),
         // ...but a *braced* body that follows another statement still needs the `;` guard.
         ("if (x) { foo\n![a].b === c }", "if (x) { foo\n;[a].b !== c }"),
+        // The ASI guard covers every continuation-start char, not just `(`/`[` (matches upstream):
+        // a leading `/` (without `;` `foo\n/re/...` becomes a SyntaxError), `` ` `` or `+`/`-`.
+        ("foo\n!/re/.test(x) === bar", "foo\n;/re/.test(x) !== bar"),
+        ("foo\n!`x`.length === bar", "foo\n;`x`.length !== bar"),
+        ("foo\n!+x === bar", "foo\n;+x !== bar"),
+        // ...and the control-flow-body exclusion still wins over the wider char set (no `;`).
+        ("if (a) !/re/.test(x) === b", "if (a) /re/.test(x) !== b"),
     ];
 
     Tester::new(NoNegationInEqualityCheck::NAME, NoNegationInEqualityCheck::PLUGIN, pass, fail)

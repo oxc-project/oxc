@@ -1072,6 +1072,18 @@ pub fn could_be_asi_hazard(node: &AstNode, ctx: &LintContext) -> bool {
         || last_char == '$'
 }
 
+/// Whether a replacement that *starts* with `first_char` could be misparsed as a
+/// continuation of the previous statement under ASI when inserted at a
+/// [`could_be_asi_hazard`] position (e.g. `[`/`(` continue a member access / call,
+/// `/` starts a division, `` ` `` a tagged template, `+`/`-` a binary operation).
+///
+/// Mirrors eslint-plugin-unicorn's `charactersMightNeedsSemicolon` set so the unicorn
+/// autofixes that reuse this logic stay consistent with upstream. Pair it with
+/// [`could_be_asi_hazard`]: a `;` is only needed when both are true.
+pub fn could_start_asi_continuation(first_char: char) -> bool {
+    matches!(first_char, '[' | '(' | '/' | '`' | '+' | '-' | '*' | ',' | '.')
+}
+
 #[inline]
 #[expect(clippy::cast_possible_wrap)]
 fn is_utf8_char_boundary(b: u8) -> bool {

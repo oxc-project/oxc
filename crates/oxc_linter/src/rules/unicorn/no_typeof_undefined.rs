@@ -8,7 +8,7 @@ use serde::Deserialize;
 
 use crate::{
     AstNode,
-    ast_util::{could_be_asi_hazard, get_declaration_of_variable},
+    ast_util::{could_be_asi_hazard, could_start_asi_continuation, get_declaration_of_variable},
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::{DefaultRuleConfig, Rule},
@@ -145,11 +145,12 @@ fn generate_fix<'a>(
         BinaryOperator::StrictInequality | BinaryOperator::Inequality => "!==",
         _ => unreachable!(),
     };
-    // Removing the `typeof` keyword can create an ASI hazard when the argument starts with `(`/`[`
-    // and the expression is at statement start: `foo\ntypeof [] === "undefined"` would otherwise
-    // become `foo\n[] === undefined` (parsed as `foo[]`). Prepend `;` in that case, like upstream.
-    let prefix = if could_be_asi_hazard(node, ctx)
-        && matches!(argument_text.chars().next(), Some('(' | '['))
+    // Removing the `typeof` keyword can create an ASI hazard when the argument starts with a
+    // continuation character (`[`/`(`/`/`/`` ` ``/`+`/`-`) and the expression is at statement start:
+    // `foo\ntypeof [] === "undefined"` would otherwise become `foo\n[] === undefined` (parsed as
+    // `foo[]`). Prepend `;` in that case, like upstream's `needsSemicolon`.
+    let prefix = if argument_text.chars().next().is_some_and(could_start_asi_continuation)
+        && could_be_asi_hazard(node, ctx)
     {
         ";"
     } else {
@@ -244,6 +245,14 @@ fn test() {
             "if (foo) { bar\n;[] === undefined }",
             None,
         ),
+        // The ASI guard covers every continuation-start char, not just `(`/`[` (matches upstream):
+        // a leading `/` (division), `` ` `` (tagged template) or `+`/`-` (binary op) is just as
+        // hazardous as `[`/`(`.
+        ("foo\ntypeof /re/g === \"undefined\"", "foo\n;/re/g === undefined", None),
+        ("foo\ntypeof `x` === \"undefined\"", "foo\n;`x` === undefined", None),
+        ("foo\ntypeof +x === \"undefined\"", "foo\n;+x === undefined", None),
+        // ...and the control-flow-body exclusion still wins over the wider char set (no `;`).
+        ("if (a) typeof /re/g === \"undefined\";", "if (a) /re/g === undefined;", None),
     ];
 
     Tester::new(NoTypeofUndefined::NAME, NoTypeofUndefined::PLUGIN, pass, fail)
