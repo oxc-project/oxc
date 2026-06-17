@@ -1016,7 +1016,9 @@ export interface DummyRuleMap {
   "jsx-a11y/no-interactive-element-to-noninteractive-role"?:
     | RuleNoConfig
     | [AllowWarnDeny, NoInteractiveElementToNoninteractiveRoleConfig];
-  "jsx-a11y/no-noninteractive-element-interactions"?: DummyRule;
+  "jsx-a11y/no-noninteractive-element-interactions"?:
+    | RuleNoConfig
+    | [AllowWarnDeny, NoNoninteractiveElementInteractionsConfig];
   "jsx-a11y/no-noninteractive-element-to-interactive-role"?:
     | RuleNoConfig
     | [AllowWarnDeny, NoNoninteractiveElementToInteractiveRoleConfig];
@@ -2614,6 +2616,13 @@ export interface NoDistractingElementsConfig {
   elements?: DistractingElement[];
 }
 export interface NoInteractiveElementToNoninteractiveRoleConfig {
+  [k: string]: string[] | undefined;
+}
+export interface NoNoninteractiveElementInteractionsConfig {
+  /**
+   * An array of event handler names that should trigger this rule.
+   */
+  handlers?: string[];
   [k: string]: string[] | undefined;
 }
 export interface NoNoninteractiveElementToInteractiveRoleConfig {
