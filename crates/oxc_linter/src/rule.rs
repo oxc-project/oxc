@@ -75,6 +75,19 @@ pub trait Rule: Sized + Default + fmt::Debug {
     }
 }
 
+/// Pretty-print a JSON value and collapse all whitespace runs to single spaces,
+/// for embedding a "received config" snippet in a rule-config deserialization error.
+///
+/// Kept non-generic (and out of the generic `Deserialize` impls below) so the heavy
+/// `serde_json::to_string_pretty` machinery is compiled once instead of being
+/// monomorphized into every rule-config `deserialize` instantiation. Returns `None`
+/// when serialization fails, so callers fall back to the bare error.
+fn compact_json_for_error(value: &serde_json::Value) -> Option<String> {
+    serde_json::to_string_pretty(value)
+        .ok()
+        .map(|value_str| value_str.split_whitespace().collect::<Vec<_>>().join(" "))
+}
+
 /// A wrapper type for deserializing ESLint-style rule configurations.
 ///
 /// ESLint configurations are typically arrays where the first element contains
@@ -127,15 +140,12 @@ where
 
         if let serde_json::Value::Array(arr) = value {
             let config = match arr.into_iter().next() {
-                Some(v) => T::deserialize(&v).map_err(|e| {
-                    // Try to include the config object in the error message if we can.
-                    // Collapse any whitespace so we emit a single-line message.
-                    if let Ok(value_str) = serde_json::to_string_pretty(&v) {
-                        let compact = value_str.split_whitespace().collect::<Vec<_>>().join(" ");
+                // Try to include the config object in the error message if we can.
+                Some(v) => T::deserialize(&v).map_err(|e| match compact_json_for_error(&v) {
+                    Some(compact) => {
                         D::Error::custom(format!("{e}\n  received config: `{compact}`"))
-                    } else {
-                        D::Error::custom(e)
                     }
+                    None => D::Error::custom(e),
                 })?,
                 None => T::default(),
             };
@@ -207,14 +217,11 @@ where
             } else {
                 // Parse the entire array as the tuple configuration.
                 let arr_value = serde_json::Value::Array(arr);
+                // Try to include the config array in the error message if we can.
                 T::deserialize(&arr_value).map_err(|e| {
-                    // Try to include the config array in the error message if we can.
-                    // Collapse any whitespace so we emit a single-line message.
-                    if let Ok(value_str) = serde_json::to_string_pretty(&arr_value) {
-                        let compact = value_str.split_whitespace().collect::<Vec<_>>().join(" ");
-                        D::Error::custom(format!("{e}, received `{compact}`"))
-                    } else {
-                        D::Error::custom(e)
+                    match compact_json_for_error(&arr_value) {
+                        Some(compact) => D::Error::custom(format!("{e}, received `{compact}`")),
+                        None => D::Error::custom(e),
                     }
                 })?
             };
