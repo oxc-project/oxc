@@ -4,7 +4,7 @@
  */
 
 export type AllowWarnDeny = ("allow" | "off" | "warn" | "error" | "deny") | number;
-export type GlobalValue = "readonly" | "writable" | "off";
+export type GlobalValue = ("readonly" | "writable" | "off") | undefined;
 export type ExternalPluginEntry =
   | string
   | {
@@ -264,22 +264,25 @@ export type ChecksVoidReturn = boolean | ChecksVoidReturnOptions;
  * - An object with `message` and optional `fixWith` and `suggest`
  */
 export type BanConfigValue =
-  | True
-  | string
-  | {
-      /**
-       * Replacement type for automatic fixing. Applied directly with `--fix`.
-       */
-      fixWith?: string;
-      /**
-       * Custom message explaining why the type is banned.
-       */
-      message?: string;
-      /**
-       * Suggested replacement types for manual review. Shown as editor suggestions.
-       */
-      suggest?: string[];
-    };
+  | (
+      | True
+      | string
+      | {
+          /**
+           * Replacement type for automatic fixing. Applied directly with `--fix`.
+           */
+          fixWith?: string;
+          /**
+           * Custom message explaining why the type is banned.
+           */
+          message?: string;
+          /**
+           * Suggested replacement types for manual review. Shown as editor suggestions.
+           */
+          suggest?: string[];
+        }
+    )
+  | undefined;
 export type True = true;
 /**
  * Represents the different ways `allowConstantLoopConditions` can be specified in JSON.
@@ -312,45 +315,48 @@ export type TypesOption = "always" | "never" | "prefer-import";
 export type BomOptionType = "always" | "never";
 export type NonZero = "greater-than" | "not-equal";
 export type ModuleStylesOverride =
-  | false
-  | {
-      /**
-       * Whether default imports or whole-module `require()` assignments are allowed for this module.
-       *
-       * With `{ "styles": { "chalk": { "default": true } } }`, this is valid:
-       * ```js
-       * import chalk from "chalk";
-       * ```
-       */
-      default?: boolean;
-      /**
-       * Whether named imports or destructured `require()` calls are allowed for this module.
-       *
-       * With `{ "styles": { "node:util": { "named": true } } }`, this is valid:
-       * ```js
-       * import {promisify} from "node:util";
-       * ```
-       */
-      named?: boolean;
-      /**
-       * Whether namespace imports or whole-module `require()` assignments are allowed for this module.
-       *
-       * With `{ "styles": { "node:fs": { "namespace": true } } }`, this is valid:
-       * ```js
-       * import * as fs from "node:fs";
-       * ```
-       */
-      namespace?: boolean;
-      /**
-       * Whether side-effect imports or unassigned dynamic imports/requires are allowed for this module.
-       *
-       * With `{ "styles": { "polyfill": { "unassigned": true } } }`, this is valid:
-       * ```js
-       * import "polyfill";
-       * ```
-       */
-      unassigned?: boolean;
-    };
+  | (
+      | false
+      | {
+          /**
+           * Whether default imports or whole-module `require()` assignments are allowed for this module.
+           *
+           * With `{ "styles": { "chalk": { "default": true } } }`, this is valid:
+           * ```js
+           * import chalk from "chalk";
+           * ```
+           */
+          default?: boolean;
+          /**
+           * Whether named imports or destructured `require()` calls are allowed for this module.
+           *
+           * With `{ "styles": { "node:util": { "named": true } } }`, this is valid:
+           * ```js
+           * import {promisify} from "node:util";
+           * ```
+           */
+          named?: boolean;
+          /**
+           * Whether namespace imports or whole-module `require()` assignments are allowed for this module.
+           *
+           * With `{ "styles": { "node:fs": { "namespace": true } } }`, this is valid:
+           * ```js
+           * import * as fs from "node:fs";
+           * ```
+           */
+          namespace?: boolean;
+          /**
+           * Whether side-effect imports or unassigned dynamic imports/requires are allowed for this module.
+           *
+           * With `{ "styles": { "polyfill": { "unassigned": true } } }`, this is valid:
+           * ```js
+           * import "polyfill";
+           * ```
+           */
+          unassigned?: boolean;
+        }
+    )
+  | undefined;
 export type NoInstanceofBuiltinsStrategy = "strict" | "loose";
 export type PreferTernaryOption = "always" | "only-single-line";
 export type RelativeUrlStyleConfig = "never" | "always";
@@ -367,29 +373,32 @@ export type AllowYoda = "never" | "always";
 export type OxlintOverrides = OxlintOverride[];
 export type JestVersionSchema = number | string;
 export type TagNamePreference =
-  | string
-  | {
-      message: string;
-      replacement: string;
-      [k: string]: unknown;
-    }
-  | {
-      message: string;
-      [k: string]: unknown;
-    }
-  | boolean;
+  | (
+      | string
+      | {
+          message: string;
+          replacement: string;
+          [k: string]: unknown | undefined;
+        }
+      | {
+          message: string;
+          [k: string]: unknown | undefined;
+        }
+      | boolean
+    )
+  | undefined;
 export type OneOrManyFor_String = string | string[];
 export type CustomComponent =
   | string
   | {
       attribute: string;
       name: string;
-      [k: string]: unknown;
+      [k: string]: unknown | undefined;
     }
   | {
       attributes: string[];
       name: string;
-      [k: string]: unknown;
+      [k: string]: unknown | undefined;
     };
 
 /**
@@ -700,7 +709,7 @@ export interface RuleCategories {
  * - worker - Web Workers globals.
  */
 export interface OxlintEnv {
-  [k: string]: boolean;
+  [k: string]: boolean | undefined;
 }
 /**
  * Add or remove global variables.
@@ -728,7 +737,7 @@ export interface OxlintEnv {
  * `"writeable"` or `true` to represent `"writable"`.
  */
 export interface OxlintGlobals {
-  [k: string]: GlobalValue;
+  [k: string]: GlobalValue | undefined;
 }
 /**
  * Options for the linter.
@@ -1705,7 +1714,7 @@ export interface DummyRuleMap {
   "vue/valid-define-props"?: RuleNoConfig;
   "vue/valid-next-tick"?: RuleNoConfig;
   yoda?: RuleNoConfig | [AllowWarnDeny, AllowYoda] | [AllowWarnDeny, AllowYoda, YodaOptions];
-  [k: string]: DummyRule | undefined;
+  [k: string]: DummyRule | undefined | undefined;
 }
 export interface AccessorPairsConfig {
   /**
@@ -2276,7 +2285,7 @@ export interface NoLargeSnapshotsConfig {
    * Snapshot names can be specified as regular expressions.
    */
   allowedSnapshots?: {
-    [k: string]: string[];
+    [k: string]: string[] | undefined;
   };
   /**
    * Maximum number of lines allowed for inline snapshots.
@@ -2288,10 +2297,10 @@ export interface NoLargeSnapshotsConfig {
   maxSize?: number;
 }
 export interface NoRestrictedTestMethodsConfig {
-  [k: string]: string | null;
+  [k: string]: (string | null) | undefined;
 }
 export interface NoRestrictedMatchersConfig {
-  [k: string]: string | null;
+  [k: string]: (string | null) | undefined;
 }
 export interface NoStandaloneExpectConfig {
   /**
@@ -2606,10 +2615,10 @@ export interface NoDistractingElementsConfig {
   elements?: DistractingElement[];
 }
 export interface NoInteractiveElementToNoninteractiveRoleConfig {
-  [k: string]: string[];
+  [k: string]: string[] | undefined;
 }
 export interface NoNoninteractiveElementToInteractiveRoleConfig {
-  [k: string]: string[];
+  [k: string]: string[] | undefined;
 }
 export interface NoNoninteractiveTabindexConfig {
   /**
@@ -2626,7 +2635,7 @@ export interface NoNoninteractiveTabindexConfig {
   tags?: string[];
 }
 export interface NoRedundantRolesConfig {
-  [k: string]: string[];
+  [k: string]: string[] | undefined;
 }
 export interface NoStaticElementInteractionsConfig {
   /**
@@ -4430,7 +4439,7 @@ export interface JsxNoLiteralsConfig {
    * An object where the keys are the element names and the values are objects with the same options as above. This allows you to specify different options for different elements.
    */
   elementOverrides?: {
-    [k: string]: ElementOverrideOptions;
+    [k: string]: ElementOverrideOptions | undefined;
   };
   /**
    * (default: false) - When true the rule ignores literals used in props, wrapped or unwrapped.
@@ -5353,7 +5362,7 @@ export interface NoRestrictedTypesConfig {
    * A mapping of type names to ban configurations.
    */
   types?: {
-    [k: string]: BanConfigValue;
+    [k: string]: BanConfigValue | undefined;
   };
 }
 export interface NoThisAliasConfig {
@@ -5907,7 +5916,7 @@ export interface ImportStyleConfig {
    * ```
    */
   styles?: {
-    [k: string]: ModuleStylesOverride;
+    [k: string]: ModuleStylesOverride | undefined;
   };
 }
 export interface MaxNestedCalls {
@@ -6274,7 +6283,7 @@ export interface OxlintPluginSettings {
   next?: NextPluginSettings;
   react?: ReactPluginSettings;
   vitest?: VitestPluginSettings;
-  [k: string]: unknown;
+  [k: string]: unknown | undefined;
 }
 /**
  * Configure Jest plugin rules.
@@ -6291,7 +6300,7 @@ export interface JestPluginSettings {
    * :::
    */
   version?: JestVersionSchema;
-  [k: string]: unknown;
+  [k: string]: unknown | undefined;
 }
 export interface JSDocPluginSettings {
   /**
@@ -6323,9 +6332,9 @@ export interface JSDocPluginSettings {
    */
   overrideReplacesDocs?: boolean;
   tagNamePreference?: {
-    [k: string]: TagNamePreference;
+    [k: string]: TagNamePreference | undefined;
   };
-  [k: string]: unknown;
+  [k: string]: unknown | undefined;
 }
 /**
  * Configure JSX A11y plugin rules.
@@ -6357,7 +6366,7 @@ export interface JSXA11YPluginSettings {
    * ```
    */
   attributes?: {
-    [k: string]: string[];
+    [k: string]: string[] | undefined;
   };
   /**
    * To have your custom components be checked as DOM elements, you can
@@ -6379,7 +6388,7 @@ export interface JSXA11YPluginSettings {
    * ```
    */
   components?: {
-    [k: string]: string;
+    [k: string]: string | undefined;
   };
   /**
    * An optional setting that define the prop your code uses to create polymorphic components.
@@ -6396,7 +6405,7 @@ export interface JSXA11YPluginSettings {
    * as a `Box`.
    */
   polymorphicPropName?: string;
-  [k: string]: unknown;
+  [k: string]: unknown | undefined;
 }
 /**
  * Configure Next.js plugin rules.
@@ -6421,7 +6430,7 @@ export interface NextPluginSettings {
    * ```
    */
   rootDir?: OneOrManyFor_String;
-  [k: string]: unknown;
+  [k: string]: unknown | undefined;
 }
 /**
  * Configure React plugin rules.
@@ -6508,7 +6517,7 @@ export interface ReactPluginSettings {
    * ```
    */
   version?: string;
-  [k: string]: unknown;
+  [k: string]: unknown | undefined;
 }
 /**
  * Configure Vitest plugin rules.
@@ -6523,5 +6532,5 @@ export interface VitestPluginSettings {
    * to accommodate TypeScript type checking scenarios.
    */
   typecheck?: boolean;
-  [k: string]: unknown;
+  [k: string]: unknown | undefined;
 }
