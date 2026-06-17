@@ -107,11 +107,6 @@ fn check_array_flat_map_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintConte
         return;
     }
 
-    // Skip receivers that are obviously not arrays, e.g. `Effects.flatMap(x => x)`,
-    // `const text = ""; text.flatMap(x => x)`, `const set = new Set(); set.flatMap(x => x)`.
-    // `flatMap` also exists on non-array types (RxJS observables, custom classes), and `.flat()`
-    // does not, so reporting/auto-fixing those is a false positive and a breaking rewrite. Mirrors
-    // eslint-plugin-unicorn's `isObviouslyNonArrayFlatMapReceiver`.
     if let Some(member_expr) = call_expr.callee.as_member_expression()
         && is_obviously_non_array_flat_map_receiver(member_expr.object(), ctx)
     {
@@ -138,9 +133,6 @@ enum ConstInitKind {
     NonArray,
 }
 
-/// Whether the `flatMap` receiver is statically known not to be an array, mirroring
-/// eslint-plugin-unicorn's `isObviouslyNonArrayFlatMapReceiver`:
-/// `(isPascalCaseIdentifier && !isConstArrayVariable) || isConstNonArrayVariable`.
 fn is_obviously_non_array_flat_map_receiver(object: &Expression, ctx: &LintContext) -> bool {
     let Expression::Identifier(ident) = object.without_parentheses() else {
         return false;
@@ -153,9 +145,6 @@ fn is_obviously_non_array_flat_map_receiver(object: &Expression, ctx: &LintConte
     }
 }
 
-/// Classify the initializer of a `const` variable as definitely-array or definitely-non-array.
-/// Returns `None` for non-`const` bindings, missing initializers, or initializers whose type
-/// cannot be statically determined (e.g. a call expression).
 fn const_variable_initializer_kind(
     ident: &IdentifierReference,
     ctx: &LintContext,
@@ -398,7 +387,6 @@ fn test() {
         "array.flatMap((x, y) => x)",
         // "array.flatMap((x) => { return x; })",
         "array.flatMap(x => y)",
-        // Non-array receivers (matches eslint-plugin-unicorn `isObviouslyNonArrayFlatMapReceiver`):
         "const randomObject = {
                 flatMap(function_) {
                     function_();
