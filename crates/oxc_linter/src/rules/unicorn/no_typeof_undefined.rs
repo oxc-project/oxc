@@ -8,7 +8,7 @@ use serde::Deserialize;
 
 use crate::{
     AstNode,
-    ast_util::get_declaration_of_variable,
+    ast_util::{could_be_asi_hazard, get_declaration_of_variable},
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::{DefaultRuleConfig, Rule},
@@ -94,12 +94,26 @@ impl Rule for NoTypeofUndefined {
             ctx.diagnostic_with_suggestion(
                 no_typeof_undefined_diagnostic(bin_expr.span),
                 |fixer| {
-                    generate_fix(fixer, &unary_expr.argument, bin_expr.operator, bin_expr.span, ctx)
+                    generate_fix(
+                        fixer,
+                        node,
+                        &unary_expr.argument,
+                        bin_expr.operator,
+                        bin_expr.span,
+                        ctx,
+                    )
                 },
             );
         } else {
             ctx.diagnostic_with_fix(no_typeof_undefined_diagnostic(bin_expr.span), |fixer| {
-                generate_fix(fixer, &unary_expr.argument, bin_expr.operator, bin_expr.span, ctx)
+                generate_fix(
+                    fixer,
+                    node,
+                    &unary_expr.argument,
+                    bin_expr.operator,
+                    bin_expr.span,
+                    ctx,
+                )
             });
         }
     }
@@ -119,6 +133,7 @@ fn is_global_variable<'a>(ident: &Expression<'a>, ctx: &LintContext<'a>) -> bool
 
 fn generate_fix<'a>(
     fixer: RuleFixer<'_, 'a>,
+    node: &AstNode<'a>,
     argument: &Expression<'a>,
     operator: BinaryOperator,
     span: Span,
@@ -130,7 +145,17 @@ fn generate_fix<'a>(
         BinaryOperator::StrictInequality | BinaryOperator::Inequality => "!==",
         _ => unreachable!(),
     };
-    fixer.replace(span, format!("{argument_text} {op} undefined"))
+    // Removing the `typeof` keyword can create an ASI hazard when the argument starts with `(`/`[`
+    // and the expression is at statement start: `foo\ntypeof [] === "undefined"` would otherwise
+    // become `foo\n[] === undefined` (parsed as `foo[]`). Prepend `;` in that case, like upstream.
+    let prefix = if could_be_asi_hazard(node, ctx)
+        && matches!(argument_text.chars().next(), Some('(' | '['))
+    {
+        ";"
+    } else {
+        ""
+    };
+    fixer.replace(span, format!("{prefix}{argument_text} {op} undefined"))
 }
 
 #[test]
@@ -197,6 +222,10 @@ fn test() {
             r"foo === undefined",
             Some(serde_json::json!([{ "checkGlobalVariables": true }])),
         ),
+        // ASI: dropping `typeof` must not let the next line continue the previous statement
+        // (`foo\n[] === undefined` would parse as `foo[]`).
+        ("foo\ntypeof [] === \"undefined\"", "foo\n;[] === undefined", None),
+        ("foo\ntypeof (a ? b : c) === \"undefined\"", "foo\n;(a ? b : c) === undefined", None),
     ];
 
     Tester::new(NoTypeofUndefined::NAME, NoTypeofUndefined::PLUGIN, pass, fail)
