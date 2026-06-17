@@ -92,6 +92,7 @@ impl Rule for NoZeroFractions {
                 // Insert a leading space when the fixed number would directly abut a preceding
                 // identifier or keyword, e.g. `case.0` -> `case 0` (without it `case0` is a single
                 // token) or `return.0.x` -> `return (0).x`.
+                let before = ctx.source_range(Span::new(0, number_literal.span.start));
                 if before.chars().next_back().is_some_and(is_identifier_part) {
                     fixed = format!(" {fixed}");
                 }
