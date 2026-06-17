@@ -2,7 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         Argument, ArrayExpressionElement, BindingPattern, CallExpression, Expression,
-        MemberExpression, Statement,
+        IdentifierReference, MemberExpression, Statement,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -11,7 +11,7 @@ use oxc_span::Span;
 
 use crate::{
     AstNode,
-    ast_util::is_method_call,
+    ast_util::{get_symbol_id_of_variable, is_method_call},
     context::LintContext,
     rule::Rule,
     utils::{
@@ -107,6 +107,17 @@ fn check_array_flat_map_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintConte
         return;
     }
 
+    // Skip receivers that are obviously not arrays, e.g. `Effects.flatMap(x => x)`,
+    // `const text = ""; text.flatMap(x => x)`, `const set = new Set(); set.flatMap(x => x)`.
+    // `flatMap` also exists on non-array types (RxJS observables, custom classes), and `.flat()`
+    // does not, so reporting/auto-fixing those is a false positive and a breaking rewrite. Mirrors
+    // eslint-plugin-unicorn's `isObviouslyNonArrayFlatMapReceiver`.
+    if let Some(member_expr) = call_expr.callee.as_member_expression()
+        && is_obviously_non_array_flat_map_receiver(member_expr.object(), ctx)
+    {
+        return;
+    }
+
     let target_fix_span = call_expr
         .callee
         .as_member_expression()
@@ -119,6 +130,81 @@ fn check_array_flat_map_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintConte
         });
     } else {
         ctx.diagnostic(prefer_array_flat_diagnostic(call_expr.span));
+    }
+}
+
+enum ConstInitKind {
+    Array,
+    NonArray,
+}
+
+/// Whether the `flatMap` receiver is statically known not to be an array, mirroring
+/// eslint-plugin-unicorn's `isObviouslyNonArrayFlatMapReceiver`:
+/// `(isPascalCaseIdentifier && !isConstArrayVariable) || isConstNonArrayVariable`.
+fn is_obviously_non_array_flat_map_receiver(object: &Expression, ctx: &LintContext) -> bool {
+    let Expression::Identifier(ident) = object.without_parentheses() else {
+        return false;
+    };
+    let is_pascal_case = ident.name.chars().next().is_some_and(char::is_uppercase);
+    match const_variable_initializer_kind(ident, ctx) {
+        Some(ConstInitKind::Array) => false,
+        Some(ConstInitKind::NonArray) => true,
+        None => is_pascal_case,
+    }
+}
+
+/// Classify the initializer of a `const` variable as definitely-array or definitely-non-array.
+/// Returns `None` for non-`const` bindings, missing initializers, or initializers whose type
+/// cannot be statically determined (e.g. a call expression).
+fn const_variable_initializer_kind(
+    ident: &IdentifierReference,
+    ctx: &LintContext,
+) -> Option<ConstInitKind> {
+    let symbol_id = get_symbol_id_of_variable(ident, ctx)?;
+    let node = ctx.nodes().get_node(ctx.scoping().symbol_declaration(symbol_id));
+    let AstKind::VariableDeclarator(declarator) = node.kind() else {
+        return None;
+    };
+    if !declarator.kind.is_const() {
+        return None;
+    }
+    let init = declarator.init.as_ref()?.without_parentheses();
+    if is_definitely_array_expression(init) {
+        Some(ConstInitKind::Array)
+    } else if is_definitely_non_array_expression(init) {
+        Some(ConstInitKind::NonArray)
+    } else {
+        None
+    }
+}
+
+fn is_definitely_array_expression(expr: &Expression) -> bool {
+    match expr {
+        Expression::ArrayExpression(_) => true,
+        Expression::NewExpression(new_expr) => {
+            matches!(&new_expr.callee, Expression::Identifier(ident) if ident.name == "Array")
+        }
+        _ => false,
+    }
+}
+
+fn is_definitely_non_array_expression(expr: &Expression) -> bool {
+    match expr {
+        Expression::ObjectExpression(_)
+        | Expression::StringLiteral(_)
+        | Expression::NumericLiteral(_)
+        | Expression::BooleanLiteral(_)
+        | Expression::NullLiteral(_)
+        | Expression::BigIntLiteral(_)
+        | Expression::RegExpLiteral(_)
+        | Expression::TemplateLiteral(_)
+        | Expression::ArrowFunctionExpression(_)
+        | Expression::FunctionExpression(_)
+        | Expression::ClassExpression(_) => true,
+        Expression::NewExpression(new_expr) => {
+            matches!(&new_expr.callee, Expression::Identifier(ident) if ident.name != "Array")
+        }
+        _ => false,
     }
 }
 
@@ -312,25 +398,25 @@ fn test() {
         "array.flatMap((x, y) => x)",
         // "array.flatMap((x) => { return x; })",
         "array.flatMap(x => y)",
-        // TODO: Get this passing.
-        // "const randomObject = {
-        //         flatMap(function_) {
-        //             function_();
-        //         },
-        //     };
-        //     randomObject.flatMap(x => x);",
-        // "Effects.flatMap(x => x)",
-        // "const effects = {
-        //         flatMap(function_) {
-        //             function_();
-        //         },
-        //     };
-        //     effects.flatMap(x => x);",
-        // "const effects = new Set(); effects.flatMap(x => x);",
-        // "const mapping = new Map(); mapping.flatMap(x => x);",
-        // r#"const text = ""; text.flatMap(x => x);"#,
-        // "const handler = () => {}; handler.flatMap(x => x);",
-        // "const collection = new Foo(); collection.flatMap(x => x);",
+        // Non-array receivers (matches eslint-plugin-unicorn `isObviouslyNonArrayFlatMapReceiver`):
+        "const randomObject = {
+                flatMap(function_) {
+                    function_();
+                },
+            };
+            randomObject.flatMap(x => x);",
+        "Effects.flatMap(x => x)",
+        "const effects = {
+                flatMap(function_) {
+                    function_();
+                },
+            };
+            effects.flatMap(x => x);",
+        "const effects = new Set(); effects.flatMap(x => x);",
+        "const mapping = new Map(); mapping.flatMap(x => x);",
+        r#"const text = ""; text.flatMap(x => x);"#,
+        "const handler = () => {}; handler.flatMap(x => x);",
+        "const collection = new Foo(); collection.flatMap(x => x);",
         "new array.reduce((a, b) => a.concat(b), [])",
         "array.reduce",
         "reduce((a, b) => a.concat(b), [])",
