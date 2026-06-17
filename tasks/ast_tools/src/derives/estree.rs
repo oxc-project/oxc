@@ -9,7 +9,7 @@ use crate::{
     Result,
     codegen::{Codegen, DeriveId},
     schema::{Def, EnumDef, FieldDef, File, Schema, StructDef, TypeDef, VariantDef, Visibility},
-    utils::create_safe_ident,
+    utils::{create_ident, create_safe_ident},
 };
 
 use super::{
@@ -567,7 +567,7 @@ impl<'s> StructSerializerGenerator<'s> {
 
 /// Generate body of `serialize` method for an enum.
 fn generate_body_for_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
-    let match_branches = enum_def.all_variants(schema).map(|variant| {
+    let own_branches = enum_def.variants.iter().map(|variant| {
         let variant_ident = variant.ident();
 
         if should_skip_enum_variant(variant) {
@@ -605,9 +605,31 @@ fn generate_body_for_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
         }
     });
 
+    // Variants inherited via `inherit_variants!` are delegated to the inherited enum's `ESTree`
+    // impl through the generated `to_*` reference cast, instead of re-emitting an arm for each.
+    // Inherited variants carry the parent's serialization config, so this is byte-identical, and
+    // it avoids duplicating the parent enum's arms (e.g. all of `Expression`'s variants) in every
+    // inheriting enum (`Argument`, `PropertyKey`, ...).
+    let inherited_branches = enum_def.inherits.iter().map(|&inherits_id| {
+        let inherited = schema.enum_def(inherits_id);
+        let patterns = inherited.all_variants(schema).map(|variant| {
+            let variant_ident = variant.ident();
+            if variant.is_fieldless() {
+                quote!( Self::#variant_ident )
+            } else {
+                quote!( Self::#variant_ident(_) )
+            }
+        });
+        let to_inherited = create_ident(&format!("to_{}", inherited.snake_name()));
+        quote! {
+            #(#patterns)|* => self.#to_inherited().serialize(serializer),
+        }
+    });
+
     quote! {
         match self {
-            #(#match_branches)*
+            #(#own_branches)*
+            #(#inherited_branches)*
         }
     }
 }
