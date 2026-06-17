@@ -226,6 +226,24 @@ fn test() {
         // (`foo\n[] === undefined` would parse as `foo[]`).
         ("foo\ntypeof [] === \"undefined\"", "foo\n;[] === undefined", None),
         ("foo\ntypeof (a ? b : c) === \"undefined\"", "foo\n;(a ? b : c) === undefined", None),
+        // ...but the unbraced body of a control-flow statement is NOT an ASI hazard: the token
+        // before it (`)`/`else`/`do`/label) closes the header, not an expression. Inserting `;`
+        // there would empty the body, so it must be omitted.
+        ("if (foo) typeof [] === \"undefined\";", "if (foo) [] === undefined;", None),
+        ("if (foo)\n  typeof [] === \"undefined\";", "if (foo)\n  [] === undefined;", None),
+        (
+            "for (const x of y) typeof [x] === \"undefined\";",
+            "for (const x of y) [x] === undefined;",
+            None,
+        ),
+        ("while (a) typeof (b) === \"undefined\";", "while (a) (b) === undefined;", None),
+        ("if (a) {} else typeof [] === \"undefined\";", "if (a) {} else [] === undefined;", None),
+        // ...while a *braced* body that follows another statement still needs the `;` guard.
+        (
+            "if (foo) { bar\ntypeof [] === \"undefined\" }",
+            "if (foo) { bar\n;[] === undefined }",
+            None,
+        ),
     ];
 
     Tester::new(NoTypeofUndefined::NAME, NoTypeofUndefined::PLUGIN, pass, fail)
