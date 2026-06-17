@@ -140,7 +140,6 @@ where
 
         if let serde_json::Value::Array(arr) = value {
             let config = match arr.into_iter().next() {
-                // Try to include the config object in the error message if we can.
                 Some(v) => T::deserialize(&v).map_err(|e| match compact_json_for_error(&v) {
                     Some(compact) => {
                         D::Error::custom(format!("{e}\n  received config: `{compact}`"))
@@ -217,7 +216,6 @@ where
             } else {
                 // Parse the entire array as the tuple configuration.
                 let arr_value = serde_json::Value::Array(arr);
-                // Try to include the config array in the error message if we can.
                 T::deserialize(&arr_value).map_err(|e| {
                     match compact_json_for_error(&arr_value) {
                         Some(compact) => D::Error::custom(format!("{e}, received `{compact}`")),
