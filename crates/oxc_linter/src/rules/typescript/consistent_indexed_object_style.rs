@@ -412,6 +412,11 @@ impl Rule for ConsistentIndexedObjectStyle {
                 };
 
                 if let Some(key_span) = key_span {
+                    // Take the value type's own span instead of slicing from `key_span.end + 1`,
+                    // which assumed the comma sits exactly one char after the key and captured a
+                    // stray `,` into the value when there was trivia before it (`Record<string , V>`
+                    // -> `{ [key: string]: , V }`). `params.params.len() == 2` is checked above.
+                    let value_span = params.params[1].span();
                     ctx.diagnostic_with_fix(
                         consistent_indexed_object_style_diagnostic(
                             ConsistentIndexedObjectStyleConfig::IndexSignature,
@@ -419,9 +424,8 @@ impl Rule for ConsistentIndexedObjectStyle {
                         ),
                         |fixer| {
                             let key = fixer.source_range(key_span);
-                            let params_span = Span::new(key_span.end + 1, tref.span.end - 1);
-                            let params = fixer.source_range(params_span).trim();
-                            let content = format!("{{ [key: {key}]: {params} }}");
+                            let value = fixer.source_range(value_span);
+                            let content = format!("{{ [key: {key}]: {value} }}");
                             fixer.replace(tref.span, content)
                         },
                     );
@@ -1261,6 +1265,10 @@ fn test() {
 ("function foo(): { readonly [key: string]: any } {}", "function foo(): Readonly<Record<string, any>> {}", None),
 ("type Foo = Record<string, any>;", "type Foo = { [key: string]: any };", Some(serde_json::json!(["index-signature"]))),
 ("type Foo<T> = Record<string, T>;", "type Foo<T> = { [key: string]: T };", Some(serde_json::json!(["index-signature"]))),
+// trivia before the comma must not leak a stray `,` into the value type
+("type Foo = Record<string , any>;", "type Foo = { [key: string]: any };", Some(serde_json::json!(["index-signature"]))),
+("type Foo = Record<string /* c */, Bar>;", "type Foo = { [key: string]: Bar };", Some(serde_json::json!(["index-signature"]))),
+("type Foo = Record<number , () => void>;", "type Foo = { [key: number]: () => void };", Some(serde_json::json!(["index-signature"]))),
 ("type Foo = { [k: string]: A.Foo };", "type Foo = Record<string, A.Foo>;", None),
 ("type Foo = { [key: string]: AnotherFoo };", "type Foo = Record<string, AnotherFoo>;", None),
 ("type Foo = { [key: string]: { [key: string]: Foo } };", "type Foo = { [key: string]: Record<string, Foo> };", None),
