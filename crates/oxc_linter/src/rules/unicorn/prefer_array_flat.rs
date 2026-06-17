@@ -157,7 +157,7 @@ fn const_variable_initializer_kind(
     if !declarator.kind.is_const() {
         return None;
     }
-    let init = declarator.init.as_ref()?.without_parentheses();
+    let init = declarator.init.as_ref()?.get_inner_expression();
     if is_definitely_array_expression(init) {
         Some(ConstInitKind::Array)
     } else if is_definitely_non_array_expression(init) {
@@ -509,6 +509,10 @@ fn test() {
         "object._.flatten(array)",
         "array.flat()",
         "array.flat(1)",
+        "const effects = new Set() as Set<unknown>; effects.flatMap(x => x);",
+        r#"const text = "" as string; text.flatMap(x => x);"#,
+        "const handler = (() => {}) as Function; handler.flatMap(x => x);",
+        "const collection = new Foo() satisfies Foo; collection.flatMap(x => x);",
     ];
 
     let fail = vec![
@@ -611,6 +615,7 @@ fn test() {
         "[].concat(some./**/array)",
         "[/**/].concat(some./**/array)",
         "[/**/].concat(some.array)",
+        "const Items = [] as unknown[]; Items.flatMap(x => x);",
     ];
 
     let fix = vec![
@@ -631,6 +636,10 @@ fn test() {
             "for (const value of values) {
                 value.flat();
             }",
+        ),
+        (
+            "const Items = [] as unknown[]; Items.flatMap(x => x);",
+            "const Items = [] as unknown[]; Items.flat();",
         ),
         // TODO: Get these passing.
         // ("/**/[].concat.apply([], array)", "/**/array.flat()"),
