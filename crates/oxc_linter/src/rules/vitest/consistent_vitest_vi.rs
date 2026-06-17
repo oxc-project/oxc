@@ -2,7 +2,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
-use oxc_ast::{AstKind, ast::ImportDeclarationSpecifier};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -125,6 +125,10 @@ impl Rule for ConsistentVitestVi {
                 ctx.diagnostic_with_fix(
                     consistent_vitest_vi_diagnostic(vitest_import.span(), &self.function),
                     |fixer| {
+                        // Keep each specifier's full source text (e.g. `expect as toBe`,
+                        // `type Foo`) rather than just its local name, otherwise aliases and
+                        // `type` qualifiers are dropped and the rewritten import rebinds to a
+                        // different (often non-existent) export.
                         let mut specifiers_without_opposite_accessor: Vec<Cow<str>> = import
                             .specifiers
                             .as_ref()
@@ -132,7 +136,7 @@ impl Rule for ConsistentVitestVi {
                                 specs
                                     .iter()
                                     .filter(|spec| spec.name() != opposite.as_str())
-                                    .map(ImportDeclarationSpecifier::name)
+                                    .map(|spec| Cow::Borrowed(fixer.source_range(spec.span())))
                                     .collect()
                             })
                             .unwrap_or_default();
@@ -140,10 +144,18 @@ impl Rule for ConsistentVitestVi {
                         if specifiers_without_opposite_accessor.is_empty() {
                             fixer.replace(vitest_import.local().span, self.function.as_str())
                         } else {
-                            if !specifiers_without_opposite_accessor
-                                .iter()
-                                .any(|s| s.as_ref() == self.function.as_str())
-                            {
+                            // Only add the target accessor when no kept specifier already binds
+                            // it locally. Compare LOCAL names (`spec.name()`), not the kept full
+                            // text — otherwise an alias/`type` whose local name is the target
+                            // (e.g. `import { x as vi, vitest }`) would get a duplicate `vi`.
+                            let target_already_bound =
+                                import.specifiers.as_ref().is_some_and(|specs| {
+                                    specs.iter().any(|spec| {
+                                        spec.name() != opposite.as_str()
+                                            && spec.name() == self.function.as_str()
+                                    })
+                                });
+                            if !target_already_bound {
                                 specifiers_without_opposite_accessor
                                     .push(self.function.as_str().into());
                             }
@@ -162,10 +174,11 @@ impl Rule for ConsistentVitestVi {
                                 return fixer.noop();
                             };
 
-                            let specifiers_span = Span::new(
-                                first_specifier.local().span.start,
-                                last_specifier.local().span.end,
-                            );
+                            // Use the full specifier spans (not `local()`) so an alias/`type`
+                            // qualifier on the first or last specifier is included in the
+                            // replaced range instead of being left behind.
+                            let specifiers_span =
+                                Span::new(first_specifier.span().start, last_specifier.span().end);
 
                             fixer.replace(specifiers_span, import_text)
                         }
@@ -243,6 +256,28 @@ fn test() {
             r#"import { expect, vi, vitest } from "vitest";"#,
             r#"import { expect, vi } from "vitest";"#,
             None,
+        ),
+        // aliased specifiers must be preserved, not collapsed to their local name
+        (
+            r#"import { vitest, expect as toBe } from "vitest";"#,
+            r#"import { expect as toBe, vi } from "vitest";"#,
+            None,
+        ),
+        (
+            r#"import { expect as e, vitest } from "vitest";"#,
+            r#"import { expect as e, vi } from "vitest";"#,
+            None,
+        ),
+        // a kept specifier already bound to the target locally must not be duplicated
+        (
+            r#"import { x as vi, vitest } from "vitest";"#,
+            r#"import { x as vi } from "vitest";"#,
+            None,
+        ),
+        (
+            r#"import { x as vitest, vi } from "vitest";"#,
+            r#"import { x as vitest } from "vitest";"#,
+            Some(serde_json::json!([{ "fn": "vitest" }])),
         ),
         (
             r#"import { vitest } from "vitest";
