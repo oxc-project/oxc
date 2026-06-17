@@ -5625,50 +5625,17 @@
               "$ref": "#/definitions/RuleNoConfig"
             },
             {
-              "anyOf": [
+              "type": "array",
+              "items": [
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "type": "boolean"
-                    },
-                    {
-                      "$ref": "#/definitions/NoMixedRequiresOptions"
-                    }
-                  ],
-                  "maxItems": 3,
-                  "minItems": 2
+                  "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "type": "boolean"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
-                },
-                {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "$ref": "#/definitions/NoMixedRequiresOptions"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/NoMixedRequiresConfig"
                 }
-              ]
+              ],
+              "maxItems": 2,
+              "minItems": 2
             }
           ]
         },
@@ -14244,6 +14211,16 @@
         }
       },
       "additionalProperties": false
+    },
+    "NoMixedRequiresConfig": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "$ref": "#/definitions/NoMixedRequiresOptions"
+        }
+      ]
     },
     "NoMixedRequiresOptions": {
       "type": "object",

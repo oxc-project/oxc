@@ -12,7 +12,7 @@ use oxc_span::Span;
 use crate::{
     AstNode,
     context::LintContext,
-    rule::{MixedTupleRuleConfig, Rule},
+    rule::{DefaultRuleConfig, Rule},
 };
 
 fn no_mix_require_diagnostic(span: Span) -> OxcDiagnostic {
@@ -21,6 +21,104 @@ fn no_mix_require_diagnostic(span: Span) -> OxcDiagnostic {
 
 fn no_mix_core_module_file_computed_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not mix core, module, file and computed requires.").with_label(span)
+}
+
+#[derive(Debug, Default, Clone, Copy, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields, default)]
+struct NoMixedRequiresOptions {
+    grouping: bool,
+    allow_call: bool,
+}
+
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
+#[serde(untagged)]
+enum NoMixedRequiresConfig {
+    Grouping(bool),
+    Options(NoMixedRequiresOptions),
+}
+
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
+pub struct NoMixedRequires(NoMixedRequiresOptions);
+
+declare_oxc_lint!(
+    /// ### What it does
+    ///
+    /// Disallows `require` calls to be mixed with regular variable declarations.
+    ///
+    /// ### Why is this bad?
+    ///
+    /// In the Node.js community it is often customary to separate initializations with calls to
+    /// `require` modules from other variable declarations, sometimes also grouping them by the type
+    /// of module.
+    ///
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```js
+    /// var fs = require('fs'),
+    ///     i = 0;
+    ///
+    /// var async = require('async'),
+    ///     debug = require('diagnostics').someFunction('my-module'),
+    ///     eslint = require('eslint');
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```js
+    /// var eventEmitter = require('events').EventEmitter,
+    ///     myUtils = require('./utils'),
+    ///     util = require('util'),
+    ///     bar = require(getBarModuleName());
+    ///
+    /// var foo = 42,
+    ///     bar = 'baz';
+    /// ```
+    NoMixedRequires,
+    node,
+    style,
+    config = NoMixedRequiresConfig,
+    version = "next",
+    short_description = "Disallow `require` calls to be mixed with regular variable declarations.",
+);
+
+impl Rule for NoMixedRequires {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        let config = serde_json::from_value::<DefaultRuleConfig<NoMixedRequiresConfig>>(value)?;
+        Ok(Self(config.into_inner().into()))
+    }
+
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::VariableDeclaration(var_decl) = node.kind() else {
+            return;
+        };
+
+        let grouping = self.0.grouping;
+        let allow_call = self.0.allow_call;
+
+        if is_mixed(&var_decl.declarations, allow_call) {
+            ctx.diagnostic(no_mix_require_diagnostic(var_decl.span));
+            return;
+        }
+
+        if grouping && !is_grouped(&var_decl.declarations, allow_call) {
+            ctx.diagnostic(no_mix_core_module_file_computed_diagnostic(var_decl.span));
+        }
+    }
+}
+
+impl Default for NoMixedRequiresConfig {
+    fn default() -> Self {
+        Self::Options(NoMixedRequiresOptions::default())
+    }
+}
+
+impl From<NoMixedRequiresConfig> for NoMixedRequiresOptions {
+    fn from(config: NoMixedRequiresConfig) -> Self {
+        match config {
+            NoMixedRequiresConfig::Grouping(grouping) => Self { grouping, allow_call: false },
+            NoMixedRequiresConfig::Options(options) => options,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -37,16 +135,6 @@ enum ModuleType {
     Module,
     Computed,
 }
-
-#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", deny_unknown_fields, default)]
-struct NoMixedRequiresOptions {
-    grouping: bool,
-    allow_call: bool,
-}
-
-#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
-pub struct NoMixedRequires(MixedTupleRuleConfig<bool, NoMixedRequiresOptions>);
 
 // This list is generated using `require("module").builtinModules` and was last updated using Node v13.8.0.
 // See <https://github.com/eslint-community/eslint-plugin-n/blob/master/lib/rules/no-mixed-requires.js>.
@@ -106,72 +194,6 @@ const BUILTIN_MODULES: &[&str] = &[
     "worker_threads",
     "zlib",
 ];
-
-declare_oxc_lint!(
-    /// ### What it does
-    ///
-    /// Disallows `require` calls to be mixed with regular variable declarations.
-    ///
-    /// ### Why is this bad?
-    ///
-    /// In the Node.js community it is often customary to separate initializations with calls to
-    /// `require` modules from other variable declarations, sometimes also grouping them by the type
-    /// of module.
-    ///
-    /// ### Examples
-    ///
-    /// Examples of **incorrect** code for this rule:
-    /// ```js
-    /// var fs = require('fs'),
-    ///     i = 0;
-    ///
-    /// var async = require('async'),
-    ///     debug = require('diagnostics').someFunction('my-module'),
-    ///     eslint = require('eslint');
-    /// ```
-    ///
-    /// Examples of **correct** code for this rule:
-    /// ```js
-    /// var eventEmitter = require('events').EventEmitter,
-    ///     myUtils = require('./utils'),
-    ///     util = require('util'),
-    ///     bar = require(getBarModuleName());
-    ///
-    /// var foo = 42,
-    ///     bar = 'baz';
-    /// ```
-    NoMixedRequires,
-    node,
-    style,
-    config = MixedTupleRuleConfig<bool, NoMixedRequiresOptions>,
-    version = "next",
-    short_description = "Disallow `require` calls to be mixed with regular variable declarations.",
-);
-
-impl Rule for NoMixedRequires {
-    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<MixedTupleRuleConfig<bool, NoMixedRequiresOptions>>(value)
-            .map(NoMixedRequires)
-    }
-
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::VariableDeclaration(var_decl) = node.kind() else {
-            return;
-        };
-
-        let grouping = if self.0.0 { true } else { self.0.1.grouping };
-        let allow_call = self.0.1.allow_call;
-
-        if is_mixed(&var_decl.declarations, allow_call) {
-            ctx.diagnostic(no_mix_require_diagnostic(var_decl.span));
-            return;
-        }
-
-        if grouping && !is_grouped(&var_decl.declarations, allow_call) {
-            ctx.diagnostic(no_mix_core_module_file_computed_diagnostic(var_decl.span));
-        }
-    }
-}
 
 fn get_declaration_type(init: Option<&Expression>, allow_call: bool) -> DeclarationType {
     let Some(init) = init else {
