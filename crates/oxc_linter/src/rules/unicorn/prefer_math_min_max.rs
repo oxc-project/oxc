@@ -197,8 +197,6 @@ fn test() {
         ),
         ("return 10e6 < height ? height : 10e6;", "return Math.max(height, 10e6);"),
         ("return -10e4 <= height ? height : -10e4;", "return Math.max(height, -10e4);"),
-        // Word-operator unary operands must keep their spacing / full operand (the old fixer
-        // reconstructed text, producing `typeofx` or dropping `delete`'s operand):
         ("const foo = typeof x < bar ? typeof x : bar;", "const foo = Math.min(typeof x, bar);"),
         ("const foo = void x < bar ? void x : bar;", "const foo = Math.min(void x, bar);"),
         (
