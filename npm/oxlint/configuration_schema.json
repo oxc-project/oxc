@@ -5619,6 +5619,9 @@
         "node/no-exports-assign": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "node/no-mixed-requires": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "node/no-new-require": {
           "$ref": "#/definitions/RuleNoConfig"
         },

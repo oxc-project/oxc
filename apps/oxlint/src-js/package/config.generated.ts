@@ -1193,6 +1193,7 @@ export interface DummyRuleMap {
   "node/global-require"?: RuleNoConfig;
   "node/handle-callback-err"?: RuleNoConfig | [AllowWarnDeny, HandleCallbackErrConfig];
   "node/no-exports-assign"?: RuleNoConfig;
+  "node/no-mixed-requires"?: RuleNoConfig;
   "node/no-new-require"?: RuleNoConfig;
   "node/no-path-concat"?: RuleNoConfig;
   "node/no-process-env"?: RuleNoConfig | [AllowWarnDeny, NoProcessEnvConfig];
