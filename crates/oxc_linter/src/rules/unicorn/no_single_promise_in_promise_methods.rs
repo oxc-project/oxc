@@ -122,10 +122,21 @@ impl Rule for NoSinglePromiseInPromiseMethods {
                 let call_span = call_expr.span;
 
                 if let Some(await_span) = await_expr_span {
+                    // `await` binds tighter than the element's operator, so dropping the
+                    // `Promise.x([…])` wrapper around a bare low-precedence element would
+                    // re-associate (`await Promise.race([a || b])` -> `await a || b`, i.e.
+                    // `(await a) || b`) or even become invalid (`await x = y`). Wrap such
+                    // elements in parentheses to preserve the original meaning.
+                    let awaited_elem =
+                        if first.as_expression().is_some_and(element_needs_parens_after_await) {
+                            format!("({elem_text})")
+                        } else {
+                            elem_text.to_owned()
+                        };
                     if method_name == "all" && !promise_all_result_unused {
-                        fixer.replace(await_span, format!("[await {elem_text}]"))
+                        fixer.replace(await_span, format!("[await {awaited_elem}]"))
                     } else {
-                        fixer.replace(call_span, elem_text.to_owned())
+                        fixer.replace(call_span, awaited_elem)
                     }
                 } else {
                     fixer.replace(call_span, format!("Promise.resolve({elem_text})"))
@@ -201,6 +212,30 @@ fn is_ignorable_kind(kind: &AstKind<'_>) -> bool {
             | AstKind::TSInstantiationExpression(_)
             | AstKind::TSNonNullExpression(_)
             | AstKind::TSTypeAssertion(_)
+    )
+}
+
+/// Whether `expr`, when spliced in as the argument of an `await`, must be
+/// parenthesized to keep its meaning. `await` has unary precedence, so an element
+/// with lower precedence would otherwise re-associate (`await a || b` parses as
+/// `(await a) || b`) or become invalid (`await x = y`, `await #x in y`). Already-parenthesized
+/// elements are `ParenthesizedExpression`s (parens preserved) and need no extra wrapping.
+///
+/// TS type-only expressions (`x as T`, `x satisfies T`) are intentionally left bare:
+/// they are erased at runtime, so `await x as T` is runtime-equivalent to the original,
+/// matching the existing `await Promise.all([x as T])` fix.
+fn element_needs_parens_after_await(expr: &Expression) -> bool {
+    matches!(
+        expr,
+        Expression::LogicalExpression(_)
+            | Expression::BinaryExpression(_)
+            // `#x in y` is a distinct node from `BinaryExpression` but has the same precedence.
+            | Expression::PrivateInExpression(_)
+            | Expression::ConditionalExpression(_)
+            | Expression::AssignmentExpression(_)
+            | Expression::ArrowFunctionExpression(_)
+            | Expression::YieldExpression(_)
+            | Expression::SequenceExpression(_)
     )
 }
 
@@ -370,6 +405,32 @@ fn test() {
             ",
             None,
         ),
+        // `await` binds tighter than the element's operator: low-precedence elements
+        // must be parenthesized so the fix preserves meaning (and stays valid syntax).
+        ("await Promise.race([a || b]);", "await (a || b);", None),
+        ("await Promise.any([a ?? b]);", "await (a ?? b);", None),
+        ("await Promise.race([a ? b : c]);", "await (a ? b : c);", None),
+        ("await Promise.race([x = y]);", "await (x = y);", None), // was invalid `await x = y`
+        ("await Promise.race([x | y]);", "await (x | y);", None),
+        // `#x in y` is a `PrivateInExpression`, not a `BinaryExpression`
+        (
+            "class C { #x; async m(y) { await Promise.race([#x in y]); } }",
+            "class C { #x; async m(y) { await (#x in y); } }",
+            None,
+        ),
+        ("await Promise.race([() => x]);", "await (() => x);", None),
+        (
+            "async function* f() { await Promise.race([yield x]); }",
+            "async function* f() { await (yield x); }",
+            None,
+        ),
+        // `[await …]` (Promise.all, result used) branch also needs the parens
+        ("(await Promise.all([a || b]))[0];", "([await (a || b)])[0];", None),
+        // already-parenthesized (sequence) element keeps its single set of parens
+        ("await Promise.race([(0, x)]);", "await (0, x);", None),
+        // an `await`/unary element needs no parens
+        ("await Promise.race([await x]);", "await await x;", None),
+        ("await Promise.race([-x]);", "await -x;", None),
     ];
 
     Tester::new(
