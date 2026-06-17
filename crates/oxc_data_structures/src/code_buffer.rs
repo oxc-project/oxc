@@ -695,6 +695,27 @@ impl CodeBuffer {
         &self.buf
     }
 
+    /// Get contents of buffer as a `&str`.
+    ///
+    /// # Example
+    /// ```
+    /// # use oxc_data_structures::code_buffer::CodeBuffer;
+    /// let mut code = CodeBuffer::new();
+    /// code.print_str("foo");
+    /// code.print_str("bar");
+    /// assert_eq!(code.as_str(), "foobar");
+    /// ```
+    #[expect(clippy::missing_panics_doc)]
+    #[inline]
+    pub fn as_str(&self) -> &str {
+        if cfg!(debug_assertions) {
+            str::from_utf8(&self.buf).unwrap()
+        } else {
+            // SAFETY: All methods of `CodeBuffer` ensure `buf` is valid UTF-8
+            unsafe { str::from_utf8_unchecked(&self.buf) }
+        }
+    }
+
     /// Consume buffer and return source code as a `String`.
     ///
     /// # Example
@@ -726,6 +747,13 @@ impl AsRef<[u8]> for CodeBuffer {
     }
 }
 
+impl AsRef<str> for CodeBuffer {
+    #[inline]
+    fn as_ref(&self) -> &str {
+        self.as_str()
+    }
+}
+
 impl From<CodeBuffer> for String {
     #[inline]
     fn from(code: CodeBuffer) -> Self {
@@ -743,6 +771,16 @@ mod test {
         assert!(code.is_empty());
         assert_eq!(code.len(), 0);
         assert_eq!(String::from(code), "");
+    }
+
+    #[test]
+    fn as_str() {
+        let s = "Hello, world!";
+        let mut code = CodeBuffer::with_capacity(s.len());
+        code.print_str(s);
+
+        let source = code.as_str();
+        assert_eq!(source, s);
     }
 
     #[test]
