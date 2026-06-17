@@ -1,8 +1,6 @@
 // Methods which are trivial or just delegate to other methods are marked `#[inline(always)]`
 #![expect(clippy::inline_always)]
 
-use std::mem;
-
 use itoa::Buffer as ItoaBuffer;
 
 use oxc_data_structures::{
@@ -152,8 +150,9 @@ impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
 
         self.buffer.print_str("\n,\"fixes\":[");
         if !self.fixes_buffer.is_empty() {
-            let traces_buffer = mem::take(&mut self.fixes_buffer).into_string();
-            self.buffer.print_str(&traces_buffer[1..]);
+            let fixes_buffer = self.fixes_buffer.as_str();
+            // Omit leading `,`
+            self.buffer.print_str(&fixes_buffer[1..]);
         }
         self.buffer.print_str("]}");
 
