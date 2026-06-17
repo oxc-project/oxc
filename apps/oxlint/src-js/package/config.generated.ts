@@ -86,12 +86,27 @@ export type Style = "expression" | "declaration";
 export type NamedExports = "ignore" | "expression" | "declaration";
 export type PairOrder = "anyOrder" | "getBeforeSet" | "setBeforeGet";
 export type Mode = "prefer-top-level" | "prefer-inline";
-export type DummyRule = AllowWarnDeny | [AllowWarnDeny, ...unknown[]];
+/**
+ * Extension rule configuration; Copy to avoid extra indirection.
+ */
+export type ExtensionRule = "always" | "never" | "ignorePackages";
+export type ImportExtensionsObject =
+  | ImportExtensionsConfig
+  | {
+      [k: string]: ExtensionRule;
+    };
+/**
+ * Action to take for path group overrides.
+ *
+ * Determines how import extensions are validated for matching bespoke import specifiers.
+ */
+export type PathGroupAction = "enforce" | "ignore";
 export type AbsoluteFirst = "absolute-first" | "disable-absolute-first";
 export type MaxDependenciesConfigJson = number | MaxDependenciesConfig;
 export type Target = "single" | "any";
 export type TestCaseName = "it" | "test";
 export type JestFnType = "hook" | "describe" | "test" | "expect" | "jest" | "unknown";
+export type DummyRule = AllowWarnDeny | [AllowWarnDeny, ...unknown[]];
 export type SnapshotHintMode = "always" | "multi";
 export type AltTextElements = "img" | "object" | "area" | 'input[type="image"]';
 export type AnchorIsValidAspect = "noHref" | "invalidHref" | "preferButton";
@@ -874,7 +889,14 @@ export interface DummyRuleMap {
   "import/default"?: RuleNoConfig;
   "import/export"?: RuleNoConfig;
   "import/exports-last"?: RuleNoConfig;
-  "import/extensions"?: DummyRule;
+  "import/extensions"?:
+    | RuleNoConfig
+    | (
+        | [AllowWarnDeny, ExtensionRule]
+        | [AllowWarnDeny, ExtensionRule, ImportExtensionsObject]
+        | [AllowWarnDeny, ExtensionRule]
+        | [AllowWarnDeny, ImportExtensionsObject]
+      );
   "import/first"?: RuleNoConfig | [AllowWarnDeny, AbsoluteFirst];
   "import/group-exports"?: RuleNoConfig;
   "import/max-dependencies"?: RuleNoConfig | [AllowWarnDeny, MaxDependenciesConfigJson];
@@ -1978,6 +2000,36 @@ export interface IdMatchOptions {
    * member names such as `obj.prop = value` are checked.
    */
   properties?: boolean;
+}
+export interface ImportExtensionsConfig {
+  /**
+   * Whether to check type imports when enforcing extension rules.
+   */
+  checkTypeImports?: boolean;
+  /**
+   * Whether to ignore package imports when enforcing extension rules.
+   */
+  ignorePackages?: boolean;
+  /**
+   * Path group overrides for bespoke import specifiers.
+   */
+  pathGroupOverrides?: PathGroupOverrideConfig[];
+  /**
+   * Per-extension rules.
+   */
+  pattern?: {
+    [k: string]: ExtensionRule;
+  };
+}
+export interface PathGroupOverrideConfig {
+  /**
+   * Action to take when pattern matches.
+   */
+  action: PathGroupAction;
+  /**
+   * Glob pattern to match import specifiers.
+   */
+  pattern: string;
 }
 export interface MaxDependenciesConfig {
   /**
