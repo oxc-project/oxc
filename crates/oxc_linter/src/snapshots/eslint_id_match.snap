@@ -194,16 +194,16 @@ source: crates/oxc_linter/src/tester.rs
    ·                ─────────────
    ╰────
 
-  ⚠ eslint(id-match): Identifier 'no_camelcased' does not match the pattern '^[^_]+$'.
-   ╭─[id_match.tsx:1:7]
- 1 │ const no_camelcased = 0; function foo({ camelcased_value = no_camelcased }) {}
-   ·       ─────────────
-   ╰────
-
   ⚠ eslint(id-match): Identifier 'camelcased_value' does not match the pattern '^[^_]+$'.
    ╭─[id_match.tsx:1:41]
  1 │ const no_camelcased = 0; function foo({ camelcased_value = no_camelcased }) {}
    ·                                         ────────────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'no_camelcased' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:7]
+ 1 │ const no_camelcased = 0; function foo({ camelcased_value = no_camelcased }) {}
+   ·       ─────────────
    ╰────
 
   ⚠ eslint(id-match): Identifier 'no_camelcased' does not match the pattern '^[^_]+$'.
@@ -236,6 +236,24 @@ source: crates/oxc_linter/src/tester.rs
    ·         ─────────────
    ╰────
 
+  ⚠ eslint(id-match): Identifier 'Array' does not match the pattern '^\$?[a-z]+([A-Z0-9][a-z0-9]+)*$'.
+   ╭─[id_match.tsx:1:221]
+ 1 │ const foo_variable = 1; class MyClass {} let a = new MyClass(); let b = { id: 1 }; let c = Object.keys(b); let d = Array.from(b); let e = (Object) => Object.keys(obj, prop); let f = (Array) => Array.from(obj, prop); foo.Array = 5;
+   ·                                                                                                                                                                                                                             ─────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'Object' does not match the pattern '^\$?[a-z]+([A-Z0-9][a-z0-9]+)*$'.
+   ╭─[id_match.tsx:1:151]
+ 1 │ const foo_variable = 1; class MyClass {} let a = new MyClass(); let b = { id: 1 }; let c = Object.keys(b); let d = Array.from(b); let e = (Object) => Object.keys(obj, prop); let f = (Array) => Array.from(obj, prop); foo.Array = 5;
+   ·                                                                                                                                                       ──────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'Array' does not match the pattern '^\$?[a-z]+([A-Z0-9][a-z0-9]+)*$'.
+   ╭─[id_match.tsx:1:194]
+ 1 │ const foo_variable = 1; class MyClass {} let a = new MyClass(); let b = { id: 1 }; let c = Object.keys(b); let d = Array.from(b); let e = (Object) => Object.keys(obj, prop); let f = (Array) => Array.from(obj, prop); foo.Array = 5;
+   ·                                                                                                                                                                                                  ─────
+   ╰────
+
   ⚠ eslint(id-match): Identifier 'foo_variable' does not match the pattern '^\$?[a-z]+([A-Z0-9][a-z0-9]+)*$'.
    ╭─[id_match.tsx:1:7]
  1 │ const foo_variable = 1; class MyClass {} let a = new MyClass(); let b = { id: 1 }; let c = Object.keys(b); let d = Array.from(b); let e = (Object) => Object.keys(obj, prop); let f = (Array) => Array.from(obj, prop); foo.Array = 5;
@@ -254,28 +272,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                                                                                                            ──────
    ╰────
 
-  ⚠ eslint(id-match): Identifier 'Object' does not match the pattern '^\$?[a-z]+([A-Z0-9][a-z0-9]+)*$'.
-   ╭─[id_match.tsx:1:151]
- 1 │ const foo_variable = 1; class MyClass {} let a = new MyClass(); let b = { id: 1 }; let c = Object.keys(b); let d = Array.from(b); let e = (Object) => Object.keys(obj, prop); let f = (Array) => Array.from(obj, prop); foo.Array = 5;
-   ·                                                                                                                                                       ──────
-   ╰────
-
   ⚠ eslint(id-match): Identifier 'Array' does not match the pattern '^\$?[a-z]+([A-Z0-9][a-z0-9]+)*$'.
    ╭─[id_match.tsx:1:184]
  1 │ const foo_variable = 1; class MyClass {} let a = new MyClass(); let b = { id: 1 }; let c = Object.keys(b); let d = Array.from(b); let e = (Object) => Object.keys(obj, prop); let f = (Array) => Array.from(obj, prop); foo.Array = 5;
    ·                                                                                                                                                                                        ─────
-   ╰────
-
-  ⚠ eslint(id-match): Identifier 'Array' does not match the pattern '^\$?[a-z]+([A-Z0-9][a-z0-9]+)*$'.
-   ╭─[id_match.tsx:1:194]
- 1 │ const foo_variable = 1; class MyClass {} let a = new MyClass(); let b = { id: 1 }; let c = Object.keys(b); let d = Array.from(b); let e = (Object) => Object.keys(obj, prop); let f = (Array) => Array.from(obj, prop); foo.Array = 5;
-   ·                                                                                                                                                                                                  ─────
-   ╰────
-
-  ⚠ eslint(id-match): Identifier 'Array' does not match the pattern '^\$?[a-z]+([A-Z0-9][a-z0-9]+)*$'.
-   ╭─[id_match.tsx:1:221]
- 1 │ const foo_variable = 1; class MyClass {} let a = new MyClass(); let b = { id: 1 }; let c = Object.keys(b); let d = Array.from(b); let e = (Object) => Object.keys(obj, prop); let f = (Array) => Array.from(obj, prop); foo.Array = 5;
-   ·                                                                                                                                                                                                                             ─────
    ╰────
 
   ⚠ eslint(id-match): Identifier '_foo' does not match the pattern '^[^_]+$'.
@@ -459,12 +459,6 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint(id-match): Identifier 'bad_name' does not match the pattern '^[^_]+$'.
-   ╭─[id_match.tsx:1:7]
- 1 │ const bad_name = 1; export { bad_name };
-   ·       ────────
-   ╰────
-
-  ⚠ eslint(id-match): Identifier 'bad_name' does not match the pattern '^[^_]+$'.
    ╭─[id_match.tsx:1:30]
  1 │ const bad_name = 1; export { bad_name };
    ·                              ────────
@@ -472,14 +466,8 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(id-match): Identifier 'bad_name' does not match the pattern '^[^_]+$'.
    ╭─[id_match.tsx:1:7]
- 1 │ const bad_name = 1; export { bad_name as bad_name };
+ 1 │ const bad_name = 1; export { bad_name };
    ·       ────────
-   ╰────
-
-  ⚠ eslint(id-match): Identifier 'bad_name' does not match the pattern '^[^_]+$'.
-   ╭─[id_match.tsx:1:30]
- 1 │ const bad_name = 1; export { bad_name as bad_name };
-   ·                              ────────
    ╰────
 
   ⚠ eslint(id-match): Identifier 'bad_name' does not match the pattern '^[^_]+$'.
@@ -489,8 +477,14 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint(id-match): Identifier 'bad_name' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:30]
+ 1 │ const bad_name = 1; export { bad_name as bad_name };
+   ·                              ────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'bad_name' does not match the pattern '^[^_]+$'.
    ╭─[id_match.tsx:1:7]
- 1 │ const bad_name = 1; export { bad_name as goodName };
+ 1 │ const bad_name = 1; export { bad_name as bad_name };
    ·       ────────
    ╰────
 
@@ -498,6 +492,12 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[id_match.tsx:1:30]
  1 │ const bad_name = 1; export { bad_name as goodName };
    ·                              ────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'bad_name' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:7]
+ 1 │ const bad_name = 1; export { bad_name as goodName };
+   ·       ────────
    ╰────
 
   ⚠ eslint(id-match): Identifier 'bad_label' does not match the pattern '^[^_]+$'.

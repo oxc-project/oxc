@@ -233,19 +233,19 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `~ /* will remove 1 */ ~ /* will remove 2 */ 3.4` with `Math.trunc(3.4)`.
 
-  ⚠ unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `| 0`.
-   ╭─[prefer_math_trunc.tsx:1:13]
- 1 │ const foo = ~~bar | 0;
-   ·             ─────────
-   ╰────
-  help: Replace `~~bar | 0` with `Math.trunc(~~bar)`.
-
   ⚠ unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `~ 0`.
    ╭─[prefer_math_trunc.tsx:1:13]
  1 │ const foo = ~~bar | 0;
    ·             ─────
    ╰────
   help: Replace `~~bar` with `Math.trunc(bar)`.
+
+  ⚠ unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `| 0`.
+   ╭─[prefer_math_trunc.tsx:1:13]
+ 1 │ const foo = ~~bar | 0;
+   ·             ─────────
+   ╰────
+  help: Replace `~~bar | 0` with `Math.trunc(~~bar)`.
 
   ⚠ unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `~ 0`.
    ╭─[prefer_math_trunc.tsx:1:13]

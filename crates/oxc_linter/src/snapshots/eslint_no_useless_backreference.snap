@@ -555,17 +555,17 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider revising the pattern to remove or relocate the backreference so it points to a group that can be matched at the time of evaluation.
 
-  ⚠ eslint(no-useless-backreference): Backreference '\2' will be ignored. It references group '(b)' which appears before in the same lookbehind.
-   ╭─[no_useless_backreference.tsx:1:5]
- 1 │ /(a)\2(b)/; RegExp('(\\1)');
-   ·     ──
-   ╰────
-  help: Consider revising the pattern to remove or relocate the backreference so it points to a group that can be matched at the time of evaluation.
-
   ⚠ eslint(no-useless-backreference): Backreference '\\1' will be ignored. It references group '(\\1)' from within that group.
    ╭─[no_useless_backreference.tsx:1:22]
  1 │ /(a)\2(b)/; RegExp('(\\1)');
    ·                      ───
+   ╰────
+  help: Consider revising the pattern to remove or relocate the backreference so it points to a group that can be matched at the time of evaluation.
+
+  ⚠ eslint(no-useless-backreference): Backreference '\2' will be ignored. It references group '(b)' which appears before in the same lookbehind.
+   ╭─[no_useless_backreference.tsx:1:5]
+ 1 │ /(a)\2(b)/; RegExp('(\\1)');
+   ·     ──
    ╰────
   help: Consider revising the pattern to remove or relocate the backreference so it points to a group that can be matched at the time of evaluation.
 

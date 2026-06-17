@@ -454,32 +454,6 @@ source: crates/oxc_linter/src/tester.rs
   help: Use `find(predicate)` instead of `filter(predicate)[0]` or similar patterns.
 
   ⚠ unicorn(prefer-array-find): Prefer `find` over filtering and accessing the first result.
-   ╭─[prefer_array_find.tsx:1:19]
- 1 │ const quz = array.filter(fn);
-   ·                   ──────
- 2 │             const [foo] = array.filter(quz[0]);
-   ╰────
-  help: Use `find(predicate)` instead of `filter(predicate)[0]` or similar patterns.
-
-  ⚠ unicorn(prefer-array-find): Prefer `find` over filtering and accessing the first result.
-   ╭─[prefer_array_find.tsx:2:33]
- 1 │ const quz = array.filter(fn);
- 2 │             const [foo] = array.filter(quz[0]);
-   ·                                 ──────
- 3 │             [{bar: baz}] = foo[
-   ╰────
-  help: Use `find(predicate)` instead of `filter(predicate)[0]` or similar patterns.
-
-  ⚠ unicorn(prefer-array-find): Prefer `find` over filtering and accessing the first result.
-   ╭─[prefer_array_find.tsx:5:15]
- 4 │                 array.filter(fn)[0]
- 5 │             ].filter(
-   ·               ──────
- 6 │                 array.filter(fn).shift()
-   ╰────
-  help: Use `find(predicate)` instead of `filter(predicate)[0]` or similar patterns.
-
-  ⚠ unicorn(prefer-array-find): Prefer `find` over filtering and accessing the first result.
    ╭─[prefer_array_find.tsx:4:23]
  3 │             [{bar: baz}] = foo[
  4 │                 array.filter(fn)[0]
@@ -498,11 +472,28 @@ source: crates/oxc_linter/src/tester.rs
   help: Use `find(predicate)` instead of `filter(predicate)[0]` or similar patterns.
 
   ⚠ unicorn(prefer-array-find): Prefer `find` over filtering and accessing the first result.
+   ╭─[prefer_array_find.tsx:5:15]
+ 4 │                 array.filter(fn)[0]
+ 5 │             ].filter(
+   ·               ──────
+ 6 │                 array.filter(fn).shift()
+   ╰────
+  help: Use `find(predicate)` instead of `filter(predicate)[0]` or similar patterns.
+
+  ⚠ unicorn(prefer-array-find): Prefer `find` over filtering and accessing the first result.
+   ╭─[prefer_array_find.tsx:1:19]
+ 1 │ const quz = array.filter(fn);
+   ·                   ──────
+ 2 │             const [foo] = array.filter(quz[0]);
+   ╰────
+  help: Use `find(predicate)` instead of `filter(predicate)[0]` or similar patterns.
+
+  ⚠ unicorn(prefer-array-find): Prefer `find` over filtering and accessing the first result.
    ╭─[prefer_array_find.tsx:2:33]
- 1 │ const quz = array.find(fn);
- 2 │             const [foo] = array.filter(quz);
+ 1 │ const quz = array.filter(fn);
+ 2 │             const [foo] = array.filter(quz[0]);
    ·                                 ──────
- 3 │             ({bar: baz} = foo[
+ 3 │             [{bar: baz}] = foo[
    ╰────
   help: Use `find(predicate)` instead of `filter(predicate)[0]` or similar patterns.
 
@@ -521,6 +512,15 @@ source: crates/oxc_linter/src/tester.rs
  6 │                 array.filter(fn).shift()
    ·                       ──────
  7 │             ));
+   ╰────
+  help: Use `find(predicate)` instead of `filter(predicate)[0]` or similar patterns.
+
+  ⚠ unicorn(prefer-array-find): Prefer `find` over filtering and accessing the first result.
+   ╭─[prefer_array_find.tsx:2:33]
+ 1 │ const quz = array.find(fn);
+ 2 │             const [foo] = array.filter(quz);
+   ·                                 ──────
+ 3 │             ({bar: baz} = foo[
    ╰────
   help: Use `find(predicate)` instead of `filter(predicate)[0]` or similar patterns.
 

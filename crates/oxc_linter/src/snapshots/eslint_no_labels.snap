@@ -9,13 +9,6 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider refactoring the code to eliminate the need for labels.
 
-  ⚠ eslint(no-labels): Labeled statement is not allowed
-   ╭─[no_labels.tsx:1:1]
- 1 │ label: while (true) { break label; }
-   · ─────
-   ╰────
-  help: Consider refactoring the code to eliminate the need for labels.
-
   ⚠ eslint(no-labels): Label in break statement is not allowed
    ╭─[no_labels.tsx:1:29]
  1 │ label: while (true) { break label; }
@@ -25,7 +18,7 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(no-labels): Labeled statement is not allowed
    ╭─[no_labels.tsx:1:1]
- 1 │ label: while (true) { continue label; }
+ 1 │ label: while (true) { break label; }
    · ─────
    ╰────
   help: Consider refactoring the code to eliminate the need for labels.
@@ -39,14 +32,14 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(no-labels): Labeled statement is not allowed
    ╭─[no_labels.tsx:1:1]
- 1 │ A: var foo = 0;
-   · ─
+ 1 │ label: while (true) { continue label; }
+   · ─────
    ╰────
   help: Consider refactoring the code to eliminate the need for labels.
 
   ⚠ eslint(no-labels): Labeled statement is not allowed
    ╭─[no_labels.tsx:1:1]
- 1 │ A: break A;
+ 1 │ A: var foo = 0;
    · ─
    ╰────
   help: Consider refactoring the code to eliminate the need for labels.
@@ -60,7 +53,7 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(no-labels): Labeled statement is not allowed
    ╭─[no_labels.tsx:1:1]
- 1 │ A: { if (foo()) { break A; } bar(); };
+ 1 │ A: break A;
    · ─
    ╰────
   help: Consider refactoring the code to eliminate the need for labels.
@@ -74,7 +67,7 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(no-labels): Labeled statement is not allowed
    ╭─[no_labels.tsx:1:1]
- 1 │ A: if (a) { if (foo()) { break A; } bar(); };
+ 1 │ A: { if (foo()) { break A; } bar(); };
    · ─
    ╰────
   help: Consider refactoring the code to eliminate the need for labels.
@@ -88,7 +81,7 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(no-labels): Labeled statement is not allowed
    ╭─[no_labels.tsx:1:1]
- 1 │ A: switch (a) { case 0: break A; default: break; };
+ 1 │ A: if (a) { if (foo()) { break A; } bar(); };
    · ─
    ╰────
   help: Consider refactoring the code to eliminate the need for labels.
@@ -102,15 +95,8 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(no-labels): Labeled statement is not allowed
    ╭─[no_labels.tsx:1:1]
- 1 │ A: switch (a) { case 0: B: { break A; } default: break; };
+ 1 │ A: switch (a) { case 0: break A; default: break; };
    · ─
-   ╰────
-  help: Consider refactoring the code to eliminate the need for labels.
-
-  ⚠ eslint(no-labels): Labeled statement is not allowed
-   ╭─[no_labels.tsx:1:25]
- 1 │ A: switch (a) { case 0: B: { break A; } default: break; };
-   ·                         ─
    ╰────
   help: Consider refactoring the code to eliminate the need for labels.
 
@@ -123,14 +109,21 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(no-labels): Labeled statement is not allowed
    ╭─[no_labels.tsx:1:1]
- 1 │ A: var foo = 0;
+ 1 │ A: switch (a) { case 0: B: { break A; } default: break; };
    · ─
    ╰────
   help: Consider refactoring the code to eliminate the need for labels.
 
   ⚠ eslint(no-labels): Labeled statement is not allowed
+   ╭─[no_labels.tsx:1:25]
+ 1 │ A: switch (a) { case 0: B: { break A; } default: break; };
+   ·                         ─
+   ╰────
+  help: Consider refactoring the code to eliminate the need for labels.
+
+  ⚠ eslint(no-labels): Labeled statement is not allowed
    ╭─[no_labels.tsx:1:1]
- 1 │ A: break A;
+ 1 │ A: var foo = 0;
    · ─
    ╰────
   help: Consider refactoring the code to eliminate the need for labels.
@@ -144,7 +137,7 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(no-labels): Labeled statement is not allowed
    ╭─[no_labels.tsx:1:1]
- 1 │ A: { if (foo()) { break A; } bar(); };
+ 1 │ A: break A;
    · ─
    ╰────
   help: Consider refactoring the code to eliminate the need for labels.
@@ -158,7 +151,7 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(no-labels): Labeled statement is not allowed
    ╭─[no_labels.tsx:1:1]
- 1 │ A: if (a) { if (foo()) { break A; } bar(); };
+ 1 │ A: { if (foo()) { break A; } bar(); };
    · ─
    ╰────
   help: Consider refactoring the code to eliminate the need for labels.
@@ -172,7 +165,7 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(no-labels): Labeled statement is not allowed
    ╭─[no_labels.tsx:1:1]
- 1 │ A: switch (a) { case 0: break A; default: break; };
+ 1 │ A: if (a) { if (foo()) { break A; } bar(); };
    · ─
    ╰────
   help: Consider refactoring the code to eliminate the need for labels.
@@ -186,14 +179,14 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(no-labels): Labeled statement is not allowed
    ╭─[no_labels.tsx:1:1]
- 1 │ A: var foo = 0;
+ 1 │ A: switch (a) { case 0: break A; default: break; };
    · ─
    ╰────
   help: Consider refactoring the code to eliminate the need for labels.
 
   ⚠ eslint(no-labels): Labeled statement is not allowed
    ╭─[no_labels.tsx:1:1]
- 1 │ A: break A;
+ 1 │ A: var foo = 0;
    · ─
    ╰────
   help: Consider refactoring the code to eliminate the need for labels.
@@ -207,7 +200,7 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(no-labels): Labeled statement is not allowed
    ╭─[no_labels.tsx:1:1]
- 1 │ A: { if (foo()) { break A; } bar(); };
+ 1 │ A: break A;
    · ─
    ╰────
   help: Consider refactoring the code to eliminate the need for labels.
@@ -221,7 +214,7 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(no-labels): Labeled statement is not allowed
    ╭─[no_labels.tsx:1:1]
- 1 │ A: if (a) { if (foo()) { break A; } bar(); };
+ 1 │ A: { if (foo()) { break A; } bar(); };
    · ─
    ╰────
   help: Consider refactoring the code to eliminate the need for labels.
@@ -235,7 +228,7 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(no-labels): Labeled statement is not allowed
    ╭─[no_labels.tsx:1:1]
- 1 │ A: while (a) { break A; }
+ 1 │ A: if (a) { if (foo()) { break A; } bar(); };
    · ─
    ╰────
   help: Consider refactoring the code to eliminate the need for labels.
@@ -249,7 +242,7 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(no-labels): Labeled statement is not allowed
    ╭─[no_labels.tsx:1:1]
- 1 │ A: do { if (b) { break A; } } while (a);
+ 1 │ A: while (a) { break A; }
    · ─
    ╰────
   help: Consider refactoring the code to eliminate the need for labels.
@@ -263,7 +256,7 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(no-labels): Labeled statement is not allowed
    ╭─[no_labels.tsx:1:1]
- 1 │ A: for (var a in obj) { for (;;) { switch (a) { case 0: break A; } } }
+ 1 │ A: do { if (b) { break A; } } while (a);
    · ─
    ╰────
   help: Consider refactoring the code to eliminate the need for labels.
@@ -272,5 +265,12 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_labels.tsx:1:63]
  1 │ A: for (var a in obj) { for (;;) { switch (a) { case 0: break A; } } }
    ·                                                               ─
+   ╰────
+  help: Consider refactoring the code to eliminate the need for labels.
+
+  ⚠ eslint(no-labels): Labeled statement is not allowed
+   ╭─[no_labels.tsx:1:1]
+ 1 │ A: for (var a in obj) { for (;;) { switch (a) { case 0: break A; } } }
+   · ─
    ╰────
   help: Consider refactoring the code to eliminate the need for labels.

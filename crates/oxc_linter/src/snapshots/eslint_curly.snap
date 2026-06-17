@@ -433,13 +433,6 @@ source: crates/oxc_linter/src/tester.rs
         			 doSomething();
         			 `.
 
-  ⚠ eslint(curly): Expected { after 'for-in'.
-   ╭─[curly.tsx:1:22]
- 1 │ for (var foo in bar) if (foo) console.log(1); else console.log(2);
-   ·                      ─────────────────────────────────────────────
-   ╰────
-  help: Replace `if (foo) console.log(1); else console.log(2);` with `{if (foo) console.log(1); else console.log(2);}`.
-
   ⚠ eslint(curly): Expected { after 'if' condition.
    ╭─[curly.tsx:1:31]
  1 │ for (var foo in bar) if (foo) console.log(1); else console.log(2);
@@ -453,6 +446,13 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                    ───────────────
    ╰────
   help: Replace `console.log(2);` with `{console.log(2);}`.
+
+  ⚠ eslint(curly): Expected { after 'for-in'.
+   ╭─[curly.tsx:1:22]
+ 1 │ for (var foo in bar) if (foo) console.log(1); else console.log(2);
+   ·                      ─────────────────────────────────────────────
+   ╰────
+  help: Replace `if (foo) console.log(1); else console.log(2);` with `{if (foo) console.log(1); else console.log(2);}`.
 
   ⚠ eslint(curly): Expected { after 'for-in'.
    ╭─[curly.tsx:2:5]

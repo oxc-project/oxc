@@ -2,15 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ vue(no-async-in-computed-properties): Unexpected async function declaration in "foo" computed property.
-   ╭─[no_async_in_computed_properties.tsx:5:30]
- 4 │                           computed: {
- 5 │ ╭─▶                         foo: async function () {
- 6 │ │                             return await someFunc()
- 7 │ ╰─▶                         }
- 8 │                           }
-   ╰────
-
   ⚠ vue(no-async-in-computed-properties): Unexpected await operator in "foo" computed property.
    ╭─[no_async_in_computed_properties.tsx:6:34]
  5 │                         foo: async function () {
@@ -23,7 +14,7 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_async_in_computed_properties.tsx:5:30]
  4 │                           computed: {
  5 │ ╭─▶                         foo: async function () {
- 6 │ │                             return new Promise((resolve, reject) => {})
+ 6 │ │                             return await someFunc()
  7 │ ╰─▶                         }
  8 │                           }
    ╰────
@@ -34,6 +25,15 @@ source: crates/oxc_linter/src/tester.rs
  6 │                           return new Promise((resolve, reject) => {})
    ·                                  ────────────────────────────────────
  7 │                         }
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected async function declaration in "foo" computed property.
+   ╭─[no_async_in_computed_properties.tsx:5:30]
+ 4 │                           computed: {
+ 5 │ ╭─▶                         foo: async function () {
+ 6 │ │                             return new Promise((resolve, reject) => {})
+ 7 │ ╰─▶                         }
+ 8 │                           }
    ╰────
 
   ⚠ vue(no-async-in-computed-properties): Unexpected asynchronous action in "foo" computed property.
@@ -156,30 +156,27 @@ source: crates/oxc_linter/src/tester.rs
  8 │                         return 'foo'
    ╰────
 
-  ⚠ vue(no-async-in-computed-properties): Unexpected async function declaration in "foo" computed property.
-    ╭─[no_async_in_computed_properties.tsx:5:33]
-  4 │                         computed: {
-  5 │ ╭─▶                       async foo () {
-  6 │ │                           await this.$nextTick()
-  7 │ │                           await Vue.nextTick()
-  8 │ │                           return 'foo'
-  9 │ ╰─▶                       }
- 10 │                         }
-    ╰────
+  ⚠ vue(no-async-in-computed-properties): Unexpected asynchronous action in "foo" computed property.
+   ╭─[no_async_in_computed_properties.tsx:6:31]
+ 5 │                       async foo () {
+ 6 │                         await this.$nextTick()
+   ·                               ────────────────
+ 7 │                         await Vue.nextTick()
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected asynchronous action in "foo" computed property.
+   ╭─[no_async_in_computed_properties.tsx:7:31]
+ 6 │                         await this.$nextTick()
+ 7 │                         await Vue.nextTick()
+   ·                               ──────────────
+ 8 │                         return 'foo'
+   ╰────
 
   ⚠ vue(no-async-in-computed-properties): Unexpected await operator in "foo" computed property.
    ╭─[no_async_in_computed_properties.tsx:6:25]
  5 │                       async foo () {
  6 │                         await this.$nextTick()
    ·                         ──────────────────────
- 7 │                         await Vue.nextTick()
-   ╰────
-
-  ⚠ vue(no-async-in-computed-properties): Unexpected asynchronous action in "foo" computed property.
-   ╭─[no_async_in_computed_properties.tsx:6:31]
- 5 │                       async foo () {
- 6 │                         await this.$nextTick()
-   ·                               ────────────────
  7 │                         await Vue.nextTick()
    ╰────
 
@@ -191,13 +188,16 @@ source: crates/oxc_linter/src/tester.rs
  8 │                         return 'foo'
    ╰────
 
-  ⚠ vue(no-async-in-computed-properties): Unexpected asynchronous action in "foo" computed property.
-   ╭─[no_async_in_computed_properties.tsx:7:31]
- 6 │                         await this.$nextTick()
- 7 │                         await Vue.nextTick()
-   ·                               ──────────────
- 8 │                         return 'foo'
-   ╰────
+  ⚠ vue(no-async-in-computed-properties): Unexpected async function declaration in "foo" computed property.
+    ╭─[no_async_in_computed_properties.tsx:5:33]
+  4 │                         computed: {
+  5 │ ╭─▶                       async foo () {
+  6 │ │                           await this.$nextTick()
+  7 │ │                           await Vue.nextTick()
+  8 │ │                           return 'foo'
+  9 │ ╰─▶                       }
+ 10 │                         }
+    ╰────
 
   ⚠ vue(no-async-in-computed-properties): Unexpected timed function in "foo" computed property.
    ╭─[no_async_in_computed_properties.tsx:6:25]
@@ -391,15 +391,6 @@ source: crates/oxc_linter/src/tester.rs
  14 │                       }
     ╰────
 
-  ⚠ vue(no-async-in-computed-properties): Unexpected async function declaration in computed function.
-   ╭─[no_async_in_computed_properties.tsx:6:46]
- 5 │                         setup() {
- 6 │ ╭─▶                       const test1 = computed(async () => {
- 7 │ │                           return await someFunc()
- 8 │ ╰─▶                       })
- 9 │                           const test2 = computed(async () => await someFunc())
-   ╰────
-
   ⚠ vue(no-async-in-computed-properties): Unexpected await operator in computed function.
    ╭─[no_async_in_computed_properties.tsx:7:32]
  6 │                       const test1 = computed(async () => {
@@ -408,29 +399,12 @@ source: crates/oxc_linter/src/tester.rs
  8 │                       })
    ╰────
 
-  ⚠ vue(no-async-in-computed-properties): Unexpected async function declaration in computed function.
-    ╭─[no_async_in_computed_properties.tsx:9:46]
-  8 │                       })
-  9 │                       const test2 = computed(async () => await someFunc())
-    ·                                              ────────────────────────────
- 10 │                       const test3 = computed(async function () {
-    ╰────
-
   ⚠ vue(no-async-in-computed-properties): Unexpected await operator in computed function.
     ╭─[no_async_in_computed_properties.tsx:9:58]
   8 │                       })
   9 │                       const test2 = computed(async () => await someFunc())
     ·                                                          ────────────────
  10 │                       const test3 = computed(async function () {
-    ╰────
-
-  ⚠ vue(no-async-in-computed-properties): Unexpected async function declaration in computed function.
-    ╭─[no_async_in_computed_properties.tsx:10:46]
-  9 │                           const test2 = computed(async () => await someFunc())
- 10 │ ╭─▶                       const test3 = computed(async function () {
- 11 │ │                           return await someFunc()
- 12 │ ╰─▶                       })
- 13 │                         }
     ╰────
 
   ⚠ vue(no-async-in-computed-properties): Unexpected await operator in computed function.
@@ -442,13 +416,30 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
 
   ⚠ vue(no-async-in-computed-properties): Unexpected async function declaration in computed function.
-   ╭─[no_async_in_computed_properties.tsx:6:45]
+    ╭─[no_async_in_computed_properties.tsx:10:46]
+  9 │                           const test2 = computed(async () => await someFunc())
+ 10 │ ╭─▶                       const test3 = computed(async function () {
+ 11 │ │                           return await someFunc()
+ 12 │ ╰─▶                       })
+ 13 │                         }
+    ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected async function declaration in computed function.
+   ╭─[no_async_in_computed_properties.tsx:6:46]
  5 │                         setup() {
- 6 │ ╭─▶                       const test = computed(async () => {
- 7 │ │                           return new Promise((resolve, reject) => {})
+ 6 │ ╭─▶                       const test1 = computed(async () => {
+ 7 │ │                           return await someFunc()
  8 │ ╰─▶                       })
- 9 │                         }
+ 9 │                           const test2 = computed(async () => await someFunc())
    ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected async function declaration in computed function.
+    ╭─[no_async_in_computed_properties.tsx:9:46]
+  8 │                       })
+  9 │                       const test2 = computed(async () => await someFunc())
+    ·                                              ────────────────────────────
+ 10 │                       const test3 = computed(async function () {
+    ╰────
 
   ⚠ vue(no-async-in-computed-properties): Unexpected Promise object in computed function.
    ╭─[no_async_in_computed_properties.tsx:7:32]
@@ -456,6 +447,15 @@ source: crates/oxc_linter/src/tester.rs
  7 │                         return new Promise((resolve, reject) => {})
    ·                                ────────────────────────────────────
  8 │                       })
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected async function declaration in computed function.
+   ╭─[no_async_in_computed_properties.tsx:6:45]
+ 5 │                         setup() {
+ 6 │ ╭─▶                       const test = computed(async () => {
+ 7 │ │                           return new Promise((resolve, reject) => {})
+ 8 │ ╰─▶                       })
+ 9 │                         }
    ╰────
 
   ⚠ vue(no-async-in-computed-properties): Unexpected asynchronous action in computed function.
@@ -563,29 +563,12 @@ source: crates/oxc_linter/src/tester.rs
  9 │                         }
    ╰────
 
-  ⚠ vue(no-async-in-computed-properties): Unexpected async function declaration in computed function.
-   ╭─[no_async_in_computed_properties.tsx:4:42]
- 3 │                       import {computed} from 'vue'
- 4 │ ╭─▶                   const test1 = computed(async () => {
- 5 │ │                       return await someFunc()
- 6 │ ╰─▶                   })
- 7 │                       const test2 = computed(async () => await someFunc())
-   ╰────
-
   ⚠ vue(no-async-in-computed-properties): Unexpected await operator in computed function.
    ╭─[no_async_in_computed_properties.tsx:5:28]
  4 │                   const test1 = computed(async () => {
  5 │                     return await someFunc()
    ·                            ────────────────
  6 │                   })
-   ╰────
-
-  ⚠ vue(no-async-in-computed-properties): Unexpected async function declaration in computed function.
-   ╭─[no_async_in_computed_properties.tsx:7:42]
- 6 │                   })
- 7 │                   const test2 = computed(async () => await someFunc())
-   ·                                          ────────────────────────────
- 8 │                   const test3 = computed(async function () {
    ╰────
 
   ⚠ vue(no-async-in-computed-properties): Unexpected await operator in computed function.
@@ -596,15 +579,6 @@ source: crates/oxc_linter/src/tester.rs
  8 │                   const test3 = computed(async function () {
    ╰────
 
-  ⚠ vue(no-async-in-computed-properties): Unexpected async function declaration in computed function.
-    ╭─[no_async_in_computed_properties.tsx:8:42]
-  7 │                       const test2 = computed(async () => await someFunc())
-  8 │ ╭─▶                   const test3 = computed(async function () {
-  9 │ │                       return await someFunc()
- 10 │ ╰─▶                   })
- 11 │                       </script>
-    ╰────
-
   ⚠ vue(no-async-in-computed-properties): Unexpected await operator in computed function.
     ╭─[no_async_in_computed_properties.tsx:9:28]
   8 │                   const test3 = computed(async function () {
@@ -614,12 +588,29 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
 
   ⚠ vue(no-async-in-computed-properties): Unexpected async function declaration in computed function.
-   ╭─[no_async_in_computed_properties.tsx:4:41]
+    ╭─[no_async_in_computed_properties.tsx:8:42]
+  7 │                       const test2 = computed(async () => await someFunc())
+  8 │ ╭─▶                   const test3 = computed(async function () {
+  9 │ │                       return await someFunc()
+ 10 │ ╰─▶                   })
+ 11 │                       </script>
+    ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected async function declaration in computed function.
+   ╭─[no_async_in_computed_properties.tsx:4:42]
  3 │                       import {computed} from 'vue'
- 4 │ ╭─▶                   const test = computed(async () => {
- 5 │ │                       return new Promise((resolve, reject) => {})
+ 4 │ ╭─▶                   const test1 = computed(async () => {
+ 5 │ │                       return await someFunc()
  6 │ ╰─▶                   })
- 7 │                       </script>
+ 7 │                       const test2 = computed(async () => await someFunc())
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected async function declaration in computed function.
+   ╭─[no_async_in_computed_properties.tsx:7:42]
+ 6 │                   })
+ 7 │                   const test2 = computed(async () => await someFunc())
+   ·                                          ────────────────────────────
+ 8 │                   const test3 = computed(async function () {
    ╰────
 
   ⚠ vue(no-async-in-computed-properties): Unexpected Promise object in computed function.
@@ -628,6 +619,15 @@ source: crates/oxc_linter/src/tester.rs
  5 │                     return new Promise((resolve, reject) => {})
    ·                            ────────────────────────────────────
  6 │                   })
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected async function declaration in computed function.
+   ╭─[no_async_in_computed_properties.tsx:4:41]
+ 3 │                       import {computed} from 'vue'
+ 4 │ ╭─▶                   const test = computed(async () => {
+ 5 │ │                       return new Promise((resolve, reject) => {})
+ 6 │ ╰─▶                   })
+ 7 │                       </script>
    ╰────
 
   ⚠ vue(no-async-in-computed-properties): Unexpected asynchronous action in computed function.

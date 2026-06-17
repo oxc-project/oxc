@@ -853,7 +853,7 @@ use crate::{
     timing::RuleTimingStat,
     utils::PossibleJestNode,
 };
-use oxc_semantic::AstTypesBitset;
+use oxc_semantic::{AstNodes, AstTypesBitset, NodeId};
 #[derive(Debug, Clone)]
 pub enum RuleEnum {
     ImportConsistentTypeSpecifierStyle(ImportConsistentTypeSpecifierStyle),
@@ -16240,6 +16240,8384 @@ impl RuleEnum {
                 Self::VueValidDefineOptions(rule) => rule.run(node, ctx),
                 Self::VueValidDefineProps(rule) => rule.run(node, ctx),
                 Self::VueValidNextTick(rule) => rule.run(node, ctx),
+            }
+        }
+    }
+    #[doc = r" Run this rule over every node in `node_ids` (all of the same AST type), resolving"]
+    #[doc = r" each id against `nodes`. The enum match happens once per call rather than once per"]
+    #[doc = r" node, so the per-node dispatch is a direct, inlinable call into the concrete rule."]
+    pub(crate) fn run_batch<'a, const TIMINGS: bool>(
+        &self,
+        node_ids: &[NodeId],
+        nodes: &AstNodes<'a>,
+        ctx: &LintContext<'a>,
+        timing_stat: Option<&mut RuleTimingStat>,
+    ) {
+        if TIMINGS {
+            timing_stat.expect("missing rule timing stat").time(|| match self {
+                Self::ImportConsistentTypeSpecifierStyle(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportDefault(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportExport(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportExportsLast(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportExtensions(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportFirst(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportGroupExports(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportMaxDependencies(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportNamed(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportNamespace(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportNewlineAfterImport(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportNoAbsolutePath(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportNoAmd(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportNoAnonymousDefaultExport(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportNoCommonjs(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportNoCycle(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportNoDefaultExport(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportNoDuplicates(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportNoDynamicRequire(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportNoEmptyNamedBlocks(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportNoMutableExports(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportNoNamedAsDefault(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportNoNamedAsDefaultMember(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportNoNamedDefault(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportNoNamedExport(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportNoNamespace(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportNoNodejsModules(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportNoRelativeParentImports(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportNoSelfImport(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportNoUnassignedImport(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportNoWebpackLoaderSyntax(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportPreferDefaultExport(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportUnambiguous(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintAccessorPairs(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintArrayCallbackReturn(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintArrowBodyStyle(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintBlockScopedVar(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintCapitalizedComments(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintClassMethodsUseThis(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintComplexity(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintConstructorSuper(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintCurly(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintDefaultCase(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintDefaultCaseLast(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintDefaultParamLast(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintEqeqeq(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintForDirection(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintFuncNameMatching(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintFuncNames(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintFuncStyle(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintGetterReturn(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintGroupedAccessorPairs(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintGuardForIn(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintIdLength(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintIdMatch(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintInitDeclarations(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintLogicalAssignmentOperators(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintMaxClassesPerFile(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintMaxDepth(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintMaxLines(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintMaxLinesPerFunction(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintMaxNestedCallbacks(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintMaxParams(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintMaxStatements(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNewCap(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoAlert(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoArrayConstructor(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoAsyncPromiseExecutor(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoAwaitInLoop(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoBitwise(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoCaller(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoCaseDeclarations(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoClassAssign(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoCompareNegZero(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoCondAssign(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoConsole(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoConstAssign(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoConstantBinaryExpression(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoConstantCondition(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoConstructorReturn(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoContinue(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoControlRegex(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoDebugger(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoDeleteVar(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoDivRegex(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoDupeClassMembers(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoDupeElseIf(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoDupeKeys(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoDuplicateCase(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoDuplicateImports(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoElseReturn(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoEmpty(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoEmptyCharacterClass(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoEmptyFunction(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoEmptyPattern(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoEmptyStaticBlock(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoEqNull(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoEval(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoExAssign(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoExtendNative(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoExtraBind(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoExtraBooleanCast(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoExtraLabel(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoFallthrough(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoFuncAssign(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoGlobalAssign(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoImplicitCoercion(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoImplicitGlobals(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoImpliedEval(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoImportAssign(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoInlineComments(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoInnerDeclarations(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoInvalidRegexp(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoIrregularWhitespace(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoIterator(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoLabelVar(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoLabels(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoLoneBlocks(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoLonelyIf(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoLoopFunc(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoLossOfPrecision(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoMagicNumbers(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoMisleadingCharacterClass(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoMultiAssign(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoMultiStr(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoNegatedCondition(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoNestedTernary(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoNew(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoNewFunc(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoNewNativeNonconstructor(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoNewWrappers(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoNonoctalDecimalEscape(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoObjCalls(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoObjectConstructor(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoParamReassign(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoPlusplus(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoPromiseExecutorReturn(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoProto(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoPrototypeBuiltins(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoRedeclare(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoRegexSpaces(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoRestrictedExports(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoRestrictedGlobals(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoRestrictedImports(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoRestrictedProperties(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoReturnAssign(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoScriptUrl(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoSelfAssign(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoSelfCompare(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoSequences(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoSetterReturn(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoShadow(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoShadowRestrictedNames(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoSparseArrays(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoTemplateCurlyInString(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoTernary(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoThisBeforeSuper(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoThrowLiteral(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUnassignedVars(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUndef(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUndefined(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUnderscoreDangle(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUnexpectedMultiline(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUnmodifiedLoopCondition(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUnneededTernary(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUnreachable(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUnsafeFinally(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUnsafeNegation(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUnsafeOptionalChaining(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUnusedExpressions(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUnusedLabels(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUnusedPrivateClassMembers(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUnusedVars(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUseBeforeDefine(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUselessAssignment(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUselessBackreference(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUselessCall(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUselessCatch(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUselessComputedKey(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUselessConcat(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUselessConstructor(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUselessEscape(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUselessRename(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUselessReturn(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoVar(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoVoid(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoWarningComments(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoWith(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintObjectShorthand(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintOperatorAssignment(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintPreferArrowCallback(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintPreferConst(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintPreferDestructuring(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintPreferExponentiationOperator(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintPreferNamedCaptureGroup(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintPreferNumericLiterals(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintPreferObjectHasOwn(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintPreferObjectSpread(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintPreferPromiseRejectErrors(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintPreferRegexLiterals(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintPreferRestParams(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintPreferSpread(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintPreferTemplate(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintPreserveCaughtError(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintRadix(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintRequireAwait(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintRequireUnicodeRegexp(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintRequireYield(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintSortImports(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintSortKeys(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintSortVars(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintSymbolDescription(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintUnicodeBom(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintUseIsnan(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintValidTypeof(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintVarsOnTop(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintYoda(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptAdjacentOverloadSignatures(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptArrayType(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptAwaitThenable(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptBanTsComment(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptBanTslintComment(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptBanTypes(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptClassLiteralPropertyStyle(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptConsistentGenericConstructors(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptConsistentIndexedObjectStyle(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptConsistentReturn(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptConsistentTypeAssertions(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptConsistentTypeDefinitions(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptConsistentTypeExports(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptConsistentTypeImports(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptDotNotation(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptExplicitFunctionReturnType(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptExplicitMemberAccessibility(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptExplicitModuleBoundaryTypes(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptMethodSignatureStyle(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoArrayDelete(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoBaseToString(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoConfusingNonNullAssertion(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoConfusingVoidExpression(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoDeprecated(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoDuplicateEnumValues(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoDuplicateTypeConstituents(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoDynamicDelete(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoEmptyInterface(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoEmptyObjectType(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoExplicitAny(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoExtraNonNullAssertion(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoExtraneousClass(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoFloatingPromises(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoForInArray(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoImpliedEval(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoImportTypeSideEffects(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoInferrableTypes(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoInvalidVoidType(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoMeaninglessVoidOperator(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoMisusedNew(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoMisusedPromises(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoMisusedSpread(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoMixedEnums(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoNamespace(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoNonNullAssertedNullishCoalescing(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoNonNullAssertedOptionalChain(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoNonNullAssertion(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoRedundantTypeConstituents(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoRequireImports(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoRestrictedTypes(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoThisAlias(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoUnnecessaryBooleanLiteralCompare(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoUnnecessaryCondition(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoUnnecessaryParameterPropertyAssignment(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoUnnecessaryQualifier(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoUnnecessaryTemplateExpression(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoUnnecessaryTypeArguments(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoUnnecessaryTypeAssertion(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoUnnecessaryTypeConstraint(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoUnnecessaryTypeConversion(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoUnnecessaryTypeParameters(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoUnsafeArgument(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoUnsafeAssignment(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoUnsafeCall(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoUnsafeDeclarationMerging(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoUnsafeEnumComparison(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoUnsafeFunctionType(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoUnsafeMemberAccess(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoUnsafeReturn(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoUnsafeTypeAssertion(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoUnsafeUnaryMinus(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoUselessDefaultAssignment(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoUselessEmptyExport(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoVarRequires(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoWrapperObjectTypes(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNonNullableTypeAssertionStyle(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptOnlyThrowError(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptParameterProperties(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptPreferAsConst(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptPreferEnumInitializers(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptPreferFind(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptPreferForOf(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptPreferFunctionType(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptPreferIncludes(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptPreferLiteralEnumMember(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptPreferNamespaceKeyword(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptPreferNullishCoalescing(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptPreferOptionalChain(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptPreferPromiseRejectErrors(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptPreferReadonly(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptPreferReadonlyParameterTypes(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptPreferReduceTypeParameter(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptPreferRegexpExec(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptPreferReturnThisType(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptPreferStringStartsEndsWith(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptPreferTsExpectError(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptPromiseFunctionAsync(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptRelatedGetterSetterPairs(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptRequireArraySortCompare(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptRequireAwait(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptRestrictPlusOperands(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptRestrictTemplateExpressions(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptReturnAwait(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptStrictBooleanExpressions(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptStrictVoidReturn(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptSwitchExhaustivenessCheck(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptTripleSlashReference(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptUnboundMethod(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptUnifiedSignatures(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptUseUnknownInCatchCallbackVariable(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestConsistentTestIt(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestExpectExpect(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestMaxExpects(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestMaxNestedDescribe(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoAliasMethods(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoCommentedOutTests(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoConditionalExpect(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoConditionalInTest(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoConfusingSetTimeout(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoDeprecatedFunctions(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoDisabledTests(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoDoneCallback(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoDuplicateHooks(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoExport(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoFocusedTests(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoHooks(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoIdenticalTitle(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoInterpolationInSnapshots(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoJasmineGlobals(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoLargeSnapshots(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoMocksImport(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoRestrictedJestMethods(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoRestrictedMatchers(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoStandaloneExpect(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoTestPrefixes(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoTestReturnStatement(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoUnneededAsyncExpectFunction(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoUntypedMockFactory(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPaddingAroundAfterAllBlocks(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPaddingAroundTestBlocks(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPreferCalledWith(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPreferComparisonMatcher(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPreferEach(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPreferEndingWithAnExpect(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPreferEqualityMatcher(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPreferExpectAssertions(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPreferExpectResolves(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPreferHooksInOrder(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPreferHooksOnTop(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPreferImportingJestGlobals(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPreferJestMocked(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPreferLowercaseTitle(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPreferMockPromiseShorthand(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPreferMockReturnShorthand(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPreferSnapshotHint(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPreferSpyOn(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPreferStrictEqual(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPreferToBe(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPreferToContain(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPreferToHaveBeenCalled(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPreferToHaveBeenCalledTimes(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPreferToHaveLength(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPreferTodo(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestRequireHook(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestRequireToThrowMessage(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestRequireTopLevelDescribe(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestValidDescribeCallback(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestValidExpect(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestValidExpectInPromise(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestValidTitle(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactButtonHasType(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactDisplayName(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactExhaustiveDeps(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactForbidComponentProps(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactForbidDomProps(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactForbidElements(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactForwardRefUsesRef(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactHookUseState(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactIframeMissingSandbox(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactJsxBooleanValue(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactJsxCurlyBracePresence(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactJsxFilenameExtension(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactJsxFragments(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactJsxHandlerNames(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactJsxKey(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactJsxMaxDepth(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactJsxNoCommentTextnodes(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactJsxNoConstructedContextValues(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactJsxNoDuplicateProps(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactJsxNoLiterals(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactJsxNoScriptUrl(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactJsxNoTargetBlank(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactJsxNoUndef(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactJsxNoUselessFragment(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactJsxPascalCase(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactJsxPropsNoSpreadMulti(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactJsxPropsNoSpreading(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoArrayIndexKey(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoChildrenProp(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoCloneElement(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoDanger(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoDangerWithChildren(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoDidMountSetState(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoDidUpdateSetState(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoDirectMutationState(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoFindDomNode(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoIsMounted(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoMultiComp(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoNamespace(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoObjectTypeAsDefaultProp(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoReactChildren(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoRedundantShouldComponentUpdate(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoRenderReturnValue(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoSetState(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoStringRefs(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoThisInSfc(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoUnescapedEntities(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoUnknownProperty(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoUnsafe(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoUnstableNestedComponents(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoWillUpdateSetState(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactOnlyExportComponents(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactPreferEs6Class(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactPreferFunctionComponent(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactReactCompiler(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactReactInJsxScope(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactRequireRenderReturn(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactRulesOfHooks(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactSelfClosingComp(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactStateInConstructor(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactStylePropObject(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactVoidDomElementsNoChildren(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactPerfJsxNoJsxAsProp(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactPerfJsxNoNewArrayAsProp(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactPerfJsxNoNewFunctionAsProp(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactPerfJsxNoNewObjectAsProp(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornCatchErrorName(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornConsistentAssert(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornConsistentDateClone(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornConsistentEmptyArraySpread(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornConsistentExistenceIndexCheck(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornConsistentFunctionScoping(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornConsistentTemplateLiteralEscape(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornCustomErrorDefinition(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornEmptyBraceSpaces(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornErrorMessage(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornEscapeCase(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornExplicitLengthCheck(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornFilenameCase(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornImportStyle(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornMaxNestedCalls(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNewForBuiltins(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoAbusiveEslintDisable(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoAccessorRecursion(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoAnonymousDefaultExport(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoArrayCallbackReference(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoArrayFillWithReferenceType(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoArrayForEach(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoArrayMethodThisArgument(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoArrayReduce(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoArrayReverse(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoArraySort(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoAwaitExpressionMember(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoAwaitInPromiseMethods(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoConsoleSpaces(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoDocumentCookie(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoEmptyFile(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoHexEscape(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoImmediateMutation(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoInstanceofArray(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoInstanceofBuiltins(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoInvalidFetchOptions(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoInvalidRemoveEventListener(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoLengthAsSliceEnd(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoLonelyIf(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoMagicArrayFlatDepth(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoNegatedCondition(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoNegationInEqualityCheck(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoNestedTernary(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoNewArray(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoNewBuffer(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoNull(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoObjectAsDefaultParameter(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoProcessExit(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoSinglePromiseInPromiseMethods(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoStaticOnlyClass(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoThenable(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoThisAssignment(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoTypeofUndefined(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoUnnecessaryArrayFlatDepth(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoUnnecessaryArraySpliceCount(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoUnnecessaryAwait(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoUnnecessarySliceEnd(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoUnreadableArrayDestructuring(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoUnreadableIife(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoUselessCollectionArgument(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoUselessErrorCaptureStackTrace(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoUselessFallbackInSpread(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoUselessIteratorToArray(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoUselessLengthCheck(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoUselessPromiseResolveReject(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoUselessSpread(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoUselessSwitchCase(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoUselessUndefined(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoZeroFractions(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNumberLiteralCase(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNumericSeparatorsStyle(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferAddEventListener(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferArrayFind(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferArrayFlat(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferArrayFlatMap(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferArrayIndexOf(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferArraySome(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferAt(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferBigintLiterals(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferBlobReadingMethods(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferClassFields(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferClasslistToggle(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferCodePoint(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferDateNow(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferDefaultParameters(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferDomNodeAppend(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferDomNodeDataset(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferDomNodeRemove(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferDomNodeTextContent(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferEventTarget(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferExportFrom(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferGlobalThis(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferImportMetaProperties(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferIncludes(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferKeyboardEventKey(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferLogicalOperatorOverTernary(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferMathMinMax(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferMathTrunc(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferModernDomApis(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferModernMathApis(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferModule(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferNativeCoercionFunctions(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferNegativeIndex(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferNodeProtocol(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferNumberCoercion(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferNumberProperties(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferObjectFromEntries(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferOptionalCatchBinding(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferPrototypeMethods(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferQuerySelector(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferReflectApply(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferRegexpTest(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferResponseStaticJson(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferSetHas(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferSetSize(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferSingleCall(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferSpread(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferStringRaw(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferStringReplaceAll(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferStringSlice(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferStringStartsEndsWith(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferStringTrimStartEnd(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferStructuredClone(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferTernary(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferTopLevelAwait(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferTypeError(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornRelativeUrlStyle(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornRequireArrayJoinSeparator(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornRequireModuleAttributes(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornRequireModuleSpecifiers(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornRequireNumberToFixedDigitsArgument(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornRequirePostMessageTargetOrigin(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornSwitchCaseBraces(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornSwitchCaseBreakPosition(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornTextEncodingIdentifierCase(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornThrowNewError(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YAltText(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YAnchorAmbiguousText(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YAnchorHasContent(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YAnchorIsValid(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YAriaActivedescendantHasTabindex(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YAriaProps(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YAriaProptypes(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YAriaRole(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YAriaUnsupportedElements(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YAutocompleteValid(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YClickEventsHaveKeyEvents(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YControlHasAssociatedLabel(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YHeadingHasContent(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YHtmlHasLang(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YIframeHasTitle(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YImgRedundantAlt(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YInteractiveSupportsFocus(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YLabelHasAssociatedControl(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YLang(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YMediaHasCaption(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YMouseEventsHaveKeyEvents(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YNoAccessKey(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YNoAriaHiddenOnFocusable(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YNoAutofocus(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YNoDistractingElements(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YNoInteractiveElementToNoninteractiveRole(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YNoNoninteractiveElementInteractions(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YNoNoninteractiveElementToInteractiveRole(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YNoNoninteractiveTabindex(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YNoRedundantRoles(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YNoStaticElementInteractions(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YPreferTagOverRole(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YRoleHasRequiredAriaProps(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YRoleSupportsAriaProps(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YScope(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YTabindexNoPositive(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcApproxConstant(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcBadArrayMethodOnArguments(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcBadBitwiseOperator(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcBadCharAtComparison(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcBadComparisonSequence(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcBadMinMaxFunc(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcBadObjectLiteralComparison(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcBadReplaceAllArg(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcBranchesSharingCode(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcConstComparisons(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcDoubleComparisons(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcErasingOp(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcMisrefactoredAssignOp(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcMissingThrow(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcNoAccumulatingSpread(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcNoAsyncAwait(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcNoAsyncEndpointHandlers(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcNoBarrelFile(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcNoConstEnum(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcNoMapSpread(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcNoOptionalChaining(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcNoRestSpreadProperties(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcNoThisInExportedFunction(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcNumberArgOutOfRange(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcOnlyUsedInRecursion(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcUninvokedArrayCallback(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NextjsGoogleFontDisplay(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NextjsGoogleFontPreconnect(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NextjsInlineScriptId(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NextjsNextScriptForGa(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NextjsNoAssignModuleVariable(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NextjsNoAsyncClientComponent(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NextjsNoBeforeInteractiveScriptOutsideDocument(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NextjsNoCssTags(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NextjsNoDocumentImportInPage(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NextjsNoDuplicateHead(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NextjsNoHeadElement(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NextjsNoHeadImportInDocument(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NextjsNoHtmlLinkForPages(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NextjsNoImgElement(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NextjsNoPageCustomFont(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NextjsNoScriptComponentInHead(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NextjsNoStyledJsxInDocument(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NextjsNoSyncScripts(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NextjsNoTitleInDocumentHead(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NextjsNoTypos(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NextjsNoUnwantedPolyfillio(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsdocCheckAccess(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsdocCheckPropertyNames(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsdocCheckTagNames(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsdocEmptyTags(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsdocImplementsOnClasses(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsdocNoDefaults(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsdocRequireParam(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsdocRequireParamDescription(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsdocRequireParamName(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsdocRequireParamType(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsdocRequireProperty(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsdocRequirePropertyDescription(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsdocRequirePropertyName(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsdocRequirePropertyType(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsdocRequireReturns(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsdocRequireReturnsDescription(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsdocRequireReturnsType(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsdocRequireThrowsDescription(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsdocRequireThrowsType(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsdocRequireYields(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsdocRequireYieldsDescription(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsdocRequireYieldsType(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::PromiseAlwaysReturn(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::PromiseAvoidNew(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::PromiseCatchOrReturn(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::PromiseNoCallbackInPromise(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::PromiseNoMultipleResolved(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::PromiseNoNesting(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::PromiseNoNewStatics(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::PromiseNoPromiseInCallback(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::PromiseNoReturnInFinally(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::PromiseNoReturnWrap(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::PromiseParamNames(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::PromisePreferAwaitToCallbacks(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::PromisePreferAwaitToThen(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::PromisePreferCatch(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::PromiseSpecOnly(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::PromiseValidParams(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestConsistentEachFor(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestConsistentTestFilename(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestConsistentTestIt(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestConsistentVitestVi(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestExpectExpect(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestHoistedApisOnTop(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestMaxExpects(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestMaxNestedDescribe(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestNoAliasMethods(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestNoCommentedOutTests(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestNoConditionalExpect(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestNoConditionalInTest(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestNoConditionalTests(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestNoDisabledTests(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestNoDuplicateHooks(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestNoFocusedTests(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestNoHooks(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestNoIdenticalTitle(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestNoImportNodeTest(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestNoImportingVitestGlobals(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestNoInterpolationInSnapshots(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestNoLargeSnapshots(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestNoMocksImport(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestNoRestrictedMatchers(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestNoRestrictedViMethods(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestNoStandaloneExpect(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestNoTestPrefixes(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestNoTestReturnStatement(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestNoUnneededAsyncExpectFunction(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPaddingAroundAfterAllBlocks(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferCalledExactlyOnceWith(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferCalledOnce(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferCalledTimes(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferCalledWith(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferComparisonMatcher(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferDescribeFunctionTitle(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferEach(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferEqualityMatcher(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferExpectAssertions(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferExpectResolves(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferExpectTypeOf(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferHooksInOrder(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferHooksOnTop(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferImportInMock(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferImportingVitestGlobals(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferLowercaseTitle(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferMockPromiseShorthand(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferMockReturnShorthand(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferSnapshotHint(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferSpyOn(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferStrictBooleanMatchers(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferStrictEqual(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferToBe(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferToBeFalsy(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferToBeObject(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferToBeTruthy(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferToContain(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferToHaveBeenCalledTimes(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferToHaveLength(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferTodo(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestRequireAwaitedExpectPoll(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestRequireHook(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestRequireMockTypeParameters(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestRequireTestTimeout(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestRequireToThrowMessage(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestRequireTopLevelDescribe(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestValidDescribeCallback(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestValidExpect(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestValidExpectInPromise(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestValidTitle(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestWarnTodo(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NodeCallbackReturn(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NodeGlobalRequire(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NodeHandleCallbackErr(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NodeNoExportsAssign(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NodeNoNewRequire(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NodeNoPathConcat(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NodeNoProcessEnv(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueComponentDefinitionNameCasing(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueDefineEmitsDeclaration(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueDefinePropsDeclaration(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueDefinePropsDestructuring(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueMaxProps(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNextTickStyle(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoArrowFunctionsInWatch(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoAsyncInComputedProperties(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoComputedPropertiesInData(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoDeprecatedDataObjectDeclaration(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoDeprecatedDeleteSet(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoDeprecatedDestroyedLifecycle(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoDeprecatedEventsApi(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoDeprecatedModelDefinition(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoDeprecatedPropsDefaultThis(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoDeprecatedVueConfigKeycodes(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoDupeKeys(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoExportInScriptSetup(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoExposeAfterAwait(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoImportCompilerMacros(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoLifecycleAfterAwait(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoMultipleSlotArgs(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoRequiredPropWithDefault(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoReservedComponentNames(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoReservedKeys(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoReservedProps(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoSharedComponentData(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoSideEffectsInComputedProperties(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoThisInBeforeRouteEnter(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoWatchAfterAwait(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VuePreferImportFromVue(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VuePropNameCasing(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueRequireDefaultExport(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueRequireDefaultProp(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueRequireDirectExport(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueRequirePropTypeConstructor(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueRequirePropTypes(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueRequireRenderReturn(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueRequireSlotsAsFunctions(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueRequireTypedRef(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueReturnInComputedProperty(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueReturnInEmitsValidator(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueValidDefineEmits(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueValidDefineOptions(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueValidDefineProps(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueValidNextTick(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+            });
+        } else {
+            match self {
+                Self::ImportConsistentTypeSpecifierStyle(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportDefault(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportExport(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportExportsLast(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportExtensions(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportFirst(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportGroupExports(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportMaxDependencies(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportNamed(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportNamespace(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportNewlineAfterImport(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportNoAbsolutePath(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportNoAmd(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportNoAnonymousDefaultExport(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportNoCommonjs(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportNoCycle(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportNoDefaultExport(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportNoDuplicates(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportNoDynamicRequire(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportNoEmptyNamedBlocks(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportNoMutableExports(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportNoNamedAsDefault(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportNoNamedAsDefaultMember(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportNoNamedDefault(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportNoNamedExport(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportNoNamespace(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportNoNodejsModules(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportNoRelativeParentImports(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportNoSelfImport(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportNoUnassignedImport(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportNoWebpackLoaderSyntax(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportPreferDefaultExport(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ImportUnambiguous(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintAccessorPairs(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintArrayCallbackReturn(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintArrowBodyStyle(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintBlockScopedVar(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintCapitalizedComments(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintClassMethodsUseThis(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintComplexity(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintConstructorSuper(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintCurly(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintDefaultCase(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintDefaultCaseLast(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintDefaultParamLast(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintEqeqeq(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintForDirection(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintFuncNameMatching(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintFuncNames(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintFuncStyle(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintGetterReturn(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintGroupedAccessorPairs(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintGuardForIn(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintIdLength(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintIdMatch(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintInitDeclarations(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintLogicalAssignmentOperators(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintMaxClassesPerFile(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintMaxDepth(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintMaxLines(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintMaxLinesPerFunction(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintMaxNestedCallbacks(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintMaxParams(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintMaxStatements(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNewCap(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoAlert(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoArrayConstructor(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoAsyncPromiseExecutor(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoAwaitInLoop(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoBitwise(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoCaller(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoCaseDeclarations(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoClassAssign(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoCompareNegZero(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoCondAssign(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoConsole(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoConstAssign(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoConstantBinaryExpression(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoConstantCondition(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoConstructorReturn(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoContinue(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoControlRegex(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoDebugger(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoDeleteVar(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoDivRegex(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoDupeClassMembers(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoDupeElseIf(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoDupeKeys(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoDuplicateCase(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoDuplicateImports(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoElseReturn(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoEmpty(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoEmptyCharacterClass(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoEmptyFunction(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoEmptyPattern(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoEmptyStaticBlock(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoEqNull(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoEval(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoExAssign(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoExtendNative(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoExtraBind(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoExtraBooleanCast(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoExtraLabel(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoFallthrough(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoFuncAssign(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoGlobalAssign(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoImplicitCoercion(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoImplicitGlobals(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoImpliedEval(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoImportAssign(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoInlineComments(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoInnerDeclarations(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoInvalidRegexp(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoIrregularWhitespace(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoIterator(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoLabelVar(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoLabels(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoLoneBlocks(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoLonelyIf(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoLoopFunc(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoLossOfPrecision(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoMagicNumbers(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoMisleadingCharacterClass(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoMultiAssign(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoMultiStr(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoNegatedCondition(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoNestedTernary(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoNew(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoNewFunc(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoNewNativeNonconstructor(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoNewWrappers(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoNonoctalDecimalEscape(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoObjCalls(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoObjectConstructor(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoParamReassign(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoPlusplus(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoPromiseExecutorReturn(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoProto(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoPrototypeBuiltins(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoRedeclare(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoRegexSpaces(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoRestrictedExports(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoRestrictedGlobals(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoRestrictedImports(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoRestrictedProperties(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoReturnAssign(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoScriptUrl(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoSelfAssign(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoSelfCompare(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoSequences(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoSetterReturn(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoShadow(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoShadowRestrictedNames(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoSparseArrays(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoTemplateCurlyInString(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoTernary(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoThisBeforeSuper(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoThrowLiteral(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUnassignedVars(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUndef(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUndefined(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUnderscoreDangle(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUnexpectedMultiline(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUnmodifiedLoopCondition(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUnneededTernary(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUnreachable(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUnsafeFinally(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUnsafeNegation(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUnsafeOptionalChaining(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUnusedExpressions(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUnusedLabels(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUnusedPrivateClassMembers(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUnusedVars(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUseBeforeDefine(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUselessAssignment(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUselessBackreference(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUselessCall(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUselessCatch(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUselessComputedKey(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUselessConcat(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUselessConstructor(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUselessEscape(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUselessRename(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoUselessReturn(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoVar(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoVoid(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoWarningComments(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintNoWith(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintObjectShorthand(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintOperatorAssignment(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintPreferArrowCallback(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintPreferConst(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintPreferDestructuring(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintPreferExponentiationOperator(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintPreferNamedCaptureGroup(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintPreferNumericLiterals(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintPreferObjectHasOwn(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintPreferObjectSpread(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintPreferPromiseRejectErrors(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintPreferRegexLiterals(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintPreferRestParams(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintPreferSpread(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintPreferTemplate(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintPreserveCaughtError(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintRadix(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintRequireAwait(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintRequireUnicodeRegexp(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintRequireYield(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintSortImports(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintSortKeys(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintSortVars(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintSymbolDescription(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintUnicodeBom(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintUseIsnan(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintValidTypeof(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintVarsOnTop(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::EslintYoda(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptAdjacentOverloadSignatures(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptArrayType(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptAwaitThenable(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptBanTsComment(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptBanTslintComment(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptBanTypes(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptClassLiteralPropertyStyle(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptConsistentGenericConstructors(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptConsistentIndexedObjectStyle(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptConsistentReturn(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptConsistentTypeAssertions(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptConsistentTypeDefinitions(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptConsistentTypeExports(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptConsistentTypeImports(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptDotNotation(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptExplicitFunctionReturnType(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptExplicitMemberAccessibility(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptExplicitModuleBoundaryTypes(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptMethodSignatureStyle(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoArrayDelete(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoBaseToString(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoConfusingNonNullAssertion(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoConfusingVoidExpression(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoDeprecated(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoDuplicateEnumValues(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoDuplicateTypeConstituents(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoDynamicDelete(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoEmptyInterface(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoEmptyObjectType(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoExplicitAny(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoExtraNonNullAssertion(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoExtraneousClass(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoFloatingPromises(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoForInArray(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoImpliedEval(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoImportTypeSideEffects(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoInferrableTypes(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoInvalidVoidType(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoMeaninglessVoidOperator(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoMisusedNew(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoMisusedPromises(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoMisusedSpread(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoMixedEnums(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoNamespace(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoNonNullAssertedNullishCoalescing(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoNonNullAssertedOptionalChain(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoNonNullAssertion(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoRedundantTypeConstituents(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoRequireImports(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoRestrictedTypes(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoThisAlias(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoUnnecessaryBooleanLiteralCompare(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoUnnecessaryCondition(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoUnnecessaryParameterPropertyAssignment(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoUnnecessaryQualifier(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoUnnecessaryTemplateExpression(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoUnnecessaryTypeArguments(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoUnnecessaryTypeAssertion(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoUnnecessaryTypeConstraint(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoUnnecessaryTypeConversion(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoUnnecessaryTypeParameters(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoUnsafeArgument(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoUnsafeAssignment(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoUnsafeCall(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoUnsafeDeclarationMerging(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoUnsafeEnumComparison(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoUnsafeFunctionType(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoUnsafeMemberAccess(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoUnsafeReturn(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoUnsafeTypeAssertion(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoUnsafeUnaryMinus(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoUselessDefaultAssignment(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoUselessEmptyExport(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoVarRequires(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNoWrapperObjectTypes(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptNonNullableTypeAssertionStyle(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptOnlyThrowError(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptParameterProperties(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptPreferAsConst(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptPreferEnumInitializers(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptPreferFind(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptPreferForOf(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptPreferFunctionType(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptPreferIncludes(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptPreferLiteralEnumMember(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptPreferNamespaceKeyword(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptPreferNullishCoalescing(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptPreferOptionalChain(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptPreferPromiseRejectErrors(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptPreferReadonly(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptPreferReadonlyParameterTypes(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptPreferReduceTypeParameter(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptPreferRegexpExec(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptPreferReturnThisType(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptPreferStringStartsEndsWith(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptPreferTsExpectError(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptPromiseFunctionAsync(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptRelatedGetterSetterPairs(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptRequireArraySortCompare(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptRequireAwait(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptRestrictPlusOperands(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptRestrictTemplateExpressions(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptReturnAwait(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptStrictBooleanExpressions(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptStrictVoidReturn(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptSwitchExhaustivenessCheck(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptTripleSlashReference(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptUnboundMethod(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptUnifiedSignatures(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::TypescriptUseUnknownInCatchCallbackVariable(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestConsistentTestIt(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestExpectExpect(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestMaxExpects(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestMaxNestedDescribe(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoAliasMethods(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoCommentedOutTests(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoConditionalExpect(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoConditionalInTest(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoConfusingSetTimeout(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoDeprecatedFunctions(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoDisabledTests(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoDoneCallback(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoDuplicateHooks(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoExport(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoFocusedTests(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoHooks(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoIdenticalTitle(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoInterpolationInSnapshots(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoJasmineGlobals(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoLargeSnapshots(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoMocksImport(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoRestrictedJestMethods(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoRestrictedMatchers(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoStandaloneExpect(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoTestPrefixes(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoTestReturnStatement(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoUnneededAsyncExpectFunction(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestNoUntypedMockFactory(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPaddingAroundAfterAllBlocks(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPaddingAroundTestBlocks(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPreferCalledWith(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPreferComparisonMatcher(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPreferEach(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPreferEndingWithAnExpect(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPreferEqualityMatcher(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPreferExpectAssertions(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPreferExpectResolves(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPreferHooksInOrder(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPreferHooksOnTop(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPreferImportingJestGlobals(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPreferJestMocked(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPreferLowercaseTitle(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPreferMockPromiseShorthand(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPreferMockReturnShorthand(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPreferSnapshotHint(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPreferSpyOn(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPreferStrictEqual(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPreferToBe(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPreferToContain(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPreferToHaveBeenCalled(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPreferToHaveBeenCalledTimes(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPreferToHaveLength(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestPreferTodo(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestRequireHook(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestRequireToThrowMessage(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestRequireTopLevelDescribe(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestValidDescribeCallback(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestValidExpect(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestValidExpectInPromise(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JestValidTitle(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactButtonHasType(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactDisplayName(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactExhaustiveDeps(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactForbidComponentProps(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactForbidDomProps(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactForbidElements(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactForwardRefUsesRef(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactHookUseState(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactIframeMissingSandbox(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactJsxBooleanValue(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactJsxCurlyBracePresence(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactJsxFilenameExtension(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactJsxFragments(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactJsxHandlerNames(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactJsxKey(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactJsxMaxDepth(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactJsxNoCommentTextnodes(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactJsxNoConstructedContextValues(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactJsxNoDuplicateProps(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactJsxNoLiterals(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactJsxNoScriptUrl(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactJsxNoTargetBlank(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactJsxNoUndef(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactJsxNoUselessFragment(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactJsxPascalCase(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactJsxPropsNoSpreadMulti(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactJsxPropsNoSpreading(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoArrayIndexKey(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoChildrenProp(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoCloneElement(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoDanger(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoDangerWithChildren(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoDidMountSetState(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoDidUpdateSetState(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoDirectMutationState(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoFindDomNode(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoIsMounted(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoMultiComp(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoNamespace(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoObjectTypeAsDefaultProp(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoReactChildren(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoRedundantShouldComponentUpdate(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoRenderReturnValue(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoSetState(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoStringRefs(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoThisInSfc(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoUnescapedEntities(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoUnknownProperty(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoUnsafe(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoUnstableNestedComponents(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactNoWillUpdateSetState(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactOnlyExportComponents(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactPreferEs6Class(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactPreferFunctionComponent(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactReactCompiler(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactReactInJsxScope(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactRequireRenderReturn(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactRulesOfHooks(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactSelfClosingComp(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactStateInConstructor(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactStylePropObject(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactVoidDomElementsNoChildren(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactPerfJsxNoJsxAsProp(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactPerfJsxNoNewArrayAsProp(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactPerfJsxNoNewFunctionAsProp(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::ReactPerfJsxNoNewObjectAsProp(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornCatchErrorName(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornConsistentAssert(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornConsistentDateClone(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornConsistentEmptyArraySpread(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornConsistentExistenceIndexCheck(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornConsistentFunctionScoping(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornConsistentTemplateLiteralEscape(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornCustomErrorDefinition(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornEmptyBraceSpaces(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornErrorMessage(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornEscapeCase(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornExplicitLengthCheck(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornFilenameCase(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornImportStyle(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornMaxNestedCalls(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNewForBuiltins(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoAbusiveEslintDisable(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoAccessorRecursion(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoAnonymousDefaultExport(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoArrayCallbackReference(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoArrayFillWithReferenceType(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoArrayForEach(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoArrayMethodThisArgument(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoArrayReduce(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoArrayReverse(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoArraySort(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoAwaitExpressionMember(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoAwaitInPromiseMethods(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoConsoleSpaces(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoDocumentCookie(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoEmptyFile(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoHexEscape(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoImmediateMutation(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoInstanceofArray(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoInstanceofBuiltins(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoInvalidFetchOptions(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoInvalidRemoveEventListener(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoLengthAsSliceEnd(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoLonelyIf(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoMagicArrayFlatDepth(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoNegatedCondition(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoNegationInEqualityCheck(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoNestedTernary(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoNewArray(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoNewBuffer(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoNull(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoObjectAsDefaultParameter(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoProcessExit(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoSinglePromiseInPromiseMethods(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoStaticOnlyClass(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoThenable(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoThisAssignment(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoTypeofUndefined(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoUnnecessaryArrayFlatDepth(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoUnnecessaryArraySpliceCount(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoUnnecessaryAwait(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoUnnecessarySliceEnd(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoUnreadableArrayDestructuring(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoUnreadableIife(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoUselessCollectionArgument(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoUselessErrorCaptureStackTrace(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoUselessFallbackInSpread(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoUselessIteratorToArray(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoUselessLengthCheck(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoUselessPromiseResolveReject(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoUselessSpread(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoUselessSwitchCase(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoUselessUndefined(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNoZeroFractions(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNumberLiteralCase(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornNumericSeparatorsStyle(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferAddEventListener(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferArrayFind(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferArrayFlat(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferArrayFlatMap(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferArrayIndexOf(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferArraySome(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferAt(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferBigintLiterals(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferBlobReadingMethods(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferClassFields(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferClasslistToggle(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferCodePoint(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferDateNow(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferDefaultParameters(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferDomNodeAppend(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferDomNodeDataset(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferDomNodeRemove(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferDomNodeTextContent(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferEventTarget(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferExportFrom(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferGlobalThis(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferImportMetaProperties(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferIncludes(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferKeyboardEventKey(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferLogicalOperatorOverTernary(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferMathMinMax(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferMathTrunc(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferModernDomApis(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferModernMathApis(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferModule(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferNativeCoercionFunctions(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferNegativeIndex(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferNodeProtocol(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferNumberCoercion(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferNumberProperties(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferObjectFromEntries(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferOptionalCatchBinding(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferPrototypeMethods(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferQuerySelector(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferReflectApply(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferRegexpTest(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferResponseStaticJson(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferSetHas(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferSetSize(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferSingleCall(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferSpread(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferStringRaw(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferStringReplaceAll(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferStringSlice(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferStringStartsEndsWith(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferStringTrimStartEnd(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferStructuredClone(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferTernary(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferTopLevelAwait(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornPreferTypeError(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornRelativeUrlStyle(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornRequireArrayJoinSeparator(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornRequireModuleAttributes(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornRequireModuleSpecifiers(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornRequireNumberToFixedDigitsArgument(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornRequirePostMessageTargetOrigin(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornSwitchCaseBraces(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornSwitchCaseBreakPosition(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornTextEncodingIdentifierCase(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::UnicornThrowNewError(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YAltText(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YAnchorAmbiguousText(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YAnchorHasContent(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YAnchorIsValid(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YAriaActivedescendantHasTabindex(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YAriaProps(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YAriaProptypes(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YAriaRole(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YAriaUnsupportedElements(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YAutocompleteValid(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YClickEventsHaveKeyEvents(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YControlHasAssociatedLabel(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YHeadingHasContent(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YHtmlHasLang(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YIframeHasTitle(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YImgRedundantAlt(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YInteractiveSupportsFocus(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YLabelHasAssociatedControl(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YLang(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YMediaHasCaption(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YMouseEventsHaveKeyEvents(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YNoAccessKey(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YNoAriaHiddenOnFocusable(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YNoAutofocus(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YNoDistractingElements(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YNoInteractiveElementToNoninteractiveRole(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YNoNoninteractiveElementInteractions(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YNoNoninteractiveElementToInteractiveRole(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YNoNoninteractiveTabindex(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YNoRedundantRoles(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YNoStaticElementInteractions(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YPreferTagOverRole(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YRoleHasRequiredAriaProps(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YRoleSupportsAriaProps(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YScope(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsxA11YTabindexNoPositive(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcApproxConstant(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcBadArrayMethodOnArguments(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcBadBitwiseOperator(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcBadCharAtComparison(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcBadComparisonSequence(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcBadMinMaxFunc(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcBadObjectLiteralComparison(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcBadReplaceAllArg(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcBranchesSharingCode(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcConstComparisons(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcDoubleComparisons(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcErasingOp(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcMisrefactoredAssignOp(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcMissingThrow(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcNoAccumulatingSpread(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcNoAsyncAwait(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcNoAsyncEndpointHandlers(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcNoBarrelFile(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcNoConstEnum(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcNoMapSpread(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcNoOptionalChaining(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcNoRestSpreadProperties(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcNoThisInExportedFunction(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcNumberArgOutOfRange(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcOnlyUsedInRecursion(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::OxcUninvokedArrayCallback(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NextjsGoogleFontDisplay(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NextjsGoogleFontPreconnect(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NextjsInlineScriptId(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NextjsNextScriptForGa(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NextjsNoAssignModuleVariable(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NextjsNoAsyncClientComponent(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NextjsNoBeforeInteractiveScriptOutsideDocument(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NextjsNoCssTags(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NextjsNoDocumentImportInPage(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NextjsNoDuplicateHead(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NextjsNoHeadElement(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NextjsNoHeadImportInDocument(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NextjsNoHtmlLinkForPages(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NextjsNoImgElement(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NextjsNoPageCustomFont(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NextjsNoScriptComponentInHead(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NextjsNoStyledJsxInDocument(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NextjsNoSyncScripts(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NextjsNoTitleInDocumentHead(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NextjsNoTypos(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NextjsNoUnwantedPolyfillio(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsdocCheckAccess(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsdocCheckPropertyNames(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsdocCheckTagNames(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsdocEmptyTags(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsdocImplementsOnClasses(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsdocNoDefaults(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsdocRequireParam(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsdocRequireParamDescription(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsdocRequireParamName(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsdocRequireParamType(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsdocRequireProperty(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsdocRequirePropertyDescription(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsdocRequirePropertyName(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsdocRequirePropertyType(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsdocRequireReturns(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsdocRequireReturnsDescription(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsdocRequireReturnsType(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsdocRequireThrowsDescription(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsdocRequireThrowsType(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsdocRequireYields(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsdocRequireYieldsDescription(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::JsdocRequireYieldsType(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::PromiseAlwaysReturn(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::PromiseAvoidNew(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::PromiseCatchOrReturn(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::PromiseNoCallbackInPromise(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::PromiseNoMultipleResolved(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::PromiseNoNesting(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::PromiseNoNewStatics(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::PromiseNoPromiseInCallback(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::PromiseNoReturnInFinally(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::PromiseNoReturnWrap(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::PromiseParamNames(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::PromisePreferAwaitToCallbacks(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::PromisePreferAwaitToThen(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::PromisePreferCatch(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::PromiseSpecOnly(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::PromiseValidParams(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestConsistentEachFor(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestConsistentTestFilename(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestConsistentTestIt(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestConsistentVitestVi(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestExpectExpect(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestHoistedApisOnTop(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestMaxExpects(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestMaxNestedDescribe(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestNoAliasMethods(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestNoCommentedOutTests(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestNoConditionalExpect(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestNoConditionalInTest(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestNoConditionalTests(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestNoDisabledTests(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestNoDuplicateHooks(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestNoFocusedTests(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestNoHooks(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestNoIdenticalTitle(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestNoImportNodeTest(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestNoImportingVitestGlobals(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestNoInterpolationInSnapshots(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestNoLargeSnapshots(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestNoMocksImport(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestNoRestrictedMatchers(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestNoRestrictedViMethods(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestNoStandaloneExpect(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestNoTestPrefixes(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestNoTestReturnStatement(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestNoUnneededAsyncExpectFunction(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPaddingAroundAfterAllBlocks(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferCalledExactlyOnceWith(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferCalledOnce(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferCalledTimes(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferCalledWith(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferComparisonMatcher(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferDescribeFunctionTitle(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferEach(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferEqualityMatcher(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferExpectAssertions(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferExpectResolves(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferExpectTypeOf(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferHooksInOrder(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferHooksOnTop(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferImportInMock(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferImportingVitestGlobals(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferLowercaseTitle(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferMockPromiseShorthand(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferMockReturnShorthand(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferSnapshotHint(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferSpyOn(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferStrictBooleanMatchers(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferStrictEqual(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferToBe(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferToBeFalsy(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferToBeObject(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferToBeTruthy(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferToContain(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferToHaveBeenCalledTimes(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferToHaveLength(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestPreferTodo(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestRequireAwaitedExpectPoll(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestRequireHook(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestRequireMockTypeParameters(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestRequireTestTimeout(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestRequireToThrowMessage(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestRequireTopLevelDescribe(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestValidDescribeCallback(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestValidExpect(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestValidExpectInPromise(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestValidTitle(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VitestWarnTodo(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NodeCallbackReturn(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NodeGlobalRequire(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NodeHandleCallbackErr(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NodeNoExportsAssign(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NodeNoNewRequire(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NodeNoPathConcat(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::NodeNoProcessEnv(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueComponentDefinitionNameCasing(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueDefineEmitsDeclaration(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueDefinePropsDeclaration(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueDefinePropsDestructuring(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueMaxProps(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNextTickStyle(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoArrowFunctionsInWatch(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoAsyncInComputedProperties(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoComputedPropertiesInData(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoDeprecatedDataObjectDeclaration(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoDeprecatedDeleteSet(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoDeprecatedDestroyedLifecycle(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoDeprecatedEventsApi(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoDeprecatedModelDefinition(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoDeprecatedPropsDefaultThis(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoDeprecatedVueConfigKeycodes(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoDupeKeys(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoExportInScriptSetup(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoExposeAfterAwait(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoImportCompilerMacros(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoLifecycleAfterAwait(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoMultipleSlotArgs(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoRequiredPropWithDefault(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoReservedComponentNames(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoReservedKeys(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoReservedProps(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoSharedComponentData(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoSideEffectsInComputedProperties(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoThisInBeforeRouteEnter(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueNoWatchAfterAwait(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VuePreferImportFromVue(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VuePropNameCasing(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueRequireDefaultExport(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueRequireDefaultProp(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueRequireDirectExport(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueRequirePropTypeConstructor(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueRequirePropTypes(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueRequireRenderReturn(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueRequireSlotsAsFunctions(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueRequireTypedRef(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueReturnInComputedProperty(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueReturnInEmitsValidator(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueValidDefineEmits(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueValidDefineOptions(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueValidDefineProps(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
+                Self::VueValidNextTick(rule) => {
+                    for &node_id in node_ids {
+                        rule.run(nodes.get_node(node_id), ctx);
+                    }
+                }
             }
         }
     }

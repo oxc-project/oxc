@@ -26,7 +26,7 @@ use oxc_data_structures::box_macros::boxed_array;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_estree_tokens::{ESTreeTokenOptionsJS, update_tokens};
 use oxc_parser::Token;
-use oxc_semantic::{AstNode, Semantic};
+use oxc_semantic::{AstNode, NodeId, Semantic};
 use oxc_span::Span;
 
 mod ast_util;
@@ -167,6 +167,12 @@ struct RuleBuckets {
     by_type: Box<[Vec<usize>; AST_TYPE_MAX as usize + 1]>,
     /// Indices of rules that run on every node (rules without `types_info`).
     any_type: Vec<usize>,
+    /// `node_ids_by_type[ast_type]` = ids of all AST nodes of that type, in source order. Built once
+    /// per file so the dispatch can be type-major: for each type, run each bucketed rule over the
+    /// whole node slice in a single monomorphic loop (one enum match per rule, not per node).
+    node_ids_by_type: Box<[Vec<NodeId>; AST_TYPE_MAX as usize + 1]>,
+    /// Ids of all AST nodes, in source order. Used to dispatch `any_type` rules over every node.
+    all_node_ids: Vec<NodeId>,
 }
 
 impl RuleBuckets {
@@ -175,6 +181,10 @@ impl RuleBuckets {
             bucket.clear();
         }
         self.any_type.clear();
+        for bucket in self.node_ids_by_type.iter_mut() {
+            bucket.clear();
+        }
+        self.all_node_ids.clear();
     }
 }
 
@@ -182,6 +192,8 @@ thread_local! {
     static RULE_BUCKETS: std::cell::RefCell<RuleBuckets> = std::cell::RefCell::new(RuleBuckets {
         by_type: boxed_array![Vec::new(); AST_TYPE_MAX as usize + 1],
         any_type: Vec::new(),
+        node_ids_by_type: boxed_array![Vec::new(); AST_TYPE_MAX as usize + 1],
+        all_node_ids: Vec::new(),
     });
 }
 
@@ -195,11 +207,10 @@ fn execute_rules<'a, const TIMINGS: bool>(
     let mut timing_stats = TIMINGS.then(|| vec![RuleTimingStat::default(); rules.len()]);
 
     if with_runtime_optimization {
-        // Bucket rules by the AST node types they care about into a reused per-thread buffer, then
-        // make a single pass over the AST, dispatching each node only to the rules registered for
-        // its type. This replaces "every rule tests every node" (which dominated dispatch cost in
-        // profiles), and because the buffer is reused there is no per-file allocation — so this is
-        // a win for files of all sizes, not just large ones.
+        // Bucket rules by the AST node types they care about, and node ids by their type, into
+        // reused per-thread buffers, then dispatch type-major via `RuleEnum::run_batch`. This keeps
+        // the per-node dispatch a direct call (the enum match is hoisted to once per rule-per-type)
+        // and, because the buffers are reused, incurs no per-file allocation.
         RULE_BUCKETS.with_borrow_mut(|buckets| {
             buckets.clear();
 
@@ -221,17 +232,34 @@ fn execute_rules<'a, const TIMINGS: bool>(
                 }
             }
 
-            for node in semantic.nodes() {
-                for &rule_index in &buckets.by_type[node.kind().ty() as usize] {
+            // Group node ids by AST type in a single pass, then dispatch type-major: for each type,
+            // run every bucketed rule over the whole node slice. This way the `RuleEnum` match runs
+            // once per (rule, type) instead of once per (node, rule) — the per-node call inside
+            // `run_batch` is a direct, inlinable call into the concrete rule.
+            let nodes = semantic.nodes();
+            for node in nodes {
+                let id = node.id();
+                buckets.node_ids_by_type[node.kind().ty() as usize].push(id);
+                buckets.all_node_ids.push(id);
+            }
+
+            for ty in 0..buckets.node_ids_by_type.len() {
+                let node_ids = &buckets.node_ids_by_type[ty];
+                if node_ids.is_empty() {
+                    continue;
+                }
+                for &rule_index in &buckets.by_type[ty] {
                     let (rule, ctx) = &rules[rule_index];
                     let timing_stat = get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);
-                    rule.run::<TIMINGS>(node, ctx, timing_stat);
+                    rule.run_batch::<TIMINGS>(node_ids, nodes, ctx, timing_stat);
                 }
-                for &rule_index in &buckets.any_type {
-                    let (rule, ctx) = &rules[rule_index];
-                    let timing_stat = get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);
-                    rule.run::<TIMINGS>(node, ctx, timing_stat);
-                }
+            }
+
+            // `any_type` rules (no `types_info`) run on every node.
+            for &rule_index in &buckets.any_type {
+                let (rule, ctx) = &rules[rule_index];
+                let timing_stat = get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);
+                rule.run_batch::<TIMINGS>(&buckets.all_node_ids, nodes, ctx, timing_stat);
             }
 
             if should_run_on_jest_node {

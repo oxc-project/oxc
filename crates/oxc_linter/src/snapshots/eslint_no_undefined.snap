@@ -159,15 +159,15 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint(no-undefined): Unexpected use of `undefined`
-   ╭─[no_undefined.tsx:1:5]
- 1 │ var undefined = true; undefined = false;
-   ·     ─────────
-   ╰────
-
-  ⚠ eslint(no-undefined): Unexpected use of `undefined`
    ╭─[no_undefined.tsx:1:23]
  1 │ var undefined = true; undefined = false;
    ·                       ─────────
+   ╰────
+
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
+   ╭─[no_undefined.tsx:1:5]
+ 1 │ var undefined = true; undefined = false;
+   ·     ─────────
    ╰────
 
   ⚠ eslint(no-undefined): Unexpected use of `undefined`
