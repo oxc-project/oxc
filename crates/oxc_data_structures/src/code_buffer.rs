@@ -746,15 +746,6 @@ mod test {
     }
 
     #[test]
-    fn string_isomorphism() {
-        let s = "Hello, world!";
-        let mut code = CodeBuffer::with_capacity(s.len());
-        code.print_str(s);
-        assert_eq!(code.len(), s.len());
-        assert_eq!(String::from(code), s.to_string());
-    }
-
-    #[test]
     fn into_string() {
         let s = "Hello, world!";
         let mut code = CodeBuffer::with_capacity(s.len());
