@@ -111,18 +111,17 @@ fn check_unicorn_prefer_spread<'a>(
 
             let member_expr_obj = member_expr.object().without_parentheses();
 
-            // Skip receivers that are statically known not to be arrays (e.g. string/number
-            // literals, template literals, `x.join()`). `"foo".slice()` returns a string, so the
-            // `[...x]` rewrite would change both value and type. Mirrors the `concat` arm and
-            // eslint-plugin-unicorn (which bails via `isNotArray`).
-            if is_not_array(member_expr_obj, ctx) {
-                return;
-            }
-
             if matches!(
                 member_expr_obj,
                 Expression::ArrayExpression(_) | Expression::ThisExpression(_)
             ) {
+                return;
+            }
+
+            // Skip receivers that are statically known not to be arrays (e.g. string/number
+            // literals, template literals, `x.join()`). `"foo".slice()` returns a string, so the
+            // `[...x]` rewrite would change both value and type.
+            if is_not_array(member_expr_obj, ctx) {
                 return;
             }
 
