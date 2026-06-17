@@ -20,7 +20,7 @@ use sequences::ESTreeSequenceSerializer;
 use structs::ESTreeStructSerializer;
 
 pub use concat::{Concat2, Concat3, ConcatElement};
-pub use config::{Config, ConfigFixesJS, ConfigFixesTS, ConfigJS, ConfigTS};
+pub use config::{Config, ConfigFixes, ConfigNoFixes};
 pub use formatter::{CompactFormatter, Formatter, PrettyFormatter};
 pub use sequences::SequenceSerializer;
 pub use strings::{JsonSafeString, LoneSurrogatesString};
@@ -70,29 +70,17 @@ pub trait Serializer {
     fn buffer_and_formatter_mut(&mut self) -> (&mut CodeBuffer, &mut Self::Formatter);
 }
 
-/// ESTree serializer which produces compact JSON, including TypeScript fields.
-pub type CompactTSSerializer = ESTreeSerializer<ConfigTS, CompactFormatter>;
+/// ESTree serializer which produces compact JSON.
+pub type CompactSerializer = ESTreeSerializer<ConfigNoFixes, CompactFormatter>;
 
-/// ESTree serializer which produces compact JSON, excluding TypeScript fields.
-pub type CompactJSSerializer = ESTreeSerializer<ConfigJS, CompactFormatter>;
+/// ESTree serializer which produces pretty JSON.
+pub type PrettySerializer = ESTreeSerializer<ConfigNoFixes, PrettyFormatter>;
 
-/// ESTree serializer which produces pretty JSON, including TypeScript fields.
-pub type PrettyTSSerializer = ESTreeSerializer<ConfigTS, PrettyFormatter>;
+/// ESTree serializer which produces compact JSON.
+pub type CompactFixesSerializer = ESTreeSerializer<ConfigFixes, CompactFormatter>;
 
-/// ESTree serializer which produces pretty JSON, excluding TypeScript fields.
-pub type PrettyJSSerializer = ESTreeSerializer<ConfigJS, PrettyFormatter>;
-
-/// ESTree serializer which produces compact JSON, including TypeScript fields.
-pub type CompactFixesTSSerializer = ESTreeSerializer<ConfigFixesTS, CompactFormatter>;
-
-/// ESTree serializer which produces compact JSON, excluding TypeScript fields.
-pub type CompactFixesJSSerializer = ESTreeSerializer<ConfigFixesJS, CompactFormatter>;
-
-/// ESTree serializer which produces pretty JSON, including TypeScript fields.
-pub type PrettyFixesTSSerializer = ESTreeSerializer<ConfigFixesTS, PrettyFormatter>;
-
-/// ESTree serializer which produces pretty JSON, excluding TypeScript fields.
-pub type PrettyFixesJSSerializer = ESTreeSerializer<ConfigFixesJS, PrettyFormatter>;
+/// ESTree serializer which produces pretty JSON.
+pub type PrettyFixesSerializer = ESTreeSerializer<ConfigFixes, PrettyFormatter>;
 
 /// ESTree serializer.
 pub struct ESTreeSerializer<C: Config, F: Formatter> {
@@ -105,24 +93,24 @@ pub struct ESTreeSerializer<C: Config, F: Formatter> {
 
 impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
     /// Create new [`ESTreeSerializer`].
-    pub fn new(ranges: bool) -> Self {
+    pub fn new(include_ts_fields: bool, ranges: bool) -> Self {
         Self {
             buffer: CodeBuffer::with_indent(IndentChar::Space, 2),
             formatter: F::new(),
             trace_path: NonEmptyStack::new(TracePathPart::Index(0)),
             fixes_buffer: CodeBuffer::new(),
-            config: C::new(ranges),
+            config: C::new(include_ts_fields, ranges),
         }
     }
 
     /// Create new [`ESTreeSerializer`] with specified buffer capacity.
-    pub fn with_capacity(capacity: usize, ranges: bool) -> Self {
+    pub fn with_capacity(capacity: usize, include_ts_fields: bool, ranges: bool) -> Self {
         Self {
             buffer: CodeBuffer::with_capacity_and_indent(capacity, IndentChar::Space, 2),
             formatter: F::new(),
             trace_path: NonEmptyStack::new(TracePathPart::Index(0)),
             fixes_buffer: CodeBuffer::new(),
-            config: C::new(ranges),
+            config: C::new(include_ts_fields, ranges),
         }
     }
 
@@ -172,7 +160,7 @@ impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
 impl<C: Config, F: Formatter> Default for ESTreeSerializer<C, F> {
     #[inline(always)]
     fn default() -> Self {
-        Self::new(false)
+        Self::new(true, false)
     }
 }
 

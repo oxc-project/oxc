@@ -363,12 +363,12 @@ mod test {
     #[cfg(feature = "serialize")]
     #[test]
     fn box_serialize_estree() {
-        use oxc_estree::{CompactTSSerializer, ESTree};
+        use oxc_estree::{CompactSerializer, ESTree};
 
         let allocator = Allocator::default();
         let b = Box::new_in("x", &allocator);
 
-        let mut serializer = CompactTSSerializer::default();
+        let mut serializer = CompactSerializer::default();
         b.serialize(&mut serializer);
         let s = serializer.into_string();
         assert_eq!(s, r#""x""#);

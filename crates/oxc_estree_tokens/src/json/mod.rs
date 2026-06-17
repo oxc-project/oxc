@@ -29,7 +29,7 @@ struct TokenSerializerConfig;
 impl ESTreeConfig for TokenSerializerConfig {
     #[expect(clippy::inline_always)] // It's a no-op
     #[inline(always)]
-    fn new(_ranges: bool) -> Self {
+    fn new(_include_ts_fields: bool, _ranges: bool) -> Self {
         Self
     }
 
@@ -79,7 +79,7 @@ pub fn to_estree_tokens_json<O: ESTreeTokenConfig>(
     options: O,
 ) -> String {
     let capacity = estimate_json_len(tokens.len(), source_text.len(), true);
-    let mut serializer = CompactTokenSerializer::with_capacity(capacity, false);
+    let mut serializer = CompactTokenSerializer::with_capacity(capacity, false, false);
     serialize_tokens(&mut serializer, tokens, program, source_text, span_converter, options);
     serializer.into_string()
 }
@@ -99,7 +99,7 @@ pub fn to_estree_tokens_pretty_json<O: ESTreeTokenConfig>(
     options: O,
 ) -> String {
     let capacity = estimate_json_len(tokens.len(), source_text.len(), false);
-    let mut serializer = PrettyTokenSerializer::with_capacity(capacity, false);
+    let mut serializer = PrettyTokenSerializer::with_capacity(capacity, false, false);
     serialize_tokens(&mut serializer, tokens, program, source_text, span_converter, options);
     serializer.into_string()
 }
