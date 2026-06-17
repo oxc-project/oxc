@@ -1,0 +1,12 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ react(jsx-no-leaked-render): Potential leaked value that might cause unintentionally rendered values
+   ╭─[jsx_no_leaked_render.tsx:3:28]
+ 2 │             const Component = ({ count, title }) => {
+ 3 │               return <div>{(numberA || numberB) && title}</div>
+   ·                            ─────────────────────────────
+ 4 │             }
+   ╰────
+  help: Coerce the conditional to a boolean (`!!(numberA || numberB) && ...`) or use a ternary (`(numberA || numberB) ? ... : null`).
