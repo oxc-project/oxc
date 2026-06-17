@@ -3232,6 +3232,12 @@ impl RuleRunner for crate::rules::unicorn::no_process_exit::NoProcessExit {
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
+impl RuleRunner for crate::rules::unicorn::no_return_array_push::NoReturnArrayPush {
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
 impl RuleRunner
     for crate::rules::unicorn::no_single_promise_in_promise_methods::NoSinglePromiseInPromiseMethods
 {

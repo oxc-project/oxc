@@ -640,6 +640,7 @@ pub use crate::rules::unicorn::no_new_buffer::NoNewBuffer as UnicornNoNewBuffer;
 pub use crate::rules::unicorn::no_null::NoNull as UnicornNoNull;
 pub use crate::rules::unicorn::no_object_as_default_parameter::NoObjectAsDefaultParameter as UnicornNoObjectAsDefaultParameter;
 pub use crate::rules::unicorn::no_process_exit::NoProcessExit as UnicornNoProcessExit;
+pub use crate::rules::unicorn::no_return_array_push::NoReturnArrayPush as UnicornNoReturnArrayPush;
 pub use crate::rules::unicorn::no_single_promise_in_promise_methods::NoSinglePromiseInPromiseMethods as UnicornNoSinglePromiseInPromiseMethods;
 pub use crate::rules::unicorn::no_static_only_class::NoStaticOnlyClass as UnicornNoStaticOnlyClass;
 pub use crate::rules::unicorn::no_thenable::NoThenable as UnicornNoThenable;
@@ -1360,6 +1361,7 @@ pub enum RuleEnum {
     UnicornNoNull(UnicornNoNull),
     UnicornNoObjectAsDefaultParameter(UnicornNoObjectAsDefaultParameter),
     UnicornNoProcessExit(UnicornNoProcessExit),
+    UnicornNoReturnArrayPush(UnicornNoReturnArrayPush),
     UnicornNoSinglePromiseInPromiseMethods(UnicornNoSinglePromiseInPromiseMethods),
     UnicornNoStaticOnlyClass(UnicornNoStaticOnlyClass),
     UnicornNoThenable(UnicornNoThenable),
@@ -2264,7 +2266,9 @@ const UNICORN_NO_NEW_BUFFER_ID: usize = UNICORN_NO_NEW_ARRAY_ID + 1usize;
 const UNICORN_NO_NULL_ID: usize = UNICORN_NO_NEW_BUFFER_ID + 1usize;
 const UNICORN_NO_OBJECT_AS_DEFAULT_PARAMETER_ID: usize = UNICORN_NO_NULL_ID + 1usize;
 const UNICORN_NO_PROCESS_EXIT_ID: usize = UNICORN_NO_OBJECT_AS_DEFAULT_PARAMETER_ID + 1usize;
-const UNICORN_NO_SINGLE_PROMISE_IN_PROMISE_METHODS_ID: usize = UNICORN_NO_PROCESS_EXIT_ID + 1usize;
+const UNICORN_NO_RETURN_ARRAY_PUSH_ID: usize = UNICORN_NO_PROCESS_EXIT_ID + 1usize;
+const UNICORN_NO_SINGLE_PROMISE_IN_PROMISE_METHODS_ID: usize =
+    UNICORN_NO_RETURN_ARRAY_PUSH_ID + 1usize;
 const UNICORN_NO_STATIC_ONLY_CLASS_ID: usize =
     UNICORN_NO_SINGLE_PROMISE_IN_PROMISE_METHODS_ID + 1usize;
 const UNICORN_NO_THENABLE_ID: usize = UNICORN_NO_STATIC_ONLY_CLASS_ID + 1usize;
@@ -3234,6 +3238,7 @@ impl RuleEnum {
             Self::UnicornNoNull(_) => UNICORN_NO_NULL_ID,
             Self::UnicornNoObjectAsDefaultParameter(_) => UNICORN_NO_OBJECT_AS_DEFAULT_PARAMETER_ID,
             Self::UnicornNoProcessExit(_) => UNICORN_NO_PROCESS_EXIT_ID,
+            Self::UnicornNoReturnArrayPush(_) => UNICORN_NO_RETURN_ARRAY_PUSH_ID,
             Self::UnicornNoSinglePromiseInPromiseMethods(_) => {
                 UNICORN_NO_SINGLE_PROMISE_IN_PROMISE_METHODS_ID
             }
@@ -4198,6 +4203,7 @@ impl RuleEnum {
             Self::UnicornNoNull(_) => UnicornNoNull::NAME,
             Self::UnicornNoObjectAsDefaultParameter(_) => UnicornNoObjectAsDefaultParameter::NAME,
             Self::UnicornNoProcessExit(_) => UnicornNoProcessExit::NAME,
+            Self::UnicornNoReturnArrayPush(_) => UnicornNoReturnArrayPush::NAME,
             Self::UnicornNoSinglePromiseInPromiseMethods(_) => {
                 UnicornNoSinglePromiseInPromiseMethods::NAME
             }
@@ -5182,6 +5188,7 @@ impl RuleEnum {
                 UnicornNoObjectAsDefaultParameter::CATEGORY
             }
             Self::UnicornNoProcessExit(_) => UnicornNoProcessExit::CATEGORY,
+            Self::UnicornNoReturnArrayPush(_) => UnicornNoReturnArrayPush::CATEGORY,
             Self::UnicornNoSinglePromiseInPromiseMethods(_) => {
                 UnicornNoSinglePromiseInPromiseMethods::CATEGORY
             }
@@ -6165,6 +6172,7 @@ impl RuleEnum {
             Self::UnicornNoNull(_) => UnicornNoNull::FIX,
             Self::UnicornNoObjectAsDefaultParameter(_) => UnicornNoObjectAsDefaultParameter::FIX,
             Self::UnicornNoProcessExit(_) => UnicornNoProcessExit::FIX,
+            Self::UnicornNoReturnArrayPush(_) => UnicornNoReturnArrayPush::FIX,
             Self::UnicornNoSinglePromiseInPromiseMethods(_) => {
                 UnicornNoSinglePromiseInPromiseMethods::FIX
             }
@@ -7258,6 +7266,7 @@ impl RuleEnum {
                 UnicornNoObjectAsDefaultParameter::documentation()
             }
             Self::UnicornNoProcessExit(_) => UnicornNoProcessExit::documentation(),
+            Self::UnicornNoReturnArrayPush(_) => UnicornNoReturnArrayPush::documentation(),
             Self::UnicornNoSinglePromiseInPromiseMethods(_) => {
                 UnicornNoSinglePromiseInPromiseMethods::documentation()
             }
@@ -9189,6 +9198,8 @@ impl RuleEnum {
             }
             Self::UnicornNoProcessExit(_) => UnicornNoProcessExit::config_schema(generator)
                 .or_else(|| UnicornNoProcessExit::schema(generator)),
+            Self::UnicornNoReturnArrayPush(_) => UnicornNoReturnArrayPush::config_schema(generator)
+                .or_else(|| UnicornNoReturnArrayPush::schema(generator)),
             Self::UnicornNoSinglePromiseInPromiseMethods(_) => {
                 UnicornNoSinglePromiseInPromiseMethods::config_schema(generator)
                     .or_else(|| UnicornNoSinglePromiseInPromiseMethods::schema(generator))
@@ -10668,6 +10679,7 @@ impl RuleEnum {
             Self::UnicornNoNull(_) => "unicorn",
             Self::UnicornNoObjectAsDefaultParameter(_) => "unicorn",
             Self::UnicornNoProcessExit(_) => "unicorn",
+            Self::UnicornNoReturnArrayPush(_) => "unicorn",
             Self::UnicornNoSinglePromiseInPromiseMethods(_) => "unicorn",
             Self::UnicornNoStaticOnlyClass(_) => "unicorn",
             Self::UnicornNoThenable(_) => "unicorn",
@@ -12625,6 +12637,9 @@ impl RuleEnum {
             Self::UnicornNoProcessExit(_) => {
                 Ok(Self::UnicornNoProcessExit(UnicornNoProcessExit::from_configuration(value)?))
             }
+            Self::UnicornNoReturnArrayPush(_) => Ok(Self::UnicornNoReturnArrayPush(
+                UnicornNoReturnArrayPush::from_configuration(value)?,
+            )),
             Self::UnicornNoSinglePromiseInPromiseMethods(_) => {
                 Ok(Self::UnicornNoSinglePromiseInPromiseMethods(
                     UnicornNoSinglePromiseInPromiseMethods::from_configuration(value)?,
@@ -14211,6 +14226,7 @@ impl RuleEnum {
             Self::UnicornNoNull(rule) => rule.to_configuration(),
             Self::UnicornNoObjectAsDefaultParameter(rule) => rule.to_configuration(),
             Self::UnicornNoProcessExit(rule) => rule.to_configuration(),
+            Self::UnicornNoReturnArrayPush(rule) => rule.to_configuration(),
             Self::UnicornNoSinglePromiseInPromiseMethods(rule) => rule.to_configuration(),
             Self::UnicornNoStaticOnlyClass(rule) => rule.to_configuration(),
             Self::UnicornNoThenable(rule) => rule.to_configuration(),
@@ -15061,6 +15077,7 @@ impl RuleEnum {
                 Self::UnicornNoNull(rule) => rule.run(node, ctx),
                 Self::UnicornNoObjectAsDefaultParameter(rule) => rule.run(node, ctx),
                 Self::UnicornNoProcessExit(rule) => rule.run(node, ctx),
+                Self::UnicornNoReturnArrayPush(rule) => rule.run(node, ctx),
                 Self::UnicornNoSinglePromiseInPromiseMethods(rule) => rule.run(node, ctx),
                 Self::UnicornNoStaticOnlyClass(rule) => rule.run(node, ctx),
                 Self::UnicornNoThenable(rule) => rule.run(node, ctx),
@@ -15904,6 +15921,7 @@ impl RuleEnum {
                 Self::UnicornNoNull(rule) => rule.run(node, ctx),
                 Self::UnicornNoObjectAsDefaultParameter(rule) => rule.run(node, ctx),
                 Self::UnicornNoProcessExit(rule) => rule.run(node, ctx),
+                Self::UnicornNoReturnArrayPush(rule) => rule.run(node, ctx),
                 Self::UnicornNoSinglePromiseInPromiseMethods(rule) => rule.run(node, ctx),
                 Self::UnicornNoStaticOnlyClass(rule) => rule.run(node, ctx),
                 Self::UnicornNoThenable(rule) => rule.run(node, ctx),
@@ -16754,6 +16772,7 @@ impl RuleEnum {
                 Self::UnicornNoNull(rule) => rule.run_once(ctx),
                 Self::UnicornNoObjectAsDefaultParameter(rule) => rule.run_once(ctx),
                 Self::UnicornNoProcessExit(rule) => rule.run_once(ctx),
+                Self::UnicornNoReturnArrayPush(rule) => rule.run_once(ctx),
                 Self::UnicornNoSinglePromiseInPromiseMethods(rule) => rule.run_once(ctx),
                 Self::UnicornNoStaticOnlyClass(rule) => rule.run_once(ctx),
                 Self::UnicornNoThenable(rule) => rule.run_once(ctx),
@@ -17597,6 +17616,7 @@ impl RuleEnum {
                 Self::UnicornNoNull(rule) => rule.run_once(ctx),
                 Self::UnicornNoObjectAsDefaultParameter(rule) => rule.run_once(ctx),
                 Self::UnicornNoProcessExit(rule) => rule.run_once(ctx),
+                Self::UnicornNoReturnArrayPush(rule) => rule.run_once(ctx),
                 Self::UnicornNoSinglePromiseInPromiseMethods(rule) => rule.run_once(ctx),
                 Self::UnicornNoStaticOnlyClass(rule) => rule.run_once(ctx),
                 Self::UnicornNoThenable(rule) => rule.run_once(ctx),
@@ -18602,6 +18622,7 @@ impl RuleEnum {
                     rule.run_on_jest_node(jest_node, ctx)
                 }
                 Self::UnicornNoProcessExit(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::UnicornNoReturnArrayPush(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornNoSinglePromiseInPromiseMethods(rule) => {
                     rule.run_on_jest_node(jest_node, ctx)
                 }
@@ -19705,6 +19726,7 @@ impl RuleEnum {
                     rule.run_on_jest_node(jest_node, ctx)
                 }
                 Self::UnicornNoProcessExit(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::UnicornNoReturnArrayPush(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornNoSinglePromiseInPromiseMethods(rule) => {
                     rule.run_on_jest_node(jest_node, ctx)
                 }
@@ -20654,6 +20676,7 @@ impl RuleEnum {
             Self::UnicornNoNull(rule) => rule.should_run(ctx),
             Self::UnicornNoObjectAsDefaultParameter(rule) => rule.should_run(ctx),
             Self::UnicornNoProcessExit(rule) => rule.should_run(ctx),
+            Self::UnicornNoReturnArrayPush(rule) => rule.should_run(ctx),
             Self::UnicornNoSinglePromiseInPromiseMethods(rule) => rule.should_run(ctx),
             Self::UnicornNoStaticOnlyClass(rule) => rule.should_run(ctx),
             Self::UnicornNoThenable(rule) => rule.should_run(ctx),
@@ -21710,6 +21733,7 @@ impl RuleEnum {
                 UnicornNoObjectAsDefaultParameter::IS_TSGOLINT_RULE
             }
             Self::UnicornNoProcessExit(_) => UnicornNoProcessExit::IS_TSGOLINT_RULE,
+            Self::UnicornNoReturnArrayPush(_) => UnicornNoReturnArrayPush::IS_TSGOLINT_RULE,
             Self::UnicornNoSinglePromiseInPromiseMethods(_) => {
                 UnicornNoSinglePromiseInPromiseMethods::IS_TSGOLINT_RULE
             }
@@ -22822,6 +22846,7 @@ impl RuleEnum {
                 UnicornNoObjectAsDefaultParameter::VERSION
             }
             Self::UnicornNoProcessExit(_) => UnicornNoProcessExit::VERSION,
+            Self::UnicornNoReturnArrayPush(_) => UnicornNoReturnArrayPush::VERSION,
             Self::UnicornNoSinglePromiseInPromiseMethods(_) => {
                 UnicornNoSinglePromiseInPromiseMethods::VERSION
             }
@@ -23857,6 +23882,7 @@ impl RuleEnum {
                 UnicornNoObjectAsDefaultParameter::HAS_CONFIG
             }
             Self::UnicornNoProcessExit(_) => UnicornNoProcessExit::HAS_CONFIG,
+            Self::UnicornNoReturnArrayPush(_) => UnicornNoReturnArrayPush::HAS_CONFIG,
             Self::UnicornNoSinglePromiseInPromiseMethods(_) => {
                 UnicornNoSinglePromiseInPromiseMethods::HAS_CONFIG
             }
@@ -24857,6 +24883,7 @@ impl RuleEnum {
             Self::UnicornNoNull(_) => UnicornNoNull::INFO,
             Self::UnicornNoObjectAsDefaultParameter(_) => UnicornNoObjectAsDefaultParameter::INFO,
             Self::UnicornNoProcessExit(_) => UnicornNoProcessExit::INFO,
+            Self::UnicornNoReturnArrayPush(_) => UnicornNoReturnArrayPush::INFO,
             Self::UnicornNoSinglePromiseInPromiseMethods(_) => {
                 UnicornNoSinglePromiseInPromiseMethods::INFO
             }
@@ -25738,6 +25765,7 @@ impl RuleEnum {
             Self::UnicornNoNull(rule) => rule.types_info(),
             Self::UnicornNoObjectAsDefaultParameter(rule) => rule.types_info(),
             Self::UnicornNoProcessExit(rule) => rule.types_info(),
+            Self::UnicornNoReturnArrayPush(rule) => rule.types_info(),
             Self::UnicornNoSinglePromiseInPromiseMethods(rule) => rule.types_info(),
             Self::UnicornNoStaticOnlyClass(rule) => rule.types_info(),
             Self::UnicornNoThenable(rule) => rule.types_info(),
@@ -26578,6 +26606,7 @@ impl RuleEnum {
             Self::UnicornNoNull(rule) => rule.run_info(),
             Self::UnicornNoObjectAsDefaultParameter(rule) => rule.run_info(),
             Self::UnicornNoProcessExit(rule) => rule.run_info(),
+            Self::UnicornNoReturnArrayPush(rule) => rule.run_info(),
             Self::UnicornNoSinglePromiseInPromiseMethods(rule) => rule.run_info(),
             Self::UnicornNoStaticOnlyClass(rule) => rule.run_info(),
             Self::UnicornNoThenable(rule) => rule.run_info(),
@@ -27518,6 +27547,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::UnicornNoNull(UnicornNoNull::default()),
         RuleEnum::UnicornNoObjectAsDefaultParameter(UnicornNoObjectAsDefaultParameter::default()),
         RuleEnum::UnicornNoProcessExit(UnicornNoProcessExit::default()),
+        RuleEnum::UnicornNoReturnArrayPush(UnicornNoReturnArrayPush::default()),
         RuleEnum::UnicornNoSinglePromiseInPromiseMethods(
             UnicornNoSinglePromiseInPromiseMethods::default(),
         ),
