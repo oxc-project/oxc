@@ -77,10 +77,6 @@ impl Rule for PreferMathMinMax {
         }
 
         ctx.diagnostic_with_fix(prefer_math_min_max_diagnostic(conditional_expr.span), |fixer| {
-            // Emit the operands' original source text rather than reconstructing them, so word
-            // operators keep their spacing (`typeof x`, not `typeofx`) and member operands aren't
-            // dropped (`delete obj.p`, not `delete`). Matches eslint-plugin-unicorn, which builds
-            // the fix from `sourceCode.getText`.
             let consequent = ctx.source_range(conditional_expr.consequent.span());
             let alternate = ctx.source_range(conditional_expr.alternate.span());
             let method = match condition_type {
