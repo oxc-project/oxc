@@ -9,9 +9,8 @@
 use std::cell::Cell;
 
 use oxc_allocator::{Allocator, Box, IntoIn, Vec};
-use oxc_syntax::{reference::ReferenceId, scope::ScopeId, symbol::SymbolId};
-
 use oxc_str::{Ident, Str};
+use oxc_syntax::{reference::ReferenceId, scope::ScopeId, symbol::SymbolId};
 
 use crate::{AstBuilder, ast::*};
 

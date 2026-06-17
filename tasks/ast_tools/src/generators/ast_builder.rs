@@ -85,10 +85,8 @@ impl Generator for AstBuilderGenerator {
 
             ///@@line_break
             use oxc_allocator::{Allocator, Box, IntoIn, Vec};
-            use oxc_syntax::{scope::ScopeId, symbol::SymbolId, reference::ReferenceId};
-
-            ///@@line_break
             use oxc_str::{Ident, Str};
+            use oxc_syntax::{scope::ScopeId, symbol::SymbolId, reference::ReferenceId};
 
             ///@@line_break
             use crate::{AstBuilder, ast::*};
