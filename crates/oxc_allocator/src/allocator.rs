@@ -1,5 +1,6 @@
 use std::{
     alloc::Layout,
+    borrow::Cow,
     ptr::{self, NonNull},
     slice, str,
 };
@@ -300,6 +301,35 @@ impl Allocator {
     #[inline(always)]
     pub fn alloc_str<'alloc>(&'alloc self, src: &str) -> &'alloc str {
         self.arena.alloc_str(src)
+    }
+
+    /// Get a `&str` out of a [`Cow`], **without copying** when it is [`Cow::Borrowed`].
+    ///
+    /// The borrow-passthrough optimization: a [`Cow::Borrowed`] already references data that
+    /// lives at least as long as this allocator (`'alloc`), so it is returned as-is; only a
+    /// [`Cow::Owned`] is copied into the arena via [`alloc_str`].
+    ///
+    /// Takes the `Cow` by shared reference so it also works when the `Cow` lives behind a `&self`
+    /// borrow and cannot be moved out. Prefer this over `allocator.alloc_str(&cow)`, which always
+    /// copies even when `cow` is borrowed. It is most useful when normalizing source text (string
+    /// / number / bigint literals, etc.): the common case needs no normalization and stays
+    /// borrowed, so the arena copy is avoided entirely.
+    ///
+    /// # Panics
+    /// In the [`Cow::Owned`] case only, panics if reserving space in the arena fails. A
+    /// [`Cow::Borrowed`] never allocates.
+    ///
+    /// [`alloc_str`]: Allocator::alloc_str
+    //
+    // `#[inline(always)]` to match `alloc_str`: this is a hot path and the borrowed arm is a
+    // no-op, so we always want it inlined.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub fn alloc_cow_str<'alloc>(&'alloc self, cow: &Cow<'alloc, str>) -> &'alloc str {
+        match *cow {
+            Cow::Borrowed(s) => s,
+            Cow::Owned(ref s) => self.alloc_str(s),
+        }
     }
 
     /// `Copy` a slice into this [`Allocator`] and return an exclusive reference to the copy.

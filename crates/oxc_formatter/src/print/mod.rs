@@ -41,8 +41,6 @@ pub use binary_like_expression::{BinaryLikeExpression, should_flatten};
 pub use fragment::{FormatFunctionParams, FormatTypeParameters};
 pub use function::FormatFunctionOptions;
 
-use std::borrow::Cow;
-
 use cow_utils::CowUtils;
 
 use oxc_allocator::Vec;
@@ -1076,14 +1074,14 @@ impl<'a> FormatWrite<'a> for AstNode<'a, StringLiteral<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, BigIntLiteral<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        // Already-lowercase bigints (the common case, e.g. `123n`) stay `Cow::Borrowed`, so the
-        // arena copy is avoided; only an uppercase literal (e.g. `0xFFn`) is copied.
-        let lowered = self.raw().unwrap().as_str().cow_to_ascii_lowercase();
-        let text_str: &'a str = match lowered {
-            Cow::Borrowed(borrowed) => borrowed,
-            Cow::Owned(owned) => f.allocator().alloc_str(&owned),
-        };
-        write!(f, text(text_str));
+        // Already-lowercase bigints (the common case, e.g. `123n`) stay `Cow::Borrowed`, so
+        // `alloc_cow_str` avoids the arena copy; only an uppercase literal (e.g. `0xFFn`) is copied.
+        write!(
+            f,
+            text(
+                f.allocator().alloc_cow_str(&self.raw().unwrap().as_str().cow_to_ascii_lowercase())
+            )
+        );
     }
 }
 

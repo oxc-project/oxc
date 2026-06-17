@@ -10,7 +10,7 @@ use oxc_formatter_core::{
 
 use crate::context::JsonFormatContext;
 
-use super::{JsonFormatter, arena_cow_str, write_quoted_str};
+use super::{JsonFormatter, write_quoted_str};
 
 pub struct FmtJsonString<'a, 'b> {
     pub lit: &'b StringLiteral<'a>,
@@ -44,7 +44,7 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonString<'a, '_> {
             return;
         }
 
-        write_quoted_str(f, chosen_quote, arena_cow_str(normalized, f));
+        write_quoted_str(f, chosen_quote, f.allocator().alloc_cow_str(&normalized));
     }
 }
 
@@ -71,6 +71,6 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonNumber<'a, '_> {
         // `keep_one_trailing_decimal_zero` matches Prettier's JS/JSON behavior (`1.00000` → `1.0`, not `1`).
         let normalized =
             format_trimmed_number(raw.as_str(), /* keep_one_trailing_decimal_zero */ true);
-        write!(f, text(arena_cow_str(normalized, f)));
+        write!(f, text(f.allocator().alloc_cow_str(&normalized)));
     }
 }
