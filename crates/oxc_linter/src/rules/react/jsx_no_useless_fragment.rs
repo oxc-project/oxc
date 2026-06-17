@@ -294,9 +294,10 @@ fn jsx_elem_has_key_attr(elem: &JSXElement) -> bool {
 }
 
 fn is_fragment_with_single_expression(children: &oxc_allocator::Vec<'_, JSXChild<'_>>) -> bool {
-    let children = children.iter().filter(|v| is_padding_spaces(v)).collect::<Vec<_>>();
+    let mut non_padding_children = children.iter().filter(|child| is_padding_spaces(child));
 
-    children.len() == 1 && matches!(children[0], JSXChild::ExpressionContainer(_))
+    matches!(non_padding_children.next(), Some(JSXChild::ExpressionContainer(_)))
+        && non_padding_children.next().is_none()
 }
 
 fn is_padding_spaces(v: &JSXChild<'_>) -> bool {
@@ -326,21 +327,23 @@ fn is_html_element(elem_name: &JSXElementName) -> bool {
 }
 
 fn has_less_than_two_children(children: &oxc_allocator::Vec<'_, JSXChild<'_>>) -> bool {
-    let non_padding_children = children.iter().filter(|v| is_padding_spaces(v)).collect::<Vec<_>>();
+    let mut non_padding_child_count = 0;
+    let mut has_call_expression_child = false;
 
-    if non_padding_children.len() < 2 {
-        return !non_padding_children.iter().any(|v| {
-            if let JSXChild::ExpressionContainer(v) = v {
-                if let JSXExpression::CallExpression(_) = v.expression {
-                    return true;
-                }
-                return false;
-            }
+    for child in children.iter().filter(|child| is_padding_spaces(child)) {
+        non_padding_child_count += 1;
+        if non_padding_child_count >= 2 {
+            return false;
+        }
 
-            false
-        });
+        has_call_expression_child = matches!(
+            child,
+            JSXChild::ExpressionContainer(expression)
+                if matches!(expression.expression, JSXExpression::CallExpression(_))
+        );
     }
-    false
+
+    !has_call_expression_child
 }
 
 fn is_fragment_with_only_text_and_is_not_child<'a>(

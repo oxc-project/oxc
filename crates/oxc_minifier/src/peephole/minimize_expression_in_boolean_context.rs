@@ -23,8 +23,7 @@ impl<'a> PeepholeOptimizations {
                 {
                     let mut e = u2.argument.take_in(ctx.ast);
                     Self::minimize_expression_in_boolean_context(&mut e, ctx);
-                    *expr = e;
-                    ctx.state.changed = true;
+                    ctx.replace_expression(expr, e);
                 }
             }
             Expression::BinaryExpression(e)
@@ -33,7 +32,7 @@ impl<'a> PeepholeOptimizations {
                     && e.left.is_int32_or_uint32(ctx) =>
             {
                 let argument = e.left.take_in(ctx.ast);
-                *expr = if matches!(
+                let new_expr = if matches!(
                     e.operator,
                     BinaryOperator::StrictInequality | BinaryOperator::Inequality
                 ) {
@@ -43,7 +42,7 @@ impl<'a> PeepholeOptimizations {
                     // `if ((a | b) === 0);", "if (!(a | b));")`
                     ctx.ast.expression_unary(e.span, UnaryOperator::LogicalNot, argument)
                 };
-                ctx.state.changed = true;
+                ctx.replace_expression(expr, new_expr);
             }
             // "if (!!a && !!b)" => "if (a && b)"
             Expression::LogicalExpression(e) if e.operator.is_and() => {
@@ -51,8 +50,8 @@ impl<'a> PeepholeOptimizations {
                 Self::minimize_expression_in_boolean_context(&mut e.right, ctx);
                 // "if (anything && truthyNoSideEffects)" => "if (anything)"
                 if e.right.get_side_free_boolean_value(ctx) == Some(true) {
-                    *expr = e.left.take_in(ctx.ast);
-                    ctx.state.changed = true;
+                    let new_expr = e.left.take_in(ctx.ast);
+                    ctx.replace_expression(expr, new_expr);
                 }
             }
             // "if (!!a ||!!b)" => "if (a || b)"
@@ -61,8 +60,8 @@ impl<'a> PeepholeOptimizations {
                 Self::minimize_expression_in_boolean_context(&mut e.right, ctx);
                 // "if (anything || falsyNoSideEffects)" => "if (anything)"
                 if e.right.get_side_free_boolean_value(ctx) == Some(false) {
-                    *expr = e.left.take_in(ctx.ast);
-                    ctx.state.changed = true;
+                    let new_expr = e.left.take_in(ctx.ast);
+                    ctx.replace_expression(expr, new_expr);
                 }
             }
             Expression::ConditionalExpression(e) => {
@@ -80,8 +79,8 @@ impl<'a> PeepholeOptimizations {
                         // "if (anything1 ? falsyNoSideEffects : anything2)" => "if (!anything1 && anything2)"
                         (LogicalOperator::And, Self::minimize_not(left.span(), left, ctx))
                     };
-                    *expr = Self::join_with_left_associative_op(span, op, left, right, ctx);
-                    ctx.state.changed = true;
+                    let new_expr = Self::join_with_left_associative_op(span, op, left, right, ctx);
+                    ctx.replace_expression(expr, new_expr);
                     return;
                 }
                 if let Some(boolean) = e.alternate.get_side_free_boolean_value(ctx) {
@@ -95,8 +94,8 @@ impl<'a> PeepholeOptimizations {
                         // "if (anything1 ? anything2 : falsyNoSideEffects)" => "if (anything1 && anything2)"
                         (LogicalOperator::And, left)
                     };
-                    *expr = Self::join_with_left_associative_op(span, op, left, right, ctx);
-                    ctx.state.changed = true;
+                    let new_expr = Self::join_with_left_associative_op(span, op, left, right, ctx);
+                    ctx.replace_expression(expr, new_expr);
                 }
             }
             Expression::SequenceExpression(seq_expr) => {

@@ -232,7 +232,8 @@ pub trait CompilerInterface {
 
         /* Mangler */
 
-        let mangler = self.mangle_options().map(|options| self.mangle(&mut program, options));
+        let mangler =
+            self.mangle_options().map(|options| self.mangle(&mut program, options, stats));
 
         /* Codegen */
 
@@ -304,8 +305,15 @@ pub trait CompilerInterface {
         Compressor::new(allocator).build_with_scoping(program, scoping, options);
     }
 
-    fn mangle(&self, program: &mut Program<'_>, options: MangleOptions) -> ManglerReturn {
-        Mangler::new().with_options(options).build(program)
+    /// `stats` from a prior semantic build size the mangler's internal semantic
+    /// rebuild, avoiding a full-AST counting pass.
+    fn mangle(
+        &self,
+        program: &mut Program<'_>,
+        options: MangleOptions,
+        stats: Stats,
+    ) -> ManglerReturn {
+        Mangler::new().with_options(options).with_stats(stats).build(program)
     }
 
     fn codegen<'a>(

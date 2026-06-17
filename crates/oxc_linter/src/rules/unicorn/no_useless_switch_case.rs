@@ -62,35 +62,28 @@ impl Rule for NoUselessSwitchCase {
 
         let cases = &switch_statement.cases;
 
-        let default_cases = cases.iter().filter(|v| v.test.is_none()).collect::<Vec<_>>();
+        let mut default_cases = cases.iter().filter(|case| case.test.is_none());
+        let Some(default_case) = default_cases.next() else {
+            return;
+        };
 
-        if default_cases.len() != 1 {
+        if default_cases.next().is_some() {
             return;
         }
-
-        let default_case = default_cases[0];
 
         // Check if the `default` case is the last case
         if default_case.unstable_address() != cases.last().unwrap().unstable_address() {
             return;
         }
 
-        let mut useless_cases = vec![];
+        let useless_cases = cases
+            .iter()
+            .rev()
+            .skip(1)
+            .take_while(|case| case.consequent.iter().all(|stmt| is_empty_stmt(stmt)));
 
-        for case in cases.iter().rev().skip(1) {
-            if case.consequent.iter().all(|v| is_empty_stmt(v)) {
-                useless_cases.push(case);
-            } else {
-                break;
-            }
-        }
-
-        if useless_cases.is_empty() {
-            return;
-        }
-
-        for case in useless_cases {
-            ctx.diagnostic(no_useless_switch_case_diagnostic(case.span));
+        for useless_case in useless_cases {
+            ctx.diagnostic(no_useless_switch_case_diagnostic(useless_case.span));
         }
     }
 }

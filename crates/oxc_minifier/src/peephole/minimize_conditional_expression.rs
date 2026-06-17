@@ -18,9 +18,19 @@ impl<'a> PeepholeOptimizations {
         alternate: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let mut cond_expr = ctx.ast.conditional_expression(span, test, consequent, alternate);
-        Self::minimize_conditional_expression(&mut cond_expr, ctx)
-            .unwrap_or_else(|| Expression::ConditionalExpression(ctx.ast.alloc(cond_expr)))
+        // Wrap the fresh conditional in an `Expression` slot so that, if the
+        // fold returns a replacement, `ctx.replace_expression` can walk the
+        // mutated transient conditional and mark its leaked refs dead. Without
+        // the slot wrapping, refs left in untouched slots of the discarded
+        // transient `ConditionalExpression` (e.g. the leftover `b` in
+        // `b == null ? c : b` -> `b ?? c`) would never reach `PassDirty`.
+        let mut as_expr = ctx.ast.expression_conditional(span, test, consequent, alternate);
+        let Expression::ConditionalExpression(cond_box) = &mut as_expr else { unreachable!() };
+        let folded = Self::minimize_conditional_expression(cond_box, ctx);
+        if let Some(new_expr) = folded {
+            ctx.replace_expression(&mut as_expr, new_expr);
+        }
+        as_expr
     }
 
     /// `MangleIfExpr`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L2745>
@@ -367,16 +377,25 @@ impl<'a> PeepholeOptimizations {
             }
         }
 
+        let consequent_value = expr.consequent.evaluate_value(ctx);
+        let alternate_value = expr.alternate.evaluate_value(ctx);
+
         // "a ? true : false" => "!!a"
         // "a ? false : true" => "!a"
         match (
-            expr.consequent
-                .evaluate_value(ctx)
-                .and_then(ConstantValue::into_boolean)
+            consequent_value
+                .as_ref()
+                .and_then(|v| match v {
+                    ConstantValue::Boolean(b) => Some(*b),
+                    _ => None,
+                })
                 .filter(|_| !expr.consequent.may_have_side_effects(ctx)),
-            expr.alternate
-                .evaluate_value(ctx)
-                .and_then(ConstantValue::into_boolean)
+            alternate_value
+                .as_ref()
+                .and_then(|v| match v {
+                    ConstantValue::Boolean(b) => Some(*b),
+                    _ => None,
+                })
                 .filter(|_| !expr.alternate.may_have_side_effects(ctx)),
         ) {
             (Some(true), Some(false)) => {
@@ -396,12 +415,10 @@ impl<'a> PeepholeOptimizations {
         // "a ? 1 : 0" => "+a" (if a is boolean) or "+!!a" (if no parens needed)
         // "a ? 0 : 1" => "+!a" (if no parens needed)
         match (
-            expr.consequent
-                .evaluate_value(ctx)
+            consequent_value
                 .and_then(ConstantValue::into_number)
                 .filter(|_| !expr.consequent.may_have_side_effects(ctx)),
-            expr.alternate
-                .evaluate_value(ctx)
+            alternate_value
                 .and_then(ConstantValue::into_number)
                 .filter(|_| !expr.alternate.may_have_side_effects(ctx)),
         ) {
@@ -449,7 +466,13 @@ impl<'a> PeepholeOptimizations {
         if ctx.expr_eq(&expr.alternate, &expr.consequent) {
             // "/* @__PURE__ */ a() ? b : b" => "b"
             if !expr.test.may_have_side_effects(ctx) {
-                return Some(expr.consequent.take_in(ctx.ast));
+                let result_expr = expr.consequent.take_in(ctx.ast);
+                // "(a ? eval : eval)(x)" => "(0, eval)(x)" — the bare branch
+                // would form a direct eval call / rebind a member call's `this`.
+                if Self::should_keep_indirect_access(&result_expr, ctx) {
+                    return Some(Self::preserve_indirect_access(expr.span, result_expr, ctx));
+                }
+                return Some(result_expr);
             }
 
             // "a ? b : b" => "a, b"
@@ -521,10 +544,11 @@ impl<'a> PeepholeOptimizations {
             ctx,
         ) {
             if !matches!(expr, Expression::ChainExpression(_)) {
-                *expr = ctx.ast.expression_chain(
+                let new_expr = ctx.ast.expression_chain(
                     expr.span(),
                     expr.take_in(ctx.ast).into_chain_element().unwrap(),
                 );
+                ctx.replace_expression(expr, new_expr);
             }
             true
         } else {
@@ -543,7 +567,8 @@ impl<'a> PeepholeOptimizations {
             Expression::StaticMemberExpression(e) => {
                 if e.object.is_specific_id(target_id_name) {
                     e.optional = true;
-                    e.object = expr_to_inject.take_in(ctx.ast);
+                    let new_object = expr_to_inject.take_in(ctx.ast);
+                    ctx.replace_expression(&mut e.object, new_object);
                     return true;
                 }
                 if Self::inject_optional_chaining_if_matched_inner(
@@ -558,7 +583,8 @@ impl<'a> PeepholeOptimizations {
             Expression::ComputedMemberExpression(e) => {
                 if e.object.is_specific_id(target_id_name) {
                     e.optional = true;
-                    e.object = expr_to_inject.take_in(ctx.ast);
+                    let new_object = expr_to_inject.take_in(ctx.ast);
+                    ctx.replace_expression(&mut e.object, new_object);
                     return true;
                 }
                 if Self::inject_optional_chaining_if_matched_inner(
@@ -573,7 +599,8 @@ impl<'a> PeepholeOptimizations {
             Expression::CallExpression(e) => {
                 if e.callee.is_specific_id(target_id_name) {
                     e.optional = true;
-                    e.callee = expr_to_inject.take_in(ctx.ast);
+                    let new_callee = expr_to_inject.take_in(ctx.ast);
+                    ctx.replace_expression(&mut e.callee, new_callee);
                     return true;
                 }
                 if Self::inject_optional_chaining_if_matched_inner(
@@ -589,7 +616,8 @@ impl<'a> PeepholeOptimizations {
                 ChainElement::StaticMemberExpression(e) => {
                     if e.object.is_specific_id(target_id_name) {
                         e.optional = true;
-                        e.object = expr_to_inject.take_in(ctx.ast);
+                        let new_object = expr_to_inject.take_in(ctx.ast);
+                        ctx.replace_expression(&mut e.object, new_object);
                         return true;
                     }
                     if Self::inject_optional_chaining_if_matched_inner(
@@ -604,7 +632,8 @@ impl<'a> PeepholeOptimizations {
                 ChainElement::ComputedMemberExpression(e) => {
                     if e.object.is_specific_id(target_id_name) {
                         e.optional = true;
-                        e.object = expr_to_inject.take_in(ctx.ast);
+                        let new_object = expr_to_inject.take_in(ctx.ast);
+                        ctx.replace_expression(&mut e.object, new_object);
                         return true;
                     }
                     if Self::inject_optional_chaining_if_matched_inner(
@@ -619,7 +648,8 @@ impl<'a> PeepholeOptimizations {
                 ChainElement::CallExpression(e) => {
                     if e.callee.is_specific_id(target_id_name) {
                         e.optional = true;
-                        e.callee = expr_to_inject.take_in(ctx.ast);
+                        let new_callee = expr_to_inject.take_in(ctx.ast);
+                        ctx.replace_expression(&mut e.callee, new_callee);
                         return true;
                     }
                     if Self::inject_optional_chaining_if_matched_inner(

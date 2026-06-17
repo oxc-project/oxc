@@ -498,6 +498,7 @@ pub(crate) mod unicorn {
     pub mod explicit_length_check;
     pub mod filename_case;
     pub mod import_style;
+    pub mod max_nested_calls;
     pub mod new_for_builtins;
     pub mod no_abusive_eslint_disable;
     pub mod no_accessor_recursion;
@@ -587,6 +588,7 @@ pub(crate) mod unicorn {
     pub mod prefer_native_coercion_functions;
     pub mod prefer_negative_index;
     pub mod prefer_node_protocol;
+    pub mod prefer_number_coercion;
     pub mod prefer_number_properties;
     pub mod prefer_object_from_entries;
     pub mod prefer_optional_catch_binding;
@@ -856,6 +858,7 @@ pub(crate) mod vue {
     pub mod max_props;
     pub mod next_tick_style;
     pub mod no_arrow_functions_in_watch;
+    pub mod no_async_in_computed_properties;
     pub mod no_computed_properties_in_data;
     pub mod no_deprecated_data_object_declaration;
     pub mod no_deprecated_delete_set;

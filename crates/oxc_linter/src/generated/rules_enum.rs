@@ -607,6 +607,7 @@ pub use crate::rules::unicorn::escape_case::EscapeCase as UnicornEscapeCase;
 pub use crate::rules::unicorn::explicit_length_check::ExplicitLengthCheck as UnicornExplicitLengthCheck;
 pub use crate::rules::unicorn::filename_case::FilenameCase as UnicornFilenameCase;
 pub use crate::rules::unicorn::import_style::ImportStyle as UnicornImportStyle;
+pub use crate::rules::unicorn::max_nested_calls::MaxNestedCalls as UnicornMaxNestedCalls;
 pub use crate::rules::unicorn::new_for_builtins::NewForBuiltins as UnicornNewForBuiltins;
 pub use crate::rules::unicorn::no_abusive_eslint_disable::NoAbusiveEslintDisable as UnicornNoAbusiveEslintDisable;
 pub use crate::rules::unicorn::no_accessor_recursion::NoAccessorRecursion as UnicornNoAccessorRecursion;
@@ -696,6 +697,7 @@ pub use crate::rules::unicorn::prefer_module::PreferModule as UnicornPreferModul
 pub use crate::rules::unicorn::prefer_native_coercion_functions::PreferNativeCoercionFunctions as UnicornPreferNativeCoercionFunctions;
 pub use crate::rules::unicorn::prefer_negative_index::PreferNegativeIndex as UnicornPreferNegativeIndex;
 pub use crate::rules::unicorn::prefer_node_protocol::PreferNodeProtocol as UnicornPreferNodeProtocol;
+pub use crate::rules::unicorn::prefer_number_coercion::PreferNumberCoercion as UnicornPreferNumberCoercion;
 pub use crate::rules::unicorn::prefer_number_properties::PreferNumberProperties as UnicornPreferNumberProperties;
 pub use crate::rules::unicorn::prefer_object_from_entries::PreferObjectFromEntries as UnicornPreferObjectFromEntries;
 pub use crate::rules::unicorn::prefer_optional_catch_binding::PreferOptionalCatchBinding as UnicornPreferOptionalCatchBinding;
@@ -806,6 +808,7 @@ pub use crate::rules::vue::define_props_destructuring::DefinePropsDestructuring 
 pub use crate::rules::vue::max_props::MaxProps as VueMaxProps;
 pub use crate::rules::vue::next_tick_style::NextTickStyle as VueNextTickStyle;
 pub use crate::rules::vue::no_arrow_functions_in_watch::NoArrowFunctionsInWatch as VueNoArrowFunctionsInWatch;
+pub use crate::rules::vue::no_async_in_computed_properties::NoAsyncInComputedProperties as VueNoAsyncInComputedProperties;
 pub use crate::rules::vue::no_computed_properties_in_data::NoComputedPropertiesInData as VueNoComputedPropertiesInData;
 pub use crate::rules::vue::no_deprecated_data_object_declaration::NoDeprecatedDataObjectDeclaration as VueNoDeprecatedDataObjectDeclaration;
 pub use crate::rules::vue::no_deprecated_delete_set::NoDeprecatedDeleteSet as VueNoDeprecatedDeleteSet;
@@ -1325,6 +1328,7 @@ pub enum RuleEnum {
     UnicornExplicitLengthCheck(UnicornExplicitLengthCheck),
     UnicornFilenameCase(UnicornFilenameCase),
     UnicornImportStyle(UnicornImportStyle),
+    UnicornMaxNestedCalls(UnicornMaxNestedCalls),
     UnicornNewForBuiltins(UnicornNewForBuiltins),
     UnicornNoAbusiveEslintDisable(UnicornNoAbusiveEslintDisable),
     UnicornNoAccessorRecursion(UnicornNoAccessorRecursion),
@@ -1414,6 +1418,7 @@ pub enum RuleEnum {
     UnicornPreferNativeCoercionFunctions(UnicornPreferNativeCoercionFunctions),
     UnicornPreferNegativeIndex(UnicornPreferNegativeIndex),
     UnicornPreferNodeProtocol(UnicornPreferNodeProtocol),
+    UnicornPreferNumberCoercion(UnicornPreferNumberCoercion),
     UnicornPreferNumberProperties(UnicornPreferNumberProperties),
     UnicornPreferObjectFromEntries(UnicornPreferObjectFromEntries),
     UnicornPreferOptionalCatchBinding(UnicornPreferOptionalCatchBinding),
@@ -1658,6 +1663,7 @@ pub enum RuleEnum {
     VueMaxProps(VueMaxProps),
     VueNextTickStyle(VueNextTickStyle),
     VueNoArrowFunctionsInWatch(VueNoArrowFunctionsInWatch),
+    VueNoAsyncInComputedProperties(VueNoAsyncInComputedProperties),
     VueNoComputedPropertiesInData(VueNoComputedPropertiesInData),
     VueNoDeprecatedDataObjectDeclaration(VueNoDeprecatedDataObjectDeclaration),
     VueNoDeprecatedDeleteSet(VueNoDeprecatedDeleteSet),
@@ -2222,7 +2228,8 @@ const UNICORN_ESCAPE_CASE_ID: usize = UNICORN_ERROR_MESSAGE_ID + 1usize;
 const UNICORN_EXPLICIT_LENGTH_CHECK_ID: usize = UNICORN_ESCAPE_CASE_ID + 1usize;
 const UNICORN_FILENAME_CASE_ID: usize = UNICORN_EXPLICIT_LENGTH_CHECK_ID + 1usize;
 const UNICORN_IMPORT_STYLE_ID: usize = UNICORN_FILENAME_CASE_ID + 1usize;
-const UNICORN_NEW_FOR_BUILTINS_ID: usize = UNICORN_IMPORT_STYLE_ID + 1usize;
+const UNICORN_MAX_NESTED_CALLS_ID: usize = UNICORN_IMPORT_STYLE_ID + 1usize;
+const UNICORN_NEW_FOR_BUILTINS_ID: usize = UNICORN_MAX_NESTED_CALLS_ID + 1usize;
 const UNICORN_NO_ABUSIVE_ESLINT_DISABLE_ID: usize = UNICORN_NEW_FOR_BUILTINS_ID + 1usize;
 const UNICORN_NO_ACCESSOR_RECURSION_ID: usize = UNICORN_NO_ABUSIVE_ESLINT_DISABLE_ID + 1usize;
 const UNICORN_NO_ANONYMOUS_DEFAULT_EXPORT_ID: usize = UNICORN_NO_ACCESSOR_RECURSION_ID + 1usize;
@@ -2327,7 +2334,8 @@ const UNICORN_PREFER_NATIVE_COERCION_FUNCTIONS_ID: usize = UNICORN_PREFER_MODULE
 const UNICORN_PREFER_NEGATIVE_INDEX_ID: usize =
     UNICORN_PREFER_NATIVE_COERCION_FUNCTIONS_ID + 1usize;
 const UNICORN_PREFER_NODE_PROTOCOL_ID: usize = UNICORN_PREFER_NEGATIVE_INDEX_ID + 1usize;
-const UNICORN_PREFER_NUMBER_PROPERTIES_ID: usize = UNICORN_PREFER_NODE_PROTOCOL_ID + 1usize;
+const UNICORN_PREFER_NUMBER_COERCION_ID: usize = UNICORN_PREFER_NODE_PROTOCOL_ID + 1usize;
+const UNICORN_PREFER_NUMBER_PROPERTIES_ID: usize = UNICORN_PREFER_NUMBER_COERCION_ID + 1usize;
 const UNICORN_PREFER_OBJECT_FROM_ENTRIES_ID: usize = UNICORN_PREFER_NUMBER_PROPERTIES_ID + 1usize;
 const UNICORN_PREFER_OPTIONAL_CATCH_BINDING_ID: usize =
     UNICORN_PREFER_OBJECT_FROM_ENTRIES_ID + 1usize;
@@ -2594,7 +2602,9 @@ const VUE_DEFINE_PROPS_DESTRUCTURING_ID: usize = VUE_DEFINE_PROPS_DECLARATION_ID
 const VUE_MAX_PROPS_ID: usize = VUE_DEFINE_PROPS_DESTRUCTURING_ID + 1usize;
 const VUE_NEXT_TICK_STYLE_ID: usize = VUE_MAX_PROPS_ID + 1usize;
 const VUE_NO_ARROW_FUNCTIONS_IN_WATCH_ID: usize = VUE_NEXT_TICK_STYLE_ID + 1usize;
-const VUE_NO_COMPUTED_PROPERTIES_IN_DATA_ID: usize = VUE_NO_ARROW_FUNCTIONS_IN_WATCH_ID + 1usize;
+const VUE_NO_ASYNC_IN_COMPUTED_PROPERTIES_ID: usize = VUE_NO_ARROW_FUNCTIONS_IN_WATCH_ID + 1usize;
+const VUE_NO_COMPUTED_PROPERTIES_IN_DATA_ID: usize =
+    VUE_NO_ASYNC_IN_COMPUTED_PROPERTIES_ID + 1usize;
 const VUE_NO_DEPRECATED_DATA_OBJECT_DECLARATION_ID: usize =
     VUE_NO_COMPUTED_PROPERTIES_IN_DATA_ID + 1usize;
 const VUE_NO_DEPRECATED_DELETE_SET_ID: usize =
@@ -3190,6 +3200,7 @@ impl RuleEnum {
             Self::UnicornExplicitLengthCheck(_) => UNICORN_EXPLICIT_LENGTH_CHECK_ID,
             Self::UnicornFilenameCase(_) => UNICORN_FILENAME_CASE_ID,
             Self::UnicornImportStyle(_) => UNICORN_IMPORT_STYLE_ID,
+            Self::UnicornMaxNestedCalls(_) => UNICORN_MAX_NESTED_CALLS_ID,
             Self::UnicornNewForBuiltins(_) => UNICORN_NEW_FOR_BUILTINS_ID,
             Self::UnicornNoAbusiveEslintDisable(_) => UNICORN_NO_ABUSIVE_ESLINT_DISABLE_ID,
             Self::UnicornNoAccessorRecursion(_) => UNICORN_NO_ACCESSOR_RECURSION_ID,
@@ -3301,6 +3312,7 @@ impl RuleEnum {
             }
             Self::UnicornPreferNegativeIndex(_) => UNICORN_PREFER_NEGATIVE_INDEX_ID,
             Self::UnicornPreferNodeProtocol(_) => UNICORN_PREFER_NODE_PROTOCOL_ID,
+            Self::UnicornPreferNumberCoercion(_) => UNICORN_PREFER_NUMBER_COERCION_ID,
             Self::UnicornPreferNumberProperties(_) => UNICORN_PREFER_NUMBER_PROPERTIES_ID,
             Self::UnicornPreferObjectFromEntries(_) => UNICORN_PREFER_OBJECT_FROM_ENTRIES_ID,
             Self::UnicornPreferOptionalCatchBinding(_) => UNICORN_PREFER_OPTIONAL_CATCH_BINDING_ID,
@@ -3563,6 +3575,7 @@ impl RuleEnum {
             Self::VueMaxProps(_) => VUE_MAX_PROPS_ID,
             Self::VueNextTickStyle(_) => VUE_NEXT_TICK_STYLE_ID,
             Self::VueNoArrowFunctionsInWatch(_) => VUE_NO_ARROW_FUNCTIONS_IN_WATCH_ID,
+            Self::VueNoAsyncInComputedProperties(_) => VUE_NO_ASYNC_IN_COMPUTED_PROPERTIES_ID,
             Self::VueNoComputedPropertiesInData(_) => VUE_NO_COMPUTED_PROPERTIES_IN_DATA_ID,
             Self::VueNoDeprecatedDataObjectDeclaration(_) => {
                 VUE_NO_DEPRECATED_DATA_OBJECT_DECLARATION_ID
@@ -4152,6 +4165,7 @@ impl RuleEnum {
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::NAME,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::NAME,
             Self::UnicornImportStyle(_) => UnicornImportStyle::NAME,
+            Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::NAME,
             Self::UnicornNewForBuiltins(_) => UnicornNewForBuiltins::NAME,
             Self::UnicornNoAbusiveEslintDisable(_) => UnicornNoAbusiveEslintDisable::NAME,
             Self::UnicornNoAccessorRecursion(_) => UnicornNoAccessorRecursion::NAME,
@@ -4259,6 +4273,7 @@ impl RuleEnum {
             }
             Self::UnicornPreferNegativeIndex(_) => UnicornPreferNegativeIndex::NAME,
             Self::UnicornPreferNodeProtocol(_) => UnicornPreferNodeProtocol::NAME,
+            Self::UnicornPreferNumberCoercion(_) => UnicornPreferNumberCoercion::NAME,
             Self::UnicornPreferNumberProperties(_) => UnicornPreferNumberProperties::NAME,
             Self::UnicornPreferObjectFromEntries(_) => UnicornPreferObjectFromEntries::NAME,
             Self::UnicornPreferOptionalCatchBinding(_) => UnicornPreferOptionalCatchBinding::NAME,
@@ -4515,6 +4530,7 @@ impl RuleEnum {
             Self::VueMaxProps(_) => VueMaxProps::NAME,
             Self::VueNextTickStyle(_) => VueNextTickStyle::NAME,
             Self::VueNoArrowFunctionsInWatch(_) => VueNoArrowFunctionsInWatch::NAME,
+            Self::VueNoAsyncInComputedProperties(_) => VueNoAsyncInComputedProperties::NAME,
             Self::VueNoComputedPropertiesInData(_) => VueNoComputedPropertiesInData::NAME,
             Self::VueNoDeprecatedDataObjectDeclaration(_) => {
                 VueNoDeprecatedDataObjectDeclaration::NAME
@@ -5132,6 +5148,7 @@ impl RuleEnum {
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::CATEGORY,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::CATEGORY,
             Self::UnicornImportStyle(_) => UnicornImportStyle::CATEGORY,
+            Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::CATEGORY,
             Self::UnicornNewForBuiltins(_) => UnicornNewForBuiltins::CATEGORY,
             Self::UnicornNoAbusiveEslintDisable(_) => UnicornNoAbusiveEslintDisable::CATEGORY,
             Self::UnicornNoAccessorRecursion(_) => UnicornNoAccessorRecursion::CATEGORY,
@@ -5247,6 +5264,7 @@ impl RuleEnum {
             }
             Self::UnicornPreferNegativeIndex(_) => UnicornPreferNegativeIndex::CATEGORY,
             Self::UnicornPreferNodeProtocol(_) => UnicornPreferNodeProtocol::CATEGORY,
+            Self::UnicornPreferNumberCoercion(_) => UnicornPreferNumberCoercion::CATEGORY,
             Self::UnicornPreferNumberProperties(_) => UnicornPreferNumberProperties::CATEGORY,
             Self::UnicornPreferObjectFromEntries(_) => UnicornPreferObjectFromEntries::CATEGORY,
             Self::UnicornPreferOptionalCatchBinding(_) => {
@@ -5523,6 +5541,7 @@ impl RuleEnum {
             Self::VueMaxProps(_) => VueMaxProps::CATEGORY,
             Self::VueNextTickStyle(_) => VueNextTickStyle::CATEGORY,
             Self::VueNoArrowFunctionsInWatch(_) => VueNoArrowFunctionsInWatch::CATEGORY,
+            Self::VueNoAsyncInComputedProperties(_) => VueNoAsyncInComputedProperties::CATEGORY,
             Self::VueNoComputedPropertiesInData(_) => VueNoComputedPropertiesInData::CATEGORY,
             Self::VueNoDeprecatedDataObjectDeclaration(_) => {
                 VueNoDeprecatedDataObjectDeclaration::CATEGORY
@@ -6115,6 +6134,7 @@ impl RuleEnum {
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::FIX,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::FIX,
             Self::UnicornImportStyle(_) => UnicornImportStyle::FIX,
+            Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::FIX,
             Self::UnicornNewForBuiltins(_) => UnicornNewForBuiltins::FIX,
             Self::UnicornNoAbusiveEslintDisable(_) => UnicornNoAbusiveEslintDisable::FIX,
             Self::UnicornNoAccessorRecursion(_) => UnicornNoAccessorRecursion::FIX,
@@ -6222,6 +6242,7 @@ impl RuleEnum {
             }
             Self::UnicornPreferNegativeIndex(_) => UnicornPreferNegativeIndex::FIX,
             Self::UnicornPreferNodeProtocol(_) => UnicornPreferNodeProtocol::FIX,
+            Self::UnicornPreferNumberCoercion(_) => UnicornPreferNumberCoercion::FIX,
             Self::UnicornPreferNumberProperties(_) => UnicornPreferNumberProperties::FIX,
             Self::UnicornPreferObjectFromEntries(_) => UnicornPreferObjectFromEntries::FIX,
             Self::UnicornPreferOptionalCatchBinding(_) => UnicornPreferOptionalCatchBinding::FIX,
@@ -6478,6 +6499,7 @@ impl RuleEnum {
             Self::VueMaxProps(_) => VueMaxProps::FIX,
             Self::VueNextTickStyle(_) => VueNextTickStyle::FIX,
             Self::VueNoArrowFunctionsInWatch(_) => VueNoArrowFunctionsInWatch::FIX,
+            Self::VueNoAsyncInComputedProperties(_) => VueNoAsyncInComputedProperties::FIX,
             Self::VueNoComputedPropertiesInData(_) => VueNoComputedPropertiesInData::FIX,
             Self::VueNoDeprecatedDataObjectDeclaration(_) => {
                 VueNoDeprecatedDataObjectDeclaration::FIX
@@ -7190,6 +7212,7 @@ impl RuleEnum {
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::documentation(),
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::documentation(),
             Self::UnicornImportStyle(_) => UnicornImportStyle::documentation(),
+            Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::documentation(),
             Self::UnicornNewForBuiltins(_) => UnicornNewForBuiltins::documentation(),
             Self::UnicornNoAbusiveEslintDisable(_) => {
                 UnicornNoAbusiveEslintDisable::documentation()
@@ -7335,6 +7358,7 @@ impl RuleEnum {
             }
             Self::UnicornPreferNegativeIndex(_) => UnicornPreferNegativeIndex::documentation(),
             Self::UnicornPreferNodeProtocol(_) => UnicornPreferNodeProtocol::documentation(),
+            Self::UnicornPreferNumberCoercion(_) => UnicornPreferNumberCoercion::documentation(),
             Self::UnicornPreferNumberProperties(_) => {
                 UnicornPreferNumberProperties::documentation()
             }
@@ -7681,6 +7705,9 @@ impl RuleEnum {
             Self::VueMaxProps(_) => VueMaxProps::documentation(),
             Self::VueNextTickStyle(_) => VueNextTickStyle::documentation(),
             Self::VueNoArrowFunctionsInWatch(_) => VueNoArrowFunctionsInWatch::documentation(),
+            Self::VueNoAsyncInComputedProperties(_) => {
+                VueNoAsyncInComputedProperties::documentation()
+            }
             Self::VueNoComputedPropertiesInData(_) => {
                 VueNoComputedPropertiesInData::documentation()
             }
@@ -9071,6 +9098,8 @@ impl RuleEnum {
                 .or_else(|| UnicornFilenameCase::schema(generator)),
             Self::UnicornImportStyle(_) => UnicornImportStyle::config_schema(generator)
                 .or_else(|| UnicornImportStyle::schema(generator)),
+            Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::config_schema(generator)
+                .or_else(|| UnicornMaxNestedCalls::schema(generator)),
             Self::UnicornNewForBuiltins(_) => UnicornNewForBuiltins::config_schema(generator)
                 .or_else(|| UnicornNewForBuiltins::schema(generator)),
             Self::UnicornNoAbusiveEslintDisable(_) => {
@@ -9351,6 +9380,10 @@ impl RuleEnum {
             Self::UnicornPreferNodeProtocol(_) => {
                 UnicornPreferNodeProtocol::config_schema(generator)
                     .or_else(|| UnicornPreferNodeProtocol::schema(generator))
+            }
+            Self::UnicornPreferNumberCoercion(_) => {
+                UnicornPreferNumberCoercion::config_schema(generator)
+                    .or_else(|| UnicornPreferNumberCoercion::schema(generator))
             }
             Self::UnicornPreferNumberProperties(_) => {
                 UnicornPreferNumberProperties::config_schema(generator)
@@ -10030,6 +10063,10 @@ impl RuleEnum {
                 VueNoArrowFunctionsInWatch::config_schema(generator)
                     .or_else(|| VueNoArrowFunctionsInWatch::schema(generator))
             }
+            Self::VueNoAsyncInComputedProperties(_) => {
+                VueNoAsyncInComputedProperties::config_schema(generator)
+                    .or_else(|| VueNoAsyncInComputedProperties::schema(generator))
+            }
             Self::VueNoComputedPropertiesInData(_) => {
                 VueNoComputedPropertiesInData::config_schema(generator)
                     .or_else(|| VueNoComputedPropertiesInData::schema(generator))
@@ -10610,6 +10647,7 @@ impl RuleEnum {
             Self::UnicornExplicitLengthCheck(_) => "unicorn",
             Self::UnicornFilenameCase(_) => "unicorn",
             Self::UnicornImportStyle(_) => "unicorn",
+            Self::UnicornMaxNestedCalls(_) => "unicorn",
             Self::UnicornNewForBuiltins(_) => "unicorn",
             Self::UnicornNoAbusiveEslintDisable(_) => "unicorn",
             Self::UnicornNoAccessorRecursion(_) => "unicorn",
@@ -10699,6 +10737,7 @@ impl RuleEnum {
             Self::UnicornPreferNativeCoercionFunctions(_) => "unicorn",
             Self::UnicornPreferNegativeIndex(_) => "unicorn",
             Self::UnicornPreferNodeProtocol(_) => "unicorn",
+            Self::UnicornPreferNumberCoercion(_) => "unicorn",
             Self::UnicornPreferNumberProperties(_) => "unicorn",
             Self::UnicornPreferObjectFromEntries(_) => "unicorn",
             Self::UnicornPreferOptionalCatchBinding(_) => "unicorn",
@@ -10937,6 +10976,7 @@ impl RuleEnum {
             Self::VueMaxProps(_) => "vue",
             Self::VueNextTickStyle(_) => "vue",
             Self::VueNoArrowFunctionsInWatch(_) => "vue",
+            Self::VueNoAsyncInComputedProperties(_) => "vue",
             Self::VueNoComputedPropertiesInData(_) => "vue",
             Self::VueNoDeprecatedDataObjectDeclaration(_) => "vue",
             Self::VueNoDeprecatedDeleteSet(_) => "vue",
@@ -12489,6 +12529,9 @@ impl RuleEnum {
             Self::UnicornImportStyle(_) => {
                 Ok(Self::UnicornImportStyle(UnicornImportStyle::from_configuration(value)?))
             }
+            Self::UnicornMaxNestedCalls(_) => {
+                Ok(Self::UnicornMaxNestedCalls(UnicornMaxNestedCalls::from_configuration(value)?))
+            }
             Self::UnicornNewForBuiltins(_) => {
                 Ok(Self::UnicornNewForBuiltins(UnicornNewForBuiltins::from_configuration(value)?))
             }
@@ -12787,6 +12830,9 @@ impl RuleEnum {
             )),
             Self::UnicornPreferNodeProtocol(_) => Ok(Self::UnicornPreferNodeProtocol(
                 UnicornPreferNodeProtocol::from_configuration(value)?,
+            )),
+            Self::UnicornPreferNumberCoercion(_) => Ok(Self::UnicornPreferNumberCoercion(
+                UnicornPreferNumberCoercion::from_configuration(value)?,
             )),
             Self::UnicornPreferNumberProperties(_) => Ok(Self::UnicornPreferNumberProperties(
                 UnicornPreferNumberProperties::from_configuration(value)?,
@@ -13548,6 +13594,9 @@ impl RuleEnum {
             Self::VueNoArrowFunctionsInWatch(_) => Ok(Self::VueNoArrowFunctionsInWatch(
                 VueNoArrowFunctionsInWatch::from_configuration(value)?,
             )),
+            Self::VueNoAsyncInComputedProperties(_) => Ok(Self::VueNoAsyncInComputedProperties(
+                VueNoAsyncInComputedProperties::from_configuration(value)?,
+            )),
             Self::VueNoComputedPropertiesInData(_) => Ok(Self::VueNoComputedPropertiesInData(
                 VueNoComputedPropertiesInData::from_configuration(value)?,
             )),
@@ -14145,6 +14194,7 @@ impl RuleEnum {
             Self::UnicornExplicitLengthCheck(rule) => rule.to_configuration(),
             Self::UnicornFilenameCase(rule) => rule.to_configuration(),
             Self::UnicornImportStyle(rule) => rule.to_configuration(),
+            Self::UnicornMaxNestedCalls(rule) => rule.to_configuration(),
             Self::UnicornNewForBuiltins(rule) => rule.to_configuration(),
             Self::UnicornNoAbusiveEslintDisable(rule) => rule.to_configuration(),
             Self::UnicornNoAccessorRecursion(rule) => rule.to_configuration(),
@@ -14234,6 +14284,7 @@ impl RuleEnum {
             Self::UnicornPreferNativeCoercionFunctions(rule) => rule.to_configuration(),
             Self::UnicornPreferNegativeIndex(rule) => rule.to_configuration(),
             Self::UnicornPreferNodeProtocol(rule) => rule.to_configuration(),
+            Self::UnicornPreferNumberCoercion(rule) => rule.to_configuration(),
             Self::UnicornPreferNumberProperties(rule) => rule.to_configuration(),
             Self::UnicornPreferObjectFromEntries(rule) => rule.to_configuration(),
             Self::UnicornPreferOptionalCatchBinding(rule) => rule.to_configuration(),
@@ -14474,6 +14525,7 @@ impl RuleEnum {
             Self::VueMaxProps(rule) => rule.to_configuration(),
             Self::VueNextTickStyle(rule) => rule.to_configuration(),
             Self::VueNoArrowFunctionsInWatch(rule) => rule.to_configuration(),
+            Self::VueNoAsyncInComputedProperties(rule) => rule.to_configuration(),
             Self::VueNoComputedPropertiesInData(rule) => rule.to_configuration(),
             Self::VueNoDeprecatedDataObjectDeclaration(rule) => rule.to_configuration(),
             Self::VueNoDeprecatedDeleteSet(rule) => rule.to_configuration(),
@@ -14993,6 +15045,7 @@ impl RuleEnum {
                 Self::UnicornExplicitLengthCheck(rule) => rule.run(node, ctx),
                 Self::UnicornFilenameCase(rule) => rule.run(node, ctx),
                 Self::UnicornImportStyle(rule) => rule.run(node, ctx),
+                Self::UnicornMaxNestedCalls(rule) => rule.run(node, ctx),
                 Self::UnicornNewForBuiltins(rule) => rule.run(node, ctx),
                 Self::UnicornNoAbusiveEslintDisable(rule) => rule.run(node, ctx),
                 Self::UnicornNoAccessorRecursion(rule) => rule.run(node, ctx),
@@ -15082,6 +15135,7 @@ impl RuleEnum {
                 Self::UnicornPreferNativeCoercionFunctions(rule) => rule.run(node, ctx),
                 Self::UnicornPreferNegativeIndex(rule) => rule.run(node, ctx),
                 Self::UnicornPreferNodeProtocol(rule) => rule.run(node, ctx),
+                Self::UnicornPreferNumberCoercion(rule) => rule.run(node, ctx),
                 Self::UnicornPreferNumberProperties(rule) => rule.run(node, ctx),
                 Self::UnicornPreferObjectFromEntries(rule) => rule.run(node, ctx),
                 Self::UnicornPreferOptionalCatchBinding(rule) => rule.run(node, ctx),
@@ -15322,6 +15376,7 @@ impl RuleEnum {
                 Self::VueMaxProps(rule) => rule.run(node, ctx),
                 Self::VueNextTickStyle(rule) => rule.run(node, ctx),
                 Self::VueNoArrowFunctionsInWatch(rule) => rule.run(node, ctx),
+                Self::VueNoAsyncInComputedProperties(rule) => rule.run(node, ctx),
                 Self::VueNoComputedPropertiesInData(rule) => rule.run(node, ctx),
                 Self::VueNoDeprecatedDataObjectDeclaration(rule) => rule.run(node, ctx),
                 Self::VueNoDeprecatedDeleteSet(rule) => rule.run(node, ctx),
@@ -15834,6 +15889,7 @@ impl RuleEnum {
                 Self::UnicornExplicitLengthCheck(rule) => rule.run(node, ctx),
                 Self::UnicornFilenameCase(rule) => rule.run(node, ctx),
                 Self::UnicornImportStyle(rule) => rule.run(node, ctx),
+                Self::UnicornMaxNestedCalls(rule) => rule.run(node, ctx),
                 Self::UnicornNewForBuiltins(rule) => rule.run(node, ctx),
                 Self::UnicornNoAbusiveEslintDisable(rule) => rule.run(node, ctx),
                 Self::UnicornNoAccessorRecursion(rule) => rule.run(node, ctx),
@@ -15923,6 +15979,7 @@ impl RuleEnum {
                 Self::UnicornPreferNativeCoercionFunctions(rule) => rule.run(node, ctx),
                 Self::UnicornPreferNegativeIndex(rule) => rule.run(node, ctx),
                 Self::UnicornPreferNodeProtocol(rule) => rule.run(node, ctx),
+                Self::UnicornPreferNumberCoercion(rule) => rule.run(node, ctx),
                 Self::UnicornPreferNumberProperties(rule) => rule.run(node, ctx),
                 Self::UnicornPreferObjectFromEntries(rule) => rule.run(node, ctx),
                 Self::UnicornPreferOptionalCatchBinding(rule) => rule.run(node, ctx),
@@ -16163,6 +16220,7 @@ impl RuleEnum {
                 Self::VueMaxProps(rule) => rule.run(node, ctx),
                 Self::VueNextTickStyle(rule) => rule.run(node, ctx),
                 Self::VueNoArrowFunctionsInWatch(rule) => rule.run(node, ctx),
+                Self::VueNoAsyncInComputedProperties(rule) => rule.run(node, ctx),
                 Self::VueNoComputedPropertiesInData(rule) => rule.run(node, ctx),
                 Self::VueNoDeprecatedDataObjectDeclaration(rule) => rule.run(node, ctx),
                 Self::VueNoDeprecatedDeleteSet(rule) => rule.run(node, ctx),
@@ -16682,6 +16740,7 @@ impl RuleEnum {
                 Self::UnicornExplicitLengthCheck(rule) => rule.run_once(ctx),
                 Self::UnicornFilenameCase(rule) => rule.run_once(ctx),
                 Self::UnicornImportStyle(rule) => rule.run_once(ctx),
+                Self::UnicornMaxNestedCalls(rule) => rule.run_once(ctx),
                 Self::UnicornNewForBuiltins(rule) => rule.run_once(ctx),
                 Self::UnicornNoAbusiveEslintDisable(rule) => rule.run_once(ctx),
                 Self::UnicornNoAccessorRecursion(rule) => rule.run_once(ctx),
@@ -16771,6 +16830,7 @@ impl RuleEnum {
                 Self::UnicornPreferNativeCoercionFunctions(rule) => rule.run_once(ctx),
                 Self::UnicornPreferNegativeIndex(rule) => rule.run_once(ctx),
                 Self::UnicornPreferNodeProtocol(rule) => rule.run_once(ctx),
+                Self::UnicornPreferNumberCoercion(rule) => rule.run_once(ctx),
                 Self::UnicornPreferNumberProperties(rule) => rule.run_once(ctx),
                 Self::UnicornPreferObjectFromEntries(rule) => rule.run_once(ctx),
                 Self::UnicornPreferOptionalCatchBinding(rule) => rule.run_once(ctx),
@@ -17011,6 +17071,7 @@ impl RuleEnum {
                 Self::VueMaxProps(rule) => rule.run_once(ctx),
                 Self::VueNextTickStyle(rule) => rule.run_once(ctx),
                 Self::VueNoArrowFunctionsInWatch(rule) => rule.run_once(ctx),
+                Self::VueNoAsyncInComputedProperties(rule) => rule.run_once(ctx),
                 Self::VueNoComputedPropertiesInData(rule) => rule.run_once(ctx),
                 Self::VueNoDeprecatedDataObjectDeclaration(rule) => rule.run_once(ctx),
                 Self::VueNoDeprecatedDeleteSet(rule) => rule.run_once(ctx),
@@ -17523,6 +17584,7 @@ impl RuleEnum {
                 Self::UnicornExplicitLengthCheck(rule) => rule.run_once(ctx),
                 Self::UnicornFilenameCase(rule) => rule.run_once(ctx),
                 Self::UnicornImportStyle(rule) => rule.run_once(ctx),
+                Self::UnicornMaxNestedCalls(rule) => rule.run_once(ctx),
                 Self::UnicornNewForBuiltins(rule) => rule.run_once(ctx),
                 Self::UnicornNoAbusiveEslintDisable(rule) => rule.run_once(ctx),
                 Self::UnicornNoAccessorRecursion(rule) => rule.run_once(ctx),
@@ -17612,6 +17674,7 @@ impl RuleEnum {
                 Self::UnicornPreferNativeCoercionFunctions(rule) => rule.run_once(ctx),
                 Self::UnicornPreferNegativeIndex(rule) => rule.run_once(ctx),
                 Self::UnicornPreferNodeProtocol(rule) => rule.run_once(ctx),
+                Self::UnicornPreferNumberCoercion(rule) => rule.run_once(ctx),
                 Self::UnicornPreferNumberProperties(rule) => rule.run_once(ctx),
                 Self::UnicornPreferObjectFromEntries(rule) => rule.run_once(ctx),
                 Self::UnicornPreferOptionalCatchBinding(rule) => rule.run_once(ctx),
@@ -17852,6 +17915,7 @@ impl RuleEnum {
                 Self::VueMaxProps(rule) => rule.run_once(ctx),
                 Self::VueNextTickStyle(rule) => rule.run_once(ctx),
                 Self::VueNoArrowFunctionsInWatch(rule) => rule.run_once(ctx),
+                Self::VueNoAsyncInComputedProperties(rule) => rule.run_once(ctx),
                 Self::VueNoComputedPropertiesInData(rule) => rule.run_once(ctx),
                 Self::VueNoDeprecatedDataObjectDeclaration(rule) => rule.run_once(ctx),
                 Self::VueNoDeprecatedDeleteSet(rule) => rule.run_once(ctx),
@@ -18512,6 +18576,7 @@ impl RuleEnum {
                 Self::UnicornExplicitLengthCheck(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornFilenameCase(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornImportStyle(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::UnicornMaxNestedCalls(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornNewForBuiltins(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornNoAbusiveEslintDisable(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornNoAccessorRecursion(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -18643,6 +18708,7 @@ impl RuleEnum {
                 }
                 Self::UnicornPreferNegativeIndex(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornPreferNodeProtocol(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::UnicornPreferNumberCoercion(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornPreferNumberProperties(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornPreferObjectFromEntries(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornPreferOptionalCatchBinding(rule) => {
@@ -18951,6 +19017,7 @@ impl RuleEnum {
                 Self::VueMaxProps(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNextTickStyle(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoArrowFunctionsInWatch(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::VueNoAsyncInComputedProperties(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoComputedPropertiesInData(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoDeprecatedDataObjectDeclaration(rule) => {
                     rule.run_on_jest_node(jest_node, ctx)
@@ -19613,6 +19680,7 @@ impl RuleEnum {
                 Self::UnicornExplicitLengthCheck(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornFilenameCase(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornImportStyle(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::UnicornMaxNestedCalls(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornNewForBuiltins(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornNoAbusiveEslintDisable(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornNoAccessorRecursion(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -19744,6 +19812,7 @@ impl RuleEnum {
                 }
                 Self::UnicornPreferNegativeIndex(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornPreferNodeProtocol(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::UnicornPreferNumberCoercion(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornPreferNumberProperties(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornPreferObjectFromEntries(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornPreferOptionalCatchBinding(rule) => {
@@ -20052,6 +20121,7 @@ impl RuleEnum {
                 Self::VueMaxProps(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNextTickStyle(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoArrowFunctionsInWatch(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::VueNoAsyncInComputedProperties(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoComputedPropertiesInData(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoDeprecatedDataObjectDeclaration(rule) => {
                     rule.run_on_jest_node(jest_node, ctx)
@@ -20574,6 +20644,7 @@ impl RuleEnum {
             Self::UnicornExplicitLengthCheck(rule) => rule.should_run(ctx),
             Self::UnicornFilenameCase(rule) => rule.should_run(ctx),
             Self::UnicornImportStyle(rule) => rule.should_run(ctx),
+            Self::UnicornMaxNestedCalls(rule) => rule.should_run(ctx),
             Self::UnicornNewForBuiltins(rule) => rule.should_run(ctx),
             Self::UnicornNoAbusiveEslintDisable(rule) => rule.should_run(ctx),
             Self::UnicornNoAccessorRecursion(rule) => rule.should_run(ctx),
@@ -20663,6 +20734,7 @@ impl RuleEnum {
             Self::UnicornPreferNativeCoercionFunctions(rule) => rule.should_run(ctx),
             Self::UnicornPreferNegativeIndex(rule) => rule.should_run(ctx),
             Self::UnicornPreferNodeProtocol(rule) => rule.should_run(ctx),
+            Self::UnicornPreferNumberCoercion(rule) => rule.should_run(ctx),
             Self::UnicornPreferNumberProperties(rule) => rule.should_run(ctx),
             Self::UnicornPreferObjectFromEntries(rule) => rule.should_run(ctx),
             Self::UnicornPreferOptionalCatchBinding(rule) => rule.should_run(ctx),
@@ -20901,6 +20973,7 @@ impl RuleEnum {
             Self::VueMaxProps(rule) => rule.should_run(ctx),
             Self::VueNextTickStyle(rule) => rule.should_run(ctx),
             Self::VueNoArrowFunctionsInWatch(rule) => rule.should_run(ctx),
+            Self::VueNoAsyncInComputedProperties(rule) => rule.should_run(ctx),
             Self::VueNoComputedPropertiesInData(rule) => rule.should_run(ctx),
             Self::VueNoDeprecatedDataObjectDeclaration(rule) => rule.should_run(ctx),
             Self::VueNoDeprecatedDeleteSet(rule) => rule.should_run(ctx),
@@ -21608,6 +21681,7 @@ impl RuleEnum {
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::IS_TSGOLINT_RULE,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::IS_TSGOLINT_RULE,
             Self::UnicornImportStyle(_) => UnicornImportStyle::IS_TSGOLINT_RULE,
+            Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::IS_TSGOLINT_RULE,
             Self::UnicornNewForBuiltins(_) => UnicornNewForBuiltins::IS_TSGOLINT_RULE,
             Self::UnicornNoAbusiveEslintDisable(_) => {
                 UnicornNoAbusiveEslintDisable::IS_TSGOLINT_RULE
@@ -21753,6 +21827,7 @@ impl RuleEnum {
             }
             Self::UnicornPreferNegativeIndex(_) => UnicornPreferNegativeIndex::IS_TSGOLINT_RULE,
             Self::UnicornPreferNodeProtocol(_) => UnicornPreferNodeProtocol::IS_TSGOLINT_RULE,
+            Self::UnicornPreferNumberCoercion(_) => UnicornPreferNumberCoercion::IS_TSGOLINT_RULE,
             Self::UnicornPreferNumberProperties(_) => {
                 UnicornPreferNumberProperties::IS_TSGOLINT_RULE
             }
@@ -22099,6 +22174,9 @@ impl RuleEnum {
             Self::VueMaxProps(_) => VueMaxProps::IS_TSGOLINT_RULE,
             Self::VueNextTickStyle(_) => VueNextTickStyle::IS_TSGOLINT_RULE,
             Self::VueNoArrowFunctionsInWatch(_) => VueNoArrowFunctionsInWatch::IS_TSGOLINT_RULE,
+            Self::VueNoAsyncInComputedProperties(_) => {
+                VueNoAsyncInComputedProperties::IS_TSGOLINT_RULE
+            }
             Self::VueNoComputedPropertiesInData(_) => {
                 VueNoComputedPropertiesInData::IS_TSGOLINT_RULE
             }
@@ -22730,6 +22808,7 @@ impl RuleEnum {
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::VERSION,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::VERSION,
             Self::UnicornImportStyle(_) => UnicornImportStyle::VERSION,
+            Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::VERSION,
             Self::UnicornNewForBuiltins(_) => UnicornNewForBuiltins::VERSION,
             Self::UnicornNoAbusiveEslintDisable(_) => UnicornNoAbusiveEslintDisable::VERSION,
             Self::UnicornNoAccessorRecursion(_) => UnicornNoAccessorRecursion::VERSION,
@@ -22845,6 +22924,7 @@ impl RuleEnum {
             }
             Self::UnicornPreferNegativeIndex(_) => UnicornPreferNegativeIndex::VERSION,
             Self::UnicornPreferNodeProtocol(_) => UnicornPreferNodeProtocol::VERSION,
+            Self::UnicornPreferNumberCoercion(_) => UnicornPreferNumberCoercion::VERSION,
             Self::UnicornPreferNumberProperties(_) => UnicornPreferNumberProperties::VERSION,
             Self::UnicornPreferObjectFromEntries(_) => UnicornPreferObjectFromEntries::VERSION,
             Self::UnicornPreferOptionalCatchBinding(_) => {
@@ -23121,6 +23201,7 @@ impl RuleEnum {
             Self::VueMaxProps(_) => VueMaxProps::VERSION,
             Self::VueNextTickStyle(_) => VueNextTickStyle::VERSION,
             Self::VueNoArrowFunctionsInWatch(_) => VueNoArrowFunctionsInWatch::VERSION,
+            Self::VueNoAsyncInComputedProperties(_) => VueNoAsyncInComputedProperties::VERSION,
             Self::VueNoComputedPropertiesInData(_) => VueNoComputedPropertiesInData::VERSION,
             Self::VueNoDeprecatedDataObjectDeclaration(_) => {
                 VueNoDeprecatedDataObjectDeclaration::VERSION
@@ -23759,6 +23840,7 @@ impl RuleEnum {
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::HAS_CONFIG,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::HAS_CONFIG,
             Self::UnicornImportStyle(_) => UnicornImportStyle::HAS_CONFIG,
+            Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::HAS_CONFIG,
             Self::UnicornNewForBuiltins(_) => UnicornNewForBuiltins::HAS_CONFIG,
             Self::UnicornNoAbusiveEslintDisable(_) => UnicornNoAbusiveEslintDisable::HAS_CONFIG,
             Self::UnicornNoAccessorRecursion(_) => UnicornNoAccessorRecursion::HAS_CONFIG,
@@ -23880,6 +23962,7 @@ impl RuleEnum {
             }
             Self::UnicornPreferNegativeIndex(_) => UnicornPreferNegativeIndex::HAS_CONFIG,
             Self::UnicornPreferNodeProtocol(_) => UnicornPreferNodeProtocol::HAS_CONFIG,
+            Self::UnicornPreferNumberCoercion(_) => UnicornPreferNumberCoercion::HAS_CONFIG,
             Self::UnicornPreferNumberProperties(_) => UnicornPreferNumberProperties::HAS_CONFIG,
             Self::UnicornPreferObjectFromEntries(_) => UnicornPreferObjectFromEntries::HAS_CONFIG,
             Self::UnicornPreferOptionalCatchBinding(_) => {
@@ -24168,6 +24251,7 @@ impl RuleEnum {
             Self::VueMaxProps(_) => VueMaxProps::HAS_CONFIG,
             Self::VueNextTickStyle(_) => VueNextTickStyle::HAS_CONFIG,
             Self::VueNoArrowFunctionsInWatch(_) => VueNoArrowFunctionsInWatch::HAS_CONFIG,
+            Self::VueNoAsyncInComputedProperties(_) => VueNoAsyncInComputedProperties::HAS_CONFIG,
             Self::VueNoComputedPropertiesInData(_) => VueNoComputedPropertiesInData::HAS_CONFIG,
             Self::VueNoDeprecatedDataObjectDeclaration(_) => {
                 VueNoDeprecatedDataObjectDeclaration::HAS_CONFIG
@@ -24763,6 +24847,7 @@ impl RuleEnum {
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::INFO,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::INFO,
             Self::UnicornImportStyle(_) => UnicornImportStyle::INFO,
+            Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::INFO,
             Self::UnicornNewForBuiltins(_) => UnicornNewForBuiltins::INFO,
             Self::UnicornNoAbusiveEslintDisable(_) => UnicornNoAbusiveEslintDisable::INFO,
             Self::UnicornNoAccessorRecursion(_) => UnicornNoAccessorRecursion::INFO,
@@ -24870,6 +24955,7 @@ impl RuleEnum {
             }
             Self::UnicornPreferNegativeIndex(_) => UnicornPreferNegativeIndex::INFO,
             Self::UnicornPreferNodeProtocol(_) => UnicornPreferNodeProtocol::INFO,
+            Self::UnicornPreferNumberCoercion(_) => UnicornPreferNumberCoercion::INFO,
             Self::UnicornPreferNumberProperties(_) => UnicornPreferNumberProperties::INFO,
             Self::UnicornPreferObjectFromEntries(_) => UnicornPreferObjectFromEntries::INFO,
             Self::UnicornPreferOptionalCatchBinding(_) => UnicornPreferOptionalCatchBinding::INFO,
@@ -25126,6 +25212,7 @@ impl RuleEnum {
             Self::VueMaxProps(_) => VueMaxProps::INFO,
             Self::VueNextTickStyle(_) => VueNextTickStyle::INFO,
             Self::VueNoArrowFunctionsInWatch(_) => VueNoArrowFunctionsInWatch::INFO,
+            Self::VueNoAsyncInComputedProperties(_) => VueNoAsyncInComputedProperties::INFO,
             Self::VueNoComputedPropertiesInData(_) => VueNoComputedPropertiesInData::INFO,
             Self::VueNoDeprecatedDataObjectDeclaration(_) => {
                 VueNoDeprecatedDataObjectDeclaration::INFO
@@ -25646,6 +25733,7 @@ impl RuleEnum {
             Self::UnicornExplicitLengthCheck(rule) => rule.types_info(),
             Self::UnicornFilenameCase(rule) => rule.types_info(),
             Self::UnicornImportStyle(rule) => rule.types_info(),
+            Self::UnicornMaxNestedCalls(rule) => rule.types_info(),
             Self::UnicornNewForBuiltins(rule) => rule.types_info(),
             Self::UnicornNoAbusiveEslintDisable(rule) => rule.types_info(),
             Self::UnicornNoAccessorRecursion(rule) => rule.types_info(),
@@ -25735,6 +25823,7 @@ impl RuleEnum {
             Self::UnicornPreferNativeCoercionFunctions(rule) => rule.types_info(),
             Self::UnicornPreferNegativeIndex(rule) => rule.types_info(),
             Self::UnicornPreferNodeProtocol(rule) => rule.types_info(),
+            Self::UnicornPreferNumberCoercion(rule) => rule.types_info(),
             Self::UnicornPreferNumberProperties(rule) => rule.types_info(),
             Self::UnicornPreferObjectFromEntries(rule) => rule.types_info(),
             Self::UnicornPreferOptionalCatchBinding(rule) => rule.types_info(),
@@ -25973,6 +26062,7 @@ impl RuleEnum {
             Self::VueMaxProps(rule) => rule.types_info(),
             Self::VueNextTickStyle(rule) => rule.types_info(),
             Self::VueNoArrowFunctionsInWatch(rule) => rule.types_info(),
+            Self::VueNoAsyncInComputedProperties(rule) => rule.types_info(),
             Self::VueNoComputedPropertiesInData(rule) => rule.types_info(),
             Self::VueNoDeprecatedDataObjectDeclaration(rule) => rule.types_info(),
             Self::VueNoDeprecatedDeleteSet(rule) => rule.types_info(),
@@ -26484,6 +26574,7 @@ impl RuleEnum {
             Self::UnicornExplicitLengthCheck(rule) => rule.run_info(),
             Self::UnicornFilenameCase(rule) => rule.run_info(),
             Self::UnicornImportStyle(rule) => rule.run_info(),
+            Self::UnicornMaxNestedCalls(rule) => rule.run_info(),
             Self::UnicornNewForBuiltins(rule) => rule.run_info(),
             Self::UnicornNoAbusiveEslintDisable(rule) => rule.run_info(),
             Self::UnicornNoAccessorRecursion(rule) => rule.run_info(),
@@ -26573,6 +26664,7 @@ impl RuleEnum {
             Self::UnicornPreferNativeCoercionFunctions(rule) => rule.run_info(),
             Self::UnicornPreferNegativeIndex(rule) => rule.run_info(),
             Self::UnicornPreferNodeProtocol(rule) => rule.run_info(),
+            Self::UnicornPreferNumberCoercion(rule) => rule.run_info(),
             Self::UnicornPreferNumberProperties(rule) => rule.run_info(),
             Self::UnicornPreferObjectFromEntries(rule) => rule.run_info(),
             Self::UnicornPreferOptionalCatchBinding(rule) => rule.run_info(),
@@ -26811,6 +26903,7 @@ impl RuleEnum {
             Self::VueMaxProps(rule) => rule.run_info(),
             Self::VueNextTickStyle(rule) => rule.run_info(),
             Self::VueNoArrowFunctionsInWatch(rule) => rule.run_info(),
+            Self::VueNoAsyncInComputedProperties(rule) => rule.run_info(),
             Self::VueNoComputedPropertiesInData(rule) => rule.run_info(),
             Self::VueNoDeprecatedDataObjectDeclaration(rule) => rule.run_info(),
             Self::VueNoDeprecatedDeleteSet(rule) => rule.run_info(),
@@ -27418,6 +27511,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::UnicornExplicitLengthCheck(UnicornExplicitLengthCheck::default()),
         RuleEnum::UnicornFilenameCase(UnicornFilenameCase::default()),
         RuleEnum::UnicornImportStyle(UnicornImportStyle::default()),
+        RuleEnum::UnicornMaxNestedCalls(UnicornMaxNestedCalls::default()),
         RuleEnum::UnicornNewForBuiltins(UnicornNewForBuiltins::default()),
         RuleEnum::UnicornNoAbusiveEslintDisable(UnicornNoAbusiveEslintDisable::default()),
         RuleEnum::UnicornNoAccessorRecursion(UnicornNoAccessorRecursion::default()),
@@ -27525,6 +27619,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         ),
         RuleEnum::UnicornPreferNegativeIndex(UnicornPreferNegativeIndex::default()),
         RuleEnum::UnicornPreferNodeProtocol(UnicornPreferNodeProtocol::default()),
+        RuleEnum::UnicornPreferNumberCoercion(UnicornPreferNumberCoercion::default()),
         RuleEnum::UnicornPreferNumberProperties(UnicornPreferNumberProperties::default()),
         RuleEnum::UnicornPreferObjectFromEntries(UnicornPreferObjectFromEntries::default()),
         RuleEnum::UnicornPreferOptionalCatchBinding(UnicornPreferOptionalCatchBinding::default()),
@@ -27781,6 +27876,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VueMaxProps(VueMaxProps::default()),
         RuleEnum::VueNextTickStyle(VueNextTickStyle::default()),
         RuleEnum::VueNoArrowFunctionsInWatch(VueNoArrowFunctionsInWatch::default()),
+        RuleEnum::VueNoAsyncInComputedProperties(VueNoAsyncInComputedProperties::default()),
         RuleEnum::VueNoComputedPropertiesInData(VueNoComputedPropertiesInData::default()),
         RuleEnum::VueNoDeprecatedDataObjectDeclaration(
             VueNoDeprecatedDataObjectDeclaration::default(),

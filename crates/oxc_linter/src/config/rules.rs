@@ -397,104 +397,123 @@ impl JsonSchema for OxlintRules {
                         .into()
                     }
 
+                    fn append_allow_warn_deny_to_schema(
+                        config_schema: Schema,
+                        r#gen: &mut SchemaGenerator,
+                    ) -> Schema {
+                        let Schema::Object(mut obj) = config_schema else {
+                            return SchemaObject {
+                                instance_type: Some(InstanceType::Array.into()),
+                                array: Some(Box::new(ArrayValidation {
+                                    items: Some(SingleOrVec::Vec(vec![
+                                        r#gen.subschema_for::<AllowWarnDeny>(),
+                                        config_schema,
+                                    ])),
+                                    min_items: Some(2),
+                                    max_items: Some(2),
+                                    ..Default::default()
+                                })),
+                                ..Default::default()
+                            }
+                            .into();
+                        };
+
+                        debug_assert!(
+                            (u8::from(obj.array.is_some())
+                                + u8::from(obj.object.is_some())
+                                + u8::from(obj.reference.is_some()))
+                                <= 1,
+                            "Expected rule schema to be either an object, an array, or a reference, but not multiple"
+                        );
+
+                        if let Some(reference) = obj.reference {
+                            return SchemaObject {
+                                instance_type: Some(InstanceType::Array.into()),
+                                array: Some(Box::new(ArrayValidation {
+                                    items: Some(SingleOrVec::Vec(vec![
+                                        r#gen.subschema_for::<AllowWarnDeny>(),
+                                        Schema::Object(SchemaObject {
+                                            reference: Some(reference),
+                                            ..Default::default()
+                                        }),
+                                    ])),
+                                    min_items: Some(2),
+                                    max_items: Some(2),
+                                    ..Default::default()
+                                })),
+                                ..Default::default()
+                            }
+                            .into();
+                        }
+
+                        if let Some(array) = obj.array {
+                            let items = match array.items {
+                                None => vec![r#gen.subschema_for::<AllowWarnDeny>()],
+                                Some(SingleOrVec::Single(config)) => {
+                                    vec![r#gen.subschema_for::<AllowWarnDeny>(), *config]
+                                }
+                                Some(SingleOrVec::Vec(configs)) => {
+                                    let mut items =
+                                        Vec::with_capacity(configs.len().saturating_add(1));
+                                    items.push(r#gen.subschema_for::<AllowWarnDeny>());
+                                    items.extend(configs);
+                                    items
+                                }
+                            };
+
+                            let config_length = items.len() as u32;
+
+                            return SchemaObject {
+                                instance_type: Some(InstanceType::Array.into()),
+                                array: Some(Box::new(ArrayValidation {
+                                    items: Some(SingleOrVec::Vec(items)),
+                                    min_items: Some(2),
+                                    max_items: Some(config_length),
+                                    ..Default::default()
+                                })),
+                                ..Default::default()
+                            }
+                            .into();
+                        }
+
+                        if let Some(subschemas) = &mut obj.subschemas
+                            && let Some(any_of) = &subschemas.any_of
+                        {
+                            subschemas.any_of = Some(
+                                any_of
+                                    .iter()
+                                    .map(|schema| {
+                                        append_allow_warn_deny_to_schema(schema.clone(), r#gen)
+                                    })
+                                    .collect(),
+                            );
+
+                            return obj.into();
+                        }
+
+                        SchemaObject {
+                            instance_type: Some(InstanceType::Array.into()),
+                            array: Some(Box::new(ArrayValidation {
+                                items: Some(SingleOrVec::Vec(vec![
+                                    r#gen.subschema_for::<AllowWarnDeny>(),
+                                    Schema::Object(obj),
+                                ])),
+                                min_items: Some(2),
+                                max_items: Some(2),
+                                ..Default::default()
+                            })),
+                            ..Default::default()
+                        }
+                        .into()
+                    }
+
                     let Some(schema) = r.schema(r#gen) else {
                         return r#gen.subschema_for::<RuleNoConfig>();
                     };
 
                     let schema = resolve_references_in_schema(&schema, r#gen).clone();
-
-                    let Schema::Object(obj) = schema else {
-                        let array_schema = SchemaObject {
-                            instance_type: Some(InstanceType::Array.into()),
-                            array: Some(Box::new(ArrayValidation {
-                                items: Some(SingleOrVec::Vec(vec![
-                                    r#gen.subschema_for::<AllowWarnDeny>(),
-                                    Schema::Bool(true),
-                                ])),
-                                min_items: Some(2),
-                                max_items: Some(2),
-                                ..Default::default()
-                            })),
-                            ..Default::default()
-                        }
-                        .into();
-                        return with_default_rule_schema(array_schema, r#gen);
-                    };
-
-                    debug_assert!(
-                        (u8::from(obj.array.is_some())
-                            + u8::from(obj.object.is_some())
-                            + u8::from(obj.reference.is_some()))
-                            <= 1,
-                        "Expected rule schema to be either an object, an array, or a reference, but not multiple"
-                    );
-
-                    if let Some(reference) = obj.reference {
-                        let array_schema = SchemaObject {
-                            instance_type: Some(InstanceType::Array.into()),
-                            array: Some(Box::new(ArrayValidation {
-                                items: Some(SingleOrVec::Vec(vec![
-                                    r#gen.subschema_for::<AllowWarnDeny>(),
-                                    Schema::Object(SchemaObject {
-                                        reference: Some(reference),
-                                        ..Default::default()
-                                    }),
-                                ])),
-                                min_items: Some(2),
-                                max_items: Some(2),
-                                ..Default::default()
-                            })),
-                            ..Default::default()
-                        }
-                        .into();
-                        return with_default_rule_schema(array_schema, r#gen);
-                    }
-
-                    if let Some(array) = obj.array {
-                        let items = match array.items {
-                            None => vec![r#gen.subschema_for::<AllowWarnDeny>()],
-                            Some(SingleOrVec::Single(config)) => {
-                                vec![r#gen.subschema_for::<AllowWarnDeny>(), *config]
-                            }
-                            Some(SingleOrVec::Vec(configs)) => {
-                                let mut items = Vec::with_capacity(configs.len().saturating_add(1));
-                                items.push(r#gen.subschema_for::<AllowWarnDeny>());
-                                items.extend(configs);
-                                items
-                            }
-                        };
-
-                        let config_length = items.len() as u32;
-
-                        let array_schema = SchemaObject {
-                            instance_type: Some(InstanceType::Array.into()),
-                            array: Some(Box::new(ArrayValidation {
-                                items: Some(SingleOrVec::Vec(items)),
-                                min_items: Some(2),
-                                max_items: Some(config_length),
-                                ..Default::default()
-                            })),
-                            ..Default::default()
-                        }
-                        .into();
-                        return with_default_rule_schema(array_schema, r#gen);
-                    }
-
-                    let array_schema = Schema::Object(SchemaObject {
-                        instance_type: Some(InstanceType::Array.into()),
-                        array: Some(Box::new(ArrayValidation {
-                            items: Some(SingleOrVec::Vec(vec![
-                                r#gen.subschema_for::<AllowWarnDeny>(),
-                                Schema::Object(obj),
-                            ])),
-                            min_items: Some(2),
-                            max_items: Some(2),
-                            ..Default::default()
-                        })),
-                        ..Default::default()
-                    });
-
-                    with_default_rule_schema(array_schema, r#gen)
+                    let schema = append_allow_warn_deny_to_schema(schema, r#gen);
+                    with_default_rule_schema(schema, r#gen)
                 }
 
                 let dummy_schema = r#gen.subschema_for::<DummyRule>();

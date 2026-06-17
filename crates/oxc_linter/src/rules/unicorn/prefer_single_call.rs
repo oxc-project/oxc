@@ -80,7 +80,7 @@ declare_oxc_lint!(
     pending,
     fix,
     config = PreferSingleCallConfig,
-    version = "next",
+    version = "1.70.0",
     short_description = "Enforce combining multiple `Array#push()`, `Element#classList.{add,remove}()`, and `importScripts()` into one call.",
 );
 
