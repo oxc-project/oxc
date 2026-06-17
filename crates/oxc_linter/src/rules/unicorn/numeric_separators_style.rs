@@ -85,19 +85,19 @@ struct NumericBaseConfig {
     only_if_contains_separator: Option<bool>,
     /// The number of digits per group when inserting numeric separators.
     /// For example, a `groupLength` of 3 formats `1234567` as `1_234_567`.
-    group_length: usize,
+    group_length: u32,
     /// The minimum number of digits required before grouping is applied.
     /// Values with fewer digits than this threshold will not be grouped.
-    minimum_digits: usize,
+    minimum_digits: u32,
 }
 
 impl NumericBaseConfig {
     pub(self) fn set_numeric_base_from_config(&mut self, val: &serde_json::Value) {
         if let Some(group_length) = val.get("groupLength").and_then(serde_json::Value::as_u64) {
-            self.group_length = usize::try_from(group_length).unwrap();
+            self.group_length = u32::try_from(group_length).unwrap();
         }
         if let Some(minimum_digits) = val.get("minimumDigits").and_then(serde_json::Value::as_u64) {
-            self.minimum_digits = usize::try_from(minimum_digits).unwrap();
+            self.minimum_digits = u32::try_from(minimum_digits).unwrap();
         }
 
         if let Some(val) = val.get("onlyIfContainsSeparator").map(serde_json::Value::as_bool) {
@@ -112,7 +112,7 @@ struct NumericNumberConfig {
     #[serde(flatten)]
     base: NumericBaseConfig,
     /// The size a group of digits in the fractional part (after the decimal point) should be.
-    fraction_group_length: usize,
+    fraction_group_length: u32,
 }
 
 impl NumericNumberConfig {
@@ -121,7 +121,7 @@ impl NumericNumberConfig {
         if let Some(fraction_group_length) =
             val.get("fractionGroupLength").and_then(serde_json::Value::as_u64)
         {
-            self.fraction_group_length = usize::try_from(fraction_group_length).unwrap();
+            self.fraction_group_length = u32::try_from(fraction_group_length).unwrap();
         }
     }
 }
@@ -134,7 +134,7 @@ impl Default for NumericNumberConfig {
                 minimum_digits: 5,
                 only_if_contains_separator: None,
             },
-            fraction_group_length: usize::MAX,
+            fraction_group_length: u32::MAX,
         }
     }
 }
@@ -410,15 +410,18 @@ fn add_separators(
     s: &mut String,
     dir: &SeparatorDir,
     config: &NumericBaseConfig,
-    fraction_group_length: Option<usize>,
+    fraction_group_length: Option<u32>,
 ) {
     let length = if *dir == SeparatorDir::Left && fraction_group_length.is_some() {
-        fraction_group_length.unwrap_or(usize::MAX)
+        usize::try_from(fraction_group_length.unwrap_or(u32::MAX))
+            .expect("u32 size must fit into usize for fraction group length")
     } else {
-        config.group_length
+        usize::try_from(config.group_length).expect("u32 size must fit into usize for group length")
     };
 
-    if s.len() < config.minimum_digits || s.len() < length.saturating_add(1) {
+    if s.len() < usize::try_from(config.minimum_digits).expect("u32 size must fit into usize")
+        || s.len() < length.saturating_add(1)
+    {
         return;
     }
 

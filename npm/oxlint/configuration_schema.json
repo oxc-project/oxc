@@ -15660,7 +15660,7 @@
           "description": "The number of digits per group when inserting numeric separators.\nFor example, a `groupLength` of 3 formats `1234567` as `1_234_567`.",
           "default": 0,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "The number of digits per group when inserting numeric separators.\nFor example, a `groupLength` of 3 formats `1234567` as `1_234_567`."
         },
@@ -15668,7 +15668,7 @@
           "description": "The minimum number of digits required before grouping is applied.\nValues with fewer digits than this threshold will not be grouped.",
           "default": 0,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "The minimum number of digits required before grouping is applied.\nValues with fewer digits than this threshold will not be grouped."
         },
@@ -15685,9 +15685,9 @@
       "properties": {
         "fractionGroupLength": {
           "description": "The size a group of digits in the fractional part (after the decimal point) should be.",
-          "default": 18446744073709551615,
+          "default": 4294967295,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "The size a group of digits in the fractional part (after the decimal point) should be."
         },
@@ -15695,7 +15695,7 @@
           "description": "The number of digits per group when inserting numeric separators.\nFor example, a `groupLength` of 3 formats `1234567` as `1_234_567`.",
           "default": 0,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "The number of digits per group when inserting numeric separators.\nFor example, a `groupLength` of 3 formats `1234567` as `1_234_567`."
         },
@@ -15703,7 +15703,7 @@
           "description": "The minimum number of digits required before grouping is applied.\nValues with fewer digits than this threshold will not be grouped.",
           "default": 0,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "The minimum number of digits required before grouping is applied.\nValues with fewer digits than this threshold will not be grouped."
         },
