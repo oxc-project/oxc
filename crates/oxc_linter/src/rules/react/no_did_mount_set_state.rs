@@ -9,7 +9,7 @@ use crate::{
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
     rules::ContextHost,
-    utils::{AllowedOrDisallowInFunc, is_es5_component, is_es6_component},
+    utils::{AllowedOrDisallowInFunc, function_count_before_lifecycle_component},
 };
 
 fn no_did_mount_set_state_diagnostic(span: Span) -> OxcDiagnostic {
@@ -89,49 +89,11 @@ impl Rule for NoDidMountSetState {
             return;
         }
 
-        let ancestors: Vec<_> = ctx.nodes().ancestors(node.id()).skip(1).collect();
-
-        let component_did_mount_index =
-            ancestors.iter().position(|ancestor| match ancestor.kind() {
-                AstKind::ObjectProperty(prop)
-                    if prop.key.static_name().is_some_and(|key| key == "componentDidMount") =>
-                {
-                    true
-                }
-                AstKind::MethodDefinition(method)
-                    if method.key.static_name().is_some_and(|name| name == "componentDidMount") =>
-                {
-                    true
-                }
-                AstKind::PropertyDefinition(prop)
-                    if prop.key.static_name().is_some_and(|name| name == "componentDidMount") =>
-                {
-                    true
-                }
-                _ => false,
-            });
-
-        let Some(component_did_mount_idx) = component_did_mount_index else {
+        let Some(function_count_before_component_did_mount) =
+            function_count_before_lifecycle_component(node, ctx, "componentDidMount")
+        else {
             return;
         };
-
-        let in_component_did_mount = ancestors[component_did_mount_idx..]
-            .iter()
-            .any(|ancestor| is_es5_component(ancestor) || is_es6_component(ancestor));
-
-        if !in_component_did_mount {
-            return;
-        }
-
-        let function_count_before_component_did_mount = ancestors[..component_did_mount_idx]
-            .iter()
-            .filter(|ancestor| {
-                matches!(
-                    ancestor.kind(),
-                    AstKind::Function(_) | AstKind::ArrowFunctionExpression(_)
-                )
-            })
-            .count();
 
         let in_nested_function = function_count_before_component_did_mount > 1;
 
