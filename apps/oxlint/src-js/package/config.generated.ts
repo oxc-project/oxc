@@ -151,6 +151,7 @@ export type Location = "start" | "anywhere";
  * Default: `"err"`.
  */
 export type HandleCallbackErrConfig = string;
+export type NoMixedRequiresConfig = boolean | NoMixedRequiresOptions;
 export type ShorthandType = "always" | "methods" | "properties" | "consistent" | "consistent-as-needed" | "never";
 export type Destructuring = "any" | "all";
 export type PreferDestructuringOption = PreferDestructuringTargetOption | PreferDestructuringAssignmentConfig;
@@ -1193,6 +1194,7 @@ export interface DummyRuleMap {
   "node/global-require"?: RuleNoConfig;
   "node/handle-callback-err"?: RuleNoConfig | [AllowWarnDeny, HandleCallbackErrConfig];
   "node/no-exports-assign"?: RuleNoConfig;
+  "node/no-mixed-requires"?: RuleNoConfig | [AllowWarnDeny, NoMixedRequiresConfig];
   "node/no-new-require"?: RuleNoConfig;
   "node/no-path-concat"?: RuleNoConfig;
   "node/no-process-env"?: RuleNoConfig | [AllowWarnDeny, NoProcessEnvConfig];
@@ -3848,6 +3850,10 @@ export interface NoWarningCommentsConfigJson {
   decoration?: string[];
   location?: Location;
   terms?: string[];
+}
+export interface NoMixedRequiresOptions {
+  allowCall?: boolean;
+  grouping?: boolean;
 }
 export interface NoProcessEnvConfig {
   /**

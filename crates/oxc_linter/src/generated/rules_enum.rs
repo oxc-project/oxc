@@ -370,6 +370,7 @@ pub use crate::rules::node::callback_return::CallbackReturn as NodeCallbackRetur
 pub use crate::rules::node::global_require::GlobalRequire as NodeGlobalRequire;
 pub use crate::rules::node::handle_callback_err::HandleCallbackErr as NodeHandleCallbackErr;
 pub use crate::rules::node::no_exports_assign::NoExportsAssign as NodeNoExportsAssign;
+pub use crate::rules::node::no_mixed_requires::NoMixedRequires as NodeNoMixedRequires;
 pub use crate::rules::node::no_new_require::NoNewRequire as NodeNoNewRequire;
 pub use crate::rules::node::no_path_concat::NoPathConcat as NodeNoPathConcat;
 pub use crate::rules::node::no_process_env::NoProcessEnv as NodeNoProcessEnv;
@@ -1651,6 +1652,7 @@ pub enum RuleEnum {
     NodeGlobalRequire(NodeGlobalRequire),
     NodeHandleCallbackErr(NodeHandleCallbackErr),
     NodeNoExportsAssign(NodeNoExportsAssign),
+    NodeNoMixedRequires(NodeNoMixedRequires),
     NodeNoNewRequire(NodeNoNewRequire),
     NodeNoPathConcat(NodeNoPathConcat),
     NodeNoProcessEnv(NodeNoProcessEnv),
@@ -2589,7 +2591,8 @@ const NODE_CALLBACK_RETURN_ID: usize = VITEST_WARN_TODO_ID + 1usize;
 const NODE_GLOBAL_REQUIRE_ID: usize = NODE_CALLBACK_RETURN_ID + 1usize;
 const NODE_HANDLE_CALLBACK_ERR_ID: usize = NODE_GLOBAL_REQUIRE_ID + 1usize;
 const NODE_NO_EXPORTS_ASSIGN_ID: usize = NODE_HANDLE_CALLBACK_ERR_ID + 1usize;
-const NODE_NO_NEW_REQUIRE_ID: usize = NODE_NO_EXPORTS_ASSIGN_ID + 1usize;
+const NODE_NO_MIXED_REQUIRES_ID: usize = NODE_NO_EXPORTS_ASSIGN_ID + 1usize;
+const NODE_NO_NEW_REQUIRE_ID: usize = NODE_NO_MIXED_REQUIRES_ID + 1usize;
 const NODE_NO_PATH_CONCAT_ID: usize = NODE_NO_NEW_REQUIRE_ID + 1usize;
 const NODE_NO_PROCESS_ENV_ID: usize = NODE_NO_PATH_CONCAT_ID + 1usize;
 const VUE_COMPONENT_DEFINITION_NAME_CASING_ID: usize = NODE_NO_PROCESS_ENV_ID + 1usize;
@@ -3561,6 +3564,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(_) => NODE_GLOBAL_REQUIRE_ID,
             Self::NodeHandleCallbackErr(_) => NODE_HANDLE_CALLBACK_ERR_ID,
             Self::NodeNoExportsAssign(_) => NODE_NO_EXPORTS_ASSIGN_ID,
+            Self::NodeNoMixedRequires(_) => NODE_NO_MIXED_REQUIRES_ID,
             Self::NodeNoNewRequire(_) => NODE_NO_NEW_REQUIRE_ID,
             Self::NodeNoPathConcat(_) => NODE_NO_PATH_CONCAT_ID,
             Self::NodeNoProcessEnv(_) => NODE_NO_PROCESS_ENV_ID,
@@ -4515,6 +4519,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::NAME,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::NAME,
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::NAME,
+            Self::NodeNoMixedRequires(_) => NodeNoMixedRequires::NAME,
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::NAME,
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::NAME,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::NAME,
@@ -5525,6 +5530,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::CATEGORY,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::CATEGORY,
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::CATEGORY,
+            Self::NodeNoMixedRequires(_) => NodeNoMixedRequires::CATEGORY,
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::CATEGORY,
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::CATEGORY,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::CATEGORY,
@@ -6482,6 +6488,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::FIX,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::FIX,
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::FIX,
+            Self::NodeNoMixedRequires(_) => NodeNoMixedRequires::FIX,
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::FIX,
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::FIX,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::FIX,
@@ -7685,6 +7692,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::documentation(),
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::documentation(),
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::documentation(),
+            Self::NodeNoMixedRequires(_) => NodeNoMixedRequires::documentation(),
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::documentation(),
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::documentation(),
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::documentation(),
@@ -10020,6 +10028,8 @@ impl RuleEnum {
                 .or_else(|| NodeHandleCallbackErr::schema(generator)),
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::config_schema(generator)
                 .or_else(|| NodeNoExportsAssign::schema(generator)),
+            Self::NodeNoMixedRequires(_) => NodeNoMixedRequires::config_schema(generator)
+                .or_else(|| NodeNoMixedRequires::schema(generator)),
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::config_schema(generator)
                 .or_else(|| NodeNoNewRequire::schema(generator)),
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::config_schema(generator)
@@ -10953,6 +10963,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(_) => "node",
             Self::NodeHandleCallbackErr(_) => "node",
             Self::NodeNoExportsAssign(_) => "node",
+            Self::NodeNoMixedRequires(_) => "node",
             Self::NodeNoNewRequire(_) => "node",
             Self::NodeNoPathConcat(_) => "node",
             Self::NodeNoProcessEnv(_) => "node",
@@ -13548,6 +13559,9 @@ impl RuleEnum {
             Self::NodeNoExportsAssign(_) => {
                 Ok(Self::NodeNoExportsAssign(NodeNoExportsAssign::from_configuration(value)?))
             }
+            Self::NodeNoMixedRequires(_) => {
+                Ok(Self::NodeNoMixedRequires(NodeNoMixedRequires::from_configuration(value)?))
+            }
             Self::NodeNoNewRequire(_) => {
                 Ok(Self::NodeNoNewRequire(NodeNoNewRequire::from_configuration(value)?))
             }
@@ -14498,6 +14512,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(rule) => rule.to_configuration(),
             Self::NodeHandleCallbackErr(rule) => rule.to_configuration(),
             Self::NodeNoExportsAssign(rule) => rule.to_configuration(),
+            Self::NodeNoMixedRequires(rule) => rule.to_configuration(),
             Self::NodeNoNewRequire(rule) => rule.to_configuration(),
             Self::NodeNoPathConcat(rule) => rule.to_configuration(),
             Self::NodeNoProcessEnv(rule) => rule.to_configuration(),
@@ -15348,6 +15363,7 @@ impl RuleEnum {
                 Self::NodeGlobalRequire(rule) => rule.run(node, ctx),
                 Self::NodeHandleCallbackErr(rule) => rule.run(node, ctx),
                 Self::NodeNoExportsAssign(rule) => rule.run(node, ctx),
+                Self::NodeNoMixedRequires(rule) => rule.run(node, ctx),
                 Self::NodeNoNewRequire(rule) => rule.run(node, ctx),
                 Self::NodeNoPathConcat(rule) => rule.run(node, ctx),
                 Self::NodeNoProcessEnv(rule) => rule.run(node, ctx),
@@ -16191,6 +16207,7 @@ impl RuleEnum {
                 Self::NodeGlobalRequire(rule) => rule.run(node, ctx),
                 Self::NodeHandleCallbackErr(rule) => rule.run(node, ctx),
                 Self::NodeNoExportsAssign(rule) => rule.run(node, ctx),
+                Self::NodeNoMixedRequires(rule) => rule.run(node, ctx),
                 Self::NodeNoNewRequire(rule) => rule.run(node, ctx),
                 Self::NodeNoPathConcat(rule) => rule.run(node, ctx),
                 Self::NodeNoProcessEnv(rule) => rule.run(node, ctx),
@@ -17041,6 +17058,7 @@ impl RuleEnum {
                 Self::NodeGlobalRequire(rule) => rule.run_once(ctx),
                 Self::NodeHandleCallbackErr(rule) => rule.run_once(ctx),
                 Self::NodeNoExportsAssign(rule) => rule.run_once(ctx),
+                Self::NodeNoMixedRequires(rule) => rule.run_once(ctx),
                 Self::NodeNoNewRequire(rule) => rule.run_once(ctx),
                 Self::NodeNoPathConcat(rule) => rule.run_once(ctx),
                 Self::NodeNoProcessEnv(rule) => rule.run_once(ctx),
@@ -17884,6 +17902,7 @@ impl RuleEnum {
                 Self::NodeGlobalRequire(rule) => rule.run_once(ctx),
                 Self::NodeHandleCallbackErr(rule) => rule.run_once(ctx),
                 Self::NodeNoExportsAssign(rule) => rule.run_once(ctx),
+                Self::NodeNoMixedRequires(rule) => rule.run_once(ctx),
                 Self::NodeNoNewRequire(rule) => rule.run_once(ctx),
                 Self::NodeNoPathConcat(rule) => rule.run_once(ctx),
                 Self::NodeNoProcessEnv(rule) => rule.run_once(ctx),
@@ -18983,6 +19002,7 @@ impl RuleEnum {
                 Self::NodeGlobalRequire(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::NodeHandleCallbackErr(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::NodeNoExportsAssign(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::NodeNoMixedRequires(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::NodeNoNewRequire(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::NodeNoPathConcat(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::NodeNoProcessEnv(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -20086,6 +20106,7 @@ impl RuleEnum {
                 Self::NodeGlobalRequire(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::NodeHandleCallbackErr(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::NodeNoExportsAssign(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::NodeNoMixedRequires(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::NodeNoNewRequire(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::NodeNoPathConcat(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::NodeNoProcessEnv(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -20939,6 +20960,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(rule) => rule.should_run(ctx),
             Self::NodeHandleCallbackErr(rule) => rule.should_run(ctx),
             Self::NodeNoExportsAssign(rule) => rule.should_run(ctx),
+            Self::NodeNoMixedRequires(rule) => rule.should_run(ctx),
             Self::NodeNoNewRequire(rule) => rule.should_run(ctx),
             Self::NodeNoPathConcat(rule) => rule.should_run(ctx),
             Self::NodeNoProcessEnv(rule) => rule.should_run(ctx),
@@ -22137,6 +22159,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::IS_TSGOLINT_RULE,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::IS_TSGOLINT_RULE,
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::IS_TSGOLINT_RULE,
+            Self::NodeNoMixedRequires(_) => NodeNoMixedRequires::IS_TSGOLINT_RULE,
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::IS_TSGOLINT_RULE,
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::IS_TSGOLINT_RULE,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::IS_TSGOLINT_RULE,
@@ -23165,6 +23188,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::VERSION,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::VERSION,
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::VERSION,
+            Self::NodeNoMixedRequires(_) => NodeNoMixedRequires::VERSION,
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::VERSION,
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::VERSION,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::VERSION,
@@ -24212,6 +24236,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::HAS_CONFIG,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::HAS_CONFIG,
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::HAS_CONFIG,
+            Self::NodeNoMixedRequires(_) => NodeNoMixedRequires::HAS_CONFIG,
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::HAS_CONFIG,
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::HAS_CONFIG,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::HAS_CONFIG,
@@ -25174,6 +25199,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::INFO,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::INFO,
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::INFO,
+            Self::NodeNoMixedRequires(_) => NodeNoMixedRequires::INFO,
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::INFO,
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::INFO,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::INFO,
@@ -26023,6 +26049,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(rule) => rule.types_info(),
             Self::NodeHandleCallbackErr(rule) => rule.types_info(),
             Self::NodeNoExportsAssign(rule) => rule.types_info(),
+            Self::NodeNoMixedRequires(rule) => rule.types_info(),
             Self::NodeNoNewRequire(rule) => rule.types_info(),
             Self::NodeNoPathConcat(rule) => rule.types_info(),
             Self::NodeNoProcessEnv(rule) => rule.types_info(),
@@ -26863,6 +26890,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(rule) => rule.run_info(),
             Self::NodeHandleCallbackErr(rule) => rule.run_info(),
             Self::NodeNoExportsAssign(rule) => rule.run_info(),
+            Self::NodeNoMixedRequires(rule) => rule.run_info(),
             Self::NodeNoNewRequire(rule) => rule.run_info(),
             Self::NodeNoPathConcat(rule) => rule.run_info(),
             Self::NodeNoProcessEnv(rule) => rule.run_info(),
@@ -27835,6 +27863,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::NodeGlobalRequire(NodeGlobalRequire::default()),
         RuleEnum::NodeHandleCallbackErr(NodeHandleCallbackErr::default()),
         RuleEnum::NodeNoExportsAssign(NodeNoExportsAssign::default()),
+        RuleEnum::NodeNoMixedRequires(NodeNoMixedRequires::default()),
         RuleEnum::NodeNoNewRequire(NodeNoNewRequire::default()),
         RuleEnum::NodeNoPathConcat(NodeNoPathConcat::default()),
         RuleEnum::NodeNoProcessEnv(NodeNoProcessEnv::default()),
