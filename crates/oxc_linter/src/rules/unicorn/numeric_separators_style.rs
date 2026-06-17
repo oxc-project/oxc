@@ -7,7 +7,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use schemars::JsonSchema;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -21,7 +21,7 @@ fn numeric_separators_style_diagnostic(span: Span) -> OxcDiagnostic {
 pub struct NumericSeparatorsStyle(Box<NumericSeparatorsStyleConfig>);
 
 #[derive(Debug, Clone, PartialEq, Eq, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NumericSeparatorsStyleConfig {
     /// Only enforce the rule when the numeric literal already contains a separator (`_`).
     ///
@@ -74,13 +74,14 @@ impl Default for NumericSeparatorsStyleConfig {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Default, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Clone, PartialEq, Eq, Default, JsonSchema, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct NumericBaseConfig {
     /// Only enforce the rule when the numeric literal already contains a separator (`_`).
     ///
     /// When `true`, numbers without separators are left as-is; when `false` (default),
     /// grouping will be enforced for eligible numbers even if they don't include separators yet.
+    #[serde(skip_serializing_if = "Option::is_none")]
     only_if_contains_separator: Option<bool>,
     /// The number of digits per group when inserting numeric separators.
     /// For example, a `groupLength` of 3 formats `1234567` as `1_234_567`.
@@ -106,7 +107,7 @@ impl NumericBaseConfig {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct NumericNumberConfig {
     #[serde(flatten)]
     base: NumericBaseConfig,
