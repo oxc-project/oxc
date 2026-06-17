@@ -15720,6 +15720,10 @@
       "properties": {
         "binary": {
           "description": "Configuration for binary literals (e.g. `0b1010_0001` and bigint variants).\nControls how digits are grouped and when separators are applied.",
+          "default": {
+            "groupLength": 4,
+            "minimumDigits": 0
+          },
           "allOf": [
             {
               "$ref": "#/definitions/NumericBaseConfig"
@@ -15729,6 +15733,10 @@
         },
         "hexadecimal": {
           "description": "Configuration for hexadecimal literals (e.g. `0xAB_CD`, `0Xab_cd`, and bigint variants).\nControls how digits are grouped and when separators are applied.",
+          "default": {
+            "groupLength": 2,
+            "minimumDigits": 0
+          },
           "allOf": [
             {
               "$ref": "#/definitions/NumericBaseConfig"
@@ -15747,6 +15755,10 @@
         },
         "octal": {
           "description": "Configuration for octal literals (e.g. `0o1234_5670` and bigint variants).\nControls how digits are grouped and when separators are applied.",
+          "default": {
+            "groupLength": 4,
+            "minimumDigits": 0
+          },
           "allOf": [
             {
               "$ref": "#/definitions/NumericBaseConfig"

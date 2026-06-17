@@ -7,7 +7,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use schemars::JsonSchema;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -74,7 +74,7 @@ impl Default for NumericSeparatorsStyleConfig {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Default, JsonSchema, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Default, JsonSchema, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct NumericBaseConfig {
     /// Only enforce the rule when the numeric literal already contains a separator (`_`).
