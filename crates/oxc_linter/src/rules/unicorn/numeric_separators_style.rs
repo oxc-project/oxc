@@ -21,7 +21,7 @@ fn numeric_separators_style_diagnostic(span: Span) -> OxcDiagnostic {
 pub struct NumericSeparatorsStyle(Box<NumericSeparatorsStyleConfig>);
 
 #[derive(Debug, Clone, PartialEq, Eq, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NumericSeparatorsStyleConfig {
     /// Only enforce the rule when the numeric literal already contains a separator (`_`).
     ///
@@ -75,7 +75,7 @@ impl Default for NumericSeparatorsStyleConfig {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct NumericBaseConfig {
     /// Only enforce the rule when the numeric literal already contains a separator (`_`).
     ///
@@ -106,7 +106,7 @@ impl NumericBaseConfig {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct NumericNumberConfig {
     #[serde(flatten)]
     base: NumericBaseConfig,

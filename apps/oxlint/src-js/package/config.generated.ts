@@ -1529,7 +1529,7 @@ export interface DummyRuleMap {
   "unicorn/no-useless-undefined"?: RuleNoConfig | [AllowWarnDeny, NoUselessUndefined];
   "unicorn/no-zero-fractions"?: RuleNoConfig;
   "unicorn/number-literal-case"?: RuleNoConfig;
-  "unicorn/numeric-separators-style"?: DummyRule;
+  "unicorn/numeric-separators-style"?: RuleNoConfig | [AllowWarnDeny, NumericSeparatorsStyleConfig];
   "unicorn/prefer-add-event-listener"?: RuleNoConfig;
   "unicorn/prefer-array-find"?: RuleNoConfig;
   "unicorn/prefer-array-flat"?: RuleNoConfig;
@@ -6022,6 +6022,77 @@ export interface NoUselessUndefined {
    * Whether to check for useless `undefined` in arrow function bodies.
    */
   checkArrowFunctionBody?: boolean;
+}
+export interface NumericSeparatorsStyleConfig {
+  /**
+   * Configuration for binary literals (e.g. `0b1010_0001` and bigint variants).
+   * Controls how digits are grouped and when separators are applied.
+   */
+  binary?: NumericBaseConfig;
+  /**
+   * Configuration for hexadecimal literals (e.g. `0xAB_CD`, `0Xab_cd`, and bigint variants).
+   * Controls how digits are grouped and when separators are applied.
+   */
+  hexadecimal?: NumericBaseConfig;
+  /**
+   * Configuration for decimal numbers (integers, fraction parts, and exponents).
+   * Controls how digits are grouped and when separators are applied.
+   */
+  number?: NumericNumberConfig;
+  /**
+   * Configuration for octal literals (e.g. `0o1234_5670` and bigint variants).
+   * Controls how digits are grouped and when separators are applied.
+   */
+  octal?: NumericBaseConfig;
+  /**
+   * Only enforce the rule when the numeric literal already contains a separator (`_`).
+   *
+   * When `true`, numbers without separators are left as-is; when `false` (default),
+   * grouping will be enforced for eligible numbers even if they don't include separators yet.
+   */
+  onlyIfContainsSeparator?: boolean;
+}
+export interface NumericBaseConfig {
+  /**
+   * The number of digits per group when inserting numeric separators.
+   * For example, a `groupLength` of 3 formats `1234567` as `1_234_567`.
+   */
+  groupLength?: number;
+  /**
+   * The minimum number of digits required before grouping is applied.
+   * Values with fewer digits than this threshold will not be grouped.
+   */
+  minimumDigits?: number;
+  /**
+   * Only enforce the rule when the numeric literal already contains a separator (`_`).
+   *
+   * When `true`, numbers without separators are left as-is; when `false` (default),
+   * grouping will be enforced for eligible numbers even if they don't include separators yet.
+   */
+  onlyIfContainsSeparator?: boolean;
+}
+export interface NumericNumberConfig {
+  /**
+   * The size a group of digits in the fractional part (after the decimal point) should be.
+   */
+  fractionGroupLength?: number;
+  /**
+   * The number of digits per group when inserting numeric separators.
+   * For example, a `groupLength` of 3 formats `1234567` as `1_234_567`.
+   */
+  groupLength?: number;
+  /**
+   * The minimum number of digits required before grouping is applied.
+   * Values with fewer digits than this threshold will not be grouped.
+   */
+  minimumDigits?: number;
+  /**
+   * Only enforce the rule when the numeric literal already contains a separator (`_`).
+   *
+   * When `true`, numbers without separators are left as-is; when `false` (default),
+   * grouping will be enforced for eligible numbers even if they don't include separators yet.
+   */
+  onlyIfContainsSeparator?: boolean;
 }
 export interface PreferAtConfig {
   /**
