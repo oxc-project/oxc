@@ -401,7 +401,7 @@ fn get_struct_params<'s>(
 
 /// Get function params and fields for a struct builder method.
 ///
-/// Omit default fields from function params if `include_default_fields == true`.
+/// Omit default fields from function params if `include_default_fields == false`.
 ///
 /// ```
 /// //         ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ function params
