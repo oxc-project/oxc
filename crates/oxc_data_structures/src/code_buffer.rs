@@ -295,9 +295,9 @@ impl CodeBuffer {
     /// The caller must ensure that, after 1 or more sequential calls, the buffer represents
     /// a valid UTF-8 string.
     ///
-    /// It is OK for a single call to temporarily result in the buffer containsing invalid UTF-8, as long
-    /// as UTF-8 integrity is restored before calls to any other `print_*` method or [`into_string`].
-    /// This lets you, for example, print an 4-byte Unicode character using 4 separate calls to this method.
+    /// It is OK for a single call to temporarily result in the buffer containing invalid UTF-8, as long
+    /// as UTF-8 integrity is restored before calls to any other `print_*` method, [`as_str`], or [`into_string`].
+    /// This lets you, for example, print a 4-byte Unicode character using 4 separate calls to this method.
     /// However, consider using [`print_bytes_unchecked`] instead for that use case.
     ///
     /// # Example
@@ -321,6 +321,7 @@ impl CodeBuffer {
     ///
     /// [`print_ascii_byte`]: CodeBuffer::print_ascii_byte
     /// [`print_char`]: CodeBuffer::print_char
+    /// [`as_str`]: CodeBuffer::as_str
     /// [`into_string`]: CodeBuffer::into_string
     /// [`print_bytes_unchecked`]: CodeBuffer::print_bytes_unchecked
     #[inline]
@@ -427,7 +428,7 @@ impl CodeBuffer {
     /// a valid UTF-8 string.
     ///
     /// It is OK for a single call to temporarily result in the buffer containing invalid UTF-8, as long
-    /// as UTF-8 integrity is restored before calls to any other `print_*` method or [`into_string`].
+    /// as UTF-8 integrity is restored before calls to any other `print_*` method, [`as_str`], or [`into_string`].
     ///
     /// This requirement is easily satisfied if buffer contained valid UTF-8, and the `bytes` slice
     /// also contains a valid UTF-8 string.
@@ -443,6 +444,7 @@ impl CodeBuffer {
     /// }
     /// ```
     ///
+    /// [`as_str`]: CodeBuffer::as_str
     /// [`into_string`]: CodeBuffer::into_string
     #[inline]
     pub unsafe fn print_bytes_unchecked(&mut self, bytes: &[u8]) {
@@ -589,7 +591,7 @@ impl CodeBuffer {
     /// a valid UTF-8 string.
     ///
     /// It is OK for a single call to temporarily result in the buffer containing invalid UTF-8, as long
-    /// as UTF-8 integrity is restored before calls to any other `print_*` method or [`into_string`].
+    /// as UTF-8 integrity is restored before calls to any other `print_*` method, [`as_str`], or [`into_string`].
     ///
     /// This requirement is easily satisfied if buffer contained valid UTF-8, and the `bytes` iterator
     /// also yields a valid UTF-8 string.
@@ -605,6 +607,7 @@ impl CodeBuffer {
     /// }
     /// ```
     ///
+    /// [`as_str`]: CodeBuffer::as_str
     /// [`into_string`]: CodeBuffer::into_string
     #[inline]
     pub unsafe fn print_bytes_iter_unchecked<I: IntoIterator<Item = u8>>(&mut self, bytes: I) {
@@ -711,7 +714,8 @@ impl CodeBuffer {
         if cfg!(debug_assertions) {
             str::from_utf8(&self.buf).unwrap()
         } else {
-            // SAFETY: All methods of `CodeBuffer` ensure `buf` is valid UTF-8
+            // SAFETY: All safe methods of `CodeBuffer` ensure `buf` is valid UTF-8, and all unsafe methods
+            // specify the buffer must be made into a valid UTF-8 string before calling this method
             unsafe { str::from_utf8_unchecked(&self.buf) }
         }
     }
@@ -734,7 +738,8 @@ impl CodeBuffer {
         if cfg!(debug_assertions) {
             String::from_utf8(self.buf).unwrap()
         } else {
-            // SAFETY: All methods of `CodeBuffer` ensure `buf` is valid UTF-8
+            // SAFETY: All safe methods of `CodeBuffer` ensure `buf` is valid UTF-8, and all unsafe methods
+            // specify the buffer must be made into a valid UTF-8 string before calling this method
             unsafe { String::from_utf8_unchecked(self.buf) }
         }
     }
