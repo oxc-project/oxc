@@ -205,6 +205,24 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `[foo][0] ^= 0` with `[foo][0] = Math.trunc([foo][0])`.
 
+  ⚠ unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `|= 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ foo[i++] |= 0;
+   · ─────────────
+   ╰────
+
+  ⚠ unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `^= 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ foo[bar()] ^= 0;
+   · ───────────────
+   ╰────
+
+  ⚠ unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `>>= 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ getFoo().bar >>= 0;
+   · ──────────────────
+   ╰────
+
   ⚠ unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `| 0`.
    ╭─[prefer_math_trunc.tsx:1:33]
  1 │ const foo = /* first comment */ 3.4 | 0; // A B C

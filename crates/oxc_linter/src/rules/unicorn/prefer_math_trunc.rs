@@ -1,4 +1,11 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{
+    AstKind,
+    ast::{
+        AssignmentExpression, AwaitExpression, CallExpression, Expression, ImportExpression,
+        NewExpression, UnaryExpression, UpdateExpression, YieldExpression,
+    },
+};
+use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -7,6 +14,53 @@ use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, UnaryOperator};
 use crate::{
     AstNode, context::LintContext, fixer::RuleFixer, rule::Rule, utils::pad_fix_with_token_boundary,
 };
+
+/// Detects whether an expression subtree contains a side-effecting node, matching the default
+/// node set of eslint-utils' `hasSideEffect` (Call / New / Update / Await / Yield / Assignment /
+/// dynamic `import` / `delete`). Used to avoid suggesting `x |= 0` -> `x = Math.trunc(x)` when
+/// duplicating `x` would re-run a side effect, e.g. `foo[i++] |= 0`.
+#[derive(Default)]
+struct SideEffectFinder {
+    found: bool,
+}
+
+impl<'a> Visit<'a> for SideEffectFinder {
+    fn visit_call_expression(&mut self, _it: &CallExpression<'a>) {
+        self.found = true;
+    }
+
+    fn visit_new_expression(&mut self, _it: &NewExpression<'a>) {
+        self.found = true;
+    }
+
+    fn visit_update_expression(&mut self, _it: &UpdateExpression<'a>) {
+        self.found = true;
+    }
+
+    fn visit_await_expression(&mut self, _it: &AwaitExpression<'a>) {
+        self.found = true;
+    }
+
+    fn visit_yield_expression(&mut self, _it: &YieldExpression<'a>) {
+        self.found = true;
+    }
+
+    fn visit_assignment_expression(&mut self, _it: &AssignmentExpression<'a>) {
+        self.found = true;
+    }
+
+    fn visit_import_expression(&mut self, _it: &ImportExpression<'a>) {
+        self.found = true;
+    }
+
+    fn visit_unary_expression(&mut self, it: &UnaryExpression<'a>) {
+        if matches!(it.operator, UnaryOperator::Delete) {
+            self.found = true;
+        } else {
+            self.visit_expression(&it.argument);
+        }
+    }
+}
 
 fn prefer_math_trunc_diagnostic(span: Span, bad_op: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Prefer `Math.trunc()` over instead of `{bad_op} 0`."))
@@ -53,7 +107,7 @@ declare_oxc_lint!(
 
 impl Rule for PreferMathTrunc {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let (operator, argument_span, is_assignment) = match node.kind() {
+        let (operator, argument_span, is_assignment, lhs_has_side_effect) = match node.kind() {
             AstKind::UnaryExpression(unary_expr) => {
                 if !matches!(unary_expr.operator, UnaryOperator::BitwiseNot) {
                     return;
@@ -72,7 +126,7 @@ impl Rule for PreferMathTrunc {
                     return;
                 }
 
-                (UnaryOperator::BitwiseNot.as_str(), inner_unary_expr.argument.span(), false)
+                (UnaryOperator::BitwiseNot.as_str(), inner_unary_expr.argument.span(), false, false)
             }
             AstKind::BinaryExpression(bin_expr) => {
                 let Expression::NumericLiteral(right_num_lit) = &bin_expr.right else {
@@ -92,7 +146,7 @@ impl Rule for PreferMathTrunc {
                     return;
                 }
 
-                (bin_expr.operator.as_str(), bin_expr.left.span(), false)
+                (bin_expr.operator.as_str(), bin_expr.left.span(), false, false)
             }
             AstKind::AssignmentExpression(assignment_expr) => {
                 let Expression::NumericLiteral(right_num_lit) = &assignment_expr.right else {
@@ -114,27 +168,34 @@ impl Rule for PreferMathTrunc {
                     return;
                 }
 
-                (assignment_expr.operator.as_str(), assignment_expr.left.span(), true)
+                // Duplicating a side-effecting LHS (e.g. `foo[i++] |= 0`) in the
+                // `x = Math.trunc(x)` suggestion would re-run the side effect, so skip the
+                // suggestion for those (still report). Matches eslint-plugin-unicorn.
+                let mut finder = SideEffectFinder::default();
+                finder.visit_assignment_target(&assignment_expr.left);
+                (assignment_expr.operator.as_str(), assignment_expr.left.span(), true, finder.found)
             }
             _ => return,
         };
 
         let span = node.kind().span();
-        ctx.diagnostic_with_suggestion(
-            prefer_math_trunc_diagnostic(span, operator),
-            |fixer: RuleFixer<'_, 'a>| {
-                let argument_text = ctx.source_range(argument_span);
-                let mut replacement = if is_assignment {
-                    // `x |= 0` -> `x = Math.trunc(x)`
-                    format!("{argument_text} = Math.trunc({argument_text})")
-                } else {
-                    // `x | 0` or `~~x` -> `Math.trunc(x)`
-                    format!("Math.trunc({argument_text})")
-                };
-                pad_fix_with_token_boundary(ctx.source_text(), span, &mut replacement);
-                fixer.replace(span, replacement)
-            },
-        );
+        let diagnostic = prefer_math_trunc_diagnostic(span, operator);
+        if lhs_has_side_effect {
+            ctx.diagnostic(diagnostic);
+            return;
+        }
+        ctx.diagnostic_with_suggestion(diagnostic, |fixer: RuleFixer<'_, 'a>| {
+            let argument_text = ctx.source_range(argument_span);
+            let mut replacement = if is_assignment {
+                // `x |= 0` -> `x = Math.trunc(x)`
+                format!("{argument_text} = Math.trunc({argument_text})")
+            } else {
+                // `x | 0` or `~~x` -> `Math.trunc(x)`
+                format!("Math.trunc({argument_text})")
+            };
+            pad_fix_with_token_boundary(ctx.source_text(), span, &mut replacement);
+            fixer.replace(span, replacement)
+        });
     }
 }
 
@@ -191,6 +252,11 @@ fn test() {
         "const foo = bar ^ 0;",
         "function foo() {return.1 ^0;}",
         "function foo() {return[foo][0] ^= 0;};",
+        // Side-effecting assignment LHS: report but offer NO suggestion (duplicating the LHS in
+        // `x = Math.trunc(x)` would re-run the side effect).
+        "foo[i++] |= 0;",
+        "foo[bar()] ^= 0;",
+        "getFoo().bar >>= 0;",
         "const foo = /* first comment */ 3.4 | 0; // A B C",
         "const foo = /* first comment */ ~~3.4; // A B C",
         "const foo = /* will keep */ 3.4 /* will remove 1 */ | /* will remove 2 */ 0;",
