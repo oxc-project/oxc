@@ -163,6 +163,7 @@ fn is_bare_expression_statement<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -
     !is_arrow_expression_body_statement(outer, ctx)
 }
 
+// NOTE: Oxc stores concise arrow bodies as a single ExpressionStatement inside FunctionBody, not as a direct expression child like ESTree.
 fn is_arrow_expression_body_statement<'a>(
     expression_statement: &AstNode<'a>,
     ctx: &LintContext<'a>,
