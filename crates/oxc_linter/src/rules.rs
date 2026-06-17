@@ -873,6 +873,7 @@ pub(crate) mod vue {
     pub mod no_import_compiler_macros;
     pub mod no_lifecycle_after_await;
     pub mod no_multiple_slot_args;
+    pub mod no_ref_as_operand;
     pub mod no_required_prop_with_default;
     pub mod no_reserved_component_names;
     pub mod no_reserved_keys;
