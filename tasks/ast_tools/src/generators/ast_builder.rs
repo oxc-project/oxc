@@ -118,7 +118,7 @@ struct Param<'d> {
     is_node_id: bool,
     /// * `None` if param is not generic.
     /// * `Some(GenericType::Into)` if is generic and uses `Into`
-    ///   e.g. `name: A where A: Into<Str<'a>>`.
+    ///   e.g. `name: S1 where S1: Into<Str<'a>>`.
     /// * `Some(GenericType::IntoIn)` if is generic and uses `IntoIn`
     ///   e.g. `type_annotation: T1 where T1: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>`.
     generic_type: Option<GenericType>,
@@ -347,7 +347,7 @@ fn get_struct_params<'s>(
                     if matches!(primitive_def.name(), "Str" | "Ident") =>
                 {
                     str_generic_count += 1;
-                    Some((format_ident!("A{str_generic_count}"), GenericType::Into))
+                    Some((format_ident!("S{str_generic_count}"), GenericType::Into))
                 }
                 TypeDef::Box(_) => {
                     generic_count += 1;
