@@ -370,9 +370,6 @@ fn test() {
         "array.slice(0, array.length)",
         "array.slice(0, 0)",
         "array.notSlice()",
-        // Non-array receivers must not be reported/auto-fixed: `"foo".slice()` returns a string,
-        // so `[..."foo"]` would be `["f","o","o"]` (different value and type). Matches
-        // eslint-plugin-unicorn, which bails on non-array receivers via `isNotArray`.
         r#""".slice()"#,
         r#""foo".slice()"#,
         "[...foo].slice()",
