@@ -143,7 +143,11 @@ impl Radix {
                 ctx.diagnostic_with_dangerous_fix(missing_radix(call_expr.span), |fixer| {
                     let first_arg = &call_expr.arguments[0];
                     let end = call_expr.span.end;
-                    let check_span = Span::new(first_arg.span().start, end);
+                    // Only scan AFTER the argument for a trailing comma. Scanning from the
+                    // argument's start also sees commas *inside* it (e.g. `parseInt((0, "10"))`,
+                    // `parseInt(f(a, b))`), which would wrongly pick the no-separator `" 10,"`
+                    // branch and paste the radix on without a comma -> invalid syntax.
+                    let check_span = Span::new(first_arg.span().end, end);
                     let insert_param = ctx
                         .source_range(check_span)
                         .chars()
@@ -274,6 +278,14 @@ fn test() {
             "parseInt(10, /** 213123 */ 10,)",
             Some(serde_json::json!(["always"])),
         ),
+        // a comma INSIDE the single argument must not be mistaken for a trailing comma
+        (
+            r#"parseInt((0, "10"))"#,
+            r#"parseInt((0, "10"), 10)"#,
+            Some(serde_json::json!(["always"])),
+        ),
+        ("parseInt(f(a, b))", "parseInt(f(a, b), 10)", Some(serde_json::json!(["always"]))),
+        ("parseInt([1, 2][0])", "parseInt([1, 2][0], 10)", Some(serde_json::json!(["always"]))),
     ];
 
     Tester::new(Radix::NAME, Radix::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
