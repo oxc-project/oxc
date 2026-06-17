@@ -2,6 +2,7 @@ use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use oxc_syntax::operator::{UnaryOperator, UpdateOperator};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -57,16 +58,28 @@ impl Rule for NoUnnecessaryAwait {
                 matches!(expr.argument, Expression::FunctionExpression(_))
                     || matches!(expr.argument, Expression::ClassExpression(_))
             } || {
-                // `+await +1` -> `++1`
+                // Removing `await` would paste the parent unary operator onto the argument's
+                // leading operator and change tokenization into a syntax error:
+                // `+await +1` -> `++1`, `+await ++a` -> `+++a`, `-await --a` -> `---a`.
+                // Skip the fix in those cases (the diagnostic is still reported).
                 let parent = ctx.nodes().parent_node(node.id());
-                if let (
-                    AstKind::UnaryExpression(parent_unary),
-                    Expression::UnaryExpression(inner_unary),
-                ) = (parent.kind(), &expr.argument)
-                {
-                    parent_unary.operator == inner_unary.operator
-                } else {
-                    false
+                match (parent.kind(), &expr.argument) {
+                    (
+                        AstKind::UnaryExpression(parent_unary),
+                        Expression::UnaryExpression(inner_unary),
+                    ) => parent_unary.operator == inner_unary.operator,
+                    (
+                        AstKind::UnaryExpression(parent_unary),
+                        Expression::UpdateExpression(inner_update),
+                    ) => {
+                        inner_update.prefix
+                            && matches!(
+                                (parent_unary.operator, inner_update.operator),
+                                (UnaryOperator::UnaryPlus, UpdateOperator::Increment)
+                                    | (UnaryOperator::UnaryNegation, UpdateOperator::Decrement)
+                            )
+                    }
+                    _ => false,
                 }
             } {
                 ctx.diagnostic(no_unnecessary_await_diagnostic(Span::sized(expr.span.start, 5)));
@@ -157,6 +170,9 @@ fn test() {
         "async function foo() {+await +1}",
         "async function foo() {-await-1}",
         "async function foo() {+await -1}",
+        // `+await ++a` / `-await --a`: removing `await` would paste `+`+`++` into `+++` / `-`+`--` into `---`
+        "async function foo() {+await ++a}",
+        "async function foo() {-await --a}",
         // https://github.com/oxc-project/oxc/issues/1718
         "await await this.assertTotalDocumentCount(expectedFormattedTotalDocCount);",
     ];
@@ -170,6 +186,10 @@ fn test() {
         ("await class {}", "await class {}"),           // no autofix
         ("+await +1", "+await +1"),                     // no autofix
         ("-await -1", "-await -1"),                     // no autofix
+        ("+await ++a", "+await ++a"), // no autofix: `+++a` would be a syntax error
+        ("-await --a", "-await --a"), // no autofix: `---a` would be a syntax error
+        ("+await --a", "+--a"),       // safe: `+--a` parses as `+(--a)`
+        ("-await ++a", "-++a"),       // safe: `-++a` parses as `-(++a)`
     ];
 
     Tester::new(NoUnnecessaryAwait::NAME, NoUnnecessaryAwait::PLUGIN, pass, fail)
