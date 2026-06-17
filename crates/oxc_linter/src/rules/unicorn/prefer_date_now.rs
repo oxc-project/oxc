@@ -21,8 +21,8 @@ fn prefer_date_now_over_methods(span: Span, bad_method: &str) -> OxcDiagnostic {
         .with_label(span)
 }
 
-fn prefer_date_now_over_number_date_object(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Prefer `Date.now()` over `Number(new Date())`")
+fn prefer_date_now_over_number_date_object(span: Span, kind: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Prefer `Date.now()` over `{kind}(new Date())`"))
         .with_help("Change to `Date.now()`.")
         .with_label(span)
 }
@@ -88,22 +88,21 @@ impl Rule for PreferDateNow {
                         call_expr.arguments.first().and_then(Argument::as_expression)
                     && is_new_date(expr.get_inner_expression())
                 {
-                    if ident.name == "Number" {
-                        // `Number(new Date())` and `Date.now()` are both `number`, so the whole
-                        // call can be replaced.
-                        ctx.diagnostic_with_fix(
-                            prefer_date_now_over_number_date_object(call_expr.span),
-                            |fixer| fixer.replace(call_expr.span, "Date.now()"),
-                        );
-                    } else {
-                        // `BigInt(new Date())` is a `bigint`; replacing the whole call with
-                        // `Date.now()` would change it to a `number`. Only the inner `new Date()`
-                        // is redundant, so fix to `BigInt(Date.now())` (matches eslint-plugin-unicorn).
-                        let new_date_span = expr.get_inner_expression().span();
-                        ctx.diagnostic_with_fix(prefer_date_now(new_date_span), |fixer| {
-                            fixer.replace(new_date_span, "Date.now()")
-                        });
-                    }
+                    ctx.diagnostic_with_fix(
+                        prefer_date_now_over_number_date_object(
+                            call_expr.span,
+                            ident.name.as_str(),
+                        ),
+                        |fixer| {
+                            let replacement_span = if ident.name.as_str() == "Number" {
+                                call_expr.span
+                            } else {
+                                expr.get_inner_expression().span()
+                            };
+
+                            fixer.replace(replacement_span, "Date.now()")
+                        },
+                    );
                 }
             }
             AstKind::UnaryExpression(unary_expr) => {
