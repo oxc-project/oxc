@@ -118,6 +118,18 @@ pub struct Transformer<'a> {
     proposals: ProposalOptions,
 }
 
+/// What [`Transformer::run_react_compiler`] leaves for the rest of the transform.
+#[cfg(feature = "react_compiler")]
+enum ReactCompilerOutcome {
+    /// `panicThreshold` escalated an error to fatal — there is no program to
+    /// emit, so the transform aborts with these diagnostics.
+    Fatal(Diagnostics),
+    /// The compiler left a usable program (the compiled output, or the untouched
+    /// original); continue the transform. Diagnostics are already demoted to
+    /// warnings.
+    Continue(Diagnostics),
+}
+
 impl<'a> Transformer<'a> {
     /// Create a transformer with source path and transform options.
     pub fn new(allocator: &'a Allocator, source_path: &Path, options: &TransformOptions) -> Self {
@@ -145,19 +157,23 @@ impl<'a> Transformer<'a> {
         let allocator = self.allocator;
 
         #[cfg(feature = "react_compiler")]
-        let (scoping, react_compiler_diagnostics) = self.run_react_compiler(scoping, program);
+        let (scoping, outcome) = self.run_react_compiler(scoping, program);
+        #[cfg(feature = "react_compiler")]
+        let react_compiler_diagnostics = match outcome {
+            // A fatal compile (`panicThreshold` escalated an error) leaves no
+            // program to emit — abort before the rest of the transform runs.
+            ReactCompilerOutcome::Fatal(diagnostics) => {
+                #[expect(deprecated)]
+                return TransformerReturn {
+                    diagnostics,
+                    scoping,
+                    helpers_used: FxHashMap::default(),
+                };
+            }
+            ReactCompilerOutcome::Continue(diagnostics) => diagnostics,
+        };
         #[cfg(not(feature = "react_compiler"))]
         let react_compiler_diagnostics = Diagnostics::new();
-
-        // A React Compiler error is fatal: stop before the rest of the transform runs.
-        if react_compiler_diagnostics.has_errors() {
-            #[expect(deprecated)]
-            return TransformerReturn {
-                diagnostics: react_compiler_diagnostics,
-                scoping,
-                helpers_used: FxHashMap::default(),
-            };
-        }
 
         let ast_builder = AstBuilder::new(allocator);
 
@@ -224,18 +240,32 @@ impl<'a> Transformer<'a> {
         &mut self,
         scoping: Scoping,
         program: &mut Program<'a>,
-    ) -> (Scoping, Diagnostics) {
+    ) -> (Scoping, ReactCompilerOutcome) {
         let Some(options) = self.react_compiler.take() else {
-            return (scoping, Diagnostics::new());
+            return (scoping, ReactCompilerOutcome::Continue(Diagnostics::new()));
         };
-        let result = react_compiler_transform(program, self.allocator, options);
+        let mut result = react_compiler_transform(program, self.allocator, options);
+        // A fatal compile (`panicThreshold` escalated an error) leaves no usable
+        // program; hand the diagnostics back so the caller aborts.
+        if result.fatal {
+            return (scoping, ReactCompilerOutcome::Fatal(result.diagnostics));
+        }
+        // Otherwise the compiler skipped what it couldn't compile and left a valid
+        // program (the compiled output, or the untouched original), like
+        // babel-plugin-react-compiler's default `panicThreshold: 'none'`. Demote its
+        // diagnostics to warnings so the rest of the transform still runs and code
+        // is emitted; the `react-compiler` lint rule reports the same issues at full
+        // severity through its own `lint()` path.
+        for diagnostic in result.diagnostics.iter_mut() {
+            diagnostic.severity = oxc_diagnostics::Severity::Warning;
+        }
         let Some(compiled) = result.program else {
-            return (scoping, result.diagnostics);
+            return (scoping, ReactCompilerOutcome::Continue(result.diagnostics));
         };
         *program = compiled;
         let scoping =
             SemanticBuilder::new().with_enum_eval(true).build(program).semantic.into_scoping();
-        (scoping, result.diagnostics)
+        (scoping, ReactCompilerOutcome::Continue(result.diagnostics))
     }
 }
 

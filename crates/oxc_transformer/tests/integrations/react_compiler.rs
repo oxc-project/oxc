@@ -55,3 +55,30 @@ fn keeps_import_used_only_as_computed_key() {
         "import referenced by the computed key was wrongly elided:\n{code}"
     );
 }
+
+/// A Rules-of-Hooks violation is non-fatal with the default `panicThreshold: 'none'`
+/// (matching babel-plugin-react-compiler): the compiler skips the offending
+/// function, so the transform still emits code and surfaces the issue as a
+/// warning rather than aborting with an error and empty output.
+#[test]
+fn react_compiler_error_is_non_fatal_and_still_emits_code() {
+    let allocator = Allocator::default();
+    let source = "function Component(props) {\n  \
+        if (props.cond) {\n    useState(0);\n  }\n  \
+        return <div>{props.text}</div>;\n}\n";
+    let mut program = Parser::new(&allocator, source, SourceType::jsx()).parse().program;
+    let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
+
+    let options =
+        TransformOptions { react_compiler: Some(default_plugin_options()), ..Default::default() };
+    let ret = Transformer::new(&allocator, Path::new("component.jsx"), &options)
+        .build_with_scoping(scoping, &mut program);
+
+    // The compiler reported the violation, but not as a fatal error.
+    assert!(!ret.diagnostics.is_empty(), "expected a diagnostic for the hook violation");
+    assert!(!ret.diagnostics.has_errors(), "react compiler error should be demoted to a warning");
+
+    // Code is still emitted (the original function, left uncompiled).
+    let code = Codegen::new().build(&program).code;
+    assert!(code.contains("function Component"), "original code should still be emitted:\n{code}");
+}
