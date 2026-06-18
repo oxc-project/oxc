@@ -81,3 +81,6 @@ url = { workspace = true }
 [dev-dependencies]
 insta = { workspace = true }
 markdown = { workspace = true }
+# The linter test harness (`src/tester.rs`, `#[cfg(test)]`) renders diagnostics, so it
+# needs the `fancy` renderer — only in tests, never in the published library.
+oxc_diagnostics = { workspace = true, features = ["fancy"] }

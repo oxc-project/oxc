@@ -64,7 +64,12 @@ pub type Severity = miette::Severity;
 pub type Result<T> = std::result::Result<T, OxcDiagnostic>;
 
 use miette::{Diagnostic, SourceCode};
-pub use miette::{GraphicalReportHandler, GraphicalTheme, LabeledSpan, Labels, NamedSource};
+pub use miette::{LabeledSpan, Labels, NamedSource};
+// The graphical report handlers pull miette's `fancy-base` (owo-colors + textwrap), so they
+// are only re-exported under the `fancy` feature. Crates that merely produce `OxcDiagnostic`s
+// never touch these, keeping the renderer out of non-reporting builds (e.g. the bundler).
+#[cfg(feature = "fancy")]
+pub use miette::{GraphicalReportHandler, GraphicalTheme};
 
 /// A collection of [`OxcDiagnostic`]s.
 ///

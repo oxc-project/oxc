@@ -33,6 +33,8 @@ unicode-id-start = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true }
+# tests/diagnostics.rs renders diagnostics with the fancy handler (tests-only).
+oxc_diagnostics = { workspace = true, features = ["fancy"] }
 
 [package.metadata.cargo-shear]
 ignored-paths = ["src/generated/derive_get_address.rs"]

@@ -41,6 +41,8 @@ smallvec = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true, features = ["glob"] }
+# Conformance tests + the `semantic` example render diagnostics (fancy), tests-only.
+oxc_diagnostics = { workspace = true, features = ["fancy"] }
 oxc_parser = { workspace = true }
 rustc-hash = { workspace = true }
 serde_json = { workspace = true }

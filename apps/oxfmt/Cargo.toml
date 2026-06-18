@@ -29,7 +29,7 @@ doctest = false
 [dependencies]
 oxc_allocator = { workspace = true, features = ["pool"] }
 oxc_config = { workspace = true }
-oxc_diagnostics = { workspace = true }
+oxc_diagnostics = { workspace = true, features = ["fancy"] }
 oxc_formatter = { workspace = true }
 oxc_formatter_core = { workspace = true }
 oxc_formatter_json = { workspace = true }
@@ -43,7 +43,7 @@ editorconfig-parser = { workspace = true }
 fast-glob = { workspace = true }
 ignore = { workspace = true, features = ["simd-accel"] }
 json-strip-comments = { workspace = true }
-miette = { workspace = true }
+miette = { workspace = true, features = ["fancy-no-syscall"] }
 phf = { workspace = true, features = ["macros"] }
 rayon = { workspace = true }
 rustc-hash = { workspace = true }

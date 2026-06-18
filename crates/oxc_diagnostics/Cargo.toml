@@ -21,5 +21,11 @@ cow-utils = { workspace = true }
 miette = { workspace = true }
 percent-encoding = { workspace = true }
 
+[features]
+# Re-export miette's graphical / JSON report handlers (pulls owo-colors + textwrap).
+# Off by default: only tools that render diagnostics (oxlint, oxfmt, test harnesses)
+# enable it, so the bundler/parser dependency graph stays free of the renderer.
+fancy = ["miette/fancy-no-syscall"]
+
 [lib]
 doctest = false
