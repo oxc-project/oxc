@@ -87,11 +87,8 @@ pub fn transform<'a>(
         return TransformResult::default();
     }
 
-    let semantic = oxc_semantic::SemanticBuilder::new()
-        .with_build_nodes(true)
-        .with_enum_eval(true)
-        .build(program)
-        .semantic;
+    let semantic =
+        oxc_semantic::SemanticBuilder::new().with_build_nodes(true).build(program).semantic;
 
     let file = convert_program(program, source_text);
     let scope_info = convert_scope_info(&semantic, program);
