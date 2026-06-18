@@ -687,12 +687,6 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
-   ╭─[prefer_regex_literals.tsx:1:1]
- 1 │ new RegExp("\\S+@(\\S+\\.)+\\S+")**RegExp('a')
-   · ─────────────────────────────────
-   ╰────
-
-  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
    ╭─[prefer_regex_literals.tsx:1:36]
  1 │ new RegExp("\\S+@(\\S+\\.)+\\S+")**RegExp('a')
    ·                                    ───────────
@@ -700,7 +694,7 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
    ╭─[prefer_regex_literals.tsx:1:1]
- 1 │ new RegExp("\\S+@(\\S+\\.)+\\S+")%RegExp('a')
+ 1 │ new RegExp("\\S+@(\\S+\\.)+\\S+")**RegExp('a')
    · ─────────────────────────────────
    ╰────
 
@@ -708,6 +702,12 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[prefer_regex_literals.tsx:1:35]
  1 │ new RegExp("\\S+@(\\S+\\.)+\\S+")%RegExp('a')
    ·                                   ───────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp("\\S+@(\\S+\\.)+\\S+")%RegExp('a')
+   · ─────────────────────────────────
    ╰────
 
   ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.

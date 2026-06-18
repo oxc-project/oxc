@@ -221,16 +221,40 @@ fn execute_rules<'a, const TIMINGS: bool>(
                 }
             }
 
-            for node in semantic.nodes() {
-                for &rule_index in &buckets.by_type[node.kind().ty() as usize] {
-                    let (rule, ctx) = &rules[rule_index];
-                    let timing_stat = get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);
-                    rule.run::<TIMINGS>(node, ctx, timing_stat);
+            let nodes = semantic.nodes();
+            if buckets.any_type.is_empty() && nodes.has_type_index() {
+                // Fast path: no rule runs on every node, so visit only the nodes whose type has an
+                // enabled rule, via the per-type index — skipping every other node entirely. Nodes
+                // are visited grouped by type (and in source order within each type) rather than in
+                // global source order; this changes only the order diagnostics are produced, not the
+                // set (verified against the reference path in debug builds).
+                for ast_type in nodes.present_node_types() {
+                    let by_type = &buckets.by_type[ast_type as usize];
+                    if by_type.is_empty() {
+                        continue;
+                    }
+                    for &node_id in nodes.nodes_of_type(ast_type) {
+                        let node = nodes.get_node(node_id);
+                        for &rule_index in by_type {
+                            let (rule, ctx) = &rules[rule_index];
+                            let timing_stat =
+                                get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);
+                            rule.run::<TIMINGS>(node, ctx, timing_stat);
+                        }
+                    }
                 }
-                for &rule_index in &buckets.any_type {
-                    let (rule, ctx) = &rules[rule_index];
-                    let timing_stat = get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);
-                    rule.run::<TIMINGS>(node, ctx, timing_stat);
+            } else {
+                for node in nodes.iter() {
+                    for &rule_index in &buckets.by_type[node.kind().ty() as usize] {
+                        let (rule, ctx) = &rules[rule_index];
+                        let timing_stat = get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);
+                        rule.run::<TIMINGS>(node, ctx, timing_stat);
+                    }
+                    for &rule_index in &buckets.any_type {
+                        let (rule, ctx) = &rules[rule_index];
+                        let timing_stat = get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);
+                        rule.run::<TIMINGS>(node, ctx, timing_stat);
+                    }
                 }
             }
 

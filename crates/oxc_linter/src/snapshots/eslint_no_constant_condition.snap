@@ -1099,14 +1099,6 @@ source: crates/oxc_linter/src/tester.rs
   help: Update the condition to not be constant, or remove the condition entirely
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
-   ╭─[no_constant_condition.tsx:1:23]
- 1 │ function* foo(){while(true){if (true) {yield 'foo';}}}
-   ·                       ──┬─
-   ·                         ╰── this expression will always evaluate to the same value
-   ╰────
-  help: Update the condition to not be constant, or remove the condition entirely
-
-  ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:33]
  1 │ function* foo(){while(true){if (true) {yield 'foo';}}}
    ·                                 ──┬─
@@ -1127,6 +1119,14 @@ source: crates/oxc_linter/src/tester.rs
  1 │ function* foo(){while(true){if (true) {yield 'foo';}}}
    ·                                 ──┬─
    ·                                   ╰── this expression will always evaluate to the same value
+   ╰────
+  help: Update the condition to not be constant, or remove the condition entirely
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:23]
+ 1 │ function* foo(){while(true){if (true) {yield 'foo';}}}
+   ·                       ──┬─
+   ·                         ╰── this expression will always evaluate to the same value
    ╰────
   help: Update the condition to not be constant, or remove the condition entirely
 

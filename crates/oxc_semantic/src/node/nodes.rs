@@ -8,7 +8,7 @@ use oxc_syntax::{
 };
 
 #[cfg(feature = "linter")]
-use oxc_ast::AstType;
+use oxc_ast::{AstType, ast_kind::AST_TYPE_MAX};
 
 #[cfg(feature = "cfg")]
 use oxc_cfg::BlockNodeId;
@@ -34,6 +34,17 @@ pub struct AstNodes<'a> {
     /// any nodes of that kind.
     #[cfg(feature = "linter")]
     node_kinds_set: AstTypesBitset,
+    /// CSR (compressed-sparse-row) inverted index mapping each [`AstType`] to its nodes.
+    ///
+    /// `type_node_ids[type_node_offsets[ty]..type_node_offsets[ty + 1]]` are the [`NodeId`]s of all
+    /// nodes of type `ty`, in ascending (source) order. Empty until [`build_type_index`] runs.
+    /// Lets the linter visit only the nodes whose type has an enabled rule, skipping the rest.
+    ///
+    /// [`build_type_index`]: AstNodes::build_type_index
+    #[cfg(feature = "linter")]
+    type_node_offsets: Vec<u32>,
+    #[cfg(feature = "linter")]
+    type_node_ids: Vec<NodeId>,
 }
 
 impl<'a> AstNodes<'a> {
@@ -45,6 +56,62 @@ impl<'a> AstNodes<'a> {
     /// Iterate over all [`AstNode`]s with their [`NodeId`].
     pub fn iter_enumerated(&self) -> impl Iterator<Item = (NodeId, &AstNode<'a>)> + '_ {
         self.nodes.iter_enumerated()
+    }
+
+    /// Iterate the [`AstType`]s that occur at least once in this AST.
+    #[cfg(feature = "linter")]
+    pub fn present_node_types(&self) -> impl Iterator<Item = AstType> + '_ {
+        self.node_kinds_set.iter()
+    }
+
+    /// Whether the per-type node index has been built (see [`nodes_of_type`](AstNodes::nodes_of_type)).
+    #[cfg(feature = "linter")]
+    #[inline]
+    pub fn has_type_index(&self) -> bool {
+        !self.type_node_offsets.is_empty()
+    }
+
+    /// [`NodeId`]s of every node of type `ty`, in ascending (source) order.
+    ///
+    /// Returns an empty slice if the index has not been built (see [`has_type_index`]).
+    ///
+    /// [`has_type_index`]: AstNodes::has_type_index
+    #[cfg(feature = "linter")]
+    #[inline]
+    pub fn nodes_of_type(&self, ty: AstType) -> &[NodeId] {
+        if self.type_node_offsets.is_empty() {
+            return &[];
+        }
+        let ty = ty as usize;
+        let start = self.type_node_offsets[ty] as usize;
+        let end = self.type_node_offsets[ty + 1] as usize;
+        &self.type_node_ids[start..end]
+    }
+
+    /// Build the per-type node index ([`nodes_of_type`](AstNodes::nodes_of_type)) with a counting
+    /// sort over the already-populated `nodes`. Call once, after all nodes have been added.
+    #[cfg(feature = "linter")]
+    pub(crate) fn build_type_index(&mut self) {
+        const LEN: usize = AST_TYPE_MAX as usize + 2;
+        let node_count = self.nodes.len();
+        // `offsets[ty + 1]` counts nodes of type `ty`, then prefix-summed into CSR row starts.
+        let mut offsets = vec![0u32; LEN];
+        for node in &self.nodes {
+            offsets[node.kind().ty() as usize + 1] += 1;
+        }
+        for i in 1..LEN {
+            offsets[i] += offsets[i - 1];
+        }
+        // Scatter each node id into its type's row, advancing a per-type write cursor.
+        let mut ids = vec![NodeId::new(0); node_count];
+        let mut cursor = offsets.clone();
+        for (node_id, node) in self.nodes.iter_enumerated() {
+            let ty = node.kind().ty() as usize;
+            ids[cursor[ty] as usize] = node_id;
+            cursor[ty] += 1;
+        }
+        self.type_node_offsets = offsets;
+        self.type_node_ids = ids;
     }
 
     /// Returns the number of node in this AST.

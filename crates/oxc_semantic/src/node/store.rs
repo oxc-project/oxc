@@ -99,7 +99,13 @@ impl<'a> AstNodeStore<'a> {
     #[inline]
     pub fn into_nodes(self) -> AstNodes<'a> {
         match self.kind {
-            AstNodeStoreKind::Full(nodes) => nodes,
+            AstNodeStoreKind::Full(nodes) => {
+                #[cfg(feature = "linter")]
+                let mut nodes = nodes;
+                #[cfg(feature = "linter")]
+                nodes.build_type_index();
+                nodes
+            }
             AstNodeStoreKind::Ancestry(_) => AstNodes::default(),
         }
     }

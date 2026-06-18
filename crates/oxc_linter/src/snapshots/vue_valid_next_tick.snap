@@ -36,6 +36,15 @@ source: crates/oxc_linter/src/tester.rs
   help: Insert `()`
 
   ⚠ vue(valid-next-tick): `nextTick` is a function.
+   ╭─[valid_next_tick.tsx:8:23]
+ 7 │ 
+ 8 │                       nt.then(callback);
+   ·                       ──
+ 9 │                       Vue.nextTick.then(callback);
+   ╰────
+  help: Insert `()`
+
+  ⚠ vue(valid-next-tick): `nextTick` is a function.
    ╭─[valid_next_tick.tsx:5:27]
  4 │                       nt;
  5 │                       Vue.nextTick;
@@ -50,15 +59,6 @@ source: crates/oxc_linter/src/tester.rs
  6 │                       this.$nextTick;
    ·                            ─────────
  7 │ 
-   ╰────
-  help: Insert `()`
-
-  ⚠ vue(valid-next-tick): `nextTick` is a function.
-   ╭─[valid_next_tick.tsx:8:23]
- 7 │ 
- 8 │                       nt.then(callback);
-   ·                       ──
- 9 │                       Vue.nextTick.then(callback);
    ╰────
   help: Insert `()`
 
@@ -167,6 +167,14 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ vue(valid-next-tick): Either await the Promise or pass a callback function to `nextTick`.
+   ╭─[valid_next_tick.tsx:8:29]
+ 7 │ 
+ 8 │                       await nt(callback);
+   ·                             ──
+ 9 │                       await Vue.nextTick(callback);
+   ╰────
+
+  ⚠ vue(valid-next-tick): Either await the Promise or pass a callback function to `nextTick`.
    ╭─[valid_next_tick.tsx:5:27]
  4 │                       nt(callback).then(anotherCallback);
  5 │                       Vue.nextTick(callback).then(anotherCallback);
@@ -180,14 +188,6 @@ source: crates/oxc_linter/src/tester.rs
  6 │                       this.$nextTick(callback).then(anotherCallback);
    ·                            ─────────
  7 │ 
-   ╰────
-
-  ⚠ vue(valid-next-tick): Either await the Promise or pass a callback function to `nextTick`.
-   ╭─[valid_next_tick.tsx:8:29]
- 7 │ 
- 8 │                       await nt(callback);
-   ·                             ──
- 9 │                       await Vue.nextTick(callback);
    ╰────
 
   ⚠ vue(valid-next-tick): Either await the Promise or pass a callback function to `nextTick`.
