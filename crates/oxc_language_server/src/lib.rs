@@ -13,6 +13,7 @@ mod position;
 #[cfg(test)]
 mod tests;
 mod tool;
+mod watchdog;
 mod worker;
 mod worker_manager;
 
@@ -44,6 +45,8 @@ pub async fn run_server(
     server_version: String,
     worker_manager: WorkerManager,
 ) {
+    watchdog::spawn();
+
     let stdin = tokio::io::stdin();
     let stdout = tokio::io::stdout();
 
