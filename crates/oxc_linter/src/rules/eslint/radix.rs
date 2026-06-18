@@ -147,12 +147,22 @@ impl Radix {
                     // argument's start also sees commas *inside* it (e.g. `parseInt((0, "10"))`,
                     // `parseInt(f(a, b))`), which would wrongly pick the no-separator `" 10,"`
                     // branch and paste the radix on without a comma -> invalid syntax.
-                    let check_span = Span::new(first_arg.span().end, end);
-                    let insert_param = ctx
-                        .source_range(check_span)
-                        .chars()
-                        .find_map(|c| if c == ',' { Some(" 10,") } else { None })
-                        .unwrap_or(", 10");
+                    let arg_end = first_arg.span().end;
+                    let check_span = Span::new(arg_end, end);
+                    // A `,` inside a comment is not the trailing comma (e.g.
+                    // `parseInt("10" /* , */)`), so skip commas that fall within a comment
+                    // span -- otherwise we'd pick `" 10,"` and emit invalid syntax.
+                    let comment_spans: Vec<Span> =
+                        ctx.comments_range(arg_end..end).map(|c| c.span).collect();
+                    let has_trailing_comma =
+                        ctx.source_range(check_span).char_indices().any(|(i, c)| {
+                            c == ','
+                                && !comment_spans.iter().any(|s| {
+                                    let abs = arg_end + u32::try_from(i).unwrap_or(0);
+                                    s.start <= abs && abs < s.end
+                                })
+                        });
+                    let insert_param = if has_trailing_comma { " 10," } else { ", 10" };
                     fixer.insert_text_before_range(Span::empty(end - 1), insert_param)
                 });
             }
@@ -286,6 +296,25 @@ fn test() {
         ),
         ("parseInt(f(a, b))", "parseInt(f(a, b), 10)", Some(serde_json::json!(["always"]))),
         ("parseInt([1, 2][0])", "parseInt([1, 2][0], 10)", Some(serde_json::json!(["always"]))),
+        // a comma inside a trailing comment is not a trailing comma: insert `, 10`,
+        // not ` 10,` (which would paste an unseparated radix -> invalid syntax).
+        (
+            r#"parseInt("10" /* , */)"#,
+            r#"parseInt("10" /* , */, 10)"#,
+            Some(serde_json::json!(["always"])),
+        ),
+        // a single parenthesized/sequence argument with a comment comma inside it.
+        (
+            r#"parseInt((0 /* , */, "10"))"#,
+            r#"parseInt((0 /* , */, "10"), 10)"#,
+            Some(serde_json::json!(["always"])),
+        ),
+        // a real trailing comma still wins even when a comment comma precedes it.
+        (
+            r#"parseInt("10" /* x */,)"#,
+            r#"parseInt("10" /* x */, 10,)"#,
+            Some(serde_json::json!(["always"])),
+        ),
     ];
 
     Tester::new(Radix::NAME, Radix::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
