@@ -1,20 +1,53 @@
+// React Compiler core, vendored from the upstream multi-crate workspace and
+// collapsed into modules of this crate. The former cross-crate `react_compiler_x::`
+// paths are now `crate::react_compiler_x::`. These modules are frontend-agnostic
+// (no oxc deps); the oxc <-> AST/scope conversion lives in the modules below.
+//
+// The vendored source is kept byte-for-byte with upstream to ease re-syncing, so
+// clippy is relaxed on these modules here rather than by editing the code. The
+// hand-written conversion modules (`convert_*`, `prefilter`, ...) stay fully linted.
+#[allow(clippy::all, clippy::pedantic, clippy::nursery, clippy::disallowed_methods)]
+pub mod react_compiler;
+#[allow(clippy::all, clippy::pedantic, clippy::nursery, clippy::disallowed_methods)]
+pub mod react_compiler_ast;
+#[allow(clippy::all, clippy::pedantic, clippy::nursery, clippy::disallowed_methods)]
+pub mod react_compiler_diagnostics;
+#[allow(clippy::all, clippy::pedantic, clippy::nursery, clippy::disallowed_methods)]
+pub mod react_compiler_hir;
+#[allow(clippy::all, clippy::pedantic, clippy::nursery, clippy::disallowed_methods)]
+pub mod react_compiler_inference;
+#[allow(clippy::all, clippy::pedantic, clippy::nursery, clippy::disallowed_methods)]
+pub mod react_compiler_lowering;
+#[allow(clippy::all, clippy::pedantic, clippy::nursery, clippy::disallowed_methods)]
+pub mod react_compiler_optimization;
+#[allow(clippy::all, clippy::pedantic, clippy::nursery, clippy::disallowed_methods)]
+pub mod react_compiler_reactive_scopes;
+#[allow(clippy::all, clippy::pedantic, clippy::nursery, clippy::disallowed_methods)]
+pub mod react_compiler_ssa;
+#[allow(clippy::all, clippy::pedantic, clippy::nursery, clippy::disallowed_methods)]
+pub mod react_compiler_typeinference;
+#[allow(clippy::all, clippy::pedantic, clippy::nursery, clippy::disallowed_methods)]
+pub mod react_compiler_utils;
+#[allow(clippy::all, clippy::pedantic, clippy::nursery, clippy::disallowed_methods)]
+pub mod react_compiler_validation;
+
 pub mod convert_ast;
 pub mod convert_ast_reverse;
 pub mod convert_scope;
 pub mod diagnostics;
 pub mod prefilter;
 
+use crate::react_compiler::entrypoint::compile_result::LoggerEvent;
 use convert_ast::convert_program;
 use convert_scope::convert_scope_info;
 use diagnostics::compile_result_to_diagnostics;
 use prefilter::{has_react_like_functions, has_resource_management_declarations};
-use react_compiler::entrypoint::compile_result::LoggerEvent;
 
 // Re-exported so integrations needn't depend on the upstream `react_compiler` crates.
-pub use react_compiler::entrypoint::plugin_options::{
+pub use crate::react_compiler::entrypoint::plugin_options::{
     CompilerTarget, DynamicGatingConfig, GatingConfig, PluginOptions,
 };
-pub use react_compiler_hir::environment_config::EnvironmentConfig;
+pub use crate::react_compiler_hir::environment_config::EnvironmentConfig;
 
 use rustc_hash::FxHashSet;
 
@@ -92,19 +125,22 @@ pub fn transform<'a>(
 
     let file = convert_program(program, source_text);
     let scope_info = convert_scope_info(&semantic, program);
-    let result = react_compiler::entrypoint::program::compile_program(file, scope_info, options);
+    let result =
+        crate::react_compiler::entrypoint::program::compile_program(file, scope_info, options);
 
     let diagnostics = compile_result_to_diagnostics(&result);
     let (program_ast, events) = match result {
-        react_compiler::entrypoint::compile_result::CompileResult::Success {
-            ast, events, ..
+        crate::react_compiler::entrypoint::compile_result::CompileResult::Success {
+            ast,
+            events,
+            ..
         } => (ast, events),
-        react_compiler::entrypoint::compile_result::CompileResult::Error { events, .. } => {
-            (None, events)
-        }
+        crate::react_compiler::entrypoint::compile_result::CompileResult::Error {
+            events, ..
+        } => (None, events),
     };
 
-    let compiled_program = program_ast.map(|file: react_compiler_ast::File| {
+    let compiled_program = program_ast.map(|file: crate::react_compiler_ast::File| {
         let mut compiled =
             convert_ast_reverse::convert_program_to_oxc_with_source(&file, allocator, source_text);
         compiled.source_type = program.source_type;
@@ -187,7 +223,7 @@ pub fn lint_source(
 // back -> codegen.
 #[cfg(test)]
 mod tests {
-    use react_compiler::entrypoint::plugin_options::PluginOptions;
+    use crate::react_compiler::entrypoint::plugin_options::PluginOptions;
 
     use super::transform_source;
 

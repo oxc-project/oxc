@@ -5,23 +5,23 @@
 
 //! Reverse AST converter: react_compiler_ast (Babel format) → OXC AST.
 //!
-//! This is the inverse of `convert_ast.rs`. It takes a `react_compiler_ast::File`
+//! This is the inverse of `convert_ast.rs`. It takes a `crate::react_compiler_ast::File`
 //! (which represents the compiler's Babel-compatible output) and produces OXC AST
 //! nodes allocated in an OXC arena, suitable for code generation via `oxc_codegen`.
 
+use crate::react_compiler_ast::common::BaseNode;
+use crate::react_compiler_ast::declarations::*;
+use crate::react_compiler_ast::expressions::*;
+use crate::react_compiler_ast::jsx::*;
+use crate::react_compiler_ast::operators::*;
+use crate::react_compiler_ast::patterns::*;
+use crate::react_compiler_ast::statements::*;
 use oxc_allocator::{Allocator, Box as ArenaBox};
 use oxc_ast::ast as oxc;
 use oxc_ast_visit::VisitMut;
 use oxc_span::SPAN;
 use oxc_span::Span;
 use oxc_syntax::identifier::is_identifier_name;
-use react_compiler_ast::common::BaseNode;
-use react_compiler_ast::declarations::*;
-use react_compiler_ast::expressions::*;
-use react_compiler_ast::jsx::*;
-use react_compiler_ast::operators::*;
-use react_compiler_ast::patterns::*;
-use react_compiler_ast::statements::*;
 
 fn set_statement_span(stmt: &mut oxc::Statement<'_>, span: Span) {
     use oxc_span::GetSpanMut;
@@ -80,9 +80,9 @@ impl VisitMut<'_> for SpanShift {
     }
 }
 
-/// Convert a `react_compiler_ast::File` into an OXC `Program` allocated in the given arena.
+/// Convert a `crate::react_compiler_ast::File` into an OXC `Program` allocated in the given arena.
 pub fn convert_program_to_oxc<'a>(
-    file: &react_compiler_ast::File,
+    file: &crate::react_compiler_ast::File,
     allocator: &'a Allocator,
 ) -> oxc::Program<'a> {
     let ctx = ReverseCtx::new(allocator, None);
@@ -91,7 +91,7 @@ pub fn convert_program_to_oxc<'a>(
 
 /// Convert with source text available for extracting TS declarations.
 pub fn convert_program_to_oxc_with_source<'a>(
-    file: &react_compiler_ast::File,
+    file: &crate::react_compiler_ast::File,
     allocator: &'a Allocator,
     source_text: &str,
 ) -> oxc::Program<'a> {
@@ -182,7 +182,7 @@ impl<'a> ReverseCtx<'a> {
 
     fn extract_source_class_expression(
         &self,
-        class: &react_compiler_ast::expressions::ClassExpression,
+        class: &crate::react_compiler_ast::expressions::ClassExpression,
     ) -> Option<oxc::Expression<'a>> {
         let expr = self.extract_source_expr(&class.base)?;
         if matches!(expr, oxc::Expression::ClassExpression(_)) { Some(expr) } else { None }
@@ -960,10 +960,10 @@ impl<'a> ReverseCtx<'a> {
 
     // ===== Program =====
 
-    fn convert_program(&self, program: &react_compiler_ast::Program) -> oxc::Program<'a> {
+    fn convert_program(&self, program: &crate::react_compiler_ast::Program) -> oxc::Program<'a> {
         let source_type = match program.source_type {
-            react_compiler_ast::SourceType::Module => oxc_span::SourceType::mjs(),
-            react_compiler_ast::SourceType::Script => oxc_span::SourceType::cjs(),
+            crate::react_compiler_ast::SourceType::Module => oxc_span::SourceType::mjs(),
+            crate::react_compiler_ast::SourceType::Script => oxc_span::SourceType::cjs(),
         };
 
         // Use convert_statements_with_spans for the top-level body so that
@@ -1888,7 +1888,7 @@ impl<'a> ReverseCtx<'a> {
 
     fn convert_template_literal(
         &self,
-        tl: &react_compiler_ast::expressions::TemplateLiteral,
+        tl: &crate::react_compiler_ast::expressions::TemplateLiteral,
     ) -> oxc::TemplateLiteral<'a> {
         let quasis = self.builder.vec_from_iter(tl.quasis.iter().map(|q| {
             let raw = self.atom(&q.value.raw).into();
@@ -1957,7 +1957,7 @@ impl<'a> ReverseCtx<'a> {
 
     fn convert_class_to_oxc(
         &self,
-        c: &react_compiler_ast::expressions::ClassExpression,
+        c: &crate::react_compiler_ast::expressions::ClassExpression,
         class_type: oxc::ClassType,
     ) -> oxc::Class<'a> {
         let id = c.id.as_ref().map(|id| self.builder.binding_identifier(SPAN, self.atom(&id.name)));
@@ -2803,10 +2803,10 @@ impl<'a> ReverseCtx<'a> {
 
     fn convert_import_specifier(
         &self,
-        spec: &react_compiler_ast::declarations::ImportSpecifier,
+        spec: &crate::react_compiler_ast::declarations::ImportSpecifier,
     ) -> oxc::ImportDeclarationSpecifier<'a> {
         match spec {
-            react_compiler_ast::declarations::ImportSpecifier::ImportSpecifier(s) => {
+            crate::react_compiler_ast::declarations::ImportSpecifier::ImportSpecifier(s) => {
                 let local = self.builder.binding_identifier(SPAN, self.atom(&s.local.name));
                 let imported = self.convert_module_export_name(&s.imported);
                 let import_kind = match s.import_kind.as_ref() {
@@ -2816,12 +2816,14 @@ impl<'a> ReverseCtx<'a> {
                 let is = self.builder.import_specifier(SPAN, imported, local, import_kind);
                 oxc::ImportDeclarationSpecifier::ImportSpecifier(self.builder.alloc(is))
             }
-            react_compiler_ast::declarations::ImportSpecifier::ImportDefaultSpecifier(s) => {
+            crate::react_compiler_ast::declarations::ImportSpecifier::ImportDefaultSpecifier(s) => {
                 let local = self.builder.binding_identifier(SPAN, self.atom(&s.local.name));
                 let ids = self.builder.import_default_specifier(SPAN, local);
                 oxc::ImportDeclarationSpecifier::ImportDefaultSpecifier(self.builder.alloc(ids))
             }
-            react_compiler_ast::declarations::ImportSpecifier::ImportNamespaceSpecifier(s) => {
+            crate::react_compiler_ast::declarations::ImportSpecifier::ImportNamespaceSpecifier(
+                s,
+            ) => {
                 let local = self.builder.binding_identifier(SPAN, self.atom(&s.local.name));
                 let ins = self.builder.import_namespace_specifier(SPAN, local);
                 oxc::ImportDeclarationSpecifier::ImportNamespaceSpecifier(self.builder.alloc(ins))
@@ -2831,15 +2833,15 @@ impl<'a> ReverseCtx<'a> {
 
     fn convert_module_export_name(
         &self,
-        name: &react_compiler_ast::declarations::ModuleExportName,
+        name: &crate::react_compiler_ast::declarations::ModuleExportName,
     ) -> oxc::ModuleExportName<'a> {
         match name {
-            react_compiler_ast::declarations::ModuleExportName::Identifier(id) => {
+            crate::react_compiler_ast::declarations::ModuleExportName::Identifier(id) => {
                 oxc::ModuleExportName::IdentifierName(
                     self.builder.identifier_name(SPAN, self.atom(&id.name)),
                 )
             }
-            react_compiler_ast::declarations::ModuleExportName::StringLiteral(s) => {
+            crate::react_compiler_ast::declarations::ModuleExportName::StringLiteral(s) => {
                 oxc::ModuleExportName::StringLiteral(self.builder.string_literal(
                     SPAN,
                     self.atom(&s.value.to_string_lossy()),
@@ -2856,15 +2858,15 @@ impl<'a> ReverseCtx<'a> {
     /// plain name.
     fn convert_module_export_name_local_ref(
         &self,
-        name: &react_compiler_ast::declarations::ModuleExportName,
+        name: &crate::react_compiler_ast::declarations::ModuleExportName,
     ) -> oxc::ModuleExportName<'a> {
         match name {
-            react_compiler_ast::declarations::ModuleExportName::Identifier(id) => {
+            crate::react_compiler_ast::declarations::ModuleExportName::Identifier(id) => {
                 oxc::ModuleExportName::IdentifierReference(
                     self.builder.identifier_reference(SPAN, self.atom(&id.name)),
                 )
             }
-            react_compiler_ast::declarations::ModuleExportName::StringLiteral(_) => {
+            crate::react_compiler_ast::declarations::ModuleExportName::StringLiteral(_) => {
                 self.convert_module_export_name(name)
             }
         }
@@ -2932,11 +2934,11 @@ impl<'a> ReverseCtx<'a> {
 
     fn convert_export_specifier(
         &self,
-        spec: &react_compiler_ast::declarations::ExportSpecifier,
+        spec: &crate::react_compiler_ast::declarations::ExportSpecifier,
         local_is_reference: bool,
     ) -> oxc::ExportSpecifier<'a> {
         match spec {
-            react_compiler_ast::declarations::ExportSpecifier::ExportSpecifier(s) => {
+            crate::react_compiler_ast::declarations::ExportSpecifier::ExportSpecifier(s) => {
                 let local = if local_is_reference {
                     self.convert_module_export_name_local_ref(&s.local)
                 } else {
@@ -2949,7 +2951,7 @@ impl<'a> ReverseCtx<'a> {
                 };
                 self.builder.export_specifier(SPAN, local, exported, export_kind)
             }
-            react_compiler_ast::declarations::ExportSpecifier::ExportDefaultSpecifier(s) => {
+            crate::react_compiler_ast::declarations::ExportSpecifier::ExportDefaultSpecifier(s) => {
                 let name = oxc::ModuleExportName::IdentifierName(
                     self.builder.identifier_name(SPAN, self.atom(&s.exported.name)),
                 );
@@ -2963,7 +2965,9 @@ impl<'a> ReverseCtx<'a> {
                     oxc::ImportOrExportKind::Value,
                 )
             }
-            react_compiler_ast::declarations::ExportSpecifier::ExportNamespaceSpecifier(s) => {
+            crate::react_compiler_ast::declarations::ExportSpecifier::ExportNamespaceSpecifier(
+                s,
+            ) => {
                 let exported = self.convert_module_export_name(&s.exported);
                 let star = oxc::ModuleExportName::IdentifierName(
                     self.builder.identifier_name(SPAN, self.atom("*")),
