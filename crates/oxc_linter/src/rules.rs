@@ -587,6 +587,7 @@ pub(crate) mod unicorn {
     pub mod prefer_native_coercion_functions;
     pub mod prefer_negative_index;
     pub mod prefer_node_protocol;
+    pub mod prefer_number_coercion;
     pub mod prefer_number_properties;
     pub mod prefer_object_from_entries;
     pub mod prefer_optional_catch_binding;
@@ -842,9 +843,11 @@ pub(crate) mod node {
     pub mod global_require;
     pub mod handle_callback_err;
     pub mod no_exports_assign;
+    pub mod no_mixed_requires;
     pub mod no_new_require;
     pub mod no_path_concat;
     pub mod no_process_env;
+    pub mod no_sync;
 }
 
 /// <https://github.com/vuejs/eslint-plugin-vue>
@@ -856,6 +859,7 @@ pub(crate) mod vue {
     pub mod max_props;
     pub mod next_tick_style;
     pub mod no_arrow_functions_in_watch;
+    pub mod no_async_in_computed_properties;
     pub mod no_computed_properties_in_data;
     pub mod no_deprecated_data_object_declaration;
     pub mod no_deprecated_delete_set;

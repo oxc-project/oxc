@@ -78,6 +78,12 @@ pub struct Semantic<'a> {
     /// The Abstract Syntax Tree (AST) nodes.
     nodes: AstNodes<'a>,
 
+    /// Number of AST nodes in the program.
+    ///
+    /// Tracked separately from `nodes`, which is empty unless the builder ran
+    /// with [`SemanticBuilder::with_build_nodes`] enabled.
+    node_count: u32,
+
     scoping: Scoping,
 
     classes: ClassTable<'a>,
@@ -220,7 +226,7 @@ impl<'a> Semantic<'a> {
     pub fn stats(&self) -> Stats {
         #[expect(clippy::cast_possible_truncation)]
         Stats::new(
-            self.nodes.len() as u32,
+            self.node_count,
             self.scoping.scopes_len() as u32,
             self.scoping.symbols_len() as u32,
             self.scoping.references.len() as u32,

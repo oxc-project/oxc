@@ -370,9 +370,11 @@ pub use crate::rules::node::callback_return::CallbackReturn as NodeCallbackRetur
 pub use crate::rules::node::global_require::GlobalRequire as NodeGlobalRequire;
 pub use crate::rules::node::handle_callback_err::HandleCallbackErr as NodeHandleCallbackErr;
 pub use crate::rules::node::no_exports_assign::NoExportsAssign as NodeNoExportsAssign;
+pub use crate::rules::node::no_mixed_requires::NoMixedRequires as NodeNoMixedRequires;
 pub use crate::rules::node::no_new_require::NoNewRequire as NodeNoNewRequire;
 pub use crate::rules::node::no_path_concat::NoPathConcat as NodeNoPathConcat;
 pub use crate::rules::node::no_process_env::NoProcessEnv as NodeNoProcessEnv;
+pub use crate::rules::node::no_sync::NoSync as NodeNoSync;
 pub use crate::rules::oxc::approx_constant::ApproxConstant as OxcApproxConstant;
 pub use crate::rules::oxc::bad_array_method_on_arguments::BadArrayMethodOnArguments as OxcBadArrayMethodOnArguments;
 pub use crate::rules::oxc::bad_bitwise_operator::BadBitwiseOperator as OxcBadBitwiseOperator;
@@ -696,6 +698,7 @@ pub use crate::rules::unicorn::prefer_module::PreferModule as UnicornPreferModul
 pub use crate::rules::unicorn::prefer_native_coercion_functions::PreferNativeCoercionFunctions as UnicornPreferNativeCoercionFunctions;
 pub use crate::rules::unicorn::prefer_negative_index::PreferNegativeIndex as UnicornPreferNegativeIndex;
 pub use crate::rules::unicorn::prefer_node_protocol::PreferNodeProtocol as UnicornPreferNodeProtocol;
+pub use crate::rules::unicorn::prefer_number_coercion::PreferNumberCoercion as UnicornPreferNumberCoercion;
 pub use crate::rules::unicorn::prefer_number_properties::PreferNumberProperties as UnicornPreferNumberProperties;
 pub use crate::rules::unicorn::prefer_object_from_entries::PreferObjectFromEntries as UnicornPreferObjectFromEntries;
 pub use crate::rules::unicorn::prefer_optional_catch_binding::PreferOptionalCatchBinding as UnicornPreferOptionalCatchBinding;
@@ -806,6 +809,7 @@ pub use crate::rules::vue::define_props_destructuring::DefinePropsDestructuring 
 pub use crate::rules::vue::max_props::MaxProps as VueMaxProps;
 pub use crate::rules::vue::next_tick_style::NextTickStyle as VueNextTickStyle;
 pub use crate::rules::vue::no_arrow_functions_in_watch::NoArrowFunctionsInWatch as VueNoArrowFunctionsInWatch;
+pub use crate::rules::vue::no_async_in_computed_properties::NoAsyncInComputedProperties as VueNoAsyncInComputedProperties;
 pub use crate::rules::vue::no_computed_properties_in_data::NoComputedPropertiesInData as VueNoComputedPropertiesInData;
 pub use crate::rules::vue::no_deprecated_data_object_declaration::NoDeprecatedDataObjectDeclaration as VueNoDeprecatedDataObjectDeclaration;
 pub use crate::rules::vue::no_deprecated_delete_set::NoDeprecatedDeleteSet as VueNoDeprecatedDeleteSet;
@@ -1414,6 +1418,7 @@ pub enum RuleEnum {
     UnicornPreferNativeCoercionFunctions(UnicornPreferNativeCoercionFunctions),
     UnicornPreferNegativeIndex(UnicornPreferNegativeIndex),
     UnicornPreferNodeProtocol(UnicornPreferNodeProtocol),
+    UnicornPreferNumberCoercion(UnicornPreferNumberCoercion),
     UnicornPreferNumberProperties(UnicornPreferNumberProperties),
     UnicornPreferObjectFromEntries(UnicornPreferObjectFromEntries),
     UnicornPreferOptionalCatchBinding(UnicornPreferOptionalCatchBinding),
@@ -1648,9 +1653,11 @@ pub enum RuleEnum {
     NodeGlobalRequire(NodeGlobalRequire),
     NodeHandleCallbackErr(NodeHandleCallbackErr),
     NodeNoExportsAssign(NodeNoExportsAssign),
+    NodeNoMixedRequires(NodeNoMixedRequires),
     NodeNoNewRequire(NodeNoNewRequire),
     NodeNoPathConcat(NodeNoPathConcat),
     NodeNoProcessEnv(NodeNoProcessEnv),
+    NodeNoSync(NodeNoSync),
     VueComponentDefinitionNameCasing(VueComponentDefinitionNameCasing),
     VueDefineEmitsDeclaration(VueDefineEmitsDeclaration),
     VueDefinePropsDeclaration(VueDefinePropsDeclaration),
@@ -1658,6 +1665,7 @@ pub enum RuleEnum {
     VueMaxProps(VueMaxProps),
     VueNextTickStyle(VueNextTickStyle),
     VueNoArrowFunctionsInWatch(VueNoArrowFunctionsInWatch),
+    VueNoAsyncInComputedProperties(VueNoAsyncInComputedProperties),
     VueNoComputedPropertiesInData(VueNoComputedPropertiesInData),
     VueNoDeprecatedDataObjectDeclaration(VueNoDeprecatedDataObjectDeclaration),
     VueNoDeprecatedDeleteSet(VueNoDeprecatedDeleteSet),
@@ -2327,7 +2335,8 @@ const UNICORN_PREFER_NATIVE_COERCION_FUNCTIONS_ID: usize = UNICORN_PREFER_MODULE
 const UNICORN_PREFER_NEGATIVE_INDEX_ID: usize =
     UNICORN_PREFER_NATIVE_COERCION_FUNCTIONS_ID + 1usize;
 const UNICORN_PREFER_NODE_PROTOCOL_ID: usize = UNICORN_PREFER_NEGATIVE_INDEX_ID + 1usize;
-const UNICORN_PREFER_NUMBER_PROPERTIES_ID: usize = UNICORN_PREFER_NODE_PROTOCOL_ID + 1usize;
+const UNICORN_PREFER_NUMBER_COERCION_ID: usize = UNICORN_PREFER_NODE_PROTOCOL_ID + 1usize;
+const UNICORN_PREFER_NUMBER_PROPERTIES_ID: usize = UNICORN_PREFER_NUMBER_COERCION_ID + 1usize;
 const UNICORN_PREFER_OBJECT_FROM_ENTRIES_ID: usize = UNICORN_PREFER_NUMBER_PROPERTIES_ID + 1usize;
 const UNICORN_PREFER_OPTIONAL_CATCH_BINDING_ID: usize =
     UNICORN_PREFER_OBJECT_FROM_ENTRIES_ID + 1usize;
@@ -2584,17 +2593,21 @@ const NODE_CALLBACK_RETURN_ID: usize = VITEST_WARN_TODO_ID + 1usize;
 const NODE_GLOBAL_REQUIRE_ID: usize = NODE_CALLBACK_RETURN_ID + 1usize;
 const NODE_HANDLE_CALLBACK_ERR_ID: usize = NODE_GLOBAL_REQUIRE_ID + 1usize;
 const NODE_NO_EXPORTS_ASSIGN_ID: usize = NODE_HANDLE_CALLBACK_ERR_ID + 1usize;
-const NODE_NO_NEW_REQUIRE_ID: usize = NODE_NO_EXPORTS_ASSIGN_ID + 1usize;
+const NODE_NO_MIXED_REQUIRES_ID: usize = NODE_NO_EXPORTS_ASSIGN_ID + 1usize;
+const NODE_NO_NEW_REQUIRE_ID: usize = NODE_NO_MIXED_REQUIRES_ID + 1usize;
 const NODE_NO_PATH_CONCAT_ID: usize = NODE_NO_NEW_REQUIRE_ID + 1usize;
 const NODE_NO_PROCESS_ENV_ID: usize = NODE_NO_PATH_CONCAT_ID + 1usize;
-const VUE_COMPONENT_DEFINITION_NAME_CASING_ID: usize = NODE_NO_PROCESS_ENV_ID + 1usize;
+const NODE_NO_SYNC_ID: usize = NODE_NO_PROCESS_ENV_ID + 1usize;
+const VUE_COMPONENT_DEFINITION_NAME_CASING_ID: usize = NODE_NO_SYNC_ID + 1usize;
 const VUE_DEFINE_EMITS_DECLARATION_ID: usize = VUE_COMPONENT_DEFINITION_NAME_CASING_ID + 1usize;
 const VUE_DEFINE_PROPS_DECLARATION_ID: usize = VUE_DEFINE_EMITS_DECLARATION_ID + 1usize;
 const VUE_DEFINE_PROPS_DESTRUCTURING_ID: usize = VUE_DEFINE_PROPS_DECLARATION_ID + 1usize;
 const VUE_MAX_PROPS_ID: usize = VUE_DEFINE_PROPS_DESTRUCTURING_ID + 1usize;
 const VUE_NEXT_TICK_STYLE_ID: usize = VUE_MAX_PROPS_ID + 1usize;
 const VUE_NO_ARROW_FUNCTIONS_IN_WATCH_ID: usize = VUE_NEXT_TICK_STYLE_ID + 1usize;
-const VUE_NO_COMPUTED_PROPERTIES_IN_DATA_ID: usize = VUE_NO_ARROW_FUNCTIONS_IN_WATCH_ID + 1usize;
+const VUE_NO_ASYNC_IN_COMPUTED_PROPERTIES_ID: usize = VUE_NO_ARROW_FUNCTIONS_IN_WATCH_ID + 1usize;
+const VUE_NO_COMPUTED_PROPERTIES_IN_DATA_ID: usize =
+    VUE_NO_ASYNC_IN_COMPUTED_PROPERTIES_ID + 1usize;
 const VUE_NO_DEPRECATED_DATA_OBJECT_DECLARATION_ID: usize =
     VUE_NO_COMPUTED_PROPERTIES_IN_DATA_ID + 1usize;
 const VUE_NO_DEPRECATED_DELETE_SET_ID: usize =
@@ -3301,6 +3314,7 @@ impl RuleEnum {
             }
             Self::UnicornPreferNegativeIndex(_) => UNICORN_PREFER_NEGATIVE_INDEX_ID,
             Self::UnicornPreferNodeProtocol(_) => UNICORN_PREFER_NODE_PROTOCOL_ID,
+            Self::UnicornPreferNumberCoercion(_) => UNICORN_PREFER_NUMBER_COERCION_ID,
             Self::UnicornPreferNumberProperties(_) => UNICORN_PREFER_NUMBER_PROPERTIES_ID,
             Self::UnicornPreferObjectFromEntries(_) => UNICORN_PREFER_OBJECT_FROM_ENTRIES_ID,
             Self::UnicornPreferOptionalCatchBinding(_) => UNICORN_PREFER_OPTIONAL_CATCH_BINDING_ID,
@@ -3553,9 +3567,11 @@ impl RuleEnum {
             Self::NodeGlobalRequire(_) => NODE_GLOBAL_REQUIRE_ID,
             Self::NodeHandleCallbackErr(_) => NODE_HANDLE_CALLBACK_ERR_ID,
             Self::NodeNoExportsAssign(_) => NODE_NO_EXPORTS_ASSIGN_ID,
+            Self::NodeNoMixedRequires(_) => NODE_NO_MIXED_REQUIRES_ID,
             Self::NodeNoNewRequire(_) => NODE_NO_NEW_REQUIRE_ID,
             Self::NodeNoPathConcat(_) => NODE_NO_PATH_CONCAT_ID,
             Self::NodeNoProcessEnv(_) => NODE_NO_PROCESS_ENV_ID,
+            Self::NodeNoSync(_) => NODE_NO_SYNC_ID,
             Self::VueComponentDefinitionNameCasing(_) => VUE_COMPONENT_DEFINITION_NAME_CASING_ID,
             Self::VueDefineEmitsDeclaration(_) => VUE_DEFINE_EMITS_DECLARATION_ID,
             Self::VueDefinePropsDeclaration(_) => VUE_DEFINE_PROPS_DECLARATION_ID,
@@ -3563,6 +3579,7 @@ impl RuleEnum {
             Self::VueMaxProps(_) => VUE_MAX_PROPS_ID,
             Self::VueNextTickStyle(_) => VUE_NEXT_TICK_STYLE_ID,
             Self::VueNoArrowFunctionsInWatch(_) => VUE_NO_ARROW_FUNCTIONS_IN_WATCH_ID,
+            Self::VueNoAsyncInComputedProperties(_) => VUE_NO_ASYNC_IN_COMPUTED_PROPERTIES_ID,
             Self::VueNoComputedPropertiesInData(_) => VUE_NO_COMPUTED_PROPERTIES_IN_DATA_ID,
             Self::VueNoDeprecatedDataObjectDeclaration(_) => {
                 VUE_NO_DEPRECATED_DATA_OBJECT_DECLARATION_ID
@@ -4259,6 +4276,7 @@ impl RuleEnum {
             }
             Self::UnicornPreferNegativeIndex(_) => UnicornPreferNegativeIndex::NAME,
             Self::UnicornPreferNodeProtocol(_) => UnicornPreferNodeProtocol::NAME,
+            Self::UnicornPreferNumberCoercion(_) => UnicornPreferNumberCoercion::NAME,
             Self::UnicornPreferNumberProperties(_) => UnicornPreferNumberProperties::NAME,
             Self::UnicornPreferObjectFromEntries(_) => UnicornPreferObjectFromEntries::NAME,
             Self::UnicornPreferOptionalCatchBinding(_) => UnicornPreferOptionalCatchBinding::NAME,
@@ -4505,9 +4523,11 @@ impl RuleEnum {
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::NAME,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::NAME,
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::NAME,
+            Self::NodeNoMixedRequires(_) => NodeNoMixedRequires::NAME,
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::NAME,
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::NAME,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::NAME,
+            Self::NodeNoSync(_) => NodeNoSync::NAME,
             Self::VueComponentDefinitionNameCasing(_) => VueComponentDefinitionNameCasing::NAME,
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::NAME,
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::NAME,
@@ -4515,6 +4535,7 @@ impl RuleEnum {
             Self::VueMaxProps(_) => VueMaxProps::NAME,
             Self::VueNextTickStyle(_) => VueNextTickStyle::NAME,
             Self::VueNoArrowFunctionsInWatch(_) => VueNoArrowFunctionsInWatch::NAME,
+            Self::VueNoAsyncInComputedProperties(_) => VueNoAsyncInComputedProperties::NAME,
             Self::VueNoComputedPropertiesInData(_) => VueNoComputedPropertiesInData::NAME,
             Self::VueNoDeprecatedDataObjectDeclaration(_) => {
                 VueNoDeprecatedDataObjectDeclaration::NAME
@@ -5247,6 +5268,7 @@ impl RuleEnum {
             }
             Self::UnicornPreferNegativeIndex(_) => UnicornPreferNegativeIndex::CATEGORY,
             Self::UnicornPreferNodeProtocol(_) => UnicornPreferNodeProtocol::CATEGORY,
+            Self::UnicornPreferNumberCoercion(_) => UnicornPreferNumberCoercion::CATEGORY,
             Self::UnicornPreferNumberProperties(_) => UnicornPreferNumberProperties::CATEGORY,
             Self::UnicornPreferObjectFromEntries(_) => UnicornPreferObjectFromEntries::CATEGORY,
             Self::UnicornPreferOptionalCatchBinding(_) => {
@@ -5513,9 +5535,11 @@ impl RuleEnum {
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::CATEGORY,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::CATEGORY,
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::CATEGORY,
+            Self::NodeNoMixedRequires(_) => NodeNoMixedRequires::CATEGORY,
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::CATEGORY,
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::CATEGORY,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::CATEGORY,
+            Self::NodeNoSync(_) => NodeNoSync::CATEGORY,
             Self::VueComponentDefinitionNameCasing(_) => VueComponentDefinitionNameCasing::CATEGORY,
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::CATEGORY,
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::CATEGORY,
@@ -5523,6 +5547,7 @@ impl RuleEnum {
             Self::VueMaxProps(_) => VueMaxProps::CATEGORY,
             Self::VueNextTickStyle(_) => VueNextTickStyle::CATEGORY,
             Self::VueNoArrowFunctionsInWatch(_) => VueNoArrowFunctionsInWatch::CATEGORY,
+            Self::VueNoAsyncInComputedProperties(_) => VueNoAsyncInComputedProperties::CATEGORY,
             Self::VueNoComputedPropertiesInData(_) => VueNoComputedPropertiesInData::CATEGORY,
             Self::VueNoDeprecatedDataObjectDeclaration(_) => {
                 VueNoDeprecatedDataObjectDeclaration::CATEGORY
@@ -6222,6 +6247,7 @@ impl RuleEnum {
             }
             Self::UnicornPreferNegativeIndex(_) => UnicornPreferNegativeIndex::FIX,
             Self::UnicornPreferNodeProtocol(_) => UnicornPreferNodeProtocol::FIX,
+            Self::UnicornPreferNumberCoercion(_) => UnicornPreferNumberCoercion::FIX,
             Self::UnicornPreferNumberProperties(_) => UnicornPreferNumberProperties::FIX,
             Self::UnicornPreferObjectFromEntries(_) => UnicornPreferObjectFromEntries::FIX,
             Self::UnicornPreferOptionalCatchBinding(_) => UnicornPreferOptionalCatchBinding::FIX,
@@ -6468,9 +6494,11 @@ impl RuleEnum {
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::FIX,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::FIX,
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::FIX,
+            Self::NodeNoMixedRequires(_) => NodeNoMixedRequires::FIX,
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::FIX,
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::FIX,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::FIX,
+            Self::NodeNoSync(_) => NodeNoSync::FIX,
             Self::VueComponentDefinitionNameCasing(_) => VueComponentDefinitionNameCasing::FIX,
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::FIX,
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::FIX,
@@ -6478,6 +6506,7 @@ impl RuleEnum {
             Self::VueMaxProps(_) => VueMaxProps::FIX,
             Self::VueNextTickStyle(_) => VueNextTickStyle::FIX,
             Self::VueNoArrowFunctionsInWatch(_) => VueNoArrowFunctionsInWatch::FIX,
+            Self::VueNoAsyncInComputedProperties(_) => VueNoAsyncInComputedProperties::FIX,
             Self::VueNoComputedPropertiesInData(_) => VueNoComputedPropertiesInData::FIX,
             Self::VueNoDeprecatedDataObjectDeclaration(_) => {
                 VueNoDeprecatedDataObjectDeclaration::FIX
@@ -7335,6 +7364,7 @@ impl RuleEnum {
             }
             Self::UnicornPreferNegativeIndex(_) => UnicornPreferNegativeIndex::documentation(),
             Self::UnicornPreferNodeProtocol(_) => UnicornPreferNodeProtocol::documentation(),
+            Self::UnicornPreferNumberCoercion(_) => UnicornPreferNumberCoercion::documentation(),
             Self::UnicornPreferNumberProperties(_) => {
                 UnicornPreferNumberProperties::documentation()
             }
@@ -7669,9 +7699,11 @@ impl RuleEnum {
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::documentation(),
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::documentation(),
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::documentation(),
+            Self::NodeNoMixedRequires(_) => NodeNoMixedRequires::documentation(),
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::documentation(),
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::documentation(),
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::documentation(),
+            Self::NodeNoSync(_) => NodeNoSync::documentation(),
             Self::VueComponentDefinitionNameCasing(_) => {
                 VueComponentDefinitionNameCasing::documentation()
             }
@@ -7681,6 +7713,9 @@ impl RuleEnum {
             Self::VueMaxProps(_) => VueMaxProps::documentation(),
             Self::VueNextTickStyle(_) => VueNextTickStyle::documentation(),
             Self::VueNoArrowFunctionsInWatch(_) => VueNoArrowFunctionsInWatch::documentation(),
+            Self::VueNoAsyncInComputedProperties(_) => {
+                VueNoAsyncInComputedProperties::documentation()
+            }
             Self::VueNoComputedPropertiesInData(_) => {
                 VueNoComputedPropertiesInData::documentation()
             }
@@ -9350,6 +9385,10 @@ impl RuleEnum {
                 UnicornPreferNodeProtocol::config_schema(generator)
                     .or_else(|| UnicornPreferNodeProtocol::schema(generator))
             }
+            Self::UnicornPreferNumberCoercion(_) => {
+                UnicornPreferNumberCoercion::config_schema(generator)
+                    .or_else(|| UnicornPreferNumberCoercion::schema(generator))
+            }
             Self::UnicornPreferNumberProperties(_) => {
                 UnicornPreferNumberProperties::config_schema(generator)
                     .or_else(|| UnicornPreferNumberProperties::schema(generator))
@@ -9997,12 +10036,17 @@ impl RuleEnum {
                 .or_else(|| NodeHandleCallbackErr::schema(generator)),
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::config_schema(generator)
                 .or_else(|| NodeNoExportsAssign::schema(generator)),
+            Self::NodeNoMixedRequires(_) => NodeNoMixedRequires::config_schema(generator)
+                .or_else(|| NodeNoMixedRequires::schema(generator)),
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::config_schema(generator)
                 .or_else(|| NodeNoNewRequire::schema(generator)),
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::config_schema(generator)
                 .or_else(|| NodeNoPathConcat::schema(generator)),
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::config_schema(generator)
                 .or_else(|| NodeNoProcessEnv::schema(generator)),
+            Self::NodeNoSync(_) => {
+                NodeNoSync::config_schema(generator).or_else(|| NodeNoSync::schema(generator))
+            }
             Self::VueComponentDefinitionNameCasing(_) => {
                 VueComponentDefinitionNameCasing::config_schema(generator)
                     .or_else(|| VueComponentDefinitionNameCasing::schema(generator))
@@ -10027,6 +10071,10 @@ impl RuleEnum {
             Self::VueNoArrowFunctionsInWatch(_) => {
                 VueNoArrowFunctionsInWatch::config_schema(generator)
                     .or_else(|| VueNoArrowFunctionsInWatch::schema(generator))
+            }
+            Self::VueNoAsyncInComputedProperties(_) => {
+                VueNoAsyncInComputedProperties::config_schema(generator)
+                    .or_else(|| VueNoAsyncInComputedProperties::schema(generator))
             }
             Self::VueNoComputedPropertiesInData(_) => {
                 VueNoComputedPropertiesInData::config_schema(generator)
@@ -10697,6 +10745,7 @@ impl RuleEnum {
             Self::UnicornPreferNativeCoercionFunctions(_) => "unicorn",
             Self::UnicornPreferNegativeIndex(_) => "unicorn",
             Self::UnicornPreferNodeProtocol(_) => "unicorn",
+            Self::UnicornPreferNumberCoercion(_) => "unicorn",
             Self::UnicornPreferNumberProperties(_) => "unicorn",
             Self::UnicornPreferObjectFromEntries(_) => "unicorn",
             Self::UnicornPreferOptionalCatchBinding(_) => "unicorn",
@@ -10925,9 +10974,11 @@ impl RuleEnum {
             Self::NodeGlobalRequire(_) => "node",
             Self::NodeHandleCallbackErr(_) => "node",
             Self::NodeNoExportsAssign(_) => "node",
+            Self::NodeNoMixedRequires(_) => "node",
             Self::NodeNoNewRequire(_) => "node",
             Self::NodeNoPathConcat(_) => "node",
             Self::NodeNoProcessEnv(_) => "node",
+            Self::NodeNoSync(_) => "node",
             Self::VueComponentDefinitionNameCasing(_) => "vue",
             Self::VueDefineEmitsDeclaration(_) => "vue",
             Self::VueDefinePropsDeclaration(_) => "vue",
@@ -10935,6 +10986,7 @@ impl RuleEnum {
             Self::VueMaxProps(_) => "vue",
             Self::VueNextTickStyle(_) => "vue",
             Self::VueNoArrowFunctionsInWatch(_) => "vue",
+            Self::VueNoAsyncInComputedProperties(_) => "vue",
             Self::VueNoComputedPropertiesInData(_) => "vue",
             Self::VueNoDeprecatedDataObjectDeclaration(_) => "vue",
             Self::VueNoDeprecatedDeleteSet(_) => "vue",
@@ -12786,6 +12838,9 @@ impl RuleEnum {
             Self::UnicornPreferNodeProtocol(_) => Ok(Self::UnicornPreferNodeProtocol(
                 UnicornPreferNodeProtocol::from_configuration(value)?,
             )),
+            Self::UnicornPreferNumberCoercion(_) => Ok(Self::UnicornPreferNumberCoercion(
+                UnicornPreferNumberCoercion::from_configuration(value)?,
+            )),
             Self::UnicornPreferNumberProperties(_) => Ok(Self::UnicornPreferNumberProperties(
                 UnicornPreferNumberProperties::from_configuration(value)?,
             )),
@@ -13516,6 +13571,9 @@ impl RuleEnum {
             Self::NodeNoExportsAssign(_) => {
                 Ok(Self::NodeNoExportsAssign(NodeNoExportsAssign::from_configuration(value)?))
             }
+            Self::NodeNoMixedRequires(_) => {
+                Ok(Self::NodeNoMixedRequires(NodeNoMixedRequires::from_configuration(value)?))
+            }
             Self::NodeNoNewRequire(_) => {
                 Ok(Self::NodeNoNewRequire(NodeNoNewRequire::from_configuration(value)?))
             }
@@ -13525,6 +13583,7 @@ impl RuleEnum {
             Self::NodeNoProcessEnv(_) => {
                 Ok(Self::NodeNoProcessEnv(NodeNoProcessEnv::from_configuration(value)?))
             }
+            Self::NodeNoSync(_) => Ok(Self::NodeNoSync(NodeNoSync::from_configuration(value)?)),
             Self::VueComponentDefinitionNameCasing(_) => {
                 Ok(Self::VueComponentDefinitionNameCasing(
                     VueComponentDefinitionNameCasing::from_configuration(value)?,
@@ -13545,6 +13604,9 @@ impl RuleEnum {
             }
             Self::VueNoArrowFunctionsInWatch(_) => Ok(Self::VueNoArrowFunctionsInWatch(
                 VueNoArrowFunctionsInWatch::from_configuration(value)?,
+            )),
+            Self::VueNoAsyncInComputedProperties(_) => Ok(Self::VueNoAsyncInComputedProperties(
+                VueNoAsyncInComputedProperties::from_configuration(value)?,
             )),
             Self::VueNoComputedPropertiesInData(_) => Ok(Self::VueNoComputedPropertiesInData(
                 VueNoComputedPropertiesInData::from_configuration(value)?,
@@ -14232,6 +14294,7 @@ impl RuleEnum {
             Self::UnicornPreferNativeCoercionFunctions(rule) => rule.to_configuration(),
             Self::UnicornPreferNegativeIndex(rule) => rule.to_configuration(),
             Self::UnicornPreferNodeProtocol(rule) => rule.to_configuration(),
+            Self::UnicornPreferNumberCoercion(rule) => rule.to_configuration(),
             Self::UnicornPreferNumberProperties(rule) => rule.to_configuration(),
             Self::UnicornPreferObjectFromEntries(rule) => rule.to_configuration(),
             Self::UnicornPreferOptionalCatchBinding(rule) => rule.to_configuration(),
@@ -14462,9 +14525,11 @@ impl RuleEnum {
             Self::NodeGlobalRequire(rule) => rule.to_configuration(),
             Self::NodeHandleCallbackErr(rule) => rule.to_configuration(),
             Self::NodeNoExportsAssign(rule) => rule.to_configuration(),
+            Self::NodeNoMixedRequires(rule) => rule.to_configuration(),
             Self::NodeNoNewRequire(rule) => rule.to_configuration(),
             Self::NodeNoPathConcat(rule) => rule.to_configuration(),
             Self::NodeNoProcessEnv(rule) => rule.to_configuration(),
+            Self::NodeNoSync(rule) => rule.to_configuration(),
             Self::VueComponentDefinitionNameCasing(rule) => rule.to_configuration(),
             Self::VueDefineEmitsDeclaration(rule) => rule.to_configuration(),
             Self::VueDefinePropsDeclaration(rule) => rule.to_configuration(),
@@ -14472,6 +14537,7 @@ impl RuleEnum {
             Self::VueMaxProps(rule) => rule.to_configuration(),
             Self::VueNextTickStyle(rule) => rule.to_configuration(),
             Self::VueNoArrowFunctionsInWatch(rule) => rule.to_configuration(),
+            Self::VueNoAsyncInComputedProperties(rule) => rule.to_configuration(),
             Self::VueNoComputedPropertiesInData(rule) => rule.to_configuration(),
             Self::VueNoDeprecatedDataObjectDeclaration(rule) => rule.to_configuration(),
             Self::VueNoDeprecatedDeleteSet(rule) => rule.to_configuration(),
@@ -15073,6 +15139,7 @@ impl RuleEnum {
             Self::UnicornPreferNativeCoercionFunctions(rule) => rule.run(node, ctx),
             Self::UnicornPreferNegativeIndex(rule) => rule.run(node, ctx),
             Self::UnicornPreferNodeProtocol(rule) => rule.run(node, ctx),
+            Self::UnicornPreferNumberCoercion(rule) => rule.run(node, ctx),
             Self::UnicornPreferNumberProperties(rule) => rule.run(node, ctx),
             Self::UnicornPreferObjectFromEntries(rule) => rule.run(node, ctx),
             Self::UnicornPreferOptionalCatchBinding(rule) => rule.run(node, ctx),
@@ -15301,9 +15368,11 @@ impl RuleEnum {
             Self::NodeGlobalRequire(rule) => rule.run(node, ctx),
             Self::NodeHandleCallbackErr(rule) => rule.run(node, ctx),
             Self::NodeNoExportsAssign(rule) => rule.run(node, ctx),
+            Self::NodeNoMixedRequires(rule) => rule.run(node, ctx),
             Self::NodeNoNewRequire(rule) => rule.run(node, ctx),
             Self::NodeNoPathConcat(rule) => rule.run(node, ctx),
             Self::NodeNoProcessEnv(rule) => rule.run(node, ctx),
+            Self::NodeNoSync(rule) => rule.run(node, ctx),
             Self::VueComponentDefinitionNameCasing(rule) => rule.run(node, ctx),
             Self::VueDefineEmitsDeclaration(rule) => rule.run(node, ctx),
             Self::VueDefinePropsDeclaration(rule) => rule.run(node, ctx),
@@ -15311,6 +15380,7 @@ impl RuleEnum {
             Self::VueMaxProps(rule) => rule.run(node, ctx),
             Self::VueNextTickStyle(rule) => rule.run(node, ctx),
             Self::VueNoArrowFunctionsInWatch(rule) => rule.run(node, ctx),
+            Self::VueNoAsyncInComputedProperties(rule) => rule.run(node, ctx),
             Self::VueNoComputedPropertiesInData(rule) => rule.run(node, ctx),
             Self::VueNoDeprecatedDataObjectDeclaration(rule) => rule.run(node, ctx),
             Self::VueNoDeprecatedDeleteSet(rule) => rule.run(node, ctx),
@@ -15924,6 +15994,7 @@ impl RuleEnum {
             Self::UnicornPreferNativeCoercionFunctions(rule) => rule.run_once(ctx),
             Self::UnicornPreferNegativeIndex(rule) => rule.run_once(ctx),
             Self::UnicornPreferNodeProtocol(rule) => rule.run_once(ctx),
+            Self::UnicornPreferNumberCoercion(rule) => rule.run_once(ctx),
             Self::UnicornPreferNumberProperties(rule) => rule.run_once(ctx),
             Self::UnicornPreferObjectFromEntries(rule) => rule.run_once(ctx),
             Self::UnicornPreferOptionalCatchBinding(rule) => rule.run_once(ctx),
@@ -16152,9 +16223,11 @@ impl RuleEnum {
             Self::NodeGlobalRequire(rule) => rule.run_once(ctx),
             Self::NodeHandleCallbackErr(rule) => rule.run_once(ctx),
             Self::NodeNoExportsAssign(rule) => rule.run_once(ctx),
+            Self::NodeNoMixedRequires(rule) => rule.run_once(ctx),
             Self::NodeNoNewRequire(rule) => rule.run_once(ctx),
             Self::NodeNoPathConcat(rule) => rule.run_once(ctx),
             Self::NodeNoProcessEnv(rule) => rule.run_once(ctx),
+            Self::NodeNoSync(rule) => rule.run_once(ctx),
             Self::VueComponentDefinitionNameCasing(rule) => rule.run_once(ctx),
             Self::VueDefineEmitsDeclaration(rule) => rule.run_once(ctx),
             Self::VueDefinePropsDeclaration(rule) => rule.run_once(ctx),
@@ -16162,6 +16235,7 @@ impl RuleEnum {
             Self::VueMaxProps(rule) => rule.run_once(ctx),
             Self::VueNextTickStyle(rule) => rule.run_once(ctx),
             Self::VueNoArrowFunctionsInWatch(rule) => rule.run_once(ctx),
+            Self::VueNoAsyncInComputedProperties(rule) => rule.run_once(ctx),
             Self::VueNoComputedPropertiesInData(rule) => rule.run_once(ctx),
             Self::VueNoDeprecatedDataObjectDeclaration(rule) => rule.run_once(ctx),
             Self::VueNoDeprecatedDeleteSet(rule) => rule.run_once(ctx),
@@ -16870,6 +16944,7 @@ impl RuleEnum {
             }
             Self::UnicornPreferNegativeIndex(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferNodeProtocol(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::UnicornPreferNumberCoercion(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferNumberProperties(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferObjectFromEntries(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferOptionalCatchBinding(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -17116,9 +17191,11 @@ impl RuleEnum {
             Self::NodeGlobalRequire(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NodeHandleCallbackErr(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NodeNoExportsAssign(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::NodeNoMixedRequires(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NodeNoNewRequire(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NodeNoPathConcat(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NodeNoProcessEnv(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::NodeNoSync(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueComponentDefinitionNameCasing(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueDefineEmitsDeclaration(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueDefinePropsDeclaration(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -17126,6 +17203,7 @@ impl RuleEnum {
             Self::VueMaxProps(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueNextTickStyle(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueNoArrowFunctionsInWatch(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VueNoAsyncInComputedProperties(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueNoComputedPropertiesInData(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueNoDeprecatedDataObjectDeclaration(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
@@ -17744,6 +17822,7 @@ impl RuleEnum {
             Self::UnicornPreferNativeCoercionFunctions(rule) => rule.should_run(ctx),
             Self::UnicornPreferNegativeIndex(rule) => rule.should_run(ctx),
             Self::UnicornPreferNodeProtocol(rule) => rule.should_run(ctx),
+            Self::UnicornPreferNumberCoercion(rule) => rule.should_run(ctx),
             Self::UnicornPreferNumberProperties(rule) => rule.should_run(ctx),
             Self::UnicornPreferObjectFromEntries(rule) => rule.should_run(ctx),
             Self::UnicornPreferOptionalCatchBinding(rule) => rule.should_run(ctx),
@@ -17972,9 +18051,11 @@ impl RuleEnum {
             Self::NodeGlobalRequire(rule) => rule.should_run(ctx),
             Self::NodeHandleCallbackErr(rule) => rule.should_run(ctx),
             Self::NodeNoExportsAssign(rule) => rule.should_run(ctx),
+            Self::NodeNoMixedRequires(rule) => rule.should_run(ctx),
             Self::NodeNoNewRequire(rule) => rule.should_run(ctx),
             Self::NodeNoPathConcat(rule) => rule.should_run(ctx),
             Self::NodeNoProcessEnv(rule) => rule.should_run(ctx),
+            Self::NodeNoSync(rule) => rule.should_run(ctx),
             Self::VueComponentDefinitionNameCasing(rule) => rule.should_run(ctx),
             Self::VueDefineEmitsDeclaration(rule) => rule.should_run(ctx),
             Self::VueDefinePropsDeclaration(rule) => rule.should_run(ctx),
@@ -17982,6 +18063,7 @@ impl RuleEnum {
             Self::VueMaxProps(rule) => rule.should_run(ctx),
             Self::VueNextTickStyle(rule) => rule.should_run(ctx),
             Self::VueNoArrowFunctionsInWatch(rule) => rule.should_run(ctx),
+            Self::VueNoAsyncInComputedProperties(rule) => rule.should_run(ctx),
             Self::VueNoComputedPropertiesInData(rule) => rule.should_run(ctx),
             Self::VueNoDeprecatedDataObjectDeclaration(rule) => rule.should_run(ctx),
             Self::VueNoDeprecatedDeleteSet(rule) => rule.should_run(ctx),
@@ -18834,6 +18916,7 @@ impl RuleEnum {
             }
             Self::UnicornPreferNegativeIndex(_) => UnicornPreferNegativeIndex::IS_TSGOLINT_RULE,
             Self::UnicornPreferNodeProtocol(_) => UnicornPreferNodeProtocol::IS_TSGOLINT_RULE,
+            Self::UnicornPreferNumberCoercion(_) => UnicornPreferNumberCoercion::IS_TSGOLINT_RULE,
             Self::UnicornPreferNumberProperties(_) => {
                 UnicornPreferNumberProperties::IS_TSGOLINT_RULE
             }
@@ -19168,9 +19251,11 @@ impl RuleEnum {
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::IS_TSGOLINT_RULE,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::IS_TSGOLINT_RULE,
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::IS_TSGOLINT_RULE,
+            Self::NodeNoMixedRequires(_) => NodeNoMixedRequires::IS_TSGOLINT_RULE,
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::IS_TSGOLINT_RULE,
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::IS_TSGOLINT_RULE,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::IS_TSGOLINT_RULE,
+            Self::NodeNoSync(_) => NodeNoSync::IS_TSGOLINT_RULE,
             Self::VueComponentDefinitionNameCasing(_) => {
                 VueComponentDefinitionNameCasing::IS_TSGOLINT_RULE
             }
@@ -19180,6 +19265,9 @@ impl RuleEnum {
             Self::VueMaxProps(_) => VueMaxProps::IS_TSGOLINT_RULE,
             Self::VueNextTickStyle(_) => VueNextTickStyle::IS_TSGOLINT_RULE,
             Self::VueNoArrowFunctionsInWatch(_) => VueNoArrowFunctionsInWatch::IS_TSGOLINT_RULE,
+            Self::VueNoAsyncInComputedProperties(_) => {
+                VueNoAsyncInComputedProperties::IS_TSGOLINT_RULE
+            }
             Self::VueNoComputedPropertiesInData(_) => {
                 VueNoComputedPropertiesInData::IS_TSGOLINT_RULE
             }
@@ -19926,6 +20014,7 @@ impl RuleEnum {
             }
             Self::UnicornPreferNegativeIndex(_) => UnicornPreferNegativeIndex::VERSION,
             Self::UnicornPreferNodeProtocol(_) => UnicornPreferNodeProtocol::VERSION,
+            Self::UnicornPreferNumberCoercion(_) => UnicornPreferNumberCoercion::VERSION,
             Self::UnicornPreferNumberProperties(_) => UnicornPreferNumberProperties::VERSION,
             Self::UnicornPreferObjectFromEntries(_) => UnicornPreferObjectFromEntries::VERSION,
             Self::UnicornPreferOptionalCatchBinding(_) => {
@@ -20192,9 +20281,11 @@ impl RuleEnum {
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::VERSION,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::VERSION,
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::VERSION,
+            Self::NodeNoMixedRequires(_) => NodeNoMixedRequires::VERSION,
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::VERSION,
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::VERSION,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::VERSION,
+            Self::NodeNoSync(_) => NodeNoSync::VERSION,
             Self::VueComponentDefinitionNameCasing(_) => VueComponentDefinitionNameCasing::VERSION,
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::VERSION,
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::VERSION,
@@ -20202,6 +20293,7 @@ impl RuleEnum {
             Self::VueMaxProps(_) => VueMaxProps::VERSION,
             Self::VueNextTickStyle(_) => VueNextTickStyle::VERSION,
             Self::VueNoArrowFunctionsInWatch(_) => VueNoArrowFunctionsInWatch::VERSION,
+            Self::VueNoAsyncInComputedProperties(_) => VueNoAsyncInComputedProperties::VERSION,
             Self::VueNoComputedPropertiesInData(_) => VueNoComputedPropertiesInData::VERSION,
             Self::VueNoDeprecatedDataObjectDeclaration(_) => {
                 VueNoDeprecatedDataObjectDeclaration::VERSION
@@ -20961,6 +21053,7 @@ impl RuleEnum {
             }
             Self::UnicornPreferNegativeIndex(_) => UnicornPreferNegativeIndex::HAS_CONFIG,
             Self::UnicornPreferNodeProtocol(_) => UnicornPreferNodeProtocol::HAS_CONFIG,
+            Self::UnicornPreferNumberCoercion(_) => UnicornPreferNumberCoercion::HAS_CONFIG,
             Self::UnicornPreferNumberProperties(_) => UnicornPreferNumberProperties::HAS_CONFIG,
             Self::UnicornPreferObjectFromEntries(_) => UnicornPreferObjectFromEntries::HAS_CONFIG,
             Self::UnicornPreferOptionalCatchBinding(_) => {
@@ -21237,9 +21330,11 @@ impl RuleEnum {
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::HAS_CONFIG,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::HAS_CONFIG,
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::HAS_CONFIG,
+            Self::NodeNoMixedRequires(_) => NodeNoMixedRequires::HAS_CONFIG,
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::HAS_CONFIG,
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::HAS_CONFIG,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::HAS_CONFIG,
+            Self::NodeNoSync(_) => NodeNoSync::HAS_CONFIG,
             Self::VueComponentDefinitionNameCasing(_) => {
                 VueComponentDefinitionNameCasing::HAS_CONFIG
             }
@@ -21249,6 +21344,7 @@ impl RuleEnum {
             Self::VueMaxProps(_) => VueMaxProps::HAS_CONFIG,
             Self::VueNextTickStyle(_) => VueNextTickStyle::HAS_CONFIG,
             Self::VueNoArrowFunctionsInWatch(_) => VueNoArrowFunctionsInWatch::HAS_CONFIG,
+            Self::VueNoAsyncInComputedProperties(_) => VueNoAsyncInComputedProperties::HAS_CONFIG,
             Self::VueNoComputedPropertiesInData(_) => VueNoComputedPropertiesInData::HAS_CONFIG,
             Self::VueNoDeprecatedDataObjectDeclaration(_) => {
                 VueNoDeprecatedDataObjectDeclaration::HAS_CONFIG
@@ -21951,6 +22047,7 @@ impl RuleEnum {
             }
             Self::UnicornPreferNegativeIndex(_) => UnicornPreferNegativeIndex::INFO,
             Self::UnicornPreferNodeProtocol(_) => UnicornPreferNodeProtocol::INFO,
+            Self::UnicornPreferNumberCoercion(_) => UnicornPreferNumberCoercion::INFO,
             Self::UnicornPreferNumberProperties(_) => UnicornPreferNumberProperties::INFO,
             Self::UnicornPreferObjectFromEntries(_) => UnicornPreferObjectFromEntries::INFO,
             Self::UnicornPreferOptionalCatchBinding(_) => UnicornPreferOptionalCatchBinding::INFO,
@@ -22197,9 +22294,11 @@ impl RuleEnum {
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::INFO,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::INFO,
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::INFO,
+            Self::NodeNoMixedRequires(_) => NodeNoMixedRequires::INFO,
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::INFO,
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::INFO,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::INFO,
+            Self::NodeNoSync(_) => NodeNoSync::INFO,
             Self::VueComponentDefinitionNameCasing(_) => VueComponentDefinitionNameCasing::INFO,
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::INFO,
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::INFO,
@@ -22207,6 +22306,7 @@ impl RuleEnum {
             Self::VueMaxProps(_) => VueMaxProps::INFO,
             Self::VueNextTickStyle(_) => VueNextTickStyle::INFO,
             Self::VueNoArrowFunctionsInWatch(_) => VueNoArrowFunctionsInWatch::INFO,
+            Self::VueNoAsyncInComputedProperties(_) => VueNoAsyncInComputedProperties::INFO,
             Self::VueNoComputedPropertiesInData(_) => VueNoComputedPropertiesInData::INFO,
             Self::VueNoDeprecatedDataObjectDeclaration(_) => {
                 VueNoDeprecatedDataObjectDeclaration::INFO
@@ -22816,6 +22916,7 @@ impl RuleEnum {
             Self::UnicornPreferNativeCoercionFunctions(rule) => rule.types_info(),
             Self::UnicornPreferNegativeIndex(rule) => rule.types_info(),
             Self::UnicornPreferNodeProtocol(rule) => rule.types_info(),
+            Self::UnicornPreferNumberCoercion(rule) => rule.types_info(),
             Self::UnicornPreferNumberProperties(rule) => rule.types_info(),
             Self::UnicornPreferObjectFromEntries(rule) => rule.types_info(),
             Self::UnicornPreferOptionalCatchBinding(rule) => rule.types_info(),
@@ -23044,9 +23145,11 @@ impl RuleEnum {
             Self::NodeGlobalRequire(rule) => rule.types_info(),
             Self::NodeHandleCallbackErr(rule) => rule.types_info(),
             Self::NodeNoExportsAssign(rule) => rule.types_info(),
+            Self::NodeNoMixedRequires(rule) => rule.types_info(),
             Self::NodeNoNewRequire(rule) => rule.types_info(),
             Self::NodeNoPathConcat(rule) => rule.types_info(),
             Self::NodeNoProcessEnv(rule) => rule.types_info(),
+            Self::NodeNoSync(rule) => rule.types_info(),
             Self::VueComponentDefinitionNameCasing(rule) => rule.types_info(),
             Self::VueDefineEmitsDeclaration(rule) => rule.types_info(),
             Self::VueDefinePropsDeclaration(rule) => rule.types_info(),
@@ -23054,6 +23157,7 @@ impl RuleEnum {
             Self::VueMaxProps(rule) => rule.types_info(),
             Self::VueNextTickStyle(rule) => rule.types_info(),
             Self::VueNoArrowFunctionsInWatch(rule) => rule.types_info(),
+            Self::VueNoAsyncInComputedProperties(rule) => rule.types_info(),
             Self::VueNoComputedPropertiesInData(rule) => rule.types_info(),
             Self::VueNoDeprecatedDataObjectDeclaration(rule) => rule.types_info(),
             Self::VueNoDeprecatedDeleteSet(rule) => rule.types_info(),
@@ -23654,6 +23758,7 @@ impl RuleEnum {
             Self::UnicornPreferNativeCoercionFunctions(rule) => rule.run_info(),
             Self::UnicornPreferNegativeIndex(rule) => rule.run_info(),
             Self::UnicornPreferNodeProtocol(rule) => rule.run_info(),
+            Self::UnicornPreferNumberCoercion(rule) => rule.run_info(),
             Self::UnicornPreferNumberProperties(rule) => rule.run_info(),
             Self::UnicornPreferObjectFromEntries(rule) => rule.run_info(),
             Self::UnicornPreferOptionalCatchBinding(rule) => rule.run_info(),
@@ -23882,9 +23987,11 @@ impl RuleEnum {
             Self::NodeGlobalRequire(rule) => rule.run_info(),
             Self::NodeHandleCallbackErr(rule) => rule.run_info(),
             Self::NodeNoExportsAssign(rule) => rule.run_info(),
+            Self::NodeNoMixedRequires(rule) => rule.run_info(),
             Self::NodeNoNewRequire(rule) => rule.run_info(),
             Self::NodeNoPathConcat(rule) => rule.run_info(),
             Self::NodeNoProcessEnv(rule) => rule.run_info(),
+            Self::NodeNoSync(rule) => rule.run_info(),
             Self::VueComponentDefinitionNameCasing(rule) => rule.run_info(),
             Self::VueDefineEmitsDeclaration(rule) => rule.run_info(),
             Self::VueDefinePropsDeclaration(rule) => rule.run_info(),
@@ -23892,6 +23999,7 @@ impl RuleEnum {
             Self::VueMaxProps(rule) => rule.run_info(),
             Self::VueNextTickStyle(rule) => rule.run_info(),
             Self::VueNoArrowFunctionsInWatch(rule) => rule.run_info(),
+            Self::VueNoAsyncInComputedProperties(rule) => rule.run_info(),
             Self::VueNoComputedPropertiesInData(rule) => rule.run_info(),
             Self::VueNoDeprecatedDataObjectDeclaration(rule) => rule.run_info(),
             Self::VueNoDeprecatedDeleteSet(rule) => rule.run_info(),
@@ -24606,6 +24714,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         ),
         RuleEnum::UnicornPreferNegativeIndex(UnicornPreferNegativeIndex::default()),
         RuleEnum::UnicornPreferNodeProtocol(UnicornPreferNodeProtocol::default()),
+        RuleEnum::UnicornPreferNumberCoercion(UnicornPreferNumberCoercion::default()),
         RuleEnum::UnicornPreferNumberProperties(UnicornPreferNumberProperties::default()),
         RuleEnum::UnicornPreferObjectFromEntries(UnicornPreferObjectFromEntries::default()),
         RuleEnum::UnicornPreferOptionalCatchBinding(UnicornPreferOptionalCatchBinding::default()),
@@ -24852,9 +24961,11 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::NodeGlobalRequire(NodeGlobalRequire::default()),
         RuleEnum::NodeHandleCallbackErr(NodeHandleCallbackErr::default()),
         RuleEnum::NodeNoExportsAssign(NodeNoExportsAssign::default()),
+        RuleEnum::NodeNoMixedRequires(NodeNoMixedRequires::default()),
         RuleEnum::NodeNoNewRequire(NodeNoNewRequire::default()),
         RuleEnum::NodeNoPathConcat(NodeNoPathConcat::default()),
         RuleEnum::NodeNoProcessEnv(NodeNoProcessEnv::default()),
+        RuleEnum::NodeNoSync(NodeNoSync::default()),
         RuleEnum::VueComponentDefinitionNameCasing(VueComponentDefinitionNameCasing::default()),
         RuleEnum::VueDefineEmitsDeclaration(VueDefineEmitsDeclaration::default()),
         RuleEnum::VueDefinePropsDeclaration(VueDefinePropsDeclaration::default()),
@@ -24862,6 +24973,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VueMaxProps(VueMaxProps::default()),
         RuleEnum::VueNextTickStyle(VueNextTickStyle::default()),
         RuleEnum::VueNoArrowFunctionsInWatch(VueNoArrowFunctionsInWatch::default()),
+        RuleEnum::VueNoAsyncInComputedProperties(VueNoAsyncInComputedProperties::default()),
         RuleEnum::VueNoComputedPropertiesInData(VueNoComputedPropertiesInData::default()),
         RuleEnum::VueNoDeprecatedDataObjectDeclaration(
             VueNoDeprecatedDataObjectDeclaration::default(),

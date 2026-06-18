@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.137.0] - 2026-06-18
+
+### 🐛 Bug Fixes
+
+- 20375f9 react_compiler: Keep imports referenced only by a computed key (#23586) (Boshen)
+
+### ⚡ Performance
+
+- dfb52b6 transformer: Pre-size statement vecs in TS enum & namespace lowering (#23516) (Yunfei He)
+- 3fa8051 transformer: Pre-size JSX props vec to attribute count (#23466) (Yunfei He)
+
 ## [0.136.0] - 2026-06-15
 
 ### 💥 BREAKING CHANGES
