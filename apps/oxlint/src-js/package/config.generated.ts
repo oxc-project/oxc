@@ -153,6 +153,7 @@ export type Location = "start" | "anywhere";
 export type HandleCallbackErrConfig = string;
 export type NoMixedRequiresConfig = boolean | NoMixedRequiresOptions;
 export type PreferGlobalBufferMode = "always" | "never";
+export type PreferGlobalConsoleMode = "always" | "never";
 export type ShorthandType = "always" | "methods" | "properties" | "consistent" | "consistent-as-needed" | "never";
 export type Destructuring = "any" | "all";
 export type PreferDestructuringOption = PreferDestructuringTargetOption | PreferDestructuringAssignmentConfig;
@@ -1201,6 +1202,7 @@ export interface DummyRuleMap {
   "node/no-process-env"?: RuleNoConfig | [AllowWarnDeny, NoProcessEnvConfig];
   "node/no-sync"?: RuleNoConfig | [AllowWarnDeny, NoSyncConfig];
   "node/prefer-global-buffer"?: RuleNoConfig | [AllowWarnDeny, PreferGlobalBufferMode];
+  "node/prefer-global-console"?: RuleNoConfig | [AllowWarnDeny, PreferGlobalConsoleMode];
   "object-shorthand"?:
     | RuleNoConfig
     | [AllowWarnDeny, ShorthandType]
