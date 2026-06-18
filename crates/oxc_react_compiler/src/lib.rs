@@ -205,14 +205,12 @@ mod tests {
     use super::transform_source;
 
     fn options() -> PluginOptions {
-        // Only the non-`#[serde(default)]` fields are required; the rest default.
-        serde_json::from_value(serde_json::json!({
-            "shouldCompile": true,
-            "enableReanimated": false,
-            "isDev": false,
-            "filename": "Component.jsx",
-        }))
-        .unwrap()
+        // The upstream options type is constructed typed (it has no `Deserialize`);
+        // only `filename` differs from the compiler's standard defaults.
+        PluginOptions {
+            filename: Some("Component.jsx".to_string()),
+            ..super::default_plugin_options()
+        }
     }
 
     #[test]

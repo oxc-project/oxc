@@ -1334,7 +1334,7 @@ impl<'a> ReverseCtx<'a> {
                 self.builder.expression_identifier(SPAN, self.atom(&id.name))
             }
             Expression::StringLiteral(lit) => {
-                self.builder.expression_string_literal(SPAN, self.atom(&lit.value), None)
+                self.builder.expression_string_literal(SPAN, self.atom(&lit.value.to_string_lossy()), None)
             }
             Expression::NumericLiteral(lit) => self.builder.expression_numeric_literal(
                 SPAN,
@@ -1544,9 +1544,10 @@ impl<'a> ReverseCtx<'a> {
             // expression and recover only the type from the original source.
             Expression::TSAsExpression(e) => {
                 let expression = self.convert_expression(&e.expression);
+                let parsed_type = e.type_annotation.parse_value();
                 let type_annotation =
-                    self.convert_ts_type_from_json(&e.type_annotation).or_else(|| {
-                        if Self::ts_type_json_contains_type_query(&e.type_annotation) {
+                    self.convert_ts_type_from_json(&parsed_type).or_else(|| {
+                        if Self::ts_type_json_contains_type_query(&parsed_type) {
                             None
                         } else {
                             self.extract_source_ts_as_type(&e.base)
@@ -1560,9 +1561,10 @@ impl<'a> ReverseCtx<'a> {
             }
             Expression::TSSatisfiesExpression(e) => {
                 let expression = self.convert_expression(&e.expression);
+                let parsed_type = e.type_annotation.parse_value();
                 let type_annotation =
-                    self.convert_ts_type_from_json(&e.type_annotation).or_else(|| {
-                        if Self::ts_type_json_contains_type_query(&e.type_annotation) {
+                    self.convert_ts_type_from_json(&parsed_type).or_else(|| {
+                        if Self::ts_type_json_contains_type_query(&parsed_type) {
                             None
                         } else {
                             self.extract_source_ts_satisfies_type(&e.base)
@@ -1579,9 +1581,10 @@ impl<'a> ReverseCtx<'a> {
             }
             Expression::TSTypeAssertion(e) => {
                 let expression = self.convert_expression(&e.expression);
+                let parsed_type = e.type_annotation.parse_value();
                 let type_annotation =
-                    self.convert_ts_type_from_json(&e.type_annotation).or_else(|| {
-                        if Self::ts_type_json_contains_type_query(&e.type_annotation) {
+                    self.convert_ts_type_from_json(&parsed_type).or_else(|| {
+                        if Self::ts_type_json_contains_type_query(&parsed_type) {
                             None
                         } else {
                             self.extract_source_ts_type_assertion_type(&e.base)
@@ -1855,7 +1858,7 @@ impl<'a> ReverseCtx<'a> {
                 self.builder.property_key_static_identifier(SPAN, self.atom(&id.name))
             }
             Expression::StringLiteral(s) => {
-                let lit = self.builder.string_literal(SPAN, self.atom(&s.value), None);
+                let lit = self.builder.string_literal(SPAN, self.atom(&s.value.to_string_lossy()), None);
                 oxc::PropertyKey::StringLiteral(self.builder.alloc(lit))
             }
             Expression::NumericLiteral(n) => {
@@ -1971,8 +1974,8 @@ impl<'a> ReverseCtx<'a> {
             None
         } else {
             f.return_type
-                .as_deref()
-                .and_then(|value| self.convert_ts_type_annotation_from_json(value))
+                .as_ref()
+                .and_then(|value| self.convert_ts_type_annotation_from_json(&value.parse_value()))
         };
         let mut func = self.builder.function(
             SPAN,
@@ -2003,8 +2006,8 @@ impl<'a> ReverseCtx<'a> {
             None
         } else {
             m.return_type
-                .as_deref()
-                .and_then(|value| self.convert_ts_type_annotation_from_json(value))
+                .as_ref()
+                .and_then(|value| self.convert_ts_type_annotation_from_json(&value.parse_value()))
         };
         let mut func = self.builder.function(
             SPAN,
@@ -2056,8 +2059,8 @@ impl<'a> ReverseCtx<'a> {
             } else {
                 arrow
                     .return_type
-                    .as_deref()
-                    .and_then(|value| self.convert_ts_type_annotation_from_json(value))
+                    .as_ref()
+                    .and_then(|value| self.convert_ts_type_annotation_from_json(&value.parse_value()))
             },
             body,
         );
@@ -2089,8 +2092,8 @@ impl<'a> ReverseCtx<'a> {
                     let rest_elem = self.builder.binding_rest_element(SPAN, arg);
                     let type_annotation = r
                         .type_annotation
-                        .as_deref()
-                        .and_then(|value| self.convert_ts_type_annotation_from_json(value));
+                        .as_ref()
+                        .and_then(|value| self.convert_ts_type_annotation_from_json(&value.parse_value()));
                     rest = Some(self.builder.formal_parameter_rest(
                         SPAN,
                         self.builder.vec(),
@@ -2172,11 +2175,11 @@ impl<'a> ReverseCtx<'a> {
         pattern: &PatternLike,
     ) -> Option<ArenaBox<'a, oxc::TSTypeAnnotation<'a>>> {
         let value = match pattern {
-            PatternLike::Identifier(id) => id.type_annotation.as_deref(),
-            PatternLike::ObjectPattern(obj) => obj.type_annotation.as_deref(),
-            PatternLike::ArrayPattern(arr) => arr.type_annotation.as_deref(),
-            PatternLike::AssignmentPattern(assign) => assign.type_annotation.as_deref(),
-            PatternLike::RestElement(rest) => rest.type_annotation.as_deref(),
+            PatternLike::Identifier(id) => id.type_annotation.as_ref(),
+            PatternLike::ObjectPattern(obj) => obj.type_annotation.as_ref(),
+            PatternLike::ArrayPattern(arr) => arr.type_annotation.as_ref(),
+            PatternLike::AssignmentPattern(assign) => assign.type_annotation.as_ref(),
+            PatternLike::RestElement(rest) => rest.type_annotation.as_ref(),
             PatternLike::MemberExpression(_)
             | PatternLike::TSAsExpression(_)
             | PatternLike::TSSatisfiesExpression(_)
@@ -2184,7 +2187,7 @@ impl<'a> ReverseCtx<'a> {
             | PatternLike::TSTypeAssertion(_)
             | PatternLike::TypeCastExpression(_) => None,
         }?;
-        self.convert_ts_type_annotation_from_json(value)
+        self.convert_ts_type_annotation_from_json(&value.parse_value())
     }
 
     // ===== Patterns → BindingPattern =====
@@ -2462,9 +2465,10 @@ impl<'a> ReverseCtx<'a> {
         expr: &TSAsExpression,
     ) -> oxc::SimpleAssignmentTarget<'a> {
         let expression = self.convert_expression(&expr.expression);
+        let parsed_type = expr.type_annotation.parse_value();
         if let Some(type_annotation) =
-            self.convert_ts_type_from_json(&expr.type_annotation).or_else(|| {
-                if Self::ts_type_json_contains_type_query(&expr.type_annotation) {
+            self.convert_ts_type_from_json(&parsed_type).or_else(|| {
+                if Self::ts_type_json_contains_type_query(&parsed_type) {
                     None
                 } else {
                     self.extract_source_ts_as_type(&expr.base)
@@ -2486,9 +2490,10 @@ impl<'a> ReverseCtx<'a> {
         expr: &TSSatisfiesExpression,
     ) -> oxc::SimpleAssignmentTarget<'a> {
         let expression = self.convert_expression(&expr.expression);
+        let parsed_type = expr.type_annotation.parse_value();
         if let Some(type_annotation) =
-            self.convert_ts_type_from_json(&expr.type_annotation).or_else(|| {
-                if Self::ts_type_json_contains_type_query(&expr.type_annotation) {
+            self.convert_ts_type_from_json(&parsed_type).or_else(|| {
+                if Self::ts_type_json_contains_type_query(&parsed_type) {
                     None
                 } else {
                     self.extract_source_ts_satisfies_type(&expr.base)
@@ -2518,9 +2523,10 @@ impl<'a> ReverseCtx<'a> {
         expr: &TSTypeAssertion,
     ) -> oxc::SimpleAssignmentTarget<'a> {
         let expression = self.convert_expression(&expr.expression);
+        let parsed_type = expr.type_annotation.parse_value();
         if let Some(type_annotation) =
-            self.convert_ts_type_from_json(&expr.type_annotation).or_else(|| {
-                if Self::ts_type_json_contains_type_query(&expr.type_annotation) {
+            self.convert_ts_type_from_json(&parsed_type).or_else(|| {
+                if Self::ts_type_json_contains_type_query(&parsed_type) {
                     None
                 } else {
                     self.extract_source_ts_type_assertion_type(&expr.base)
@@ -2650,7 +2656,7 @@ impl<'a> ReverseCtx<'a> {
     fn convert_jsx_attribute_value(&self, value: &JSXAttributeValue) -> oxc::JSXAttributeValue<'a> {
         match value {
             JSXAttributeValue::StringLiteral(s) => {
-                self.builder.jsx_attribute_value_string_literal(SPAN, self.atom(&s.value), None)
+                self.builder.jsx_attribute_value_string_literal(SPAN, self.atom(&s.value.to_string_lossy()), None)
             }
             JSXAttributeValue::JSXExpressionContainer(ec) => {
                 let expr = self.convert_jsx_expression_container_expr(&ec.expression);
@@ -2739,7 +2745,7 @@ impl<'a> ReverseCtx<'a> {
             } else {
                 Some(specifiers)
             };
-        let source = self.builder.string_literal(SPAN, self.atom(&decl.source.value), None);
+        let source = self.builder.string_literal(SPAN, self.atom(&decl.source.value.to_string_lossy()), None);
         let import_kind = match decl.import_kind.as_ref() {
             Some(ImportKind::Type) => oxc::ImportOrExportKind::Type,
             _ => oxc::ImportOrExportKind::Value,
@@ -2777,7 +2783,7 @@ impl<'a> ReverseCtx<'a> {
         } else {
             self.builder.import_attribute_key_identifier(SPAN, self.atom(&attr.key.name))
         };
-        let value = self.builder.string_literal(SPAN, self.atom(&attr.value.value), None);
+        let value = self.builder.string_literal(SPAN, self.atom(&attr.value.value.to_string_lossy()), None);
         self.builder.import_attribute(SPAN, key, value)
     }
 
@@ -2822,7 +2828,7 @@ impl<'a> ReverseCtx<'a> {
             react_compiler_ast::declarations::ModuleExportName::StringLiteral(s) => {
                 oxc::ModuleExportName::StringLiteral(self.builder.string_literal(
                     SPAN,
-                    self.atom(&s.value),
+                    self.atom(&s.value.to_string_lossy()),
                     None,
                 ))
             }
@@ -2868,7 +2874,7 @@ impl<'a> ReverseCtx<'a> {
         let source = decl
             .source
             .as_ref()
-            .map(|s| self.builder.string_literal(SPAN, self.atom(&s.value), None));
+            .map(|s| self.builder.string_literal(SPAN, self.atom(&s.value.to_string_lossy()), None));
         let export_kind = match decl.export_kind.as_ref() {
             Some(ExportKind::Type) => oxc::ImportOrExportKind::Type,
             _ => oxc::ImportOrExportKind::Value,
@@ -2992,7 +2998,7 @@ impl<'a> ReverseCtx<'a> {
         &self,
         decl: &ExportAllDeclaration,
     ) -> oxc::ExportAllDeclaration<'a> {
-        let source = self.builder.string_literal(SPAN, self.atom(&decl.source.value), None);
+        let source = self.builder.string_literal(SPAN, self.atom(&decl.source.value.to_string_lossy()), None);
         let export_kind = match decl.export_kind.as_ref() {
             Some(ExportKind::Type) => oxc::ImportOrExportKind::Type,
             _ => oxc::ImportOrExportKind::Value,
