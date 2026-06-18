@@ -288,7 +288,10 @@ fn type_needs_parentheses(type_param: &TSType) -> bool {
         | TSType::TSIntersectionType(_)
         | TSType::TSTypeOperatorType(_)
         | TSType::TSInferType(_)
-        | TSType::TSConstructorType(_) => true,
+        | TSType::TSConstructorType(_)
+        // A conditional type binds looser than postfix `[]`, so `Array<A extends B ? C : D>`
+        // must become `(A extends B ? C : D)[]`, not `A extends B ? C : D[]` (a different type).
+        | TSType::TSConditionalType(_) => true,
         _ => false,
     }
 }
@@ -1543,6 +1546,17 @@ export const test8 = testFn<Array<string>, number[]>([]);",
         (
             "let a: Array<string | number> = [];",
             "let a: (string | number)[] = [];",
+            Some(serde_json::json!([{"default":"array"}])),
+        ),
+        // a conditional element must be parenthesized (`[]` binds tighter than `? :`)
+        (
+            "let a: Array<A extends B ? C : D> = [];",
+            "let a: (A extends B ? C : D)[] = [];",
+            Some(serde_json::json!([{"default":"array"}])),
+        ),
+        (
+            "let a: ReadonlyArray<A extends B ? C : D> = [];",
+            "let a: readonly (A extends B ? C : D)[] = [];",
             Some(serde_json::json!([{"default":"array"}])),
         ),
         (
