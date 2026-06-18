@@ -143,10 +143,6 @@ impl Radix {
                 ctx.diagnostic_with_dangerous_fix(missing_radix(call_expr.span), |fixer| {
                     let first_arg = &call_expr.arguments[0];
                     let end = call_expr.span.end;
-                    // Look only AFTER the argument for a trailing comma, and skip commas inside
-                    // comments (e.g. `parseInt("10" /* , */)`) -- otherwise we'd pick the
-                    // no-separator `" 10,"` branch and paste the radix on without a separator,
-                    // emitting invalid syntax. `find_next_token_within` already does both.
                     let has_trailing_comma =
                         ctx.find_next_token_within(first_arg.span().end, end, ",").is_some();
                     let insert_param = if has_trailing_comma { " 10," } else { ", 10" };
@@ -275,7 +271,6 @@ fn test() {
             "parseInt(10, /** 213123 */ 10,)",
             Some(serde_json::json!(["always"])),
         ),
-        // a comma INSIDE the single argument must not be mistaken for a trailing comma
         (
             r#"parseInt((0, "10"))"#,
             r#"parseInt((0, "10"), 10)"#,
@@ -283,20 +278,16 @@ fn test() {
         ),
         ("parseInt(f(a, b))", "parseInt(f(a, b), 10)", Some(serde_json::json!(["always"]))),
         ("parseInt([1, 2][0])", "parseInt([1, 2][0], 10)", Some(serde_json::json!(["always"]))),
-        // a comma inside a trailing comment is not a trailing comma: insert `, 10`,
-        // not ` 10,` (which would paste an unseparated radix -> invalid syntax).
         (
             r#"parseInt("10" /* , */)"#,
             r#"parseInt("10" /* , */, 10)"#,
             Some(serde_json::json!(["always"])),
         ),
-        // a single parenthesized/sequence argument with a comment comma inside it.
         (
             r#"parseInt((0 /* , */, "10"))"#,
             r#"parseInt((0 /* , */, "10"), 10)"#,
             Some(serde_json::json!(["always"])),
         ),
-        // a real trailing comma still wins even when a comment comma precedes it.
         (
             r#"parseInt("10" /* x */,)"#,
             r#"parseInt("10" /* x */, 10,)"#,
