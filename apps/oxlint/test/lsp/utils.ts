@@ -526,14 +526,16 @@ function getSeverityLabel(severity: number | undefined): string {
 }
 
 function lspRangeToBabelLocation(range: Range) {
+  // LSP positions are 0-based. `@babel/code-frame` expects 1-based lines and,
+  // since Babel 8, 0-based columns (columns were 1-based in Babel 7).
   return {
     start: {
       line: range.start.line + 1,
-      column: range.start.character + 1,
+      column: range.start.character,
     },
     end: {
       line: range.end.line + 1,
-      column: range.end.character + 1,
+      column: range.end.character,
     },
   };
 }
