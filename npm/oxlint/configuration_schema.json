@@ -3209,6 +3209,9 @@
         "jest/padding-around-after-all-blocks": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "jest/padding-around-before-all-blocks": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "jest/padding-around-test-blocks": {
           "$ref": "#/definitions/RuleNoConfig"
         },
@@ -9691,6 +9694,9 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "vitest/padding-around-after-all-blocks": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "vitest/padding-around-before-all-blocks": {
           "$ref": "#/definitions/RuleNoConfig"
         },
         "vitest/prefer-called-exactly-once-with": {
