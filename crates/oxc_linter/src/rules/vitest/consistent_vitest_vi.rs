@@ -255,27 +255,10 @@ fn test() {
             r#"import { expect, vi } from "vitest";"#,
             None,
         ),
-        // aliased specifiers must be preserved, not collapsed to their local name
         (
             r#"import { vitest, expect as toBe } from "vitest";"#,
             r#"import { expect as toBe, vi } from "vitest";"#,
             None,
-        ),
-        (
-            r#"import { expect as e, vitest } from "vitest";"#,
-            r#"import { expect as e, vi } from "vitest";"#,
-            None,
-        ),
-        // a kept specifier already bound to the target locally must not be duplicated
-        (
-            r#"import { x as vi, vitest } from "vitest";"#,
-            r#"import { x as vi } from "vitest";"#,
-            None,
-        ),
-        (
-            r#"import { x as vitest, vi } from "vitest";"#,
-            r#"import { x as vitest } from "vitest";"#,
-            Some(serde_json::json!([{ "fn": "vitest" }])),
         ),
         (
             r#"import { vitest } from "vitest";
@@ -289,6 +272,21 @@ fn test() {
 			vi.clearAllMocks();"#,
             r#"vitest.stubEnv("NODE_ENV", "production");
 			vitest.clearAllMocks();"#,
+            Some(serde_json::json!([{ "fn": "vitest" }])),
+        ),
+        (
+            r#"import { expect as e, vitest } from "vitest";"#,
+            r#"import { expect as e, vi } from "vitest";"#,
+            None,
+        ),
+        (
+            r#"import { x as vi, vitest } from "vitest";"#,
+            r#"import { x as vi } from "vitest";"#,
+            None,
+        ),
+        (
+            r#"import { x as vitest, vi } from "vitest";"#,
+            r#"import { x as vitest } from "vitest";"#,
             Some(serde_json::json!([{ "fn": "vitest" }])),
         ),
     ];
