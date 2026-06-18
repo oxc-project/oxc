@@ -95,6 +95,87 @@ fn shadowed() {
 }
 
 #[test]
+fn typeof_define() {
+    let config = config(&[
+        ("typeof window", "'undefined'"),
+        ("typeof process.env", "'object'"),
+        ("typeof import.meta", "'object'"),
+    ]);
+
+    test_define_only(
+        "foo(typeof window, typeof (window), typeof process.env, typeof process['env'], typeof process?.env, typeof import.meta)",
+        "foo('undefined', 'undefined', 'object', 'object', 'object', 'object')",
+        &config,
+    );
+    test("if (typeof window === 'undefined') server(); else client();", "server()", &config);
+    test(
+        "if (typeof window !== 'undefined') import('./client'); else import('./server');",
+        "import('./server')",
+        &config,
+    );
+}
+
+#[test]
+fn typeof_define_is_exact() {
+    let config = config(&[("typeof window", "'undefined'"), ("typeof process.env", "'object'")]);
+
+    test_same("foo(typeof window.document)", &config);
+    test_same("foo(typeof process)", &config);
+    test_same("foo(typeof process.env.NODE_ENV)", &config);
+}
+
+#[test]
+fn typeof_define_is_scope_aware() {
+    let config =
+        config(&[("typeof window", "'undefined'"), ("typeof window.document", "'object'")]);
+
+    test_define_only(
+        "foo(typeof window, typeof window.document); function f(window) { foo(typeof window, typeof window.document) }",
+        "foo('undefined', 'object'); function f(window) { foo(typeof window, typeof window.document) }",
+        &config,
+    );
+    test_define_only(
+        "const window = {}; foo(typeof window)",
+        "const window = {}; foo(typeof window)",
+        &config,
+    );
+    test_define_only("foo(typeof window); var window", "foo(typeof window); var window", &config);
+    test_define_only(
+        "try {} catch (window) { foo(typeof window) }",
+        "try {} catch (window) { foo(typeof window) }",
+        &config,
+    );
+    test_define_only(
+        "import window from 'window'; foo(typeof window)",
+        "import window from 'window'; foo(typeof window)",
+        &config,
+    );
+    test_define_only(
+        "declare const window: Window; foo(typeof window)",
+        "declare const window: Window; foo('undefined')",
+        &config,
+    );
+    test_define_only(
+        "type WindowType = typeof window; foo(typeof window)",
+        "type WindowType = typeof window; foo('undefined')",
+        &config,
+    );
+}
+
+#[test]
+fn typeof_define_takes_precedence_over_identifier_define() {
+    let config = config(&[("window", "globalThis"), ("typeof window", "'undefined'")]);
+    test_define_only("foo(window, typeof window)", "foo(globalThis, 'undefined')", &config);
+}
+
+#[test]
+fn invalid_typeof_define_key() {
+    for key in ["typeof ", "typeof  window", "typeof window.*", "typeof window[0]"] {
+        assert!(ReplaceGlobalDefinesConfig::new(&[(key, "'undefined'")]).is_err(), "{key}");
+    }
+}
+
+#[test]
 fn dot() {
     let config = config(&[("process.env.NODE_ENV", "production")]);
     test("foo(process.env.NODE_ENV)", "foo(production)", &config);
