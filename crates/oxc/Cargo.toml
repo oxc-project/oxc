@@ -46,6 +46,10 @@ oxc_transformer_plugins = { workspace = true, optional = true }
 [features]
 default = ["regular_expression"]
 
+# Re-export miette's graphical report handlers (`oxc::diagnostics::GraphicalReportHandler`)
+# and render fancy codeframes. Off by default; only tools that render diagnostics enable it.
+fancy = ["oxc_diagnostics/fancy"]
+
 full = [
   "codegen",
   "mangler",

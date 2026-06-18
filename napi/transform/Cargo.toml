@@ -23,7 +23,7 @@ doctest = false
 
 [dependencies]
 oxc = { workspace = true, features = ["full"] }
-oxc_napi = { workspace = true }
+oxc_napi = { workspace = true, features = ["fancy"] }
 oxc_sourcemap = { workspace = true, features = ["napi"] }
 
 rustc-hash = { workspace = true }

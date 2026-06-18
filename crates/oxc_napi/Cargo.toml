@@ -31,6 +31,12 @@ oxc_syntax = { workspace = true }
 napi = { workspace = true }
 napi-derive = { workspace = true }
 
+[features]
+# Render the diagnostic codeframe with miette's graphical handler (owo-colors + textwrap).
+# Off by default so embedders that don't render diagnostics (e.g. bundlers) don't link the
+# renderer; the oxc napi binaries (parser/minify/transform/playground) opt in.
+fancy = ["oxc_diagnostics/fancy"]
+
 [build-dependencies]
 napi-build = { workspace = true }
 

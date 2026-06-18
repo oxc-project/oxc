@@ -26,7 +26,7 @@ oxc = { workspace = true, features = ["ast_visit", "regular_expression", "semant
 oxc_ast_macros = { workspace = true }
 oxc_estree = { workspace = true }
 oxc_estree_tokens = { workspace = true, optional = true }
-oxc_napi = { workspace = true }
+oxc_napi = { workspace = true, features = ["fancy"] }
 oxc_str = { workspace = true }
 
 rustc-hash = { workspace = true }
