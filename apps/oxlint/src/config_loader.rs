@@ -237,6 +237,9 @@ impl ConfigLoadError {
 ///
 /// This groups together failures related to the root configuration file
 /// and to any nested configuration files discovered during loading.
+// `OxcDiagnostic` is intentionally inlined (~176 bytes) to keep its construction
+// allocation-free, so the variant size difference is a deliberate trade-off.
+#[expect(clippy::large_enum_variant)]
 #[derive(Debug)]
 pub enum CliConfigLoadError {
     /// An error that occurred while loading or parsing the root configuration.
@@ -255,6 +258,10 @@ pub struct LoadedConfigs {
     pub nested: FxHashMap<PathBuf, Config>,
     /// Ignore patterns from nested configs, paired with the directory they apply to.
     pub nested_ignore_patterns: Vec<(Vec<String>, PathBuf)>,
+}
+
+pub fn materialize_default_plugins(config: &mut Oxlintrc) {
+    config.plugins.get_or_insert_with(Default::default);
 }
 
 pub struct ConfigLoader<'a> {

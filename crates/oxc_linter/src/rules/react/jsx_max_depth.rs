@@ -17,7 +17,7 @@ use crate::{
     rule::{DefaultRuleConfig, Rule},
 };
 
-fn jsx_max_depth_diagnostic(depth: usize, max: usize, span: Span) -> OxcDiagnostic {
+fn jsx_max_depth_diagnostic(depth: u32, max: u32, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
         "JSX nesting depth of {depth} exceeds the configured maximum of {max}"
     ))
@@ -39,7 +39,7 @@ impl std::ops::Deref for JsxMaxDepth {
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct JsxMaxDepthConfig {
     /// The maximum allowed depth of nested JSX elements and fragments.
-    pub max: usize,
+    pub max: u32,
 }
 
 impl Default for JsxMaxDepthConfig {
@@ -87,6 +87,7 @@ declare_oxc_lint!(
     style,
     config = JsxMaxDepthConfig,
     version = "1.36.0",
+    short_description = "Enforces a maximum depth for nested JSX elements and fragments.",
 );
 
 impl Rule for JsxMaxDepth {
@@ -125,7 +126,7 @@ fn calculate_variable_jsx_depth(
     symbol_id: SymbolId,
     ctx: &LintContext<'_>,
     visited: &mut FxHashSet<SymbolId>,
-) -> usize {
+) -> u32 {
     if !visited.insert(symbol_id) {
         return 0;
     }
@@ -146,7 +147,7 @@ fn calculate_expression_jsx_depth(
     expr: &Expression<'_>,
     ctx: &LintContext<'_>,
     visited: &mut FxHashSet<SymbolId>,
-) -> usize {
+) -> u32 {
     match expr {
         Expression::JSXElement(elem) => calculate_jsx_children_depth(&elem.children, ctx, visited),
         Expression::JSXFragment(frag) => calculate_jsx_children_depth(&frag.children, ctx, visited),
@@ -166,7 +167,7 @@ fn calculate_node_jsx_depth(
     node: &AstNode<'_>,
     ctx: &LintContext<'_>,
     visited_symbols: &mut FxHashSet<SymbolId>,
-) -> usize {
+) -> u32 {
     let children = match node.kind() {
         AstKind::JSXElement(elem) => &elem.children,
         AstKind::JSXFragment(frag) => &frag.children,
@@ -179,7 +180,7 @@ fn calculate_jsx_children_depth(
     children: &[JSXChild<'_>],
     ctx: &LintContext<'_>,
     visited_symbols: &mut FxHashSet<SymbolId>,
-) -> usize {
+) -> u32 {
     if children.is_empty() {
         return 0;
     }
@@ -228,13 +229,14 @@ fn is_leaf_jsx_node(node: &AstNode<'_>) -> bool {
     !children.iter().any(|child| matches!(child, JSXChild::Element(_) | JSXChild::Fragment(_)))
 }
 
-fn jsx_ancestor_depth(node: &AstNode<'_>, ctx: &LintContext<'_>) -> usize {
+#[expect(clippy::cast_possible_truncation)] // the length of ancestors can't be over u32::MAX, because the source code is already limited by u32::MAX.
+fn jsx_ancestor_depth(node: &AstNode<'_>, ctx: &LintContext<'_>) -> u32 {
     ctx.nodes()
         .ancestors(node.id())
         .filter(|ancestor| {
             matches!(ancestor.kind(), AstKind::JSXElement(_) | AstKind::JSXFragment(_))
         })
-        .count()
+        .count() as u32
 }
 
 #[test]

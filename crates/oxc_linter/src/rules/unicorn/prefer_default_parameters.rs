@@ -63,6 +63,7 @@ declare_oxc_lint!(
     style,
     fix,
     version = "1.33.0",
+    short_description = "Prefer default parameters over reassignment.",
 );
 
 impl Rule for PreferDefaultParameters {

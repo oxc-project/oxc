@@ -4,7 +4,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         ArrowFunctionExpression, AwaitExpression, ChainElement, ExportDefaultDeclarationKind,
-        Expression, ExpressionStatement, Function, ObjectExpression, ObjectPropertyKind,
+        Expression, ExpressionStatement, Function, ObjectExpression,
     },
 };
 use oxc_ast_visit::{Visit, walk};
@@ -14,7 +14,9 @@ use oxc_semantic::{ScopeFlags, Scoping, SymbolId};
 use oxc_span::Span;
 
 use crate::module_record::{ImportEntry, ImportImportName};
-use crate::{AstNode, context::LintContext, frameworks::FrameworkOptions, rule::Rule};
+use crate::{
+    AstNode, context::LintContext, frameworks::FrameworkOptions, rule::Rule, utils::find_property,
+};
 
 fn no_watch_after_await_diagnostic(span: Span, name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("`{name}` is forbidden after an `await` expression."))
@@ -28,7 +30,7 @@ pub struct NoWatchAfterAwait;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow asynchronously registered `watch`.
+    /// Disallow asynchronously-registered `watch`.
     ///
     /// ### Why is this bad?
     ///
@@ -66,7 +68,8 @@ declare_oxc_lint!(
     NoWatchAfterAwait,
     vue,
     correctness,
-    version = "next",
+    version = "1.67.0",
+    short_description = "Disallow asynchronously-registered `watch`.",
 );
 
 const WATCH_FUNCTIONS: &[&str] = &["watch", "watchEffect"];
@@ -103,12 +106,7 @@ impl Rule for NoWatchAfterAwait {
 }
 
 fn check_setup_in_object<'a>(obj_expr: &ObjectExpression<'a>, ctx: &LintContext<'a>) {
-    let Some(setup_prop) = obj_expr.properties.iter().find_map(|prop| {
-        let ObjectPropertyKind::ObjectProperty(obj_prop) = prop else {
-            return None;
-        };
-        obj_prop.key.static_name().is_some_and(|name| name == "setup").then_some(obj_prop)
-    }) else {
+    let Some(setup_prop) = find_property(obj_expr, "setup") else {
         return;
     };
 
@@ -234,7 +232,7 @@ fn test() {
                   export default {
                     async setup() {
                       watch(foo, () => { /* ... */ }) // ok
-            
+
                       await doSomething()
                     }
                   }
@@ -283,7 +281,7 @@ fn test() {
                   export default {
                     async _setup() {
                       await doSomething()
-            
+
                       onMounted(() => { /* ... */ }) // error
                     }
                   }
@@ -433,7 +431,7 @@ fn test() {
                   export default {
                     async setup() {
                       await doSomething()
-            
+
                       watch(foo, () => { /* ... */ }) // error
                     }
                   }
@@ -450,7 +448,7 @@ fn test() {
                   export default {
                     async setup() {
                       await doSomething()
-            
+
                       watchEffect(() => { /* ... */ })
                       watch(foo, () => { /* ... */ })
                     }

@@ -1,0 +1,19 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ vue(no-computed-properties-in-data): The computed property cannot be used in `data()` because it is before initialization.
+   ╭─[no_computed_properties_in_data.tsx:4:29]
+ 3 │               data() {
+ 4 │                 const foo = this.foo
+   ·                             ────────
+ 5 │                 return  {}
+   ╰────
+
+  ⚠ vue(no-computed-properties-in-data): The computed property cannot be used in `data()` because it is before initialization.
+   ╭─[no_computed_properties_in_data.tsx:5:29]
+ 4 │                 const vm = this
+ 5 │                 const foo = vm.foo
+   ·                             ──────
+ 6 │                 return  {}
+   ╰────

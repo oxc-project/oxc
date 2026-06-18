@@ -53,15 +53,16 @@ impl<'a> PeepholeOptimizations {
                 let left = test.take_in(ctx.ast);
                 let mut logical_expr =
                     ctx.ast.logical_expression(test.span(), left, LogicalOperator::And, expr);
-                *test = Self::try_fold_and_or(&mut logical_expr, ctx)
+                let new_test = Self::try_fold_and_or(&mut logical_expr, ctx)
                     .unwrap_or_else(|| Expression::LogicalExpression(ctx.ast.alloc(logical_expr)));
+                ctx.replace_expression(test, new_test);
             } else {
                 for_stmt.test = Some(expr);
             }
 
             let alternate = if_stmt.alternate.take();
-            for_stmt.body = Self::drop_first_statement(span, body, alternate, ctx);
-            ctx.state.changed = true;
+            let new_body = Self::drop_first_statement(span, body, alternate, ctx);
+            ctx.replace_statement(&mut for_stmt.body, new_body);
             return;
         }
         // "for (;;) if (x) y(); else break;" => "for (; x;) y();"
@@ -90,15 +91,16 @@ impl<'a> PeepholeOptimizations {
                 let left = test.take_in(ctx.ast);
                 let mut logical_expr =
                     ctx.ast.logical_expression(test.span(), left, LogicalOperator::And, expr);
-                *test = Self::try_fold_and_or(&mut logical_expr, ctx)
+                let new_test = Self::try_fold_and_or(&mut logical_expr, ctx)
                     .unwrap_or_else(|| Expression::LogicalExpression(ctx.ast.alloc(logical_expr)));
+                ctx.replace_expression(test, new_test);
             } else {
                 for_stmt.test = Some(expr);
             }
 
             let consequent = if_stmt.consequent.take_in(ctx.ast);
-            for_stmt.body = Self::drop_first_statement(span, body, Some(consequent), ctx);
-            ctx.state.changed = true;
+            let new_body = Self::drop_first_statement(span, body, Some(consequent), ctx);
+            ctx.replace_statement(&mut for_stmt.body, new_body);
         }
     }
 

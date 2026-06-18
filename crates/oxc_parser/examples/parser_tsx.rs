@@ -39,9 +39,9 @@ export const Counter: React.FC = () => {
     let source_type = SourceType::from_path("Counter.tsx").unwrap();
 
     let ParserReturn {
-        program,  // AST
-        errors,   // Syntax errors
-        panicked, // Parser encountered an error it couldn't recover from
+        program,     // AST
+        diagnostics, // Syntax errors
+        panicked,    // Parser encountered an error it couldn't recover from
         ..
     } = Parser::new(&allocator, source_text, source_type).parse();
 
@@ -49,8 +49,8 @@ export const Counter: React.FC = () => {
         return Err("Parser panicked".to_string());
     }
 
-    if !errors.is_empty() {
-        return Err(format!("Parsing errors: {}", errors.len()));
+    if !diagnostics.is_empty() {
+        return Err(format!("Parsing errors: {}", diagnostics.len()));
     }
 
     assert!(!program.body.is_empty());

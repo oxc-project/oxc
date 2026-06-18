@@ -4,6 +4,26 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.137.0] - 2026-06-18
+
+### 💥 BREAKING CHANGES
+
+- 7a76cd3 estree: [**BREAKING**] Make whether to include TS fields a runtime option (#23574) (overlookmotel)
+
+### 🚀 Features
+
+- 53509a8 minifier: Treeshake pure typed arrays and Set/Map array literals (#23469) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- ae02b4e ci/parser: Use `minimal` for vitest reporter (#23457) (camc314)
+
+## [0.136.0] - 2026-06-15
+
+### ⚡ Performance
+
+- da1a6c6 diagnostics: Migrate to allocation-optimized oxc-miette (#23094) (Boshen)
+
 ## [0.130.0] - 2026-05-11
 
 ### 📚 Documentation

@@ -619,6 +619,25 @@ fn test_fold_logical_op2() {
     fold("x = [(function(){alert(x)})()] && x", "x=((function(){alert(x)})(),x)");
 }
 
+// `cjs-module-lexer` scans `module.exports = { ... }` syntactically. esbuild
+// emits `0 && (module.exports = { ... })` as a parse-time hint when the real
+// exports happen through helpers the lexer can't trace; folding the hint
+// away breaks `import { X } from "<cjs-pkg>"` consumers.
+//
+// Hint emission site (esbuild v0.28.0):
+// https://github.com/evanw/esbuild/blob/v0.28.0/internal/linker/linker.go#L5127-L5138
+//
+// See also #4878 — the original guard, removed by the #8618 refactor.
+#[test]
+fn test_preserve_cjs_module_lexer_hint() {
+    test_same("0 && (module.exports = { version });");
+    test_same("0 && (module.exports = { a, b, c });");
+    // Compound assignments aren't real lexer hints — keep folding them.
+    fold("x = 0 && (module.exports ||= y)", "x = 0");
+    // Non-export-shape RHS still folds.
+    fold("x = 0 && foo()", "x = 0");
+}
+
 #[test]
 fn test_fold_nullish_coalesce() {
     // fold if left is null/undefined
@@ -1258,6 +1277,37 @@ fn test_inline_values_in_template_literal() {
     fold("`foo${'${}'}`", "'foo${}'");
     fold("`foo${'${}'}${i}`", "`foo\\${}${i}`");
     fold_same("foo`foo${1}bar`");
+}
+
+// Regression: when `fold_object_exp` drops or folds a spread, the dropped
+// subtree must be walked through `drop_expression` so identifier references
+// inside don't leak across passes. The discriminating signal is an
+// otherwise-inlineable symbol that stays uninlined because a stale
+// write-ref hangs around in `Scoping` (#22736).
+//
+// Test options keep unused declarations (`CompressOptionsUnused::Keep`), so
+// `let x` survives — but with `write_references_count == 0` the inline pass
+// replaces `return x` with the constant value. Without the drop walk, the
+// dropped subtree's stale write-ref leaves the count at 1 and inline is
+// blocked.
+#[test]
+fn test_fold_object_spread_drop_walks_argument_refs() {
+    // Path 2: spread argument is a side-effect-free function expression,
+    // folded away entirely. The write to `x` inside the function body must
+    // be cleared from `Scoping`, otherwise the constant inline of `x`
+    // below is blocked by a stale write-reference.
+    test(
+        "function f() { let x = 'a'; ({...function(){ x = 'b' }}); return x; }",
+        "function f() { let x = 'a'; return 'a'; }",
+    );
+    // Path 3: non-computed `__proto__` from an inlined object literal is
+    // elided because it would set the prototype rather than become a
+    // regular property. The dropped property's value subtree must be
+    // walked for the same reason.
+    test(
+        "function f() { let x = 'a'; ({...{__proto__: function(){ x = 'b' }}}); return x; }",
+        "function f() { let x = 'a'; return 'a'; }",
+    );
 }
 
 mod bigint {

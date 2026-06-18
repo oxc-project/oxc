@@ -1,8 +1,5 @@
 use oxc_allocator::Vec as AllocatorVec;
-use oxc_ast::ast::{
-    ArrowFunctionExpression, Expression, Function, FunctionBody, ReturnStatement, Statement,
-    UnaryOperator,
-};
+use oxc_ast::ast::{ArrowFunctionExpression, Function, FunctionBody, ReturnStatement, Statement};
 use oxc_ast_visit::Visit;
 use oxc_cfg::{
     EdgeType, InstructionKind, ReturnInstructionKind,
@@ -219,7 +216,7 @@ impl Visit<'_> for ReturnStatementFinder {
             return;
         };
 
-        if is_expression_void(argument) {
+        if argument.is_void() {
             self.has_void_expression = true;
             if !self.allow_void {
                 self.spans.push(argument.span());
@@ -251,14 +248,5 @@ pub fn is_void_arrow_return(statements: &AllocatorVec<'_, Statement>) -> bool {
         return false;
     };
 
-    is_expression_void(&expression_return.expression)
-}
-
-fn is_expression_void(statement_expression: &Expression<'_>) -> bool {
-    match statement_expression {
-        Expression::UnaryExpression(void_expression) => {
-            void_expression.operator == UnaryOperator::Void
-        }
-        _ => false,
-    }
+    expression_return.expression.is_void()
 }

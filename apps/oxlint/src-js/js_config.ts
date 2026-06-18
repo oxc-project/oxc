@@ -1,6 +1,5 @@
 import { importJsConfig, loadViteConfigField } from "@oxapps/shared";
 import { getErrorMessage } from "./utils/utils.ts";
-import { DateNow, JSONStringify } from "./utils/globals.ts";
 
 interface JsConfigResult {
   path: string;
@@ -127,12 +126,12 @@ async function loadConfigs(
     }
 
     if (errors.length > 0) {
-      return JSONStringify({ Failures: errors } satisfies LoadJsConfigsResult);
+      return JSON.stringify({ Failures: errors } satisfies LoadJsConfigsResult);
     }
 
-    return JSONStringify({ Success: successes } satisfies LoadJsConfigsResult);
+    return JSON.stringify({ Success: successes } satisfies LoadJsConfigsResult);
   } catch (err) {
-    return JSONStringify({
+    return JSON.stringify({
       Error: getErrorMessage(err),
     } satisfies LoadJsConfigsResult);
   }
@@ -146,7 +145,7 @@ export type ConfigLoader = (paths: string[]) => Promise<string>;
 export const loadJsConfigs: ConfigLoader = (paths) => {
   // Share one cache-busting key across the batch so that `?cache=<key>` is identical
   // for every path resolved in this call (consistent reload semantics for LSP).
-  const cacheKey = DateNow();
+  const cacheKey = Date.now();
   return loadConfigs(paths, (path) => resolveJsConfig(path, cacheKey));
 };
 

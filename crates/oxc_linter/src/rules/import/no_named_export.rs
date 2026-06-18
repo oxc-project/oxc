@@ -46,6 +46,7 @@ declare_oxc_lint!(
     import,
     style,
     version = "1.19.0",
+    short_description = "Prohibit named exports.",
 );
 
 impl Rule for NoNamedExport {

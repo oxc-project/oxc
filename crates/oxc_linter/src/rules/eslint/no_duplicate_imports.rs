@@ -123,6 +123,7 @@ declare_oxc_lint!(
     pending,
     config = NoDuplicateImports,
     version = "0.13.2",
+    short_description = "Disallow duplicate module imports.",
 );
 
 #[derive(Debug, Clone, PartialEq)]

@@ -125,7 +125,8 @@ declare_oxc_lint!(
     CallbackReturn,
     node,
     style,
-    version = "next",
+    version = "1.67.0",
+    short_description = "Require `return` statements after callbacks.",
     config = CallbackReturn,
 );
 

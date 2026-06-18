@@ -259,6 +259,13 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider using this expression or removing it
 
   ⚠ eslint(no-unused-expressions): Expected expression to be used
+   ╭─[no_unused_expressions.tsx:1:1]
+ 1 │ foo;
+   · ────
+   ╰────
+  help: Consider using this expression or removing it
+
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:2:20]
  1 │ 
  2 │             if (0) 0;
@@ -392,6 +399,15 @@ source: crates/oxc_linter/src/tester.rs
  5 │               'use strict';
    ·               ─────────────
  6 │             }
+   ╰────
+  help: Consider using this expression or removing it
+
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
+   ╭─[no_unused_expressions.tsx:3:15]
+ 2 │               const foo = true;
+ 3 │               ('use strict');
+   ·               ───────────────
+ 4 │             }
    ╰────
   help: Consider using this expression or removing it
 

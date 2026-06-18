@@ -3,6 +3,39 @@ use crate::{
     tester::{test, test_same},
 };
 
+// A leading comment inside a `pife` arrow alternate of a `?:` must stay
+// inside the paren wrap on every codegen pass; otherwise the parser re-
+// anchors the shifted comment and the next pass drops it.
+#[test]
+fn test_comment_inside_pife_arrow_alternate_of_conditional() {
+    test(
+        "export const x = foo ? bar : (\n  // explanatory comment\n  (a, b) => a + b\n);",
+        "export const x = foo ? bar : (\n// explanatory comment\n(a, b) => a + b);\n",
+    );
+    test_idempotency(
+        "export const x = foo ? bar : (\n  // explanatory comment\n  (a, b) => a + b\n);",
+    );
+}
+
+#[test]
+fn test_comment_inside_pife_function_alternate_of_conditional() {
+    test_idempotency(
+        "export const x = foo ? bar : (\n  // explanatory comment\n  function(c) { return c }\n);",
+    );
+}
+
+// A line comment between a conditional `:` and a plain (non-pife) alternate must
+// be preserved. It was previously treated as a trailing comment of `:` and
+// dropped, which broke codegen idempotency once a transform emits
+// `? consequent : // comment\nalternate` (e.g. lowered optional chaining).
+#[test]
+fn test_line_comment_after_conditional_colon() {
+    test("x = cond ? a : // c\nb;", "x = cond ? a : // c\nb;\n");
+    test_idempotency("x = cond ? a : // c\nb;");
+    // Real-world shape: `a?.b() ?? c` with a leading comment, after lowering.
+    test_idempotency("x = (_a = a) === null || _a === void 0 ? void 0 : // c1\n// c2\n_a.b();");
+}
+
 #[test]
 fn test_comment_at_top_of_file() {
     use oxc_allocator::Allocator;
@@ -23,6 +56,9 @@ fn test_comment_at_top_of_file() {
 #[test]
 fn unit() {
     test_same("<div>{/* Hello */}</div>;\n");
+    // A comment-only JSX expression container must not leak a leading space onto
+    // the following statement's indent.
+    test_same("x = <div>{/* Hello */}</div>;\ny = 1;\n");
     // https://github.com/oxc-project/oxc/issues/17266
     test("console.log(<div x={/*before*/ x} />)", "console.log(<div x={/*before*/ x} />);\n");
     test(
@@ -683,4 +719,14 @@ fn test_legal_comment_after_code_minify_with_comments_idempotency() {
             ..CodegenOptions::default()
         },
     );
+}
+
+#[test]
+fn test_comment_inside_parenthesized_expression_with_pife_arrow() {
+    test_idempotency("export const x = foo ? bar : (\n  // comment\n  (a, b) => a + b\n);");
+}
+
+#[test]
+fn test_comment_inside_double_parenthesized_pife_arrow() {
+    test_idempotency("const x = foo ? bar : ( ( ( a ) => a ) );");
 }

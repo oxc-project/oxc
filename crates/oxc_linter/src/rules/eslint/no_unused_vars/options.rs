@@ -8,7 +8,7 @@ use serde_json::Value;
 
 // See [ESLint - no-unused-vars config schema](https://github.com/eslint/eslint/blob/53b1ff047948e36682fade502c949f4e371e53cd/lib/rules/no-unused-vars.js#L61)
 #[derive(Debug, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 #[must_use]
 #[non_exhaustive]
 pub struct NoUnusedVarsOptions {
@@ -235,7 +235,7 @@ pub struct NoUnusedVarsOptions {
 
 /// Fine-grained auto-fix controls for `no-unused-vars`.
 #[derive(Default, Debug, Clone, JsonSchema, Serialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 #[must_use]
 #[non_exhaustive]
 pub struct NoUnusedVarsFixOptions {
@@ -271,9 +271,13 @@ impl NoUnusedVarsFixMode {
 // which represents the default ignore pattern for when no pattern is
 // explicitly provided.
 #[derive(Debug, Clone, Copy, JsonSchema)]
+#[serde(untagged)]
 pub enum IgnorePattern<R> {
     /// No ignore pattern was provided, use the default pattern. This
     /// means that the pattern is `^_`.
+    #[serde(skip)]
+    // skip serialization since this is only a marker for default behavior, not an actual pattern to be used.
+    // The schema generation would produce two `null` options.
     Default,
     /// The ignore pattern is explicitly none.
     None,

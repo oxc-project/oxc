@@ -476,12 +476,14 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                                 let class_binding = class_decl.id.as_ref().unwrap();
                                 let class_binding_name = class_binding.name;
 
-                                let xx = BoundIdentifier::from_binding_ident(class_binding)
-                                    .create_read_reference(ctx);
+                                let class_binding_reference =
+                                    BoundIdentifier::from_binding_ident(class_binding)
+                                        .create_read_reference(ctx);
 
                                 inner_block.push(Self::transform_class_decl(class_decl, ctx));
 
-                                let local = ModuleExportName::IdentifierReference(xx);
+                                let local =
+                                    ModuleExportName::IdentifierReference(class_binding_reference);
                                 let exported = ctx
                                     .ast
                                     .module_export_name_identifier_name(SPAN, class_binding_name);

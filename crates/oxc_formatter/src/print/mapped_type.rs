@@ -2,7 +2,7 @@ use oxc_ast::ast::{TSMappedType, TSMappedTypeModifierOperator};
 
 use crate::{
     ast_nodes::AstNode,
-    formatter::{Formatter, prelude::*, trivia::FormatLeadingComments},
+    formatter::{prelude::*, trivia::FormatLeadingComments},
     print::semicolon::OptionalSemicolon,
     utils::suppressed::FormatSuppressedNode,
     write,
@@ -11,7 +11,7 @@ use crate::{
 use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSMappedType<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         if f.comments().is_suppressed(self.key.span.start) {
             return write!(f, FormatSuppressedNode(self.span));
         }
@@ -27,7 +27,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSMappedType<'a>> {
         //   { readonly
         //     [A in B]: T}
         // Because the break is not immediately after `{`.
-        let should_expand = f.source_text().has_newline_after_opening_brace(self.span.start);
+        // `+ 1` skips the opening `{`.
+        let should_expand =
+            f.source_text().has_line_terminator_after_skipping_comments(self.span.start + 1);
 
         let format_inner = format_with(|f| {
             if should_expand {

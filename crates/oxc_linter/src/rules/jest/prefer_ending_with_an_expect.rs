@@ -29,7 +29,7 @@ fn prefer_ending_with_an_expect_diagnostic(span: Span) -> OxcDiagnostic {
 pub struct PreferEndingWithAnExpect(Box<PreferEndingWithAnExpectConfig>);
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct PreferEndingWithAnExpectConfig {
     /// An array of function names that should also be treated as test blocks.
     additional_test_block_functions: Vec<CompactStr>,
@@ -152,7 +152,8 @@ declare_oxc_lint!(
     jest,
     style,
     config = PreferEndingWithAnExpectConfig,
-    version = "1.60.0"
+    version = "1.60.0",
+    short_description = "Enforces that test blocks end with an assertion.",
 );
 
 impl Rule for PreferEndingWithAnExpect {

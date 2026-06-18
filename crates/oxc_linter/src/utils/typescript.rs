@@ -50,7 +50,7 @@ pub enum TypeOrValueSpecifier {
 
 /// Describes specific types or values declared in local files.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct FileSpecifier {
     /// Must be "file"
     pub from: FileFrom,
@@ -70,7 +70,7 @@ pub enum FileFrom {
 
 /// Describes specific types or values declared in TypeScript's built-in lib.*.d.ts types.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct LibSpecifier {
     /// Must be "lib"
     pub from: LibFrom,
@@ -86,7 +86,7 @@ pub enum LibFrom {
 
 /// Describes specific types or values imported from packages.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct PackageSpecifier {
     /// Must be "package"
     pub from: PackageFrom,

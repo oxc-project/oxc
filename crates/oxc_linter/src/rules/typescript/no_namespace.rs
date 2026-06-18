@@ -115,6 +115,7 @@ declare_oxc_lint!(
     restriction,
     config = NoNamespace,
     version = "0.0.8",
+    short_description = "Disallow TypeScript namespaces.",
 );
 
 impl Rule for NoNamespace {
@@ -348,7 +349,7 @@ fn test() {
         (
             "namespace A {
                export declare namespace B {
-                 declare namespace C {}
+                 namespace C {}
                }
              }",
             Some(serde_json::json!([{ "allowDeclarations": true }])),
@@ -358,7 +359,7 @@ fn test() {
         (
             "namespace A {
                export declare namespace B {
-                 export declare namespace C {}
+                 export namespace C {}
                }
              }",
             Some(serde_json::json!([{ "allowDeclarations": true }])),
@@ -428,7 +429,7 @@ fn test() {
         (
             "export namespace A {
                export declare namespace B {
-                 declare namespace C {}
+                 namespace C {}
                }
              }",
             Some(serde_json::json!([{ "allowDeclarations": true }])),
@@ -438,7 +439,7 @@ fn test() {
         (
             "export namespace A {
                export declare namespace B {
-                 export declare namespace C {}
+                 export namespace C {}
                }
              }",
             Some(serde_json::json!([{ "allowDeclarations": true }])),

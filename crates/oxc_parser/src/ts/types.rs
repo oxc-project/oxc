@@ -151,7 +151,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_ts_type_parameters(
         &mut self,
     ) -> Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
-        self.parse_ts_type_parameters_impl().0
+        self.parse_ts_type_parameters_impl(false).0
+    }
+
+    pub(crate) fn parse_ts_type_parameters_with_variance(
+        &mut self,
+    ) -> Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        self.parse_ts_type_parameters_impl(true).0
     }
 
     /// Parse TypeScript type parameters and return whether there was a trailing comma.
@@ -159,11 +165,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_ts_type_parameters_with_trailing_comma(
         &mut self,
     ) -> (Option<Box<'a, TSTypeParameterDeclaration<'a>>>, bool) {
-        self.parse_ts_type_parameters_impl()
+        self.parse_ts_type_parameters_impl(false)
     }
 
     fn parse_ts_type_parameters_impl(
         &mut self,
+        allow_variance: bool,
     ) -> (Option<Box<'a, TSTypeParameterDeclaration<'a>>>, bool) {
         if !self.is_ts {
             return (None, false);
@@ -174,12 +181,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let span = self.start_span();
         let opening_span = self.cur_token().span();
         self.expect(Kind::LAngle);
-        let (params, trailing_comma) = self.parse_delimited_list(
-            Kind::RAngle,
-            Kind::Comma,
-            opening_span,
-            Self::parse_ts_type_parameter,
-        );
+        let (params, trailing_comma) =
+            self.parse_delimited_list(Kind::RAngle, Kind::Comma, opening_span, |p| {
+                p.parse_ts_type_parameter(allow_variance)
+            });
         self.expect(Kind::RAngle);
         let span = self.end_span(span);
         if params.is_empty() {
@@ -198,18 +203,32 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         implements
     }
 
-    pub(crate) fn parse_ts_type_parameter(&mut self) -> TSTypeParameter<'a> {
+    fn parse_ts_type_parameter(&mut self, allow_variance: bool) -> TSTypeParameter<'a> {
         let span = self.start_span();
 
         let modifiers = self.parse_modifiers(true, false);
+        let allowed_modifiers = if allow_variance {
+            ModifierKinds::new([ModifierKind::In, ModifierKind::Out, ModifierKind::Const])
+        } else {
+            ModifierKinds::new([ModifierKind::Const])
+        };
         self.verify_modifiers(
             &modifiers,
-            ModifierKinds::new([ModifierKind::In, ModifierKind::Out, ModifierKind::Const]),
-            false, // `in` and `out` are only allowed on a type parameter of a class, interface or type alias
-            diagnostics::cannot_appear_on_a_type_parameter,
+            allowed_modifiers,
+            false,
+            |modifier, allowed| match modifier.kind {
+                ModifierKind::In | ModifierKind::Out => {
+                    diagnostics::can_only_appear_on_a_type_parameter_of_a_class_interface_or_type_alias(
+                        modifier.kind,
+                        modifier.span(),
+                    )
+                }
+                _ => diagnostics::cannot_appear_on_a_type_parameter(modifier, allowed),
+            },
         );
 
         let name = self.parse_binding_identifier();
+        self.check_reserved_type_name(&name, "Type parameter");
         let constraint = self.parse_ts_type_constraint();
         let default = self.parse_ts_default_type();
 
@@ -302,6 +321,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_type_parameter_of_infer_type(&mut self) -> Box<'a, TSTypeParameter<'a>> {
         let span = self.start_span();
         let name = self.parse_binding_identifier();
+        self.check_reserved_type_name(&name, "Type parameter");
         let constraint = self.parse_constraint_of_infer_type();
         let span = self.end_span(span);
 
@@ -321,14 +341,22 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if !self.at(Kind::Extends) {
             return None;
         }
+        // When conditional types are already disallowed by the enclosing context — the normal case,
+        // since `infer` lives in a conditional's `extends` clause which is parsed with
+        // `DisallowConditionalTypes` — a trailing `?` cannot reinterpret `extends` as a conditional.
+        // The constraint is then unambiguous, so parse it without a checkpoint/rewind.
+        if self.ctx.has_disallow_conditional_types() {
+            self.bump_any();
+            return Some(self.context_add(Context::DisallowConditionalTypes, Self::parse_ts_type));
+        }
         let checkpoint = self.checkpoint();
         self.bump_any();
         let constraint = self.context_add(Context::DisallowConditionalTypes, Self::parse_ts_type);
-        if self.ctx.has_disallow_conditional_types() || !self.at(Kind::Question) {
-            Some(constraint)
-        } else {
+        if self.at(Kind::Question) {
             self.rewind(checkpoint);
             None
+        } else {
+            Some(constraint)
         }
     }
 
@@ -464,11 +492,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Kind::LParen => self.parse_parenthesized_type(),
             Kind::Import => TSType::TSImportType(self.parse_ts_import_type()),
             Kind::Asserts => {
-                // Use lookahead to check if this is an asserts type predicate
-                if self.lookahead(|parser| {
-                    parser.bump(Kind::Asserts);
-                    parser.is_token_identifier_or_keyword_on_same_line()
-                }) {
+                // Peek the token after `asserts` to check if this is an asserts type predicate.
+                let next = self.lexer.peek_token();
+                if next.kind().is_identifier_name() && !next.is_on_new_line() {
                     let asserts_start_span = self.start_span();
                     self.bump_any(); // bump `asserts`
                     self.parse_asserts_type_predicate(asserts_start_span)
@@ -479,10 +505,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Kind::TemplateHead => self.parse_template_type(false),
             _ => self.parse_type_reference(),
         }
-    }
-
-    fn is_token_identifier_or_keyword_on_same_line(&self) -> bool {
-        self.cur_kind().is_identifier_name() && !self.cur_token().is_on_new_line()
     }
 
     fn parse_keyword_type(&mut self) -> TSType<'a> {
@@ -883,6 +905,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_type_arguments_in_expression(
         &mut self,
     ) -> Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+        // A type-argument list can only open with `<`, or `<<` for nested generics like
+        // `f<<T>() => U>()`. This mirrors TypeScript's `reScanLessThanToken`, which re-scans only
+        // `<`/`<<`. `<=`/`<<=` can never open one — splitting off the leading `<` leaves a `=`, and
+        // no type starts with `=` — so although `re_lex_ts_l_angle` would accept them (it is shared
+        // with type-context callers), speculating here can only fail and rewind to `None`. Bail
+        // before the checkpoint for any non-`<`-opening token (the common `a?.(`, `a?.b` paths),
+        // avoiding a checkpoint/rewind round-trip that returns `None` anyway.
+        if !matches!(self.cur_kind(), Kind::LAngle | Kind::ShiftLeft) {
+            return None;
+        }
         let checkpoint = self.checkpoint();
         let span = self.start_span();
         if !self.re_lex_ts_l_angle() {
@@ -1496,8 +1528,21 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             ));
         }
         self.expect(Kind::RBrack);
-        if params.len() != 1 {
-            self.error(diagnostics::index_signature_one_parameter(self.end_span(span)));
+        match params.as_slice() {
+            [param] => match &param.type_annotation.type_annotation {
+                TSType::TSLiteralType(ty) => {
+                    self.error(diagnostics::index_signature_parameter_literal_type(ty.span));
+                }
+                TSType::TSStringKeyword(_)
+                | TSType::TSNumberKeyword(_)
+                | TSType::TSSymbolKeyword(_)
+                | TSType::TSAnyKeyword(_) => {}
+                ty if ty.is_keyword() => {
+                    self.error(diagnostics::index_signature_parameter_type(param.span));
+                }
+                _ => {}
+            },
+            _ => self.error(diagnostics::index_signature_one_parameter(self.end_span(span))),
         }
         let Some(type_annotation) = self.parse_ts_type_annotation() else {
             return self

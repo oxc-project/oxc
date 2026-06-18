@@ -22,7 +22,14 @@ fn main() {
     } else {
         std::thread::available_parallelism().map_or(1, NonZeroUsize::get)
     };
-    ThreadPoolBuilder::new().num_threads(thread_count).build_global().unwrap();
+    // Match Linux's default main-thread stack (8 MB) so deeply-nested expressions
+    // (e.g. typescript/tests/cases/compiler/binderBinaryExpressionStressJs.ts)
+    // don't overflow macOS's 2 MB worker default.
+    ThreadPoolBuilder::new()
+        .num_threads(thread_count)
+        .stack_size(8 * 1024 * 1024)
+        .build_global()
+        .unwrap();
 
     // Load all test data once
     let data = TestData::load(app_args.filter.as_deref());

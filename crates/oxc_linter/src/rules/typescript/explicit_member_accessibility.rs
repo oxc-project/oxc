@@ -200,6 +200,7 @@ declare_oxc_lint!(
     conditional_fix_suggestion,
     config = ExplicitMemberAccessibilityConfig,
     version = "1.61.0",
+    short_description = "Require explicit accessibility modifiers on class properties and methods.",
 );
 
 impl Rule for ExplicitMemberAccessibility {
@@ -723,7 +724,7 @@ fn test() {
         (
             "
             abstract class Test {
-              private abstract accessor foo: number;
+              private accessor foo: number;
             }
                   ",
             None,

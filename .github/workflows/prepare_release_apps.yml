@@ -22,23 +22,23 @@ jobs:
       oxlint_version: ${{ steps.run.outputs.OXLINT_VERSION }}
       oxfmt_version: ${{ steps.run.outputs.OXFMT_VERSION }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           fetch-depth: 0
           persist-credentials: false
 
-      - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
+      - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17
         with:
           cache-key: warm
           tools: cargo-release-oxc
 
-      - uses: oxc-project/setup-node@ab97f03642370d79a7e96dd286bd02a1be40e0ba # v1.3.0
+      - uses: oxc-project/setup-node@4c588e9266bd930b6ddc34307df0659ed511d187 # v1.3.1
 
       - name: Generate version and changelog
         id: run
         run: |
           mkdir -p target
-          cargo release-oxc update --release oxlint --release oxfmt
+          cargo release-oxc update --changelog --release oxlint --release oxfmt
           echo "OXLINT_VERSION=$(cat ./target/OXLINT_VERSION)" >> $GITHUB_OUTPUT
           echo "OXFMT_VERSION=$(cat ./target/OXFMT_VERSION)" >> $GITHUB_OUTPUT
           {
@@ -81,58 +81,9 @@ jobs:
           base: main
           body-path: ./target/PR_BODY.md
           assignees: Boshen
-
-  ecosystem-ci:
-    needs: prepare
-    name: Trigger Ecosystem CI
-    runs-on: ubuntu-slim
-    permissions:
-      pull-requests: write
-      contents: write
-    steps:
-      - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-
-      - uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5.0.0
-        id: comment-oxlint
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          issue-number: ${{ needs.prepare.outputs.pull-request-number }}
-          body: |
-            Triggering Oxlint Ecosystem CI
-            https://github.com/oxc-project/oxc-ecosystem-ci/actions/workflows/oxlint-ci.yml
-
-      - uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5.0.0
-        id: comment-oxfmt
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          issue-number: ${{ needs.prepare.outputs.pull-request-number }}
-          body: |
-            Triggering Oxfmt Ecosystem CI
-            https://github.com/oxc-project/oxc-ecosystem-ci/actions/workflows/oxfmt-ci.yml
-
-      - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
-        id: app-token
-        with:
-          client-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-          owner: oxc-project
-          repositories: oxc-ecosystem-ci
-
-      - uses: benc-uk/workflow-dispatch@7a027648b88c2413826b6ddd6c76114894dc5ec4 # v1.3.1
-        with:
-          repo: oxc-project/oxc-ecosystem-ci
-          workflow: oxlint-ci.yml
-          token: ${{ steps.app-token.outputs.token }}
-          ref: main
-          inputs: '{ "issue-number": "${{ needs.prepare.outputs.pull-request-number }}", "comment-id": "${{ steps.comment-oxlint.outputs.comment-id }}" }'
-
-      - uses: benc-uk/workflow-dispatch@7a027648b88c2413826b6ddd6c76114894dc5ec4 # v1.3.1
-        with:
-          repo: oxc-project/oxc-ecosystem-ci
-          workflow: oxfmt-ci.yml
-          token: ${{ steps.app-token.outputs.token }}
-          ref: main
-          inputs: '{ "issue-number": "${{ needs.prepare.outputs.pull-request-number }}", "comment-id": "${{ steps.comment-oxfmt.outputs.comment-id }}" }'
+          labels: |
+            run-oxlint-ecosystem-ci
+            run-oxfmt-ecosystem-ci
 
   website:
     needs: prepare
@@ -149,7 +100,7 @@ jobs:
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
           owner: oxc-project
           repositories: website
-      - uses: benc-uk/workflow-dispatch@7a027648b88c2413826b6ddd6c76114894dc5ec4 # v1.3.1
+      - uses: benc-uk/workflow-dispatch@31e2b3319479a63f0ab15bf800eff9e913504e26 # v1.3.2
         with:
           repo: oxc-project/website
           workflow: release.yml

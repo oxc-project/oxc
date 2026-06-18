@@ -461,7 +461,7 @@ pub fn wrap_text(
     max_width: usize,
     tag_string_length: usize,
     capitalize: bool,
-    format_options: Option<&crate::FormatOptions>,
+    format_options: Option<&crate::JsFormatOptions>,
     allocator: Option<&oxc_allocator::Allocator>,
     external_callbacks: Option<&crate::external_formatter::ExternalCallbacks>,
 ) -> String {

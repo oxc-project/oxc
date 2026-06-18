@@ -72,6 +72,14 @@ impl<'a> TriviaBuilder<'a> {
     }
 
     pub fn add_irregular_whitespace(&mut self, start: u32, end: u32) {
+        // The irregular whitespaces array is ordered; only add if not added before, to avoid
+        // duplicates when the parser looks ahead (e.g. `peek_token`) and rewinds, then re-lexes the
+        // same whitespace. Same approach as `add_comment`.
+        if let Some(last) = self.irregular_whitespaces.last()
+            && start <= last.start
+        {
+            return;
+        }
         self.irregular_whitespaces.push(Span::new(start, end));
     }
 
@@ -142,8 +150,8 @@ impl<'a> TriviaBuilder<'a> {
     /// let x = 5;
     /// ```
     ///
-    /// 2. It does not immediately follow an `=` [`Kind::Eq`] or `(` [`Kind::LParen`]
-    ///    token.
+    /// 2. It does not immediately follow an `=` [`Kind::Eq`], `(` [`Kind::LParen`]
+    ///    or `:` [`Kind::Colon`] token.
     ///
     /// ```javascript
     /// let y = // This should not be treated as trailing (follows `=`)
@@ -152,14 +160,33 @@ impl<'a> TriviaBuilder<'a> {
     /// function foo( // This should not be treated as trailing (follows `(`)
     ///     param
     /// ) {}
+    ///
+    /// let z = cond ? a : // This should not be treated as trailing (follows `:`)
+    ///     b;
     /// ```
+    ///
+    /// Treating a comment after `:` as trailing drops it (it anchors to the
+    /// previous token rather than the following operand), which breaks codegen
+    /// idempotency once a transform emits `? consequent : // comment\nalternate`.
     fn should_be_treated_as_trailing_comment(&self) -> bool {
-        !self.saw_newline && !matches!(self.previous_kind, Kind::Eq | Kind::LParen)
+        !self.saw_newline && !matches!(self.previous_kind, Kind::Eq | Kind::LParen | Kind::Colon)
     }
 
     fn should_stay_leading(comment: &Comment) -> bool {
         // Match esbuild's model where legal comments are preserved before the following token/statement.
-        matches!(comment.content, CommentContent::Legal | CommentContent::JsdocLegal)
+        // Annotation comments (`@__PURE__`, `@__NO_SIDE_EFFECTS__`) semantically mark the *next*
+        // token, so they must also stay leading even when no newline precedes them — otherwise
+        // codegen's minified output (which smashes statements together) breaks idempotency:
+        // pass 1 emits the verbatim annotation as leading, pass 2 re-parses it as trailing of the
+        // previous `}`/`;` and loses the `attached_to`, falling back to the canonical literal.
+        matches!(
+            comment.content,
+            CommentContent::Legal
+                | CommentContent::JsdocLegal
+                | CommentContent::Pure
+                | CommentContent::PureNotApplied
+                | CommentContent::NoSideEffects
+        )
     }
 
     /// Update `pure_comment` / `has_no_side_effects_comment` to point to the comment at `index`.
@@ -386,7 +413,7 @@ mod test {
         let allocator = Allocator::default();
         let source_type = SourceType::default();
         let ret = Parser::new(&allocator, source_text, source_type).parse();
-        assert!(ret.errors.is_empty());
+        assert!(ret.diagnostics.is_empty());
         ret.program.comments.iter().copied().collect::<Vec<_>>()
     }
 
@@ -546,6 +573,49 @@ function bar() {}";
         assert!(comments[0].followed_by_newline());
     }
 
+    // Annotation comments mark the *next* token, so they must stay leading even
+    // when they sit directly after a previous statement with no preceding newline
+    // (which is what codegen produces in `minify` mode). Without this, pass 2 of
+    // an idempotency test would re-classify the annotation as trailing of the
+    // previous token, drop its `attached_to`, and the codegen would fall back to
+    // the canonical literal — diverging from pass 1's verbatim output.
+    #[test]
+    fn no_side_effects_block_comment_after_code_is_attached_to_next_token() {
+        let source_text = "function foo() {}/* #__NO_SIDE_EFFECTS__ */\nfunction bar() {}";
+        let comments = get_comments(source_text);
+        let bar_start = u32::try_from(source_text.rfind("function").unwrap()).unwrap();
+
+        assert_eq!(comments.len(), 1);
+        assert_eq!(comments[0].position, CommentPosition::Leading);
+        assert_eq!(comments[0].attached_to, bar_start);
+        assert!(comments[0].is_no_side_effects());
+    }
+
+    #[test]
+    fn no_side_effects_line_comment_after_code_is_attached_to_next_token() {
+        let source_text = "foo();// @__NO_SIDE_EFFECTS__\nfunction bar() {}";
+        let comments = get_comments(source_text);
+        let function_start = u32::try_from(source_text.find("function").unwrap()).unwrap();
+
+        assert_eq!(comments.len(), 1);
+        assert_eq!(comments[0].position, CommentPosition::Leading);
+        assert_eq!(comments[0].attached_to, function_start);
+        assert!(comments[0].is_no_side_effects());
+        assert!(comments[0].followed_by_newline());
+    }
+
+    #[test]
+    fn pure_block_comment_after_code_is_attached_to_next_token() {
+        let source_text = "foo();/* @__PURE__ */new Bar()";
+        let comments = get_comments(source_text);
+        let new_start = u32::try_from(source_text.find("new").unwrap()).unwrap();
+
+        assert_eq!(comments.len(), 1);
+        assert_eq!(comments[0].position, CommentPosition::Leading);
+        assert_eq!(comments[0].attached_to, new_start);
+        assert!(comments[0].is_pure());
+    }
+
     #[test]
     fn leading_comments_after_eq() {
         let source_text = "
@@ -604,6 +674,23 @@ function bar() {}";
                 content: CommentContent::None,
             },
         ];
+        assert_eq!(comments, expected);
+    }
+
+    #[test]
+    fn leading_comments_after_colon() {
+        // A line comment right after a conditional `:` anchors to the following
+        // alternate (leading), not the previous token — otherwise it is dropped.
+        let source_text = "v = cond ? a : // Leading comment\nb;";
+        let comments = get_comments(source_text);
+        let expected = vec![Comment {
+            span: Span::new(15, 33),
+            kind: CommentKind::Line,
+            position: CommentPosition::Leading,
+            attached_to: 34,
+            newlines: CommentNewlines::Trailing,
+            content: CommentContent::None,
+        }];
         assert_eq!(comments, expected);
     }
 

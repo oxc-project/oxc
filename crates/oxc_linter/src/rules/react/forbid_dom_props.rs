@@ -143,6 +143,7 @@ declare_oxc_lint!(
     restriction,
     config = ForbidDomPropsConfig,
     version = "1.24.0",
+    short_description = "Disallow certain props on DOM Nodes.",
 );
 
 impl Rule for ForbidDomProps {

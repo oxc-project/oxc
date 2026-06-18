@@ -53,6 +53,7 @@ declare_oxc_lint!(
     perf, // Encourages more efficient use of built-in methods
     pending,
     version = "0.16.12",
+    short_description = "Encourages using `Array.prototype.find` instead of `filter(...)[0]` or similar patterns when only the first matching element is needed.",
 );
 
 impl Rule for PreferArrayFind {

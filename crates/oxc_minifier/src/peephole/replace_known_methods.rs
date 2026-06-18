@@ -30,8 +30,8 @@ impl<'a> PeepholeOptimizations {
 
         // Use constant evaluation for known method calls
         if let Some(constant_value) = ce.evaluate_value(ctx) {
-            ctx.state.changed = true;
-            *node = ctx.value_to_expr(ce.span, constant_value);
+            let new_expr = ctx.value_to_expr(ce.span, constant_value);
+            ctx.replace_expression(node, new_expr);
             return;
         }
 
@@ -56,8 +56,7 @@ impl<'a> PeepholeOptimizations {
             _ => None,
         };
         if let Some(replacement) = replacement {
-            ctx.state.changed = true;
-            *node = replacement;
+            ctx.replace_expression(node, replacement);
         }
     }
 
@@ -188,7 +187,7 @@ impl<'a> PeepholeOptimizations {
             return;
         }
 
-        *node = ctx.ast.expression_call(
+        let new_expr = ctx.ast.expression_call(
             original_span,
             new_root_callee.take_in(ctx.ast),
             NONE,
@@ -197,7 +196,7 @@ impl<'a> PeepholeOptimizations {
             ),
             false,
         );
-        ctx.state.changed = true;
+        ctx.replace_expression(node, new_expr);
     }
 
     /// `[].concat(1, 2)` -> `[1, 2]`
@@ -316,11 +315,11 @@ impl<'a> PeepholeOptimizations {
                         let cooked = ast.str(scratch);
                         let raw_cow = Self::escape_string_for_template_literal(scratch);
                         let raw = ast.str(&raw_cow);
+                        // `raw` is already escaped
                         quasis.push(ast.template_element(
                             SPAN,
                             TemplateElementValue { raw, cooked: Some(cooked) },
                             false,
-                            false, // raw is already escaped
                         ));
                         scratch.clear(); // maintains INVARIANT above
                         // checked that all the arguments are expression above
@@ -340,11 +339,11 @@ impl<'a> PeepholeOptimizations {
                 let cooked = ast.str(scratch);
                 let raw_cow = Self::escape_string_for_template_literal(scratch);
                 let raw = ast.str(&raw_cow);
+                // `raw` is already escaped
                 quasis.push(ast.template_element(
                     SPAN,
                     TemplateElementValue { raw, cooked: Some(cooked) },
                     true, // tail
-                    false,
                 ));
 
                 debug_assert_eq!(quasis.len(), expressions.len() + 1);
@@ -397,8 +396,7 @@ impl<'a> PeepholeOptimizations {
                                 span,
                                 ctx,
                             ) {
-                                ctx.state.changed = true;
-                                *node = replacement;
+                                ctx.replace_expression(node, replacement);
                             }
                         }
                         return;
@@ -415,8 +413,7 @@ impl<'a> PeepholeOptimizations {
                                 span,
                                 ctx,
                             ) {
-                                ctx.state.changed = true;
-                                *node = replacement;
+                                ctx.replace_expression(node, replacement);
                             }
                         }
                         return;
@@ -482,8 +479,7 @@ impl<'a> PeepholeOptimizations {
             _ => return,
         };
         if let Some(replacement) = replacement {
-            ctx.state.changed = true;
-            *node = replacement;
+            ctx.replace_expression(node, replacement);
         }
     }
 

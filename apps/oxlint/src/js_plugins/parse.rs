@@ -204,16 +204,17 @@ unsafe fn parse_raw_impl(
             })
             .with_config(RuntimeParserConfig::new(true))
             .parse();
-        let ParserReturn { program: parsed_program, errors, mut tokens, panicked, .. } = parser_ret;
+        let ParserReturn { program: parsed_program, diagnostics, mut tokens, panicked, .. } =
+            parser_ret;
         let program = allocator.alloc(parsed_program);
 
-        let mut parsing_failed = panicked || (!errors.is_empty() && !ignore_non_fatal_errors);
+        let mut parsing_failed = panicked || (!diagnostics.is_empty() && !ignore_non_fatal_errors);
 
         // Check for semantic errors.
         // If `ignore_non_fatal_errors` is `true`, skip running semantic, as any errors will be ignored anyway.
         if !parsing_failed && !ignore_non_fatal_errors {
-            let semantic_ret = SemanticBuilder::new().with_check_syntax_error(true).build(program);
-            parsing_failed = !semantic_ret.errors.is_empty();
+            let semantic_ret = SemanticBuilder::new_compiler().build(program);
+            parsing_failed = !semantic_ret.diagnostics.is_empty();
         }
 
         if parsing_failed {

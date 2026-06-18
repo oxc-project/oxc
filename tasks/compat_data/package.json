@@ -5,6 +5,6 @@
     "build": "node build.js"
   },
   "devDependencies": {
-    "degit": "2.8.4"
+    "degit": "catalog:"
   }
 }

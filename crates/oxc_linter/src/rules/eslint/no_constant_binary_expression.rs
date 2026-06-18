@@ -58,6 +58,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     version = "0.0.3",
+    short_description = "Disallow expressions where the operation doesn't affect the value.",
 );
 
 fn constant_short_circuit(lhs_name: &str, expr_name: &str, span: Span) -> OxcDiagnostic {

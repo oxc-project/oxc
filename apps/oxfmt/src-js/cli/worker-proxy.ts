@@ -1,4 +1,6 @@
 import Tinypool from "tinypool";
+import { toFormatFileResult, toNullable } from "../libs/napi-callbacks";
+import type { FormatFileResult } from "../libs/napi-callbacks";
 import type {
   FormatFileParam,
   FormatEmbeddedCodeParam,
@@ -31,65 +33,42 @@ export async function disposeExternalFormatter(): Promise<void> {
 
 // ---
 
-// Used for non-JS files formatting
-export async function formatFile(
+export function formatFile(
   options: FormatFileParam["options"],
   code: string,
-): Promise<string> {
-  return (
-    pool!
-      .run({ options, code } satisfies FormatFileParam, { name: "formatFile" })
-      // `tinypool` with `runtime: "child_process"` serializes Error as plain objects via IPC.
-      // (e.g. `{ name, message, stack, ... }`)
-      // And napi-rs converts unknown JS values to Rust Error by calling `String()` on them,
-      // which yields `"[object Object]"` for plain objects...
-      // So, this function reconstructs a proper `Error` instance so napi-rs can extract the message.
-      .catch((err) => {
-        if (err instanceof Error) throw err;
-        if (err !== null && typeof err === "object") {
-          const obj = err as { name: string; message: string };
-          const newErr = new Error(obj.message);
-          newErr.name = obj.name;
-          throw newErr;
-        }
-        throw new Error(String(err));
-      })
+): Promise<FormatFileResult> {
+  return toFormatFileResult(
+    pool!.run({ options, code } satisfies FormatFileParam, { name: "formatFile" }),
   );
 }
 
 // ---
 
-// All functions below are used for JS files with embedded code
-//
-// NOTE: These functions return `null` on error instead of throwing.
-// When errors were propagated as rejected JS promises, which become `napi::Error` values in Rust TSFN await paths.
-// In heavily concurrent runs, dropping those error values could reach `napi_reference_unref` during teardown and trigger V8 fatal checks.
-
-export async function formatEmbeddedCode(
+export function formatEmbeddedCode(
   options: FormatEmbeddedCodeParam["options"],
   code: string,
 ): Promise<string | null> {
-  return pool!
-    .run({ options, code } satisfies FormatEmbeddedCodeParam, { name: "formatEmbeddedCode" })
-    .catch(() => null);
+  return toNullable(
+    pool!.run({ options, code } satisfies FormatEmbeddedCodeParam, { name: "formatEmbeddedCode" }),
+  );
 }
 
-export async function formatEmbeddedDoc(
+export function formatEmbeddedDoc(
   options: FormatEmbeddedDocParam["options"],
   texts: string[],
 ): Promise<string[] | null> {
-  return pool!
-    .run({ options, texts } satisfies FormatEmbeddedDocParam, {
-      name: "formatEmbeddedDoc",
-    })
-    .catch(() => null);
+  return toNullable(
+    pool!.run({ options, texts } satisfies FormatEmbeddedDocParam, { name: "formatEmbeddedDoc" }),
+  );
 }
 
-export async function sortTailwindClasses(
+export function sortTailwindClasses(
   options: SortTailwindClassesArgs["options"],
   classes: string[],
 ): Promise<string[] | null> {
-  return pool!
-    .run({ classes, options } satisfies SortTailwindClassesArgs, { name: "sortTailwindClasses" })
-    .catch(() => null);
+  return toNullable(
+    pool!.run({ classes, options } satisfies SortTailwindClassesArgs, {
+      name: "sortTailwindClasses",
+    }),
+  );
 }

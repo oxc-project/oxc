@@ -20,6 +20,7 @@ declare_oxc_lint!(
     pending,
     docs = DOCUMENTATION,
     version = "0.0.18",
+    short_description = "Disallow negated conditions.",
 );
 
 impl Rule for NoNegatedCondition {

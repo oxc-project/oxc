@@ -11,7 +11,7 @@ use crate::{
     utils::{PossibleJestNode, collect_possible_jest_call_node},
 };
 
-fn exceeded_max_assertion(count: usize, max: usize, span: Span) -> OxcDiagnostic {
+fn exceeded_max_assertion(count: u32, max: u32, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Enforces a maximum number assertion calls in a test body.")
         .with_help(format!("Too many assertion calls ({count}) - maximum allowed is {max}"))
         .with_label(span)
@@ -55,7 +55,7 @@ it('should not pass', () => {
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct MaxExpectsConfig {
     /// Maximum number of `expect()` assertion calls allowed within a single test.
-    pub max: usize,
+    pub max: u32,
 }
 
 impl Default for MaxExpectsConfig {
@@ -66,7 +66,7 @@ impl Default for MaxExpectsConfig {
 
 impl MaxExpectsConfig {
     pub fn run_once(&self, ctx: &LintContext) {
-        let mut count_map: FxHashMap<usize, usize> = FxHashMap::default();
+        let mut count_map: FxHashMap<usize, u32> = FxHashMap::default();
 
         for possible_jest_node in &collect_possible_jest_call_node(ctx) {
             self.run(possible_jest_node, &mut count_map, ctx);
@@ -76,7 +76,7 @@ impl MaxExpectsConfig {
     fn run<'a>(
         &self,
         jest_node: &PossibleJestNode<'a, '_>,
-        count_map: &mut FxHashMap<usize, usize>,
+        count_map: &mut FxHashMap<usize, u32>,
         ctx: &LintContext<'a>,
     ) {
         let node = jest_node.node;

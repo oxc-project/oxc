@@ -49,6 +49,7 @@ declare_oxc_lint!(
     style,
     suggestion,
     version = "0.0.19",
+    short_description = "Disallows the use of `Function.prototype.apply()` and suggests using `Reflect.apply()` instead.",
 );
 
 fn is_apply_signature(first_arg: &Argument, second_arg: &Argument) -> bool {
