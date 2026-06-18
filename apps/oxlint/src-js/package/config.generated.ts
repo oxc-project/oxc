@@ -1507,6 +1507,7 @@ export interface DummyRuleMap {
   "unicorn/no-null"?: RuleNoConfig | [AllowWarnDeny, NoNull];
   "unicorn/no-object-as-default-parameter"?: RuleNoConfig;
   "unicorn/no-process-exit"?: RuleNoConfig;
+  "unicorn/no-return-array-push"?: RuleNoConfig;
   "unicorn/no-single-promise-in-promise-methods"?: RuleNoConfig;
   "unicorn/no-static-only-class"?: RuleNoConfig;
   "unicorn/no-thenable"?: RuleNoConfig;
