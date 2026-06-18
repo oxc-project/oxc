@@ -98,10 +98,6 @@ impl Rule for NoCompareNegZero {
                     ctx.diagnostic_with_fix(
                         no_compare_neg_zero_diagnostic(op, expr.span),
                         |fixer| {
-                            // Delete the `-` of the `-0` unary. `is_neg_zero` looks through
-                            // parentheses, so use the inner expression's span start (the `-`),
-                            // not the operand's outer span start — otherwise for `x > (-0)` the
-                            // `(` is deleted, leaving the unbalanced `x > -0)`.
                             let neg_zero = if is_left_neg_zero {
                                 expr.left.get_inner_expression()
                             } else {
@@ -203,10 +199,11 @@ fn test() {
         ("x <= -0", "x <= 0", None),
         ("-0 <= x", "0 <= x", None),
         ("-0n <= x", "0n <= x", None),
-        // a parenthesized `-0` operand: delete the `-`, not the `(`
         ("x > (-0)", "x > (0)", None),
         ("(-0) > x", "(0) > x", None),
         ("x <= (-0n)", "x <= (0n)", None),
+        ("x > (-0 as number)", "x > (0 as number)", None),
+        ("(-0 satisfies number) > x", "(0 satisfies number) > x", None),
     ];
 
     Tester::new(NoCompareNegZero::NAME, NoCompareNegZero::PLUGIN, pass, fail)
