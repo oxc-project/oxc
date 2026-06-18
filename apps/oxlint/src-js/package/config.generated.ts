@@ -1460,6 +1460,7 @@ export interface DummyRuleMap {
   "typescript/unified-signatures"?: RuleNoConfig | [AllowWarnDeny, UnifiedSignaturesOptions];
   "typescript/use-unknown-in-catch-callback-variable"?: RuleNoConfig;
   "unicode-bom"?: RuleNoConfig | [AllowWarnDeny, BomOptionType];
+  "unicorn/better-dom-traversing"?: RuleNoConfig;
   "unicorn/catch-error-name"?: RuleNoConfig | [AllowWarnDeny, CatchErrorNameConfig];
   "unicorn/consistent-assert"?: RuleNoConfig;
   "unicorn/consistent-date-clone"?: RuleNoConfig;
