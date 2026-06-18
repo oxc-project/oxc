@@ -143,25 +143,12 @@ impl Radix {
                 ctx.diagnostic_with_dangerous_fix(missing_radix(call_expr.span), |fixer| {
                     let first_arg = &call_expr.arguments[0];
                     let end = call_expr.span.end;
-                    // Only scan AFTER the argument for a trailing comma. Scanning from the
-                    // argument's start also sees commas *inside* it (e.g. `parseInt((0, "10"))`,
-                    // `parseInt(f(a, b))`), which would wrongly pick the no-separator `" 10,"`
-                    // branch and paste the radix on without a comma -> invalid syntax.
-                    let arg_end = first_arg.span().end;
-                    let check_span = Span::new(arg_end, end);
-                    // A `,` inside a comment is not the trailing comma (e.g.
-                    // `parseInt("10" /* , */)`), so skip commas that fall within a comment
-                    // span -- otherwise we'd pick `" 10,"` and emit invalid syntax.
-                    let comment_spans: Vec<Span> =
-                        ctx.comments_range(arg_end..end).map(|c| c.span).collect();
+                    // Look only AFTER the argument for a trailing comma, and skip commas inside
+                    // comments (e.g. `parseInt("10" /* , */)`) -- otherwise we'd pick the
+                    // no-separator `" 10,"` branch and paste the radix on without a separator,
+                    // emitting invalid syntax. `find_next_token_within` already does both.
                     let has_trailing_comma =
-                        ctx.source_range(check_span).char_indices().any(|(i, c)| {
-                            c == ','
-                                && !comment_spans.iter().any(|s| {
-                                    let abs = arg_end + u32::try_from(i).unwrap_or(0);
-                                    s.start <= abs && abs < s.end
-                                })
-                        });
+                        ctx.find_next_token_within(first_arg.span().end, end, ",").is_some();
                     let insert_param = if has_trailing_comma { " 10," } else { ", 10" };
                     fixer.insert_text_before_range(Span::empty(end - 1), insert_param)
                 });
