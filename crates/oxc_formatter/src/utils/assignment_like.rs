@@ -868,7 +868,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AssignmentLike<'a, '_> {
                         // changing which token the comment semantically attaches to.
                         //
                         // NOTE: Currently scoped to non-conditional `TSTypeAliasDeclaration`
-                        // simple single member union/intersection types (which have
+                        // and simple single member union/intersection types (which have
                         // their own comment formatting logic for this case).
                         // Expanding the condition would preserve the order in other nodes too.
                         // (e.g. `VariableDeclarator`) But for those we follow Prettier's current behavior.
