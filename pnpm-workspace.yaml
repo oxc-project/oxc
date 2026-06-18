@@ -20,8 +20,8 @@ catalog:
   json-schema-to-typescript: ^15.0.4
   publint: 0.3.21
   rolldown: 1.1.1
-  tsdown: 0.22.2
-  vite-plus: 0.1.24
+  tsdown: 0.22.3
+  vite-plus: 0.2.1
   vitest: 4.1.8
 
 overrides:

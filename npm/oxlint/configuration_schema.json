@@ -3940,7 +3940,24 @@
           ]
         },
         "jsx-a11y/no-noninteractive-element-interactions": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoNoninteractiveElementInteractionsConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "jsx-a11y/no-noninteractive-element-to-interactive-role": {
           "anyOf": [
@@ -5601,6 +5618,26 @@
         },
         "node/no-exports-assign": {
           "$ref": "#/definitions/RuleNoConfig"
+        },
+        "node/no-mixed-requires": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoMixedRequiresConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "node/no-new-require": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -8955,7 +8992,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "unicorn/numeric-separators-style": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NumericSeparatorsStyleConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "unicorn/prefer-add-event-listener": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -14195,6 +14249,30 @@
       },
       "additionalProperties": false
     },
+    "NoMixedRequiresConfig": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "$ref": "#/definitions/NoMixedRequiresOptions"
+        }
+      ]
+    },
+    "NoMixedRequiresOptions": {
+      "type": "object",
+      "properties": {
+        "allowCall": {
+          "default": false,
+          "type": "boolean"
+        },
+        "grouping": {
+          "default": false,
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
     "NoMultiAssign": {
       "type": "object",
       "properties": {
@@ -14272,6 +14350,53 @@
         }
       },
       "additionalProperties": false
+    },
+    "NoNoninteractiveElementInteractionsConfig": {
+      "type": "object",
+      "properties": {
+        "handlers": {
+          "description": "An array of event handler names that should trigger this rule.",
+          "default": [
+            "onError",
+            "onLoad",
+            "onKeyPress",
+            "onKeyDown",
+            "onKeyUp",
+            "onFocus",
+            "onBlur",
+            "onClick",
+            "onContextMenu",
+            "onDblClick",
+            "onDoubleClick",
+            "onDrag",
+            "onDragEnd",
+            "onDragEnter",
+            "onDragExit",
+            "onDragLeave",
+            "onDragOver",
+            "onDragStart",
+            "onDrop",
+            "onMouseDown",
+            "onMouseEnter",
+            "onMouseLeave",
+            "onMouseMove",
+            "onMouseOut",
+            "onMouseOver",
+            "onMouseUp"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "An array of event handler names that should trigger this rule."
+        }
+      },
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
     },
     "NoNoninteractiveElementToInteractiveRoleConfig": {
       "type": "object",
@@ -15569,6 +15694,128 @@
           "markdownDescription": "Ignore null comparisons, allow either `== null`/`!= null` or `=== null`/`!== null`."
         }
       ]
+    },
+    "NumericBaseConfig": {
+      "type": "object",
+      "properties": {
+        "groupLength": {
+          "description": "The number of digits per group when inserting numeric separators.\nFor example, a `groupLength` of 3 formats `1234567` as `1_234_567`.",
+          "default": 0,
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0,
+          "markdownDescription": "The number of digits per group when inserting numeric separators.\nFor example, a `groupLength` of 3 formats `1234567` as `1_234_567`."
+        },
+        "minimumDigits": {
+          "description": "The minimum number of digits required before grouping is applied.\nValues with fewer digits than this threshold will not be grouped.",
+          "default": 0,
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0,
+          "markdownDescription": "The minimum number of digits required before grouping is applied.\nValues with fewer digits than this threshold will not be grouped."
+        },
+        "onlyIfContainsSeparator": {
+          "description": "Only enforce the rule when the numeric literal already contains a separator (`_`).\n\nWhen `true`, numbers without separators are left as-is; when `false` (default),\ngrouping will be enforced for eligible numbers even if they don't include separators yet.",
+          "type": "boolean",
+          "markdownDescription": "Only enforce the rule when the numeric literal already contains a separator (`_`).\n\nWhen `true`, numbers without separators are left as-is; when `false` (default),\ngrouping will be enforced for eligible numbers even if they don't include separators yet."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NumericNumberConfig": {
+      "type": "object",
+      "properties": {
+        "fractionGroupLength": {
+          "description": "The size a group of digits in the fractional part (after the decimal point) should be.",
+          "default": 4294967295,
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0,
+          "markdownDescription": "The size a group of digits in the fractional part (after the decimal point) should be."
+        },
+        "groupLength": {
+          "description": "The number of digits per group when inserting numeric separators.\nFor example, a `groupLength` of 3 formats `1234567` as `1_234_567`.",
+          "default": 0,
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0,
+          "markdownDescription": "The number of digits per group when inserting numeric separators.\nFor example, a `groupLength` of 3 formats `1234567` as `1_234_567`."
+        },
+        "minimumDigits": {
+          "description": "The minimum number of digits required before grouping is applied.\nValues with fewer digits than this threshold will not be grouped.",
+          "default": 0,
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0,
+          "markdownDescription": "The minimum number of digits required before grouping is applied.\nValues with fewer digits than this threshold will not be grouped."
+        },
+        "onlyIfContainsSeparator": {
+          "description": "Only enforce the rule when the numeric literal already contains a separator (`_`).\n\nWhen `true`, numbers without separators are left as-is; when `false` (default),\ngrouping will be enforced for eligible numbers even if they don't include separators yet.",
+          "type": "boolean",
+          "markdownDescription": "Only enforce the rule when the numeric literal already contains a separator (`_`).\n\nWhen `true`, numbers without separators are left as-is; when `false` (default),\ngrouping will be enforced for eligible numbers even if they don't include separators yet."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NumericSeparatorsStyleConfig": {
+      "type": "object",
+      "properties": {
+        "binary": {
+          "description": "Configuration for binary literals (e.g. `0b1010_0001` and bigint variants).\nControls how digits are grouped and when separators are applied.",
+          "default": {
+            "groupLength": 4,
+            "minimumDigits": 0
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/NumericBaseConfig"
+            }
+          ],
+          "markdownDescription": "Configuration for binary literals (e.g. `0b1010_0001` and bigint variants).\nControls how digits are grouped and when separators are applied."
+        },
+        "hexadecimal": {
+          "description": "Configuration for hexadecimal literals (e.g. `0xAB_CD`, `0Xab_cd`, and bigint variants).\nControls how digits are grouped and when separators are applied.",
+          "default": {
+            "groupLength": 2,
+            "minimumDigits": 0
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/NumericBaseConfig"
+            }
+          ],
+          "markdownDescription": "Configuration for hexadecimal literals (e.g. `0xAB_CD`, `0Xab_cd`, and bigint variants).\nControls how digits are grouped and when separators are applied."
+        },
+        "number": {
+          "description": "Configuration for decimal numbers (integers, fraction parts, and exponents).\nControls how digits are grouped and when separators are applied.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/NumericNumberConfig"
+            }
+          ],
+          "markdownDescription": "Configuration for decimal numbers (integers, fraction parts, and exponents).\nControls how digits are grouped and when separators are applied."
+        },
+        "octal": {
+          "description": "Configuration for octal literals (e.g. `0o1234_5670` and bigint variants).\nControls how digits are grouped and when separators are applied.",
+          "default": {
+            "groupLength": 4,
+            "minimumDigits": 0
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/NumericBaseConfig"
+            }
+          ],
+          "markdownDescription": "Configuration for octal literals (e.g. `0o1234_5670` and bigint variants).\nControls how digits are grouped and when separators are applied."
+        },
+        "onlyIfContainsSeparator": {
+          "description": "Only enforce the rule when the numeric literal already contains a separator (`_`).\n\nWhen `true`, numbers without separators are left as-is; when `false` (default),\ngrouping will be enforced for eligible numbers even if they don't include separators yet.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Only enforce the rule when the numeric literal already contains a separator (`_`).\n\nWhen `true`, numbers without separators are left as-is; when `false` (default),\ngrouping will be enforced for eligible numbers even if they don't include separators yet."
+        }
+      },
+      "additionalProperties": false
     },
     "ObjectLiteralTypeAssertions": {
       "oneOf": [

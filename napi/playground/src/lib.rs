@@ -360,7 +360,7 @@ impl Oxc {
         self.ir = format!("{:#?}", program.body);
         let mut comments = convert_utf8_to_utf16(source_text, program, module_record, &mut []);
 
-        self.ast_json = if source_type.is_javascript() {
+        if source_type.is_javascript() {
             // Add hashbang to start of comments
             if let Some(hashbang) = &program.hashbang {
                 comments.insert(
@@ -373,11 +373,10 @@ impl Oxc {
                     },
                 );
             }
+        }
 
-            program.to_pretty_estree_js_json_with_fixes(false)
-        } else {
-            program.to_pretty_estree_ts_json_with_fixes(false)
-        };
+        let include_ts_fields = !source_type.is_javascript();
+        self.ast_json = program.to_pretty_estree_json_with_fixes(include_ts_fields, false);
         self.comments = comments;
     }
 
