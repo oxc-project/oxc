@@ -1,24 +1,20 @@
 use crate::react_compiler_diagnostics::JsString;
-use serde::Serialize;
 
 use crate::react_compiler_ast::common::BaseNode;
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone)]
 pub struct StringLiteral {
-    #[serde(flatten)]
     pub base: BaseNode,
     /// JS string values may contain unpaired surrogates; see [`JsString`].
     pub value: JsString,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone)]
 pub struct NumericLiteral {
-    #[serde(flatten)]
     pub base: BaseNode,
     pub value: f64,
     /// Babel's extra field containing the raw source text.
     /// Used to recover exact f64 values that serde_json may parse imprecisely.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub extra: Option<NumericLiteralExtra>,
 }
 
@@ -35,52 +31,45 @@ impl NumericLiteral {
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone)]
 pub struct NumericLiteralExtra {
     pub raw: String,
-    #[serde(default, rename = "rawValue")]
     pub raw_value: Option<f64>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone)]
 pub struct BooleanLiteral {
-    #[serde(flatten)]
     pub base: BaseNode,
     pub value: bool,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone)]
 pub struct NullLiteral {
-    #[serde(flatten)]
     pub base: BaseNode,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone)]
 pub struct BigIntLiteral {
-    #[serde(flatten)]
     pub base: BaseNode,
     pub value: String,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone)]
 pub struct RegExpLiteral {
-    #[serde(flatten)]
     pub base: BaseNode,
     pub pattern: String,
     pub flags: String,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone)]
 pub struct TemplateElement {
-    #[serde(flatten)]
     pub base: BaseNode,
     pub value: TemplateElementValue,
     pub tail: bool,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone)]
 pub struct TemplateElementValue {
     pub raw: String,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub cooked: Option<String>,
 }

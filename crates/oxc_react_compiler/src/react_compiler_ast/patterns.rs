@@ -1,5 +1,3 @@
-use serde::Serialize;
-
 use crate::react_compiler_ast::common::BaseNode;
 use crate::react_compiler_ast::common::RawNode;
 use crate::react_compiler_ast::expressions::{Expression, Identifier};
@@ -7,8 +5,7 @@ use crate::react_compiler_ast::expressions::{Expression, Identifier};
 /// Covers assignment targets and patterns.
 /// In Babel, LVal includes Identifier, MemberExpression, ObjectPattern, ArrayPattern,
 /// RestElement, AssignmentPattern.
-#[derive(Debug, Clone, Serialize)]
-#[serde(tag = "type")]
+#[derive(Debug, Clone)]
 pub enum PatternLike {
     Identifier(Identifier),
     ObjectPattern(ObjectPattern),
@@ -55,68 +52,52 @@ impl PatternLike {
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone)]
 pub struct ObjectPattern {
-    #[serde(flatten)]
     pub base: BaseNode,
     pub properties: Vec<ObjectPatternProperty>,
-    #[serde(default, skip_serializing_if = "Option::is_none", rename = "typeAnnotation")]
     pub type_annotation: Option<RawNode>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub decorators: Option<Vec<RawNode>>,
 }
 
-#[derive(Debug, Clone, Serialize)]
-#[serde(tag = "type")]
+#[derive(Debug, Clone)]
 pub enum ObjectPatternProperty {
     ObjectProperty(ObjectPatternProp),
     RestElement(RestElement),
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone)]
 pub struct ObjectPatternProp {
-    #[serde(flatten)]
     pub base: BaseNode,
     pub key: Box<Expression>,
     pub value: Box<PatternLike>,
     pub computed: bool,
     pub shorthand: bool,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub decorators: Option<Vec<RawNode>>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub method: Option<bool>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone)]
 pub struct ArrayPattern {
-    #[serde(flatten)]
     pub base: BaseNode,
     pub elements: Vec<Option<PatternLike>>,
-    #[serde(default, skip_serializing_if = "Option::is_none", rename = "typeAnnotation")]
     pub type_annotation: Option<RawNode>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub decorators: Option<Vec<RawNode>>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone)]
 pub struct AssignmentPattern {
-    #[serde(flatten)]
     pub base: BaseNode,
     pub left: Box<PatternLike>,
     pub right: Box<Expression>,
-    #[serde(default, skip_serializing_if = "Option::is_none", rename = "typeAnnotation")]
     pub type_annotation: Option<RawNode>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub decorators: Option<Vec<RawNode>>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone)]
 pub struct RestElement {
-    #[serde(flatten)]
     pub base: BaseNode,
     pub argument: Box<PatternLike>,
-    #[serde(default, skip_serializing_if = "Option::is_none", rename = "typeAnnotation")]
     pub type_annotation: Option<RawNode>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub decorators: Option<Vec<RawNode>>,
 }

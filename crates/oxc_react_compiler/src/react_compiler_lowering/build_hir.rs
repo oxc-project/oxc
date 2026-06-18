@@ -261,11 +261,8 @@ fn expression_type_name(expr: &crate::react_compiler_ast::expressions::Expressio
 fn extract_type_annotation_name(
     type_annotation: &Option<crate::react_compiler_ast::common::RawNode>,
 ) -> Option<String> {
-    let val = type_annotation.as_ref()?.parse_value();
-    // Navigate: typeAnnotation.typeAnnotation.type
-    let inner = val.get("typeAnnotation")?;
-    let type_name = inner.get("type")?.as_str()?;
-    Some(type_name.to_string())
+    // `node_type` is the pre-extracted (unwrapped) type tag.
+    type_annotation.as_ref()?.node_type.clone()
 }
 
 // =============================================================================
@@ -2120,30 +2117,28 @@ fn lower_expression(
         Expression::TSAsExpression(ts) => {
             let loc = convert_opt_loc(&ts.base.loc);
             let value = lower_expression_to_temporary(builder, &ts.expression)?;
-            let type_annotation = ts.type_annotation.parse_value();
-            let type_ = lower_type_annotation(&type_annotation, builder);
-            let type_annotation_name = get_type_annotation_name(&type_annotation);
+            let type_ = lower_type_annotation(&ts.type_annotation, builder);
+            let type_annotation_name = get_type_annotation_name(&ts.type_annotation);
             Ok(InstructionValue::TypeCastExpression {
                 value,
                 type_,
                 type_annotation_name,
                 type_annotation_kind: Some("as".to_string()),
-                type_annotation: Some(Box::new(type_annotation)),
+                type_annotation: Some(ts.type_annotation.clone()),
                 loc,
             })
         }
         Expression::TSSatisfiesExpression(ts) => {
             let loc = convert_opt_loc(&ts.base.loc);
             let value = lower_expression_to_temporary(builder, &ts.expression)?;
-            let type_annotation = ts.type_annotation.parse_value();
-            let type_ = lower_type_annotation(&type_annotation, builder);
-            let type_annotation_name = get_type_annotation_name(&type_annotation);
+            let type_ = lower_type_annotation(&ts.type_annotation, builder);
+            let type_annotation_name = get_type_annotation_name(&ts.type_annotation);
             Ok(InstructionValue::TypeCastExpression {
                 value,
                 type_,
                 type_annotation_name,
                 type_annotation_kind: Some("satisfies".to_string()),
-                type_annotation: Some(Box::new(type_annotation)),
+                type_annotation: Some(ts.type_annotation.clone()),
                 loc,
             })
         }
@@ -2151,15 +2146,14 @@ fn lower_expression(
         Expression::TSTypeAssertion(ts) => {
             let loc = convert_opt_loc(&ts.base.loc);
             let value = lower_expression_to_temporary(builder, &ts.expression)?;
-            let type_annotation = ts.type_annotation.parse_value();
-            let type_ = lower_type_annotation(&type_annotation, builder);
-            let type_annotation_name = get_type_annotation_name(&type_annotation);
+            let type_ = lower_type_annotation(&ts.type_annotation, builder);
+            let type_annotation_name = get_type_annotation_name(&ts.type_annotation);
             Ok(InstructionValue::TypeCastExpression {
                 value,
                 type_,
                 type_annotation_name,
                 type_annotation_kind: Some("as".to_string()),
-                type_annotation: Some(Box::new(type_annotation)),
+                type_annotation: Some(ts.type_annotation.clone()),
                 loc,
             })
         }
@@ -2167,17 +2161,15 @@ fn lower_expression(
         Expression::TypeCastExpression(tc) => {
             let loc = convert_opt_loc(&tc.base.loc);
             let value = lower_expression_to_temporary(builder, &tc.expression)?;
-            let annotation_value = tc.type_annotation.parse_value();
-            // Flow TypeCastExpression: typeAnnotation is a TypeAnnotation node wrapping the actual type
-            let inner_type = annotation_value.get("typeAnnotation").unwrap_or(&annotation_value);
-            let type_ = lower_type_annotation(inner_type, builder);
-            let type_annotation_name = get_type_annotation_name(inner_type);
+            // The type metadata already unwraps the Flow `TypeAnnotation` wrapper.
+            let type_ = lower_type_annotation(&tc.type_annotation, builder);
+            let type_annotation_name = get_type_annotation_name(&tc.type_annotation);
             Ok(InstructionValue::TypeCastExpression {
                 value,
                 type_,
                 type_annotation_name,
                 type_annotation_kind: Some("cast".to_string()),
-                type_annotation: Some(Box::new(annotation_value)),
+                type_annotation: Some(tc.type_annotation.clone()),
                 loc,
             })
         }
@@ -6463,58 +6455,21 @@ fn is_reorderable_expression(
 
 /// Extract the type name from a type annotation serde_json::Value.
 /// Returns the "type" field value, e.g. "TSTypeReference", "GenericTypeAnnotation".
-fn get_type_annotation_name(val: &serde_json::Value) -> Option<String> {
-    val.get("type").and_then(|v| v.as_str()).map(|s| s.to_string())
+fn get_type_annotation_name(raw: &crate::react_compiler_ast::common::RawNode) -> Option<String> {
+    raw.node_type.clone()
 }
 
-/// Lower a type annotation JSON value to an HIR Type.
+/// Lower a type annotation to an HIR Type from its pre-extracted classification.
 /// Mirrors the TS `lowerType` function.
-fn lower_type_annotation(val: &serde_json::Value, builder: &mut HirBuilder) -> Type {
-    let type_name = match val.get("type").and_then(|v| v.as_str()) {
-        Some(name) => name,
-        None => return builder.make_type(),
-    };
-    match type_name {
-        "GenericTypeAnnotation" => {
-            // Check if it's Array
-            if let Some(id) = val.get("id") {
-                if id.get("type").and_then(|v| v.as_str()) == Some("Identifier") {
-                    if id.get("name").and_then(|v| v.as_str()) == Some("Array") {
-                        return Type::Object { shape_id: Some("BuiltInArray".to_string()) };
-                    }
-                }
-            }
-            builder.make_type()
-        }
-        "TSTypeReference" => {
-            if let Some(type_name_val) = val.get("typeName") {
-                if type_name_val.get("type").and_then(|v| v.as_str()) == Some("Identifier") {
-                    if type_name_val.get("name").and_then(|v| v.as_str()) == Some("Array") {
-                        return Type::Object { shape_id: Some("BuiltInArray".to_string()) };
-                    }
-                }
-            }
-            builder.make_type()
-        }
-        "ArrayTypeAnnotation" | "TSArrayType" => {
-            Type::Object { shape_id: Some("BuiltInArray".to_string()) }
-        }
-        "BooleanLiteralTypeAnnotation"
-        | "BooleanTypeAnnotation"
-        | "NullLiteralTypeAnnotation"
-        | "NumberLiteralTypeAnnotation"
-        | "NumberTypeAnnotation"
-        | "StringLiteralTypeAnnotation"
-        | "StringTypeAnnotation"
-        | "TSBooleanKeyword"
-        | "TSNullKeyword"
-        | "TSNumberKeyword"
-        | "TSStringKeyword"
-        | "TSSymbolKeyword"
-        | "TSUndefinedKeyword"
-        | "TSVoidKeyword"
-        | "VoidTypeAnnotation" => Type::Primitive,
-        _ => builder.make_type(),
+fn lower_type_annotation(
+    raw: &crate::react_compiler_ast::common::RawNode,
+    builder: &mut HirBuilder,
+) -> Type {
+    use crate::react_compiler_ast::common::RawTypeCategory;
+    match raw.type_category {
+        RawTypeCategory::Array => Type::Object { shape_id: Some("BuiltInArray".to_string()) },
+        RawTypeCategory::Primitive => Type::Primitive,
+        RawTypeCategory::Other => builder.make_type(),
     }
 }
 

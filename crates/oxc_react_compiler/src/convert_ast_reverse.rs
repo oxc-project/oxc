@@ -258,253 +258,51 @@ impl<'a> ReverseCtx<'a> {
         }
     }
 
-    fn extract_source_ts_as_type(&self, base: &BaseNode) -> Option<oxc::TSType<'a>> {
-        match self.extract_source_expr(base)? {
-            oxc::Expression::TSAsExpression(expr) => Some(expr.unbox().type_annotation),
-            _ => None,
-        }
-    }
-
-    fn extract_source_ts_type_from_json(
+    /// Re-emit a TS type from its original source span, applying any identifier
+    /// renames recorded on the `RawNode`'s metadata (text substitution before
+    /// re-parsing). Replaces JSON-tree reconstruction: the oxc frontend always has
+    /// the source, so types round-trip by re-parsing the original text.
+    fn convert_type_from_raw(
         &self,
-        value: &serde_json::Value,
+        raw: &crate::react_compiler_ast::common::RawNode,
     ) -> Option<oxc::TSType<'a>> {
-        let value =
-            if value.get("type").and_then(serde_json::Value::as_str) == Some("TSTypeAnnotation") {
-                value.get("typeAnnotation")?
-            } else {
-                value
-            };
         let source = self.source_text.as_deref()?;
-        let start = value.get("start")?.as_u64()? as usize;
-        let end = value.get("end")?.as_u64()? as usize;
+        let start = raw.type_start? as usize;
+        let end = raw.type_end? as usize;
         if start >= source.len() || end > source.len() || start >= end {
             return None;
         }
-        self.parse_source_ts_type_text_at(&source[start..end], start)
-    }
-
-    fn span_from_json_value(&self, value: &serde_json::Value) -> Span {
-        let start = value.get("start").and_then(serde_json::Value::as_u64);
-        let end = value.get("end").and_then(serde_json::Value::as_u64);
-        match (start, end) {
-            (Some(start), Some(end)) => Span::new(start as u32, end as u32),
-            (Some(start), None) => Span::new(start as u32, start as u32),
-            _ => SPAN,
+        let slice = &source[start..end];
+        // Apply renames (e.g. `typeof x` -> `typeof x_0`) as text edits, right to
+        // left so earlier offsets stay valid, then re-parse the rendered type.
+        let mut edits: Vec<(usize, usize, &str)> = raw
+            .idents
+            .iter()
+            .filter_map(|id| {
+                let renamed = id.renamed_to.as_deref()?;
+                let rel = (id.start as usize).checked_sub(start)?;
+                Some((rel, id.name.len(), renamed))
+            })
+            .collect();
+        if edits.is_empty() {
+            return self.parse_source_ts_type_text_at(slice, start);
         }
+        edits.sort_by_key(|edit| std::cmp::Reverse(edit.0));
+        let mut text = slice.to_string();
+        for (rel, old_len, renamed) in edits {
+            if rel + old_len <= text.len() {
+                text.replace_range(rel..rel + old_len, renamed);
+            }
+        }
+        self.parse_source_ts_type_text_at(&text, start)
     }
 
-    fn convert_ts_type_annotation_from_json(
+    fn convert_type_annotation_from_raw(
         &self,
-        value: &serde_json::Value,
+        raw: &crate::react_compiler_ast::common::RawNode,
     ) -> Option<ArenaBox<'a, oxc::TSTypeAnnotation<'a>>> {
-        let ty =
-            if value.get("type").and_then(serde_json::Value::as_str) == Some("TSTypeAnnotation") {
-                let type_annotation = value.get("typeAnnotation")?;
-                self.convert_ts_type_from_json(type_annotation).or_else(|| {
-                    if Self::ts_type_json_contains_type_query(type_annotation) {
-                        None
-                    } else {
-                        self.extract_source_ts_type_from_json(value)
-                    }
-                })?
-            } else {
-                self.convert_ts_type_from_json(value)?
-            };
+        let ty = self.convert_type_from_raw(raw)?;
         Some(self.builder.alloc_ts_type_annotation(SPAN, ty))
-    }
-
-    fn convert_ts_type_from_json(&self, value: &serde_json::Value) -> Option<oxc::TSType<'a>> {
-        if !Self::ts_type_json_contains_type_query(value)
-            && let Some(ty) = self.extract_source_ts_type_from_json(value)
-        {
-            return Some(ty);
-        }
-
-        match value.get("type")?.as_str()? {
-            "TSAnyKeyword" => Some(self.builder.ts_type_any_keyword(SPAN)),
-            "TSBigIntKeyword" => Some(self.builder.ts_type_big_int_keyword(SPAN)),
-            "TSBooleanKeyword" => Some(self.builder.ts_type_boolean_keyword(SPAN)),
-            "TSIntrinsicKeyword" => Some(self.builder.ts_type_intrinsic_keyword(SPAN)),
-            "TSNeverKeyword" => Some(self.builder.ts_type_never_keyword(SPAN)),
-            "TSNullKeyword" => Some(self.builder.ts_type_null_keyword(SPAN)),
-            "TSNumberKeyword" => Some(self.builder.ts_type_number_keyword(SPAN)),
-            "TSObjectKeyword" => Some(self.builder.ts_type_object_keyword(SPAN)),
-            "TSStringKeyword" => Some(self.builder.ts_type_string_keyword(SPAN)),
-            "TSSymbolKeyword" => Some(self.builder.ts_type_symbol_keyword(SPAN)),
-            "TSThisType" => Some(self.builder.ts_type_this_type(SPAN)),
-            "TSUndefinedKeyword" => Some(self.builder.ts_type_undefined_keyword(SPAN)),
-            "TSUnknownKeyword" => Some(self.builder.ts_type_unknown_keyword(SPAN)),
-            "TSVoidKeyword" => Some(self.builder.ts_type_void_keyword(SPAN)),
-            "TSArrayType" => {
-                let element_type = self.convert_ts_type_from_json(value.get("elementType")?)?;
-                Some(self.builder.ts_type_array_type(SPAN, element_type))
-            }
-            "TSUnionType" => {
-                let types = value.get("types")?.as_array()?;
-                let types = self.builder.vec_from_iter(
-                    types.iter().filter_map(|ty| self.convert_ts_type_from_json(ty)),
-                );
-                Some(self.builder.ts_type_union_type(SPAN, types))
-            }
-            "TSParenthesizedType" => {
-                let type_annotation =
-                    self.convert_ts_type_from_json(value.get("typeAnnotation")?)?;
-                Some(self.builder.ts_type_parenthesized_type(SPAN, type_annotation))
-            }
-            "TSTypeOperator" => {
-                let operator = match value.get("operator")?.as_str()? {
-                    "keyof" => oxc::TSTypeOperatorOperator::Keyof,
-                    "unique" => oxc::TSTypeOperatorOperator::Unique,
-                    "readonly" => oxc::TSTypeOperatorOperator::Readonly,
-                    _ => return None,
-                };
-                let type_annotation =
-                    self.convert_ts_type_from_json(value.get("typeAnnotation")?)?;
-                Some(self.builder.ts_type_type_operator_type(SPAN, operator, type_annotation))
-            }
-            "TSTypeReference" => {
-                let type_name = self.convert_ts_type_name_from_json(value.get("typeName")?)?;
-                let type_arguments =
-                    value.get("typeParameters").or_else(|| value.get("typeArguments")).and_then(
-                        |value| self.convert_ts_type_parameter_instantiation_from_json(value),
-                    );
-                Some(self.builder.ts_type_type_reference(SPAN, type_name, type_arguments))
-            }
-            "TSTypeQuery" => {
-                let expr_name =
-                    self.convert_ts_type_query_expr_name_from_json(value.get("exprName")?)?;
-                let type_arguments =
-                    value.get("typeParameters").or_else(|| value.get("typeArguments")).and_then(
-                        |value| self.convert_ts_type_parameter_instantiation_from_json(value),
-                    );
-                Some(self.builder.ts_type_type_query(
-                    self.span_from_json_value(value),
-                    expr_name,
-                    type_arguments,
-                ))
-            }
-            "TSIndexedAccessType" => {
-                let object_type = self.convert_ts_type_from_json(value.get("objectType")?)?;
-                let index_type = self.convert_ts_type_from_json(value.get("indexType")?)?;
-                Some(self.builder.ts_type_indexed_access_type(
-                    self.span_from_json_value(value),
-                    object_type,
-                    index_type,
-                ))
-            }
-            "TSLiteralType" => {
-                let literal = self.convert_ts_literal_from_json(value.get("literal")?)?;
-                Some(self.builder.ts_type_literal_type(SPAN, literal))
-            }
-            _ => None,
-        }
-    }
-
-    fn convert_ts_type_name_from_json(
-        &self,
-        value: &serde_json::Value,
-    ) -> Option<oxc::TSTypeName<'a>> {
-        match value.get("type")?.as_str()? {
-            "Identifier" => Some(self.builder.ts_type_name_identifier_reference(
-                self.span_from_json_value(value),
-                self.atom(value.get("name")?.as_str()?),
-            )),
-            "TSQualifiedName" => {
-                let left = self.convert_ts_type_name_from_json(value.get("left")?)?;
-                let right_value = value.get("right")?;
-                let right = self.builder.identifier_name(
-                    self.span_from_json_value(right_value),
-                    self.atom(right_value.get("name")?.as_str()?),
-                );
-                Some(self.builder.ts_type_name_qualified_name(
-                    self.span_from_json_value(value),
-                    left,
-                    right,
-                ))
-            }
-            "TSThisType" | "ThisExpression" => {
-                Some(self.builder.ts_type_name_this_expression(self.span_from_json_value(value)))
-            }
-            _ => None,
-        }
-    }
-
-    fn convert_ts_type_query_expr_name_from_json(
-        &self,
-        value: &serde_json::Value,
-    ) -> Option<oxc::TSTypeQueryExprName<'a>> {
-        match self.convert_ts_type_name_from_json(value)? {
-            oxc::TSTypeName::IdentifierReference(identifier) => {
-                Some(oxc::TSTypeQueryExprName::IdentifierReference(identifier))
-            }
-            oxc::TSTypeName::QualifiedName(qualified) => {
-                Some(oxc::TSTypeQueryExprName::QualifiedName(qualified))
-            }
-            oxc::TSTypeName::ThisExpression(this) => {
-                Some(oxc::TSTypeQueryExprName::ThisExpression(this))
-            }
-        }
-    }
-
-    fn convert_ts_type_parameter_instantiation_from_json(
-        &self,
-        value: &serde_json::Value,
-    ) -> Option<ArenaBox<'a, oxc::TSTypeParameterInstantiation<'a>>> {
-        let params = value.get("params")?.as_array()?;
-        let params = self
-            .builder
-            .vec_from_iter(params.iter().filter_map(|ty| self.convert_ts_type_from_json(ty)));
-        Some(self.builder.alloc_ts_type_parameter_instantiation(SPAN, params))
-    }
-
-    fn convert_ts_literal_from_json(
-        &self,
-        value: &serde_json::Value,
-    ) -> Option<oxc::TSLiteral<'a>> {
-        match value.get("type")?.as_str()? {
-            "BooleanLiteral" => {
-                Some(self.builder.ts_literal_boolean_literal(SPAN, value.get("value")?.as_bool()?))
-            }
-            "NumericLiteral" => Some(self.builder.ts_literal_numeric_literal(
-                SPAN,
-                value.get("value")?.as_f64()?,
-                None,
-                oxc::NumberBase::Decimal,
-            )),
-            "StringLiteral" => Some(self.builder.ts_literal_string_literal(
-                SPAN,
-                self.atom(value.get("value")?.as_str()?),
-                None,
-            )),
-            "BigIntLiteral" => Some(self.builder.ts_literal_big_int_literal(
-                SPAN,
-                self.atom(value.get("value")?.as_str()?),
-                None,
-                oxc::BigintBase::Decimal,
-            )),
-            _ => None,
-        }
-    }
-
-    fn ts_type_json_contains_type_query(value: &serde_json::Value) -> bool {
-        match value {
-            serde_json::Value::Object(obj) => {
-                let is_rename_sensitive_type_query =
-                    obj.get("type").and_then(serde_json::Value::as_str) == Some("TSTypeQuery")
-                        && obj
-                            .get("exprName")
-                            .and_then(|expr| expr.get("type"))
-                            .and_then(serde_json::Value::as_str)
-                            != Some("TSImportType");
-                is_rename_sensitive_type_query
-                    || obj.values().any(Self::ts_type_json_contains_type_query)
-            }
-            serde_json::Value::Array(values) => {
-                values.iter().any(Self::ts_type_json_contains_type_query)
-            }
-            _ => false,
-        }
     }
 
     fn ts_type_contains_type_query(ty: &oxc::TSType<'a>) -> bool {
@@ -538,20 +336,6 @@ impl<'a> ReverseCtx<'a> {
         type_arguments: &oxc::TSTypeParameterInstantiation<'a>,
     ) -> bool {
         type_arguments.params.iter().any(Self::ts_type_contains_type_query)
-    }
-
-    fn extract_source_ts_satisfies_type(&self, base: &BaseNode) -> Option<oxc::TSType<'a>> {
-        match self.extract_source_expr(base)? {
-            oxc::Expression::TSSatisfiesExpression(expr) => Some(expr.unbox().type_annotation),
-            _ => None,
-        }
-    }
-
-    fn extract_source_ts_type_assertion_type(&self, base: &BaseNode) -> Option<oxc::TSType<'a>> {
-        match self.extract_source_expr(base)? {
-            oxc::Expression::TSTypeAssertion(expr) => Some(expr.unbox().type_annotation),
-            _ => None,
-        }
     }
 
     fn extract_source_ts_instantiation_type_arguments(
@@ -1546,15 +1330,7 @@ impl<'a> ReverseCtx<'a> {
             // expression and recover only the type from the original source.
             Expression::TSAsExpression(e) => {
                 let expression = self.convert_expression(&e.expression);
-                let parsed_type = e.type_annotation.parse_value();
-                let type_annotation = self.convert_ts_type_from_json(&parsed_type).or_else(|| {
-                    if Self::ts_type_json_contains_type_query(&parsed_type) {
-                        None
-                    } else {
-                        self.extract_source_ts_as_type(&e.base)
-                    }
-                });
-                if let Some(type_annotation) = type_annotation {
+                if let Some(type_annotation) = self.convert_type_from_raw(&e.type_annotation) {
                     self.builder.expression_ts_as(SPAN, expression, type_annotation)
                 } else {
                     expression
@@ -1562,15 +1338,7 @@ impl<'a> ReverseCtx<'a> {
             }
             Expression::TSSatisfiesExpression(e) => {
                 let expression = self.convert_expression(&e.expression);
-                let parsed_type = e.type_annotation.parse_value();
-                let type_annotation = self.convert_ts_type_from_json(&parsed_type).or_else(|| {
-                    if Self::ts_type_json_contains_type_query(&parsed_type) {
-                        None
-                    } else {
-                        self.extract_source_ts_satisfies_type(&e.base)
-                    }
-                });
-                if let Some(type_annotation) = type_annotation {
+                if let Some(type_annotation) = self.convert_type_from_raw(&e.type_annotation) {
                     self.builder.expression_ts_satisfies(SPAN, expression, type_annotation)
                 } else {
                     expression
@@ -1581,15 +1349,7 @@ impl<'a> ReverseCtx<'a> {
             }
             Expression::TSTypeAssertion(e) => {
                 let expression = self.convert_expression(&e.expression);
-                let parsed_type = e.type_annotation.parse_value();
-                let type_annotation = self.convert_ts_type_from_json(&parsed_type).or_else(|| {
-                    if Self::ts_type_json_contains_type_query(&parsed_type) {
-                        None
-                    } else {
-                        self.extract_source_ts_type_assertion_type(&e.base)
-                    }
-                });
-                if let Some(type_annotation) = type_annotation {
+                if let Some(type_annotation) = self.convert_type_from_raw(&e.type_annotation) {
                     self.builder.expression_ts_type_assertion(SPAN, type_annotation, expression)
                 } else {
                     expression
@@ -1986,9 +1746,7 @@ impl<'a> ReverseCtx<'a> {
         let return_type = if initializes_react_cache {
             None
         } else {
-            f.return_type
-                .as_ref()
-                .and_then(|value| self.convert_ts_type_annotation_from_json(&value.parse_value()))
+            f.return_type.as_ref().and_then(|value| self.convert_type_annotation_from_raw(value))
         };
         let mut func = self.builder.function(
             SPAN,
@@ -2018,9 +1776,7 @@ impl<'a> ReverseCtx<'a> {
         let return_type = if initializes_react_cache {
             None
         } else {
-            m.return_type
-                .as_ref()
-                .and_then(|value| self.convert_ts_type_annotation_from_json(&value.parse_value()))
+            m.return_type.as_ref().and_then(|value| self.convert_type_annotation_from_raw(value))
         };
         let mut func = self.builder.function(
             SPAN,
@@ -2070,9 +1826,10 @@ impl<'a> ReverseCtx<'a> {
             if arrow_initializes_react_cache {
                 None
             } else {
-                arrow.return_type.as_ref().and_then(|value| {
-                    self.convert_ts_type_annotation_from_json(&value.parse_value())
-                })
+                arrow
+                    .return_type
+                    .as_ref()
+                    .and_then(|value| self.convert_type_annotation_from_raw(value))
             },
             body,
         );
@@ -2102,9 +1859,10 @@ impl<'a> ReverseCtx<'a> {
                 PatternLike::RestElement(r) => {
                     let arg = self.convert_pattern_to_binding_pattern(&r.argument);
                     let rest_elem = self.builder.binding_rest_element(SPAN, arg);
-                    let type_annotation = r.type_annotation.as_ref().and_then(|value| {
-                        self.convert_ts_type_annotation_from_json(&value.parse_value())
-                    });
+                    let type_annotation = r
+                        .type_annotation
+                        .as_ref()
+                        .and_then(|value| self.convert_type_annotation_from_raw(value));
                     rest = Some(self.builder.formal_parameter_rest(
                         SPAN,
                         self.builder.vec(),
@@ -2198,7 +1956,7 @@ impl<'a> ReverseCtx<'a> {
             | PatternLike::TSTypeAssertion(_)
             | PatternLike::TypeCastExpression(_) => None,
         }?;
-        self.convert_ts_type_annotation_from_json(&value.parse_value())
+        self.convert_type_annotation_from_raw(value)
     }
 
     // ===== Patterns → BindingPattern =====
@@ -2478,14 +2236,7 @@ impl<'a> ReverseCtx<'a> {
         expr: &TSAsExpression,
     ) -> oxc::SimpleAssignmentTarget<'a> {
         let expression = self.convert_expression(&expr.expression);
-        let parsed_type = expr.type_annotation.parse_value();
-        if let Some(type_annotation) = self.convert_ts_type_from_json(&parsed_type).or_else(|| {
-            if Self::ts_type_json_contains_type_query(&parsed_type) {
-                None
-            } else {
-                self.extract_source_ts_as_type(&expr.base)
-            }
-        }) {
+        if let Some(type_annotation) = self.convert_type_from_raw(&expr.type_annotation) {
             self.builder.simple_assignment_target_ts_as_expression(
                 SPAN,
                 expression,
@@ -2501,14 +2252,7 @@ impl<'a> ReverseCtx<'a> {
         expr: &TSSatisfiesExpression,
     ) -> oxc::SimpleAssignmentTarget<'a> {
         let expression = self.convert_expression(&expr.expression);
-        let parsed_type = expr.type_annotation.parse_value();
-        if let Some(type_annotation) = self.convert_ts_type_from_json(&parsed_type).or_else(|| {
-            if Self::ts_type_json_contains_type_query(&parsed_type) {
-                None
-            } else {
-                self.extract_source_ts_satisfies_type(&expr.base)
-            }
-        }) {
+        if let Some(type_annotation) = self.convert_type_from_raw(&expr.type_annotation) {
             self.builder.simple_assignment_target_ts_satisfies_expression(
                 SPAN,
                 expression,
@@ -2532,14 +2276,7 @@ impl<'a> ReverseCtx<'a> {
         expr: &TSTypeAssertion,
     ) -> oxc::SimpleAssignmentTarget<'a> {
         let expression = self.convert_expression(&expr.expression);
-        let parsed_type = expr.type_annotation.parse_value();
-        if let Some(type_annotation) = self.convert_ts_type_from_json(&parsed_type).or_else(|| {
-            if Self::ts_type_json_contains_type_query(&parsed_type) {
-                None
-            } else {
-                self.extract_source_ts_type_assertion_type(&expr.base)
-            }
-        }) {
+        if let Some(type_annotation) = self.convert_type_from_raw(&expr.type_annotation) {
             self.builder.simple_assignment_target_ts_type_assertion(
                 SPAN,
                 type_annotation,

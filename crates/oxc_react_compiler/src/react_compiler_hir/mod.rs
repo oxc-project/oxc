@@ -630,10 +630,10 @@ pub enum InstructionValue {
         type_: Type,
         type_annotation_name: Option<String>,
         type_annotation_kind: Option<String>,
-        /// The original AST type annotation node, preserved for codegen.
-        /// For Flow: the inner type from TypeAnnotation.typeAnnotation
-        /// For TS: the TSType node from TSAsExpression/TSSatisfiesExpression
-        type_annotation: Option<Box<serde_json::Value>>,
+        /// The original AST type annotation subtree, preserved for codegen, which
+        /// re-emits it by re-parsing its source span (and applying any identifier
+        /// renames recorded on its metadata).
+        type_annotation: Option<crate::react_compiler_ast::common::RawNode>,
         loc: Option<SourceLocation>,
     },
     JsxExpression {
@@ -1037,23 +1037,15 @@ impl IdentifierName {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Effect {
-    #[serde(rename = "<unknown>")]
     Unknown,
-    #[serde(rename = "freeze")]
     Freeze,
-    #[serde(rename = "read")]
     Read,
-    #[serde(rename = "capture")]
     Capture,
-    #[serde(rename = "mutate-iterator?")]
     ConditionallyMutateIterator,
-    #[serde(rename = "mutate?")]
     ConditionallyMutate,
-    #[serde(rename = "mutate")]
     Mutate,
-    #[serde(rename = "store")]
     Store,
 }
 

@@ -2283,29 +2283,29 @@ fn codegen_base_instruction_value(
             let wrapped = match (type_annotation_kind.as_deref(), type_annotation) {
                 (Some("satisfies"), Some(ta)) => {
                     let mut ta = ta.clone();
-                    apply_renames_to_json(&mut ta, &cx.env.renames, &cx.env.reference_node_ids);
+                    set_raw_type_renames(&mut ta, &cx.env.renames, &cx.env.reference_node_ids);
                     Expression::TSSatisfiesExpression(ast_expr::TSSatisfiesExpression {
                         base: BaseNode::typed("TSSatisfiesExpression"),
                         expression: Box::new(expr),
-                        type_annotation: RawNode::from_value(&ta),
+                        type_annotation: ta,
                     })
                 }
                 (Some("as"), Some(ta)) => {
                     let mut ta = ta.clone();
-                    apply_renames_to_json(&mut ta, &cx.env.renames, &cx.env.reference_node_ids);
+                    set_raw_type_renames(&mut ta, &cx.env.renames, &cx.env.reference_node_ids);
                     Expression::TSAsExpression(ast_expr::TSAsExpression {
                         base: BaseNode::typed("TSAsExpression"),
                         expression: Box::new(expr),
-                        type_annotation: RawNode::from_value(&ta),
+                        type_annotation: ta,
                     })
                 }
                 (Some("cast"), Some(ta)) => {
                     let mut ta = ta.clone();
-                    apply_renames_to_json(&mut ta, &cx.env.renames, &cx.env.reference_node_ids);
+                    set_raw_type_renames(&mut ta, &cx.env.renames, &cx.env.reference_node_ids);
                     Expression::TypeCastExpression(ast_expr::TypeCastExpression {
                         base: BaseNode::typed("TypeCastExpression"),
                         expression: Box::new(expr),
-                        type_annotation: RawNode::from_value(&ta),
+                        type_annotation: ta,
                     })
                 }
                 _ => expr,
@@ -3827,73 +3827,34 @@ fn create_function_body_hook_guard(
     })
 }
 
-fn apply_renames_to_json(
-    value: &mut serde_json::Value,
+/// Record identifier renames on a type annotation's pre-extracted metadata, to be
+/// applied when the type is re-parsed from source during codegen.
+///
+/// Mirrors the old JSON rename walk: an identifier is renamed only if it is an
+/// actual reference (its node-id is in `reference_node_ids`, which excludes
+/// type-level labels and object-type property keys) and a binding rename applies,
+/// picking the nearest enclosing declaration. Every type identifier produced by
+/// `convert_ast` carries a non-zero node-id, so the legacy name-only fallback for
+/// id-less nodes is unnecessary.
+fn set_raw_type_renames(
+    raw: &mut RawNode,
     renames: &[crate::react_compiler_hir::environment::BindingRename],
     reference_node_ids: &rustc_hash::FxHashSet<u32>,
-) {
-    apply_renames_to_json_inner(value, renames, reference_node_ids, false);
-}
-
-fn apply_renames_to_json_inner(
-    value: &mut serde_json::Value,
-    renames: &[crate::react_compiler_hir::environment::BindingRename],
-    reference_node_ids: &rustc_hash::FxHashSet<u32>,
-    is_property_key: bool,
 ) {
     if renames.is_empty() {
         return;
     }
-    match value {
-        serde_json::Value::Object(map) => {
-            let node_type = map.get("type").and_then(|v| v.as_str()).unwrap_or("").to_string();
-            // Rename Identifier nodes that are NOT object property keys.
-            // Property keys in object type annotations (e.g., `id: string`)
-            // use the original property name, not a variable binding name.
-            if (node_type == "Identifier" || node_type == "GenericTypeAnnotation")
-                && !is_property_key
-            {
-                let ident_node_id = map.get("_nodeId").and_then(|v| v.as_u64()).unwrap_or(0) as u32;
-                let ident_start = map.get("start").and_then(|v| v.as_u64()).unwrap_or(0) as u32;
-                // Only rename identifiers that are actual references to bindings
-                // (identified by node_id). Type-level labels (e.g., ObjectTypeIndexer
-                // params) are NOT in the reference set and keep their original names.
-                let is_reference = ident_node_id > 0 && reference_node_ids.contains(&ident_node_id);
-                let maybe_rename = if is_reference {
-                    map.get("name").and_then(|v| v.as_str()).and_then(|name| {
-                        renames
-                            .iter()
-                            .filter(|r| r.original == name && r.declaration_start <= ident_start)
-                            .max_by_key(|r| r.declaration_start)
-                            .map(|r| r.renamed.clone())
-                    })
-                } else if ident_node_id == 0 {
-                    map.get("name").and_then(|v| v.as_str()).and_then(|name| {
-                        renames.iter().find(|r| r.original == name).map(|r| r.renamed.clone())
-                    })
-                } else {
-                    None
-                };
-                if let Some(renamed) = maybe_rename {
-                    map.insert("name".to_string(), serde_json::Value::String(renamed));
-                }
-                if let Some(id) = map.get_mut("id") {
-                    apply_renames_to_json_inner(id, renames, reference_node_ids, false);
-                }
-            }
-            let is_obj_type_prop =
-                node_type == "ObjectTypeProperty" || node_type == "ObjectTypeIndexer";
-            for (key, val) in map.iter_mut() {
-                let child_is_key = is_obj_type_prop && key == "key";
-                apply_renames_to_json_inner(val, renames, reference_node_ids, child_is_key);
-            }
+    for id in &mut raw.idents {
+        if id.node_id == 0 || !reference_node_ids.contains(&id.node_id) {
+            continue;
         }
-        serde_json::Value::Array(arr) => {
-            for item in arr {
-                apply_renames_to_json_inner(item, renames, reference_node_ids, false);
-            }
+        if let Some(rename) = renames
+            .iter()
+            .filter(|r| r.original == id.name && r.declaration_start <= id.start)
+            .max_by_key(|r| r.declaration_start)
+        {
+            id.renamed_to = Some(rename.renamed.clone());
         }
-        _ => {}
     }
 }
 

@@ -5,9 +5,10 @@
 #
 # This crate owns the oxc <-> react_compiler_ast conversion layer. The React
 # Compiler *core* (a Rust port of the MIT React Compiler) is vendored in
-# `src/react_compiler*` — frontend-agnostic modules that depend on serde/indexmap
-# only, never on oxc. The AST/scope conversion lives alongside it, written against
-# the live workspace oxc AST.
+# `src/react_compiler*` — frontend-agnostic modules with no oxc dependency. The
+# AST/scope conversion lives alongside it, written against the live workspace oxc
+# AST. TS types and unmodeled nodes round-trip by re-parsing their source span, so
+# the compiler carries no JSON/serde layer.
 
 [package]
 name = "oxc_react_compiler"
@@ -38,11 +39,8 @@ oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
 
 hmac-sha256 = { workspace = true }
-indexmap = { workspace = true, features = ["serde"] }
+indexmap = { workspace = true }
 rustc-hash = { workspace = true }
-serde = { workspace = true, features = ["derive"] }
-serde-transcode = { workspace = true }
-serde_json = { workspace = true, features = ["raw_value", "unbounded_depth"] }
 
 # The `src/` conversion modules are vendored close to upstream `react_compiler_oxc`
 # (kept near byte-for-byte to ease re-syncing), so relax the handful of lints they

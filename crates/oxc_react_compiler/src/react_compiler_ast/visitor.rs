@@ -5,6 +5,7 @@
 //! via the scope tree's `node_to_scope` map.
 
 use crate::react_compiler_ast::Program;
+use crate::react_compiler_ast::common::RawNode;
 use crate::react_compiler_ast::declarations::*;
 use crate::react_compiler_ast::expressions::*;
 use crate::react_compiler_ast::jsx::*;
@@ -86,6 +87,11 @@ pub trait Visitor<'ast> {
     fn enter_update_expression(&mut self, _node: &'ast UpdateExpression, _scope_stack: &[ScopeId]) {
     }
     fn enter_identifier(&mut self, _node: &'ast Identifier, _scope_stack: &[ScopeId]) {}
+    /// Called for every `RawNode` (unmodeled TS/JSX/decorator subtree) the walker
+    /// reaches. Lets visitors consume a RawNode's pre-extracted metadata (e.g.
+    /// type-annotation identifiers) without the walker descending into the opaque
+    /// subtree itself.
+    fn visit_raw_node(&mut self, _raw: &'ast RawNode) {}
     fn enter_jsx_identifier(&mut self, _node: &'ast JSXIdentifier, _scope_stack: &[ScopeId]) {}
     fn enter_jsx_opening_element(
         &mut self,
@@ -320,8 +326,15 @@ impl<'a> AstWalker<'a> {
             }
             Statement::ClassDeclaration(node) => {
                 // Call the visitor hook so consumers can index the class name,
-                // but skip walking the class body (no compilable functions inside)
+                // then visit the class's unmodeled (RawNode) parts (body members,
+                // type params, decorators) for their pre-extracted metadata.
                 v.enter_class_declaration(node, &self.scope_stack);
+                self.walk_raws_opt(v, &node.decorators);
+                self.walk_raws_opt(v, &node.implements);
+                self.walk_raw_opt(v, &node.super_type_parameters);
+                self.walk_raw_opt(v, &node.type_parameters);
+                self.walk_raws_opt(v, &node.mixins);
+                self.walk_raws(v, &node.body.body);
             }
             Statement::WithStatement(node) => {
                 self.walk_expression(v, &node.object);
@@ -370,6 +383,8 @@ impl<'a> AstWalker<'a> {
         match expr {
             Expression::Identifier(node) => {
                 v.enter_identifier(node, &self.scope_stack);
+                self.walk_raw_opt(v, &node.type_annotation);
+                self.walk_raws_opt(v, &node.decorators);
             }
             Expression::CallExpression(node) => {
                 v.enter_call_expression(node, &self.scope_stack);
@@ -377,6 +392,8 @@ impl<'a> AstWalker<'a> {
                 for arg in &node.arguments {
                     self.walk_expression(v, arg);
                 }
+                self.walk_raw_opt(v, &node.type_parameters);
+                self.walk_raw_opt(v, &node.type_arguments);
                 v.leave_call_expression(node, &self.scope_stack);
             }
             Expression::MemberExpression(node) => {
@@ -390,6 +407,8 @@ impl<'a> AstWalker<'a> {
                 for arg in &node.arguments {
                     self.walk_expression(v, arg);
                 }
+                self.walk_raw_opt(v, &node.type_parameters);
+                self.walk_raw_opt(v, &node.type_arguments);
             }
             Expression::OptionalMemberExpression(node) => {
                 self.walk_expression(v, &node.object);
@@ -430,6 +449,9 @@ impl<'a> AstWalker<'a> {
             Expression::ArrowFunctionExpression(node) => {
                 let pushed = self.try_push_scope(node.base.start, node.base.node_id);
                 v.enter_arrow_function_expression(node, &self.scope_stack);
+                self.walk_raw_opt(v, &node.return_type);
+                self.walk_raw_opt(v, &node.type_parameters);
+                self.walk_raw_opt(v, &node.predicate);
                 if v.traverse_function_bodies() {
                     for param in &node.params {
                         self.walk_pattern(v, param);
@@ -451,6 +473,9 @@ impl<'a> AstWalker<'a> {
             Expression::FunctionExpression(node) => {
                 let pushed = self.try_push_scope(node.base.start, node.base.node_id);
                 v.enter_function_expression(node, &self.scope_stack);
+                self.walk_raw_opt(v, &node.return_type);
+                self.walk_raw_opt(v, &node.type_parameters);
+                self.walk_raw_opt(v, &node.predicate);
                 if v.traverse_function_bodies() {
                     for param in &node.params {
                         self.walk_pattern(v, param);
@@ -479,6 +504,8 @@ impl<'a> AstWalker<'a> {
                 for arg in &node.arguments {
                     self.walk_expression(v, arg);
                 }
+                self.walk_raw_opt(v, &node.type_parameters);
+                self.walk_raw_opt(v, &node.type_arguments);
             }
             Expression::TemplateLiteral(node) => {
                 for expr in &node.expressions {
@@ -490,6 +517,7 @@ impl<'a> AstWalker<'a> {
                 for expr in &node.quasi.expressions {
                     self.walk_expression(v, expr);
                 }
+                self.walk_raw_opt(v, &node.type_parameters);
             }
             Expression::AwaitExpression(node) => {
                 self.walk_expression(v, &node.argument);
@@ -511,21 +539,41 @@ impl<'a> AstWalker<'a> {
             }
             Expression::ClassExpression(node) => {
                 // Call the visitor hook so consumers can index the class name,
-                // but skip walking the class body
+                // then visit the class's unmodeled (RawNode) parts. The class body
+                // is not recursed structurally, but its members carry pre-extracted
+                // identifier metadata.
                 v.enter_class_expression(node, &self.scope_stack);
+                self.walk_raws_opt(v, &node.decorators);
+                self.walk_raws_opt(v, &node.implements);
+                self.walk_raw_opt(v, &node.super_type_parameters);
+                self.walk_raw_opt(v, &node.type_parameters);
+                self.walk_raws(v, &node.body.body);
             }
             // JSX
             Expression::JSXElement(node) => self.walk_jsx_element(v, node),
             Expression::JSXFragment(node) => self.walk_jsx_fragment(v, node),
-            // TS/Flow wrappers - traverse inner expression
-            Expression::TSAsExpression(node) => self.walk_expression(v, &node.expression),
-            Expression::TSSatisfiesExpression(node) => self.walk_expression(v, &node.expression),
-            Expression::TSNonNullExpression(node) => self.walk_expression(v, &node.expression),
-            Expression::TSTypeAssertion(node) => self.walk_expression(v, &node.expression),
-            Expression::TSInstantiationExpression(node) => {
-                self.walk_expression(v, &node.expression)
+            // TS/Flow wrappers - traverse inner expression and visit the type node
+            Expression::TSAsExpression(node) => {
+                self.walk_expression(v, &node.expression);
+                self.walk_raw(v, &node.type_annotation);
             }
-            Expression::TypeCastExpression(node) => self.walk_expression(v, &node.expression),
+            Expression::TSSatisfiesExpression(node) => {
+                self.walk_expression(v, &node.expression);
+                self.walk_raw(v, &node.type_annotation);
+            }
+            Expression::TSNonNullExpression(node) => self.walk_expression(v, &node.expression),
+            Expression::TSTypeAssertion(node) => {
+                self.walk_expression(v, &node.expression);
+                self.walk_raw(v, &node.type_annotation);
+            }
+            Expression::TSInstantiationExpression(node) => {
+                self.walk_expression(v, &node.expression);
+                self.walk_raw(v, &node.type_parameters);
+            }
+            Expression::TypeCastExpression(node) => {
+                self.walk_expression(v, &node.expression);
+                self.walk_raw(v, &node.type_annotation);
+            }
             // Leaf nodes
             Expression::StringLiteral(_)
             | Expression::NumericLiteral(_)
@@ -545,6 +593,8 @@ impl<'a> AstWalker<'a> {
         match pat {
             PatternLike::Identifier(node) => {
                 v.enter_identifier(node, &self.scope_stack);
+                self.walk_raw_opt(v, &node.type_annotation);
+                self.walk_raws_opt(v, &node.decorators);
             }
             PatternLike::ObjectPattern(node) => {
                 for prop in &node.properties {
@@ -560,6 +610,8 @@ impl<'a> AstWalker<'a> {
                         }
                     }
                 }
+                self.walk_raw_opt(v, &node.type_annotation);
+                self.walk_raws_opt(v, &node.decorators);
             }
             PatternLike::ArrayPattern(node) => {
                 for element in &node.elements {
@@ -567,13 +619,19 @@ impl<'a> AstWalker<'a> {
                         self.walk_pattern(v, el);
                     }
                 }
+                self.walk_raw_opt(v, &node.type_annotation);
+                self.walk_raws_opt(v, &node.decorators);
             }
             PatternLike::AssignmentPattern(node) => {
                 self.walk_pattern(v, &node.left);
                 self.walk_expression(v, &node.right);
+                self.walk_raw_opt(v, &node.type_annotation);
+                self.walk_raws_opt(v, &node.decorators);
             }
             PatternLike::RestElement(node) => {
                 self.walk_pattern(v, &node.argument);
+                self.walk_raw_opt(v, &node.type_annotation);
+                self.walk_raws_opt(v, &node.decorators);
             }
             PatternLike::MemberExpression(node) => {
                 self.walk_expression(v, &node.object);
@@ -581,15 +639,55 @@ impl<'a> AstWalker<'a> {
                     self.walk_expression(v, &node.property);
                 }
             }
-            PatternLike::TSAsExpression(node) => self.walk_expression(v, &node.expression),
-            PatternLike::TSSatisfiesExpression(node) => self.walk_expression(v, &node.expression),
+            PatternLike::TSAsExpression(node) => {
+                self.walk_expression(v, &node.expression);
+                self.walk_raw(v, &node.type_annotation);
+            }
+            PatternLike::TSSatisfiesExpression(node) => {
+                self.walk_expression(v, &node.expression);
+                self.walk_raw(v, &node.type_annotation);
+            }
             PatternLike::TSNonNullExpression(node) => self.walk_expression(v, &node.expression),
-            PatternLike::TSTypeAssertion(node) => self.walk_expression(v, &node.expression),
-            PatternLike::TypeCastExpression(node) => self.walk_expression(v, &node.expression),
+            PatternLike::TSTypeAssertion(node) => {
+                self.walk_expression(v, &node.expression);
+                self.walk_raw(v, &node.type_annotation);
+            }
+            PatternLike::TypeCastExpression(node) => {
+                self.walk_expression(v, &node.expression);
+                self.walk_raw(v, &node.type_annotation);
+            }
         }
     }
 
     // ---- Private helper walk methods ----
+
+    fn walk_raw<'ast>(&mut self, v: &mut impl Visitor<'ast>, raw: &'ast RawNode) {
+        v.visit_raw_node(raw);
+    }
+
+    fn walk_raw_opt<'ast>(&mut self, v: &mut impl Visitor<'ast>, raw: &'ast Option<RawNode>) {
+        if let Some(raw) = raw {
+            v.visit_raw_node(raw);
+        }
+    }
+
+    fn walk_raws<'ast>(&mut self, v: &mut impl Visitor<'ast>, raws: &'ast [RawNode]) {
+        for raw in raws {
+            v.visit_raw_node(raw);
+        }
+    }
+
+    fn walk_raws_opt<'ast>(
+        &mut self,
+        v: &mut impl Visitor<'ast>,
+        raws: &'ast Option<Vec<RawNode>>,
+    ) {
+        if let Some(raws) = raws {
+            for raw in raws {
+                v.visit_raw_node(raw);
+            }
+        }
+    }
 
     fn walk_for_in_of_left<'ast>(&mut self, v: &mut impl Visitor<'ast>, left: &'ast ForInOfLeft) {
         match left {
@@ -620,6 +718,9 @@ impl<'a> AstWalker<'a> {
     ) {
         let pushed = self.try_push_scope(node.base.start, node.base.node_id);
         v.enter_function_declaration(node, &self.scope_stack);
+        self.walk_raw_opt(v, &node.return_type);
+        self.walk_raw_opt(v, &node.type_parameters);
+        self.walk_raw_opt(v, &node.predicate);
         if v.traverse_function_bodies() {
             for param in &node.params {
                 self.walk_pattern(v, param);
@@ -643,10 +744,15 @@ impl<'a> AstWalker<'a> {
                     self.walk_expression(v, &p.key);
                 }
                 self.walk_expression(v, &p.value);
+                self.walk_raws_opt(v, &p.decorators);
             }
             ObjectExpressionProperty::ObjectMethod(node) => {
                 let pushed = self.try_push_scope(node.base.start, node.base.node_id);
                 v.enter_object_method(node, &self.scope_stack);
+                self.walk_raws_opt(v, &node.decorators);
+                self.walk_raw_opt(v, &node.return_type);
+                self.walk_raw_opt(v, &node.type_parameters);
+                self.walk_raw_opt(v, &node.predicate);
                 if v.traverse_function_bodies() {
                     if node.computed {
                         self.walk_expression(v, &node.key);
@@ -705,6 +811,7 @@ impl<'a> AstWalker<'a> {
     fn walk_jsx_element<'ast>(&mut self, v: &mut impl Visitor<'ast>, node: &'ast JSXElement) {
         v.enter_jsx_opening_element(&node.opening_element, &self.scope_stack);
         self.walk_jsx_element_name(v, &node.opening_element.name);
+        self.walk_raw_opt(v, &node.opening_element.type_parameters);
         v.leave_jsx_opening_element(&node.opening_element, &self.scope_stack);
         for attr in &node.opening_element.attributes {
             match attr {

@@ -13,8 +13,6 @@
 
 use std::fmt;
 
-use serde::Serialize;
-
 /// Invariant: `Repr::Utf8` holds every well-formed value and `Repr::Wtf16`
 /// only ill-formed ones (at least one unpaired surrogate). The derived
 /// `PartialEq`/`Hash` are only sound under this invariant: a well-formed
@@ -237,12 +235,6 @@ impl PartialEq<&str> for JsString {
 impl fmt::Display for JsString {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(&self.to_escaped_string())
-    }
-}
-
-impl Serialize for JsString {
-    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        serializer.serialize_str(&self.to_marker_string())
     }
 }
 
