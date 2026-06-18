@@ -164,10 +164,7 @@ impl<'a> ConvertCtx<'a> {
         obj
     }
 
-    fn convert_ts_type_annotation_json(
-        &self,
-        type_annotation: &oxc::TSTypeAnnotation,
-    ) -> RawNode {
+    fn convert_ts_type_annotation_json(&self, type_annotation: &oxc::TSTypeAnnotation) -> RawNode {
         let mut obj = self.make_typed_json_base("TSTypeAnnotation", type_annotation.span);
         obj.insert(
             "typeAnnotation".to_string(),
@@ -270,7 +267,8 @@ impl<'a> ConvertCtx<'a> {
                 if let Some(type_arguments) = &reference.type_arguments {
                     obj.insert(
                         "typeParameters".to_string(),
-                        self.convert_ts_type_parameter_instantiation_json(type_arguments).parse_value(),
+                        self.convert_ts_type_parameter_instantiation_json(type_arguments)
+                            .parse_value(),
                     );
                 }
             }
@@ -282,7 +280,8 @@ impl<'a> ConvertCtx<'a> {
                 if let Some(type_arguments) = &query.type_arguments {
                     obj.insert(
                         "typeParameters".to_string(),
-                        self.convert_ts_type_parameter_instantiation_json(type_arguments).parse_value(),
+                        self.convert_ts_type_parameter_instantiation_json(type_arguments)
+                            .parse_value(),
                     );
                 }
             }
@@ -886,10 +885,7 @@ impl<'a> ConvertCtx<'a> {
             is_async: func.r#async,
             declare: if func.declare { Some(true) } else { None },
             return_type: func.return_type.as_ref().map(|t| self.convert_ts_type_annotation_json(t)),
-            type_parameters: func
-                .type_parameters
-                .as_ref()
-                .map(|_t| RawNode::null()),
+            type_parameters: func.type_parameters.as_ref().map(|_t| RawNode::null()),
             predicate: None,
             component_declaration: false,
             hook_declaration: false,
@@ -904,17 +900,16 @@ impl<'a> ConvertCtx<'a> {
                 .convert_formal_parameters(&func.params)
                 .into_iter()
                 .map(|param| {
-                    RawNode::from_value(&serde_json::to_value(param).unwrap_or(serde_json::Value::Null))
+                    RawNode::from_value(
+                        &serde_json::to_value(param).unwrap_or(serde_json::Value::Null),
+                    )
                 })
                 .collect(),
             is_async: if func.r#async { Some(true) } else { None },
             declare: if func.declare { Some(true) } else { None },
             generator: if func.generator { Some(true) } else { None },
             return_type: func.return_type.as_ref().map(|t| self.convert_ts_type_annotation_json(t)),
-            type_parameters: func
-                .type_parameters
-                .as_ref()
-                .map(|_t| RawNode::null()),
+            type_parameters: func.type_parameters.as_ref().map(|_t| RawNode::null()),
         }
     }
 
@@ -939,14 +934,8 @@ impl<'a> ConvertCtx<'a> {
             } else {
                 Some(class.implements.iter().map(|_i| RawNode::null()).collect())
             },
-            super_type_parameters: class
-                .super_type_arguments
-                .as_ref()
-                .map(|_t| RawNode::null()),
-            type_parameters: class
-                .type_parameters
-                .as_ref()
-                .map(|_t| RawNode::null()),
+            super_type_parameters: class.super_type_arguments.as_ref().map(|_t| RawNode::null()),
+            type_parameters: class.type_parameters.as_ref().map(|_t| RawNode::null()),
             mixins: None,
         }
     }
@@ -1249,10 +1238,7 @@ impl<'a> ConvertCtx<'a> {
             base: self.make_base_node(type_alias.span),
             id: self.convert_binding_identifier(&type_alias.id),
             type_annotation: self.convert_ts_type_json(&type_alias.type_annotation),
-            type_parameters: type_alias
-                .type_parameters
-                .as_ref()
-                .map(|_t| RawNode::null()),
+            type_parameters: type_alias.type_parameters.as_ref().map(|_t| RawNode::null()),
             declare: if type_alias.declare { Some(true) } else { None },
         }
     }
@@ -1265,10 +1251,7 @@ impl<'a> ConvertCtx<'a> {
             base: self.make_base_node(interface.span),
             id: self.convert_binding_identifier(&interface.id),
             body: RawNode::null(),
-            type_parameters: interface
-                .type_parameters
-                .as_ref()
-                .map(|_t| RawNode::null()),
+            type_parameters: interface.type_parameters.as_ref().map(|_t| RawNode::null()),
             extends: if interface.extends.is_empty() {
                 None
             } else {
@@ -1578,10 +1561,7 @@ impl<'a> ConvertCtx<'a> {
                 .return_type
                 .as_ref()
                 .map(|t| self.convert_ts_type_annotation_json(t)),
-            type_parameters: arrow
-                .type_parameters
-                .as_ref()
-                .map(|_t| RawNode::null()),
+            type_parameters: arrow.type_parameters.as_ref().map(|_t| RawNode::null()),
             predicate: None,
         }
     }
@@ -1945,10 +1925,7 @@ impl<'a> ConvertCtx<'a> {
             base: self.make_base_node(call.span),
             callee: Box::new(self.convert_expression(&call.callee)),
             arguments: call.arguments.iter().map(|a| self.convert_argument(a)).collect(),
-            type_parameters: call
-                .type_arguments
-                .as_ref()
-                .map(|_t| RawNode::null()),
+            type_parameters: call.type_arguments.as_ref().map(|_t| RawNode::null()),
             type_arguments: None,
             optional: if call.optional { Some(true) } else { None },
         }
@@ -1973,10 +1950,7 @@ impl<'a> ConvertCtx<'a> {
                     callee: Box::new(self.convert_expression_in_chain(&c.callee)),
                     arguments: c.arguments.iter().map(|a| self.convert_argument(a)).collect(),
                     optional: c.optional,
-                    type_parameters: c
-                        .type_arguments
-                        .as_ref()
-                        .map(|_t| RawNode::null()),
+                    type_parameters: c.type_arguments.as_ref().map(|_t| RawNode::null()),
                     type_arguments: None,
                 })
             }
@@ -2064,10 +2038,7 @@ impl<'a> ConvertCtx<'a> {
                     callee: Box::new(self.convert_expression_in_chain(&c.callee)),
                     arguments: c.arguments.iter().map(|a| self.convert_argument(a)).collect(),
                     optional: true,
-                    type_parameters: c
-                        .type_arguments
-                        .as_ref()
-                        .map(|_t| RawNode::null()),
+                    type_parameters: c.type_arguments.as_ref().map(|_t| RawNode::null()),
                     type_arguments: None,
                 })
             }
@@ -2102,10 +2073,7 @@ impl<'a> ConvertCtx<'a> {
                     callee: Box::new(self.convert_expression_in_chain(&c.callee)),
                     arguments: c.arguments.iter().map(|a| self.convert_argument(a)).collect(),
                     optional: false,
-                    type_parameters: c
-                        .type_arguments
-                        .as_ref()
-                        .map(|_t| RawNode::null()),
+                    type_parameters: c.type_arguments.as_ref().map(|_t| RawNode::null()),
                     type_arguments: None,
                 })
             }
@@ -2158,14 +2126,8 @@ impl<'a> ConvertCtx<'a> {
             } else {
                 Some(class.implements.iter().map(|_i| RawNode::null()).collect())
             },
-            super_type_parameters: class
-                .super_type_arguments
-                .as_ref()
-                .map(|_t| RawNode::null()),
-            type_parameters: class
-                .type_parameters
-                .as_ref()
-                .map(|_t| RawNode::null()),
+            super_type_parameters: class.super_type_arguments.as_ref().map(|_t| RawNode::null()),
+            type_parameters: class.type_parameters.as_ref().map(|_t| RawNode::null()),
         }
     }
 
@@ -2194,10 +2156,7 @@ impl<'a> ConvertCtx<'a> {
             generator: func.generator,
             is_async: func.r#async,
             return_type: func.return_type.as_ref().map(|t| self.convert_ts_type_annotation_json(t)),
-            type_parameters: func
-                .type_parameters
-                .as_ref()
-                .map(|_t| RawNode::null()),
+            type_parameters: func.type_parameters.as_ref().map(|_t| RawNode::null()),
             predicate: None,
         }
     }
@@ -2224,10 +2183,7 @@ impl<'a> ConvertCtx<'a> {
             base: self.make_base_node(new.span),
             callee: Box::new(self.convert_expression(&new.callee)),
             arguments: new.arguments.iter().map(|a| self.convert_argument(a)).collect(),
-            type_parameters: new
-                .type_arguments
-                .as_ref()
-                .map(|_t| RawNode::null()),
+            type_parameters: new.type_arguments.as_ref().map(|_t| RawNode::null()),
             type_arguments: None,
         }
     }
@@ -2284,10 +2240,7 @@ impl<'a> ConvertCtx<'a> {
                                 .return_type
                                 .as_ref()
                                 .map(|t| self.convert_ts_type_annotation_json(t)),
-                            type_parameters: func
-                                .type_parameters
-                                .as_ref()
-                                .map(|_| RawNode::null()),
+                            type_parameters: func.type_parameters.as_ref().map(|_| RawNode::null()),
                             predicate: None,
                         });
                     }
@@ -2359,10 +2312,7 @@ impl<'a> ConvertCtx<'a> {
             base: self.make_base_node(tagged.span),
             tag: Box::new(self.convert_expression(&tagged.tag)),
             quasi: self.convert_template_literal(&tagged.quasi),
-            type_parameters: tagged
-                .type_arguments
-                .as_ref()
-                .map(|_t| RawNode::null()),
+            type_parameters: tagged.type_arguments.as_ref().map(|_t| RawNode::null()),
         }
     }
 
@@ -2564,10 +2514,7 @@ impl<'a> ConvertCtx<'a> {
                 .map(|a| self.convert_jsx_attribute_item(a))
                 .collect(),
             self_closing: false, // Will be set properly at JSXElement level if needed
-            type_parameters: opening
-                .type_arguments
-                .as_ref()
-                .map(|_t| RawNode::null()),
+            type_parameters: opening.type_arguments.as_ref().map(|_t| RawNode::null()),
         }
     }
 
@@ -2936,10 +2883,7 @@ impl<'a> ConvertCtx<'a> {
         pattern
     }
 
-    fn set_pattern_type_annotation(
-        pattern: &mut PatternLike,
-        type_annotation: RawNode,
-    ) {
+    fn set_pattern_type_annotation(pattern: &mut PatternLike, type_annotation: RawNode) {
         match pattern {
             PatternLike::Identifier(id) => {
                 id.type_annotation = Some(type_annotation);
