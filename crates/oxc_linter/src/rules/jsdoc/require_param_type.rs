@@ -90,8 +90,12 @@ impl Rule for RequireParamType {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         // Collected targets from `FormalParameters`
         let params_to_check = match node.kind() {
-            AstKind::Function(func) if !func.is_typescript_syntax() => collect_params(&func.params),
-            AstKind::ArrowFunctionExpression(arrow_func) => collect_params(&arrow_func.params),
+            AstKind::Function(func) if !func.is_typescript_syntax() => {
+                collect_params(&func.params, self.0.set_default_destructured_root_type)
+            }
+            AstKind::ArrowFunctionExpression(arrow_func) => {
+                collect_params(&arrow_func.params, self.0.set_default_destructured_root_type)
+            }
             // If not a function, skip
             _ => return,
         };
