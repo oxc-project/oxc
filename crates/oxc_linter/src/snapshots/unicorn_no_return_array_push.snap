@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 490
 ---
 
   ⚠ unicorn(no-return-array-push): Do not use the return value of `.push(…)`.
@@ -10,23 +9,9 @@ assertion_line: 490
    ╰────
   help: Separate the `push()` call from `return`.
 
-  ⚠ unicorn(no-return-array-push): Do not use the return value of `.push(…)`.
-   ╭─[no_return_array_push.tsx:1:22]
- 1 │ const length = array.push(value, other);
-   ·                      ────
-   ╰────
-  help: Separate the `push()` call from `return`.
-
   ⚠ unicorn(no-return-array-push): Do not use the return value of `.unshift(…)`.
    ╭─[no_return_array_push.tsx:1:22]
  1 │ const length = array.unshift(value);
-   ·                      ───────
-   ╰────
-  help: Separate the `unshift()` call from `return`.
-
-  ⚠ unicorn(no-return-array-push): Do not use the return value of `.unshift(…)`.
-   ╭─[no_return_array_push.tsx:1:22]
- 1 │ const length = array.unshift(value, other);
    ·                      ───────
    ╰────
   help: Separate the `unshift()` call from `return`.
@@ -67,6 +52,62 @@ assertion_line: 490
   help: Separate the `unshift()` call from `return`.
 
   ⚠ unicorn(no-return-array-push): Do not use the return value of `.push(…)`.
+   ╭─[no_return_array_push.tsx:1:28]
+ 1 │ const length = await array.push(value);
+   ·                            ────
+   ╰────
+  help: Separate the `push()` call from `return`.
+
+  ⚠ unicorn(no-return-array-push): Do not use the return value of `.unshift(…)`.
+   ╭─[no_return_array_push.tsx:1:28]
+ 1 │ const length = await array.unshift(value);
+   ·                            ───────
+   ╰────
+  help: Separate the `unshift()` call from `return`.
+
+  ⚠ unicorn(no-return-array-push): Do not use the return value of `.push(…)`.
+   ╭─[no_return_array_push.tsx:1:36]
+ 1 │ async function foo() { await array.push(value); }
+   ·                                    ────
+   ╰────
+  help: Separate the `push()` call from `return`.
+
+  ⚠ unicorn(no-return-array-push): Do not use the return value of `.unshift(…)`.
+   ╭─[no_return_array_push.tsx:1:36]
+ 1 │ async function foo() { await array.unshift(value); }
+   ·                                    ───────
+   ╰────
+  help: Separate the `unshift()` call from `return`.
+
+  ⚠ unicorn(no-return-array-push): Do not use the return value of `.push(…)`.
+   ╭─[no_return_array_push.tsx:1:8]
+ 1 │ (array.push(value), sideEffect());
+   ·        ────
+   ╰────
+  help: Separate the `push()` call from `return`.
+
+  ⚠ unicorn(no-return-array-push): Do not use the return value of `.unshift(…)`.
+   ╭─[no_return_array_push.tsx:1:8]
+ 1 │ (array.unshift(value), sideEffect());
+   ·        ───────
+   ╰────
+  help: Separate the `unshift()` call from `return`.
+
+  ⚠ unicorn(no-return-array-push): Do not use the return value of `.push(…)`.
+   ╭─[no_return_array_push.tsx:1:22]
+ 1 │ (sideEffect(), array.push(value));
+   ·                      ────
+   ╰────
+  help: Separate the `push()` call from `return`.
+
+  ⚠ unicorn(no-return-array-push): Do not use the return value of `.unshift(…)`.
+   ╭─[no_return_array_push.tsx:1:22]
+ 1 │ (sideEffect(), array.unshift(value));
+   ·                      ───────
+   ╰────
+  help: Separate the `unshift()` call from `return`.
+
+  ⚠ unicorn(no-return-array-push): Do not use the return value of `.push(…)`.
    ╭─[no_return_array_push.tsx:1:20]
  1 │ condition && array.push(value);
    ·                    ────
@@ -95,22 +136,134 @@ assertion_line: 490
   help: Separate the `unshift()` call from `return`.
 
   ⚠ unicorn(no-return-array-push): Do not use the return value of `.push(…)`.
+   ╭─[no_return_array_push.tsx:1:20]
+ 1 │ condition || array.push(value);
+   ·                    ────
+   ╰────
+  help: Separate the `push()` call from `return`.
+
+  ⚠ unicorn(no-return-array-push): Do not use the return value of `.unshift(…)`.
+   ╭─[no_return_array_push.tsx:1:20]
+ 1 │ condition || array.unshift(value);
+   ·                    ───────
+   ╰────
+  help: Separate the `unshift()` call from `return`.
+
+  ⚠ unicorn(no-return-array-push): Do not use the return value of `.push(…)`.
+   ╭─[no_return_array_push.tsx:1:7]
+ 1 │ array.push(value) || sideEffect();
+   ·       ────
+   ╰────
+  help: Separate the `push()` call from `return`.
+
+  ⚠ unicorn(no-return-array-push): Do not use the return value of `.unshift(…)`.
+   ╭─[no_return_array_push.tsx:1:7]
+ 1 │ array.unshift(value) || sideEffect();
+   ·       ───────
+   ╰────
+  help: Separate the `unshift()` call from `return`.
+
+  ⚠ unicorn(no-return-array-push): Do not use the return value of `.push(…)`.
+   ╭─[no_return_array_push.tsx:1:20]
+ 1 │ condition ?? array.push(value);
+   ·                    ────
+   ╰────
+  help: Separate the `push()` call from `return`.
+
+  ⚠ unicorn(no-return-array-push): Do not use the return value of `.unshift(…)`.
+   ╭─[no_return_array_push.tsx:1:20]
+ 1 │ condition ?? array.unshift(value);
+   ·                    ───────
+   ╰────
+  help: Separate the `unshift()` call from `return`.
+
+  ⚠ unicorn(no-return-array-push): Do not use the return value of `.push(…)`.
+   ╭─[no_return_array_push.tsx:1:7]
+ 1 │ array.push(value) ?? sideEffect();
+   ·       ────
+   ╰────
+  help: Separate the `push()` call from `return`.
+
+  ⚠ unicorn(no-return-array-push): Do not use the return value of `.unshift(…)`.
+   ╭─[no_return_array_push.tsx:1:7]
+ 1 │ array.unshift(value) ?? sideEffect();
+   ·       ───────
+   ╰────
+  help: Separate the `unshift()` call from `return`.
+
+  ⚠ unicorn(no-return-array-push): Do not use the return value of `.push(…)`.
+   ╭─[no_return_array_push.tsx:1:19]
+ 1 │ condition ? array.push(value) : sideEffect();
+   ·                   ────
+   ╰────
+  help: Separate the `push()` call from `return`.
+
+  ⚠ unicorn(no-return-array-push): Do not use the return value of `.unshift(…)`.
+   ╭─[no_return_array_push.tsx:1:19]
+ 1 │ condition ? array.unshift(value) : sideEffect();
+   ·                   ───────
+   ╰────
+  help: Separate the `unshift()` call from `return`.
+
+  ⚠ unicorn(no-return-array-push): Do not use the return value of `.push(…)`.
+   ╭─[no_return_array_push.tsx:1:34]
+ 1 │ condition ? sideEffect() : array.push(value);
+   ·                                  ────
+   ╰────
+  help: Separate the `push()` call from `return`.
+
+  ⚠ unicorn(no-return-array-push): Do not use the return value of `.unshift(…)`.
+   ╭─[no_return_array_push.tsx:1:34]
+ 1 │ condition ? sideEffect() : array.unshift(value);
+   ·                                  ───────
+   ╰────
+  help: Separate the `unshift()` call from `return`.
+
+  ⚠ unicorn(no-return-array-push): Do not use the return value of `.push(…)`.
+   ╭─[no_return_array_push.tsx:1:7]
+ 1 │ array.push(value) ? sideEffect() : other();
+   ·       ────
+   ╰────
+  help: Separate the `push()` call from `return`.
+
+  ⚠ unicorn(no-return-array-push): Do not use the return value of `.unshift(…)`.
+   ╭─[no_return_array_push.tsx:1:7]
+ 1 │ array.unshift(value) ? sideEffect() : other();
+   ·       ───────
+   ╰────
+  help: Separate the `unshift()` call from `return`.
+
+  ⚠ unicorn(no-return-array-push): Do not use the return value of `.push(…)`.
+   ╭─[no_return_array_push.tsx:1:12]
+ 1 │ for (array.push(value); condition; ) {}
+   ·            ────
+   ╰────
+  help: Separate the `push()` call from `return`.
+
+  ⚠ unicorn(no-return-array-push): Do not use the return value of `.push(…)`.
+   ╭─[no_return_array_push.tsx:1:14]
+ 1 │ for (; array.push(value); ) {}
+   ·              ────
+   ╰────
+  help: Separate the `push()` call from `return`.
+
+  ⚠ unicorn(no-return-array-push): Do not use the return value of `.unshift(…)`.
+   ╭─[no_return_array_push.tsx:1:25]
+ 1 │ for (; condition; array.unshift(value)) {}
+   ·                         ───────
+   ╰────
+  help: Separate the `unshift()` call from `return`.
+
+  ⚠ unicorn(no-return-array-push): Do not use the return value of `.unshift(…)`.
+   ╭─[no_return_array_push.tsx:1:14]
+ 1 │ for (; array.unshift(value); ) {}
+   ·              ───────
+   ╰────
+  help: Separate the `unshift()` call from `return`.
+
+  ⚠ unicorn(no-return-array-push): Do not use the return value of `.push(…)`.
    ╭─[no_return_array_push.tsx:1:31]
  1 │ function foo() { return array.push(value); }
-   ·                               ────
-   ╰────
-  help: Separate the `push()` call from `return`.
-
-  ⚠ unicorn(no-return-array-push): Do not use the return value of `.push(…)`.
-   ╭─[no_return_array_push.tsx:1:42]
- 1 │ function foo() { return /* keep */ array.push(value); }
-   ·                                          ────
-   ╰────
-  help: Separate the `push()` call from `return`.
-
-  ⚠ unicorn(no-return-array-push): Do not use the return value of `.push(…)`.
-   ╭─[no_return_array_push.tsx:1:31]
- 1 │ function foo() { return array.push(/* keep */ value); }
    ·                               ────
    ╰────
   help: Separate the `push()` call from `return`.
@@ -165,6 +318,20 @@ assertion_line: 490
   help: Separate the `unshift()` call from `return`.
 
   ⚠ unicorn(no-return-array-push): Do not use the return value of `.push(…)`.
+   ╭─[no_return_array_push.tsx:1:43]
+ 1 │ async function foo() { return await array.push(value); }
+   ·                                           ────
+   ╰────
+  help: Separate the `push()` call from `return`.
+
+  ⚠ unicorn(no-return-array-push): Do not use the return value of `.unshift(…)`.
+   ╭─[no_return_array_push.tsx:1:43]
+ 1 │ async function foo() { return await array.unshift(value); }
+   ·                                           ───────
+   ╰────
+  help: Separate the `unshift()` call from `return`.
+
+  ⚠ unicorn(no-return-array-push): Do not use the return value of `.push(…)`.
    ╭─[no_return_array_push.tsx:1:28]
  1 │ const foo = value => array.push(value);
    ·                            ────
@@ -179,11 +346,60 @@ assertion_line: 490
   help: Separate the `unshift()` call from `return`.
 
   ⚠ unicorn(no-return-array-push): Do not use the return value of `.push(…)`.
+   ╭─[no_return_array_push.tsx:1:34]
+ 1 │ const foo = async value => array.push(await value);
+   ·                                  ────
+   ╰────
+  help: Separate the `push()` call from `return`.
+
+  ⚠ unicorn(no-return-array-push): Do not use the return value of `.unshift(…)`.
+   ╭─[no_return_array_push.tsx:1:34]
+ 1 │ const foo = async value => array.unshift(await value);
+   ·                                  ───────
+   ╰────
+  help: Separate the `unshift()` call from `return`.
+
+  ⚠ unicorn(no-return-array-push): Do not use the return value of `.push(…)`.
+   ╭─[no_return_array_push.tsx:1:45]
+ 1 │ function foo() { return /* comment */ array.push(value); }
+   ·                                             ────
+   ╰────
+  help: Separate the `push()` call from `return`.
+
+  ⚠ unicorn(no-return-array-push): Do not use the return value of `.unshift(…)`.
+   ╭─[no_return_array_push.tsx:1:45]
+ 1 │ function foo() { return /* comment */ array.unshift(value); }
+   ·                                             ───────
+   ╰────
+  help: Separate the `unshift()` call from `return`.
+
+  ⚠ unicorn(no-return-array-push): Do not use the return value of `.push(…)`.
+   ╭─[no_return_array_push.tsx:1:31]
+ 1 │ function foo() { return array.push(/* comment */ value); }
+   ·                               ────
+   ╰────
+  help: Separate the `push()` call from `return`.
+
+  ⚠ unicorn(no-return-array-push): Do not use the return value of `.unshift(…)`.
+   ╭─[no_return_array_push.tsx:1:31]
+ 1 │ function foo() { return array.unshift(/* comment */ value); }
+   ·                               ───────
+   ╰────
+  help: Separate the `unshift()` call from `return`.
+
+  ⚠ unicorn(no-return-array-push): Do not use the return value of `.push(…)`.
    ╭─[no_return_array_push.tsx:1:46]
  1 │ function foo() { if (condition) return array.push(value); }
    ·                                              ────
    ╰────
   help: Separate the `push()` call from `return`.
+
+  ⚠ unicorn(no-return-array-push): Do not use the return value of `.unshift(…)`.
+   ╭─[no_return_array_push.tsx:1:46]
+ 1 │ function foo() { if (condition) return array.unshift(value); }
+   ·                                              ───────
+   ╰────
+  help: Separate the `unshift()` call from `return`.
 
   ⚠ unicorn(no-return-array-push): Do not use the return value of `.push(…)`.
    ╭─[no_return_array_push.tsx:1:44]
@@ -192,12 +408,26 @@ assertion_line: 490
    ╰────
   help: Separate the `push()` call from `return`.
 
+  ⚠ unicorn(no-return-array-push): Do not use the return value of `.unshift(…)`.
+   ╭─[no_return_array_push.tsx:1:44]
+ 1 │ function foo() { return condition && array.unshift(value); }
+   ·                                            ───────
+   ╰────
+  help: Separate the `unshift()` call from `return`.
+
   ⚠ unicorn(no-return-array-push): Do not use the return value of `.push(…)`.
    ╭─[no_return_array_push.tsx:1:43]
  1 │ function foo() { return condition ? array.push(value) : value; }
    ·                                           ────
    ╰────
   help: Separate the `push()` call from `return`.
+
+  ⚠ unicorn(no-return-array-push): Do not use the return value of `.unshift(…)`.
+   ╭─[no_return_array_push.tsx:1:43]
+ 1 │ function foo() { return condition ? array.unshift(value) : value; }
+   ·                                           ───────
+   ╰────
+  help: Separate the `unshift()` call from `return`.
 
   ⚠ unicorn(no-return-array-push): Do not use the return value of `.push(…)`.
    ╭─[no_return_array_push.tsx:1:51]
@@ -206,6 +436,13 @@ assertion_line: 490
    ╰────
   help: Separate the `push()` call from `return`.
 
+  ⚠ unicorn(no-return-array-push): Do not use the return value of `.unshift(…)`.
+   ╭─[no_return_array_push.tsx:1:51]
+ 1 │ function foo() { return condition ? value : array.unshift(value); }
+   ·                                                   ───────
+   ╰────
+  help: Separate the `unshift()` call from `return`.
+
   ⚠ unicorn(no-return-array-push): Do not use the return value of `.push(…)`.
    ╭─[no_return_array_push.tsx:1:46]
  1 │ function foo() { return (sideEffect(), array.push(value)); }
@@ -213,12 +450,40 @@ assertion_line: 490
    ╰────
   help: Separate the `push()` call from `return`.
 
+  ⚠ unicorn(no-return-array-push): Do not use the return value of `.unshift(…)`.
+   ╭─[no_return_array_push.tsx:1:46]
+ 1 │ function foo() { return (sideEffect(), array.unshift(value)); }
+   ·                                              ───────
+   ╰────
+  help: Separate the `unshift()` call from `return`.
+
   ⚠ unicorn(no-return-array-push): Do not use the return value of `.push(…)`.
    ╭─[no_return_array_push.tsx:1:40]
  1 │ function foo() { foo(); return [array].push(value); }
    ·                                        ────
    ╰────
   help: Separate the `push()` call from `return`.
+
+  ⚠ unicorn(no-return-array-push): Do not use the return value of `.unshift(…)`.
+   ╭─[no_return_array_push.tsx:1:40]
+ 1 │ function foo() { foo(); return [array].unshift(value); }
+   ·                                        ───────
+   ╰────
+  help: Separate the `unshift()` call from `return`.
+
+  ⚠ unicorn(no-return-array-push): Do not use the return value of `.push(…)`.
+   ╭─[no_return_array_push.tsx:1:38]
+ 1 │ const foo = (value: string) => array.push(value);
+   ·                                      ────
+   ╰────
+  help: Separate the `push()` call from `return`.
+
+  ⚠ unicorn(no-return-array-push): Do not use the return value of `.unshift(…)`.
+   ╭─[no_return_array_push.tsx:1:38]
+ 1 │ const foo = (value: string) => array.unshift(value);
+   ·                                      ───────
+   ╰────
+  help: Separate the `unshift()` call from `return`.
 
   ⚠ unicorn(no-return-array-push): Do not use the return value of `.push(…)`.
    ╭─[no_return_array_push.tsx:1:31]
@@ -230,6 +495,20 @@ assertion_line: 490
   ⚠ unicorn(no-return-array-push): Do not use the return value of `.unshift(…)`.
    ╭─[no_return_array_push.tsx:1:31]
  1 │ function foo() { return array.unshift(value) as number; }
+   ·                               ───────
+   ╰────
+  help: Separate the `unshift()` call from `return`.
+
+  ⚠ unicorn(no-return-array-push): Do not use the return value of `.push(…)`.
+   ╭─[no_return_array_push.tsx:1:31]
+ 1 │ function foo() { return array.push(value); }
+   ·                               ────
+   ╰────
+  help: Separate the `push()` call from `return`.
+
+  ⚠ unicorn(no-return-array-push): Do not use the return value of `.unshift(…)`.
+   ╭─[no_return_array_push.tsx:1:31]
+ 1 │ function foo() { return array.unshift(value); }
    ·                               ───────
    ╰────
   help: Separate the `unshift()` call from `return`.
@@ -264,14 +543,28 @@ assertion_line: 490
 
   ⚠ unicorn(no-return-array-push): Do not use the return value of `.push(…)`.
    ╭─[no_return_array_push.tsx:1:38]
- 1 │ const foo = (value: string) => array.push(value);
+ 1 │ const foo = (value: string) => array.push(value) satisfies number;
    ·                                      ────
    ╰────
   help: Separate the `push()` call from `return`.
 
   ⚠ unicorn(no-return-array-push): Do not use the return value of `.unshift(…)`.
    ╭─[no_return_array_push.tsx:1:38]
- 1 │ const foo = (value: string) => array.unshift(value);
+ 1 │ const foo = (value: string) => array.unshift(value) satisfies number;
    ·                                      ───────
+   ╰────
+  help: Separate the `unshift()` call from `return`.
+
+  ⚠ unicorn(no-return-array-push): Do not use the return value of `.push(…)`.
+   ╭─[no_return_array_push.tsx:1:22]
+ 1 │ const length = array.push(value, other);
+   ·                      ────
+   ╰────
+  help: Separate the `push()` call from `return`.
+
+  ⚠ unicorn(no-return-array-push): Do not use the return value of `.unshift(…)`.
+   ╭─[no_return_array_push.tsx:1:22]
+ 1 │ const length = array.unshift(value, other);
+   ·                      ───────
    ╰────
   help: Separate the `unshift()` call from `return`.
