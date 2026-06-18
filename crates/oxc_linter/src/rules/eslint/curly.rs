@@ -426,7 +426,15 @@ fn apply_rule_fix<'a>(
     let fixed = if should_have_braces {
         format!("{{{source}}}")
     } else {
-        let mut trimmed = source.trim_matches(|c| c == '{' || c == '}').to_string();
+        // Strip only the block's own outer braces (one leading `{`, one trailing `}`).
+        // `trim_matches` would remove EVERY boundary brace, eating an inner statement's
+        // braces too — e.g. `if (x) {while(y){}}` -> `if (x) while(y)` (invalid: the
+        // `while` loses its body).
+        let mut trimmed = source
+            .strip_prefix('{')
+            .and_then(|s| s.strip_suffix('}'))
+            .unwrap_or(source)
+            .to_string();
         if is_do_while {
             trimmed.insert(0, ' ');
         }
@@ -1494,6 +1502,9 @@ fn test() {
             None,
         ),
         ("if (foo) { bar() }", "if (foo)  bar() ", Some(serde_json::json!(["multi"]))),
+        // only the block's OWN braces are removed; an inner statement's braces survive
+        ("if (foo) {while(bar){}}", "if (foo) while(bar){}", Some(serde_json::json!(["multi"]))),
+        ("if (foo) {if(bar){}}", "if (foo) if(bar){}", Some(serde_json::json!(["multi"]))),
         (
             "if (foo) if (bar) { baz() }",
             "if (foo) if (bar)  baz() ",
