@@ -256,11 +256,6 @@ fn test() {
             None,
         ),
         (
-            r#"import { vitest, expect as toBe } from "vitest";"#,
-            r#"import { expect as toBe, vi } from "vitest";"#,
-            None,
-        ),
-        (
             r#"import { vitest } from "vitest";
 			vitest.stubEnv("NODE_ENV", "production");"#,
             r#"import { vi } from "vitest";
@@ -273,6 +268,11 @@ fn test() {
             r#"vitest.stubEnv("NODE_ENV", "production");
 			vitest.clearAllMocks();"#,
             Some(serde_json::json!([{ "fn": "vitest" }])),
+        ),
+        (
+            r#"import { vitest, expect as toBe } from "vitest";"#,
+            r#"import { expect as toBe, vi } from "vitest";"#,
+            None,
         ),
         (
             r#"import { expect as e, vitest } from "vitest";"#,
