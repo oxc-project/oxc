@@ -273,7 +273,7 @@ const bannerComment =
 const enumDefinitionTypes = getEnumDefinitionTypes(schema);
 const definitionPrimitiveTypes = getDefinitionPrimitiveTypes(schema);
 
-let ts = await compile(schema, "OxlintConfig", { bannerComment });
+let ts = await compile(schema, "OxlintConfig", { bannerComment, strictIndexSignatures: true });
 ts = collapseEnumPrimitiveIntersections(ts, enumDefinitionTypes, definitionPrimitiveTypes);
 
 writeFileSync(outputPath, ts);

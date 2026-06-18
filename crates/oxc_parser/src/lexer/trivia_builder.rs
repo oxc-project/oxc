@@ -150,8 +150,8 @@ impl<'a> TriviaBuilder<'a> {
     /// let x = 5;
     /// ```
     ///
-    /// 2. It does not immediately follow an `=` [`Kind::Eq`] or `(` [`Kind::LParen`]
-    ///    token.
+    /// 2. It does not immediately follow an `=` [`Kind::Eq`], `(` [`Kind::LParen`]
+    ///    or `:` [`Kind::Colon`] token.
     ///
     /// ```javascript
     /// let y = // This should not be treated as trailing (follows `=`)
@@ -160,9 +160,16 @@ impl<'a> TriviaBuilder<'a> {
     /// function foo( // This should not be treated as trailing (follows `(`)
     ///     param
     /// ) {}
+    ///
+    /// let z = cond ? a : // This should not be treated as trailing (follows `:`)
+    ///     b;
     /// ```
+    ///
+    /// Treating a comment after `:` as trailing drops it (it anchors to the
+    /// previous token rather than the following operand), which breaks codegen
+    /// idempotency once a transform emits `? consequent : // comment\nalternate`.
     fn should_be_treated_as_trailing_comment(&self) -> bool {
-        !self.saw_newline && !matches!(self.previous_kind, Kind::Eq | Kind::LParen)
+        !self.saw_newline && !matches!(self.previous_kind, Kind::Eq | Kind::LParen | Kind::Colon)
     }
 
     fn should_stay_leading(comment: &Comment) -> bool {
@@ -667,6 +674,23 @@ function bar() {}";
                 content: CommentContent::None,
             },
         ];
+        assert_eq!(comments, expected);
+    }
+
+    #[test]
+    fn leading_comments_after_colon() {
+        // A line comment right after a conditional `:` anchors to the following
+        // alternate (leading), not the previous token — otherwise it is dropped.
+        let source_text = "v = cond ? a : // Leading comment\nb;";
+        let comments = get_comments(source_text);
+        let expected = vec![Comment {
+            span: Span::new(15, 33),
+            kind: CommentKind::Line,
+            position: CommentPosition::Leading,
+            attached_to: 34,
+            newlines: CommentNewlines::Trailing,
+            content: CommentContent::None,
+        }];
         assert_eq!(comments, expected);
     }
 

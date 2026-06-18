@@ -11,7 +11,7 @@
 
 [package]
 name = "oxc_react_compiler"
-version = "0.136.0"
+version = "0.137.0"
 publish = true
 authors.workspace = true
 categories.workspace = true
@@ -39,9 +39,9 @@ oxc_syntax = { workspace = true }
 
 # React Compiler core crates — frontend-agnostic (no oxc deps). Published fork of
 # the React Compiler (MIT). `package` keeps the in-code name `react_compiler*`.
-react_compiler = { package = "forked_react_compiler", version = "0.1.4" }
-react_compiler_ast = { package = "forked_react_compiler_ast", version = "0.1.4" }
-react_compiler_hir = { package = "forked_react_compiler_hir", version = "0.1.4" }
+react_compiler = { package = "forked_react_compiler", version = "0.2.0" }
+react_compiler_ast = { package = "forked_react_compiler_ast", version = "0.2.0" }
+react_compiler_hir = { package = "forked_react_compiler_hir", version = "0.2.0" }
 
 indexmap = { workspace = true, features = ["serde"] }
 rustc-hash = { workspace = true }

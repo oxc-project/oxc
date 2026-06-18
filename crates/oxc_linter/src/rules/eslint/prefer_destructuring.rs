@@ -9,9 +9,12 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{Rule, TupleRuleConfig},
+};
 
 fn prefer_object_destructuring(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use Object destructuring.")
@@ -27,14 +30,112 @@ fn prefer_array_destructuring(span: Span) -> OxcDiagnostic {
 
 #[derive(Debug, Clone, JsonSchema, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
-struct Config {
+struct PreferDestructuringTargetConfig {
     array: bool,
     object: bool,
 }
 
-impl Default for Config {
+impl Default for PreferDestructuringTargetConfig {
     fn default() -> Self {
         Self { array: true, object: true }
+    }
+}
+
+impl PreferDestructuringTargetConfig {
+    fn disabled() -> Self {
+        Self { array: false, object: false }
+    }
+}
+
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct PreferDestructuringTargetOption {
+    array: Option<bool>,
+    object: Option<bool>,
+}
+
+impl PreferDestructuringTargetOption {
+    fn enabled_by_default() -> Self {
+        Self { array: Some(true), object: Some(true) }
+    }
+
+    fn into_config(self) -> PreferDestructuringTargetConfig {
+        PreferDestructuringTargetConfig {
+            array: self.array.unwrap_or(false),
+            object: self.object.unwrap_or(false),
+        }
+    }
+}
+
+#[derive(Debug, Clone, JsonSchema, Deserialize, Serialize)]
+#[serde(rename_all = "PascalCase", deny_unknown_fields)]
+struct PreferDestructuringAssignmentConfig {
+    variable_declarator: Option<PreferDestructuringTargetOption>,
+    assignment_expression: Option<PreferDestructuringTargetOption>,
+}
+
+impl PreferDestructuringAssignmentConfig {
+    fn into_configs(self) -> (PreferDestructuringTargetConfig, PreferDestructuringTargetConfig) {
+        let variable_declarator = self.variable_declarator.map_or_else(
+            PreferDestructuringTargetConfig::disabled,
+            PreferDestructuringTargetOption::into_config,
+        );
+        let assignment_expression = self.assignment_expression.map_or_else(
+            PreferDestructuringTargetConfig::disabled,
+            PreferDestructuringTargetOption::into_config,
+        );
+
+        (variable_declarator, assignment_expression)
+    }
+}
+
+#[derive(Debug, Clone, JsonSchema, Deserialize, Serialize)]
+#[serde(untagged)]
+enum PreferDestructuringOption {
+    Target(PreferDestructuringTargetOption),
+    Assignment(PreferDestructuringAssignmentConfig),
+}
+
+impl Default for PreferDestructuringOption {
+    fn default() -> Self {
+        Self::Target(PreferDestructuringTargetOption::enabled_by_default())
+    }
+}
+
+impl PreferDestructuringOption {
+    fn into_configs(self) -> (PreferDestructuringTargetConfig, PreferDestructuringTargetConfig) {
+        match self {
+            Self::Target(config) => {
+                let config = config.into_config();
+                (config.clone(), config)
+            }
+            Self::Assignment(config) => config.into_configs(),
+        }
+    }
+}
+
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+struct PreferDestructuringRenamedPropertiesConfig {
+    enforce_for_renamed_properties: bool,
+}
+
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
+#[serde(default)]
+struct PreferDestructuringConfig(
+    PreferDestructuringOption,
+    PreferDestructuringRenamedPropertiesConfig,
+);
+
+impl PreferDestructuringConfig {
+    fn into_rule(self) -> PreferDestructuring {
+        let (variable_declarator, assignment_expression) = self.0.into_configs();
+
+        PreferDestructuring {
+            variable_declarator,
+            assignment_expression,
+            enforce_for_renamed_properties: self.1.enforce_for_renamed_properties,
+        }
     }
 }
 
@@ -43,10 +144,10 @@ impl Default for Config {
 pub struct PreferDestructuring {
     /// Configuration for destructuring in variable declarations, configured for arrays and objects independently.
     #[serde(rename = "VariableDeclarator")]
-    variable_declarator: Config,
+    variable_declarator: PreferDestructuringTargetConfig,
     /// Configuration for destructuring in assignment expressions, configured for arrays and objects independently.
     #[serde(rename = "AssignmentExpression")]
-    assignment_expression: Config,
+    assignment_expression: PreferDestructuringTargetConfig,
     /// Determines whether the object destructuring rule applies to renamed variables.
     enforce_for_renamed_properties: bool,
 }
@@ -89,51 +190,15 @@ declare_oxc_lint!(
     eslint,
     style,
     conditional_fix,
-    config = PreferDestructuring,
+    config = PreferDestructuringConfig,
     version = "1.10.0",
     short_description = "Require destructuring from arrays and/or objects.",
 );
 
 impl Rule for PreferDestructuring {
-    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
-        let (variable_declarator, assignment_expression) = if let Some(obj) = value.get(0) {
-            let array = obj.get("array").and_then(Value::as_bool);
-            let object = obj.get("object").and_then(Value::as_bool);
-            if array.is_some() || object.is_some() {
-                (
-                    Config { array: array.unwrap_or(false), object: object.unwrap_or(false) },
-                    Config { array: array.unwrap_or(false), object: object.unwrap_or(false) },
-                )
-            } else {
-                let var_config = obj.get("VariableDeclarator").and_then(Value::as_object).map_or(
-                    Config { array: false, object: false },
-                    |conf| Config {
-                        array: conf.get("array").and_then(Value::as_bool).unwrap_or(false),
-                        object: conf.get("object").and_then(Value::as_bool).unwrap_or(false),
-                    },
-                );
-                let assign_config = obj
-                    .get("AssignmentExpression")
-                    .and_then(Value::as_object)
-                    .map_or(Config { array: false, object: false }, |conf| Config {
-                        array: conf.get("array").and_then(Value::as_bool).unwrap_or(false),
-                        object: conf.get("object").and_then(Value::as_bool).unwrap_or(false),
-                    });
-                (var_config, assign_config)
-            }
-        } else {
-            (Config::default(), Config::default())
-        };
-
-        Ok(Self {
-            variable_declarator,
-            assignment_expression,
-            enforce_for_renamed_properties: value
-                .get(1)
-                .and_then(|v| v.get("enforceForRenamedProperties"))
-                .and_then(Value::as_bool)
-                .unwrap_or(false),
-        })
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<TupleRuleConfig<PreferDestructuringConfig>>(value)
+            .map(|config| config.into_inner().into_rule())
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
