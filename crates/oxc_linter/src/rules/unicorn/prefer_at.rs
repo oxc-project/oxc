@@ -397,8 +397,7 @@ impl PreferAt {
             // `slice(start, end).pop()` returns the slice's LAST element. `.at()` can only
             // express that when the slice is exactly one element (`end == start + 1`), in which
             // case the element is at `start`. For a multi-element slice `.at()` cannot replicate
-            // `.pop()` (which takes the last element), so don't report — matching
-            // eslint-plugin-unicorn. (`slice(-9, -8).pop()` is `at(-9)`, not `at(-8)`.)
+            // `.pop()` (which takes the last element), so skip reporting in this case.
             if second_negative == first_negative + 1 {
                 ctx.diagnostic_with_fix(
                     prefer_at_diagnostic(call_expr.span, "slice().pop/shift"),
@@ -739,8 +738,6 @@ fn test() {
         ("array.slice(-9, 0)[0]", None),
         ("array.slice(-5, 0).pop()", None),
         ("array.slice(-3, 0).shift()", None),
-        // multi-element `slice(start, end).pop()` (`end != start + 1`) can't be expressed
-        // by `.at()` (pop takes the slice's last element), so it is not reported
         ("array.slice(-5, -3).pop()", None),
         ("array.slice(-9, -2).pop()", None),
         ("++array[1]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
@@ -892,8 +889,6 @@ fn test() {
         // Two-arg slice patterns
         ("array.slice(-9, -8)[0]", "array.at(-9)", None),
         ("array.slice(-3, -2).shift()", "array.at(-3)", None),
-        // `slice(start, end).pop()` of a one-element slice (`end == start + 1`) is the element
-        // at `start`, not at `end`. (Multi-element `slice().pop()` is no longer reported — see `pass`.)
         ("array.slice(-9, -8).pop()", "array.at(-9)", None),
         ("array.slice(-2, -1).pop()", "array.at(-2)", None),
         // Lodash patterns
