@@ -1,6 +1,5 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::borrow::Cow;
 
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
@@ -129,14 +128,14 @@ impl Rule for ConsistentVitestVi {
                         // `type Foo`) rather than just its local name, otherwise aliases and
                         // `type` qualifiers are dropped and the rewritten import rebinds to a
                         // different (often non-existent) export.
-                        let mut specifiers_without_opposite_accessor: Vec<Cow<str>> = import
+                        let mut specifiers_without_opposite_accessor: Vec<&str> = import
                             .specifiers
                             .as_ref()
                             .map(|specs| {
                                 specs
                                     .iter()
                                     .filter(|spec| spec.name() != opposite.as_str())
-                                    .map(|spec| Cow::Borrowed(fixer.source_range(spec.span())))
+                                    .map(|spec| fixer.source_range(spec.span()))
                                     .collect()
                             })
                             .unwrap_or_default();
@@ -156,8 +155,7 @@ impl Rule for ConsistentVitestVi {
                                     })
                                 });
                             if !target_already_bound {
-                                specifiers_without_opposite_accessor
-                                    .push(self.function.as_str().into());
+                                specifiers_without_opposite_accessor.push(self.function.as_str());
                             }
 
                             let import_text = specifiers_without_opposite_accessor.join(", ");
