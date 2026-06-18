@@ -846,6 +846,7 @@ pub(crate) mod node {
     pub mod no_new_require;
     pub mod no_path_concat;
     pub mod no_process_env;
+    pub mod no_sync;
 }
 
 /// <https://github.com/vuejs/eslint-plugin-vue>

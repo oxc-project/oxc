@@ -1185,6 +1185,7 @@ export interface DummyRuleMap {
   "node/no-new-require"?: RuleNoConfig;
   "node/no-path-concat"?: RuleNoConfig;
   "node/no-process-env"?: RuleNoConfig | [AllowWarnDeny, NoProcessEnvConfig];
+  "node/no-sync"?: RuleNoConfig | [AllowWarnDeny, NoSyncConfig];
   "object-shorthand"?:
     | RuleNoConfig
     | [AllowWarnDeny, ShorthandType]
@@ -3836,6 +3837,16 @@ export interface NoProcessEnvConfig {
    * Variable names which are allowed to be accessed on `process.env`.
    */
   allowedVariables?: string[];
+}
+export interface NoSyncConfig {
+  /**
+   * Whether synchronous methods should be allowed at the top level of a file.
+   */
+  allowAtRootLevel?: boolean;
+  /**
+   * Function names to ignore.
+   */
+  ignores?: string[];
 }
 export interface ObjectShorthandOptions {
   avoidExplicitReturnArrows?: boolean;
