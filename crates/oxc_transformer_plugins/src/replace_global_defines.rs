@@ -892,7 +892,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
             }
 
             current_part_member_expression = if let Some(member) = current_part_member_expression {
-                match &member.object() {
+                match member.object().without_parentheses() {
                     Expression::StaticMemberExpression(member) => {
                         cur_part_name = &member.property.name;
                         Some(DotDefineMemberExpression::StaticMemberExpression(member))

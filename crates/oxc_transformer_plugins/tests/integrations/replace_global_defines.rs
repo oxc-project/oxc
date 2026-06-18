@@ -103,8 +103,8 @@ fn typeof_define() {
     ]);
 
     test_define_only(
-        "foo(typeof window, typeof (window), typeof process.env, typeof process['env'], typeof process?.env, typeof import.meta)",
-        "foo('undefined', 'undefined', 'object', 'object', 'object', 'object')",
+        "foo(typeof window, typeof (window), typeof process.env, typeof (process).env, typeof process['env'], typeof (process)['env'], typeof process?.env, typeof import.meta)",
+        "foo('undefined', 'undefined', 'object', 'object', 'object', 'object', 'object', 'object')",
         &config,
     );
     test("if (typeof window === 'undefined') server(); else client();", "server()", &config);
