@@ -1805,7 +1805,7 @@ impl<'a> ReverseCtx<'a> {
     ) -> oxc::ObjectPropertyKind<'a> {
         match prop {
             ObjectExpressionProperty::ObjectProperty(p) => {
-                let key = self.convert_expression_to_property_key(&p.key);
+                let key = self.convert_expression_to_property_key(&p.key, p.computed);
                 let value = self.convert_expression(&p.value);
                 let value = match self.extract_source_object_property_value(&p.base) {
                     Some(source_value) => {
@@ -1834,7 +1834,7 @@ impl<'a> ReverseCtx<'a> {
                     ObjectMethodKind::Get => oxc::PropertyKind::Get,
                     ObjectMethodKind::Set => oxc::PropertyKind::Set,
                 };
-                let key = self.convert_expression_to_property_key(&m.key);
+                let key = self.convert_expression_to_property_key(&m.key, m.computed);
                 let func = self.convert_object_method_to_function(m);
                 let func_expr = oxc::Expression::FunctionExpression(self.builder.alloc(func));
                 let obj_prop = self.builder.object_property(
@@ -1851,7 +1851,20 @@ impl<'a> ReverseCtx<'a> {
         }
     }
 
-    fn convert_expression_to_property_key(&self, expr: &Expression) -> oxc::PropertyKey<'a> {
+    fn convert_expression_to_property_key(
+        &self,
+        expr: &Expression,
+        computed: bool,
+    ) -> oxc::PropertyKey<'a> {
+        // A computed key (`{ [expr]: … }`) is an arbitrary expression evaluated at
+        // runtime, so its identifiers are *references* — `{ [CONST]: x }` reads the
+        // variable `CONST`. Build it from the expression so semantic analysis links
+        // those references; otherwise an imported `CONST` looks unused and import
+        // elision drops it, leaving the emitted `[CONST]` dangling. Only a
+        // non-computed key is a static property name or literal.
+        if computed {
+            return oxc::PropertyKey::from(self.convert_expression(expr));
+        }
         match expr {
             Expression::Identifier(id) => {
                 self.builder.property_key_static_identifier(SPAN, self.atom(&id.name))
@@ -2202,7 +2215,7 @@ impl<'a> ReverseCtx<'a> {
                 for prop in &obj.properties {
                     match prop {
                         ObjectPatternProperty::ObjectProperty(p) => {
-                            let key = self.convert_expression_to_property_key(&p.key);
+                            let key = self.convert_expression_to_property_key(&p.key, p.computed);
                             let value = self.convert_pattern_to_binding_pattern(&p.value);
                             let bp = self.builder.binding_property(
                                 SPAN,
@@ -2312,7 +2325,8 @@ impl<'a> ReverseCtx<'a> {
                                     properties.push(atp);
                                 } else {
                                     // Fallback to non-shorthand
-                                    let key = self.convert_expression_to_property_key(&p.key);
+                                    let key =
+                                        self.convert_expression_to_property_key(&p.key, p.computed);
                                     let binding = self
                                         .convert_pattern_to_assignment_target_maybe_default(
                                             &p.value,
@@ -2325,7 +2339,8 @@ impl<'a> ReverseCtx<'a> {
                                     properties.push(atp);
                                 }
                             } else {
-                                let key = self.convert_expression_to_property_key(&p.key);
+                                let key =
+                                    self.convert_expression_to_property_key(&p.key, p.computed);
                                 let binding = self
                                     .convert_pattern_to_assignment_target_maybe_default(&p.value);
                                 let atp = self
