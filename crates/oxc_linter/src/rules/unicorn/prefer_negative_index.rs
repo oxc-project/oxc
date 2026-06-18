@@ -93,12 +93,9 @@ impl Rule for PreferNegativeIndex {
 
         let identifier_expr = match (callee_type, callee_name) {
             (TypeOptions::String, "slice" | "at")
-            | (TypeOptions::TypedArray, "slice" | "at" | "with" | "subarray")
-            | (TypeOptions::Array, "slice" | "at" | "splice" | "with" | "toSpliced")
-            | (
-                TypeOptions::Literal,
-                "slice" | "at" | "splice" | "subarray" | "with" | "toSpliced",
-            ) => {
+            | (TypeOptions::TypedArray, "slice" | "at" | "subarray")
+            | (TypeOptions::Array, "slice" | "at" | "splice" | "toSpliced")
+            | (TypeOptions::Literal, "slice" | "at" | "splice" | "subarray" | "toSpliced") => {
                 if is_prototype {
                     let Some(first_arg) =
                         call_expr.arguments.first().and_then(Argument::as_expression)
@@ -313,6 +310,13 @@ fn test() {
         "String.prototype.with.call(foo, foo.length - 1)",
         "Uint8Array.prototype.toSpliced.call(foo, foo.length - 1)",
         "Array.prototype.subarray.call(foo, foo.length - 1)",
+        // `Array#with`/`%TypedArray%#with` are intentionally unsupported: unlike `slice`/`at`/
+        // `splice`, `with` throws a `RangeError` for out-of-range indices instead of clamping, so
+        // rewriting `length - n` to `-n` can change behavior on short arrays (matches
+        // eslint-plugin-unicorn, which excludes `with`).
+        "foo.with(foo.length - 3, foo.length - 6)",
+        "Array.prototype.with.call(foo, foo.length - 3, foo.length - 6)",
+        "Uint8Array.prototype.with.call(foo, foo.length - 3, foo.length - 6)",
     ];
 
     let fail = vec![
@@ -437,8 +441,6 @@ fn test() {
         "foo.toSpliced(foo.length - 3, foo.length - 6)",
         "Array.prototype.toSpliced.call(foo, foo.length - 3, foo.length - 6)",
         "[].toSpliced.call(foo, foo.length - 3, foo.length - 6)",
-        "foo.with(foo.length - 3, foo.length - 6)",
-        "Array.prototype.with.call(foo, foo.length - 3, foo.length - 6)",
         "foo.subarray(foo.length - 3, foo.length - 6)",
         "Uint8Array.prototype.subarray.call(foo, foo.length - 3, foo.length - 6)",
         "Uint8Array.prototype.subarray.apply(foo, [foo.length - 3, foo.length - 6])",

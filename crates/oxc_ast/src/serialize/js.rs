@@ -407,7 +407,7 @@ impl ESTree for FormalParameterConverter<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let param = self.0;
 
-        if S::INCLUDE_TS_FIELDS {
+        if serializer.include_ts_fields() {
             if param.has_modifier() {
                 let mut state = serializer.serialize_struct();
                 state.serialize_field("type", &JsonSafeString("TSParameterProperty"));
@@ -547,7 +547,7 @@ pub struct FunctionParams<'a, 'b>(pub &'b Function<'a>);
 impl ESTree for FunctionParams<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let func = self.0;
-        if S::INCLUDE_TS_FIELDS {
+        if serializer.include_ts_fields() {
             Concat2(&func.this_param, func.params.as_ref()).serialize(serializer);
         } else {
             func.params.serialize(serializer);
