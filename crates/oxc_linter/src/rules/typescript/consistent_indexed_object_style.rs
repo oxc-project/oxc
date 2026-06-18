@@ -412,56 +412,53 @@ impl Rule for ConsistentIndexedObjectStyle {
                 };
 
                 if let Some(key_span) = key_span {
-                    // Use the value type's own span (not a slice from `key_span.end + 1`, which
-                    // assumed the comma sits exactly one char after the key and captured a stray
-                    // `,` into the value: `Record<string , V>` -> `{ [key: string]: , V }`).
-                    let value_span = params.params[1].span();
-                    let diagnostic = consistent_indexed_object_style_diagnostic(
-                        ConsistentIndexedObjectStyleConfig::IndexSignature,
-                        tref.span,
-                    );
-                    // A line comment inside the `Record<...>` cannot be inlined into the
-                    // single-line `{ [key: K]: V }` -- it would comment out the closing `}` and
-                    // produce invalid syntax -- so withhold the autofix when one is present.
-                    // Block comments are sliced from the source and preserved (below).
-                    if ctx
-                        .comments_range(tref.span.start..tref.span.end)
-                        .any(|comment| comment.is_line())
-                    {
-                        ctx.diagnostic(diagnostic);
-                    } else {
-                        // Build the key from the source up to the separator comma (located while
-                        // skipping commas inside comments) rather than just the keyword span, so a
-                        // comment/trivia after the key type is preserved, not dropped
-                        // (`Record<string /* c */, V>` -> `{ [key: string /* c */]: V }`).
-                        let comma = ctx
-                            .find_next_token_within(key_span.end, value_span.start, ",")
-                            .map(|offset| key_span.end + offset);
-                        ctx.diagnostic_with_fix(diagnostic, |fixer| {
-                            // Slice the source on each side of the separator comma so block
-                            // comments and trivia around it are preserved rather than dropped.
-                            // Fall back to the bare node spans if (defensively) no comma is found.
-                            let (key, value) = match comma {
-                                Some(comma) => {
-                                    let key =
-                                        fixer.source_range(Span::new(key_span.start, comma)).trim();
-                                    // Up to the closing `>` (`tref` ends with it); strip a
-                                    // trailing `,` so `Record<K, V,>` doesn't yield `[key: K]: V,`.
-                                    let value = fixer
-                                        .source_range(Span::new(comma + 1, tref.span.end - 1))
-                                        .trim();
-                                    let value =
-                                        value.strip_suffix(',').map_or(value, str::trim_end);
-                                    (key, value)
-                                }
-                                None => {
-                                    (fixer.source_range(key_span), fixer.source_range(value_span))
-                                }
+                    ctx.diagnostic_with_fix(
+                        consistent_indexed_object_style_diagnostic(
+                            ConsistentIndexedObjectStyleConfig::IndexSignature,
+                            tref.span,
+                        ),
+                        |fixer| {
+                            // ```ts
+                            // type t = Record</* leading */ string /* trailing */, /* leading */ V /* trailing */>;
+                            // //             ┬                                   ┬                               ┬
+                            // //             │                                   │                               ╰ params.span().end
+                            // //             │                                   ╰ first_type_arg_comma_start
+                            // //             ╰ opening_angle_bracket_start
+                            // ```
+                            let opening_angle_bracket_start = {
+                                let type_name_end = tref.type_name.span().end;
+                                let first_param_start = key_span.start;
+                                ctx.find_next_token_within(type_name_end, first_param_start, "<")
+                                    .map(|offset| type_name_end + offset)
                             };
+                            let first_type_arg_comma_start = {
+                                let first_param_end = key_span.end;
+                                let second_param_start = params.params[1].span().start;
+                                ctx.find_next_token_within(first_param_end, second_param_start, ",")
+                                    .map(|offset| first_param_end + offset)
+                            };
+
+                            let (
+                                Some(opening_angle_bracket_start),
+                                Some(first_type_arg_comma_start),
+                            ) = (opening_angle_bracket_start, first_type_arg_comma_start)
+                            else {
+                                return fixer.noop();
+                            };
+
+                            let key_span = Span::new(
+                                opening_angle_bracket_start + 1,
+                                first_type_arg_comma_start,
+                            );
+                            let value_span =
+                                Span::new(first_type_arg_comma_start + 1, params.span().end - 1);
+
+                            let key = fixer.source_range(key_span).trim();
+                            let value = fixer.source_range(value_span).trim();
                             let content = format!("{{ [key: {key}]: {value} }}");
                             fixer.replace(tref.span, content)
-                        });
-                    }
+                        },
+                    );
                 } else {
                     ctx.diagnostic(consistent_indexed_object_style_diagnostic(
                         ConsistentIndexedObjectStyleConfig::IndexSignature,
@@ -1005,10 +1002,9 @@ fn test() {
         ("function foo(): { readonly [key: string]: any } {}", None),
         ("type Foo = Record<string, any>;", Some(serde_json::json!(["index-signature"]))),
         ("type Foo<T> = Record<string, T>;", Some(serde_json::json!(["index-signature"]))),
-        // A line comment can't be inlined into the single-line `{ [key: K]: V }` (it would
-        // comment out the closing `}`), so it's reported without an autofix.
-        ("type Foo = Record<string, Bar // c\n>;", Some(serde_json::json!(["index-signature"]))),
-        ("type Foo = Record<string, // c\n Bar>;", Some(serde_json::json!(["index-signature"]))),
+        ("type Foo = Record<string /* c */, Bar>;", Some(serde_json::json!(["index-signature"]))),
+        ("type Foo = Record<string, /* c */ Bar>;", Some(serde_json::json!(["index-signature"]))),
+        ("type Foo = Record<string, Bar /* c */>;", Some(serde_json::json!(["index-signature"]))),
         ("type Foo = { [k: string]: A.Foo };", None),
         ("type Foo = { [key: string]: AnotherFoo };", None),
         ("type Foo = { [key: string]: { [key: string]: Foo } };", None),
@@ -1305,12 +1301,11 @@ fn test() {
 // trivia before the comma must not leak a stray `,` into the value type
 ("type Foo = Record<string , any>;", "type Foo = { [key: string]: any };", Some(serde_json::json!(["index-signature"]))),
 ("type Foo = Record<number , () => void>;", "type Foo = { [key: number]: () => void };", Some(serde_json::json!(["index-signature"]))),
-// comments around the separator comma are preserved (sliced from source, not dropped)
 ("type Foo = Record<string /* c */, Bar>;", "type Foo = { [key: string /* c */]: Bar };", Some(serde_json::json!(["index-signature"]))),
 ("type Foo = Record<string, /* c */ Bar>;", "type Foo = { [key: string]: /* c */ Bar };", Some(serde_json::json!(["index-signature"]))),
 ("type Foo = Record<string, Bar /* c */>;", "type Foo = { [key: string]: Bar /* c */ };", Some(serde_json::json!(["index-signature"]))),
-// a trailing comma in the type args is dropped, not leaked into the value
-("type Foo = Record<string, Bar,>;", "type Foo = { [key: string]: Bar };", Some(serde_json::json!(["index-signature"]))),
+("type Foo = Record<\n// line comment\nstring, Bar /* c */>;", "type Foo = { [key: // line comment\nstring]: Bar /* c */ };", Some(serde_json::json!(["index-signature"]))),
+("type Foo = Record<string, Map<string, number>>;", "type Foo = { [key: string]: Map<string, number> };", Some(serde_json::json!(["index-signature"]))),
 ("type Foo = { [k: string]: A.Foo };", "type Foo = Record<string, A.Foo>;", None),
 ("type Foo = { [key: string]: AnotherFoo };", "type Foo = Record<string, AnotherFoo>;", None),
 ("type Foo = { [key: string]: { [key: string]: Foo } };", "type Foo = { [key: string]: Record<string, Foo> };", None),
