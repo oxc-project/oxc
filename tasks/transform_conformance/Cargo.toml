@@ -22,7 +22,7 @@ test = false
 doctest = false
 
 [dependencies]
-oxc = { workspace = true, features = ["full"] }
+oxc = { workspace = true, features = ["full", "fancy"] }
 oxc_tasks_common = { workspace = true }
 oxc_tasks_transform_checker = { workspace = true }
 
