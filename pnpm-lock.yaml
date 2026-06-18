@@ -43,8 +43,8 @@ catalogs:
       specifier: 0.22.3
       version: 0.22.3
     vite-plus:
-      specifier: 0.2.0
-      version: 0.2.0
+      specifier: 0.2.1
+      version: 0.2.1
     vitest:
       specifier: 4.1.8
       version: 4.1.8
@@ -61,10 +61,10 @@ importers:
         version: 3.7.2(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(@types/node@25.0.2)
       oxfmt:
         specifier: ^0.55.0
-        version: 0.55.0(svelte@5.56.3(@typescript-eslint/types@8.61.0))(vite-plus@0.2.0(@arethetypeswrong/core@0.18.3)(@types/node@25.0.2)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4)))
+        version: 0.55.0(svelte@5.56.3(@typescript-eslint/types@8.61.0))(vite-plus@0.2.1(@arethetypeswrong/core@0.18.3)(@types/node@25.0.2)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4)))
       oxlint:
         specifier: ^1.66.0
-        version: 1.70.0(oxlint-tsgolint@0.23.0)(vite-plus@0.2.0(@arethetypeswrong/core@0.18.3)(@types/node@25.0.2)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4)))
+        version: 1.70.0(oxlint-tsgolint@0.23.0)(vite-plus@0.2.1(@arethetypeswrong/core@0.18.3)(@types/node@25.0.2)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4)))
       oxlint-tsgolint:
         specifier: 0.23.0
         version: 0.23.0
@@ -116,7 +116,7 @@ importers:
         version: 0.22.3(@arethetypeswrong/core@0.18.3)(publint@0.3.21)(tsx@4.22.4)(typescript@5.6.1-rc)
       vite-plus:
         specifier: 'catalog:'
-        version: 0.2.0(@arethetypeswrong/core@0.18.3)(@types/node@24.1.0)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))
+        version: 0.2.1(@arethetypeswrong/core@0.18.3)(@types/node@24.1.0)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))
       vitest:
         specifier: 'catalog:'
         version: 4.1.8(@types/node@24.1.0)(@vitest/browser-preview@4.1.9)(happy-dom@20.0.11)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))
@@ -218,7 +218,7 @@ importers:
         version: 5.7.0
       vite-plus:
         specifier: 'catalog:'
-        version: 0.2.0(@arethetypeswrong/core@0.18.3)(@types/node@24.1.0)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(typescript@5.6.1-rc)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))
+        version: 0.2.1(@arethetypeswrong/core@0.18.3)(@types/node@24.1.0)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(typescript@5.6.1-rc)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))
       vitest:
         specifier: 'catalog:'
         version: 4.1.8(@types/node@24.1.0)(@vitest/browser-preview@4.1.9)(happy-dom@20.0.11)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))
@@ -236,7 +236,7 @@ importers:
         version: 24.1.0
       vite-plus:
         specifier: 'catalog:'
-        version: 0.2.0(@arethetypeswrong/core@0.18.3)(@types/node@24.1.0)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))
+        version: 0.2.1(@arethetypeswrong/core@0.18.3)(@types/node@24.1.0)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))
       vitest:
         specifier: 'catalog:'
         version: 4.1.8(@types/node@24.1.0)(@vitest/browser-preview@4.1.9)(happy-dom@20.0.11)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))
@@ -363,7 +363,7 @@ importers:
         version: 2.1.0
       vite-plus:
         specifier: '*'
-        version: 0.2.0(@arethetypeswrong/core@0.18.3)(@types/node@25.0.2)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))
+        version: 0.2.1(@arethetypeswrong/core@0.18.3)(@types/node@25.0.2)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))
 
   npm/oxlint:
     dependencies:
@@ -372,7 +372,7 @@ importers:
         version: 0.23.0
       vite-plus:
         specifier: '*'
-        version: 0.2.0(@arethetypeswrong/core@0.18.3)(@types/node@25.0.2)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))
+        version: 0.2.1(@arethetypeswrong/core@0.18.3)(@types/node@25.0.2)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))
 
   npm/oxlint-plugin-eslint: {}
 
@@ -3106,9 +3106,9 @@ packages:
   '@vitest/utils@4.1.9':
     resolution: {integrity: sha512-A51o8ymO5PpqlWNnBP9ZHPXDIpuMtTLlGSjN7la4US+LJzoUMyhwjA5QXlm39JexgwHKW4Xjs8Z2d3dLCXOeuA==}
 
-  '@voidzero-dev/vite-plus-core@0.2.0':
-    resolution: {integrity: sha512-wCgDtjRlV5LdwMDdcNPTHFn2te1Rx5ib/E2Cc1PPreWv6byLm6dvzLgG5dT7i0obMjJn7K3gkwywUufoysgUwA==}
-    engines: {node: ^22.18.0 || >=24.11.0}
+  '@voidzero-dev/vite-plus-core@0.2.1':
+    resolution: {integrity: sha512-iWdtOlLezgYcDqIzxZx1yOUhY93vUB+ob+mRYBNr7/3Hf80uRyTQbqVD1WtsYaANbzeUi81SQ1ZoUraXHO+u8A==}
+    engines: {node: ^20.19.0 || ^22.18.0 || >=24.11.0}
     peerDependencies:
       '@arethetypeswrong/core': ^0.18.1
       '@tsdown/css': 0.22.3
@@ -3169,55 +3169,55 @@ packages:
       yaml:
         optional: true
 
-  '@voidzero-dev/vite-plus-darwin-arm64@0.2.0':
-    resolution: {integrity: sha512-mfXvqn5qDa7waP6md1fK9GNyaVO/PMB2Jz3bkPM8JdwpoVtpYc3XfQfQBkhiFtPi928gTZMaPqDktSDEIQZgUA==}
-    engines: {node: ^22.18.0 || >=24.11.0}
+  '@voidzero-dev/vite-plus-darwin-arm64@0.2.1':
+    resolution: {integrity: sha512-9AfN/5LKRks8gbTaHPiQHT0L4yboy2xB6x6vvCRWxQMWxPS6/ZJLf5kUIZeE7I1z33AEyLKKkDscsZZVMgMLgg==}
+    engines: {node: ^20.19.0 || ^22.18.0 || >=24.11.0}
     cpu: [arm64]
     os: [darwin]
 
-  '@voidzero-dev/vite-plus-darwin-x64@0.2.0':
-    resolution: {integrity: sha512-oz9vpzs7DTXSbl4EK6LNaD4tMEXn7007pmjgnQYeGwuLrRCh9Zt+TpyYGNs9Sqrl89HM13PXj2nyyX89pxbFXg==}
-    engines: {node: ^22.18.0 || >=24.11.0}
+  '@voidzero-dev/vite-plus-darwin-x64@0.2.1':
+    resolution: {integrity: sha512-Q1vyimRbf4M82qIQSWRyr7NJaH9ag5G7vVEfGVVJlQHNprI+Q8zj2Phcs/PGf6QcyjcL8UclLznQTHU9NgnKZw==}
+    engines: {node: ^20.19.0 || ^22.18.0 || >=24.11.0}
     cpu: [x64]
     os: [darwin]
 
-  '@voidzero-dev/vite-plus-linux-arm64-gnu@0.2.0':
-    resolution: {integrity: sha512-BlBvBwIERvc2obnFZ56YIfHItiU4Rfo8PoR4X89m0s2Tx4Y47Cod7LuXqU1wT95t3+ocUWoYXqLo015hYWmMvg==}
-    engines: {node: ^22.18.0 || >=24.11.0}
+  '@voidzero-dev/vite-plus-linux-arm64-gnu@0.2.1':
+    resolution: {integrity: sha512-WHW3DziqedRfhJ2upq6kC4y/pmdQWYt322DVB7+4Xb4oOa/CT9GtnSrWIiXVJ4PSO42v54+YsSTKPH2HC5RbtA==}
+    engines: {node: ^20.19.0 || ^22.18.0 || >=24.11.0}
     cpu: [arm64]
     os: [linux]
     libc: [glibc]
 
-  '@voidzero-dev/vite-plus-linux-arm64-musl@0.2.0':
-    resolution: {integrity: sha512-0K5sYjx6oJJmL+0zBp/5VH4uANXEnLM+9Igav/WzzEP5QEq8dn2OZrAdsPFf+swrfq5AMrZx7sjbeYwGPUvctg==}
-    engines: {node: ^22.18.0 || >=24.11.0}
+  '@voidzero-dev/vite-plus-linux-arm64-musl@0.2.1':
+    resolution: {integrity: sha512-vUY7hYycZW0qEevpl7ImzZJFnOEKRYCaCOX4TBW0vk6MJZ+zj/xW7e0LOggzJcz2wbYAgLDqp5h+b8wV9dguDA==}
+    engines: {node: ^20.19.0 || ^22.18.0 || >=24.11.0}
     cpu: [arm64]
     os: [linux]
     libc: [musl]
 
-  '@voidzero-dev/vite-plus-linux-x64-gnu@0.2.0':
-    resolution: {integrity: sha512-Qgsxwcf203gncyNSFue2DxRWovE8BDiRC1HTYjlV6sQ21R+w1yhFaxrdmfVDcbjzt6UKPbm0s/YTQoE7lm5igw==}
-    engines: {node: ^22.18.0 || >=24.11.0}
+  '@voidzero-dev/vite-plus-linux-x64-gnu@0.2.1':
+    resolution: {integrity: sha512-tFxpToEaykBGxMQHp8M/qmr1yruRRED+c9gA1h9kmplqot04OxuqzRCWu/IiIvMJ0v3JFdOP3gqkyjXLLJhxIA==}
+    engines: {node: ^20.19.0 || ^22.18.0 || >=24.11.0}
     cpu: [x64]
     os: [linux]
     libc: [glibc]
 
-  '@voidzero-dev/vite-plus-linux-x64-musl@0.2.0':
-    resolution: {integrity: sha512-c6ul3t0wpgedQEwa/kXTMqx3FdU3p7rw1IkELT7dw1FDZYDoc3nTyAJIqph9+mdGWQrPSsMkFa5z9N9wI4T+pA==}
-    engines: {node: ^22.18.0 || >=24.11.0}
+  '@voidzero-dev/vite-plus-linux-x64-musl@0.2.1':
+    resolution: {integrity: sha512-2scSS7wEbLO2758fqr1/bAULg7nLCFa5V8LO2b5w3g1CrTYdMTDt2WX1ghPesIi+70pYGydRbXo6iaaN43zfMg==}
+    engines: {node: ^20.19.0 || ^22.18.0 || >=24.11.0}
     cpu: [x64]
     os: [linux]
     libc: [musl]
 
-  '@voidzero-dev/vite-plus-win32-arm64-msvc@0.2.0':
-    resolution: {integrity: sha512-J6+RVo5oWuy0xY+bk7CLNVjKmy6R2WB+mu5L3f6ZSKWu+/CQ84YJawmduNNth0h312Gy0dlfqup75qK1l6/mpA==}
-    engines: {node: ^22.18.0 || >=24.11.0}
+  '@voidzero-dev/vite-plus-win32-arm64-msvc@0.2.1':
+    resolution: {integrity: sha512-3+5FJYhi9SqBszjngI2LBmvoiqEwxJWyQ5UsOUtNz6/d+yDrDw+tOgHLl4OKIh5aVNZeIGXzxvP6h24kcEqIyg==}
+    engines: {node: ^20.19.0 || ^22.18.0 || >=24.11.0}
     cpu: [arm64]
     os: [win32]
 
-  '@voidzero-dev/vite-plus-win32-x64-msvc@0.2.0':
-    resolution: {integrity: sha512-Dm7kRVbHghXqDuGyTawf0p/3Bzq/Dxf6fSaDz1Pk7Iw7cXypvnCrqNl9cqMGd0zBTUI57eKaKge5uBPrUM1J0A==}
-    engines: {node: ^22.18.0 || >=24.11.0}
+  '@voidzero-dev/vite-plus-win32-x64-msvc@0.2.1':
+    resolution: {integrity: sha512-5sOEwEoU5PW7ObmJ5VCakU09Oh14rYCoLQJkFqvOph6PK30lN5iqWGk0KigEyfcd7Zv+fZg9EmcERDol/3Xl9w==}
+    engines: {node: ^20.19.0 || ^22.18.0 || >=24.11.0}
     cpu: [x64]
     os: [win32]
 
@@ -5042,9 +5042,9 @@ packages:
     resolution: {integrity: sha512-BNGbWLfd0eUPabhkXUVm0j8uuvREyTh5ovRa/dyow/BqAbZJyC+5fU+IzQOzmAKzYqYRAISoRhdQr3eIZ/PXqg==}
     engines: {node: '>= 0.8'}
 
-  vite-plus@0.2.0:
-    resolution: {integrity: sha512-/GO1AlECCa9fzR7BLutUiIPuxJyAUr49Zn9uXupyTwI55+04fSldLLZrw8uCplLHtKxA6/4gnatl8UrTtgtYJw==}
-    engines: {node: ^22.18.0 || >=24.11.0}
+  vite-plus@0.2.1:
+    resolution: {integrity: sha512-q5q/Y38UkWFsNg1JO+RyRdPUqoewaSqIlMyK2p83GKNUvf4D38Ntb3PToRTDZbTRh7mWt+B+d0DQBv4nCDpMcQ==}
+    engines: {node: ^20.19.0 || ^22.18.0 || >=24.11.0}
     hasBin: true
     peerDependencies:
       '@vitest/browser-playwright': 4.1.9
@@ -7743,7 +7743,7 @@ snapshots:
       convert-source-map: 2.0.0
       tinyrainbow: 3.1.0
 
-  '@voidzero-dev/vite-plus-core@0.2.0(@arethetypeswrong/core@0.18.3)(@types/node@24.1.0)(esbuild@0.28.0)(publint@0.3.21)(terser@5.44.1)(tsx@4.22.4)(typescript@5.6.1-rc)':
+  '@voidzero-dev/vite-plus-core@0.2.1(@arethetypeswrong/core@0.18.3)(@types/node@24.1.0)(esbuild@0.28.0)(publint@0.3.21)(terser@5.44.1)(tsx@4.22.4)(typescript@5.6.1-rc)':
     dependencies:
       '@oxc-project/runtime': 0.136.0
       '@oxc-project/types': 0.136.0
@@ -7759,7 +7759,7 @@ snapshots:
       tsx: 4.22.4
       typescript: 5.6.1-rc
 
-  '@voidzero-dev/vite-plus-core@0.2.0(@arethetypeswrong/core@0.18.3)(@types/node@25.0.2)(esbuild@0.28.0)(publint@0.3.21)(terser@5.44.1)(tsx@4.22.4)':
+  '@voidzero-dev/vite-plus-core@0.2.1(@arethetypeswrong/core@0.18.3)(@types/node@25.0.2)(esbuild@0.28.0)(publint@0.3.21)(terser@5.44.1)(tsx@4.22.4)':
     dependencies:
       '@oxc-project/runtime': 0.136.0
       '@oxc-project/types': 0.136.0
@@ -7774,28 +7774,28 @@ snapshots:
       terser: 5.44.1
       tsx: 4.22.4
 
-  '@voidzero-dev/vite-plus-darwin-arm64@0.2.0':
+  '@voidzero-dev/vite-plus-darwin-arm64@0.2.1':
     optional: true
 
-  '@voidzero-dev/vite-plus-darwin-x64@0.2.0':
+  '@voidzero-dev/vite-plus-darwin-x64@0.2.1':
     optional: true
 
-  '@voidzero-dev/vite-plus-linux-arm64-gnu@0.2.0':
+  '@voidzero-dev/vite-plus-linux-arm64-gnu@0.2.1':
     optional: true
 
-  '@voidzero-dev/vite-plus-linux-arm64-musl@0.2.0':
+  '@voidzero-dev/vite-plus-linux-arm64-musl@0.2.1':
     optional: true
 
-  '@voidzero-dev/vite-plus-linux-x64-gnu@0.2.0':
+  '@voidzero-dev/vite-plus-linux-x64-gnu@0.2.1':
     optional: true
 
-  '@voidzero-dev/vite-plus-linux-x64-musl@0.2.0':
+  '@voidzero-dev/vite-plus-linux-x64-musl@0.2.1':
     optional: true
 
-  '@voidzero-dev/vite-plus-win32-arm64-msvc@0.2.0':
+  '@voidzero-dev/vite-plus-win32-arm64-msvc@0.2.1':
     optional: true
 
-  '@voidzero-dev/vite-plus-win32-x64-msvc@0.2.0':
+  '@voidzero-dev/vite-plus-win32-x64-msvc@0.2.1':
     optional: true
 
   '@vue/compiler-core@3.5.25':
@@ -9046,7 +9046,7 @@ snapshots:
       '@oxc-parser/binding-win32-ia32-msvc': 0.136.0
       '@oxc-parser/binding-win32-x64-msvc': 0.136.0
 
-  oxfmt@0.55.0(svelte@5.56.3(@typescript-eslint/types@8.61.0))(vite-plus@0.2.0(@arethetypeswrong/core@0.18.3)(@types/node@24.1.0)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(typescript@5.6.1-rc)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))):
+  oxfmt@0.55.0(svelte@5.56.3(@typescript-eslint/types@8.61.0))(vite-plus@0.2.1(@arethetypeswrong/core@0.18.3)(@types/node@24.1.0)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(typescript@5.6.1-rc)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))):
     dependencies:
       tinypool: 2.1.0
     optionalDependencies:
@@ -9070,9 +9070,9 @@ snapshots:
       '@oxfmt/binding-win32-ia32-msvc': 0.55.0
       '@oxfmt/binding-win32-x64-msvc': 0.55.0
       svelte: 5.56.3(@typescript-eslint/types@8.61.0)
-      vite-plus: 0.2.0(@arethetypeswrong/core@0.18.3)(@types/node@24.1.0)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(typescript@5.6.1-rc)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))
+      vite-plus: 0.2.1(@arethetypeswrong/core@0.18.3)(@types/node@24.1.0)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(typescript@5.6.1-rc)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))
 
-  oxfmt@0.55.0(svelte@5.56.3(@typescript-eslint/types@8.61.0))(vite-plus@0.2.0(@arethetypeswrong/core@0.18.3)(@types/node@24.1.0)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))):
+  oxfmt@0.55.0(svelte@5.56.3(@typescript-eslint/types@8.61.0))(vite-plus@0.2.1(@arethetypeswrong/core@0.18.3)(@types/node@24.1.0)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))):
     dependencies:
       tinypool: 2.1.0
     optionalDependencies:
@@ -9096,9 +9096,9 @@ snapshots:
       '@oxfmt/binding-win32-ia32-msvc': 0.55.0
       '@oxfmt/binding-win32-x64-msvc': 0.55.0
       svelte: 5.56.3(@typescript-eslint/types@8.61.0)
-      vite-plus: 0.2.0(@arethetypeswrong/core@0.18.3)(@types/node@24.1.0)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))
+      vite-plus: 0.2.1(@arethetypeswrong/core@0.18.3)(@types/node@24.1.0)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))
 
-  oxfmt@0.55.0(svelte@5.56.3(@typescript-eslint/types@8.61.0))(vite-plus@0.2.0(@arethetypeswrong/core@0.18.3)(@types/node@25.0.2)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))):
+  oxfmt@0.55.0(svelte@5.56.3(@typescript-eslint/types@8.61.0))(vite-plus@0.2.1(@arethetypeswrong/core@0.18.3)(@types/node@25.0.2)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))):
     dependencies:
       tinypool: 2.1.0
     optionalDependencies:
@@ -9122,7 +9122,7 @@ snapshots:
       '@oxfmt/binding-win32-ia32-msvc': 0.55.0
       '@oxfmt/binding-win32-x64-msvc': 0.55.0
       svelte: 5.56.3(@typescript-eslint/types@8.61.0)
-      vite-plus: 0.2.0(@arethetypeswrong/core@0.18.3)(@types/node@25.0.2)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))
+      vite-plus: 0.2.1(@arethetypeswrong/core@0.18.3)(@types/node@25.0.2)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))
 
   oxlint-tsgolint@0.23.0:
     optionalDependencies:
@@ -9133,7 +9133,7 @@ snapshots:
       '@oxlint-tsgolint/win32-arm64': 0.23.0
       '@oxlint-tsgolint/win32-x64': 0.23.0
 
-  oxlint@1.70.0(oxlint-tsgolint@0.23.0)(vite-plus@0.2.0(@arethetypeswrong/core@0.18.3)(@types/node@24.1.0)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(typescript@5.6.1-rc)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))):
+  oxlint@1.70.0(oxlint-tsgolint@0.23.0)(vite-plus@0.2.1(@arethetypeswrong/core@0.18.3)(@types/node@24.1.0)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(typescript@5.6.1-rc)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))):
     optionalDependencies:
       '@oxlint/binding-android-arm-eabi': 1.70.0
       '@oxlint/binding-android-arm64': 1.70.0
@@ -9155,9 +9155,9 @@ snapshots:
       '@oxlint/binding-win32-ia32-msvc': 1.70.0
       '@oxlint/binding-win32-x64-msvc': 1.70.0
       oxlint-tsgolint: 0.23.0
-      vite-plus: 0.2.0(@arethetypeswrong/core@0.18.3)(@types/node@24.1.0)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(typescript@5.6.1-rc)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))
+      vite-plus: 0.2.1(@arethetypeswrong/core@0.18.3)(@types/node@24.1.0)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(typescript@5.6.1-rc)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))
 
-  oxlint@1.70.0(oxlint-tsgolint@0.23.0)(vite-plus@0.2.0(@arethetypeswrong/core@0.18.3)(@types/node@24.1.0)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))):
+  oxlint@1.70.0(oxlint-tsgolint@0.23.0)(vite-plus@0.2.1(@arethetypeswrong/core@0.18.3)(@types/node@24.1.0)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))):
     optionalDependencies:
       '@oxlint/binding-android-arm-eabi': 1.70.0
       '@oxlint/binding-android-arm64': 1.70.0
@@ -9179,9 +9179,9 @@ snapshots:
       '@oxlint/binding-win32-ia32-msvc': 1.70.0
       '@oxlint/binding-win32-x64-msvc': 1.70.0
       oxlint-tsgolint: 0.23.0
-      vite-plus: 0.2.0(@arethetypeswrong/core@0.18.3)(@types/node@24.1.0)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))
+      vite-plus: 0.2.1(@arethetypeswrong/core@0.18.3)(@types/node@24.1.0)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))
 
-  oxlint@1.70.0(oxlint-tsgolint@0.23.0)(vite-plus@0.2.0(@arethetypeswrong/core@0.18.3)(@types/node@25.0.2)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))):
+  oxlint@1.70.0(oxlint-tsgolint@0.23.0)(vite-plus@0.2.1(@arethetypeswrong/core@0.18.3)(@types/node@25.0.2)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))):
     optionalDependencies:
       '@oxlint/binding-android-arm-eabi': 1.70.0
       '@oxlint/binding-android-arm64': 1.70.0
@@ -9203,7 +9203,7 @@ snapshots:
       '@oxlint/binding-win32-ia32-msvc': 1.70.0
       '@oxlint/binding-win32-x64-msvc': 1.70.0
       oxlint-tsgolint: 0.23.0
-      vite-plus: 0.2.0(@arethetypeswrong/core@0.18.3)(@types/node@25.0.2)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))
+      vite-plus: 0.2.1(@arethetypeswrong/core@0.18.3)(@types/node@25.0.2)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))
 
   p-limit@3.1.0:
     dependencies:
@@ -9760,7 +9760,7 @@ snapshots:
 
   vary@1.1.2: {}
 
-  vite-plus@0.2.0(@arethetypeswrong/core@0.18.3)(@types/node@24.1.0)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(typescript@5.6.1-rc)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4)):
+  vite-plus@0.2.1(@arethetypeswrong/core@0.18.3)(@types/node@24.1.0)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(typescript@5.6.1-rc)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4)):
     dependencies:
       '@oxc-project/types': 0.136.0
       '@oxlint/plugins': 1.68.0
@@ -9773,20 +9773,20 @@ snapshots:
       '@vitest/snapshot': 4.1.9
       '@vitest/spy': 4.1.9
       '@vitest/utils': 4.1.9
-      '@voidzero-dev/vite-plus-core': 0.2.0(@arethetypeswrong/core@0.18.3)(@types/node@24.1.0)(esbuild@0.28.0)(publint@0.3.21)(terser@5.44.1)(tsx@4.22.4)(typescript@5.6.1-rc)
-      oxfmt: 0.55.0(svelte@5.56.3(@typescript-eslint/types@8.61.0))(vite-plus@0.2.0(@arethetypeswrong/core@0.18.3)(@types/node@24.1.0)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(typescript@5.6.1-rc)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4)))
-      oxlint: 1.70.0(oxlint-tsgolint@0.23.0)(vite-plus@0.2.0(@arethetypeswrong/core@0.18.3)(@types/node@24.1.0)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(typescript@5.6.1-rc)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4)))
+      '@voidzero-dev/vite-plus-core': 0.2.1(@arethetypeswrong/core@0.18.3)(@types/node@24.1.0)(esbuild@0.28.0)(publint@0.3.21)(terser@5.44.1)(tsx@4.22.4)(typescript@5.6.1-rc)
+      oxfmt: 0.55.0(svelte@5.56.3(@typescript-eslint/types@8.61.0))(vite-plus@0.2.1(@arethetypeswrong/core@0.18.3)(@types/node@24.1.0)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(typescript@5.6.1-rc)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4)))
+      oxlint: 1.70.0(oxlint-tsgolint@0.23.0)(vite-plus@0.2.1(@arethetypeswrong/core@0.18.3)(@types/node@24.1.0)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(typescript@5.6.1-rc)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4)))
       oxlint-tsgolint: 0.23.0
       vitest: 4.1.9(@types/node@24.1.0)(@vitest/browser-preview@4.1.9)(happy-dom@20.0.11)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))
     optionalDependencies:
-      '@voidzero-dev/vite-plus-darwin-arm64': 0.2.0
-      '@voidzero-dev/vite-plus-darwin-x64': 0.2.0
-      '@voidzero-dev/vite-plus-linux-arm64-gnu': 0.2.0
-      '@voidzero-dev/vite-plus-linux-arm64-musl': 0.2.0
-      '@voidzero-dev/vite-plus-linux-x64-gnu': 0.2.0
-      '@voidzero-dev/vite-plus-linux-x64-musl': 0.2.0
-      '@voidzero-dev/vite-plus-win32-arm64-msvc': 0.2.0
-      '@voidzero-dev/vite-plus-win32-x64-msvc': 0.2.0
+      '@voidzero-dev/vite-plus-darwin-arm64': 0.2.1
+      '@voidzero-dev/vite-plus-darwin-x64': 0.2.1
+      '@voidzero-dev/vite-plus-linux-arm64-gnu': 0.2.1
+      '@voidzero-dev/vite-plus-linux-arm64-musl': 0.2.1
+      '@voidzero-dev/vite-plus-linux-x64-gnu': 0.2.1
+      '@voidzero-dev/vite-plus-linux-x64-musl': 0.2.1
+      '@voidzero-dev/vite-plus-win32-arm64-msvc': 0.2.1
+      '@voidzero-dev/vite-plus-win32-x64-msvc': 0.2.1
     transitivePeerDependencies:
       - '@arethetypeswrong/core'
       - '@edge-runtime/vm'
@@ -9820,7 +9820,7 @@ snapshots:
       - vite
       - yaml
 
-  vite-plus@0.2.0(@arethetypeswrong/core@0.18.3)(@types/node@24.1.0)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4)):
+  vite-plus@0.2.1(@arethetypeswrong/core@0.18.3)(@types/node@24.1.0)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4)):
     dependencies:
       '@oxc-project/types': 0.136.0
       '@oxlint/plugins': 1.68.0
@@ -9833,20 +9833,20 @@ snapshots:
       '@vitest/snapshot': 4.1.9
       '@vitest/spy': 4.1.9
       '@vitest/utils': 4.1.9
-      '@voidzero-dev/vite-plus-core': 0.2.0(@arethetypeswrong/core@0.18.3)(@types/node@24.1.0)(esbuild@0.28.0)(publint@0.3.21)(terser@5.44.1)(tsx@4.22.4)(typescript@5.6.1-rc)
-      oxfmt: 0.55.0(svelte@5.56.3(@typescript-eslint/types@8.61.0))(vite-plus@0.2.0(@arethetypeswrong/core@0.18.3)(@types/node@24.1.0)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4)))
-      oxlint: 1.70.0(oxlint-tsgolint@0.23.0)(vite-plus@0.2.0(@arethetypeswrong/core@0.18.3)(@types/node@24.1.0)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4)))
+      '@voidzero-dev/vite-plus-core': 0.2.1(@arethetypeswrong/core@0.18.3)(@types/node@24.1.0)(esbuild@0.28.0)(publint@0.3.21)(terser@5.44.1)(tsx@4.22.4)(typescript@5.6.1-rc)
+      oxfmt: 0.55.0(svelte@5.56.3(@typescript-eslint/types@8.61.0))(vite-plus@0.2.1(@arethetypeswrong/core@0.18.3)(@types/node@24.1.0)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4)))
+      oxlint: 1.70.0(oxlint-tsgolint@0.23.0)(vite-plus@0.2.1(@arethetypeswrong/core@0.18.3)(@types/node@24.1.0)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4)))
       oxlint-tsgolint: 0.23.0
       vitest: 4.1.9(@types/node@24.1.0)(@vitest/browser-preview@4.1.9)(happy-dom@20.0.11)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))
     optionalDependencies:
-      '@voidzero-dev/vite-plus-darwin-arm64': 0.2.0
-      '@voidzero-dev/vite-plus-darwin-x64': 0.2.0
-      '@voidzero-dev/vite-plus-linux-arm64-gnu': 0.2.0
-      '@voidzero-dev/vite-plus-linux-arm64-musl': 0.2.0
-      '@voidzero-dev/vite-plus-linux-x64-gnu': 0.2.0
-      '@voidzero-dev/vite-plus-linux-x64-musl': 0.2.0
-      '@voidzero-dev/vite-plus-win32-arm64-msvc': 0.2.0
-      '@voidzero-dev/vite-plus-win32-x64-msvc': 0.2.0
+      '@voidzero-dev/vite-plus-darwin-arm64': 0.2.1
+      '@voidzero-dev/vite-plus-darwin-x64': 0.2.1
+      '@voidzero-dev/vite-plus-linux-arm64-gnu': 0.2.1
+      '@voidzero-dev/vite-plus-linux-arm64-musl': 0.2.1
+      '@voidzero-dev/vite-plus-linux-x64-gnu': 0.2.1
+      '@voidzero-dev/vite-plus-linux-x64-musl': 0.2.1
+      '@voidzero-dev/vite-plus-win32-arm64-msvc': 0.2.1
+      '@voidzero-dev/vite-plus-win32-x64-msvc': 0.2.1
     transitivePeerDependencies:
       - '@arethetypeswrong/core'
       - '@edge-runtime/vm'
@@ -9880,7 +9880,7 @@ snapshots:
       - vite
       - yaml
 
-  vite-plus@0.2.0(@arethetypeswrong/core@0.18.3)(@types/node@25.0.2)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4)):
+  vite-plus@0.2.1(@arethetypeswrong/core@0.18.3)(@types/node@25.0.2)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4)):
     dependencies:
       '@oxc-project/types': 0.136.0
       '@oxlint/plugins': 1.68.0
@@ -9893,20 +9893,20 @@ snapshots:
       '@vitest/snapshot': 4.1.9
       '@vitest/spy': 4.1.9
       '@vitest/utils': 4.1.9
-      '@voidzero-dev/vite-plus-core': 0.2.0(@arethetypeswrong/core@0.18.3)(@types/node@25.0.2)(esbuild@0.28.0)(publint@0.3.21)(terser@5.44.1)(tsx@4.22.4)
-      oxfmt: 0.55.0(svelte@5.56.3(@typescript-eslint/types@8.61.0))(vite-plus@0.2.0(@arethetypeswrong/core@0.18.3)(@types/node@25.0.2)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4)))
-      oxlint: 1.70.0(oxlint-tsgolint@0.23.0)(vite-plus@0.2.0(@arethetypeswrong/core@0.18.3)(@types/node@25.0.2)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4)))
+      '@voidzero-dev/vite-plus-core': 0.2.1(@arethetypeswrong/core@0.18.3)(@types/node@25.0.2)(esbuild@0.28.0)(publint@0.3.21)(terser@5.44.1)(tsx@4.22.4)
+      oxfmt: 0.55.0(svelte@5.56.3(@typescript-eslint/types@8.61.0))(vite-plus@0.2.1(@arethetypeswrong/core@0.18.3)(@types/node@25.0.2)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4)))
+      oxlint: 1.70.0(oxlint-tsgolint@0.23.0)(vite-plus@0.2.1(@arethetypeswrong/core@0.18.3)(@types/node@25.0.2)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.3(@typescript-eslint/types@8.61.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4)))
       oxlint-tsgolint: 0.23.0
       vitest: 4.1.9(@types/node@25.0.2)(@vitest/browser-preview@4.1.9)(happy-dom@20.0.11)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))
     optionalDependencies:
-      '@voidzero-dev/vite-plus-darwin-arm64': 0.2.0
-      '@voidzero-dev/vite-plus-darwin-x64': 0.2.0
-      '@voidzero-dev/vite-plus-linux-arm64-gnu': 0.2.0
-      '@voidzero-dev/vite-plus-linux-arm64-musl': 0.2.0
-      '@voidzero-dev/vite-plus-linux-x64-gnu': 0.2.0
-      '@voidzero-dev/vite-plus-linux-x64-musl': 0.2.0
-      '@voidzero-dev/vite-plus-win32-arm64-msvc': 0.2.0
-      '@voidzero-dev/vite-plus-win32-x64-msvc': 0.2.0
+      '@voidzero-dev/vite-plus-darwin-arm64': 0.2.1
+      '@voidzero-dev/vite-plus-darwin-x64': 0.2.1
+      '@voidzero-dev/vite-plus-linux-arm64-gnu': 0.2.1
+      '@voidzero-dev/vite-plus-linux-arm64-musl': 0.2.1
+      '@voidzero-dev/vite-plus-linux-x64-gnu': 0.2.1
+      '@voidzero-dev/vite-plus-linux-x64-musl': 0.2.1
+      '@voidzero-dev/vite-plus-win32-arm64-msvc': 0.2.1
+      '@voidzero-dev/vite-plus-win32-x64-msvc': 0.2.1
     transitivePeerDependencies:
       - '@arethetypeswrong/core'
       - '@edge-runtime/vm'
