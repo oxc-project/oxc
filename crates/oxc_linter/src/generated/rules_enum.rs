@@ -1648,7 +1648,6 @@ pub enum RuleEnum {
     VitestValidExpectInPromise(VitestValidExpectInPromise),
     VitestValidTitle(VitestValidTitle),
     VitestWarnTodo(VitestWarnTodo),
-    NodeNoSync(NodeNoSync),
     NodeCallbackReturn(NodeCallbackReturn),
     NodeGlobalRequire(NodeGlobalRequire),
     NodeHandleCallbackErr(NodeHandleCallbackErr),
@@ -1656,6 +1655,7 @@ pub enum RuleEnum {
     NodeNoNewRequire(NodeNoNewRequire),
     NodeNoPathConcat(NodeNoPathConcat),
     NodeNoProcessEnv(NodeNoProcessEnv),
+    NodeNoSync(NodeNoSync),
     VueComponentDefinitionNameCasing(VueComponentDefinitionNameCasing),
     VueDefineEmitsDeclaration(VueDefineEmitsDeclaration),
     VueDefinePropsDeclaration(VueDefinePropsDeclaration),
@@ -2587,15 +2587,15 @@ const VITEST_VALID_EXPECT_ID: usize = VITEST_VALID_DESCRIBE_CALLBACK_ID + 1usize
 const VITEST_VALID_EXPECT_IN_PROMISE_ID: usize = VITEST_VALID_EXPECT_ID + 1usize;
 const VITEST_VALID_TITLE_ID: usize = VITEST_VALID_EXPECT_IN_PROMISE_ID + 1usize;
 const VITEST_WARN_TODO_ID: usize = VITEST_VALID_TITLE_ID + 1usize;
-const NODE_NO_SYNC_ID: usize = VITEST_WARN_TODO_ID + 1usize;
-const NODE_CALLBACK_RETURN_ID: usize = NODE_NO_SYNC_ID + 1usize;
+const NODE_CALLBACK_RETURN_ID: usize = VITEST_WARN_TODO_ID + 1usize;
 const NODE_GLOBAL_REQUIRE_ID: usize = NODE_CALLBACK_RETURN_ID + 1usize;
 const NODE_HANDLE_CALLBACK_ERR_ID: usize = NODE_GLOBAL_REQUIRE_ID + 1usize;
 const NODE_NO_EXPORTS_ASSIGN_ID: usize = NODE_HANDLE_CALLBACK_ERR_ID + 1usize;
 const NODE_NO_NEW_REQUIRE_ID: usize = NODE_NO_EXPORTS_ASSIGN_ID + 1usize;
 const NODE_NO_PATH_CONCAT_ID: usize = NODE_NO_NEW_REQUIRE_ID + 1usize;
 const NODE_NO_PROCESS_ENV_ID: usize = NODE_NO_PATH_CONCAT_ID + 1usize;
-const VUE_COMPONENT_DEFINITION_NAME_CASING_ID: usize = NODE_NO_PROCESS_ENV_ID + 1usize;
+const NODE_NO_SYNC_ID: usize = NODE_NO_PROCESS_ENV_ID + 1usize;
+const VUE_COMPONENT_DEFINITION_NAME_CASING_ID: usize = NODE_NO_SYNC_ID + 1usize;
 const VUE_DEFINE_EMITS_DECLARATION_ID: usize = VUE_COMPONENT_DEFINITION_NAME_CASING_ID + 1usize;
 const VUE_DEFINE_PROPS_DECLARATION_ID: usize = VUE_DEFINE_EMITS_DECLARATION_ID + 1usize;
 const VUE_DEFINE_PROPS_DESTRUCTURING_ID: usize = VUE_DEFINE_PROPS_DECLARATION_ID + 1usize;
@@ -3560,7 +3560,6 @@ impl RuleEnum {
             Self::VitestValidExpectInPromise(_) => VITEST_VALID_EXPECT_IN_PROMISE_ID,
             Self::VitestValidTitle(_) => VITEST_VALID_TITLE_ID,
             Self::VitestWarnTodo(_) => VITEST_WARN_TODO_ID,
-            Self::NodeNoSync(_) => NODE_NO_SYNC_ID,
             Self::NodeCallbackReturn(_) => NODE_CALLBACK_RETURN_ID,
             Self::NodeGlobalRequire(_) => NODE_GLOBAL_REQUIRE_ID,
             Self::NodeHandleCallbackErr(_) => NODE_HANDLE_CALLBACK_ERR_ID,
@@ -3568,6 +3567,7 @@ impl RuleEnum {
             Self::NodeNoNewRequire(_) => NODE_NO_NEW_REQUIRE_ID,
             Self::NodeNoPathConcat(_) => NODE_NO_PATH_CONCAT_ID,
             Self::NodeNoProcessEnv(_) => NODE_NO_PROCESS_ENV_ID,
+            Self::NodeNoSync(_) => NODE_NO_SYNC_ID,
             Self::VueComponentDefinitionNameCasing(_) => VUE_COMPONENT_DEFINITION_NAME_CASING_ID,
             Self::VueDefineEmitsDeclaration(_) => VUE_DEFINE_EMITS_DECLARATION_ID,
             Self::VueDefinePropsDeclaration(_) => VUE_DEFINE_PROPS_DECLARATION_ID,
@@ -4515,7 +4515,6 @@ impl RuleEnum {
             Self::VitestValidExpectInPromise(_) => VitestValidExpectInPromise::NAME,
             Self::VitestValidTitle(_) => VitestValidTitle::NAME,
             Self::VitestWarnTodo(_) => VitestWarnTodo::NAME,
-            Self::NodeNoSync(_) => NodeNoSync::NAME,
             Self::NodeCallbackReturn(_) => NodeCallbackReturn::NAME,
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::NAME,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::NAME,
@@ -4523,6 +4522,7 @@ impl RuleEnum {
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::NAME,
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::NAME,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::NAME,
+            Self::NodeNoSync(_) => NodeNoSync::NAME,
             Self::VueComponentDefinitionNameCasing(_) => VueComponentDefinitionNameCasing::NAME,
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::NAME,
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::NAME,
@@ -5526,7 +5526,6 @@ impl RuleEnum {
             Self::VitestValidExpectInPromise(_) => VitestValidExpectInPromise::CATEGORY,
             Self::VitestValidTitle(_) => VitestValidTitle::CATEGORY,
             Self::VitestWarnTodo(_) => VitestWarnTodo::CATEGORY,
-            Self::NodeNoSync(_) => NodeNoSync::CATEGORY,
             Self::NodeCallbackReturn(_) => NodeCallbackReturn::CATEGORY,
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::CATEGORY,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::CATEGORY,
@@ -5534,6 +5533,7 @@ impl RuleEnum {
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::CATEGORY,
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::CATEGORY,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::CATEGORY,
+            Self::NodeNoSync(_) => NodeNoSync::CATEGORY,
             Self::VueComponentDefinitionNameCasing(_) => VueComponentDefinitionNameCasing::CATEGORY,
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::CATEGORY,
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::CATEGORY,
@@ -6484,7 +6484,6 @@ impl RuleEnum {
             Self::VitestValidExpectInPromise(_) => VitestValidExpectInPromise::FIX,
             Self::VitestValidTitle(_) => VitestValidTitle::FIX,
             Self::VitestWarnTodo(_) => VitestWarnTodo::FIX,
-            Self::NodeNoSync(_) => NodeNoSync::FIX,
             Self::NodeCallbackReturn(_) => NodeCallbackReturn::FIX,
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::FIX,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::FIX,
@@ -6492,6 +6491,7 @@ impl RuleEnum {
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::FIX,
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::FIX,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::FIX,
+            Self::NodeNoSync(_) => NodeNoSync::FIX,
             Self::VueComponentDefinitionNameCasing(_) => VueComponentDefinitionNameCasing::FIX,
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::FIX,
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::FIX,
@@ -7688,7 +7688,6 @@ impl RuleEnum {
             Self::VitestValidExpectInPromise(_) => VitestValidExpectInPromise::documentation(),
             Self::VitestValidTitle(_) => VitestValidTitle::documentation(),
             Self::VitestWarnTodo(_) => VitestWarnTodo::documentation(),
-            Self::NodeNoSync(_) => NodeNoSync::documentation(),
             Self::NodeCallbackReturn(_) => NodeCallbackReturn::documentation(),
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::documentation(),
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::documentation(),
@@ -7696,6 +7695,7 @@ impl RuleEnum {
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::documentation(),
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::documentation(),
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::documentation(),
+            Self::NodeNoSync(_) => NodeNoSync::documentation(),
             Self::VueComponentDefinitionNameCasing(_) => {
                 VueComponentDefinitionNameCasing::documentation()
             }
@@ -10020,9 +10020,6 @@ impl RuleEnum {
                 .or_else(|| VitestValidTitle::schema(generator)),
             Self::VitestWarnTodo(_) => VitestWarnTodo::config_schema(generator)
                 .or_else(|| VitestWarnTodo::schema(generator)),
-            Self::NodeNoSync(_) => {
-                NodeNoSync::config_schema(generator).or_else(|| NodeNoSync::schema(generator))
-            }
             Self::NodeCallbackReturn(_) => NodeCallbackReturn::config_schema(generator)
                 .or_else(|| NodeCallbackReturn::schema(generator)),
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::config_schema(generator)
@@ -10037,6 +10034,9 @@ impl RuleEnum {
                 .or_else(|| NodeNoPathConcat::schema(generator)),
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::config_schema(generator)
                 .or_else(|| NodeNoProcessEnv::schema(generator)),
+            Self::NodeNoSync(_) => {
+                NodeNoSync::config_schema(generator).or_else(|| NodeNoSync::schema(generator))
+            }
             Self::VueComponentDefinitionNameCasing(_) => {
                 VueComponentDefinitionNameCasing::config_schema(generator)
                     .or_else(|| VueComponentDefinitionNameCasing::schema(generator))
@@ -10960,7 +10960,6 @@ impl RuleEnum {
             Self::VitestValidExpectInPromise(_) => "vitest",
             Self::VitestValidTitle(_) => "vitest",
             Self::VitestWarnTodo(_) => "vitest",
-            Self::NodeNoSync(_) => "node",
             Self::NodeCallbackReturn(_) => "node",
             Self::NodeGlobalRequire(_) => "node",
             Self::NodeHandleCallbackErr(_) => "node",
@@ -10968,6 +10967,7 @@ impl RuleEnum {
             Self::NodeNoNewRequire(_) => "node",
             Self::NodeNoPathConcat(_) => "node",
             Self::NodeNoProcessEnv(_) => "node",
+            Self::NodeNoSync(_) => "node",
             Self::VueComponentDefinitionNameCasing(_) => "vue",
             Self::VueDefineEmitsDeclaration(_) => "vue",
             Self::VueDefinePropsDeclaration(_) => "vue",
@@ -13548,7 +13548,6 @@ impl RuleEnum {
             Self::VitestWarnTodo(_) => {
                 Ok(Self::VitestWarnTodo(VitestWarnTodo::from_configuration(value)?))
             }
-            Self::NodeNoSync(_) => Ok(Self::NodeNoSync(NodeNoSync::from_configuration(value)?)),
             Self::NodeCallbackReturn(_) => {
                 Ok(Self::NodeCallbackReturn(NodeCallbackReturn::from_configuration(value)?))
             }
@@ -13570,6 +13569,7 @@ impl RuleEnum {
             Self::NodeNoProcessEnv(_) => {
                 Ok(Self::NodeNoProcessEnv(NodeNoProcessEnv::from_configuration(value)?))
             }
+            Self::NodeNoSync(_) => Ok(Self::NodeNoSync(NodeNoSync::from_configuration(value)?)),
             Self::VueComponentDefinitionNameCasing(_) => {
                 Ok(Self::VueComponentDefinitionNameCasing(
                     VueComponentDefinitionNameCasing::from_configuration(value)?,
@@ -14507,7 +14507,6 @@ impl RuleEnum {
             Self::VitestValidExpectInPromise(rule) => rule.to_configuration(),
             Self::VitestValidTitle(rule) => rule.to_configuration(),
             Self::VitestWarnTodo(rule) => rule.to_configuration(),
-            Self::NodeNoSync(rule) => rule.to_configuration(),
             Self::NodeCallbackReturn(rule) => rule.to_configuration(),
             Self::NodeGlobalRequire(rule) => rule.to_configuration(),
             Self::NodeHandleCallbackErr(rule) => rule.to_configuration(),
@@ -14515,6 +14514,7 @@ impl RuleEnum {
             Self::NodeNoNewRequire(rule) => rule.to_configuration(),
             Self::NodeNoPathConcat(rule) => rule.to_configuration(),
             Self::NodeNoProcessEnv(rule) => rule.to_configuration(),
+            Self::NodeNoSync(rule) => rule.to_configuration(),
             Self::VueComponentDefinitionNameCasing(rule) => rule.to_configuration(),
             Self::VueDefineEmitsDeclaration(rule) => rule.to_configuration(),
             Self::VueDefinePropsDeclaration(rule) => rule.to_configuration(),
@@ -15358,7 +15358,6 @@ impl RuleEnum {
                 Self::VitestValidExpectInPromise(rule) => rule.run(node, ctx),
                 Self::VitestValidTitle(rule) => rule.run(node, ctx),
                 Self::VitestWarnTodo(rule) => rule.run(node, ctx),
-                Self::NodeNoSync(rule) => rule.run(node, ctx),
                 Self::NodeCallbackReturn(rule) => rule.run(node, ctx),
                 Self::NodeGlobalRequire(rule) => rule.run(node, ctx),
                 Self::NodeHandleCallbackErr(rule) => rule.run(node, ctx),
@@ -15366,6 +15365,7 @@ impl RuleEnum {
                 Self::NodeNoNewRequire(rule) => rule.run(node, ctx),
                 Self::NodeNoPathConcat(rule) => rule.run(node, ctx),
                 Self::NodeNoProcessEnv(rule) => rule.run(node, ctx),
+                Self::NodeNoSync(rule) => rule.run(node, ctx),
                 Self::VueComponentDefinitionNameCasing(rule) => rule.run(node, ctx),
                 Self::VueDefineEmitsDeclaration(rule) => rule.run(node, ctx),
                 Self::VueDefinePropsDeclaration(rule) => rule.run(node, ctx),
@@ -16202,7 +16202,6 @@ impl RuleEnum {
                 Self::VitestValidExpectInPromise(rule) => rule.run(node, ctx),
                 Self::VitestValidTitle(rule) => rule.run(node, ctx),
                 Self::VitestWarnTodo(rule) => rule.run(node, ctx),
-                Self::NodeNoSync(rule) => rule.run(node, ctx),
                 Self::NodeCallbackReturn(rule) => rule.run(node, ctx),
                 Self::NodeGlobalRequire(rule) => rule.run(node, ctx),
                 Self::NodeHandleCallbackErr(rule) => rule.run(node, ctx),
@@ -16210,6 +16209,7 @@ impl RuleEnum {
                 Self::NodeNoNewRequire(rule) => rule.run(node, ctx),
                 Self::NodeNoPathConcat(rule) => rule.run(node, ctx),
                 Self::NodeNoProcessEnv(rule) => rule.run(node, ctx),
+                Self::NodeNoSync(rule) => rule.run(node, ctx),
                 Self::VueComponentDefinitionNameCasing(rule) => rule.run(node, ctx),
                 Self::VueDefineEmitsDeclaration(rule) => rule.run(node, ctx),
                 Self::VueDefinePropsDeclaration(rule) => rule.run(node, ctx),
@@ -17053,7 +17053,6 @@ impl RuleEnum {
                 Self::VitestValidExpectInPromise(rule) => rule.run_once(ctx),
                 Self::VitestValidTitle(rule) => rule.run_once(ctx),
                 Self::VitestWarnTodo(rule) => rule.run_once(ctx),
-                Self::NodeNoSync(rule) => rule.run_once(ctx),
                 Self::NodeCallbackReturn(rule) => rule.run_once(ctx),
                 Self::NodeGlobalRequire(rule) => rule.run_once(ctx),
                 Self::NodeHandleCallbackErr(rule) => rule.run_once(ctx),
@@ -17061,6 +17060,7 @@ impl RuleEnum {
                 Self::NodeNoNewRequire(rule) => rule.run_once(ctx),
                 Self::NodeNoPathConcat(rule) => rule.run_once(ctx),
                 Self::NodeNoProcessEnv(rule) => rule.run_once(ctx),
+                Self::NodeNoSync(rule) => rule.run_once(ctx),
                 Self::VueComponentDefinitionNameCasing(rule) => rule.run_once(ctx),
                 Self::VueDefineEmitsDeclaration(rule) => rule.run_once(ctx),
                 Self::VueDefinePropsDeclaration(rule) => rule.run_once(ctx),
@@ -17897,7 +17897,6 @@ impl RuleEnum {
                 Self::VitestValidExpectInPromise(rule) => rule.run_once(ctx),
                 Self::VitestValidTitle(rule) => rule.run_once(ctx),
                 Self::VitestWarnTodo(rule) => rule.run_once(ctx),
-                Self::NodeNoSync(rule) => rule.run_once(ctx),
                 Self::NodeCallbackReturn(rule) => rule.run_once(ctx),
                 Self::NodeGlobalRequire(rule) => rule.run_once(ctx),
                 Self::NodeHandleCallbackErr(rule) => rule.run_once(ctx),
@@ -17905,6 +17904,7 @@ impl RuleEnum {
                 Self::NodeNoNewRequire(rule) => rule.run_once(ctx),
                 Self::NodeNoPathConcat(rule) => rule.run_once(ctx),
                 Self::NodeNoProcessEnv(rule) => rule.run_once(ctx),
+                Self::NodeNoSync(rule) => rule.run_once(ctx),
                 Self::VueComponentDefinitionNameCasing(rule) => rule.run_once(ctx),
                 Self::VueDefineEmitsDeclaration(rule) => rule.run_once(ctx),
                 Self::VueDefinePropsDeclaration(rule) => rule.run_once(ctx),
@@ -18997,7 +18997,6 @@ impl RuleEnum {
                 Self::VitestValidExpectInPromise(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VitestValidTitle(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VitestWarnTodo(rule) => rule.run_on_jest_node(jest_node, ctx),
-                Self::NodeNoSync(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::NodeCallbackReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::NodeGlobalRequire(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::NodeHandleCallbackErr(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -19005,6 +19004,7 @@ impl RuleEnum {
                 Self::NodeNoNewRequire(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::NodeNoPathConcat(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::NodeNoProcessEnv(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::NodeNoSync(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueComponentDefinitionNameCasing(rule) => {
                     rule.run_on_jest_node(jest_node, ctx)
                 }
@@ -20101,7 +20101,6 @@ impl RuleEnum {
                 Self::VitestValidExpectInPromise(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VitestValidTitle(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VitestWarnTodo(rule) => rule.run_on_jest_node(jest_node, ctx),
-                Self::NodeNoSync(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::NodeCallbackReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::NodeGlobalRequire(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::NodeHandleCallbackErr(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -20109,6 +20108,7 @@ impl RuleEnum {
                 Self::NodeNoNewRequire(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::NodeNoPathConcat(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::NodeNoProcessEnv(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::NodeNoSync(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueComponentDefinitionNameCasing(rule) => {
                     rule.run_on_jest_node(jest_node, ctx)
                 }
@@ -20955,7 +20955,6 @@ impl RuleEnum {
             Self::VitestValidExpectInPromise(rule) => rule.should_run(ctx),
             Self::VitestValidTitle(rule) => rule.should_run(ctx),
             Self::VitestWarnTodo(rule) => rule.should_run(ctx),
-            Self::NodeNoSync(rule) => rule.should_run(ctx),
             Self::NodeCallbackReturn(rule) => rule.should_run(ctx),
             Self::NodeGlobalRequire(rule) => rule.should_run(ctx),
             Self::NodeHandleCallbackErr(rule) => rule.should_run(ctx),
@@ -20963,6 +20962,7 @@ impl RuleEnum {
             Self::NodeNoNewRequire(rule) => rule.should_run(ctx),
             Self::NodeNoPathConcat(rule) => rule.should_run(ctx),
             Self::NodeNoProcessEnv(rule) => rule.should_run(ctx),
+            Self::NodeNoSync(rule) => rule.should_run(ctx),
             Self::VueComponentDefinitionNameCasing(rule) => rule.should_run(ctx),
             Self::VueDefineEmitsDeclaration(rule) => rule.should_run(ctx),
             Self::VueDefinePropsDeclaration(rule) => rule.should_run(ctx),
@@ -22154,7 +22154,6 @@ impl RuleEnum {
             Self::VitestValidExpectInPromise(_) => VitestValidExpectInPromise::IS_TSGOLINT_RULE,
             Self::VitestValidTitle(_) => VitestValidTitle::IS_TSGOLINT_RULE,
             Self::VitestWarnTodo(_) => VitestWarnTodo::IS_TSGOLINT_RULE,
-            Self::NodeNoSync(_) => NodeNoSync::IS_TSGOLINT_RULE,
             Self::NodeCallbackReturn(_) => NodeCallbackReturn::IS_TSGOLINT_RULE,
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::IS_TSGOLINT_RULE,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::IS_TSGOLINT_RULE,
@@ -22162,6 +22161,7 @@ impl RuleEnum {
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::IS_TSGOLINT_RULE,
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::IS_TSGOLINT_RULE,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::IS_TSGOLINT_RULE,
+            Self::NodeNoSync(_) => NodeNoSync::IS_TSGOLINT_RULE,
             Self::VueComponentDefinitionNameCasing(_) => {
                 VueComponentDefinitionNameCasing::IS_TSGOLINT_RULE
             }
@@ -23183,7 +23183,6 @@ impl RuleEnum {
             Self::VitestValidExpectInPromise(_) => VitestValidExpectInPromise::VERSION,
             Self::VitestValidTitle(_) => VitestValidTitle::VERSION,
             Self::VitestWarnTodo(_) => VitestWarnTodo::VERSION,
-            Self::NodeNoSync(_) => NodeNoSync::VERSION,
             Self::NodeCallbackReturn(_) => NodeCallbackReturn::VERSION,
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::VERSION,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::VERSION,
@@ -23191,6 +23190,7 @@ impl RuleEnum {
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::VERSION,
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::VERSION,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::VERSION,
+            Self::NodeNoSync(_) => NodeNoSync::VERSION,
             Self::VueComponentDefinitionNameCasing(_) => VueComponentDefinitionNameCasing::VERSION,
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::VERSION,
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::VERSION,
@@ -24231,7 +24231,6 @@ impl RuleEnum {
             Self::VitestValidExpectInPromise(_) => VitestValidExpectInPromise::HAS_CONFIG,
             Self::VitestValidTitle(_) => VitestValidTitle::HAS_CONFIG,
             Self::VitestWarnTodo(_) => VitestWarnTodo::HAS_CONFIG,
-            Self::NodeNoSync(_) => NodeNoSync::HAS_CONFIG,
             Self::NodeCallbackReturn(_) => NodeCallbackReturn::HAS_CONFIG,
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::HAS_CONFIG,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::HAS_CONFIG,
@@ -24239,6 +24238,7 @@ impl RuleEnum {
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::HAS_CONFIG,
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::HAS_CONFIG,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::HAS_CONFIG,
+            Self::NodeNoSync(_) => NodeNoSync::HAS_CONFIG,
             Self::VueComponentDefinitionNameCasing(_) => {
                 VueComponentDefinitionNameCasing::HAS_CONFIG
             }
@@ -25194,7 +25194,6 @@ impl RuleEnum {
             Self::VitestValidExpectInPromise(_) => VitestValidExpectInPromise::INFO,
             Self::VitestValidTitle(_) => VitestValidTitle::INFO,
             Self::VitestWarnTodo(_) => VitestWarnTodo::INFO,
-            Self::NodeNoSync(_) => NodeNoSync::INFO,
             Self::NodeCallbackReturn(_) => NodeCallbackReturn::INFO,
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::INFO,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::INFO,
@@ -25202,6 +25201,7 @@ impl RuleEnum {
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::INFO,
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::INFO,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::INFO,
+            Self::NodeNoSync(_) => NodeNoSync::INFO,
             Self::VueComponentDefinitionNameCasing(_) => VueComponentDefinitionNameCasing::INFO,
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::INFO,
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::INFO,
@@ -26044,7 +26044,6 @@ impl RuleEnum {
             Self::VitestValidExpectInPromise(rule) => rule.types_info(),
             Self::VitestValidTitle(rule) => rule.types_info(),
             Self::VitestWarnTodo(rule) => rule.types_info(),
-            Self::NodeNoSync(rule) => rule.types_info(),
             Self::NodeCallbackReturn(rule) => rule.types_info(),
             Self::NodeGlobalRequire(rule) => rule.types_info(),
             Self::NodeHandleCallbackErr(rule) => rule.types_info(),
@@ -26052,6 +26051,7 @@ impl RuleEnum {
             Self::NodeNoNewRequire(rule) => rule.types_info(),
             Self::NodeNoPathConcat(rule) => rule.types_info(),
             Self::NodeNoProcessEnv(rule) => rule.types_info(),
+            Self::NodeNoSync(rule) => rule.types_info(),
             Self::VueComponentDefinitionNameCasing(rule) => rule.types_info(),
             Self::VueDefineEmitsDeclaration(rule) => rule.types_info(),
             Self::VueDefinePropsDeclaration(rule) => rule.types_info(),
@@ -26885,7 +26885,6 @@ impl RuleEnum {
             Self::VitestValidExpectInPromise(rule) => rule.run_info(),
             Self::VitestValidTitle(rule) => rule.run_info(),
             Self::VitestWarnTodo(rule) => rule.run_info(),
-            Self::NodeNoSync(rule) => rule.run_info(),
             Self::NodeCallbackReturn(rule) => rule.run_info(),
             Self::NodeGlobalRequire(rule) => rule.run_info(),
             Self::NodeHandleCallbackErr(rule) => rule.run_info(),
@@ -26893,6 +26892,7 @@ impl RuleEnum {
             Self::NodeNoNewRequire(rule) => rule.run_info(),
             Self::NodeNoPathConcat(rule) => rule.run_info(),
             Self::NodeNoProcessEnv(rule) => rule.run_info(),
+            Self::NodeNoSync(rule) => rule.run_info(),
             Self::VueComponentDefinitionNameCasing(rule) => rule.run_info(),
             Self::VueDefineEmitsDeclaration(rule) => rule.run_info(),
             Self::VueDefinePropsDeclaration(rule) => rule.run_info(),
@@ -27858,7 +27858,6 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VitestValidExpectInPromise(VitestValidExpectInPromise::default()),
         RuleEnum::VitestValidTitle(VitestValidTitle::default()),
         RuleEnum::VitestWarnTodo(VitestWarnTodo::default()),
-        RuleEnum::NodeNoSync(NodeNoSync::default()),
         RuleEnum::NodeCallbackReturn(NodeCallbackReturn::default()),
         RuleEnum::NodeGlobalRequire(NodeGlobalRequire::default()),
         RuleEnum::NodeHandleCallbackErr(NodeHandleCallbackErr::default()),
@@ -27866,6 +27865,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::NodeNoNewRequire(NodeNoNewRequire::default()),
         RuleEnum::NodeNoPathConcat(NodeNoPathConcat::default()),
         RuleEnum::NodeNoProcessEnv(NodeNoProcessEnv::default()),
+        RuleEnum::NodeNoSync(NodeNoSync::default()),
         RuleEnum::VueComponentDefinitionNameCasing(VueComponentDefinitionNameCasing::default()),
         RuleEnum::VueDefineEmitsDeclaration(VueDefineEmitsDeclaration::default()),
         RuleEnum::VueDefinePropsDeclaration(VueDefinePropsDeclaration::default()),
