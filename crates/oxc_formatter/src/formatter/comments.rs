@@ -119,6 +119,8 @@ pub struct CommentSnapshot {
 pub struct Comments<'a> {
     source_text: SourceText<'a>,
     inner: &'a [Comment],
+    /// Whether any comment is a suppression marker, letting the per-node suppression checks early-out. Set once in `new`.
+    has_suppression_comment: bool,
     /// **Critical state field**: Tracks how many comments have been processed.
     ///
     /// This acts as a cursor dividing the comments array into two sections:
@@ -141,9 +143,15 @@ pub struct Comments<'a> {
 
 impl<'a> Comments<'a> {
     pub fn new(source_text: SourceText<'a>, comments: &'a [Comment]) -> Self {
+        let has_suppression_comment = comments.iter().any(|comment| {
+            oxc_formatter_core::spec::is_suppression_marker(
+                source_text.text_for(&comment.content_span()),
+            )
+        });
         Comments {
             source_text,
             inner: comments,
+            has_suppression_comment,
             printed_count: 0,
             last_handled_type_cast_comment: 0,
             type_cast_node_span: Span::default(),
@@ -395,7 +403,11 @@ impl<'a> Comments<'a> {
 
     /// Checks if the node has a suppression comment.
     pub fn is_suppressed(&self, start: u32) -> bool {
-        self.comments_before(start).iter().any(|comment| self.is_suppression_comment(comment))
+        self.has_suppression_comment
+            && self
+                .comments_before(start)
+                .iter()
+                .any(|comment| self.is_suppression_comment(comment))
     }
 
     /// Checks if there is a trailing suppression comment on the same line.
@@ -405,9 +417,11 @@ impl<'a> Comments<'a> {
     /// `statement(); /* prettier-ignore */`
     /// `value, // prettier-ignore`
     pub fn has_trailing_suppression_comment(&self, pos: u32) -> bool {
-        self.end_of_line_comments_after(pos)
-            .iter()
-            .any(|comment| self.is_suppression_comment(comment))
+        self.has_suppression_comment
+            && self
+                .end_of_line_comments_after(pos)
+                .iter()
+                .any(|comment| self.is_suppression_comment(comment))
     }
 
     /// Checks if a comment is a suppression comment (`oxfmt-ignore`).
