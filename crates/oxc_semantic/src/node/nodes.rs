@@ -34,6 +34,13 @@ pub struct AstNodes<'a> {
     /// any nodes of that kind.
     #[cfg(feature = "linter")]
     node_kinds_set: AstTypesBitset,
+    /// `node` -> `AstType`.
+    ///
+    /// A dense parallel array of each node's [`AstType`], stored separately from `nodes` so the
+    /// linter's dispatch loop can scan node types (1 byte each) without loading the full 24-byte
+    /// [`AstNode`] (with its arena pointer) for nodes that no enabled rule cares about.
+    #[cfg(feature = "linter")]
+    node_types: IndexVec<NodeId, AstType>,
 }
 
 impl<'a> AstNodes<'a> {
@@ -45,6 +52,16 @@ impl<'a> AstNodes<'a> {
     /// Iterate over all [`AstNode`]s with their [`NodeId`].
     pub fn iter_enumerated(&self) -> impl Iterator<Item = (NodeId, &AstNode<'a>)> + '_ {
         self.nodes.iter_enumerated()
+    }
+
+    /// Dense parallel array of every node's [`AstType`], in [`NodeId`] order.
+    ///
+    /// `node_types()[i]` is the type of the node yielded i-th by [`iter`](AstNodes::iter), so the
+    /// two can be zipped to dispatch on node type without loading each [`AstNode`].
+    #[cfg(feature = "linter")]
+    #[inline]
+    pub fn node_types(&self) -> &[AstType] {
+        self.node_types.as_raw_slice()
     }
 
     /// Returns the number of node in this AST.
@@ -194,7 +211,11 @@ impl<'a> AstNodes<'a> {
         #[cfg(feature = "cfg")]
         self.cfg_ids.push(cfg_id);
         #[cfg(feature = "linter")]
-        self.node_kinds_set.set(kind.ty());
+        {
+            let ty = kind.ty();
+            self.node_kinds_set.set(ty);
+            self.node_types.push(ty);
+        }
     }
 
     /// Create and add an [`AstNode`] to the [`AstNodes`] tree and get its [`NodeId`].
@@ -221,7 +242,10 @@ impl<'a> AstNodes<'a> {
         #[cfg(feature = "cfg")]
         self.cfg_ids.push(cfg_id);
         #[cfg(feature = "linter")]
-        self.node_kinds_set.set(AstType::Program);
+        {
+            self.node_kinds_set.set(AstType::Program);
+            self.node_types.push(AstType::Program);
+        }
     }
 
     /// Reserve space for at least `additional` more nodes.
@@ -231,6 +255,8 @@ impl<'a> AstNodes<'a> {
         self.flags.reserve(additional);
         #[cfg(feature = "cfg")]
         self.cfg_ids.reserve(additional);
+        #[cfg(feature = "linter")]
+        self.node_types.reserve(additional);
     }
 
     /// Checks if the AST contains any nodes of the given types.

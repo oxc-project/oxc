@@ -221,8 +221,16 @@ fn execute_rules<'a, const TIMINGS: bool>(
                 }
             }
 
-            for node in semantic.nodes() {
-                for &rule_index in &buckets.by_type[node.kind().ty() as usize] {
+            // Scan the dense `node_types` array (1 byte per node) and only load the full `AstNode`
+            // when some enabled rule is registered for that node's type (or runs on every node).
+            let nodes = semantic.nodes();
+            let any_type_empty = buckets.any_type.is_empty();
+            for (node, &ty) in nodes.iter().zip(nodes.node_types()) {
+                let by_type = &buckets.by_type[ty as usize];
+                if by_type.is_empty() && any_type_empty {
+                    continue;
+                }
+                for &rule_index in by_type {
                     let (rule, ctx) = &rules[rule_index];
                     let timing_stat = get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);
                     rule.run::<TIMINGS>(node, ctx, timing_stat);
