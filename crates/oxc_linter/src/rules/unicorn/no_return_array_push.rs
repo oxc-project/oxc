@@ -8,13 +8,13 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
 
-const IGNORED_PUSH_CALLEES: &[&str] = &[
-    "stream.push",
-    "this.push",
-    "this.stream.push",
-    "process.stdin.push",
-    "process.stdout.push",
-    "process.stderr.push",
+const IGNORED_PUSH_CALLEES: &[&[&str]] = &[
+    &["stream", "push"],
+    &["this", "push"],
+    &["this", "stream", "push"],
+    &["process", "stdin", "push"],
+    &["process", "stdout", "push"],
+    &["process", "stderr", "push"],
 ];
 
 fn no_return_array_push_diagnostic(span: Span, method: &str) -> OxcDiagnostic {
@@ -121,9 +121,8 @@ fn is_ignored_push_callee(callee: &Expression) -> bool {
     IGNORED_PUSH_CALLEES.iter().any(|path| matches_static_member_path(callee, path))
 }
 
-fn matches_static_member_path(expression: &Expression, path: &str) -> bool {
-    let names: Vec<&str> = path.split('.').collect();
-    if names.len() < 2 {
+fn matches_static_member_path(expression: &Expression, path: &[&str]) -> bool {
+    if path.len() < 2 {
         return false;
     }
 
@@ -131,13 +130,13 @@ fn matches_static_member_path(expression: &Expression, path: &str) -> bool {
         return false;
     };
 
-    if member.is_computed() || member.static_property_name() != names.last().copied() {
+    if member.is_computed() || member.static_property_name() != path.last().copied() {
         return false;
     }
 
     let mut current = member.object().get_inner_expression();
 
-    for name in &names[1..names.len() - 1] {
+    for name in &path[1..path.len() - 1] {
         let Expression::StaticMemberExpression(static_member) = current else {
             return false;
         };
@@ -148,8 +147,8 @@ fn matches_static_member_path(expression: &Expression, path: &str) -> bool {
     }
 
     match current {
-        Expression::Identifier(ident) => ident.name.as_str() == names[0],
-        Expression::ThisExpression(_) => names[0] == "this",
+        Expression::Identifier(ident) => ident.name.as_str() == path[0],
+        Expression::ThisExpression(_) => path[0] == "this",
         _ => false,
     }
 }
