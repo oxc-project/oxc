@@ -124,10 +124,6 @@ impl Rule for ConsistentVitestVi {
                 ctx.diagnostic_with_fix(
                     consistent_vitest_vi_diagnostic(vitest_import.span(), &self.function),
                     |fixer| {
-                        // Keep each specifier's full source text (e.g. `expect as toBe`,
-                        // `type Foo`) rather than just its local name, otherwise aliases and
-                        // `type` qualifiers are dropped and the rewritten import rebinds to a
-                        // different (often non-existent) export.
                         let mut specifiers_without_opposite_accessor: Vec<&str> = import
                             .specifiers
                             .as_ref()
@@ -143,10 +139,6 @@ impl Rule for ConsistentVitestVi {
                         if specifiers_without_opposite_accessor.is_empty() {
                             fixer.replace(vitest_import.local().span, self.function.as_str())
                         } else {
-                            // Only add the target accessor when no kept specifier already binds
-                            // it locally. Compare LOCAL names (`spec.name()`), not the kept full
-                            // text — otherwise an alias/`type` whose local name is the target
-                            // (e.g. `import { x as vi, vitest }`) would get a duplicate `vi`.
                             let target_already_bound =
                                 import.specifiers.as_ref().is_some_and(|specs| {
                                     specs.iter().any(|spec| {
@@ -172,9 +164,6 @@ impl Rule for ConsistentVitestVi {
                                 return fixer.noop();
                             };
 
-                            // Use the full specifier spans (not `local()`) so an alias/`type`
-                            // qualifier on the first or last specifier is included in the
-                            // replaced range instead of being left behind.
                             let specifiers_span =
                                 Span::new(first_specifier.span().start, last_specifier.span().end);
 
