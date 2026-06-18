@@ -4,6 +4,24 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.137.0] - 2026-06-18
+
+### 💥 BREAKING CHANGES
+
+- 7a76cd3 estree: [**BREAKING**] Make whether to include TS fields a runtime option (#23574) (overlookmotel)
+
+### 🚀 Features
+
+- 38c4b06 parser: Add friendly error for adjacent JSX elements (#23378) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 837a395 parser: Treat a line comment after ':' as leading, not trailing (#23515) (Dunqing)
+
+### ⚡ Performance
+
+- 4058a6a parser: Reduce code bloat from verify_modifiers monomorphization (#23576) (Boshen)
+
 ## [0.136.0] - 2026-06-15
 
 ### 🚀 Features
