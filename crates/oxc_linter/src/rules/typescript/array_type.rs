@@ -289,8 +289,6 @@ fn type_needs_parentheses(type_param: &TSType) -> bool {
         | TSType::TSTypeOperatorType(_)
         | TSType::TSInferType(_)
         | TSType::TSConstructorType(_)
-        // A conditional type binds looser than postfix `[]`, so `Array<A extends B ? C : D>`
-        // must become `(A extends B ? C : D)[]`, not `A extends B ? C : D[]` (a different type).
         | TSType::TSConditionalType(_) => true,
         _ => false,
     }
