@@ -15,7 +15,7 @@ use std::{
     string::ToString,
 };
 
-use oxc_allocator::{Allocator, AllocatorPool, CloneIn, TakeIn, Vec as ArenaVec};
+use oxc_allocator::{Allocator, AllocatorPool, CloneIn, GetAddress, TakeIn, Vec as ArenaVec};
 use oxc_ast::{
     ast::{Comment, CommentContent, CommentKind, Program},
     ast_kind::AST_TYPE_MAX,
@@ -185,6 +185,35 @@ thread_local! {
     });
 }
 
+/// How many nodes ahead to software-prefetch in the rule-dispatch loop.
+const PREFETCH_DISTANCE: usize = 16;
+
+/// Issue a software prefetch hint for a read of `ptr` into the L1 cache.
+///
+/// Never faults regardless of the pointer value, and is a no-op on architectures without a
+/// supported prefetch instruction.
+#[inline]
+fn prefetch_read(ptr: *const u8) {
+    #[cfg(target_arch = "x86_64")]
+    // SAFETY: `_mm_prefetch` never faults, whatever the pointer value.
+    unsafe {
+        core::arch::x86_64::_mm_prefetch::<{ core::arch::x86_64::_MM_HINT_T0 }>(ptr.cast::<i8>());
+    }
+    #[cfg(target_arch = "aarch64")]
+    // SAFETY: `prfm` never faults, whatever the pointer value.
+    unsafe {
+        core::arch::asm!(
+            "prfm pldl1keep, [{p}]",
+            p = in(reg) ptr,
+            options(nostack, preserves_flags, readonly),
+        );
+    }
+    #[cfg(not(any(target_arch = "x86_64", target_arch = "aarch64")))]
+    {
+        let _ = ptr;
+    }
+}
+
 fn execute_rules<'a, const TIMINGS: bool>(
     rules: &[(&RuleEnum, LintContext<'a>)],
     semantic: &Semantic<'a>,
@@ -221,7 +250,20 @@ fn execute_rules<'a, const TIMINGS: bool>(
                 }
             }
 
-            for node in semantic.nodes() {
+            // Software-prefetch each node's arena memory `PREFETCH_DISTANCE` iterations before a
+            // rule dereferences it. The flat node list holds the (fixed) arena address of every
+            // node up front, but the arena is laid out in allocation order (≈ reverse DFS), not
+            // node-id order, so these dereferences miss cache. Issuing the prefetch ahead of time
+            // hides that latency behind the per-node dispatch work.
+            let nodes = semantic.nodes();
+            let mut prefetch_ahead = nodes.iter();
+            for _ in 0..PREFETCH_DISTANCE {
+                prefetch_ahead.next();
+            }
+            for node in nodes.iter() {
+                if let Some(ahead) = prefetch_ahead.next() {
+                    prefetch_read(ahead.address().as_ptr());
+                }
                 for &rule_index in &buckets.by_type[node.kind().ty() as usize] {
                     let (rule, ctx) = &rules[rule_index];
                     let timing_stat = get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);

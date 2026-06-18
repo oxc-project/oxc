@@ -102,6 +102,15 @@ impl Address {
     pub unsafe fn from_ptr<T>(p: *const T) -> Self {
         Self(p as usize)
     }
+
+    /// Get this `Address` as a raw pointer.
+    ///
+    /// The pointer is only valid to dereference if this `Address` was obtained from a live AST node
+    /// in the arena. It is always valid as a software-prefetch target (prefetch never faults).
+    #[inline(always)] // Because it's a no-op
+    pub fn as_ptr(self) -> *const u8 {
+        self.0 as *const u8
+    }
 }
 
 /// Trait for getting the memory address of an AST node.
