@@ -35,6 +35,15 @@ pub fn convert_scope_info(semantic: &Semantic, _program: &Program) -> ScopeInfo 
     // First pass: Create all bindings from symbols
     for symbol_id in scoping.symbol_ids() {
         let symbol_flags = scoping.symbol_flags(symbol_id);
+
+        // Skip type-only symbols (type parameters, interfaces, type aliases):
+        // the React Compiler models value semantics only, so a type parameter
+        // would otherwise become a value binding and trip the hoisting pass.
+        // https://github.com/oxc-project/oxc/issues/23611
+        if symbol_flags.is_type() && !symbol_flags.is_value() {
+            continue;
+        }
+
         let name = scoping.symbol_name(symbol_id).to_string();
 
         let kind = get_binding_kind(symbol_flags, semantic, symbol_id);

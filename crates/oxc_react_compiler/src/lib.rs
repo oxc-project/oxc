@@ -228,6 +228,44 @@ mod tests {
         );
     }
 
+    /// Generic components/hooks must compile: a TS type parameter was collected
+    /// as a value binding and tripped the HIR hoisting pass with a spurious
+    /// bail-out. Regression test for <https://github.com/oxc-project/oxc/issues/23611>.
+    #[test]
+    fn generic_component_does_not_bail_out_on_type_parameter_hoisting() {
+        let source = r#"
+export function Select<T extends string>({
+  options,
+  onChange,
+}: {
+  options: T[];
+  onChange: (value: T) => void;
+}) {
+  const handleChange = (value: T) => {
+    onChange(value);
+  };
+  return (
+    <select onChange={(event) => handleChange(event.target.value as T)}>
+      {options.map((option) => (
+        <option key={option} value={option}>
+          {option}
+        </option>
+      ))}
+    </select>
+  );
+}
+"#;
+
+        let allocator = oxc_allocator::Allocator::default();
+        let result = transform_source(source, oxc_span::SourceType::tsx(), &allocator, options());
+
+        let report = format!("{:?}", result.diagnostics);
+        assert!(
+            !report.contains("Unsupported declaration type for hoisting"),
+            "generic component wrongly bailed out on type-parameter hoisting:\n{report}"
+        );
+    }
+
     #[test]
     fn skips_non_react_code() {
         let source = "function add(a, b) {\n  return a + b;\n}\n";
