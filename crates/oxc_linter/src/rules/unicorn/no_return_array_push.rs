@@ -60,9 +60,9 @@ declare_oxc_lint!(
     /// ```
     NoReturnArrayPush,
     unicorn,
-    correctness,
+    pedantic,
     suggestion,
-    version = "1.70.0",
+    version = "next",
     short_description = "Disallow using the return value of `Array#push()` and `Array#unshift()`.",
 );
 
