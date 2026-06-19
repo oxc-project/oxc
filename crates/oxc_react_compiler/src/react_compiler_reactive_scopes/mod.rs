@@ -16,7 +16,31 @@ mod build_reactive_function;
 pub mod codegen_reactive_function;
 mod extract_scope_declarations_from_destructuring;
 mod merge_reactive_scopes_that_invalidate_together;
+#[cfg(feature = "debug")]
 pub mod print_reactive_function;
+/// Stub when the `debug` feature is off: the pipeline calls these in its
+/// `if debug_enabled` blocks; keep the signatures, drop the IR printing.
+#[cfg(not(feature = "debug"))]
+pub mod print_reactive_function {
+    use crate::react_compiler_hir::HirFunction;
+    use crate::react_compiler_hir::ReactiveFunction;
+    use crate::react_compiler_hir::environment::Environment;
+    use crate::react_compiler_hir::print::PrintFormatter;
+
+    pub type HirFunctionFormatter = dyn Fn(&mut PrintFormatter, &HirFunction);
+
+    pub fn debug_reactive_function(_func: &ReactiveFunction, _env: &Environment) -> String {
+        String::new()
+    }
+
+    pub fn debug_reactive_function_with_formatter(
+        _func: &ReactiveFunction,
+        _env: &Environment,
+        _hir_formatter: Option<&HirFunctionFormatter>,
+    ) -> String {
+        String::new()
+    }
+}
 mod promote_used_temporaries;
 mod propagate_early_returns;
 mod prune_always_invalidating_scopes;

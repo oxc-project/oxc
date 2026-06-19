@@ -4,7 +4,14 @@ pub mod environment;
 pub mod environment_config;
 pub mod globals;
 pub mod object_shape;
+#[cfg(feature = "debug")]
 pub mod print;
+/// Stub when the `debug` feature is off: keeps only the `PrintFormatter` type
+/// that the pipeline's debug closures name; the IR printer itself is excluded.
+#[cfg(not(feature = "debug"))]
+pub mod print {
+    pub struct PrintFormatter;
+}
 pub mod reactive;
 pub mod type_config;
 pub mod visitors;

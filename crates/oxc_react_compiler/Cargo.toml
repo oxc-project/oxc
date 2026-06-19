@@ -27,6 +27,12 @@ description = "oxc integration for the Rust port of React Compiler"
 [lib]
 doctest = false
 
+[features]
+# Off by default. Gates the heavy HIR / reactive-function debug (IR-dump)
+# printers, which only run when `PluginOptions.debug` is set. Excluding them from
+# the default build trims ~100 KiB of code with no effect on transform/lint.
+debug = []
+
 [dependencies]
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
