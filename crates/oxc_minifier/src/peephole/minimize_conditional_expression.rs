@@ -422,7 +422,9 @@ impl<'a> PeepholeOptimizations {
                 .and_then(ConstantValue::into_number)
                 .filter(|_| !expr.alternate.may_have_side_effects(ctx)),
         ) {
-            (Some(1.0), Some(0.0)) => {
+            // The `0` must be `+0`: `a ? 1 : -0` would become `+a`, which yields `+0` (not `-0`)
+            // when the test is falsy. `-0.0` matches the `0.0` pattern (`-0.0 == 0.0`), so guard it.
+            (Some(1.0), Some(alternate @ 0.0)) if !alternate.is_sign_negative() => {
                 // "a ? 1 : 0"
                 let is_boolean = expr.test.value_type(ctx).is_boolean();
                 let needs_parens = Self::test_needs_parens(&expr.test);
@@ -448,10 +450,11 @@ impl<'a> PeepholeOptimizations {
                     ));
                 }
             }
-            (Some(0.0), Some(1.0))
+            (Some(consequent @ 0.0), Some(1.0))
                 // "a ? 0 : 1" => "+!a"
-                // Skip if parens would be needed (e.g., "a+b?0:1" => "+!(a+b)" is same length)
-                if !Self::test_needs_parens(&expr.test) => {
+                // Skip if parens would be needed (e.g., "a+b?0:1" => "+!(a+b)" is same length).
+                // The `0` must be `+0`: `a ? -0 : 1` would become `+!a`, yielding `+0`, not `-0`.
+                if !consequent.is_sign_negative() && !Self::test_needs_parens(&expr.test) => {
                     let test = expr.test.take_in(ctx.ast);
                     let test = Self::minimize_not(expr.span, test, ctx);
                     return Some(ctx.ast.expression_unary(

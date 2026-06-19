@@ -104,4 +104,10 @@ fn test_minimize_conditional_numeric() {
 
     // "a ? 0 : 1" stays when parens would make it same or longer
     test("let x = a + b ? 0 : 1", "let x = a + b ? 0 : 1");
+
+    // `-0` must not be folded to `+a`/`+!a`: that would turn the `-0` branch into `+0`.
+    test_same("let x = a ? 1 : -0");
+    test_same("let x = a ? -0 : 1");
+    // The test may still be negated + branches swapped, but `-0` is preserved (not `+0`).
+    test("let x = !y ? 1 : -0", "let x = y ? -0 : 1");
 }
