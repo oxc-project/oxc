@@ -2228,11 +2228,377 @@ fn lower_expression(
                 "V8IntrinsicExpression: oxc does not emit this without ParseOptions::allow_v8_intrinsics"
             )
         }
+        oxc::Expression::ObjectExpression(obj) => {
+            let loc = builder.source_location(obj.span);
+            let mut properties: Vec<ObjectPropertyOrSpread> = Vec::new();
+            for prop in &obj.properties {
+                match prop {
+                    oxc::ObjectPropertyKind::ObjectProperty(p) => {
+                        // In oxc, getters/setters/methods are encoded as an
+                        // `ObjectProperty` whose value is a `FunctionExpression`
+                        // (the Babel AST instead carried a separate `ObjectMethod`
+                        // node). Route those through `lower_object_method`.
+                        if p.method
+                            || matches!(p.kind, oxc::PropertyKind::Get | oxc::PropertyKind::Set)
+                        {
+                            if let Some(method_prop) = lower_object_method(builder, p)? {
+                                properties.push(ObjectPropertyOrSpread::Property(method_prop));
+                            }
+                            continue;
+                        }
+                        let key = lower_object_property_key(builder, &p.key, p.computed)?;
+                        let key = match key {
+                            Some(k) => k,
+                            None => continue,
+                        };
+                        let value = lower_expression_to_temporary(builder, &p.value)?;
+                        properties.push(ObjectPropertyOrSpread::Property(ObjectProperty {
+                            key,
+                            property_type: ObjectPropertyType::Property,
+                            place: value,
+                        }));
+                    }
+                    oxc::ObjectPropertyKind::SpreadProperty(spread) => {
+                        let place = lower_expression_to_temporary(builder, &spread.argument)?;
+                        properties.push(ObjectPropertyOrSpread::Spread(SpreadPattern { place }));
+                    }
+                }
+            }
+            Ok(InstructionValue::ObjectExpression { properties, loc })
+        }
+        oxc::Expression::ArrayExpression(arr) => {
+            let loc = builder.source_location(arr.span);
+            let mut elements: Vec<ArrayElement> = Vec::new();
+            for element in &arr.elements {
+                match element {
+                    oxc::ArrayExpressionElement::Elision(_) => {
+                        elements.push(ArrayElement::Hole);
+                    }
+                    oxc::ArrayExpressionElement::SpreadElement(spread) => {
+                        let place = lower_expression_to_temporary(builder, &spread.argument)?;
+                        elements.push(ArrayElement::Spread(SpreadPattern { place }));
+                    }
+                    _ => {
+                        let expr = element.to_expression();
+                        let place = lower_expression_to_temporary(builder, expr)?;
+                        elements.push(ArrayElement::Place(place));
+                    }
+                }
+            }
+            Ok(InstructionValue::ArrayExpression { elements, loc })
+        }
         _ => {
             // not-yet-ported arms bail to undefined (differential green-set grows as arms land)
             let loc = builder.source_location(expr.span());
             Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc })
         }
+    }
+}
+
+/// Get the Babel-style type name of an oxc `Expression` node. Mirrors the
+/// original `expression_type_name` (which read Babel-shaped variants), mapping
+/// oxc's split member/chain shapes back to the Babel names the original emitted
+/// (e.g. `StaticMemberExpression`/`ComputedMemberExpression`/`PrivateFieldExpression`
+/// → "MemberExpression"; `ChainExpression` → "OptionalMemberExpression").
+fn expression_type_name(expr: &oxc::Expression) -> &'static str {
+    match expr {
+        oxc::Expression::Identifier(_) => "Identifier",
+        oxc::Expression::StringLiteral(_) => "StringLiteral",
+        oxc::Expression::NumericLiteral(_) => "NumericLiteral",
+        oxc::Expression::BooleanLiteral(_) => "BooleanLiteral",
+        oxc::Expression::NullLiteral(_) => "NullLiteral",
+        oxc::Expression::BigIntLiteral(_) => "BigIntLiteral",
+        oxc::Expression::RegExpLiteral(_) => "RegExpLiteral",
+        oxc::Expression::CallExpression(_) => "CallExpression",
+        oxc::Expression::StaticMemberExpression(_)
+        | oxc::Expression::ComputedMemberExpression(_)
+        | oxc::Expression::PrivateFieldExpression(_) => "MemberExpression",
+        oxc::Expression::ChainExpression(_) => "OptionalMemberExpression",
+        oxc::Expression::BinaryExpression(_) => "BinaryExpression",
+        oxc::Expression::PrivateInExpression(_) => "BinaryExpression",
+        oxc::Expression::LogicalExpression(_) => "LogicalExpression",
+        oxc::Expression::UnaryExpression(_) => "UnaryExpression",
+        oxc::Expression::UpdateExpression(_) => "UpdateExpression",
+        oxc::Expression::ConditionalExpression(_) => "ConditionalExpression",
+        oxc::Expression::AssignmentExpression(_) => "AssignmentExpression",
+        oxc::Expression::SequenceExpression(_) => "SequenceExpression",
+        oxc::Expression::ArrowFunctionExpression(_) => "ArrowFunctionExpression",
+        oxc::Expression::FunctionExpression(_) => "FunctionExpression",
+        oxc::Expression::ObjectExpression(_) => "ObjectExpression",
+        oxc::Expression::ArrayExpression(_) => "ArrayExpression",
+        oxc::Expression::NewExpression(_) => "NewExpression",
+        oxc::Expression::TemplateLiteral(_) => "TemplateLiteral",
+        oxc::Expression::TaggedTemplateExpression(_) => "TaggedTemplateExpression",
+        oxc::Expression::AwaitExpression(_) => "AwaitExpression",
+        oxc::Expression::YieldExpression(_) => "YieldExpression",
+        oxc::Expression::MetaProperty(_) => "MetaProperty",
+        oxc::Expression::ClassExpression(_) => "ClassExpression",
+        oxc::Expression::Super(_) => "Super",
+        oxc::Expression::ImportExpression(_) => "Import",
+        oxc::Expression::ThisExpression(_) => "ThisExpression",
+        oxc::Expression::ParenthesizedExpression(_) => "ParenthesizedExpression",
+        oxc::Expression::JSXElement(_) => "JSXElement",
+        oxc::Expression::JSXFragment(_) => "JSXFragment",
+        oxc::Expression::TSAsExpression(_) => "TSAsExpression",
+        oxc::Expression::TSSatisfiesExpression(_) => "TSSatisfiesExpression",
+        oxc::Expression::TSNonNullExpression(_) => "TSNonNullExpression",
+        oxc::Expression::TSTypeAssertion(_) => "TSTypeAssertion",
+        oxc::Expression::TSInstantiationExpression(_) => "TSInstantiationExpression",
+        oxc::Expression::V8IntrinsicExpression(_) => "V8IntrinsicExpression",
+    }
+}
+
+/// Lower an oxc object getter/setter/method (`ObjectProperty` whose value is a
+/// `FunctionExpression`). Faithful to the original `lower_object_method`:
+/// `get`/`set` record a Todo error and are skipped. The `method` case requires
+/// nested-function lowering (`lower_function_for_object_method` /
+/// `gather_captured_context`), which is not yet ported in this stage, so it is
+/// likewise deferred with a Todo error rather than emitting divergent HIR.
+fn lower_object_method(
+    builder: &mut HirBuilder,
+    method: &oxc::ObjectProperty,
+) -> Result<Option<ObjectProperty>, CompilerError> {
+    let kind_str = match method.kind {
+        oxc::PropertyKind::Get => "get",
+        oxc::PropertyKind::Set => "set",
+        oxc::PropertyKind::Init => "method",
+    };
+    builder.record_error(CompilerErrorDetail {
+        reason: format!(
+            "(BuildHIR::lowerExpression) Handle {} functions in ObjectExpression",
+            kind_str
+        ),
+        category: ErrorCategory::Todo,
+        loc: builder.source_location(method.span),
+        description: None,
+        suggestions: None,
+    })?;
+    Ok(None)
+}
+
+/// Lower an object property key. Faithful to the original `lower_object_property_key`.
+fn lower_object_property_key(
+    builder: &mut HirBuilder,
+    key: &oxc::PropertyKey,
+    computed: bool,
+) -> Result<Option<ObjectPropertyKey>, CompilerError> {
+    match key {
+        // Property keys stay String-typed; oxc atoms are valid UTF-8, so
+        // `to_string()` reproduces the marker wire form for non-pathological keys.
+        oxc::PropertyKey::StringLiteral(lit) => {
+            Ok(Some(ObjectPropertyKey::String { name: lit.value.to_string() }))
+        }
+        oxc::PropertyKey::StaticIdentifier(ident) if !computed => {
+            Ok(Some(ObjectPropertyKey::Identifier { name: ident.name.to_string() }))
+        }
+        oxc::PropertyKey::Identifier(ident) if !computed => {
+            Ok(Some(ObjectPropertyKey::Identifier { name: ident.name.to_string() }))
+        }
+        oxc::PropertyKey::NumericLiteral(lit) if !computed => {
+            Ok(Some(ObjectPropertyKey::Identifier { name: lit.value.to_string() }))
+        }
+        _ if computed => {
+            let place = lower_expression_to_temporary(builder, key.to_expression())?;
+            Ok(Some(ObjectPropertyKey::Computed { name: place }))
+        }
+        _ => {
+            let loc = match key {
+                oxc::PropertyKey::StaticIdentifier(i) => builder.source_location(i.span),
+                oxc::PropertyKey::Identifier(i) => builder.source_location(i.span),
+                _ => None,
+            };
+            builder.record_error(CompilerErrorDetail {
+                category: ErrorCategory::Todo,
+                reason: "Unsupported key type in ObjectExpression".to_string(),
+                description: None,
+                loc,
+                suggestions: None,
+            })?;
+            Ok(None)
+        }
+    }
+}
+
+/// Lower a reorderable expression. Faithful to the original
+/// `lower_reorderable_expression`: records an error when the expression cannot be
+/// safely reordered, then lowers it to a temporary regardless.
+fn lower_reorderable_expression(
+    builder: &mut HirBuilder,
+    expr: &oxc::Expression,
+) -> Result<Place, CompilerError> {
+    if !is_reorderable_expression(builder, expr, true) {
+        builder.record_error(CompilerErrorDetail {
+            category: ErrorCategory::Todo,
+            reason: format!(
+                "(BuildHIR::node.lowerReorderableExpression) Expression type `{}` cannot be safely reordered",
+                expression_type_name(expr)
+            ),
+            description: None,
+            loc: builder.source_location(expr.span()),
+            suggestions: None,
+        })?;
+    }
+    lower_expression_to_temporary(builder, expr)
+}
+
+/// Faithful to the original `is_reorderable_expression`. oxc's split member
+/// shapes (Static/Computed/PrivateField) map to the original `MemberExpression`
+/// arm; optional chains (`ChainExpression`) were not handled by the original
+/// (`OptionalMemberExpression` fell to `_ => false`), so they return false here.
+fn is_reorderable_expression(
+    builder: &HirBuilder,
+    expr: &oxc::Expression,
+    allow_local_identifiers: bool,
+) -> bool {
+    match expr {
+        oxc::Expression::Identifier(ident) => {
+            let binding = builder
+                .scope_info()
+                .resolve_reference_for_node(Some(ident.span.start));
+            match binding {
+                None => {
+                    // global, safe to reorder
+                    true
+                }
+                Some(b) => {
+                    if b.scope == builder.scope_info().program_scope {
+                        // Module-scope binding (ModuleLocal, imports), safe to reorder
+                        true
+                    } else {
+                        allow_local_identifiers
+                    }
+                }
+            }
+        }
+        oxc::Expression::RegExpLiteral(_)
+        | oxc::Expression::StringLiteral(_)
+        | oxc::Expression::NumericLiteral(_)
+        | oxc::Expression::NullLiteral(_)
+        | oxc::Expression::BooleanLiteral(_)
+        | oxc::Expression::BigIntLiteral(_) => true,
+        oxc::Expression::UnaryExpression(unary) => {
+            matches!(
+                unary.operator,
+                oxc::UnaryOperator::LogicalNot
+                    | oxc::UnaryOperator::UnaryPlus
+                    | oxc::UnaryOperator::UnaryNegation
+            ) && is_reorderable_expression(builder, &unary.argument, allow_local_identifiers)
+        }
+        oxc::Expression::LogicalExpression(logical) => {
+            is_reorderable_expression(builder, &logical.left, allow_local_identifiers)
+                && is_reorderable_expression(builder, &logical.right, allow_local_identifiers)
+        }
+        oxc::Expression::ConditionalExpression(cond) => {
+            is_reorderable_expression(builder, &cond.test, allow_local_identifiers)
+                && is_reorderable_expression(builder, &cond.consequent, allow_local_identifiers)
+                && is_reorderable_expression(builder, &cond.alternate, allow_local_identifiers)
+        }
+        oxc::Expression::ArrayExpression(arr) => arr.elements.iter().all(|element| match element {
+            oxc::ArrayExpressionElement::Elision(_) => false, // holes are not reorderable
+            oxc::ArrayExpressionElement::SpreadElement(spread) => {
+                is_reorderable_expression(builder, &spread.argument, allow_local_identifiers)
+            }
+            _ => is_reorderable_expression(builder, element.to_expression(), allow_local_identifiers),
+        }),
+        oxc::Expression::ObjectExpression(obj) => obj.properties.iter().all(|prop| match prop {
+            oxc::ObjectPropertyKind::ObjectProperty(p) => {
+                !p.computed
+                    && !p.method
+                    && matches!(p.kind, oxc::PropertyKind::Init)
+                    && is_reorderable_expression(builder, &p.value, allow_local_identifiers)
+            }
+            _ => false,
+        }),
+        oxc::Expression::StaticMemberExpression(_)
+        | oxc::Expression::ComputedMemberExpression(_)
+        | oxc::Expression::PrivateFieldExpression(_) => {
+            // Allow member expressions where the innermost object is a global or module-local
+            let mut inner = expr;
+            loop {
+                inner = match inner {
+                    oxc::Expression::StaticMemberExpression(m) => &m.object,
+                    oxc::Expression::ComputedMemberExpression(m) => &m.object,
+                    oxc::Expression::PrivateFieldExpression(m) => &m.object,
+                    _ => break,
+                };
+            }
+            if let oxc::Expression::Identifier(ident) = inner {
+                match builder
+                    .scope_info()
+                    .resolve_reference_for_node(Some(ident.span.start))
+                {
+                    None => true, // global
+                    Some(binding) => {
+                        // Module-scope bindings (ModuleLocal, imports) are safe to reorder
+                        binding.scope == builder.scope_info().program_scope
+                    }
+                }
+            } else {
+                false
+            }
+        }
+        oxc::Expression::ArrowFunctionExpression(arrow) => {
+            if arrow.expression {
+                match arrow.body.statements.first() {
+                    Some(oxc::Statement::ExpressionStatement(es)) => {
+                        is_reorderable_expression(builder, &es.expression, false)
+                    }
+                    _ => arrow.body.statements.is_empty(),
+                }
+            } else {
+                arrow.body.statements.is_empty()
+            }
+        }
+        oxc::Expression::CallExpression(call) => {
+            is_reorderable_expression(builder, &call.callee, allow_local_identifiers)
+                && call.arguments.iter().all(|arg| match arg {
+                    oxc::Argument::SpreadElement(spread) => is_reorderable_expression(
+                        builder,
+                        &spread.argument,
+                        allow_local_identifiers,
+                    ),
+                    _ => is_reorderable_expression(
+                        builder,
+                        arg.to_expression(),
+                        allow_local_identifiers,
+                    ),
+                })
+        }
+        oxc::Expression::NewExpression(new_expr) => {
+            is_reorderable_expression(builder, &new_expr.callee, allow_local_identifiers)
+                && new_expr.arguments.iter().all(|arg| match arg {
+                    oxc::Argument::SpreadElement(spread) => is_reorderable_expression(
+                        builder,
+                        &spread.argument,
+                        allow_local_identifiers,
+                    ),
+                    _ => is_reorderable_expression(
+                        builder,
+                        arg.to_expression(),
+                        allow_local_identifiers,
+                    ),
+                })
+        }
+        // TypeScript type wrappers: recurse into the inner expression.
+        oxc::Expression::TSAsExpression(ts) => {
+            is_reorderable_expression(builder, &ts.expression, allow_local_identifiers)
+        }
+        oxc::Expression::TSSatisfiesExpression(ts) => {
+            is_reorderable_expression(builder, &ts.expression, allow_local_identifiers)
+        }
+        oxc::Expression::TSNonNullExpression(ts) => {
+            is_reorderable_expression(builder, &ts.expression, allow_local_identifiers)
+        }
+        oxc::Expression::TSInstantiationExpression(ts) => {
+            is_reorderable_expression(builder, &ts.expression, allow_local_identifiers)
+        }
+        oxc::Expression::TSTypeAssertion(ts) => {
+            is_reorderable_expression(builder, &ts.expression, allow_local_identifiers)
+        }
+        oxc::Expression::ParenthesizedExpression(p) => {
+            is_reorderable_expression(builder, &p.expression, allow_local_identifiers)
+        }
+        _ => false,
     }
 }
 
