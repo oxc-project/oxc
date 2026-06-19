@@ -2495,9 +2495,10 @@ fn is_reorderable_expression(
         }
         oxc::Expression::ArrayExpression(arr) => arr.elements.iter().all(|element| match element {
             oxc::ArrayExpressionElement::Elision(_) => false, // holes are not reorderable
-            oxc::ArrayExpressionElement::SpreadElement(spread) => {
-                is_reorderable_expression(builder, &spread.argument, allow_local_identifiers)
-            }
+            // A spread is a Babel `Expression::SpreadElement`, which the original
+            // hit via the catch-all `_ => false` (no SpreadElement arm), so any
+            // array containing a spread is not reorderable.
+            oxc::ArrayExpressionElement::SpreadElement(_) => false,
             _ => is_reorderable_expression(builder, element.to_expression(), allow_local_identifiers),
         }),
         oxc::Expression::ObjectExpression(obj) => obj.properties.iter().all(|prop| match prop {
@@ -2552,11 +2553,9 @@ fn is_reorderable_expression(
         oxc::Expression::CallExpression(call) => {
             is_reorderable_expression(builder, &call.callee, allow_local_identifiers)
                 && call.arguments.iter().all(|arg| match arg {
-                    oxc::Argument::SpreadElement(spread) => is_reorderable_expression(
-                        builder,
-                        &spread.argument,
-                        allow_local_identifiers,
-                    ),
+                    // A spread argument is a Babel `Expression::SpreadElement`,
+                    // which the original hit via the catch-all `_ => false`.
+                    oxc::Argument::SpreadElement(_) => false,
                     _ => is_reorderable_expression(
                         builder,
                         arg.to_expression(),
@@ -2567,11 +2566,9 @@ fn is_reorderable_expression(
         oxc::Expression::NewExpression(new_expr) => {
             is_reorderable_expression(builder, &new_expr.callee, allow_local_identifiers)
                 && new_expr.arguments.iter().all(|arg| match arg {
-                    oxc::Argument::SpreadElement(spread) => is_reorderable_expression(
-                        builder,
-                        &spread.argument,
-                        allow_local_identifiers,
-                    ),
+                    // A spread argument is a Babel `Expression::SpreadElement`,
+                    // which the original hit via the catch-all `_ => false`.
+                    oxc::Argument::SpreadElement(_) => false,
                     _ => is_reorderable_expression(
                         builder,
                         arg.to_expression(),
