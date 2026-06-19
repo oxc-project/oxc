@@ -156,6 +156,9 @@ fn format_left_trailing_comments(
 }
 
 fn is_simple_single_member_union_or_intersection_type(type_to_check: &TSType) -> bool {
+    // For single-element union/intersection types (e.g., `type A = /*1*/ | C`),
+    // Prettier relocates the single leading comment to after the identifier,
+    // producing `type A /*1*/ = C;`. Skip complex nested cases.
     match type_to_check {
         TSType::TSUnionType(u) if u.types.len() == 1 => !matches!(
             u.types.first().unwrap(),
@@ -354,9 +357,6 @@ impl<'a> AssignmentLike<'a, '_> {
                     declaration.id.span.end
                 };
 
-                // For single-element union/intersection types (e.g., `type A = /*1*/ | C`),
-                // Prettier relocates the single leading comment to after the identifier,
-                // producing `type A /*1*/ = C;`. Skip complex nested cases.
                 if is_simple_single_member_union_or_intersection_type(&declaration.type_annotation)
                 {
                     let comments_in_span =
@@ -364,8 +364,16 @@ impl<'a> AssignmentLike<'a, '_> {
                     let end_index = comments_in_span
                         .iter()
                         .take_while(|comment| {
+                            // Case 1: Own-line comments shouldn't be trailing
                             !comment.preceded_by_newline()
+                                // Case 2: End-of-line comments are trailing unless
+                                // they're block comments.
                                 && (comment.followed_by_newline() && !comment.is_block()
+                                    // Case 3: Inline comments are leading when they're
+                                    // only separated by whitespace or other comments
+                                    // from the following node. Consider them trailing
+                                    // if they come before the `&` or `|` symbol, as
+                                    // they can't be leading in that case.
                                     || (!comment.followed_by_newline()
                                         && comment.span.end
                                             <= declaration.type_annotation.span().start))
