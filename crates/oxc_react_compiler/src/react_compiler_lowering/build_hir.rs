@@ -1143,6 +1143,186 @@ fn lower_arguments(
     Ok(result)
 }
 
+/// Result of resolving an identifier for assignment.
+enum IdentifierForAssignment {
+    Place(Place),
+    Global { name: String },
+}
+
+/// Resolve an identifier as an assignment target. AST-agnostic. Returns None if
+/// the binding could not be found (error recorded).
+fn lower_identifier_for_assignment(
+    builder: &mut HirBuilder,
+    loc: Option<SourceLocation>,
+    ident_loc: Option<SourceLocation>,
+    kind: InstructionKind,
+    name: &str,
+    start: u32,
+    node_id: Option<u32>,
+) -> Result<Option<IdentifierForAssignment>, CompilerError> {
+    let mut binding = builder.resolve_identifier(name, start, ident_loc.clone(), node_id)?;
+    if !matches!(binding, VariableBinding::Identifier { .. }) && kind != InstructionKind::Reassign {
+        if let Some((binding_id, binding_data)) =
+            builder.scope_info().find_binding_id_in_descendants(name, builder.function_scope())
+        {
+            let bk = crate::react_compiler_lowering::convert_binding_kind(&binding_data.kind);
+            let identifier =
+                builder.resolve_binding_with_loc(name, binding_id, ident_loc.clone())?;
+            binding = VariableBinding::Identifier { identifier, binding_kind: bk };
+        }
+    }
+    match binding {
+        VariableBinding::Identifier { identifier, binding_kind, .. } => {
+            if kind != InstructionKind::Reassign {
+                builder.set_identifier_declaration_loc(identifier, &ident_loc);
+            }
+            if binding_kind == BindingKind::Const && kind == InstructionKind::Reassign {
+                builder.record_error(CompilerErrorDetail {
+                    reason: "Cannot reassign a `const` variable".to_string(),
+                    category: ErrorCategory::Syntax,
+                    loc: loc.clone(),
+                    description: Some(format!("`{}` is declared as const", name)),
+                    suggestions: None,
+                })?;
+                return Ok(None);
+            }
+            Ok(Some(IdentifierForAssignment::Place(Place {
+                identifier,
+                effect: Effect::Unknown,
+                reactive: false,
+                loc,
+            })))
+        }
+        VariableBinding::Global { name: gname } => {
+            if kind == InstructionKind::Reassign {
+                Ok(Some(IdentifierForAssignment::Global { name: gname }))
+            } else {
+                builder.record_error(CompilerErrorDetail {
+                    reason: "Could not find binding for declaration".to_string(),
+                    category: ErrorCategory::Invariant,
+                    loc,
+                    description: None,
+                    suggestions: None,
+                })?;
+                Ok(None)
+            }
+        }
+        _ => {
+            if kind == InstructionKind::Reassign {
+                Ok(Some(IdentifierForAssignment::Global { name: name.to_string() }))
+            } else {
+                builder.record_error(CompilerErrorDetail {
+                    reason: "Could not find binding for declaration".to_string(),
+                    category: ErrorCategory::Invariant,
+                    loc,
+                    description: None,
+                    suggestions: None,
+                })?;
+                Ok(None)
+            }
+        }
+    }
+}
+
+/// Assign `value` to a binding pattern (variable declaration / destructuring param).
+/// BindingIdentifier is handled; destructuring/default patterns are deferred.
+fn lower_binding_assignment(
+    builder: &mut HirBuilder,
+    loc: Option<SourceLocation>,
+    kind: InstructionKind,
+    target: &oxc::BindingPattern,
+    value: Place,
+) -> Result<Option<Place>, CompilerError> {
+    match target {
+        oxc::BindingPattern::BindingIdentifier(id) => {
+            let start = id.span.start;
+            let id_loc = builder.source_location(id.span);
+            let result = lower_identifier_for_assignment(
+                builder,
+                loc.clone(),
+                id_loc,
+                kind,
+                id.name.as_str(),
+                start,
+                Some(start),
+            )?;
+            match result {
+                None => Ok(None),
+                Some(IdentifierForAssignment::Global { name }) => {
+                    let temp = lower_value_to_temporary(
+                        builder,
+                        InstructionValue::StoreGlobal { name, value, loc },
+                    )?;
+                    Ok(Some(temp))
+                }
+                Some(IdentifierForAssignment::Place(place)) => {
+                    if builder.is_context_identifier(id.name.as_str(), start, Some(start)) {
+                        let is_hoisted = builder
+                            .scope_info()
+                            .resolve_reference_for_node(Some(start))
+                            .map(|b| builder.environment().is_hoisted_identifier(b.id.0))
+                            .unwrap_or(false);
+                        if kind == InstructionKind::Const && !is_hoisted {
+                            builder.record_error(CompilerErrorDetail {
+                                reason: "Expected `const` declaration not to be reassigned"
+                                    .to_string(),
+                                category: ErrorCategory::Syntax,
+                                loc: loc.clone(),
+                                suggestions: None,
+                                description: None,
+                            })?;
+                        }
+                        let temp = lower_value_to_temporary(
+                            builder,
+                            InstructionValue::StoreContext {
+                                lvalue: LValue { place, kind },
+                                value,
+                                loc,
+                            },
+                        )?;
+                        Ok(Some(temp))
+                    } else {
+                        let temp = lower_value_to_temporary(
+                            builder,
+                            InstructionValue::StoreLocal {
+                                lvalue: LValue { place, kind },
+                                value,
+                                type_annotation: None,
+                                loc,
+                            },
+                        )?;
+                        Ok(Some(temp))
+                    }
+                }
+            }
+        }
+        oxc::BindingPattern::ObjectPattern(_) | oxc::BindingPattern::ArrayPattern(_) => {
+            // TODO(stage1a-arms): destructuring binding patterns.
+            builder.record_error(CompilerErrorDetail {
+                category: ErrorCategory::Todo,
+                reason: "(BuildHIR::lowerAssignment) Handle destructuring binding patterns"
+                    .to_string(),
+                description: None,
+                loc,
+                suggestions: None,
+            })?;
+            Ok(None)
+        }
+        oxc::BindingPattern::AssignmentPattern(_) => {
+            // TODO(stage1a-arms): default-value binding patterns.
+            builder.record_error(CompilerErrorDetail {
+                category: ErrorCategory::Todo,
+                reason: "(BuildHIR::lowerAssignment) Handle default-value binding patterns"
+                    .to_string(),
+                description: None,
+                loc,
+                suggestions: None,
+            })?;
+            Ok(None)
+        }
+    }
+}
+
 fn lower_expression(
     builder: &mut HirBuilder,
     expr: &oxc::Expression,
@@ -1382,6 +1562,31 @@ fn lower_statement(
         }
         oxc::Statement::BlockStatement(block) => {
             lower_block_statement(builder, &block.body, block.span.start, parent_scope)?;
+        }
+        oxc::Statement::VariableDeclaration(var_decl) => {
+            use oxc::VariableDeclarationKind as VK;
+            if matches!(var_decl.kind, VK::Var) {
+                builder.record_error(CompilerErrorDetail {
+                    reason: "(BuildHIR::lowerStatement) Handle var kinds in VariableDeclaration"
+                        .to_string(),
+                    category: ErrorCategory::Todo,
+                    loc: builder.source_location(var_decl.span),
+                    description: None,
+                    suggestions: None,
+                })?;
+            }
+            let kind = match var_decl.kind {
+                VK::Let | VK::Var => InstructionKind::Let,
+                VK::Const | VK::Using | VK::AwaitUsing => InstructionKind::Const,
+            };
+            for declarator in &var_decl.declarations {
+                let stmt_loc = builder.source_location(var_decl.span);
+                if let Some(init) = &declarator.init {
+                    let value = lower_expression_to_temporary(builder, init)?;
+                    lower_binding_assignment(builder, stmt_loc, kind, &declarator.id, value)?;
+                }
+                // TODO(stage1a-arms): no-init declarations (DeclareLocal/DeclareContext).
+            }
         }
         _ => {
             // not-yet-ported statements are skipped (differential green-set grows as arms land)
