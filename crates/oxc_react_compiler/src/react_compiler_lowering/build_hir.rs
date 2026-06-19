@@ -4444,7 +4444,7 @@ fn lower_statement(
                 // TODO(stage1a-arms): no-init declarations (DeclareLocal/DeclareContext).
             }
         }
-        oxc::Statement::FunctionDeclaration(func_decl) => {
+        oxc::Statement::FunctionDeclaration(func_decl) if func_decl.body.is_some() => {
             lower_function_declaration(builder, func_decl)?;
         }
         _ => {
