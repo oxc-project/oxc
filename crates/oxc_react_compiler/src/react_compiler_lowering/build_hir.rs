@@ -1035,18 +1035,18 @@ struct LoweredMemberExpression {
 /// receiver place + property + load value.
 fn lower_member_expression(
     builder: &mut HirBuilder,
-    member: &oxc::Expression,
+    member: &oxc::MemberExpression,
 ) -> Result<LoweredMemberExpression, CompilerError> {
     lower_member_expression_impl(builder, member, None)
 }
 
 fn lower_member_expression_impl(
     builder: &mut HirBuilder,
-    member: &oxc::Expression,
+    member: &oxc::MemberExpression,
     lowered_object: Option<Place>,
 ) -> Result<LoweredMemberExpression, CompilerError> {
     match member {
-        oxc::Expression::StaticMemberExpression(m) => {
+        oxc::MemberExpression::StaticMemberExpression(m) => {
             let loc = builder.source_location(m.span);
             let object = match lowered_object {
                 Some(obj) => obj,
@@ -1064,7 +1064,7 @@ fn lower_member_expression_impl(
                 value,
             })
         }
-        oxc::Expression::ComputedMemberExpression(m) => {
+        oxc::MemberExpression::ComputedMemberExpression(m) => {
             let loc = builder.source_location(m.span);
             let object = match lowered_object {
                 Some(obj) => obj,
@@ -1096,7 +1096,7 @@ fn lower_member_expression_impl(
                 value,
             })
         }
-        oxc::Expression::PrivateFieldExpression(m) => {
+        oxc::MemberExpression::PrivateFieldExpression(m) => {
             let loc = builder.source_location(m.span);
             let object = match lowered_object {
                 Some(obj) => obj,
@@ -1118,7 +1118,6 @@ fn lower_member_expression_impl(
                 value: InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc },
             })
         }
-        _ => unreachable!("lower_member_expression called on a non-member expression"),
     }
 }
 
@@ -1558,6 +1557,378 @@ fn lower_binding_assignment(
     }
 }
 
+/// True if any node in the receiver spine carries `optional == true`.
+///
+/// Mirrors `convert_ast::expr_contains_optional`: in oxc a chain like `a?.b.c` is
+/// a single `ChainExpression` where each member/call carries its own `.optional`
+/// flag, so a node "is in optional context" iff itself or anything deeper in its
+/// receiver spine is optional. This is the predicate Babel used to decide whether
+/// a node became `Optional{Member,Call}Expression` (vs a plain member/call).
+fn expr_contains_optional(expr: &oxc::Expression) -> bool {
+    match expr {
+        oxc::Expression::CallExpression(c) => c.optional || expr_contains_optional(&c.callee),
+        oxc::Expression::StaticMemberExpression(m) => {
+            m.optional || expr_contains_optional(&m.object)
+        }
+        oxc::Expression::ComputedMemberExpression(m) => {
+            m.optional || expr_contains_optional(&m.object)
+        }
+        oxc::Expression::PrivateFieldExpression(p) => {
+            p.optional || expr_contains_optional(&p.object)
+        }
+        _ => false,
+    }
+}
+
+/// Lower an oxc `ChainExpression` (`a?.b?.c()` etc.). oxc represents the whole
+/// optional chain as one node wrapping nested member/call nodes carrying per-node
+/// `.optional` flags; Babel instead split each link into
+/// `Optional{Member,Call}Expression`. This fuses `convert_chain_expression` with
+/// the original `lower_optional_member_expression` / `lower_optional_call_expression`
+/// dispatch, reproducing the same `Optional` terminal / `OptionalCall`-`OptionalLoad`
+/// HIR structure.
+fn lower_chain_expression(
+    builder: &mut HirBuilder,
+    chain: &oxc::ChainExpression,
+) -> Result<InstructionValue, CompilerError> {
+    match &chain.expression {
+        oxc::ChainElement::CallExpression(call) => {
+            lower_optional_call_expression_impl(builder, call, None)
+        }
+        oxc::ChainElement::TSNonNullExpression(ts) => {
+            // `foo?.bar!` — the non-null assertion wraps a chain-context expression.
+            // The original lowered `TSNonNullExpression` by recursing into its inner
+            // expression (loc-transparent); preserve that, keeping chain awareness.
+            lower_chain_subexpr(builder, &ts.expression)
+        }
+        // The `@inherit MemberExpression` variants of `ChainElement`.
+        oxc::ChainElement::StaticMemberExpression(_)
+        | oxc::ChainElement::ComputedMemberExpression(_)
+        | oxc::ChainElement::PrivateFieldExpression(_) => {
+            let member = chain.expression.as_member_expression().unwrap();
+            let place = lower_optional_member_expression_impl(builder, member, None)?.1;
+            Ok(InstructionValue::LoadLocal { loc: place.loc.clone(), place })
+        }
+    }
+}
+
+/// Lower an expression that appears as a callee/object inside a chain (or wrapped
+/// by a chain-context `TSNonNullExpression`), as an `InstructionValue`.
+///
+/// Faithful to the original: Babel's regular `lower_expression` routed
+/// `OptionalMemberExpression`/`OptionalCallExpression` into the optional impls and
+/// `TSNonNullExpression` by recursing into its inner expression, while everything
+/// else went through normal lowering. The oxc equivalent uses `expr_contains_optional`
+/// to detect optional-context member/call nodes.
+fn lower_chain_subexpr(
+    builder: &mut HirBuilder,
+    expr: &oxc::Expression,
+) -> Result<InstructionValue, CompilerError> {
+    match expr {
+        oxc::Expression::StaticMemberExpression(_)
+        | oxc::Expression::ComputedMemberExpression(_)
+        | oxc::Expression::PrivateFieldExpression(_)
+            if expr_contains_optional(expr) =>
+        {
+            let member = expr.as_member_expression().unwrap();
+            let place = lower_optional_member_expression_impl(builder, member, None)?.1;
+            Ok(InstructionValue::LoadLocal { loc: place.loc.clone(), place })
+        }
+        oxc::Expression::CallExpression(call) if expr_contains_optional(expr) => {
+            lower_optional_call_expression_impl(builder, call, None)
+        }
+        oxc::Expression::TSNonNullExpression(ts) => lower_chain_subexpr(builder, &ts.expression),
+        _ => lower_expression(builder, expr),
+    }
+}
+
+/// Returns `(object, value_place)`. The `value_place` holds the result temporary;
+/// the top-level caller wraps it in `LoadLocal`. `member` is one of the three oxc
+/// member variants. `parent_alternate` threads the shared null/undefined block so a
+/// chain only creates one alternate at the first `?.`.
+fn lower_optional_member_expression_impl(
+    builder: &mut HirBuilder,
+    member: &oxc::MemberExpression,
+    parent_alternate: Option<BlockId>,
+) -> Result<(Place, Place), CompilerError> {
+    let optional = member.optional();
+    let loc = builder.source_location(member.span());
+    let place = build_temporary_place(builder, loc.clone());
+    let continuation_block = builder.reserve(builder.current_block_kind());
+    let continuation_id = continuation_block.id;
+    let consequent = builder.reserve(BlockKind::Value);
+
+    // Block to evaluate if the receiver is null/undefined — sets result to undefined.
+    // Only create an alternate when first entering an optional subtree.
+    let alternate = if let Some(parent_alt) = parent_alternate {
+        Ok(parent_alt)
+    } else {
+        builder.try_enter(BlockKind::Value, |builder, _block_id| {
+            let temp = lower_value_to_temporary(
+                builder,
+                InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc: loc.clone() },
+            )?;
+            lower_value_to_temporary(
+                builder,
+                InstructionValue::StoreLocal {
+                    lvalue: LValue { kind: InstructionKind::Const, place: place.clone() },
+                    value: temp,
+                    type_annotation: None,
+                    loc: loc.clone(),
+                },
+            )?;
+            Ok(Terminal::Goto {
+                block: continuation_id,
+                variant: GotoVariant::Break,
+                id: EvaluationOrder(0),
+                loc: loc.clone(),
+            })
+        })
+    }?;
+
+    let object_expr = member.object();
+    let mut object: Option<Place> = None;
+    let test_block = builder.try_enter(BlockKind::Value, |builder, _block_id| {
+        match object_expr {
+            oxc::Expression::StaticMemberExpression(_)
+            | oxc::Expression::ComputedMemberExpression(_)
+            | oxc::Expression::PrivateFieldExpression(_)
+                if expr_contains_optional(object_expr) =>
+            {
+                let object_member = object_expr.as_member_expression().unwrap();
+                let (_obj, value) =
+                    lower_optional_member_expression_impl(builder, object_member, Some(alternate))?;
+                object = Some(value);
+            }
+            oxc::Expression::CallExpression(opt_call)
+                if expr_contains_optional(object_expr) =>
+            {
+                let value =
+                    lower_optional_call_expression_impl(builder, opt_call, Some(alternate))?;
+                let value_place = lower_value_to_temporary(builder, value)?;
+                object = Some(value_place);
+            }
+            other => {
+                object = Some(lower_expression_to_temporary(builder, other)?);
+            }
+        }
+        let test_place = object.as_ref().unwrap().clone();
+        Ok(Terminal::Branch {
+            test: test_place,
+            consequent: consequent.id,
+            alternate,
+            fallthrough: continuation_id,
+            id: EvaluationOrder(0),
+            loc: loc.clone(),
+        })
+    });
+
+    let obj = object.unwrap();
+
+    // Block to evaluate if the receiver is non-null/undefined.
+    builder.try_enter_reserved(consequent, |builder| {
+        let lowered = lower_member_expression_impl(builder, member, Some(obj.clone()))?;
+        let temp = lower_value_to_temporary(builder, lowered.value)?;
+        lower_value_to_temporary(
+            builder,
+            InstructionValue::StoreLocal {
+                lvalue: LValue { kind: InstructionKind::Const, place: place.clone() },
+                value: temp,
+                type_annotation: None,
+                loc: loc.clone(),
+            },
+        )?;
+        Ok(Terminal::Goto {
+            block: continuation_id,
+            variant: GotoVariant::Break,
+            id: EvaluationOrder(0),
+            loc: loc.clone(),
+        })
+    })?;
+
+    builder.terminate_with_continuation(
+        Terminal::Optional {
+            optional,
+            test: test_block?,
+            fallthrough: continuation_id,
+            id: EvaluationOrder(0),
+            loc: loc.clone(),
+        },
+        continuation_block,
+    );
+
+    Ok((obj, place))
+}
+
+/// Lower an oxc optional `CallExpression` (a call link inside a `ChainExpression`).
+/// `parent_alternate` threads the shared null/undefined block.
+fn lower_optional_call_expression_impl(
+    builder: &mut HirBuilder,
+    call: &oxc::CallExpression,
+    parent_alternate: Option<BlockId>,
+) -> Result<InstructionValue, CompilerError> {
+    let optional = call.optional;
+    let loc = builder.source_location(call.span);
+    let place = build_temporary_place(builder, loc.clone());
+    let continuation_block = builder.reserve(builder.current_block_kind());
+    let continuation_id = continuation_block.id;
+    let consequent = builder.reserve(BlockKind::Value);
+
+    let alternate = if let Some(parent_alt) = parent_alternate {
+        Ok(parent_alt)
+    } else {
+        builder.try_enter(BlockKind::Value, |builder, _block_id| {
+            let temp = lower_value_to_temporary(
+                builder,
+                InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc: loc.clone() },
+            )?;
+            lower_value_to_temporary(
+                builder,
+                InstructionValue::StoreLocal {
+                    lvalue: LValue { kind: InstructionKind::Const, place: place.clone() },
+                    value: temp,
+                    type_annotation: None,
+                    loc: loc.clone(),
+                },
+            )?;
+            Ok(Terminal::Goto {
+                block: continuation_id,
+                variant: GotoVariant::Break,
+                id: EvaluationOrder(0),
+                loc: loc.clone(),
+            })
+        })
+    }?;
+
+    // Track callee info for building the call in the consequent block.
+    enum CalleeInfo {
+        CallExpression { callee: Place },
+        MethodCall { receiver: Place, property: Place },
+    }
+
+    let mut callee_info: Option<CalleeInfo> = None;
+
+    let test_block = builder.try_enter(BlockKind::Value, |builder, _block_id| {
+        match &call.callee {
+            oxc::Expression::CallExpression(opt_call)
+                if expr_contains_optional(&call.callee) =>
+            {
+                let value =
+                    lower_optional_call_expression_impl(builder, opt_call, Some(alternate))?;
+                let value_place = lower_value_to_temporary(builder, value)?;
+                callee_info = Some(CalleeInfo::CallExpression { callee: value_place });
+            }
+            oxc::Expression::StaticMemberExpression(_)
+            | oxc::Expression::ComputedMemberExpression(_)
+            | oxc::Expression::PrivateFieldExpression(_)
+                if expr_contains_optional(&call.callee) =>
+            {
+                let callee_member = call.callee.as_member_expression().unwrap();
+                let (obj, value) = lower_optional_member_expression_impl(
+                    builder,
+                    callee_member,
+                    Some(alternate),
+                )?;
+                callee_info = Some(CalleeInfo::MethodCall { receiver: obj, property: value });
+            }
+            oxc::Expression::StaticMemberExpression(_)
+            | oxc::Expression::ComputedMemberExpression(_)
+            | oxc::Expression::PrivateFieldExpression(_) => {
+                let callee_member = call.callee.as_member_expression().unwrap();
+                let lowered = lower_member_expression(builder, callee_member)?;
+                let property_place = lower_value_to_temporary(builder, lowered.value)?;
+                callee_info = Some(CalleeInfo::MethodCall {
+                    receiver: lowered.object,
+                    property: property_place,
+                });
+            }
+            other => {
+                let callee_place = lower_expression_to_temporary(builder, other)?;
+                callee_info = Some(CalleeInfo::CallExpression { callee: callee_place });
+            }
+        }
+
+        let test_place = match callee_info.as_ref().unwrap() {
+            CalleeInfo::CallExpression { callee } => callee.clone(),
+            CalleeInfo::MethodCall { property, .. } => property.clone(),
+        };
+
+        Ok(Terminal::Branch {
+            test: test_place,
+            consequent: consequent.id,
+            alternate,
+            fallthrough: continuation_id,
+            id: EvaluationOrder(0),
+            loc: loc.clone(),
+        })
+    });
+
+    // Block to evaluate if the callee is non-null/undefined.
+    builder.try_enter_reserved(consequent, |builder| {
+        let args = lower_arguments(builder, &call.arguments)?;
+        let temp = build_temporary_place(builder, loc.clone());
+
+        match callee_info.as_ref().unwrap() {
+            CalleeInfo::CallExpression { callee } => {
+                builder.push(Instruction {
+                    id: EvaluationOrder(0),
+                    lvalue: temp.clone(),
+                    value: InstructionValue::CallExpression {
+                        callee: callee.clone(),
+                        args,
+                        loc: loc.clone(),
+                    },
+                    loc: loc.clone(),
+                    effects: None,
+                });
+            }
+            CalleeInfo::MethodCall { receiver, property } => {
+                builder.push(Instruction {
+                    id: EvaluationOrder(0),
+                    lvalue: temp.clone(),
+                    value: InstructionValue::MethodCall {
+                        receiver: receiver.clone(),
+                        property: property.clone(),
+                        args,
+                        loc: loc.clone(),
+                    },
+                    loc: loc.clone(),
+                    effects: None,
+                });
+            }
+        }
+
+        lower_value_to_temporary(
+            builder,
+            InstructionValue::StoreLocal {
+                lvalue: LValue { kind: InstructionKind::Const, place: place.clone() },
+                value: temp,
+                type_annotation: None,
+                loc: loc.clone(),
+            },
+        )?;
+        Ok(Terminal::Goto {
+            block: continuation_id,
+            variant: GotoVariant::Break,
+            id: EvaluationOrder(0),
+            loc: loc.clone(),
+        })
+    })?;
+
+    builder.terminate_with_continuation(
+        Terminal::Optional {
+            optional,
+            test: test_block?,
+            fallthrough: continuation_id,
+            id: EvaluationOrder(0),
+            loc: loc.clone(),
+        },
+        continuation_block,
+    );
+
+    Ok(InstructionValue::LoadLocal { place: place.clone(), loc: place.loc })
+}
+
 fn lower_expression(
     builder: &mut HirBuilder,
     expr: &oxc::Expression,
@@ -1710,18 +2081,13 @@ fn lower_expression(
         oxc::Expression::StaticMemberExpression(_)
         | oxc::Expression::ComputedMemberExpression(_)
         | oxc::Expression::PrivateFieldExpression(_) => {
-            let lowered = lower_member_expression(builder, expr)?;
+            let lowered = lower_member_expression(builder, expr.as_member_expression().unwrap())?;
             Ok(lowered.value)
         }
         oxc::Expression::CallExpression(call) => {
             let loc = builder.source_location(call.span);
-            if matches!(
-                call.callee,
-                oxc::Expression::StaticMemberExpression(_)
-                    | oxc::Expression::ComputedMemberExpression(_)
-                    | oxc::Expression::PrivateFieldExpression(_)
-            ) {
-                let lowered = lower_member_expression(builder, &call.callee)?;
+            if let Some(member) = call.callee.as_member_expression() {
+                let lowered = lower_member_expression(builder, member)?;
                 let property = lower_value_to_temporary(builder, lowered.value)?;
                 let args = lower_arguments(builder, &call.arguments)?;
                 Ok(InstructionValue::MethodCall { receiver: lowered.object, property, args, loc })
@@ -2291,6 +2657,7 @@ fn lower_expression(
         oxc::Expression::JSXFragment(jsx_fragment) => {
             lower_jsx_fragment_expr(builder, jsx_fragment)
         }
+        oxc::Expression::ChainExpression(chain) => lower_chain_expression(builder, chain),
         _ => {
             // not-yet-ported arms bail to undefined (differential green-set grows as arms land)
             let loc = builder.source_location(expr.span());
