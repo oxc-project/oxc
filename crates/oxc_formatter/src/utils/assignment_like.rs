@@ -653,6 +653,11 @@ impl<'a> AssignmentLike<'a, '_> {
                 }
                 // `TSUnionType` has its own indentation logic
                 TSType::TSUnionType(_) => false,
+                // For a single-member `TSIntersectionType`, we need to check for
+                // leading own-line comments before the type inside the
+                // `TSIntersectionType`. This is because Prettier treats a single-member
+                // `TSIntersectionType` as the literal type inside of it, so it checks
+                // whether there's a leading own-line comment before the start of the type.
                 TSType::TSIntersectionType(intersection_type)
                     if intersection_type.types.len() == 1 =>
                 {
