@@ -14,7 +14,10 @@ use crate::react_compiler_hir::*;
 use crate::react_compiler_utils::FxIndexMap;
 use crate::react_compiler_utils::FxIndexSet;
 
+use oxc_span::Span;
+
 use crate::react_compiler_lowering::identifier_loc_index::IdentifierLocIndex;
+use crate::react_compiler_lowering::source_loc::LineOffsets;
 
 // ---------------------------------------------------------------------------
 // Reserved word check (matches TS isReservedWord)
@@ -158,6 +161,10 @@ pub struct HirBuilder<'a> {
     claimed_synthetic_scopes: rustc_hash::FxHashSet<ScopeId>,
     /// Index mapping identifier byte offsets to source locations and JSX status.
     identifier_locs: &'a IdentifierLocIndex,
+    /// Line-offset table for computing `SourceLocation`s from oxc byte spans.
+    /// Built once per file and shared; replaces the Babel `base.loc` the
+    /// front-end used to read off the now-removed Babel-shaped AST.
+    line_offsets: &'a LineOffsets,
 }
 
 impl<'a> HirBuilder<'a> {
@@ -184,6 +191,7 @@ impl<'a> HirBuilder<'a> {
         entry_block_kind: Option<BlockKind>,
         used_names: Option<FxIndexMap<String, BindingId>>,
         identifier_locs: &'a IdentifierLocIndex,
+        line_offsets: &'a LineOffsets,
     ) -> Self {
         let entry = env.next_block_id();
         let kind = entry_block_kind.unwrap_or(BlockKind::Block);
@@ -205,7 +213,14 @@ impl<'a> HirBuilder<'a> {
             context_identifiers,
             claimed_synthetic_scopes: rustc_hash::FxHashSet::default(),
             identifier_locs,
+            line_offsets,
         }
+    }
+
+    /// Compute the HIR `SourceLocation` for an oxc byte span. Always `Some`
+    /// (oxc nodes always have a span), matching what `convert_ast` produced.
+    pub fn source_location(&self, span: Span) -> Option<SourceLocation> {
+        Some(self.line_offsets.source_location(span))
     }
 
     /// Check if a scope is the component scope or a descendant of it.

@@ -197,51 +197,8 @@ pub fn build_identifier_loc_index(
     func: &FunctionNode<'_>,
     scope_info: &ScopeInfo,
 ) -> IdentifierLocIndex {
-    let func_scope =
-        scope_info.resolve_scope_for_node(func.node_id()).unwrap_or(scope_info.program_scope);
-
-    let mut visitor =
-        IdentifierLocVisitor { index: FxHashMap::default(), current_opening_element_loc: None };
-    let mut walker = AstWalker::with_initial_scope(scope_info, func_scope);
-
-    // Visit the top-level function's own name identifier (if any),
-    // since the walker only walks params + body, not the function node itself.
-    match func {
-        FunctionNode::FunctionDeclaration(d) => {
-            if let Some(id) = &d.id {
-                visitor.enter_identifier(id, &[]);
-            }
-            for param in &d.params {
-                walker.walk_pattern(&mut visitor, param);
-            }
-            walker.walk_block_statement(&mut visitor, &d.body);
-        }
-        FunctionNode::FunctionExpression(e) => {
-            if let Some(id) = &e.id {
-                visitor.enter_identifier(id, &[]);
-            }
-            for param in &e.params {
-                walker.walk_pattern(&mut visitor, param);
-            }
-            walker.walk_block_statement(&mut visitor, &e.body);
-        }
-        FunctionNode::ArrowFunctionExpression(a) => {
-            for param in &a.params {
-                walker.walk_pattern(&mut visitor, param);
-            }
-            match a.body.as_ref() {
-                ArrowFunctionBody::BlockStatement(block) => {
-                    walker.walk_block_statement(&mut visitor, block);
-                }
-                ArrowFunctionBody::Expression(expr) => {
-                    walker.walk_expression(&mut visitor, expr);
-                }
-            }
-        }
-    }
-
-    // Type-annotation and class-body identifiers (which the typed walker skips)
-    // are indexed via the walker's `visit_raw_node` hook from each RawNode's
-    // pre-extracted `idents`, so no separate JSON walk is needed.
-    visitor.index
+    // Stage 1a skeleton stub: the real oxc walk is ported with the arms (it only
+    // affects hoisting / loc once arms emit real instructions).
+    let _ = (func, scope_info);
+    IdentifierLocIndex::default()
 }

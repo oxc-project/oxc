@@ -2,10 +2,10 @@ pub mod build_hir;
 pub mod find_context_identifiers;
 pub mod hir_builder;
 pub mod identifier_loc_index;
+pub mod source_loc;
 
-use crate::react_compiler_ast::expressions::ArrowFunctionExpression;
-use crate::react_compiler_ast::expressions::FunctionExpression;
-use crate::react_compiler_ast::statements::FunctionDeclaration;
+use oxc_ast::ast as oxc;
+
 use crate::react_compiler_hir::BindingKind;
 
 /// Convert AST binding kind to HIR binding kind.
@@ -24,20 +24,21 @@ pub fn convert_binding_kind(kind: &crate::react_compiler_ast::scope::BindingKind
 
 /// Represents a reference to a function AST node for lowering.
 /// Analogous to TS's `NodePath<t.Function>` / `BabelFn`.
+///
+/// oxc collapses Babel's `FunctionDeclaration`/`FunctionExpression` into one
+/// [`oxc::Function`] (discriminated by `r#type`); arrows are separate.
 pub enum FunctionNode<'a> {
-    FunctionDeclaration(&'a FunctionDeclaration),
-    FunctionExpression(&'a FunctionExpression),
-    ArrowFunctionExpression(&'a ArrowFunctionExpression),
+    Function(&'a oxc::Function<'a>),
+    Arrow(&'a oxc::ArrowFunctionExpression<'a>),
 }
 
 impl<'a> FunctionNode<'a> {
-    /// Get the node_id of the function node. Panics if not set.
+    /// The node_id of the function node, equal to its `span.start`.
     pub fn node_id(&self) -> Option<u32> {
-        match self {
-            FunctionNode::FunctionDeclaration(d) => d.base.node_id,
-            FunctionNode::FunctionExpression(e) => e.base.node_id,
-            FunctionNode::ArrowFunctionExpression(a) => a.base.node_id,
-        }
+        Some(match self {
+            FunctionNode::Function(f) => f.span.start,
+            FunctionNode::Arrow(a) => a.span.start,
+        })
     }
 }
 
