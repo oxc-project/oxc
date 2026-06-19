@@ -109,12 +109,8 @@ impl Rule for NoUnnecessaryTypeConstraint {
                     ty_span,
                 ),
                 |fixer| {
-                    let replacement = if should_add_trailing_comma(decl, node, param, ty_span, ctx)
-                    {
-                        ","
-                    } else {
-                        ""
-                    };
+                    let replacement =
+                        if should_add_trailing_comma(decl, node, param, ctx) { "," } else { "" };
 
                     let fix_span = Span::new(param.name.span.end, ty_span.end);
 
@@ -133,7 +129,6 @@ fn should_add_trailing_comma(
     decl: &TSTypeParameterDeclaration,
     node: &AstNode,
     param: &TSTypeParameter,
-    constraint_span: Span,
     ctx: &LintContext,
 ) -> bool {
     if !matches!(ctx.nodes().parent_kind(node.id()), AstKind::ArrowFunctionExpression(_))
@@ -144,10 +139,7 @@ fn should_add_trailing_comma(
         return false;
     }
 
-    ctx.source_range(Span::new(constraint_span.end, decl.span.end))
-        .bytes()
-        .find(|b| !b.is_ascii_whitespace())
-        .is_none_or(|b| b != b',')
+    ctx.find_next_token_within(param.span.end, decl.span.end, ",").is_none()
 }
 
 fn requires_generic_declaration_disambiguation(ctx: &LintContext<'_>) -> bool {
@@ -236,6 +228,16 @@ fn test() {
             "const data = <T,>() => {};",
             None,
             Some(PathBuf::from("no_unnecessary_type_constraint.cts")),
+        )
+            .into(),
+        (
+            "const data = <T extends any /* comment */,>() => {};",
+            "const data = <T /* comment */,>() => {};",
+        )
+            .into(),
+        (
+            "const data = <T extends any /* comment */>() => {};",
+            "const data = <T, /* comment */>() => {};",
         )
             .into(),
         ("const data = <T extends unknown>() => {};", "const data = <T,>() => {};").into(),
