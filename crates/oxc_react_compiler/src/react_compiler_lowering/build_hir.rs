@@ -1020,6 +1020,129 @@ fn convert_unary_operator(op: oxc::UnaryOperator) -> UnaryOperator {
     }
 }
 
+enum MemberProperty {
+    Literal(PropertyLiteral),
+    Computed(Place),
+}
+
+struct LoweredMemberExpression {
+    object: Place,
+    property: MemberProperty,
+    value: InstructionValue,
+}
+
+/// Lower a member access (oxc's Static / Computed / PrivateField variants) into a
+/// receiver place + property + load value.
+fn lower_member_expression(
+    builder: &mut HirBuilder,
+    member: &oxc::Expression,
+) -> Result<LoweredMemberExpression, CompilerError> {
+    lower_member_expression_impl(builder, member, None)
+}
+
+fn lower_member_expression_impl(
+    builder: &mut HirBuilder,
+    member: &oxc::Expression,
+    lowered_object: Option<Place>,
+) -> Result<LoweredMemberExpression, CompilerError> {
+    match member {
+        oxc::Expression::StaticMemberExpression(m) => {
+            let loc = builder.source_location(m.span);
+            let object = match lowered_object {
+                Some(obj) => obj,
+                None => lower_expression_to_temporary(builder, &m.object)?,
+            };
+            let prop_literal = PropertyLiteral::String(m.property.name.to_string());
+            let value = InstructionValue::PropertyLoad {
+                object: object.clone(),
+                property: prop_literal.clone(),
+                loc,
+            };
+            Ok(LoweredMemberExpression {
+                object,
+                property: MemberProperty::Literal(prop_literal),
+                value,
+            })
+        }
+        oxc::Expression::ComputedMemberExpression(m) => {
+            let loc = builder.source_location(m.span);
+            let object = match lowered_object {
+                Some(obj) => obj,
+                None => lower_expression_to_temporary(builder, &m.object)?,
+            };
+            // A numeric computed index is treated as a PropertyLoad (matches TS).
+            if let oxc::Expression::NumericLiteral(lit) = &m.expression {
+                let prop_literal = PropertyLiteral::Number(FloatValue::new(lit.value));
+                let value = InstructionValue::PropertyLoad {
+                    object: object.clone(),
+                    property: prop_literal.clone(),
+                    loc,
+                };
+                return Ok(LoweredMemberExpression {
+                    object,
+                    property: MemberProperty::Literal(prop_literal),
+                    value,
+                });
+            }
+            let property = lower_expression_to_temporary(builder, &m.expression)?;
+            let value = InstructionValue::ComputedLoad {
+                object: object.clone(),
+                property: property.clone(),
+                loc,
+            };
+            Ok(LoweredMemberExpression {
+                object,
+                property: MemberProperty::Computed(property),
+                value,
+            })
+        }
+        oxc::Expression::PrivateFieldExpression(m) => {
+            let loc = builder.source_location(m.span);
+            let object = match lowered_object {
+                Some(obj) => obj,
+                None => lower_expression_to_temporary(builder, &m.object)?,
+            };
+            // TODO(stage1a-arms): private field access needs a private-name property
+            // load + OriginalNode bail; defer to a later batch.
+            builder.record_error(CompilerErrorDetail {
+                category: ErrorCategory::Todo,
+                reason: "(BuildHIR::lowerMemberExpression) Handle private field property"
+                    .to_string(),
+                description: None,
+                loc: loc.clone(),
+                suggestions: None,
+            })?;
+            Ok(LoweredMemberExpression {
+                object,
+                property: MemberProperty::Literal(PropertyLiteral::String(String::new())),
+                value: InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc },
+            })
+        }
+        _ => unreachable!("lower_member_expression called on a non-member expression"),
+    }
+}
+
+fn lower_arguments(
+    builder: &mut HirBuilder,
+    args: &[oxc::Argument],
+) -> Result<Vec<PlaceOrSpread>, CompilerError> {
+    let mut result = Vec::new();
+    for arg in args {
+        match arg {
+            oxc::Argument::SpreadElement(spread) => {
+                let place = lower_expression_to_temporary(builder, &spread.argument)?;
+                result.push(PlaceOrSpread::Spread(SpreadPattern { place }));
+            }
+            _ => {
+                let expr = arg.as_expression().expect("non-spread argument is an expression");
+                let place = lower_expression_to_temporary(builder, expr)?;
+                result.push(PlaceOrSpread::Place(place));
+            }
+        }
+    }
+    Ok(result)
+}
+
 fn lower_expression(
     builder: &mut HirBuilder,
     expr: &oxc::Expression,
@@ -1169,6 +1292,30 @@ fn lower_expression(
 
             Ok(InstructionValue::LoadLocal { place: place.clone(), loc: place.loc.clone() })
         }
+        oxc::Expression::StaticMemberExpression(_)
+        | oxc::Expression::ComputedMemberExpression(_)
+        | oxc::Expression::PrivateFieldExpression(_) => {
+            let lowered = lower_member_expression(builder, expr)?;
+            Ok(lowered.value)
+        }
+        oxc::Expression::CallExpression(call) => {
+            let loc = builder.source_location(call.span);
+            if matches!(
+                call.callee,
+                oxc::Expression::StaticMemberExpression(_)
+                    | oxc::Expression::ComputedMemberExpression(_)
+                    | oxc::Expression::PrivateFieldExpression(_)
+            ) {
+                let lowered = lower_member_expression(builder, &call.callee)?;
+                let property = lower_value_to_temporary(builder, lowered.value)?;
+                let args = lower_arguments(builder, &call.arguments)?;
+                Ok(InstructionValue::MethodCall { receiver: lowered.object, property, args, loc })
+            } else {
+                let callee = lower_expression_to_temporary(builder, &call.callee)?;
+                let args = lower_arguments(builder, &call.arguments)?;
+                Ok(InstructionValue::CallExpression { callee, args, loc })
+            }
+        }
         _ => {
             // not-yet-ported arms bail to undefined (differential green-set grows as arms land)
             let loc = builder.source_location(expr.span());
@@ -1181,8 +1328,64 @@ fn lower_statement(
     builder: &mut HirBuilder,
     stmt: &oxc::Statement,
     _label: Option<&str>,
-    _parent_scope: Option<crate::react_compiler_ast::scope::ScopeId>,
+    parent_scope: Option<crate::react_compiler_ast::scope::ScopeId>,
 ) -> Result<(), CompilerDiagnostic> {
-    let _ = (builder, stmt);
+    match stmt {
+        oxc::Statement::EmptyStatement(_) => {}
+        oxc::Statement::DebuggerStatement(dbg) => {
+            let loc = builder.source_location(dbg.span);
+            lower_value_to_temporary(builder, InstructionValue::Debugger { loc })?;
+        }
+        oxc::Statement::ExpressionStatement(expr_stmt) => {
+            lower_expression_to_temporary(builder, &expr_stmt.expression)?;
+        }
+        oxc::Statement::ReturnStatement(ret) => {
+            let loc = builder.source_location(ret.span);
+            let value = if let Some(arg) = &ret.argument {
+                lower_expression_to_temporary(builder, arg)?
+            } else {
+                lower_value_to_temporary(
+                    builder,
+                    InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc: None },
+                )?
+            };
+            let fallthrough = builder.reserve(BlockKind::Block);
+            builder.terminate_with_continuation(
+                Terminal::Return {
+                    value,
+                    return_variant: ReturnVariant::Explicit,
+                    id: EvaluationOrder(0),
+                    loc,
+                    effects: None,
+                },
+                fallthrough,
+            );
+        }
+        oxc::Statement::ThrowStatement(throw) => {
+            let loc = builder.source_location(throw.span);
+            let value = lower_expression_to_temporary(builder, &throw.argument)?;
+            if builder.resolve_throw_handler().is_some() {
+                builder.record_error(CompilerErrorDetail {
+                    category: ErrorCategory::Todo,
+                    reason: "(BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch"
+                        .to_string(),
+                    description: None,
+                    loc: loc.clone(),
+                    suggestions: None,
+                })?;
+            }
+            let fallthrough = builder.reserve(BlockKind::Block);
+            builder.terminate_with_continuation(
+                Terminal::Throw { value, id: EvaluationOrder(0), loc },
+                fallthrough,
+            );
+        }
+        oxc::Statement::BlockStatement(block) => {
+            lower_block_statement(builder, &block.body, block.span.start, parent_scope)?;
+        }
+        _ => {
+            // not-yet-ported statements are skipped (differential green-set grows as arms land)
+        }
+    }
     Ok(())
 }
