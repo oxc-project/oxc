@@ -938,6 +938,13 @@ fn test_string_add() {
     fold("x = foo() + 'a' + 'b' + 'cd' + bar()", "x = foo()+'abcd'+bar()");
     fold("x = foo() + 2 + 'b'", "x = foo()+2+\"b\""); // don't fold!
 
+    // Don't merge string literals across a non-`+` inner operator: the inner string operand
+    // is coerced numerically, so `(x - 'b') + 'c'` is `(x - NaN) + 'c'`, not `x + 'bc'`.
+    fold_same("x = x - 'b' + 'c'");
+    fold_same("x = x * 'b' + 'c'");
+    fold_same("x = x % 'b' + 'c'");
+    fold_same("x = (x & 'b') + 'c'");
+
     fold("x = foo() + 'a' + 2", "x = foo()+\"a2\"");
     fold("x = '' + null", "x = 'null'");
     fold("x = true + '' + false", "x = 'truefalse'");
