@@ -38,12 +38,12 @@ pub struct AstNodes<'a> {
 
 impl<'a> AstNodes<'a> {
     /// Iterate over all [`AstNode`]s in this AST.
-    pub fn iter(&self) -> impl Iterator<Item = &AstNode<'a>> + '_ {
+    pub fn iter(&self) -> impl Iterator<Item = &AstNode<'a>> + Clone + '_ {
         self.nodes.iter()
     }
 
     /// Iterate over all [`AstNode`]s with their [`NodeId`].
-    pub fn iter_enumerated(&self) -> impl Iterator<Item = (NodeId, &AstNode<'a>)> + '_ {
+    pub fn iter_enumerated(&self) -> impl Iterator<Item = (NodeId, &AstNode<'a>)> + Clone + '_ {
         self.nodes.iter_enumerated()
     }
 

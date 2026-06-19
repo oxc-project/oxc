@@ -220,7 +220,7 @@ macro_rules! multi_index_vec {
             }
 
             /// Iterate over all valid indices.
-            $vis fn iter_ids(&self) -> impl Iterator<Item = $idx> {
+            $vis fn iter_ids(&self) -> impl Iterator<Item = $idx> + Clone {
                 let len = self.len as usize;
                 // SAFETY: Valid indices are `0..len`, and by invariant `len <= Idx::MAX + 1`.
                 (0..len).map(|i| unsafe { <$idx as ::oxc_index::Idx>::from_usize_unchecked(i) })

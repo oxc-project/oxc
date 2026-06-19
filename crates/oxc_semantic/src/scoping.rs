@@ -309,12 +309,14 @@ impl Scoping {
     }
 
     /// Iterate all symbol names in insertion order.
-    pub fn symbol_names(&self) -> impl Iterator<Item = &str> + '_ {
+    pub fn symbol_names(&self) -> impl Iterator<Item = &str> + Clone + '_ {
         self.cell.borrow_dependent().symbol_names.iter().map(Ident::as_str)
     }
 
     /// Iterate resolved reference ID lists for each symbol.
-    pub fn resolved_references(&self) -> impl Iterator<Item = &ArenaVec<'_, ReferenceId>> + '_ {
+    pub fn resolved_references(
+        &self,
+    ) -> impl Iterator<Item = &ArenaVec<'_, ReferenceId>> + Clone + '_ {
         self.cell.borrow_dependent().resolved_references.iter()
     }
 
@@ -324,7 +326,7 @@ impl Scoping {
     /// scope.
     ///
     /// [`ScopeTree::iter_bindings_in`]: crate::scoping::Scoping::iter_bindings_in
-    pub fn symbol_ids(&self) -> impl Iterator<Item = SymbolId> + '_ {
+    pub fn symbol_ids(&self) -> impl Iterator<Item = SymbolId> + Clone + '_ {
         self.symbol_table.iter_ids()
     }
 
@@ -423,7 +425,10 @@ impl Scoping {
     /// declarations (e.g. `interface Foo {}` + `const Foo = ...`).
     /// This iterator yields all declaration nodes in those cases.
     #[inline]
-    pub fn symbol_declarations(&self, symbol_id: SymbolId) -> impl Iterator<Item = NodeId> + '_ {
+    pub fn symbol_declarations(
+        &self,
+        symbol_id: SymbolId,
+    ) -> impl Iterator<Item = NodeId> + Clone + '_ {
         let redeclarations = self.symbol_redeclarations(symbol_id);
         std::iter::once(self.symbol_declaration(symbol_id))
             .filter(move |_| redeclarations.is_empty())
@@ -551,7 +556,7 @@ impl Scoping {
     pub fn get_resolved_references(
         &self,
         symbol_id: SymbolId,
-    ) -> impl DoubleEndedIterator<Item = &Reference> + '_ {
+    ) -> impl DoubleEndedIterator<Item = &Reference> + Clone + '_ {
         self.get_resolved_reference_ids(symbol_id)
             .iter()
             .map(|&reference_id| &self.references[reference_id])
@@ -690,7 +695,7 @@ impl Scoping {
     ///
     /// The first element of this iterator will be the scope itself. This
     /// guarantees the iterator will have at least 1 element.
-    pub fn scope_ancestors(&self, scope_id: ScopeId) -> impl Iterator<Item = ScopeId> + '_ {
+    pub fn scope_ancestors(&self, scope_id: ScopeId) -> impl Iterator<Item = ScopeId> + Clone + '_ {
         std::iter::successors(Some(scope_id), |&scope_id| *self.scope_table.parent_ids(scope_id))
     }
 
@@ -702,7 +707,7 @@ impl Scoping {
     }
 
     /// Iterate all scope IDs from the root scope through all descendants.
-    pub fn scope_descendants_from_root(&self) -> impl Iterator<Item = ScopeId> + '_ {
+    pub fn scope_descendants_from_root(&self) -> impl Iterator<Item = ScopeId> + Clone + '_ {
         self.scope_table.iter_ids()
     }
 
@@ -732,7 +737,7 @@ impl Scoping {
     /// Iterate unresolved reference IDs grouped by unresolved identifier name.
     pub fn root_unresolved_references_ids(
         &self,
-    ) -> impl Iterator<Item = impl Iterator<Item = ReferenceId> + '_> + '_ {
+    ) -> impl Iterator<Item = impl Iterator<Item = ReferenceId> + '_> + Clone + '_ {
         self.cell.borrow_dependent().root_unresolved_references.values().map(|v| v.iter().copied())
     }
 
@@ -862,13 +867,16 @@ impl Scoping {
     /// If you only want bindings in a specific scope, use [`iter_bindings_in`].
     ///
     /// [`iter_bindings_in`]: Scoping::iter_bindings_in
-    pub fn iter_bindings(&self) -> impl Iterator<Item = (ScopeId, &Bindings<'_>)> + '_ {
+    pub fn iter_bindings(&self) -> impl Iterator<Item = (ScopeId, &Bindings<'_>)> + Clone + '_ {
         self.cell.borrow_dependent().bindings.iter_enumerated()
     }
 
     /// Iterate over bindings declared inside a scope.
     #[inline]
-    pub fn iter_bindings_in(&self, scope_id: ScopeId) -> impl Iterator<Item = SymbolId> + '_ {
+    pub fn iter_bindings_in(
+        &self,
+        scope_id: ScopeId,
+    ) -> impl Iterator<Item = SymbolId> + Clone + '_ {
         self.cell.borrow_dependent().bindings[scope_id].values().copied()
     }
 

@@ -1501,7 +1501,7 @@ impl<'a> FormalParameters<'a> {
     }
 
     /// Iterates over all bound parameters, including rest parameters.
-    pub fn iter_bindings(&self) -> impl Iterator<Item = &BindingPattern<'a>> + '_ {
+    pub fn iter_bindings(&self) -> impl Iterator<Item = &BindingPattern<'a>> + Clone + '_ {
         self.items
             .iter()
             .map(|param| &param.pattern)
