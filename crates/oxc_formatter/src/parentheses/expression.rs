@@ -876,7 +876,12 @@ impl NeedsParentheses<'_> for AstNode<'_, TSTypeAssertion<'_>> {
         match self.parent() {
             AstNodes::TSAsExpression(_) | AstNodes::TSSatisfiesExpression(_) => true,
             AstNodes::BinaryExpression(binary) => {
+                // The base of `**` must be an `UpdateExpression`; a type assertion `<T>x` is a
+                // unary-like expression, so as the left operand it must be parenthesized
+                // (`<T>x ** 2` is a syntax error, same restriction as `-2 ** 2`).
                 matches!(binary.operator, BinaryOperator::ShiftLeft)
+                    || (binary.operator == BinaryOperator::Exponential
+                        && binary.left.span() == self.span())
             }
             _ => type_cast_like_needs_parens(self.span(), self.parent()),
         }
