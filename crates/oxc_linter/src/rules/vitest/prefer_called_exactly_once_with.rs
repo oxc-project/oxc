@@ -425,18 +425,24 @@ fn is_mock_reset_call_expression(call_expr: &CallExpression<'_>) -> bool {
  * Even doing it safely the end check, this fix will remain dangerous as it removes code.
  */
 fn get_source_code_line_span(statement_span: Span, ctx: &LintContext<'_>) -> Span {
+    // Clamp the line end to the source length: when the statement is the last line with no
+    // trailing newline, `statement_span.end == source.len()`, so `end + 1` would slice out
+    // of bounds and panic. Only extend past the statement when a trailing byte exists.
+    let line_end = if (statement_span.end as usize) < ctx.source_text().len() {
+        statement_span.end + 1
+    } else {
+        statement_span.end
+    };
     let mut column_0_span_index = statement_span.start;
 
     // Guard against underflow when statement is at the beginning of the file
     while column_0_span_index > 0
-        && !ctx
-            .source_range(Span::new(column_0_span_index - 1, statement_span.end + 1))
-            .starts_with('\n')
+        && !ctx.source_range(Span::new(column_0_span_index - 1, line_end)).starts_with('\n')
     {
         column_0_span_index -= 1;
     }
 
-    Span::new(column_0_span_index, statement_span.end + 1)
+    Span::new(column_0_span_index, line_end)
 }
 
 fn get_test_callback<'a>(call_expr: &'a CallExpression<'a>) -> Option<&'a Expression<'a>> {
@@ -507,6 +513,9 @@ fn test() {
     ];
 
     let fail = vec![
+        // Last statement ends at EOF with no trailing newline — previously panicked with an
+        // out-of-bounds slice in `get_source_code_line_span`.
+        "expect(x).toHaveBeenCalledOnce();\nexpect(x).toHaveBeenCalledWith('hoge');",
         "
 			      expect(x).toHaveBeenCalledOnce();
 			      expect(x).toHaveBeenCalledWith('hoge');

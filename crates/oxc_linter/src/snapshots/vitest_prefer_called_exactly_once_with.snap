@@ -3,6 +3,17 @@ source: crates/oxc_linter/src/tester.rs
 ---
 
   ⚠ vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
+   ╭─[prefer_called_exactly_once_with.tsx:1:1]
+ 1 │ expect(x).toHaveBeenCalledOnce();
+   · ────────────────┬───────────────
+   ·                 ╰── Replace with `toHaveBeenCalledExactlyOnceWith`
+ 2 │ expect(x).toHaveBeenCalledWith('hoge');
+   · ───────────────────┬───────────────────
+   ·                    ╰── Remove this expect
+   ╰────
+  help: Replace with `toHaveBeenCalledExactlyOnceWith` and remove redundant expect
+
+  ⚠ vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
    ╭─[prefer_called_exactly_once_with.tsx:2:10]
  1 │ 
  2 │                   expect(x).toHaveBeenCalledOnce();
