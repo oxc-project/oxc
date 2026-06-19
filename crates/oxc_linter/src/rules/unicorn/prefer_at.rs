@@ -66,6 +66,9 @@ declare_oxc_lint!(
     /// The `.at()` method is more readable and consistent for accessing elements by index,
     /// especially for negative indices which access elements from the end of the array or string.
     ///
+    /// The index of the array can be out of bounds, which does not get reflected by TypeScript when using bracket notation,
+    /// but using `.at()` makes it clearer for the type system that the result can be `undefined`.
+    ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
