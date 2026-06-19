@@ -322,6 +322,12 @@ impl<'a> HirBuilder<'a> {
         self.identifier_locs
     }
 
+    /// Access the line-offset table.
+    /// Returns the 'a reference to avoid conflicts with mutable borrows on self.
+    pub fn line_offsets(&self) -> &'a LineOffsets {
+        self.line_offsets
+    }
+
     /// Access the bindings map.
     pub fn bindings(&self) -> &FxIndexMap<BindingId, IdentifierId> {
         &self.bindings

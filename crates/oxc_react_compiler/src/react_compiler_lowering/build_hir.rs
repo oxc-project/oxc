@@ -1929,6 +1929,896 @@ fn lower_optional_call_expression_impl(
     Ok(InstructionValue::LoadLocal { place: place.clone(), loc: place.loc })
 }
 
+// =============================================================================
+// Function / arrow lowering
+// =============================================================================
+
+/// Lower a function/arrow expression to a `FunctionExpression` instruction value.
+/// Mirrors the original `lower_function_to_value`.
+fn lower_function_to_value(
+    builder: &mut HirBuilder,
+    func: FunctionNode<'_>,
+    expr_type: FunctionExpressionType,
+) -> Result<InstructionValue, CompilerError> {
+    let loc = match func {
+        FunctionNode::Arrow(arrow) => builder.source_location(arrow.span),
+        FunctionNode::Function(f) => builder.source_location(f.span),
+    };
+    let name = match func {
+        FunctionNode::Function(f) => f.id.as_ref().map(|id| id.name.to_string()),
+        FunctionNode::Arrow(_) => None,
+    };
+    let lowered_func = lower_function(builder, func)?;
+    Ok(InstructionValue::FunctionExpression { name, name_hint: None, lowered_func, expr_type, loc })
+}
+
+/// Lower a nested function/arrow node into a `LoweredFunction`. Mirrors the
+/// original `lower_function`.
+fn lower_function(
+    builder: &mut HirBuilder,
+    func: FunctionNode<'_>,
+) -> Result<LoweredFunction, CompilerError> {
+    // Extract function parts from the AST node
+    let (params, body, id, generator, is_async, func_start, func_end, func_loc, func_node_id) =
+        match func {
+            FunctionNode::Arrow(arrow) => {
+                let body = if arrow.expression {
+                    match arrow.body.statements.first() {
+                        Some(oxc::Statement::ExpressionStatement(es)) => {
+                            FunctionBody::Expression(&es.expression)
+                        }
+                        _ => FunctionBody::Block(arrow.body.as_ref()),
+                    }
+                } else {
+                    FunctionBody::Block(arrow.body.as_ref())
+                };
+                (
+                    arrow.params.as_ref(),
+                    body,
+                    None::<&str>,
+                    false,
+                    arrow.r#async,
+                    arrow.span.start,
+                    arrow.span.end,
+                    builder.source_location(arrow.span),
+                    Some(arrow.span.start),
+                )
+            }
+            FunctionNode::Function(f) => {
+                let body_ref = f.body.as_deref().expect("function expression has a body");
+                (
+                    f.params.as_ref(),
+                    FunctionBody::Block(body_ref),
+                    f.id.as_ref().map(|id| id.name.as_str()),
+                    f.generator,
+                    f.r#async,
+                    f.span.start,
+                    f.span.end,
+                    builder.source_location(f.span),
+                    Some(f.span.start),
+                )
+            }
+        };
+
+    // Find the function's scope. For synthetic zero-width functions (e.g., desugared
+    // match IIFEs from Hermes with start=end=0), node_to_scope won't have an entry.
+    let function_scope =
+        if let Some(scope) = builder.scope_info().resolve_scope_for_node(func_node_id) {
+            scope
+        } else if func_start < func_end {
+            builder.scope_info().program_scope
+        } else {
+            let parent = builder.function_scope();
+            let scope_info = builder.scope_info();
+            let mapped: rustc_hash::FxHashSet<crate::react_compiler_ast::scope::ScopeId> =
+                scope_info.node_to_scope.values().copied().collect();
+            let param_names: Vec<String> = params
+                .items
+                .iter()
+                .filter_map(|p| {
+                    if let oxc::BindingPattern::BindingIdentifier(id) = &p.pattern {
+                        Some(id.name.to_string())
+                    } else {
+                        None
+                    }
+                })
+                .collect();
+            let mut descendants = rustc_hash::FxHashSet::default();
+            descendants.insert(parent);
+            let mut changed = true;
+            while changed {
+                changed = false;
+                for (i, scope) in scope_info.scopes.iter().enumerate() {
+                    let sid = crate::react_compiler_ast::scope::ScopeId(i as u32);
+                    if let Some(p) = scope.parent {
+                        if descendants.contains(&p) && !descendants.contains(&sid) {
+                            descendants.insert(sid);
+                            changed = true;
+                        }
+                    }
+                }
+            }
+            let mut found = scope_info.program_scope;
+            for (i, scope) in scope_info.scopes.iter().enumerate() {
+                let sid = crate::react_compiler_ast::scope::ScopeId(i as u32);
+                if let Some(p) = scope.parent {
+                    if descendants.contains(&p)
+                        && matches!(scope.kind, ScopeKind::Function)
+                        && !mapped.contains(&sid)
+                        && !builder.is_synthetic_scope_claimed(sid)
+                    {
+                        if !param_names.is_empty() {
+                            let all_match =
+                                param_names.iter().all(|name| scope.bindings.contains_key(name));
+                            if !all_match {
+                                continue;
+                            }
+                        }
+                        found = sid;
+                        break;
+                    }
+                }
+            }
+            builder.claim_synthetic_scope(found);
+            found
+        };
+
+    let component_scope = builder.component_scope();
+    let scope_info = builder.scope_info();
+
+    let parent_bindings = builder.bindings().clone();
+    let parent_used_names = builder.used_names().clone();
+    let context_ids = builder.context_identifiers().clone();
+    let ident_locs = builder.identifier_locs();
+    let line_offsets = builder.line_offsets();
+
+    // For synthetic functions with zero-width position ranges, position-based
+    // reference filtering fails. Walk the body AST to collect actual positions.
+    let ref_override = if func_start >= func_end {
+        Some(collect_identifier_node_ids_from_body(&body))
+    } else {
+        None
+    };
+
+    // Gather captured context
+    let captured_context = gather_captured_context(
+        scope_info,
+        function_scope,
+        component_scope,
+        func_start,
+        func_end,
+        ident_locs,
+        ref_override.as_ref(),
+    );
+    let merged_context: FxIndexMap<
+        crate::react_compiler_ast::scope::BindingId,
+        Option<SourceLocation>,
+    > = {
+        let parent_context = builder.context().clone();
+        let mut merged = parent_context;
+        for (k, v) in captured_context {
+            merged.insert(k, v);
+        }
+        merged
+    };
+
+    // Use scope_info_and_env_mut to avoid conflicting borrows
+    let (scope_info, env) = builder.scope_info_and_env_mut();
+    let (hir_func, child_used_names, child_bindings) = lower_inner(
+        params,
+        body,
+        id,
+        generator,
+        is_async,
+        func_loc,
+        scope_info,
+        env,
+        Some(parent_bindings),
+        Some(parent_used_names),
+        merged_context,
+        function_scope,
+        component_scope,
+        &context_ids,
+        false, // nested function
+        ident_locs,
+        line_offsets,
+    )?;
+
+    builder.merge_used_names(child_used_names);
+    builder.merge_bindings(child_bindings);
+
+    let func_id = builder.environment_mut().add_function(hir_func);
+    Ok(LoweredFunction { func: func_id })
+}
+
+/// Lower a function declaration statement to a FunctionExpression + StoreLocal.
+fn lower_function_declaration(
+    builder: &mut HirBuilder,
+    func_decl: &oxc::Function,
+) -> Result<(), CompilerError> {
+    let loc = builder.source_location(func_decl.span);
+    let func_start = func_decl.span.start;
+    let func_end = func_decl.span.end;
+
+    let func_name = func_decl.id.as_ref().map(|id| id.name.to_string());
+
+    // Find the function's scope
+    let function_scope = builder
+        .scope_info()
+        .resolve_scope_for_node(Some(func_decl.span.start))
+        .unwrap_or(builder.scope_info().program_scope);
+
+    let component_scope = builder.component_scope();
+    let scope_info = builder.scope_info();
+
+    let parent_bindings = builder.bindings().clone();
+    let parent_used_names = builder.used_names().clone();
+    let context_ids = builder.context_identifiers().clone();
+    let ident_locs = builder.identifier_locs();
+    let line_offsets = builder.line_offsets();
+
+    // Gather captured context
+    let captured_context = gather_captured_context(
+        scope_info,
+        function_scope,
+        component_scope,
+        func_start,
+        func_end,
+        ident_locs,
+        None,
+    );
+    let merged_context: FxIndexMap<
+        crate::react_compiler_ast::scope::BindingId,
+        Option<SourceLocation>,
+    > = {
+        let parent_context = builder.context().clone();
+        let mut merged = parent_context;
+        for (k, v) in captured_context {
+            merged.insert(k, v);
+        }
+        merged
+    };
+
+    let body_ref = func_decl.body.as_deref().expect("function declaration has a body");
+    let (scope_info, env) = builder.scope_info_and_env_mut();
+    let (hir_func, child_used_names, child_bindings) = lower_inner(
+        func_decl.params.as_ref(),
+        FunctionBody::Block(body_ref),
+        func_decl.id.as_ref().map(|id| id.name.as_str()),
+        func_decl.generator,
+        func_decl.r#async,
+        loc.clone(),
+        scope_info,
+        env,
+        Some(parent_bindings),
+        Some(parent_used_names),
+        merged_context,
+        function_scope,
+        component_scope,
+        &context_ids,
+        false, // nested function
+        ident_locs,
+        line_offsets,
+    )?;
+
+    builder.merge_used_names(child_used_names);
+    builder.merge_bindings(child_bindings);
+
+    let func_id = builder.environment_mut().add_function(hir_func);
+    let lowered_func = LoweredFunction { func: func_id };
+
+    // Emit FunctionExpression instruction
+    let fn_value = InstructionValue::FunctionExpression {
+        name: func_name.clone(),
+        name_hint: None,
+        lowered_func,
+        expr_type: FunctionExpressionType::FunctionDeclaration,
+        loc: loc.clone(),
+    };
+    let fn_place = lower_value_to_temporary(builder, fn_value)?;
+
+    // Resolve the binding for the function name and store. TS resolves the id
+    // via Babel's `path.scope.getBinding(name)`, which starts at the function's
+    // OWN scope: a body-level local that shadows the function's name resolves
+    // to that inner binding — storing the function into the shadow while
+    // references elsewhere resolve to the hoisted binding in the parent scope.
+    // This is a known TS quirk that we reproduce for parity (see
+    // todo-repro-named-function-with-shadowed-local-same-name). Fall back to
+    // node-based resolution when the scope walk fails (degraded scope info,
+    // e.g. synthetic scopes, or backends that split function-body scopes).
+    if let Some(ref name) = func_name {
+        if let Some(id_node) = &func_decl.id {
+            let start = id_node.span.start;
+            let ident_loc = builder.source_location(id_node.span);
+            let scope_binding = builder.get_function_declaration_binding(function_scope, name);
+            let mut is_context = false;
+            let binding = match scope_binding {
+                Some(binding_id) => {
+                    is_context = builder.is_context_binding(binding_id);
+                    let binding_kind = crate::react_compiler_lowering::convert_binding_kind(
+                        &builder.scope_info().bindings[binding_id.0 as usize].kind,
+                    );
+                    let identifier =
+                        builder.resolve_binding_with_loc(name, binding_id, ident_loc.clone())?;
+                    VariableBinding::Identifier { identifier, binding_kind }
+                }
+                None => {
+                    let mut binding = builder.resolve_identifier(
+                        name,
+                        start,
+                        ident_loc.clone(),
+                        Some(id_node.span.start),
+                    )?;
+                    if matches!(&binding, VariableBinding::Global { .. }) {
+                        // For function redeclarations (e.g., `function x() {} function x() {}`),
+                        // the redeclaration's identifier may not be in ref_node_id_to_binding
+                        // (OXC/SWC don't map constant violations). Retry using the first
+                        // declaration's node_id from the scope chain.
+                        let fallback = {
+                            let si = builder.scope_info();
+                            let scope_id = si
+                                .resolve_scope_for_node(Some(func_decl.span.start))
+                                .unwrap_or(si.program_scope);
+                            si.get_binding(scope_id, name).map(|bid| {
+                                let b = &si.bindings[bid.0 as usize];
+                                (b.declaration_start.unwrap_or(0), b.declaration_node_id)
+                            })
+                        };
+                        if let Some((ds, ds_node_id)) = fallback {
+                            binding = builder.resolve_identifier(
+                                name,
+                                ds,
+                                ident_loc.clone(),
+                                ds_node_id,
+                            )?;
+                        }
+                    }
+                    if matches!(&binding, VariableBinding::Identifier { .. }) {
+                        is_context =
+                            builder.is_context_identifier(name, start, Some(id_node.span.start));
+                    }
+                    binding
+                }
+            };
+            match binding {
+                VariableBinding::Identifier { identifier, .. } => {
+                    // Don't override the identifier's declaration loc here.
+                    // For function redeclarations (e.g., `function x() {} function x() {}`),
+                    // the identifier's loc should remain the first declaration's loc,
+                    // which was already set during define_binding.
+                    // Use the full function declaration loc for the Place,
+                    // matching the TS behavior where lowerAssignment uses stmt.node.loc
+                    let place = Place {
+                        identifier,
+                        reactive: false,
+                        effect: Effect::Unknown,
+                        loc: loc.clone(),
+                    };
+                    if is_context {
+                        lower_value_to_temporary(
+                            builder,
+                            InstructionValue::StoreContext {
+                                lvalue: LValue { kind: InstructionKind::Function, place },
+                                value: fn_place,
+                                loc,
+                            },
+                        )?;
+                    } else {
+                        lower_value_to_temporary(
+                            builder,
+                            InstructionValue::StoreLocal {
+                                lvalue: LValue { kind: InstructionKind::Function, place },
+                                value: fn_place,
+                                type_annotation: None,
+                                loc,
+                            },
+                        )?;
+                    }
+                }
+                _ => {
+                    builder.record_error(CompilerErrorDetail {
+                        category: ErrorCategory::Invariant,
+                        reason: format!(
+                            "Could not find binding for function declaration `{}`",
+                            name
+                        ),
+                        description: None,
+                        loc,
+                        suggestions: None,
+                    })?;
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+/// Lower a function expression used as an object method.
+#[allow(dead_code)]
+fn lower_function_for_object_method(
+    builder: &mut HirBuilder,
+    method_span: oxc_span::Span,
+    params: &oxc::FormalParameters,
+    body: &oxc::FunctionBody,
+    generator: bool,
+    is_async: bool,
+) -> Result<LoweredFunction, CompilerError> {
+    let func_start = method_span.start;
+    let func_end = method_span.end;
+    let func_loc = builder.source_location(method_span);
+
+    let function_scope = builder
+        .scope_info()
+        .resolve_scope_for_node(Some(method_span.start))
+        .unwrap_or(builder.scope_info().program_scope);
+
+    let component_scope = builder.component_scope();
+    let scope_info = builder.scope_info();
+
+    let parent_bindings = builder.bindings().clone();
+    let parent_used_names = builder.used_names().clone();
+    let context_ids = builder.context_identifiers().clone();
+    let ident_locs = builder.identifier_locs();
+    let line_offsets = builder.line_offsets();
+
+    let captured_context = gather_captured_context(
+        scope_info,
+        function_scope,
+        component_scope,
+        func_start,
+        func_end,
+        ident_locs,
+        None,
+    );
+    let merged_context: FxIndexMap<
+        crate::react_compiler_ast::scope::BindingId,
+        Option<SourceLocation>,
+    > = {
+        let parent_context = builder.context().clone();
+        let mut merged = parent_context;
+        for (k, v) in captured_context {
+            merged.insert(k, v);
+        }
+        merged
+    };
+
+    let (scope_info, env) = builder.scope_info_and_env_mut();
+    let (hir_func, child_used_names, child_bindings) = lower_inner(
+        params,
+        FunctionBody::Block(body),
+        None,
+        generator,
+        is_async,
+        func_loc,
+        scope_info,
+        env,
+        Some(parent_bindings),
+        Some(parent_used_names),
+        merged_context,
+        function_scope,
+        component_scope,
+        &context_ids,
+        false, // nested function
+        ident_locs,
+        line_offsets,
+    )?;
+
+    builder.merge_used_names(child_used_names);
+    builder.merge_bindings(child_bindings);
+
+    let func_id = builder.environment_mut().add_function(hir_func);
+    Ok(LoweredFunction { func: func_id })
+}
+
+fn gather_captured_context(
+    scope_info: &ScopeInfo,
+    function_scope: crate::react_compiler_ast::scope::ScopeId,
+    component_scope: crate::react_compiler_ast::scope::ScopeId,
+    func_start: u32,
+    func_end: u32,
+    identifier_locs: &IdentifierLocIndex,
+    ref_node_ids_override: Option<&FxIndexSet<u32>>,
+) -> FxIndexMap<crate::react_compiler_ast::scope::BindingId, Option<SourceLocation>> {
+    let parent_scope = scope_info.scopes[function_scope.0 as usize].parent;
+    let pure_scopes = match parent_scope {
+        Some(parent) => capture_scopes(scope_info, parent, component_scope),
+        None => FxIndexSet::default(),
+    };
+
+    // Collect the earliest (lowest source position) reference location for each
+    // captured binding. Using the minimum position makes the result independent of
+    // ref_node_id_to_binding iteration order, matching the behavior the TS compiler
+    // gets from Babel's position-ordered traversal.
+    let mut captured: rustc_hash::FxHashMap<
+        crate::react_compiler_ast::scope::BindingId,
+        (u32, Option<SourceLocation>), // (min_position, loc)
+    > = rustc_hash::FxHashMap::default();
+
+    for (&ref_nid, &binding_id) in &scope_info.ref_node_id_to_binding {
+        if let Some(allowed) = ref_node_ids_override {
+            if !allowed.contains(&ref_nid) {
+                continue;
+            }
+        } else {
+            // Range check: use the position stored in identifier_locs
+            let ref_start = identifier_locs.get(&ref_nid).map(|e| e.start).unwrap_or(0);
+            if ref_start < func_start || ref_start >= func_end {
+                continue;
+            }
+        }
+        let binding = &scope_info.bindings[binding_id.0 as usize];
+        // Skip references that are actually the binding's own declaration site
+        if binding.declaration_node_id == Some(ref_nid) {
+            continue;
+        }
+        // Skip function/class declaration names that are not expression references.
+        // Skip type-annotation references: TS's gatherCapturedContext traverse
+        // skips TypeAnnotation/TSTypeAnnotation/TypeAlias/TSTypeAliasDeclaration
+        // subtrees, so identifiers there never become captures (they DO still
+        // feed FindContextIdentifiers and the hoisting analysis, which have no
+        // such skip in TS).
+        if let Some(entry) = identifier_locs.get(&ref_nid) {
+            if entry.is_declaration_name || entry.in_type_annotation {
+                continue;
+            }
+        }
+        // Skip type-only bindings
+        if binding.declaration_type == "TypeAlias"
+            || binding.declaration_type == "OpaqueType"
+            || binding.declaration_type == "InterfaceDeclaration"
+            || binding.declaration_type == "TSTypeAliasDeclaration"
+            || binding.declaration_type == "TSInterfaceDeclaration"
+            || binding.declaration_type == "TSEnumDeclaration"
+        {
+            continue;
+        }
+        if pure_scopes.contains(&binding.scope) {
+            let ref_start = identifier_locs.get(&ref_nid).map(|e| e.start).unwrap_or(0);
+            // Skip references whose start offset aliases the binding's own
+            // declaration offset. Hermes desugars (component syntax) reuse the
+            // original source offsets for generated nodes, so a sibling
+            // reference structurally OUTSIDE this function (e.g. the forwardRef
+            // argument naming the desugared inner function) can fall inside the
+            // function's position range and alias the declaration position. In
+            // real source a non-declaration reference can never share its
+            // declaration's offset, so this only filters desugared aliases.
+            if binding.declaration_start == Some(ref_start) {
+                continue;
+            }
+            let loc = identifier_locs.get(&ref_nid).map(|entry| {
+                if let Some(oe_loc) = &entry.opening_element_loc {
+                    oe_loc.clone()
+                } else {
+                    entry.loc.clone()
+                }
+            });
+            captured
+                .entry(binding.id)
+                .and_modify(|(min_pos, existing_loc)| {
+                    if ref_start < *min_pos {
+                        *min_pos = ref_start;
+                        *existing_loc = loc.clone();
+                    }
+                })
+                .or_insert((ref_start, loc));
+        }
+    }
+
+    // Sort captured entries by source position so context declarations appear
+    // in source order, matching the TS compiler's position-ordered traversal.
+    let mut sorted: Vec<_> = captured.into_iter().collect();
+    sorted.sort_by_key(|(_, (pos, _))| *pos);
+
+    sorted.into_iter().map(|(bid, (_, loc))| (bid, loc)).collect()
+}
+
+fn capture_scopes(
+    scope_info: &ScopeInfo,
+    from: crate::react_compiler_ast::scope::ScopeId,
+    to: crate::react_compiler_ast::scope::ScopeId,
+) -> FxIndexSet<crate::react_compiler_ast::scope::ScopeId> {
+    let mut result = FxIndexSet::default();
+    let mut current = Some(from);
+    while let Some(scope_id) = current {
+        result.insert(scope_id);
+        if scope_id == to {
+            break;
+        }
+        current = scope_info.scopes[scope_id.0 as usize].parent;
+    }
+    result
+}
+
+fn collect_identifier_node_ids_from_body(body: &FunctionBody) -> FxIndexSet<u32> {
+    let mut positions = FxIndexSet::default();
+    match body {
+        FunctionBody::Block(block) => {
+            for stmt in &block.statements {
+                collect_identifier_node_ids_from_stmt(stmt, &mut positions);
+            }
+        }
+        FunctionBody::Expression(expr) => {
+            collect_identifier_node_ids_from_expr(expr, &mut positions);
+        }
+    }
+    positions
+}
+
+fn collect_identifier_node_ids_from_stmt(stmt: &oxc::Statement, positions: &mut FxIndexSet<u32>) {
+    match stmt {
+        oxc::Statement::ExpressionStatement(s) => {
+            collect_identifier_node_ids_from_expr(&s.expression, positions)
+        }
+        oxc::Statement::ReturnStatement(s) => {
+            if let Some(arg) = &s.argument {
+                collect_identifier_node_ids_from_expr(arg, positions);
+            }
+        }
+        oxc::Statement::ThrowStatement(s) => {
+            collect_identifier_node_ids_from_expr(&s.argument, positions)
+        }
+        oxc::Statement::BlockStatement(s) => {
+            for stmt in &s.body {
+                collect_identifier_node_ids_from_stmt(stmt, positions);
+            }
+        }
+        oxc::Statement::IfStatement(s) => {
+            collect_identifier_node_ids_from_expr(&s.test, positions);
+            collect_identifier_node_ids_from_stmt(&s.consequent, positions);
+            if let Some(alt) = &s.alternate {
+                collect_identifier_node_ids_from_stmt(alt, positions);
+            }
+        }
+        oxc::Statement::VariableDeclaration(s) => {
+            for decl in &s.declarations {
+                if let Some(init) = &decl.init {
+                    collect_identifier_node_ids_from_expr(init, positions);
+                }
+            }
+        }
+        _ => {}
+    }
+}
+
+fn collect_identifier_node_ids_from_expr(expr: &oxc::Expression, positions: &mut FxIndexSet<u32>) {
+    match expr {
+        oxc::Expression::Identifier(id) => {
+            positions.insert(id.span.start);
+        }
+        oxc::Expression::CallExpression(call) => {
+            collect_identifier_node_ids_from_expr(&call.callee, positions);
+            for arg in &call.arguments {
+                if let Some(e) = arg.as_expression() {
+                    collect_identifier_node_ids_from_expr(e, positions);
+                } else if let oxc::Argument::SpreadElement(s) = arg {
+                    collect_identifier_node_ids_from_expr(&s.argument, positions);
+                }
+            }
+        }
+        oxc::Expression::BinaryExpression(e) => {
+            collect_identifier_node_ids_from_expr(&e.left, positions);
+            collect_identifier_node_ids_from_expr(&e.right, positions);
+        }
+        oxc::Expression::ConditionalExpression(e) => {
+            collect_identifier_node_ids_from_expr(&e.test, positions);
+            collect_identifier_node_ids_from_expr(&e.consequent, positions);
+            collect_identifier_node_ids_from_expr(&e.alternate, positions);
+        }
+        oxc::Expression::LogicalExpression(e) => {
+            collect_identifier_node_ids_from_expr(&e.left, positions);
+            collect_identifier_node_ids_from_expr(&e.right, positions);
+        }
+        oxc::Expression::StaticMemberExpression(e) => {
+            collect_identifier_node_ids_from_expr(&e.object, positions);
+        }
+        oxc::Expression::ComputedMemberExpression(e) => {
+            collect_identifier_node_ids_from_expr(&e.object, positions);
+        }
+        oxc::Expression::PrivateFieldExpression(e) => {
+            collect_identifier_node_ids_from_expr(&e.object, positions);
+        }
+        oxc::Expression::ChainExpression(chain) => {
+            collect_identifier_node_ids_from_chain_element(&chain.expression, positions);
+        }
+        oxc::Expression::UpdateExpression(e) => {
+            collect_identifier_node_ids_from_simple_target(&e.argument, positions);
+        }
+        oxc::Expression::FunctionExpression(func) => {
+            if let Some(body) = func.body.as_deref() {
+                for stmt in &body.statements {
+                    collect_identifier_node_ids_from_stmt(stmt, positions);
+                }
+            }
+        }
+        oxc::Expression::UnaryExpression(e) => {
+            collect_identifier_node_ids_from_expr(&e.argument, positions);
+        }
+        oxc::Expression::ParenthesizedExpression(e) => {
+            collect_identifier_node_ids_from_expr(&e.expression, positions);
+        }
+        oxc::Expression::TSAsExpression(e) => {
+            collect_identifier_node_ids_from_expr(&e.expression, positions);
+        }
+        oxc::Expression::TSSatisfiesExpression(e) => {
+            collect_identifier_node_ids_from_expr(&e.expression, positions);
+        }
+        oxc::Expression::TSTypeAssertion(e) => {
+            collect_identifier_node_ids_from_expr(&e.expression, positions);
+        }
+        oxc::Expression::TSNonNullExpression(e) => {
+            collect_identifier_node_ids_from_expr(&e.expression, positions);
+        }
+        oxc::Expression::ArrowFunctionExpression(arrow) => {
+            if arrow.expression {
+                if let Some(oxc::Statement::ExpressionStatement(es)) =
+                    arrow.body.statements.first()
+                {
+                    collect_identifier_node_ids_from_expr(&es.expression, positions);
+                }
+            } else {
+                for stmt in &arrow.body.statements {
+                    collect_identifier_node_ids_from_stmt(stmt, positions);
+                }
+            }
+        }
+        oxc::Expression::JSXElement(el) => {
+            collect_identifier_node_ids_from_jsx_element(el, positions);
+        }
+        oxc::Expression::JSXFragment(frag) => {
+            for child in &frag.children {
+                collect_identifier_node_ids_from_jsx_child(child, positions);
+            }
+        }
+        oxc::Expression::ArrayExpression(arr) => {
+            for elem in &arr.elements {
+                if let Some(e) = elem.as_expression() {
+                    collect_identifier_node_ids_from_expr(e, positions);
+                } else if let oxc::ArrayExpressionElement::SpreadElement(s) = elem {
+                    collect_identifier_node_ids_from_expr(&s.argument, positions);
+                }
+            }
+        }
+        oxc::Expression::ObjectExpression(obj) => {
+            for prop in &obj.properties {
+                match prop {
+                    oxc::ObjectPropertyKind::ObjectProperty(p) => {
+                        collect_identifier_node_ids_from_expr(&p.value, positions);
+                    }
+                    oxc::ObjectPropertyKind::SpreadProperty(s) => {
+                        collect_identifier_node_ids_from_expr(&s.argument, positions);
+                    }
+                }
+            }
+        }
+        oxc::Expression::NewExpression(e) => {
+            collect_identifier_node_ids_from_expr(&e.callee, positions);
+            for arg in &e.arguments {
+                if let Some(ex) = arg.as_expression() {
+                    collect_identifier_node_ids_from_expr(ex, positions);
+                } else if let oxc::Argument::SpreadElement(s) = arg {
+                    collect_identifier_node_ids_from_expr(&s.argument, positions);
+                }
+            }
+        }
+        oxc::Expression::AssignmentExpression(e) => {
+            collect_identifier_node_ids_from_expr(&e.right, positions);
+        }
+        oxc::Expression::TemplateLiteral(e) => {
+            for expr in &e.expressions {
+                collect_identifier_node_ids_from_expr(expr, positions);
+            }
+        }
+        oxc::Expression::SequenceExpression(e) => {
+            for expr in &e.expressions {
+                collect_identifier_node_ids_from_expr(expr, positions);
+            }
+        }
+        _ => {}
+    }
+}
+
+fn collect_identifier_node_ids_from_chain_element(
+    element: &oxc::ChainElement,
+    positions: &mut FxIndexSet<u32>,
+) {
+    match element {
+        oxc::ChainElement::CallExpression(call) => {
+            collect_identifier_node_ids_from_expr(&call.callee, positions);
+            for arg in &call.arguments {
+                if let Some(e) = arg.as_expression() {
+                    collect_identifier_node_ids_from_expr(e, positions);
+                } else if let oxc::Argument::SpreadElement(s) = arg {
+                    collect_identifier_node_ids_from_expr(&s.argument, positions);
+                }
+            }
+        }
+        oxc::ChainElement::TSNonNullExpression(e) => {
+            collect_identifier_node_ids_from_expr(&e.expression, positions);
+        }
+        oxc::ChainElement::StaticMemberExpression(m) => {
+            collect_identifier_node_ids_from_expr(&m.object, positions);
+        }
+        oxc::ChainElement::ComputedMemberExpression(m) => {
+            collect_identifier_node_ids_from_expr(&m.object, positions);
+        }
+        oxc::ChainElement::PrivateFieldExpression(m) => {
+            collect_identifier_node_ids_from_expr(&m.object, positions);
+        }
+    }
+}
+
+fn collect_identifier_node_ids_from_simple_target(
+    target: &oxc::SimpleAssignmentTarget,
+    positions: &mut FxIndexSet<u32>,
+) {
+    match target {
+        oxc::SimpleAssignmentTarget::AssignmentTargetIdentifier(id) => {
+            positions.insert(id.span.start);
+        }
+        oxc::SimpleAssignmentTarget::StaticMemberExpression(m) => {
+            collect_identifier_node_ids_from_expr(&m.object, positions);
+        }
+        oxc::SimpleAssignmentTarget::ComputedMemberExpression(m) => {
+            collect_identifier_node_ids_from_expr(&m.object, positions);
+        }
+        oxc::SimpleAssignmentTarget::PrivateFieldExpression(m) => {
+            collect_identifier_node_ids_from_expr(&m.object, positions);
+        }
+        _ => {}
+    }
+}
+
+fn collect_identifier_node_ids_from_jsx_element(
+    el: &oxc::JSXElement,
+    positions: &mut FxIndexSet<u32>,
+) {
+    if let oxc::JSXElementName::IdentifierReference(id) = &el.opening_element.name {
+        positions.insert(id.span.start);
+    }
+    for attr in &el.opening_element.attributes {
+        match attr {
+            oxc::JSXAttributeItem::Attribute(a) => {
+                if let Some(oxc::JSXAttributeValue::ExpressionContainer(c)) = &a.value {
+                    if let Some(e) = c.expression.as_expression() {
+                        collect_identifier_node_ids_from_expr(e, positions);
+                    }
+                }
+            }
+            oxc::JSXAttributeItem::SpreadAttribute(a) => {
+                collect_identifier_node_ids_from_expr(&a.argument, positions);
+            }
+        }
+    }
+    for child in &el.children {
+        collect_identifier_node_ids_from_jsx_child(child, positions);
+    }
+}
+
+fn collect_identifier_node_ids_from_jsx_child(
+    child: &oxc::JSXChild,
+    positions: &mut FxIndexSet<u32>,
+) {
+    match child {
+        oxc::JSXChild::ExpressionContainer(c) => {
+            if let Some(e) = c.expression.as_expression() {
+                collect_identifier_node_ids_from_expr(e, positions);
+            }
+        }
+        oxc::JSXChild::Element(child_el) => {
+            collect_identifier_node_ids_from_jsx_element(child_el, positions);
+        }
+        oxc::JSXChild::Fragment(frag) => {
+            for c in &frag.children {
+                collect_identifier_node_ids_from_jsx_child(c, positions);
+            }
+        }
+        oxc::JSXChild::Spread(s) => {
+            collect_identifier_node_ids_from_expr(&s.expression, positions);
+        }
+        _ => {}
+    }
+}
+
 fn lower_expression(
     builder: &mut HirBuilder,
     expr: &oxc::Expression,
@@ -2658,6 +3548,16 @@ fn lower_expression(
             lower_jsx_fragment_expr(builder, jsx_fragment)
         }
         oxc::Expression::ChainExpression(chain) => lower_chain_expression(builder, chain),
+        oxc::Expression::ArrowFunctionExpression(arrow) => lower_function_to_value(
+            builder,
+            FunctionNode::Arrow(arrow),
+            FunctionExpressionType::ArrowFunctionExpression,
+        ),
+        oxc::Expression::FunctionExpression(func) => lower_function_to_value(
+            builder,
+            FunctionNode::Function(func),
+            FunctionExpressionType::FunctionExpression,
+        ),
         _ => {
             // not-yet-ported arms bail to undefined (differential green-set grows as arms land)
             let loc = builder.source_location(expr.span());
@@ -3543,6 +4443,9 @@ fn lower_statement(
                 }
                 // TODO(stage1a-arms): no-init declarations (DeclareLocal/DeclareContext).
             }
+        }
+        oxc::Statement::FunctionDeclaration(func_decl) => {
+            lower_function_declaration(builder, func_decl)?;
         }
         _ => {
             // not-yet-ported statements are skipped (differential green-set grows as arms land)
