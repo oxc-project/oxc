@@ -195,6 +195,20 @@ impl<'a> PeepholeOptimizations {
         match test_boolean {
             Some(false) => match &for_stmt.init {
                 Some(ForStatementInit::VariableDeclaration(_)) => {
+                    // The for-init runs exactly once before the (false) test. A `var` binding is
+                    // hoisted and merged below, but a `let`/`const` binding is block-scoped to the
+                    // now-dead loop and cannot be kept; we may only drop it when its initializers
+                    // are side-effect free. Otherwise removing the loop would silently discard
+                    // those side effects (e.g. `for (let i = foo(); false;) {}` drops `foo()`),
+                    // so bail and keep the loop, which still runs the init exactly once.
+                    if let Some(ForStatementInit::VariableDeclaration(var_init)) = &for_stmt.init
+                        && !var_init.kind.is_var()
+                        && var_init.declarations.iter().any(|d| {
+                            d.init.as_ref().is_some_and(|init| init.may_have_side_effects(ctx))
+                        })
+                    {
+                        return;
+                    }
                     let mut keep_var = KeepVar::new();
                     keep_var.visit_statement(&for_stmt.body);
                     let mut var_decl = keep_var.get_variable_declaration(&ctx.ast);
