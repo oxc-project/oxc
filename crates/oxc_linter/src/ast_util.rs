@@ -599,8 +599,10 @@ fn could_be_error_impl(
 }
 
 pub fn is_callee<'a>(node: &AstNode<'a>, semantic: &Semantic<'a>) -> bool {
-    let parent = outermost_paren_parent(node, semantic);
-    parent.is_some_and(|node | matches!(node.kind(), AstKind::CallExpression(call_expr) if call_expr.callee.span().contains_inclusive(node.kind().span())))
+    let node_span = node.kind().span();
+    outermost_paren_parent(node, semantic).is_some_and(|parent| {
+        matches!(parent.kind(), AstKind::CallExpression(call_expr) if call_expr.callee.span().contains_inclusive(node_span))
+    })
 }
 
 fn has_jsdoc_this_tag<'a>(semantic: &Semantic<'a>, node: &AstNode<'a>) -> bool {
@@ -677,16 +679,18 @@ pub fn is_default_this_binding<'a>(
                         AstKind::Function(_) | AstKind::ArrowFunctionExpression(_)
                     )
                 });
-                if upper_func.is_none_or(|node| !is_callee(node, semantic)) {
-                    return true;
+                match upper_func {
+                    Some(func) if is_callee(func, semantic) => {
+                        current_node = outermost_paren_parent(func, semantic).unwrap();
+                    }
+                    _ => return true,
                 }
-                current_node = parent;
             }
             AstKind::ArrowFunctionExpression(expr) => {
                 if current_node.span() != expr.body.span || !is_callee(parent, semantic) {
                     return true;
                 }
-                current_node = parent;
+                current_node = outermost_paren_parent(parent, semantic).unwrap();
             }
             AstKind::ObjectProperty(obj) => {
                 return obj.value.span() != current_node.span();
