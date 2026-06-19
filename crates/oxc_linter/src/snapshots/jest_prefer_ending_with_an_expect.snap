@@ -39,6 +39,13 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ jest(prefer-ending-with-an-expect): Test must end with an assertion
    ╭─[prefer_ending_with_an_expect.tsx:1:1]
+ 1 │ test("should fail", () => { foo(true).toBe(true); })
+   · ────
+   ╰────
+  help: Add an `expect` or assertion call as the last statement in the test block.
+
+  ⚠ jest(prefer-ending-with-an-expect): Test must end with an assertion
+   ╭─[prefer_ending_with_an_expect.tsx:1:1]
  1 │ it("should also fail",() => expectSaga(mySaga).returns());
    · ──
    ╰────
