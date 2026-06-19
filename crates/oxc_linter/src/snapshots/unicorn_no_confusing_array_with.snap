@@ -1,0 +1,147 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(no-confusing-array-with): Avoid using a negative index with `Array#with()`.
+   ╭─[no_confusing_array_with.tsx:1:7]
+ 1 │ array.with(-1, value)
+   ·       ────
+   ╰────
+
+  ⚠ unicorn(no-confusing-array-with): Avoid using a negative index with `Array#with()`.
+   ╭─[no_confusing_array_with.tsx:1:7]
+ 1 │ array.with(-2, value)
+   ·       ────
+   ╰────
+
+  ⚠ unicorn(no-confusing-array-with): Avoid using a negative index with `Array#with()`.
+   ╭─[no_confusing_array_with.tsx:1:7]
+ 1 │ array.with(-1.5, value)
+   ·       ────
+   ╰────
+
+  ⚠ unicorn(no-confusing-array-with): Avoid using a negative index with `Array#with()`.
+   ╭─[no_confusing_array_with.tsx:1:7]
+ 1 │ array.with(- 1, value)
+   ·       ────
+   ╰────
+
+  ⚠ unicorn(no-confusing-array-with): Avoid using a negative index with `Array#with()`.
+   ╭─[no_confusing_array_with.tsx:1:7]
+ 1 │ array.with(- - -1, value)
+   ·       ────
+   ╰────
+
+  ⚠ unicorn(no-confusing-array-with): Avoid using a negative index with `Array#with()`.
+   ╭─[no_confusing_array_with.tsx:1:7]
+ 1 │ array.with(-(-(-1)), value)
+   ·       ────
+   ╰────
+
+  ⚠ unicorn(no-confusing-array-with): Avoid using a negative index with `Array#with()`.
+   ╭─[no_confusing_array_with.tsx:1:7]
+ 1 │ array.with(-1)
+   ·       ────
+   ╰────
+
+  ⚠ unicorn(no-confusing-array-with): Avoid using a negative index with `Array#with()`.
+   ╭─[no_confusing_array_with.tsx:1:7]
+ 1 │ array.with(-1, value, extra)
+   ·       ────
+   ╰────
+
+  ⚠ unicorn(no-confusing-array-with): Avoid using `.length` as the index in `Array#with()`.
+   ╭─[no_confusing_array_with.tsx:1:7]
+ 1 │ array.with(array.length, value)
+   ·       ────
+   ╰────
+
+  ⚠ unicorn(no-confusing-array-with): Avoid using `.length` as the index in `Array#with()`.
+   ╭─[no_confusing_array_with.tsx:1:7]
+ 1 │ array.with(array.length)
+   ·       ────
+   ╰────
+
+  ⚠ unicorn(no-confusing-array-with): Avoid using `.length` as the index in `Array#with()`.
+   ╭─[no_confusing_array_with.tsx:1:7]
+ 1 │ array.with(array.length, value, extra)
+   ·       ────
+   ╰────
+
+  ⚠ unicorn(no-confusing-array-with): Avoid using `.length` as the index in `Array#with()`.
+   ╭─[no_confusing_array_with.tsx:1:14]
+ 1 │ object.items.with(object.items.length, value)
+   ·              ────
+   ╰────
+
+  ⚠ unicorn(no-confusing-array-with): Avoid using a negative index with `Array#with()`.
+   ╭─[no_confusing_array_with.tsx:1:7]
+ 1 │ array.with(-1 as const, value)
+   ·       ────
+   ╰────
+
+  ⚠ unicorn(no-confusing-array-with): Avoid using a negative index with `Array#with()`.
+   ╭─[no_confusing_array_with.tsx:1:7]
+ 1 │ array.with( -1, value)
+   ·       ────
+   ╰────
+
+  ⚠ unicorn(no-confusing-array-with): Avoid using a negative index with `Array#with()`.
+   ╭─[no_confusing_array_with.tsx:1:7]
+ 1 │ array.with(-1!, value)
+   ·       ────
+   ╰────
+
+  ⚠ unicorn(no-confusing-array-with): Avoid using a negative index with `Array#with()`.
+   ╭─[no_confusing_array_with.tsx:1:7]
+ 1 │ array.with(-1 satisfies number, value)
+   ·       ────
+   ╰────
+
+  ⚠ unicorn(no-confusing-array-with): Avoid using `.length` as the index in `Array#with()`.
+   ╭─[no_confusing_array_with.tsx:1:7]
+ 1 │ array.with(array.length as number, value)
+   ·       ────
+   ╰────
+
+  ⚠ unicorn(no-confusing-array-with): Avoid using `.length` as the index in `Array#with()`.
+   ╭─[no_confusing_array_with.tsx:1:7]
+ 1 │ array.with( array.length, value)
+   ·       ────
+   ╰────
+
+  ⚠ unicorn(no-confusing-array-with): Avoid using `.length` as the index in `Array#with()`.
+   ╭─[no_confusing_array_with.tsx:1:7]
+ 1 │ array.with(array.length!, value)
+   ·       ────
+   ╰────
+
+  ⚠ unicorn(no-confusing-array-with): Avoid using `.length` as the index in `Array#with()`.
+   ╭─[no_confusing_array_with.tsx:1:7]
+ 1 │ array.with(array.length satisfies number, value)
+   ·       ────
+   ╰────
+
+  ⚠ unicorn(no-confusing-array-with): Avoid using `.length` as the index in `Array#with()`.
+   ╭─[no_confusing_array_with.tsx:1:7]
+ 1 │ array.with((array satisfies number[]).length, value)
+   ·       ────
+   ╰────
+
+  ⚠ unicorn(no-confusing-array-with): Avoid using `.length` as the index in `Array#with()`.
+   ╭─[no_confusing_array_with.tsx:1:28]
+ 1 │ (array satisfies number[]).with(array.length, value)
+   ·                            ────
+   ╰────
+
+  ⚠ unicorn(no-confusing-array-with): Avoid using `.length` as the index in `Array#with()`.
+   ╭─[no_confusing_array_with.tsx:1:14]
+ 1 │ object.items.with((object satisfies {items: unknown[]}).items.length, value)
+   ·              ────
+   ╰────
+
+  ⚠ unicorn(no-confusing-array-with): Avoid using `.length` as the index in `Array#with()`.
+   ╭─[no_confusing_array_with.tsx:1:45]
+ 1 │ (object satisfies {items: unknown[]}).items.with(object.items.length, value)
+   ·                                             ────
+   ╰────
