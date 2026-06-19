@@ -6091,48 +6091,1041 @@ fn lower_statement(
             lower_block_statement(builder, &block.body, block.span.start, parent_scope)?;
         }
         oxc::Statement::VariableDeclaration(var_decl) => {
-            use oxc::VariableDeclarationKind as VK;
-            if matches!(var_decl.kind, VK::Var) {
-                builder.record_error(CompilerErrorDetail {
-                    reason: "(BuildHIR::lowerStatement) Handle var kinds in VariableDeclaration"
-                        .to_string(),
-                    category: ErrorCategory::Todo,
-                    loc: builder.source_location(var_decl.span),
-                    description: None,
-                    suggestions: None,
-                })?;
-            }
-            let kind = match var_decl.kind {
-                VK::Let | VK::Var => InstructionKind::Let,
-                VK::Const | VK::Using | VK::AwaitUsing => InstructionKind::Const,
-            };
-            for declarator in &var_decl.declarations {
-                let stmt_loc = builder.source_location(var_decl.span);
-                if let Some(init) = &declarator.init {
-                    let value = lower_expression_to_temporary(builder, init)?;
-                    let assign_style = match &declarator.id {
-                        oxc::BindingPattern::ObjectPattern(_)
-                        | oxc::BindingPattern::ArrayPattern(_) => AssignmentStyle::Destructure,
-                        _ => AssignmentStyle::Assignment,
-                    };
-                    lower_binding_assignment(
-                        builder,
-                        stmt_loc,
-                        kind,
-                        &declarator.id,
-                        value,
-                        assign_style,
-                    )?;
-                }
-                // TODO(stage1a-arms): no-init declarations (DeclareLocal/DeclareContext).
-            }
+            lower_variable_declaration(builder, var_decl)?;
         }
         oxc::Statement::FunctionDeclaration(func_decl) if func_decl.body.is_some() => {
             lower_function_declaration(builder, func_decl)?;
         }
+        oxc::Statement::IfStatement(if_stmt) => {
+            let loc = builder.source_location(if_stmt.span);
+            // Block for code following the if
+            let continuation_block = builder.reserve(BlockKind::Block);
+            let continuation_id = continuation_block.id;
+
+            // Block for the consequent (if the test is truthy)
+            let consequent_loc = builder.source_location(if_stmt.consequent.span());
+            let consequent_block = builder.try_enter(BlockKind::Block, |builder, _block_id| {
+                lower_statement(builder, &if_stmt.consequent, None, parent_scope)?;
+                Ok(Terminal::Goto {
+                    block: continuation_id,
+                    variant: GotoVariant::Break,
+                    id: EvaluationOrder(0),
+                    loc: consequent_loc,
+                })
+            })?;
+
+            // Block for the alternate (if the test is not truthy)
+            let alternate_block = if let Some(alternate) = &if_stmt.alternate {
+                let alternate_loc = builder.source_location(alternate.span());
+                builder.try_enter(BlockKind::Block, |builder, _block_id| {
+                    lower_statement(builder, alternate, None, parent_scope)?;
+                    Ok(Terminal::Goto {
+                        block: continuation_id,
+                        variant: GotoVariant::Break,
+                        id: EvaluationOrder(0),
+                        loc: alternate_loc,
+                    })
+                })?
+            } else {
+                // If there is no else clause, use the continuation directly
+                continuation_id
+            };
+
+            let test = lower_expression_to_temporary(builder, &if_stmt.test)?;
+            builder.terminate_with_continuation(
+                Terminal::If {
+                    test,
+                    consequent: consequent_block,
+                    alternate: alternate_block,
+                    fallthrough: continuation_id,
+                    id: EvaluationOrder(0),
+                    loc,
+                },
+                continuation_block,
+            );
+        }
+        oxc::Statement::ForStatement(for_stmt) => {
+            let loc = builder.source_location(for_stmt.span);
+
+            let test_block = builder.reserve(BlockKind::Loop);
+            let test_block_id = test_block.id;
+            // Block for code following the loop
+            let continuation_block = builder.reserve(BlockKind::Block);
+            let continuation_id = continuation_block.id;
+
+            // Init block: lower init expression/declaration, then goto test
+            let init_block = builder.try_enter(BlockKind::Loop, |builder, _block_id| {
+                let init_loc = match &for_stmt.init {
+                    None => {
+                        // No init expression (e.g., `for (; ...)`), add a placeholder
+                        let placeholder = InstructionValue::Primitive {
+                            value: PrimitiveValue::Undefined,
+                            loc: loc.clone(),
+                        };
+                        lower_value_to_temporary(builder, placeholder)?;
+                        loc.clone()
+                    }
+                    Some(oxc::ForStatementInit::VariableDeclaration(var_decl)) => {
+                        let init_loc = builder.source_location(var_decl.span);
+                        lower_variable_declaration(builder, var_decl)?;
+                        init_loc
+                    }
+                    Some(init) => {
+                        let expr = init.to_expression();
+                        let init_loc = builder.source_location(expr.span());
+                        builder.record_error(CompilerErrorDetail {
+                            category: ErrorCategory::Todo,
+                            reason: "(BuildHIR::lowerStatement) Handle non-variable initialization in ForStatement".to_string(),
+                            description: None,
+                            loc: loc.clone(),
+                            suggestions: None,
+                        })?;
+                        lower_expression_to_temporary(builder, expr)?;
+                        init_loc
+                    }
+                };
+                Ok(Terminal::Goto {
+                    block: test_block_id,
+                    variant: GotoVariant::Break,
+                    id: EvaluationOrder(0),
+                    loc: init_loc,
+                })
+            })?;
+
+            // Update block (optional)
+            let update_block_id = if let Some(update) = &for_stmt.update {
+                let update_loc = builder.source_location(update.span());
+                Some(builder.try_enter(BlockKind::Loop, |builder, _block_id| {
+                    lower_expression_to_temporary(builder, update)?;
+                    Ok(Terminal::Goto {
+                        block: test_block_id,
+                        variant: GotoVariant::Break,
+                        id: EvaluationOrder(0),
+                        loc: update_loc,
+                    })
+                })?)
+            } else {
+                None
+            };
+
+            // Loop body block
+            let continue_target = update_block_id.unwrap_or(test_block_id);
+            let body_loc = builder.source_location(for_stmt.body.span());
+            let body_block = builder.try_enter(BlockKind::Block, |builder, _block_id| {
+                builder.loop_scope(
+                    _label.map(|s| s.to_string()),
+                    continue_target,
+                    continuation_id,
+                    |builder| {
+                        lower_statement(builder, &for_stmt.body, None, parent_scope)?;
+                        Ok(Terminal::Goto {
+                            block: continue_target,
+                            variant: GotoVariant::Continue,
+                            id: EvaluationOrder(0),
+                            loc: body_loc,
+                        })
+                    },
+                )
+            })?;
+
+            // Emit For terminal, then fill in the test block
+            builder.terminate_with_continuation(
+                Terminal::For {
+                    init: init_block,
+                    test: test_block_id,
+                    update: update_block_id,
+                    loop_block: body_block,
+                    fallthrough: continuation_id,
+                    id: EvaluationOrder(0),
+                    loc: loc.clone(),
+                },
+                test_block,
+            );
+
+            // Fill in the test block
+            if let Some(test_expr) = &for_stmt.test {
+                let test = lower_expression_to_temporary(builder, test_expr)?;
+                builder.terminate_with_continuation(
+                    Terminal::Branch {
+                        test,
+                        consequent: body_block,
+                        alternate: continuation_id,
+                        fallthrough: continuation_id,
+                        id: EvaluationOrder(0),
+                        loc: loc.clone(),
+                    },
+                    continuation_block,
+                );
+            } else {
+                builder.record_error(CompilerErrorDetail {
+                    category: ErrorCategory::Todo,
+                    reason: "(BuildHIR::lowerStatement) Handle empty test in ForStatement"
+                        .to_string(),
+                    description: None,
+                    loc: loc.clone(),
+                    suggestions: None,
+                })?;
+                // Treat `for(;;)` as `while(true)` to keep the builder state consistent
+                let true_val = InstructionValue::Primitive {
+                    value: PrimitiveValue::Boolean(true),
+                    loc: loc.clone(),
+                };
+                let test = lower_value_to_temporary(builder, true_val)?;
+                builder.terminate_with_continuation(
+                    Terminal::Branch {
+                        test,
+                        consequent: body_block,
+                        alternate: continuation_id,
+                        fallthrough: continuation_id,
+                        id: EvaluationOrder(0),
+                        loc,
+                    },
+                    continuation_block,
+                );
+            }
+        }
+        oxc::Statement::WhileStatement(while_stmt) => {
+            let loc = builder.source_location(while_stmt.span);
+            // Block used to evaluate whether to (re)enter or exit the loop
+            let conditional_block = builder.reserve(BlockKind::Loop);
+            let conditional_id = conditional_block.id;
+            // Block for code following the loop
+            let continuation_block = builder.reserve(BlockKind::Block);
+            let continuation_id = continuation_block.id;
+
+            // Loop body
+            let body_loc = builder.source_location(while_stmt.body.span());
+            let loop_block = builder.try_enter(BlockKind::Block, |builder, _block_id| {
+                builder.loop_scope(
+                    _label.map(|s| s.to_string()),
+                    conditional_id,
+                    continuation_id,
+                    |builder| {
+                        lower_statement(builder, &while_stmt.body, None, parent_scope)?;
+                        Ok(Terminal::Goto {
+                            block: conditional_id,
+                            variant: GotoVariant::Continue,
+                            id: EvaluationOrder(0),
+                            loc: body_loc,
+                        })
+                    },
+                )
+            })?;
+
+            // Emit While terminal, jumping to the conditional block
+            builder.terminate_with_continuation(
+                Terminal::While {
+                    test: conditional_id,
+                    loop_block,
+                    fallthrough: continuation_id,
+                    id: EvaluationOrder(0),
+                    loc: loc.clone(),
+                },
+                conditional_block,
+            );
+
+            // Fill in the conditional block: lower test, branch
+            let test = lower_expression_to_temporary(builder, &while_stmt.test)?;
+            builder.terminate_with_continuation(
+                Terminal::Branch {
+                    test,
+                    consequent: loop_block,
+                    alternate: continuation_id,
+                    fallthrough: conditional_id,
+                    id: EvaluationOrder(0),
+                    loc,
+                },
+                continuation_block,
+            );
+        }
+        oxc::Statement::DoWhileStatement(do_while_stmt) => {
+            let loc = builder.source_location(do_while_stmt.span);
+            // Block used to evaluate whether to (re)enter or exit the loop
+            let conditional_block = builder.reserve(BlockKind::Loop);
+            let conditional_id = conditional_block.id;
+            // Block for code following the loop
+            let continuation_block = builder.reserve(BlockKind::Block);
+            let continuation_id = continuation_block.id;
+
+            // Loop body, executed at least once unconditionally prior to exit
+            let body_loc = builder.source_location(do_while_stmt.body.span());
+            let loop_block = builder.try_enter(BlockKind::Block, |builder, _block_id| {
+                builder.loop_scope(
+                    _label.map(|s| s.to_string()),
+                    conditional_id,
+                    continuation_id,
+                    |builder| {
+                        lower_statement(builder, &do_while_stmt.body, None, parent_scope)?;
+                        Ok(Terminal::Goto {
+                            block: conditional_id,
+                            variant: GotoVariant::Continue,
+                            id: EvaluationOrder(0),
+                            loc: body_loc,
+                        })
+                    },
+                )
+            })?;
+
+            // Jump to the conditional block
+            builder.terminate_with_continuation(
+                Terminal::DoWhile {
+                    loop_block,
+                    test: conditional_id,
+                    fallthrough: continuation_id,
+                    id: EvaluationOrder(0),
+                    loc: loc.clone(),
+                },
+                conditional_block,
+            );
+
+            // Fill in the conditional block: lower test, branch
+            let test = lower_expression_to_temporary(builder, &do_while_stmt.test)?;
+            builder.terminate_with_continuation(
+                Terminal::Branch {
+                    test,
+                    consequent: loop_block,
+                    alternate: continuation_id,
+                    fallthrough: conditional_id,
+                    id: EvaluationOrder(0),
+                    loc,
+                },
+                continuation_block,
+            );
+        }
+        oxc::Statement::ForInStatement(for_in) => {
+            let loc = builder.source_location(for_in.span);
+            let continuation_block = builder.reserve(BlockKind::Block);
+            let continuation_id = continuation_block.id;
+            let init_block = builder.reserve(BlockKind::Loop);
+            let init_block_id = init_block.id;
+
+            let body_loc = builder.source_location(for_in.body.span());
+            let loop_block = builder.try_enter(BlockKind::Block, |builder, _block_id| {
+                builder.loop_scope(
+                    _label.map(|s| s.to_string()),
+                    init_block_id,
+                    continuation_id,
+                    |builder| {
+                        lower_statement(builder, &for_in.body, None, parent_scope)?;
+                        Ok(Terminal::Goto {
+                            block: init_block_id,
+                            variant: GotoVariant::Continue,
+                            id: EvaluationOrder(0),
+                            loc: body_loc,
+                        })
+                    },
+                )
+            })?;
+
+            let value = lower_expression_to_temporary(builder, &for_in.right)?;
+            builder.terminate_with_continuation(
+                Terminal::ForIn {
+                    init: init_block_id,
+                    loop_block,
+                    fallthrough: continuation_id,
+                    id: EvaluationOrder(0),
+                    loc: loc.clone(),
+                },
+                init_block,
+            );
+
+            // Lower the init: NextPropertyOf + assignment
+            let left_loc = builder.source_location(for_in.left.span());
+            let next_property = lower_value_to_temporary(
+                builder,
+                InstructionValue::NextPropertyOf { value, loc: left_loc.clone() },
+            )?;
+
+            let assign_result =
+                lower_for_in_of_left(builder, &for_in.left, left_loc.clone(), next_property.clone())?;
+            // Use the assign result (StoreLocal temp) as the test, matching TS behavior
+            let test_value = assign_result.unwrap_or(next_property);
+            let test = lower_value_to_temporary(
+                builder,
+                InstructionValue::LoadLocal { place: test_value, loc: left_loc.clone() },
+            )?;
+            builder.terminate_with_continuation(
+                Terminal::Branch {
+                    test,
+                    consequent: loop_block,
+                    alternate: continuation_id,
+                    fallthrough: continuation_id,
+                    id: EvaluationOrder(0),
+                    loc: loc.clone(),
+                },
+                continuation_block,
+            );
+        }
+        oxc::Statement::ForOfStatement(for_of) => {
+            let loc = builder.source_location(for_of.span);
+            let continuation_block = builder.reserve(BlockKind::Block);
+            let continuation_id = continuation_block.id;
+            let init_block = builder.reserve(BlockKind::Loop);
+            let init_block_id = init_block.id;
+            let test_block = builder.reserve(BlockKind::Loop);
+            let test_block_id = test_block.id;
+
+            if for_of.r#await {
+                builder.record_error(CompilerErrorDetail {
+                    category: ErrorCategory::Todo,
+                    reason: "(BuildHIR::lowerStatement) Handle for-await loops".to_string(),
+                    description: None,
+                    loc: loc.clone(),
+                    suggestions: None,
+                })?;
+                return Ok(());
+            }
+
+            let body_loc = builder.source_location(for_of.body.span());
+            let loop_block = builder.try_enter(BlockKind::Block, |builder, _block_id| {
+                builder.loop_scope(
+                    _label.map(|s| s.to_string()),
+                    init_block_id,
+                    continuation_id,
+                    |builder| {
+                        lower_statement(builder, &for_of.body, None, parent_scope)?;
+                        Ok(Terminal::Goto {
+                            block: init_block_id,
+                            variant: GotoVariant::Continue,
+                            id: EvaluationOrder(0),
+                            loc: body_loc,
+                        })
+                    },
+                )
+            })?;
+
+            let value = lower_expression_to_temporary(builder, &for_of.right)?;
+            builder.terminate_with_continuation(
+                Terminal::ForOf {
+                    init: init_block_id,
+                    test: test_block_id,
+                    loop_block,
+                    fallthrough: continuation_id,
+                    id: EvaluationOrder(0),
+                    loc: loc.clone(),
+                },
+                init_block,
+            );
+
+            // Init block: GetIterator, goto test
+            let iterator = lower_value_to_temporary(
+                builder,
+                InstructionValue::GetIterator { collection: value.clone(), loc: value.loc.clone() },
+            )?;
+            builder.terminate_with_continuation(
+                Terminal::Goto {
+                    block: test_block_id,
+                    variant: GotoVariant::Break,
+                    id: EvaluationOrder(0),
+                    loc: loc.clone(),
+                },
+                test_block,
+            );
+
+            // Test block: IteratorNext, assign, branch
+            let left_loc = builder.source_location(for_of.left.span());
+            let advance_iterator = lower_value_to_temporary(
+                builder,
+                InstructionValue::IteratorNext {
+                    iterator: iterator.clone(),
+                    collection: value.clone(),
+                    loc: left_loc.clone(),
+                },
+            )?;
+
+            let assign_result = lower_for_in_of_left(
+                builder,
+                &for_of.left,
+                left_loc.clone(),
+                advance_iterator.clone(),
+            )?;
+            // Use the assign result (StoreLocal temp) as the test, matching TS behavior
+            let test_value = assign_result.unwrap_or(advance_iterator);
+            let test = lower_value_to_temporary(
+                builder,
+                InstructionValue::LoadLocal { place: test_value, loc: left_loc.clone() },
+            )?;
+            builder.terminate_with_continuation(
+                Terminal::Branch {
+                    test,
+                    consequent: loop_block,
+                    alternate: continuation_id,
+                    fallthrough: continuation_id,
+                    id: EvaluationOrder(0),
+                    loc: loc.clone(),
+                },
+                continuation_block,
+            );
+        }
+        oxc::Statement::SwitchStatement(switch_stmt) => {
+            let loc = builder.source_location(switch_stmt.span);
+            let continuation_block = builder.reserve(BlockKind::Block);
+            let continuation_id = continuation_block.id;
+
+            // Iterate through cases in reverse order so that previous blocks can
+            // fallthrough to successors
+            let mut fallthrough = continuation_id;
+            let mut cases: Vec<Case> = Vec::new();
+            let mut has_default = false;
+
+            for ii in (0..switch_stmt.cases.len()).rev() {
+                let case = &switch_stmt.cases[ii];
+                let case_loc = builder.source_location(case.span);
+
+                if case.test.is_none() {
+                    if has_default {
+                        builder.record_error(CompilerErrorDetail {
+                            category: ErrorCategory::Syntax,
+                            reason: "Expected at most one `default` branch in a switch statement"
+                                .to_string(),
+                            description: None,
+                            loc: case_loc.clone(),
+                            suggestions: None,
+                        })?;
+                        break;
+                    }
+                    has_default = true;
+                }
+
+                let fallthrough_target = fallthrough;
+                let block = builder.try_enter(BlockKind::Block, |builder, _block_id| {
+                    builder.switch_scope(_label.map(|s| s.to_string()), continuation_id, |builder| {
+                        for consequent in &case.consequent {
+                            lower_statement(builder, consequent, None, parent_scope)?;
+                        }
+                        Ok(Terminal::Goto {
+                            block: fallthrough_target,
+                            variant: GotoVariant::Break,
+                            id: EvaluationOrder(0),
+                            loc: case_loc.clone(),
+                        })
+                    })
+                })?;
+
+                let test = if let Some(test_expr) = &case.test {
+                    Some(lower_reorderable_expression(builder, test_expr)?)
+                } else {
+                    None
+                };
+
+                cases.push(Case { test, block });
+                fallthrough = block;
+            }
+
+            // Reverse back to original order
+            cases.reverse();
+
+            // If no default case, add one that jumps to continuation
+            if !has_default {
+                cases.push(Case { test: None, block: continuation_id });
+            }
+
+            let test = lower_expression_to_temporary(builder, &switch_stmt.discriminant)?;
+            builder.terminate_with_continuation(
+                Terminal::Switch {
+                    test,
+                    cases,
+                    fallthrough: continuation_id,
+                    id: EvaluationOrder(0),
+                    loc,
+                },
+                continuation_block,
+            );
+        }
+        oxc::Statement::TryStatement(try_stmt) => {
+            let loc = builder.source_location(try_stmt.span);
+            let continuation_block = builder.reserve(BlockKind::Block);
+            let continuation_id = continuation_block.id;
+
+            let handler_clause = match &try_stmt.handler {
+                Some(h) => h,
+                None => {
+                    builder.record_error(CompilerErrorDetail {
+                        category: ErrorCategory::Todo,
+                        reason:
+                            "(BuildHIR::lowerStatement) Handle TryStatement without a catch clause"
+                                .to_string(),
+                        description: None,
+                        loc: loc.clone(),
+                        suggestions: None,
+                    })?;
+                    return Ok(());
+                }
+            };
+
+            if try_stmt.finalizer.is_some() {
+                builder.record_error(CompilerErrorDetail {
+                    category: ErrorCategory::Todo,
+                    reason: "(BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause".to_string(),
+                    description: None,
+                    loc: loc.clone(),
+                    suggestions: None,
+                })?;
+            }
+
+            // Set up handler binding if catch has a param
+            let handler_binding_info: Option<(Place, &oxc::BindingPattern)> =
+                if let Some(param) = &handler_clause.param {
+                    // Check for destructuring in catch clause params.
+                    // Match TS behavior: Babel doesn't register destructured catch bindings
+                    // in its scope, so resolveIdentifier fails and records an invariant error.
+                    let is_destructuring = matches!(
+                        &param.pattern,
+                        oxc::BindingPattern::ObjectPattern(_)
+                            | oxc::BindingPattern::ArrayPattern(_)
+                    );
+                    if is_destructuring {
+                        let mut id_locs = Vec::new();
+                        collect_catch_pattern_identifier_locs(builder, &param.pattern, &mut id_locs);
+                        for id_loc in id_locs {
+                            builder.record_error(CompilerErrorDetail {
+                                reason: "(BuildHIR::lowerAssignment) Could not find binding for declaration.".to_string(),
+                                category: ErrorCategory::Invariant,
+                                loc: id_loc,
+                                description: None,
+                                suggestions: None,
+                            })?;
+                        }
+                        None
+                    } else {
+                        let param_loc = builder.source_location(param.pattern.span());
+                        let id = builder.make_temporary(param_loc.clone());
+                        promote_temporary(builder, id);
+                        let place = Place {
+                            identifier: id,
+                            effect: Effect::Unknown,
+                            reactive: false,
+                            loc: param_loc.clone(),
+                        };
+                        // Emit DeclareLocal for the catch binding
+                        lower_value_to_temporary(
+                            builder,
+                            InstructionValue::DeclareLocal {
+                                lvalue: LValue {
+                                    kind: InstructionKind::Catch,
+                                    place: place.clone(),
+                                },
+                                type_annotation: None,
+                                loc: param_loc,
+                            },
+                        )?;
+                        Some((place, &param.pattern))
+                    }
+                } else {
+                    None
+                };
+
+            // Create the handler (catch) block
+            let handler_binding_for_block = handler_binding_info.clone();
+            let handler_loc = builder.source_location(handler_clause.span);
+            // Use the catch param's loc for the assignment, matching TS: handlerBinding.path.node.loc
+            let handler_param_loc =
+                handler_clause.param.as_ref().map(|p| builder.source_location(p.pattern.span()));
+            let handler_block = builder.try_enter(BlockKind::Catch, |builder, _block_id| {
+                if let Some((ref place, pattern)) = handler_binding_for_block {
+                    lower_binding_assignment(
+                        builder,
+                        handler_param_loc.clone().flatten().or_else(|| handler_loc.clone()),
+                        InstructionKind::Catch,
+                        pattern,
+                        place.clone(),
+                        AssignmentStyle::Assignment,
+                    )?;
+                }
+                // Lower the catch body using lower_block_statement to get hoisting support.
+                // Use the catch clause's scope (which contains the catch param binding).
+                // Fall back to the body block's own scope if the catch clause scope is missing.
+                let catch_scope = builder
+                    .scope_info()
+                    .resolve_scope_for_node(Some(handler_clause.span.start))
+                    .or_else(|| {
+                        builder
+                            .scope_info()
+                            .resolve_scope_for_node(Some(handler_clause.body.span.start))
+                    });
+                if let Some(scope_id) = catch_scope {
+                    lower_block_statement_with_scope(
+                        builder,
+                        &handler_clause.body.body,
+                        handler_clause.body.span.start,
+                        scope_id,
+                    )?;
+                } else {
+                    lower_block_statement(
+                        builder,
+                        &handler_clause.body.body,
+                        handler_clause.body.span.start,
+                        parent_scope,
+                    )?;
+                }
+                Ok(Terminal::Goto {
+                    block: continuation_id,
+                    variant: GotoVariant::Break,
+                    id: EvaluationOrder(0),
+                    loc: handler_loc.clone(),
+                })
+            })?;
+
+            // Create the try block
+            let try_body_loc = builder.source_location(try_stmt.block.span);
+            let try_block = builder.try_enter(BlockKind::Block, |builder, _block_id| {
+                builder.try_enter_try_catch(handler_block, |builder| {
+                    lower_block_statement(
+                        builder,
+                        &try_stmt.block.body,
+                        try_stmt.block.span.start,
+                        parent_scope,
+                    )?;
+                    Ok(())
+                })?;
+                Ok(Terminal::Goto {
+                    block: continuation_id,
+                    variant: GotoVariant::Try,
+                    id: EvaluationOrder(0),
+                    loc: try_body_loc.clone(),
+                })
+            })?;
+
+            builder.terminate_with_continuation(
+                Terminal::Try {
+                    block: try_block,
+                    handler_binding: handler_binding_info.map(|(place, _)| place),
+                    handler: handler_block,
+                    fallthrough: continuation_id,
+                    id: EvaluationOrder(0),
+                    loc,
+                },
+                continuation_block,
+            );
+        }
+        oxc::Statement::BreakStatement(brk) => {
+            let loc = builder.source_location(brk.span);
+            let label_name = brk.label.as_ref().map(|l| l.name.as_str());
+            let target = builder.lookup_break(label_name)?;
+            let fallthrough = builder.reserve(BlockKind::Block);
+            builder.terminate_with_continuation(
+                Terminal::Goto {
+                    block: target,
+                    variant: GotoVariant::Break,
+                    id: EvaluationOrder(0),
+                    loc,
+                },
+                fallthrough,
+            );
+        }
+        oxc::Statement::ContinueStatement(cont) => {
+            let loc = builder.source_location(cont.span);
+            let label_name = cont.label.as_ref().map(|l| l.name.as_str());
+            let target = builder.lookup_continue(label_name)?;
+            let fallthrough = builder.reserve(BlockKind::Block);
+            builder.terminate_with_continuation(
+                Terminal::Goto {
+                    block: target,
+                    variant: GotoVariant::Continue,
+                    id: EvaluationOrder(0),
+                    loc,
+                },
+                fallthrough,
+            );
+        }
+        oxc::Statement::LabeledStatement(labeled_stmt) => {
+            let label_name = labeled_stmt.label.name.as_str();
+            let loc = builder.source_location(labeled_stmt.span);
+
+            // Check if the body is a loop statement - if so, delegate with label
+            match &labeled_stmt.body {
+                oxc::Statement::ForStatement(_)
+                | oxc::Statement::WhileStatement(_)
+                | oxc::Statement::DoWhileStatement(_)
+                | oxc::Statement::ForInStatement(_)
+                | oxc::Statement::ForOfStatement(_) => {
+                    // Labeled loops are special because of continue, push the label down
+                    lower_statement(builder, &labeled_stmt.body, Some(label_name), parent_scope)?;
+                }
+                _ => {
+                    // All other statements create a continuation block to allow `break`
+                    let continuation_block = builder.reserve(BlockKind::Block);
+                    let continuation_id = continuation_block.id;
+                    let body_loc = builder.source_location(labeled_stmt.body.span());
+                    let label_string = label_name.to_string();
+
+                    let block = builder.try_enter(BlockKind::Block, |builder, _block_id| {
+                        builder.label_scope(label_string, continuation_id, |builder| {
+                            lower_statement(builder, &labeled_stmt.body, None, parent_scope)?;
+                            Ok(())
+                        })?;
+                        Ok(Terminal::Goto {
+                            block: continuation_id,
+                            variant: GotoVariant::Break,
+                            id: EvaluationOrder(0),
+                            loc: body_loc,
+                        })
+                    })?;
+
+                    builder.terminate_with_continuation(
+                        Terminal::Label {
+                            block,
+                            fallthrough: continuation_id,
+                            id: EvaluationOrder(0),
+                            loc,
+                        },
+                        continuation_block,
+                    );
+                }
+            }
+        }
+        oxc::Statement::WithStatement(with_stmt) => {
+            let loc = builder.source_location(with_stmt.span);
+            builder.record_error(CompilerErrorDetail {
+                category: ErrorCategory::UnsupportedSyntax,
+                reason: "JavaScript 'with' syntax is not supported".to_string(),
+                description: Some("'with' syntax is considered deprecated and removed from JavaScript standards, consider alternatives".to_string()),
+                loc,
+                suggestions: None,
+            })?;
+        }
+        oxc::Statement::ClassDeclaration(cls) => {
+            let loc = builder.source_location(cls.span);
+            builder.record_error(CompilerErrorDetail {
+                category: ErrorCategory::UnsupportedSyntax,
+                reason: "Inline `class` declarations are not supported".to_string(),
+                description: Some(
+                    "Move class declarations outside of components/hooks".to_string(),
+                ),
+                loc,
+                suggestions: None,
+            })?;
+        }
+        oxc::Statement::ImportDeclaration(_)
+        | oxc::Statement::ExportNamedDeclaration(_)
+        | oxc::Statement::ExportDefaultDeclaration(_)
+        | oxc::Statement::ExportAllDeclaration(_) => {
+            let loc = builder.source_location(stmt.span());
+            builder.record_error(CompilerErrorDetail {
+                category: ErrorCategory::Syntax,
+                reason: "JavaScript `import` and `export` statements may only appear at the top level of a module".to_string(),
+                description: None,
+                loc,
+                suggestions: None,
+            })?;
+        }
         _ => {
-            // not-yet-ported statements are skipped (differential green-set grows as arms land)
+            // Remaining statements are skipped: bodyless FunctionDeclaration
+            // (== Babel TSDeclareFunction), TS/Flow type-only declarations
+            // (TSTypeAlias/TSInterface/TSModule/TSGlobal/TSImportEquals/
+            // TSExportAssignment/TSNamespaceExport), and TSEnumDeclaration
+            // (the original emitted UnsupportedNode silently, no diagnostic).
         }
     }
     Ok(())
+}
+
+/// Lower a `VariableDeclaration`, mirroring the original `Statement::VariableDeclaration`
+/// arm (extracted so the `ForStatement` init can reuse it without re-wrapping in a
+/// `Statement`).
+fn lower_variable_declaration(
+    builder: &mut HirBuilder,
+    var_decl: &oxc::VariableDeclaration,
+) -> Result<(), CompilerDiagnostic> {
+    use oxc::VariableDeclarationKind as VK;
+    if matches!(var_decl.kind, VK::Var) {
+        builder.record_error(CompilerErrorDetail {
+            reason: "(BuildHIR::lowerStatement) Handle var kinds in VariableDeclaration".to_string(),
+            category: ErrorCategory::Todo,
+            loc: builder.source_location(var_decl.span),
+            description: None,
+            suggestions: None,
+        })?;
+        // Treat `var` as `let` so references to the variable don't break
+    }
+    let kind = match var_decl.kind {
+        VK::Let | VK::Var => InstructionKind::Let,
+        VK::Const | VK::Using | VK::AwaitUsing => InstructionKind::Const,
+    };
+    for declarator in &var_decl.declarations {
+        let stmt_loc = builder.source_location(var_decl.span);
+        if let Some(init) = &declarator.init {
+            let value = lower_expression_to_temporary(builder, init)?;
+            let assign_style = match &declarator.id {
+                oxc::BindingPattern::ObjectPattern(_) | oxc::BindingPattern::ArrayPattern(_) => {
+                    AssignmentStyle::Destructure
+                }
+                _ => AssignmentStyle::Assignment,
+            };
+            lower_binding_assignment(builder, stmt_loc, kind, &declarator.id, value, assign_style)?;
+        } else if let oxc::BindingPattern::BindingIdentifier(id) = &declarator.id {
+            // No init: emit DeclareLocal or DeclareContext
+            let id_loc = builder.source_location(id.span);
+            let mut binding = builder.resolve_identifier(
+                id.name.as_str(),
+                id.span.start,
+                id_loc.clone(),
+                Some(id.span.start),
+            )?;
+            if !matches!(binding, VariableBinding::Identifier { .. }) {
+                // Position-based resolution failed (synthetic $$gen vars at
+                // position 0). Try scope lookup including descendants.
+                if let Some((binding_id, binding_data)) = builder
+                    .scope_info()
+                    .find_binding_id_in_descendants(id.name.as_str(), builder.function_scope())
+                {
+                    let binding_kind =
+                        crate::react_compiler_lowering::convert_binding_kind(&binding_data.kind);
+                    let identifier = builder.resolve_binding_with_loc(
+                        id.name.as_str(),
+                        binding_id,
+                        id_loc.clone(),
+                    )?;
+                    binding = VariableBinding::Identifier { identifier, binding_kind };
+                }
+            }
+            match binding {
+                VariableBinding::Identifier { identifier, .. } => {
+                    // Update the identifier's loc to the declaration site
+                    // (it may have been first created at a reference site during hoisting)
+                    builder.set_identifier_declaration_loc(identifier, &id_loc);
+                    let place = Place {
+                        identifier,
+                        effect: Effect::Unknown,
+                        reactive: false,
+                        loc: id_loc.clone(),
+                    };
+                    if builder.is_context_identifier(
+                        id.name.as_str(),
+                        id.span.start,
+                        Some(id.span.start),
+                    ) {
+                        if kind == InstructionKind::Const {
+                            builder.record_error(CompilerErrorDetail {
+                                reason: "Expect `const` declaration not to be reassigned"
+                                    .to_string(),
+                                category: ErrorCategory::Syntax,
+                                loc: id_loc.clone(),
+                                description: None,
+                                suggestions: None,
+                            })?;
+                        }
+                        lower_value_to_temporary(
+                            builder,
+                            InstructionValue::DeclareContext {
+                                lvalue: LValue { kind: InstructionKind::Let, place },
+                                loc: id_loc,
+                            },
+                        )?;
+                    } else {
+                        let type_annotation = declarator
+                            .type_annotation
+                            .as_ref()
+                            .map(|ann| ts_type_node_type(&ann.type_annotation).to_string());
+                        lower_value_to_temporary(
+                            builder,
+                            InstructionValue::DeclareLocal {
+                                lvalue: LValue { kind, place },
+                                type_annotation,
+                                loc: id_loc,
+                            },
+                        )?;
+                    }
+                }
+                _ => {
+                    builder.record_error(CompilerErrorDetail {
+                        reason: "Could not find binding for declaration".to_string(),
+                        category: ErrorCategory::Invariant,
+                        loc: id_loc,
+                        description: None,
+                        suggestions: None,
+                    })?;
+                }
+            }
+        } else {
+            builder.record_error(CompilerErrorDetail {
+                reason: "Expected variable declaration to be an identifier if no initializer was provided".to_string(),
+                category: ErrorCategory::Syntax,
+                loc: builder.source_location(declarator.span),
+                description: None,
+                suggestions: None,
+            })?;
+        }
+    }
+    Ok(())
+}
+
+/// Lower the `left` target of a for-in / for-of loop, dispatching to the binding
+/// assignment (for `VariableDeclaration`) or assignment-target (for plain
+/// patterns) lowering. Mirrors the original `ForInOfLeft` match.
+fn lower_for_in_of_left(
+    builder: &mut HirBuilder,
+    left: &oxc::ForStatementLeft,
+    left_loc: Option<SourceLocation>,
+    value: Place,
+) -> Result<Option<Place>, CompilerError> {
+    match left {
+        oxc::ForStatementLeft::VariableDeclaration(var_decl) => {
+            if var_decl.declarations.len() != 1 {
+                builder.record_error(CompilerErrorDetail {
+                    category: ErrorCategory::Invariant,
+                    reason: format!(
+                        "Expected only one declaration in for-in/of init, got {}",
+                        var_decl.declarations.len()
+                    ),
+                    description: None,
+                    loc: left_loc.clone(),
+                    suggestions: None,
+                })?;
+            }
+            if let Some(declarator) = var_decl.declarations.first() {
+                lower_binding_assignment(
+                    builder,
+                    left_loc,
+                    InstructionKind::Let,
+                    &declarator.id,
+                    value,
+                    AssignmentStyle::Assignment,
+                )
+            } else {
+                Ok(None)
+            }
+        }
+        _ => lower_assignment_target(
+            builder,
+            left_loc,
+            InstructionKind::Reassign,
+            left.to_assignment_target(),
+            value,
+            AssignmentStyle::Assignment,
+        ),
+    }
+}
+
+/// Collect identifier locs from a destructured catch-clause pattern, for error
+/// reporting (Babel doesn't register destructured catch bindings).
+fn collect_catch_pattern_identifier_locs(
+    builder: &HirBuilder,
+    pat: &oxc::BindingPattern,
+    locs: &mut Vec<Option<SourceLocation>>,
+) {
+    match pat {
+        oxc::BindingPattern::BindingIdentifier(id) => {
+            locs.push(builder.source_location(id.span));
+        }
+        oxc::BindingPattern::ObjectPattern(obj) => {
+            for prop in &obj.properties {
+                collect_catch_pattern_identifier_locs(builder, &prop.value, locs);
+            }
+            if let Some(rest) = &obj.rest {
+                collect_catch_pattern_identifier_locs(builder, &rest.argument, locs);
+            }
+        }
+        oxc::BindingPattern::ArrayPattern(arr) => {
+            for elem in arr.elements.iter().flatten() {
+                collect_catch_pattern_identifier_locs(builder, elem, locs);
+            }
+            if let Some(rest) = &arr.rest {
+                collect_catch_pattern_identifier_locs(builder, &rest.argument, locs);
+            }
+        }
+        // The original matched only Identifier/Object/Array; AssignmentPattern
+        // (destructuring defaults) fell through its `_ => {}` catch-all.
+        oxc::BindingPattern::AssignmentPattern(_) => {}
+    }
 }
