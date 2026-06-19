@@ -926,12 +926,255 @@ fn lower_inner(
 // primitive / no-op so the crate compiles and the differential green-set grows.
 // =============================================================================
 
+// =============================================================================
+// lower_identifier
+// =============================================================================
+
+/// Resolve an identifier to a Place. Local/context identifiers return a Place
+/// referencing the binding; globals/imports emit a LoadGlobal. AST-agnostic.
+fn lower_identifier(
+    builder: &mut HirBuilder,
+    name: &str,
+    start: u32,
+    loc: Option<SourceLocation>,
+    node_id: Option<u32>,
+) -> Result<Place, CompilerError> {
+    let binding = builder.resolve_identifier(name, start, loc.clone(), node_id)?;
+    match binding {
+        VariableBinding::Identifier { identifier, .. } => {
+            Ok(Place { identifier, effect: Effect::Unknown, reactive: false, loc })
+        }
+        _ => {
+            if let VariableBinding::Global { ref name } = binding {
+                if name == "eval" {
+                    builder.record_error(CompilerErrorDetail {
+                        category: ErrorCategory::UnsupportedSyntax,
+                        reason: "The 'eval' function is not supported".to_string(),
+                        description: Some(
+                            "Eval is an anti-pattern in JavaScript, and the code executed cannot be evaluated by React Compiler".to_string(),
+                        ),
+                        loc: loc.clone(),
+                        suggestions: None,
+                    })?;
+                }
+            }
+            let non_local_binding = match binding {
+                VariableBinding::Global { name } => NonLocalBinding::Global { name },
+                VariableBinding::ImportDefault { name, module } => {
+                    NonLocalBinding::ImportDefault { name, module }
+                }
+                VariableBinding::ImportSpecifier { name, module, imported } => {
+                    NonLocalBinding::ImportSpecifier { name, module, imported }
+                }
+                VariableBinding::ImportNamespace { name, module } => {
+                    NonLocalBinding::ImportNamespace { name, module }
+                }
+                VariableBinding::ModuleLocal { name } => NonLocalBinding::ModuleLocal { name },
+                VariableBinding::Identifier { .. } => unreachable!(),
+            };
+            let instr_value =
+                InstructionValue::LoadGlobal { binding: non_local_binding, loc: loc.clone() };
+            lower_value_to_temporary(builder, instr_value)
+        }
+    }
+}
+
+fn convert_binary_operator(op: oxc::BinaryOperator) -> BinaryOperator {
+    use oxc::BinaryOperator as O;
+    match op {
+        O::Addition => BinaryOperator::Add,
+        O::Subtraction => BinaryOperator::Subtract,
+        O::Multiplication => BinaryOperator::Multiply,
+        O::Division => BinaryOperator::Divide,
+        O::Remainder => BinaryOperator::Modulo,
+        O::Exponential => BinaryOperator::Exponent,
+        O::Equality => BinaryOperator::Equal,
+        O::StrictEquality => BinaryOperator::StrictEqual,
+        O::Inequality => BinaryOperator::NotEqual,
+        O::StrictInequality => BinaryOperator::StrictNotEqual,
+        O::LessThan => BinaryOperator::LessThan,
+        O::LessEqualThan => BinaryOperator::LessEqual,
+        O::GreaterThan => BinaryOperator::GreaterThan,
+        O::GreaterEqualThan => BinaryOperator::GreaterEqual,
+        O::ShiftLeft => BinaryOperator::ShiftLeft,
+        O::ShiftRight => BinaryOperator::ShiftRight,
+        O::ShiftRightZeroFill => BinaryOperator::UnsignedShiftRight,
+        O::BitwiseOR => BinaryOperator::BitwiseOr,
+        O::BitwiseXOR => BinaryOperator::BitwiseXor,
+        O::BitwiseAnd => BinaryOperator::BitwiseAnd,
+        O::In => BinaryOperator::In,
+        O::Instanceof => BinaryOperator::InstanceOf,
+    }
+}
+
+fn convert_unary_operator(op: oxc::UnaryOperator) -> UnaryOperator {
+    use oxc::UnaryOperator as O;
+    match op {
+        O::UnaryNegation => UnaryOperator::Minus,
+        O::UnaryPlus => UnaryOperator::Plus,
+        O::LogicalNot => UnaryOperator::Not,
+        O::BitwiseNot => UnaryOperator::BitwiseNot,
+        O::Typeof => UnaryOperator::TypeOf,
+        O::Void => UnaryOperator::Void,
+        O::Delete => unreachable!("delete is handled in the UnaryExpression arm"),
+    }
+}
+
 fn lower_expression(
     builder: &mut HirBuilder,
     expr: &oxc::Expression,
 ) -> Result<InstructionValue, CompilerError> {
-    let loc = builder.source_location(expr.span());
-    Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc })
+    match expr {
+        oxc::Expression::Identifier(ident) => {
+            let loc = builder.source_location(ident.span);
+            let start = ident.span.start;
+            let place =
+                lower_identifier(builder, ident.name.as_str(), start, loc.clone(), Some(start))?;
+            if builder.is_context_identifier(ident.name.as_str(), start, Some(start)) {
+                Ok(InstructionValue::LoadContext { place, loc })
+            } else {
+                Ok(InstructionValue::LoadLocal { place, loc })
+            }
+        }
+        oxc::Expression::NullLiteral(lit) => Ok(InstructionValue::Primitive {
+            value: PrimitiveValue::Null,
+            loc: builder.source_location(lit.span),
+        }),
+        oxc::Expression::BooleanLiteral(lit) => Ok(InstructionValue::Primitive {
+            value: PrimitiveValue::Boolean(lit.value),
+            loc: builder.source_location(lit.span),
+        }),
+        oxc::Expression::NumericLiteral(lit) => Ok(InstructionValue::Primitive {
+            value: PrimitiveValue::Number(FloatValue::new(lit.value)),
+            loc: builder.source_location(lit.span),
+        }),
+        oxc::Expression::StringLiteral(lit) => Ok(InstructionValue::Primitive {
+            value: PrimitiveValue::String(lit.value.to_string().into()),
+            loc: builder.source_location(lit.span),
+        }),
+        oxc::Expression::BinaryExpression(bin) => {
+            let loc = builder.source_location(bin.span);
+            let left = lower_expression_to_temporary(builder, &bin.left)?;
+            let right = lower_expression_to_temporary(builder, &bin.right)?;
+            Ok(InstructionValue::BinaryExpression {
+                operator: convert_binary_operator(bin.operator),
+                left,
+                right,
+                loc,
+            })
+        }
+        oxc::Expression::UnaryExpression(unary) => {
+            let loc = builder.source_location(unary.span);
+            match unary.operator {
+                oxc::UnaryOperator::Delete => {
+                    // TODO(stage1a-arms): delete needs member lowering
+                    // (PropertyDelete / ComputedDelete).
+                    Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc })
+                }
+                op => {
+                    let value = lower_expression_to_temporary(builder, &unary.argument)?;
+                    Ok(InstructionValue::UnaryExpression {
+                        operator: convert_unary_operator(op),
+                        value,
+                        loc,
+                    })
+                }
+            }
+        }
+        oxc::Expression::LogicalExpression(logical) => {
+            let loc = builder.source_location(logical.span);
+            let continuation_block = builder.reserve(builder.current_block_kind());
+            let continuation_id = continuation_block.id;
+            let test_block = builder.reserve(BlockKind::Value);
+            let test_block_id = test_block.id;
+            let place = build_temporary_place(builder, loc.clone());
+            let left_loc = builder.source_location(logical.left.span());
+            let left_place = build_temporary_place(builder, left_loc);
+
+            let consequent_block = builder.try_enter(BlockKind::Value, |builder, _block_id| {
+                lower_value_to_temporary(
+                    builder,
+                    InstructionValue::StoreLocal {
+                        lvalue: LValue { kind: InstructionKind::Const, place: place.clone() },
+                        value: left_place.clone(),
+                        type_annotation: None,
+                        loc: left_place.loc.clone(),
+                    },
+                )?;
+                Ok(Terminal::Goto {
+                    block: continuation_id,
+                    variant: GotoVariant::Break,
+                    id: EvaluationOrder(0),
+                    loc: left_place.loc.clone(),
+                })
+            });
+
+            let alternate_block = builder.try_enter(BlockKind::Value, |builder, _block_id| {
+                let right = lower_expression_to_temporary(builder, &logical.right)?;
+                let right_loc = right.loc.clone();
+                lower_value_to_temporary(
+                    builder,
+                    InstructionValue::StoreLocal {
+                        lvalue: LValue { kind: InstructionKind::Const, place: place.clone() },
+                        value: right,
+                        type_annotation: None,
+                        loc: right_loc.clone(),
+                    },
+                )?;
+                Ok(Terminal::Goto {
+                    block: continuation_id,
+                    variant: GotoVariant::Break,
+                    id: EvaluationOrder(0),
+                    loc: right_loc,
+                })
+            });
+
+            let hir_op = match logical.operator {
+                oxc::LogicalOperator::And => LogicalOperator::And,
+                oxc::LogicalOperator::Or => LogicalOperator::Or,
+                oxc::LogicalOperator::Coalesce => LogicalOperator::NullishCoalescing,
+            };
+
+            builder.terminate_with_continuation(
+                Terminal::Logical {
+                    operator: hir_op,
+                    test: test_block_id,
+                    fallthrough: continuation_id,
+                    id: EvaluationOrder(0),
+                    loc: loc.clone(),
+                },
+                test_block,
+            );
+
+            let left_value = lower_expression_to_temporary(builder, &logical.left)?;
+            builder.push(Instruction {
+                id: EvaluationOrder(0),
+                lvalue: left_place.clone(),
+                value: InstructionValue::LoadLocal { place: left_value, loc: loc.clone() },
+                effects: None,
+                loc: loc.clone(),
+            });
+
+            builder.terminate_with_continuation(
+                Terminal::Branch {
+                    test: left_place,
+                    consequent: consequent_block?,
+                    alternate: alternate_block?,
+                    fallthrough: continuation_id,
+                    id: EvaluationOrder(0),
+                    loc: loc.clone(),
+                },
+                continuation_block,
+            );
+
+            Ok(InstructionValue::LoadLocal { place: place.clone(), loc: place.loc.clone() })
+        }
+        _ => {
+            // not-yet-ported arms bail to undefined (differential green-set grows as arms land)
+            let loc = builder.source_location(expr.span());
+            Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc })
+        }
+    }
 }
 
 fn lower_statement(
