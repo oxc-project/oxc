@@ -59,7 +59,10 @@ pub fn compile_fn(
     env.reference_node_ids = scope_info.ref_node_id_to_binding.keys().copied().collect();
 
     context.timing.start("lower");
-    let mut hir = crate::react_compiler_lowering::lower(func, fn_name, scope_info, &mut env)?;
+    let line_offsets =
+        crate::react_compiler_lowering::source_loc::LineOffsets::new(context.code.as_deref().unwrap_or(""));
+    let mut hir =
+        crate::react_compiler_lowering::lower(func, fn_name, scope_info, &mut env, &line_offsets)?;
     context.timing.stop();
 
     // Copy renames from lowering to context (keep on env for codegen to apply to type annotations)
@@ -1043,57 +1046,22 @@ pub fn compile_fn(
 /// the full compilation pipeline. This mirrors the TS behavior where outlined
 /// functions are inserted into the program AST and re-compiled from scratch.
 pub fn compile_outlined_fn(
-    mut codegen_fn: CodegenFunction,
+    codegen_fn: CodegenFunction,
     fn_name: Option<&str>,
     fn_type: ReactFunctionType,
     mode: CompilerOutputMode,
     env_config: &EnvironmentConfig,
     context: &mut ProgramContext,
 ) -> Result<CodegenFunction, CompilerError> {
-    let mut env = Environment::with_config(env_config.clone());
-    env.fn_type = fn_type;
-    env.output_mode = match mode {
-        CompilerOutputMode::Ssr => OutputMode::Ssr,
-        CompilerOutputMode::Client => OutputMode::Client,
-        CompilerOutputMode::Lint => OutputMode::Lint,
-    };
-
-    // Build a FunctionDeclaration from the codegen output
-    let mut outlined_decl = crate::react_compiler_ast::statements::FunctionDeclaration {
-        base: crate::react_compiler_ast::common::BaseNode::typed("FunctionDeclaration"),
-        id: codegen_fn.id.take(),
-        params: std::mem::take(&mut codegen_fn.params),
-        body: std::mem::replace(
-            &mut codegen_fn.body,
-            crate::react_compiler_ast::statements::BlockStatement {
-                base: crate::react_compiler_ast::common::BaseNode::typed("BlockStatement"),
-                body: Vec::new(),
-                directives: Vec::new(),
-            },
-        ),
-        generator: codegen_fn.generator,
-        is_async: codegen_fn.is_async,
-        declare: None,
-        return_type: None,
-        type_parameters: None,
-        predicate: None,
-        component_declaration: false,
-        hook_declaration: false,
-    };
-
-    // Build scope info by assigning fake positions to all identifiers
-    let scope_info = build_outlined_scope_info(&mut outlined_decl);
-
-    let func_node =
-        crate::react_compiler_lowering::FunctionNode::FunctionDeclaration(&outlined_decl);
-    let mut hir =
-        crate::react_compiler_lowering::lower(&func_node, fn_name, &scope_info, &mut env)?;
-
-    if env.has_invariant_errors() {
-        return Err(env.take_invariant_errors());
-    }
-
-    run_pipeline_passes(&mut hir, &mut env, context)
+    // Stage 1a skeleton: outlining synthesizes a function and re-lowers it. While
+    // the front-end runs on the oxc AST but codegen still emits the Babel AST,
+    // re-lowering a *synthesized* Babel function via the oxc `lower()` isn't wired.
+    // Outlining is unreachable until arms are filled (no memoization -> nothing to
+    // outline), so pass the codegen output through unchanged for now. The Babel
+    // outlining infra below (build_outlined_scope_info / outlined_assign_*) is dead
+    // until this is ported to synthesize an oxc function.
+    let _ = (fn_name, fn_type, mode, env_config, context);
+    Ok(codegen_fn)
 }
 
 /// Build a ScopeInfo for an outlined function declaration by assigning unique

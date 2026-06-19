@@ -241,45 +241,10 @@ fn is_manual_memoization(expr: &Expression) -> bool {
 fn collect_important_original_locations(
     func: &FunctionNode<'_>,
 ) -> FxHashMap<String, ImportantLocation> {
-    let mut locations = FxHashMap::default();
-
-    // Note: TS uses func.traverse() which visits DESCENDANTS only, not the root
-    // function node itself. So we don't record the root function as important.
-    match func {
-        FunctionNode::FunctionDeclaration(f) => {
-            if let Some(id) = &f.id {
-                record_important("Identifier", &id.base.loc, &mut locations);
-            }
-            for param in &f.params {
-                collect_original_pattern(param, &mut locations);
-            }
-            collect_original_block(&f.body.body, false, &mut locations);
-        }
-        FunctionNode::FunctionExpression(f) => {
-            if let Some(id) = &f.id {
-                record_important("Identifier", &id.base.loc, &mut locations);
-            }
-            for param in &f.params {
-                collect_original_pattern(param, &mut locations);
-            }
-            collect_original_block(&f.body.body, false, &mut locations);
-        }
-        FunctionNode::ArrowFunctionExpression(f) => {
-            for param in &f.params {
-                collect_original_pattern(param, &mut locations);
-            }
-            match f.body.as_ref() {
-                ArrowFunctionBody::BlockStatement(block) => {
-                    collect_original_block(&block.body, false, &mut locations);
-                }
-                ArrowFunctionBody::Expression(expr) => {
-                    collect_original_expression(expr, &mut locations);
-                }
-            }
-        }
-    }
-
-    locations
+    // Stage 1a: validation is off by default; this walked the Babel AST. Stubbed to
+    // compile; re-port to the oxc AST when re-enabling source-location validation.
+    let _ = func;
+    FxHashMap::default()
 }
 
 fn record_important(

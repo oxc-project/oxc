@@ -27,6 +27,7 @@ pub fn convert_binding_kind(kind: &crate::react_compiler_ast::scope::BindingKind
 ///
 /// oxc collapses Babel's `FunctionDeclaration`/`FunctionExpression` into one
 /// [`oxc::Function`] (discriminated by `r#type`); arrows are separate.
+#[derive(Clone, Copy)]
 pub enum FunctionNode<'a> {
     Function(&'a oxc::Function<'a>),
     Arrow(&'a oxc::ArrowFunctionExpression<'a>),
