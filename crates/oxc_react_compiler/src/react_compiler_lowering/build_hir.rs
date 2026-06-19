@@ -2733,7 +2733,8 @@ fn lower_followup_target(
             lower_assignment_target_maybe_default(builder, loc, kind, m, value, assignment_style)
         }
         FollowupTarget::Identifier(id) => {
-            lower_identifier_followup_store(builder, loc, kind, id, value)
+            let followup_loc = builder.source_location(id.span).or(loc);
+            lower_identifier_followup_store(builder, followup_loc, kind, id, value)
         }
         FollowupTarget::Default { span, default, binding } => {
             lower_assignment_target_default(
