@@ -599,6 +599,12 @@ impl<'a> PeepholeOptimizations {
         if let Expression::UnaryExpression(left) = &e.left
             && left.operator.is_typeof()
             && e.operator.is_equality()
+            // Folding to a boolean discards both operands, so only do it when neither side has
+            // side effects: `typeof foo === [bar()]` must still evaluate `bar()`, and
+            // `typeof bar() === 'x'` must still evaluate `bar()`. Use `e.left` (the whole
+            // `typeof X`) so the `typeof <identifier>` special case stays side-effect-free.
+            && !e.left.may_have_side_effects(ctx)
+            && !e.right.may_have_side_effects(ctx)
         {
             let right_ty = e.right.value_type(ctx);
 
