@@ -173,14 +173,11 @@ impl Config {
             .cloned()
             .collect::<FxHashMap<_, _>>();
 
-        let all_rules = RULES
-            .iter()
-            .filter(|rule| {
-                LintPlugins::try_from(rule.plugin_name())
-                    .is_ok_and(|plugin| builtin_rule_plugins.contains(plugin))
-            })
-            .cloned()
-            .collect::<Vec<_>>();
+        // The full set of rules for the enabled plugins is only needed when an override
+        // introduces a new, unconfigured plugin (to apply its category rules). Compute it
+        // lazily so the common case — overrides that only tweak rule severities — doesn't
+        // clone every rule in `RULES` on each call (i.e. for every linted file).
+        let mut all_rules: Option<Vec<RuleEnum>> = None;
 
         // Build a hashmap of existing external rules keyed by rule id with value (options_id, severity)
         let mut external_rules = self
@@ -204,6 +201,16 @@ impl Config {
                 let unconfigured_plugins = plugins & !configured_plugins;
 
                 if !unconfigured_plugins.is_empty() {
+                    let all_rules = all_rules.get_or_insert_with(|| {
+                        RULES
+                            .iter()
+                            .filter(|rule| {
+                                LintPlugins::try_from(rule.plugin_name())
+                                    .is_ok_and(|plugin| builtin_rule_plugins.contains(plugin))
+                            })
+                            .cloned()
+                            .collect::<Vec<_>>()
+                    });
                     for (rule, severity) in all_rules.iter().filter_map(|rule| {
                         let rule_plugin = LintPlugins::try_from(rule.plugin_name())
                             .unwrap_or(LintPlugins::empty());
