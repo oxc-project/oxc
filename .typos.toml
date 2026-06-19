@@ -18,6 +18,10 @@ extend-exclude = [
   "crates/oxc_linter/src/rules/jsx_a11y/img_redundant_alt.rs",
   "crates/oxc_linter/src/rules/react/no_unknown_property.rs",
   "crates/oxc_parser/src/lexer/byte_handlers.rs",
+  # Vendored React Compiler core (kept close to upstream; legit short identifiers
+  # like `pn`/`oce`/`ome`/`froms` trip typos). The hand-written conversion code
+  # (`convert_*`, `lib`, ...) is not matched by this glob and stays checked.
+  "crates/oxc_react_compiler/src/react_compiler*",
   "crates/oxc_syntax/src/xml_entities.rs",
   "patches/**",
   "pnpm-lock.yaml",
