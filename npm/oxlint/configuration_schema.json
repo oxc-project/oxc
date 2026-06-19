@@ -2605,7 +2605,57 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "import/extensions": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
+                    },
+                    {
+                      "$ref": "#/definitions/ExtensionRule"
+                    },
+                    {
+                      "$ref": "#/definitions/ImportExtensionsObject"
+                    }
+                  ],
+                  "maxItems": 3,
+                  "minItems": 2
+                },
+                {
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
+                    },
+                    {
+                      "$ref": "#/definitions/ExtensionRule"
+                    }
+                  ],
+                  "maxItems": 2,
+                  "minItems": 2
+                },
+                {
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
+                    },
+                    {
+                      "$ref": "#/definitions/ImportExtensionsObject"
+                    }
+                  ],
+                  "maxItems": 2,
+                  "minItems": 2
+                }
+              ]
+            }
+          ]
         },
         "import/first": {
           "anyOf": [
@@ -10711,6 +10761,16 @@
       },
       "additionalProperties": false
     },
+    "ExtensionRule": {
+      "description": "Extension rule configuration; Copy to avoid extra indirection.",
+      "type": "string",
+      "enum": [
+        "always",
+        "never",
+        "ignorePackages"
+      ],
+      "markdownDescription": "Extension rule configuration; Copy to avoid extra indirection."
+    },
     "ExternalPluginEntry": {
       "anyOf": [
         {
@@ -11472,6 +11532,53 @@
         }
       },
       "additionalProperties": false
+    },
+    "ImportExtensionsConfig": {
+      "type": "object",
+      "properties": {
+        "checkTypeImports": {
+          "description": "Whether to check type imports when enforcing extension rules.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to check type imports when enforcing extension rules."
+        },
+        "ignorePackages": {
+          "description": "Whether to ignore package imports when enforcing extension rules.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to ignore package imports when enforcing extension rules."
+        },
+        "pathGroupOverrides": {
+          "description": "Path group overrides for bespoke import specifiers.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PathGroupOverrideConfig"
+          },
+          "markdownDescription": "Path group overrides for bespoke import specifiers."
+        },
+        "pattern": {
+          "description": "Per-extension rules.",
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/ExtensionRule"
+          },
+          "markdownDescription": "Per-extension rules."
+        }
+      },
+      "additionalProperties": false
+    },
+    "ImportExtensionsObject": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ImportExtensionsConfig"
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/ExtensionRule"
+          }
+        }
+      ]
     },
     "ImportKind": {
       "type": "string",
@@ -16378,6 +16485,52 @@
             }
           ],
           "markdownDescription": "Whether to prefer parameter properties or class properties."
+        }
+      },
+      "additionalProperties": false
+    },
+    "PathGroupAction": {
+      "description": "Action to take for path group overrides.\n\nDetermines how import extensions are validated for matching bespoke import specifiers.",
+      "oneOf": [
+        {
+          "description": "Enforce extension validation for matching imports (require extensions based on config).",
+          "type": "string",
+          "enum": [
+            "enforce"
+          ],
+          "markdownDescription": "Enforce extension validation for matching imports (require extensions based on config)."
+        },
+        {
+          "description": "Ignore matching imports entirely (skip all extension validation).",
+          "type": "string",
+          "enum": [
+            "ignore"
+          ],
+          "markdownDescription": "Ignore matching imports entirely (skip all extension validation)."
+        }
+      ],
+      "markdownDescription": "Action to take for path group overrides.\n\nDetermines how import extensions are validated for matching bespoke import specifiers."
+    },
+    "PathGroupOverrideConfig": {
+      "type": "object",
+      "required": [
+        "action",
+        "pattern"
+      ],
+      "properties": {
+        "action": {
+          "description": "Action to take when pattern matches.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/PathGroupAction"
+            }
+          ],
+          "markdownDescription": "Action to take when pattern matches."
+        },
+        "pattern": {
+          "description": "Glob pattern to match import specifiers.",
+          "type": "string",
+          "markdownDescription": "Glob pattern to match import specifiers."
         }
       },
       "additionalProperties": false
