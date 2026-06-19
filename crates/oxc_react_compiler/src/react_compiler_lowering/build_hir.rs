@@ -1458,14 +1458,29 @@ fn lower_identifier_for_assignment(
     }
 }
 
+/// The style of assignment (used internally by the lower-assignment helpers).
+/// Mirrors the original `AssignmentStyle`.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum AssignmentStyle {
+    /// Assignment via `=`
+    Assignment,
+    /// Destructuring assignment
+    Destructure,
+}
+
 /// Assign `value` to a binding pattern (variable declaration / destructuring param).
-/// BindingIdentifier is handled; destructuring/default patterns are deferred.
+/// Faithful translation of the original `lower_assignment` for the BindingPattern
+/// targets (Identifier / Object / Array / Assignment). The original unified binding
+/// patterns and assignment targets under `PatternLike`; oxc splits them, so this
+/// handles only the binding side. `kind` is never `Reassign` on this path, so
+/// `force_temporaries` is always false.
 fn lower_binding_assignment(
     builder: &mut HirBuilder,
     loc: Option<SourceLocation>,
     kind: InstructionKind,
     target: &oxc::BindingPattern,
     value: Place,
+    assignment_style: AssignmentStyle,
 ) -> Result<Option<Place>, CompilerError> {
     match target {
         oxc::BindingPattern::BindingIdentifier(id) => {
@@ -1530,29 +1545,1346 @@ fn lower_binding_assignment(
                 }
             }
         }
-        oxc::BindingPattern::ObjectPattern(_) | oxc::BindingPattern::ArrayPattern(_) => {
-            // TODO(stage1a-arms): destructuring binding patterns.
-            builder.record_error(CompilerErrorDetail {
-                category: ErrorCategory::Todo,
-                reason: "(BuildHIR::lowerAssignment) Handle destructuring binding patterns"
-                    .to_string(),
-                description: None,
-                loc,
-                suggestions: None,
-            })?;
-            Ok(None)
+        oxc::BindingPattern::ArrayPattern(pattern) => {
+            let mut items: Vec<ArrayPatternElement> = Vec::new();
+            let mut followups: Vec<(Place, &oxc::BindingPattern)> = Vec::new();
+
+            for element in &pattern.elements {
+                match element {
+                    None => {
+                        items.push(ArrayPatternElement::Hole);
+                    }
+                    Some(oxc::BindingPattern::BindingIdentifier(id)) => {
+                        let start = id.span.start;
+                        let is_context =
+                            builder.is_context_identifier(id.name.as_str(), start, Some(start));
+                        // force_temporaries is always false on the binding path.
+                        let can_use_direct = matches!(assignment_style, AssignmentStyle::Assignment)
+                            || !is_context;
+                        if can_use_direct {
+                            let id_loc = builder.source_location(id.span);
+                            match lower_identifier_for_assignment(
+                                builder,
+                                id_loc.clone(),
+                                id_loc,
+                                kind,
+                                id.name.as_str(),
+                                start,
+                                Some(start),
+                            )? {
+                                Some(IdentifierForAssignment::Place(place)) => {
+                                    items.push(ArrayPatternElement::Place(place));
+                                }
+                                Some(IdentifierForAssignment::Global { .. }) => {
+                                    let temp = build_temporary_place(
+                                        builder,
+                                        builder.source_location(id.span),
+                                    );
+                                    promote_temporary(builder, temp.identifier);
+                                    items.push(ArrayPatternElement::Place(temp.clone()));
+                                    followups.push((temp, element.as_ref().unwrap()));
+                                }
+                                None => {
+                                    items.push(ArrayPatternElement::Hole);
+                                }
+                            }
+                        } else {
+                            let temp =
+                                build_temporary_place(builder, builder.source_location(id.span));
+                            promote_temporary(builder, temp.identifier);
+                            items.push(ArrayPatternElement::Place(temp.clone()));
+                            followups.push((temp, element.as_ref().unwrap()));
+                        }
+                    }
+                    Some(other) => {
+                        let elem_loc = builder.source_location(other.span());
+                        let temp = build_temporary_place(builder, elem_loc);
+                        promote_temporary(builder, temp.identifier);
+                        items.push(ArrayPatternElement::Place(temp.clone()));
+                        followups.push((temp, other));
+                    }
+                }
+            }
+
+            if let Some(rest) = &pattern.rest {
+                match &rest.argument {
+                    oxc::BindingPattern::BindingIdentifier(id) => {
+                        let start = id.span.start;
+                        let is_context =
+                            builder.is_context_identifier(id.name.as_str(), start, Some(start));
+                        let can_use_direct = matches!(assignment_style, AssignmentStyle::Assignment)
+                            || !is_context;
+                        if can_use_direct {
+                            let rest_loc = builder.source_location(rest.span);
+                            let id_loc = builder.source_location(id.span);
+                            match lower_identifier_for_assignment(
+                                builder,
+                                rest_loc,
+                                id_loc,
+                                kind,
+                                id.name.as_str(),
+                                start,
+                                Some(start),
+                            )? {
+                                Some(IdentifierForAssignment::Place(place)) => {
+                                    items.push(ArrayPatternElement::Spread(SpreadPattern { place }));
+                                }
+                                Some(IdentifierForAssignment::Global { .. }) => {
+                                    let temp = build_temporary_place(
+                                        builder,
+                                        builder.source_location(rest.span),
+                                    );
+                                    promote_temporary(builder, temp.identifier);
+                                    items.push(ArrayPatternElement::Spread(SpreadPattern {
+                                        place: temp.clone(),
+                                    }));
+                                    followups.push((temp, &rest.argument));
+                                }
+                                None => {}
+                            }
+                        } else {
+                            let temp =
+                                build_temporary_place(builder, builder.source_location(rest.span));
+                            promote_temporary(builder, temp.identifier);
+                            items.push(ArrayPatternElement::Spread(SpreadPattern {
+                                place: temp.clone(),
+                            }));
+                            followups.push((temp, &rest.argument));
+                        }
+                    }
+                    _ => {
+                        let temp =
+                            build_temporary_place(builder, builder.source_location(rest.span));
+                        promote_temporary(builder, temp.identifier);
+                        items.push(ArrayPatternElement::Spread(SpreadPattern {
+                            place: temp.clone(),
+                        }));
+                        followups.push((temp, &rest.argument));
+                    }
+                }
+            }
+
+            let pattern_loc = builder.source_location(pattern.span);
+            let temporary = lower_value_to_temporary(
+                builder,
+                InstructionValue::Destructure {
+                    lvalue: LValuePattern {
+                        pattern: Pattern::Array(ArrayPattern { items, loc: pattern_loc }),
+                        kind,
+                    },
+                    value: value.clone(),
+                    loc: loc.clone(),
+                },
+            )?;
+
+            for (place, path) in followups {
+                let followup_loc = builder.source_location(path.span()).or(loc.clone());
+                lower_binding_assignment(builder, followup_loc, kind, path, place, assignment_style)?;
+            }
+            Ok(Some(temporary))
         }
-        oxc::BindingPattern::AssignmentPattern(_) => {
-            // TODO(stage1a-arms): default-value binding patterns.
+        oxc::BindingPattern::ObjectPattern(pattern) => {
+            let mut properties: Vec<ObjectPropertyOrSpread> = Vec::new();
+            let mut followups: Vec<(Place, &oxc::BindingPattern)> = Vec::new();
+
+            for prop in &pattern.properties {
+                if prop.computed {
+                    builder.record_error(CompilerErrorDetail {
+                        reason: "(BuildHIR::lowerAssignment) Handle computed properties in ObjectPattern".to_string(),
+                        category: ErrorCategory::Todo,
+                        loc: builder.source_location(prop.span),
+                        description: None,
+                        suggestions: None,
+                    })?;
+                    continue;
+                }
+
+                let key = match lower_object_property_key(builder, &prop.key, false)? {
+                    Some(k) => k,
+                    None => continue,
+                };
+
+                match &prop.value {
+                    oxc::BindingPattern::BindingIdentifier(id) => {
+                        let start = id.span.start;
+                        let is_context =
+                            builder.is_context_identifier(id.name.as_str(), start, Some(start));
+                        let can_use_direct = matches!(assignment_style, AssignmentStyle::Assignment)
+                            || !is_context;
+                        if can_use_direct {
+                            let id_loc = builder.source_location(id.span);
+                            match lower_identifier_for_assignment(
+                                builder,
+                                id_loc.clone(),
+                                id_loc,
+                                kind,
+                                id.name.as_str(),
+                                start,
+                                Some(start),
+                            )? {
+                                Some(IdentifierForAssignment::Place(place)) => {
+                                    properties.push(ObjectPropertyOrSpread::Property(
+                                        ObjectProperty {
+                                            key,
+                                            property_type: ObjectPropertyType::Property,
+                                            place,
+                                        },
+                                    ));
+                                }
+                                Some(IdentifierForAssignment::Global { .. }) => {
+                                    builder.record_error(CompilerErrorDetail {
+                                        reason: "Expected reassignment of globals to enable forceTemporaries".to_string(),
+                                        category: ErrorCategory::Todo,
+                                        loc: builder.source_location(id.span),
+                                        description: None,
+                                        suggestions: None,
+                                    })?;
+                                }
+                                None => {
+                                    continue;
+                                }
+                            }
+                        } else {
+                            let temp =
+                                build_temporary_place(builder, builder.source_location(id.span));
+                            promote_temporary(builder, temp.identifier);
+                            properties.push(ObjectPropertyOrSpread::Property(ObjectProperty {
+                                key,
+                                property_type: ObjectPropertyType::Property,
+                                place: temp.clone(),
+                            }));
+                            followups.push((temp, &prop.value));
+                        }
+                    }
+                    other => {
+                        let elem_loc = builder.source_location(other.span());
+                        let temp = build_temporary_place(builder, elem_loc);
+                        promote_temporary(builder, temp.identifier);
+                        properties.push(ObjectPropertyOrSpread::Property(ObjectProperty {
+                            key,
+                            property_type: ObjectPropertyType::Property,
+                            place: temp.clone(),
+                        }));
+                        followups.push((temp, other));
+                    }
+                }
+            }
+
+            if let Some(rest) = &pattern.rest {
+                match &rest.argument {
+                    oxc::BindingPattern::BindingIdentifier(id) => {
+                        let start = id.span.start;
+                        let is_context =
+                            builder.is_context_identifier(id.name.as_str(), start, Some(start));
+                        let can_use_direct = matches!(assignment_style, AssignmentStyle::Assignment)
+                            || !is_context;
+                        if can_use_direct {
+                            let rest_loc = builder.source_location(rest.span);
+                            let id_loc = builder.source_location(id.span);
+                            match lower_identifier_for_assignment(
+                                builder,
+                                rest_loc,
+                                id_loc,
+                                kind,
+                                id.name.as_str(),
+                                start,
+                                Some(start),
+                            )? {
+                                Some(IdentifierForAssignment::Place(place)) => {
+                                    properties.push(ObjectPropertyOrSpread::Spread(SpreadPattern {
+                                        place,
+                                    }));
+                                }
+                                Some(IdentifierForAssignment::Global { .. }) => {
+                                    builder.record_error(CompilerErrorDetail {
+                                        reason: "Expected reassignment of globals to enable forceTemporaries".to_string(),
+                                        category: ErrorCategory::Todo,
+                                        loc: builder.source_location(rest.span),
+                                        description: None,
+                                        suggestions: None,
+                                    })?;
+                                }
+                                None => {}
+                            }
+                        } else {
+                            let temp =
+                                build_temporary_place(builder, builder.source_location(rest.span));
+                            promote_temporary(builder, temp.identifier);
+                            properties.push(ObjectPropertyOrSpread::Spread(SpreadPattern {
+                                place: temp.clone(),
+                            }));
+                            followups.push((temp, &rest.argument));
+                        }
+                    }
+                    other => {
+                        builder.record_error(CompilerErrorDetail {
+                            reason: format!(
+                                "(BuildHIR::lowerAssignment) Handle {} rest element in ObjectPattern",
+                                match other {
+                                    oxc::BindingPattern::ObjectPattern(_) => "ObjectPattern",
+                                    oxc::BindingPattern::ArrayPattern(_) => "ArrayPattern",
+                                    oxc::BindingPattern::AssignmentPattern(_) => "AssignmentPattern",
+                                    _ => "unknown",
+                                }
+                            ),
+                            category: ErrorCategory::Todo,
+                            loc: builder.source_location(rest.span),
+                            description: None,
+                            suggestions: None,
+                        })?;
+                    }
+                }
+            }
+
+            let pattern_loc = builder.source_location(pattern.span);
+            let temporary = lower_value_to_temporary(
+                builder,
+                InstructionValue::Destructure {
+                    lvalue: LValuePattern {
+                        pattern: Pattern::Object(ObjectPattern { properties, loc: pattern_loc }),
+                        kind,
+                    },
+                    value: value.clone(),
+                    loc: loc.clone(),
+                },
+            )?;
+
+            for (place, path) in followups {
+                let followup_loc = builder.source_location(path.span()).or(loc.clone());
+                lower_binding_assignment(builder, followup_loc, kind, path, place, assignment_style)?;
+            }
+            Ok(Some(temporary))
+        }
+        oxc::BindingPattern::AssignmentPattern(pattern) => {
+            // Default value: if value === undefined, use default, else use value.
+            let pat_loc = builder.source_location(pattern.span);
+
+            let temp = build_temporary_place(builder, pat_loc.clone());
+
+            let test_block = builder.reserve(BlockKind::Value);
+            let continuation_block = builder.reserve(builder.current_block_kind());
+
+            // Consequent: use default value
+            let temp_consequent = temp.clone();
+            let pat_loc_consequent = pat_loc.clone();
+            let continuation_id = continuation_block.id;
+            let consequent = builder.try_enter(BlockKind::Value, |builder, _| {
+                let default_value = lower_reorderable_expression(builder, &pattern.right)?;
+                lower_value_to_temporary(
+                    builder,
+                    InstructionValue::StoreLocal {
+                        lvalue: LValue {
+                            place: temp_consequent.clone(),
+                            kind: InstructionKind::Const,
+                        },
+                        value: default_value,
+                        type_annotation: None,
+                        loc: pat_loc_consequent.clone(),
+                    },
+                )?;
+                Ok(Terminal::Goto {
+                    block: continuation_id,
+                    variant: GotoVariant::Break,
+                    id: EvaluationOrder(0),
+                    loc: pat_loc_consequent.clone(),
+                })
+            });
+
+            // Alternate: use the original value
+            let temp_alternate = temp.clone();
+            let pat_loc_alternate = pat_loc.clone();
+            let value_alternate = value.clone();
+            let alternate = builder.try_enter(BlockKind::Value, |builder, _| {
+                lower_value_to_temporary(
+                    builder,
+                    InstructionValue::StoreLocal {
+                        lvalue: LValue {
+                            place: temp_alternate.clone(),
+                            kind: InstructionKind::Const,
+                        },
+                        value: value_alternate.clone(),
+                        type_annotation: None,
+                        loc: pat_loc_alternate.clone(),
+                    },
+                )?;
+                Ok(Terminal::Goto {
+                    block: continuation_id,
+                    variant: GotoVariant::Break,
+                    id: EvaluationOrder(0),
+                    loc: pat_loc_alternate.clone(),
+                })
+            });
+
+            // Ternary terminal
+            builder.terminate_with_continuation(
+                Terminal::Ternary {
+                    test: test_block.id,
+                    fallthrough: continuation_id,
+                    id: EvaluationOrder(0),
+                    loc: pat_loc.clone(),
+                },
+                test_block,
+            );
+
+            // In test block: check if value === undefined
+            let undef = lower_value_to_temporary(
+                builder,
+                InstructionValue::Primitive {
+                    value: PrimitiveValue::Undefined,
+                    loc: pat_loc.clone(),
+                },
+            )?;
+            let test = lower_value_to_temporary(
+                builder,
+                InstructionValue::BinaryExpression {
+                    left: value,
+                    operator: BinaryOperator::StrictEqual,
+                    right: undef,
+                    loc: pat_loc.clone(),
+                },
+            )?;
+            builder.terminate_with_continuation(
+                Terminal::Branch {
+                    test,
+                    consequent: consequent?,
+                    alternate: alternate?,
+                    fallthrough: continuation_id,
+                    id: EvaluationOrder(0),
+                    loc: pat_loc.clone(),
+                },
+                continuation_block,
+            );
+
+            // Recursively assign the resolved value to the left pattern.
+            lower_binding_assignment(builder, pat_loc, kind, &pattern.left, temp, assignment_style)
+        }
+    }
+}
+
+/// Resolve a member-expression assignment target (oxc's member variants of
+/// `SimpleAssignmentTarget`) and store `value` into it, returning the store
+/// temporary. Mirrors the `PatternLike::MemberExpression` arm of the original
+/// `lower_assignment`.
+fn lower_member_assignment_target(
+    builder: &mut HirBuilder,
+    loc: Option<SourceLocation>,
+    kind: InstructionKind,
+    target: &oxc::SimpleAssignmentTarget,
+    value: Place,
+) -> Result<Option<Place>, CompilerError> {
+    // MemberExpression may only appear in an assignment expression (Reassign).
+    if kind != InstructionKind::Reassign {
+        builder.record_error(CompilerErrorDetail {
+            category: ErrorCategory::Invariant,
+            reason: "MemberExpression may only appear in an assignment expression".to_string(),
+            description: None,
+            loc: loc.clone(),
+            suggestions: None,
+        })?;
+        return Ok(None);
+    }
+    match target {
+        oxc::SimpleAssignmentTarget::StaticMemberExpression(member) => {
+            let object = lower_expression_to_temporary(builder, &member.object)?;
+            let temp = lower_value_to_temporary(
+                builder,
+                InstructionValue::PropertyStore {
+                    object,
+                    property: PropertyLiteral::String(member.property.name.to_string()),
+                    value,
+                    loc,
+                },
+            )?;
+            Ok(Some(temp))
+        }
+        oxc::SimpleAssignmentTarget::ComputedMemberExpression(member) => {
+            let object = lower_expression_to_temporary(builder, &member.object)?;
+            // A numeric computed index is treated as a PropertyStore (matches the
+            // original `member.computed && NumericLiteral` branch).
+            if let oxc::Expression::NumericLiteral(num) = &member.expression {
+                let temp = lower_value_to_temporary(
+                    builder,
+                    InstructionValue::PropertyStore {
+                        object,
+                        property: PropertyLiteral::Number(FloatValue::new(num.value)),
+                        value,
+                        loc,
+                    },
+                )?;
+                return Ok(Some(temp));
+            }
+            let property_place = lower_expression_to_temporary(builder, &member.expression)?;
+            let temp = lower_value_to_temporary(
+                builder,
+                InstructionValue::ComputedStore { object, property: property_place, value, loc },
+            )?;
+            Ok(Some(temp))
+        }
+        oxc::SimpleAssignmentTarget::PrivateFieldExpression(member) => {
+            // Babel modeled `a.#b = v` as a non-computed MemberExpression with a
+            // PrivateName property; the original `lower_assignment` member arm hit
+            // the generic property `_` branch and bailed with this Todo.
+            let object = lower_expression_to_temporary(builder, &member.object)?;
+            let _ = object;
             builder.record_error(CompilerErrorDetail {
+                reason: "(BuildHIR::lowerAssignment) Handle PrivateName properties in MemberExpression".to_string(),
                 category: ErrorCategory::Todo,
-                reason: "(BuildHIR::lowerAssignment) Handle default-value binding patterns"
-                    .to_string(),
+                loc: builder.source_location(member.field.span),
                 description: None,
-                loc,
                 suggestions: None,
             })?;
-            Ok(None)
+            let temp = lower_value_to_temporary(
+                builder,
+                InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc },
+            )?;
+            Ok(Some(temp))
+        }
+        _ => unreachable!("lower_member_assignment_target called on a non-member target"),
+    }
+}
+
+/// True if `maybe` is a bare identifier assignment target that resolves to a local
+/// binding (used to compute `force_temporaries`).
+fn assignment_target_is_local_identifier(
+    builder: &mut HirBuilder,
+    maybe: &oxc::AssignmentTargetMaybeDefault,
+) -> Result<bool, CompilerError> {
+    match maybe {
+        oxc::AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(id) => {
+            let start = id.span.start;
+            if builder.is_context_identifier(id.name.as_str(), start, Some(start)) {
+                return Ok(false);
+            }
+            let ident_loc = builder.source_location(id.span);
+            match builder.resolve_identifier(id.name.as_str(), start, ident_loc, Some(start))? {
+                VariableBinding::Identifier { .. } => Ok(true),
+                _ => Ok(false),
+            }
+        }
+        _ => Ok(false),
+    }
+}
+
+/// Assign `value` to an assignment-expression target (`x`, `a.b`, `[a, b]`,
+/// `{a, b}`). Faithful translation of the original `lower_assignment` for the
+/// `PatternLike` cases that came from `AssignmentExpression.left` / destructuring
+/// targets; oxc models these as `AssignmentTarget`.
+fn lower_assignment_target(
+    builder: &mut HirBuilder,
+    loc: Option<SourceLocation>,
+    kind: InstructionKind,
+    target: &oxc::AssignmentTarget,
+    value: Place,
+    assignment_style: AssignmentStyle,
+) -> Result<Option<Place>, CompilerError> {
+    match target {
+        oxc::AssignmentTarget::AssignmentTargetIdentifier(id) => {
+            let start = id.span.start;
+            let id_loc = builder.source_location(id.span);
+            let result = lower_identifier_for_assignment(
+                builder,
+                loc.clone(),
+                id_loc,
+                kind,
+                id.name.as_str(),
+                start,
+                Some(start),
+            )?;
+            match result {
+                None => Ok(None),
+                Some(IdentifierForAssignment::Global { name }) => {
+                    let temp = lower_value_to_temporary(
+                        builder,
+                        InstructionValue::StoreGlobal { name, value, loc },
+                    )?;
+                    Ok(Some(temp))
+                }
+                Some(IdentifierForAssignment::Place(place)) => {
+                    if builder.is_context_identifier(id.name.as_str(), start, Some(start)) {
+                        let is_hoisted = builder
+                            .scope_info()
+                            .resolve_reference_for_node(Some(start))
+                            .map(|b| builder.environment().is_hoisted_identifier(b.id.0))
+                            .unwrap_or(false);
+                        if kind == InstructionKind::Const && !is_hoisted {
+                            builder.record_error(CompilerErrorDetail {
+                                reason: "Expected `const` declaration not to be reassigned"
+                                    .to_string(),
+                                category: ErrorCategory::Syntax,
+                                loc: loc.clone(),
+                                suggestions: None,
+                                description: None,
+                            })?;
+                        }
+                        let temp = lower_value_to_temporary(
+                            builder,
+                            InstructionValue::StoreContext {
+                                lvalue: LValue { place, kind },
+                                value,
+                                loc,
+                            },
+                        )?;
+                        Ok(Some(temp))
+                    } else {
+                        let temp = lower_value_to_temporary(
+                            builder,
+                            InstructionValue::StoreLocal {
+                                lvalue: LValue { place, kind },
+                                value,
+                                type_annotation: None,
+                                loc,
+                            },
+                        )?;
+                        Ok(Some(temp))
+                    }
+                }
+            }
+        }
+        oxc::AssignmentTarget::StaticMemberExpression(_)
+        | oxc::AssignmentTarget::ComputedMemberExpression(_)
+        | oxc::AssignmentTarget::PrivateFieldExpression(_) => {
+            let simple = target.as_simple_assignment_target().unwrap();
+            lower_member_assignment_target(builder, loc, kind, simple, value)
+        }
+        oxc::AssignmentTarget::ArrayAssignmentTarget(pattern) => {
+            let mut items: Vec<ArrayPatternElement> = Vec::new();
+            let mut followups: Vec<(Place, FollowupTarget)> = Vec::new();
+
+            // force_temporaries: when kind is Reassign and any element is
+            // non-identifier, a context variable, or a non-local binding.
+            let force_temporaries = if kind == InstructionKind::Reassign {
+                let mut found = false;
+                if pattern.rest.is_some() {
+                    found = true;
+                }
+                if !found {
+                    for elem in &pattern.elements {
+                        match elem {
+                            Some(maybe) => {
+                                if !assignment_target_is_local_identifier(builder, maybe)? {
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            None => {
+                                found = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                found
+            } else {
+                false
+            };
+
+            for element in &pattern.elements {
+                match element {
+                    None => {
+                        items.push(ArrayPatternElement::Hole);
+                    }
+                    Some(oxc::AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(id)) => {
+                        let start = id.span.start;
+                        let is_context =
+                            builder.is_context_identifier(id.name.as_str(), start, Some(start));
+                        let can_use_direct = !force_temporaries
+                            && (matches!(assignment_style, AssignmentStyle::Assignment)
+                                || !is_context);
+                        if can_use_direct {
+                            let id_loc = builder.source_location(id.span);
+                            match lower_identifier_for_assignment(
+                                builder,
+                                id_loc.clone(),
+                                id_loc,
+                                kind,
+                                id.name.as_str(),
+                                start,
+                                Some(start),
+                            )? {
+                                Some(IdentifierForAssignment::Place(place)) => {
+                                    items.push(ArrayPatternElement::Place(place));
+                                }
+                                Some(IdentifierForAssignment::Global { .. }) => {
+                                    let temp = build_temporary_place(
+                                        builder,
+                                        builder.source_location(id.span),
+                                    );
+                                    promote_temporary(builder, temp.identifier);
+                                    items.push(ArrayPatternElement::Place(temp.clone()));
+                                    followups.push((
+                                        temp,
+                                        FollowupTarget::MaybeDefault(element.as_ref().unwrap()),
+                                    ));
+                                }
+                                None => {
+                                    items.push(ArrayPatternElement::Hole);
+                                }
+                            }
+                        } else {
+                            let temp =
+                                build_temporary_place(builder, builder.source_location(id.span));
+                            promote_temporary(builder, temp.identifier);
+                            items.push(ArrayPatternElement::Place(temp.clone()));
+                            followups.push((
+                                temp,
+                                FollowupTarget::MaybeDefault(element.as_ref().unwrap()),
+                            ));
+                        }
+                    }
+                    Some(other) => {
+                        let elem_loc = builder.source_location(other.span());
+                        let temp = build_temporary_place(builder, elem_loc);
+                        promote_temporary(builder, temp.identifier);
+                        items.push(ArrayPatternElement::Place(temp.clone()));
+                        followups.push((temp, FollowupTarget::MaybeDefault(other)));
+                    }
+                }
+            }
+
+            if let Some(rest) = &pattern.rest {
+                match &rest.target {
+                    oxc::AssignmentTarget::AssignmentTargetIdentifier(id) => {
+                        let start = id.span.start;
+                        let is_context =
+                            builder.is_context_identifier(id.name.as_str(), start, Some(start));
+                        let can_use_direct = !force_temporaries
+                            && (matches!(assignment_style, AssignmentStyle::Assignment)
+                                || !is_context);
+                        if can_use_direct {
+                            let rest_loc = builder.source_location(rest.span);
+                            let id_loc = builder.source_location(id.span);
+                            match lower_identifier_for_assignment(
+                                builder,
+                                rest_loc,
+                                id_loc,
+                                kind,
+                                id.name.as_str(),
+                                start,
+                                Some(start),
+                            )? {
+                                Some(IdentifierForAssignment::Place(place)) => {
+                                    items.push(ArrayPatternElement::Spread(SpreadPattern { place }));
+                                }
+                                Some(IdentifierForAssignment::Global { .. }) => {
+                                    let temp = build_temporary_place(
+                                        builder,
+                                        builder.source_location(rest.span),
+                                    );
+                                    promote_temporary(builder, temp.identifier);
+                                    items.push(ArrayPatternElement::Spread(SpreadPattern {
+                                        place: temp.clone(),
+                                    }));
+                                    followups.push((temp, FollowupTarget::Target(&rest.target)));
+                                }
+                                None => {}
+                            }
+                        } else {
+                            let temp =
+                                build_temporary_place(builder, builder.source_location(rest.span));
+                            promote_temporary(builder, temp.identifier);
+                            items.push(ArrayPatternElement::Spread(SpreadPattern {
+                                place: temp.clone(),
+                            }));
+                            followups.push((temp, FollowupTarget::Target(&rest.target)));
+                        }
+                    }
+                    _ => {
+                        let temp =
+                            build_temporary_place(builder, builder.source_location(rest.span));
+                        promote_temporary(builder, temp.identifier);
+                        items.push(ArrayPatternElement::Spread(SpreadPattern {
+                            place: temp.clone(),
+                        }));
+                        followups.push((temp, FollowupTarget::Target(&rest.target)));
+                    }
+                }
+            }
+
+            let pattern_loc = builder.source_location(pattern.span);
+            let temporary = lower_value_to_temporary(
+                builder,
+                InstructionValue::Destructure {
+                    lvalue: LValuePattern {
+                        pattern: Pattern::Array(ArrayPattern { items, loc: pattern_loc }),
+                        kind,
+                    },
+                    value: value.clone(),
+                    loc: loc.clone(),
+                },
+            )?;
+
+            for (place, path) in followups {
+                lower_followup_target(builder, loc.clone(), kind, path, place, assignment_style)?;
+            }
+            Ok(Some(temporary))
+        }
+        oxc::AssignmentTarget::ObjectAssignmentTarget(pattern) => {
+            let mut properties: Vec<ObjectPropertyOrSpread> = Vec::new();
+            let mut followups: Vec<(Place, FollowupTarget)> = Vec::new();
+
+            let force_temporaries = if kind == InstructionKind::Reassign {
+                let mut found = false;
+                if pattern.rest.is_some() {
+                    found = true;
+                }
+                if !found {
+                    for prop in &pattern.properties {
+                        match prop {
+                            oxc::AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(p) => {
+                                // `{foo}` (init None) is a bare identifier; `{foo = d}`
+                                // (init Some) is an AssignmentPattern in Babel terms.
+                                if p.init.is_some() {
+                                    found = true;
+                                    break;
+                                }
+                                let start = p.binding.span.start;
+                                let ident_loc = builder.source_location(p.binding.span);
+                                match builder.resolve_identifier(
+                                    p.binding.name.as_str(),
+                                    start,
+                                    ident_loc,
+                                    Some(start),
+                                )? {
+                                    VariableBinding::Identifier { .. } => {}
+                                    _ => {
+                                        found = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            oxc::AssignmentTargetProperty::AssignmentTargetPropertyProperty(p) => {
+                                if !assignment_target_is_local_identifier(builder, &p.binding)? {
+                                    found = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                found
+            } else {
+                false
+            };
+
+            for prop in &pattern.properties {
+                match prop {
+                    oxc::AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(p) => {
+                        let key =
+                            ObjectPropertyKey::Identifier { name: p.binding.name.to_string() };
+                        let id = &p.binding;
+                        let start = id.span.start;
+                        if let Some(default) = &p.init {
+                            // `{foo = d}` — Babel shorthand AssignmentPattern. Lower
+                            // via a promoted temporary + default followup.
+                            let elem_loc = builder.source_location(p.span);
+                            let temp = build_temporary_place(builder, elem_loc);
+                            promote_temporary(builder, temp.identifier);
+                            properties.push(ObjectPropertyOrSpread::Property(ObjectProperty {
+                                key,
+                                property_type: ObjectPropertyType::Property,
+                                place: temp.clone(),
+                            }));
+                            followups.push((
+                                temp,
+                                FollowupTarget::Default {
+                                    span: p.span,
+                                    default,
+                                    binding: FollowupBinding::Identifier(id),
+                                },
+                            ));
+                            continue;
+                        }
+                        let is_context =
+                            builder.is_context_identifier(id.name.as_str(), start, Some(start));
+                        let can_use_direct = !force_temporaries
+                            && (matches!(assignment_style, AssignmentStyle::Assignment)
+                                || !is_context);
+                        if can_use_direct {
+                            let id_loc = builder.source_location(id.span);
+                            match lower_identifier_for_assignment(
+                                builder,
+                                id_loc.clone(),
+                                id_loc,
+                                kind,
+                                id.name.as_str(),
+                                start,
+                                Some(start),
+                            )? {
+                                Some(IdentifierForAssignment::Place(place)) => {
+                                    properties.push(ObjectPropertyOrSpread::Property(
+                                        ObjectProperty {
+                                            key,
+                                            property_type: ObjectPropertyType::Property,
+                                            place,
+                                        },
+                                    ));
+                                }
+                                Some(IdentifierForAssignment::Global { .. }) => {
+                                    builder.record_error(CompilerErrorDetail {
+                                        reason: "Expected reassignment of globals to enable forceTemporaries".to_string(),
+                                        category: ErrorCategory::Todo,
+                                        loc: builder.source_location(id.span),
+                                        description: None,
+                                        suggestions: None,
+                                    })?;
+                                }
+                                None => {
+                                    continue;
+                                }
+                            }
+                        } else {
+                            let temp =
+                                build_temporary_place(builder, builder.source_location(id.span));
+                            promote_temporary(builder, temp.identifier);
+                            properties.push(ObjectPropertyOrSpread::Property(ObjectProperty {
+                                key,
+                                property_type: ObjectPropertyType::Property,
+                                place: temp.clone(),
+                            }));
+                            followups.push((temp, FollowupTarget::Identifier(id)));
+                        }
+                    }
+                    oxc::AssignmentTargetProperty::AssignmentTargetPropertyProperty(p) => {
+                        if p.computed {
+                            builder.record_error(CompilerErrorDetail {
+                                reason: "(BuildHIR::lowerAssignment) Handle computed properties in ObjectPattern".to_string(),
+                                category: ErrorCategory::Todo,
+                                loc: builder.source_location(p.span),
+                                description: None,
+                                suggestions: None,
+                            })?;
+                            continue;
+                        }
+                        let key = match lower_object_property_key(builder, &p.name, false)? {
+                            Some(k) => k,
+                            None => continue,
+                        };
+                        match &p.binding {
+                            oxc::AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(id) => {
+                                let start = id.span.start;
+                                let is_context = builder
+                                    .is_context_identifier(id.name.as_str(), start, Some(start));
+                                let can_use_direct = !force_temporaries
+                                    && (matches!(assignment_style, AssignmentStyle::Assignment)
+                                        || !is_context);
+                                if can_use_direct {
+                                    let id_loc = builder.source_location(id.span);
+                                    match lower_identifier_for_assignment(
+                                        builder,
+                                        id_loc.clone(),
+                                        id_loc,
+                                        kind,
+                                        id.name.as_str(),
+                                        start,
+                                        Some(start),
+                                    )? {
+                                        Some(IdentifierForAssignment::Place(place)) => {
+                                            properties.push(ObjectPropertyOrSpread::Property(
+                                                ObjectProperty {
+                                                    key,
+                                                    property_type: ObjectPropertyType::Property,
+                                                    place,
+                                                },
+                                            ));
+                                        }
+                                        Some(IdentifierForAssignment::Global { .. }) => {
+                                            builder.record_error(CompilerErrorDetail {
+                                                reason: "Expected reassignment of globals to enable forceTemporaries".to_string(),
+                                                category: ErrorCategory::Todo,
+                                                loc: builder.source_location(id.span),
+                                                description: None,
+                                                suggestions: None,
+                                            })?;
+                                        }
+                                        None => {
+                                            continue;
+                                        }
+                                    }
+                                } else {
+                                    let temp = build_temporary_place(
+                                        builder,
+                                        builder.source_location(id.span),
+                                    );
+                                    promote_temporary(builder, temp.identifier);
+                                    properties.push(ObjectPropertyOrSpread::Property(
+                                        ObjectProperty {
+                                            key,
+                                            property_type: ObjectPropertyType::Property,
+                                            place: temp.clone(),
+                                        },
+                                    ));
+                                    followups.push((
+                                        temp,
+                                        FollowupTarget::MaybeDefault(&p.binding),
+                                    ));
+                                }
+                            }
+                            other => {
+                                let elem_loc = builder.source_location(other.span());
+                                let temp = build_temporary_place(builder, elem_loc);
+                                promote_temporary(builder, temp.identifier);
+                                properties.push(ObjectPropertyOrSpread::Property(ObjectProperty {
+                                    key,
+                                    property_type: ObjectPropertyType::Property,
+                                    place: temp.clone(),
+                                }));
+                                followups.push((temp, FollowupTarget::MaybeDefault(other)));
+                            }
+                        }
+                    }
+                }
+            }
+
+            if let Some(rest) = &pattern.rest {
+                match &rest.target {
+                    oxc::AssignmentTarget::AssignmentTargetIdentifier(id) => {
+                        let start = id.span.start;
+                        let is_context =
+                            builder.is_context_identifier(id.name.as_str(), start, Some(start));
+                        let can_use_direct = !force_temporaries
+                            && (matches!(assignment_style, AssignmentStyle::Assignment)
+                                || !is_context);
+                        if can_use_direct {
+                            let rest_loc = builder.source_location(rest.span);
+                            let id_loc = builder.source_location(id.span);
+                            match lower_identifier_for_assignment(
+                                builder,
+                                rest_loc,
+                                id_loc,
+                                kind,
+                                id.name.as_str(),
+                                start,
+                                Some(start),
+                            )? {
+                                Some(IdentifierForAssignment::Place(place)) => {
+                                    properties.push(ObjectPropertyOrSpread::Spread(SpreadPattern {
+                                        place,
+                                    }));
+                                }
+                                Some(IdentifierForAssignment::Global { .. }) => {
+                                    builder.record_error(CompilerErrorDetail {
+                                        reason: "Expected reassignment of globals to enable forceTemporaries".to_string(),
+                                        category: ErrorCategory::Todo,
+                                        loc: builder.source_location(rest.span),
+                                        description: None,
+                                        suggestions: None,
+                                    })?;
+                                }
+                                None => {}
+                            }
+                        } else {
+                            let temp =
+                                build_temporary_place(builder, builder.source_location(rest.span));
+                            promote_temporary(builder, temp.identifier);
+                            properties.push(ObjectPropertyOrSpread::Spread(SpreadPattern {
+                                place: temp.clone(),
+                            }));
+                            followups.push((temp, FollowupTarget::Target(&rest.target)));
+                        }
+                    }
+                    other => {
+                        builder.record_error(CompilerErrorDetail {
+                            reason: format!(
+                                "(BuildHIR::lowerAssignment) Handle {} rest element in ObjectPattern",
+                                match other {
+                                    oxc::AssignmentTarget::ObjectAssignmentTarget(_) => {
+                                        "ObjectPattern"
+                                    }
+                                    oxc::AssignmentTarget::ArrayAssignmentTarget(_) => "ArrayPattern",
+                                    oxc::AssignmentTarget::StaticMemberExpression(_)
+                                    | oxc::AssignmentTarget::ComputedMemberExpression(_)
+                                    | oxc::AssignmentTarget::PrivateFieldExpression(_) => {
+                                        "MemberExpression"
+                                    }
+                                    _ => "unknown",
+                                }
+                            ),
+                            category: ErrorCategory::Todo,
+                            loc: builder.source_location(rest.span),
+                            description: None,
+                            suggestions: None,
+                        })?;
+                    }
+                }
+            }
+
+            let pattern_loc = builder.source_location(pattern.span);
+            let temporary = lower_value_to_temporary(
+                builder,
+                InstructionValue::Destructure {
+                    lvalue: LValuePattern {
+                        pattern: Pattern::Object(ObjectPattern { properties, loc: pattern_loc }),
+                        kind,
+                    },
+                    value: value.clone(),
+                    loc: loc.clone(),
+                },
+            )?;
+
+            for (place, path) in followups {
+                lower_followup_target(builder, loc.clone(), kind, path, place, assignment_style)?;
+            }
+            Ok(Some(temporary))
+        }
+        // TS assignment-target wrappers (e.g. `(x as T) = ...`). The original
+        // recorded the TS-faithful Todo once in find_context_identifiers and
+        // returned None here.
+        oxc::AssignmentTarget::TSAsExpression(_)
+        | oxc::AssignmentTarget::TSSatisfiesExpression(_)
+        | oxc::AssignmentTarget::TSNonNullExpression(_)
+        | oxc::AssignmentTarget::TSTypeAssertion(_) => Ok(None),
+    }
+}
+
+/// A destructuring followup target: either a nested assignment target, a
+/// with-default wrapper element, or (for `{foo = d}` object shorthand) an
+/// identifier with a default expression.
+enum FollowupTarget<'a> {
+    Target(&'a oxc::AssignmentTarget<'a>),
+    MaybeDefault(&'a oxc::AssignmentTargetMaybeDefault<'a>),
+    /// A bare `{foo}` shorthand object property binding that needs a promoted
+    /// temporary followup (the Babel `obj_prop.value == Identifier` case).
+    Identifier(&'a oxc::IdentifierReference<'a>),
+    Default {
+        span: oxc_span::Span,
+        default: &'a oxc::Expression<'a>,
+        binding: FollowupBinding<'a>,
+    },
+}
+
+enum FollowupBinding<'a> {
+    Identifier(&'a oxc::IdentifierReference<'a>),
+    Target(&'a oxc::AssignmentTarget<'a>),
+}
+
+/// Store `value` into the identifier-target `id` (a bare destructuring binding).
+/// Mirrors the `PatternLike::Identifier` followup path of the original
+/// `lower_assignment` (re-resolving the binding for the store).
+fn lower_identifier_followup_store(
+    builder: &mut HirBuilder,
+    loc: Option<SourceLocation>,
+    kind: InstructionKind,
+    id: &oxc::IdentifierReference,
+    value: Place,
+) -> Result<Option<Place>, CompilerError> {
+    let start = id.span.start;
+    let id_loc = builder.source_location(id.span);
+    let result = lower_identifier_for_assignment(
+        builder,
+        loc.clone(),
+        id_loc,
+        kind,
+        id.name.as_str(),
+        start,
+        Some(start),
+    )?;
+    match result {
+        None => Ok(None),
+        Some(IdentifierForAssignment::Global { name }) => {
+            let t = lower_value_to_temporary(
+                builder,
+                InstructionValue::StoreGlobal { name, value, loc },
+            )?;
+            Ok(Some(t))
+        }
+        Some(IdentifierForAssignment::Place(place)) => {
+            if builder.is_context_identifier(id.name.as_str(), start, Some(start)) {
+                let t = lower_value_to_temporary(
+                    builder,
+                    InstructionValue::StoreContext {
+                        lvalue: LValue { place, kind },
+                        value,
+                        loc,
+                    },
+                )?;
+                Ok(Some(t))
+            } else {
+                let t = lower_value_to_temporary(
+                    builder,
+                    InstructionValue::StoreLocal {
+                        lvalue: LValue { place, kind },
+                        value,
+                        type_annotation: None,
+                        loc,
+                    },
+                )?;
+                Ok(Some(t))
+            }
+        }
+    }
+}
+
+/// Lower a single destructuring followup (the recursion step shared by
+/// `lower_assignment_target`).
+fn lower_followup_target(
+    builder: &mut HirBuilder,
+    loc: Option<SourceLocation>,
+    kind: InstructionKind,
+    target: FollowupTarget,
+    value: Place,
+    assignment_style: AssignmentStyle,
+) -> Result<Option<Place>, CompilerError> {
+    match target {
+        FollowupTarget::Target(t) => {
+            let followup_loc = builder.source_location(t.span()).or(loc);
+            lower_assignment_target(builder, followup_loc, kind, t, value, assignment_style)
+        }
+        FollowupTarget::MaybeDefault(m) => {
+            lower_assignment_target_maybe_default(builder, loc, kind, m, value, assignment_style)
+        }
+        FollowupTarget::Identifier(id) => {
+            lower_identifier_followup_store(builder, loc, kind, id, value)
+        }
+        FollowupTarget::Default { span, default, binding } => {
+            lower_assignment_target_default(
+                builder,
+                span,
+                kind,
+                default,
+                binding,
+                value,
+                assignment_style,
+            )
+        }
+    }
+}
+
+/// Lower an `AssignmentTargetMaybeDefault` (array element / object property
+/// binding). The with-default wrapper (`[a = 1]`, `{a: b = 1}`) is the Babel
+/// `AssignmentPattern` case.
+fn lower_assignment_target_maybe_default(
+    builder: &mut HirBuilder,
+    loc: Option<SourceLocation>,
+    kind: InstructionKind,
+    maybe: &oxc::AssignmentTargetMaybeDefault,
+    value: Place,
+    assignment_style: AssignmentStyle,
+) -> Result<Option<Place>, CompilerError> {
+    match maybe {
+        oxc::AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(with_default) => {
+            lower_assignment_target_default(
+                builder,
+                with_default.span,
+                kind,
+                &with_default.init,
+                FollowupBinding::Target(&with_default.binding),
+                value,
+                assignment_style,
+            )
+        }
+        _ => {
+            let target = maybe.as_assignment_target().unwrap();
+            let followup_loc = builder.source_location(target.span()).or(loc);
+            lower_assignment_target(builder, followup_loc, kind, target, value, assignment_style)
+        }
+    }
+}
+
+/// Lower a default-value assignment target (`AssignmentPattern`): if `value ===
+/// undefined`, use the default, else use `value`, then assign the result into the
+/// inner binding. Faithful translation of the `PatternLike::AssignmentPattern` arm.
+fn lower_assignment_target_default(
+    builder: &mut HirBuilder,
+    span: oxc_span::Span,
+    kind: InstructionKind,
+    default: &oxc::Expression,
+    binding: FollowupBinding,
+    value: Place,
+    assignment_style: AssignmentStyle,
+) -> Result<Option<Place>, CompilerError> {
+    let pat_loc = builder.source_location(span);
+
+    let temp = build_temporary_place(builder, pat_loc.clone());
+
+    let test_block = builder.reserve(BlockKind::Value);
+    let continuation_block = builder.reserve(builder.current_block_kind());
+    let continuation_id = continuation_block.id;
+
+    let temp_consequent = temp.clone();
+    let pat_loc_consequent = pat_loc.clone();
+    let consequent = builder.try_enter(BlockKind::Value, |builder, _| {
+        let default_value = lower_reorderable_expression(builder, default)?;
+        lower_value_to_temporary(
+            builder,
+            InstructionValue::StoreLocal {
+                lvalue: LValue { place: temp_consequent.clone(), kind: InstructionKind::Const },
+                value: default_value,
+                type_annotation: None,
+                loc: pat_loc_consequent.clone(),
+            },
+        )?;
+        Ok(Terminal::Goto {
+            block: continuation_id,
+            variant: GotoVariant::Break,
+            id: EvaluationOrder(0),
+            loc: pat_loc_consequent.clone(),
+        })
+    });
+
+    let temp_alternate = temp.clone();
+    let pat_loc_alternate = pat_loc.clone();
+    let value_alternate = value.clone();
+    let alternate = builder.try_enter(BlockKind::Value, |builder, _| {
+        lower_value_to_temporary(
+            builder,
+            InstructionValue::StoreLocal {
+                lvalue: LValue { place: temp_alternate.clone(), kind: InstructionKind::Const },
+                value: value_alternate.clone(),
+                type_annotation: None,
+                loc: pat_loc_alternate.clone(),
+            },
+        )?;
+        Ok(Terminal::Goto {
+            block: continuation_id,
+            variant: GotoVariant::Break,
+            id: EvaluationOrder(0),
+            loc: pat_loc_alternate.clone(),
+        })
+    });
+
+    builder.terminate_with_continuation(
+        Terminal::Ternary {
+            test: test_block.id,
+            fallthrough: continuation_id,
+            id: EvaluationOrder(0),
+            loc: pat_loc.clone(),
+        },
+        test_block,
+    );
+
+    let undef = lower_value_to_temporary(
+        builder,
+        InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc: pat_loc.clone() },
+    )?;
+    let test = lower_value_to_temporary(
+        builder,
+        InstructionValue::BinaryExpression {
+            left: value,
+            operator: BinaryOperator::StrictEqual,
+            right: undef,
+            loc: pat_loc.clone(),
+        },
+    )?;
+    builder.terminate_with_continuation(
+        Terminal::Branch {
+            test,
+            consequent: consequent?,
+            alternate: alternate?,
+            fallthrough: continuation_id,
+            id: EvaluationOrder(0),
+            loc: pat_loc.clone(),
+        },
+        continuation_block,
+    );
+
+    // Recursively assign the resolved value to the inner binding.
+    match binding {
+        FollowupBinding::Target(t) => {
+            lower_assignment_target(builder, pat_loc, kind, t, temp, assignment_style)
+        }
+        FollowupBinding::Identifier(id) => {
+            // `{foo = d}` shorthand: the binding is the identifier `foo` itself.
+            lower_identifier_followup_store(builder, pat_loc, kind, id, temp)
         }
     }
 }
@@ -3558,10 +4890,348 @@ fn lower_expression(
             FunctionNode::Function(func),
             FunctionExpressionType::FunctionExpression,
         ),
+        oxc::Expression::AssignmentExpression(assign) => lower_assignment_expression(builder, assign),
         _ => {
             // not-yet-ported arms bail to undefined (differential green-set grows as arms land)
             let loc = builder.source_location(expr.span());
             Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc })
+        }
+    }
+}
+
+/// Lower an `AssignmentExpression`. Faithful translation of the original
+/// `Expression::AssignmentExpression` arm, adapted to oxc's `AssignmentTarget`
+/// split. `=` handles identifier / member / destructuring targets; compound
+/// operators (`+=` etc.) handle identifier / member targets and bail on patterns.
+fn lower_assignment_expression(
+    builder: &mut HirBuilder,
+    assign: &oxc::AssignmentExpression,
+) -> Result<InstructionValue, CompilerError> {
+    let loc = builder.source_location(assign.span);
+
+    if matches!(assign.operator, oxc::AssignmentOperator::Assign) {
+        match &assign.left {
+            oxc::AssignmentTarget::AssignmentTargetIdentifier(ident) => {
+                let start = ident.span.start;
+                let right = lower_expression_to_temporary(builder, &assign.right)?;
+                let ident_loc = builder.source_location(ident.span);
+                let binding = builder.resolve_identifier(
+                    ident.name.as_str(),
+                    start,
+                    ident_loc.clone(),
+                    Some(start),
+                )?;
+                match binding {
+                    VariableBinding::Identifier { identifier, binding_kind } => {
+                        if binding_kind == BindingKind::Const {
+                            builder.record_error(CompilerErrorDetail {
+                                reason: "Cannot reassign a `const` variable".to_string(),
+                                category: ErrorCategory::Syntax,
+                                loc: ident_loc.clone(),
+                                description: Some(format!(
+                                    "`{}` is declared as const",
+                                    ident.name.as_str()
+                                )),
+                                suggestions: None,
+                            })?;
+                            return Ok(InstructionValue::Primitive {
+                                value: PrimitiveValue::Undefined,
+                                loc: ident_loc,
+                            });
+                        }
+                        let place = Place {
+                            identifier,
+                            reactive: false,
+                            effect: Effect::Unknown,
+                            loc: ident_loc,
+                        };
+                        if builder.is_context_identifier(ident.name.as_str(), start, Some(start)) {
+                            let temp = lower_value_to_temporary(
+                                builder,
+                                InstructionValue::StoreContext {
+                                    lvalue: LValue {
+                                        kind: InstructionKind::Reassign,
+                                        place: place.clone(),
+                                    },
+                                    value: right,
+                                    loc: place.loc.clone(),
+                                },
+                            )?;
+                            Ok(InstructionValue::LoadLocal { place: temp.clone(), loc: temp.loc })
+                        } else {
+                            let temp = lower_value_to_temporary(
+                                builder,
+                                InstructionValue::StoreLocal {
+                                    lvalue: LValue {
+                                        kind: InstructionKind::Reassign,
+                                        place: place.clone(),
+                                    },
+                                    value: right,
+                                    type_annotation: None,
+                                    loc: place.loc.clone(),
+                                },
+                            )?;
+                            Ok(InstructionValue::LoadLocal { place: temp.clone(), loc: temp.loc })
+                        }
+                    }
+                    _ => {
+                        let name = ident.name.to_string();
+                        let temp = lower_value_to_temporary(
+                            builder,
+                            InstructionValue::StoreGlobal { name, value: right, loc: ident_loc },
+                        )?;
+                        Ok(InstructionValue::LoadLocal { place: temp.clone(), loc: temp.loc })
+                    }
+                }
+            }
+            oxc::AssignmentTarget::StaticMemberExpression(_)
+            | oxc::AssignmentTarget::ComputedMemberExpression(_)
+            | oxc::AssignmentTarget::PrivateFieldExpression(_) => {
+                let simple = assign.left.as_simple_assignment_target().unwrap();
+                let right = lower_expression_to_temporary(builder, &assign.right)?;
+                let left_loc = builder.source_location(simple.span());
+                let temp = match simple {
+                    oxc::SimpleAssignmentTarget::StaticMemberExpression(member) => {
+                        let object = lower_expression_to_temporary(builder, &member.object)?;
+                        lower_value_to_temporary(
+                            builder,
+                            InstructionValue::PropertyStore {
+                                object,
+                                property: PropertyLiteral::String(member.property.name.to_string()),
+                                value: right,
+                                loc: left_loc,
+                            },
+                        )?
+                    }
+                    oxc::SimpleAssignmentTarget::ComputedMemberExpression(member) => {
+                        let object = lower_expression_to_temporary(builder, &member.object)?;
+                        if let oxc::Expression::NumericLiteral(num) = &member.expression {
+                            lower_value_to_temporary(
+                                builder,
+                                InstructionValue::PropertyStore {
+                                    object,
+                                    property: PropertyLiteral::Number(FloatValue::new(num.value)),
+                                    value: right,
+                                    loc: left_loc,
+                                },
+                            )?
+                        } else {
+                            let prop =
+                                lower_expression_to_temporary(builder, &member.expression)?;
+                            lower_value_to_temporary(
+                                builder,
+                                InstructionValue::ComputedStore {
+                                    object,
+                                    property: prop,
+                                    value: right,
+                                    loc: left_loc,
+                                },
+                            )?
+                        }
+                    }
+                    oxc::SimpleAssignmentTarget::PrivateFieldExpression(member) => {
+                        // Babel modeled `a.#b = x` as a non-computed MemberExpression
+                        // whose property is a PrivateName; the original fell to the
+                        // generic property arm, lowering the PrivateName (which bails
+                        // to an undefined temp) and emitting a ComputedStore.
+                        let object = lower_expression_to_temporary(builder, &member.object)?;
+                        let prop = lower_private_name_to_temporary(builder, member.field.span)?;
+                        lower_value_to_temporary(
+                            builder,
+                            InstructionValue::ComputedStore {
+                                object,
+                                property: prop,
+                                value: right,
+                                loc: left_loc,
+                            },
+                        )?
+                    }
+                    _ => unreachable!(),
+                };
+                Ok(InstructionValue::LoadLocal { place: temp.clone(), loc: temp.loc })
+            }
+            _ => {
+                // Destructuring assignment
+                let right = lower_expression_to_temporary(builder, &assign.right)?;
+                let left_loc = builder.source_location(assign.left.span());
+                let result = lower_assignment_target(
+                    builder,
+                    left_loc,
+                    InstructionKind::Reassign,
+                    &assign.left,
+                    right.clone(),
+                    AssignmentStyle::Destructure,
+                )?;
+                match result {
+                    Some(place) => {
+                        Ok(InstructionValue::LoadLocal { place: place.clone(), loc: place.loc })
+                    }
+                    None => Ok(InstructionValue::LoadLocal { place: right, loc }),
+                }
+            }
+        }
+    } else {
+        // Compound assignment operators
+        let binary_op = match assign.operator {
+            oxc::AssignmentOperator::Addition => Some(BinaryOperator::Add),
+            oxc::AssignmentOperator::Subtraction => Some(BinaryOperator::Subtract),
+            oxc::AssignmentOperator::Multiplication => Some(BinaryOperator::Multiply),
+            oxc::AssignmentOperator::Division => Some(BinaryOperator::Divide),
+            oxc::AssignmentOperator::Remainder => Some(BinaryOperator::Modulo),
+            oxc::AssignmentOperator::Exponential => Some(BinaryOperator::Exponent),
+            oxc::AssignmentOperator::ShiftLeft => Some(BinaryOperator::ShiftLeft),
+            oxc::AssignmentOperator::ShiftRight => Some(BinaryOperator::ShiftRight),
+            oxc::AssignmentOperator::ShiftRightZeroFill => {
+                Some(BinaryOperator::UnsignedShiftRight)
+            }
+            oxc::AssignmentOperator::BitwiseOR => Some(BinaryOperator::BitwiseOr),
+            oxc::AssignmentOperator::BitwiseXOR => Some(BinaryOperator::BitwiseXor),
+            oxc::AssignmentOperator::BitwiseAnd => Some(BinaryOperator::BitwiseAnd),
+            oxc::AssignmentOperator::LogicalOr
+            | oxc::AssignmentOperator::LogicalAnd
+            | oxc::AssignmentOperator::LogicalNullish => {
+                builder.record_error(CompilerErrorDetail {
+                    reason: "Logical assignment operators (||=, &&=, ??=) are not yet supported"
+                        .to_string(),
+                    category: ErrorCategory::Todo,
+                    loc: loc.clone(),
+                    description: None,
+                    suggestions: None,
+                })?;
+                return Ok(InstructionValue::Primitive {
+                    value: PrimitiveValue::Undefined,
+                    loc,
+                });
+            }
+            oxc::AssignmentOperator::Assign => unreachable!(),
+        };
+        let binary_op = match binary_op {
+            Some(op) => op,
+            None => {
+                return Ok(InstructionValue::Primitive {
+                    value: PrimitiveValue::Undefined,
+                    loc,
+                });
+            }
+        };
+
+        match &assign.left {
+            oxc::AssignmentTarget::AssignmentTargetIdentifier(ident) => {
+                let start = ident.span.start;
+                let ident_loc = builder.source_location(ident.span);
+                let left_place =
+                    lower_identifier(builder, ident.name.as_str(), start, ident_loc.clone(), Some(start))?;
+                let right = lower_expression_to_temporary(builder, &assign.right)?;
+                let binary_place = lower_value_to_temporary(
+                    builder,
+                    InstructionValue::BinaryExpression {
+                        operator: binary_op,
+                        left: left_place,
+                        right,
+                        loc: loc.clone(),
+                    },
+                )?;
+                let binding = builder.resolve_identifier(
+                    ident.name.as_str(),
+                    start,
+                    ident_loc.clone(),
+                    Some(start),
+                )?;
+                match binding {
+                    VariableBinding::Identifier { identifier, .. } => {
+                        let place = Place {
+                            identifier,
+                            reactive: false,
+                            effect: Effect::Unknown,
+                            loc: ident_loc,
+                        };
+                        if builder.is_context_identifier(ident.name.as_str(), start, Some(start)) {
+                            lower_value_to_temporary(
+                                builder,
+                                InstructionValue::StoreContext {
+                                    lvalue: LValue {
+                                        kind: InstructionKind::Reassign,
+                                        place: place.clone(),
+                                    },
+                                    value: binary_place,
+                                    loc: loc.clone(),
+                                },
+                            )?;
+                            Ok(InstructionValue::LoadContext { place, loc })
+                        } else {
+                            lower_value_to_temporary(
+                                builder,
+                                InstructionValue::StoreLocal {
+                                    lvalue: LValue {
+                                        kind: InstructionKind::Reassign,
+                                        place: place.clone(),
+                                    },
+                                    value: binary_place,
+                                    type_annotation: None,
+                                    loc: loc.clone(),
+                                },
+                            )?;
+                            Ok(InstructionValue::LoadLocal { place, loc })
+                        }
+                    }
+                    _ => {
+                        let name = ident.name.to_string();
+                        let temp = lower_value_to_temporary(
+                            builder,
+                            InstructionValue::StoreGlobal {
+                                name,
+                                value: binary_place,
+                                loc: loc.clone(),
+                            },
+                        )?;
+                        Ok(InstructionValue::LoadLocal { place: temp.clone(), loc: temp.loc })
+                    }
+                }
+            }
+            oxc::AssignmentTarget::StaticMemberExpression(_)
+            | oxc::AssignmentTarget::ComputedMemberExpression(_)
+            | oxc::AssignmentTarget::PrivateFieldExpression(_) => {
+                let simple = assign.left.as_simple_assignment_target().unwrap();
+                let member_loc = builder.source_location(simple.span());
+                let lowered = lower_member_expression_from_simple_target(builder, simple)?;
+                let object = lowered.object;
+                let lowered_property = lowered.property;
+                let current_value = lower_value_to_temporary(builder, lowered.value)?;
+                let right = lower_expression_to_temporary(builder, &assign.right)?;
+                let result = lower_value_to_temporary(
+                    builder,
+                    InstructionValue::BinaryExpression {
+                        operator: binary_op,
+                        left: current_value,
+                        right,
+                        loc: member_loc.clone(),
+                    },
+                )?;
+                match lowered_property {
+                    MemberProperty::Literal(prop_literal) => Ok(InstructionValue::PropertyStore {
+                        object,
+                        property: prop_literal,
+                        value: result,
+                        loc: member_loc,
+                    }),
+                    MemberProperty::Computed(prop_place) => Ok(InstructionValue::ComputedStore {
+                        object,
+                        property: prop_place,
+                        value: result,
+                        loc: member_loc,
+                    }),
+                }
+            }
+            _ => {
+                builder.record_error(CompilerErrorDetail {
+                    reason: "Compound assignment to complex pattern is not yet supported".to_string(),
+                    category: ErrorCategory::Todo,
+                    loc: loc.clone(),
+                    description: None,
+                    suggestions: None,
+                })?;
+                Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc })
+            }
         }
     }
 }
@@ -4439,7 +6109,19 @@ fn lower_statement(
                 let stmt_loc = builder.source_location(var_decl.span);
                 if let Some(init) = &declarator.init {
                     let value = lower_expression_to_temporary(builder, init)?;
-                    lower_binding_assignment(builder, stmt_loc, kind, &declarator.id, value)?;
+                    let assign_style = match &declarator.id {
+                        oxc::BindingPattern::ObjectPattern(_)
+                        | oxc::BindingPattern::ArrayPattern(_) => AssignmentStyle::Destructure,
+                        _ => AssignmentStyle::Assignment,
+                    };
+                    lower_binding_assignment(
+                        builder,
+                        stmt_loc,
+                        kind,
+                        &declarator.id,
+                        value,
+                        assign_style,
+                    )?;
                 }
                 // TODO(stage1a-arms): no-init declarations (DeclareLocal/DeclareContext).
             }
