@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_formatter/tests/fixtures/mod.rs
-assertion_line: 142
 ---
 ==================== Input ====================
 // `<T>x` as the base of `**` must stay parenthesized (`<T>x ** 2` is a syntax error).
@@ -10,6 +9,10 @@ b = 2 ** (<T>x);
 // Other operators are unaffected: `<<` keeps parens, `+` drops them.
 c = (<T>x) << 2;
 d = (<T>x) + 2;
+// Right-associative nesting: the base `<T>x` must stay parenthesized.
+e = (<T>x) ** 2 ** 3;
+// Both operands are type assertions: only the base needs parentheses.
+f = (<T>x) ** (<U>y);
 
 ==================== Output ====================
 ------------------
@@ -22,6 +25,10 @@ b = 2 ** <T>x;
 // Other operators are unaffected: `<<` keeps parens, `+` drops them.
 c = (<T>x) << 2;
 d = <T>x + 2;
+// Right-associative nesting: the base `<T>x` must stay parenthesized.
+e = (<T>x) ** (2 ** 3);
+// Both operands are type assertions: only the base needs parentheses.
+f = (<T>x) ** <U>y;
 
 -------------------
 { printWidth: 100 }
@@ -33,5 +40,9 @@ b = 2 ** <T>x;
 // Other operators are unaffected: `<<` keeps parens, `+` drops them.
 c = (<T>x) << 2;
 d = <T>x + 2;
+// Right-associative nesting: the base `<T>x` must stay parenthesized.
+e = (<T>x) ** (2 ** 3);
+// Both operands are type assertions: only the base needs parentheses.
+f = (<T>x) ** <U>y;
 
 ===================== End =====================
