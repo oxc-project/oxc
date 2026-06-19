@@ -8780,6 +8780,9 @@
         "unicorn/no-await-in-promise-methods": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "unicorn/no-confusing-array-with": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "unicorn/no-console-spaces": {
           "$ref": "#/definitions/RuleNoConfig"
         },
