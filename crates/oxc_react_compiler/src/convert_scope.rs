@@ -3,8 +3,6 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::collections::HashMap;
-
 use indexmap::IndexMap;
 use oxc_ast::AstKind;
 use oxc_ast::ast::Program;
@@ -12,7 +10,11 @@ use oxc_semantic::Semantic;
 use oxc_span::GetSpan;
 use oxc_syntax::symbol::SymbolFlags;
 use react_compiler_ast::scope::*;
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxBuildHasher, FxHashMap};
+
+/// `IndexMap` keyed with the deterministic Fx hasher, matching the `FxIndexMap`
+/// used by `react_compiler_ast::scope` fields (`react_compiler_utils::FxIndexMap`).
+type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;
 
 /// Convert OXC's semantic analysis into React Compiler's ScopeInfo.
 pub fn convert_scope_info(semantic: &Semantic, _program: &Program) -> ScopeInfo {
@@ -21,11 +23,11 @@ pub fn convert_scope_info(semantic: &Semantic, _program: &Program) -> ScopeInfo 
 
     let mut scopes: Vec<ScopeData> = Vec::new();
     let mut bindings: Vec<BindingData> = Vec::new();
-    let mut node_to_scope: HashMap<u32, ScopeId> = HashMap::new();
-    let mut node_to_scope_end: HashMap<u32, u32> = HashMap::new();
+    let mut node_to_scope: FxHashMap<u32, ScopeId> = FxHashMap::default();
+    let mut node_to_scope_end: FxHashMap<u32, u32> = FxHashMap::default();
     // In OXC, span.start is used as node_id (OXC spans are unique).
-    let mut node_id_to_scope: HashMap<u32, ScopeId> = HashMap::new();
-    let mut ref_node_id_to_binding: IndexMap<u32, BindingId> = IndexMap::new();
+    let mut node_id_to_scope: FxHashMap<u32, ScopeId> = FxHashMap::default();
+    let mut ref_node_id_to_binding: FxIndexMap<u32, BindingId> = FxIndexMap::default();
 
     let mut symbol_to_binding: FxHashMap<oxc_syntax::symbol::SymbolId, BindingId> =
         FxHashMap::default();
@@ -70,7 +72,7 @@ pub fn convert_scope_info(semantic: &Semantic, _program: &Program) -> ScopeInfo 
 
         let kind = get_scope_kind(scope_flags, semantic, scope_id);
 
-        let mut scope_bindings: HashMap<String, BindingId> = HashMap::new();
+        let mut scope_bindings: FxHashMap<String, BindingId> = FxHashMap::default();
         for symbol_id in scoping.iter_bindings_in(scope_id) {
             if let Some(&binding_id) = symbol_to_binding.get(&symbol_id) {
                 let name = bindings[binding_id.0 as usize].name.clone();
@@ -215,7 +217,7 @@ pub fn convert_scope_info(semantic: &Semantic, _program: &Program) -> ScopeInfo 
         bindings,
         node_to_scope,
         node_to_scope_end,
-        reference_to_binding: IndexMap::new(),
+        reference_to_binding: FxIndexMap::default(),
         ref_node_id_to_binding,
         node_id_to_scope,
         program_scope,

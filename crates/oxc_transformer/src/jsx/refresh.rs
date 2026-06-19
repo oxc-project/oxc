@@ -4,8 +4,8 @@ use base64::{
     encoded_len as base64_encoded_len,
     prelude::{BASE64_STANDARD, Engine},
 };
+use hmac_sha1_compact::Hash as Sha1;
 use rustc_hash::{FxHashMap, FxHashSet};
-use sha1::{Digest, Sha1};
 
 use oxc_allocator::{
     CloneIn, GetAddress, StringBuilder as ArenaStringBuilder, TakeIn, UnstableAddress,
@@ -578,7 +578,7 @@ impl<'a> ReactRefresh<'a> {
             };
 
             let mut hasher = Sha1::new();
-            hasher.update(&key);
+            hasher.update(key.as_bytes());
             let hash = hasher.finalize();
             debug_assert_eq!(hash.len(), SHA1_HASH_LEN);
 

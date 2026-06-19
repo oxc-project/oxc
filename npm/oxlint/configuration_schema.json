@@ -5665,6 +5665,26 @@
             }
           ]
         },
+        "node/no-sync": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoSyncConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "object-shorthand": {
           "anyOf": [
             {
@@ -14897,6 +14917,28 @@
           "default": false,
           "type": "boolean",
           "markdownDescription": "Disallow template literals in addition to string literals."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoSyncConfig": {
+      "type": "object",
+      "properties": {
+        "allowAtRootLevel": {
+          "description": "Whether synchronous methods should be allowed at the top level of a file.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether synchronous methods should be allowed at the top level of a file."
+        },
+        "ignores": {
+          "description": "Function names to ignore.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true,
+          "markdownDescription": "Function names to ignore."
         }
       },
       "additionalProperties": false

@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.137.0] - 2026-06-18
+
+### 💥 BREAKING CHANGES
+
+- 7a76cd3 estree: [**BREAKING**] Make whether to include TS fields a runtime option (#23574) (overlookmotel)
+- e7b6b68 estree: [**BREAKING**] `ESTree` config use methods not consts (#23573) (overlookmotel)
+
 ## [0.116.0] - 2026-03-02
 
 ### 🚀 Features

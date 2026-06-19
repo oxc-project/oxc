@@ -378,6 +378,11 @@ impl NumericSeparatorsStyle {
                 &SeparatorDir::Left,
                 &mut out,
             );
+        } else if number_raw.ends_with('.') {
+            // Handle the case where the number ends with a dot, e.g. `12345678.`
+            // This ensures a clean fix when it the object of a StaticMemberExpression
+            // `123.toString()` is invalid JS syntax, so the dot at the end is needed to result in `123..toString()`.
+            out.push('.');
         }
 
         if let Some(exponent_mark) = parsed.exponent_mark {
@@ -812,7 +817,10 @@ fn test() {
         ("const foo = 3819.123_4325", "const foo = 3819.1234325", None),
         ("const foo = 138789.12343_2_42", "const foo = 138_789.12343242", None),
         ("const foo = .000000_1", "const foo = .0000001", None),
-        // ("const foo = 12345678..toString()", "const foo = 12_345_678..toString()", None), // TODO: the second dot is needed
+        ("const foo = 12345678..toString()", "const foo = 12_345_678..toString()", None),
+        ("const foo = 12345678.1.toString()", "const foo = 12_345_678.1.toString()", None),
+        ("12345678.e10.toString()", "12_345_678e10.toString()", None),
+        ("12345678.1.e10.toString()", "12_345_678.1.e10.toString()", None),
         ("const foo = 12345678 .toString()", "const foo = 12_345_678 .toString()", None),
         (
             "const foo = 1.234567",
