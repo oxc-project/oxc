@@ -1171,6 +1171,118 @@ fn lower_private_name_to_temporary(
     )
 }
 
+/// Babel/ESTree node-type tag for an oxc TS type, used as a
+/// `TypeCastExpression`'s `type_annotation_name` (mirrors `get_type_annotation_name`,
+/// which reads the unwrapped type's tag).
+fn ts_type_node_type(ty: &oxc::TSType) -> &'static str {
+    match ty {
+        oxc::TSType::TSAnyKeyword(_) => "TSAnyKeyword",
+        oxc::TSType::TSBigIntKeyword(_) => "TSBigIntKeyword",
+        oxc::TSType::TSBooleanKeyword(_) => "TSBooleanKeyword",
+        oxc::TSType::TSIntrinsicKeyword(_) => "TSIntrinsicKeyword",
+        oxc::TSType::TSNeverKeyword(_) => "TSNeverKeyword",
+        oxc::TSType::TSNullKeyword(_) => "TSNullKeyword",
+        oxc::TSType::TSNumberKeyword(_) => "TSNumberKeyword",
+        oxc::TSType::TSObjectKeyword(_) => "TSObjectKeyword",
+        oxc::TSType::TSStringKeyword(_) => "TSStringKeyword",
+        oxc::TSType::TSSymbolKeyword(_) => "TSSymbolKeyword",
+        oxc::TSType::TSThisType(_) => "TSThisType",
+        oxc::TSType::TSUndefinedKeyword(_) => "TSUndefinedKeyword",
+        oxc::TSType::TSUnknownKeyword(_) => "TSUnknownKeyword",
+        oxc::TSType::TSVoidKeyword(_) => "TSVoidKeyword",
+        oxc::TSType::TSArrayType(_) => "TSArrayType",
+        oxc::TSType::TSUnionType(_) => "TSUnionType",
+        oxc::TSType::TSParenthesizedType(_) => "TSParenthesizedType",
+        oxc::TSType::TSLiteralType(_) => "TSLiteralType",
+        oxc::TSType::TSTypeReference(_) => "TSTypeReference",
+        oxc::TSType::TSTypeOperatorType(_) => "TSTypeOperator",
+        oxc::TSType::TSTupleType(_) => "TSTupleType",
+        oxc::TSType::TSIntersectionType(_) => "TSIntersectionType",
+        oxc::TSType::TSTypeLiteral(_) => "TSTypeLiteral",
+        oxc::TSType::TSTypeQuery(_) => "TSTypeQuery",
+        oxc::TSType::TSFunctionType(_) => "TSFunctionType",
+        oxc::TSType::TSConstructorType(_) => "TSConstructorType",
+        oxc::TSType::TSConditionalType(_) => "TSConditionalType",
+        oxc::TSType::TSIndexedAccessType(_) => "TSIndexedAccessType",
+        oxc::TSType::TSInferType(_) => "TSInferType",
+        oxc::TSType::TSImportType(_) => "TSImportType",
+        oxc::TSType::TSMappedType(_) => "TSMappedType",
+        oxc::TSType::TSNamedTupleMember(_) => "TSNamedTupleMember",
+        oxc::TSType::TSTemplateLiteralType(_) => "TSTemplateLiteralType",
+        oxc::TSType::TSTypePredicate(_) => "TSTypePredicate",
+        oxc::TSType::JSDocNullableType(_) => "JSDocNullableType",
+        oxc::TSType::JSDocNonNullableType(_) => "JSDocNonNullableType",
+        oxc::TSType::JSDocUnknownType(_) => "JSDocUnknownType",
+    }
+}
+
+/// Coarse classification of an oxc TS type, mirroring `lower_type_annotation`
+/// (array / primitive / everything else).
+fn classify_ts_type(ty: &oxc::TSType) -> crate::react_compiler_ast::common::RawTypeCategory {
+    use crate::react_compiler_ast::common::RawTypeCategory;
+    match ty {
+        oxc::TSType::TSArrayType(_) => RawTypeCategory::Array,
+        oxc::TSType::TSTypeReference(r) => match &r.type_name {
+            oxc::TSTypeName::IdentifierReference(id) if id.name == "Array" => {
+                RawTypeCategory::Array
+            }
+            _ => RawTypeCategory::Other,
+        },
+        oxc::TSType::TSBooleanKeyword(_)
+        | oxc::TSType::TSNullKeyword(_)
+        | oxc::TSType::TSNumberKeyword(_)
+        | oxc::TSType::TSStringKeyword(_)
+        | oxc::TSType::TSSymbolKeyword(_)
+        | oxc::TSType::TSUndefinedKeyword(_)
+        | oxc::TSType::TSVoidKeyword(_) => RawTypeCategory::Primitive,
+        _ => RawTypeCategory::Other,
+    }
+}
+
+/// Lower the HIR `Type` for a TS type annotation from its coarse classification,
+/// mirroring `lower_type_annotation`.
+fn lower_ts_type(builder: &mut HirBuilder, ty: &oxc::TSType) -> Type {
+    use crate::react_compiler_ast::common::RawTypeCategory;
+    match classify_ts_type(ty) {
+        RawTypeCategory::Array => Type::Object { shape_id: Some("BuiltInArray".to_string()) },
+        RawTypeCategory::Primitive => Type::Primitive,
+        RawTypeCategory::Other => builder.make_type(),
+    }
+}
+
+/// Lower `x as T` / `x satisfies T` / `<T>x` to a `TypeCastExpression`: the inner
+/// expression is lowered to a temporary and the type metadata is attached. Mirrors
+/// the original Babel `TSAsExpression`/`TSSatisfiesExpression`/`TSTypeAssertion`
+/// arms. The `type_annotation` RawNode is built from the unwrapped TS type's tag,
+/// span and classification (codegen re-parses it from source).
+fn lower_type_cast_expression(
+    builder: &mut HirBuilder,
+    span: oxc_span::Span,
+    expression: &oxc::Expression,
+    type_annotation: &oxc::TSType,
+    type_annotation_kind: &str,
+) -> Result<InstructionValue, CompilerError> {
+    let loc = builder.source_location(span);
+    let value = lower_expression_to_temporary(builder, expression)?;
+    let type_ = lower_ts_type(builder, type_annotation);
+    let type_annotation_name = Some(ts_type_node_type(type_annotation).to_string());
+    let raw = crate::react_compiler_ast::common::RawNode::type_node(
+        type_annotation_name.clone(),
+        Some(type_annotation.span().start),
+        Some(type_annotation.span().end),
+        classify_ts_type(type_annotation),
+        Vec::new(),
+    );
+    Ok(InstructionValue::TypeCastExpression {
+        value,
+        type_,
+        type_annotation_name,
+        type_annotation_kind: Some(type_annotation_kind.to_string()),
+        type_annotation: Some(raw),
+        loc,
+    })
+}
+
 /// Lower a member-expression update target (oxc's member variants of
 /// `SimpleAssignmentTarget`) into a receiver place + property + load value,
 /// mirroring `lower_member_expression_impl`.
@@ -1884,7 +1996,12 @@ fn lower_expression(
             // The `Import` keyword callee bails (records an error), then the source
             // and options arguments are lowered left-to-right.
             let loc = builder.source_location(imp.span);
-            let callee = lower_import_keyword_to_temporary(builder, &loc)?;
+            // The `import` keyword has no standalone node in oxc; synthesize its
+            // span ([start, start+6)) so the callee bail error and temporary carry
+            // the keyword loc, matching Babel's `Import` node loc.
+            let import_keyword_loc = builder
+                .source_location(oxc_span::Span::new(imp.span.start, imp.span.start + 6));
+            let callee = lower_import_keyword_to_temporary(builder, &import_keyword_loc)?;
             let mut args: Vec<PlaceOrSpread> = Vec::new();
             let source = lower_expression_to_temporary(builder, &imp.source)?;
             args.push(PlaceOrSpread::Place(source));
@@ -2076,13 +2193,33 @@ fn lower_expression(
                 }
             }
         }
-        // TS wrapper expressions unwrap to their inner expression. The original
-        // emitted a `TypeCastExpression` carrying type metadata, but that metadata
-        // (OriginalNode / type lowering) is deferred, so we unwrap faithfully.
-        oxc::Expression::TSAsExpression(ts) => lower_expression(builder, &ts.expression),
-        oxc::Expression::TSSatisfiesExpression(ts) => lower_expression(builder, &ts.expression),
+        // `x as T` / `x satisfies T` / `<T>x` lower the inner expression to a
+        // temporary and emit a `TypeCastExpression` carrying the type metadata,
+        // mirroring the original Babel logic.
+        oxc::Expression::TSAsExpression(ts) => lower_type_cast_expression(
+            builder,
+            ts.span,
+            &ts.expression,
+            &ts.type_annotation,
+            "as",
+        ),
+        oxc::Expression::TSSatisfiesExpression(ts) => lower_type_cast_expression(
+            builder,
+            ts.span,
+            &ts.expression,
+            &ts.type_annotation,
+            "satisfies",
+        ),
+        oxc::Expression::TSTypeAssertion(ts) => lower_type_cast_expression(
+            builder,
+            ts.span,
+            &ts.expression,
+            &ts.type_annotation,
+            "as",
+        ),
+        // `x!` and `x<T>` unwrap to their inner expression (the original also just
+        // unwraps these).
         oxc::Expression::TSNonNullExpression(ts) => lower_expression(builder, &ts.expression),
-        oxc::Expression::TSTypeAssertion(ts) => lower_expression(builder, &ts.expression),
         oxc::Expression::TSInstantiationExpression(ts) => {
             lower_expression(builder, &ts.expression)
         }
