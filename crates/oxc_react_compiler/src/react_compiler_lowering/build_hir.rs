@@ -2287,12 +2287,506 @@ fn lower_expression(
             }
             Ok(InstructionValue::ArrayExpression { elements, loc })
         }
+        oxc::Expression::JSXElement(jsx_element) => lower_jsx_element_expr(builder, jsx_element),
+        oxc::Expression::JSXFragment(jsx_fragment) => {
+            lower_jsx_fragment_expr(builder, jsx_fragment)
+        }
         _ => {
             // not-yet-ported arms bail to undefined (differential green-set grows as arms land)
             let loc = builder.source_location(expr.span());
             Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc })
         }
     }
+}
+
+/// Lower a JSX element expression. Faithful translation of the original Babel
+/// `Expression::JSXElement` arm, adapted to oxc's JSX shapes.
+///
+/// fbt note: the original tracked fbt/fbs sub-tags (`collect_fbt_sub_tags`) and
+/// reported duplicates. That sub-tag tracking is not ported in this batch; the
+/// `is_fbt` checks below preserve the module-level-import invariant (which is the
+/// only fbt path exercised by the differential corpus) but `builder.fbt_depth`
+/// stays 0 so JSX text whitespace is always trimmed.
+fn lower_jsx_element_expr(
+    builder: &mut HirBuilder,
+    jsx_element: &oxc::JSXElement,
+) -> Result<InstructionValue, CompilerError> {
+    let loc = builder.source_location(jsx_element.span);
+    let opening_loc = builder.source_location(jsx_element.opening_element.span);
+    let closing_loc = jsx_element
+        .closing_element
+        .as_ref()
+        .and_then(|c| builder.source_location(c.span));
+
+    // Lower the tag name
+    let tag = lower_jsx_element_name(builder, &jsx_element.opening_element.name)?;
+
+    // Lower attributes (props)
+    let mut props: Vec<JsxAttribute> = Vec::new();
+    for attr_item in &jsx_element.opening_element.attributes {
+        match attr_item {
+            oxc::JSXAttributeItem::SpreadAttribute(spread) => {
+                let argument = lower_expression_to_temporary(builder, &spread.argument)?;
+                props.push(JsxAttribute::SpreadAttribute { argument });
+            }
+            oxc::JSXAttributeItem::Attribute(attr) => {
+                // Get the attribute name
+                let prop_name = match &attr.name {
+                    oxc::JSXAttributeName::Identifier(id) => {
+                        let name = id.name.as_str();
+                        if name.contains(':') {
+                            builder.record_error(CompilerErrorDetail {
+                                category: ErrorCategory::Todo,
+                                reason: format!(
+                                    "(BuildHIR::lowerExpression) Unexpected colon in attribute name `{}`",
+                                    name
+                                ),
+                                description: None,
+                                loc: builder.source_location(id.span),
+                                suggestions: None,
+                            })?;
+                        }
+                        name.to_string()
+                    }
+                    oxc::JSXAttributeName::NamespacedName(ns) => {
+                        format!("{}:{}", ns.namespace.name, ns.name.name)
+                    }
+                };
+
+                // Get the attribute value
+                let value = match &attr.value {
+                    Some(oxc::JSXAttributeValue::StringLiteral(s)) => {
+                        let str_loc = builder.source_location(s.span);
+                        lower_value_to_temporary(
+                            builder,
+                            InstructionValue::Primitive {
+                                value: PrimitiveValue::String(
+                                    decode_jsx_entities(s.value.as_str()).into(),
+                                ),
+                                loc: str_loc,
+                            },
+                        )?
+                    }
+                    Some(oxc::JSXAttributeValue::ExpressionContainer(container)) => {
+                        match &container.expression {
+                            oxc::JSXExpression::EmptyExpression(_) => {
+                                // Empty expression container - skip this attribute
+                                continue;
+                            }
+                            other => {
+                                let expr = other
+                                    .as_expression()
+                                    .expect("non-empty JSX expression is an expression");
+                                lower_expression_to_temporary(builder, expr)?
+                            }
+                        }
+                    }
+                    Some(oxc::JSXAttributeValue::Element(el)) => {
+                        let val = lower_jsx_element_expr(builder, el)?;
+                        lower_value_to_temporary(builder, val)?
+                    }
+                    Some(oxc::JSXAttributeValue::Fragment(frag)) => {
+                        let val = lower_jsx_fragment_expr(builder, frag)?;
+                        lower_value_to_temporary(builder, val)?
+                    }
+                    None => {
+                        // No value means boolean true (e.g., <div disabled />)
+                        let attr_loc = builder.source_location(attr.span);
+                        lower_value_to_temporary(
+                            builder,
+                            InstructionValue::Primitive {
+                                value: PrimitiveValue::Boolean(true),
+                                loc: attr_loc,
+                            },
+                        )?
+                    }
+                };
+
+                props.push(JsxAttribute::Attribute { name: prop_name, place: value });
+            }
+        }
+    }
+
+    // Check if this is an fbt/fbs tag, which requires special whitespace handling
+    let is_fbt = matches!(&tag, JsxTag::Builtin(b) if b.name == "fbt" || b.name == "fbs");
+
+    // Check that fbt/fbs tags are module-level imports, not local bindings.
+    // Matches TS: CompilerError.invariant(tagIdentifier.kind !== 'Identifier', ...)
+    if is_fbt {
+        let tag_name = match &tag {
+            JsxTag::Builtin(b) => b.name.clone(),
+            _ => "fbt".to_string(),
+        };
+        // Get the opening element's name identifier and check if it's a local binding.
+        let jsx_id_name = match &jsx_element.opening_element.name {
+            oxc::JSXElementName::Identifier(id) => Some((id.name.as_str(), id.span)),
+            oxc::JSXElementName::IdentifierReference(id) => Some((id.name.as_str(), id.span)),
+            _ => None,
+        };
+        if let Some((name, span)) = jsx_id_name {
+            let id_loc = builder.source_location(span);
+            // Check if fbt/fbs tag name resolves to a local binding.
+            // JSX identifiers may not be in our position-based reference map,
+            // so check if ANY binding with this name exists in the function scope.
+            let is_local_binding = builder.has_local_binding(name);
+            if is_local_binding {
+                // Record as a Diagnostic (not ErrorDetail) to match TS behavior
+                // where CompilerError.invariant creates a CompilerDiagnostic.
+                let reason = format!("<{}> tags should be module-level imports", tag_name);
+                return Err(CompilerDiagnostic::new(ErrorCategory::Invariant, &reason, None)
+                    .with_detail(CompilerDiagnosticDetail::Error {
+                        loc: id_loc.clone(),
+                        message: Some(reason.clone()),
+                        identifier_name: None,
+                    })
+                    .into());
+            }
+        }
+    }
+
+    // Lower children
+    let children: Vec<Place> = jsx_element
+        .children
+        .iter()
+        .map(|child| lower_jsx_element(builder, child))
+        .collect::<Result<Vec<_>, _>>()?
+        .into_iter()
+        .flatten()
+        .collect();
+
+    Ok(InstructionValue::JsxExpression {
+        tag,
+        props,
+        children: if children.is_empty() { None } else { Some(children) },
+        loc,
+        opening_loc,
+        closing_loc,
+    })
+}
+
+/// Lower a JSX fragment expression. Faithful translation of the original
+/// `Expression::JSXFragment` arm.
+fn lower_jsx_fragment_expr(
+    builder: &mut HirBuilder,
+    jsx_fragment: &oxc::JSXFragment,
+) -> Result<InstructionValue, CompilerError> {
+    let loc = builder.source_location(jsx_fragment.span);
+
+    // Lower children
+    let children: Vec<Place> = jsx_fragment
+        .children
+        .iter()
+        .map(|child| lower_jsx_element(builder, child))
+        .collect::<Result<Vec<_>, _>>()?
+        .into_iter()
+        .flatten()
+        .collect();
+
+    Ok(InstructionValue::JsxFragment { children, loc })
+}
+
+/// Lower a JSX element name into a `JsxTag`. Faithful translation of the original
+/// `lower_jsx_element_name`, adapted to oxc's `JSXElementName` shape (which splits
+/// out `IdentifierReference`, `MemberExpression`, and `ThisExpression`; the latter
+/// maps to the identifier `"this"`).
+fn lower_jsx_element_name(
+    builder: &mut HirBuilder,
+    name: &oxc::JSXElementName,
+) -> Result<JsxTag, CompilerError> {
+    // Lower a simple JSX tag identifier (component-vs-builtin split on case).
+    fn lower_tag_identifier(
+        builder: &mut HirBuilder,
+        tag: &str,
+        span: oxc_span::Span,
+    ) -> Result<JsxTag, CompilerError> {
+        let loc = builder.source_location(span);
+        let start = span.start;
+        if tag.starts_with(|c: char| c.is_ascii_uppercase()) {
+            // Component tag: resolve as identifier and load
+            let place = lower_identifier(builder, tag, start, loc.clone(), Some(start))?;
+            let load_value = if builder.is_context_identifier(tag, start, Some(start)) {
+                InstructionValue::LoadContext { place, loc }
+            } else {
+                InstructionValue::LoadLocal { place, loc }
+            };
+            let temp = lower_value_to_temporary(builder, load_value)?;
+            Ok(JsxTag::Place(temp))
+        } else {
+            // Builtin HTML tag
+            Ok(JsxTag::Builtin(BuiltinTag { name: tag.to_string(), loc }))
+        }
+    }
+
+    match name {
+        oxc::JSXElementName::Identifier(id) => {
+            lower_tag_identifier(builder, id.name.as_str(), id.span)
+        }
+        oxc::JSXElementName::IdentifierReference(id) => {
+            lower_tag_identifier(builder, id.name.as_str(), id.span)
+        }
+        oxc::JSXElementName::ThisExpression(this) => {
+            // `<this.Foo />`-style `this` tag lowers as the identifier "this".
+            lower_tag_identifier(builder, "this", this.span)
+        }
+        oxc::JSXElementName::MemberExpression(member) => {
+            let place = lower_jsx_member_expression(builder, member)?;
+            Ok(JsxTag::Place(place))
+        }
+        oxc::JSXElementName::NamespacedName(ns) => {
+            let namespace = ns.namespace.name.as_str();
+            let name = ns.name.name.as_str();
+            let tag = format!("{}:{}", namespace, name);
+            let loc = builder.source_location(ns.span);
+            if namespace.contains(':') || name.contains(':') {
+                builder.record_error(CompilerErrorDetail {
+                    category: ErrorCategory::Syntax,
+                    reason: "Expected JSXNamespacedName to have no colons in the namespace or name"
+                        .to_string(),
+                    description: Some(format!("Got `{}` : `{}`", namespace, name)),
+                    loc: loc.clone(),
+                    suggestions: None,
+                })?;
+            }
+            let place = lower_value_to_temporary(
+                builder,
+                InstructionValue::Primitive {
+                    value: PrimitiveValue::String(tag.into()),
+                    loc: loc.clone(),
+                },
+            )?;
+            Ok(JsxTag::Place(place))
+        }
+    }
+}
+
+/// Lower a JSX member expression tag (`<a.b.c />`) into a `Place`. Faithful
+/// translation of the original `lower_jsx_member_expression`, adapted to oxc's
+/// `JSXMemberExpressionObject` (where the leaf object may be a `ThisExpression`,
+/// which lowers as the identifier `"this"`).
+fn lower_jsx_member_expression(
+    builder: &mut HirBuilder,
+    expr: &oxc::JSXMemberExpression,
+) -> Result<Place, CompilerError> {
+    // Use the full member expression's loc for instruction locs (matching TS: exprPath.node.loc)
+    let expr_loc = builder.source_location(expr.span);
+    let object = match &expr.object {
+        oxc::JSXMemberExpressionObject::IdentifierReference(id) => {
+            lower_jsx_member_object_identifier(builder, id.name.as_str(), id.span, &expr_loc)?
+        }
+        oxc::JSXMemberExpressionObject::ThisExpression(this) => {
+            lower_jsx_member_object_identifier(builder, "this", this.span, &expr_loc)?
+        }
+        oxc::JSXMemberExpressionObject::MemberExpression(inner) => {
+            lower_jsx_member_expression(builder, inner)?
+        }
+    };
+    let prop_name = expr.property.name.as_str();
+    let value = InstructionValue::PropertyLoad {
+        object,
+        property: PropertyLiteral::String(prop_name.to_string()),
+        loc: expr_loc,
+    };
+    lower_value_to_temporary(builder, value)
+}
+
+/// Lower the leaf identifier of a JSX member expression object. Uses the
+/// identifier's own loc for the place, but the enclosing member expression's loc
+/// for the load instruction (matching TS).
+fn lower_jsx_member_object_identifier(
+    builder: &mut HirBuilder,
+    name: &str,
+    span: oxc_span::Span,
+    expr_loc: &Option<SourceLocation>,
+) -> Result<Place, CompilerError> {
+    let id_loc = builder.source_location(span);
+    let start = span.start;
+    let place = lower_identifier(builder, name, start, id_loc, Some(start))?;
+    let load_value = if builder.is_context_identifier(name, start, Some(start)) {
+        InstructionValue::LoadContext { place, loc: expr_loc.clone() }
+    } else {
+        InstructionValue::LoadLocal { place, loc: expr_loc.clone() }
+    };
+    lower_value_to_temporary(builder, load_value)
+}
+
+/// Lower a single JSX child into an optional `Place`. Faithful translation of the
+/// original `lower_jsx_element` (the JSXChild handler), adapted to oxc's `JSXChild`.
+fn lower_jsx_element(
+    builder: &mut HirBuilder,
+    child: &oxc::JSXChild,
+) -> Result<Option<Place>, CompilerError> {
+    match child {
+        oxc::JSXChild::Text(text) => {
+            // oxc keeps JSX text raw; decode entities first so the value matches
+            // Babel's `JSXText.value` (the Babel bridge decoded in convert_ast).
+            let decoded = decode_jsx_entities(text.value.as_str());
+            // FBT whitespace normalization differs from standard JSX.
+            // Since the fbt transform runs after, preserve all whitespace
+            // in FBT subtrees as is.
+            let value = if builder.fbt_depth > 0 {
+                Some(decoded)
+            } else {
+                trim_jsx_text(&decoded)
+            };
+            match value {
+                None => Ok(None),
+                Some(value) => {
+                    let loc = builder.source_location(text.span);
+                    let place = lower_value_to_temporary(
+                        builder,
+                        InstructionValue::JSXText { value, loc },
+                    )?;
+                    Ok(Some(place))
+                }
+            }
+        }
+        oxc::JSXChild::Element(element) => {
+            let value = lower_jsx_element_expr(builder, element)?;
+            Ok(Some(lower_value_to_temporary(builder, value)?))
+        }
+        oxc::JSXChild::Fragment(fragment) => {
+            let value = lower_jsx_fragment_expr(builder, fragment)?;
+            Ok(Some(lower_value_to_temporary(builder, value)?))
+        }
+        oxc::JSXChild::ExpressionContainer(container) => match &container.expression {
+            oxc::JSXExpression::EmptyExpression(_) => Ok(None),
+            other => {
+                let expr =
+                    other.as_expression().expect("non-empty JSX expression is an expression");
+                Ok(Some(lower_expression_to_temporary(builder, expr)?))
+            }
+        },
+        oxc::JSXChild::Spread(spread) => {
+            Ok(Some(lower_expression_to_temporary(builder, &spread.expression)?))
+        }
+    }
+}
+
+/// Split a string on line endings, handling \r\n, \n, and \r.
+fn split_line_endings(s: &str) -> Vec<&str> {
+    let mut lines = Vec::new();
+    let mut start = 0;
+    let bytes = s.as_bytes();
+    let mut i = 0;
+    while i < bytes.len() {
+        if bytes[i] == b'\r' {
+            lines.push(&s[start..i]);
+            if i + 1 < bytes.len() && bytes[i + 1] == b'\n' {
+                i += 2;
+            } else {
+                i += 1;
+            }
+            start = i;
+        } else if bytes[i] == b'\n' {
+            lines.push(&s[start..i]);
+            i += 1;
+            start = i;
+        } else {
+            i += 1;
+        }
+    }
+    lines.push(&s[start..]);
+    lines
+}
+
+/// Trims whitespace according to the JSX spec.
+/// Implementation ported from Babel's cleanJSXElementLiteralChild.
+fn trim_jsx_text(original: &str) -> Option<String> {
+    // Split on \r\n, \n, or \r to handle all line ending styles (matching TS split(/\r\n|\n|\r/))
+    let lines: Vec<&str> = split_line_endings(original);
+
+    // NOTE: when builder.fbt_depth > 0, the TS skips whitespace trimming entirely.
+    // That check is handled by the caller (lower_jsx_element) before calling this function.
+
+    let mut last_non_empty_line = 0;
+    for (i, line) in lines.iter().enumerate() {
+        if line.contains(|c: char| c != ' ' && c != '\t') {
+            last_non_empty_line = i;
+        }
+    }
+
+    let mut str = String::new();
+
+    for (i, line) in lines.iter().enumerate() {
+        let is_first_line = i == 0;
+        let is_last_line = i == lines.len() - 1;
+        let is_last_non_empty_line = i == last_non_empty_line;
+
+        // Replace rendered whitespace tabs with spaces
+        let mut trimmed_line = line.replace('\t', " ");
+
+        // Trim whitespace touching a newline (leading whitespace on non-first lines)
+        if !is_first_line {
+            trimmed_line = trimmed_line.trim_start_matches(' ').to_string();
+        }
+
+        // Trim whitespace touching an endline (trailing whitespace on non-last lines)
+        if !is_last_line {
+            trimmed_line = trimmed_line.trim_end_matches(' ').to_string();
+        }
+
+        if !trimmed_line.is_empty() {
+            if !is_last_non_empty_line {
+                trimmed_line.push(' ');
+            }
+            str.push_str(&trimmed_line);
+        }
+    }
+
+    if str.is_empty() { None } else { Some(str) }
+}
+
+/// Decode XML/HTML entities in JSX text (`&amp;` → `&`, `&gt;` → `>`, `&#123;`
+/// → `{`, `&#x1F600;` → emoji, …) so the lowered JSX text/attribute value matches
+/// Babel's decoded text. oxc keeps JSX text raw in the AST. Mirrors the
+/// `decode_jsx_entities` helper in `convert_ast.rs`. Unrecognized `&…;` sequences
+/// are kept verbatim.
+fn decode_jsx_entities(s: &str) -> String {
+    if !s.contains('&') {
+        return s.to_string();
+    }
+    let mut out = String::with_capacity(s.len());
+    let mut chars = s.char_indices();
+    let mut prev = 0;
+    while let Some((i, c)) = chars.next() {
+        if c != '&' {
+            continue;
+        }
+        let mut start = i;
+        let mut end = None;
+        for (j, c) in chars.by_ref() {
+            if c == ';' {
+                end = Some(j);
+                break;
+            } else if c == '&' {
+                start = j;
+            }
+        }
+        let Some(end) = end else { break };
+        out.push_str(&s[prev..start]);
+        prev = end + 1;
+        let word = &s[start + 1..end];
+        let decoded = if let Some(num) = word.strip_prefix('#') {
+            if let Some(hex) = num.strip_prefix(['x', 'X']) {
+                u32::from_str_radix(hex, 16).ok().and_then(char::from_u32)
+            } else {
+                num.parse::<u32>().ok().and_then(char::from_u32)
+            }
+        } else {
+            oxc_syntax::xml_entities::XML_ENTITIES.get(word).copied()
+        };
+        match decoded {
+            Some(c) => out.push(c),
+            // Not a recognized entity — keep the `&…;` literal.
+            None => {
+                out.push('&');
+                out.push_str(word);
+                out.push(';');
+            }
+        }
+    }
+    out.push_str(&s[prev..]);
+    out
 }
 
 /// Get the Babel-style type name of an oxc `Expression` node. Mirrors the
