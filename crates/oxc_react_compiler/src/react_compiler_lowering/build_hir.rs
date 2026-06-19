@@ -1122,6 +1122,129 @@ fn lower_member_expression_impl(
     }
 }
 
+/// Build a HIR `TemplateQuasi` from an oxc `TemplateElement`.
+fn template_quasi_from_oxc(q: &oxc::TemplateElement) -> TemplateQuasi {
+    TemplateQuasi {
+        raw: q.value.raw.to_string(),
+        cooked: q.value.cooked.map(|c| c.to_string()),
+    }
+}
+
+/// Lower the `import` keyword callee of an `ImportExpression`. The original Babel
+/// path treats this as the `Import` node, which bails (records an error) and
+/// returns an undefined primitive that is then loaded to a temporary.
+fn lower_import_keyword_to_temporary(
+    builder: &mut HirBuilder,
+    loc: &Option<SourceLocation>,
+) -> Result<Place, CompilerError> {
+    builder.record_error(CompilerErrorDetail {
+        category: ErrorCategory::Todo,
+        reason: "(BuildHIR::lowerExpression) Handle Import expressions".to_string(),
+        description: None,
+        loc: loc.clone(),
+        suggestions: None,
+    })?;
+    lower_value_to_temporary(
+        builder,
+        InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc: loc.clone() },
+    )
+}
+
+/// Lower a `PrivateName` operand (e.g. the left side of `#f in obj`). The original
+/// Babel path bails (records an error) and returns an undefined primitive that is
+/// then loaded to a temporary.
+fn lower_private_name_to_temporary(
+    builder: &mut HirBuilder,
+    span: oxc_span::Span,
+) -> Result<Place, CompilerError> {
+    let loc = builder.source_location(span);
+    builder.record_error(CompilerErrorDetail {
+        category: ErrorCategory::Todo,
+        reason: "(BuildHIR::lowerExpression) Handle PrivateName expressions".to_string(),
+        description: None,
+        loc: loc.clone(),
+        suggestions: None,
+    })?;
+    lower_value_to_temporary(
+        builder,
+        InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc },
+    )
+}
+
+/// Lower a member-expression update target (oxc's member variants of
+/// `SimpleAssignmentTarget`) into a receiver place + property + load value,
+/// mirroring `lower_member_expression_impl`.
+fn lower_member_expression_from_simple_target(
+    builder: &mut HirBuilder,
+    target: &oxc::SimpleAssignmentTarget,
+) -> Result<LoweredMemberExpression, CompilerError> {
+    match target {
+        oxc::SimpleAssignmentTarget::StaticMemberExpression(m) => {
+            let loc = builder.source_location(m.span);
+            let object = lower_expression_to_temporary(builder, &m.object)?;
+            let prop_literal = PropertyLiteral::String(m.property.name.to_string());
+            let value = InstructionValue::PropertyLoad {
+                object: object.clone(),
+                property: prop_literal.clone(),
+                loc,
+            };
+            Ok(LoweredMemberExpression {
+                object,
+                property: MemberProperty::Literal(prop_literal),
+                value,
+            })
+        }
+        oxc::SimpleAssignmentTarget::ComputedMemberExpression(m) => {
+            let loc = builder.source_location(m.span);
+            let object = lower_expression_to_temporary(builder, &m.object)?;
+            if let oxc::Expression::NumericLiteral(lit) = &m.expression {
+                let prop_literal = PropertyLiteral::Number(FloatValue::new(lit.value));
+                let value = InstructionValue::PropertyLoad {
+                    object: object.clone(),
+                    property: prop_literal.clone(),
+                    loc,
+                };
+                return Ok(LoweredMemberExpression {
+                    object,
+                    property: MemberProperty::Literal(prop_literal),
+                    value,
+                });
+            }
+            let property = lower_expression_to_temporary(builder, &m.expression)?;
+            let value = InstructionValue::ComputedLoad {
+                object: object.clone(),
+                property: property.clone(),
+                loc,
+            };
+            Ok(LoweredMemberExpression {
+                object,
+                property: MemberProperty::Computed(property),
+                value,
+            })
+        }
+        oxc::SimpleAssignmentTarget::PrivateFieldExpression(m) => {
+            let loc = builder.source_location(m.span);
+            let object = lower_expression_to_temporary(builder, &m.object)?;
+            builder.record_error(CompilerErrorDetail {
+                category: ErrorCategory::Todo,
+                reason: "(BuildHIR::lowerMemberExpression) Handle private field property"
+                    .to_string(),
+                description: None,
+                loc: loc.clone(),
+                suggestions: None,
+            })?;
+            Ok(LoweredMemberExpression {
+                object,
+                property: MemberProperty::Literal(PropertyLiteral::String(String::new())),
+                value: InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc },
+            })
+        }
+        _ => unreachable!(
+            "lower_member_expression_from_simple_target called on a non-member target"
+        ),
+    }
+}
+
 fn lower_arguments(
     builder: &mut HirBuilder,
     args: &[oxc::Argument],
@@ -1495,6 +1618,478 @@ fn lower_expression(
                 let args = lower_arguments(builder, &call.arguments)?;
                 Ok(InstructionValue::CallExpression { callee, args, loc })
             }
+        }
+        oxc::Expression::ConditionalExpression(cond) => {
+            let loc = builder.source_location(cond.span);
+            let continuation_block = builder.reserve(builder.current_block_kind());
+            let continuation_id = continuation_block.id;
+            let test_block = builder.reserve(BlockKind::Value);
+            let test_block_id = test_block.id;
+            let place = build_temporary_place(builder, loc.clone());
+
+            // Block for the consequent (test is truthy)
+            let consequent_ast_loc = builder.source_location(cond.consequent.span());
+            let consequent_block = builder.try_enter(BlockKind::Value, |builder, _block_id| {
+                let consequent = lower_expression_to_temporary(builder, &cond.consequent)?;
+                lower_value_to_temporary(
+                    builder,
+                    InstructionValue::StoreLocal {
+                        lvalue: LValue { kind: InstructionKind::Const, place: place.clone() },
+                        value: consequent,
+                        type_annotation: None,
+                        loc: loc.clone(),
+                    },
+                )?;
+                Ok(Terminal::Goto {
+                    block: continuation_id,
+                    variant: GotoVariant::Break,
+                    id: EvaluationOrder(0),
+                    loc: consequent_ast_loc,
+                })
+            });
+
+            // Block for the alternate (test is falsy)
+            let alternate_ast_loc = builder.source_location(cond.alternate.span());
+            let alternate_block = builder.try_enter(BlockKind::Value, |builder, _block_id| {
+                let alternate = lower_expression_to_temporary(builder, &cond.alternate)?;
+                lower_value_to_temporary(
+                    builder,
+                    InstructionValue::StoreLocal {
+                        lvalue: LValue { kind: InstructionKind::Const, place: place.clone() },
+                        value: alternate,
+                        type_annotation: None,
+                        loc: loc.clone(),
+                    },
+                )?;
+                Ok(Terminal::Goto {
+                    block: continuation_id,
+                    variant: GotoVariant::Break,
+                    id: EvaluationOrder(0),
+                    loc: alternate_ast_loc,
+                })
+            });
+
+            builder.terminate_with_continuation(
+                Terminal::Ternary {
+                    test: test_block_id,
+                    fallthrough: continuation_id,
+                    id: EvaluationOrder(0),
+                    loc: loc.clone(),
+                },
+                test_block,
+            );
+
+            // Now in test block: lower test expression
+            let test_place = lower_expression_to_temporary(builder, &cond.test)?;
+            builder.terminate_with_continuation(
+                Terminal::Branch {
+                    test: test_place,
+                    consequent: consequent_block?,
+                    alternate: alternate_block?,
+                    fallthrough: continuation_id,
+                    id: EvaluationOrder(0),
+                    loc: loc.clone(),
+                },
+                continuation_block,
+            );
+
+            Ok(InstructionValue::LoadLocal { place: place.clone(), loc: place.loc.clone() })
+        }
+        oxc::Expression::SequenceExpression(seq) => {
+            let loc = builder.source_location(seq.span);
+
+            if seq.expressions.is_empty() {
+                builder.record_error(CompilerErrorDetail {
+                    category: ErrorCategory::Syntax,
+                    reason: "Expected sequence expression to have at least one expression"
+                        .to_string(),
+                    description: None,
+                    loc: loc.clone(),
+                    suggestions: None,
+                })?;
+                return Ok(InstructionValue::Primitive {
+                    value: PrimitiveValue::Undefined,
+                    loc,
+                });
+            }
+
+            let continuation_block = builder.reserve(builder.current_block_kind());
+            let continuation_id = continuation_block.id;
+            let place = build_temporary_place(builder, loc.clone());
+
+            let sequence_block = builder.try_enter(BlockKind::Sequence, |builder, _block_id| {
+                let mut last: Option<Place> = None;
+                for item in &seq.expressions {
+                    last = Some(lower_expression_to_temporary(builder, item)?);
+                }
+                if let Some(last) = last {
+                    lower_value_to_temporary(
+                        builder,
+                        InstructionValue::StoreLocal {
+                            lvalue: LValue { kind: InstructionKind::Const, place: place.clone() },
+                            value: last,
+                            type_annotation: None,
+                            loc: loc.clone(),
+                        },
+                    )?;
+                }
+                Ok(Terminal::Goto {
+                    block: continuation_id,
+                    variant: GotoVariant::Break,
+                    id: EvaluationOrder(0),
+                    loc: loc.clone(),
+                })
+            });
+
+            builder.terminate_with_continuation(
+                Terminal::Sequence {
+                    block: sequence_block?,
+                    fallthrough: continuation_id,
+                    id: EvaluationOrder(0),
+                    loc: loc.clone(),
+                },
+                continuation_block,
+            );
+            Ok(InstructionValue::LoadLocal { place, loc })
+        }
+        oxc::Expression::NewExpression(new_expr) => {
+            let loc = builder.source_location(new_expr.span);
+            let callee = lower_expression_to_temporary(builder, &new_expr.callee)?;
+            let args = lower_arguments(builder, &new_expr.arguments)?;
+            Ok(InstructionValue::NewExpression { callee, args, loc })
+        }
+        oxc::Expression::TemplateLiteral(tmpl) => {
+            let loc = builder.source_location(tmpl.span);
+            let subexprs: Vec<Place> = tmpl
+                .expressions
+                .iter()
+                .map(|e| lower_expression_to_temporary(builder, e))
+                .collect::<Result<Vec<_>, _>>()?;
+            let quasis: Vec<TemplateQuasi> =
+                tmpl.quasis.iter().map(template_quasi_from_oxc).collect();
+            Ok(InstructionValue::TemplateLiteral { subexprs, quasis, loc })
+        }
+        oxc::Expression::TaggedTemplateExpression(tagged) => {
+            let loc = builder.source_location(tagged.span);
+            // Upstream React Compiler bails on any interpolation here; the oxc port
+            // instead lowers the tag plus every quasi and every `${...}`
+            // subexpression (mirroring `TemplateLiteral`). This is a deliberate
+            // divergence from the TS reference.
+            //
+            // We still bail when any quasi's cooked value differs from its raw value
+            // (e.g. escape sequences or graphql templates), matching upstream's
+            // single-quasi behavior — the HIR only round-trips raw==cooked quasis.
+            if tagged.quasi.quasis.iter().any(|q| {
+                q.value.raw.as_str()
+                    != q.value.cooked.map(|c| c.to_string()).unwrap_or_default()
+            }) {
+                builder.record_error(CompilerErrorDetail {
+                    category: ErrorCategory::Todo,
+                    reason: "(BuildHIR::lowerExpression) Handle tagged template where cooked value is different from raw value".to_string(),
+                    description: None,
+                    loc: loc.clone(),
+                    suggestions: None,
+                })?;
+                return Ok(InstructionValue::Primitive {
+                    value: PrimitiveValue::Undefined,
+                    loc,
+                });
+            }
+            // Evaluation order: the tag is evaluated first, then each interpolated
+            // subexpression left-to-right.
+            let tag = lower_expression_to_temporary(builder, &tagged.tag)?;
+            let subexprs: Vec<Place> = tagged
+                .quasi
+                .expressions
+                .iter()
+                .map(|e| lower_expression_to_temporary(builder, e))
+                .collect::<Result<Vec<_>, _>>()?;
+            let quasis: Vec<TemplateQuasi> =
+                tagged.quasi.quasis.iter().map(template_quasi_from_oxc).collect();
+            Ok(InstructionValue::TaggedTemplateExpression { tag, quasis, subexprs, loc })
+        }
+        oxc::Expression::AwaitExpression(await_expr) => {
+            let loc = builder.source_location(await_expr.span);
+            let value = lower_expression_to_temporary(builder, &await_expr.argument)?;
+            Ok(InstructionValue::Await { value, loc })
+        }
+        oxc::Expression::YieldExpression(yld) => {
+            let loc = builder.source_location(yld.span);
+            builder.record_error(CompilerErrorDetail {
+                category: ErrorCategory::Todo,
+                reason: "(BuildHIR::lowerExpression) Handle YieldExpression expressions"
+                    .to_string(),
+                description: None,
+                loc: loc.clone(),
+                suggestions: None,
+            })?;
+            Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc })
+        }
+        oxc::Expression::MetaProperty(meta) => {
+            let loc = builder.source_location(meta.span);
+            if meta.meta.name == "import" && meta.property.name == "meta" {
+                Ok(InstructionValue::MetaProperty {
+                    meta: meta.meta.name.to_string(),
+                    property: meta.property.name.to_string(),
+                    loc,
+                })
+            } else {
+                builder.record_error(CompilerErrorDetail {
+                    category: ErrorCategory::Todo,
+                    reason: "(BuildHIR::lowerExpression) Handle MetaProperty expressions other than import.meta".to_string(),
+                    description: None,
+                    loc: loc.clone(),
+                    suggestions: None,
+                })?;
+                Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc })
+            }
+        }
+        oxc::Expression::ClassExpression(cls) => {
+            let loc = builder.source_location(cls.span);
+            builder.record_error(CompilerErrorDetail {
+                category: ErrorCategory::Todo,
+                reason: "(BuildHIR::lowerExpression) Handle ClassExpression expressions"
+                    .to_string(),
+                description: None,
+                loc: loc.clone(),
+                suggestions: None,
+            })?;
+            Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc })
+        }
+        oxc::Expression::Super(sup) => {
+            let loc = builder.source_location(sup.span);
+            builder.record_error(CompilerErrorDetail {
+                category: ErrorCategory::Todo,
+                reason: "(BuildHIR::lowerExpression) Handle Super expressions".to_string(),
+                description: None,
+                loc: loc.clone(),
+                suggestions: None,
+            })?;
+            Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc })
+        }
+        oxc::Expression::ThisExpression(this) => {
+            let loc = builder.source_location(this.span);
+            builder.record_error(CompilerErrorDetail {
+                category: ErrorCategory::Todo,
+                reason: "(BuildHIR::lowerExpression) Handle ThisExpression expressions".to_string(),
+                description: None,
+                loc: loc.clone(),
+                suggestions: None,
+            })?;
+            Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc })
+        }
+        oxc::Expression::ImportExpression(imp) => {
+            // oxc's `import(source, options?)` maps to Babel's
+            // `CallExpression { callee: Import, arguments: [source] + options? }`.
+            // The `Import` keyword callee bails (records an error), then the source
+            // and options arguments are lowered left-to-right.
+            let loc = builder.source_location(imp.span);
+            let callee = lower_import_keyword_to_temporary(builder, &loc)?;
+            let mut args: Vec<PlaceOrSpread> = Vec::new();
+            let source = lower_expression_to_temporary(builder, &imp.source)?;
+            args.push(PlaceOrSpread::Place(source));
+            if let Some(options) = &imp.options {
+                let options = lower_expression_to_temporary(builder, options)?;
+                args.push(PlaceOrSpread::Place(options));
+            }
+            Ok(InstructionValue::CallExpression { callee, args, loc })
+        }
+        oxc::Expression::PrivateInExpression(priv_in) => {
+            // `#f in obj` maps to Babel's `BinaryExpression { op: In, left: PrivateName, right }`.
+            // The PrivateName left operand bails (records an error), then the right
+            // operand is lowered.
+            let loc = builder.source_location(priv_in.span);
+            let left = lower_private_name_to_temporary(builder, priv_in.left.span)?;
+            let right = lower_expression_to_temporary(builder, &priv_in.right)?;
+            Ok(InstructionValue::BinaryExpression {
+                operator: BinaryOperator::In,
+                left,
+                right,
+                loc,
+            })
+        }
+        oxc::Expression::UpdateExpression(update) => {
+            let loc = builder.source_location(update.span);
+            match &update.argument {
+                oxc::SimpleAssignmentTarget::StaticMemberExpression(_)
+                | oxc::SimpleAssignmentTarget::ComputedMemberExpression(_)
+                | oxc::SimpleAssignmentTarget::PrivateFieldExpression(_) => {
+                    let binary_op = match update.operator {
+                        oxc::UpdateOperator::Increment => BinaryOperator::Add,
+                        oxc::UpdateOperator::Decrement => BinaryOperator::Subtract,
+                    };
+                    // Use the member expression's loc (not the update expression's)
+                    // to match TS behavior where the inner operations use leftExpr.node.loc
+                    let member_loc = builder.source_location(update.argument.span());
+                    let lowered =
+                        lower_member_expression_from_simple_target(builder, &update.argument)?;
+                    let object = lowered.object;
+                    let lowered_property = lowered.property;
+                    let prev_value = lower_value_to_temporary(builder, lowered.value)?;
+
+                    let one = lower_value_to_temporary(
+                        builder,
+                        InstructionValue::Primitive {
+                            value: PrimitiveValue::Number(FloatValue::new(1.0)),
+                            loc: None,
+                        },
+                    )?;
+                    let updated = lower_value_to_temporary(
+                        builder,
+                        InstructionValue::BinaryExpression {
+                            operator: binary_op,
+                            left: prev_value.clone(),
+                            right: one,
+                            loc: member_loc.clone(),
+                        },
+                    )?;
+
+                    // Store back using the property from the lowered member expression.
+                    // For prefix, the result is the PropertyStore/ComputedStore lvalue
+                    // (matching TS which uses newValuePlace). For postfix, it's prev_value.
+                    let new_value_place = match lowered_property {
+                        MemberProperty::Literal(prop_literal) => lower_value_to_temporary(
+                            builder,
+                            InstructionValue::PropertyStore {
+                                object,
+                                property: prop_literal,
+                                value: updated.clone(),
+                                loc: member_loc,
+                            },
+                        )?,
+                        MemberProperty::Computed(prop_place) => lower_value_to_temporary(
+                            builder,
+                            InstructionValue::ComputedStore {
+                                object,
+                                property: prop_place,
+                                value: updated.clone(),
+                                loc: member_loc,
+                            },
+                        )?,
+                    };
+
+                    // Return previous for postfix, newValuePlace for prefix
+                    let result_place = if update.prefix { new_value_place } else { prev_value };
+                    Ok(InstructionValue::LoadLocal {
+                        place: result_place.clone(),
+                        loc: result_place.loc.clone(),
+                    })
+                }
+                oxc::SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {
+                    let start = ident.span.start;
+                    if builder.is_context_identifier(ident.name.as_str(), start, Some(start)) {
+                        builder.record_error(CompilerErrorDetail {
+                            category: ErrorCategory::Todo,
+                            reason: "(BuildHIR::lowerExpression) Handle UpdateExpression to variables captured within lambdas.".to_string(),
+                            description: None,
+                            loc: loc.clone(),
+                            suggestions: None,
+                        })?;
+                        return Ok(InstructionValue::Primitive {
+                            value: PrimitiveValue::Undefined,
+                            loc,
+                        });
+                    }
+
+                    let ident_loc = builder.source_location(ident.span);
+                    let binding = builder.resolve_identifier(
+                        ident.name.as_str(),
+                        start,
+                        ident_loc.clone(),
+                        Some(start),
+                    )?;
+                    if matches!(binding, VariableBinding::Global { .. }) {
+                        builder.record_error(CompilerErrorDetail {
+                            category: ErrorCategory::Todo,
+                            reason: "UpdateExpression where argument is a global is not yet supported".to_string(),
+                            description: None,
+                            loc: loc.clone(),
+                            suggestions: None,
+                        })?;
+                        return Ok(InstructionValue::Primitive {
+                            value: PrimitiveValue::Undefined,
+                            loc,
+                        });
+                    }
+                    let identifier = match binding {
+                        VariableBinding::Identifier { identifier, .. } => identifier,
+                        _ => {
+                            builder.record_error(CompilerErrorDetail {
+                                category: ErrorCategory::Todo,
+                                reason: "(BuildHIR::lowerExpression) Support UpdateExpression where argument is a global".to_string(),
+                                description: None,
+                                loc: loc.clone(),
+                                suggestions: None,
+                            })?;
+                            return Ok(InstructionValue::Primitive {
+                                value: PrimitiveValue::Undefined,
+                                loc,
+                            });
+                        }
+                    };
+                    let lvalue_place = Place {
+                        identifier,
+                        effect: Effect::Unknown,
+                        reactive: false,
+                        loc: ident_loc.clone(),
+                    };
+
+                    // Load the current value
+                    let value = lower_identifier(
+                        builder,
+                        ident.name.as_str(),
+                        start,
+                        ident_loc,
+                        Some(start),
+                    )?;
+
+                    let operation = match update.operator {
+                        oxc::UpdateOperator::Increment => UpdateOperator::Increment,
+                        oxc::UpdateOperator::Decrement => UpdateOperator::Decrement,
+                    };
+
+                    if update.prefix {
+                        Ok(InstructionValue::PrefixUpdate {
+                            lvalue: lvalue_place,
+                            operation,
+                            value,
+                            loc,
+                        })
+                    } else {
+                        Ok(InstructionValue::PostfixUpdate {
+                            lvalue: lvalue_place,
+                            operation,
+                            value,
+                            loc,
+                        })
+                    }
+                }
+                _ => {
+                    builder.record_error(CompilerErrorDetail {
+                        category: ErrorCategory::Todo,
+                        reason: "UpdateExpression with unsupported argument type".to_string(),
+                        description: None,
+                        loc: loc.clone(),
+                        suggestions: None,
+                    })?;
+                    Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc })
+                }
+            }
+        }
+        // TS wrapper expressions unwrap to their inner expression. The original
+        // emitted a `TypeCastExpression` carrying type metadata, but that metadata
+        // (OriginalNode / type lowering) is deferred, so we unwrap faithfully.
+        oxc::Expression::TSAsExpression(ts) => lower_expression(builder, &ts.expression),
+        oxc::Expression::TSSatisfiesExpression(ts) => lower_expression(builder, &ts.expression),
+        oxc::Expression::TSNonNullExpression(ts) => lower_expression(builder, &ts.expression),
+        oxc::Expression::TSTypeAssertion(ts) => lower_expression(builder, &ts.expression),
+        oxc::Expression::TSInstantiationExpression(ts) => {
+            lower_expression(builder, &ts.expression)
+        }
+        oxc::Expression::V8IntrinsicExpression(_) => {
+            unreachable!(
+                "V8IntrinsicExpression: oxc does not emit this without ParseOptions::allow_v8_intrinsics"
+            )
         }
         _ => {
             // not-yet-ported arms bail to undefined (differential green-set grows as arms land)
