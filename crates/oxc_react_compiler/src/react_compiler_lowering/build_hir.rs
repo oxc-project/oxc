@@ -4212,11 +4212,31 @@ fn lower_expression(
         oxc::Expression::UnaryExpression(unary) => {
             let loc = builder.source_location(unary.span);
             match unary.operator {
-                oxc::UnaryOperator::Delete => {
-                    // TODO(stage1a-arms): delete needs member lowering
-                    // (PropertyDelete / ComputedDelete).
-                    Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc })
-                }
+                oxc::UnaryOperator::Delete => match &unary.argument {
+                    oxc::Expression::StaticMemberExpression(member) => {
+                        let object = lower_expression_to_temporary(builder, &member.object)?;
+                        Ok(InstructionValue::PropertyDelete {
+                            object,
+                            property: PropertyLiteral::String(member.property.name.to_string()),
+                            loc,
+                        })
+                    }
+                    oxc::Expression::ComputedMemberExpression(member) => {
+                        let object = lower_expression_to_temporary(builder, &member.object)?;
+                        let property = lower_expression_to_temporary(builder, &member.expression)?;
+                        Ok(InstructionValue::ComputedDelete { object, property, loc })
+                    }
+                    _ => {
+                        builder.record_error(CompilerErrorDetail {
+                            reason: "Only object properties can be deleted".to_string(),
+                            category: ErrorCategory::Syntax,
+                            loc: loc.clone(),
+                            description: None,
+                            suggestions: None,
+                        })?;
+                        Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc })
+                    }
+                },
                 op => {
                     let value = lower_expression_to_temporary(builder, &unary.argument)?;
                     Ok(InstructionValue::UnaryExpression {
