@@ -215,7 +215,30 @@ pub fn codegen_function<'a>(
     let fn_name = func.id.as_deref().unwrap_or("[[ anonymous ]]");
     let mut cx = OxcContext::new(*ast, env, fn_name.to_string(), unique_identifiers, fbt_operands);
 
-    let mut compiled = ox_codegen_reactive_function(&mut cx, func)?;
+    // The value-emission port covers most instruction kinds, but a few sub-emitters
+    // (function/object/JSX expressions, hook-guard wrapping, TS-type reparse) are
+    // deferred to later batches and currently raise an invariant error. Until they
+    // land — and until the emitted body is actually spliced into the program — fall
+    // back to an empty body on any emission error, preserving the pre-batch behavior
+    // (the original program is returned un-memoized by `compile_program`) without
+    // surfacing spurious diagnostics. This shim is removed once emission is complete.
+    let mut compiled = match ox_codegen_reactive_function(&mut cx, func) {
+        Ok(compiled) => compiled,
+        Err(_) => OxcCompiledFunction {
+            params: ast.alloc_formal_parameters(
+                SPAN,
+                oxc_ast::ast::FormalParameterKind::FormalParameter,
+                ast.vec(),
+                None::<oxc_allocator::Box<oxc_ast::ast::FormalParameterRest>>,
+            ),
+            body: ast.alloc_function_body(SPAN, ast.vec(), ast.vec()),
+            memo_slots_used: 0,
+            memo_blocks: 0,
+            memo_values: 0,
+            pruned_memo_blocks: 0,
+            pruned_memo_values: 0,
+        },
+    };
 
     let cache_count = compiled.memo_slots_used;
     if cache_count != 0 {
@@ -278,11 +301,41 @@ pub fn codegen_function<'a>(
 use oxc_ast::ast as oxc;
 use oxc_span::SPAN;
 
-// Temp value tracking. Real temp *values* (oxc expressions) are populated once the
-// per-instruction emission is ported; for this orchestration batch only presence
-// (`None` placeholder for params/catch bindings) matters, and oxc `Expression` is not
-// `Clone` (the snapshot/restore in block codegen needs `Clone`).
-type OxcTemporaries = FxHashMap<DeclarationId, Option<()>>;
+// Temp value tracking. Maps a temporary's declaration to its emitted oxc value
+// (`None` for params/catch bindings that are declared but have no inlinable value).
+// oxc nodes are not `Clone`; the snapshot/restore in block codegen and the per-place
+// read both clone into the arena via [`CloneIn`] (see `ox_clone_temporaries` /
+// `ox_codegen_place`).
+type OxcTemporaries<'a> = FxHashMap<DeclarationId, Option<OxValue<'a>>>;
+
+use oxc_allocator::CloneIn;
+
+/// oxc analog of the Babel `ExpressionOrJsxText`: an instruction value is usually an
+/// expression, but JSX children codegen can produce raw `JSXText`, which is not an
+/// `Expression` in oxc.
+enum OxValue<'a> {
+    Expression(oxc::Expression<'a>),
+    JsxText(oxc_allocator::Box<'a, oxc::JSXText<'a>>),
+}
+
+impl<'a> OxValue<'a> {
+    fn clone_in(&self, allocator: &'a oxc_allocator::Allocator) -> OxValue<'a> {
+        match self {
+            OxValue::Expression(e) => OxValue::Expression(e.clone_in(allocator)),
+            OxValue::JsxText(t) => OxValue::JsxText(t.clone_in(allocator)),
+        }
+    }
+}
+
+/// Clone the temporaries map, cloning each oxc value into the arena.
+fn ox_clone_temporaries<'a>(
+    ast: &oxc_ast::AstBuilder<'a>,
+    temp: &OxcTemporaries<'a>,
+) -> OxcTemporaries<'a> {
+    temp.iter()
+        .map(|(id, v)| (*id, v.as_ref().map(|v| v.clone_in(ast.allocator))))
+        .collect()
+}
 
 struct OxcContext<'a, 'env> {
     ast: oxc_ast::AstBuilder<'a>,
@@ -291,8 +344,7 @@ struct OxcContext<'a, 'env> {
     fn_name: String,
     next_cache_index: u32,
     declarations: FxHashSet<DeclarationId>,
-    temp: OxcTemporaries,
-    #[allow(dead_code)]
+    temp: OxcTemporaries<'a>,
     object_methods: FxHashMap<
         IdentifierId,
         (InstructionValue, Option<crate::react_compiler_diagnostics::SourceLocation>),
@@ -536,7 +588,7 @@ fn ox_codegen_block<'a>(
     cx: &mut OxcContext<'a, '_>,
     block: &ReactiveBlock,
 ) -> Result<oxc_allocator::Vec<'a, oxc::Statement<'a>>, CompilerError> {
-    let temp_snapshot = cx.temp.clone();
+    let temp_snapshot = ox_clone_temporaries(&cx.ast, &cx.temp);
     let result = ox_codegen_block_no_reset(cx, block)?;
     cx.temp = temp_snapshot;
     Ok(result)
@@ -559,7 +611,7 @@ fn ox_codegen_block_no_reset<'a>(
                 statements.extend(scope_block);
             }
             ReactiveStatement::Scope(ReactiveScopeBlock { scope, instructions }) => {
-                let temp_snapshot = cx.temp.clone();
+                let temp_snapshot = ox_clone_temporaries(&cx.ast, &cx.temp);
                 ox_codegen_reactive_scope(cx, &mut statements, *scope, instructions)?;
                 cx.temp = temp_snapshot;
             }
@@ -1157,58 +1209,1185 @@ fn ox_codegen_for_init<'a>(
 }
 
 // =============================================================================
-// STUBBED per-instruction value emission (oxc) — filled in the next batch.
+// Per-instruction value emission (oxc).
 //
-// These return a minimal placeholder oxc expression/statement so the orchestration
-// above compiles and runs. The faithful HIR->oxc value emission (the translation of
-// `codegen_base_instruction_value` / `codegen_instruction_value` / `codegen_place`
-// / `codegen_lvalue` / `codegen_dependency` / `codegen_argument`) lands next.
+// Ports the Babel reference value tree-walk (`codegen_instruction*`,
+// `codegen_store_or_declare`, `emit_store`, `codegen_instruction_value`,
+// `codegen_base_instruction_value`, `codegen_place`, `codegen_lvalue`,
+// `codegen_argument`, `codegen_dependency`) to build oxc nodes via `AstBuilder`.
+// The HIR-driven control flow is identical; only node construction differs. Since
+// oxc tracks positions by `Span` (not Babel-style locs), the per-node loc
+// propagation (`apply_loc_to_value` / place-loc overrides) collapses to `SPAN`.
+//
+// `FunctionExpression` / `ObjectExpression` / JSX / non-trivial `TypeCastExpression`
+// emission are deferred to later batches and currently raise an invariant error
+// (which fails compilation of that function and falls back to the original program,
+// matching the current differential floor).
 // =============================================================================
 
-fn ox_placeholder_expression<'a>(cx: &OxcContext<'a, '_>) -> oxc::Expression<'a> {
-    cx.ast.expression_null_literal(SPAN)
+fn ox_convert_value_to_expression<'a>(
+    ast: &oxc_ast::AstBuilder<'a>,
+    value: OxValue<'a>,
+) -> oxc::Expression<'a> {
+    match value {
+        OxValue::Expression(e) => e,
+        OxValue::JsxText(text) => ast.expression_string_literal(SPAN, text.value.as_str(), None),
+    }
 }
 
 fn ox_codegen_instruction_nullable<'a>(
     cx: &mut OxcContext<'a, '_>,
     instr: &ReactiveInstruction,
 ) -> Result<Option<oxc::Statement<'a>>, CompilerError> {
-    // STUB: emit nothing for now. Real lvalue/temp tracking and statement emission
-    // is ported in the next batch.
-    let _ = (cx, instr);
-    Ok(None)
+    if let ReactiveValue::Instruction(ref value) = instr.value {
+        match value {
+            InstructionValue::StoreLocal { .. }
+            | InstructionValue::StoreContext { .. }
+            | InstructionValue::Destructure { .. }
+            | InstructionValue::DeclareLocal { .. }
+            | InstructionValue::DeclareContext { .. } => {
+                return ox_codegen_store_or_declare(cx, instr, value);
+            }
+            InstructionValue::StartMemoize { .. } | InstructionValue::FinishMemoize { .. } => {
+                return Ok(None);
+            }
+            InstructionValue::Debugger { .. } => {
+                return Ok(Some(cx.ast.statement_debugger(SPAN)));
+            }
+            InstructionValue::ObjectMethod { loc, .. } => {
+                invariant(
+                    instr.lvalue.is_some(),
+                    "Expected object methods to have a temp lvalue",
+                    None,
+                )?;
+                let lvalue = instr.lvalue.as_ref().unwrap();
+                cx.object_methods.insert(lvalue.identifier, (value.clone(), *loc));
+                return Ok(None);
+            }
+            _ => {}
+        }
+    }
+    let expr_value = ox_codegen_instruction_value(cx, &instr.value)?;
+    let stmt = ox_codegen_instruction(cx, instr, expr_value)?;
+    if matches!(stmt, oxc::Statement::EmptyStatement(_)) { Ok(None) } else { Ok(Some(stmt)) }
 }
+
+fn ox_codegen_store_or_declare<'a>(
+    cx: &mut OxcContext<'a, '_>,
+    instr: &ReactiveInstruction,
+    value: &InstructionValue,
+) -> Result<Option<oxc::Statement<'a>>, CompilerError> {
+    match value {
+        InstructionValue::StoreLocal { lvalue, value: val, .. } => {
+            let mut kind = lvalue.kind;
+            if cx.has_declared(lvalue.place.identifier) {
+                kind = InstructionKind::Reassign;
+            }
+            let rhs = ox_codegen_place_to_expression(cx, val)?;
+            ox_emit_store(cx, instr, kind, &LvalueRef::Place(&lvalue.place), Some(rhs))
+        }
+        InstructionValue::StoreContext { lvalue, value: val, .. } => {
+            let rhs = ox_codegen_place_to_expression(cx, val)?;
+            ox_emit_store(cx, instr, lvalue.kind, &LvalueRef::Place(&lvalue.place), Some(rhs))
+        }
+        InstructionValue::DeclareLocal { lvalue, .. }
+        | InstructionValue::DeclareContext { lvalue, .. } => {
+            if cx.has_declared(lvalue.place.identifier) {
+                return Ok(None);
+            }
+            ox_emit_store(cx, instr, lvalue.kind, &LvalueRef::Place(&lvalue.place), None)
+        }
+        InstructionValue::Destructure { lvalue, value: val, .. } => {
+            let kind = lvalue.kind;
+            for place in crate::react_compiler_hir::visitors::each_pattern_operand(&lvalue.pattern) {
+                let ident = &cx.env.identifiers[place.identifier.0 as usize];
+                if kind != InstructionKind::Reassign && ident.name.is_none() {
+                    cx.temp.insert(ident.declaration_id, None);
+                }
+            }
+            let rhs = ox_codegen_place_to_expression(cx, val)?;
+            ox_emit_store(cx, instr, kind, &LvalueRef::Pattern(&lvalue.pattern), Some(rhs))
+        }
+        _ => unreachable!(),
+    }
+}
+
+fn ox_emit_store<'a>(
+    cx: &mut OxcContext<'a, '_>,
+    instr: &ReactiveInstruction,
+    kind: InstructionKind,
+    lvalue: &LvalueRef,
+    value: Option<oxc::Expression<'a>>,
+) -> Result<Option<oxc::Statement<'a>>, CompilerError> {
+    match kind {
+        InstructionKind::Const => {
+            if instr.lvalue.is_some() {
+                return Err(invariant_err_with_detail_message(
+                    "Const declaration cannot be referenced as an expression",
+                    "this is Const",
+                    instr.loc,
+                ));
+            }
+            let lval = ox_codegen_lvalue(cx, lvalue)?;
+            Ok(Some(ox_make_var_decl(cx, oxc::VariableDeclarationKind::Const, lval, value)))
+        }
+        InstructionKind::Function => {
+            let lval = ox_codegen_lvalue(cx, lvalue)?;
+            let oxc::BindingPattern::BindingIdentifier(fn_id) = lval else {
+                return Err(invariant_err(
+                    "Expected an identifier as function declaration lvalue",
+                    None,
+                ));
+            };
+            let Some(rhs) = value else {
+                return Err(invariant_err(
+                    "Expected a function value for function declaration",
+                    None,
+                ));
+            };
+            match rhs {
+                oxc::Expression::FunctionExpression(func_expr) => {
+                    let func_expr = func_expr.unbox();
+                    let decl = cx.ast.alloc_function(
+                        SPAN,
+                        oxc::FunctionType::FunctionDeclaration,
+                        Some(fn_id.unbox()),
+                        func_expr.generator,
+                        func_expr.r#async,
+                        false,
+                        func_expr.type_parameters,
+                        func_expr.this_param,
+                        func_expr.params,
+                        func_expr.return_type,
+                        func_expr.body,
+                    );
+                    Ok(Some(oxc::Statement::FunctionDeclaration(decl)))
+                }
+                _ => Err(invariant_err(
+                    "Expected a function expression for function declaration",
+                    None,
+                )),
+            }
+        }
+        InstructionKind::Let => {
+            if instr.lvalue.is_some() {
+                return Err(invariant_err_with_detail_message(
+                    "Const declaration cannot be referenced as an expression",
+                    "this is Let",
+                    instr.loc,
+                ));
+            }
+            let lval = ox_codegen_lvalue(cx, lvalue)?;
+            Ok(Some(ox_make_var_decl(cx, oxc::VariableDeclarationKind::Let, lval, value)))
+        }
+        InstructionKind::Reassign => {
+            let Some(rhs) = value else {
+                return Err(invariant_err("Expected a value for reassignment", None));
+            };
+            let lval = ox_codegen_lvalue(cx, lvalue)?;
+            let target = ox_binding_pattern_to_assignment_target(cx, lval)?;
+            let expr = cx.ast.expression_assignment(
+                SPAN,
+                oxc::AssignmentOperator::Assign,
+                target,
+                rhs,
+            );
+            if let Some(ref lvalue_place) = instr.lvalue {
+                let is_store_context = matches!(
+                    &instr.value,
+                    ReactiveValue::Instruction(InstructionValue::StoreContext { .. })
+                );
+                if !is_store_context {
+                    let ident = &cx.env.identifiers[lvalue_place.identifier.0 as usize];
+                    cx.temp.insert(ident.declaration_id, Some(OxValue::Expression(expr)));
+                    return Ok(None);
+                }
+                let stmt = ox_codegen_instruction(cx, instr, OxValue::Expression(expr))?;
+                if matches!(stmt, oxc::Statement::EmptyStatement(_)) {
+                    return Ok(None);
+                }
+                return Ok(Some(stmt));
+            }
+            Ok(Some(cx.ast.statement_expression(SPAN, expr)))
+        }
+        InstructionKind::Catch => Ok(Some(cx.ast.statement_empty(SPAN))),
+        InstructionKind::HoistedLet
+        | InstructionKind::HoistedConst
+        | InstructionKind::HoistedFunction => Err(invariant_err(
+            &format!("Expected {:?} to have been pruned in PruneHoistedContexts", kind),
+            None,
+        )),
+    }
+}
+
+/// Build `kind id = init;` (or `kind id;` when `init` is `None`).
+fn ox_make_var_decl<'a>(
+    cx: &OxcContext<'a, '_>,
+    kind: oxc::VariableDeclarationKind,
+    id: oxc::BindingPattern<'a>,
+    init: Option<oxc::Expression<'a>>,
+) -> oxc::Statement<'a> {
+    let declarator = cx.ast.variable_declarator(
+        SPAN,
+        kind,
+        id,
+        None::<oxc_allocator::Box<oxc::TSTypeAnnotation>>,
+        init,
+        false,
+    );
+    oxc::Statement::VariableDeclaration(cx.ast.alloc_variable_declaration(
+        SPAN,
+        kind,
+        cx.ast.vec1(declarator),
+        false,
+    ))
+}
+
+fn ox_codegen_instruction<'a>(
+    cx: &mut OxcContext<'a, '_>,
+    instr: &ReactiveInstruction,
+    value: OxValue<'a>,
+) -> Result<oxc::Statement<'a>, CompilerError> {
+    let Some(ref lvalue) = instr.lvalue else {
+        let expr = ox_convert_value_to_expression(&cx.ast, value);
+        return Ok(cx.ast.statement_expression(SPAN, expr));
+    };
+    let ident = &cx.env.identifiers[lvalue.identifier.0 as usize];
+    if ident.name.is_none() {
+        cx.temp.insert(ident.declaration_id, Some(value));
+        return Ok(cx.ast.statement_empty(SPAN));
+    }
+    let expr_value = ox_convert_value_to_expression(&cx.ast, value);
+    let name = ox_identifier_name(cx.env, lvalue.identifier)?;
+    if cx.has_declared(lvalue.identifier) {
+        let target = oxc::AssignmentTarget::AssignmentTargetIdentifier(
+            cx.ast.alloc_identifier_reference(SPAN, ox_str(&cx.ast, &name)),
+        );
+        let expr = cx.ast.expression_assignment(
+            SPAN,
+            oxc::AssignmentOperator::Assign,
+            target,
+            expr_value,
+        );
+        Ok(cx.ast.statement_expression(SPAN, expr))
+    } else {
+        let id = cx.ast.binding_pattern_binding_identifier(SPAN, ox_str(&cx.ast, &name));
+        Ok(ox_make_var_decl(cx, oxc::VariableDeclarationKind::Const, id, Some(expr_value)))
+    }
+}
+
+// =============================================================================
+// Instruction value codegen (oxc)
+// =============================================================================
 
 fn ox_codegen_instruction_value_to_expression<'a>(
     cx: &mut OxcContext<'a, '_>,
     instr_value: &ReactiveValue,
 ) -> Result<oxc::Expression<'a>, CompilerError> {
-    let _ = instr_value;
-    Ok(ox_placeholder_expression(cx))
+    let value = ox_codegen_instruction_value(cx, instr_value)?;
+    Ok(ox_convert_value_to_expression(&cx.ast, value))
 }
+
+fn ox_codegen_instruction_value<'a>(
+    cx: &mut OxcContext<'a, '_>,
+    instr_value: &ReactiveValue,
+) -> Result<OxValue<'a>, CompilerError> {
+    match instr_value {
+        ReactiveValue::Instruction(iv) => ox_codegen_base_instruction_value(cx, iv),
+        ReactiveValue::LogicalExpression { operator, left, right, .. } => {
+            let left_expr = ox_codegen_instruction_value_to_expression(cx, left)?;
+            let right_expr = ox_codegen_instruction_value_to_expression(cx, right)?;
+            Ok(OxValue::Expression(cx.ast.expression_logical(
+                SPAN,
+                left_expr,
+                ox_convert_logical_operator(operator),
+                right_expr,
+            )))
+        }
+        ReactiveValue::ConditionalExpression { test, consequent, alternate, .. } => {
+            let test_expr = ox_codegen_instruction_value_to_expression(cx, test)?;
+            let cons_expr = ox_codegen_instruction_value_to_expression(cx, consequent)?;
+            let alt_expr = ox_codegen_instruction_value_to_expression(cx, alternate)?;
+            Ok(OxValue::Expression(cx.ast.expression_conditional(
+                SPAN, test_expr, cons_expr, alt_expr,
+            )))
+        }
+        ReactiveValue::SequenceExpression { instructions, value, .. } => {
+            let block_items: Vec<ReactiveStatement> =
+                instructions.iter().map(|i| ReactiveStatement::Instruction(i.clone())).collect();
+            let body = ox_codegen_block_no_reset(cx, &block_items)?;
+            let mut expressions: oxc_allocator::Vec<'a, oxc::Expression<'a>> = cx.ast.vec();
+            for stmt in body {
+                match stmt {
+                    oxc::Statement::ExpressionStatement(es) => {
+                        expressions.push(es.unbox().expression);
+                    }
+                    oxc::Statement::VariableDeclaration(_) => {
+                        cx.record_error(CompilerErrorDetail {
+                            category: ErrorCategory::Todo,
+                            reason: "(CodegenReactiveFunction::codegenInstructionValue) Cannot declare variables in a value block".to_string(),
+                            description: None,
+                            loc: None,
+                            suggestions: None,
+                        })?;
+                        expressions.push(cx.ast.expression_string_literal(
+                            SPAN,
+                            "TODO handle declaration",
+                            None,
+                        ));
+                    }
+                    _ => {
+                        cx.record_error(CompilerErrorDetail {
+                            category: ErrorCategory::Todo,
+                            reason: "(CodegenReactiveFunction::codegenInstructionValue) Handle conversion of statement to expression".to_string(),
+                            description: None,
+                            loc: None,
+                            suggestions: None,
+                        })?;
+                        expressions.push(cx.ast.expression_string_literal(
+                            SPAN,
+                            "TODO handle statement",
+                            None,
+                        ));
+                    }
+                }
+            }
+            let final_expr = ox_codegen_instruction_value_to_expression(cx, value)?;
+            if expressions.is_empty() {
+                Ok(OxValue::Expression(final_expr))
+            } else {
+                expressions.push(final_expr);
+                Ok(OxValue::Expression(cx.ast.expression_sequence(SPAN, expressions)))
+            }
+        }
+        ReactiveValue::OptionalExpression { value, optional, .. } => {
+            let opt_value = ox_codegen_instruction_value_to_expression(cx, value)?;
+            ox_make_optional(cx, opt_value, *optional)
+        }
+    }
+}
+
+/// Re-wrap a call/member expression as an optional-chaining element, mirroring the
+/// Babel reference's `OptionalExpression` arm.
+fn ox_make_optional<'a>(
+    cx: &mut OxcContext<'a, '_>,
+    expr: oxc::Expression<'a>,
+    optional: bool,
+) -> Result<OxValue<'a>, CompilerError> {
+    let chain_element: oxc::ChainElement<'a> = match expr {
+        oxc::Expression::ChainExpression(chain) => {
+            // Already a chain; update the optional flag on the head element.
+            let chain = chain.unbox();
+            match chain.expression {
+                oxc::ChainElement::CallExpression(call) => {
+                    let mut call = call.unbox();
+                    call.optional = optional;
+                    oxc::ChainElement::CallExpression(cx.ast.alloc(call))
+                }
+                oxc::ChainElement::ComputedMemberExpression(m) => {
+                    let mut m = m.unbox();
+                    m.optional = optional;
+                    oxc::ChainElement::ComputedMemberExpression(cx.ast.alloc(m))
+                }
+                oxc::ChainElement::StaticMemberExpression(m) => {
+                    let mut m = m.unbox();
+                    m.optional = optional;
+                    oxc::ChainElement::StaticMemberExpression(cx.ast.alloc(m))
+                }
+                other => other,
+            }
+        }
+        oxc::Expression::CallExpression(call) => {
+            let call = call.unbox();
+            oxc::ChainElement::CallExpression(cx.ast.alloc_call_expression(
+                SPAN,
+                call.callee,
+                call.type_arguments,
+                call.arguments,
+                optional,
+            ))
+        }
+        oxc::Expression::ComputedMemberExpression(m) => {
+            let m = m.unbox();
+            oxc::ChainElement::ComputedMemberExpression(cx.ast.alloc_computed_member_expression(
+                SPAN, m.object, m.expression, optional,
+            ))
+        }
+        oxc::Expression::StaticMemberExpression(m) => {
+            let m = m.unbox();
+            oxc::ChainElement::StaticMemberExpression(cx.ast.alloc_static_member_expression(
+                SPAN, m.object, m.property, optional,
+            ))
+        }
+        _ => {
+            return Err(invariant_err(
+                "Expected optional value to resolve to call or member expression",
+                None,
+            ));
+        }
+    };
+    Ok(OxValue::Expression(cx.ast.expression_chain(SPAN, chain_element)))
+}
+
+fn ox_codegen_base_instruction_value<'a>(
+    cx: &mut OxcContext<'a, '_>,
+    iv: &InstructionValue,
+) -> Result<OxValue<'a>, CompilerError> {
+    match iv {
+        InstructionValue::Primitive { value, .. } => {
+            Ok(OxValue::Expression(ox_codegen_primitive_value(&cx.ast, value)))
+        }
+        InstructionValue::BinaryExpression { operator, left, right, .. } => {
+            let left_expr = ox_codegen_place_to_expression(cx, left)?;
+            let right_expr = ox_codegen_place_to_expression(cx, right)?;
+            Ok(OxValue::Expression(cx.ast.expression_binary(
+                SPAN,
+                left_expr,
+                ox_convert_binary_operator(operator),
+                right_expr,
+            )))
+        }
+        InstructionValue::UnaryExpression { operator, value, .. } => {
+            let arg = ox_codegen_place_to_expression(cx, value)?;
+            Ok(OxValue::Expression(cx.ast.expression_unary(
+                SPAN,
+                ox_convert_unary_operator(operator),
+                arg,
+            )))
+        }
+        InstructionValue::LoadLocal { place, .. } | InstructionValue::LoadContext { place, .. } => {
+            let expr = ox_codegen_place_to_expression(cx, place)?;
+            Ok(OxValue::Expression(expr))
+        }
+        InstructionValue::LoadGlobal { binding, .. } => Ok(OxValue::Expression(
+            cx.ast.expression_identifier(SPAN, ox_str(&cx.ast, binding.name())),
+        )),
+        InstructionValue::CallExpression { callee, args, .. } => {
+            let callee_expr = ox_codegen_place_to_expression(cx, callee)?;
+            let arguments = ox_codegen_arguments(cx, args)?;
+            let call_expr = cx.ast.expression_call(
+                SPAN,
+                callee_expr,
+                None::<oxc_allocator::Box<oxc::TSTypeParameterInstantiation>>,
+                arguments,
+                false,
+            );
+            let result = ox_maybe_wrap_hook_call(cx, call_expr, callee.identifier)?;
+            Ok(OxValue::Expression(result))
+        }
+        InstructionValue::MethodCall { property, args, .. } => {
+            let member_expr = ox_codegen_place_to_expression(cx, property)?;
+            if !ox_is_member_like(&member_expr) {
+                let msg = format!("Got: '{}'", ox_expression_type_name(&member_expr));
+                let mut err = CompilerError::new();
+                err.push_diagnostic(
+                    CompilerDiagnostic::new(
+                        ErrorCategory::Invariant,
+                        "[Codegen] Internal error: MethodCall::property must be an unpromoted + unmemoized MemberExpression",
+                        None,
+                    )
+                    .with_detail(CompilerDiagnosticDetail::Error {
+                        loc: property.loc,
+                        message: Some(msg),
+                        identifier_name: None,
+                    }),
+                );
+                return Err(err);
+            }
+            let arguments = ox_codegen_arguments(cx, args)?;
+            let call_expr = cx.ast.expression_call(
+                SPAN,
+                member_expr,
+                None::<oxc_allocator::Box<oxc::TSTypeParameterInstantiation>>,
+                arguments,
+                false,
+            );
+            let result = ox_maybe_wrap_hook_call(cx, call_expr, property.identifier)?;
+            Ok(OxValue::Expression(result))
+        }
+        InstructionValue::NewExpression { callee, args, .. } => {
+            let callee_expr = ox_codegen_place_to_expression(cx, callee)?;
+            let arguments = ox_codegen_arguments(cx, args)?;
+            Ok(OxValue::Expression(cx.ast.expression_new(
+                SPAN,
+                callee_expr,
+                None::<oxc_allocator::Box<oxc::TSTypeParameterInstantiation>>,
+                arguments,
+            )))
+        }
+        InstructionValue::ArrayExpression { elements, .. } => {
+            let mut elems: oxc_allocator::Vec<'a, oxc::ArrayExpressionElement<'a>> = cx.ast.vec();
+            for el in elements {
+                match el {
+                    ArrayElement::Place(place) => {
+                        let expr = ox_codegen_place_to_expression(cx, place)?;
+                        elems.push(oxc::ArrayExpressionElement::from(expr));
+                    }
+                    ArrayElement::Spread(spread) => {
+                        let arg = ox_codegen_place_to_expression(cx, &spread.place)?;
+                        elems.push(oxc::ArrayExpressionElement::SpreadElement(
+                            cx.ast.alloc_spread_element(SPAN, arg),
+                        ));
+                    }
+                    ArrayElement::Hole => {
+                        elems.push(cx.ast.array_expression_element_elision(SPAN));
+                    }
+                }
+            }
+            Ok(OxValue::Expression(cx.ast.expression_array(SPAN, elems)))
+        }
+        InstructionValue::ObjectExpression { properties, .. } => {
+            ox_codegen_object_expression(cx, properties)
+        }
+        InstructionValue::PropertyLoad { object, property, .. } => {
+            let obj = ox_codegen_place_to_expression(cx, object)?;
+            let member = ox_property_member(cx, obj, property);
+            Ok(OxValue::Expression(oxc::Expression::from(member)))
+        }
+        InstructionValue::PropertyStore { object, property, value, .. } => {
+            let obj = ox_codegen_place_to_expression(cx, object)?;
+            let member = ox_property_member(cx, obj, property);
+            let val = ox_codegen_place_to_expression(cx, value)?;
+            let target = oxc::AssignmentTarget::from(oxc::SimpleAssignmentTarget::from(member));
+            Ok(OxValue::Expression(cx.ast.expression_assignment(
+                SPAN,
+                oxc::AssignmentOperator::Assign,
+                target,
+                val,
+            )))
+        }
+        InstructionValue::PropertyDelete { object, property, .. } => {
+            let obj = ox_codegen_place_to_expression(cx, object)?;
+            let member = ox_property_member(cx, obj, property);
+            Ok(OxValue::Expression(cx.ast.expression_unary(
+                SPAN,
+                oxc::UnaryOperator::Delete,
+                oxc::Expression::from(member),
+            )))
+        }
+        InstructionValue::ComputedLoad { object, property, .. } => {
+            let obj = ox_codegen_place_to_expression(cx, object)?;
+            let prop = ox_codegen_place_to_expression(cx, property)?;
+            let member = cx.ast.member_expression_computed(SPAN, obj, prop, false);
+            Ok(OxValue::Expression(oxc::Expression::from(member)))
+        }
+        InstructionValue::ComputedStore { object, property, value, .. } => {
+            let obj = ox_codegen_place_to_expression(cx, object)?;
+            let prop = ox_codegen_place_to_expression(cx, property)?;
+            let member = cx.ast.member_expression_computed(SPAN, obj, prop, false);
+            let val = ox_codegen_place_to_expression(cx, value)?;
+            let target = oxc::AssignmentTarget::from(oxc::SimpleAssignmentTarget::from(member));
+            Ok(OxValue::Expression(cx.ast.expression_assignment(
+                SPAN,
+                oxc::AssignmentOperator::Assign,
+                target,
+                val,
+            )))
+        }
+        InstructionValue::ComputedDelete { object, property, .. } => {
+            let obj = ox_codegen_place_to_expression(cx, object)?;
+            let prop = ox_codegen_place_to_expression(cx, property)?;
+            let member = cx.ast.member_expression_computed(SPAN, obj, prop, false);
+            Ok(OxValue::Expression(cx.ast.expression_unary(
+                SPAN,
+                oxc::UnaryOperator::Delete,
+                oxc::Expression::from(member),
+            )))
+        }
+        InstructionValue::RegExpLiteral { pattern, flags, .. } => {
+            let regex_flags = ox_parse_regexp_flags(flags);
+            let regex = oxc::RegExp {
+                pattern: oxc::RegExpPattern { text: ox_str(&cx.ast, pattern).into(), pattern: None },
+                flags: regex_flags,
+            };
+            Ok(OxValue::Expression(cx.ast.expression_reg_exp_literal(SPAN, regex, None)))
+        }
+        InstructionValue::MetaProperty { meta, property, .. } => {
+            let meta_ident = cx.ast.identifier_name(SPAN, ox_str(&cx.ast, meta));
+            let prop_ident = cx.ast.identifier_name(SPAN, ox_str(&cx.ast, property));
+            Ok(OxValue::Expression(cx.ast.expression_meta_property(SPAN, meta_ident, prop_ident)))
+        }
+        InstructionValue::Await { value, .. } => {
+            let arg = ox_codegen_place_to_expression(cx, value)?;
+            Ok(OxValue::Expression(cx.ast.expression_await(SPAN, arg)))
+        }
+        InstructionValue::GetIterator { collection, .. } => {
+            let expr = ox_codegen_place_to_expression(cx, collection)?;
+            Ok(OxValue::Expression(expr))
+        }
+        InstructionValue::IteratorNext { iterator, .. } => {
+            let expr = ox_codegen_place_to_expression(cx, iterator)?;
+            Ok(OxValue::Expression(expr))
+        }
+        InstructionValue::NextPropertyOf { value, .. } => {
+            let expr = ox_codegen_place_to_expression(cx, value)?;
+            Ok(OxValue::Expression(expr))
+        }
+        InstructionValue::PostfixUpdate { operation, lvalue, .. } => {
+            let arg = ox_codegen_place_to_expression(cx, lvalue)?;
+            let target = ox_expression_to_simple_assignment_target(cx, arg)?;
+            Ok(OxValue::Expression(cx.ast.expression_update(
+                SPAN,
+                ox_convert_update_operator(operation),
+                false,
+                target,
+            )))
+        }
+        InstructionValue::PrefixUpdate { operation, lvalue, .. } => {
+            let arg = ox_codegen_place_to_expression(cx, lvalue)?;
+            let target = ox_expression_to_simple_assignment_target(cx, arg)?;
+            Ok(OxValue::Expression(cx.ast.expression_update(
+                SPAN,
+                ox_convert_update_operator(operation),
+                true,
+                target,
+            )))
+        }
+        InstructionValue::StoreLocal { lvalue, value, .. } => {
+            invariant(
+                lvalue.kind == InstructionKind::Reassign,
+                "Unexpected StoreLocal in codegenInstructionValue",
+                None,
+            )?;
+            let lval = ox_codegen_lvalue(cx, &LvalueRef::Place(&lvalue.place))?;
+            let target = ox_binding_pattern_to_assignment_target(cx, lval)?;
+            let rhs = ox_codegen_place_to_expression(cx, value)?;
+            Ok(OxValue::Expression(cx.ast.expression_assignment(
+                SPAN,
+                oxc::AssignmentOperator::Assign,
+                target,
+                rhs,
+            )))
+        }
+        InstructionValue::StoreGlobal { name, value, .. } => {
+            let rhs = ox_codegen_place_to_expression(cx, value)?;
+            let target = oxc::AssignmentTarget::AssignmentTargetIdentifier(
+                cx.ast.alloc_identifier_reference(SPAN, ox_str(&cx.ast, name)),
+            );
+            Ok(OxValue::Expression(cx.ast.expression_assignment(
+                SPAN,
+                oxc::AssignmentOperator::Assign,
+                target,
+                rhs,
+            )))
+        }
+        InstructionValue::FunctionExpression {
+            name, name_hint, lowered_func, expr_type, ..
+        } => ox_codegen_function_expression(cx, name, name_hint, lowered_func, expr_type),
+        InstructionValue::TaggedTemplateExpression { tag, quasis, subexprs, .. } => {
+            let tag_expr = ox_codegen_place_to_expression(cx, tag)?;
+            let mut exprs: oxc_allocator::Vec<'a, oxc::Expression<'a>> = cx.ast.vec();
+            for p in subexprs {
+                exprs.push(ox_codegen_place_to_expression(cx, p)?);
+            }
+            let quasi = ox_template_literal(cx, quasis, exprs);
+            Ok(OxValue::Expression(cx.ast.expression_tagged_template(
+                SPAN,
+                tag_expr,
+                None::<oxc_allocator::Box<oxc::TSTypeParameterInstantiation>>,
+                quasi,
+            )))
+        }
+        InstructionValue::TemplateLiteral { subexprs, quasis, .. } => {
+            let mut exprs: oxc_allocator::Vec<'a, oxc::Expression<'a>> = cx.ast.vec();
+            for p in subexprs {
+                exprs.push(ox_codegen_place_to_expression(cx, p)?);
+            }
+            let template = ox_template_literal(cx, quasis, exprs);
+            Ok(OxValue::Expression(oxc::Expression::TemplateLiteral(cx.ast.alloc(template))))
+        }
+        InstructionValue::TypeCastExpression { value, .. } => {
+            // TS-type reparse (`as` / `satisfies` / cast) is deferred to a later
+            // batch; emit the inner expression unwrapped for now.
+            let expr = ox_codegen_place_to_expression(cx, value)?;
+            Ok(OxValue::Expression(expr))
+        }
+        InstructionValue::JSXText { value, .. } => {
+            Ok(OxValue::JsxText(cx.ast.alloc_jsx_text(SPAN, ox_str(&cx.ast, value), None)))
+        }
+        InstructionValue::JsxExpression { .. } | InstructionValue::JsxFragment { .. } => {
+            Err(invariant_err(
+                "JSX codegen to oxc is not yet ported (deferred to a later batch)",
+                iv.loc().copied(),
+            ))
+        }
+        InstructionValue::StartMemoize { .. }
+        | InstructionValue::FinishMemoize { .. }
+        | InstructionValue::Debugger { .. }
+        | InstructionValue::DeclareLocal { .. }
+        | InstructionValue::DeclareContext { .. }
+        | InstructionValue::Destructure { .. }
+        | InstructionValue::ObjectMethod { .. }
+        | InstructionValue::StoreContext { .. } => Err(invariant_err(
+            &format!("Unexpected {:?} in codegenInstructionValue", std::mem::discriminant(iv)),
+            None,
+        )),
+    }
+}
+
+/// Build `obj.prop` / `obj[prop]` member expression from a `PropertyLiteral`.
+fn ox_property_member<'a>(
+    cx: &OxcContext<'a, '_>,
+    object: oxc::Expression<'a>,
+    property: &PropertyLiteral,
+) -> oxc::MemberExpression<'a> {
+    match property {
+        PropertyLiteral::String(s) => cx.ast.member_expression_static(
+            SPAN,
+            object,
+            cx.ast.identifier_name(SPAN, ox_str(&cx.ast, s)),
+            false,
+        ),
+        PropertyLiteral::Number(n) => cx.ast.member_expression_computed(
+            SPAN,
+            object,
+            ox_number(&cx.ast, n.value()),
+            false,
+        ),
+    }
+}
+
+fn ox_template_literal<'a>(
+    cx: &OxcContext<'a, '_>,
+    quasis: &[crate::react_compiler_hir::TemplateQuasi],
+    expressions: oxc_allocator::Vec<'a, oxc::Expression<'a>>,
+) -> oxc::TemplateLiteral<'a> {
+    let mut quasi_vec: oxc_allocator::Vec<'a, oxc::TemplateElement<'a>> = cx.ast.vec();
+    let len = quasis.len();
+    for (i, q) in quasis.iter().enumerate() {
+        let value = oxc::TemplateElementValue {
+            raw: ox_str(&cx.ast, &q.raw).into(),
+            cooked: q.cooked.as_deref().map(|c| ox_str(&cx.ast, c).into()),
+        };
+        quasi_vec.push(cx.ast.template_element(SPAN, value, i == len - 1));
+    }
+    cx.ast.template_literal(SPAN, quasi_vec, expressions)
+}
+
+fn ox_codegen_arguments<'a>(
+    cx: &mut OxcContext<'a, '_>,
+    args: &[PlaceOrSpread],
+) -> Result<oxc_allocator::Vec<'a, oxc::Argument<'a>>, CompilerError> {
+    let mut out: oxc_allocator::Vec<'a, oxc::Argument<'a>> = cx.ast.vec();
+    for arg in args {
+        out.push(ox_codegen_argument(cx, arg)?);
+    }
+    Ok(out)
+}
+
+fn ox_codegen_argument<'a>(
+    cx: &mut OxcContext<'a, '_>,
+    arg: &PlaceOrSpread,
+) -> Result<oxc::Argument<'a>, CompilerError> {
+    match arg {
+        PlaceOrSpread::Place(place) => {
+            Ok(oxc::Argument::from(ox_codegen_place_to_expression(cx, place)?))
+        }
+        PlaceOrSpread::Spread(spread) => {
+            let expr = ox_codegen_place_to_expression(cx, &spread.place)?;
+            Ok(oxc::Argument::SpreadElement(cx.ast.alloc_spread_element(SPAN, expr)))
+        }
+    }
+}
+
+fn ox_is_member_like(expr: &oxc::Expression) -> bool {
+    matches!(
+        expr,
+        oxc::Expression::StaticMemberExpression(_)
+            | oxc::Expression::ComputedMemberExpression(_)
+            | oxc::Expression::PrivateFieldExpression(_)
+            | oxc::Expression::ChainExpression(_)
+    )
+}
+
+fn ox_expression_type_name(expr: &oxc::Expression) -> &'static str {
+    match expr {
+        oxc::Expression::Identifier(_) => "Identifier",
+        _ => "unknown",
+    }
+}
+
+// =============================================================================
+// Place / lvalue / dependency codegen (oxc)
+// =============================================================================
 
 fn ox_codegen_place_to_expression<'a>(
     cx: &mut OxcContext<'a, '_>,
     place: &Place,
 ) -> Result<oxc::Expression<'a>, CompilerError> {
-    let _ = place;
-    Ok(ox_placeholder_expression(cx))
+    let value = ox_codegen_place(cx, place)?;
+    Ok(ox_convert_value_to_expression(&cx.ast, value))
 }
 
-fn ox_codegen_dependency<'a>(
+fn ox_codegen_place<'a>(
     cx: &mut OxcContext<'a, '_>,
-    dep: &crate::react_compiler_hir::ReactiveScopeDependency,
-) -> Result<oxc::Expression<'a>, CompilerError> {
-    let _ = dep;
-    Ok(ox_placeholder_expression(cx))
+    place: &Place,
+) -> Result<OxValue<'a>, CompilerError> {
+    let ident = &cx.env.identifiers[place.identifier.0 as usize];
+    let declaration_id = ident.declaration_id;
+    if let Some(tmp) = cx.temp.get(&declaration_id) {
+        if let Some(val) = tmp {
+            return Ok(val.clone_in(cx.ast.allocator));
+        }
+    } else if ident.name.is_none() {
+        return Err(invariant_err(
+            &format!(
+                "[Codegen] No value found for temporary, identifier id={}",
+                place.identifier.0
+            ),
+            place.loc,
+        ));
+    }
+    let name = ox_identifier_name(cx.env, place.identifier)?;
+    Ok(OxValue::Expression(cx.ast.expression_identifier(SPAN, ox_str(&cx.ast, &name))))
 }
 
 fn ox_codegen_lvalue<'a>(
     cx: &mut OxcContext<'a, '_>,
     pattern: &LvalueRef,
 ) -> Result<oxc::BindingPattern<'a>, CompilerError> {
-    let _ = pattern;
-    Ok(cx.ast.binding_pattern_binding_identifier(SPAN, "_"))
+    match pattern {
+        LvalueRef::Place(place) => ox_binding_for_identifier(cx, place.identifier),
+        LvalueRef::Pattern(pat) => match pat {
+            Pattern::Array(arr) => ox_codegen_array_pattern(cx, arr),
+            Pattern::Object(obj) => ox_codegen_object_pattern(cx, obj),
+        },
+        LvalueRef::Spread(spread) => ox_binding_for_identifier(cx, spread.place.identifier),
+    }
+}
+
+fn ox_codegen_array_pattern<'a>(
+    cx: &mut OxcContext<'a, '_>,
+    pattern: &ArrayPattern,
+) -> Result<oxc::BindingPattern<'a>, CompilerError> {
+    let mut elements: oxc_allocator::Vec<'a, Option<oxc::BindingPattern<'a>>> = cx.ast.vec();
+    let mut rest: Option<oxc::BindingRestElement<'a>> = None;
+    for item in &pattern.items {
+        match item {
+            crate::react_compiler_hir::ArrayPatternElement::Place(place) => {
+                elements.push(Some(ox_binding_for_identifier(cx, place.identifier)?));
+            }
+            crate::react_compiler_hir::ArrayPatternElement::Spread(spread) => {
+                let inner = ox_binding_for_identifier(cx, spread.place.identifier)?;
+                rest = Some(cx.ast.binding_rest_element(SPAN, inner));
+            }
+            crate::react_compiler_hir::ArrayPatternElement::Hole => {
+                elements.push(None);
+            }
+        }
+    }
+    Ok(cx.ast.binding_pattern_array_pattern(SPAN, elements, rest))
+}
+
+fn ox_codegen_object_pattern<'a>(
+    cx: &mut OxcContext<'a, '_>,
+    pattern: &ObjectPattern,
+) -> Result<oxc::BindingPattern<'a>, CompilerError> {
+    let mut properties: oxc_allocator::Vec<'a, oxc::BindingProperty<'a>> = cx.ast.vec();
+    let mut rest: Option<oxc::BindingRestElement<'a>> = None;
+    for prop in &pattern.properties {
+        match prop {
+            ObjectPropertyOrSpread::Property(obj_prop) => {
+                let (key, computed) = ox_codegen_object_property_key(cx, &obj_prop.key)?;
+                let value = ox_binding_for_identifier(cx, obj_prop.place.identifier)?;
+                let shorthand = !computed
+                    && matches!(
+                        (&key, &value),
+                        (
+                            oxc::PropertyKey::StaticIdentifier(k),
+                            oxc::BindingPattern::BindingIdentifier(v),
+                        ) if k.name == v.name
+                    );
+                properties.push(cx.ast.binding_property(SPAN, key, value, shorthand, computed));
+            }
+            ObjectPropertyOrSpread::Spread(spread) => {
+                let inner = ox_binding_for_identifier(cx, spread.place.identifier)?;
+                rest = Some(cx.ast.binding_rest_element(SPAN, inner));
+            }
+        }
+    }
+    Ok(cx.ast.binding_pattern_object_pattern(SPAN, properties, rest))
+}
+
+/// Build an object pattern key, returning `(key, computed)`.
+fn ox_codegen_object_property_key<'a>(
+    cx: &mut OxcContext<'a, '_>,
+    key: &ObjectPropertyKey,
+) -> Result<(oxc::PropertyKey<'a>, bool), CompilerError> {
+    match key {
+        ObjectPropertyKey::String { name } => Ok((
+            oxc::PropertyKey::from(cx.ast.expression_string_literal(
+                SPAN,
+                ox_str(&cx.ast, name),
+                None,
+            )),
+            false,
+        )),
+        ObjectPropertyKey::Identifier { name } => Ok((
+            cx.ast.property_key_static_identifier(SPAN, ox_str(&cx.ast, name)),
+            false,
+        )),
+        ObjectPropertyKey::Computed { name } => {
+            let expr = ox_codegen_place_to_expression(cx, name)?;
+            Ok((oxc::PropertyKey::from(expr), true))
+        }
+        ObjectPropertyKey::Number { name } => Ok((
+            oxc::PropertyKey::from(ox_number(&cx.ast, name.value())),
+            false,
+        )),
+    }
+}
+
+fn ox_codegen_dependency<'a>(
+    cx: &mut OxcContext<'a, '_>,
+    dep: &crate::react_compiler_hir::ReactiveScopeDependency,
+) -> Result<oxc::Expression<'a>, CompilerError> {
+    let name = ox_identifier_name(cx.env, dep.identifier)?;
+    let mut object = cx.ast.expression_identifier(SPAN, ox_str(&cx.ast, &name));
+    if !dep.path.is_empty() {
+        let has_optional = dep.path.iter().any(|p| p.optional);
+        for path_entry in &dep.path {
+            let member = ox_property_member(cx, object, &path_entry.property);
+            object = if has_optional {
+                // Optional chaining: rebuild member with the entry's optional flag.
+                let chain = match member {
+                    oxc::MemberExpression::StaticMemberExpression(m) => {
+                        let m = m.unbox();
+                        oxc::ChainElement::StaticMemberExpression(
+                            cx.ast.alloc_static_member_expression(
+                                SPAN, m.object, m.property, path_entry.optional,
+                            ),
+                        )
+                    }
+                    oxc::MemberExpression::ComputedMemberExpression(m) => {
+                        let m = m.unbox();
+                        oxc::ChainElement::ComputedMemberExpression(
+                            cx.ast.alloc_computed_member_expression(
+                                SPAN, m.object, m.expression, path_entry.optional,
+                            ),
+                        )
+                    }
+                    oxc::MemberExpression::PrivateFieldExpression(m) => {
+                        oxc::ChainElement::from(oxc::MemberExpression::PrivateFieldExpression(m))
+                    }
+                };
+                cx.ast.expression_chain(SPAN, chain)
+            } else {
+                oxc::Expression::from(member)
+            };
+        }
+    }
+    Ok(object)
+}
+
+/// Convert a `BindingPattern` (from `ox_codegen_lvalue`) into an `AssignmentTarget`
+/// for reassignment / `StoreLocal` emission.
+fn ox_binding_pattern_to_assignment_target<'a>(
+    cx: &OxcContext<'a, '_>,
+    pattern: oxc::BindingPattern<'a>,
+) -> Result<oxc::AssignmentTarget<'a>, CompilerError> {
+    match pattern {
+        oxc::BindingPattern::BindingIdentifier(id) => {
+            let id = id.unbox();
+            Ok(oxc::AssignmentTarget::AssignmentTargetIdentifier(
+                cx.ast.alloc_identifier_reference(SPAN, id.name),
+            ))
+        }
+        _ => Err(invariant_err(
+            "Destructuring reassignment targets are not yet ported to oxc",
+            None,
+        )),
+    }
+}
+
+/// Convert an expression to a `SimpleAssignmentTarget` for update expressions.
+fn ox_expression_to_simple_assignment_target<'a>(
+    cx: &OxcContext<'a, '_>,
+    expr: oxc::Expression<'a>,
+) -> Result<oxc::SimpleAssignmentTarget<'a>, CompilerError> {
+    match expr {
+        oxc::Expression::Identifier(id) => {
+            let id = id.unbox();
+            Ok(oxc::SimpleAssignmentTarget::AssignmentTargetIdentifier(
+                cx.ast.alloc_identifier_reference(SPAN, id.name),
+            ))
+        }
+        oxc::Expression::StaticMemberExpression(m) => {
+            Ok(oxc::SimpleAssignmentTarget::from(oxc::MemberExpression::StaticMemberExpression(m)))
+        }
+        oxc::Expression::ComputedMemberExpression(m) => {
+            Ok(oxc::SimpleAssignmentTarget::from(oxc::MemberExpression::ComputedMemberExpression(m)))
+        }
+        _ => Err(invariant_err("Expected a simple assignment target for update expression", None)),
+    }
+}
+
+// =============================================================================
+// Deferred sub-emitters (later batches): function/object/jsx expression codegen.
+// =============================================================================
+
+fn ox_codegen_function_expression<'a>(
+    cx: &mut OxcContext<'a, '_>,
+    _name: &Option<String>,
+    _name_hint: &Option<String>,
+    _lowered_func: &crate::react_compiler_hir::LoweredFunction,
+    _expr_type: &FunctionExpressionType,
+) -> Result<OxValue<'a>, CompilerError> {
+    let _ = cx;
+    Err(invariant_err(
+        "Function expression codegen to oxc is not yet ported (deferred to a later batch)",
+        None,
+    ))
+}
+
+fn ox_codegen_object_expression<'a>(
+    cx: &mut OxcContext<'a, '_>,
+    _properties: &[ObjectPropertyOrSpread],
+) -> Result<OxValue<'a>, CompilerError> {
+    let _ = cx;
+    Err(invariant_err(
+        "Object expression codegen to oxc is not yet ported (deferred to a later batch)",
+        None,
+    ))
+}
+
+fn ox_maybe_wrap_hook_call<'a>(
+    cx: &OxcContext<'a, '_>,
+    call_expr: oxc::Expression<'a>,
+    _callee_id: IdentifierId,
+) -> Result<oxc::Expression<'a>, CompilerError> {
+    // enableEmitHookGuards wrapping is deferred to a later batch; the guard is
+    // off by default, so unwrapped calls match the differential floor.
+    if cx.env.hook_guard_name.is_some()
+        && cx.env.output_mode == crate::react_compiler_hir::environment::OutputMode::Client
+    {
+        return Err(invariant_err(
+            "Hook guard wrapping in oxc codegen is not yet ported (deferred to a later batch)",
+            None,
+        ));
+    }
+    Ok(call_expr)
+}
+
+// =============================================================================
+// Operator conversions (HIR -> oxc)
+// =============================================================================
+
+fn ox_convert_binary_operator(
+    op: &crate::react_compiler_hir::BinaryOperator,
+) -> oxc::BinaryOperator {
+    use crate::react_compiler_hir::BinaryOperator as Hir;
+    use oxc::BinaryOperator as Ox;
+    match op {
+        Hir::Equal => Ox::Equality,
+        Hir::NotEqual => Ox::Inequality,
+        Hir::StrictEqual => Ox::StrictEquality,
+        Hir::StrictNotEqual => Ox::StrictInequality,
+        Hir::LessThan => Ox::LessThan,
+        Hir::LessEqual => Ox::LessEqualThan,
+        Hir::GreaterThan => Ox::GreaterThan,
+        Hir::GreaterEqual => Ox::GreaterEqualThan,
+        Hir::ShiftLeft => Ox::ShiftLeft,
+        Hir::ShiftRight => Ox::ShiftRight,
+        Hir::UnsignedShiftRight => Ox::ShiftRightZeroFill,
+        Hir::Add => Ox::Addition,
+        Hir::Subtract => Ox::Subtraction,
+        Hir::Multiply => Ox::Multiplication,
+        Hir::Divide => Ox::Division,
+        Hir::Modulo => Ox::Remainder,
+        Hir::Exponent => Ox::Exponential,
+        Hir::BitwiseOr => Ox::BitwiseOR,
+        Hir::BitwiseXor => Ox::BitwiseXOR,
+        Hir::BitwiseAnd => Ox::BitwiseAnd,
+        Hir::In => Ox::In,
+        Hir::InstanceOf => Ox::Instanceof,
+    }
+}
+
+fn ox_convert_unary_operator(op: &crate::react_compiler_hir::UnaryOperator) -> oxc::UnaryOperator {
+    use crate::react_compiler_hir::UnaryOperator as Hir;
+    use oxc::UnaryOperator as Ox;
+    match op {
+        Hir::Minus => Ox::UnaryNegation,
+        Hir::Plus => Ox::UnaryPlus,
+        Hir::Not => Ox::LogicalNot,
+        Hir::BitwiseNot => Ox::BitwiseNot,
+        Hir::TypeOf => Ox::Typeof,
+        Hir::Void => Ox::Void,
+    }
+}
+
+fn ox_convert_logical_operator(op: &LogicalOperator) -> oxc::LogicalOperator {
+    match op {
+        LogicalOperator::And => oxc::LogicalOperator::And,
+        LogicalOperator::Or => oxc::LogicalOperator::Or,
+        LogicalOperator::NullishCoalescing => oxc::LogicalOperator::Coalesce,
+    }
+}
+
+fn ox_convert_update_operator(
+    op: &crate::react_compiler_hir::UpdateOperator,
+) -> oxc::UpdateOperator {
+    match op {
+        crate::react_compiler_hir::UpdateOperator::Increment => oxc::UpdateOperator::Increment,
+        crate::react_compiler_hir::UpdateOperator::Decrement => oxc::UpdateOperator::Decrement,
+    }
+}
+
+// =============================================================================
+// Primitive / literal helpers (oxc)
+// =============================================================================
+
+fn ox_codegen_primitive_value<'a>(
+    ast: &oxc_ast::AstBuilder<'a>,
+    value: &PrimitiveValue,
+) -> oxc::Expression<'a> {
+    match value {
+        PrimitiveValue::Number(n) => {
+            let f = n.value();
+            if f.is_nan() {
+                ast.expression_identifier(SPAN, "NaN")
+            } else if f.is_infinite() {
+                if f > 0.0 {
+                    ast.expression_identifier(SPAN, "Infinity")
+                } else {
+                    ast.expression_unary(
+                        SPAN,
+                        oxc::UnaryOperator::UnaryNegation,
+                        ast.expression_identifier(SPAN, "Infinity"),
+                    )
+                }
+            } else if f < 0.0 {
+                ast.expression_unary(SPAN, oxc::UnaryOperator::UnaryNegation, ox_number(ast, -f))
+            } else {
+                ox_number(ast, f)
+            }
+        }
+        PrimitiveValue::Boolean(b) => ast.expression_boolean_literal(SPAN, *b),
+        PrimitiveValue::String(s) => {
+            ast.expression_string_literal(SPAN, ox_str(ast, &s.to_string_lossy()), None)
+        }
+        PrimitiveValue::Null => ast.expression_null_literal(SPAN),
+        PrimitiveValue::Undefined => ast.expression_identifier(SPAN, "undefined"),
+    }
+}
+
+fn ox_parse_regexp_flags(flags_str: &str) -> oxc::RegExpFlags {
+    let mut flags = oxc::RegExpFlags::empty();
+    for c in flags_str.chars() {
+        match c {
+            'g' => flags |= oxc::RegExpFlags::G,
+            'i' => flags |= oxc::RegExpFlags::I,
+            'm' => flags |= oxc::RegExpFlags::M,
+            's' => flags |= oxc::RegExpFlags::S,
+            'u' => flags |= oxc::RegExpFlags::U,
+            'y' => flags |= oxc::RegExpFlags::Y,
+            'd' => flags |= oxc::RegExpFlags::D,
+            'v' => flags |= oxc::RegExpFlags::V,
+            _ => {}
+        }
+    }
+    flags
 }
 
 /// Original Babel-shaped codegen entry, retained as the reference implementation
