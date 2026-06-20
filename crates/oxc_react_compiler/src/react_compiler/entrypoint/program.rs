@@ -71,6 +71,25 @@ const OPT_OUT_DIRECTIVES: &[&str] = &["use no forget", "use no memo"];
 // Internal types
 // -----------------------------------------------------------------------
 
+/// A source location for a discovered function, used only to feed logger
+/// events. The former Babel front-end carried this on `BaseNode.loc`; the oxc
+/// front-end synthesizes it from the function span (only the byte `index` is
+/// load-bearing — line/column/filename never reach the compiled output).
+#[derive(Debug, Clone)]
+struct FnSourceLoc {
+    start: FnSourcePos,
+    end: FnSourcePos,
+    filename: Option<String>,
+    identifier_name: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+struct FnSourcePos {
+    line: u32,
+    column: u32,
+    index: Option<u32>,
+}
+
 /// A function found in the program that should be compiled.
 ///
 /// `'a` is the arena lifetime of the discovered oxc function node.
@@ -82,7 +101,7 @@ struct CompileSource<'a> {
     /// Original AST source location for logger events. The example front-end
     /// discards logger locations, and diagnostics carry their own byte spans, so
     /// this is left `None` (it never affects compiled output).
-    fn_ast_loc: Option<crate::react_compiler_ast::common::SourceLocation>,
+    fn_ast_loc: Option<FnSourceLoc>,
     fn_start: Option<u32>,
     fn_end: Option<u32>,
     fn_node_id: Option<u32>,
@@ -1159,7 +1178,7 @@ fn diagnostic_details_to_items(
 
 /// Convert an optional AST SourceLocation to a LoggerSourceLocation with filename.
 fn to_logger_loc(
-    ast_loc: Option<&crate::react_compiler_ast::common::SourceLocation>,
+    ast_loc: Option<&FnSourceLoc>,
     filename: Option<&str>,
 ) -> Option<LoggerSourceLocation> {
     ast_loc.map(|loc| LoggerSourceLocation {
@@ -1224,7 +1243,7 @@ fn suggestions_to_logger(
 /// Log an error as LoggerEvent(s) directly onto the ProgramContext.
 fn log_error(
     err: &CompilerError,
-    fn_ast_loc: Option<&crate::react_compiler_ast::common::SourceLocation>,
+    fn_ast_loc: Option<&FnSourceLoc>,
     context: &mut ProgramContext,
 ) {
     // Use the filename from the AST node's loc (set by parser's sourceFilename option),
@@ -1288,7 +1307,7 @@ fn log_error(
 /// otherwise returns None (error was logged only).
 fn handle_error<'a>(
     err: &CompilerError,
-    fn_ast_loc: Option<&crate::react_compiler_ast::common::SourceLocation>,
+    fn_ast_loc: Option<&FnSourceLoc>,
     context: &mut ProgramContext,
 ) -> Option<CompileResult<'a>> {
     // Log the error
@@ -1649,17 +1668,9 @@ fn try_make_compile_source<'a>(
         // The function source location flows into compile-error diagnostics as the
         // fallback labeled span (offset/length). Only the byte `index` is
         // load-bearing; line/column/filename never reach the example's output.
-        fn_ast_loc: Some(crate::react_compiler_ast::common::SourceLocation {
-            start: crate::react_compiler_ast::common::Position {
-                line: 0,
-                column: 0,
-                index: Some(span.start),
-            },
-            end: crate::react_compiler_ast::common::Position {
-                line: 0,
-                column: 0,
-                index: Some(span.end),
-            },
+        fn_ast_loc: Some(FnSourceLoc {
+            start: FnSourcePos { line: 0, column: 0, index: Some(span.start) },
+            end: FnSourcePos { line: 0, column: 0, index: Some(span.end) },
             filename: None,
             identifier_name: None,
         }),

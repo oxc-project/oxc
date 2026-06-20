@@ -15,7 +15,6 @@ pub mod debug_print {
     pub fn format_hir_function_into(_fmt: &mut PrintFormatter, _func: &HirFunction) {}
 }
 pub mod entrypoint;
-pub mod fixture_utils;
 pub mod timing;
 
 // Re-export from new crates for backwards compatibility

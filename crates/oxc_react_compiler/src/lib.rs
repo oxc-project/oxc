@@ -9,8 +9,6 @@
 #[allow(clippy::all, clippy::pedantic, clippy::nursery, clippy::disallowed_methods)]
 pub mod react_compiler;
 #[allow(clippy::all, clippy::pedantic, clippy::nursery, clippy::disallowed_methods)]
-pub mod react_compiler_ast;
-#[allow(clippy::all, clippy::pedantic, clippy::nursery, clippy::disallowed_methods)]
 pub mod react_compiler_diagnostics;
 #[allow(clippy::all, clippy::pedantic, clippy::nursery, clippy::disallowed_methods)]
 pub mod react_compiler_hir;
@@ -31,7 +29,6 @@ pub mod react_compiler_utils;
 #[allow(clippy::all, clippy::pedantic, clippy::nursery, clippy::disallowed_methods)]
 pub mod react_compiler_validation;
 
-pub mod convert_ast;
 pub mod convert_scope;
 pub mod diagnostics;
 pub mod prefilter;
