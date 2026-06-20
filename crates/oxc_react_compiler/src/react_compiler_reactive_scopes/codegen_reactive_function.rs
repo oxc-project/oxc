@@ -13,7 +13,6 @@
 use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
 
-use crate::react_compiler_ast::OriginalNode;
 use crate::react_compiler_ast::common::BaseNode;
 use crate::react_compiler_ast::common::Position as AstPosition;
 use crate::react_compiler_ast::common::RawNode;
@@ -1432,37 +1431,6 @@ fn codegen_for_init(
 // Instruction codegen
 // =============================================================================
 
-/// How statement-position codegen disposes of an `UnsupportedNode`'s
-/// `original_node`. See [`codegen_unsupported_original_node`].
-enum UnsupportedOriginalNode {
-    /// Emit this statement directly (early return).
-    Statement(Statement),
-    /// Flow through the general expression codegen path so the instruction's
-    /// lvalue temporary is bound/registered.
-    ExpressionCodegen,
-}
-
-/// Discriminate an `UnsupportedNode`'s `original_node` by which syntactic
-/// position lowering captured it from.
-///
-/// - [`OriginalNode::Statement`]: emit the statement directly. This covers
-///   modeled statements, type-only TS/Flow enum declarations, and the
-///   `Statement::Unknown` catch-all that the unknown-statement lowering
-///   bailout preserves verbatim — matching the TS codegen's `return node`
-///   for non-expressions.
-/// - [`OriginalNode::Expression`] / [`OriginalNode::Pattern`]: flow through
-///   the general expression codegen path so the instruction's lvalue
-///   temporary is bound. Patterns (e.g. `ObjectPattern` destructuring
-///   targets) keep their placeholder fallback there.
-fn codegen_unsupported_original_node(node: &OriginalNode) -> UnsupportedOriginalNode {
-    match node {
-        OriginalNode::Statement(stmt) => UnsupportedOriginalNode::Statement((**stmt).clone()),
-        OriginalNode::Expression(_) | OriginalNode::Pattern(_) => {
-            UnsupportedOriginalNode::ExpressionCodegen
-        }
-    }
-}
-
 fn codegen_instruction_nullable(
     cx: &mut Context,
     instr: &ReactiveInstruction,
@@ -1484,24 +1452,6 @@ fn codegen_instruction_nullable(
                 return Ok(Some(Statement::DebuggerStatement(DebuggerStatement {
                     base: base_node_with_loc("DebuggerStatement", instr.loc),
                 })));
-            }
-            InstructionValue::UnsupportedNode { original_node: Some(node), .. } => {
-                // Statement-vs-expression discrimination must be explicit by
-                // `type` tag: `Statement`'s deserializer has a tolerant
-                // `Statement::Unknown` catch-all, so "does it deserialize as
-                // a Statement?" succeeds for ANY tagged object and would
-                // emit expression nodes as raw statements, orphaning their
-                // lvalue temporaries (the regression the explicit dispatch
-                // below prevents; TS codegen's equivalent check is
-                // `if (!t.isExpression(node)) return node; value = node`).
-                match codegen_unsupported_original_node(node) {
-                    UnsupportedOriginalNode::Statement(stmt) => return Ok(Some(stmt)),
-                    UnsupportedOriginalNode::ExpressionCodegen => {
-                        // Expression (or pattern) node — fall through to the
-                        // general codegen path which handles lvalue binding
-                        // and temporary registration.
-                    }
-                }
             }
             InstructionValue::ObjectMethod { loc, .. } => {
                 invariant(
@@ -2334,25 +2284,6 @@ fn codegen_base_instruction_value(
                 },
                 children: child_elems,
             })))
-        }
-        InstructionValue::UnsupportedNode { original_node, node_type, .. } => {
-            // Emit the original node as an expression when it is one (mirrors
-            // the statement-level handler), otherwise fall back to a
-            // placeholder identifier. A pattern that shares a tag with
-            // `Expression` (e.g. a `MemberExpression` LVal) converts; pattern-
-            // only and statement nodes do not.
-            let expr = match original_node {
-                Some(OriginalNode::Expression(expr)) => Some((**expr).clone()),
-                Some(OriginalNode::Pattern(pat)) => pat.as_expression(),
-                Some(OriginalNode::Statement(_)) | None => None,
-            }
-            .unwrap_or_else(|| {
-                Expression::Identifier(make_identifier(&format!(
-                    "__unsupported_{}",
-                    node_type.as_deref().unwrap_or("unknown")
-                )))
-            });
-            Ok(ExpressionOrJsxText::Expression(expr))
         }
         InstructionValue::StartMemoize { .. }
         | InstructionValue::FinishMemoize { .. }

@@ -625,8 +625,7 @@ fn evaluate_instruction(
         | InstructionValue::IteratorNext { .. }
         | InstructionValue::NextPropertyOf { .. }
         | InstructionValue::Debugger { .. }
-        | InstructionValue::FinishMemoize { .. }
-        | InstructionValue::UnsupportedNode { .. } => None,
+        | InstructionValue::FinishMemoize { .. } => None,
     }
 }
 

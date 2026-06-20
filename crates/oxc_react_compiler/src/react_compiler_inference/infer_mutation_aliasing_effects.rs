@@ -2284,8 +2284,7 @@ fn compute_signature_for_instruction(
         | InstructionValue::Primitive { .. }
         | InstructionValue::RegExpLiteral { .. }
         | InstructionValue::TemplateLiteral { .. }
-        | InstructionValue::UnaryExpression { .. }
-        | InstructionValue::UnsupportedNode { .. } => {
+        | InstructionValue::UnaryExpression { .. } => {
             effects.push(AliasingEffect::Create {
                 into: lvalue.clone(),
                 value: ValueKind::Primitive,

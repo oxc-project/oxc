@@ -6876,90 +6876,40 @@ fn lower_statement(
             }
         }
         oxc::Statement::WithStatement(with_stmt) => {
-            let loc = builder.source_location(with_stmt.span);
             builder.record_error(CompilerErrorDetail {
                 category: ErrorCategory::UnsupportedSyntax,
                 reason: "JavaScript 'with' syntax is not supported".to_string(),
                 description: Some("'with' syntax is considered deprecated and removed from JavaScript standards, consider alternatives".to_string()),
-                loc: loc.clone(),
+                loc: builder.source_location(with_stmt.span),
                 suggestions: None,
             })?;
-            // The original also emits an `UnsupportedNode` instruction after the
-            // error. `original_node` is the Stage-2 `OriginalNode` payload (a
-            // Babel-shaped AST) which cannot be built from the oxc input yet, so
-            // pass `None`; the HIR print output ignores it, so emitting the
-            // instruction restores byte-for-byte HIR parity (instruction count,
-            // node_type, loc).
-            lower_value_to_temporary(
-                builder,
-                InstructionValue::UnsupportedNode {
-                    node_type: Some("WithStatement".to_string()),
-                    original_node: None,
-                    loc,
-                },
-            )?;
         }
         oxc::Statement::ClassDeclaration(cls) => {
-            let loc = builder.source_location(cls.span);
             builder.record_error(CompilerErrorDetail {
                 category: ErrorCategory::UnsupportedSyntax,
                 reason: "Inline `class` declarations are not supported".to_string(),
                 description: Some(
                     "Move class declarations outside of components/hooks".to_string(),
                 ),
-                loc: loc.clone(),
+                loc: builder.source_location(cls.span),
                 suggestions: None,
             })?;
-            lower_value_to_temporary(
-                builder,
-                InstructionValue::UnsupportedNode {
-                    node_type: Some("ClassDeclaration".to_string()),
-                    original_node: None,
-                    loc,
-                },
-            )?;
         }
         oxc::Statement::ImportDeclaration(_)
         | oxc::Statement::ExportNamedDeclaration(_)
         | oxc::Statement::ExportDefaultDeclaration(_)
         | oxc::Statement::ExportAllDeclaration(_) => {
-            let loc = builder.source_location(stmt.span());
             builder.record_error(CompilerErrorDetail {
                 category: ErrorCategory::Syntax,
                 reason: "JavaScript `import` and `export` statements may only appear at the top level of a module".to_string(),
                 description: None,
-                loc: loc.clone(),
+                loc: builder.source_location(stmt.span()),
                 suggestions: None,
             })?;
-            let node_type = match stmt {
-                oxc::Statement::ImportDeclaration(_) => "ImportDeclaration",
-                oxc::Statement::ExportNamedDeclaration(_) => "ExportNamedDeclaration",
-                oxc::Statement::ExportDefaultDeclaration(_) => "ExportDefaultDeclaration",
-                oxc::Statement::ExportAllDeclaration(_) => "ExportAllDeclaration",
-                _ => unreachable!(),
-            };
-            lower_value_to_temporary(
-                builder,
-                InstructionValue::UnsupportedNode {
-                    node_type: Some(node_type.to_string()),
-                    original_node: None,
-                    loc,
-                },
-            )?;
         }
-        oxc::Statement::TSEnumDeclaration(e) => {
+        oxc::Statement::TSEnumDeclaration(_) => {
             // The original emitted an `UnsupportedNode` silently (no diagnostic)
-            // for `TSEnumDeclaration`. `original_node` is the deferred Stage-2
-            // payload, so pass `None`.
-            let loc = builder.source_location(e.span);
-            lower_value_to_temporary(
-                builder,
-                InstructionValue::UnsupportedNode {
-                    node_type: Some("TSEnumDeclaration".to_string()),
-                    original_node: None,
-                    loc,
-                },
-            )?;
+            // for `TSEnumDeclaration`; oxc has no such variant, so skip it.
         }
         _ => {
             // Remaining statements are skipped: bodyless FunctionDeclaration

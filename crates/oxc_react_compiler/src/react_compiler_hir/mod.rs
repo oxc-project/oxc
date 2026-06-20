@@ -785,12 +785,6 @@ pub enum InstructionValue {
         pruned: bool,
         loc: Option<SourceLocation>,
     },
-    UnsupportedNode {
-        node_type: Option<String>,
-        /// The original AST node, preserved verbatim so codegen can re-emit it.
-        original_node: Option<crate::react_compiler_ast::OriginalNode>,
-        loc: Option<SourceLocation>,
-    },
 }
 
 impl InstructionValue {
@@ -837,8 +831,7 @@ impl InstructionValue {
             | InstructionValue::PostfixUpdate { loc, .. }
             | InstructionValue::Debugger { loc, .. }
             | InstructionValue::StartMemoize { loc, .. }
-            | InstructionValue::FinishMemoize { loc, .. }
-            | InstructionValue::UnsupportedNode { loc, .. } => loc.as_ref(),
+            | InstructionValue::FinishMemoize { loc, .. } => loc.as_ref(),
         }
     }
 }

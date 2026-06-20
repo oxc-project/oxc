@@ -79,8 +79,7 @@ pub fn each_instruction_value_lvalue(value: &InstructionValue) -> Vec<Place> {
         | InstructionValue::NextPropertyOf { .. }
         | InstructionValue::Debugger { .. }
         | InstructionValue::StartMemoize { .. }
-        | InstructionValue::FinishMemoize { .. }
-        | InstructionValue::UnsupportedNode { .. } => {}
+        | InstructionValue::FinishMemoize { .. } => {}
     }
     result
 }
@@ -143,8 +142,7 @@ pub fn each_instruction_lvalue_with_kind(
         | InstructionValue::NextPropertyOf { .. }
         | InstructionValue::Debugger { .. }
         | InstructionValue::StartMemoize { .. }
-        | InstructionValue::FinishMemoize { .. }
-        | InstructionValue::UnsupportedNode { .. } => {}
+        | InstructionValue::FinishMemoize { .. } => {}
     }
     result
 }
@@ -344,7 +342,6 @@ pub fn each_instruction_value_operand_with_functions(
         | InstructionValue::RegExpLiteral { .. }
         | InstructionValue::MetaProperty { .. }
         | InstructionValue::LoadGlobal { .. }
-        | InstructionValue::UnsupportedNode { .. }
         | InstructionValue::Primitive { .. }
         | InstructionValue::JSXText { .. } => {
             // no operands
@@ -742,7 +739,6 @@ pub fn map_instruction_value_operands(
         | InstructionValue::RegExpLiteral { .. }
         | InstructionValue::MetaProperty { .. }
         | InstructionValue::LoadGlobal { .. }
-        | InstructionValue::UnsupportedNode { .. }
         | InstructionValue::Primitive { .. }
         | InstructionValue::JSXText { .. } => {
             // no operands
@@ -1384,7 +1380,6 @@ pub fn for_each_instruction_value_operand_mut(
         | InstructionValue::RegExpLiteral { .. }
         | InstructionValue::MetaProperty { .. }
         | InstructionValue::LoadGlobal { .. }
-        | InstructionValue::UnsupportedNode { .. }
         | InstructionValue::Primitive { .. }
         | InstructionValue::JSXText { .. } => {}
     }
