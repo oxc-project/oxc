@@ -1516,6 +1516,36 @@ fn ox_codegen_instruction_value<'a>(
     }
 }
 
+/// Strip a `ChainExpression` wrapper from a sub-expression so its inner element can
+/// be folded into the enclosing optional chain. In oxc, `a?.b.c(d)` is a single
+/// `ChainExpression` wrapping the outermost member/call; inner optional members are
+/// plain members with `optional: true`. When the callee/object of an outer chain
+/// element is itself a `ChainExpression`, it must be unwrapped to avoid emitting
+/// spurious parens (e.g. `(a?.b)(d)` instead of `a?.b(d)`).
+fn ox_unwrap_chain(expr: oxc::Expression<'_>) -> oxc::Expression<'_> {
+    match expr {
+        oxc::Expression::ChainExpression(chain) => {
+            let chain = chain.unbox();
+            match chain.expression {
+                oxc::ChainElement::CallExpression(call) => oxc::Expression::CallExpression(call),
+                oxc::ChainElement::ComputedMemberExpression(m) => {
+                    oxc::Expression::ComputedMemberExpression(m)
+                }
+                oxc::ChainElement::StaticMemberExpression(m) => {
+                    oxc::Expression::StaticMemberExpression(m)
+                }
+                oxc::ChainElement::PrivateFieldExpression(m) => {
+                    oxc::Expression::PrivateFieldExpression(m)
+                }
+                oxc::ChainElement::TSNonNullExpression(e) => {
+                    oxc::Expression::TSNonNullExpression(e)
+                }
+            }
+        }
+        other => other,
+    }
+}
+
 /// Re-wrap a call/member expression as an optional-chaining element, mirroring the
 /// Babel reference's `OptionalExpression` arm.
 fn ox_make_optional<'a>(
@@ -1548,7 +1578,8 @@ fn ox_make_optional<'a>(
                 }
             }
             oxc::Expression::CallExpression(call) => {
-                let call = call.unbox();
+                let mut call = call.unbox();
+                call.callee = ox_unwrap_chain(call.callee);
                 oxc::ChainElement::CallExpression(cx.ast.alloc_call_expression(
                     SPAN,
                     call.callee,
@@ -1560,13 +1591,23 @@ fn ox_make_optional<'a>(
             oxc::Expression::ComputedMemberExpression(m) => {
                 let m = m.unbox();
                 oxc::ChainElement::ComputedMemberExpression(
-                    cx.ast.alloc_computed_member_expression(SPAN, m.object, m.expression, optional),
+                    cx.ast.alloc_computed_member_expression(
+                        SPAN,
+                        ox_unwrap_chain(m.object),
+                        m.expression,
+                        optional,
+                    ),
                 )
             }
             oxc::Expression::StaticMemberExpression(m) => {
                 let m = m.unbox();
                 oxc::ChainElement::StaticMemberExpression(
-                    cx.ast.alloc_static_member_expression(SPAN, m.object, m.property, optional),
+                    cx.ast.alloc_static_member_expression(
+                        SPAN,
+                        ox_unwrap_chain(m.object),
+                        m.property,
+                        optional,
+                    ),
                 )
             }
             _ => {
