@@ -150,10 +150,24 @@ impl<'a> ContextIdentifierVisitor<'a> {
 impl<'a> Visit<'a> for ContextIdentifierVisitor<'a> {
     // ---- function scopes (push BOTH the generic scope and the function stack) ----
 
-    fn visit_function(&mut self, it: &oxc::Function<'a>, flags: ScopeFlags) {
+    fn visit_function(&mut self, it: &oxc::Function<'a>, _flags: ScopeFlags) {
         let scope_pushed = self.enter_scope(it.span);
         let fn_pushed = self.push_function_scope(it.span);
-        oxc_ast_visit::walk::walk_function(self, it, flags);
+        // The original Babel walker never visited the function NAME identifier
+        // (`it.id`); it only walked the type-bearing parts (as opaque RawNodes),
+        // then params, then body. oxc's `walk_function` DOES visit `it.id` via
+        // `visit_binding_identifier`, which — with the inner function already on
+        // `function_stack` — would spuriously mark a hoisted nested-function name
+        // as referenced_by_inner_fn. Walk the parts manually, skipping `it.id`.
+        // (Type parameters / return type are no-ops via the `visit_ts_*`
+        // overrides, mirroring the original RawNode walk.)
+        if let Some(this_param) = &it.this_param {
+            self.visit_ts_this_parameter(this_param);
+        }
+        self.visit_formal_parameters(&it.params);
+        if let Some(body) = &it.body {
+            self.visit_function_body(body);
+        }
         self.pop_function_scope(fn_pushed);
         self.exit_scope(scope_pushed);
     }
@@ -225,6 +239,21 @@ impl<'a> Visit<'a> for ContextIdentifierVisitor<'a> {
 
     fn visit_jsx_identifier(&mut self, it: &oxc::JSXIdentifier<'a>) {
         self.check_captured_reference(it.span);
+    }
+
+    fn visit_jsx_attribute(&mut self, it: &oxc::JSXAttribute<'a>) {
+        // The original `AstWalker.walk_jsx_element` walked only attribute VALUES;
+        // the attribute NAME was never visited. oxc's `walk_jsx_attribute` would
+        // otherwise fire `visit_jsx_identifier` on the name. Visit only the value.
+        if let Some(value) = &it.value {
+            self.visit_jsx_attribute_value(value);
+        }
+    }
+
+    fn visit_jsx_namespaced_name(&mut self, _it: &oxc::JSXNamespacedName<'a>) {
+        // The original explicitly skipped JSXNamespacedName (both as an element
+        // name and as an attribute name), never visiting its namespace/name
+        // identifiers. oxc's `walk_jsx_namespaced_name` would visit both.
     }
 
     // ---- reassignment tracking ----
