@@ -6,14 +6,30 @@
 //! entry also stores `start` (byte offset) for range-containment checks in
 //! `gather_captured_context`.
 //!
-//! This is a faithful translation of the original Babel-AST `IdentifierLocVisitor`
-//! to walk the oxc AST instead. The traversal mirrors the original exactly:
+//! This is a translation of the original immutable `IdentifierLocVisitor`, which
+//! was driven by the in-tree `AstWalker`/`Visitor`
+//! (`crate::react_compiler_ast::visitor`). That walker deliberately visited only
+//! a NARROW set of identifier positions, and TS type identifiers came from
+//! `collect_type_idents`, which collected only `IdentifierReference` /
+//! `IdentifierName` (never `BindingIdentifier`). The overrides below restrict the
+//! oxc walk to match those positions instead of relying on oxc's default
+//! full-AST traversal. The traversal records:
 //!
 //! * every reference / binding identifier → `is_jsx = false`
 //! * function / class declaration & expression names → `is_declaration_name = true`
 //! * JSX element-name identifiers → `is_jsx = true` plus the enclosing
 //!   `JSXOpeningElement`'s loc as `opening_element_loc`
 //! * identifiers inside TS type subtrees → `in_type_annotation = true`
+//!
+//! Positions deliberately NOT recorded, matching the original walker:
+//!
+//! * non-computed member property names (`a.b` → `b`)
+//! * non-computed object / class member keys (`{ a: 1 }` → `a`)
+//! * JSX attribute names and JSX closing-element names
+//! * label identifiers (`LabeledStatement` / `break` / `continue` targets)
+//! * class `super_class` (`extends Foo`) and class member bodies
+//! * TS declaration statements (type alias / interface / enum / module)
+//! * `BindingIdentifier`s inside TS type subtrees (e.g. type-parameter names)
 
 use rustc_hash::FxHashMap;
 
@@ -119,10 +135,12 @@ impl<'a> Visit<'a> for IdentifierLocVisitor<'a> {
     }
 
     fn visit_binding_identifier(&mut self, it: &oxc::BindingIdentifier<'a>) {
-        self.record(it.span, false, false);
-    }
-
-    fn visit_label_identifier(&mut self, it: &oxc::LabelIdentifier<'a>) {
+        // `collect_type_idents` only collected IdentifierReference / IdentifierName,
+        // never BindingIdentifier, so type-parameter declaration names (`<T>`) and
+        // other binding positions inside type subtrees must not be recorded.
+        if self.type_depth > 0 {
+            return;
+        }
         self.record(it.span, false, false);
     }
 
@@ -141,10 +159,36 @@ impl<'a> Visit<'a> for IdentifierLocVisitor<'a> {
     }
 
     fn visit_class(&mut self, it: &oxc::Class<'a>) {
+        // The original immutable walker recorded only the class name and then the
+        // class's type-bearing parts (decorators / implements / type params) as
+        // RawNodes (type idents only). It did NOT walk `super_class` (the extends
+        // clause) nor the class body's method/property members.
         if let Some(id) = &it.id {
             self.record(id.span, false, true);
         }
-        oxc_ast_visit::walk::walk_class(self, it);
+        if let Some(type_parameters) = &it.type_parameters {
+            self.visit_ts_type_parameter_declaration(type_parameters);
+        }
+        if let Some(super_type_arguments) = &it.super_type_arguments {
+            self.visit_ts_type_parameter_instantiation(super_type_arguments);
+        }
+        self.type_depth += 1;
+        self.visit_ts_class_implements_list(&it.implements);
+        self.type_depth -= 1;
+    }
+
+    fn visit_static_member_expression(&mut self, it: &oxc::StaticMemberExpression<'a>) {
+        // Original walked the property only when computed; a static member is
+        // non-computed, so the property name is never recorded.
+        self.visit_expression(&it.object);
+    }
+
+    fn visit_object_property(&mut self, it: &oxc::ObjectProperty<'a>) {
+        // Original walked the key only when computed.
+        if it.computed {
+            self.visit_property_key(&it.key);
+        }
+        self.visit_expression(&it.value);
     }
 
     fn visit_jsx_element(&mut self, it: &oxc::JSXElement<'a>) {
@@ -158,14 +202,29 @@ impl<'a> Visit<'a> for IdentifierLocVisitor<'a> {
         }
         self.current_opening_element_loc = None;
 
+        // The original walker visited only attribute VALUES and spread arguments,
+        // never attribute names, and had no closing-element handling.
         for attr in &it.opening_element.attributes {
-            self.visit_jsx_attribute_item(attr);
+            match attr {
+                oxc::JSXAttributeItem::Attribute(a) => {
+                    if let Some(value) = &a.value {
+                        match value {
+                            oxc::JSXAttributeValue::ExpressionContainer(c) => {
+                                self.visit_jsx_expression_container(c);
+                            }
+                            oxc::JSXAttributeValue::Element(el) => self.visit_jsx_element(el),
+                            oxc::JSXAttributeValue::Fragment(f) => self.visit_jsx_fragment(f),
+                            oxc::JSXAttributeValue::StringLiteral(_) => {}
+                        }
+                    }
+                }
+                oxc::JSXAttributeItem::SpreadAttribute(a) => {
+                    self.visit_expression(&a.argument);
+                }
+            }
         }
         for child in &it.children {
             self.visit_jsx_child(child);
-        }
-        if let Some(closing) = &it.closing_element {
-            self.visit_jsx_closing_element(closing);
         }
     }
 
@@ -198,6 +257,16 @@ impl<'a> Visit<'a> for IdentifierLocVisitor<'a> {
         oxc_ast_visit::walk::walk_ts_type_parameter_declaration(self, it);
         self.type_depth -= 1;
     }
+
+    // The original immutable walker treated these TS declaration statements as
+    // no-ops (nothing inside them was recorded). Override to skip entirely.
+    fn visit_ts_type_alias_declaration(&mut self, _it: &oxc::TSTypeAliasDeclaration<'a>) {}
+
+    fn visit_ts_interface_declaration(&mut self, _it: &oxc::TSInterfaceDeclaration<'a>) {}
+
+    fn visit_ts_enum_declaration(&mut self, _it: &oxc::TSEnumDeclaration<'a>) {}
+
+    fn visit_ts_module_declaration(&mut self, _it: &oxc::TSModuleDeclaration<'a>) {}
 }
 
 /// Build an index of all Identifier and JSXIdentifier positions in a function's AST.
