@@ -134,6 +134,19 @@ pub fn transform<'a>(
 ) -> TransformResult<'a> {
     let source_text = program.source_text;
 
+    // The HIR lowering computes `SourceLocation` line/column from a line-offset
+    // table built off `context.code` (see `pipeline::compile_fn`). In the
+    // original Babel front-end the locations were carried on the AST nodes
+    // (`base.loc`) computed from the source during `convert_ast`; the oxc
+    // front-end instead derives them on demand from the source text, so the
+    // source must be threaded through. Without it, every loc collapses to
+    // `line = 1, column = byte_offset`, which surfaces as wrong `(line:col)`
+    // suffixes in diagnostics.
+    let mut options = options;
+    if options.source_code.is_none() {
+        options.source_code = Some(source_text.to_string());
+    }
+
     // Skip files with no React-like functions, unless the mode compiles everything.
     if !matches!(options.compilation_mode.as_str(), "all" | "annotation")
         && !has_react_like_functions(program)
