@@ -3,12 +3,12 @@
 # Native oxc integration for the Rust port of the React Compiler:
 # https://github.com/react/react/tree/main/compiler
 #
-# This crate owns the oxc <-> react_compiler_ast conversion layer. The React
-# Compiler *core* (a Rust port of the MIT React Compiler) is vendored in
-# `src/react_compiler*` — frontend-agnostic modules with no oxc dependency. The
-# AST/scope conversion lives alongside it, written against the live workspace oxc
-# AST. TS types and unmodeled nodes round-trip by re-parsing their source span, so
-# the compiler carries no JSON/serde layer.
+# This crate runs the React Compiler directly over the live workspace oxc AST.
+# The React Compiler *core* (a Rust port of the MIT React Compiler) is vendored
+# in `src/react_compiler*` — frontend-agnostic modules with no oxc dependency.
+# The scope conversion (`convert_scope.rs`) lives alongside it, written against
+# the oxc AST. TS types and unmodeled nodes round-trip by re-parsing their source
+# span, so the compiler carries no JSON/serde layer.
 
 [package]
 name = "oxc_react_compiler"
@@ -55,7 +55,7 @@ rustc-hash = { workspace = true }
 # lints (`todo!`/`unimplemented!`/...) off the vendored code while clippy's default
 # correctness and perf checks still apply.
 [lints.clippy]
-disallowed_types = "allow" # `react_compiler_ast`'s `ScopeInfo`/`ScopeData` fields are std `HashMap`
+disallowed_types = "allow" # `ScopeInfo`/`ScopeData` fields are std `HashMap`
 collapsible_if = "allow"
 needless_return = "allow"
 unnecessary_unwrap = "allow"

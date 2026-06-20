@@ -7,8 +7,7 @@
 //! `gather_captured_context`.
 //!
 //! This is a translation of the original immutable `IdentifierLocVisitor`, which
-//! was driven by the in-tree `AstWalker`/`Visitor`
-//! (`crate::react_compiler_ast::visitor`). That walker deliberately visited only
+//! was driven by a Babel-shaped AST walker. That walker deliberately visited only
 //! a NARROW set of identifier positions, and TS type identifiers came from
 //! `collect_type_idents`, which collected only `IdentifierReference` /
 //! `IdentifierName` (never `BindingIdentifier`). The overrides below restrict the

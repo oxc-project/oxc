@@ -166,9 +166,9 @@ pub fn transform<'a>(
 }
 
 /// Carry over the comments attached to top-level statements of the compiled
-/// program, so codegen can re-emit them. The `react_compiler_ast` roundtrip
-/// drops comments, so we reuse the ones from the original `source` program
-/// (already parsed) rather than re-parsing the source.
+/// program, so codegen can re-emit them. The compile pipeline rebuilds the
+/// program AST from HIR and drops comments, so we reuse the ones from the
+/// original `source` program (already parsed) rather than re-parsing the source.
 fn preserve_comments<'a>(
     compiled: &mut oxc_ast::ast::Program<'a>,
     source: &oxc_ast::ast::Program<'a>,
@@ -649,8 +649,8 @@ function Component(props) {\n  return <div>{props.text}</div>;\n}\n";
         );
     }
 
-    /// Comments are dropped by the `react_compiler_ast` roundtrip, so
-    /// `preserve_comments` carries top-level comments over from the original
+    /// Comments are dropped when the compile pipeline rebuilds the program AST,
+    /// so `preserve_comments` carries top-level comments over from the original
     /// program. Comments inside a compiled function are not recovered.
     #[test]
     fn top_level_comments_are_preserved() {

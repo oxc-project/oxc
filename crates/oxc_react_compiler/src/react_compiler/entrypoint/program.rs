@@ -1241,11 +1241,7 @@ fn suggestions_to_logger(
 }
 
 /// Log an error as LoggerEvent(s) directly onto the ProgramContext.
-fn log_error(
-    err: &CompilerError,
-    fn_ast_loc: Option<&FnSourceLoc>,
-    context: &mut ProgramContext,
-) {
+fn log_error(err: &CompilerError, fn_ast_loc: Option<&FnSourceLoc>, context: &mut ProgramContext) {
     // Use the filename from the AST node's loc (set by parser's sourceFilename option),
     // not from plugin options (which may have a different prefix like '/').
     let source_filename = fn_ast_loc.and_then(|loc| loc.filename.as_deref());

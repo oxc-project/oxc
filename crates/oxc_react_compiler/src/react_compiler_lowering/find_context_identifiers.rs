@@ -5,8 +5,8 @@
 //! cross function boundaries.
 //!
 //! This is a translation of the original immutable `ContextIdentifierVisitor`,
-//! which was driven by the in-tree `AstWalker`/`Visitor`
-//! (`crate::react_compiler_ast::visitor`). The original tracked two stacks:
+//! which was driven by a Babel-shaped AST walker. The original tracked two
+//! stacks:
 //!
 //! * a generic `scope_stack` (the active scope, used to resolve the lexical
 //!   binding of a reassignment target by name), and
