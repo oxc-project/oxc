@@ -32,12 +32,6 @@ pub mod react_compiler_utils;
 pub mod react_compiler_validation;
 
 pub mod convert_ast;
-// Stage 2: no longer on the transform path (codegen builds oxc directly). Kept as
-// the authoritative Babel->oxc node-mapping reference for porting the real
-// per-instruction emission; deleted once that lands. `#[allow(dead_code)]` so the
-// unused mapping helpers don't warn.
-#[allow(dead_code)]
-pub mod convert_ast_reverse;
 pub mod convert_scope;
 pub mod diagnostics;
 pub mod prefilter;
@@ -172,9 +166,8 @@ pub fn transform<'a>(
     // Map each function's node_id (== span.start) to its oxc node, so the
     // (still Babel-shaped) discovery can hand the oxc `FunctionNode` to lowering.
     let fn_map = build_fn_node_map(&semantic);
-    // Stage 2: the back-end now produces an oxc `Program` directly (emission is
-    // stubbed — see `codegen_function`). Thread the arena's `AstBuilder` and the
-    // original oxc program in, so codegen no longer needs `convert_ast_reverse`.
+    // The back-end produces an oxc `Program` directly (see `codegen_function`).
+    // Thread the arena's `AstBuilder` and the original oxc program in.
     let ast_builder = oxc_ast::AstBuilder::new(allocator);
     let result = crate::react_compiler::entrypoint::program::compile_program(
         &ast_builder,
@@ -508,7 +501,7 @@ function Component(props: Props): JSX.Element {\n\
     }
 
     #[test]
-    #[ignore = "Stage 2: codegen value-emission (outlined fns / type-query rename) not yet ported"]
+    #[ignore = "codegen value-emission (outlined fns / type-query rename) not yet ported"]
     fn type_query_casts_are_renamed_with_value_bindings() {
         let source = "\
 type Field = { value?: string; optionsInputs?: Record<string, string> };\n\

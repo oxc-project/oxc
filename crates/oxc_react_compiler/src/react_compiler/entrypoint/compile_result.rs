@@ -61,11 +61,9 @@ pub struct BindingRenameInfo {
 
 /// Main result type returned by the compile function.
 ///
-/// Stage 2 (back-end on oxc): the compiled program is now an arena-allocated oxc
-/// [`oxc_ast::ast::Program`] (lifetime `'a` of the arena) rather than the former
-/// Babel-shaped `File`. The per-instruction emission is still being ported, so
-/// the program is produced by the codegen scaffold (see `compile_program`); once
-/// emission lands, `convert_ast_reverse` is deleted entirely.
+/// The compiled program is an arena-allocated oxc
+/// [`oxc_ast::ast::Program`] (lifetime `'a` of the arena), built directly by the
+/// codegen back-end (see `compile_program`).
 #[derive(Debug)]
 pub enum CompileResult<'a> {
     /// Compilation succeeded (or no functions needed compilation).
