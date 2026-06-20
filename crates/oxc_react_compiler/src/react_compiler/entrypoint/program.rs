@@ -2791,6 +2791,30 @@ fn ox_clone_original_fn_as_expression<'a>(
 
 /// Splice every compiled oxc function into a clone of the original oxc program and
 /// add the required imports. Returns the final memoized program.
+/// Clears the parser's `pife` ("parenthesized immediately-invoked function
+/// expression") hint on every function/arrow so codegen does not preserve
+/// source-only parens, matching the original Babel `@babel/generator` behavior.
+struct OxcClearPifeVisitor;
+
+impl<'a> oxc_ast_visit::VisitMut<'a> for OxcClearPifeVisitor {
+    fn visit_function(
+        &mut self,
+        it: &mut oxc_ast::ast::Function<'a>,
+        flags: oxc_syntax::scope::ScopeFlags,
+    ) {
+        it.pife = false;
+        oxc_ast_visit::walk_mut::walk_function(self, it, flags);
+    }
+
+    fn visit_arrow_function_expression(
+        &mut self,
+        it: &mut oxc_ast::ast::ArrowFunctionExpression<'a>,
+    ) {
+        it.pife = false;
+        oxc_ast_visit::walk_mut::walk_arrow_function_expression(self, it);
+    }
+}
+
 fn ox_splice_program<'a>(
     ast: &oxc_ast::AstBuilder<'a>,
     oxc_program: &oxc_ast::ast::Program<'a>,
@@ -2800,6 +2824,12 @@ fn ox_splice_program<'a>(
     use oxc_allocator::CloneIn;
 
     let mut program = oxc_program.clone_in(ast.allocator);
+    // The parser sets `pife = true` on parenthesized function/arrow expressions
+    // so codegen preserves the source parens. Passed-through (non-recompiled)
+    // code keeps that flag through `clone_in`, making oxc emit callee parens
+    // (`(async function(){})()`) the original Babel path never produced. Clear it
+    // so codegen parenthesizes by syntactic position only.
+    oxc_ast_visit::VisitMut::visit_program(&mut OxcClearPifeVisitor, &mut program);
 
     // Outlined function declarations are placed differently depending on the
     // original function's syntactic kind, mirroring `insertNewOutlinedFunctionNode`
