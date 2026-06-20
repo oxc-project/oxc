@@ -3693,7 +3693,6 @@ fn lower_function_declaration(
 }
 
 /// Lower a function expression used as an object method.
-#[allow(dead_code)]
 fn lower_function_for_object_method(
     builder: &mut HirBuilder,
     method_span: oxc_span::Span,
@@ -5815,30 +5814,64 @@ fn expression_type_name(expr: &oxc::Expression) -> &'static str {
 
 /// Lower an oxc object getter/setter/method (`ObjectProperty` whose value is a
 /// `FunctionExpression`). Faithful to the original `lower_object_method`:
-/// `get`/`set` record a Todo error and are skipped. The `method` case requires
-/// nested-function lowering (`lower_function_for_object_method` /
-/// `gather_captured_context`), which is not yet ported in this stage, so it is
-/// likewise deferred with a Todo error rather than emitting divergent HIR.
+/// `get`/`set` record a Todo error and are skipped. The `method` case lowers the
+/// key and the nested function (`lower_function_for_object_method`) and emits an
+/// `ObjectMethod` instruction value.
 fn lower_object_method(
     builder: &mut HirBuilder,
     method: &oxc::ObjectProperty,
 ) -> Result<Option<ObjectProperty>, CompilerError> {
-    let kind_str = match method.kind {
-        oxc::PropertyKind::Get => "get",
-        oxc::PropertyKind::Set => "set",
-        oxc::PropertyKind::Init => "method",
+    // In oxc, a shorthand method is encoded as `kind: Init, method: true`; only
+    // getters/setters carry a non-`Init` `PropertyKind`.
+    let is_method = method.method && matches!(method.kind, oxc::PropertyKind::Init);
+    if !is_method {
+        let kind_str = match method.kind {
+            oxc::PropertyKind::Get => "get",
+            oxc::PropertyKind::Set => "set",
+            oxc::PropertyKind::Init => "method",
+        };
+        builder.record_error(CompilerErrorDetail {
+            reason: format!(
+                "(BuildHIR::lowerExpression) Handle {} functions in ObjectExpression",
+                kind_str
+            ),
+            category: ErrorCategory::Todo,
+            loc: builder.source_location(method.span),
+            description: None,
+            suggestions: None,
+        })?;
+        return Ok(None);
+    }
+
+    let key = lower_object_property_key(builder, &method.key, method.computed)?
+        .unwrap_or(ObjectPropertyKey::String { name: String::new() });
+
+    let func = match &method.value {
+        oxc::Expression::FunctionExpression(func) => func,
+        _ => unreachable!("object method value is always a FunctionExpression in oxc"),
     };
-    builder.record_error(CompilerErrorDetail {
-        reason: format!(
-            "(BuildHIR::lowerExpression) Handle {} functions in ObjectExpression",
-            kind_str
-        ),
-        category: ErrorCategory::Todo,
-        loc: builder.source_location(method.span),
-        description: None,
-        suggestions: None,
-    })?;
-    Ok(None)
+    let body = func
+        .body
+        .as_ref()
+        .expect("object method always has a body");
+    let lowered_func = lower_function_for_object_method(
+        builder,
+        method.span,
+        &func.params,
+        body,
+        func.generator,
+        func.r#async,
+    )?;
+
+    let loc = builder.source_location(method.span);
+    let method_value = InstructionValue::ObjectMethod { loc, lowered_func };
+    let method_place = lower_value_to_temporary(builder, method_value)?;
+
+    Ok(Some(ObjectProperty {
+        key,
+        property_type: ObjectPropertyType::Method,
+        place: method_place,
+    }))
 }
 
 /// Lower an object property key. Faithful to the original `lower_object_property_key`.
