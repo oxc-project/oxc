@@ -2546,6 +2546,7 @@ dependencies = [
  "napi-derive",
  "oxc",
  "oxc_napi",
+ "oxc_react_compiler",
  "oxc_sourcemap",
  "rustc-hash",
 ]

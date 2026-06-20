@@ -329,6 +329,47 @@ export interface PluginsOptions {
   taggedTemplateEscape?: boolean
 }
 
+export interface ReactCompilerOptions {
+  sourcemap?: boolean
+  /**
+   * How the compiler decides which functions to compile.
+   * One of `"infer"` (default), `"syntax"`, `"annotation"`, `"all"`.
+   */
+  compilationMode?: string
+  /**
+   * When the compiler should throw on an error rather than skip the function.
+   * One of `"none"` (default), `"critical_errors"`, `"all_errors"`.
+   */
+  panicThreshold?: string
+}
+
+export interface ReactCompilerResult {
+  /**
+   * The compiled code.
+   *
+   * When the compiler makes no changes (the file has no React component or
+   * hook, or compilation bails out), this is the **original source unchanged**
+   * — mirroring `babel-plugin-react-compiler`, which leaves untouched
+   * functions as-is.
+   */
+  code: string
+  map?: SourceMap
+  /**
+   * `true` if the compiler memoized at least one function (i.e. `code` is the
+   * recompiled program rather than the original source).
+   */
+  changed: boolean
+  errors: Array<OxcError>
+}
+
+/**
+ * Run the React Compiler (oxc's native Rust port) on a single file.
+ *
+ * Parses `source_text`, applies the compiler, and returns the recompiled code.
+ * Intended to mirror `babel-plugin-react-compiler` for a single-file transform.
+ */
+export declare function reactCompilerSync(filename: string, sourceText: string, options?: ReactCompilerOptions | undefined | null): ReactCompilerResult
+
 export interface ReactRefreshOptions {
   /**
    * Specify the identifier of the refresh registration variable.
