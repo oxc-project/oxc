@@ -295,7 +295,6 @@ mod tests {
     // not the memoized body yet), so the compiled-output assertions below don't
     // hold. Re-enable once the per-instruction emission is ported.
     #[test]
-    #[ignore = "Stage 2 scaffold: codegen emission stubbed"]
     fn memoizes_a_component_end_to_end() {
         let source = "function Component(props) {\n  \
             return <div onClick={() => props.onClick()}>{props.text}</div>;\n}\n";
@@ -335,7 +334,6 @@ mod tests {
     /// overload signatures, `#field in obj`) round-trip without panicking while the
     /// component still compiles.
     #[test]
-    #[ignore = "Stage 2 scaffold: codegen emission stubbed"]
     fn typescript_only_constructs_round_trip() {
         let source = "\
 import legacy = require('legacy');\n\
@@ -392,7 +390,6 @@ export = legacy;\n";
     /// Class bodies are stubbed by the converter and re-parsed from source on the
     /// way back, so members survive.
     #[test]
-    #[ignore = "Stage 2 scaffold: codegen emission stubbed"]
     fn class_body_is_preserved() {
         let source = "\
 class Store {\n  count = 0;\n  increment() {\n    this.count++;\n  }\n}\n\
@@ -407,7 +404,6 @@ function Component(props) {\n  return <div>{props.text}</div>;\n}\n";
     }
 
     #[test]
-    #[ignore = "Stage 2 scaffold: codegen emission stubbed"]
     fn unsupported_sibling_ast_forms_are_preserved() {
         let source = "\
 import './style.css';\n\
@@ -445,7 +441,6 @@ function Component(props) {\n\
     }
 
     #[test]
-    #[ignore = "Stage 2 scaffold: codegen emission stubbed"]
     fn typescript_surface_syntax_is_preserved_around_compiled_code() {
         let source = "\
 import { createContext, forwardRef } from 'react';\n\
@@ -513,7 +508,7 @@ function Component(props: Props): JSX.Element {\n\
     }
 
     #[test]
-    #[ignore = "Stage 2 scaffold: codegen emission stubbed"]
+    #[ignore = "Stage 2: codegen value-emission (outlined fns / type-query rename) not yet ported"]
     fn type_query_casts_are_renamed_with_value_bindings() {
         let source = "\
 type Field = { value?: string; optionsInputs?: Record<string, string> };\n\
@@ -544,7 +539,6 @@ function Component({ fields }: { fields: Field[] }) {\n\
     }
 
     #[test]
-    #[ignore = "Stage 2 scaffold: codegen emission stubbed"]
     fn jsx_attribute_string_entities_are_decoded() {
         let source = "\
 function Component(props) {\n\
@@ -657,7 +651,6 @@ function Component(props) {\n  return <div>{props.text}</div>;\n}\n";
 
     /// A `React.memo(...)` component is anonymous; the prefilter must still see it.
     #[test]
-    #[ignore = "Stage 2 scaffold: codegen emission stubbed"]
     fn memo_wrapped_component_compiles() {
         let source = "React.memo((props) => {\n  return <div>{props.text}</div>;\n});\n";
         let allocator = oxc_allocator::Allocator::default();
@@ -701,7 +694,6 @@ function Component(props) {\n  return <div>{props.text}</div>;\n}\n";
     /// `preserve_comments` carries top-level comments over from the original
     /// program. Comments inside a compiled function are not recovered.
     #[test]
-    #[ignore = "Stage 2 scaffold: codegen emission stubbed"]
     fn top_level_comments_are_preserved() {
         let source = "\
 // keep: leading\n\

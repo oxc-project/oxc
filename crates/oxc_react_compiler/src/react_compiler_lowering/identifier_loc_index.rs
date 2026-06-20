@@ -82,7 +82,8 @@ struct IdentifierLocVisitor<'a> {
 
 impl<'a> IdentifierLocVisitor<'a> {
     fn record(&mut self, span: oxc_span::Span, is_jsx: bool, is_declaration_name: bool) {
-        let opening_element_loc = if is_jsx { self.current_opening_element_loc.clone() } else { None };
+        let opening_element_loc =
+            if is_jsx { self.current_opening_element_loc.clone() } else { None };
         // `or_insert` keeps the richer entry already recorded for a node_id.
         // Function/class names are recorded as declaration names *before* the
         // generic binding-identifier walk re-visits them, so the declaration
@@ -195,7 +196,8 @@ impl<'a> Visit<'a> for IdentifierLocVisitor<'a> {
         // Mirror the original walker: the opening element's loc is active only
         // while walking the element name (and its type arguments); it is cleared
         // before attributes and children.
-        self.current_opening_element_loc = Some(self.line_offsets.source_location(it.opening_element.span));
+        self.current_opening_element_loc =
+            Some(self.line_offsets.source_location(it.opening_element.span));
         self.record_jsx_element_name(&it.opening_element.name);
         if let Some(type_args) = &it.opening_element.type_arguments {
             self.visit_ts_type_parameter_instantiation(type_args);
@@ -249,10 +251,7 @@ impl<'a> Visit<'a> for IdentifierLocVisitor<'a> {
         self.type_depth -= 1;
     }
 
-    fn visit_ts_type_parameter_declaration(
-        &mut self,
-        it: &oxc::TSTypeParameterDeclaration<'a>,
-    ) {
+    fn visit_ts_type_parameter_declaration(&mut self, it: &oxc::TSTypeParameterDeclaration<'a>) {
         self.type_depth += 1;
         oxc_ast_visit::walk::walk_ts_type_parameter_declaration(self, it);
         self.type_depth -= 1;
@@ -318,8 +317,7 @@ pub fn build_identifier_loc_index(
                 visitor.visit_ts_type_annotation(return_type);
             }
             if arrow.expression {
-                if let Some(oxc::Statement::ExpressionStatement(es)) =
-                    arrow.body.statements.first()
+                if let Some(oxc::Statement::ExpressionStatement(es)) = arrow.body.statements.first()
                 {
                     visitor.visit_expression(&es.expression);
                 } else {

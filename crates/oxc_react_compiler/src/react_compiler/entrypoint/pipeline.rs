@@ -60,8 +60,9 @@ pub fn compile_fn<'a>(
     env.reference_node_ids = scope_info.ref_node_id_to_binding.keys().copied().collect();
 
     context.timing.start("lower");
-    let line_offsets =
-        crate::react_compiler_lowering::source_loc::LineOffsets::new(context.code.as_deref().unwrap_or(""));
+    let line_offsets = crate::react_compiler_lowering::source_loc::LineOffsets::new(
+        context.code.as_deref().unwrap_or(""),
+    );
     let mut hir =
         crate::react_compiler_lowering::lower(func, fn_name, scope_info, &mut env, &line_offsets)?;
     context.timing.stop();

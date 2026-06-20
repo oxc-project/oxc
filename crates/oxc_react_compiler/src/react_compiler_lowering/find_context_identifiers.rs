@@ -309,11 +309,7 @@ impl<'a> Visit<'a> for ContextIdentifierVisitor<'a> {
     ) {
     }
 
-    fn visit_ts_type_parameter_declaration(
-        &mut self,
-        _it: &oxc::TSTypeParameterDeclaration<'a>,
-    ) {
-    }
+    fn visit_ts_type_parameter_declaration(&mut self, _it: &oxc::TSTypeParameterDeclaration<'a>) {}
 
     fn visit_ts_type_alias_declaration(&mut self, _it: &oxc::TSTypeAliasDeclaration<'a>) {}
 
@@ -508,8 +504,7 @@ pub fn find_context_identifiers(
         FunctionNode::Arrow(arrow) => {
             visitor.visit_formal_parameters(&arrow.params);
             if arrow.expression {
-                if let Some(oxc::Statement::ExpressionStatement(es)) =
-                    arrow.body.statements.first()
+                if let Some(oxc::Statement::ExpressionStatement(es)) = arrow.body.statements.first()
                 {
                     visitor.visit_expression(&es.expression);
                 } else {
