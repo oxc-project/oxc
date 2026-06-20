@@ -5273,10 +5273,9 @@ fn lower_assignment_expression(
 /// `Expression::JSXElement` arm, adapted to oxc's JSX shapes.
 ///
 /// fbt note: the original tracked fbt/fbs sub-tags (`collect_fbt_sub_tags`) and
-/// reported duplicates. That sub-tag tracking is not ported in this batch; the
-/// `is_fbt` checks below preserve the module-level-import invariant (which is the
-/// only fbt path exercised by the differential corpus) but `builder.fbt_depth`
-/// stays 0 so JSX text whitespace is always trimmed.
+/// reported duplicates, and incremented `builder.fbt_depth` around the children so
+/// JSX text whitespace is preserved within fbt subtrees. Both behaviors are ported
+/// below.
 fn lower_jsx_element_expr(
     builder: &mut HirBuilder,
     jsx_element: &oxc::JSXElement,
@@ -5414,6 +5413,56 @@ fn lower_jsx_element_expr(
         }
     }
 
+    // Check for duplicate fbt:enum, fbt:plural, fbt:pronoun tags.
+    if is_fbt {
+        let tag_name = match &tag {
+            JsxTag::Builtin(b) => b.name.as_str(),
+            _ => "fbt",
+        };
+        let mut enum_locs: Vec<Option<SourceLocation>> = Vec::new();
+        let mut plural_locs: Vec<Option<SourceLocation>> = Vec::new();
+        let mut pronoun_locs: Vec<Option<SourceLocation>> = Vec::new();
+        collect_fbt_sub_tags(
+            builder,
+            &jsx_element.children,
+            tag_name,
+            &mut enum_locs,
+            &mut plural_locs,
+            &mut pronoun_locs,
+        );
+
+        for (name, locations) in
+            [("enum", &enum_locs), ("plural", &plural_locs), ("pronoun", &pronoun_locs)]
+        {
+            if locations.len() > 1 {
+                let details: Vec<CompilerDiagnosticDetail> = locations
+                    .iter()
+                    .map(|loc| CompilerDiagnosticDetail::Error {
+                        message: Some(format!("Multiple `<{}:{}>` tags found", tag_name, name)),
+                        loc: loc.clone(),
+                        identifier_name: None,
+                    })
+                    .collect();
+                let mut diag = CompilerDiagnostic::new(
+                    ErrorCategory::Todo,
+                    "Support duplicate fbt tags",
+                    Some(format!(
+                        "Support `<{}>` tags with multiple `<{}:{}>` values",
+                        tag_name, tag_name, name
+                    )),
+                );
+                diag.details = details;
+                builder.environment_mut().record_diagnostic(diag);
+            }
+        }
+    }
+
+    // Increment fbt counter before traversing into children, as whitespace
+    // in jsx text is handled differently for fbt subtrees.
+    if is_fbt {
+        builder.fbt_depth += 1;
+    }
+
     // Lower children
     let children: Vec<Place> = jsx_element
         .children
@@ -5423,6 +5472,10 @@ fn lower_jsx_element_expr(
         .into_iter()
         .flatten()
         .collect();
+
+    if is_fbt {
+        builder.fbt_depth -= 1;
+    }
 
     Ok(InstructionValue::JsxExpression {
         tag,
@@ -5628,6 +5681,218 @@ fn lower_jsx_element(
         },
         oxc::JSXChild::Spread(spread) => {
             Ok(Some(lower_expression_to_temporary(builder, &spread.expression)?))
+        }
+    }
+}
+
+/// Recursively collect the locations of `<tag:enum>`, `<tag:plural>`, and
+/// `<tag:pronoun>` sub-tags within fbt/fbs children. Faithful translation of the
+/// original Babel `collect_fbt_sub_tags`, adapted to oxc's JSX shapes.
+fn collect_fbt_sub_tags(
+    builder: &HirBuilder,
+    children: &[oxc::JSXChild],
+    tag_name: &str,
+    enum_locs: &mut Vec<Option<SourceLocation>>,
+    plural_locs: &mut Vec<Option<SourceLocation>>,
+    pronoun_locs: &mut Vec<Option<SourceLocation>>,
+) {
+    for child in children {
+        match child {
+            oxc::JSXChild::Element(el) => {
+                collect_fbt_sub_tags_from_element(
+                    builder, el, tag_name, enum_locs, plural_locs, pronoun_locs,
+                );
+            }
+            oxc::JSXChild::Fragment(frag) => {
+                collect_fbt_sub_tags(
+                    builder,
+                    &frag.children,
+                    tag_name,
+                    enum_locs,
+                    plural_locs,
+                    pronoun_locs,
+                );
+            }
+            oxc::JSXChild::ExpressionContainer(container) => {
+                if let Some(expr) = container.expression.as_expression() {
+                    collect_fbt_sub_tags_from_expr(
+                        builder, expr, tag_name, enum_locs, plural_locs, pronoun_locs,
+                    );
+                }
+            }
+            _ => {}
+        }
+    }
+}
+
+fn collect_fbt_sub_tags_from_element(
+    builder: &HirBuilder,
+    el: &oxc::JSXElement,
+    tag_name: &str,
+    enum_locs: &mut Vec<Option<SourceLocation>>,
+    plural_locs: &mut Vec<Option<SourceLocation>>,
+    pronoun_locs: &mut Vec<Option<SourceLocation>>,
+) {
+    if let oxc::JSXElementName::NamespacedName(ns) = &el.opening_element.name {
+        if ns.namespace.name == tag_name {
+            let loc = builder.source_location(ns.span);
+            match ns.name.name.as_str() {
+                "enum" => enum_locs.push(loc),
+                "plural" => plural_locs.push(loc),
+                "pronoun" => pronoun_locs.push(loc),
+                _ => {}
+            }
+        }
+    }
+    collect_fbt_sub_tags(builder, &el.children, tag_name, enum_locs, plural_locs, pronoun_locs);
+    // Also traverse JSX attributes (matching TS expr.traverse which visits all nodes)
+    for attr in &el.opening_element.attributes {
+        if let oxc::JSXAttributeItem::Attribute(a) = attr {
+            match &a.value {
+                Some(oxc::JSXAttributeValue::ExpressionContainer(container)) => {
+                    if let Some(expr) = container.expression.as_expression() {
+                        collect_fbt_sub_tags_from_expr(
+                            builder, expr, tag_name, enum_locs, plural_locs, pronoun_locs,
+                        );
+                    }
+                }
+                Some(oxc::JSXAttributeValue::Element(nested)) => {
+                    collect_fbt_sub_tags_from_element(
+                        builder, nested, tag_name, enum_locs, plural_locs, pronoun_locs,
+                    );
+                }
+                _ => {}
+            }
+        }
+    }
+}
+
+fn collect_fbt_sub_tags_from_expr(
+    builder: &HirBuilder,
+    expr: &oxc::Expression,
+    tag_name: &str,
+    enum_locs: &mut Vec<Option<SourceLocation>>,
+    plural_locs: &mut Vec<Option<SourceLocation>>,
+    pronoun_locs: &mut Vec<Option<SourceLocation>>,
+) {
+    match expr {
+        oxc::Expression::JSXElement(el) => {
+            collect_fbt_sub_tags_from_element(
+                builder, el, tag_name, enum_locs, plural_locs, pronoun_locs,
+            );
+        }
+        oxc::Expression::JSXFragment(frag) => {
+            collect_fbt_sub_tags(
+                builder,
+                &frag.children,
+                tag_name,
+                enum_locs,
+                plural_locs,
+                pronoun_locs,
+            );
+        }
+        oxc::Expression::ConditionalExpression(cond) => {
+            collect_fbt_sub_tags_from_expr(
+                builder,
+                &cond.consequent,
+                tag_name,
+                enum_locs,
+                plural_locs,
+                pronoun_locs,
+            );
+            collect_fbt_sub_tags_from_expr(
+                builder,
+                &cond.alternate,
+                tag_name,
+                enum_locs,
+                plural_locs,
+                pronoun_locs,
+            );
+        }
+        oxc::Expression::LogicalExpression(log) => {
+            collect_fbt_sub_tags_from_expr(
+                builder, &log.left, tag_name, enum_locs, plural_locs, pronoun_locs,
+            );
+            collect_fbt_sub_tags_from_expr(
+                builder, &log.right, tag_name, enum_locs, plural_locs, pronoun_locs,
+            );
+        }
+        oxc::Expression::ParenthesizedExpression(paren) => {
+            collect_fbt_sub_tags_from_expr(
+                builder,
+                &paren.expression,
+                tag_name,
+                enum_locs,
+                plural_locs,
+                pronoun_locs,
+            );
+        }
+        oxc::Expression::ArrowFunctionExpression(arrow) => {
+            if arrow.expression {
+                if let Some(oxc::Statement::ExpressionStatement(es)) =
+                    arrow.body.statements.first()
+                {
+                    collect_fbt_sub_tags_from_expr(
+                        builder,
+                        &es.expression,
+                        tag_name,
+                        enum_locs,
+                        plural_locs,
+                        pronoun_locs,
+                    );
+                }
+            } else {
+                collect_fbt_sub_tags_from_stmts(
+                    builder,
+                    &arrow.body.statements,
+                    tag_name,
+                    enum_locs,
+                    plural_locs,
+                    pronoun_locs,
+                );
+            }
+        }
+        oxc::Expression::CallExpression(call) => {
+            for arg in &call.arguments {
+                if let Some(arg_expr) = arg.as_expression() {
+                    collect_fbt_sub_tags_from_expr(
+                        builder, arg_expr, tag_name, enum_locs, plural_locs, pronoun_locs,
+                    );
+                }
+            }
+        }
+        _ => {}
+    }
+}
+
+fn collect_fbt_sub_tags_from_stmts(
+    builder: &HirBuilder,
+    stmts: &[oxc::Statement],
+    tag_name: &str,
+    enum_locs: &mut Vec<Option<SourceLocation>>,
+    plural_locs: &mut Vec<Option<SourceLocation>>,
+    pronoun_locs: &mut Vec<Option<SourceLocation>>,
+) {
+    for stmt in stmts {
+        match stmt {
+            oxc::Statement::ReturnStatement(ret) => {
+                if let Some(arg) = &ret.argument {
+                    collect_fbt_sub_tags_from_expr(
+                        builder, arg, tag_name, enum_locs, plural_locs, pronoun_locs,
+                    );
+                }
+            }
+            oxc::Statement::ExpressionStatement(expr_stmt) => {
+                collect_fbt_sub_tags_from_expr(
+                    builder,
+                    &expr_stmt.expression,
+                    tag_name,
+                    enum_locs,
+                    plural_locs,
+                    pronoun_locs,
+                );
+            }
+            _ => {}
         }
     }
 }
