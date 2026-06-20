@@ -4612,12 +4612,9 @@ fn lower_expression(
             // The `Import` keyword callee bails (records an error), then the source
             // and options arguments are lowered left-to-right.
             let loc = builder.source_location(imp.span);
-            // The `import` keyword has no standalone node in oxc; synthesize its
-            // span ([start, start+6)) so the callee bail error and temporary carry
-            // the keyword loc, matching Babel's `Import` node loc.
-            let import_keyword_loc =
-                builder.source_location(oxc_span::Span::new(imp.span.start, imp.span.start + 6));
-            let callee = lower_import_keyword_to_temporary(builder, &import_keyword_loc)?;
+            // Babel's `Import` node carried the loc of the whole `import(...)`
+            // expression, so the callee bail error + temporary use the full span.
+            let callee = lower_import_keyword_to_temporary(builder, &loc)?;
             let mut args: Vec<PlaceOrSpread> = Vec::new();
             let source = lower_expression_to_temporary(builder, &imp.source)?;
             args.push(PlaceOrSpread::Place(source));
