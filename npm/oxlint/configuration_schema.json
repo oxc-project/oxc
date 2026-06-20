@@ -1480,6 +1480,18 @@
       },
       "additionalProperties": false
     },
+    "ComplexityConfigEnum": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        {
+          "$ref": "#/definitions/ComplexityConfig"
+        }
+      ]
+    },
     "Config": {
       "type": "array",
       "items": [
@@ -2278,34 +2290,17 @@
               "$ref": "#/definitions/RuleNoConfig"
             },
             {
-              "anyOf": [
+              "type": "array",
+              "items": [
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "type": "number"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "$ref": "#/definitions/ComplexityConfig"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/ComplexityConfigEnum"
                 }
-              ]
+              ],
+              "maxItems": 2,
+              "minItems": 2
             }
           ]
         },
@@ -4133,34 +4128,17 @@
               "$ref": "#/definitions/RuleNoConfig"
             },
             {
-              "anyOf": [
+              "type": "array",
+              "items": [
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "type": "number"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "$ref": "#/definitions/MaxClassesPerFileConfig"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/MaxClassesPerFileConfigEnum"
                 }
-              ]
+              ],
+              "maxItems": 2,
+              "minItems": 2
             }
           ]
         },
@@ -4170,34 +4148,17 @@
               "$ref": "#/definitions/RuleNoConfig"
             },
             {
-              "anyOf": [
+              "type": "array",
+              "items": [
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "type": "number"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "$ref": "#/definitions/MaxDepth"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/MaxDepthConfigEnum"
                 }
-              ]
+              ],
+              "maxItems": 2,
+              "minItems": 2
             }
           ]
         },
@@ -4207,34 +4168,17 @@
               "$ref": "#/definitions/RuleNoConfig"
             },
             {
-              "anyOf": [
+              "type": "array",
+              "items": [
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "type": "number"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "$ref": "#/definitions/MaxLinesConfig"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/MaxLinesConfigEnum"
                 }
-              ]
+              ],
+              "maxItems": 2,
+              "minItems": 2
             }
           ]
         },
@@ -4244,34 +4188,17 @@
               "$ref": "#/definitions/RuleNoConfig"
             },
             {
-              "anyOf": [
+              "type": "array",
+              "items": [
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "type": "number"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "$ref": "#/definitions/MaxLinesPerFunctionConfig"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/MaxLinesPerFunctionConfigEnum"
                 }
-              ]
+              ],
+              "maxItems": 2,
+              "minItems": 2
             }
           ]
         },
@@ -4281,34 +4208,17 @@
               "$ref": "#/definitions/RuleNoConfig"
             },
             {
-              "anyOf": [
+              "type": "array",
+              "items": [
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "type": "number"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "$ref": "#/definitions/MaxNestedCallbacks"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/MaxNestedCallbacksConfigEnum"
                 }
-              ]
+              ],
+              "maxItems": 2,
+              "minItems": 2
             }
           ]
         },
@@ -4318,34 +4228,17 @@
               "$ref": "#/definitions/RuleNoConfig"
             },
             {
-              "anyOf": [
+              "type": "array",
+              "items": [
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "type": "number"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "$ref": "#/definitions/MaxParamsConfig"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/MaxParamsConfigEnum"
                 }
-              ]
+              ],
+              "maxItems": 2,
+              "minItems": 2
             }
           ]
         },
@@ -4355,34 +4248,17 @@
               "$ref": "#/definitions/RuleNoConfig"
             },
             {
-              "anyOf": [
+              "type": "array",
+              "items": [
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "type": "number"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "$ref": "#/definitions/MaxStatementsConfig"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/MaxStatementsConfigEnum"
                 }
-              ]
+              ],
+              "maxItems": 2,
+              "minItems": 2
             }
           ]
         },
@@ -12458,6 +12334,18 @@
       },
       "additionalProperties": false
     },
+    "MaxClassesPerFileConfigEnum": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        {
+          "$ref": "#/definitions/MaxClassesPerFileConfig"
+        }
+      ]
+    },
     "MaxDependenciesConfig": {
       "type": "object",
       "properties": {
@@ -12504,6 +12392,18 @@
       },
       "additionalProperties": false
     },
+    "MaxDepthConfigEnum": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        {
+          "$ref": "#/definitions/MaxDepth"
+        }
+      ]
+    },
     "MaxExpectsConfig": {
       "type": "object",
       "properties": {
@@ -12544,6 +12444,18 @@
       },
       "additionalProperties": false
     },
+    "MaxLinesConfigEnum": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        {
+          "$ref": "#/definitions/MaxLinesConfig"
+        }
+      ]
+    },
     "MaxLinesPerFunctionConfig": {
       "type": "object",
       "properties": {
@@ -12576,6 +12488,18 @@
       },
       "additionalProperties": false
     },
+    "MaxLinesPerFunctionConfigEnum": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        {
+          "$ref": "#/definitions/MaxLinesPerFunctionConfig"
+        }
+      ]
+    },
     "MaxNestedCallbacks": {
       "type": "object",
       "properties": {
@@ -12589,6 +12513,18 @@
         }
       },
       "additionalProperties": false
+    },
+    "MaxNestedCallbacksConfigEnum": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        {
+          "$ref": "#/definitions/MaxNestedCallbacks"
+        }
+      ]
     },
     "MaxNestedCalls": {
       "type": "object",
@@ -12647,6 +12583,18 @@
       },
       "additionalProperties": false
     },
+    "MaxParamsConfigEnum": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        {
+          "$ref": "#/definitions/MaxParamsConfig"
+        }
+      ]
+    },
     "MaxProps": {
       "type": "object",
       "properties": {
@@ -12680,6 +12628,18 @@
         }
       },
       "additionalProperties": false
+    },
+    "MaxStatementsConfigEnum": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        {
+          "$ref": "#/definitions/MaxStatementsConfig"
+        }
+      ]
     },
     "MediaHasCaptionConfig": {
       "type": "object",

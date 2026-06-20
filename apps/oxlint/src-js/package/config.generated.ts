@@ -68,6 +68,7 @@ export type OptionsJsonEnum =
       line?: CommentConfigJson;
     };
 export type IgnoreClassWithImplements = "all" | "public-fields";
+export type ComplexityConfigEnum = number | ComplexityConfig;
 export type Variant = "classic" | "modified";
 /**
  * The enforcement type for the curly rule.
@@ -112,7 +113,14 @@ export type AltTextElements = "img" | "object" | "area" | 'input[type="image"]';
 export type AnchorIsValidAspect = "noHref" | "invalidHref" | "preferButton";
 export type Assert = "htmlFor" | "nesting" | "both" | "either";
 export type DistractingElement = "marquee" | "blink";
+export type MaxClassesPerFileConfigEnum = number | MaxClassesPerFileConfig;
+export type MaxDepthConfigEnum = number | MaxDepth;
+export type MaxLinesConfigEnum = number | MaxLinesConfig;
+export type MaxLinesPerFunctionConfigEnum = number | MaxLinesPerFunctionConfig;
+export type MaxNestedCallbacksConfigEnum = number | MaxNestedCallbacks;
+export type MaxParamsConfigEnum = number | MaxParamsConfig;
 export type CountThis = "always" | "never" | "except-void";
+export type MaxStatementsConfigEnum = number | MaxStatementsConfig;
 export type NoCondAssignConfig = "except-parens" | "always";
 export type CheckLoopsConfig = boolean | CheckLoops;
 export type CheckLoops = "all" | "allExceptWhileTrue" | "none";
@@ -856,7 +864,7 @@ export interface DummyRuleMap {
   "block-scoped-var"?: RuleNoConfig;
   "capitalized-comments"?: RuleNoConfig | [AllowWarnDeny, AlwaysNever] | [AllowWarnDeny, AlwaysNever, OptionsJsonEnum];
   "class-methods-use-this"?: RuleNoConfig | [AllowWarnDeny, ClassMethodsUseThisConfig];
-  complexity?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, ComplexityConfig]);
+  complexity?: RuleNoConfig | [AllowWarnDeny, ComplexityConfigEnum];
   "constructor-super"?: RuleNoConfig;
   curly?: RuleNoConfig | [AllowWarnDeny, CurlyType] | [AllowWarnDeny, CurlyType, CurlyConsistent];
   "default-case"?: RuleNoConfig | [AllowWarnDeny, DefaultCaseConfig];
@@ -1057,13 +1065,13 @@ export interface DummyRuleMap {
     | RuleNoConfig
     | [AllowWarnDeny, AlwaysNever]
     | [AllowWarnDeny, AlwaysNever, LogicalAssignmentOperatorsConfig];
-  "max-classes-per-file"?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, MaxClassesPerFileConfig]);
-  "max-depth"?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, MaxDepth]);
-  "max-lines"?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, MaxLinesConfig]);
-  "max-lines-per-function"?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, MaxLinesPerFunctionConfig]);
-  "max-nested-callbacks"?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, MaxNestedCallbacks]);
-  "max-params"?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, MaxParamsConfig]);
-  "max-statements"?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, MaxStatementsConfig]);
+  "max-classes-per-file"?: RuleNoConfig | [AllowWarnDeny, MaxClassesPerFileConfigEnum];
+  "max-depth"?: RuleNoConfig | [AllowWarnDeny, MaxDepthConfigEnum];
+  "max-lines"?: RuleNoConfig | [AllowWarnDeny, MaxLinesConfigEnum];
+  "max-lines-per-function"?: RuleNoConfig | [AllowWarnDeny, MaxLinesPerFunctionConfigEnum];
+  "max-nested-callbacks"?: RuleNoConfig | [AllowWarnDeny, MaxNestedCallbacksConfigEnum];
+  "max-params"?: RuleNoConfig | [AllowWarnDeny, MaxParamsConfigEnum];
+  "max-statements"?: RuleNoConfig | [AllowWarnDeny, MaxStatementsConfigEnum];
   "new-cap"?: RuleNoConfig | [AllowWarnDeny, NewCapConfig];
   "nextjs/google-font-display"?: RuleNoConfig;
   "nextjs/google-font-preconnect"?: RuleNoConfig;

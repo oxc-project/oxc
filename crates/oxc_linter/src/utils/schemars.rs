@@ -4,9 +4,6 @@ use schemars::{
 };
 
 #[cfg(feature = "ruledocs")]
-use schemars::schema::NumberValidation;
-
-#[cfg(feature = "ruledocs")]
 use crate::rules::RuleEnum;
 
 /// These rules are not verified to have a valid schema
@@ -65,32 +62,4 @@ pub fn object_with_nullable_string_schema(_gen: &mut SchemaGenerator) -> Schema 
         ..Default::default()
     }
     .into()
-}
-
-/// Converts an object schema into a schema that accepts both numbers and objects.
-/// Optionally, a number validation can be provided to further restrict the accepted values.
-#[cfg(feature = "ruledocs")]
-pub fn number_as_object_schema(
-    _gen: &mut SchemaGenerator,
-    schema: &mut Schema,
-    number_schema: Option<NumberValidation>,
-) {
-    let Schema::Object(object_schema) = schema.clone() else {
-        panic!("Expected an object schema to be converted");
-    };
-
-    let number_only_schema = SchemaObject {
-        instance_type: Some(InstanceType::Number.into()),
-        number: number_schema.map(Box::new),
-        ..Default::default()
-    };
-
-    *schema = SchemaObject {
-        subschemas: Some(Box::new(SubschemaValidation {
-            any_of: Some(vec![number_only_schema.into(), Schema::Object(object_schema)]),
-            ..Default::default()
-        })),
-        ..Default::default()
-    }
-    .into();
 }
