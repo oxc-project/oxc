@@ -175,7 +175,7 @@ json-strip-comments = "3.1.0" # Strip JSON comments
 oxc-browserslist = "3.0.0" # Browser compatibility queries
 oxc_index = { version = "5.0.0", features = ["nonmax", "serde"] } # Type-safe indices
 oxc_resolver = "11.16.3" # Module resolution
-oxc_sourcemap = "8.0.1" # Source map generation
+oxc_sourcemap = "8.0.2" # Source map generation
 
 #
 allocator-api2 = "=0.2.21" # Allocator trait
