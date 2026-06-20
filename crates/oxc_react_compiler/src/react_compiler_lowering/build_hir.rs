@@ -7238,15 +7238,22 @@ fn lower_statement(
             })?;
         }
         oxc::Statement::ClassDeclaration(cls) => {
+            let loc = builder.source_location(cls.span);
             builder.record_error(CompilerErrorDetail {
                 category: ErrorCategory::UnsupportedSyntax,
                 reason: "Inline `class` declarations are not supported".to_string(),
                 description: Some(
                     "Move class declarations outside of components/hooks".to_string(),
                 ),
-                loc: builder.source_location(cls.span),
+                loc: loc.clone(),
                 suggestions: None,
             })?;
+            // Original lowered an UnsupportedNode temporary; emit the same
+            // Primitive::Undefined placeholder to keep IdentifierId numbering aligned.
+            lower_value_to_temporary(
+                builder,
+                InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc },
+            )?;
         }
         oxc::Statement::ImportDeclaration(_)
         | oxc::Statement::ExportNamedDeclaration(_)
