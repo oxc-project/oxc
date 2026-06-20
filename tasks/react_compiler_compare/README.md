@@ -22,16 +22,24 @@ cd tasks/react_compiler_compare && npm install
 > don't). So comparing against **npm** mostly measures *version drift*, while comparing
 > against the **fork** measures true *port fidelity*. Use `BPRC` to pick the reference.
 
-### Comparing against the fork (recommended — true port fidelity)
+### Comparing against built source (recommended — true port fidelity)
+
+Build either the oxc fork **or** upstream `react/react` main and point `BPRC` at the
+built plugin. As of 2026-06-18 the oxc fork is a same-day mirror of upstream main, so
+both give the same result (~86%):
 
 ```bash
-# build the fork's babel plugin once
-cd ~/github/oxc-project/oxc-react-compiler/react-compiler
-yarn install && yarn workspace babel-plugin-react-compiler build && cd -
-
-# point the harness at the fork's built plugin
-BPRC=~/github/oxc-project/oxc-react-compiler/react-compiler/packages/babel-plugin-react-compiler/dist/index.js \
+# upstream react/react main (sparse-clone just the compiler)
+git clone --depth 1 --filter=blob:none --sparse https://github.com/react/react.git /tmp/react-upstream
+cd /tmp/react-upstream && git sparse-checkout set compiler
+cd compiler && yarn install && yarn workspace babel-plugin-react-compiler build && cd -
+BPRC=/tmp/react-upstream/compiler/packages/babel-plugin-react-compiler/dist/index.js \
   REPOS=/path/to/oxc-ecosystem-ci/repos node compare.mjs
+
+# ...or the oxc fork it directly ports
+#   cd ~/github/oxc-project/oxc-react-compiler/react-compiler
+#   yarn install && yarn workspace babel-plugin-react-compiler build
+#   BPRC=.../packages/babel-plugin-react-compiler/dist/index.js node compare.mjs
 ```
 
 Without `BPRC`, the pinned npm `babel-plugin-react-compiler` in `package.json` is used.
@@ -69,7 +77,8 @@ match). Mismatches are bucketed by dominant cause.
 | reference | identical-output on memoized files |
 | --- | --- |
 | npm `babel-plugin-react-compiler@334f00b` (a year stale) | ~31% — dominated by **version drift** |
-| the **fork** oxc actually ports (`yarn build`, via `BPRC`) | **~86%** — true port fidelity |
+| upstream `react/react` main (built, via `BPRC`) | **85.6%** (1747/2040 over 3000 files) |
+| the oxc fork it ports (same-day mirror of upstream) | 85.6% — identical to upstream main |
 
 Against the fork, the remaining ~14% are genuine port gaps:
 
