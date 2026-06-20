@@ -357,18 +357,24 @@ impl JsonSchema for OxlintRules {
                     schema: &'a Schema,
                     r#gen: &'a SchemaGenerator,
                 ) -> &'a Schema {
-                    let mut current = schema;
-                    while let Some(next) = r#gen.dereference(current) {
-                        current = next;
-                    }
+                    let Some(current) = r#gen.dereference(schema) else {
+                        return schema;
+                    };
 
                     let Schema::Object(obj) = current else {
-                        return current;
+                        return schema;
                     };
 
                     // We only need to dereference array schemas for rule config.
                     // Reuse the schema for other cases.
-                    if obj.array.is_none() {
+                    // We only need to dereference array schemas with at least 2 entries. A single entry array schema is used for configs which accepts an array.
+                    // 2 entries means that it is a tuple config, and `AllowWarnDeny` needs to be appended for each entry in the tuple.
+                    if obj.array.as_ref().is_none_or(|array| {
+                        array
+                            .items
+                            .as_ref()
+                            .is_none_or(|items| !matches!(items, SingleOrVec::Vec(_)))
+                    }) {
                         return schema;
                     }
 
@@ -401,7 +407,7 @@ impl JsonSchema for OxlintRules {
                         config_schema: Schema,
                         r#gen: &mut SchemaGenerator,
                     ) -> Schema {
-                        let Schema::Object(mut obj) = config_schema else {
+                        let Schema::Object(mut obj) = config_schema.clone() else {
                             return SchemaObject {
                                 instance_type: Some(InstanceType::Array.into()),
                                 array: Some(Box::new(ArrayValidation {
@@ -426,40 +432,34 @@ impl JsonSchema for OxlintRules {
                             "Expected rule schema to be either an object, an array, or a reference, but not multiple"
                         );
 
-                        if let Some(reference) = obj.reference {
-                            return SchemaObject {
-                                instance_type: Some(InstanceType::Array.into()),
-                                array: Some(Box::new(ArrayValidation {
-                                    items: Some(SingleOrVec::Vec(vec![
-                                        r#gen.subschema_for::<AllowWarnDeny>(),
-                                        Schema::Object(SchemaObject {
-                                            reference: Some(reference),
-                                            ..Default::default()
-                                        }),
-                                    ])),
-                                    min_items: Some(2),
-                                    max_items: Some(2),
-                                    ..Default::default()
-                                })),
-                                ..Default::default()
-                            }
-                            .into();
-                        }
-
                         if let Some(array) = obj.array {
-                            let items = match array.items {
-                                None => vec![r#gen.subschema_for::<AllowWarnDeny>()],
-                                Some(SingleOrVec::Single(config)) => {
-                                    vec![r#gen.subschema_for::<AllowWarnDeny>(), *config]
+                            debug_assert!(
+                                array.additional_items.is_none(),
+                                "Expected array schema to have no additionalItems for rule config"
+                            );
+                            // We only need to handle the cases where multiple items exists,
+                            // because single item array schema is used for rules which accepts an array as config,
+                            // and we just need to append `AllowWarnDeny` for that case.
+                            let Some(SingleOrVec::Vec(configs)) = array.items else {
+                                return SchemaObject {
+                                    instance_type: Some(InstanceType::Array.into()),
+                                    array: Some(Box::new(ArrayValidation {
+                                        items: Some(SingleOrVec::Vec(vec![
+                                            r#gen.subschema_for::<AllowWarnDeny>(),
+                                            config_schema,
+                                        ])),
+                                        min_items: Some(2),
+                                        max_items: Some(2),
+                                        ..Default::default()
+                                    })),
+                                    ..Default::default()
                                 }
-                                Some(SingleOrVec::Vec(configs)) => {
-                                    let mut items =
-                                        Vec::with_capacity(configs.len().saturating_add(1));
-                                    items.push(r#gen.subschema_for::<AllowWarnDeny>());
-                                    items.extend(configs);
-                                    items
-                                }
+                                .into();
                             };
+
+                            let mut items = Vec::with_capacity(configs.len().saturating_add(1));
+                            items.push(r#gen.subschema_for::<AllowWarnDeny>());
+                            items.extend(configs);
 
                             let config_length = items.len() as u32;
 
@@ -496,7 +496,7 @@ impl JsonSchema for OxlintRules {
                             array: Some(Box::new(ArrayValidation {
                                 items: Some(SingleOrVec::Vec(vec![
                                     r#gen.subschema_for::<AllowWarnDeny>(),
-                                    Schema::Object(obj),
+                                    config_schema,
                                 ])),
                                 min_items: Some(2),
                                 max_items: Some(2),

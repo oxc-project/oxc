@@ -163,6 +163,10 @@ export type NoUseBeforeDefineConfigJson = Nofunc | NoUseBeforeDefineConfig;
 export type Nofunc = "nofunc";
 export type Location = "start" | "anywhere";
 /**
+ * The rule takes a single option - an array of possible callback names - which may include object methods. The default callback names are `callback`, `cb`, `next`.
+ */
+export type CallbackReturn = string[];
+/**
  * The rule takes a single string option: the name of the error parameter.
  *
  * This can be either:
@@ -1220,7 +1224,7 @@ export interface DummyRuleMap {
   "no-void"?: RuleNoConfig | [AllowWarnDeny, NoVoid];
   "no-warning-comments"?: RuleNoConfig | [AllowWarnDeny, NoWarningCommentsConfigJson];
   "no-with"?: RuleNoConfig;
-  "node/callback-return"?: DummyRule;
+  "node/callback-return"?: RuleNoConfig | [AllowWarnDeny, CallbackReturn];
   "node/global-require"?: RuleNoConfig;
   "node/handle-callback-err"?: RuleNoConfig | [AllowWarnDeny, HandleCallbackErrConfig];
   "node/no-exports-assign"?: RuleNoConfig;

@@ -1138,6 +1138,14 @@
       },
       "additionalProperties": false
     },
+    "CallbackReturn": {
+      "description": "The rule takes a single option - an array of possible callback names - which may include object methods. The default callback names are `callback`, `cb`, `next`.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "markdownDescription": "The rule takes a single option - an array of possible callback names - which may include object methods. The default callback names are `callback`, `cb`, `next`."
+    },
     "CapitalizedCommentsOptions": {
       "description": "Configuration for the capitalized-comments rule.\n\nThe first element specifies whether comments should `\"always\"` or `\"never\"`\nbegin with a capital letter. The second element is an optional object\ncontaining additional options.",
       "type": "array",
@@ -5517,7 +5525,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "node/callback-return": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/CallbackReturn"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "node/global-require": {
           "$ref": "#/definitions/RuleNoConfig"
