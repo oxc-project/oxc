@@ -664,7 +664,7 @@ pub fn lower(
     validate_ts_this_parameters_in_function_range(scope_info, start, end)?;
 
     // Build identifier location index from the AST (replaces serialized referenceLocs/jsxReferencePositions)
-    let identifier_locs = build_identifier_loc_index(func, scope_info);
+    let identifier_locs = build_identifier_loc_index(func, scope_info, line_offsets);
 
     // Pre-compute context identifiers: variables captured across function boundaries
     let context_identifiers = find_context_identifiers(func, scope_info, env, &identifier_locs)?;
