@@ -2365,18 +2365,32 @@ fn ox_splice_program<'a>(
 
     let mut program = oxc_program.clone_in(ast.allocator);
 
-    // Collect outlined function declarations to insert (top level), mirroring the
-    // Babel path's pushContainer behavior for expression/arrow parents.
-    let mut outlined_decls: Vec<oxc_ast::ast::Statement<'a>> = Vec::new();
+    // Outlined function declarations are placed differently depending on the
+    // original function's syntactic kind, mirroring `insertNewOutlinedFunctionNode`
+    // in TS `Program.ts`:
+    //   - FunctionDeclaration originals: inserted as a sibling immediately after the
+    //     original function (Babel `insertAfter`).
+    //   - (Arrow)FunctionExpression originals: appended at the end of the program
+    //     body (Babel `pushContainer('body', ...)`), since inserting as a sibling
+    //     would corrupt the parent expression.
+    let mut appended_outlined_decls: Vec<oxc_ast::ast::Statement<'a>> = Vec::new();
 
     for replacement in replacements {
+        let mut sibling_outlined_decls: Vec<oxc_ast::ast::Statement<'a>> = Vec::new();
+        let insert_as_sibling =
+            replacement.original_kind == OriginalFnKind::FunctionDeclaration;
         for outlined in &replacement.codegen_fn.outlined {
             let func = ox_build_function(
                 ast,
                 &outlined.func,
                 oxc_ast::ast::FunctionType::FunctionDeclaration,
             );
-            outlined_decls.push(oxc_ast::ast::Statement::FunctionDeclaration(func));
+            let stmt = oxc_ast::ast::Statement::FunctionDeclaration(func);
+            if insert_as_sibling {
+                sibling_outlined_decls.push(stmt);
+            } else {
+                appended_outlined_decls.push(stmt);
+            }
         }
 
         if let Some(ref gating_config) = replacement.gating {
@@ -2386,10 +2400,17 @@ fn ox_splice_program<'a>(
                 OxcReplaceFnVisitor { ast, node_id, codegen: &replacement.codegen_fn, done: false };
             oxc_ast_visit::VisitMut::visit_program(&mut visitor, &mut program);
         }
+
+        if !sibling_outlined_decls.is_empty() {
+            if let Some(node_id) = replacement.fn_node_id {
+                ox_insert_outlined_after(&mut program, node_id, sibling_outlined_decls);
+            }
+        }
     }
 
-    // Append outlined function declarations at the top level.
-    program.body.extend(outlined_decls);
+    // Append outlined function declarations (from expression-parented originals) at
+    // the top level.
+    program.body.extend(appended_outlined_decls);
 
     // Register the memo cache import and rename `useMemoCache` references.
     let needs_memo_import = replacements.iter().any(|r| r.codegen_fn.memo_slots_used > 0);
@@ -2404,6 +2425,48 @@ fn ox_splice_program<'a>(
     ox_add_imports_to_program(ast, &mut program, context);
 
     program
+}
+
+/// Insert outlined function declarations immediately after the top-level statement
+/// that declares the function identified by `node_id`. Mirrors Babel's
+/// `originalFn.insertAfter(...)` for `FunctionDeclaration` originals. The statement
+/// may be a bare `FunctionDeclaration` or one wrapped in an `export`.
+fn ox_insert_outlined_after<'a>(
+    program: &mut oxc_ast::ast::Program<'a>,
+    node_id: u32,
+    outlined_decls: Vec<oxc_ast::ast::Statement<'a>>,
+) {
+    use oxc_ast::ast::{Declaration, ExportDefaultDeclarationKind, Statement};
+
+    let matches = |stmt: &Statement<'a>| -> bool {
+        match stmt {
+            Statement::FunctionDeclaration(f) => f.span.start == node_id,
+            Statement::ExportNamedDeclaration(e) => {
+                matches!(&e.declaration, Some(Declaration::FunctionDeclaration(f)) if f.span.start == node_id)
+            }
+            Statement::ExportDefaultDeclaration(e) => {
+                matches!(&e.declaration, ExportDefaultDeclarationKind::FunctionDeclaration(f) if f.span.start == node_id)
+            }
+            _ => false,
+        }
+    };
+
+    let index = program.body.iter().position(matches);
+    match index {
+        Some(idx) => {
+            // Babel inserts each outlined function via `originalFn.insertAfter(...)`,
+            // anchored at the same original node, so repeated insertions reverse the
+            // emitted order. Insert each at `idx + 1` to reproduce that.
+            for stmt in outlined_decls {
+                program.body.insert(idx + 1, stmt);
+            }
+        }
+        None => {
+            // Function is nested (not a direct program-body statement); fall back to
+            // appending at the top level.
+            program.body.extend(outlined_decls);
+        }
+    }
 }
 
 /// Insert import declarations into the oxc program. Mirrors `add_imports_to_program`

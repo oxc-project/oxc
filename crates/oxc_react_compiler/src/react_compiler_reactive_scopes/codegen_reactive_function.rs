@@ -57,6 +57,7 @@ use crate::react_compiler_reactive_scopes::build_reactive_function::build_reacti
 use crate::react_compiler_reactive_scopes::prune_hoisted_contexts::prune_hoisted_contexts;
 use crate::react_compiler_reactive_scopes::prune_unused_labels::prune_unused_labels;
 use crate::react_compiler_reactive_scopes::prune_unused_lvalues::prune_unused_lvalues;
+use crate::react_compiler_reactive_scopes::rename_variables::rename_variables;
 use crate::react_compiler_reactive_scopes::visitors::ReactiveFunctionVisitor;
 use crate::react_compiler_reactive_scopes::visitors::visit_reactive_function;
 
@@ -96,6 +97,9 @@ pub fn codegen_function<'a>(
     use oxc_span::SPAN;
 
     let fn_name = func.id.as_deref().unwrap_or("[[ anonymous ]]");
+    // Outlined functions reuse the same `fbtOperands` set as the main function
+    // (see TS `codegenFunction`), so keep a copy before it is moved into the context.
+    let fbt_operands_for_outlined = fbt_operands.clone();
     let mut cx = OxcContext::new(*ast, env, fn_name.to_string(), unique_identifiers, fbt_operands);
 
     // The value-emission port covers most instruction kinds, but a few sub-emitters
@@ -158,6 +162,12 @@ pub fn codegen_function<'a>(
 
     let id = func.id.as_deref().map(|name| ast.binding_identifier(SPAN, ox_str(ast, name)));
 
+    // Release the borrow of `env` held by `cx` so the outlined functions can be
+    // compiled with fresh contexts (mirrors TS `codegenFunction`).
+    drop(cx);
+
+    let outlined = ox_codegen_outlined(ast, env, fbt_operands_for_outlined)?;
+
     Ok(OxcCodegenFunction {
         loc: func.loc,
         id,
@@ -171,8 +181,49 @@ pub fn codegen_function<'a>(
         memo_values: compiled.memo_values,
         pruned_memo_blocks: compiled.pruned_memo_blocks,
         pruned_memo_values: compiled.pruned_memo_values,
-        outlined: Vec::new(),
+        outlined,
     })
+}
+
+/// Compile the functions accumulated during the outlining passes (stored on the
+/// `Environment`) into `CodegenFunction`s. Mirrors the `outlined` loop in TS
+/// `codegenFunction`: for each entry build its reactive function, run the same
+/// prune passes + variable renaming, then codegen it with a fresh context.
+fn ox_codegen_outlined<'a>(
+    ast: &oxc_ast::AstBuilder<'a>,
+    env: &mut Environment,
+    fbt_operands: FxHashSet<IdentifierId>,
+) -> Result<
+    Vec<crate::react_compiler::entrypoint::compile_result::OutlinedFunction<'a>>,
+    CompilerError,
+> {
+    use crate::react_compiler::entrypoint::compile_result::OutlinedFunction as OxcOutlinedFunction;
+
+    let entries = env.take_outlined_functions();
+    let mut outlined = Vec::with_capacity(entries.len());
+    for entry in entries {
+        let mut reactive_function = build_reactive_function(&entry.func, env).map_err(|diag| {
+            let loc = diag.primary_location().cloned();
+            let mut err = CompilerError::new();
+            err.push_error_detail(crate::react_compiler_diagnostics::CompilerErrorDetail {
+                category: diag.category,
+                reason: diag.reason,
+                description: diag.description,
+                loc,
+                suggestions: diag.suggestions,
+            });
+            err
+        })?;
+        prune_unused_labels(&mut reactive_function, env)?;
+        prune_unused_lvalues(&mut reactive_function, env);
+        prune_hoisted_contexts(&mut reactive_function, env)?;
+
+        let identifiers = rename_variables(&mut reactive_function, env);
+
+        let func = codegen_function(ast, &reactive_function, env, identifiers, fbt_operands.clone())?;
+        outlined.push(OxcOutlinedFunction { func, fn_type: entry.fn_type });
+    }
+    Ok(outlined)
 }
 
 // =============================================================================
