@@ -2190,41 +2190,55 @@ fn ox_codegen_dependency<'a>(
     let mut object = cx.ast.expression_identifier(SPAN, ox_str(&cx.ast, &name));
     if !dep.path.is_empty() {
         let has_optional = dep.path.iter().any(|p| p.optional);
+        // Build every member as a plain member expression carrying its own optional
+        // flag. In oxc, an optional chain like `a.b?.c.d?.e` is a single
+        // `ChainExpression` wrapping the outermost member, with inner members being
+        // plain members whose `optional` flags are preserved. Wrapping each step in
+        // its own `ChainExpression` would force spurious parens such as `(((a.b)?.c).d)?.e`.
         for path_entry in &dep.path {
             let member = ox_property_member(cx, object, &path_entry.property);
-            object = if has_optional {
-                // Optional chaining: rebuild member with the entry's optional flag.
-                let chain = match member {
-                    oxc::MemberExpression::StaticMemberExpression(m) => {
-                        let m = m.unbox();
-                        oxc::ChainElement::StaticMemberExpression(
-                            cx.ast.alloc_static_member_expression(
-                                SPAN,
-                                m.object,
-                                m.property,
-                                path_entry.optional,
-                            ),
-                        )
-                    }
-                    oxc::MemberExpression::ComputedMemberExpression(m) => {
-                        let m = m.unbox();
-                        oxc::ChainElement::ComputedMemberExpression(
-                            cx.ast.alloc_computed_member_expression(
-                                SPAN,
-                                m.object,
-                                m.expression,
-                                path_entry.optional,
-                            ),
-                        )
-                    }
-                    oxc::MemberExpression::PrivateFieldExpression(m) => {
-                        oxc::ChainElement::from(oxc::MemberExpression::PrivateFieldExpression(m))
-                    }
-                };
-                cx.ast.expression_chain(SPAN, chain)
-            } else {
-                oxc::Expression::from(member)
+            object = match member {
+                oxc::MemberExpression::StaticMemberExpression(m) => {
+                    let m = m.unbox();
+                    oxc::Expression::StaticMemberExpression(cx.ast.alloc_static_member_expression(
+                        SPAN,
+                        m.object,
+                        m.property,
+                        path_entry.optional,
+                    ))
+                }
+                oxc::MemberExpression::ComputedMemberExpression(m) => {
+                    let m = m.unbox();
+                    oxc::Expression::ComputedMemberExpression(
+                        cx.ast.alloc_computed_member_expression(
+                            SPAN,
+                            m.object,
+                            m.expression,
+                            path_entry.optional,
+                        ),
+                    )
+                }
+                oxc::MemberExpression::PrivateFieldExpression(m) => {
+                    oxc::Expression::PrivateFieldExpression(m)
+                }
             };
+        }
+        // Wrap the whole access path in a single chain only when it actually contains
+        // an optional access.
+        if has_optional {
+            let chain = match object {
+                oxc::Expression::StaticMemberExpression(m) => {
+                    oxc::ChainElement::StaticMemberExpression(m)
+                }
+                oxc::Expression::ComputedMemberExpression(m) => {
+                    oxc::ChainElement::ComputedMemberExpression(m)
+                }
+                oxc::Expression::PrivateFieldExpression(m) => {
+                    oxc::ChainElement::PrivateFieldExpression(m)
+                }
+                other => return Ok(other),
+            };
+            object = cx.ast.expression_chain(SPAN, chain);
         }
     }
     Ok(object)

@@ -1928,6 +1928,31 @@ struct OxcReplacement<'a> {
     gating: Option<GatingConfig>,
 }
 
+/// Copy the TS metadata (type annotation, decorators, optional/modifier flags)
+/// from a function's original parameters onto the compiled replacement parameters,
+/// matched positionally. Mirrors the Babel reference's signature restoration for
+/// functions that are not memoized: the parameter bindings are unchanged, so their
+/// types carry through. The compiled params (from codegen) never carry types.
+fn copy_param_ts_metadata<'a>(
+    allocator: &'a oxc_allocator::Allocator,
+    new_params: &mut oxc_ast::ast::FormalParameters<'a>,
+    source_params: &oxc_ast::ast::FormalParameters<'a>,
+) {
+    use oxc_allocator::CloneIn;
+    for (param, source) in new_params.items.iter_mut().zip(source_params.items.iter()) {
+        param.decorators = source.decorators.clone_in(allocator);
+        param.type_annotation = source.type_annotation.clone_in(allocator);
+        param.optional = source.optional;
+        param.accessibility = source.accessibility;
+        param.readonly = source.readonly;
+        param.r#override = source.r#override;
+    }
+    if let (Some(rest), Some(source_rest)) = (&mut new_params.rest, &source_params.rest) {
+        rest.decorators = source_rest.decorators.clone_in(allocator);
+        rest.type_annotation = source_rest.type_annotation.clone_in(allocator);
+    }
+}
+
 /// Build an oxc `Function` from a compiled codegen function. `r#type` selects
 /// declaration vs expression. Mirrors the Babel `ReplaceFnVisitor` field copy.
 fn ox_build_function<'a>(
@@ -2001,14 +2026,24 @@ impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcReplaceFnVisitor<'a, 'b> {
         }
         if func.span.start == self.node_id {
             use oxc_allocator::CloneIn;
+            // When the compiled function does not initialize a memo cache, the body is
+            // left essentially intact, so the original TS signature (type parameters,
+            // `this` parameter, return type, and per-parameter type annotations) is
+            // preserved. Functions that memoize drop these types, mirroring Babel.
+            let keep_types = self.codegen.memo_slots_used == 0;
+            let mut params = self.codegen.params.clone_in(self.ast.allocator);
+            if keep_types {
+                copy_param_ts_metadata(self.ast.allocator, &mut params, &func.params);
+            } else {
+                func.type_parameters = None;
+                func.return_type = None;
+                func.this_param = None;
+            }
             func.id = self.codegen.id.clone_in(self.ast.allocator);
-            func.params = self.codegen.params.clone_in(self.ast.allocator);
+            func.params = params;
             func.body = Some(self.codegen.body.clone_in(self.ast.allocator));
             func.generator = self.codegen.generator;
             func.r#async = self.codegen.is_async;
-            func.type_parameters = None;
-            func.return_type = None;
-            func.this_param = None;
             func.declare = false;
             self.done = true;
             return;
@@ -2025,12 +2060,18 @@ impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcReplaceFnVisitor<'a, 'b> {
         }
         if arrow.span.start == self.node_id {
             use oxc_allocator::CloneIn;
-            arrow.params = self.codegen.params.clone_in(self.ast.allocator);
+            let keep_types = self.codegen.memo_slots_used == 0;
+            let mut params = self.codegen.params.clone_in(self.ast.allocator);
+            if keep_types {
+                copy_param_ts_metadata(self.ast.allocator, &mut params, &arrow.params);
+            } else {
+                arrow.type_parameters = None;
+                arrow.return_type = None;
+            }
+            arrow.params = params;
             arrow.body = self.codegen.body.clone_in(self.ast.allocator);
             arrow.r#async = self.codegen.is_async;
             arrow.expression = false;
-            arrow.type_parameters = None;
-            arrow.return_type = None;
             self.done = true;
             return;
         }
