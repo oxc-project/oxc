@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
-use crate::react_compiler_ast::common::{Comment, CommentData};
+use crate::react_compiler_ast::common::CommentData;
 use crate::react_compiler_diagnostics::{
     CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, CompilerSuggestion,
     CompilerSuggestionOperation, ErrorCategory,
@@ -29,9 +29,36 @@ pub struct SuppressionRange {
     pub source: SuppressionSource,
 }
 
-fn comment_data(comment: &Comment) -> &CommentData {
-    match comment {
-        Comment::CommentBlock(data) | Comment::CommentLine(data) => data,
+/// Build a Babel-shaped [`CommentData`] from an oxc comment, stripping the `//`
+/// or `/* */` delimiters from the value exactly as the former Babel bridge did.
+fn comment_data(comment: &oxc_ast::ast::Comment, source_text: &str) -> CommentData {
+    let raw = &source_text[comment.span.start as usize..comment.span.end as usize];
+    let value = if matches!(comment.kind, oxc_ast::ast::CommentKind::Line) {
+        raw.strip_prefix("//").unwrap_or(raw).trim().to_string()
+    } else {
+        raw.strip_prefix("/*").unwrap_or(raw).strip_suffix("*/").unwrap_or(raw).trim().to_string()
+    };
+    CommentData {
+        value,
+        start: Some(comment.span.start),
+        end: Some(comment.span.end),
+        // Only the byte `index` is load-bearing here: it surfaces as the labeled
+        // span offset/length on the suppression diagnostic. Line/column are unused
+        // by downstream consumers of this loc.
+        loc: Some(crate::react_compiler_ast::common::SourceLocation {
+            start: crate::react_compiler_ast::common::Position {
+                line: 0,
+                column: 0,
+                index: Some(comment.span.start),
+            },
+            end: crate::react_compiler_ast::common::Position {
+                line: 0,
+                column: 0,
+                index: Some(comment.span.end),
+            },
+            filename: None,
+            identifier_name: None,
+        }),
     }
 }
 
@@ -103,7 +130,8 @@ fn matches_flow_suppression(value: &str) -> bool {
 /// Parse eslint-disable/enable and Flow suppression comments from program comments.
 /// Equivalent to findProgramSuppressions in Suppression.ts
 pub fn find_program_suppressions(
-    comments: &[Comment],
+    comments: &[oxc_ast::ast::Comment],
+    source_text: &str,
     rule_names: Option<&[String]>,
     flow_suppressions: bool,
 ) -> Vec<SuppressionRange> {
@@ -115,7 +143,7 @@ pub fn find_program_suppressions(
     let has_rules = matches!(rule_names, Some(names) if !names.is_empty());
 
     for comment in comments {
-        let data = comment_data(comment);
+        let data = comment_data(comment, source_text);
 
         if data.start.is_none() || data.end.is_none() {
             continue;

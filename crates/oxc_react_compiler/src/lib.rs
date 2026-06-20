@@ -38,7 +38,6 @@ pub mod prefilter;
 pub mod scope;
 
 use crate::react_compiler::entrypoint::compile_result::LoggerEvent;
-use convert_ast::convert_program;
 use convert_scope::convert_scope_info;
 use diagnostics::compile_result_to_diagnostics;
 use prefilter::{has_react_like_functions, has_resource_management_declarations};
@@ -101,32 +100,6 @@ pub struct LintResult {
 /// nothing was compiled (no React-like functions, a bail-out, or no changes).
 ///
 /// Must run **first**, on the pristine AST, before any other transform.
-/// Index every function in the program by `node_id` (== `span.start`) to its oxc
-/// `FunctionNode`. Lowering consumes the oxc AST, but the function discovery still
-/// walks the Babel-shaped AST; this lets it map a discovered function back to the
-/// oxc node to lower. Uses `oxc_semantic`'s nodes, whose `AstKind` references carry
-/// the arena lifetime `'a` (a `Visit` walk would yield too-short borrows).
-fn build_fn_node_map<'a>(
-    semantic: &oxc_semantic::Semantic<'a>,
-) -> rustc_hash::FxHashMap<u32, crate::react_compiler_lowering::FunctionNode<'a>> {
-    use crate::react_compiler_lowering::FunctionNode;
-    use oxc_ast::AstKind;
-
-    let mut map = rustc_hash::FxHashMap::default();
-    for node in semantic.nodes() {
-        match node.kind() {
-            AstKind::Function(func) => {
-                map.insert(func.span.start, FunctionNode::Function(func));
-            }
-            AstKind::ArrowFunctionExpression(arrow) => {
-                map.insert(arrow.span.start, FunctionNode::Arrow(arrow));
-            }
-            _ => {}
-        }
-    }
-    map
-}
-
 pub fn transform<'a>(
     program: &oxc_ast::ast::Program<'a>,
     allocator: &'a oxc_allocator::Allocator,
@@ -162,21 +135,16 @@ pub fn transform<'a>(
     let semantic =
         oxc_semantic::SemanticBuilder::new().with_build_nodes(true).build(program).semantic;
 
-    let file = convert_program(program, source_text);
     let scope_info = convert_scope_info(&semantic, program);
-    // Map each function's node_id (== span.start) to its oxc node, so the
-    // (still Babel-shaped) discovery can hand the oxc `FunctionNode` to lowering.
-    let fn_map = build_fn_node_map(&semantic);
     // The back-end produces an oxc `Program` directly (see `codegen_function`).
-    // Thread the arena's `AstBuilder` and the original oxc program in.
+    // Thread the arena's `AstBuilder` and the original oxc program in. Function
+    // discovery and lowering both walk the oxc `Program` directly.
     let ast_builder = oxc_ast::AstBuilder::new(allocator);
     let result = crate::react_compiler::entrypoint::program::compile_program(
         &ast_builder,
         program,
-        file,
         scope_info,
         options,
-        &fn_map,
     );
 
     let diagnostics = compile_result_to_diagnostics(&result);

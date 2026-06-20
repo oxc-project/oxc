@@ -14,18 +14,10 @@
 //! 5. Processing each function through the compilation pipeline
 //! 6. Applying compiled functions back to the AST
 
+use oxc_ast::ast as oxc;
+use oxc_span::Span;
 use rustc_hash::FxHashMap;
 
-use crate::react_compiler_ast::File;
-use crate::react_compiler_ast::Program;
-use crate::react_compiler_ast::common::BaseNode;
-use crate::react_compiler_ast::declarations::ImportSpecifier;
-use crate::react_compiler_ast::declarations::ModuleExportName;
-use crate::react_compiler_ast::expressions::*;
-use crate::react_compiler_ast::patterns::PatternLike;
-use crate::react_compiler_ast::statements::*;
-use crate::react_compiler_ast::visitor::AstWalker;
-use crate::react_compiler_ast::visitor::Visitor;
 use crate::react_compiler_diagnostics::CompilerError;
 use crate::react_compiler_diagnostics::CompilerErrorDetail;
 use crate::react_compiler_diagnostics::CompilerErrorOrDiagnostic;
@@ -79,22 +71,26 @@ const OPT_OUT_DIRECTIVES: &[&str] = &["use no forget", "use no memo"];
 // Internal types
 // -----------------------------------------------------------------------
 
-/// A function found in the program that should be compiled
+/// A function found in the program that should be compiled.
+///
+/// `'a` is the arena lifetime of the discovered oxc function node.
 #[allow(dead_code)]
-struct CompileSource {
+struct CompileSource<'a> {
     kind: CompileSourceKind,
     original_kind: OriginalFnKind,
-    /// Location of this function in the AST for logging
     fn_name: Option<String>,
-    fn_loc: Option<SourceLocation>,
-    /// Original AST source location (with index and filename) for logger events.
+    /// Original AST source location for logger events. The example front-end
+    /// discards logger locations, and diagnostics carry their own byte spans, so
+    /// this is left `None` (it never affects compiled output).
     fn_ast_loc: Option<crate::react_compiler_ast::common::SourceLocation>,
     fn_start: Option<u32>,
     fn_end: Option<u32>,
     fn_node_id: Option<u32>,
     fn_type: ReactFunctionType,
-    /// Directives from the function body (for opt-in/opt-out checks)
-    body_directives: Vec<Directive>,
+    /// The discovered oxc function node, handed straight to lowering.
+    fn_node: FunctionNode<'a>,
+    /// Directive values from the function body (for opt-in/opt-out checks)
+    body_directives: Vec<String>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -109,15 +105,15 @@ enum CompileSourceKind {
 // -----------------------------------------------------------------------
 
 /// Check if any opt-in directive is present in the given directives.
-/// Returns the first matching directive, or None.
+/// Returns the first matching directive value, or None.
 ///
 /// Also checks for dynamic gating directives (`use memo if(...)`)
 fn try_find_directive_enabling_memoization<'a>(
-    directives: &'a [Directive],
+    directives: &'a [String],
     opts: &PluginOptions,
-) -> Result<Option<&'a Directive>, CompilerError> {
+) -> Result<Option<&'a String>, CompilerError> {
     // Check standard opt-in directives
-    let opt_in = directives.iter().find(|d| OPT_IN_DIRECTIVES.contains(&d.value.value.as_str()));
+    let opt_in = directives.iter().find(|d| OPT_IN_DIRECTIVES.contains(&d.as_str()));
     if let Some(directive) = opt_in {
         return Ok(Some(directive));
     }
@@ -132,27 +128,27 @@ fn try_find_directive_enabling_memoization<'a>(
 
 /// Check if any opt-out directive is present in the given directives.
 fn find_directive_disabling_memoization<'a>(
-    directives: &'a [Directive],
+    directives: &'a [String],
     opts: &PluginOptions,
-) -> Option<&'a Directive> {
+) -> Option<&'a String> {
     if let Some(ref custom_directives) = opts.custom_opt_out_directives {
-        directives.iter().find(|d| custom_directives.contains(&d.value.value))
+        directives.iter().find(|d| custom_directives.contains(d))
     } else {
-        directives.iter().find(|d| OPT_OUT_DIRECTIVES.contains(&d.value.value.as_str()))
+        directives.iter().find(|d| OPT_OUT_DIRECTIVES.contains(&d.as_str()))
     }
 }
 
 /// Result of a dynamic gating directive parse.
 struct DynamicGatingResult<'a> {
     #[allow(dead_code)]
-    directive: &'a Directive,
+    directive: &'a String,
     gating: GatingConfig,
 }
 
 /// Check for dynamic gating directives like `use memo if(identifier)`.
 /// Returns the directive and gating config if found, or an error if malformed.
 fn find_directives_dynamic_gating<'a>(
-    directives: &'a [Directive],
+    directives: &'a [String],
     opts: &PluginOptions,
 ) -> Result<Option<DynamicGatingResult<'a>>, CompilerError> {
     let dynamic_gating = match &opts.dynamic_gating {
@@ -161,19 +157,18 @@ fn find_directives_dynamic_gating<'a>(
     };
 
     let mut errors: Vec<CompilerErrorDetail> = Vec::new();
-    let mut matches: Vec<(&'a Directive, String)> = Vec::new();
+    let mut matches: Vec<(&'a String, String)> = Vec::new();
 
     for directive in directives {
-        if let Some(ident) = parse_dynamic_gating_directive(&directive.value.value) {
+        if let Some(ident) = parse_dynamic_gating_directive(directive) {
             if is_valid_identifier(ident) {
                 matches.push((directive, ident.to_string()));
             } else {
-                let mut detail = CompilerErrorDetail::new(
+                let detail = CompilerErrorDetail::new(
                     ErrorCategory::Gating,
                     "Dynamic gating directive is not a valid JavaScript identifier",
                 )
-                .with_description(format!("Found '{}'", directive.value.value));
-                detail.loc = directive.base.loc.as_ref().map(convert_loc);
+                .with_description(format!("Found '{directive}'"));
                 errors.push(detail);
             }
         }
@@ -188,14 +183,13 @@ fn find_directives_dynamic_gating<'a>(
     }
 
     if matches.len() > 1 {
-        let names: Vec<String> = matches.iter().map(|(d, _)| d.value.value.clone()).collect();
+        let names: Vec<String> = matches.iter().map(|(d, _)| (*d).clone()).collect();
         let mut err = CompilerError::new();
-        let mut detail = CompilerErrorDetail::new(
+        let detail = CompilerErrorDetail::new(
             ErrorCategory::Gating,
             "Multiple dynamic gating directives found",
         )
         .with_description(format!("Expected a single directive but found [{}]", names.join(", ")));
-        detail.loc = matches[0].0.base.loc.as_ref().map(convert_loc);
         err.push_error_detail(detail);
         return Err(err);
     }
@@ -311,19 +305,16 @@ fn is_component_name(name: &str) -> bool {
 
 /// Check if an expression is a hook call (identifier with hook name, or
 /// member expression `PascalCase.useHook`).
-fn expr_is_hook(expr: &Expression) -> bool {
+fn expr_is_hook(expr: &oxc::Expression) -> bool {
     match expr {
-        Expression::Identifier(id) => is_hook_name(&id.name),
-        Expression::MemberExpression(member) => {
-            if member.computed {
-                return false;
-            }
+        oxc::Expression::Identifier(id) => is_hook_name(&id.name),
+        oxc::Expression::StaticMemberExpression(member) => {
             // Property must be a hook name
-            if !expr_is_hook(&member.property) {
+            if !is_hook_name(&member.property.name) {
                 return false;
             }
             // Object must be a PascalCase identifier
-            if let Expression::Identifier(obj) = member.object.as_ref() {
+            if let oxc::Expression::Identifier(obj) = &member.object {
                 obj.name.chars().next().map_or(false, |c| c.is_ascii_uppercase())
             } else {
                 false
@@ -333,17 +324,43 @@ fn expr_is_hook(expr: &Expression) -> bool {
     }
 }
 
+/// Whether an expression's sub-tree contains any optional chaining link. Mirrors
+/// `convert_ast::ConvertCtx::expr_contains_optional`, used to decide whether a
+/// `CallExpression` inside a `ChainExpression` was a regular call (before the
+/// first `?.`, hook-checkable) or an optional call (not a hook).
+fn expr_contains_optional(expr: &oxc::Expression) -> bool {
+    match expr {
+        oxc::Expression::CallExpression(c) => c.optional || expr_contains_optional(&c.callee),
+        oxc::Expression::StaticMemberExpression(m) => {
+            m.optional || expr_contains_optional(&m.object)
+        }
+        oxc::Expression::ComputedMemberExpression(m) => {
+            m.optional || expr_contains_optional(&m.object)
+        }
+        oxc::Expression::PrivateFieldExpression(p) => {
+            p.optional || expr_contains_optional(&p.object)
+        }
+        _ => false,
+    }
+}
+
+/// Whether a `CallExpression` is a "regular" (non-optional) call. In Babel such a
+/// call was a `CallExpression` (hook-checkable); optional / post-`?.` calls were
+/// `OptionalCallExpression` (never treated as hooks). Matches the Babel-bridge
+/// chain flattening exactly.
+fn is_regular_call(call: &oxc::CallExpression) -> bool {
+    !call.optional && !expr_contains_optional(&call.callee)
+}
+
 /// Check if an expression is a React API call (e.g., `forwardRef` or `React.forwardRef`).
 #[allow(dead_code)]
-fn is_react_api(expr: &Expression, function_name: &str) -> bool {
+fn is_react_api(expr: &oxc::Expression, function_name: &str) -> bool {
     match expr {
-        Expression::Identifier(id) => id.name == function_name,
-        Expression::MemberExpression(member) => {
-            if let Expression::Identifier(obj) = member.object.as_ref() {
+        oxc::Expression::Identifier(id) => id.name == function_name,
+        oxc::Expression::StaticMemberExpression(member) => {
+            if let oxc::Expression::Identifier(obj) = &member.object {
                 if obj.name == "React" {
-                    if let Expression::Identifier(prop) = member.property.as_ref() {
-                        return prop.name == function_name;
-                    }
+                    return member.property.name == function_name;
                 }
             }
             false
@@ -357,8 +374,8 @@ fn is_react_api(expr: &Expression, function_name: &str) -> bool {
 /// For FunctionDeclaration: uses the `id` field.
 /// For FunctionExpression/ArrowFunctionExpression: infers from parent context
 /// (VariableDeclarator, etc.) which is passed explicitly since we don't have Babel paths.
-fn get_function_name_from_id(id: Option<&Identifier>) -> Option<String> {
-    id.map(|id| id.name.clone())
+fn get_function_name_from_id(id: Option<&oxc::BindingIdentifier>) -> Option<String> {
+    id.map(|id| id.name.to_string())
 }
 
 // -----------------------------------------------------------------------
@@ -367,15 +384,15 @@ fn get_function_name_from_id(id: Option<&Identifier>) -> Option<String> {
 
 /// Check if an expression is a "non-node" return value (indicating the function
 /// is not a React component). This matches the TS `isNonNode` function.
-fn is_non_node(expr: &Expression) -> bool {
+fn is_non_node(expr: &oxc::Expression) -> bool {
     matches!(
         expr,
-        Expression::ObjectExpression(_)
-            | Expression::ArrowFunctionExpression(_)
-            | Expression::FunctionExpression(_)
-            | Expression::BigIntLiteral(_)
-            | Expression::ClassExpression(_)
-            | Expression::NewExpression(_)
+        oxc::Expression::ObjectExpression(_)
+            | oxc::Expression::ArrowFunctionExpression(_)
+            | oxc::Expression::FunctionExpression(_)
+            | oxc::Expression::BigIntLiteral(_)
+            | oxc::Expression::ClassExpression(_)
+            | oxc::Expression::NewExpression(_)
     )
 }
 
@@ -383,7 +400,7 @@ fn is_non_node(expr: &Expression) -> bool {
 /// Walks all return statements in the function (not in nested functions).
 /// The last return statement visited (in DFS order) determines the result,
 /// rather than short-circuiting on the first non-node return.
-fn returns_non_node_in_stmts(stmts: &[Statement]) -> bool {
+fn returns_non_node_in_stmts(stmts: &[oxc::Statement]) -> bool {
     let mut result = false;
     for stmt in stmts {
         returns_non_node_in_stmt(stmt, &mut result);
@@ -391,38 +408,42 @@ fn returns_non_node_in_stmts(stmts: &[Statement]) -> bool {
     result
 }
 
-fn returns_non_node_in_stmt(stmt: &Statement, result: &mut bool) {
+fn returns_non_node_in_stmt(stmt: &oxc::Statement, result: &mut bool) {
     match stmt {
-        Statement::ReturnStatement(ret) => {
+        oxc::Statement::ReturnStatement(ret) => {
             *result = match &ret.argument {
                 Some(arg) => is_non_node(arg),
                 None => true, // bare `return;` with no argument is a non-node value
             };
         }
-        Statement::BlockStatement(block) => {
+        oxc::Statement::BlockStatement(block) => {
             for s in &block.body {
                 returns_non_node_in_stmt(s, result);
             }
         }
-        Statement::IfStatement(if_stmt) => {
+        oxc::Statement::IfStatement(if_stmt) => {
             returns_non_node_in_stmt(&if_stmt.consequent, result);
             if let Some(ref alt) = if_stmt.alternate {
                 returns_non_node_in_stmt(alt, result);
             }
         }
-        Statement::ForStatement(for_stmt) => returns_non_node_in_stmt(&for_stmt.body, result),
-        Statement::WhileStatement(while_stmt) => returns_non_node_in_stmt(&while_stmt.body, result),
-        Statement::DoWhileStatement(do_while) => returns_non_node_in_stmt(&do_while.body, result),
-        Statement::ForInStatement(for_in) => returns_non_node_in_stmt(&for_in.body, result),
-        Statement::ForOfStatement(for_of) => returns_non_node_in_stmt(&for_of.body, result),
-        Statement::SwitchStatement(switch) => {
+        oxc::Statement::ForStatement(for_stmt) => returns_non_node_in_stmt(&for_stmt.body, result),
+        oxc::Statement::WhileStatement(while_stmt) => {
+            returns_non_node_in_stmt(&while_stmt.body, result)
+        }
+        oxc::Statement::DoWhileStatement(do_while) => {
+            returns_non_node_in_stmt(&do_while.body, result)
+        }
+        oxc::Statement::ForInStatement(for_in) => returns_non_node_in_stmt(&for_in.body, result),
+        oxc::Statement::ForOfStatement(for_of) => returns_non_node_in_stmt(&for_of.body, result),
+        oxc::Statement::SwitchStatement(switch) => {
             for case in &switch.cases {
                 for s in &case.consequent {
                     returns_non_node_in_stmt(s, result);
                 }
             }
         }
-        Statement::TryStatement(try_stmt) => {
+        oxc::Statement::TryStatement(try_stmt) => {
             for s in &try_stmt.block.body {
                 returns_non_node_in_stmt(s, result);
             }
@@ -437,13 +458,12 @@ fn returns_non_node_in_stmt(stmt: &Statement, result: &mut bool) {
                 }
             }
         }
-        Statement::LabeledStatement(labeled) => returns_non_node_in_stmt(&labeled.body, result),
-        Statement::WithStatement(with) => returns_non_node_in_stmt(&with.body, result),
-        // Skip nested function/class declarations -- they have their own returns
-        Statement::FunctionDeclaration(_) | Statement::ClassDeclaration(_) => {}
-        // Unmodeled statements are opaque to return analysis; functions
-        // containing them bail out in lowering before this matters.
-        Statement::Unknown(_) => {}
+        oxc::Statement::LabeledStatement(labeled) => {
+            returns_non_node_in_stmt(&labeled.body, result)
+        }
+        oxc::Statement::WithStatement(with) => returns_non_node_in_stmt(&with.body, result),
+        // Skip nested function/class declarations -- they have their own returns.
+        // All other statements (incl. TS-only declarations) are opaque here.
         _ => {}
     }
 }
@@ -451,10 +471,10 @@ fn returns_non_node_in_stmt(stmt: &Statement, result: &mut bool) {
 /// Check if a function returns non-node values.
 /// For arrow functions with expression body, checks the expression directly.
 /// For block bodies, walks the statements.
-fn returns_non_node_fn(params: &[PatternLike], body: &FunctionBody) -> bool {
+fn returns_non_node_fn(params: &oxc::FormalParameters, body: &FunctionBody) -> bool {
     let _ = params;
     match body {
-        FunctionBody::Block(block) => returns_non_node_in_stmts(&block.body),
+        FunctionBody::Block(block) => returns_non_node_in_stmts(&block.statements),
         FunctionBody::Expression(expr) => is_non_node(expr),
     }
 }
@@ -463,7 +483,7 @@ fn returns_non_node_fn(params: &[PatternLike], body: &FunctionBody) -> bool {
 /// Traverses the function body (not nested functions) looking for:
 /// - CallExpression where callee is a hook
 /// - JSXElement or JSXFragment
-fn calls_hooks_or_creates_jsx_in_stmts(stmts: &[Statement]) -> bool {
+fn calls_hooks_or_creates_jsx_in_stmts(stmts: &[oxc::Statement]) -> bool {
     for stmt in stmts {
         if calls_hooks_or_creates_jsx_in_stmt(stmt) {
             return true;
@@ -472,19 +492,19 @@ fn calls_hooks_or_creates_jsx_in_stmts(stmts: &[Statement]) -> bool {
     false
 }
 
-fn calls_hooks_or_creates_jsx_in_stmt(stmt: &Statement) -> bool {
+fn calls_hooks_or_creates_jsx_in_stmt(stmt: &oxc::Statement) -> bool {
     match stmt {
-        Statement::ExpressionStatement(expr_stmt) => {
+        oxc::Statement::ExpressionStatement(expr_stmt) => {
             calls_hooks_or_creates_jsx_in_expr(&expr_stmt.expression)
         }
-        Statement::ReturnStatement(ret) => {
+        oxc::Statement::ReturnStatement(ret) => {
             if let Some(ref arg) = ret.argument {
                 calls_hooks_or_creates_jsx_in_expr(arg)
             } else {
                 false
             }
         }
-        Statement::VariableDeclaration(var_decl) => {
+        oxc::Statement::VariableDeclaration(var_decl) => {
             for decl in &var_decl.declarations {
                 if let Some(ref init) = decl.init {
                     if calls_hooks_or_creates_jsx_in_expr(init) {
@@ -494,8 +514,8 @@ fn calls_hooks_or_creates_jsx_in_stmt(stmt: &Statement) -> bool {
             }
             false
         }
-        Statement::BlockStatement(block) => calls_hooks_or_creates_jsx_in_stmts(&block.body),
-        Statement::IfStatement(if_stmt) => {
+        oxc::Statement::BlockStatement(block) => calls_hooks_or_creates_jsx_in_stmts(&block.body),
+        oxc::Statement::IfStatement(if_stmt) => {
             calls_hooks_or_creates_jsx_in_expr(&if_stmt.test)
                 || calls_hooks_or_creates_jsx_in_stmt(&if_stmt.consequent)
                 || if_stmt
@@ -503,20 +523,24 @@ fn calls_hooks_or_creates_jsx_in_stmt(stmt: &Statement) -> bool {
                     .as_ref()
                     .map_or(false, |alt| calls_hooks_or_creates_jsx_in_stmt(alt))
         }
-        Statement::ForStatement(for_stmt) => {
+        oxc::Statement::ForStatement(for_stmt) => {
             if let Some(ref init) = for_stmt.init {
-                match init.as_ref() {
-                    ForInit::Expression(expr) => {
-                        if calls_hooks_or_creates_jsx_in_expr(expr) {
-                            return true;
-                        }
-                    }
-                    ForInit::VariableDeclaration(var_decl) => {
+                match init {
+                    oxc::ForStatementInit::VariableDeclaration(var_decl) => {
                         for decl in &var_decl.declarations {
                             if let Some(ref init) = decl.init {
                                 if calls_hooks_or_creates_jsx_in_expr(init) {
                                     return true;
                                 }
+                            }
+                        }
+                    }
+                    // An expression `ForStatementInit` is an `Expression` (the
+                    // enum inherits the Expression variants).
+                    expr => {
+                        if let Some(expr) = expr.as_expression() {
+                            if calls_hooks_or_creates_jsx_in_expr(expr) {
+                                return true;
                             }
                         }
                     }
@@ -534,23 +558,23 @@ fn calls_hooks_or_creates_jsx_in_stmt(stmt: &Statement) -> bool {
             }
             calls_hooks_or_creates_jsx_in_stmt(&for_stmt.body)
         }
-        Statement::WhileStatement(while_stmt) => {
+        oxc::Statement::WhileStatement(while_stmt) => {
             calls_hooks_or_creates_jsx_in_expr(&while_stmt.test)
                 || calls_hooks_or_creates_jsx_in_stmt(&while_stmt.body)
         }
-        Statement::DoWhileStatement(do_while) => {
+        oxc::Statement::DoWhileStatement(do_while) => {
             calls_hooks_or_creates_jsx_in_stmt(&do_while.body)
                 || calls_hooks_or_creates_jsx_in_expr(&do_while.test)
         }
-        Statement::ForInStatement(for_in) => {
+        oxc::Statement::ForInStatement(for_in) => {
             calls_hooks_or_creates_jsx_in_expr(&for_in.right)
                 || calls_hooks_or_creates_jsx_in_stmt(&for_in.body)
         }
-        Statement::ForOfStatement(for_of) => {
+        oxc::Statement::ForOfStatement(for_of) => {
             calls_hooks_or_creates_jsx_in_expr(&for_of.right)
                 || calls_hooks_or_creates_jsx_in_stmt(&for_of.body)
         }
-        Statement::SwitchStatement(switch) => {
+        oxc::Statement::SwitchStatement(switch) => {
             if calls_hooks_or_creates_jsx_in_expr(&switch.discriminant) {
                 return true;
             }
@@ -566,8 +590,10 @@ fn calls_hooks_or_creates_jsx_in_stmt(stmt: &Statement) -> bool {
             }
             false
         }
-        Statement::ThrowStatement(throw) => calls_hooks_or_creates_jsx_in_expr(&throw.argument),
-        Statement::TryStatement(try_stmt) => {
+        oxc::Statement::ThrowStatement(throw) => {
+            calls_hooks_or_creates_jsx_in_expr(&throw.argument)
+        }
+        oxc::Statement::TryStatement(try_stmt) => {
             if calls_hooks_or_creates_jsx_in_stmts(&try_stmt.block.body) {
                 return true;
             }
@@ -583,30 +609,39 @@ fn calls_hooks_or_creates_jsx_in_stmt(stmt: &Statement) -> bool {
             }
             false
         }
-        Statement::LabeledStatement(labeled) => calls_hooks_or_creates_jsx_in_stmt(&labeled.body),
-        Statement::WithStatement(with) => {
+        oxc::Statement::LabeledStatement(labeled) => {
+            calls_hooks_or_creates_jsx_in_stmt(&labeled.body)
+        }
+        oxc::Statement::WithStatement(with) => {
             calls_hooks_or_creates_jsx_in_expr(&with.object)
                 || calls_hooks_or_creates_jsx_in_stmt(&with.body)
         }
-        // Recurse into class body to find JSX/hooks in methods (matching TS behavior
-        // where Babel's traverse enters class bodies, only skipping nested functions)
-        Statement::FunctionDeclaration(_) => false,
-        Statement::ClassDeclaration(class) => calls_hooks_or_creates_jsx_in_class_body(&class.body),
-        // Unmodeled statements are preserved verbatim and never compiled, so
-        // hook/JSX content inside them cannot affect compilation decisions.
-        Statement::Unknown(_) => false,
+        // Nested function declarations have their own returns; class bodies in the
+        // Babel bridge carried no extracted hook/JSX metadata (always `false`), so
+        // class declarations never contributed here. All other statements (incl.
+        // TS-only declarations) are opaque.
         _ => false,
     }
 }
 
-fn calls_hooks_or_creates_jsx_in_expr(expr: &Expression) -> bool {
+fn calls_hooks_or_creates_jsx_in_expr(expr: &oxc::Expression) -> bool {
+    /// Whether an argument expression is a nested function (skipped by the walk).
+    fn is_nested_fn(arg: &oxc::Expression) -> bool {
+        matches!(
+            arg,
+            oxc::Expression::ArrowFunctionExpression(_) | oxc::Expression::FunctionExpression(_)
+        )
+    }
+
     match expr {
         // JSX creates
-        Expression::JSXElement(_) | Expression::JSXFragment(_) => true,
+        oxc::Expression::JSXElement(_) | oxc::Expression::JSXFragment(_) => true,
 
-        // Hook calls
-        Expression::CallExpression(call) => {
-            if expr_is_hook(&call.callee) {
+        // Hook calls. Only a "regular" (non-optional) call's callee is hook-checked;
+        // optional calls (Babel `OptionalCallExpression`) never count as hooks, but
+        // their callee/args are still searched.
+        oxc::Expression::CallExpression(call) => {
+            if is_regular_call(call) && expr_is_hook(&call.callee) {
                 return true;
             }
             // Also check arguments for JSX/hooks (but not nested functions)
@@ -615,287 +650,327 @@ fn calls_hooks_or_creates_jsx_in_expr(expr: &Expression) -> bool {
             }
             for arg in &call.arguments {
                 // Skip function arguments -- they are nested functions
-                if matches!(
-                    arg,
-                    Expression::ArrowFunctionExpression(_) | Expression::FunctionExpression(_)
-                ) {
-                    continue;
-                }
-                if calls_hooks_or_creates_jsx_in_expr(arg) {
-                    return true;
+                if let Some(arg) = arg.as_expression() {
+                    if is_nested_fn(arg) {
+                        continue;
+                    }
+                    if calls_hooks_or_creates_jsx_in_expr(arg) {
+                        return true;
+                    }
+                } else if let oxc::Argument::SpreadElement(s) = arg {
+                    if calls_hooks_or_creates_jsx_in_expr(&s.argument) {
+                        return true;
+                    }
                 }
             }
             false
         }
-        Expression::OptionalCallExpression(call) => {
-            // Note: OptionalCallExpression is NOT treated as a hook call for
-            // the purpose of determining function type. The TS code only checks
-            // regular CallExpression nodes in callsHooksOrCreatesJsx.
-            // We still recurse into the callee and arguments to find other
-            // hook calls or JSX.
-            if calls_hooks_or_creates_jsx_in_expr(&call.callee) {
-                return true;
-            }
-            for arg in &call.arguments {
-                if matches!(
-                    arg,
-                    Expression::ArrowFunctionExpression(_) | Expression::FunctionExpression(_)
-                ) {
-                    continue;
-                }
-                if calls_hooks_or_creates_jsx_in_expr(arg) {
-                    return true;
-                }
-            }
-            false
+        // Optional chaining (`a?.b`, `a?.()`): Babel modeled these as
+        // Optional{Member,Call}Expression. Recurse into the inner element, where
+        // per-call hook checks honor the optional flag via `is_regular_call`.
+        oxc::Expression::ChainExpression(chain) => {
+            calls_hooks_or_creates_jsx_in_chain_element(&chain.expression)
         }
 
         // Binary/logical
-        Expression::BinaryExpression(bin) => {
+        oxc::Expression::BinaryExpression(bin) => {
             calls_hooks_or_creates_jsx_in_expr(&bin.left)
                 || calls_hooks_or_creates_jsx_in_expr(&bin.right)
         }
-        Expression::LogicalExpression(log) => {
+        oxc::Expression::LogicalExpression(log) => {
             calls_hooks_or_creates_jsx_in_expr(&log.left)
                 || calls_hooks_or_creates_jsx_in_expr(&log.right)
         }
-        Expression::ConditionalExpression(cond) => {
+        oxc::Expression::ConditionalExpression(cond) => {
             calls_hooks_or_creates_jsx_in_expr(&cond.test)
                 || calls_hooks_or_creates_jsx_in_expr(&cond.consequent)
                 || calls_hooks_or_creates_jsx_in_expr(&cond.alternate)
         }
-        Expression::AssignmentExpression(assign) => {
+        oxc::Expression::AssignmentExpression(assign) => {
             calls_hooks_or_creates_jsx_in_expr(&assign.right)
         }
-        Expression::SequenceExpression(seq) => {
-            seq.expressions.iter().any(|e| calls_hooks_or_creates_jsx_in_expr(e))
+        oxc::Expression::SequenceExpression(seq) => {
+            seq.expressions.iter().any(calls_hooks_or_creates_jsx_in_expr)
         }
-        Expression::UnaryExpression(unary) => calls_hooks_or_creates_jsx_in_expr(&unary.argument),
-        Expression::UpdateExpression(update) => {
-            calls_hooks_or_creates_jsx_in_expr(&update.argument)
+        oxc::Expression::UnaryExpression(unary) => {
+            calls_hooks_or_creates_jsx_in_expr(&unary.argument)
         }
-        Expression::MemberExpression(member) => {
+        oxc::Expression::UpdateExpression(update) => match &update.argument {
+            oxc::SimpleAssignmentTarget::AssignmentTargetIdentifier(_) => false,
+            target => {
+                target.as_member_expression().map_or(false, calls_hooks_or_creates_jsx_in_member)
+            }
+        },
+        oxc::Expression::StaticMemberExpression(member) => {
             calls_hooks_or_creates_jsx_in_expr(&member.object)
-                || calls_hooks_or_creates_jsx_in_expr(&member.property)
         }
-        Expression::OptionalMemberExpression(member) => {
+        oxc::Expression::ComputedMemberExpression(member) => {
             calls_hooks_or_creates_jsx_in_expr(&member.object)
-                || calls_hooks_or_creates_jsx_in_expr(&member.property)
+                || calls_hooks_or_creates_jsx_in_expr(&member.expression)
         }
-        Expression::SpreadElement(spread) => calls_hooks_or_creates_jsx_in_expr(&spread.argument),
-        Expression::AwaitExpression(await_expr) => {
+        oxc::Expression::PrivateFieldExpression(member) => {
+            calls_hooks_or_creates_jsx_in_expr(&member.object)
+        }
+        oxc::Expression::AwaitExpression(await_expr) => {
             calls_hooks_or_creates_jsx_in_expr(&await_expr.argument)
         }
-        Expression::YieldExpression(yield_expr) => yield_expr
+        oxc::Expression::YieldExpression(yield_expr) => yield_expr
             .argument
             .as_ref()
             .map_or(false, |arg| calls_hooks_or_creates_jsx_in_expr(arg)),
-        Expression::TaggedTemplateExpression(tagged) => {
+        oxc::Expression::TaggedTemplateExpression(tagged) => {
             calls_hooks_or_creates_jsx_in_expr(&tagged.tag)
-                || tagged.quasi.expressions.iter().any(|e| calls_hooks_or_creates_jsx_in_expr(e))
+                || tagged.quasi.expressions.iter().any(calls_hooks_or_creates_jsx_in_expr)
         }
-        Expression::TemplateLiteral(tl) => {
-            tl.expressions.iter().any(|e| calls_hooks_or_creates_jsx_in_expr(e))
+        oxc::Expression::TemplateLiteral(tl) => {
+            tl.expressions.iter().any(calls_hooks_or_creates_jsx_in_expr)
         }
-        Expression::ArrayExpression(arr) => arr
-            .elements
-            .iter()
-            .any(|e| e.as_ref().map_or(false, |e| calls_hooks_or_creates_jsx_in_expr(e))),
-        Expression::ObjectExpression(obj) => obj.properties.iter().any(|prop| match prop {
-            ObjectExpressionProperty::ObjectProperty(p) => {
-                calls_hooks_or_creates_jsx_in_expr(&p.value)
-            }
-            ObjectExpressionProperty::SpreadElement(s) => {
+        oxc::Expression::ArrayExpression(arr) => arr.elements.iter().any(|e| match e {
+            oxc::ArrayExpressionElement::SpreadElement(s) => {
                 calls_hooks_or_creates_jsx_in_expr(&s.argument)
             }
-            // ObjectMethod: traverse into its body to find hooks/JSX.
-            // This matches the TS behavior where Babel's traverse enters
-            // ObjectMethod (only FunctionDeclaration, FunctionExpression,
-            // and ArrowFunctionExpression are skipped).
-            ObjectExpressionProperty::ObjectMethod(m) => {
-                calls_hooks_or_creates_jsx_in_stmts(&m.body.body)
+            oxc::ArrayExpressionElement::Elision(_) => false,
+            other => other.as_expression().map_or(false, calls_hooks_or_creates_jsx_in_expr),
+        }),
+        oxc::Expression::ObjectExpression(obj) => obj.properties.iter().any(|prop| match prop {
+            oxc::ObjectPropertyKind::SpreadProperty(s) => {
+                calls_hooks_or_creates_jsx_in_expr(&s.argument)
+            }
+            // Object methods (`{ foo() {} }`, getters/setters): Babel modeled these
+            // as `ObjectMethod` and traversed their body statements. Regular
+            // properties traverse their value (nested functions are skipped).
+            oxc::ObjectPropertyKind::ObjectProperty(p) => {
+                if p.method || matches!(p.kind, oxc::PropertyKind::Get | oxc::PropertyKind::Set) {
+                    if let oxc::Expression::FunctionExpression(func) = &p.value {
+                        if let Some(body) = &func.body {
+                            return calls_hooks_or_creates_jsx_in_stmts(&body.statements);
+                        }
+                    }
+                    false
+                } else {
+                    calls_hooks_or_creates_jsx_in_expr(&p.value)
+                }
             }
         }),
-        Expression::ParenthesizedExpression(paren) => {
+        oxc::Expression::ParenthesizedExpression(paren) => {
             calls_hooks_or_creates_jsx_in_expr(&paren.expression)
         }
-        Expression::TSAsExpression(ts) => calls_hooks_or_creates_jsx_in_expr(&ts.expression),
-        Expression::TSSatisfiesExpression(ts) => calls_hooks_or_creates_jsx_in_expr(&ts.expression),
-        Expression::TSNonNullExpression(ts) => calls_hooks_or_creates_jsx_in_expr(&ts.expression),
-        Expression::TSTypeAssertion(ts) => calls_hooks_or_creates_jsx_in_expr(&ts.expression),
-        Expression::TSInstantiationExpression(ts) => {
+        oxc::Expression::TSAsExpression(ts) => calls_hooks_or_creates_jsx_in_expr(&ts.expression),
+        oxc::Expression::TSSatisfiesExpression(ts) => {
             calls_hooks_or_creates_jsx_in_expr(&ts.expression)
         }
-        Expression::TypeCastExpression(tc) => calls_hooks_or_creates_jsx_in_expr(&tc.expression),
-        Expression::NewExpression(new) => {
+        oxc::Expression::TSNonNullExpression(ts) => {
+            calls_hooks_or_creates_jsx_in_expr(&ts.expression)
+        }
+        oxc::Expression::TSTypeAssertion(ts) => calls_hooks_or_creates_jsx_in_expr(&ts.expression),
+        oxc::Expression::TSInstantiationExpression(ts) => {
+            calls_hooks_or_creates_jsx_in_expr(&ts.expression)
+        }
+        oxc::Expression::NewExpression(new) => {
             if calls_hooks_or_creates_jsx_in_expr(&new.callee) {
                 return true;
             }
             new.arguments.iter().any(|a| {
-                if matches!(
-                    a,
-                    Expression::ArrowFunctionExpression(_) | Expression::FunctionExpression(_)
-                ) {
-                    return false;
+                if let Some(a) = a.as_expression() {
+                    if is_nested_fn(a) {
+                        return false;
+                    }
+                    calls_hooks_or_creates_jsx_in_expr(a)
+                } else if let oxc::Argument::SpreadElement(s) = a {
+                    calls_hooks_or_creates_jsx_in_expr(&s.argument)
+                } else {
+                    false
                 }
-                calls_hooks_or_creates_jsx_in_expr(a)
             })
         }
 
-        // Skip nested functions
-        Expression::ArrowFunctionExpression(_) | Expression::FunctionExpression(_) => false,
-
-        // Recurse into class body to find JSX/hooks in methods
-        Expression::ClassExpression(class) => calls_hooks_or_creates_jsx_in_class_body(&class.body),
-
-        // Leaf expressions
+        // Nested functions are skipped; class expressions carried no extracted
+        // hook/JSX metadata in the Babel bridge (always `false`). Leaf expressions
+        // fall through to `false`.
         _ => false,
     }
 }
 
-/// Recursively search a ClassBody for JSX elements or hook calls.
-/// Class body members are stored as serde_json::Value since they aren't fully typed.
-/// We search the JSON tree, skipping nested function nodes (matching TS behavior where
-/// Babel's traverse skips ArrowFunctionExpression, FunctionExpression, FunctionDeclaration
-/// but recurses into class methods).
-fn calls_hooks_or_creates_jsx_in_class_body(
-    body: &crate::react_compiler_ast::expressions::ClassBody,
-) -> bool {
-    body.body.iter().any(|member| member.contains_hook_or_jsx)
+/// Search a `ChainElement` (`a?.b`, `a?.()`, ...) for hook calls / JSX, mirroring
+/// the Babel `Optional{Member,Call}Expression` traversal. Optional calls never
+/// count as hooks, but their callee/args are searched.
+fn calls_hooks_or_creates_jsx_in_chain_element(element: &oxc::ChainElement) -> bool {
+    match element {
+        oxc::ChainElement::CallExpression(call) => {
+            if is_regular_call(call) && expr_is_hook(&call.callee) {
+                return true;
+            }
+            if calls_hooks_or_creates_jsx_in_expr(&call.callee) {
+                return true;
+            }
+            call.arguments.iter().any(|arg| {
+                if let Some(arg) = arg.as_expression() {
+                    !matches!(
+                        arg,
+                        oxc::Expression::ArrowFunctionExpression(_)
+                            | oxc::Expression::FunctionExpression(_)
+                    ) && calls_hooks_or_creates_jsx_in_expr(arg)
+                } else if let oxc::Argument::SpreadElement(s) = arg {
+                    calls_hooks_or_creates_jsx_in_expr(&s.argument)
+                } else {
+                    false
+                }
+            })
+        }
+        oxc::ChainElement::StaticMemberExpression(m) => {
+            calls_hooks_or_creates_jsx_in_expr(&m.object)
+        }
+        oxc::ChainElement::ComputedMemberExpression(m) => {
+            calls_hooks_or_creates_jsx_in_expr(&m.object)
+                || calls_hooks_or_creates_jsx_in_expr(&m.expression)
+        }
+        oxc::ChainElement::PrivateFieldExpression(m) => {
+            calls_hooks_or_creates_jsx_in_expr(&m.object)
+        }
+        oxc::ChainElement::TSNonNullExpression(t) => {
+            calls_hooks_or_creates_jsx_in_expr(&t.expression)
+        }
+    }
+}
+
+/// Search a member expression (object side) for hook calls / JSX.
+fn calls_hooks_or_creates_jsx_in_member(member: &oxc::MemberExpression) -> bool {
+    match member {
+        oxc::MemberExpression::StaticMemberExpression(m) => {
+            calls_hooks_or_creates_jsx_in_expr(&m.object)
+        }
+        oxc::MemberExpression::ComputedMemberExpression(m) => {
+            calls_hooks_or_creates_jsx_in_expr(&m.object)
+                || calls_hooks_or_creates_jsx_in_expr(&m.expression)
+        }
+        oxc::MemberExpression::PrivateFieldExpression(m) => {
+            calls_hooks_or_creates_jsx_in_expr(&m.object)
+        }
+    }
 }
 
 /// Check if a function body calls hooks or creates JSX.
-fn calls_hooks_or_creates_jsx(params: &[PatternLike], body: &FunctionBody) -> bool {
+fn calls_hooks_or_creates_jsx(params: &oxc::FormalParameters, body: &FunctionBody) -> bool {
     // Check default param values (TS traverses the whole function node including params)
     if calls_hooks_or_creates_jsx_in_params(params) {
         return true;
     }
     match body {
-        FunctionBody::Block(block) => calls_hooks_or_creates_jsx_in_stmts(&block.body),
+        FunctionBody::Block(block) => calls_hooks_or_creates_jsx_in_stmts(&block.statements),
         FunctionBody::Expression(expr) => calls_hooks_or_creates_jsx_in_expr(expr),
     }
 }
 
 /// Check if any parameter default values contain hooks or JSX.
-fn calls_hooks_or_creates_jsx_in_params(params: &[PatternLike]) -> bool {
-    for param in params {
-        if calls_hooks_or_creates_jsx_in_pattern(param) {
+///
+/// Babel traversed the whole function node including params; default values live
+/// on `FormalParameter.initializer`, and the binding pattern may itself contain
+/// nested defaults.
+fn calls_hooks_or_creates_jsx_in_params(params: &oxc::FormalParameters) -> bool {
+    for param in &params.items {
+        if let Some(init) = &param.initializer {
+            if calls_hooks_or_creates_jsx_in_expr(init) {
+                return true;
+            }
+        }
+        if calls_hooks_or_creates_jsx_in_binding(&param.pattern) {
+            return true;
+        }
+    }
+    if let Some(rest) = &params.rest {
+        if calls_hooks_or_creates_jsx_in_binding(&rest.rest.argument) {
             return true;
         }
     }
     false
 }
 
-fn calls_hooks_or_creates_jsx_in_pattern(pattern: &PatternLike) -> bool {
+fn calls_hooks_or_creates_jsx_in_binding(pattern: &oxc::BindingPattern) -> bool {
     match pattern {
-        PatternLike::AssignmentPattern(assign) => {
-            // Check the default value expression
-            calls_hooks_or_creates_jsx_in_expr(&assign.right)
-                || calls_hooks_or_creates_jsx_in_pattern(&assign.left)
+        oxc::BindingPattern::BindingIdentifier(_) => false,
+        oxc::BindingPattern::ObjectPattern(obj) => {
+            obj.properties.iter().any(|p| calls_hooks_or_creates_jsx_in_binding(&p.value))
+                || obj
+                    .rest
+                    .as_ref()
+                    .map_or(false, |r| calls_hooks_or_creates_jsx_in_binding(&r.argument))
         }
-        PatternLike::ObjectPattern(obj) => obj.properties.iter().any(|prop| match prop {
-            crate::react_compiler_ast::patterns::ObjectPatternProperty::ObjectProperty(p) => {
-                calls_hooks_or_creates_jsx_in_pattern(&p.value)
-            }
-            crate::react_compiler_ast::patterns::ObjectPatternProperty::RestElement(rest) => {
-                calls_hooks_or_creates_jsx_in_pattern(&rest.argument)
-            }
-        }),
-        PatternLike::ArrayPattern(arr) => arr
-            .elements
-            .iter()
-            .any(|elem| elem.as_ref().map_or(false, |e| calls_hooks_or_creates_jsx_in_pattern(e))),
-        PatternLike::RestElement(rest) => calls_hooks_or_creates_jsx_in_pattern(&rest.argument),
-        PatternLike::Identifier(_)
-        | PatternLike::MemberExpression(_)
-        | PatternLike::TSAsExpression(_)
-        | PatternLike::TSSatisfiesExpression(_)
-        | PatternLike::TSNonNullExpression(_)
-        | PatternLike::TSTypeAssertion(_)
-        | PatternLike::TypeCastExpression(_) => false,
+        oxc::BindingPattern::ArrayPattern(arr) => {
+            arr.elements
+                .iter()
+                .any(|e| e.as_ref().map_or(false, calls_hooks_or_creates_jsx_in_binding))
+                || arr
+                    .rest
+                    .as_ref()
+                    .map_or(false, |r| calls_hooks_or_creates_jsx_in_binding(&r.argument))
+        }
+        oxc::BindingPattern::AssignmentPattern(assign) => {
+            calls_hooks_or_creates_jsx_in_expr(&assign.right)
+                || calls_hooks_or_creates_jsx_in_binding(&assign.left)
+        }
     }
+}
+
+/// Check if a parameter's type annotation is valid for a React component prop.
+/// Returns false for primitive type annotations that indicate this is NOT a component.
+fn is_valid_props_annotation(type_annotation: Option<&oxc::TSTypeAnnotation>) -> bool {
+    let Some(annotation) = type_annotation else {
+        return true; // No annotation = valid
+    };
+    // Mirrors the Babel-bridge `babel_ts_type_name` of the param's annotation; the
+    // disallowed TS keyword/type set. (Flow types never appear in the oxc AST.)
+    !matches!(
+        &annotation.type_annotation,
+        oxc::TSType::TSArrayType(_)
+            | oxc::TSType::TSBigIntKeyword(_)
+            | oxc::TSType::TSBooleanKeyword(_)
+            | oxc::TSType::TSConstructorType(_)
+            | oxc::TSType::TSFunctionType(_)
+            | oxc::TSType::TSLiteralType(_)
+            | oxc::TSType::TSNeverKeyword(_)
+            | oxc::TSType::TSNumberKeyword(_)
+            | oxc::TSType::TSStringKeyword(_)
+            | oxc::TSType::TSSymbolKeyword(_)
+            | oxc::TSType::TSTupleType(_)
+    )
 }
 
 /// Check if the function parameters are valid for a React component.
 /// Components can have 0 params, 1 param (props), or 2 params (props + ref).
-/// Check if a parameter's type annotation is valid for a React component prop.
-/// Returns false for primitive type annotations that indicate this is NOT a component.
-fn is_valid_props_annotation(param: &PatternLike) -> bool {
-    let type_annotation = match param {
-        PatternLike::Identifier(id) => id.type_annotation.as_ref(),
-        PatternLike::ObjectPattern(op) => op.type_annotation.as_ref(),
-        PatternLike::ArrayPattern(ap) => ap.type_annotation.as_ref(),
-        PatternLike::AssignmentPattern(ap) => ap.type_annotation.as_ref(),
-        PatternLike::RestElement(re) => re.type_annotation.as_ref(),
-        PatternLike::MemberExpression(_)
-        | PatternLike::TSAsExpression(_)
-        | PatternLike::TSSatisfiesExpression(_)
-        | PatternLike::TSNonNullExpression(_)
-        | PatternLike::TSTypeAssertion(_)
-        | PatternLike::TypeCastExpression(_) => None,
-    };
-    let Some(raw) = type_annotation else {
-        return true; // No annotation = valid
-    };
-    // `node_type` is the pre-extracted, unwrapped inner type tag. The TS and Flow
-    // disallowed type names are disjoint, so one membership test covers both.
-    let Some(inner_type) = raw.node_type.as_deref() else {
-        return true;
-    };
-    !matches!(
-        inner_type,
-        // TS
-        "TSArrayType"
-            | "TSBigIntKeyword"
-            | "TSBooleanKeyword"
-            | "TSConstructorType"
-            | "TSFunctionType"
-            | "TSLiteralType"
-            | "TSNeverKeyword"
-            | "TSNumberKeyword"
-            | "TSStringKeyword"
-            | "TSSymbolKeyword"
-            | "TSTupleType"
-            // Flow
-            | "ArrayTypeAnnotation"
-            | "BooleanLiteralTypeAnnotation"
-            | "BooleanTypeAnnotation"
-            | "EmptyTypeAnnotation"
-            | "FunctionTypeAnnotation"
-            | "NullLiteralTypeAnnotation"
-            | "NumberLiteralTypeAnnotation"
-            | "NumberTypeAnnotation"
-            | "StringLiteralTypeAnnotation"
-            | "StringTypeAnnotation"
-            | "SymbolTypeAnnotation"
-            | "ThisTypeAnnotation"
-            | "TupleTypeAnnotation"
-    )
-}
-
-fn is_valid_component_params(params: &[PatternLike]) -> bool {
-    if params.is_empty() {
+///
+/// The Babel reference treated the rest parameter as a trailing `RestElement` in
+/// the flat params list; in oxc the rest lives in `params.rest`. So the logical
+/// param count is `items.len() + rest.is_some()`.
+fn is_valid_component_params(params: &oxc::FormalParameters) -> bool {
+    let logical_len = params.items.len() + usize::from(params.rest.is_some());
+    if logical_len == 0 {
         return true;
     }
-    if params.len() > 2 {
+    if logical_len > 2 {
         return false;
     }
-    // First param cannot be a rest element
-    if matches!(params[0], PatternLike::RestElement(_)) {
+    // First param cannot be a rest element. If there are no `items`, the only param
+    // is the rest -> invalid.
+    let Some(first) = params.items.first() else {
+        return false;
+    };
+    // Check type annotation on first param.
+    if !is_valid_props_annotation(first.type_annotation.as_deref()) {
         return false;
     }
-    // Check type annotation on first param
-    if !is_valid_props_annotation(&params[0]) {
-        return false;
-    }
-    if params.len() == 1 {
+    if logical_len == 1 {
         return true;
     }
-    // If second param exists, it should look like a ref
-    if let PatternLike::Identifier(ref id) = params[1] {
-        id.name.contains("ref") || id.name.contains("Ref")
-    } else {
-        false
+    // Second param: either a second `item` or the rest. The rest is not an
+    // identifier, so it never looks like a ref.
+    match params.items.get(1) {
+        Some(second) => match &second.pattern {
+            oxc::BindingPattern::BindingIdentifier(id) => {
+                id.name.contains("ref") || id.name.contains("Ref")
+            }
+            _ => false,
+        },
+        None => false,
     }
 }
 
@@ -905,8 +980,8 @@ fn is_valid_component_params(params: &[PatternLike]) -> bool {
 
 /// Abstraction over function body types to simplify traversal code
 enum FunctionBody<'a> {
-    Block(&'a BlockStatement),
-    Expression(&'a Expression),
+    Block(&'a oxc::FunctionBody<'a>),
+    Expression(&'a oxc::Expression<'a>),
 }
 
 // -----------------------------------------------------------------------
@@ -919,9 +994,9 @@ enum FunctionBody<'a> {
 /// This is the Rust equivalent of `getReactFunctionType` in Program.ts.
 fn get_react_function_type(
     name: Option<&str>,
-    params: &[PatternLike],
+    params: &oxc::FormalParameters,
     body: &FunctionBody,
-    body_directives: &[Directive],
+    body_directives: &[String],
     is_declaration: bool,
     parent_callee_name: Option<&str>,
     opts: &PluginOptions,
@@ -984,7 +1059,7 @@ fn get_react_function_type(
 /// https://github.com/facebook/react/blob/main/packages/eslint-plugin-react-hooks/src/RulesOfHooks.js
 fn get_component_or_hook_like(
     name: Option<&str>,
-    params: &[PatternLike],
+    params: &oxc::FormalParameters,
     body: &FunctionBody,
     parent_callee_name: Option<&str>,
 ) -> Option<ReactFunctionType> {
@@ -1021,53 +1096,27 @@ fn get_component_or_hook_like(
 
 /// Extract the callee name from a CallExpression if it's a React API call
 /// (forwardRef, memo, React.forwardRef, React.memo).
-fn get_callee_name_if_react_api(callee: &Expression) -> Option<&str> {
+fn get_callee_name_if_react_api<'e>(callee: &'e oxc::Expression) -> Option<&'e str> {
     match callee {
-        Expression::Identifier(id) => {
+        oxc::Expression::Identifier(id) => {
             if id.name == "forwardRef" || id.name == "memo" {
-                Some(&id.name)
+                Some(id.name.as_str())
             } else {
                 None
             }
         }
-        Expression::MemberExpression(member) => {
-            if let Expression::Identifier(obj) = member.object.as_ref() {
-                if obj.name == "React" {
-                    if let Expression::Identifier(prop) = member.property.as_ref() {
-                        if prop.name == "forwardRef" || prop.name == "memo" {
-                            return Some(&prop.name);
-                        }
-                    }
+        oxc::Expression::StaticMemberExpression(member) => {
+            if let oxc::Expression::Identifier(obj) = &member.object {
+                if obj.name == "React"
+                    && (member.property.name == "forwardRef" || member.property.name == "memo")
+                {
+                    return Some(member.property.name.as_str());
                 }
             }
             None
         }
         _ => None,
     }
-}
-
-// -----------------------------------------------------------------------
-// SourceLocation conversion
-// -----------------------------------------------------------------------
-
-/// Convert an AST SourceLocation to a diagnostics SourceLocation
-fn convert_loc(loc: &crate::react_compiler_ast::common::SourceLocation) -> SourceLocation {
-    SourceLocation {
-        start: crate::react_compiler_diagnostics::Position {
-            line: loc.start.line,
-            column: loc.start.column,
-            index: loc.start.index,
-        },
-        end: crate::react_compiler_diagnostics::Position {
-            line: loc.end.line,
-            column: loc.end.column,
-            index: loc.end.index,
-        },
-    }
-}
-
-fn base_node_loc(base: &BaseNode) -> Option<SourceLocation> {
-    base.loc.as_ref().map(convert_loc)
 }
 
 // -----------------------------------------------------------------------
@@ -1350,7 +1399,6 @@ fn try_compile_function<'a>(
     output_mode: CompilerOutputMode,
     env_config: &EnvironmentConfig,
     context: &mut ProgramContext,
-    fn_map: &FxHashMap<u32, FunctionNode<'_>>,
 ) -> Result<CodegenFunction<'a>, CompilerError> {
     // Check for suppressions that affect this function
     if let (Some(start), Some(end)) = (source.fn_start, source.fn_end) {
@@ -1365,14 +1413,11 @@ fn try_compile_function<'a>(
         }
     }
 
-    // Run the compilation pipeline. The discovery records the function's
-    // node_id; map it back to the oxc FunctionNode for lowering.
-    let fn_node = *fn_map
-        .get(&source.fn_node_id.expect("compiled function has a node id"))
-        .expect("oxc FunctionNode for discovered function");
+    // Run the compilation pipeline directly on the oxc function node discovered
+    // during the program walk.
     pipeline::compile_fn(
         ast,
-        &fn_node,
+        &source.fn_node,
         source.fn_name.as_deref(),
         scope_info,
         source.fn_type,
@@ -1394,7 +1439,6 @@ fn process_fn<'a>(
     output_mode: CompilerOutputMode,
     env_config: &EnvironmentConfig,
     context: &mut ProgramContext,
-    fn_map: &FxHashMap<u32, FunctionNode<'_>>,
 ) -> Result<Option<CodegenFunction<'a>>, CompileResult<'a>> {
     // Parse directives from the function body
     let opt_in_result =
@@ -1415,7 +1459,7 @@ fn process_fn<'a>(
 
     // Attempt compilation
     let compile_result =
-        try_compile_function(ast, source, scope_info, output_mode, env_config, context, fn_map);
+        try_compile_function(ast, source, scope_info, output_mode, env_config, context);
 
     match compile_result {
         Err(err) => {
@@ -1445,13 +1489,15 @@ fn process_fn<'a>(
         Ok(codegen_fn) => {
             // Check opt-out
             if !context.opts.ignore_use_no_forget && opt_out.is_some() {
-                let opt_out_value = &opt_out.unwrap().value.value;
+                let opt_out_value = opt_out.unwrap();
                 let source_filename =
                     source.fn_ast_loc.as_ref().and_then(|loc| loc.filename.as_deref());
                 context.log_event(LoggerEvent::CompileSkip {
                     fn_loc: to_logger_loc(source.fn_ast_loc.as_ref(), source_filename),
-                    reason: format!("Skipped due to '{}' directive.", opt_out_value),
-                    loc: opt_out.and_then(|d| to_logger_loc(d.base.loc.as_ref(), source_filename)),
+                    reason: format!("Skipped due to '{opt_out_value}' directive."),
+                    // The directive's own source location only fed logger events,
+                    // which the example front-end discards.
+                    loc: None,
                 });
                 // The function is skipped due to opt-out. Do NOT register the memo
                 // cache import here — it will be registered in apply_compiled_functions()
@@ -1498,18 +1544,23 @@ fn process_fn<'a>(
 
 /// Check if the program already has a `c` import from the React Compiler runtime module.
 /// If so, the file was already compiled and should be skipped.
-fn has_memo_cache_function_import(program: &Program, module_name: &str) -> bool {
+fn has_memo_cache_function_import(program: &oxc::Program, module_name: &str) -> bool {
     for stmt in &program.body {
-        if let Statement::ImportDeclaration(import) = stmt {
+        if let oxc::Statement::ImportDeclaration(import) = stmt {
             if import.source.value == module_name {
-                for specifier in &import.specifiers {
-                    if let ImportSpecifier::ImportSpecifier(data) = specifier {
-                        let imported_name = match &data.imported {
-                            ModuleExportName::Identifier(id) => Some(id.name.as_str()),
-                            ModuleExportName::StringLiteral(s) => s.value.as_str(),
-                        };
-                        if imported_name == Some("c") {
-                            return true;
+                if let Some(specifiers) = &import.specifiers {
+                    for specifier in specifiers {
+                        if let oxc::ImportDeclarationSpecifier::ImportSpecifier(data) = specifier {
+                            let imported_name = match &data.imported {
+                                oxc::ModuleExportName::IdentifierName(id) => Some(id.name.as_str()),
+                                oxc::ModuleExportName::IdentifierReference(id) => {
+                                    Some(id.name.as_str())
+                                }
+                                oxc::ModuleExportName::StringLiteral(s) => Some(s.value.as_str()),
+                            };
+                            if imported_name == Some("c") {
+                                return true;
+                            }
                         }
                     }
                 }
@@ -1520,7 +1571,7 @@ fn has_memo_cache_function_import(program: &Program, module_name: &str) -> bool 
 }
 
 /// Check if compilation should be skipped for this program.
-fn should_skip_compilation(program: &Program, options: &PluginOptions) -> bool {
+fn should_skip_compilation(program: &oxc::Program, options: &PluginOptions) -> bool {
     let runtime_module = get_react_compiler_runtime_module(&options.target);
     has_memo_cache_function_import(program, &runtime_module)
 }
@@ -1529,361 +1580,715 @@ fn should_skip_compilation(program: &Program, options: &PluginOptions) -> bool {
 // Function discovery
 // -----------------------------------------------------------------------
 
-/// Information about an expression that might be a function to compile
-struct FunctionInfo<'a> {
+/// Collect the directive value strings of a function body (for opt-in/opt-out
+/// checks). Matches the Babel-bridge directive values (`d.expression.value`).
+fn body_directive_values(body: &oxc::FunctionBody) -> Vec<String> {
+    body.directives.iter().map(|d| d.expression.value.to_string()).collect()
+}
+
+/// Try to create a `CompileSource` from a discovered oxc function node.
+///
+/// `fn_node` is the oxc function node, `span` its byte range (`span.start` is the
+/// node id), `name` the inferred function name, `original_kind` the syntactic kind,
+/// and `parent_callee_name` the enclosing forwardRef/memo callee (if any).
+fn try_make_compile_source<'a>(
+    fn_node: FunctionNode<'a>,
     name: Option<String>,
     original_kind: OriginalFnKind,
-    params: &'a [PatternLike],
-    body: FunctionBody<'a>,
-    body_directives: Vec<Directive>,
-    base: &'a BaseNode,
     parent_callee_name: Option<String>,
-    /// True if the node has `__componentDeclaration` set by the Hermes parser (Flow component syntax)
-    is_component_declaration: bool,
-    /// True if the node has `__hookDeclaration` set by the Hermes parser (Flow hook syntax)
-    is_hook_declaration: bool,
-}
-
-/// Extract function info from a FunctionDeclaration
-fn fn_info_from_decl(decl: &FunctionDeclaration) -> FunctionInfo<'_> {
-    FunctionInfo {
-        name: get_function_name_from_id(decl.id.as_ref()),
-        original_kind: OriginalFnKind::FunctionDeclaration,
-        params: &decl.params,
-        body: FunctionBody::Block(&decl.body),
-        body_directives: decl.body.directives.clone(),
-        base: &decl.base,
-        parent_callee_name: None,
-        is_component_declaration: decl.component_declaration,
-        is_hook_declaration: decl.hook_declaration,
-    }
-}
-
-/// Extract function info from a FunctionExpression
-fn fn_info_from_func_expr<'a>(
-    expr: &'a FunctionExpression,
-    inferred_name: Option<String>,
-    parent_callee_name: Option<String>,
-) -> FunctionInfo<'a> {
-    FunctionInfo {
-        name: inferred_name,
-        original_kind: OriginalFnKind::FunctionExpression,
-        params: &expr.params,
-        body: FunctionBody::Block(&expr.body),
-        body_directives: expr.body.directives.clone(),
-        base: &expr.base,
-        parent_callee_name,
-        is_component_declaration: false,
-        is_hook_declaration: false,
-    }
-}
-
-/// Extract function info from an ArrowFunctionExpression
-fn fn_info_from_arrow<'a>(
-    expr: &'a ArrowFunctionExpression,
-    inferred_name: Option<String>,
-    parent_callee_name: Option<String>,
-) -> FunctionInfo<'a> {
-    let (body, directives) = match expr.body.as_ref() {
-        ArrowFunctionBody::BlockStatement(block) => {
-            (FunctionBody::Block(block), block.directives.clone())
-        }
-        ArrowFunctionBody::Expression(e) => (FunctionBody::Expression(e), Vec::new()),
-    };
-    FunctionInfo {
-        name: inferred_name,
-        original_kind: OriginalFnKind::ArrowFunctionExpression,
-        params: &expr.params,
-        body,
-        body_directives: directives,
-        base: &expr.base,
-        parent_callee_name,
-        is_component_declaration: false,
-        is_hook_declaration: false,
-    }
-}
-
-/// Try to create a CompileSource from function info
-fn try_make_compile_source<'a>(
-    info: FunctionInfo<'a>,
     opts: &PluginOptions,
     context: &mut ProgramContext,
-) -> Option<CompileSource> {
-    // Skip if already compiled (identified by node_id)
-    if let Some(nid) = info.base.node_id {
-        if context.is_already_compiled(nid) {
-            return None;
+) -> Option<CompileSource<'a>> {
+    let (params, body, span, body_directives) = match fn_node {
+        FunctionNode::Function(f) => {
+            // Bodyless functions (`declare function`, overload signatures,
+            // `TSDeclareFunction`) are never compiled; Babel modeled these as
+            // separate, non-traversed statement kinds.
+            let block = f.body.as_deref()?;
+            (&f.params, FunctionBody::Block(block), f.span, body_directive_values(block))
         }
+        FunctionNode::Arrow(a) => {
+            let (body, directives) = if a.expression {
+                // Expression-bodied arrow: the single body statement is an
+                // `ExpressionStatement` wrapping the expression.
+                let expr = a.get_expression().expect("expression-bodied arrow has an expression");
+                (FunctionBody::Expression(expr), Vec::new())
+            } else {
+                (FunctionBody::Block(&a.body), body_directive_values(&a.body))
+            };
+            (&a.params, body, a.span, directives)
+        }
+    };
+
+    let node_id = span.start;
+
+    // Skip if already compiled (identified by node_id).
+    if context.is_already_compiled(node_id) {
+        return None;
     }
 
     let fn_type = get_react_function_type(
-        info.name.as_deref(),
-        info.params,
-        &info.body,
-        &info.body_directives,
-        info.is_component_declaration || info.is_hook_declaration,
-        info.parent_callee_name.as_deref(),
+        name.as_deref(),
+        params,
+        &body,
+        &body_directives,
+        // Flow `component`/`hook` declaration syntax never appears in the oxc AST.
+        false,
+        parent_callee_name.as_deref(),
         opts,
-        info.is_component_declaration,
-        info.is_hook_declaration,
+        false,
+        false,
     )?;
 
-    // Mark as compiled
-    if let Some(nid) = info.base.node_id {
-        context.mark_compiled(nid);
-    }
+    context.mark_compiled(node_id);
 
     Some(CompileSource {
         kind: CompileSourceKind::Original,
-        original_kind: info.original_kind,
-        fn_name: info.name,
-        fn_loc: base_node_loc(info.base),
-        fn_ast_loc: info.base.loc.clone(),
-        fn_start: info.base.start,
-        fn_end: info.base.end,
-        fn_node_id: info.base.node_id,
+        original_kind,
+        fn_name: name,
+        // The function source location flows into compile-error diagnostics as the
+        // fallback labeled span (offset/length). Only the byte `index` is
+        // load-bearing; line/column/filename never reach the example's output.
+        fn_ast_loc: Some(crate::react_compiler_ast::common::SourceLocation {
+            start: crate::react_compiler_ast::common::Position {
+                line: 0,
+                column: 0,
+                index: Some(span.start),
+            },
+            end: crate::react_compiler_ast::common::Position {
+                line: 0,
+                column: 0,
+                index: Some(span.end),
+            },
+            filename: None,
+            identifier_name: None,
+        }),
+        fn_start: Some(span.start),
+        fn_end: Some(span.end),
+        fn_node_id: Some(node_id),
         fn_type,
-        body_directives: info.body_directives,
+        fn_node,
+        body_directives,
     })
 }
 
-/// Get the variable declarator name (for inferring function names from `const Foo = () => {}`)
-fn get_declarator_name(decl: &VariableDeclarator) -> Option<String> {
+/// Get the variable declarator name (for inferring function names from
+/// `const Foo = () => {}`).
+fn get_declarator_name(decl: &oxc::VariableDeclarator) -> Option<String> {
     match &decl.id {
-        PatternLike::Identifier(id) => Some(id.name.clone()),
+        oxc::BindingPattern::BindingIdentifier(id) => Some(id.name.to_string()),
         _ => None,
     }
 }
 
 // -----------------------------------------------------------------------
-// FunctionDiscoveryVisitor — uses AstWalker to find compilable functions
+// Discovery walker
 // -----------------------------------------------------------------------
 
-/// Visitor that discovers functions to compile, matching the TypeScript
-/// compiler's Babel `program.traverse` behavior.
+/// Walks the oxc `Program` to find compilable functions, mirroring the
+/// TypeScript compiler's Babel `program.traverse` behavior one-for-one.
 ///
-/// Dynamically controls body traversal via `traverse_function_bodies()`:
-/// functions that are queued for compilation have their bodies skipped
-/// (matching Babel's `fn.skip()`), while non-compiled functions have their
-/// bodies traversed to find nested component/hook declarations.
+/// Replicates the former Babel `AstWalker` + `FunctionDiscoveryVisitor`:
+/// - scope tracking via `ScopeInfo` (`node_id_to_scope`, keyed by `span.start`);
+/// - `loop_expression_depth` for loop test/right positions (while.test,
+///   do-while.test, for-in.right, for-of.right), which Babel treats as
+///   non-program-scope in 'all' mode;
+/// - parent context: `current_declarator_name` for `const Foo = () => {}` and
+///   `parent_callee_stack` for forwardRef/memo wrappers;
+/// - in 'all' mode, rejects functions whose scope depth `> 2` (program +
+///   function) or that sit in a loop expression position.
 ///
-/// Tracks parent context via:
-/// - `current_declarator_name`: set by `enter_variable_declarator`, used to
-///   infer function names from `const Foo = () => {}`.
-/// - `parent_callee_stack`: set by `enter_call_expression`, used to detect
-///   forwardRef/memo wrappers around function expressions.
-///
-/// In 'all' mode, uses `scope_stack.len() > 1` to reject functions that are
-/// not at program scope. The walker pushes the program scope first, then
-/// nested scopes for for/switch/etc. — so `len() > 1` means the function
-/// is inside a nested scope (not at program level), matching Babel's
-/// `fn.scope.getProgramParent() !== fn.scope.parent` check.
-struct FunctionDiscoveryVisitor<'a> {
+/// Compiled functions have their bodies skipped (Babel's `fn.skip()`); other
+/// functions are descended to find nested component/hook declarations. Classes
+/// are entered only structurally (their bodies carry no compilable functions for
+/// discovery — matching the Babel bridge, which extracted no metadata for them).
+struct DiscoveryWalker<'a, 'ast> {
+    scope_info: &'a ScopeInfo,
     opts: &'a PluginOptions,
     context: &'a mut ProgramContext,
-    queue: Vec<CompileSource>,
-    /// The inferred name from the current VariableDeclarator, if any.
-    current_declarator_name: Option<String>,
-    /// Stack tracking callee names of enclosing CallExpressions.
-    /// `Some(name)` when the callee is a React API (forwardRef/memo),
-    /// `None` for other calls.
-    parent_callee_stack: Vec<Option<String>>,
-    /// Depth counter for loop expression positions (while.test, for-in.right, etc.).
-    /// When > 0, functions are treated as non-program-scope in 'all' mode.
+    queue: Vec<CompileSource<'ast>>,
+    scope_stack: Vec<ScopeId>,
     loop_expression_depth: usize,
-    /// Set by enter_* hooks: true when the function was queued for compilation,
-    /// meaning the walker should NOT traverse its body (matching Babel's fn.skip()).
-    /// When false, the walker DOES traverse the body to find nested declarations.
-    skip_body: bool,
+    current_declarator_name: Option<String>,
+    parent_callee_stack: Vec<Option<String>>,
 }
 
-impl<'a> FunctionDiscoveryVisitor<'a> {
-    fn new(opts: &'a PluginOptions, context: &'a mut ProgramContext) -> Self {
+impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
+    fn new(
+        scope_info: &'a ScopeInfo,
+        opts: &'a PluginOptions,
+        context: &'a mut ProgramContext,
+    ) -> Self {
         Self {
+            scope_info,
             opts,
             context,
             queue: Vec::new(),
+            scope_stack: Vec::new(),
+            loop_expression_depth: 0,
             current_declarator_name: None,
             parent_callee_stack: Vec::new(),
-            loop_expression_depth: 0,
-            skip_body: false,
         }
     }
 
-    /// Check if in 'all' mode and the function is inside a nested scope.
-    /// The walker pushes the function's own scope BEFORE calling enter hooks,
-    /// so scope_stack = [program, ...parents, function_scope]. A top-level
-    /// function has len=2 (program + function). Anything deeper means it's
-    /// inside a nested scope (for/switch/etc.) and should be rejected.
-    /// Also rejects functions found in loop expression positions (while.test,
-    /// for-in.right, etc.) where Babel treats the scope as non-program.
-    fn is_rejected_by_scope_check(&self, scope_stack: &[ScopeId]) -> bool {
-        self.opts.compilation_mode == "all"
-            && (scope_stack.len() > 2 || self.loop_expression_depth > 0)
+    /// Try to push the scope a node creates. Returns whether one was pushed.
+    fn try_push_scope(&mut self, span: Span) -> bool {
+        if let Some(scope_id) = self.scope_info.resolve_scope_for_node(Some(span.start)) {
+            self.scope_stack.push(scope_id);
+            true
+        } else {
+            false
+        }
     }
 
-    /// Get the current parent callee name (forwardRef/memo) if any.
+    /// In 'all' mode, reject functions that are not at program scope. The
+    /// function's own scope is on the stack, so a top-level function has
+    /// `len == 2` (program + function); deeper means a nested scope.
+    fn is_rejected_by_scope_check(&self) -> bool {
+        self.opts.compilation_mode == "all"
+            && (self.scope_stack.len() > 2 || self.loop_expression_depth > 0)
+    }
+
     fn current_parent_callee(&self) -> Option<String> {
         self.parent_callee_stack.last().and_then(|opt| opt.clone())
     }
-}
 
-impl<'a, 'ast> Visitor<'ast> for FunctionDiscoveryVisitor<'a> {
-    fn traverse_function_bodies(&self) -> bool {
-        // Dynamic: only skip the body of functions that were queued for compilation.
-        // Non-queued functions have their bodies traversed to find nested declarations
-        // (matching Babel behavior where fn.skip() is only called for compiled functions).
-        !self.skip_body
+    fn walk_program(&mut self, program: &'ast oxc::Program<'ast>) {
+        let pushed = self.try_push_scope(program.span);
+        for stmt in &program.body {
+            self.walk_statement(stmt);
+        }
+        if pushed {
+            self.scope_stack.pop();
+        }
     }
 
-    fn enter_loop_expression(&mut self) {
-        self.loop_expression_depth += 1;
+    fn walk_block(&mut self, block: &'ast oxc::BlockStatement<'ast>) {
+        let pushed = self.try_push_scope(block.span);
+        for stmt in &block.body {
+            self.walk_statement(stmt);
+        }
+        if pushed {
+            self.scope_stack.pop();
+        }
     }
 
-    fn leave_loop_expression(&mut self) {
-        self.loop_expression_depth -= 1;
+    fn walk_function_body_block(&mut self, body: &'ast oxc::FunctionBody<'ast>) {
+        // A function body BlockStatement shares the function's scope in the Babel
+        // model and never gets its own scope entry, so do not push a scope here.
+        for stmt in &body.statements {
+            self.walk_statement(stmt);
+        }
     }
 
-    fn enter_variable_declarator(
-        &mut self,
-        node: &'ast VariableDeclarator,
-        _scope_stack: &[ScopeId],
-    ) {
-        // Only infer the declarator name when the init is a direct function
-        // expression, arrow, or call expression (for forwardRef/memo wrappers).
-        // TS checks `path.parentPath.isVariableDeclarator()` which only matches
-        // when the function IS the init, not when it's nested inside an object,
-        // array, or other expression.
-        if let Some(ref init) = node.init {
-            match init.as_ref() {
-                Expression::FunctionExpression(_)
-                | Expression::ArrowFunctionExpression(_)
-                | Expression::CallExpression(_) => {
-                    self.current_declarator_name = get_declarator_name(node);
+    fn walk_statement(&mut self, stmt: &'ast oxc::Statement<'ast>) {
+        match stmt {
+            oxc::Statement::BlockStatement(node) => self.walk_block(node),
+            oxc::Statement::ReturnStatement(node) => {
+                if let Some(arg) = &node.argument {
+                    self.walk_expression(arg);
                 }
-                _ => {}
+            }
+            oxc::Statement::ExpressionStatement(node) => self.walk_expression(&node.expression),
+            oxc::Statement::IfStatement(node) => {
+                self.walk_expression(&node.test);
+                self.walk_statement(&node.consequent);
+                if let Some(alt) = &node.alternate {
+                    self.walk_statement(alt);
+                }
+            }
+            oxc::Statement::ForStatement(node) => {
+                let pushed = self.try_push_scope(node.span);
+                if let Some(init) = &node.init {
+                    match init {
+                        oxc::ForStatementInit::VariableDeclaration(decl) => {
+                            self.walk_variable_declaration(decl);
+                        }
+                        expr => {
+                            if let Some(expr) = expr.as_expression() {
+                                self.walk_expression(expr);
+                            }
+                        }
+                    }
+                }
+                if let Some(test) = &node.test {
+                    self.walk_expression(test);
+                }
+                if let Some(update) = &node.update {
+                    self.walk_expression(update);
+                }
+                self.walk_statement(&node.body);
+                if pushed {
+                    self.scope_stack.pop();
+                }
+            }
+            oxc::Statement::WhileStatement(node) => {
+                self.loop_expression_depth += 1;
+                self.walk_expression(&node.test);
+                self.loop_expression_depth -= 1;
+                self.walk_statement(&node.body);
+            }
+            oxc::Statement::DoWhileStatement(node) => {
+                self.walk_statement(&node.body);
+                self.loop_expression_depth += 1;
+                self.walk_expression(&node.test);
+                self.loop_expression_depth -= 1;
+            }
+            oxc::Statement::ForInStatement(node) => {
+                let pushed = self.try_push_scope(node.span);
+                self.walk_for_left(&node.left);
+                self.loop_expression_depth += 1;
+                self.walk_expression(&node.right);
+                self.loop_expression_depth -= 1;
+                self.walk_statement(&node.body);
+                if pushed {
+                    self.scope_stack.pop();
+                }
+            }
+            oxc::Statement::ForOfStatement(node) => {
+                let pushed = self.try_push_scope(node.span);
+                self.walk_for_left(&node.left);
+                self.loop_expression_depth += 1;
+                self.walk_expression(&node.right);
+                self.loop_expression_depth -= 1;
+                self.walk_statement(&node.body);
+                if pushed {
+                    self.scope_stack.pop();
+                }
+            }
+            oxc::Statement::SwitchStatement(node) => {
+                let pushed = self.try_push_scope(node.span);
+                self.walk_expression(&node.discriminant);
+                for case in &node.cases {
+                    if let Some(test) = &case.test {
+                        self.walk_expression(test);
+                    }
+                    for consequent in &case.consequent {
+                        self.walk_statement(consequent);
+                    }
+                }
+                if pushed {
+                    self.scope_stack.pop();
+                }
+            }
+            oxc::Statement::ThrowStatement(node) => self.walk_expression(&node.argument),
+            oxc::Statement::TryStatement(node) => {
+                self.walk_block(&node.block);
+                if let Some(handler) = &node.handler {
+                    let pushed = self.try_push_scope(handler.span);
+                    self.walk_block(&handler.body);
+                    if pushed {
+                        self.scope_stack.pop();
+                    }
+                }
+                if let Some(finalizer) = &node.finalizer {
+                    self.walk_block(finalizer);
+                }
+            }
+            oxc::Statement::LabeledStatement(node) => self.walk_statement(&node.body),
+            oxc::Statement::VariableDeclaration(node) => self.walk_variable_declaration(node),
+            oxc::Statement::FunctionDeclaration(node) => self.walk_function(node, None),
+            oxc::Statement::WithStatement(node) => {
+                self.walk_expression(&node.object);
+                self.walk_statement(&node.body);
+            }
+            oxc::Statement::ExportNamedDeclaration(node) => {
+                if let Some(decl) = &node.declaration {
+                    self.walk_declaration(decl);
+                }
+            }
+            oxc::Statement::ExportDefaultDeclaration(node) => {
+                self.walk_export_default(&node.declaration);
+            }
+            // Classes are not descended into (their bodies hold no functions for
+            // discovery); all remaining statements (TS-only declarations, imports,
+            // break/continue, etc.) carry no compilable functions.
+            _ => {}
+        }
+    }
+
+    fn walk_for_left(&mut self, left: &'ast oxc::ForStatementLeft<'ast>) {
+        if let oxc::ForStatementLeft::VariableDeclaration(decl) = left {
+            self.walk_variable_declaration(decl);
+        }
+        // Assignment-target lefts contain no functions to discover.
+    }
+
+    fn walk_variable_declaration(&mut self, decl: &'ast oxc::VariableDeclaration<'ast>) {
+        for declarator in &decl.declarations {
+            // Only infer the declarator name when the init is a direct function
+            // expression, arrow, or call expression (for forwardRef/memo wrappers).
+            if let Some(init) = &declarator.init {
+                if matches!(
+                    init,
+                    oxc::Expression::FunctionExpression(_)
+                        | oxc::Expression::ArrowFunctionExpression(_)
+                        | oxc::Expression::CallExpression(_)
+                ) {
+                    self.current_declarator_name = get_declarator_name(declarator);
+                }
+                self.walk_expression(init);
+            }
+            self.current_declarator_name = None;
+        }
+    }
+
+    fn walk_declaration(&mut self, decl: &'ast oxc::Declaration<'ast>) {
+        match decl {
+            oxc::Declaration::FunctionDeclaration(node) => self.walk_function(node, None),
+            oxc::Declaration::VariableDeclaration(node) => self.walk_variable_declaration(node),
+            // TS-only declarations have no runtime expressions / functions.
+            _ => {}
+        }
+    }
+
+    fn walk_export_default(&mut self, decl: &'ast oxc::ExportDefaultDeclarationKind<'ast>) {
+        match decl {
+            oxc::ExportDefaultDeclarationKind::FunctionDeclaration(node) => {
+                self.walk_function(node, None)
+            }
+            other => {
+                if let Some(expr) = other.as_expression() {
+                    self.walk_expression(expr);
+                }
             }
         }
     }
 
-    fn leave_variable_declarator(
+    /// Walk an oxc `Function` node (declaration or expression). `inferred_name`,
+    /// when `Some`, supplies the name from the enclosing variable declarator (for
+    /// function expressions); `None` means use the function's own id.
+    fn walk_function(&mut self, func: &'ast oxc::Function<'ast>, inferred_name: Option<String>) {
+        let pushed = self.try_push_scope(func.span);
+
+        let original_kind = match func.r#type {
+            oxc::FunctionType::FunctionDeclaration | oxc::FunctionType::TSDeclareFunction => {
+                OriginalFnKind::FunctionDeclaration
+            }
+            _ => OriginalFnKind::FunctionExpression,
+        };
+
+        let skip_body = if self.is_rejected_by_scope_check() {
+            false
+        } else {
+            // TS `getFunctionName` for FunctionDeclaration uses the node's own id;
+            // for FunctionExpression it uses only the parent context (declarator).
+            let name = match original_kind {
+                OriginalFnKind::FunctionDeclaration => get_function_name_from_id(func.id.as_ref()),
+                _ => inferred_name,
+            };
+            let parent_callee = self.current_parent_callee();
+            if let Some(source) = try_make_compile_source(
+                FunctionNode::Function(func),
+                name,
+                original_kind,
+                parent_callee,
+                self.opts,
+                self.context,
+            ) {
+                self.queue.push(source);
+                true
+            } else {
+                false
+            }
+        };
+
+        if !skip_body {
+            // Babel `fn.skip()` is only called for compiled functions; other
+            // functions are descended to find nested declarations.
+            if let Some(body) = &func.body {
+                self.walk_function_body_block(body);
+            }
+        }
+
+        if pushed {
+            self.scope_stack.pop();
+        }
+    }
+
+    fn walk_arrow(
         &mut self,
-        _node: &'ast VariableDeclarator,
-        _scope_stack: &[ScopeId],
+        arrow: &'ast oxc::ArrowFunctionExpression<'ast>,
+        inferred_name: Option<String>,
     ) {
-        self.current_declarator_name = None;
-    }
+        let pushed = self.try_push_scope(arrow.span);
 
-    fn enter_call_expression(&mut self, node: &'ast CallExpression, _scope_stack: &[ScopeId]) {
-        let callee_name = get_callee_name_if_react_api(&node.callee).map(|s| s.to_string());
-        // In TS, the declarator name only flows through forwardRef/memo calls
-        // (path.parentPath.isCallExpression() checks the callee). For any other
-        // call expression, clear the name so nested functions don't inherit it.
-        if callee_name.is_none() {
-            self.current_declarator_name = None;
-        }
-        self.parent_callee_stack.push(callee_name);
-    }
+        let skip_body = if self.is_rejected_by_scope_check() {
+            false
+        } else {
+            let parent_callee = self.current_parent_callee();
+            if let Some(source) = try_make_compile_source(
+                FunctionNode::Arrow(arrow),
+                inferred_name,
+                OriginalFnKind::ArrowFunctionExpression,
+                parent_callee,
+                self.opts,
+                self.context,
+            ) {
+                self.queue.push(source);
+                true
+            } else {
+                false
+            }
+        };
 
-    fn leave_call_expression(&mut self, _node: &'ast CallExpression, _scope_stack: &[ScopeId]) {
-        let was_react_api = self.parent_callee_stack.pop().and_then(|name| name).is_some();
-        // After a forwardRef/memo call finishes, clear the declarator name.
-        // The name is only valid within the call's arguments — if a function
-        // inside consumed it via .take(), great; if not, it shouldn't leak
-        // to sibling or subsequent expressions.
-        if was_react_api {
-            self.current_declarator_name = None;
+        if !skip_body {
+            for stmt in &arrow.body.statements {
+                self.walk_statement(stmt);
+            }
         }
-    }
 
-    fn enter_function_declaration(
-        &mut self,
-        node: &'ast FunctionDeclaration,
-        scope_stack: &[ScopeId],
-    ) {
-        self.skip_body = false;
-        if self.is_rejected_by_scope_check(scope_stack) {
-            return;
-        }
-        let info = fn_info_from_decl(node);
-        if let Some(source) = try_make_compile_source(info, self.opts, self.context) {
-            self.queue.push(source);
-            self.skip_body = true;
+        if pushed {
+            self.scope_stack.pop();
         }
     }
 
-    fn enter_function_expression(
-        &mut self,
-        node: &'ast FunctionExpression,
-        scope_stack: &[ScopeId],
-    ) {
-        self.skip_body = false;
-        if self.is_rejected_by_scope_check(scope_stack) {
-            return;
-        }
-        // TS getFunctionName for FunctionExpressions only returns names from parent
-        // context (VariableDeclarator, AssignmentExpression, Property) — never from
-        // the expression's own `id`. So we only use current_declarator_name here.
-        let inferred_name = self.current_declarator_name.take();
-        let parent_callee = self.current_parent_callee();
-        let info = fn_info_from_func_expr(node, inferred_name, parent_callee);
-        if let Some(source) = try_make_compile_source(info, self.opts, self.context) {
-            self.queue.push(source);
-            self.skip_body = true;
+    fn walk_expression(&mut self, expr: &'ast oxc::Expression<'ast>) {
+        match expr {
+            oxc::Expression::FunctionExpression(node) => {
+                // The declarator name flows into the function expression and is
+                // consumed here (so siblings don't inherit it).
+                let name = self.current_declarator_name.take();
+                self.walk_function(node, name);
+            }
+            oxc::Expression::ArrowFunctionExpression(node) => {
+                let name = self.current_declarator_name.take();
+                self.walk_arrow(node, name);
+            }
+            oxc::Expression::CallExpression(node) => {
+                let callee_name = get_callee_name_if_react_api(&node.callee).map(|s| s.to_string());
+                // The declarator name only flows through forwardRef/memo calls; for
+                // any other call, clear it so nested functions don't inherit it.
+                if callee_name.is_none() {
+                    self.current_declarator_name = None;
+                }
+                self.parent_callee_stack.push(callee_name);
+                self.walk_expression(&node.callee);
+                for arg in &node.arguments {
+                    self.walk_argument(arg);
+                }
+                let was_react_api = self.parent_callee_stack.pop().flatten().is_some();
+                if was_react_api {
+                    self.current_declarator_name = None;
+                }
+            }
+            oxc::Expression::ChainExpression(node) => self.walk_chain_element(&node.expression),
+            oxc::Expression::StaticMemberExpression(node) => self.walk_expression(&node.object),
+            oxc::Expression::ComputedMemberExpression(node) => {
+                self.walk_expression(&node.object);
+                self.walk_expression(&node.expression);
+            }
+            oxc::Expression::PrivateFieldExpression(node) => self.walk_expression(&node.object),
+            oxc::Expression::BinaryExpression(node) => {
+                self.walk_expression(&node.left);
+                self.walk_expression(&node.right);
+            }
+            oxc::Expression::LogicalExpression(node) => {
+                self.walk_expression(&node.left);
+                self.walk_expression(&node.right);
+            }
+            oxc::Expression::UnaryExpression(node) => self.walk_expression(&node.argument),
+            oxc::Expression::UpdateExpression(node) => {
+                if let Some(member) = node.argument.as_member_expression() {
+                    self.walk_member_expression(member);
+                }
+            }
+            oxc::Expression::ConditionalExpression(node) => {
+                self.walk_expression(&node.test);
+                self.walk_expression(&node.consequent);
+                self.walk_expression(&node.alternate);
+            }
+            oxc::Expression::AssignmentExpression(node) => self.walk_expression(&node.right),
+            oxc::Expression::SequenceExpression(node) => {
+                for e in &node.expressions {
+                    self.walk_expression(e);
+                }
+            }
+            oxc::Expression::ObjectExpression(node) => {
+                for prop in &node.properties {
+                    self.walk_object_property(prop);
+                }
+            }
+            oxc::Expression::ArrayExpression(node) => {
+                for el in &node.elements {
+                    match el {
+                        oxc::ArrayExpressionElement::SpreadElement(s) => {
+                            self.walk_expression(&s.argument)
+                        }
+                        oxc::ArrayExpressionElement::Elision(_) => {}
+                        other => {
+                            if let Some(e) = other.as_expression() {
+                                self.walk_expression(e);
+                            }
+                        }
+                    }
+                }
+            }
+            oxc::Expression::NewExpression(node) => {
+                self.walk_expression(&node.callee);
+                for arg in &node.arguments {
+                    self.walk_argument(arg);
+                }
+            }
+            oxc::Expression::TemplateLiteral(node) => {
+                for e in &node.expressions {
+                    self.walk_expression(e);
+                }
+            }
+            oxc::Expression::TaggedTemplateExpression(node) => {
+                self.walk_expression(&node.tag);
+                for e in &node.quasi.expressions {
+                    self.walk_expression(e);
+                }
+            }
+            oxc::Expression::AwaitExpression(node) => self.walk_expression(&node.argument),
+            oxc::Expression::YieldExpression(node) => {
+                if let Some(arg) = &node.argument {
+                    self.walk_expression(arg);
+                }
+            }
+            oxc::Expression::ParenthesizedExpression(node) => {
+                self.walk_expression(&node.expression)
+            }
+            oxc::Expression::JSXElement(node) => self.walk_jsx_element(node),
+            oxc::Expression::JSXFragment(node) => self.walk_jsx_children(&node.children),
+            oxc::Expression::TSAsExpression(node) => self.walk_expression(&node.expression),
+            oxc::Expression::TSSatisfiesExpression(node) => self.walk_expression(&node.expression),
+            oxc::Expression::TSNonNullExpression(node) => self.walk_expression(&node.expression),
+            oxc::Expression::TSTypeAssertion(node) => self.walk_expression(&node.expression),
+            oxc::Expression::TSInstantiationExpression(node) => {
+                self.walk_expression(&node.expression)
+            }
+            // ClassExpression bodies and leaf expressions are not descended.
+            _ => {}
         }
     }
 
-    fn enter_arrow_function_expression(
-        &mut self,
-        node: &'ast ArrowFunctionExpression,
-        scope_stack: &[ScopeId],
-    ) {
-        self.skip_body = false;
-        if self.is_rejected_by_scope_check(scope_stack) {
-            return;
-        }
-        let inferred_name = self.current_declarator_name.take();
-        let parent_callee = self.current_parent_callee();
-        let info = fn_info_from_arrow(node, inferred_name, parent_callee);
-        if let Some(source) = try_make_compile_source(info, self.opts, self.context) {
-            self.queue.push(source);
-            self.skip_body = true;
+    fn walk_argument(&mut self, arg: &'ast oxc::Argument<'ast>) {
+        if let Some(expr) = arg.as_expression() {
+            self.walk_expression(expr);
+        } else if let oxc::Argument::SpreadElement(s) = arg {
+            self.walk_expression(&s.argument);
         }
     }
 
-    fn enter_object_method(
-        &mut self,
-        _node: &'ast crate::react_compiler_ast::expressions::ObjectMethod,
-        _scope_stack: &[ScopeId],
-    ) {
-        self.skip_body = false;
+    fn walk_member_expression(&mut self, member: &'ast oxc::MemberExpression<'ast>) {
+        match member {
+            oxc::MemberExpression::StaticMemberExpression(m) => self.walk_expression(&m.object),
+            oxc::MemberExpression::ComputedMemberExpression(m) => {
+                self.walk_expression(&m.object);
+                self.walk_expression(&m.expression);
+            }
+            oxc::MemberExpression::PrivateFieldExpression(m) => self.walk_expression(&m.object),
+        }
+    }
+
+    fn walk_chain_element(&mut self, element: &'ast oxc::ChainElement<'ast>) {
+        match element {
+            oxc::ChainElement::CallExpression(node) => {
+                self.walk_expression(&node.callee);
+                for arg in &node.arguments {
+                    self.walk_argument(arg);
+                }
+            }
+            oxc::ChainElement::StaticMemberExpression(m) => self.walk_expression(&m.object),
+            oxc::ChainElement::ComputedMemberExpression(m) => {
+                self.walk_expression(&m.object);
+                self.walk_expression(&m.expression);
+            }
+            oxc::ChainElement::PrivateFieldExpression(m) => self.walk_expression(&m.object),
+            oxc::ChainElement::TSNonNullExpression(t) => self.walk_expression(&t.expression),
+        }
+    }
+
+    fn walk_object_property(&mut self, prop: &'ast oxc::ObjectPropertyKind<'ast>) {
+        match prop {
+            oxc::ObjectPropertyKind::SpreadProperty(s) => self.walk_expression(&s.argument),
+            oxc::ObjectPropertyKind::ObjectProperty(p) => {
+                if p.computed {
+                    self.walk_property_key(&p.key);
+                }
+                // Object methods (`{ foo() {} }`, getters/setters): Babel modeled
+                // these as `ObjectMethod` and walked the body without queuing the
+                // method itself; the body is the value FunctionExpression's body.
+                let is_method =
+                    p.method || matches!(p.kind, oxc::PropertyKind::Get | oxc::PropertyKind::Set);
+                if is_method {
+                    if let oxc::Expression::FunctionExpression(func) = &p.value {
+                        let pushed = self.try_push_scope(func.span);
+                        if let Some(body) = &func.body {
+                            self.walk_function_body_block(body);
+                        }
+                        if pushed {
+                            self.scope_stack.pop();
+                        }
+                    }
+                } else {
+                    self.walk_expression(&p.value);
+                }
+            }
+        }
+    }
+
+    fn walk_property_key(&mut self, key: &'ast oxc::PropertyKey<'ast>) {
+        if let Some(expr) = key.as_expression() {
+            self.walk_expression(expr);
+        }
+    }
+
+    fn walk_jsx_element(&mut self, node: &'ast oxc::JSXElement<'ast>) {
+        for attr in &node.opening_element.attributes {
+            match attr {
+                oxc::JSXAttributeItem::Attribute(a) => {
+                    if let Some(value) = &a.value {
+                        match value {
+                            oxc::JSXAttributeValue::ExpressionContainer(c) => {
+                                self.walk_jsx_container(c)
+                            }
+                            oxc::JSXAttributeValue::Element(el) => self.walk_jsx_element(el),
+                            oxc::JSXAttributeValue::Fragment(f) => {
+                                self.walk_jsx_children(&f.children)
+                            }
+                            oxc::JSXAttributeValue::StringLiteral(_) => {}
+                        }
+                    }
+                }
+                oxc::JSXAttributeItem::SpreadAttribute(a) => self.walk_expression(&a.argument),
+            }
+        }
+        self.walk_jsx_children(&node.children);
+    }
+
+    fn walk_jsx_children(&mut self, children: &'ast oxc_allocator::Vec<'ast, oxc::JSXChild<'ast>>) {
+        for child in children {
+            match child {
+                oxc::JSXChild::Element(el) => self.walk_jsx_element(el),
+                oxc::JSXChild::Fragment(f) => self.walk_jsx_children(&f.children),
+                oxc::JSXChild::ExpressionContainer(c) => self.walk_jsx_container(c),
+                oxc::JSXChild::Spread(s) => self.walk_expression(&s.expression),
+                oxc::JSXChild::Text(_) => {}
+            }
+        }
+    }
+
+    fn walk_jsx_container(&mut self, container: &'ast oxc::JSXExpressionContainer<'ast>) {
+        if let Some(expr) = container.expression.as_expression() {
+            self.walk_expression(expr);
+        }
     }
 }
 
-/// Find all functions in the program that should be compiled.
-///
-/// Uses the `AstWalker` with a `FunctionDiscoveryVisitor` to traverse
-/// the entire program, discovering functions at any depth. The visitor
-/// dynamically controls body traversal: compiled functions have their
-/// bodies skipped (matching Babel's `fn.skip()`), while non-compiled
-/// functions have their bodies traversed to find nested declarations.
-///
-/// The visitor tracks parent context (VariableDeclarator names for
-/// `const Foo = () => {}`, CallExpression callees for forwardRef/memo
-/// wrappers) via enter/leave hooks.
-///
-/// Skips classes and their contents (the walker does not recurse into
-/// class bodies).
-fn find_functions_to_compile<'a>(
-    program: &'a Program,
+/// Find all functions in the program that should be compiled by walking the oxc
+/// `Program` directly. See [`DiscoveryWalker`] for the traversal semantics.
+fn find_functions_to_compile<'ast>(
+    program: &'ast oxc::Program<'ast>,
     opts: &PluginOptions,
     context: &mut ProgramContext,
     scope: &ScopeInfo,
-) -> Vec<CompileSource> {
-    let mut visitor = FunctionDiscoveryVisitor::new(opts, context);
-    let mut walker = AstWalker::new(scope);
-    walker.walk_program(&mut visitor, program);
-    visitor.queue
+) -> Vec<CompileSource<'ast>> {
+    let mut walker = DiscoveryWalker::new(scope, opts, context);
+    walker.walk_program(program);
+    walker.queue
 }
 
 // -----------------------------------------------------------------------
@@ -1893,12 +2298,12 @@ fn find_functions_to_compile<'a>(
 /// A successfully compiled function, ready to be applied to the AST.
 ///
 /// `'a` is the arena lifetime of the compiled oxc nodes; `'s` borrows the
-/// discovery's `CompileSource`.
-struct CompiledFunction<'a, 's> {
+/// discovery's `CompileSource`, itself parameterized by the program-borrow `'p`.
+struct CompiledFunction<'a, 'p, 's> {
     #[allow(dead_code)]
     kind: CompileSourceKind,
     #[allow(dead_code)]
-    source: &'s CompileSource,
+    source: &'s CompileSource<'p>,
     #[allow(dead_code)]
     codegen_fn: CodegenFunction<'a>,
 }
@@ -2662,13 +3067,11 @@ fn ox_is_non_namespaced_import(import: &oxc_ast::ast::ImportDeclaration) -> bool
 /// - findFunctionsToCompile: traverse program to find components and hooks
 /// - processFn: per-function compilation with directive and suppression handling
 /// - applyCompiledFunctions: replace original functions with compiled versions
-pub fn compile_program<'a>(
+pub fn compile_program<'a, 'p>(
     ast: &oxc_ast::AstBuilder<'a>,
-    oxc_program: &oxc_ast::ast::Program<'a>,
-    file: File,
+    oxc_program: &'p oxc_ast::ast::Program<'a>,
     scope: ScopeInfo,
     options: PluginOptions,
-    fn_map: &FxHashMap<u32, FunctionNode<'_>>,
 ) -> CompileResult<'a> {
     // Compute output mode once, up front
     let output_mode = CompilerOutputMode::from_opts(&options);
@@ -2695,7 +3098,7 @@ pub fn compile_program<'a>(
         };
     }
 
-    let program = &file.program;
+    let program = oxc_program;
 
     // Check for existing runtime imports (file already compiled)
     if should_skip_compilation(program, &options) {
@@ -2727,14 +3130,17 @@ pub fn compile_program<'a>(
 
     // Find program-level suppressions from comments
     let suppressions = find_program_suppressions(
-        &file.comments,
+        &program.comments,
+        program.source_text,
         eslint_rules.as_deref(),
         options.flow_suppressions,
     );
 
     // Check for module-scope opt-out directive
+    let module_directives: Vec<String> =
+        program.directives.iter().map(|d| d.expression.value.to_string()).collect();
     let has_module_scope_opt_out =
-        find_directive_disabling_memoization(&program.directives, &options).is_some();
+        find_directive_disabling_memoization(&module_directives, &options).is_some();
 
     // Create program context
     let mut context = ProgramContext::new(
@@ -2746,29 +3152,10 @@ pub fn compile_program<'a>(
         has_module_scope_opt_out,
     );
 
-    // Extract the source filename from the AST (set by parser's sourceFilename option).
-    // This is the bare filename (e.g., "foo.ts") without path prefixes, which the TS
-    // compiler uses in logger event source locations.
-    let source_filename =
-        program.base.loc.as_ref().and_then(|loc| loc.filename.clone()).or_else(|| {
-            // Fallback: try the first statement's loc
-            program.body.first().and_then(|stmt| {
-                let base = match stmt {
-                    crate::react_compiler_ast::statements::Statement::ExpressionStatement(s) => {
-                        &s.base
-                    }
-                    crate::react_compiler_ast::statements::Statement::VariableDeclaration(s) => {
-                        &s.base
-                    }
-                    crate::react_compiler_ast::statements::Statement::FunctionDeclaration(s) => {
-                        &s.base
-                    }
-                    _ => return None,
-                };
-                base.loc.as_ref().and_then(|loc| loc.filename.clone())
-            })
-        });
-    context.set_source_filename(source_filename);
+    // The source filename only fed logger event source locations. The oxc AST
+    // carries no per-node filename (the Babel bridge set it to `None` too), so
+    // leave it unset; it never affects compiled output or diagnostics.
+    context.set_source_filename(None);
 
     // Initialize known referenced names from scope bindings for UID collision detection
     context.init_from_scope(&scope);
@@ -2836,10 +3223,10 @@ pub fn compile_program<'a>(
     let env_config = options.environment.clone();
 
     // Process each function and collect compiled results
-    let mut compiled_fns: Vec<CompiledFunction<'_, '_>> = Vec::new();
+    let mut compiled_fns: Vec<CompiledFunction<'_, '_, '_>> = Vec::new();
 
     for source in &queue {
-        match process_fn(ast, source, &scope, output_mode, &env_config, &mut context, fn_map) {
+        match process_fn(ast, source, &scope, output_mode, &env_config, &mut context) {
             Ok(Some(codegen_fn)) => {
                 compiled_fns.push(CompiledFunction { kind: source.kind, source, codegen_fn });
             }
@@ -3000,82 +3387,74 @@ mod tests {
         assert!(!is_valid_identifier("foo bar"));
     }
 
+    /// Build an `oxc::FormalParameters` of plain identifier params from names,
+    /// for the component-param validity tests.
+    fn ident_params<'a>(
+        ast: &oxc_ast::AstBuilder<'a>,
+        names: &[&str],
+    ) -> oxc_ast::ast::FormalParameters<'a> {
+        use oxc_span::SPAN;
+        let mut items = ast.vec();
+        for name in names {
+            let name = ox_atom(ast, name);
+            let pattern = ast.binding_pattern_binding_identifier(SPAN, name);
+            items.push(ast.formal_parameter(
+                SPAN,
+                ast.vec(),
+                pattern,
+                None::<oxc_allocator::Box<oxc_ast::ast::TSTypeAnnotation>>,
+                None::<oxc_ast::ast::Expression>,
+                false,
+                None,
+                false,
+                false,
+            ));
+        }
+        ast.formal_parameters(
+            SPAN,
+            oxc_ast::ast::FormalParameterKind::FormalParameter,
+            items,
+            None::<oxc_allocator::Box<oxc_ast::ast::FormalParameterRest>>,
+        )
+    }
+
     #[test]
     fn test_is_valid_component_params_empty() {
-        assert!(is_valid_component_params(&[]));
+        let allocator = oxc_allocator::Allocator::default();
+        let ast = oxc_ast::AstBuilder::new(&allocator);
+        assert!(is_valid_component_params(&ident_params(&ast, &[])));
     }
 
     #[test]
     fn test_is_valid_component_params_one_identifier() {
-        let params = vec![PatternLike::Identifier(Identifier {
-            base: BaseNode::default(),
-            name: "props".to_string(),
-            type_annotation: None,
-            optional: None,
-            decorators: None,
-        })];
-        assert!(is_valid_component_params(&params));
+        let allocator = oxc_allocator::Allocator::default();
+        let ast = oxc_ast::AstBuilder::new(&allocator);
+        assert!(is_valid_component_params(&ident_params(&ast, &["props"])));
     }
 
     #[test]
     fn test_is_valid_component_params_too_many() {
-        let params = vec![
-            PatternLike::Identifier(Identifier {
-                base: BaseNode::default(),
-                name: "a".to_string(),
-                type_annotation: None,
-                optional: None,
-                decorators: None,
-            }),
-            PatternLike::Identifier(Identifier {
-                base: BaseNode::default(),
-                name: "b".to_string(),
-                type_annotation: None,
-                optional: None,
-                decorators: None,
-            }),
-            PatternLike::Identifier(Identifier {
-                base: BaseNode::default(),
-                name: "c".to_string(),
-                type_annotation: None,
-                optional: None,
-                decorators: None,
-            }),
-        ];
-        assert!(!is_valid_component_params(&params));
+        let allocator = oxc_allocator::Allocator::default();
+        let ast = oxc_ast::AstBuilder::new(&allocator);
+        assert!(!is_valid_component_params(&ident_params(&ast, &["a", "b", "c"])));
     }
 
     #[test]
     fn test_is_valid_component_params_with_ref() {
-        let params = vec![
-            PatternLike::Identifier(Identifier {
-                base: BaseNode::default(),
-                name: "props".to_string(),
-                type_annotation: None,
-                optional: None,
-                decorators: None,
-            }),
-            PatternLike::Identifier(Identifier {
-                base: BaseNode::default(),
-                name: "ref".to_string(),
-                type_annotation: None,
-                optional: None,
-                decorators: None,
-            }),
-        ];
-        assert!(is_valid_component_params(&params));
+        let allocator = oxc_allocator::Allocator::default();
+        let ast = oxc_ast::AstBuilder::new(&allocator);
+        assert!(is_valid_component_params(&ident_params(&ast, &["props", "ref"])));
     }
 
     #[test]
     fn test_should_skip_compilation_no_import() {
-        let program = Program {
-            base: BaseNode::default(),
-            body: vec![],
-            directives: vec![],
-            source_type: crate::react_compiler_ast::SourceType::Module,
-            interpreter: None,
-            source_file: None,
-        };
+        let allocator = oxc_allocator::Allocator::default();
+        let parsed = oxc_parser::Parser::new(
+            &allocator,
+            "function Component() {}\n",
+            oxc_span::SourceType::tsx(),
+        )
+        .parse();
         let options = PluginOptions {
             should_compile: true,
             enable_reanimated: false,
@@ -3097,6 +3476,6 @@ mod tests {
             profiling: false,
             debug: false,
         };
-        assert!(!should_skip_compilation(&program, &options));
+        assert!(!should_skip_compilation(&parsed.program, &options));
     }
 }

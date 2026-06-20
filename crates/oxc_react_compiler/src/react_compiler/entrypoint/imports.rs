@@ -19,9 +19,7 @@ use crate::react_compiler_ast::statements::{
     Statement, VariableDeclaration, VariableDeclarationKind, VariableDeclarator,
 };
 use crate::react_compiler_ast::{Program, SourceType};
-use crate::react_compiler_diagnostics::{
-    CompilerError, CompilerErrorDetail, ErrorCategory, Position, SourceLocation,
-};
+use crate::react_compiler_diagnostics::{CompilerError, CompilerErrorDetail, ErrorCategory};
 use crate::scope::ScopeInfo;
 
 use super::compile_result::{DebugLogEntry, LoggerEvent, OrderedLogItem};
@@ -265,7 +263,7 @@ impl ProgramContext {
 /// Check for blocklisted import modules.
 /// Returns a CompilerError if any blocklisted imports are found.
 pub fn validate_restricted_imports(
-    program: &Program,
+    program: &oxc_ast::ast::Program,
     blocklisted: &Option<Vec<String>>,
 ) -> Option<CompilerError> {
     let blocklisted = match blocklisted {
@@ -276,25 +274,13 @@ pub fn validate_restricted_imports(
     let mut error = CompilerError::new();
 
     for stmt in &program.body {
-        if let Statement::ImportDeclaration(import) = stmt {
-            if import.source.value.as_str().is_some_and(|v| restricted.contains(v)) {
-                let mut detail = CompilerErrorDetail::new(
+        if let oxc_ast::ast::Statement::ImportDeclaration(import) = stmt {
+            if restricted.contains(import.source.value.as_str()) {
+                let detail = CompilerErrorDetail::new(
                     ErrorCategory::Todo,
                     "Bailing out due to blocklisted import",
                 )
                 .with_description(format!("Import from module {}", import.source.value));
-                detail.loc = import.base.loc.as_ref().map(|loc| SourceLocation {
-                    start: Position {
-                        line: loc.start.line,
-                        column: loc.start.column,
-                        index: loc.start.index,
-                    },
-                    end: Position {
-                        line: loc.end.line,
-                        column: loc.end.column,
-                        index: loc.end.index,
-                    },
-                });
                 error.push_error_detail(detail);
             }
         }
