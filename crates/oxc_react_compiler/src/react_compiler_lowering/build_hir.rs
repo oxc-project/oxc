@@ -4838,6 +4838,13 @@ fn lower_expression(
         oxc::Expression::TSInstantiationExpression(ts) => {
             lower_expression(builder, &ts.expression)
         }
+        // oxc parses with `preserve_parens: true`, so `(expr)` is a real
+        // `ParenthesizedExpression` node. The original Babel AST never carried
+        // paren nodes (convert_ast stripped them), so unwrap to the inner
+        // expression to reproduce the original HIR.
+        oxc::Expression::ParenthesizedExpression(paren) => {
+            lower_expression(builder, &paren.expression)
+        }
         oxc::Expression::V8IntrinsicExpression(_) => {
             unreachable!(
                 "V8IntrinsicExpression: oxc does not emit this without ParseOptions::allow_v8_intrinsics"
