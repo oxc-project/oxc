@@ -388,6 +388,40 @@ fn ox_str<'a>(ast: &oxc_ast::AstBuilder<'a>, s: &str) -> &'a str {
     oxc_allocator::StringBuilder::from_str_in(s, ast.allocator).into_str()
 }
 
+/// Re-parse a TS type annotation from its original source span (recorded on the
+/// `TypeCastExpression`'s `RawNode` as `type_start`/`type_end`). The lowering only
+/// stores the span, so codegen recovers the actual `TSType` AST by re-parsing the
+/// source slice. Returns `None` if the source / span is unavailable or unparsable.
+fn ox_reparse_ts_type<'a>(
+    cx: &OxcContext<'a, '_>,
+    raw: &crate::react_compiler_ast::common::RawNode,
+) -> Option<oxc::TSType<'a>> {
+    let source = cx.env.code.as_deref()?;
+    let start = raw.type_start? as usize;
+    let end = raw.type_end? as usize;
+    if start >= source.len() || end > source.len() || start >= end {
+        return None;
+    }
+    let slice = &source[start..end];
+    // Wrap the type in a cast so the parser yields a `TSAsExpression` whose
+    // `type_annotation` is exactly the parsed type.
+    let wrapped = oxc_allocator::StringBuilder::from_strs_array_in(
+        ["let __oxc_t = null as ", slice, ";"],
+        cx.ast.allocator,
+    )
+    .into_str();
+    let parsed =
+        oxc_parser::Parser::new(cx.ast.allocator, wrapped, oxc_span::SourceType::tsx()).parse();
+    if parsed.panicked {
+        return None;
+    }
+    let stmt = parsed.program.body.into_iter().next()?;
+    let oxc::Statement::VariableDeclaration(decl) = stmt else { return None };
+    let init = decl.unbox().declarations.into_iter().next()?.init?;
+    let oxc::Expression::TSAsExpression(ts_as) = init else { return None };
+    Some(ts_as.unbox().type_annotation)
+}
+
 /// Build `Symbol.for("<name>")`.
 fn ox_symbol_for<'a>(ast: &oxc_ast::AstBuilder<'a>, name: &str) -> oxc::Expression<'a> {
     let callee = oxc::Expression::from(ast.member_expression_static(
@@ -1890,11 +1924,25 @@ fn ox_codegen_base_instruction_value<'a>(
             let template = ox_template_literal(cx, quasis, exprs);
             Ok(OxValue::Expression(oxc::Expression::TemplateLiteral(cx.ast.alloc(template))))
         }
-        InstructionValue::TypeCastExpression { value, .. } => {
-            // TS-type reparse (`as` / `satisfies` / cast) is deferred to a later
-            // batch; emit the inner expression unwrapped for now.
+        InstructionValue::TypeCastExpression {
+            value, type_annotation_kind, type_annotation, ..
+        } => {
             let expr = ox_codegen_place_to_expression(cx, value)?;
-            Ok(OxValue::Expression(expr))
+            // Recover the TS type from its original source span and re-wrap the
+            // inner expression, matching the baseline output. If the type can't be
+            // recovered, fall back to the unwrapped expression.
+            let wrapped = match (type_annotation_kind.as_deref(), type_annotation) {
+                (Some("satisfies"), Some(ta)) => match ox_reparse_ts_type(cx, ta) {
+                    Some(ty) => cx.ast.expression_ts_satisfies(SPAN, expr, ty),
+                    None => expr,
+                },
+                (Some("as"), Some(ta)) => match ox_reparse_ts_type(cx, ta) {
+                    Some(ty) => cx.ast.expression_ts_as(SPAN, expr, ty),
+                    None => expr,
+                },
+                _ => expr,
+            };
+            Ok(OxValue::Expression(wrapped))
         }
         InstructionValue::JSXText { value, .. } => {
             Ok(OxValue::JsxText(cx.ast.alloc_jsx_text(SPAN, ox_str(&cx.ast, value), None)))
