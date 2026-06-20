@@ -176,6 +176,25 @@ fn dot_with_postfix_mixed() {
 }
 
 #[test]
+fn meta_property_not_new_target() {
+    // `new.target` is also a `MetaProperty`, but an `import.meta.*` define must only match
+    // `import.meta`, never `new.target`.
+    let config = config(&[("import.meta.env", "__foo__"), ("import.meta.env.*", "undefined")]);
+    test(
+        "export function f() { return new.target.env; }",
+        "export function f() { return new.target.env; }",
+        &config,
+    );
+    test(
+        "export function f() { return new.target.env.FOO; }",
+        "export function f() { return new.target.env.FOO; }",
+        &config,
+    );
+    // sanity: the same config still rewrites the real `import.meta`
+    test("const _ = import.meta.env", "__foo__", &config);
+}
+
+#[test]
 fn optional_chain() {
     let config = config(&[("a.b.c", "1"), ("process.env", "{}")]);
     test("foo(a.b.c)", "foo(1)", &config);
