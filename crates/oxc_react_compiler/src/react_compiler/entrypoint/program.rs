@@ -2815,6 +2815,26 @@ impl<'a> oxc_ast_visit::VisitMut<'a> for OxcClearPifeVisitor {
     }
 }
 
+/// Re-applies the original JSX-text entity round-trip (decode on parse, encode on
+/// codegen) to every JSXText in the spliced program, so passed-through JSX text is
+/// normalized identically to recompiled JSX (e.g. `&gte;` → `&amp;gte;`).
+struct OxcNormalizeJsxTextVisitor<'a> {
+    ast: oxc_ast::AstBuilder<'a>,
+}
+
+impl<'a> oxc_ast_visit::VisitMut<'a> for OxcNormalizeJsxTextVisitor<'a> {
+    fn visit_jsx_text(&mut self, it: &mut oxc_ast::ast::JSXText<'a>) {
+        let decoded = crate::react_compiler_lowering::build_hir::decode_jsx_entities(
+            it.value.as_str(),
+        );
+        let encoded =
+            crate::react_compiler_reactive_scopes::codegen_reactive_function::ox_encode_jsx_text(
+                &decoded,
+            );
+        it.value = self.ast.str(&encoded);
+    }
+}
+
 fn ox_splice_program<'a>(
     ast: &oxc_ast::AstBuilder<'a>,
     oxc_program: &oxc_ast::ast::Program<'a>,
@@ -2830,6 +2850,15 @@ fn ox_splice_program<'a>(
     // (`(async function(){})()`) the original Babel path never produced. Clear it
     // so codegen parenthesizes by syntactic position only.
     oxc_ast_visit::VisitMut::visit_program(&mut OxcClearPifeVisitor, &mut program);
+    // The original pipeline decoded JSX text entities on parse and re-encoded them
+    // on codegen. The de-Babeled path only does that round-trip for *recompiled*
+    // JSX; passed-through JSX text is left raw, so e.g. `&gte;` is not re-escaped to
+    // `&amp;gte;`. Run the same decode→encode over every JSXText in the spliced
+    // program (idempotent for already-normalized, recompiled text).
+    oxc_ast_visit::VisitMut::visit_program(
+        &mut OxcNormalizeJsxTextVisitor { ast: *ast },
+        &mut program,
+    );
 
     // Outlined function declarations are placed differently depending on the
     // original function's syntactic kind, mirroring `insertNewOutlinedFunctionNode`

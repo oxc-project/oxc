@@ -2650,7 +2650,7 @@ fn ox_string_requires_expr_container(s: &str) -> bool {
     false
 }
 
-fn ox_encode_jsx_text(raw: &str) -> String {
+pub(crate) fn ox_encode_jsx_text(raw: &str) -> String {
     let mut escaped = String::with_capacity(raw.len());
     for ch in raw.chars() {
         match ch {

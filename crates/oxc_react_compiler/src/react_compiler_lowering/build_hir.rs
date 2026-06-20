@@ -6004,7 +6004,7 @@ fn trim_jsx_text(original: &str) -> Option<String> {
 /// Babel's decoded text. oxc keeps JSX text raw in the AST. Mirrors the
 /// `decode_jsx_entities` helper in `convert_ast.rs`. Unrecognized `&…;` sequences
 /// are kept verbatim.
-fn decode_jsx_entities(s: &str) -> String {
+pub(crate) fn decode_jsx_entities(s: &str) -> String {
     if !s.contains('&') {
         return s.to_string();
     }
