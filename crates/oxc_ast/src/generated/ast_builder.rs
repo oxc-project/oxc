@@ -13654,20 +13654,19 @@ impl<'a> AstBuilder<'a> {
     /// * `name`
     /// * `type_annotation`
     #[inline]
-    pub fn ts_index_signature_name<S1, T1>(
+    pub fn ts_index_signature_name<T1>(
         self,
         span: Span,
-        name: S1,
+        name: IdentifierName<'a>,
         type_annotation: T1,
     ) -> TSIndexSignatureName<'a>
     where
-        S1: Into<Str<'a>>,
         T1: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
     {
         TSIndexSignatureName {
             node_id: Default::default(),
             span,
-            name: name.into(),
+            name,
             type_annotation: type_annotation.into_in(self.allocator),
         }
     }

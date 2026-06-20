@@ -1533,12 +1533,12 @@ const _: () = {
     assert!(offset_of!(TSConstructSignatureDeclaration, return_type) == 32);
 
     // Padding: 4 bytes
-    assert!(size_of::<TSIndexSignatureName>() == 40);
+    assert!(size_of::<TSIndexSignatureName>() == 56);
     assert!(align_of::<TSIndexSignatureName>() == 8);
     assert!(offset_of!(TSIndexSignatureName, span) == 0);
     assert!(offset_of!(TSIndexSignatureName, node_id) == 8);
     assert!(offset_of!(TSIndexSignatureName, name) == 16);
-    assert!(offset_of!(TSIndexSignatureName, type_annotation) == 32);
+    assert!(offset_of!(TSIndexSignatureName, type_annotation) == 48);
 
     // Padding: 4 bytes
     assert!(size_of::<TSInterfaceHeritage>() == 40);
@@ -3344,12 +3344,12 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(TSConstructSignatureDeclaration, return_type) == 24);
 
     // Padding: 0 bytes
-    assert!(size_of::<TSIndexSignatureName>() == 24);
+    assert!(size_of::<TSIndexSignatureName>() == 40);
     assert!(align_of::<TSIndexSignatureName>() == 4);
     assert!(offset_of!(TSIndexSignatureName, span) == 0);
     assert!(offset_of!(TSIndexSignatureName, node_id) == 8);
     assert!(offset_of!(TSIndexSignatureName, name) == 12);
-    assert!(offset_of!(TSIndexSignatureName, type_annotation) == 20);
+    assert!(offset_of!(TSIndexSignatureName, type_annotation) == 36);
 
     // Padding: 0 bytes
     assert!(size_of::<TSInterfaceHeritage>() == 24);

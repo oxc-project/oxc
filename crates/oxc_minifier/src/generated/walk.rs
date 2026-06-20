@@ -4924,9 +4924,15 @@ unsafe fn walk_ts_index_signature_name<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_index_signature_name(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSIndexSignatureNameTypeAnnotation(
-        ancestor::TSIndexSignatureNameWithoutTypeAnnotation(node, PhantomData),
+    let pop_token = ctx.push_stack(Ancestor::TSIndexSignatureNameName(
+        ancestor::TSIndexSignatureNameWithoutName(node, PhantomData),
     ));
+    walk_identifier_name(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_INDEX_SIGNATURE_NAME_NAME) as *mut IdentifierName,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::TSIndexSignatureNameTypeAnnotation);
     walk_ts_type_annotation(
         traverser,
         (&mut **((node as *mut u8).add(ancestor::OFFSET_TS_INDEX_SIGNATURE_NAME_TYPE_ANNOTATION)

@@ -206,7 +206,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Vec<'a, TSIndexSignatur
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSIndexSignatureName<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        write!(f, [text_without_whitespace(self.name().as_str()), self.type_annotation()]);
+        write!(f, [text_without_whitespace(self.name().name.as_str()), self.type_annotation()]);
     }
 }
 

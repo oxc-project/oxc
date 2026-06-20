@@ -91,8 +91,7 @@ type Identifier =
   | ESTree.IdentifierReference
   | ESTree.BindingIdentifier
   | ESTree.LabelIdentifier
-  | ESTree.TSThisParameter
-  | ESTree.TSIndexSignatureName;
+  | ESTree.TSThisParameter;
 
 // TS-ESLint `ScopeManager` for current file.
 // Created lazily only when needed.

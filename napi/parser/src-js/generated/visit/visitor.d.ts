@@ -140,8 +140,7 @@ export interface VisitorObject {
       | ESTree.IdentifierReference
       | ESTree.BindingIdentifier
       | ESTree.LabelIdentifier
-      | ESTree.TSThisParameter
-      | ESTree.TSIndexSignatureName,
+      | ESTree.TSThisParameter,
   ) => void;
   "Identifier:exit"?: (
     node:
@@ -149,8 +148,7 @@ export interface VisitorObject {
       | ESTree.IdentifierReference
       | ESTree.BindingIdentifier
       | ESTree.LabelIdentifier
-      | ESTree.TSThisParameter
-      | ESTree.TSIndexSignatureName,
+      | ESTree.TSThisParameter,
   ) => void;
   IfStatement?: (node: ESTree.IfStatement) => void;
   "IfStatement:exit"?: (node: ESTree.IfStatement) => void;

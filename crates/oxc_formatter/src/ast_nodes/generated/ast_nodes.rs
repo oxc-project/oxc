@@ -9285,8 +9285,14 @@ impl<'a> AstNode<'a, TSIndexSignatureName<'a>> {
     }
 
     #[inline]
-    pub fn name(&self) -> Str<'a> {
-        self.inner.name
+    pub fn name(&self) -> &AstNode<'a, IdentifierName<'a>> {
+        let following_span_start = self.inner.type_annotation.span().start;
+        self.allocator.alloc(AstNode {
+            inner: &self.inner.name,
+            allocator: self.allocator,
+            parent: AstNodes::TSIndexSignatureName(transmute_self(self)),
+            following_span_start,
+        })
     }
 
     #[inline]

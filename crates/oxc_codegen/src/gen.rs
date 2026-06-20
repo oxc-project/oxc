@@ -3907,7 +3907,7 @@ impl Gen for TSIndexSignature<'_> {
                 p.print_ascii_byte(b',');
                 p.print_soft_space();
             }
-            p.print_str(parameter.name.as_str());
+            p.print_str(parameter.name.name.as_str());
             p.print_colon();
             p.print_soft_space();
             parameter.type_annotation.print(p, ctx);

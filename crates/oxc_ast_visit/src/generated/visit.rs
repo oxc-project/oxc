@@ -3802,6 +3802,7 @@ pub mod walk {
         let kind = AstKind::TSIndexSignatureName(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
+        visitor.visit_identifier_name(&it.name);
         visitor.visit_ts_type_annotation(&it.type_annotation);
         visitor.leave_node(kind);
     }

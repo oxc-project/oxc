@@ -4419,21 +4419,23 @@ function deserializeTSConstructSignatureDeclaration(pos) {
 }
 
 function deserializeTSIndexSignatureName(pos) {
-  let start,
-    end,
-    previousParent = parent,
+  let previousParent = parent,
+    name = deserializeIdentifierName(pos + 16),
+    typeAnnotation = deserializeBoxTSTypeAnnotation(pos + 48),
+    start = name.start,
+    end = typeAnnotation.end,
     node = (parent = {
       type: "Identifier",
       decorators: [],
-      name: deserializeStr(pos + 16),
+      name: name.name,
       optional: false,
-      typeAnnotation: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
+      typeAnnotation,
+      start,
+      end,
       range: [start, end],
       parent,
     });
-  node.typeAnnotation = deserializeBoxTSTypeAnnotation(pos + 32);
+  typeAnnotation.parent = node;
   parent = previousParent;
   return node;
 }
@@ -6766,10 +6768,10 @@ function deserializeVecTSIndexSignatureName(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = int32[pos32];
-  let endPos = pos + int32[pos32 + 2] * 40;
+  let endPos = pos + int32[pos32 + 2] * 56;
   for (; pos !== endPos; ) {
     arr.push(deserializeTSIndexSignatureName(pos));
-    pos += 40;
+    pos += 56;
   }
   return arr;
 }

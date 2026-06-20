@@ -10163,7 +10163,7 @@ export class TSIndexSignatureName {
     const cached = nodes.get(pos);
     if (cached !== void 0) return cached;
 
-    this.#internal = { pos, ast, $name: void 0 };
+    this.#internal = { pos, ast };
     nodes.set(pos, this);
   }
 
@@ -10178,15 +10178,13 @@ export class TSIndexSignatureName {
   }
 
   get name() {
-    const internal = this.#internal,
-      cached = internal.$name;
-    if (cached !== void 0) return cached;
-    return (internal.$name = constructStr(internal.pos + 16, internal.ast));
+    const internal = this.#internal;
+    return new IdentifierName(internal.pos + 16, internal.ast);
   }
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return constructBoxTSTypeAnnotation(internal.pos + 32, internal.ast);
+    return constructBoxTSTypeAnnotation(internal.pos + 48, internal.ast);
   }
 
   toJSON() {
@@ -13727,7 +13725,7 @@ function constructBoxTSMethodSignature(pos, ast) {
 function constructVecTSIndexSignatureName(pos, ast) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(int32[pos32], int32[pos32 + 2], 40, constructTSIndexSignatureName, ast);
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 56, constructTSIndexSignatureName, ast);
 }
 
 function constructTSIndexSignatureName(pos, ast) {

@@ -2,6 +2,7 @@ use std::cell::Cell;
 
 use oxc_ast_macros::ast_meta;
 use oxc_estree::{Concat2, ESTree, JsonSafeString, Serializer, StructSerializer};
+use oxc_str::Str;
 use oxc_syntax::node::NodeId;
 
 use crate::ast::*;
@@ -423,6 +424,55 @@ impl ESTree for TSCallSignatureDeclarationParams<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let decl = self.0;
         Concat2(&decl.this_param, decl.params.as_ref()).serialize(serializer);
+    }
+}
+
+/// Serializer for `TSIndexSignatureName`.
+///
+/// Internally, `name` is an `IdentifierName` so its token span is available. In ESTree,
+/// the whole parameter is represented as one `Identifier` with a `typeAnnotation`.
+#[ast_meta]
+#[estree(
+    ts_type = "Identifier",
+    raw_deser = "
+        const previousParent = parent,
+            name = DESER[IdentifierName](POS_OFFSET.name),
+            typeAnnotation = DESER[Box<TSTypeAnnotation>](POS_OFFSET.type_annotation),
+            start = name.start,
+            end = typeAnnotation.end;
+
+        const node = parent = {
+            type: 'Identifier',
+            decorators: [],
+            name: name.name,
+            optional: false,
+            typeAnnotation,
+            start,
+            end,
+            ...(RANGE && { range: [start, end] }),
+            ...(PARENT && { parent }),
+        };
+
+        if (PARENT) typeAnnotation.parent = node;
+        if (PARENT) parent = previousParent;
+        node
+    "
+)]
+pub struct TSIndexSignatureNameConverter<'a, 'b>(pub &'b TSIndexSignatureName<'a>);
+
+impl ESTree for TSIndexSignatureNameConverter<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let name = &self.0.name;
+        let type_annotation = self.0.type_annotation.as_ref();
+
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("Identifier"));
+        state.serialize_field("decorators", &crate::serialize::basic::EmptyArray(self));
+        state.serialize_field("name", &JsonSafeString(name.name.as_str()));
+        state.serialize_field("optional", &crate::serialize::basic::False(self));
+        state.serialize_field("typeAnnotation", type_annotation);
+        state.serialize_span(name.span.merge(type_annotation.span));
+        state.end();
     }
 }
 

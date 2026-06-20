@@ -339,7 +339,6 @@ fn generate(codegen: &Codegen) -> Codes {
                 "BindingIdentifier",
                 "LabelIdentifier",
                 "TSThisParameter",
-                "TSIndexSignatureName",
             ]),
             "Property" => Some(&[
                 "ObjectProperty",

@@ -4008,6 +4008,7 @@ pub mod walk_mut {
         let kind = AstType::TSIndexSignatureName;
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
+        visitor.visit_identifier_name(&mut it.name);
         visitor.visit_ts_type_annotation(&mut it.type_annotation);
         visitor.leave_node(kind);
     }

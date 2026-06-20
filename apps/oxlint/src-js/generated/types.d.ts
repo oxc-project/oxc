@@ -1417,7 +1417,7 @@ export type TSSignature =
 
 export interface TSIndexSignature extends Span {
   type: "TSIndexSignature";
-  parameters: Array<TSIndexSignatureName>;
+  parameters: Array<Identifier>;
   typeAnnotation: TSTypeAnnotation;
   readonly: boolean;
   static: boolean;
@@ -1455,15 +1455,6 @@ export interface TSConstructSignatureDeclaration extends Span {
   typeParameters: TSTypeParameterDeclaration | null;
   params: ParamPattern[];
   returnType: TSTypeAnnotation | null;
-  parent: Node;
-}
-
-export interface TSIndexSignatureName extends Span {
-  type: "Identifier";
-  decorators: [];
-  name: string;
-  optional: false;
-  typeAnnotation: TSTypeAnnotation;
   parent: Node;
 }
 
@@ -1882,7 +1873,6 @@ export type Node =
   | TSCallSignatureDeclaration
   | TSMethodSignature
   | TSConstructSignatureDeclaration
-  | TSIndexSignatureName
   | TSInterfaceHeritage
   | TSTypePredicate
   | TSModuleDeclaration

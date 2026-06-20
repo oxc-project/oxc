@@ -4185,7 +4185,8 @@ function walkTSIndexSignatureName(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkBoxTSTypeAnnotation(pos + 32, ast, visitors);
+  walkIdentifierName(pos + 16, ast, visitors);
+  walkBoxTSTypeAnnotation(pos + 48, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -5773,10 +5774,10 @@ function walkVecTSIndexSignatureName(pos, ast, visitors) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
   pos = int32[pos32];
-  const endPos = pos + int32[pos32 + 2] * 40;
+  const endPos = pos + int32[pos32 + 2] * 56;
   while (pos < endPos) {
     walkTSIndexSignatureName(pos, ast, visitors);
-    pos += 40;
+    pos += 56;
   }
 }
 

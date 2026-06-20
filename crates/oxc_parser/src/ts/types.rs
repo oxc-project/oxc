@@ -1570,7 +1570,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     fn parse_ts_index_signature_name(&mut self) -> TSIndexSignatureName<'a> {
         let span = self.start_span();
-        let name = self.parse_identifier_name().name;
+        let name = self.parse_identifier_name();
         if self.at(Kind::Question) {
             self.error(diagnostics::index_signature_question_mark(self.cur_token().span()));
             self.bump_any();
