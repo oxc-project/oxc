@@ -667,7 +667,8 @@ pub fn lower(
     let identifier_locs = build_identifier_loc_index(func, scope_info, line_offsets);
 
     // Pre-compute context identifiers: variables captured across function boundaries
-    let context_identifiers = find_context_identifiers(func, scope_info, env, &identifier_locs)?;
+    let context_identifiers =
+        find_context_identifiers(func, scope_info, env, &identifier_locs, line_offsets)?;
 
     // For top-level functions, context is empty (no captured refs)
     let context_map: FxIndexMap<
