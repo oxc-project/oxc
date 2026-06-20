@@ -232,6 +232,8 @@ pub fn codegen_function<'a>(
                 None::<oxc_allocator::Box<oxc_ast::ast::FormalParameterRest>>,
             ),
             body: ast.alloc_function_body(SPAN, ast.vec(), ast.vec()),
+            generator: false,
+            is_async: false,
             memo_slots_used: 0,
             memo_blocks: 0,
             memo_values: 0,
@@ -419,6 +421,8 @@ impl<'a, 'env> OxcContext<'a, 'env> {
 struct OxcCompiledFunction<'a> {
     params: oxc_allocator::Box<'a, oxc::FormalParameters<'a>>,
     body: oxc_allocator::Box<'a, oxc::FunctionBody<'a>>,
+    generator: bool,
+    is_async: bool,
     memo_slots_used: u32,
     memo_blocks: u32,
     memo_values: u32,
@@ -509,6 +513,8 @@ fn ox_codegen_reactive_function<'a>(
     Ok(OxcCompiledFunction {
         params,
         body,
+        generator: func.generator,
+        is_async: func.is_async,
         memo_slots_used: cx.next_cache_index,
         memo_blocks,
         memo_values,
@@ -1905,11 +1911,18 @@ fn ox_codegen_base_instruction_value<'a>(
         InstructionValue::JSXText { value, .. } => {
             Ok(OxValue::JsxText(cx.ast.alloc_jsx_text(SPAN, ox_str(&cx.ast, value), None)))
         }
-        InstructionValue::JsxExpression { .. } | InstructionValue::JsxFragment { .. } => {
-            Err(invariant_err(
-                "JSX codegen to oxc is not yet ported (deferred to a later batch)",
-                iv.loc().copied(),
-            ))
+        InstructionValue::JsxExpression { tag, props, children, .. } => {
+            ox_codegen_jsx_expression(cx, tag, props, children)
+        }
+        InstructionValue::JsxFragment { children, .. } => {
+            let mut child_nodes: oxc_allocator::Vec<'a, oxc::JSXChild<'a>> = cx.ast.vec();
+            for child in children {
+                child_nodes.push(ox_codegen_jsx_element(cx, child)?);
+            }
+            let opening = cx.ast.jsx_opening_fragment(SPAN);
+            let closing = cx.ast.jsx_closing_fragment(SPAN);
+            let fragment = cx.ast.jsx_fragment(SPAN, opening, child_nodes, closing);
+            Ok(OxValue::Expression(oxc::Expression::JSXFragment(cx.ast.alloc(fragment))))
         }
         InstructionValue::StartMemoize { .. }
         | InstructionValue::FinishMemoize { .. }
@@ -2228,27 +2241,474 @@ fn ox_expression_to_simple_assignment_target<'a>(
 
 fn ox_codegen_function_expression<'a>(
     cx: &mut OxcContext<'a, '_>,
-    _name: &Option<String>,
-    _name_hint: &Option<String>,
-    _lowered_func: &crate::react_compiler_hir::LoweredFunction,
-    _expr_type: &FunctionExpressionType,
+    name: &Option<String>,
+    name_hint: &Option<String>,
+    lowered_func: &crate::react_compiler_hir::LoweredFunction,
+    expr_type: &FunctionExpressionType,
 ) -> Result<OxValue<'a>, CompilerError> {
-    let _ = cx;
-    Err(invariant_err(
-        "Function expression codegen to oxc is not yet ported (deferred to a later batch)",
-        None,
-    ))
+    let func = cx.env.functions[lowered_func.func.0 as usize].clone();
+    let mut reactive_fn = build_reactive_function(&func, cx.env)?;
+    prune_unused_labels(&mut reactive_fn, cx.env)?;
+    prune_unused_lvalues(&mut reactive_fn, cx.env);
+    prune_hoisted_contexts(&mut reactive_fn, cx.env)?;
+
+    let fn_result = ox_codegen_inner_function(cx, &reactive_fn)?;
+
+    let value = match expr_type {
+        FunctionExpressionType::ArrowFunctionExpression => {
+            let mut fn_result = fn_result;
+            // Optimize single-return arrow functions into expression bodies.
+            let single_return_arg = if fn_result.body.statements.len() == 1
+                && reactive_fn.directives.is_empty()
+                && matches!(
+                    fn_result.body.statements.last(),
+                    Some(oxc::Statement::ReturnStatement(ret)) if ret.argument.is_some()
+                ) {
+                let stmt = fn_result.body.statements.pop().unwrap();
+                let oxc::Statement::ReturnStatement(ret) = stmt else { unreachable!() };
+                ret.unbox().argument
+            } else {
+                None
+            };
+            match single_return_arg {
+                Some(arg) => {
+                    let stmts = cx.ast.vec1(cx.ast.statement_expression(SPAN, arg));
+                    let body = cx.ast.alloc_function_body(SPAN, cx.ast.vec(), stmts);
+                    ox_build_arrow(cx, fn_result.params, body, fn_result.is_async, true)
+                }
+                None => {
+                    ox_build_arrow(cx, fn_result.params, fn_result.body, fn_result.is_async, false)
+                }
+            }
+        }
+        _ => {
+            let id =
+                name.as_ref().map(|n| cx.ast.binding_identifier(SPAN, ox_str(&cx.ast, n)));
+            let func = cx.ast.function(
+                SPAN,
+                oxc::FunctionType::FunctionExpression,
+                id,
+                fn_result.generator,
+                fn_result.is_async,
+                false,
+                None::<oxc_allocator::Box<oxc::TSTypeParameterDeclaration>>,
+                None::<oxc_allocator::Box<oxc::TSThisParameter>>,
+                fn_result.params,
+                None::<oxc_allocator::Box<oxc::TSTypeAnnotation>>,
+                Some(fn_result.body),
+            );
+            oxc::Expression::FunctionExpression(cx.ast.alloc(func))
+        }
+    };
+
+    // enableNameAnonymousFunctions: `({ "<hint>": <fn> })["<hint>"]`
+    if cx.env.config.enable_name_anonymous_functions && name.is_none() && name_hint.is_some() {
+        let hint = name_hint.as_ref().unwrap().clone();
+        let key = oxc::PropertyKey::from(cx.ast.expression_string_literal(
+            SPAN,
+            ox_str(&cx.ast, &hint),
+            None,
+        ));
+        let prop = cx.ast.object_property(
+            SPAN,
+            oxc::PropertyKind::Init,
+            key,
+            value,
+            false,
+            false,
+            false,
+        );
+        let props =
+            cx.ast.vec1(oxc::ObjectPropertyKind::ObjectProperty(cx.ast.alloc(prop)));
+        let object = cx.ast.expression_object(SPAN, props);
+        let member = cx.ast.member_expression_computed(
+            SPAN,
+            object,
+            cx.ast.expression_string_literal(SPAN, ox_str(&cx.ast, &hint), None),
+            false,
+        );
+        return Ok(OxValue::Expression(oxc::Expression::from(member)));
+    }
+
+    Ok(OxValue::Expression(value))
+}
+
+fn ox_build_arrow<'a>(
+    cx: &OxcContext<'a, '_>,
+    params: oxc_allocator::Box<'a, oxc::FormalParameters<'a>>,
+    body: oxc_allocator::Box<'a, oxc::FunctionBody<'a>>,
+    is_async: bool,
+    expression: bool,
+) -> oxc::Expression<'a> {
+    cx.ast.expression_arrow_function(
+        SPAN,
+        expression,
+        is_async,
+        None::<oxc_allocator::Box<oxc::TSTypeParameterDeclaration>>,
+        params,
+        None::<oxc_allocator::Box<oxc::TSTypeAnnotation>>,
+        body,
+    )
+}
+
+/// Run the inner-function codegen with a fresh context (mirrors the Babel reference's
+/// `Context::new` + `codegen_reactive_function` for function/object-method expressions).
+fn ox_codegen_inner_function<'a>(
+    cx: &mut OxcContext<'a, '_>,
+    reactive_fn: &ReactiveFunction,
+) -> Result<OxcCompiledFunction<'a>, CompilerError> {
+    let fn_name = reactive_fn.id.as_deref().unwrap_or("[[ anonymous ]]").to_string();
+    let mut inner_cx = OxcContext::new(
+        cx.ast,
+        cx.env,
+        fn_name,
+        cx.unique_identifiers.clone(),
+        cx.fbt_operands.clone(),
+    );
+    inner_cx.temp = ox_clone_temporaries(&cx.ast, &cx.temp);
+    ox_codegen_reactive_function(&mut inner_cx, reactive_fn)
 }
 
 fn ox_codegen_object_expression<'a>(
     cx: &mut OxcContext<'a, '_>,
-    _properties: &[ObjectPropertyOrSpread],
+    properties: &[ObjectPropertyOrSpread],
 ) -> Result<OxValue<'a>, CompilerError> {
-    let _ = cx;
-    Err(invariant_err(
-        "Object expression codegen to oxc is not yet ported (deferred to a later batch)",
-        None,
-    ))
+    let mut props: oxc_allocator::Vec<'a, oxc::ObjectPropertyKind<'a>> = cx.ast.vec();
+    for prop in properties {
+        match prop {
+            ObjectPropertyOrSpread::Property(obj_prop) => {
+                let (key, key_computed) = ox_codegen_object_property_key(cx, &obj_prop.key)?;
+                match obj_prop.property_type {
+                    ObjectPropertyType::Property => {
+                        let value = ox_codegen_place_to_expression(cx, &obj_prop.place)?;
+                        let shorthand = !key_computed
+                            && matches!(
+                                (&key, &value),
+                                (
+                                    oxc::PropertyKey::StaticIdentifier(k),
+                                    oxc::Expression::Identifier(v),
+                                ) if k.name == v.name
+                            );
+                        let p = cx.ast.object_property(
+                            SPAN,
+                            oxc::PropertyKind::Init,
+                            key,
+                            value,
+                            false,
+                            shorthand,
+                            key_computed,
+                        );
+                        props.push(oxc::ObjectPropertyKind::ObjectProperty(cx.ast.alloc(p)));
+                    }
+                    ObjectPropertyType::Method => {
+                        let method_data =
+                            cx.object_methods.get(&obj_prop.place.identifier).cloned();
+                        let Some((
+                            InstructionValue::ObjectMethod { lowered_func, .. },
+                            _,
+                        )) = method_data
+                        else {
+                            return Err(invariant_err("Expected ObjectMethod instruction", None));
+                        };
+
+                        let func = cx.env.functions[lowered_func.func.0 as usize].clone();
+                        let mut reactive_fn = build_reactive_function(&func, cx.env)?;
+                        prune_unused_labels(&mut reactive_fn, cx.env)?;
+                        prune_unused_lvalues(&mut reactive_fn, cx.env);
+
+                        let fn_result = ox_codegen_inner_function(cx, &reactive_fn)?;
+                        let method = cx.ast.function(
+                            SPAN,
+                            oxc::FunctionType::FunctionExpression,
+                            None,
+                            fn_result.generator,
+                            fn_result.is_async,
+                            false,
+                            None::<oxc_allocator::Box<oxc::TSTypeParameterDeclaration>>,
+                            None::<oxc_allocator::Box<oxc::TSThisParameter>>,
+                            fn_result.params,
+                            None::<oxc_allocator::Box<oxc::TSTypeAnnotation>>,
+                            Some(fn_result.body),
+                        );
+                        let func_expr =
+                            oxc::Expression::FunctionExpression(cx.ast.alloc(method));
+                        let p = cx.ast.object_property(
+                            SPAN,
+                            oxc::PropertyKind::Init,
+                            key,
+                            func_expr,
+                            true,
+                            false,
+                            key_computed,
+                        );
+                        props.push(oxc::ObjectPropertyKind::ObjectProperty(cx.ast.alloc(p)));
+                    }
+                }
+            }
+            ObjectPropertyOrSpread::Spread(spread) => {
+                let arg = ox_codegen_place_to_expression(cx, &spread.place)?;
+                let spread_el = cx.ast.spread_element(SPAN, arg);
+                props.push(oxc::ObjectPropertyKind::SpreadProperty(cx.ast.alloc(spread_el)));
+            }
+        }
+    }
+    Ok(OxValue::Expression(cx.ast.expression_object(SPAN, props)))
+}
+
+// =============================================================================
+// JSX codegen (oxc)
+// =============================================================================
+
+fn ox_codegen_jsx_expression<'a>(
+    cx: &mut OxcContext<'a, '_>,
+    tag: &JsxTag,
+    props: &[JsxAttribute],
+    children: &Option<Vec<Place>>,
+) -> Result<OxValue<'a>, CompilerError> {
+    let mut attributes: oxc_allocator::Vec<'a, oxc::JSXAttributeItem<'a>> = cx.ast.vec();
+    for attr in props {
+        attributes.push(ox_codegen_jsx_attribute(cx, attr)?);
+    }
+
+    let (tag_value, is_fbt_tag) = match tag {
+        JsxTag::Place(place) => (ox_codegen_place_to_expression(cx, place)?, false),
+        JsxTag::Builtin(builtin) => {
+            let is_fbt = SINGLE_CHILD_FBT_TAGS.contains(&builtin.name.as_str());
+            (cx.ast.expression_string_literal(SPAN, ox_str(&cx.ast, &builtin.name), None), is_fbt)
+        }
+    };
+
+    let opening_name = ox_expression_to_jsx_tag(cx, &tag_value)?;
+
+    let mut child_nodes: oxc_allocator::Vec<'a, oxc::JSXChild<'a>> = cx.ast.vec();
+    if let Some(c) = children {
+        for child in c {
+            if is_fbt_tag {
+                child_nodes.push(ox_codegen_jsx_fbt_child_element(cx, child)?);
+            } else {
+                child_nodes.push(ox_codegen_jsx_element(cx, child)?);
+            }
+        }
+    }
+
+    let is_self_closing = children.is_none();
+    let opening = cx.ast.jsx_opening_element(
+        SPAN,
+        opening_name,
+        None::<oxc_allocator::Box<oxc::TSTypeParameterInstantiation>>,
+        attributes,
+    );
+    let closing = if is_self_closing {
+        None
+    } else {
+        let closing_name = ox_expression_to_jsx_tag(cx, &tag_value)?;
+        Some(cx.ast.jsx_closing_element(SPAN, closing_name))
+    };
+    let element = cx.ast.jsx_element(SPAN, opening, child_nodes, closing);
+    Ok(OxValue::Expression(oxc::Expression::JSXElement(cx.ast.alloc(element))))
+}
+
+fn ox_string_requires_expr_container(s: &str) -> bool {
+    for c in s.chars() {
+        if STRING_REQUIRES_EXPR_CONTAINER_CHARS.contains(c) {
+            return true;
+        }
+        let code = c as u32;
+        if code <= 0x1F || code == 0x7F || (0x80..=0x9F).contains(&code) || code >= 0xA0 {
+            return true;
+        }
+    }
+    false
+}
+
+fn ox_encode_jsx_text(raw: &str) -> String {
+    let mut escaped = String::with_capacity(raw.len());
+    for ch in raw.chars() {
+        match ch {
+            '&' => escaped.push_str("&amp;"),
+            '<' => escaped.push_str("&lt;"),
+            '>' => escaped.push_str("&gt;"),
+            '{' => escaped.push_str("&#123;"),
+            '}' => escaped.push_str("&#125;"),
+            _ => escaped.push(ch),
+        }
+    }
+    escaped
+}
+
+fn ox_codegen_jsx_attribute<'a>(
+    cx: &mut OxcContext<'a, '_>,
+    attr: &JsxAttribute,
+) -> Result<oxc::JSXAttributeItem<'a>, CompilerError> {
+    match attr {
+        JsxAttribute::Attribute { name, place } => {
+            let prop_name = if name.contains(':') {
+                let parts: Vec<&str> = name.splitn(2, ':').collect();
+                let namespace = cx.ast.jsx_identifier(SPAN, ox_str(&cx.ast, parts[0]));
+                let local = cx.ast.jsx_identifier(SPAN, ox_str(&cx.ast, parts[1]));
+                cx.ast.jsx_attribute_name_namespaced_name(SPAN, namespace, local)
+            } else {
+                cx.ast.jsx_attribute_name_identifier(SPAN, ox_str(&cx.ast, name))
+            };
+
+            let is_fbt_operand = cx.fbt_operands.contains(&place.identifier);
+            let inner_value = ox_codegen_place_to_expression(cx, place)?;
+            let attr_value = match inner_value {
+                oxc::Expression::StringLiteral(ref s)
+                    if !ox_string_requires_expr_container(s.value.as_str()) || is_fbt_operand =>
+                {
+                    let value = s.value;
+                    Some(cx.ast.jsx_attribute_value_string_literal(SPAN, value, None))
+                }
+                _ => {
+                    let expr = oxc::JSXExpression::from(inner_value);
+                    Some(cx.ast.jsx_attribute_value_expression_container(SPAN, expr))
+                }
+            };
+            Ok(cx.ast.jsx_attribute_item_attribute(SPAN, prop_name, attr_value))
+        }
+        JsxAttribute::SpreadAttribute { argument } => {
+            let expr = ox_codegen_place_to_expression(cx, argument)?;
+            Ok(cx.ast.jsx_attribute_item_spread_attribute(SPAN, expr))
+        }
+    }
+}
+
+fn ox_codegen_jsx_element<'a>(
+    cx: &mut OxcContext<'a, '_>,
+    place: &Place,
+) -> Result<oxc::JSXChild<'a>, CompilerError> {
+    let value = ox_codegen_place(cx, place)?;
+    match value {
+        OxValue::JsxText(text) => {
+            let raw = text.value.as_str();
+            if raw.contains(JSX_TEXT_CHILD_REQUIRES_EXPR_CONTAINER_PATTERN) {
+                let lit = cx.ast.expression_string_literal(SPAN, ox_str(&cx.ast, raw), None);
+                Ok(cx.ast.jsx_child_expression_container(SPAN, oxc::JSXExpression::from(lit)))
+            } else {
+                let encoded = ox_encode_jsx_text(raw);
+                Ok(cx.ast.jsx_child_text(SPAN, ox_str(&cx.ast, &encoded), None))
+            }
+        }
+        OxValue::Expression(oxc::Expression::JSXElement(elem)) => {
+            let elem = elem.unbox();
+            Ok(cx.ast.jsx_child_element(
+                SPAN,
+                elem.opening_element,
+                elem.children,
+                elem.closing_element,
+            ))
+        }
+        OxValue::Expression(oxc::Expression::JSXFragment(frag)) => {
+            let frag = frag.unbox();
+            Ok(cx.ast.jsx_child_fragment(
+                SPAN,
+                frag.opening_fragment,
+                frag.children,
+                frag.closing_fragment,
+            ))
+        }
+        OxValue::Expression(expr) => {
+            Ok(cx.ast.jsx_child_expression_container(SPAN, oxc::JSXExpression::from(expr)))
+        }
+    }
+}
+
+fn ox_codegen_jsx_fbt_child_element<'a>(
+    cx: &mut OxcContext<'a, '_>,
+    place: &Place,
+) -> Result<oxc::JSXChild<'a>, CompilerError> {
+    let value = ox_codegen_place(cx, place)?;
+    match value {
+        OxValue::JsxText(text) => {
+            let encoded = ox_encode_jsx_text(text.value.as_str());
+            Ok(cx.ast.jsx_child_text(SPAN, ox_str(&cx.ast, &encoded), None))
+        }
+        OxValue::Expression(oxc::Expression::JSXElement(elem)) => {
+            let elem = elem.unbox();
+            Ok(cx.ast.jsx_child_element(
+                SPAN,
+                elem.opening_element,
+                elem.children,
+                elem.closing_element,
+            ))
+        }
+        OxValue::Expression(expr) => {
+            Ok(cx.ast.jsx_child_expression_container(SPAN, oxc::JSXExpression::from(expr)))
+        }
+    }
+}
+
+/// Build a `JSXElementName` from a tag expression, mirroring the Babel reference's
+/// `expression_to_jsx_tag` + `convert_ast_reverse`'s identifier-reference rule
+/// (uppercase / contains-`.` names become references).
+fn ox_expression_to_jsx_tag<'a>(
+    cx: &OxcContext<'a, '_>,
+    expr: &oxc::Expression<'a>,
+) -> Result<oxc::JSXElementName<'a>, CompilerError> {
+    match expr {
+        oxc::Expression::Identifier(ident) => Ok(ox_jsx_element_name_from_ident(cx, &ident.name)),
+        oxc::Expression::StaticMemberExpression(_)
+        | oxc::Expression::ComputedMemberExpression(_) => {
+            let member = ox_convert_member_expression_to_jsx(cx, expr)?;
+            Ok(cx.ast.jsx_element_name_member_expression(SPAN, member.0, member.1))
+        }
+        oxc::Expression::StringLiteral(s) => {
+            let tag_text = s.value.as_str();
+            if tag_text.contains(':') {
+                let parts: Vec<&str> = tag_text.splitn(2, ':').collect();
+                let namespace = cx.ast.jsx_identifier(SPAN, ox_str(&cx.ast, parts[0]));
+                let name = cx.ast.jsx_identifier(SPAN, ox_str(&cx.ast, parts[1]));
+                Ok(cx.ast.jsx_element_name_namespaced_name(SPAN, namespace, name))
+            } else {
+                Ok(ox_jsx_element_name_from_ident(cx, tag_text))
+            }
+        }
+        _ => Err(invariant_err("Expected JSX tag to be an identifier or string", None)),
+    }
+}
+
+fn ox_jsx_element_name_from_ident<'a>(
+    cx: &OxcContext<'a, '_>,
+    name: &str,
+) -> oxc::JSXElementName<'a> {
+    let first_char = name.chars().next().unwrap_or('a');
+    if first_char.is_uppercase() || name.contains('.') {
+        cx.ast.jsx_element_name_identifier_reference(SPAN, ox_str(&cx.ast, name))
+    } else {
+        cx.ast.jsx_element_name_identifier(SPAN, ox_str(&cx.ast, name))
+    }
+}
+
+/// Convert an oxc member expression into a JSX member expression's
+/// `(object, property)` pair.
+fn ox_convert_member_expression_to_jsx<'a>(
+    cx: &OxcContext<'a, '_>,
+    expr: &oxc::Expression<'a>,
+) -> Result<(oxc::JSXMemberExpressionObject<'a>, oxc::JSXIdentifier<'a>), CompilerError> {
+    let oxc::Expression::StaticMemberExpression(me) = expr else {
+        return Err(invariant_err(
+            "Expected JSX member expression property to be a string",
+            None,
+        ));
+    };
+    let property = cx.ast.jsx_identifier(SPAN, ox_str(&cx.ast, me.property.name.as_str()));
+    let object = match &me.object {
+        oxc::Expression::Identifier(ident) => cx
+            .ast
+            .jsx_member_expression_object_identifier_reference(SPAN, ox_str(&cx.ast, &ident.name)),
+        oxc::Expression::StaticMemberExpression(_) => {
+            let inner = ox_convert_member_expression_to_jsx(cx, &me.object)?;
+            cx.ast.jsx_member_expression_object_member_expression(SPAN, inner.0, inner.1)
+        }
+        _ => {
+            return Err(invariant_err(
+                "Expected JSX member expression to be an identifier or nested member expression",
+                None,
+            ));
+        }
+    };
+    Ok((object, property))
 }
 
 fn ox_maybe_wrap_hook_call<'a>(
