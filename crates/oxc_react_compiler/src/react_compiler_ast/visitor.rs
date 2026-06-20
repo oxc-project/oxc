@@ -10,9 +10,9 @@ use crate::react_compiler_ast::declarations::*;
 use crate::react_compiler_ast::expressions::*;
 use crate::react_compiler_ast::jsx::*;
 use crate::react_compiler_ast::patterns::*;
-use crate::react_compiler_ast::scope::ScopeId;
-use crate::react_compiler_ast::scope::ScopeInfo;
 use crate::react_compiler_ast::statements::*;
+use crate::scope::ScopeId;
+use crate::scope::ScopeInfo;
 
 /// Trait for visiting Babel AST nodes. All methods default to no-ops.
 /// Override specific methods to intercept nodes of interest.

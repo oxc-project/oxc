@@ -5,7 +5,6 @@ pub mod jsx;
 pub mod literals;
 pub mod operators;
 pub mod patterns;
-pub mod scope;
 pub mod statements;
 pub mod visitor;
 

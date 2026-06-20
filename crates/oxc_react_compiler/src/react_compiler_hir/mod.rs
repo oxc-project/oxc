@@ -6,6 +6,7 @@ pub mod globals;
 pub mod object_shape;
 #[cfg(feature = "debug")]
 pub mod print;
+pub mod raw;
 /// Stub when the `debug` feature is off: keeps only the `PrintFormatter` type
 /// that the pipeline's debug closures name; the IR printer itself is excluded.
 #[cfg(not(feature = "debug"))]
@@ -23,6 +24,7 @@ pub use crate::react_compiler_diagnostics::Position;
 pub use crate::react_compiler_diagnostics::SourceLocation;
 use crate::react_compiler_utils::FxIndexMap;
 use crate::react_compiler_utils::FxIndexSet;
+pub use raw::{RawIdent, RawNode, RawTypeCategory};
 pub use reactive::*;
 
 // =============================================================================
@@ -640,7 +642,7 @@ pub enum InstructionValue {
         /// The original AST type annotation subtree, preserved for codegen, which
         /// re-emits it by re-parsing its source span (and applying any identifier
         /// renames recorded on its metadata).
-        type_annotation: Option<crate::react_compiler_ast::common::RawNode>,
+        type_annotation: Option<crate::react_compiler_hir::RawNode>,
         loc: Option<SourceLocation>,
     },
     JsxExpression {

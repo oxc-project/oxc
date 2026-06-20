@@ -35,6 +35,7 @@ pub mod convert_ast;
 pub mod convert_scope;
 pub mod diagnostics;
 pub mod prefilter;
+pub mod scope;
 
 use crate::react_compiler::entrypoint::compile_result::LoggerEvent;
 use convert_ast::convert_program;

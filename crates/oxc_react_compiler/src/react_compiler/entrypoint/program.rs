@@ -23,8 +23,6 @@ use crate::react_compiler_ast::declarations::ImportSpecifier;
 use crate::react_compiler_ast::declarations::ModuleExportName;
 use crate::react_compiler_ast::expressions::*;
 use crate::react_compiler_ast::patterns::PatternLike;
-use crate::react_compiler_ast::scope::ScopeId;
-use crate::react_compiler_ast::scope::ScopeInfo;
 use crate::react_compiler_ast::statements::*;
 use crate::react_compiler_ast::visitor::AstWalker;
 use crate::react_compiler_ast::visitor::Visitor;
@@ -36,6 +34,8 @@ use crate::react_compiler_diagnostics::SourceLocation;
 use crate::react_compiler_hir::ReactFunctionType;
 use crate::react_compiler_hir::environment_config::EnvironmentConfig;
 use crate::react_compiler_lowering::FunctionNode;
+use crate::scope::ScopeId;
+use crate::scope::ScopeInfo;
 
 use super::compile_result::BindingRenameInfo;
 use super::compile_result::CodegenFunction;
@@ -2418,8 +2418,7 @@ fn ox_splice_program<'a>(
 
     for replacement in replacements {
         let mut sibling_outlined_decls: Vec<oxc_ast::ast::Statement<'a>> = Vec::new();
-        let insert_as_sibling =
-            replacement.original_kind == OriginalFnKind::FunctionDeclaration;
+        let insert_as_sibling = replacement.original_kind == OriginalFnKind::FunctionDeclaration;
         for outlined in &replacement.codegen_fn.outlined {
             let func = ox_build_function(
                 ast,

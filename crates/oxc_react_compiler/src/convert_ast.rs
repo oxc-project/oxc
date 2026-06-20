@@ -6,9 +6,6 @@ use crate::react_compiler_ast::common::BaseNode;
 use crate::react_compiler_ast::common::Comment;
 use crate::react_compiler_ast::common::CommentData;
 use crate::react_compiler_ast::common::Position;
-use crate::react_compiler_ast::common::RawIdent;
-use crate::react_compiler_ast::common::RawNode;
-use crate::react_compiler_ast::common::RawTypeCategory;
 use crate::react_compiler_ast::common::SourceLocation;
 use crate::react_compiler_ast::declarations::*;
 use crate::react_compiler_ast::expressions::*;
@@ -17,6 +14,9 @@ use crate::react_compiler_ast::literals::*;
 use crate::react_compiler_ast::operators::*;
 use crate::react_compiler_ast::patterns::*;
 use crate::react_compiler_ast::statements::*;
+use crate::react_compiler_hir::RawIdent;
+use crate::react_compiler_hir::RawNode;
+use crate::react_compiler_hir::RawTypeCategory;
 /**
  * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
@@ -240,10 +240,25 @@ impl<'a> ConvertCtx<'a> {
             name: name.to_string(),
             node_id: span.start,
             start: span.start,
-            loc: Some(self.source_location(span)),
+            loc: Some(self.hir_source_location(span)),
             is_jsx: false,
             in_type_annotation: true,
             renamed_to: None,
+        }
+    }
+
+    /// Build the HIR's 2-field [`crate::react_compiler_hir::SourceLocation`] for a
+    /// span. [`RawIdent::loc`] uses the HIR location type (not the Babel
+    /// `common::SourceLocation`) to keep the relocated [`RawIdent`] free of the
+    /// Babel AST.
+    fn hir_source_location(&self, span: Span) -> crate::react_compiler_hir::SourceLocation {
+        let position = |offset: u32| {
+            let p = self.position(offset);
+            crate::react_compiler_hir::Position { line: p.line, column: p.column, index: p.index }
+        };
+        crate::react_compiler_hir::SourceLocation {
+            start: position(span.start),
+            end: position(span.end),
         }
     }
 

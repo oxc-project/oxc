@@ -220,7 +220,8 @@ fn ox_codegen_outlined<'a>(
 
         let identifiers = rename_variables(&mut reactive_function, env);
 
-        let func = codegen_function(ast, &reactive_function, env, identifiers, fbt_operands.clone())?;
+        let func =
+            codegen_function(ast, &reactive_function, env, identifiers, fbt_operands.clone())?;
         outlined.push(OxcOutlinedFunction { func, fn_type: entry.fn_type });
     }
     Ok(outlined)
@@ -394,7 +395,7 @@ fn ox_str<'a>(ast: &oxc_ast::AstBuilder<'a>, s: &str) -> &'a str {
 /// source slice. Returns `None` if the source / span is unavailable or unparsable.
 fn ox_reparse_ts_type<'a>(
     cx: &OxcContext<'a, '_>,
-    raw: &crate::react_compiler_ast::common::RawNode,
+    raw: &crate::react_compiler_hir::RawNode,
 ) -> Option<oxc::TSType<'a>> {
     let source = cx.env.code.as_deref()?;
     let start = raw.type_start? as usize;
@@ -1587,70 +1588,65 @@ fn ox_make_optional<'a>(
     expr: oxc::Expression<'a>,
     optional: bool,
 ) -> Result<OxValue<'a>, CompilerError> {
-    let chain_element: oxc::ChainElement<'a> =
-        match expr {
-            oxc::Expression::ChainExpression(chain) => {
-                // Already a chain; update the optional flag on the head element.
-                let chain = chain.unbox();
-                match chain.expression {
-                    oxc::ChainElement::CallExpression(call) => {
-                        let mut call = call.unbox();
-                        call.optional = optional;
-                        oxc::ChainElement::CallExpression(cx.ast.alloc(call))
-                    }
-                    oxc::ChainElement::ComputedMemberExpression(m) => {
-                        let mut m = m.unbox();
-                        m.optional = optional;
-                        oxc::ChainElement::ComputedMemberExpression(cx.ast.alloc(m))
-                    }
-                    oxc::ChainElement::StaticMemberExpression(m) => {
-                        let mut m = m.unbox();
-                        m.optional = optional;
-                        oxc::ChainElement::StaticMemberExpression(cx.ast.alloc(m))
-                    }
-                    other => other,
+    let chain_element: oxc::ChainElement<'a> = match expr {
+        oxc::Expression::ChainExpression(chain) => {
+            // Already a chain; update the optional flag on the head element.
+            let chain = chain.unbox();
+            match chain.expression {
+                oxc::ChainElement::CallExpression(call) => {
+                    let mut call = call.unbox();
+                    call.optional = optional;
+                    oxc::ChainElement::CallExpression(cx.ast.alloc(call))
                 }
+                oxc::ChainElement::ComputedMemberExpression(m) => {
+                    let mut m = m.unbox();
+                    m.optional = optional;
+                    oxc::ChainElement::ComputedMemberExpression(cx.ast.alloc(m))
+                }
+                oxc::ChainElement::StaticMemberExpression(m) => {
+                    let mut m = m.unbox();
+                    m.optional = optional;
+                    oxc::ChainElement::StaticMemberExpression(cx.ast.alloc(m))
+                }
+                other => other,
             }
-            oxc::Expression::CallExpression(call) => {
-                let mut call = call.unbox();
-                call.callee = ox_unwrap_chain(call.callee);
-                oxc::ChainElement::CallExpression(cx.ast.alloc_call_expression(
-                    SPAN,
-                    call.callee,
-                    call.type_arguments,
-                    call.arguments,
-                    optional,
-                ))
-            }
-            oxc::Expression::ComputedMemberExpression(m) => {
-                let m = m.unbox();
-                oxc::ChainElement::ComputedMemberExpression(
-                    cx.ast.alloc_computed_member_expression(
-                        SPAN,
-                        ox_unwrap_chain(m.object),
-                        m.expression,
-                        optional,
-                    ),
-                )
-            }
-            oxc::Expression::StaticMemberExpression(m) => {
-                let m = m.unbox();
-                oxc::ChainElement::StaticMemberExpression(
-                    cx.ast.alloc_static_member_expression(
-                        SPAN,
-                        ox_unwrap_chain(m.object),
-                        m.property,
-                        optional,
-                    ),
-                )
-            }
-            _ => {
-                return Err(invariant_err(
-                    "Expected optional value to resolve to call or member expression",
-                    None,
-                ));
-            }
-        };
+        }
+        oxc::Expression::CallExpression(call) => {
+            let mut call = call.unbox();
+            call.callee = ox_unwrap_chain(call.callee);
+            oxc::ChainElement::CallExpression(cx.ast.alloc_call_expression(
+                SPAN,
+                call.callee,
+                call.type_arguments,
+                call.arguments,
+                optional,
+            ))
+        }
+        oxc::Expression::ComputedMemberExpression(m) => {
+            let m = m.unbox();
+            oxc::ChainElement::ComputedMemberExpression(cx.ast.alloc_computed_member_expression(
+                SPAN,
+                ox_unwrap_chain(m.object),
+                m.expression,
+                optional,
+            ))
+        }
+        oxc::Expression::StaticMemberExpression(m) => {
+            let m = m.unbox();
+            oxc::ChainElement::StaticMemberExpression(cx.ast.alloc_static_member_expression(
+                SPAN,
+                ox_unwrap_chain(m.object),
+                m.property,
+                optional,
+            ))
+        }
+        _ => {
+            return Err(invariant_err(
+                "Expected optional value to resolve to call or member expression",
+                None,
+            ));
+        }
+    };
     Ok(OxValue::Expression(cx.ast.expression_chain(SPAN, chain_element)))
 }
 
@@ -1925,7 +1921,10 @@ fn ox_codegen_base_instruction_value<'a>(
             Ok(OxValue::Expression(oxc::Expression::TemplateLiteral(cx.ast.alloc(template))))
         }
         InstructionValue::TypeCastExpression {
-            value, type_annotation_kind, type_annotation, ..
+            value,
+            type_annotation_kind,
+            type_annotation,
+            ..
         } => {
             let expr = ox_codegen_place_to_expression(cx, value)?;
             // Recover the TS type from its original source span and re-wrap the

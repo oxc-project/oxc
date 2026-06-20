@@ -15,7 +15,6 @@ use crate::react_compiler_ast::literals::StringLiteral;
 use crate::react_compiler_ast::patterns::{
     ObjectPattern, ObjectPatternProp, ObjectPatternProperty, PatternLike,
 };
-use crate::react_compiler_ast::scope::ScopeInfo;
 use crate::react_compiler_ast::statements::{
     Statement, VariableDeclaration, VariableDeclarationKind, VariableDeclarator,
 };
@@ -23,6 +22,7 @@ use crate::react_compiler_ast::{Program, SourceType};
 use crate::react_compiler_diagnostics::{
     CompilerError, CompilerErrorDetail, ErrorCategory, Position, SourceLocation,
 };
+use crate::scope::ScopeInfo;
 
 use super::compile_result::{DebugLogEntry, LoggerEvent, OrderedLogItem};
 use super::plugin_options::{CompilerTarget, PluginOptions};
