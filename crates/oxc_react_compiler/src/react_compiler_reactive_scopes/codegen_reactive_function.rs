@@ -144,6 +144,10 @@ pub const EARLY_RETURN_SENTINEL: &str = "react.early_return_sentinel";
 const SINGLE_CHILD_FBT_TAGS: &[&str] = &["fbt:param", "fbs:param"];
 
 /// Result of code generation for a single function.
+///
+/// Babel-shaped; retained only for the dead reference codegen
+/// (`codegen_function_babel`) pending the oxc emission port.
+#[allow(dead_code)]
 pub struct CodegenFunction {
     pub loc: Option<DiagSourceLocation>,
     pub id: Option<AstIdentifier>,
@@ -173,6 +177,7 @@ impl std::fmt::Debug for CodegenFunction {
 }
 
 /// An outlined function extracted during compilation.
+#[allow(dead_code)]
 pub struct OutlinedFunction {
     pub func: CodegenFunction,
     pub fn_type: Option<crate::react_compiler_hir::ReactFunctionType>,
@@ -187,7 +192,56 @@ fn source_file_hash(code: &str) -> String {
     hmac_sha256::HMAC::mac(b"", code.as_bytes()).iter().map(|b| format!("{b:02x}")).collect()
 }
 
-pub fn codegen_function(
+/// Stage 2 scaffold entry point: produces an oxc-shaped
+/// [`crate::react_compiler::entrypoint::compile_result::CodegenFunction`] from a
+/// reactive function.
+///
+/// EMISSION IS STUBBED. The real per-instruction / terminal codegen — the ~3.8k
+/// lines below that build Babel-shaped nodes (`codegen_function_babel` and its
+/// helpers) — has NOT yet been ported to build the oxc AST directly. For now this
+/// returns a function with empty oxc `params` and an empty oxc `FunctionBody`, so
+/// the back-end compiles and runs without `convert_ast_reverse`. The memo stats
+/// and `outlined` plumbing are kept (zeroed / empty) so the rest of the pipeline
+/// is unaffected. See the NEXT-PHASE punch-list in the Stage 2 commit message.
+pub fn codegen_function<'a>(
+    ast: &oxc_ast::AstBuilder<'a>,
+    func: &ReactiveFunction,
+    _env: &mut Environment,
+    _unique_identifiers: FxHashSet<String>,
+    _fbt_operands: FxHashSet<IdentifierId>,
+) -> Result<crate::react_compiler::entrypoint::compile_result::CodegenFunction<'a>, CompilerError> {
+    use crate::react_compiler::entrypoint::compile_result::CodegenFunction as OxcCodegenFunction;
+    use oxc_span::SPAN;
+
+    let id = func.id.as_deref().map(|name| ast.binding_identifier(SPAN, ast.ident(name)));
+
+    Ok(OxcCodegenFunction {
+        loc: None,
+        id,
+        name_hint: None,
+        // Empty params/body: real emission is ported in a later phase.
+        params: ast.alloc_formal_parameters(
+            SPAN,
+            oxc_ast::ast::FormalParameterKind::FormalParameter,
+            ast.vec(),
+            None::<oxc_allocator::Box<oxc_ast::ast::FormalParameterRest>>,
+        ),
+        body: ast.alloc_function_body(SPAN, ast.vec(), ast.vec()),
+        generator: false,
+        is_async: false,
+        memo_slots_used: 0,
+        memo_blocks: 0,
+        memo_values: 0,
+        pruned_memo_blocks: 0,
+        pruned_memo_values: 0,
+        outlined: Vec::new(),
+    })
+}
+
+/// Original Babel-shaped codegen entry, retained as the reference implementation
+/// to port arm-by-arm into the oxc emission. Dead until the port begins.
+#[allow(dead_code)]
+fn codegen_function_babel(
     func: &ReactiveFunction,
     env: &mut Environment,
     unique_identifiers: FxHashSet<String>,

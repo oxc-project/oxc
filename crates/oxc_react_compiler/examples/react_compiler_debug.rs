@@ -16,6 +16,9 @@ use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 
+use oxc_ast::AstBuilder;
+use oxc_ast::AstKind;
+
 use oxc_react_compiler::convert_ast::convert_program;
 use oxc_react_compiler::convert_scope::convert_scope_info;
 use oxc_react_compiler::default_plugin_options;
@@ -23,6 +26,7 @@ use oxc_react_compiler::react_compiler::entrypoint::compile_result::{
     CompileResult, OrderedLogItem,
 };
 use oxc_react_compiler::react_compiler::entrypoint::program::compile_program;
+use oxc_react_compiler::react_compiler_lowering::FunctionNode;
 
 fn main() {
     let mut args = std::env::args().skip(1);
@@ -43,10 +47,25 @@ fn main() {
     let file = convert_program(&program, &source_text);
     let scope_info = convert_scope_info(&semantic, &program);
 
+    // Map each function's node_id (== span.start) to its oxc node (as in `transform`).
+    let mut fn_map = rustc_hash::FxHashMap::default();
+    for node in semantic.nodes() {
+        match node.kind() {
+            AstKind::Function(func) => {
+                fn_map.insert(func.span.start, FunctionNode::Function(func));
+            }
+            AstKind::ArrowFunctionExpression(arrow) => {
+                fn_map.insert(arrow.span.start, FunctionNode::Arrow(arrow));
+            }
+            _ => {}
+        }
+    }
+
     let mut options = default_plugin_options();
     options.debug = true;
 
-    let result = compile_program(file, scope_info, options);
+    let ast_builder = AstBuilder::new(&allocator);
+    let result = compile_program(&ast_builder, &program, file, scope_info, options, &fn_map);
     let ordered_log = match &result {
         CompileResult::Success { ordered_log, .. } | CompileResult::Error { ordered_log, .. } => {
             ordered_log

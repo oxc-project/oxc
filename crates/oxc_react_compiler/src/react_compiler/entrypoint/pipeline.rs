@@ -33,7 +33,8 @@ use crate::react_compiler::debug_print;
 /// Currently: creates an Environment, runs BuildHIR (lowering), and produces
 /// debug output via the context. Returns a CodegenFunction with zeroed memo
 /// stats on success (codegen is not yet implemented).
-pub fn compile_fn(
+pub fn compile_fn<'a>(
+    ast: &oxc_ast::AstBuilder<'a>,
     func: &FunctionNode<'_>,
     fn_name: Option<&str>,
     scope_info: &ScopeInfo,
@@ -41,7 +42,7 @@ pub fn compile_fn(
     mode: CompilerOutputMode,
     env_config: &EnvironmentConfig,
     context: &mut ProgramContext,
-) -> Result<CodegenFunction, CompilerError> {
+) -> Result<CodegenFunction<'a>, CompilerError> {
     let mut env = Environment::with_config(env_config.clone());
     env.fn_type = fn_type;
     env.output_mode = match mode {
@@ -926,6 +927,7 @@ pub fn compile_fn(
 
     context.timing.start("codegen");
     let codegen_result = crate::react_compiler_reactive_scopes::codegen_function(
+        ast,
         &reactive_fn,
         &mut env,
         unique_identifiers,
@@ -940,12 +942,11 @@ pub fn compile_fn(
     // but is later discarded (e.g., due to "use no memo" opt-out or errors),
     // while other functions in the same file compile to 0 memo slots.
 
+    // Stage 2 scaffold: `validate_source_locations` inspects the Babel-shaped
+    // codegen output, which is no longer produced (emission is stubbed). Re-enable
+    // once the oxc emission is ported and an oxc-shaped validator exists.
     if env.config.validate_source_locations {
-        super::validate_source_locations::validate_source_locations(
-            func,
-            &codegen_result,
-            &mut env,
-        );
+        // no-op while codegen emission is stubbed
     }
 
     // Simulate unexpected exception for testing (matches TS Pipeline.ts)
@@ -978,26 +979,18 @@ pub fn compile_fn(
     // Re-compile outlined functions through the full pipeline.
     // This mirrors TS behavior where outlined functions from JSX outlining
     // are pushed back onto the compilation queue and compiled as components.
-    let mut compiled_outlined: Vec<OutlinedFunction> = Vec::new();
-    for o in codegen_result.outlined {
-        let outlined_codegen = CodegenFunction {
-            loc: o.func.loc,
-            id: o.func.id,
-            name_hint: o.func.name_hint,
-            params: o.func.params,
-            body: o.func.body,
-            generator: o.func.generator,
-            is_async: o.func.is_async,
-            memo_slots_used: o.func.memo_slots_used,
-            memo_blocks: o.func.memo_blocks,
-            memo_values: o.func.memo_values,
-            pruned_memo_blocks: o.func.pruned_memo_blocks,
-            pruned_memo_values: o.func.pruned_memo_values,
-            outlined: Vec::new(),
-        };
+    // With emission stubbed, codegen produces no outlined functions, so this loop
+    // is effectively inert; kept for when the oxc emission is ported.
+    let mut codegen_result = codegen_result;
+    let outlined = std::mem::take(&mut codegen_result.outlined);
+    let mut compiled_outlined: Vec<OutlinedFunction<'a>> = Vec::new();
+    for o in outlined {
+        let mut outlined_codegen = o.func;
+        outlined_codegen.outlined = Vec::new();
         if let Some(fn_type) = o.fn_type {
-            let fn_name = outlined_codegen.id.as_ref().map(|id| id.name.clone());
+            let fn_name = outlined_codegen.id.as_ref().map(|id| id.name.to_string());
             match compile_outlined_fn(
+                ast,
                 outlined_codegen,
                 fn_name.as_deref(),
                 fn_type,
@@ -1022,21 +1015,8 @@ pub fn compile_fn(
         context.merge_uid_known_names(&uid_names);
     }
 
-    Ok(CodegenFunction {
-        loc: codegen_result.loc,
-        id: codegen_result.id,
-        name_hint: codegen_result.name_hint,
-        params: codegen_result.params,
-        body: codegen_result.body,
-        generator: codegen_result.generator,
-        is_async: codegen_result.is_async,
-        memo_slots_used: codegen_result.memo_slots_used,
-        memo_blocks: codegen_result.memo_blocks,
-        memo_values: codegen_result.memo_values,
-        pruned_memo_blocks: codegen_result.pruned_memo_blocks,
-        pruned_memo_values: codegen_result.pruned_memo_values,
-        outlined: compiled_outlined,
-    })
+    codegen_result.outlined = compiled_outlined;
+    Ok(codegen_result)
 }
 
 /// Compile an outlined function's codegen AST through the full pipeline.
@@ -1045,22 +1025,21 @@ pub fn compile_fn(
 /// positions for identifier resolution, lowers from AST to HIR, then runs
 /// the full compilation pipeline. This mirrors the TS behavior where outlined
 /// functions are inserted into the program AST and re-compiled from scratch.
-pub fn compile_outlined_fn(
-    codegen_fn: CodegenFunction,
+pub fn compile_outlined_fn<'a>(
+    ast: &oxc_ast::AstBuilder<'a>,
+    codegen_fn: CodegenFunction<'a>,
     fn_name: Option<&str>,
     fn_type: ReactFunctionType,
     mode: CompilerOutputMode,
     env_config: &EnvironmentConfig,
     context: &mut ProgramContext,
-) -> Result<CodegenFunction, CompilerError> {
-    // Stage 1a skeleton: outlining synthesizes a function and re-lowers it. While
-    // the front-end runs on the oxc AST but codegen still emits the Babel AST,
-    // re-lowering a *synthesized* Babel function via the oxc `lower()` isn't wired.
-    // Outlining is unreachable until arms are filled (no memoization -> nothing to
-    // outline), so pass the codegen output through unchanged for now. The Babel
-    // outlining infra below (build_outlined_scope_info / outlined_assign_*) is dead
-    // until this is ported to synthesize an oxc function.
-    let _ = (fn_name, fn_type, mode, env_config, context);
+) -> Result<CodegenFunction<'a>, CompilerError> {
+    // Stage 2 scaffold: outlining synthesizes a function and re-lowers it. With
+    // codegen emission stubbed, no functions are outlined, so this stays a
+    // passthrough. The Babel outlining infra below (build_outlined_scope_info /
+    // outlined_assign_*) is dead until the oxc emission is ported and outlining
+    // is re-wired to synthesize an oxc function.
+    let _ = (ast, fn_name, fn_type, mode, env_config, context);
     Ok(codegen_fn)
 }
 
@@ -1482,11 +1461,16 @@ fn outlined_assign_jsx_child_positions(
 ///
 /// This is extracted from `compile_fn` to allow reuse for outlined functions.
 /// Returns the compiled CodegenFunction on success.
-fn run_pipeline_passes(
+///
+/// Currently unused (kept for the outlined-function port); threads the oxc
+/// `AstBuilder` like `compile_fn`.
+#[allow(dead_code)]
+fn run_pipeline_passes<'a>(
+    ast: &oxc_ast::AstBuilder<'a>,
     hir: &mut crate::react_compiler_hir::HirFunction,
     env: &mut Environment,
     context: &mut ProgramContext,
-) -> Result<CodegenFunction, CompilerError> {
+) -> Result<CodegenFunction<'a>, CompilerError> {
     crate::react_compiler_optimization::prune_maybe_throws(hir, &mut env.functions)?;
 
     crate::react_compiler_optimization::drop_manual_memoization(hir, env)?;
@@ -1640,49 +1624,16 @@ fn run_pipeline_passes(
         crate::react_compiler_validation::validate_preserved_manual_memoization(&reactive_fn, env);
     }
 
+    // `codegen_function` already returns the oxc-shaped `CodegenFunction<'a>`.
     let codegen_result = crate::react_compiler_reactive_scopes::codegen_function(
+        ast,
         &reactive_fn,
         env,
         unique_identifiers,
         fbt_operands,
     )?;
 
-    Ok(CodegenFunction {
-        loc: codegen_result.loc,
-        id: codegen_result.id,
-        name_hint: codegen_result.name_hint,
-        params: codegen_result.params,
-        body: codegen_result.body,
-        generator: codegen_result.generator,
-        is_async: codegen_result.is_async,
-        memo_slots_used: codegen_result.memo_slots_used,
-        memo_blocks: codegen_result.memo_blocks,
-        memo_values: codegen_result.memo_values,
-        pruned_memo_blocks: codegen_result.pruned_memo_blocks,
-        pruned_memo_values: codegen_result.pruned_memo_values,
-        outlined: codegen_result
-            .outlined
-            .into_iter()
-            .map(|o| OutlinedFunction {
-                func: CodegenFunction {
-                    loc: o.func.loc,
-                    id: o.func.id,
-                    name_hint: o.func.name_hint,
-                    params: o.func.params,
-                    body: o.func.body,
-                    generator: o.func.generator,
-                    is_async: o.func.is_async,
-                    memo_slots_used: o.func.memo_slots_used,
-                    memo_blocks: o.func.memo_blocks,
-                    memo_values: o.func.memo_values,
-                    pruned_memo_blocks: o.func.pruned_memo_blocks,
-                    pruned_memo_values: o.func.pruned_memo_values,
-                    outlined: Vec::new(),
-                },
-                fn_type: o.fn_type,
-            })
-            .collect(),
-    })
+    Ok(codegen_result)
 }
 
 /// Log CompilerError diagnostics as CompileError events, matching TS `env.logErrors()` behavior.

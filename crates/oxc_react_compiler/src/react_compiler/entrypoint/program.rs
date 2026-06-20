@@ -47,6 +47,9 @@ use crate::react_compiler_lowering::FunctionNode;
 use super::compile_result::BindingRenameInfo;
 use super::compile_result::CodegenFunction;
 use super::compile_result::CompileResult;
+/// Babel-shaped codegen output, retained only for the now-dead Babel splicing
+/// machinery below (replaced by direct oxc emission in the Stage 2 port).
+use crate::react_compiler_reactive_scopes::codegen_reactive_function::CodegenFunction as BabelCodegenFunction;
 use super::compile_result::CompilerErrorDetailInfo;
 use super::compile_result::CompilerErrorInfo;
 use super::compile_result::CompilerErrorItemInfo;
@@ -1245,11 +1248,11 @@ fn log_error(
 /// Handle an error according to the panicThreshold setting.
 /// Returns Some(CompileResult::Error) if the error should be surfaced as fatal,
 /// otherwise returns None (error was logged only).
-fn handle_error(
+fn handle_error<'a>(
     err: &CompilerError,
     fn_ast_loc: Option<&crate::react_compiler_ast::common::SourceLocation>,
     context: &mut ProgramContext,
-) -> Option<CompileResult> {
+) -> Option<CompileResult<'a>> {
     // Log the error
     log_error(err, fn_ast_loc, context);
 
@@ -1351,14 +1354,15 @@ fn compiler_error_to_info(err: &CompilerError, filename: Option<&str>) -> Compil
 ///
 /// Returns `CodegenFunction` on success or `CompilerError` on failure.
 /// Debug log entries are accumulated on `context.debug_logs`.
-fn try_compile_function(
+fn try_compile_function<'a>(
+    ast: &oxc_ast::AstBuilder<'a>,
     source: &CompileSource,
     scope_info: &ScopeInfo,
     output_mode: CompilerOutputMode,
     env_config: &EnvironmentConfig,
     context: &mut ProgramContext,
     fn_map: &FxHashMap<u32, FunctionNode<'_>>,
-) -> Result<CodegenFunction, CompilerError> {
+) -> Result<CodegenFunction<'a>, CompilerError> {
     // Check for suppressions that affect this function
     if let (Some(start), Some(end)) = (source.fn_start, source.fn_end) {
         let affecting = filter_suppressions_that_affect_function(&context.suppressions, start, end);
@@ -1378,6 +1382,7 @@ fn try_compile_function(
         .get(&source.fn_node_id.expect("compiled function has a node id"))
         .expect("oxc FunctionNode for discovered function");
     pipeline::compile_fn(
+        ast,
         &fn_node,
         source.fn_name.as_deref(),
         scope_info,
@@ -1393,14 +1398,15 @@ fn try_compile_function(
 /// Returns `Ok(Some(codegen_fn))` when the function was compiled and should be applied,
 /// `Ok(None)` when the function was skipped or lint-only,
 /// or `Err(CompileResult)` if a fatal error should short-circuit the program.
-fn process_fn(
+fn process_fn<'a>(
+    ast: &oxc_ast::AstBuilder<'a>,
     source: &CompileSource,
     scope_info: &ScopeInfo,
     output_mode: CompilerOutputMode,
     env_config: &EnvironmentConfig,
     context: &mut ProgramContext,
     fn_map: &FxHashMap<u32, FunctionNode<'_>>,
-) -> Result<Option<CodegenFunction>, CompileResult> {
+) -> Result<Option<CodegenFunction<'a>>, CompileResult<'a>> {
     // Parse directives from the function body
     let opt_in_result =
         try_find_directive_enabling_memoization(&source.body_directives, &context.opts);
@@ -1420,7 +1426,7 @@ fn process_fn(
 
     // Attempt compilation
     let compile_result =
-        try_compile_function(source, scope_info, output_mode, env_config, context, fn_map);
+        try_compile_function(ast, source, scope_info, output_mode, env_config, context, fn_map);
 
     match compile_result {
         Err(err) => {
@@ -1469,7 +1475,7 @@ fn process_fn(
                 source.fn_ast_loc.as_ref().and_then(|loc| loc.filename.as_deref());
             context.log_event(LoggerEvent::CompileSuccess {
                 fn_loc: to_logger_loc(source.fn_ast_loc.as_ref(), source_filename),
-                fn_name: codegen_fn.id.as_ref().map(|id| id.name.clone()),
+                fn_name: codegen_fn.id.as_ref().map(|id| id.name.to_string()),
                 memo_slots: codegen_fn.memo_slots_used,
                 memo_blocks: codegen_fn.memo_blocks,
                 memo_values: codegen_fn.memo_values,
@@ -1896,12 +1902,16 @@ fn find_functions_to_compile<'a>(
 // -----------------------------------------------------------------------
 
 /// A successfully compiled function, ready to be applied to the AST.
-struct CompiledFunction<'a> {
+///
+/// `'a` is the arena lifetime of the compiled oxc nodes; `'s` borrows the
+/// discovery's `CompileSource`.
+struct CompiledFunction<'a, 's> {
     #[allow(dead_code)]
     kind: CompileSourceKind,
     #[allow(dead_code)]
-    source: &'a CompileSource,
-    codegen_fn: CodegenFunction,
+    source: &'s CompileSource,
+    #[allow(dead_code)]
+    codegen_fn: CodegenFunction<'a>,
 }
 
 /// The type of the original function node, used to determine what kind of
@@ -1915,6 +1925,11 @@ enum OriginalFnKind {
 
 /// Owned representation of a compiled function for AST replacement.
 /// Does not borrow from the original program, so we can mutate the AST.
+///
+/// Stage 2: DEAD. The Babel splicing path (`apply_compiled_functions`) is no
+/// longer driven from `compile_program`; it is retained as the reference for the
+/// oxc emission port. It keeps the Babel-shaped `codegen_fn`.
+#[allow(dead_code)]
 struct CompiledFnForReplacement {
     /// Start position of the original function (retained for range queries).
     fn_start: Option<u32>,
@@ -1923,7 +1938,7 @@ struct CompiledFnForReplacement {
     /// The kind of the original function node.
     original_kind: OriginalFnKind,
     /// The compiled codegen output.
-    codegen_fn: CodegenFunction,
+    codegen_fn: BabelCodegenFunction,
     /// Whether this is an original function (vs outlined). Gating only applies to original.
     #[allow(dead_code)]
     source_kind: CompileSourceKind,
@@ -2070,7 +2085,8 @@ fn expr_references_identifier_at_top_level(expr: &Expression, name: &str) -> boo
 }
 
 /// Build a function expression from a codegen function (compiled output).
-fn build_compiled_function_expression(codegen: &CodegenFunction) -> Expression {
+#[allow(dead_code)]
+fn build_compiled_function_expression(codegen: &BabelCodegenFunction) -> Expression {
     Expression::FunctionExpression(FunctionExpression {
         base: BaseNode::typed("FunctionExpression"),
         id: codegen.id.clone(),
@@ -2386,8 +2402,9 @@ fn clone_original_expr_as_expression(expr: &Expression, node_id: u32) -> Option<
 
 /// Build a compiled arrow/function expression from a codegen function,
 /// matching the original expression kind.
+#[allow(dead_code)]
 fn build_compiled_expression_matching_kind(
-    codegen: &CodegenFunction,
+    codegen: &BabelCodegenFunction,
     original_kind: OriginalFnKind,
 ) -> Expression {
     match original_kind {
@@ -3523,12 +3540,14 @@ impl MutVisitor for RenameIdentifierVisitor<'_> {
 /// - findFunctionsToCompile: traverse program to find components and hooks
 /// - processFn: per-function compilation with directive and suppression handling
 /// - applyCompiledFunctions: replace original functions with compiled versions
-pub fn compile_program(
-    mut file: File,
+pub fn compile_program<'a>(
+    ast: &oxc_ast::AstBuilder<'a>,
+    oxc_program: &oxc_ast::ast::Program<'a>,
+    file: File,
     scope: ScopeInfo,
     options: PluginOptions,
     fn_map: &FxHashMap<u32, FunctionNode<'_>>,
-) -> CompileResult {
+) -> CompileResult<'a> {
     // Compute output mode once, up front
     let output_mode = CompilerOutputMode::from_opts(&options);
 
@@ -3695,10 +3714,10 @@ pub fn compile_program(
     let env_config = options.environment.clone();
 
     // Process each function and collect compiled results
-    let mut compiled_fns: Vec<CompiledFunction<'_>> = Vec::new();
+    let mut compiled_fns: Vec<CompiledFunction<'_, '_>> = Vec::new();
 
     for source in &queue {
-        match process_fn(source, &scope, output_mode, &env_config, &mut context, fn_map) {
+        match process_fn(ast, source, &scope, output_mode, &env_config, &mut context, fn_map) {
             Ok(Some(codegen_fn)) => {
                 compiled_fns.push(CompiledFunction { kind: source.kind, source, codegen_fn });
             }
@@ -3720,7 +3739,7 @@ pub fn compile_program(
             if outlined.fn_type.is_some() {
                 context.log_event(LoggerEvent::CompileSuccess {
                     fn_loc: None,
-                    fn_name: outlined.func.id.as_ref().map(|id| id.name.clone()),
+                    fn_name: outlined.func.id.as_ref().map(|id| id.name.to_string()),
                     memo_slots: outlined.func.memo_slots_used,
                     memo_blocks: outlined.func.memo_blocks,
                     memo_values: outlined.func.memo_values,
@@ -3750,45 +3769,15 @@ pub fn compile_program(
         };
     }
 
-    // Determine gating for each compiled function.
-    // In the TS compiler, dynamic gating from directives takes precedence over plugin-level gating.
-    // Gating only applies to 'original' functions, not 'outlined' ones.
-    let function_gating_config = options.gating.clone();
+    // Did any function actually compile (and is meant to be applied)?
+    let has_replacements = !compiled_fns.is_empty();
 
-    // Convert compiled functions to owned representations (dropping borrows)
-    // so we can mutate the AST.
-    let replacements: Vec<CompiledFnForReplacement> = compiled_fns
-        .into_iter()
-        .map(|cf| {
-            let original_kind = cf.source.original_kind;
-            // Determine per-function gating: dynamic gating from directives OR plugin-level gating.
-            // Dynamic gating (from `use memo if(identifier)`) takes precedence.
-            let gating = if cf.kind == CompileSourceKind::Original {
-                // Check body directives for dynamic gating
-                let dynamic_gating =
-                    find_directives_dynamic_gating(&cf.source.body_directives, &options)
-                        .ok()
-                        .flatten()
-                        .map(|r| r.gating);
-                dynamic_gating.or_else(|| function_gating_config.clone())
-            } else {
-                None
-            };
-            CompiledFnForReplacement {
-                fn_start: cf.source.fn_start,
-                fn_node_id: cf.source.fn_node_id,
-                original_kind,
-                codegen_fn: cf.codegen_fn,
-                source_kind: cf.kind,
-                fn_name: cf.source.fn_name.clone(),
-                gating,
-            }
-        })
-        .collect();
-    // Drop queue (and its borrows from file.program)
+    // Drop the discovery results (and their borrows of `file.program`) so we no
+    // longer hold any borrow of the Babel `file`.
+    drop(compiled_fns);
     drop(queue);
 
-    if replacements.is_empty() {
+    if !has_replacements {
         // No functions to replace. Return renames for the Babel plugin to apply
         // (e.g., variable shadowing renames in lint mode). Imports are NOT added
         // when there are no replacements — matching TS behavior where
@@ -3802,15 +3791,26 @@ pub fn compile_program(
         };
     }
 
-    // Now we can mutate file.program
-    apply_compiled_functions(&replacements, &mut file.program, &mut context);
+    // STAGE 2 SCAFFOLD — codegen emission is stubbed.
+    //
+    // The back-end (`codegen_function`) now builds *oxc* AST, but the real
+    // per-instruction / terminal emission has not yet been ported, so the
+    // compiled function bodies are empty (see `codegen_reactive_function::
+    // codegen_function`). The former Babel path mutated `file.program` in place
+    // via `apply_compiled_functions` and the result was mapped to oxc by
+    // `convert_ast_reverse`; that mapping is no longer called.
+    //
+    // Until the emission port lands, return an arena-clone of the *original*
+    // oxc program so the example/tests still produce a valid (un-memoized)
+    // program without panicking and without `convert_ast_reverse`. The
+    // differential WILL drop here; that is expected.
+    use oxc_allocator::CloneIn;
+    let compiled_program = oxc_program.clone_in(ast.allocator);
 
     let timing_entries = context.timing.into_entries();
 
-    // Return the compiled File by value; in-process Rust consumers use it
-    // directly, and the napi consumer serializes the whole result as before.
     CompileResult::Success {
-        ast: Some(file),
+        ast: Some(compiled_program),
         events: context.events,
         ordered_log: context.ordered_log,
         renames: convert_renames(&context.renames),
