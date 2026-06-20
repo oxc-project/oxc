@@ -760,9 +760,6 @@ fn lower_inner(
     }
 
     // Process parameters.
-    // Stage 1a skeleton: only plain identifier params (no default) are lowered.
-    // Destructuring / default / rest params need `lower_assignment`, ported with
-    // the assignment arms.
     let mut hir_params: Vec<ParamPattern> = Vec::new();
     for param in &params.items {
         if param.initializer.is_none()
@@ -827,19 +824,47 @@ fn lower_inner(
             }
             continue;
         }
-        // TODO(stage1a-arms): destructuring / default parameters need lower_assignment.
-        builder.record_diagnostic(
-            CompilerDiagnostic::new(
-                ErrorCategory::Todo,
-                "Handle parameter",
-                Some("[BuildHIR] Non-identifier parameters not yet ported".to_string()),
-            )
-            .with_detail(CompilerDiagnosticDetail::Error {
-                loc: builder.source_location(param.span),
-                message: Some("Unsupported parameter type".to_string()),
-                identifier_name: None,
-            }),
-        );
+        // Destructuring (`{a}`, `[a]`), defaulted (`x = 1`, `{a} = obj`), and any
+        // other non-plain-identifier param. Babel modeled a default param as an
+        // `AssignmentPattern` param node; in oxc the default lives in
+        // `FormalParameter.initializer` alongside the underlying `pattern`.
+        // Create a temporary place for the param value, promote it, push it as the
+        // param, then delegate the binding via `lower_binding_assignment` (running
+        // the default ternary first when an initializer is present).
+        let param_loc = builder.source_location(param.span);
+        let place = build_temporary_place(&mut builder, param_loc.clone());
+        promote_temporary(&mut builder, place.identifier);
+        hir_params.push(ParamPattern::Place(place.clone()));
+        let value = if let Some(initializer) = &param.initializer {
+            lower_default_to_temp(&mut builder, param_loc.clone(), initializer, place)?
+        } else {
+            place
+        };
+        lower_binding_assignment(
+            &mut builder,
+            param_loc,
+            InstructionKind::Let,
+            &param.pattern,
+            value,
+            AssignmentStyle::Assignment,
+        )?;
+    }
+
+    // Rest parameter (`...rest`). Babel modeled this as a `RestElement` param; in
+    // oxc it is the separate `params.rest` field. Push a spread param place and
+    // delegate the binding of the rest argument.
+    if let Some(rest) = &params.rest {
+        let rest_loc = builder.source_location(rest.span);
+        let place = build_temporary_place(&mut builder, rest_loc.clone());
+        hir_params.push(ParamPattern::Spread(SpreadPattern { place: place.clone() }));
+        lower_binding_assignment(
+            &mut builder,
+            rest_loc,
+            InstructionKind::Let,
+            &rest.rest.argument,
+            place,
+            AssignmentStyle::Assignment,
+        )?;
     }
 
     // Lower the body
@@ -1859,107 +1884,107 @@ fn lower_binding_assignment(
         oxc::BindingPattern::AssignmentPattern(pattern) => {
             // Default value: if value === undefined, use default, else use value.
             let pat_loc = builder.source_location(pattern.span);
-
-            let temp = build_temporary_place(builder, pat_loc.clone());
-
-            let test_block = builder.reserve(BlockKind::Value);
-            let continuation_block = builder.reserve(builder.current_block_kind());
-
-            // Consequent: use default value
-            let temp_consequent = temp.clone();
-            let pat_loc_consequent = pat_loc.clone();
-            let continuation_id = continuation_block.id;
-            let consequent = builder.try_enter(BlockKind::Value, |builder, _| {
-                let default_value = lower_reorderable_expression(builder, &pattern.right)?;
-                lower_value_to_temporary(
-                    builder,
-                    InstructionValue::StoreLocal {
-                        lvalue: LValue {
-                            place: temp_consequent.clone(),
-                            kind: InstructionKind::Const,
-                        },
-                        value: default_value,
-                        type_annotation: None,
-                        loc: pat_loc_consequent.clone(),
-                    },
-                )?;
-                Ok(Terminal::Goto {
-                    block: continuation_id,
-                    variant: GotoVariant::Break,
-                    id: EvaluationOrder(0),
-                    loc: pat_loc_consequent.clone(),
-                })
-            });
-
-            // Alternate: use the original value
-            let temp_alternate = temp.clone();
-            let pat_loc_alternate = pat_loc.clone();
-            let value_alternate = value.clone();
-            let alternate = builder.try_enter(BlockKind::Value, |builder, _| {
-                lower_value_to_temporary(
-                    builder,
-                    InstructionValue::StoreLocal {
-                        lvalue: LValue {
-                            place: temp_alternate.clone(),
-                            kind: InstructionKind::Const,
-                        },
-                        value: value_alternate.clone(),
-                        type_annotation: None,
-                        loc: pat_loc_alternate.clone(),
-                    },
-                )?;
-                Ok(Terminal::Goto {
-                    block: continuation_id,
-                    variant: GotoVariant::Break,
-                    id: EvaluationOrder(0),
-                    loc: pat_loc_alternate.clone(),
-                })
-            });
-
-            // Ternary terminal
-            builder.terminate_with_continuation(
-                Terminal::Ternary {
-                    test: test_block.id,
-                    fallthrough: continuation_id,
-                    id: EvaluationOrder(0),
-                    loc: pat_loc.clone(),
-                },
-                test_block,
-            );
-
-            // In test block: check if value === undefined
-            let undef = lower_value_to_temporary(
-                builder,
-                InstructionValue::Primitive {
-                    value: PrimitiveValue::Undefined,
-                    loc: pat_loc.clone(),
-                },
-            )?;
-            let test = lower_value_to_temporary(
-                builder,
-                InstructionValue::BinaryExpression {
-                    left: value,
-                    operator: BinaryOperator::StrictEqual,
-                    right: undef,
-                    loc: pat_loc.clone(),
-                },
-            )?;
-            builder.terminate_with_continuation(
-                Terminal::Branch {
-                    test,
-                    consequent: consequent?,
-                    alternate: alternate?,
-                    fallthrough: continuation_id,
-                    id: EvaluationOrder(0),
-                    loc: pat_loc.clone(),
-                },
-                continuation_block,
-            );
-
+            let temp = lower_default_to_temp(builder, pat_loc.clone(), &pattern.right, value)?;
             // Recursively assign the resolved value to the left pattern.
             lower_binding_assignment(builder, pat_loc, kind, &pattern.left, temp, assignment_style)
         }
     }
+}
+
+/// Lower the default-value ternary `value === undefined ? default : value` into a
+/// fresh temporary and return it. Shared by the `AssignmentPattern` arm and by the
+/// default-parameter (`FormalParameter.initializer`) lowering, which in Babel was a
+/// single `AssignmentPattern` param node.
+fn lower_default_to_temp(
+    builder: &mut HirBuilder,
+    pat_loc: Option<SourceLocation>,
+    default: &oxc::Expression,
+    value: Place,
+) -> Result<Place, CompilerError> {
+    let temp = build_temporary_place(builder, pat_loc.clone());
+
+    let test_block = builder.reserve(BlockKind::Value);
+    let continuation_block = builder.reserve(builder.current_block_kind());
+    let continuation_id = continuation_block.id;
+
+    let temp_consequent = temp.clone();
+    let pat_loc_consequent = pat_loc.clone();
+    let consequent = builder.try_enter(BlockKind::Value, |builder, _| {
+        let default_value = lower_reorderable_expression(builder, default)?;
+        lower_value_to_temporary(
+            builder,
+            InstructionValue::StoreLocal {
+                lvalue: LValue { place: temp_consequent.clone(), kind: InstructionKind::Const },
+                value: default_value,
+                type_annotation: None,
+                loc: pat_loc_consequent.clone(),
+            },
+        )?;
+        Ok(Terminal::Goto {
+            block: continuation_id,
+            variant: GotoVariant::Break,
+            id: EvaluationOrder(0),
+            loc: pat_loc_consequent.clone(),
+        })
+    });
+
+    let temp_alternate = temp.clone();
+    let pat_loc_alternate = pat_loc.clone();
+    let value_alternate = value.clone();
+    let alternate = builder.try_enter(BlockKind::Value, |builder, _| {
+        lower_value_to_temporary(
+            builder,
+            InstructionValue::StoreLocal {
+                lvalue: LValue { place: temp_alternate.clone(), kind: InstructionKind::Const },
+                value: value_alternate.clone(),
+                type_annotation: None,
+                loc: pat_loc_alternate.clone(),
+            },
+        )?;
+        Ok(Terminal::Goto {
+            block: continuation_id,
+            variant: GotoVariant::Break,
+            id: EvaluationOrder(0),
+            loc: pat_loc_alternate.clone(),
+        })
+    });
+
+    builder.terminate_with_continuation(
+        Terminal::Ternary {
+            test: test_block.id,
+            fallthrough: continuation_id,
+            id: EvaluationOrder(0),
+            loc: pat_loc.clone(),
+        },
+        test_block,
+    );
+
+    let undef = lower_value_to_temporary(
+        builder,
+        InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc: pat_loc.clone() },
+    )?;
+    let test = lower_value_to_temporary(
+        builder,
+        InstructionValue::BinaryExpression {
+            left: value,
+            operator: BinaryOperator::StrictEqual,
+            right: undef,
+            loc: pat_loc.clone(),
+        },
+    )?;
+    builder.terminate_with_continuation(
+        Terminal::Branch {
+            test,
+            consequent: consequent?,
+            alternate: alternate?,
+            fallthrough: continuation_id,
+            id: EvaluationOrder(0),
+            loc: pat_loc,
+        },
+        continuation_block,
+    );
+
+    Ok(temp)
 }
 
 /// Resolve a member-expression assignment target (oxc's member variants of
