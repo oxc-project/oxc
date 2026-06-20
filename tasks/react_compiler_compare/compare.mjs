@@ -26,7 +26,7 @@ import { parse } from '@babel/parser';
 import _generate from '@babel/generator';
 
 const generate = _generate.default || _generate;
-const ReactCompilerMod = await import('babel-plugin-react-compiler');
+const ReactCompilerMod = await import(process.env.BPRC || 'babel-plugin-react-compiler');
 const ReactCompiler = ReactCompilerMod.default || ReactCompilerMod;
 const bprcVersion = (() => {
   try { return JSON.parse(readFileSync(new URL('./node_modules/babel-plugin-react-compiler/package.json', import.meta.url))).version; }

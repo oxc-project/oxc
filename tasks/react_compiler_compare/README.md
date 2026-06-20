@@ -14,10 +14,27 @@ cd napi/transform && pnpm build && cd -
 cd tasks/react_compiler_compare && npm install
 ```
 
-The pinned `babel-plugin-react-compiler` version
-(`0.0.0-experimental-334f00b-20240725`) is the **exact commit oxc's port was based
-on**, so differences reflect port fidelity rather than version drift. Bump it in
-`package.json` to compare against a newer release.
+> [!IMPORTANT]
+> `oxc_react_compiler` is a Rust port of the **oxc-project fork** of react-compiler
+> (`~/github/oxc-project/oxc-react-compiler/react-compiler`), **not** of any published
+> npm release. The fork has diverged from npm by ~a year (e.g. it alphabetically
+> sorts reactive-scope dependencies via `compareScopeDependency`; older npm builds
+> don't). So comparing against **npm** mostly measures *version drift*, while comparing
+> against the **fork** measures true *port fidelity*. Use `BPRC` to pick the reference.
+
+### Comparing against the fork (recommended — true port fidelity)
+
+```bash
+# build the fork's babel plugin once
+cd ~/github/oxc-project/oxc-react-compiler/react-compiler
+yarn install && yarn workspace babel-plugin-react-compiler build && cd -
+
+# point the harness at the fork's built plugin
+BPRC=~/github/oxc-project/oxc-react-compiler/react-compiler/packages/babel-plugin-react-compiler/dist/index.js \
+  REPOS=/path/to/oxc-ecosystem-ci/repos node compare.mjs
+```
+
+Without `BPRC`, the pinned npm `babel-plugin-react-compiler` in `package.json` is used.
 
 ## Run
 
@@ -45,24 +62,26 @@ quote style / spacing / codegen formatting. A file "counts" toward the rate only
 when react-compiler actually memoized something (otherwise it's a trivial no-op
 match). Mismatches are bucketed by dominant cause.
 
-## Findings (sample: 5000 files, `0.0.0-experimental-334f00b-20240725`)
+## Findings
 
-- **0** oxc crashes across ~5000 real-world files (robustness).
-- On files where the compiler memoized something: **~31% byte-identical** to babel
-  after normalization.
-- Mismatch causes, in order:
-  - **dependency / cache-slot ordering** (largest): same dependencies and
-    semantics, but ordered differently in the `$[i] !== dep` change-checks, which
-    cascades into different slot numbering — e.g.
-    `$[4] !== isOn || $[5] !== isDisabled` (babel) vs
-    `$[4] !== isDisabled || $[5] !== isOn` (oxc).
-  - **memoization decisions**: oxc compiles some functions babel skips (and vice
-    versa), notably around `forwardRef`/nested components.
-  - **cache-slot counts**: `_c(33)` vs `_c(31)` — different memoization
-    granularity.
-  - **outlining**: oxc outlines some inline callbacks (`setOpen(_temp)`) babel
-    leaves inline.
+**0 oxc crashes** across thousands of real-world files (robustness).
 
-The dependency-ordering difference is the single biggest lever: it is the most
-common cause and is semantically equivalent, so aligning oxc's reactive-scope
-dependency ordering with babel's would move the match rate substantially.
+| reference | identical-output on memoized files |
+| --- | --- |
+| npm `babel-plugin-react-compiler@334f00b` (a year stale) | ~31% — dominated by **version drift** |
+| the **fork** oxc actually ports (`yarn build`, via `BPRC`) | **~86%** — true port fidelity |
+
+Against the fork, the remaining ~14% are genuine port gaps:
+
+- **mutation / immutability inference false-positives** (most serious): oxc rejects
+  some legal mutations the fork accepts — e.g. `ref.current = x` on a `useRef` value
+  raises `[ReactCompiler] Immutability: This value cannot be modified`, which errors
+  the whole component and emits an **empty body**. Fixing the inference to treat ref
+  `.current` (and other allowed mutations) as mutable closes these.
+- **memoization decisions**: oxc declines to compile a few components the fork does.
+- **cache-slot counts**: `_c(33)` vs `_c(31)` — different memoization granularity.
+- **outlining**: minor differences in which inline callbacks get outlined.
+
+The `~31%` vs npm is almost entirely the fork's alphabetical dependency sort
+(`compareScopeDependency`) that the stale npm build lacks — i.e. oxc is *correct*
+relative to what it ports; the npm number is not a fair fidelity measure.
