@@ -5087,7 +5087,25 @@
           "$ref": "#/definitions/DummyRule"
         },
         "no-restricted-properties": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PropertyDetails"
+                }
+              ],
+              "additionalItems": {
+                "$ref": "#/definitions/PropertyDetails"
+              },
+              "minItems": 2
+            }
+          ]
         },
         "no-return-assign": {
           "anyOf": [
@@ -17256,6 +17274,53 @@
       },
       "additionalProperties": false,
       "markdownDescription": "A prop with optional `disallowedFor` DOM node list and custom `message`."
+    },
+    "PropertyDetails": {
+      "type": "object",
+      "properties": {
+        "allowObjects": {
+          "description": "Objects where property access should be allowed. This must be used with `property` and\ncannot be used with `object`.",
+          "default": null,
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Objects where property access should be allowed. This must be used with `property` and\ncannot be used with `object`."
+        },
+        "allowProperties": {
+          "description": "Properties where property access should be allowed. This must be used with `object` and\ncannot be used with `property`.",
+          "default": null,
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Properties where property access should be allowed. This must be used with `object` and\ncannot be used with `property`."
+        },
+        "message": {
+          "description": "A custom message to display.",
+          "default": null,
+          "type": "string",
+          "markdownDescription": "A custom message to display."
+        },
+        "object": {
+          "description": "The object on which the property is being accessed.",
+          "default": null,
+          "type": "string",
+          "markdownDescription": "The object on which the property is being accessed."
+        },
+        "property": {
+          "description": "The property being accessed. If `object` is not specified, this applies to the named\nproperty on all objects.",
+          "default": null,
+          "type": "string",
+          "markdownDescription": "The property being accessed. If `object` is not specified, this applies to the named\nproperty on all objects."
+        }
+      },
+      "additionalProperties": false
+    },
+    "PropertyDetailsList": {
+      "additionalItems": {
+        "$ref": "#/definitions/PropertyDetails"
+      }
     },
     "RadixType": {
       "oneOf": [

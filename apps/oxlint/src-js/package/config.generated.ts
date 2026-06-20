@@ -1180,7 +1180,7 @@ export interface DummyRuleMap {
   "no-restricted-exports"?: RuleNoConfig | [AllowWarnDeny, NoRestrictedExportsConfig];
   "no-restricted-globals"?: DummyRule;
   "no-restricted-imports"?: DummyRule;
-  "no-restricted-properties"?: DummyRule;
+  "no-restricted-properties"?: RuleNoConfig | [AllowWarnDeny, PropertyDetails, ...PropertyDetails[]];
   "no-return-assign"?: RuleNoConfig | [AllowWarnDeny, NoReturnAssignMode];
   "no-script-url"?: RuleNoConfig;
   "no-self-assign"?: RuleNoConfig | [AllowWarnDeny, NoSelfAssign];
@@ -3422,6 +3422,31 @@ export interface RestrictDefaultExports {
    * ```
    */
   namespaceFrom?: boolean;
+}
+export interface PropertyDetails {
+  /**
+   * Objects where property access should be allowed. This must be used with `property` and
+   * cannot be used with `object`.
+   */
+  allowObjects?: string[];
+  /**
+   * Properties where property access should be allowed. This must be used with `object` and
+   * cannot be used with `property`.
+   */
+  allowProperties?: string[];
+  /**
+   * A custom message to display.
+   */
+  message?: string;
+  /**
+   * The object on which the property is being accessed.
+   */
+  object?: string;
+  /**
+   * The property being accessed. If `object` is not specified, this applies to the named
+   * property on all objects.
+   */
+  property?: string;
 }
 export interface NoSelfAssign {
   /**

@@ -367,13 +367,17 @@ impl JsonSchema for OxlintRules {
 
                     // We only need to dereference array schemas for rule config.
                     // Reuse the schema for other cases.
-                    // We only need to dereference array schemas with at least 2 entries. A single entry array schema is used for configs which accepts an array.
-                    // 2 entries means that it is a tuple config, and `AllowWarnDeny` needs to be appended for each entry in the tuple.
                     if obj.array.as_ref().is_none_or(|array| {
+                        // We need to dereference array schemas with at least 2 entries. A single entry array schema is used for configs which accepts an array.
+                        // 2 entries means that it is a tuple config, and `AllowWarnDeny` needs to be appended for each entry in the tuple.
                         array
                             .items
                             .as_ref()
                             .is_none_or(|items| !matches!(items, SingleOrVec::Vec(_)))
+                            &&
+                            // We need to dereference array schemas with additional items. These should be handled as spread elements inside the config.
+                            // So rule configurations like `[AllowWarnDeny, ...Config]` can be supported.
+                            array.additional_items.is_none()
                     }) {
                         return schema;
                     }
@@ -432,15 +436,24 @@ impl JsonSchema for OxlintRules {
                             "Expected rule schema to be either an object, an array, or a reference, but not multiple"
                         );
 
-                        if let Some(array) = obj.array {
+                        if let Some(ref mut array) = obj.array {
                             debug_assert!(
-                                array.additional_items.is_none(),
-                                "Expected array schema to have no additionalItems for rule config"
+                                array.items.is_none() || array.additional_items.is_none(),
+                                "Expected rule to not contain items and additionalItems at the same time"
                             );
+                            if let Some(ref additional_items) = array.additional_items {
+                                array.items = Some(SingleOrVec::Vec(vec![
+                                    r#gen.subschema_for::<AllowWarnDeny>(),
+                                    *additional_items.clone(),
+                                ]));
+                                array.min_items = Some(2);
+                                array.max_items = None;
+                                return Schema::Object(obj);
+                            }
                             // We only need to handle the cases where multiple items exists,
                             // because single item array schema is used for rules which accepts an array as config,
                             // and we just need to append `AllowWarnDeny` for that case.
-                            let Some(SingleOrVec::Vec(configs)) = array.items else {
+                            let Some(SingleOrVec::Vec(configs)) = array.items.clone() else {
                                 return SchemaObject {
                                     instance_type: Some(InstanceType::Array.into()),
                                     array: Some(Box::new(ArrayValidation {
@@ -510,7 +523,6 @@ impl JsonSchema for OxlintRules {
                     let Some(schema) = r.schema(r#gen) else {
                         return r#gen.subschema_for::<RuleNoConfig>();
                     };
-
                     let schema = resolve_references_in_schema(&schema, r#gen).clone();
                     let schema = append_allow_warn_deny_to_schema(schema, r#gen);
                     with_default_rule_schema(schema, r#gen)
