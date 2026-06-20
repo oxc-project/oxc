@@ -371,23 +371,6 @@ fn is_regular_call(call: &oxc::CallExpression) -> bool {
     !call.optional && !expr_contains_optional(&call.callee)
 }
 
-/// Check if an expression is a React API call (e.g., `forwardRef` or `React.forwardRef`).
-#[allow(dead_code)]
-fn is_react_api(expr: &oxc::Expression, function_name: &str) -> bool {
-    match expr {
-        oxc::Expression::Identifier(id) => id.name == function_name,
-        oxc::Expression::StaticMemberExpression(member) => {
-            if let oxc::Expression::Identifier(obj) = &member.object {
-                if obj.name == "React" {
-                    return member.property.name == function_name;
-                }
-            }
-            false
-        }
-        _ => false,
-    }
-}
-
 /// Get the inferred function name from a function's context.
 ///
 /// For FunctionDeclaration: uses the `id` field.

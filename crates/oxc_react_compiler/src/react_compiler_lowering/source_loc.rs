@@ -16,13 +16,11 @@ use crate::react_compiler_hir::Position;
 use crate::react_compiler_hir::SourceLocation;
 
 /// One-time index of line-start byte offsets, for `Span` → [`SourceLocation`].
-#[allow(dead_code)]
 pub struct LineOffsets {
     /// Byte offset of the start of each line. `line_offsets[0] == 0`.
     line_offsets: Vec<u32>,
 }
 
-#[allow(dead_code)]
 impl LineOffsets {
     pub fn new(source_text: &str) -> Self {
         let mut line_offsets = vec![0];
