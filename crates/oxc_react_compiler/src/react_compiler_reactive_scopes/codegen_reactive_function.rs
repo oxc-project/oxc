@@ -2256,9 +2256,101 @@ fn ox_binding_pattern_to_assignment_target<'a>(
                 cx.ast.alloc_identifier_reference(SPAN, id.name),
             ))
         }
-        _ => {
-            Err(invariant_err("Destructuring reassignment targets are not yet ported to oxc", None))
+        oxc::BindingPattern::ObjectPattern(obj) => {
+            let obj = obj.unbox();
+            let mut properties = cx.ast.vec();
+            for prop in obj.properties {
+                properties.push(ox_binding_property_to_assignment_target_property(cx, prop)?);
+            }
+            let rest = ox_binding_rest_to_assignment_target_rest(cx, obj.rest)?;
+            let target = cx.ast.object_assignment_target(SPAN, properties, rest);
+            Ok(oxc::AssignmentTarget::ObjectAssignmentTarget(cx.ast.alloc(target)))
         }
+        oxc::BindingPattern::ArrayPattern(arr) => {
+            let arr = arr.unbox();
+            let mut elements = cx.ast.vec();
+            for elem in arr.elements {
+                match elem {
+                    Some(p) => elements.push(Some(ox_binding_pattern_to_maybe_default(cx, p)?)),
+                    None => elements.push(None),
+                }
+            }
+            let rest = ox_binding_rest_to_assignment_target_rest(cx, arr.rest)?;
+            let target = cx.ast.array_assignment_target(SPAN, elements, rest);
+            Ok(oxc::AssignmentTarget::ArrayAssignmentTarget(cx.ast.alloc(target)))
+        }
+        oxc::BindingPattern::AssignmentPattern(_) => {
+            Err(invariant_err("Unexpected top-level default in a reassignment target", None))
+        }
+    }
+}
+
+/// Convert an optional `BindingRestElement` (`...rest`) into an `AssignmentTargetRest`.
+fn ox_binding_rest_to_assignment_target_rest<'a>(
+    cx: &OxcContext<'a, '_>,
+    rest: Option<oxc_allocator::Box<'a, oxc::BindingRestElement<'a>>>,
+) -> Result<Option<oxc_allocator::Box<'a, oxc::AssignmentTargetRest<'a>>>, CompilerError> {
+    match rest {
+        Some(rest) => {
+            let rest = rest.unbox();
+            let target = ox_binding_pattern_to_assignment_target(cx, rest.argument)?;
+            Ok(Some(cx.ast.alloc(cx.ast.assignment_target_rest(SPAN, target))))
+        }
+        None => Ok(None),
+    }
+}
+
+/// Convert a `BindingPattern` element into an `AssignmentTargetMaybeDefault`,
+/// turning an `AssignmentPattern` (`x = default`) into an `AssignmentTargetWithDefault`.
+fn ox_binding_pattern_to_maybe_default<'a>(
+    cx: &OxcContext<'a, '_>,
+    pattern: oxc::BindingPattern<'a>,
+) -> Result<oxc::AssignmentTargetMaybeDefault<'a>, CompilerError> {
+    match pattern {
+        oxc::BindingPattern::AssignmentPattern(assign) => {
+            let assign = assign.unbox();
+            let binding = ox_binding_pattern_to_assignment_target(cx, assign.left)?;
+            let with_default = cx.ast.assignment_target_with_default(SPAN, binding, assign.right);
+            Ok(oxc::AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(
+                cx.ast.alloc(with_default),
+            ))
+        }
+        other => {
+            let target = ox_binding_pattern_to_assignment_target(cx, other)?;
+            Ok(oxc::AssignmentTargetMaybeDefault::from(target))
+        }
+    }
+}
+
+/// Convert a destructuring `BindingProperty` into an `AssignmentTargetProperty`.
+/// Shorthand properties (`{a}` / `{a = d}`) become identifier targets; the rest
+/// become `name: target` properties.
+fn ox_binding_property_to_assignment_target_property<'a>(
+    cx: &OxcContext<'a, '_>,
+    prop: oxc::BindingProperty<'a>,
+) -> Result<oxc::AssignmentTargetProperty<'a>, CompilerError> {
+    if prop.shorthand {
+        let (id, init) = match prop.value {
+            oxc::BindingPattern::BindingIdentifier(id) => (id.unbox(), None),
+            oxc::BindingPattern::AssignmentPattern(assign) => {
+                let assign = assign.unbox();
+                match assign.left {
+                    oxc::BindingPattern::BindingIdentifier(id) => (id.unbox(), Some(assign.right)),
+                    _ => return Err(invariant_err("Unexpected shorthand default target", None)),
+                }
+            }
+            _ => return Err(invariant_err("Unexpected shorthand property value", None)),
+        };
+        Ok(cx.ast.assignment_target_property_assignment_target_property_identifier(
+            SPAN,
+            cx.ast.identifier_reference(SPAN, id.name),
+            init,
+        ))
+    } else {
+        let binding = ox_binding_pattern_to_maybe_default(cx, prop.value)?;
+        let property =
+            cx.ast.assignment_target_property_property(SPAN, prop.key, binding, prop.computed);
+        Ok(oxc::AssignmentTargetProperty::AssignmentTargetPropertyProperty(cx.ast.alloc(property)))
     }
 }
 
