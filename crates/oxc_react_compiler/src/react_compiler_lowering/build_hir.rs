@@ -4193,6 +4193,11 @@ fn lower_expression(
             value: PrimitiveValue::String(lit.value.to_string().into()),
             loc: builder.source_location(lit.span),
         }),
+        oxc::Expression::RegExpLiteral(lit) => Ok(InstructionValue::RegExpLiteral {
+            pattern: lit.regex.pattern.text.to_string(),
+            flags: lit.regex.flags.to_inline_string().as_str().to_string(),
+            loc: builder.source_location(lit.span),
+        }),
         oxc::Expression::BinaryExpression(bin) => {
             let loc = builder.source_location(bin.span);
             let left = lower_expression_to_temporary(builder, &bin.left)?;
