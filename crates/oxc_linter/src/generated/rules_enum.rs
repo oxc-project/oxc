@@ -842,6 +842,7 @@ pub use crate::rules::vue::require_prop_types::RequirePropTypes as VueRequirePro
 pub use crate::rules::vue::require_render_return::RequireRenderReturn as VueRequireRenderReturn;
 pub use crate::rules::vue::require_slots_as_functions::RequireSlotsAsFunctions as VueRequireSlotsAsFunctions;
 pub use crate::rules::vue::require_typed_ref::RequireTypedRef as VueRequireTypedRef;
+pub use crate::rules::vue::require_valid_default_prop::RequireValidDefaultProp as VueRequireValidDefaultProp;
 pub use crate::rules::vue::return_in_computed_property::ReturnInComputedProperty as VueReturnInComputedProperty;
 pub use crate::rules::vue::return_in_emits_validator::ReturnInEmitsValidator as VueReturnInEmitsValidator;
 pub use crate::rules::vue::valid_define_emits::ValidDefineEmits as VueValidDefineEmits;
@@ -1698,6 +1699,7 @@ pub enum RuleEnum {
     VueRequireRenderReturn(VueRequireRenderReturn),
     VueRequireSlotsAsFunctions(VueRequireSlotsAsFunctions),
     VueRequireTypedRef(VueRequireTypedRef),
+    VueRequireValidDefaultProp(VueRequireValidDefaultProp),
     VueReturnInComputedProperty(VueReturnInComputedProperty),
     VueReturnInEmitsValidator(VueReturnInEmitsValidator),
     VueValidDefineEmits(VueValidDefineEmits),
@@ -2645,7 +2647,8 @@ const VUE_REQUIRE_PROP_TYPES_ID: usize = VUE_REQUIRE_PROP_TYPE_CONSTRUCTOR_ID + 
 const VUE_REQUIRE_RENDER_RETURN_ID: usize = VUE_REQUIRE_PROP_TYPES_ID + 1usize;
 const VUE_REQUIRE_SLOTS_AS_FUNCTIONS_ID: usize = VUE_REQUIRE_RENDER_RETURN_ID + 1usize;
 const VUE_REQUIRE_TYPED_REF_ID: usize = VUE_REQUIRE_SLOTS_AS_FUNCTIONS_ID + 1usize;
-const VUE_RETURN_IN_COMPUTED_PROPERTY_ID: usize = VUE_REQUIRE_TYPED_REF_ID + 1usize;
+const VUE_REQUIRE_VALID_DEFAULT_PROP_ID: usize = VUE_REQUIRE_TYPED_REF_ID + 1usize;
+const VUE_RETURN_IN_COMPUTED_PROPERTY_ID: usize = VUE_REQUIRE_VALID_DEFAULT_PROP_ID + 1usize;
 const VUE_RETURN_IN_EMITS_VALIDATOR_ID: usize = VUE_RETURN_IN_COMPUTED_PROPERTY_ID + 1usize;
 const VUE_VALID_DEFINE_EMITS_ID: usize = VUE_RETURN_IN_EMITS_VALIDATOR_ID + 1usize;
 const VUE_VALID_DEFINE_OPTIONS_ID: usize = VUE_VALID_DEFINE_EMITS_ID + 1usize;
@@ -3616,6 +3619,7 @@ impl RuleEnum {
             Self::VueRequireRenderReturn(_) => VUE_REQUIRE_RENDER_RETURN_ID,
             Self::VueRequireSlotsAsFunctions(_) => VUE_REQUIRE_SLOTS_AS_FUNCTIONS_ID,
             Self::VueRequireTypedRef(_) => VUE_REQUIRE_TYPED_REF_ID,
+            Self::VueRequireValidDefaultProp(_) => VUE_REQUIRE_VALID_DEFAULT_PROP_ID,
             Self::VueReturnInComputedProperty(_) => VUE_RETURN_IN_COMPUTED_PROPERTY_ID,
             Self::VueReturnInEmitsValidator(_) => VUE_RETURN_IN_EMITS_VALIDATOR_ID,
             Self::VueValidDefineEmits(_) => VUE_VALID_DEFINE_EMITS_ID,
@@ -4572,6 +4576,7 @@ impl RuleEnum {
             Self::VueRequireRenderReturn(_) => VueRequireRenderReturn::NAME,
             Self::VueRequireSlotsAsFunctions(_) => VueRequireSlotsAsFunctions::NAME,
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::NAME,
+            Self::VueRequireValidDefaultProp(_) => VueRequireValidDefaultProp::NAME,
             Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::NAME,
             Self::VueReturnInEmitsValidator(_) => VueReturnInEmitsValidator::NAME,
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::NAME,
@@ -5586,6 +5591,7 @@ impl RuleEnum {
             Self::VueRequireRenderReturn(_) => VueRequireRenderReturn::CATEGORY,
             Self::VueRequireSlotsAsFunctions(_) => VueRequireSlotsAsFunctions::CATEGORY,
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::CATEGORY,
+            Self::VueRequireValidDefaultProp(_) => VueRequireValidDefaultProp::CATEGORY,
             Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::CATEGORY,
             Self::VueReturnInEmitsValidator(_) => VueReturnInEmitsValidator::CATEGORY,
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::CATEGORY,
@@ -6543,6 +6549,7 @@ impl RuleEnum {
             Self::VueRequireRenderReturn(_) => VueRequireRenderReturn::FIX,
             Self::VueRequireSlotsAsFunctions(_) => VueRequireSlotsAsFunctions::FIX,
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::FIX,
+            Self::VueRequireValidDefaultProp(_) => VueRequireValidDefaultProp::FIX,
             Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::FIX,
             Self::VueReturnInEmitsValidator(_) => VueReturnInEmitsValidator::FIX,
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::FIX,
@@ -7764,6 +7771,7 @@ impl RuleEnum {
             Self::VueRequireRenderReturn(_) => VueRequireRenderReturn::documentation(),
             Self::VueRequireSlotsAsFunctions(_) => VueRequireSlotsAsFunctions::documentation(),
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::documentation(),
+            Self::VueRequireValidDefaultProp(_) => VueRequireValidDefaultProp::documentation(),
             Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::documentation(),
             Self::VueReturnInEmitsValidator(_) => VueReturnInEmitsValidator::documentation(),
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::documentation(),
@@ -10167,6 +10175,10 @@ impl RuleEnum {
             }
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::config_schema(generator)
                 .or_else(|| VueRequireTypedRef::schema(generator)),
+            Self::VueRequireValidDefaultProp(_) => {
+                VueRequireValidDefaultProp::config_schema(generator)
+                    .or_else(|| VueRequireValidDefaultProp::schema(generator))
+            }
             Self::VueReturnInComputedProperty(_) => {
                 VueReturnInComputedProperty::config_schema(generator)
                     .or_else(|| VueReturnInComputedProperty::schema(generator))
@@ -11019,6 +11031,7 @@ impl RuleEnum {
             Self::VueRequireRenderReturn(_) => "vue",
             Self::VueRequireSlotsAsFunctions(_) => "vue",
             Self::VueRequireTypedRef(_) => "vue",
+            Self::VueRequireValidDefaultProp(_) => "vue",
             Self::VueReturnInComputedProperty(_) => "vue",
             Self::VueReturnInEmitsValidator(_) => "vue",
             Self::VueValidDefineEmits(_) => "vue",
@@ -13712,6 +13725,9 @@ impl RuleEnum {
             Self::VueRequireTypedRef(_) => {
                 Ok(Self::VueRequireTypedRef(VueRequireTypedRef::from_configuration(value)?))
             }
+            Self::VueRequireValidDefaultProp(_) => Ok(Self::VueRequireValidDefaultProp(
+                VueRequireValidDefaultProp::from_configuration(value)?,
+            )),
             Self::VueReturnInComputedProperty(_) => Ok(Self::VueReturnInComputedProperty(
                 VueReturnInComputedProperty::from_configuration(value)?,
             )),
@@ -14570,6 +14586,7 @@ impl RuleEnum {
             Self::VueRequireRenderReturn(rule) => rule.to_configuration(),
             Self::VueRequireSlotsAsFunctions(rule) => rule.to_configuration(),
             Self::VueRequireTypedRef(rule) => rule.to_configuration(),
+            Self::VueRequireValidDefaultProp(rule) => rule.to_configuration(),
             Self::VueReturnInComputedProperty(rule) => rule.to_configuration(),
             Self::VueReturnInEmitsValidator(rule) => rule.to_configuration(),
             Self::VueValidDefineEmits(rule) => rule.to_configuration(),
@@ -15413,6 +15430,7 @@ impl RuleEnum {
             Self::VueRequireRenderReturn(rule) => rule.run(node, ctx),
             Self::VueRequireSlotsAsFunctions(rule) => rule.run(node, ctx),
             Self::VueRequireTypedRef(rule) => rule.run(node, ctx),
+            Self::VueRequireValidDefaultProp(rule) => rule.run(node, ctx),
             Self::VueReturnInComputedProperty(rule) => rule.run(node, ctx),
             Self::VueReturnInEmitsValidator(rule) => rule.run(node, ctx),
             Self::VueValidDefineEmits(rule) => rule.run(node, ctx),
@@ -16268,6 +16286,7 @@ impl RuleEnum {
             Self::VueRequireRenderReturn(rule) => rule.run_once(ctx),
             Self::VueRequireSlotsAsFunctions(rule) => rule.run_once(ctx),
             Self::VueRequireTypedRef(rule) => rule.run_once(ctx),
+            Self::VueRequireValidDefaultProp(rule) => rule.run_once(ctx),
             Self::VueReturnInComputedProperty(rule) => rule.run_once(ctx),
             Self::VueReturnInEmitsValidator(rule) => rule.run_once(ctx),
             Self::VueValidDefineEmits(rule) => rule.run_once(ctx),
@@ -17240,6 +17259,7 @@ impl RuleEnum {
             Self::VueRequireRenderReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueRequireSlotsAsFunctions(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueRequireTypedRef(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VueRequireValidDefaultProp(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueReturnInComputedProperty(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueReturnInEmitsValidator(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueValidDefineEmits(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -18096,6 +18116,7 @@ impl RuleEnum {
             Self::VueRequireRenderReturn(rule) => rule.should_run(ctx),
             Self::VueRequireSlotsAsFunctions(rule) => rule.should_run(ctx),
             Self::VueRequireTypedRef(rule) => rule.should_run(ctx),
+            Self::VueRequireValidDefaultProp(rule) => rule.should_run(ctx),
             Self::VueReturnInComputedProperty(rule) => rule.should_run(ctx),
             Self::VueReturnInEmitsValidator(rule) => rule.should_run(ctx),
             Self::VueValidDefineEmits(rule) => rule.should_run(ctx),
@@ -19316,6 +19337,7 @@ impl RuleEnum {
             Self::VueRequireRenderReturn(_) => VueRequireRenderReturn::IS_TSGOLINT_RULE,
             Self::VueRequireSlotsAsFunctions(_) => VueRequireSlotsAsFunctions::IS_TSGOLINT_RULE,
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::IS_TSGOLINT_RULE,
+            Self::VueRequireValidDefaultProp(_) => VueRequireValidDefaultProp::IS_TSGOLINT_RULE,
             Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::IS_TSGOLINT_RULE,
             Self::VueReturnInEmitsValidator(_) => VueReturnInEmitsValidator::IS_TSGOLINT_RULE,
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::IS_TSGOLINT_RULE,
@@ -20332,6 +20354,7 @@ impl RuleEnum {
             Self::VueRequireRenderReturn(_) => VueRequireRenderReturn::VERSION,
             Self::VueRequireSlotsAsFunctions(_) => VueRequireSlotsAsFunctions::VERSION,
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::VERSION,
+            Self::VueRequireValidDefaultProp(_) => VueRequireValidDefaultProp::VERSION,
             Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::VERSION,
             Self::VueReturnInEmitsValidator(_) => VueReturnInEmitsValidator::VERSION,
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::VERSION,
@@ -21385,6 +21408,7 @@ impl RuleEnum {
             Self::VueRequireRenderReturn(_) => VueRequireRenderReturn::HAS_CONFIG,
             Self::VueRequireSlotsAsFunctions(_) => VueRequireSlotsAsFunctions::HAS_CONFIG,
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::HAS_CONFIG,
+            Self::VueRequireValidDefaultProp(_) => VueRequireValidDefaultProp::HAS_CONFIG,
             Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::HAS_CONFIG,
             Self::VueReturnInEmitsValidator(_) => VueReturnInEmitsValidator::HAS_CONFIG,
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::HAS_CONFIG,
@@ -22343,6 +22367,7 @@ impl RuleEnum {
             Self::VueRequireRenderReturn(_) => VueRequireRenderReturn::INFO,
             Self::VueRequireSlotsAsFunctions(_) => VueRequireSlotsAsFunctions::INFO,
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::INFO,
+            Self::VueRequireValidDefaultProp(_) => VueRequireValidDefaultProp::INFO,
             Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::INFO,
             Self::VueReturnInEmitsValidator(_) => VueReturnInEmitsValidator::INFO,
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::INFO,
@@ -23190,6 +23215,7 @@ impl RuleEnum {
             Self::VueRequireRenderReturn(rule) => rule.types_info(),
             Self::VueRequireSlotsAsFunctions(rule) => rule.types_info(),
             Self::VueRequireTypedRef(rule) => rule.types_info(),
+            Self::VueRequireValidDefaultProp(rule) => rule.types_info(),
             Self::VueReturnInComputedProperty(rule) => rule.types_info(),
             Self::VueReturnInEmitsValidator(rule) => rule.types_info(),
             Self::VueValidDefineEmits(rule) => rule.types_info(),
@@ -24032,6 +24058,7 @@ impl RuleEnum {
             Self::VueRequireRenderReturn(rule) => rule.run_info(),
             Self::VueRequireSlotsAsFunctions(rule) => rule.run_info(),
             Self::VueRequireTypedRef(rule) => rule.run_info(),
+            Self::VueRequireValidDefaultProp(rule) => rule.run_info(),
             Self::VueReturnInComputedProperty(rule) => rule.run_info(),
             Self::VueReturnInEmitsValidator(rule) => rule.run_info(),
             Self::VueValidDefineEmits(rule) => rule.run_info(),
@@ -25010,6 +25037,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VueRequireRenderReturn(VueRequireRenderReturn::default()),
         RuleEnum::VueRequireSlotsAsFunctions(VueRequireSlotsAsFunctions::default()),
         RuleEnum::VueRequireTypedRef(VueRequireTypedRef::default()),
+        RuleEnum::VueRequireValidDefaultProp(VueRequireValidDefaultProp::default()),
         RuleEnum::VueReturnInComputedProperty(VueReturnInComputedProperty::default()),
         RuleEnum::VueReturnInEmitsValidator(VueReturnInEmitsValidator::default()),
         RuleEnum::VueValidDefineEmits(VueValidDefineEmits::default()),
