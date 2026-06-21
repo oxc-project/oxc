@@ -89,6 +89,7 @@
     "**/generated/**",
     "npm/runtime/**",
     "tasks/coverage/**",
+    "tasks/react_compiler_compare/**",
     "crates/oxc_semantic/tests/**",
     "napi/minify/**", // TODO
     "apps/oxlint/src-js/package/config.generated.ts",
