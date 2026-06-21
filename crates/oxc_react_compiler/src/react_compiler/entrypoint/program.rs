@@ -2920,45 +2920,63 @@ fn ox_splice_program<'a>(
     program
 }
 
-/// Insert outlined function declarations immediately after the top-level statement
-/// that declares the function identified by `node_id`. Mirrors Babel's
-/// `originalFn.insertAfter(...)` for `FunctionDeclaration` originals. The statement
-/// may be a bare `FunctionDeclaration` or one wrapped in an `export`.
+/// Insert outlined function declarations immediately after the statement that
+/// declares the function identified by `node_id`. Mirrors Babel's
+/// `originalFn.insertAfter(...)` for `FunctionDeclaration` originals. The original
+/// may be nested (e.g. a component declared inside a `describe(() => { ... })`
+/// callback), so the search descends into every statement list — function bodies,
+/// blocks, and the bodies of arrow/function arguments — not just `program.body`.
 fn ox_insert_outlined_after<'a>(
     program: &mut oxc_ast::ast::Program<'a>,
     node_id: u32,
     outlined_decls: Vec<oxc_ast::ast::Statement<'a>>,
 ) {
-    use oxc_ast::ast::{Declaration, ExportDefaultDeclarationKind, Statement};
+    let mut visitor = OxcInsertOutlinedVisitor { node_id, decls: outlined_decls, done: false };
+    oxc_ast_visit::VisitMut::visit_program(&mut visitor, program);
+    // The original function should always be found; if not (defensive), append at
+    // the top level rather than dropping the outlined declarations.
+    if !visitor.done {
+        program.body.extend(visitor.decls);
+    }
+}
 
-    let matches = |stmt: &Statement<'a>| -> bool {
-        match stmt {
-            Statement::FunctionDeclaration(f) => f.span.start == node_id,
-            Statement::ExportNamedDeclaration(e) => {
-                matches!(&e.declaration, Some(Declaration::FunctionDeclaration(f)) if f.span.start == node_id)
-            }
-            Statement::ExportDefaultDeclaration(e) => {
-                matches!(&e.declaration, ExportDefaultDeclarationKind::FunctionDeclaration(f) if f.span.start == node_id)
-            }
-            _ => false,
-        }
-    };
+/// Finds the statement list containing the original function (by `node_id`) and
+/// inserts the outlined declarations right after it, wherever it is nested.
+struct OxcInsertOutlinedVisitor<'a> {
+    node_id: u32,
+    decls: Vec<oxc_ast::ast::Statement<'a>>,
+    done: bool,
+}
 
-    let index = program.body.iter().position(matches);
-    match index {
-        Some(idx) => {
-            // Babel inserts each outlined function via `originalFn.insertAfter(...)`,
-            // anchored at the same original node, so repeated insertions reverse the
-            // emitted order. Insert each at `idx + 1` to reproduce that.
-            for stmt in outlined_decls {
-                program.body.insert(idx + 1, stmt);
+impl<'a> oxc_ast_visit::VisitMut<'a> for OxcInsertOutlinedVisitor<'a> {
+    fn visit_statements(
+        &mut self,
+        stmts: &mut oxc_allocator::Vec<'a, oxc_ast::ast::Statement<'a>>,
+    ) {
+        use oxc_ast::ast::{Declaration, ExportDefaultDeclarationKind, Statement};
+        if !self.done {
+            let node_id = self.node_id;
+            let pos = stmts.iter().position(|stmt| match stmt {
+                Statement::FunctionDeclaration(f) => f.span.start == node_id,
+                Statement::ExportNamedDeclaration(e) => {
+                    matches!(&e.declaration, Some(Declaration::FunctionDeclaration(f)) if f.span.start == node_id)
+                }
+                Statement::ExportDefaultDeclaration(e) => {
+                    matches!(&e.declaration, ExportDefaultDeclarationKind::FunctionDeclaration(f) if f.span.start == node_id)
+                }
+                _ => false,
+            });
+            if let Some(idx) = pos {
+                // Babel anchors each `insertAfter` at the same original node, so
+                // repeated insertions reverse the emitted order. Insert each at
+                // `idx + 1` to reproduce that.
+                for stmt in std::mem::take(&mut self.decls) {
+                    stmts.insert(idx + 1, stmt);
+                }
+                self.done = true;
             }
         }
-        None => {
-            // Function is nested (not a direct program-body statement); fall back to
-            // appending at the top level.
-            program.body.extend(outlined_decls);
-        }
+        oxc_ast_visit::walk_mut::walk_statements(self, stmts);
     }
 }
 
