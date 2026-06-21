@@ -861,13 +861,13 @@ impl NeedsParentheses<'_> for AstNode<'_, JSXEmptyExpression> {
 
 impl NeedsParentheses<'_> for AstNode<'_, TSAsExpression<'_>> {
     fn needs_parentheses(&self, _f: &JsFormatter<'_, '_>) -> bool {
-        ts_as_or_satisfies_needs_parens(self.span(), &self.expression, self.parent())
+        ts_as_or_satisfies_needs_parens(self.span(), self.expression(), self.parent())
     }
 }
 
 impl NeedsParentheses<'_> for AstNode<'_, TSSatisfiesExpression<'_>> {
     fn needs_parentheses(&self, _f: &JsFormatter<'_, '_>) -> bool {
-        ts_as_or_satisfies_needs_parens(self.span(), &self.expression, self.parent())
+        ts_as_or_satisfies_needs_parens(self.span(), self.expression(), self.parent())
     }
 }
 
@@ -1175,7 +1175,7 @@ fn await_or_yield_needs_parens(span: Span, node: &AstNodes<'_>) -> bool {
 
 fn ts_as_or_satisfies_needs_parens(
     span: Span,
-    inner: &Expression<'_>,
+    inner: &AstNode<'_, Expression<'_>>,
     parent: &AstNodes<'_>,
 ) -> bool {
     match parent {
@@ -1183,9 +1183,15 @@ fn ts_as_or_satisfies_needs_parens(
         // Binary-like
         | AstNodes::LogicalExpression(_)
         | AstNodes::BinaryExpression(_) => true,
-        // `export default (function foo() {} as bar)` and `export default (class {} as bar)`
-        AstNodes::ExportDefaultDeclaration(_) =>
-            matches!(inner, Expression::FunctionExpression(_) | Expression::ClassExpression(_)),
+        // `export default (function foo() {} as bar)` and `export default (class {} as bar)`.
+        // The parens are load-bearing: without them the leading `function`/`class` token makes
+        // `export default` parse the right-hand side as a declaration, detaching the cast. The
+        // leftmost expression is used (not just `inner`) so chained casts are also covered, e.g.
+        // `export default (function foo() {} as unknown as bar)`.
+        AstNodes::ExportDefaultDeclaration(_) => matches!(
+            ExpressionLeftSide::leftmost(inner).as_ref(),
+            Expression::FunctionExpression(_) | Expression::ClassExpression(_)
+        ),
         _ => {
             type_cast_like_needs_parens(span, parent)
         }

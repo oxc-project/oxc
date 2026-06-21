@@ -1,0 +1,24 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// Parens are load-bearing: without them the leading `function`/`class` makes
+// `export default` parse the right-hand side as a declaration, detaching the cast.
+export default (function foo() {} as unknown as Foo);
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// Parens are load-bearing: without them the leading `function`/`class` makes
+// `export default` parse the right-hand side as a declaration, detaching the cast.
+export default (function foo() {} as unknown as Foo);
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// Parens are load-bearing: without them the leading `function`/`class` makes
+// `export default` parse the right-hand side as a declaration, detaching the cast.
+export default (function foo() {} as unknown as Foo);
+
+===================== End =====================
