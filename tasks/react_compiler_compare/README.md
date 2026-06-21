@@ -19,8 +19,8 @@ cd tasks/react_compiler_compare && npm install
 > (`~/github/oxc-project/oxc-react-compiler/react-compiler`), **not** of any published
 > npm release. The fork has diverged from npm by ~a year (e.g. it alphabetically
 > sorts reactive-scope dependencies via `compareScopeDependency`; older npm builds
-> don't). So comparing against **npm** mostly measures *version drift*, while comparing
-> against the **fork** measures true *port fidelity*. Use `BPRC` to pick the reference.
+> don't). So comparing against **npm** mostly measures _version drift_, while comparing
+> against the **fork** measures true _port fidelity_. Use `BPRC` to pick the reference.
 
 ### Comparing against built source (recommended — true port fidelity)
 
@@ -65,7 +65,7 @@ Env: `REPOS` (scan dir, default `../../../oxc-ecosystem-ci/repos`),
 
 Both compilers run on each file; **both outputs are then normalized** through
 `@babel/parser` + `@babel/generator` (formatting metadata stripped) and
-string-compared, so only *semantic* differences in the memoization count — not
+string-compared, so only _semantic_ differences in the memoization count — not
 quote style / spacing / codegen formatting. A file "counts" toward the rate only
 when react-compiler actually memoized something (otherwise it's a trivial no-op
 match). Mismatches are bucketed by dominant cause.
@@ -74,11 +74,11 @@ match). Mismatches are bucketed by dominant cause.
 
 **0 oxc crashes** across thousands of real-world files (robustness).
 
-| reference | identical-output on memoized files |
-| --- | --- |
+| reference                                                | identical-output on memoized files    |
+| -------------------------------------------------------- | ------------------------------------- |
 | npm `babel-plugin-react-compiler@334f00b` (a year stale) | ~31% — dominated by **version drift** |
-| upstream `react/react` main (built, via `BPRC`) | **85.6%** (1747/2040 over 3000 files) |
-| the oxc fork it ports (same-day mirror of upstream) | 85.6% — identical to upstream main |
+| upstream `react/react` main (built, via `BPRC`)          | **85.6%** (1747/2040 over 3000 files) |
+| the oxc fork it ports (same-day mirror of upstream)      | 85.6% — identical to upstream main    |
 
 Against the fork, the remaining ~14% are genuine port gaps:
 
@@ -92,5 +92,5 @@ Against the fork, the remaining ~14% are genuine port gaps:
 - **outlining**: minor differences in which inline callbacks get outlined.
 
 The `~31%` vs npm is almost entirely the fork's alphabetical dependency sort
-(`compareScopeDependency`) that the stale npm build lacks — i.e. oxc is *correct*
+(`compareScopeDependency`) that the stale npm build lacks — i.e. oxc is _correct_
 relative to what it ports; the npm number is not a fair fidelity measure.

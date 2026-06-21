@@ -1435,7 +1435,9 @@ fn lower_member_expression_from_expr(
                 value,
             })
         }
-        oxc::Expression::TSAsExpression(e) => lower_member_expression_from_expr(builder, &e.expression),
+        oxc::Expression::TSAsExpression(e) => {
+            lower_member_expression_from_expr(builder, &e.expression)
+        }
         oxc::Expression::TSSatisfiesExpression(e) => {
             lower_member_expression_from_expr(builder, &e.expression)
         }

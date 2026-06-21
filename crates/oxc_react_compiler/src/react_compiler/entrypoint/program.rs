@@ -2824,9 +2824,8 @@ struct OxcNormalizeJsxTextVisitor<'a> {
 
 impl<'a> oxc_ast_visit::VisitMut<'a> for OxcNormalizeJsxTextVisitor<'a> {
     fn visit_jsx_text(&mut self, it: &mut oxc_ast::ast::JSXText<'a>) {
-        let decoded = crate::react_compiler_lowering::build_hir::decode_jsx_entities(
-            it.value.as_str(),
-        );
+        let decoded =
+            crate::react_compiler_lowering::build_hir::decode_jsx_entities(it.value.as_str());
         let encoded =
             crate::react_compiler_reactive_scopes::codegen_reactive_function::ox_encode_jsx_text(
                 &decoded,

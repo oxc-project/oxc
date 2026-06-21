@@ -62,8 +62,7 @@ fn react_compiler_impl(
 
     let result = oxc_react_compiler::transform(&parsed.program, &allocator, plugin_options);
 
-    let diagnostics =
-        parsed.diagnostics.into_iter().chain(result.diagnostics).collect::<Vec<_>>();
+    let diagnostics = parsed.diagnostics.into_iter().chain(result.diagnostics).collect::<Vec<_>>();
     let errors = OxcError::from_diagnostics(filename, source_text, diagnostics);
 
     match result.program {
@@ -82,12 +81,9 @@ fn react_compiler_impl(
                 errors,
             }
         }
-        None => ReactCompilerResult {
-            code: source_text.to_string(),
-            map: None,
-            changed: false,
-            errors,
-        },
+        None => {
+            ReactCompilerResult { code: source_text.to_string(), map: None, changed: false, errors }
+        }
     }
 }
 

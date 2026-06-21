@@ -2,8 +2,8 @@
   "name": "react-compiler-compare",
   "version": "0.0.0",
   "private": true,
-  "type": "module",
   "description": "Compare babel-plugin-react-compiler vs oxc reactCompilerSync over real-world files",
+  "type": "module",
   "scripts": {
     "compare": "node compare.mjs"
   },
