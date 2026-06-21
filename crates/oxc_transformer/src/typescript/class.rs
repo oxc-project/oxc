@@ -146,7 +146,7 @@ impl<'a> TypeScript<'a> {
                             // When `remove_class_fields_without_initializer` is true, the property without initializer
                             // would be removed in the `transform_class_on_exit`. We need to make sure the computed key
                             // keeps and is evaluated in the same order as the original class field in static block.
-                            computed_key_assignments.push(key.take_in(ctx.ast));
+                            computed_key_assignments.push(key.take_in(ctx));
                         }
                     }
                 }
@@ -449,12 +449,12 @@ impl<'a> TypeScript<'a> {
                 // `class C { 'x' = true; 123 = false; }`
                 // No temp var is created for these.
                 let new_key = if key_needs_temp_var(key, ctx) {
-                    let taken_key = key.take_in(ctx.ast);
+                    let taken_key = key.take_in(ctx);
                     let (assignment, ident) = create_computed_key_temp_var(taken_key, ctx);
                     computed_key_assignments.push(assignment);
                     ident
                 } else {
-                    key.take_in(ctx.ast)
+                    key.take_in(ctx)
                 };
 
                 ctx.ast.member_expression_computed(
@@ -523,7 +523,7 @@ impl<'a> TypeScript<'a> {
         if let Some(key) = key.as_expression_mut() {
             // If the key is already an expression, we need to create a new expression sequence
             // to insert the assignments into.
-            let original_key = key.take_in(ctx.ast);
+            let original_key = key.take_in(ctx);
             let new_key = ctx.ast.expression_sequence(
                 SPAN,
                 ctx.ast.vec_from_iter(

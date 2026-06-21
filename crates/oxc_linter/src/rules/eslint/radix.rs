@@ -160,7 +160,9 @@ impl Radix {
 }
 
 fn is_valid_radix(node: &Argument) -> bool {
-    let expr = node.to_expression();
+    let Some(expr) = node.as_expression() else {
+        return false;
+    };
 
     if let Expression::NumericLiteral(lit) = expr {
         return lit.value.fract() == 0.0 && lit.value >= 2.0 && lit.value <= 36.0;
@@ -218,6 +220,8 @@ fn test() {
         (r#"parseInt("10", 1);"#, None, None),
         (r#"parseInt("10", 37);"#, None, None),
         (r#"parseInt("10", 10.5);"#, None, None),
+        (r#"parseInt("10", ...bar);"#, None, None),
+        ("parseInt(foo, ...bar);", None, None),
         ("Number.parseInt();", None, None),
         (r#"Number.parseInt("10");"#, None, None),
         (r#"Number.parseInt("10", 1);"#, None, None),
