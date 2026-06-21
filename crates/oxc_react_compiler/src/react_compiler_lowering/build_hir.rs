@@ -5257,13 +5257,28 @@ fn lower_assignment_expression(
             oxc::AssignmentTarget::AssignmentTargetIdentifier(ident) => {
                 let start = ident.span.start;
                 let ident_loc = builder.source_location(ident.span);
-                let left_place = lower_identifier(
+                // Read the current value through a LoadLocal/LoadContext temporary
+                // (as the original did via `lower_expression_to_temporary`), NOT the
+                // bare binding place. Without the load instruction, ConstantPropagation
+                // can't propagate a known value into the compound op, and the missing
+                // temporary shifts IdentifierId numbering away from the baseline.
+                let read_place = lower_identifier(
                     builder,
                     ident.name.as_str(),
                     start,
                     ident_loc.clone(),
                     Some(start),
                 )?;
+                let read_value = if builder.is_context_identifier(
+                    ident.name.as_str(),
+                    start,
+                    Some(start),
+                ) {
+                    InstructionValue::LoadContext { place: read_place, loc: ident_loc.clone() }
+                } else {
+                    InstructionValue::LoadLocal { place: read_place, loc: ident_loc.clone() }
+                };
+                let left_place = lower_value_to_temporary(builder, read_value)?;
                 let right = lower_expression_to_temporary(builder, &assign.right)?;
                 let binary_place = lower_value_to_temporary(
                     builder,
