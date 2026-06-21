@@ -24,7 +24,7 @@ impl<'a> PeepholeOptimizations {
             let property = ctx.ast.identifier_name(s.span, s.value);
             let new_member = ctx.ast.alloc_static_member_expression(
                 e.span,
-                e.object.take_in(ctx.ast),
+                e.object.take_in(ctx),
                 property,
                 e.optional,
             );

@@ -68,7 +68,7 @@ mod arena;
 #[cfg(feature = "testing")]
 pub mod arena;
 
-pub use accessor::AllocatorAccessor;
+pub use accessor::GetAllocator;
 pub use address::{Address, GetAddress, UnstableAddress};
 pub use allocator::Allocator;
 #[cfg(feature = "bitset")]

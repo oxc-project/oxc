@@ -83,7 +83,7 @@ impl<'a> TaggedTemplateTransform {
             return;
         }
 
-        let Expression::TaggedTemplateExpression(tagged) = expr.take_in(ctx.ast) else {
+        let Expression::TaggedTemplateExpression(tagged) = expr.take_in(ctx) else {
             unreachable!();
         };
 
