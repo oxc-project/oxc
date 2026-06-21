@@ -1,6 +1,6 @@
 #![allow(clippy::module_inception)]
 
-use oxc_allocator::{Allocator, Vec as ArenaVec};
+use oxc_allocator::{Allocator, GetAllocator, Vec as ArenaVec};
 
 use crate::{
     Argument, Arguments, Buffer, FormatContext, FormatElement, FormatState, VecBuffer,
@@ -119,5 +119,12 @@ impl<'ast, C> Buffer<'ast, C> for Formatter<'_, 'ast, C> {
 
     fn replace_end(&mut self, start: usize, replacement: &[FormatElement<'ast>]) {
         self.buffer.replace_end(start, replacement);
+    }
+}
+
+impl<'ast, C> GetAllocator<'ast> for Formatter<'_, 'ast, C> {
+    #[inline]
+    fn allocator(&self) -> &'ast Allocator {
+        self.state().allocator()
     }
 }

@@ -649,8 +649,7 @@ pub struct FormatMultilineChildren<'a> {
 impl<'a> Format<'a, JsFormatContext<'a>> for FormatMultilineChildren<'a> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let format_inner = format_with(|f| {
-            if let Some(elements) = f.intern_vec(self.elements.borrow_mut().take_in(f.allocator()))
-            {
+            if let Some(elements) = f.intern_vec(self.elements.borrow_mut().take_in(f)) {
                 match self.layout {
                     MultilineLayout::Fill => f.write_elements([
                         FormatElement::Tag(Tag::StartFill),
@@ -747,7 +746,7 @@ pub struct FormatFlatChildren<'a> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for FormatFlatChildren<'a> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if let Some(elements) = f.intern_vec(self.elements.borrow_mut().take_in(f.allocator())) {
+        if let Some(elements) = f.intern_vec(self.elements.borrow_mut().take_in(f)) {
             f.write_element(elements);
         }
     }
