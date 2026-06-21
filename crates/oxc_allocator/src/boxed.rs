@@ -41,23 +41,35 @@ impl<T: ?Sized> Box<'_, T> {
         assert!(!std::mem::needs_drop::<T>(), "Cannot create a Box<T> where T is a Drop type");
 }
 
-impl<T> Box<'_, T> {
-    /// Put a `value` into a memory arena and get back a [`Box`] with ownership
-    /// to the allocation.
+impl<'alloc, T> Box<'alloc, T> {
+    /// Allocate `value` into the memory arena, and receive a [`Box`] which owns the value.
     ///
     /// # Examples
+    ///
     /// ```
     /// use oxc_allocator::{Allocator, Box};
     ///
     /// let arena = Allocator::default();
     /// let in_arena: Box<i32> = Box::new_in(5, &arena);
     /// ```
+    ///
+    /// The `Box` cannot outlive the `Allocator`. This fails to compile:
+    ///
+    /// ```compile_fail
+    /// use oxc_allocator::{Allocator, Box};
+    ///
+    /// let boxed = {
+    ///     let allocator = Allocator::default();
+    ///     Box::new_in(5, &allocator)
+    /// };
+    /// assert_eq!(*boxed, 5);
+    /// ```
     //
     // `#[inline(always)]` because this is a hot path and `Allocator::alloc` is a very small function.
     // We always want it to be inlined.
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    pub fn new_in(value: T, allocator: &Allocator) -> Self {
+    pub fn new_in(value: T, allocator: &'alloc Allocator) -> Self {
         const { Self::ASSERT_T_IS_NOT_DROP };
 
         Self(NonNull::from(allocator.alloc(value)), PhantomData)
