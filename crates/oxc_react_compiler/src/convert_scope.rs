@@ -152,7 +152,15 @@ pub fn convert_scope_info(semantic: &Semantic, _program: &Program) -> ScopeInfo 
                             break false;
                         }
                         match nodes.get_node(parent).kind() {
-                            AstKind::VariableDeclarator(_) => break true,
+                            // Positions the old Babel scope analysis did NOT record:
+                            // variable-declarator annotations (`const v: T`) and type
+                            // arguments on calls/news (`foo.get<T>()`, `new Foo<T>()`).
+                            AstKind::VariableDeclarator(_)
+                            | AstKind::CallExpression(_)
+                            | AstKind::NewExpression(_) => break true,
+                            // Positions it DID record: param/return annotations and
+                            // `as`/`satisfies` casts. These are reached first when the
+                            // ref is nested inside them, so they win over the skips.
                             AstKind::FormalParameter(_)
                             | AstKind::FormalParameters(_)
                             | AstKind::TSAsExpression(_)
