@@ -15,8 +15,8 @@ use oxc_semantic::AstNode;
 use oxc_syntax::operator::UnaryOperator;
 use oxc_syntax::scope::ScopeFlags;
 
-use crate::globals::HTML_TAG;
 use crate::{LintContext, OxlintSettings};
+use crate::{config::ReactVersion, globals::HTML_TAG};
 
 pub fn is_create_element_call(call_expr: &CallExpression) -> bool {
     match &call_expr.callee {
@@ -919,6 +919,20 @@ pub fn expression_contains_jsx(expr: &Expression) -> bool {
             function_body_contains_jsx(&arrow_func.body)
         }
         _ => false,
+    }
+}
+
+pub fn check_react_version(version: Option<&ReactVersion>, min_major: u32, min_minor: u32) -> bool {
+    match version {
+        Some(v) => {
+            let major = v.major();
+            let minor = v.minor();
+            major >= min_major && (major > min_major || minor >= min_minor)
+        }
+        None => {
+            // If no version specified, assume modern React
+            true
+        }
     }
 }
 

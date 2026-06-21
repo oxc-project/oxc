@@ -6583,6 +6583,26 @@
         "react/jsx-no-duplicate-props": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "react/jsx-no-leaked-render": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/JsxNoLeakedRender"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "react/jsx-no-literals": {
           "anyOf": [
             {
@@ -11881,6 +11901,33 @@
           "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "The maximum allowed depth of nested JSX elements and fragments."
+        }
+      },
+      "additionalProperties": false
+    },
+    "JsxNoLeakedRender": {
+      "$ref": "#/definitions/JsxNoLeakedRenderConfig"
+    },
+    "JsxNoLeakedRenderConfig": {
+      "type": "object",
+      "properties": {
+        "ignoreAttributes": {
+          "description": "When `true`, logical expressions inside non-`children` attributes are ignored.\nExpressions assigned to `children` and any nested JSX are still checked.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "When `true`, logical expressions inside non-`children` attributes are ignored.\nExpressions assigned to `children` and any nested JSX are still checked."
+        },
+        "validStrategies": {
+          "description": "Which strategies are considered valid for conditional rendering.\n\nDefaults to allowing both `\"ternary\"` and `\"coerce\"`.",
+          "default": [
+            "ternary",
+            "coerce"
+          ],
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ValidStrategies"
+          },
+          "markdownDescription": "Which strategies are considered valid for conditional rendering.\n\nDefaults to allowing both `\"ternary\"` and `\"coerce\"`."
         }
       },
       "additionalProperties": false
@@ -17977,6 +18024,28 @@
         }
       },
       "additionalProperties": false
+    },
+    "ValidStrategies": {
+      "description": "Strategies that are considered safe ways to write a conditional render.\n\nThe first strategy listed is the one used by the autofix.",
+      "oneOf": [
+        {
+          "description": "Coerce the left-hand side of the `&&` to a boolean, e.g. `!!cond && <Foo />`.",
+          "type": "string",
+          "enum": [
+            "coerce"
+          ],
+          "markdownDescription": "Coerce the left-hand side of the `&&` to a boolean, e.g. `!!cond && <Foo />`."
+        },
+        {
+          "description": "Use a ternary expression with an explicit `null` alternate, e.g. `cond ? <Foo /> : null`.",
+          "type": "string",
+          "enum": [
+            "ternary"
+          ],
+          "markdownDescription": "Use a ternary expression with an explicit `null` alternate, e.g. `cond ? <Foo /> : null`."
+        }
+      ],
+      "markdownDescription": "Strategies that are considered safe ways to write a conditional render.\n\nThe first strategy listed is the one used by the autofix."
     },
     "ValidTypeof": {
       "type": "object",
