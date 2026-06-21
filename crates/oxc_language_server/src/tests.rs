@@ -20,21 +20,31 @@ use crate::{
 pub struct FakeToolBuilder {
     diagnostic_mode: DiagnosticMode,
     cache_uris: Option<Arc<Mutex<Vec<Uri>>>>,
+    delays: FakeToolDelays,
+}
+
+#[derive(Default, Clone, Copy)]
+pub struct FakeToolDelays {
+    run_diagnostic: u64,
 }
 
 impl FakeToolBuilder {
     pub fn new(diagnostic_mode: DiagnosticMode) -> Self {
-        Self { diagnostic_mode, cache_uris: None }
+        Self { diagnostic_mode, cache_uris: None, delays: FakeToolDelays::default() }
     }
 
     pub fn with_cache_tracking(self, cache_uris: Arc<Mutex<Vec<Uri>>>) -> Self {
         Self { cache_uris: Some(cache_uris), ..self }
     }
+
+    pub fn with_delays(self, delays: FakeToolDelays) -> Self {
+        Self { delays, ..self }
+    }
 }
 
 impl ToolBuilder for FakeToolBuilder {
     fn build_boxed(&self, _root_uri: &Uri, _options: serde_json::Value) -> Box<dyn Tool> {
-        Box::new(FakeTool { cache_uris: self.cache_uris.clone() })
+        Box::new(FakeTool { cache_uris: self.cache_uris.clone(), delays: self.delays })
     }
 
     fn server_capabilities(
@@ -56,6 +66,7 @@ impl ToolBuilder for FakeToolBuilder {
 
 pub struct FakeTool {
     cache_uris: Option<Arc<Mutex<Vec<Uri>>>>,
+    delays: FakeToolDelays,
 }
 
 pub const FAKE_COMMAND: &str = "fake.command";
@@ -155,6 +166,9 @@ impl Tool for FakeTool {
     }
 
     fn run_diagnostic(&self, document: &TextDocument) -> DiagnosticResult {
+        if self.delays.run_diagnostic > 0 {
+            std::thread::sleep(std::time::Duration::from_millis(self.delays.run_diagnostic));
+        }
         if let Some(cache_uris) = &self.cache_uris {
             cache_uris.lock().unwrap().push(document.uri.clone());
         }
@@ -2212,6 +2226,71 @@ mod test_suite {
             server.send_ack(&Id::Number(0)).await;
 
             server.shutdown(2).await;
+        }
+    }
+
+    mod request_locks {
+        use std::time::Instant;
+
+        use crate::tests::{FakeToolDelays, create_dynamic_workspace_manager};
+
+        use super::*;
+        #[tokio::test]
+        #[ignore = "This needs to be fixed"]
+        async fn test_request_locks() {
+            let delay = 100;
+            let mut server = TestServer::new_initialized(
+                |client| {
+                    Backend::new(
+                        client,
+                        server_info(),
+                        create_dynamic_workspace_manager(
+                            FakeToolBuilder::new(DiagnosticMode::Pull)
+                                .with_delays(FakeToolDelays { run_diagnostic: delay }),
+                        ),
+                    )
+                },
+                initialize_request(InitializeRequestOptions::default()),
+            )
+            .await;
+
+            let file = format!("{WORKSPACE}/diagnostics.config");
+            server.send_request(did_open(&file, "content")).await;
+
+            let now = Instant::now();
+
+            // Send multiple diagnostic requests
+            for i in 0..5 {
+                server.send_request(diagnostic(1 + i, &file)).await;
+            }
+            server.send_request(code_action(6, &file)).await;
+
+            let mut diagnostic_responses = 0;
+            loop {
+                let response = server.recv_response().await;
+                if response.id() == &Id::Number(6) {
+                    break;
+                }
+                diagnostic_responses += 1;
+            }
+
+            let elapsed = now.elapsed().as_millis();
+
+            while diagnostic_responses < 5 {
+                let response = server.recv_response().await;
+                assert_ne!(response.id(), &Id::Number(6));
+                diagnostic_responses += 1;
+            }
+
+            server.shutdown(7).await;
+
+            // The diagnostic request should not block the code action request,
+            // so the total elapsed time should be less than delay * number of diagnostic requests.
+            assert!(
+                elapsed < u128::from(delay * 5),
+                "Diagnostic requests are blocking the code action request, elapsed time: {elapsed}ms, expected under {}ms",
+                delay * 5
+            );
         }
     }
 }
