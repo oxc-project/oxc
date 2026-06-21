@@ -6206,7 +6206,10 @@ fn expression_type_name(expr: &oxc::Expression) -> &'static str {
         oxc::Expression::StaticMemberExpression(_)
         | oxc::Expression::ComputedMemberExpression(_)
         | oxc::Expression::PrivateFieldExpression(_) => "MemberExpression",
-        oxc::Expression::ChainExpression(_) => "OptionalMemberExpression",
+        oxc::Expression::ChainExpression(c) => match &c.expression {
+            oxc::ChainElement::CallExpression(_) => "OptionalCallExpression",
+            _ => "OptionalMemberExpression",
+        },
         oxc::Expression::BinaryExpression(_) => "BinaryExpression",
         oxc::Expression::PrivateInExpression(_) => "BinaryExpression",
         oxc::Expression::LogicalExpression(_) => "LogicalExpression",
