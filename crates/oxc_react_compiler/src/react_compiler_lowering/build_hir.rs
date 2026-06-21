@@ -1362,9 +1362,122 @@ fn lower_member_expression_from_simple_target(
                 value: InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc },
             })
         }
+        // TS casts are transparent for an assignment/update target: `(obj.x as T)`
+        // behaves like `obj.x`. The original stripped these before lowering.
+        oxc::SimpleAssignmentTarget::TSAsExpression(e) => {
+            lower_member_expression_from_expr(builder, &e.expression)
+        }
+        oxc::SimpleAssignmentTarget::TSSatisfiesExpression(e) => {
+            lower_member_expression_from_expr(builder, &e.expression)
+        }
+        oxc::SimpleAssignmentTarget::TSNonNullExpression(e) => {
+            lower_member_expression_from_expr(builder, &e.expression)
+        }
+        oxc::SimpleAssignmentTarget::TSTypeAssertion(e) => {
+            lower_member_expression_from_expr(builder, &e.expression)
+        }
         _ => {
             unreachable!("lower_member_expression_from_simple_target called on a non-member target")
         }
+    }
+}
+
+/// Lower a member expression that appears (behind transparent TS casts) as the
+/// argument of an `UpdateExpression`, e.g. `(obj.x as T)++`. Mirrors
+/// `lower_member_expression_from_simple_target` for the `Expression` form the casts
+/// expose. Only member variants are reachable (callers guard with
+/// `simple_target_is_member_like`).
+fn lower_member_expression_from_expr(
+    builder: &mut HirBuilder,
+    expr: &oxc::Expression,
+) -> Result<LoweredMemberExpression, CompilerError> {
+    match expr {
+        oxc::Expression::StaticMemberExpression(m) => {
+            let loc = builder.source_location(m.span);
+            let object = lower_expression_to_temporary(builder, &m.object)?;
+            let prop_literal = PropertyLiteral::String(m.property.name.to_string());
+            let value = InstructionValue::PropertyLoad {
+                object: object.clone(),
+                property: prop_literal.clone(),
+                loc,
+            };
+            Ok(LoweredMemberExpression {
+                object,
+                property: MemberProperty::Literal(prop_literal),
+                value,
+            })
+        }
+        oxc::Expression::ComputedMemberExpression(m) => {
+            let loc = builder.source_location(m.span);
+            let object = lower_expression_to_temporary(builder, &m.object)?;
+            if let oxc::Expression::NumericLiteral(lit) = &m.expression {
+                let prop_literal = PropertyLiteral::Number(FloatValue::new(lit.value));
+                let value = InstructionValue::PropertyLoad {
+                    object: object.clone(),
+                    property: prop_literal.clone(),
+                    loc,
+                };
+                return Ok(LoweredMemberExpression {
+                    object,
+                    property: MemberProperty::Literal(prop_literal),
+                    value,
+                });
+            }
+            let property = lower_expression_to_temporary(builder, &m.expression)?;
+            let value = InstructionValue::ComputedLoad {
+                object: object.clone(),
+                property: property.clone(),
+                loc,
+            };
+            Ok(LoweredMemberExpression {
+                object,
+                property: MemberProperty::Computed(property),
+                value,
+            })
+        }
+        oxc::Expression::TSAsExpression(e) => lower_member_expression_from_expr(builder, &e.expression),
+        oxc::Expression::TSSatisfiesExpression(e) => {
+            lower_member_expression_from_expr(builder, &e.expression)
+        }
+        oxc::Expression::TSNonNullExpression(e) => {
+            lower_member_expression_from_expr(builder, &e.expression)
+        }
+        oxc::Expression::TSTypeAssertion(e) => {
+            lower_member_expression_from_expr(builder, &e.expression)
+        }
+        oxc::Expression::ParenthesizedExpression(e) => {
+            lower_member_expression_from_expr(builder, &e.expression)
+        }
+        _ => unreachable!("lower_member_expression_from_expr called on a non-member expression"),
+    }
+}
+
+/// True if `target` is a member expression, possibly behind transparent TS casts
+/// (`(obj.x as T)`), so an `UpdateExpression` can treat it as a plain member update.
+fn simple_target_is_member_like(target: &oxc::SimpleAssignmentTarget) -> bool {
+    match target {
+        oxc::SimpleAssignmentTarget::StaticMemberExpression(_)
+        | oxc::SimpleAssignmentTarget::ComputedMemberExpression(_)
+        | oxc::SimpleAssignmentTarget::PrivateFieldExpression(_) => true,
+        oxc::SimpleAssignmentTarget::TSAsExpression(e) => expr_is_member_like(&e.expression),
+        oxc::SimpleAssignmentTarget::TSSatisfiesExpression(e) => expr_is_member_like(&e.expression),
+        oxc::SimpleAssignmentTarget::TSNonNullExpression(e) => expr_is_member_like(&e.expression),
+        oxc::SimpleAssignmentTarget::TSTypeAssertion(e) => expr_is_member_like(&e.expression),
+        _ => false,
+    }
+}
+
+fn expr_is_member_like(expr: &oxc::Expression) -> bool {
+    match expr {
+        oxc::Expression::StaticMemberExpression(_)
+        | oxc::Expression::ComputedMemberExpression(_)
+        | oxc::Expression::PrivateFieldExpression(_) => true,
+        oxc::Expression::TSAsExpression(e) => expr_is_member_like(&e.expression),
+        oxc::Expression::TSSatisfiesExpression(e) => expr_is_member_like(&e.expression),
+        oxc::Expression::TSNonNullExpression(e) => expr_is_member_like(&e.expression),
+        oxc::Expression::TSTypeAssertion(e) => expr_is_member_like(&e.expression),
+        oxc::Expression::ParenthesizedExpression(e) => expr_is_member_like(&e.expression),
+        _ => false,
     }
 }
 
@@ -4643,7 +4756,13 @@ fn lower_expression(
             match &update.argument {
                 oxc::SimpleAssignmentTarget::StaticMemberExpression(_)
                 | oxc::SimpleAssignmentTarget::ComputedMemberExpression(_)
-                | oxc::SimpleAssignmentTarget::PrivateFieldExpression(_) => {
+                | oxc::SimpleAssignmentTarget::PrivateFieldExpression(_)
+                | oxc::SimpleAssignmentTarget::TSAsExpression(_)
+                | oxc::SimpleAssignmentTarget::TSSatisfiesExpression(_)
+                | oxc::SimpleAssignmentTarget::TSNonNullExpression(_)
+                | oxc::SimpleAssignmentTarget::TSTypeAssertion(_)
+                    if simple_target_is_member_like(&update.argument) =>
+                {
                     let binary_op = match update.operator {
                         oxc::UpdateOperator::Increment => BinaryOperator::Add,
                         oxc::UpdateOperator::Decrement => BinaryOperator::Subtract,
