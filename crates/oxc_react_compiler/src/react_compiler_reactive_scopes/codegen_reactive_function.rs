@@ -404,6 +404,47 @@ fn ox_reparse_ts_type<'a>(
         return None;
     }
     let slice = &source[start..end];
+    // Apply identifier renames recorded for this type's pre-extracted idents, as
+    // text edits (right-to-left so earlier offsets stay valid), matching the old
+    // `set_raw_type_renames` + `convert_type_from_raw`: an ident is renamed only if
+    // it is an actual reference (its node-id is in `reference_node_ids`, excluding
+    // type labels / property keys) and a binding rename applies (nearest enclosing
+    // declaration). Without this, a re-parsed `typeof x` keeps the pre-rename name
+    // while the value binding was renamed (e.g. `typeof field` vs `typeof field_3`).
+    let edited: Option<String> = if cx.env.renames.is_empty() {
+        None
+    } else {
+        let mut edits: Vec<(usize, usize, &str)> = Vec::new();
+        for id in &raw.idents {
+            if id.node_id == 0 || !cx.env.reference_node_ids.contains(&id.node_id) {
+                continue;
+            }
+            if let Some(rename) = cx
+                .env
+                .renames
+                .iter()
+                .filter(|r| r.original == id.name && r.declaration_start <= id.start)
+                .max_by_key(|r| r.declaration_start)
+            {
+                if let Some(rel) = (id.start as usize).checked_sub(start) {
+                    edits.push((rel, id.name.len(), rename.renamed.as_str()));
+                }
+            }
+        }
+        if edits.is_empty() {
+            None
+        } else {
+            edits.sort_by_key(|edit| std::cmp::Reverse(edit.0));
+            let mut text = slice.to_string();
+            for (rel, old_len, renamed) in edits {
+                if rel + old_len <= text.len() {
+                    text.replace_range(rel..rel + old_len, renamed);
+                }
+            }
+            Some(text)
+        }
+    };
+    let slice: &str = edited.as_deref().unwrap_or(slice);
     // Wrap the type in a cast so the parser yields a `TSAsExpression` whose
     // `type_annotation` is exactly the parsed type.
     let wrapped = oxc_allocator::StringBuilder::from_strs_array_in(

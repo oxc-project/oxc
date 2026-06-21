@@ -1266,6 +1266,45 @@ fn lower_ts_type(builder: &mut HirBuilder, ty: &oxc::TSType) -> Type {
 /// the original Babel `TSAsExpression`/`TSSatisfiesExpression`/`TSTypeAssertion`
 /// arms. The `type_annotation` RawNode is built from the unwrapped TS type's tag,
 /// span and classification (codegen re-parses it from source).
+/// Collect identifier references appearing inside a TS type, as `RawIdent`s keyed
+/// by source start offset. Codegen uses these (filtered by `reference_node_ids`) to
+/// apply binding renames when it re-parses the type from source (`typeof x` ->
+/// `typeof x_0`). Over-collected idents (type labels, object-type property keys)
+/// are harmless — they are dropped by the `reference_node_ids` filter in codegen.
+fn collect_type_idents(ty: &oxc::TSType) -> Vec<crate::react_compiler_hir::RawIdent> {
+    use crate::react_compiler_hir::RawIdent;
+    struct Collector {
+        out: Vec<RawIdent>,
+    }
+    impl<'a> oxc_ast_visit::Visit<'a> for Collector {
+        fn visit_identifier_reference(&mut self, it: &oxc::IdentifierReference<'a>) {
+            self.out.push(RawIdent {
+                name: it.name.to_string(),
+                node_id: it.span.start,
+                start: it.span.start,
+                loc: None,
+                is_jsx: false,
+                in_type_annotation: true,
+                renamed_to: None,
+            });
+        }
+        fn visit_identifier_name(&mut self, it: &oxc::IdentifierName<'a>) {
+            self.out.push(RawIdent {
+                name: it.name.to_string(),
+                node_id: it.span.start,
+                start: it.span.start,
+                loc: None,
+                is_jsx: false,
+                in_type_annotation: true,
+                renamed_to: None,
+            });
+        }
+    }
+    let mut collector = Collector { out: Vec::new() };
+    oxc_ast_visit::Visit::visit_ts_type(&mut collector, ty);
+    collector.out
+}
+
 fn lower_type_cast_expression(
     builder: &mut HirBuilder,
     span: oxc_span::Span,
@@ -1282,7 +1321,7 @@ fn lower_type_cast_expression(
         Some(type_annotation.span().start),
         Some(type_annotation.span().end),
         classify_ts_type(type_annotation),
-        Vec::new(),
+        collect_type_idents(type_annotation),
     );
     Ok(InstructionValue::TypeCastExpression {
         value,
