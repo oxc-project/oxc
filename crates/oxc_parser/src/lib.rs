@@ -814,6 +814,11 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         let original_tokens =
             if self.lexer.config.tokens() { Some(self.lexer.take_tokens()) } else { None };
 
+        // `rewind` resets `self.fatal_error` to each checkpoint's value, all taken before any later
+        // statement could fail. Reparsing only re-derives already-valid `await` statements, so a
+        // fatal error from a later statement must survive it. Hold it aside, restore below.
+        let fatal_error = self.fatal_error.take();
+
         let checkpoints = std::mem::take(&mut self.state.potential_await_reparse);
         for (stmt_index, checkpoint) in checkpoints {
             // Rewind to the checkpoint
@@ -833,6 +838,9 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         if let Some(original_tokens) = original_tokens {
             self.lexer.set_tokens(original_tokens);
         }
+
+        // A fatal error from reparsing comes earlier in source order and wins; else restore.
+        self.fatal_error = self.fatal_error.take().or(fatal_error);
     }
 
     fn default_context(source_type: SourceType, options: ParseOptions) -> Context {
