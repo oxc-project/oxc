@@ -157,7 +157,8 @@ pub fn convert_scope_info(semantic: &Semantic, _program: &Program) -> ScopeInfo 
                             // arguments on calls/news (`foo.get<T>()`, `new Foo<T>()`).
                             AstKind::VariableDeclarator(_)
                             | AstKind::CallExpression(_)
-                            | AstKind::NewExpression(_) => break true,
+                            | AstKind::NewExpression(_)
+                            | AstKind::JSXOpeningElement(_) => break true,
                             // Positions it DID record: param/return annotations and
                             // `as`/`satisfies` casts. These are reached first when the
                             // ref is nested inside them, so they win over the skips.
