@@ -136,6 +136,37 @@ pub fn convert_scope_info(semantic: &Semantic, _program: &Program) -> ScopeInfo 
                 let reference = scoping.get_reference(ref_id);
                 let ref_node = nodes.get_node(reference.node_id());
                 let start = ref_node.kind().span().start;
+                // The old Babel scope analysis did not record pure type-position
+                // references that live in a *variable-declarator* type annotation
+                // (`const v: T`), so they must not enter the scope stream (else they
+                // drive the hoisting scan to treat a type parameter as a hoistable
+                // "Unknown" binding and bail). Param/return annotations and
+                // `as`/`satisfies` casts ARE recorded by the old path, so only the
+                // declarator-annotation case is skipped. Walk to the structural host
+                // of the reference: the first non-type ancestor decides.
+                if reference.is_type() && !reference.is_value() {
+                    let mut cur = reference.node_id();
+                    let skip = loop {
+                        let parent = nodes.parent_id(cur);
+                        if parent == cur {
+                            break false;
+                        }
+                        match nodes.get_node(parent).kind() {
+                            AstKind::VariableDeclarator(_) => break true,
+                            AstKind::FormalParameter(_)
+                            | AstKind::FormalParameters(_)
+                            | AstKind::TSAsExpression(_)
+                            | AstKind::TSSatisfiesExpression(_)
+                            | AstKind::Function(_)
+                            | AstKind::ArrowFunctionExpression(_) => break false,
+                            _ => {}
+                        }
+                        cur = parent;
+                    };
+                    if skip {
+                        continue;
+                    }
+                }
                 ref_node_id_to_binding.insert(start, binding_id);
             }
         }
