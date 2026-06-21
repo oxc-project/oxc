@@ -125,9 +125,9 @@ function classify(cb, co, bMemo, oMemo) {
   const bc = cacheCount(cb),
     oc = cacheCount(co);
   if (bc !== null && oc !== null && bc !== oc) return "cache-count";
-  const bt = (cb.match(/_temp\d*/g) || []).length,
-    ot = (co.match(/_temp\d*/g) || []).length;
-  if (bt !== ot) return "outlining";
+  const baseTemps = (cb.match(/_temp\d*/g) || []).length,
+    oxcTemps = (co.match(/_temp\d*/g) || []).length;
+  if (baseTemps !== oxcTemps) return "outlining";
   const norm = (s) =>
     s
       .split("\n")
@@ -140,14 +140,14 @@ function classify(cb, co, bMemo, oMemo) {
 }
 
 function shortDiff(cb, co) {
-  const ba = cb.split("\n"),
-    oa = co.split("\n");
+  const baseLines = cb.split("\n"),
+    oxcLines = co.split("\n");
   const out = [];
-  const max = Math.max(ba.length, oa.length);
+  const max = Math.max(baseLines.length, oxcLines.length);
   for (let i = 0; i < max && out.length < 16; i++) {
-    if (ba[i] !== oa[i]) {
-      if (ba[i] !== undefined) out.push(`- ${ba[i].trim().slice(0, 120)}`);
-      if (oa[i] !== undefined) out.push(`+ ${oa[i].trim().slice(0, 120)}`);
+    if (baseLines[i] !== oxcLines[i]) {
+      if (baseLines[i] !== undefined) out.push(`- ${baseLines[i].trim().slice(0, 120)}`);
+      if (oxcLines[i] !== undefined) out.push(`+ ${oxcLines[i].trim().slice(0, 120)}`);
     }
   }
   return out.join("\n");
