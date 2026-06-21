@@ -5308,15 +5308,12 @@ fn lower_assignment_expression(
                     ident_loc.clone(),
                     Some(start),
                 )?;
-                let read_value = if builder.is_context_identifier(
-                    ident.name.as_str(),
-                    start,
-                    Some(start),
-                ) {
-                    InstructionValue::LoadContext { place: read_place, loc: ident_loc.clone() }
-                } else {
-                    InstructionValue::LoadLocal { place: read_place, loc: ident_loc.clone() }
-                };
+                let read_value =
+                    if builder.is_context_identifier(ident.name.as_str(), start, Some(start)) {
+                        InstructionValue::LoadContext { place: read_place, loc: ident_loc.clone() }
+                    } else {
+                        InstructionValue::LoadLocal { place: read_place, loc: ident_loc.clone() }
+                    };
                 let left_place = lower_value_to_temporary(builder, read_value)?;
                 let right = lower_expression_to_temporary(builder, &assign.right)?;
                 let binary_place = lower_value_to_temporary(
