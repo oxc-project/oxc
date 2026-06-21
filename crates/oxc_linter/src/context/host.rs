@@ -29,6 +29,10 @@ use crate::frameworks::{has_jest_imports, has_vitest_imports, is_jestlike_file};
 
 use super::{LintContext, plugin_display_name};
 
+/// Initial capacity reserved for `ContextHost::diagnostics` on the first push.
+/// The `Vec` starts empty so files that report no diagnostics incur no allocation.
+const DIAGNOSTICS_INITIAL_CAPACITY: usize = 32;
+
 /// Stores shared information about a script block being linted.
 pub struct ContextSubHost<'a> {
     /// Semantic information about the file being linted, which includes scopes, symbols and AST nodes.
@@ -184,8 +188,6 @@ impl<'a> ContextHost<'a> {
         options: LintOptions,
         config: Arc<LintConfig>,
     ) -> Self {
-        const DIAGNOSTICS_INITIAL_CAPACITY: usize = 512;
-
         assert!(
             !sub_hosts.is_empty(),
             "ContextHost requires at least one ContextSubHost to be analyzed"
@@ -197,7 +199,7 @@ impl<'a> ContextHost<'a> {
         Self {
             sub_hosts,
             current_sub_host_index: Cell::new(0),
-            diagnostics: RefCell::new(Vec::with_capacity(DIAGNOSTICS_INITIAL_CAPACITY)),
+            diagnostics: RefCell::new(Vec::new()),
             fix: options.fix,
             file_path,
             file_extension,
@@ -304,7 +306,11 @@ impl<'a> ContextHost<'a> {
         if self.current_sub_host().source_text_offset != 0 {
             diagnostic.move_offset(self.current_sub_host().source_text_offset);
         }
-        self.diagnostics.borrow_mut().push(diagnostic);
+        let mut diagnostics = self.diagnostics.borrow_mut();
+        if diagnostics.capacity() == 0 {
+            diagnostics.reserve(DIAGNOSTICS_INITIAL_CAPACITY);
+        }
+        diagnostics.push(diagnostic);
     }
 
     // Append a list of diagnostics. Only used in report_unused_directives.
