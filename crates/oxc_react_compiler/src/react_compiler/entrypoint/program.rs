@@ -2834,6 +2834,50 @@ impl<'a> oxc_ast_visit::VisitMut<'a> for OxcNormalizeJsxTextVisitor<'a> {
     }
 }
 
+/// Rewrites a non-null assertion that oxc parses *inside* an optional chain
+/// (`a?.b!` => `ChainExpression(TSNonNull(member))`) into the shape the original
+/// Babel round-trip produced (`TSNonNull(Paren(Chain(member)))`), which codegen
+/// prints as `(a?.b)!`.
+struct OxcNonNullChainParensVisitor<'a> {
+    ast: oxc_ast::AstBuilder<'a>,
+}
+
+impl<'a> oxc_ast_visit::VisitMut<'a> for OxcNonNullChainParensVisitor<'a> {
+    fn visit_expression(&mut self, it: &mut oxc_ast::ast::Expression<'a>) {
+        use oxc_ast::ast::{ChainElement, Expression};
+        oxc_ast_visit::walk_mut::walk_expression(self, it);
+        // Only a `ChainExpression` whose head element is a `TSNonNullExpression`.
+        let is_target = matches!(
+            it,
+            Expression::ChainExpression(c) if matches!(c.expression, ChainElement::TSNonNullExpression(_))
+        );
+        if !is_target {
+            return;
+        }
+        let taken = std::mem::replace(it, oxc_allocator::Dummy::dummy(self.ast.allocator));
+        let Expression::ChainExpression(chain) = taken else { unreachable!() };
+        let ChainElement::TSNonNullExpression(ts) = chain.unbox().expression else {
+            unreachable!()
+        };
+        // Re-wrap the non-null operand (a member/call) as a chain element so the
+        // optional chain is reconstructed inside the parens.
+        let member_elem: ChainElement<'a> = match ts.unbox().expression {
+            Expression::StaticMemberExpression(b) => ChainElement::StaticMemberExpression(b),
+            Expression::ComputedMemberExpression(b) => ChainElement::ComputedMemberExpression(b),
+            Expression::PrivateFieldExpression(b) => ChainElement::PrivateFieldExpression(b),
+            Expression::CallExpression(b) => ChainElement::CallExpression(b),
+            // Not a member/call operand — emit a plain non-null without the chain.
+            other => {
+                *it = self.ast.expression_ts_non_null(oxc_span::SPAN, other);
+                return;
+            }
+        };
+        let new_chain = self.ast.expression_chain(oxc_span::SPAN, member_elem);
+        let paren = self.ast.expression_parenthesized(oxc_span::SPAN, new_chain);
+        *it = self.ast.expression_ts_non_null(oxc_span::SPAN, paren);
+    }
+}
+
 fn ox_splice_program<'a>(
     ast: &oxc_ast::AstBuilder<'a>,
     oxc_program: &oxc_ast::ast::Program<'a>,
@@ -2856,6 +2900,14 @@ fn ox_splice_program<'a>(
     // program (idempotent for already-normalized, recompiled text).
     oxc_ast_visit::VisitMut::visit_program(
         &mut OxcNormalizeJsxTextVisitor { ast: *ast },
+        &mut program,
+    );
+    // The original Babel round-trip emitted a non-null assertion over an optional
+    // chain with parens — `(a?.b)!` — whereas passed-through code keeps the source
+    // form `a?.b!`. Re-wrap the chain so the output matches. (Recompiled chains
+    // drop the `!` entirely, so only passed-through assertions are affected.)
+    oxc_ast_visit::VisitMut::visit_program(
+        &mut OxcNonNullChainParensVisitor { ast: *ast },
         &mut program,
     );
 
