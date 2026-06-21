@@ -84,9 +84,10 @@ impl DotDefine {
 
 enum IdentifierType {
     Identifier,
-    DotDefines { parts: Vec<CompactStr> },
-    // import.meta.a
-    ImportMetaWithParts { parts: Vec<CompactStr>, postfix_wildcard: bool },
+    // `key` is the last part (the bucket key); `parts` is the full member path.
+    DotDefines { key: CompactStr, parts: Vec<CompactStr> },
+    // import.meta.a; `key` is the last part (used to bucket non-wildcard defines).
+    ImportMetaWithParts { key: CompactStr, parts: Vec<CompactStr>, postfix_wildcard: bool },
     // import.meta or import.meta.*
     ImportMeta(bool),
 }
@@ -96,9 +97,6 @@ impl ReplaceGlobalDefinesConfig {
     ///
     /// * key is not an identifier
     /// * value has a syntax error
-    // The `parts.last().unwrap()` calls are invariant-protected: `check_key` guarantees dot
-    // defines have >= 2 parts and non-wildcard `import.meta` defines have >= 1 part.
-    #[expect(clippy::missing_panics_doc)]
     pub fn new<S: AsRef<str>>(defines: &[(S, S)]) -> Result<Self, Diagnostics> {
         let allocator = Allocator::default();
         let mut identifier_defines: FxHashMap<CompactStr, CompactStr> = FxHashMap::default();
@@ -123,22 +121,18 @@ impl ReplaceGlobalDefinesConfig {
                         .entry(CompactStr::new(key))
                         .or_insert_with(|| CompactStr::new(value));
                 }
-                IdentifierType::DotDefines { parts } => {
-                    // Dot defines always have at least two parts, so `last` exists.
-                    let key = parts.last().unwrap().clone();
+                IdentifierType::DotDefines { key, parts } => {
                     dot_defines
                         .entry(key)
                         .or_default()
                         .push(DotDefine::new(parts, CompactStr::new(value)));
                 }
-                IdentifierType::ImportMetaWithParts { parts, postfix_wildcard } => {
+                IdentifierType::ImportMetaWithParts { key, parts, postfix_wildcard } => {
                     let define =
                         MetaPropertyDefine::new(parts, CompactStr::new(value), postfix_wildcard);
                     if postfix_wildcard {
                         meta_property_wildcard.push(define);
                     } else {
-                        // Non-wildcard `import.meta.<parts>` always has at least one part.
-                        let key = define.parts.last().unwrap().clone();
                         meta_property.entry(key).or_default().push(define);
                     }
                 }
@@ -194,10 +188,14 @@ impl ReplaceGlobalDefinesConfig {
                 .into());
             }
         }
+        // The last non-wildcard part is the bucket key (the outermost property name accessed).
+        // It always exists here: `normalized_parts_len >= 2` after the `parts.len() == 1` return.
+        let key = CompactStr::new(parts[normalized_parts_len - 1]);
         if is_import_meta {
             match normalized_parts_len {
                 2 => Ok(IdentifierType::ImportMeta(normalized_parts_len != parts.len())),
                 _ => Ok(IdentifierType::ImportMetaWithParts {
+                    key,
                     parts: parts
                         .iter()
                         .skip(2)
@@ -215,6 +213,7 @@ impl ReplaceGlobalDefinesConfig {
             .into())
         } else {
             Ok(IdentifierType::DotDefines {
+                key,
                 parts: parts
                     .iter()
                     .take(normalized_parts_len)
@@ -483,8 +482,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
             }
             Expression::MetaProperty(meta_property) => {
                 if let Some(replacement) = self.config.0.import_meta.clone()
-                    && meta_property.meta.name == "import"
-                    && meta_property.property.name == "meta"
+                    && is_import_meta(meta_property)
                 {
                     let value = self.parse_value(&replacement);
                     *expr = value;
@@ -503,87 +501,20 @@ impl<'a> ReplaceGlobalDefines<'a> {
         // Only a static computed key (e.g. `a["b"]`) can match a define; a dynamic key never does,
         // and its outermost property name is what selects the candidate defines.
         let leaf = static_property_name_of_computed_expr(member)?;
-        let scoping = self.scoping();
-        let scope_flags = self.current_scope_flags();
-        let value = self.config.0.dot.get(leaf.as_str()).and_then(|bucket| {
-            bucket
-                .iter()
-                .find(|dot_define| {
-                    Self::is_dot_define(
-                        scoping,
-                        scope_flags,
-                        dot_define,
-                        DotDefineMemberExpression::ComputedMemberExpression(member),
-                    )
-                })
-                .map(|dot_define| dot_define.value.clone())
-        });
-        if let Some(value) = value {
-            let value = self.parse_value(&value);
-            return Some(value);
-        }
         // TODO: meta_property_define
-        None
+        let value = self.find_dot_define_value(
+            leaf.as_str(),
+            DotDefineMemberExpression::ComputedMemberExpression(member),
+        )?;
+        Some(self.parse_value(&value))
     }
 
     fn replace_dot_static_member_expr(
         &mut self,
         member: &StaticMemberExpression<'a>,
     ) -> Option<Expression<'a>> {
-        let leaf = member.property.name.as_str();
-        // Only defines whose last part equals the outermost property name can match, so look up
-        // the candidate bucket instead of scanning every define.
-        {
-            let scoping = self.scoping();
-            let scope_flags = self.current_scope_flags();
-            let value = self.config.0.dot.get(leaf).and_then(|bucket| {
-                bucket
-                    .iter()
-                    .find(|dot_define| {
-                        Self::is_dot_define(
-                            scoping,
-                            scope_flags,
-                            dot_define,
-                            DotDefineMemberExpression::StaticMemberExpression(member),
-                        )
-                    })
-                    .map(|dot_define| dot_define.value.clone())
-            });
-            if let Some(value) = value {
-                let value = self.parse_value(&value);
-                return Some(self.destructing_dot_define_optimizer(value));
-            }
-        }
-        let value = self.config.0.meta_property.get(leaf).and_then(|bucket| {
-            bucket
-                .iter()
-                .find(|meta_property_define| {
-                    Self::is_meta_property_define(meta_property_define, member)
-                })
-                .map(|meta_property_define| meta_property_define.value.clone())
-        });
-        if let Some(value) = value {
-            let value = self.parse_value(&value);
-            return Some(self.destructing_dot_define_optimizer(value));
-        }
-        // Wildcard meta defines can't be keyed by their trailing name, and only ever match
-        // `import.meta`-rooted expressions, so gate the linear scan on that cheap check.
-        if !self.config.0.meta_property_wildcard.is_empty() && Self::is_import_meta_member(member) {
-            let value = self
-                .config
-                .0
-                .meta_property_wildcard
-                .iter()
-                .find(|meta_property_define| {
-                    Self::is_meta_property_define(meta_property_define, member)
-                })
-                .map(|meta_property_define| meta_property_define.value.clone());
-            if let Some(value) = value {
-                let value = self.parse_value(&value);
-                return Some(self.destructing_dot_define_optimizer(value));
-            }
-        }
-        None
+        let value = self.replace_dot_static_member_expr_impl(member)?;
+        Some(self.destructing_dot_define_optimizer(value))
     }
 
     /// Like `replace_dot_static_member_expr` but without the destructuring optimization.
@@ -592,75 +523,79 @@ impl<'a> ReplaceGlobalDefines<'a> {
         &mut self,
         member: &StaticMemberExpression<'a>,
     ) -> Option<Expression<'a>> {
+        self.replace_dot_static_member_expr_impl(member)
+    }
+
+    /// Shared lookup for a static member expression: a `dot` define, then a `meta_property`
+    /// define. Returns the parsed replacement expression, or `None` if nothing matches.
+    fn replace_dot_static_member_expr_impl(
+        &mut self,
+        member: &StaticMemberExpression<'a>,
+    ) -> Option<Expression<'a>> {
         let leaf = member.property.name.as_str();
+        let value = self
+            .find_dot_define_value(leaf, DotDefineMemberExpression::StaticMemberExpression(member))
+            .or_else(|| self.find_meta_property_value(leaf, member))?;
+        Some(self.parse_value(&value))
+    }
+
+    /// Find the value of a `dot` define matching `member`, whose outermost property name is `leaf`.
+    /// Only defines bucketed under `leaf` can match, so this is a single map lookup instead of a
+    /// scan over every define.
+    fn find_dot_define_value(
+        &self,
+        leaf: &str,
+        member: DotDefineMemberExpression<'_, 'a>,
+    ) -> Option<CompactStr> {
+        let bucket = self.config.0.dot.get(leaf)?;
+        let scoping = self.scoping();
+        let scope_flags = self.current_scope_flags();
+        bucket
+            .iter()
+            .find(|dot_define| Self::is_dot_define(scoping, scope_flags, dot_define, member))
+            .map(|dot_define| dot_define.value.clone())
+    }
+
+    /// Find the value of a meta property define matching the static member `member`, whose
+    /// outermost property name is `leaf`. Non-wildcard defines are bucketed under `leaf`; wildcard
+    /// defines match a variable trailing name, so they are scanned linearly but only for
+    /// `import.meta`-rooted expressions.
+    fn find_meta_property_value(
+        &self,
+        leaf: &str,
+        member: &StaticMemberExpression<'a>,
+    ) -> Option<CompactStr> {
+        if let Some(bucket) = self.config.0.meta_property.get(leaf)
+            && let Some(define) =
+                bucket.iter().find(|define| Self::is_meta_property_define(define, member))
         {
-            let scoping = self.scoping();
-            let scope_flags = self.current_scope_flags();
-            let value = self.config.0.dot.get(leaf).and_then(|bucket| {
-                bucket
-                    .iter()
-                    .find(|dot_define| {
-                        Self::is_dot_define(
-                            scoping,
-                            scope_flags,
-                            dot_define,
-                            DotDefineMemberExpression::StaticMemberExpression(member),
-                        )
-                    })
-                    .map(|dot_define| dot_define.value.clone())
-            });
-            if let Some(value) = value {
-                let value = self.parse_value(&value);
-                return Some(value);
-            }
+            return Some(define.value.clone());
         }
-        let value = self.config.0.meta_property.get(leaf).and_then(|bucket| {
-            bucket
-                .iter()
-                .find(|meta_property_define| {
-                    Self::is_meta_property_define(meta_property_define, member)
-                })
-                .map(|meta_property_define| meta_property_define.value.clone())
-        });
-        if let Some(value) = value {
-            let value = self.parse_value(&value);
-            return Some(value);
-        }
-        // Wildcard meta defines can't be keyed by their trailing name, and only ever match
-        // `import.meta`-rooted expressions, so gate the linear scan on that cheap check.
         if !self.config.0.meta_property_wildcard.is_empty() && Self::is_import_meta_member(member) {
-            let value = self
+            return self
                 .config
                 .0
                 .meta_property_wildcard
                 .iter()
-                .find(|meta_property_define| {
-                    Self::is_meta_property_define(meta_property_define, member)
-                })
-                .map(|meta_property_define| meta_property_define.value.clone());
-            if let Some(value) = value {
-                let value = self.parse_value(&value);
-                return Some(value);
-            }
+                .find(|define| Self::is_meta_property_define(define, member))
+                .map(|define| define.value.clone());
         }
         None
     }
 
     /// Whether `member`'s object chain roots at `import.meta`.
     ///
-    /// A meta property define (`import.meta.*`) can only ever match a static member expression
-    /// whose innermost object is the `import.meta` meta property. Walking the chain once is far
-    /// cheaper than running [`Self::is_meta_property_define`] for every configured meta define on
-    /// every member expression in the file, so this lets the caller skip the whole loop for
-    /// ordinary member expressions such as `console.log` or `a.b.c`.
+    /// This is a cheap fast-reject, not a correctness check ([`Self::is_meta_property_define`]
+    /// already rejects non-`import.meta` roots): a meta property define can only ever match a
+    /// member expression rooted at `import.meta`, so walking the chain once here lets the caller
+    /// skip the whole wildcard scan for ordinary member expressions such as `console.log` or
+    /// `a.b.c`.
     fn is_import_meta_member(member: &StaticMemberExpression<'a>) -> bool {
         let mut object = &member.object;
         loop {
             match object {
                 Expression::StaticMemberExpression(inner) => object = &inner.object,
-                Expression::MetaProperty(meta) => {
-                    return meta.meta.name == "import" && meta.property.name == "meta";
-                }
+                Expression::MetaProperty(meta) => return is_import_meta(meta),
                 _ => return false,
             }
         }
@@ -677,9 +612,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
         }
         if meta_define.parts.is_empty() && meta_define.postfix_wildcard {
             match &member.object {
-                Expression::MetaProperty(meta) => {
-                    return meta.meta.name == "import" && meta.property.name == "meta";
-                }
+                Expression::MetaProperty(meta) => return is_import_meta(meta),
                 _ => return false,
             }
         }
@@ -727,7 +660,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
                     }
                     Expression::MetaProperty(meta) => {
                         // Only `import.meta` is a valid root; never `new.target`.
-                        if meta.meta.name != "import" || meta.property.name != "meta" {
+                        if !is_import_meta(meta) {
                             return false;
                         }
                         if meta_define.postfix_wildcard {
@@ -872,7 +805,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
                         // Handle import.meta
                         // When we encounter a MetaProperty, we need to verify that the remaining
                         // parts match ["import", "meta"]
-                        if meta.meta.name == "import" && meta.property.name == "meta" {
+                        if is_import_meta(meta) {
                             // At this point, i is the current position we're checking
                             // We need the next two parts (going backwards) to be "meta" then "import"
                             // i.e., parts[i-1] == "meta" and parts[i-2] == "import"
@@ -998,6 +931,11 @@ fn static_property_name_of_computed_expr<'b, 'a: 'b>(
 
 const fn should_replace_this_expr(scope_flags: ScopeFlags) -> bool {
     !scope_flags.contains(ScopeFlags::Function) || scope_flags.contains(ScopeFlags::Arrow)
+}
+
+/// Whether `meta` is the `import.meta` meta property (as opposed to `new.target`).
+fn is_import_meta(meta: &MetaProperty) -> bool {
+    meta.meta.name == "import" && meta.property.name == "meta"
 }
 
 fn assignment_target_from_expr(expr: Expression) -> Option<AssignmentTarget> {
