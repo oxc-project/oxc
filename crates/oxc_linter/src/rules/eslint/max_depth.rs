@@ -32,16 +32,12 @@ impl Default for MaxDepth {
     }
 }
 
-#[cfg(feature = "ruledocs")]
-impl MaxDepth {
-    #[expect(clippy::unnecessary_wraps)]
-    pub fn config_schema(
-        r#gen: &mut schemars::r#gen::SchemaGenerator,
-    ) -> Option<schemars::schema::Schema> {
-        let mut schema = r#gen.subschema_for::<Self>();
-        crate::utils::number_as_object_schema(r#gen, &mut schema, None);
-        Some(schema)
-    }
+#[derive(Debug, JsonSchema, Deserialize)]
+#[serde(untagged)]
+#[expect(unused)]
+enum MaxDepthConfigEnum {
+    Number(u32),
+    Object(MaxDepth),
 }
 
 declare_oxc_lint!(
@@ -104,7 +100,7 @@ declare_oxc_lint!(
     MaxDepth,
     eslint,
     pedantic,
-    config = MaxDepth,
+    config = MaxDepthConfigEnum,
     version = "0.15.12",
     short_description = "Enforce a maximum depth that blocks can be nested.",
 );

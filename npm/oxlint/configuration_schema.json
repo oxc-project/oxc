@@ -1138,6 +1138,14 @@
       },
       "additionalProperties": false
     },
+    "CallbackReturn": {
+      "description": "The rule takes a single option - an array of possible callback names - which may include object methods. The default callback names are `callback`, `cb`, `next`.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "markdownDescription": "The rule takes a single option - an array of possible callback names - which may include object methods. The default callback names are `callback`, `cb`, `next`."
+    },
     "CapitalizedCommentsOptions": {
       "description": "Configuration for the capitalized-comments rule.\n\nThe first element specifies whether comments should `\"always\"` or `\"never\"`\nbegin with a capital letter. The second element is an optional object\ncontaining additional options.",
       "type": "array",
@@ -1479,6 +1487,18 @@
         }
       },
       "additionalProperties": false
+    },
+    "ComplexityConfigEnum": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        {
+          "$ref": "#/definitions/ComplexityConfig"
+        }
+      ]
     },
     "Config": {
       "type": "array",
@@ -2278,34 +2298,17 @@
               "$ref": "#/definitions/RuleNoConfig"
             },
             {
-              "anyOf": [
+              "type": "array",
+              "items": [
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "type": "number"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "$ref": "#/definitions/ComplexityConfig"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/ComplexityConfigEnum"
                 }
-              ]
+              ],
+              "maxItems": 2,
+              "minItems": 2
             }
           ]
         },
@@ -2605,7 +2608,57 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "import/extensions": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
+                    },
+                    {
+                      "$ref": "#/definitions/ExtensionRule"
+                    },
+                    {
+                      "$ref": "#/definitions/ImportExtensionsObject"
+                    }
+                  ],
+                  "maxItems": 3,
+                  "minItems": 2
+                },
+                {
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
+                    },
+                    {
+                      "$ref": "#/definitions/ExtensionRule"
+                    }
+                  ],
+                  "maxItems": 2,
+                  "minItems": 2
+                },
+                {
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
+                    },
+                    {
+                      "$ref": "#/definitions/ImportExtensionsObject"
+                    }
+                  ],
+                  "maxItems": 2,
+                  "minItems": 2
+                }
+              ]
+            }
+          ]
         },
         "import/first": {
           "anyOf": [
@@ -3940,7 +3993,24 @@
           ]
         },
         "jsx-a11y/no-noninteractive-element-interactions": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoNoninteractiveElementInteractionsConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "jsx-a11y/no-noninteractive-element-to-interactive-role": {
           "anyOf": [
@@ -4066,34 +4136,17 @@
               "$ref": "#/definitions/RuleNoConfig"
             },
             {
-              "anyOf": [
+              "type": "array",
+              "items": [
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "type": "number"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "$ref": "#/definitions/MaxClassesPerFileConfig"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/MaxClassesPerFileConfigEnum"
                 }
-              ]
+              ],
+              "maxItems": 2,
+              "minItems": 2
             }
           ]
         },
@@ -4103,34 +4156,17 @@
               "$ref": "#/definitions/RuleNoConfig"
             },
             {
-              "anyOf": [
+              "type": "array",
+              "items": [
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "type": "number"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "$ref": "#/definitions/MaxDepth"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/MaxDepthConfigEnum"
                 }
-              ]
+              ],
+              "maxItems": 2,
+              "minItems": 2
             }
           ]
         },
@@ -4140,34 +4176,17 @@
               "$ref": "#/definitions/RuleNoConfig"
             },
             {
-              "anyOf": [
+              "type": "array",
+              "items": [
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "type": "number"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "$ref": "#/definitions/MaxLinesConfig"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/MaxLinesConfigEnum"
                 }
-              ]
+              ],
+              "maxItems": 2,
+              "minItems": 2
             }
           ]
         },
@@ -4177,34 +4196,17 @@
               "$ref": "#/definitions/RuleNoConfig"
             },
             {
-              "anyOf": [
+              "type": "array",
+              "items": [
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "type": "number"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "$ref": "#/definitions/MaxLinesPerFunctionConfig"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/MaxLinesPerFunctionConfigEnum"
                 }
-              ]
+              ],
+              "maxItems": 2,
+              "minItems": 2
             }
           ]
         },
@@ -4214,34 +4216,17 @@
               "$ref": "#/definitions/RuleNoConfig"
             },
             {
-              "anyOf": [
+              "type": "array",
+              "items": [
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "type": "number"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "$ref": "#/definitions/MaxNestedCallbacks"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/MaxNestedCallbacksConfigEnum"
                 }
-              ]
+              ],
+              "maxItems": 2,
+              "minItems": 2
             }
           ]
         },
@@ -4251,34 +4236,17 @@
               "$ref": "#/definitions/RuleNoConfig"
             },
             {
-              "anyOf": [
+              "type": "array",
+              "items": [
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "type": "number"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "$ref": "#/definitions/MaxParamsConfig"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/MaxParamsConfigEnum"
                 }
-              ]
+              ],
+              "maxItems": 2,
+              "minItems": 2
             }
           ]
         },
@@ -4288,34 +4256,17 @@
               "$ref": "#/definitions/RuleNoConfig"
             },
             {
-              "anyOf": [
+              "type": "array",
+              "items": [
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "type": "number"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "$ref": "#/definitions/MaxStatementsConfig"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/MaxStatementsConfigEnum"
                 }
-              ]
+              ],
+              "maxItems": 2,
+              "minItems": 2
             }
           ]
         },
@@ -5136,7 +5087,25 @@
           "$ref": "#/definitions/DummyRule"
         },
         "no-restricted-properties": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PropertyDetails"
+                }
+              ],
+              "additionalItems": {
+                "$ref": "#/definitions/PropertyDetails"
+              },
+              "minItems": 2
+            }
+          ]
         },
         "no-return-assign": {
           "anyOf": [
@@ -5574,7 +5543,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "node/callback-return": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/CallbackReturn"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "node/global-require": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -5602,6 +5588,26 @@
         "node/no-exports-assign": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "node/no-mixed-requires": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoMixedRequiresConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "node/no-new-require": {
           "$ref": "#/definitions/RuleNoConfig"
         },
@@ -5621,6 +5627,26 @@
                 },
                 {
                   "$ref": "#/definitions/NoProcessEnvConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
+        "node/no-sync": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoSyncConfig"
                 }
               ],
               "maxItems": 2,
@@ -8955,7 +8981,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "unicorn/numeric-separators-style": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NumericSeparatorsStyleConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "unicorn/prefer-add-event-listener": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -10657,6 +10700,16 @@
       },
       "additionalProperties": false
     },
+    "ExtensionRule": {
+      "description": "Extension rule configuration; Copy to avoid extra indirection.",
+      "type": "string",
+      "enum": [
+        "always",
+        "never",
+        "ignorePackages"
+      ],
+      "markdownDescription": "Extension rule configuration; Copy to avoid extra indirection."
+    },
     "ExternalPluginEntry": {
       "anyOf": [
         {
@@ -11418,6 +11471,53 @@
         }
       },
       "additionalProperties": false
+    },
+    "ImportExtensionsConfig": {
+      "type": "object",
+      "properties": {
+        "checkTypeImports": {
+          "description": "Whether to check type imports when enforcing extension rules.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to check type imports when enforcing extension rules."
+        },
+        "ignorePackages": {
+          "description": "Whether to ignore package imports when enforcing extension rules.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to ignore package imports when enforcing extension rules."
+        },
+        "pathGroupOverrides": {
+          "description": "Path group overrides for bespoke import specifiers.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PathGroupOverrideConfig"
+          },
+          "markdownDescription": "Path group overrides for bespoke import specifiers."
+        },
+        "pattern": {
+          "description": "Per-extension rules.",
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/ExtensionRule"
+          },
+          "markdownDescription": "Per-extension rules."
+        }
+      },
+      "additionalProperties": false
+    },
+    "ImportExtensionsObject": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ImportExtensionsConfig"
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/ExtensionRule"
+          }
+        }
+      ]
     },
     "ImportKind": {
       "type": "string",
@@ -12324,6 +12424,18 @@
       },
       "additionalProperties": false
     },
+    "MaxClassesPerFileConfigEnum": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        {
+          "$ref": "#/definitions/MaxClassesPerFileConfig"
+        }
+      ]
+    },
     "MaxDependenciesConfig": {
       "type": "object",
       "properties": {
@@ -12370,6 +12482,18 @@
       },
       "additionalProperties": false
     },
+    "MaxDepthConfigEnum": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        {
+          "$ref": "#/definitions/MaxDepth"
+        }
+      ]
+    },
     "MaxExpectsConfig": {
       "type": "object",
       "properties": {
@@ -12410,6 +12534,18 @@
       },
       "additionalProperties": false
     },
+    "MaxLinesConfigEnum": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        {
+          "$ref": "#/definitions/MaxLinesConfig"
+        }
+      ]
+    },
     "MaxLinesPerFunctionConfig": {
       "type": "object",
       "properties": {
@@ -12442,6 +12578,18 @@
       },
       "additionalProperties": false
     },
+    "MaxLinesPerFunctionConfigEnum": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        {
+          "$ref": "#/definitions/MaxLinesPerFunctionConfig"
+        }
+      ]
+    },
     "MaxNestedCallbacks": {
       "type": "object",
       "properties": {
@@ -12455,6 +12603,18 @@
         }
       },
       "additionalProperties": false
+    },
+    "MaxNestedCallbacksConfigEnum": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        {
+          "$ref": "#/definitions/MaxNestedCallbacks"
+        }
+      ]
     },
     "MaxNestedCalls": {
       "type": "object",
@@ -12513,6 +12673,18 @@
       },
       "additionalProperties": false
     },
+    "MaxParamsConfigEnum": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        {
+          "$ref": "#/definitions/MaxParamsConfig"
+        }
+      ]
+    },
     "MaxProps": {
       "type": "object",
       "properties": {
@@ -12546,6 +12718,18 @@
         }
       },
       "additionalProperties": false
+    },
+    "MaxStatementsConfigEnum": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        {
+          "$ref": "#/definitions/MaxStatementsConfig"
+        }
+      ]
     },
     "MediaHasCaptionConfig": {
       "type": "object",
@@ -14222,6 +14406,30 @@
       },
       "additionalProperties": false
     },
+    "NoMixedRequiresConfig": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "$ref": "#/definitions/NoMixedRequiresOptions"
+        }
+      ]
+    },
+    "NoMixedRequiresOptions": {
+      "type": "object",
+      "properties": {
+        "allowCall": {
+          "default": false,
+          "type": "boolean"
+        },
+        "grouping": {
+          "default": false,
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
     "NoMultiAssign": {
       "type": "object",
       "properties": {
@@ -14299,6 +14507,53 @@
         }
       },
       "additionalProperties": false
+    },
+    "NoNoninteractiveElementInteractionsConfig": {
+      "type": "object",
+      "properties": {
+        "handlers": {
+          "description": "An array of event handler names that should trigger this rule.",
+          "default": [
+            "onError",
+            "onLoad",
+            "onKeyPress",
+            "onKeyDown",
+            "onKeyUp",
+            "onFocus",
+            "onBlur",
+            "onClick",
+            "onContextMenu",
+            "onDblClick",
+            "onDoubleClick",
+            "onDrag",
+            "onDragEnd",
+            "onDragEnter",
+            "onDragExit",
+            "onDragLeave",
+            "onDragOver",
+            "onDragStart",
+            "onDrop",
+            "onMouseDown",
+            "onMouseEnter",
+            "onMouseLeave",
+            "onMouseMove",
+            "onMouseOut",
+            "onMouseOver",
+            "onMouseUp"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "An array of event handler names that should trigger this rule."
+        }
+      },
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
     },
     "NoNoninteractiveElementToInteractiveRoleConfig": {
       "type": "object",
@@ -14816,6 +15071,28 @@
           "default": false,
           "type": "boolean",
           "markdownDescription": "Disallow template literals in addition to string literals."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoSyncConfig": {
+      "type": "object",
+      "properties": {
+        "allowAtRootLevel": {
+          "description": "Whether synchronous methods should be allowed at the top level of a file.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether synchronous methods should be allowed at the top level of a file."
+        },
+        "ignores": {
+          "description": "Function names to ignore.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true,
+          "markdownDescription": "Function names to ignore."
         }
       },
       "additionalProperties": false
@@ -15575,6 +15852,128 @@
         }
       ]
     },
+    "NumericBaseConfig": {
+      "type": "object",
+      "properties": {
+        "groupLength": {
+          "description": "The number of digits per group when inserting numeric separators.\nFor example, a `groupLength` of 3 formats `1234567` as `1_234_567`.",
+          "default": 0,
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0,
+          "markdownDescription": "The number of digits per group when inserting numeric separators.\nFor example, a `groupLength` of 3 formats `1234567` as `1_234_567`."
+        },
+        "minimumDigits": {
+          "description": "The minimum number of digits required before grouping is applied.\nValues with fewer digits than this threshold will not be grouped.",
+          "default": 0,
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0,
+          "markdownDescription": "The minimum number of digits required before grouping is applied.\nValues with fewer digits than this threshold will not be grouped."
+        },
+        "onlyIfContainsSeparator": {
+          "description": "Only enforce the rule when the numeric literal already contains a separator (`_`).\n\nWhen `true`, numbers without separators are left as-is; when `false` (default),\ngrouping will be enforced for eligible numbers even if they don't include separators yet.",
+          "type": "boolean",
+          "markdownDescription": "Only enforce the rule when the numeric literal already contains a separator (`_`).\n\nWhen `true`, numbers without separators are left as-is; when `false` (default),\ngrouping will be enforced for eligible numbers even if they don't include separators yet."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NumericNumberConfig": {
+      "type": "object",
+      "properties": {
+        "fractionGroupLength": {
+          "description": "The size a group of digits in the fractional part (after the decimal point) should be.",
+          "default": 4294967295,
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0,
+          "markdownDescription": "The size a group of digits in the fractional part (after the decimal point) should be."
+        },
+        "groupLength": {
+          "description": "The number of digits per group when inserting numeric separators.\nFor example, a `groupLength` of 3 formats `1234567` as `1_234_567`.",
+          "default": 0,
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0,
+          "markdownDescription": "The number of digits per group when inserting numeric separators.\nFor example, a `groupLength` of 3 formats `1234567` as `1_234_567`."
+        },
+        "minimumDigits": {
+          "description": "The minimum number of digits required before grouping is applied.\nValues with fewer digits than this threshold will not be grouped.",
+          "default": 0,
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0,
+          "markdownDescription": "The minimum number of digits required before grouping is applied.\nValues with fewer digits than this threshold will not be grouped."
+        },
+        "onlyIfContainsSeparator": {
+          "description": "Only enforce the rule when the numeric literal already contains a separator (`_`).\n\nWhen `true`, numbers without separators are left as-is; when `false` (default),\ngrouping will be enforced for eligible numbers even if they don't include separators yet.",
+          "type": "boolean",
+          "markdownDescription": "Only enforce the rule when the numeric literal already contains a separator (`_`).\n\nWhen `true`, numbers without separators are left as-is; when `false` (default),\ngrouping will be enforced for eligible numbers even if they don't include separators yet."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NumericSeparatorsStyleConfig": {
+      "type": "object",
+      "properties": {
+        "binary": {
+          "description": "Configuration for binary literals (e.g. `0b1010_0001` and bigint variants).\nControls how digits are grouped and when separators are applied.",
+          "default": {
+            "groupLength": 4,
+            "minimumDigits": 0
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/NumericBaseConfig"
+            }
+          ],
+          "markdownDescription": "Configuration for binary literals (e.g. `0b1010_0001` and bigint variants).\nControls how digits are grouped and when separators are applied."
+        },
+        "hexadecimal": {
+          "description": "Configuration for hexadecimal literals (e.g. `0xAB_CD`, `0Xab_cd`, and bigint variants).\nControls how digits are grouped and when separators are applied.",
+          "default": {
+            "groupLength": 2,
+            "minimumDigits": 0
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/NumericBaseConfig"
+            }
+          ],
+          "markdownDescription": "Configuration for hexadecimal literals (e.g. `0xAB_CD`, `0Xab_cd`, and bigint variants).\nControls how digits are grouped and when separators are applied."
+        },
+        "number": {
+          "description": "Configuration for decimal numbers (integers, fraction parts, and exponents).\nControls how digits are grouped and when separators are applied.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/NumericNumberConfig"
+            }
+          ],
+          "markdownDescription": "Configuration for decimal numbers (integers, fraction parts, and exponents).\nControls how digits are grouped and when separators are applied."
+        },
+        "octal": {
+          "description": "Configuration for octal literals (e.g. `0o1234_5670` and bigint variants).\nControls how digits are grouped and when separators are applied.",
+          "default": {
+            "groupLength": 4,
+            "minimumDigits": 0
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/NumericBaseConfig"
+            }
+          ],
+          "markdownDescription": "Configuration for octal literals (e.g. `0o1234_5670` and bigint variants).\nControls how digits are grouped and when separators are applied."
+        },
+        "onlyIfContainsSeparator": {
+          "description": "Only enforce the rule when the numeric literal already contains a separator (`_`).\n\nWhen `true`, numbers without separators are left as-is; when `false` (default),\ngrouping will be enforced for eligible numbers even if they don't include separators yet.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Only enforce the rule when the numeric literal already contains a separator (`_`).\n\nWhen `true`, numbers without separators are left as-is; when `false` (default),\ngrouping will be enforced for eligible numbers even if they don't include separators yet."
+        }
+      },
+      "additionalProperties": false
+    },
     "ObjectLiteralTypeAssertions": {
       "oneOf": [
         {
@@ -16136,6 +16535,52 @@
             }
           ],
           "markdownDescription": "Whether to prefer parameter properties or class properties."
+        }
+      },
+      "additionalProperties": false
+    },
+    "PathGroupAction": {
+      "description": "Action to take for path group overrides.\n\nDetermines how import extensions are validated for matching bespoke import specifiers.",
+      "oneOf": [
+        {
+          "description": "Enforce extension validation for matching imports (require extensions based on config).",
+          "type": "string",
+          "enum": [
+            "enforce"
+          ],
+          "markdownDescription": "Enforce extension validation for matching imports (require extensions based on config)."
+        },
+        {
+          "description": "Ignore matching imports entirely (skip all extension validation).",
+          "type": "string",
+          "enum": [
+            "ignore"
+          ],
+          "markdownDescription": "Ignore matching imports entirely (skip all extension validation)."
+        }
+      ],
+      "markdownDescription": "Action to take for path group overrides.\n\nDetermines how import extensions are validated for matching bespoke import specifiers."
+    },
+    "PathGroupOverrideConfig": {
+      "type": "object",
+      "required": [
+        "action",
+        "pattern"
+      ],
+      "properties": {
+        "action": {
+          "description": "Action to take when pattern matches.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/PathGroupAction"
+            }
+          ],
+          "markdownDescription": "Action to take when pattern matches."
+        },
+        "pattern": {
+          "description": "Glob pattern to match import specifiers.",
+          "type": "string",
+          "markdownDescription": "Glob pattern to match import specifiers."
         }
       },
       "additionalProperties": false
@@ -16876,6 +17321,53 @@
       },
       "additionalProperties": false,
       "markdownDescription": "A prop with optional `disallowedFor` DOM node list and custom `message`."
+    },
+    "PropertyDetails": {
+      "type": "object",
+      "properties": {
+        "allowObjects": {
+          "description": "Objects where property access should be allowed. This must be used with `property` and\ncannot be used with `object`.",
+          "default": null,
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Objects where property access should be allowed. This must be used with `property` and\ncannot be used with `object`."
+        },
+        "allowProperties": {
+          "description": "Properties where property access should be allowed. This must be used with `object` and\ncannot be used with `property`.",
+          "default": null,
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Properties where property access should be allowed. This must be used with `object` and\ncannot be used with `property`."
+        },
+        "message": {
+          "description": "A custom message to display.",
+          "default": null,
+          "type": "string",
+          "markdownDescription": "A custom message to display."
+        },
+        "object": {
+          "description": "The object on which the property is being accessed.",
+          "default": null,
+          "type": "string",
+          "markdownDescription": "The object on which the property is being accessed."
+        },
+        "property": {
+          "description": "The property being accessed. If `object` is not specified, this applies to the named\nproperty on all objects.",
+          "default": null,
+          "type": "string",
+          "markdownDescription": "The property being accessed. If `object` is not specified, this applies to the named\nproperty on all objects."
+        }
+      },
+      "additionalProperties": false
+    },
+    "PropertyDetailsList": {
+      "additionalItems": {
+        "$ref": "#/definitions/PropertyDetails"
+      }
     },
     "RadixType": {
       "oneOf": [

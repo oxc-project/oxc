@@ -85,10 +85,8 @@ impl Generator for AstBuilderGenerator {
 
             ///@@line_break
             use oxc_allocator::{Allocator, Box, IntoIn, Vec};
-            use oxc_syntax::{scope::ScopeId, symbol::SymbolId, reference::ReferenceId};
-
-            ///@@line_break
             use oxc_str::{Ident, Str};
+            use oxc_syntax::{scope::ScopeId, symbol::SymbolId, reference::ReferenceId};
 
             ///@@line_break
             use crate::{AstBuilder, ast::*};
@@ -120,7 +118,7 @@ struct Param<'d> {
     is_node_id: bool,
     /// * `None` if param is not generic.
     /// * `Some(GenericType::Into)` if is generic and uses `Into`
-    ///   e.g. `name: A where A: Into<Str<'a>>`.
+    ///   e.g. `name: S1 where S1: Into<Str<'a>>`.
     /// * `Some(GenericType::IntoIn)` if is generic and uses `IntoIn`
     ///   e.g. `type_annotation: T1 where T1: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>`.
     generic_type: Option<GenericType>,
@@ -349,7 +347,7 @@ fn get_struct_params<'s>(
                     if matches!(primitive_def.name(), "Str" | "Ident") =>
                 {
                     str_generic_count += 1;
-                    Some((format_ident!("A{str_generic_count}"), GenericType::Into))
+                    Some((format_ident!("S{str_generic_count}"), GenericType::Into))
                 }
                 TypeDef::Box(_) => {
                     generic_count += 1;
@@ -401,7 +399,7 @@ fn get_struct_params<'s>(
 
 /// Get function params and fields for a struct builder method.
 ///
-/// Omit default fields from function params if `include_default_fields == true`.
+/// Omit default fields from function params if `include_default_fields == false`.
 ///
 /// ```
 /// //         ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ function params

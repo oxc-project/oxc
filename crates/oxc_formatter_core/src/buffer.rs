@@ -113,7 +113,7 @@ impl<'buf, 'ast, C> VecBuffer<'buf, 'ast, C> {
 
     /// Takes the elements without consuming self
     pub fn take_vec(&mut self) -> ArenaVec<'ast, FormatElement<'ast>> {
-        self.elements.take_in(self.state.allocator())
+        self.elements.take_in(self.state)
     }
 }
 

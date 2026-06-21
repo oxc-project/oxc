@@ -66,12 +66,12 @@ impl ESTree for () {
 
 #[cfg(test)]
 mod tests {
-    use super::super::CompactTSSerializer;
+    use super::super::CompactSerializer;
     use super::*;
 
     fn run_test<T: ESTree>(cases: &[(T, &str)]) {
         for (input, output) in cases {
-            let mut serializer = CompactTSSerializer::default();
+            let mut serializer = CompactSerializer::default();
             input.serialize(&mut serializer);
             let s = serializer.into_string();
             assert_eq!(&s, output);

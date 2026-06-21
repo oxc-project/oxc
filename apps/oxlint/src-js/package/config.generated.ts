@@ -4,7 +4,7 @@
  */
 
 export type AllowWarnDeny = ("allow" | "off" | "warn" | "error" | "deny") | number;
-export type GlobalValue = "readonly" | "writable" | "off";
+export type GlobalValue = ("readonly" | "writable" | "off") | undefined;
 export type ExternalPluginEntry =
   | string
   | {
@@ -68,6 +68,7 @@ export type OptionsJsonEnum =
       line?: CommentConfigJson;
     };
 export type IgnoreClassWithImplements = "all" | "public-fields";
+export type ComplexityConfigEnum = number | ComplexityConfig;
 export type Variant = "classic" | "modified";
 /**
  * The enforcement type for the curly rule.
@@ -86,18 +87,40 @@ export type Style = "expression" | "declaration";
 export type NamedExports = "ignore" | "expression" | "declaration";
 export type PairOrder = "anyOrder" | "getBeforeSet" | "setBeforeGet";
 export type Mode = "prefer-top-level" | "prefer-inline";
-export type DummyRule = AllowWarnDeny | [AllowWarnDeny, ...unknown[]];
+/**
+ * Extension rule configuration; Copy to avoid extra indirection.
+ */
+export type ExtensionRule = "always" | "never" | "ignorePackages";
+export type ImportExtensionsObject =
+  | ImportExtensionsConfig
+  | {
+      [k: string]: ExtensionRule;
+    };
+/**
+ * Action to take for path group overrides.
+ *
+ * Determines how import extensions are validated for matching bespoke import specifiers.
+ */
+export type PathGroupAction = "enforce" | "ignore";
 export type AbsoluteFirst = "absolute-first" | "disable-absolute-first";
 export type MaxDependenciesConfigJson = number | MaxDependenciesConfig;
 export type Target = "single" | "any";
 export type TestCaseName = "it" | "test";
 export type JestFnType = "hook" | "describe" | "test" | "expect" | "jest" | "unknown";
+export type DummyRule = AllowWarnDeny | [AllowWarnDeny, ...unknown[]];
 export type SnapshotHintMode = "always" | "multi";
 export type AltTextElements = "img" | "object" | "area" | 'input[type="image"]';
 export type AnchorIsValidAspect = "noHref" | "invalidHref" | "preferButton";
 export type Assert = "htmlFor" | "nesting" | "both" | "either";
 export type DistractingElement = "marquee" | "blink";
+export type MaxClassesPerFileConfigEnum = number | MaxClassesPerFileConfig;
+export type MaxDepthConfigEnum = number | MaxDepth;
+export type MaxLinesConfigEnum = number | MaxLinesConfig;
+export type MaxLinesPerFunctionConfigEnum = number | MaxLinesPerFunctionConfig;
+export type MaxNestedCallbacksConfigEnum = number | MaxNestedCallbacks;
+export type MaxParamsConfigEnum = number | MaxParamsConfig;
 export type CountThis = "always" | "never" | "except-void";
+export type MaxStatementsConfigEnum = number | MaxStatementsConfig;
 export type NoCondAssignConfig = "except-parens" | "always";
 export type CheckLoopsConfig = boolean | CheckLoops;
 export type CheckLoops = "all" | "allExceptWhileTrue" | "none";
@@ -140,6 +163,10 @@ export type NoUseBeforeDefineConfigJson = Nofunc | NoUseBeforeDefineConfig;
 export type Nofunc = "nofunc";
 export type Location = "start" | "anywhere";
 /**
+ * The rule takes a single option - an array of possible callback names - which may include object methods. The default callback names are `callback`, `cb`, `next`.
+ */
+export type CallbackReturn = string[];
+/**
  * The rule takes a single string option: the name of the error parameter.
  *
  * This can be either:
@@ -151,6 +178,7 @@ export type Location = "start" | "anywhere";
  * Default: `"err"`.
  */
 export type HandleCallbackErrConfig = string;
+export type NoMixedRequiresConfig = boolean | NoMixedRequiresOptions;
 export type ShorthandType = "always" | "methods" | "properties" | "consistent" | "consistent-as-needed" | "never";
 export type Destructuring = "any" | "all";
 export type PreferDestructuringOption = PreferDestructuringTargetOption | PreferDestructuringAssignmentConfig;
@@ -270,22 +298,25 @@ export type ChecksVoidReturn = boolean | ChecksVoidReturnOptions;
  * - An object with `message` and optional `fixWith` and `suggest`
  */
 export type BanConfigValue =
-  | True
-  | string
-  | {
-      /**
-       * Replacement type for automatic fixing. Applied directly with `--fix`.
-       */
-      fixWith?: string;
-      /**
-       * Custom message explaining why the type is banned.
-       */
-      message?: string;
-      /**
-       * Suggested replacement types for manual review. Shown as editor suggestions.
-       */
-      suggest?: string[];
-    };
+  | (
+      | True
+      | string
+      | {
+          /**
+           * Replacement type for automatic fixing. Applied directly with `--fix`.
+           */
+          fixWith?: string;
+          /**
+           * Custom message explaining why the type is banned.
+           */
+          message?: string;
+          /**
+           * Suggested replacement types for manual review. Shown as editor suggestions.
+           */
+          suggest?: string[];
+        }
+    )
+  | undefined;
 export type True = true;
 /**
  * Represents the different ways `allowConstantLoopConditions` can be specified in JSON.
@@ -318,45 +349,48 @@ export type TypesOption = "always" | "never" | "prefer-import";
 export type BomOptionType = "always" | "never";
 export type NonZero = "greater-than" | "not-equal";
 export type ModuleStylesOverride =
-  | false
-  | {
-      /**
-       * Whether default imports or whole-module `require()` assignments are allowed for this module.
-       *
-       * With `{ "styles": { "chalk": { "default": true } } }`, this is valid:
-       * ```js
-       * import chalk from "chalk";
-       * ```
-       */
-      default?: boolean;
-      /**
-       * Whether named imports or destructured `require()` calls are allowed for this module.
-       *
-       * With `{ "styles": { "node:util": { "named": true } } }`, this is valid:
-       * ```js
-       * import {promisify} from "node:util";
-       * ```
-       */
-      named?: boolean;
-      /**
-       * Whether namespace imports or whole-module `require()` assignments are allowed for this module.
-       *
-       * With `{ "styles": { "node:fs": { "namespace": true } } }`, this is valid:
-       * ```js
-       * import * as fs from "node:fs";
-       * ```
-       */
-      namespace?: boolean;
-      /**
-       * Whether side-effect imports or unassigned dynamic imports/requires are allowed for this module.
-       *
-       * With `{ "styles": { "polyfill": { "unassigned": true } } }`, this is valid:
-       * ```js
-       * import "polyfill";
-       * ```
-       */
-      unassigned?: boolean;
-    };
+  | (
+      | false
+      | {
+          /**
+           * Whether default imports or whole-module `require()` assignments are allowed for this module.
+           *
+           * With `{ "styles": { "chalk": { "default": true } } }`, this is valid:
+           * ```js
+           * import chalk from "chalk";
+           * ```
+           */
+          default?: boolean;
+          /**
+           * Whether named imports or destructured `require()` calls are allowed for this module.
+           *
+           * With `{ "styles": { "node:util": { "named": true } } }`, this is valid:
+           * ```js
+           * import {promisify} from "node:util";
+           * ```
+           */
+          named?: boolean;
+          /**
+           * Whether namespace imports or whole-module `require()` assignments are allowed for this module.
+           *
+           * With `{ "styles": { "node:fs": { "namespace": true } } }`, this is valid:
+           * ```js
+           * import * as fs from "node:fs";
+           * ```
+           */
+          namespace?: boolean;
+          /**
+           * Whether side-effect imports or unassigned dynamic imports/requires are allowed for this module.
+           *
+           * With `{ "styles": { "polyfill": { "unassigned": true } } }`, this is valid:
+           * ```js
+           * import "polyfill";
+           * ```
+           */
+          unassigned?: boolean;
+        }
+    )
+  | undefined;
 export type NoInstanceofBuiltinsStrategy = "strict" | "loose";
 export type PreferTernaryOption = "always" | "only-single-line";
 export type RelativeUrlStyleConfig = "never" | "always";
@@ -373,29 +407,32 @@ export type AllowYoda = "never" | "always";
 export type OxlintOverrides = OxlintOverride[];
 export type JestVersionSchema = number | string;
 export type TagNamePreference =
-  | string
-  | {
-      message: string;
-      replacement: string;
-      [k: string]: unknown;
-    }
-  | {
-      message: string;
-      [k: string]: unknown;
-    }
-  | boolean;
+  | (
+      | string
+      | {
+          message: string;
+          replacement: string;
+          [k: string]: unknown | undefined;
+        }
+      | {
+          message: string;
+          [k: string]: unknown | undefined;
+        }
+      | boolean
+    )
+  | undefined;
 export type OneOrManyFor_String = string | string[];
 export type CustomComponent =
   | string
   | {
       attribute: string;
       name: string;
-      [k: string]: unknown;
+      [k: string]: unknown | undefined;
     }
   | {
       attributes: string[];
       name: string;
-      [k: string]: unknown;
+      [k: string]: unknown | undefined;
     };
 
 /**
@@ -706,7 +743,7 @@ export interface RuleCategories {
  * - worker - Web Workers globals.
  */
 export interface OxlintEnv {
-  [k: string]: boolean;
+  [k: string]: boolean | undefined;
 }
 /**
  * Add or remove global variables.
@@ -734,7 +771,7 @@ export interface OxlintEnv {
  * `"writeable"` or `true` to represent `"writable"`.
  */
 export interface OxlintGlobals {
-  [k: string]: GlobalValue;
+  [k: string]: GlobalValue | undefined;
 }
 /**
  * Options for the linter.
@@ -837,7 +874,7 @@ export interface DummyRuleMap {
   "block-scoped-var"?: RuleNoConfig;
   "capitalized-comments"?: RuleNoConfig | [AllowWarnDeny, AlwaysNever] | [AllowWarnDeny, AlwaysNever, OptionsJsonEnum];
   "class-methods-use-this"?: RuleNoConfig | [AllowWarnDeny, ClassMethodsUseThisConfig];
-  complexity?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, ComplexityConfig]);
+  complexity?: RuleNoConfig | [AllowWarnDeny, ComplexityConfigEnum];
   "constructor-super"?: RuleNoConfig;
   curly?: RuleNoConfig | [AllowWarnDeny, CurlyType] | [AllowWarnDeny, CurlyType, CurlyConsistent];
   "default-case"?: RuleNoConfig | [AllowWarnDeny, DefaultCaseConfig];
@@ -870,7 +907,14 @@ export interface DummyRuleMap {
   "import/default"?: RuleNoConfig;
   "import/export"?: RuleNoConfig;
   "import/exports-last"?: RuleNoConfig;
-  "import/extensions"?: DummyRule;
+  "import/extensions"?:
+    | RuleNoConfig
+    | (
+        | [AllowWarnDeny, ExtensionRule]
+        | [AllowWarnDeny, ExtensionRule, ImportExtensionsObject]
+        | [AllowWarnDeny, ExtensionRule]
+        | [AllowWarnDeny, ImportExtensionsObject]
+      );
   "import/first"?: RuleNoConfig | [AllowWarnDeny, AbsoluteFirst];
   "import/group-exports"?: RuleNoConfig;
   "import/max-dependencies"?: RuleNoConfig | [AllowWarnDeny, MaxDependenciesConfigJson];
@@ -1013,7 +1057,9 @@ export interface DummyRuleMap {
   "jsx-a11y/no-interactive-element-to-noninteractive-role"?:
     | RuleNoConfig
     | [AllowWarnDeny, NoInteractiveElementToNoninteractiveRoleConfig];
-  "jsx-a11y/no-noninteractive-element-interactions"?: DummyRule;
+  "jsx-a11y/no-noninteractive-element-interactions"?:
+    | RuleNoConfig
+    | [AllowWarnDeny, NoNoninteractiveElementInteractionsConfig];
   "jsx-a11y/no-noninteractive-element-to-interactive-role"?:
     | RuleNoConfig
     | [AllowWarnDeny, NoNoninteractiveElementToInteractiveRoleConfig];
@@ -1029,13 +1075,13 @@ export interface DummyRuleMap {
     | RuleNoConfig
     | [AllowWarnDeny, AlwaysNever]
     | [AllowWarnDeny, AlwaysNever, LogicalAssignmentOperatorsConfig];
-  "max-classes-per-file"?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, MaxClassesPerFileConfig]);
-  "max-depth"?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, MaxDepth]);
-  "max-lines"?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, MaxLinesConfig]);
-  "max-lines-per-function"?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, MaxLinesPerFunctionConfig]);
-  "max-nested-callbacks"?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, MaxNestedCallbacks]);
-  "max-params"?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, MaxParamsConfig]);
-  "max-statements"?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, MaxStatementsConfig]);
+  "max-classes-per-file"?: RuleNoConfig | [AllowWarnDeny, MaxClassesPerFileConfigEnum];
+  "max-depth"?: RuleNoConfig | [AllowWarnDeny, MaxDepthConfigEnum];
+  "max-lines"?: RuleNoConfig | [AllowWarnDeny, MaxLinesConfigEnum];
+  "max-lines-per-function"?: RuleNoConfig | [AllowWarnDeny, MaxLinesPerFunctionConfigEnum];
+  "max-nested-callbacks"?: RuleNoConfig | [AllowWarnDeny, MaxNestedCallbacksConfigEnum];
+  "max-params"?: RuleNoConfig | [AllowWarnDeny, MaxParamsConfigEnum];
+  "max-statements"?: RuleNoConfig | [AllowWarnDeny, MaxStatementsConfigEnum];
   "new-cap"?: RuleNoConfig | [AllowWarnDeny, NewCapConfig];
   "nextjs/google-font-display"?: RuleNoConfig;
   "nextjs/google-font-preconnect"?: RuleNoConfig;
@@ -1140,7 +1186,7 @@ export interface DummyRuleMap {
   "no-restricted-exports"?: RuleNoConfig | [AllowWarnDeny, NoRestrictedExportsConfig];
   "no-restricted-globals"?: DummyRule;
   "no-restricted-imports"?: DummyRule;
-  "no-restricted-properties"?: DummyRule;
+  "no-restricted-properties"?: RuleNoConfig | [AllowWarnDeny, PropertyDetails, ...PropertyDetails[]];
   "no-return-assign"?: RuleNoConfig | [AllowWarnDeny, NoReturnAssignMode];
   "no-script-url"?: RuleNoConfig;
   "no-self-assign"?: RuleNoConfig | [AllowWarnDeny, NoSelfAssign];
@@ -1184,13 +1230,15 @@ export interface DummyRuleMap {
   "no-void"?: RuleNoConfig | [AllowWarnDeny, NoVoid];
   "no-warning-comments"?: RuleNoConfig | [AllowWarnDeny, NoWarningCommentsConfigJson];
   "no-with"?: RuleNoConfig;
-  "node/callback-return"?: DummyRule;
+  "node/callback-return"?: RuleNoConfig | [AllowWarnDeny, CallbackReturn];
   "node/global-require"?: RuleNoConfig;
   "node/handle-callback-err"?: RuleNoConfig | [AllowWarnDeny, HandleCallbackErrConfig];
   "node/no-exports-assign"?: RuleNoConfig;
+  "node/no-mixed-requires"?: RuleNoConfig | [AllowWarnDeny, NoMixedRequiresConfig];
   "node/no-new-require"?: RuleNoConfig;
   "node/no-path-concat"?: RuleNoConfig;
   "node/no-process-env"?: RuleNoConfig | [AllowWarnDeny, NoProcessEnvConfig];
+  "node/no-sync"?: RuleNoConfig | [AllowWarnDeny, NoSyncConfig];
   "object-shorthand"?:
     | RuleNoConfig
     | [AllowWarnDeny, ShorthandType]
@@ -1523,7 +1571,7 @@ export interface DummyRuleMap {
   "unicorn/no-useless-undefined"?: RuleNoConfig | [AllowWarnDeny, NoUselessUndefined];
   "unicorn/no-zero-fractions"?: RuleNoConfig;
   "unicorn/number-literal-case"?: RuleNoConfig;
-  "unicorn/numeric-separators-style"?: DummyRule;
+  "unicorn/numeric-separators-style"?: RuleNoConfig | [AllowWarnDeny, NumericSeparatorsStyleConfig];
   "unicorn/prefer-add-event-listener"?: RuleNoConfig;
   "unicorn/prefer-array-find"?: RuleNoConfig;
   "unicorn/prefer-array-flat"?: RuleNoConfig;
@@ -1711,7 +1759,7 @@ export interface DummyRuleMap {
   "vue/valid-define-props"?: RuleNoConfig;
   "vue/valid-next-tick"?: RuleNoConfig;
   yoda?: RuleNoConfig | [AllowWarnDeny, AllowYoda] | [AllowWarnDeny, AllowYoda, YodaOptions];
-  [k: string]: DummyRule | undefined;
+  [k: string]: DummyRule | undefined | undefined;
 }
 export interface AccessorPairsConfig {
   /**
@@ -1972,6 +2020,36 @@ export interface IdMatchOptions {
    * member names such as `obj.prop = value` are checked.
    */
   properties?: boolean;
+}
+export interface ImportExtensionsConfig {
+  /**
+   * Whether to check type imports when enforcing extension rules.
+   */
+  checkTypeImports?: boolean;
+  /**
+   * Whether to ignore package imports when enforcing extension rules.
+   */
+  ignorePackages?: boolean;
+  /**
+   * Path group overrides for bespoke import specifiers.
+   */
+  pathGroupOverrides?: PathGroupOverrideConfig[];
+  /**
+   * Per-extension rules.
+   */
+  pattern?: {
+    [k: string]: ExtensionRule;
+  };
+}
+export interface PathGroupOverrideConfig {
+  /**
+   * Action to take when pattern matches.
+   */
+  action: PathGroupAction;
+  /**
+   * Glob pattern to match import specifiers.
+   */
+  pattern: string;
 }
 export interface MaxDependenciesConfig {
   /**
@@ -2282,7 +2360,7 @@ export interface NoLargeSnapshotsConfig {
    * Snapshot names can be specified as regular expressions.
    */
   allowedSnapshots?: {
-    [k: string]: string[];
+    [k: string]: string[] | undefined;
   };
   /**
    * Maximum number of lines allowed for inline snapshots.
@@ -2294,10 +2372,10 @@ export interface NoLargeSnapshotsConfig {
   maxSize?: number;
 }
 export interface NoRestrictedTestMethodsConfig {
-  [k: string]: string | null;
+  [k: string]: (string | null) | undefined;
 }
 export interface NoRestrictedMatchersConfig {
-  [k: string]: string | null;
+  [k: string]: (string | null) | undefined;
 }
 export interface NoStandaloneExpectConfig {
   /**
@@ -2612,10 +2690,17 @@ export interface NoDistractingElementsConfig {
   elements?: DistractingElement[];
 }
 export interface NoInteractiveElementToNoninteractiveRoleConfig {
-  [k: string]: string[];
+  [k: string]: string[] | undefined;
+}
+export interface NoNoninteractiveElementInteractionsConfig {
+  /**
+   * An array of event handler names that should trigger this rule.
+   */
+  handlers?: string[];
+  [k: string]: string[] | undefined;
 }
 export interface NoNoninteractiveElementToInteractiveRoleConfig {
-  [k: string]: string[];
+  [k: string]: string[] | undefined;
 }
 export interface NoNoninteractiveTabindexConfig {
   /**
@@ -2632,7 +2717,7 @@ export interface NoNoninteractiveTabindexConfig {
   tags?: string[];
 }
 export interface NoRedundantRolesConfig {
-  [k: string]: string[];
+  [k: string]: string[] | undefined;
 }
 export interface NoStaticElementInteractionsConfig {
   /**
@@ -3345,6 +3430,31 @@ export interface RestrictDefaultExports {
    */
   namespaceFrom?: boolean;
 }
+export interface PropertyDetails {
+  /**
+   * Objects where property access should be allowed. This must be used with `property` and
+   * cannot be used with `object`.
+   */
+  allowObjects?: string[];
+  /**
+   * Properties where property access should be allowed. This must be used with `object` and
+   * cannot be used with `property`.
+   */
+  allowProperties?: string[];
+  /**
+   * A custom message to display.
+   */
+  message?: string;
+  /**
+   * The object on which the property is being accessed.
+   */
+  object?: string;
+  /**
+   * The property being accessed. If `object` is not specified, this applies to the named
+   * property on all objects.
+   */
+  property?: string;
+}
 export interface NoSelfAssign {
   /**
    * The `props` option when set to `false`, disables the checking of properties.
@@ -3838,11 +3948,25 @@ export interface NoWarningCommentsConfigJson {
   location?: Location;
   terms?: string[];
 }
+export interface NoMixedRequiresOptions {
+  allowCall?: boolean;
+  grouping?: boolean;
+}
 export interface NoProcessEnvConfig {
   /**
    * Variable names which are allowed to be accessed on `process.env`.
    */
   allowedVariables?: string[];
+}
+export interface NoSyncConfig {
+  /**
+   * Whether synchronous methods should be allowed at the top level of a file.
+   */
+  allowAtRootLevel?: boolean;
+  /**
+   * Function names to ignore.
+   */
+  ignores?: string[];
 }
 export interface ObjectShorthandOptions {
   avoidExplicitReturnArrows?: boolean;
@@ -4449,7 +4573,7 @@ export interface JsxNoLiteralsConfig {
    * An object where the keys are the element names and the values are objects with the same options as above. This allows you to specify different options for different elements.
    */
   elementOverrides?: {
-    [k: string]: ElementOverrideOptions;
+    [k: string]: ElementOverrideOptions | undefined;
   };
   /**
    * (default: false) - When true the rule ignores literals used in props, wrapped or unwrapped.
@@ -5372,7 +5496,7 @@ export interface NoRestrictedTypesConfig {
    * A mapping of type names to ban configurations.
    */
   types?: {
-    [k: string]: BanConfigValue;
+    [k: string]: BanConfigValue | undefined;
   };
 }
 export interface NoThisAliasConfig {
@@ -5926,7 +6050,7 @@ export interface ImportStyleConfig {
    * ```
    */
   styles?: {
-    [k: string]: ModuleStylesOverride;
+    [k: string]: ModuleStylesOverride | undefined;
   };
 }
 export interface MaxNestedCalls {
@@ -6018,6 +6142,77 @@ export interface NoUselessUndefined {
    * Whether to check for useless `undefined` in arrow function bodies.
    */
   checkArrowFunctionBody?: boolean;
+}
+export interface NumericSeparatorsStyleConfig {
+  /**
+   * Configuration for binary literals (e.g. `0b1010_0001` and bigint variants).
+   * Controls how digits are grouped and when separators are applied.
+   */
+  binary?: NumericBaseConfig;
+  /**
+   * Configuration for hexadecimal literals (e.g. `0xAB_CD`, `0Xab_cd`, and bigint variants).
+   * Controls how digits are grouped and when separators are applied.
+   */
+  hexadecimal?: NumericBaseConfig;
+  /**
+   * Configuration for decimal numbers (integers, fraction parts, and exponents).
+   * Controls how digits are grouped and when separators are applied.
+   */
+  number?: NumericNumberConfig;
+  /**
+   * Configuration for octal literals (e.g. `0o1234_5670` and bigint variants).
+   * Controls how digits are grouped and when separators are applied.
+   */
+  octal?: NumericBaseConfig;
+  /**
+   * Only enforce the rule when the numeric literal already contains a separator (`_`).
+   *
+   * When `true`, numbers without separators are left as-is; when `false` (default),
+   * grouping will be enforced for eligible numbers even if they don't include separators yet.
+   */
+  onlyIfContainsSeparator?: boolean;
+}
+export interface NumericBaseConfig {
+  /**
+   * The number of digits per group when inserting numeric separators.
+   * For example, a `groupLength` of 3 formats `1234567` as `1_234_567`.
+   */
+  groupLength?: number;
+  /**
+   * The minimum number of digits required before grouping is applied.
+   * Values with fewer digits than this threshold will not be grouped.
+   */
+  minimumDigits?: number;
+  /**
+   * Only enforce the rule when the numeric literal already contains a separator (`_`).
+   *
+   * When `true`, numbers without separators are left as-is; when `false` (default),
+   * grouping will be enforced for eligible numbers even if they don't include separators yet.
+   */
+  onlyIfContainsSeparator?: boolean;
+}
+export interface NumericNumberConfig {
+  /**
+   * The size a group of digits in the fractional part (after the decimal point) should be.
+   */
+  fractionGroupLength?: number;
+  /**
+   * The number of digits per group when inserting numeric separators.
+   * For example, a `groupLength` of 3 formats `1234567` as `1_234_567`.
+   */
+  groupLength?: number;
+  /**
+   * The minimum number of digits required before grouping is applied.
+   * Values with fewer digits than this threshold will not be grouped.
+   */
+  minimumDigits?: number;
+  /**
+   * Only enforce the rule when the numeric literal already contains a separator (`_`).
+   *
+   * When `true`, numbers without separators are left as-is; when `false` (default),
+   * grouping will be enforced for eligible numbers even if they don't include separators yet.
+   */
+  onlyIfContainsSeparator?: boolean;
 }
 export interface PreferAtConfig {
   /**
@@ -6293,7 +6488,7 @@ export interface OxlintPluginSettings {
   next?: NextPluginSettings;
   react?: ReactPluginSettings;
   vitest?: VitestPluginSettings;
-  [k: string]: unknown;
+  [k: string]: unknown | undefined;
 }
 /**
  * Configure Jest plugin rules.
@@ -6310,7 +6505,7 @@ export interface JestPluginSettings {
    * :::
    */
   version?: JestVersionSchema;
-  [k: string]: unknown;
+  [k: string]: unknown | undefined;
 }
 export interface JSDocPluginSettings {
   /**
@@ -6342,9 +6537,9 @@ export interface JSDocPluginSettings {
    */
   overrideReplacesDocs?: boolean;
   tagNamePreference?: {
-    [k: string]: TagNamePreference;
+    [k: string]: TagNamePreference | undefined;
   };
-  [k: string]: unknown;
+  [k: string]: unknown | undefined;
 }
 /**
  * Configure JSX A11y plugin rules.
@@ -6376,7 +6571,7 @@ export interface JSXA11YPluginSettings {
    * ```
    */
   attributes?: {
-    [k: string]: string[];
+    [k: string]: string[] | undefined;
   };
   /**
    * To have your custom components be checked as DOM elements, you can
@@ -6398,7 +6593,7 @@ export interface JSXA11YPluginSettings {
    * ```
    */
   components?: {
-    [k: string]: string;
+    [k: string]: string | undefined;
   };
   /**
    * An optional setting that define the prop your code uses to create polymorphic components.
@@ -6415,7 +6610,7 @@ export interface JSXA11YPluginSettings {
    * as a `Box`.
    */
   polymorphicPropName?: string;
-  [k: string]: unknown;
+  [k: string]: unknown | undefined;
 }
 /**
  * Configure Next.js plugin rules.
@@ -6440,7 +6635,7 @@ export interface NextPluginSettings {
    * ```
    */
   rootDir?: OneOrManyFor_String;
-  [k: string]: unknown;
+  [k: string]: unknown | undefined;
 }
 /**
  * Configure React plugin rules.
@@ -6527,7 +6722,7 @@ export interface ReactPluginSettings {
    * ```
    */
   version?: string;
-  [k: string]: unknown;
+  [k: string]: unknown | undefined;
 }
 /**
  * Configure Vitest plugin rules.
@@ -6542,5 +6737,5 @@ export interface VitestPluginSettings {
    * to accommodate TypeScript type checking scenarios.
    */
   typecheck?: boolean;
-  [k: string]: unknown;
+  [k: string]: unknown | undefined;
 }

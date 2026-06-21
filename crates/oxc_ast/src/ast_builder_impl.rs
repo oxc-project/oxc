@@ -1,6 +1,6 @@
 use std::{alloc::Layout, borrow::Cow, mem::MaybeUninit, slice, str};
 
-use oxc_allocator::{Allocator, AllocatorAccessor, Box, FromIn, IntoIn, Vec};
+use oxc_allocator::{Allocator, Box, FromIn, GetAllocator, IntoIn, Vec};
 use oxc_span::{SPAN, Span};
 use oxc_str::{Ident, Str};
 use oxc_syntax::{number::NumberBase, operator::UnaryOperator, scope::ScopeId};
@@ -18,18 +18,18 @@ impl<'a, T> FromIn<'a, NONE> for Option<Box<'a, T>> {
     }
 }
 
-impl<'a> AllocatorAccessor<'a> for AstBuilder<'a> {
-    #[inline]
-    fn allocator(self) -> &'a Allocator {
-        self.allocator
-    }
-}
-
 /// AST builder for creating AST nodes.
 #[derive(Clone, Copy)]
 pub struct AstBuilder<'a> {
     /// The memory allocator used to allocate AST nodes in the arena.
     pub allocator: &'a Allocator,
+}
+
+impl<'a> GetAllocator<'a> for AstBuilder<'a> {
+    #[inline]
+    fn allocator(&self) -> &'a Allocator {
+        self.allocator
+    }
 }
 
 impl<'a> AstBuilder<'a> {

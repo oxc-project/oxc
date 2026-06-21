@@ -329,97 +329,6 @@ export interface PluginsOptions {
   taggedTemplateEscape?: boolean
 }
 
-/** Dynamic gating for {@link ReactCompilerOptions#dynamicGating}. */
-export interface ReactCompilerDynamicGating {
-  /** Module the gating import comes from. */
-  source: string
-}
-
-/** Static gating for {@link ReactCompilerOptions#gating}. */
-export interface ReactCompilerGating {
-  /** Module the gating import comes from. */
-  source: string
-  /** Imported specifier used as the gate. */
-  importSpecifierName: string
-}
-
-/**
- * Options for the experimental [React Compiler](https://github.com/react/react/tree/main/compiler).
- *
- * Mirrors the compiler's `PluginOptions`. The deep `environment` configuration
- * (inference / validation flags) is not surfaced here.
- *
- * @see {@link TransformOptions#reactCompiler}
- */
-export interface ReactCompilerOptions {
-  /**
-   * Which functions to compile.
-   *
-   * @default 'infer'
-   */
-  compilationMode?: 'infer' | 'syntax' | 'annotation' | 'all'
-  /**
-   * What to do when a function cannot be compiled.
-   *
-   * @default 'none'
-   */
-  panicThreshold?: 'none' | 'critical_errors' | 'all_errors'
-  /**
-   * React runtime version target. `17` and `18` require the
-   * `react-compiler-runtime` package; `19` ships the runtime in `react`.
-   *
-   * @default '19'
-   */
-  target?: '17' | '18' | '19'
-  /**
-   * Analyze and report diagnostics only; emit no transformed code.
-   *
-   * @default false
-   */
-  noEmit?: boolean
-  /**
-   * Compiler output mode.
-   *
-   * @default undefined
-   */
-  outputMode?: 'client' | 'ssr' | 'lint'
-  /**
-   * Compile even functions marked with the `"use no memo"` / `"use no forget"`
-   * opt-out directives.
-   *
-   * @default false
-   */
-  ignoreUseNoForget?: boolean
-  /**
-   * Treat Flow suppression comments as opt-outs.
-   *
-   * @default true
-   */
-  flowSuppressions?: boolean
-  /**
-   * Enable `react-native-reanimated` support.
-   *
-   * @default false
-   */
-  enableReanimated?: boolean
-  /**
-   * Development mode (extra validation / instrumentation).
-   *
-   * @default false
-   */
-  isDev?: boolean
-  /** Source file name, used for the fast-refresh hash and in diagnostics. */
-  filename?: string
-  /** ESLint rules whose suppressions opt a function out of compilation. */
-  eslintSuppressionRules?: Array<string>
-  /** Extra directives that opt a function out of compilation. */
-  customOptOutDirectives?: Array<string>
-  /** Also emit a gated (feature-flagged) version of each compiled function. */
-  gating?: ReactCompilerGating
-  /** Dynamically-gated compilation. */
-  dynamicGating?: ReactCompilerDynamicGating
-}
-
 export interface ReactRefreshOptions {
   /**
    * Specify the identifier of the refresh registration variable.
@@ -539,7 +448,7 @@ export declare function transform(filename: string, sourceText: string, options?
  *
  * Options are listed in evaluation order: the source is parsed (`lang`,
  * `sourceType`), declarations are emitted (`typescript.declaration`), then
- * transforms run (`reactCompiler`, `typescript`, `decorator`, `plugins`,
+ * transforms run (`typescript`, `decorator`, `plugins`,
  * `jsx`, `target`), followed by the `inject` and `define` plugins, and
  * finally codegen (`sourcemap`). `helpers` configures the runtime helpers
  * the transforms emit.
@@ -558,14 +467,6 @@ export interface TransformOptions {
   cwd?: string
   /** Set assumptions in order to produce smaller output. */
   assumptions?: CompilerAssumptions
-  /**
-   * Enable the experimental [React Compiler](https://github.com/react/react/tree/main/compiler).
-   *
-   * `true` enables it with default options; an object enables it with the
-   * given options; `false` or omitted disables it. When enabled, the compiler
-   * runs as the first transform and memoizes React components and hooks.
-   */
-  reactCompiler?: boolean | ReactCompilerOptions
   /**
    * Configure how TypeScript is transformed.
    *
