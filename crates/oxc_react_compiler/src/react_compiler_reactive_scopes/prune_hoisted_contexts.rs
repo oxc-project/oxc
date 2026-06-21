@@ -28,9 +28,9 @@ use crate::react_compiler_reactive_scopes::visitors::{
 /// Prunes DeclareContexts lowered for HoistedConsts and transforms any
 /// references back to their original instruction kind.
 /// TS: `pruneHoistedContexts`
-pub fn prune_hoisted_contexts(
-    func: &mut ReactiveFunction,
-    env: &Environment,
+pub fn prune_hoisted_contexts<'a>(
+    func: &mut ReactiveFunction<'a>,
+    env: &Environment<'a>,
 ) -> Result<(), CompilerError> {
     let mut transform = Transform { env };
     let mut state = VisitorState { active_scopes: Vec::new(), uninitialized: FxHashMap::default() };
@@ -63,20 +63,20 @@ impl VisitorState {
     }
 }
 
-struct Transform<'a> {
-    env: &'a Environment,
+struct Transform<'a, 'e> {
+    env: &'e Environment<'a>,
 }
 
-impl<'a> ReactiveFunctionTransform for Transform<'a> {
+impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
     type State = VisitorState;
 
-    fn env(&self) -> &Environment {
+    fn env(&self) -> &Environment<'a> {
         self.env
     }
 
     fn visit_scope(
         &mut self,
-        scope: &mut ReactiveScopeBlock,
+        scope: &mut ReactiveScopeBlock<'a>,
         state: &mut VisitorState,
     ) -> Result<(), CompilerError> {
         let scope_data = &self.env.scopes[scope.scope.0 as usize];
@@ -127,9 +127,9 @@ impl<'a> ReactiveFunctionTransform for Transform<'a> {
 
     fn transform_instruction(
         &mut self,
-        instruction: &mut ReactiveInstruction,
+        instruction: &mut ReactiveInstruction<'a>,
         state: &mut VisitorState,
-    ) -> Result<Transformed<ReactiveStatement>, CompilerError> {
+    ) -> Result<Transformed<ReactiveStatement<'a>>, CompilerError> {
         // Remove hoisted declarations to preserve TDZ
         if let ReactiveValue::Instruction(InstructionValue::DeclareContext { lvalue, .. }) =
             &instruction.value

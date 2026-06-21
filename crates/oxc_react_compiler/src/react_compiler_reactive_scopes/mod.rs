@@ -27,16 +27,19 @@ pub mod print_reactive_function {
     use crate::react_compiler_hir::environment::Environment;
     use crate::react_compiler_hir::print::PrintFormatter;
 
-    pub type HirFunctionFormatter = dyn Fn(&mut PrintFormatter, &HirFunction);
+    pub type HirFunctionFormatter<'h> = dyn Fn(&mut PrintFormatter<'_, 'h>, &HirFunction<'h>);
 
-    pub fn debug_reactive_function(_func: &ReactiveFunction, _env: &Environment) -> String {
+    pub fn debug_reactive_function<'h>(
+        _func: &ReactiveFunction<'h>,
+        _env: &Environment<'h>,
+    ) -> String {
         String::new()
     }
 
-    pub fn debug_reactive_function_with_formatter(
-        _func: &ReactiveFunction,
-        _env: &Environment,
-        _hir_formatter: Option<&HirFunctionFormatter>,
+    pub fn debug_reactive_function_with_formatter<'h>(
+        _func: &ReactiveFunction<'h>,
+        _env: &Environment<'h>,
+        _hir_formatter: Option<&HirFunctionFormatter<'h>>,
     ) -> String {
         String::new()
     }

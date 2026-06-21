@@ -24,13 +24,13 @@ use crate::react_compiler_hir::{
 /// corresponding `traverse_*` to continue the default recursion.
 ///
 /// TS: `class ReactiveFunctionVisitor<TState>`
-pub trait ReactiveFunctionVisitor {
+pub trait ReactiveFunctionVisitor<'a> {
     type State;
 
     /// Provide Environment access. The default traversal uses this to include
     /// FunctionExpression/ObjectMethod context places as operands (matching the
     /// TS `eachInstructionValueOperand` behavior).
-    fn env(&self) -> &Environment;
+    fn env(&self) -> &Environment<'a>;
 
     fn visit_id(&self, _id: EvaluationOrder, _state: &mut Self::State) {}
 
@@ -88,11 +88,16 @@ pub trait ReactiveFunctionVisitor {
         }
     }
 
-    fn visit_value(&self, id: EvaluationOrder, value: &ReactiveValue, state: &mut Self::State) {
+    fn visit_value(&self, id: EvaluationOrder, value: &ReactiveValue<'a>, state: &mut Self::State) {
         self.traverse_value(id, value, state);
     }
 
-    fn traverse_value(&self, id: EvaluationOrder, value: &ReactiveValue, state: &mut Self::State) {
+    fn traverse_value(
+        &self,
+        id: EvaluationOrder,
+        value: &ReactiveValue<'a>,
+        state: &mut Self::State,
+    ) {
         match value {
             ReactiveValue::OptionalExpression { value: inner, .. } => {
                 self.visit_value(id, inner, state);
@@ -126,11 +131,15 @@ pub trait ReactiveFunctionVisitor {
         }
     }
 
-    fn visit_instruction(&self, instruction: &ReactiveInstruction, state: &mut Self::State) {
+    fn visit_instruction(&self, instruction: &ReactiveInstruction<'a>, state: &mut Self::State) {
         self.traverse_instruction(instruction, state);
     }
 
-    fn traverse_instruction(&self, instruction: &ReactiveInstruction, state: &mut Self::State) {
+    fn traverse_instruction(
+        &self,
+        instruction: &ReactiveInstruction<'a>,
+        state: &mut Self::State,
+    ) {
         self.visit_id(instruction.id, state);
         // Visit instruction-level lvalue
         if let Some(lvalue) = &instruction.lvalue {
@@ -145,11 +154,15 @@ pub trait ReactiveFunctionVisitor {
         self.visit_value(instruction.id, &instruction.value, state);
     }
 
-    fn visit_terminal(&self, stmt: &ReactiveTerminalStatement, state: &mut Self::State) {
+    fn visit_terminal(&self, stmt: &ReactiveTerminalStatement<'a>, state: &mut Self::State) {
         self.traverse_terminal(stmt, state);
     }
 
-    fn traverse_terminal(&self, stmt: &ReactiveTerminalStatement, state: &mut Self::State) {
+    fn traverse_terminal(
+        &self,
+        stmt: &ReactiveTerminalStatement<'a>,
+        state: &mut Self::State,
+    ) {
         let terminal = &stmt.terminal;
         let id = terminal_id(terminal);
         self.visit_id(id, state);
@@ -217,27 +230,27 @@ pub trait ReactiveFunctionVisitor {
         }
     }
 
-    fn visit_scope(&self, scope: &ReactiveScopeBlock, state: &mut Self::State) {
+    fn visit_scope(&self, scope: &ReactiveScopeBlock<'a>, state: &mut Self::State) {
         self.traverse_scope(scope, state);
     }
 
-    fn traverse_scope(&self, scope: &ReactiveScopeBlock, state: &mut Self::State) {
+    fn traverse_scope(&self, scope: &ReactiveScopeBlock<'a>, state: &mut Self::State) {
         self.visit_block(&scope.instructions, state);
     }
 
-    fn visit_pruned_scope(&self, scope: &PrunedReactiveScopeBlock, state: &mut Self::State) {
+    fn visit_pruned_scope(&self, scope: &PrunedReactiveScopeBlock<'a>, state: &mut Self::State) {
         self.traverse_pruned_scope(scope, state);
     }
 
-    fn traverse_pruned_scope(&self, scope: &PrunedReactiveScopeBlock, state: &mut Self::State) {
+    fn traverse_pruned_scope(&self, scope: &PrunedReactiveScopeBlock<'a>, state: &mut Self::State) {
         self.visit_block(&scope.instructions, state);
     }
 
-    fn visit_block(&self, block: &ReactiveBlock, state: &mut Self::State) {
+    fn visit_block(&self, block: &ReactiveBlock<'a>, state: &mut Self::State) {
         self.traverse_block(block, state);
     }
 
-    fn traverse_block(&self, block: &ReactiveBlock, state: &mut Self::State) {
+    fn traverse_block(&self, block: &ReactiveBlock<'a>, state: &mut Self::State) {
         for stmt in block {
             match stmt {
                 ReactiveStatement::Instruction(instr) => {
@@ -259,8 +272,8 @@ pub trait ReactiveFunctionVisitor {
 
 /// Entry point for visiting a reactive function.
 /// TS: `visitReactiveFunction`
-pub fn visit_reactive_function<V: ReactiveFunctionVisitor>(
-    func: &ReactiveFunction,
+pub fn visit_reactive_function<'a, V: ReactiveFunctionVisitor<'a>>(
+    func: &ReactiveFunction<'a>,
     visitor: &V,
     state: &mut V::State,
 ) {
@@ -283,9 +296,9 @@ pub enum Transformed<T> {
 /// Result of transforming a ReactiveValue.
 /// TS: `TransformedValue`
 #[allow(dead_code)]
-pub enum TransformedValue {
+pub enum TransformedValue<'a> {
     Keep,
-    Replace(ReactiveValue),
+    Replace(ReactiveValue<'a>),
 }
 
 // =============================================================================
@@ -299,13 +312,13 @@ pub enum TransformedValue {
 /// transform results to the block.
 ///
 /// TS: `class ReactiveFunctionTransform<TState>`
-pub trait ReactiveFunctionTransform {
+pub trait ReactiveFunctionTransform<'a> {
     type State;
 
     /// Provide Environment access. The default traversal uses this to include
     /// FunctionExpression/ObjectMethod context places as operands (matching the
     /// TS `eachInstructionValueOperand` behavior).
-    fn env(&self) -> &Environment;
+    fn env(&self) -> &Environment<'a>;
 
     fn visit_id(
         &mut self,
@@ -336,7 +349,7 @@ pub trait ReactiveFunctionTransform {
     fn visit_value(
         &mut self,
         id: EvaluationOrder,
-        value: &mut ReactiveValue,
+        value: &mut ReactiveValue<'a>,
         state: &mut Self::State,
     ) -> Result<(), CompilerError> {
         self.traverse_value(id, value, state)
@@ -345,7 +358,7 @@ pub trait ReactiveFunctionTransform {
     fn traverse_value(
         &mut self,
         id: EvaluationOrder,
-        value: &mut ReactiveValue,
+        value: &mut ReactiveValue<'a>,
         state: &mut Self::State,
     ) -> Result<(), CompilerError> {
         match value {
@@ -408,7 +421,7 @@ pub trait ReactiveFunctionTransform {
 
     fn visit_instruction(
         &mut self,
-        instruction: &mut ReactiveInstruction,
+        instruction: &mut ReactiveInstruction<'a>,
         state: &mut Self::State,
     ) -> Result<(), CompilerError> {
         self.traverse_instruction(instruction, state)
@@ -417,16 +430,16 @@ pub trait ReactiveFunctionTransform {
     fn transform_value(
         &mut self,
         id: EvaluationOrder,
-        value: &mut ReactiveValue,
+        value: &mut ReactiveValue<'a>,
         state: &mut Self::State,
-    ) -> Result<TransformedValue, CompilerError> {
+    ) -> Result<TransformedValue<'a>, CompilerError> {
         self.visit_value(id, value, state)?;
         Ok(TransformedValue::Keep)
     }
 
     fn traverse_instruction(
         &mut self,
-        instruction: &mut ReactiveInstruction,
+        instruction: &mut ReactiveInstruction<'a>,
         state: &mut Self::State,
     ) -> Result<(), CompilerError> {
         self.visit_id(instruction.id, state)?;
@@ -449,7 +462,7 @@ pub trait ReactiveFunctionTransform {
 
     fn visit_terminal(
         &mut self,
-        stmt: &mut ReactiveTerminalStatement,
+        stmt: &mut ReactiveTerminalStatement<'a>,
         state: &mut Self::State,
     ) -> Result<(), CompilerError> {
         self.traverse_terminal(stmt, state)
@@ -457,7 +470,7 @@ pub trait ReactiveFunctionTransform {
 
     fn traverse_terminal(
         &mut self,
-        stmt: &mut ReactiveTerminalStatement,
+        stmt: &mut ReactiveTerminalStatement<'a>,
         state: &mut Self::State,
     ) -> Result<(), CompilerError> {
         let terminal = &mut stmt.terminal;
@@ -561,7 +574,7 @@ pub trait ReactiveFunctionTransform {
 
     fn visit_scope(
         &mut self,
-        scope: &mut ReactiveScopeBlock,
+        scope: &mut ReactiveScopeBlock<'a>,
         state: &mut Self::State,
     ) -> Result<(), CompilerError> {
         self.traverse_scope(scope, state)
@@ -569,7 +582,7 @@ pub trait ReactiveFunctionTransform {
 
     fn traverse_scope(
         &mut self,
-        scope: &mut ReactiveScopeBlock,
+        scope: &mut ReactiveScopeBlock<'a>,
         state: &mut Self::State,
     ) -> Result<(), CompilerError> {
         self.visit_block(&mut scope.instructions, state)
@@ -577,7 +590,7 @@ pub trait ReactiveFunctionTransform {
 
     fn visit_pruned_scope(
         &mut self,
-        scope: &mut PrunedReactiveScopeBlock,
+        scope: &mut PrunedReactiveScopeBlock<'a>,
         state: &mut Self::State,
     ) -> Result<(), CompilerError> {
         self.traverse_pruned_scope(scope, state)
@@ -585,7 +598,7 @@ pub trait ReactiveFunctionTransform {
 
     fn traverse_pruned_scope(
         &mut self,
-        scope: &mut PrunedReactiveScopeBlock,
+        scope: &mut PrunedReactiveScopeBlock<'a>,
         state: &mut Self::State,
     ) -> Result<(), CompilerError> {
         self.visit_block(&mut scope.instructions, state)
@@ -593,7 +606,7 @@ pub trait ReactiveFunctionTransform {
 
     fn visit_block(
         &mut self,
-        block: &mut ReactiveBlock,
+        block: &mut ReactiveBlock<'a>,
         state: &mut Self::State,
     ) -> Result<(), CompilerError> {
         self.traverse_block(block, state)
@@ -601,46 +614,46 @@ pub trait ReactiveFunctionTransform {
 
     fn transform_instruction(
         &mut self,
-        instruction: &mut ReactiveInstruction,
+        instruction: &mut ReactiveInstruction<'a>,
         state: &mut Self::State,
-    ) -> Result<Transformed<ReactiveStatement>, CompilerError> {
+    ) -> Result<Transformed<ReactiveStatement<'a>>, CompilerError> {
         self.visit_instruction(instruction, state)?;
         Ok(Transformed::Keep)
     }
 
     fn transform_terminal(
         &mut self,
-        stmt: &mut ReactiveTerminalStatement,
+        stmt: &mut ReactiveTerminalStatement<'a>,
         state: &mut Self::State,
-    ) -> Result<Transformed<ReactiveStatement>, CompilerError> {
+    ) -> Result<Transformed<ReactiveStatement<'a>>, CompilerError> {
         self.visit_terminal(stmt, state)?;
         Ok(Transformed::Keep)
     }
 
     fn transform_scope(
         &mut self,
-        scope: &mut ReactiveScopeBlock,
+        scope: &mut ReactiveScopeBlock<'a>,
         state: &mut Self::State,
-    ) -> Result<Transformed<ReactiveStatement>, CompilerError> {
+    ) -> Result<Transformed<ReactiveStatement<'a>>, CompilerError> {
         self.visit_scope(scope, state)?;
         Ok(Transformed::Keep)
     }
 
     fn transform_pruned_scope(
         &mut self,
-        scope: &mut PrunedReactiveScopeBlock,
+        scope: &mut PrunedReactiveScopeBlock<'a>,
         state: &mut Self::State,
-    ) -> Result<Transformed<ReactiveStatement>, CompilerError> {
+    ) -> Result<Transformed<ReactiveStatement<'a>>, CompilerError> {
         self.visit_pruned_scope(scope, state)?;
         Ok(Transformed::Keep)
     }
 
     fn traverse_block(
         &mut self,
-        block: &mut ReactiveBlock,
+        block: &mut ReactiveBlock<'a>,
         state: &mut Self::State,
     ) -> Result<(), CompilerError> {
-        let mut next_block: Option<Vec<ReactiveStatement>> = None;
+        let mut next_block: Option<Vec<ReactiveStatement<'a>>> = None;
         let len = block.len();
         for i in 0..len {
             // Take the statement out temporarily
@@ -706,8 +719,8 @@ pub trait ReactiveFunctionTransform {
 
 /// Entry point for transforming a reactive function.
 /// TS: `visitReactiveFunction` (used with transforms too)
-pub fn transform_reactive_function<T: ReactiveFunctionTransform>(
-    func: &mut ReactiveFunction,
+pub fn transform_reactive_function<'a, T: ReactiveFunctionTransform<'a>>(
+    func: &mut ReactiveFunction<'a>,
     transform: &mut T,
     state: &mut T::State,
 ) -> Result<(), CompilerError> {

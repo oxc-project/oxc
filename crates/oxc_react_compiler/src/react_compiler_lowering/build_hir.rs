@@ -88,23 +88,23 @@ fn validate_ts_this_parameters_in_function_range(
 }
 
 /// Get the Babel-style type name of an Expression node (e.g. "Identifier", "NumericLiteral").
-fn build_temporary_place(builder: &mut HirBuilder, loc: Option<SourceLocation>) -> Place {
+fn build_temporary_place(builder: &mut HirBuilder<'_, '_>, loc: Option<SourceLocation>) -> Place {
     let id = builder.make_temporary(loc.clone());
     Place { identifier: id, reactive: false, effect: Effect::Unknown, loc }
 }
 
 /// Promote a temporary identifier to a named identifier (for destructuring).
 /// Corresponds to TS `promoteTemporary(identifier)`.
-fn promote_temporary(builder: &mut HirBuilder, identifier_id: IdentifierId) {
+fn promote_temporary(builder: &mut HirBuilder<'_, '_>, identifier_id: IdentifierId) {
     let env = builder.environment_mut();
     let decl_id = env.identifiers[identifier_id.0 as usize].declaration_id;
     env.identifiers[identifier_id.0 as usize].name =
         Some(IdentifierName::Promoted(format!("#t{}", decl_id.0)));
 }
 
-fn lower_value_to_temporary(
-    builder: &mut HirBuilder,
-    value: InstructionValue,
+fn lower_value_to_temporary<'a>(
+    builder: &mut HirBuilder<'a, '_>,
+    value: InstructionValue<'a>,
 ) -> Result<Place, CompilerError> {
     // Optimization: if loading an unnamed temporary, skip creating a new instruction
     if let InstructionValue::LoadLocal { ref place, .. } = value {
@@ -125,9 +125,9 @@ fn lower_value_to_temporary(
     Ok(place)
 }
 
-fn lower_expression_to_temporary(
-    builder: &mut HirBuilder,
-    expr: &oxc::Expression,
+fn lower_expression_to_temporary<'a>(
+    builder: &mut HirBuilder<'a, '_>,
+    expr: &'a oxc::Expression<'a>,
 ) -> Result<Place, CompilerError> {
     let value = lower_expression(builder, expr)?;
     lower_value_to_temporary(builder, value)
@@ -218,9 +218,9 @@ fn collect_binding_names_from_pattern(
 ///
 /// Implements the TS BlockStatement hoisting pass: identifies forward references to
 /// block-scoped bindings and emits DeclareContext instructions to hoist them.
-fn lower_block_statement(
-    builder: &mut HirBuilder,
-    statements: &[oxc::Statement],
+fn lower_block_statement<'a>(
+    builder: &mut HirBuilder<'a, '_>,
+    statements: &'a [oxc::Statement<'a>],
     block_node_id: u32,
     parent_scope: Option<crate::scope::ScopeId>,
 ) -> Result<(), CompilerError> {
@@ -228,9 +228,9 @@ fn lower_block_statement(
     Ok(())
 }
 
-fn lower_block_statement_with_scope(
-    builder: &mut HirBuilder,
-    statements: &[oxc::Statement],
+fn lower_block_statement_with_scope<'a>(
+    builder: &mut HirBuilder<'a, '_>,
+    statements: &'a [oxc::Statement<'a>],
     block_node_id: u32,
     scope_override: crate::scope::ScopeId,
 ) -> Result<(), CompilerError> {
@@ -239,9 +239,9 @@ fn lower_block_statement_with_scope(
     Ok(())
 }
 
-fn lower_block_statement_inner(
-    builder: &mut HirBuilder,
-    statements: &[oxc::Statement],
+fn lower_block_statement_inner<'a>(
+    builder: &mut HirBuilder<'a, '_>,
+    statements: &'a [oxc::Statement<'a>],
     block_node_id: u32,
     scope_override: Option<crate::scope::ScopeId>,
     parent_scope: Option<crate::scope::ScopeId>,
@@ -603,13 +603,13 @@ enum FunctionBody<'a> {
 /// Receives a `FunctionNode` (discovered by the entrypoint) and lowers it to HIR.
 /// The `id` parameter provides the function name (which may come from the variable
 /// declarator rather than the function node itself, e.g. `const Foo = () => {}`).
-pub fn lower(
-    func: &FunctionNode<'_>,
+pub fn lower<'a>(
+    func: &'a FunctionNode<'a>,
     _id: Option<&str>,
     scope_info: &ScopeInfo,
-    env: &mut Environment,
+    env: &mut Environment<'a>,
     line_offsets: &LineOffsets,
-) -> Result<HirFunction, CompilerError> {
+) -> Result<HirFunction<'a>, CompilerError> {
     // Extract params, body, generator, is_async, loc, scope_id, and the AST function's own id
     // Note: `id` param may include inferred names (e.g., from `const Foo = () => {}`),
     // but the HIR function's `id` field should only include the function's own AST id
@@ -696,15 +696,15 @@ pub fn lower(
 // =============================================================================
 
 /// Result of resolving an identifier for assignment.
-fn lower_inner(
-    params: &oxc::FormalParameters,
-    body: FunctionBody<'_>,
+fn lower_inner<'a>(
+    params: &'a oxc::FormalParameters<'a>,
+    body: FunctionBody<'a>,
     id: Option<&str>,
     generator: bool,
     is_async: bool,
     loc: Option<SourceLocation>,
     scope_info: &ScopeInfo,
-    env: &mut Environment,
+    env: &mut Environment<'a>,
     parent_bindings: Option<FxIndexMap<crate::scope::BindingId, IdentifierId>>,
     parent_used_names: Option<FxIndexMap<String, crate::scope::BindingId>>,
     context_map: FxIndexMap<crate::scope::BindingId, Option<SourceLocation>>,
@@ -716,7 +716,7 @@ fn lower_inner(
     line_offsets: &LineOffsets,
 ) -> Result<
     (
-        HirFunction,
+        HirFunction<'a>,
         FxIndexMap<String, crate::scope::BindingId>,
         FxIndexMap<crate::scope::BindingId, IdentifierId>,
     ),
@@ -948,7 +948,7 @@ fn lower_inner(
 /// Resolve an identifier to a Place. Local/context identifiers return a Place
 /// referencing the binding; globals/imports emit a LoadGlobal. AST-agnostic.
 fn lower_identifier(
-    builder: &mut HirBuilder,
+    builder: &mut HirBuilder<'_, '_>,
     name: &str,
     start: u32,
     loc: Option<SourceLocation>,
@@ -1040,26 +1040,26 @@ enum MemberProperty {
     Computed(Place),
 }
 
-struct LoweredMemberExpression {
+struct LoweredMemberExpression<'a> {
     object: Place,
     property: MemberProperty,
-    value: InstructionValue,
+    value: InstructionValue<'a>,
 }
 
 /// Lower a member access (oxc's Static / Computed / PrivateField variants) into a
 /// receiver place + property + load value.
-fn lower_member_expression(
-    builder: &mut HirBuilder,
-    member: &oxc::MemberExpression,
-) -> Result<LoweredMemberExpression, CompilerError> {
+fn lower_member_expression<'a>(
+    builder: &mut HirBuilder<'a, '_>,
+    member: &'a oxc::MemberExpression<'a>,
+) -> Result<LoweredMemberExpression<'a>, CompilerError> {
     lower_member_expression_impl(builder, member, None)
 }
 
-fn lower_member_expression_impl(
-    builder: &mut HirBuilder,
-    member: &oxc::MemberExpression,
+fn lower_member_expression_impl<'a>(
+    builder: &mut HirBuilder<'a, '_>,
+    member: &'a oxc::MemberExpression<'a>,
     lowered_object: Option<Place>,
-) -> Result<LoweredMemberExpression, CompilerError> {
+) -> Result<LoweredMemberExpression<'a>, CompilerError> {
     match member {
         oxc::MemberExpression::StaticMemberExpression(m) => {
             let loc = builder.source_location(m.span);
@@ -1145,7 +1145,7 @@ fn template_quasi_from_oxc(q: &oxc::TemplateElement) -> TemplateQuasi {
 /// path treats this as the `Import` node, which bails (records an error) and
 /// returns an undefined primitive that is then loaded to a temporary.
 fn lower_import_keyword_to_temporary(
-    builder: &mut HirBuilder,
+    builder: &mut HirBuilder<'_, '_>,
     loc: &Option<SourceLocation>,
 ) -> Result<Place, CompilerError> {
     builder.record_error(CompilerErrorDetail {
@@ -1165,7 +1165,7 @@ fn lower_import_keyword_to_temporary(
 /// Babel path bails (records an error) and returns an undefined primitive that is
 /// then loaded to a temporary.
 fn lower_private_name_to_temporary(
-    builder: &mut HirBuilder,
+    builder: &mut HirBuilder<'_, '_>,
     span: oxc_span::Span,
 ) -> Result<Place, CompilerError> {
     let loc = builder.source_location(span);
@@ -1252,7 +1252,7 @@ fn classify_ts_type(ty: &oxc::TSType) -> crate::react_compiler_hir::RawTypeCateg
 
 /// Lower the HIR `Type` for a TS type annotation from its coarse classification,
 /// mirroring `lower_type_annotation`.
-fn lower_ts_type(builder: &mut HirBuilder, ty: &oxc::TSType) -> Type {
+fn lower_ts_type(builder: &mut HirBuilder<'_, '_>, ty: &oxc::TSType) -> Type {
     use crate::react_compiler_hir::RawTypeCategory;
     match classify_ts_type(ty) {
         RawTypeCategory::Array => Type::Object { shape_id: Some("BuiltInArray".to_string()) },
@@ -1264,71 +1264,25 @@ fn lower_ts_type(builder: &mut HirBuilder, ty: &oxc::TSType) -> Type {
 /// Lower `x as T` / `x satisfies T` / `<T>x` to a `TypeCastExpression`: the inner
 /// expression is lowered to a temporary and the type metadata is attached. Mirrors
 /// the original Babel `TSAsExpression`/`TSSatisfiesExpression`/`TSTypeAssertion`
-/// arms. The `type_annotation` RawNode is built from the unwrapped TS type's tag,
-/// span and classification (codegen re-parses it from source).
-/// Collect identifier references appearing inside a TS type, as `RawIdent`s keyed
-/// by source start offset. Codegen uses these (filtered by `reference_node_ids`) to
-/// apply binding renames when it re-parses the type from source (`typeof x` ->
-/// `typeof x_0`). Over-collected idents (type labels, object-type property keys)
-/// are harmless — they are dropped by the `reference_node_ids` filter in codegen.
-fn collect_type_idents(ty: &oxc::TSType) -> Vec<crate::react_compiler_hir::RawIdent> {
-    use crate::react_compiler_hir::RawIdent;
-    struct Collector {
-        out: Vec<RawIdent>,
-    }
-    impl<'a> oxc_ast_visit::Visit<'a> for Collector {
-        fn visit_identifier_reference(&mut self, it: &oxc::IdentifierReference<'a>) {
-            self.out.push(RawIdent {
-                name: it.name.to_string(),
-                node_id: it.span.start,
-                start: it.span.start,
-                loc: None,
-                is_jsx: false,
-                in_type_annotation: true,
-                renamed_to: None,
-            });
-        }
-        fn visit_identifier_name(&mut self, it: &oxc::IdentifierName<'a>) {
-            self.out.push(RawIdent {
-                name: it.name.to_string(),
-                node_id: it.span.start,
-                start: it.span.start,
-                loc: None,
-                is_jsx: false,
-                in_type_annotation: true,
-                renamed_to: None,
-            });
-        }
-    }
-    let mut collector = Collector { out: Vec::new() };
-    oxc_ast_visit::Visit::visit_ts_type(&mut collector, ty);
-    collector.out
-}
-
-fn lower_type_cast_expression(
-    builder: &mut HirBuilder,
+/// arms. The original `TSType` AST node is stored directly so codegen can re-emit
+/// it by cloning (applying any identifier renames) instead of re-parsing source.
+fn lower_type_cast_expression<'a>(
+    builder: &mut HirBuilder<'a, '_>,
     span: oxc_span::Span,
-    expression: &oxc::Expression,
-    type_annotation: &oxc::TSType,
+    expression: &'a oxc::Expression<'a>,
+    type_annotation: &'a oxc::TSType<'a>,
     type_annotation_kind: &str,
-) -> Result<InstructionValue, CompilerError> {
+) -> Result<InstructionValue<'a>, CompilerError> {
     let loc = builder.source_location(span);
     let value = lower_expression_to_temporary(builder, expression)?;
     let type_ = lower_ts_type(builder, type_annotation);
     let type_annotation_name = Some(ts_type_node_type(type_annotation).to_string());
-    let raw = crate::react_compiler_hir::RawNode::type_node(
-        type_annotation_name.clone(),
-        Some(type_annotation.span().start),
-        Some(type_annotation.span().end),
-        classify_ts_type(type_annotation),
-        collect_type_idents(type_annotation),
-    );
     Ok(InstructionValue::TypeCastExpression {
         value,
         type_,
         type_annotation_name,
         type_annotation_kind: Some(type_annotation_kind.to_string()),
-        type_annotation: Some(raw),
+        type_annotation: Some(type_annotation),
         loc,
     })
 }
@@ -1336,10 +1290,10 @@ fn lower_type_cast_expression(
 /// Lower a member-expression update target (oxc's member variants of
 /// `SimpleAssignmentTarget`) into a receiver place + property + load value,
 /// mirroring `lower_member_expression_impl`.
-fn lower_member_expression_from_simple_target(
-    builder: &mut HirBuilder,
-    target: &oxc::SimpleAssignmentTarget,
-) -> Result<LoweredMemberExpression, CompilerError> {
+fn lower_member_expression_from_simple_target<'a>(
+    builder: &mut HirBuilder<'a, '_>,
+    target: &'a oxc::SimpleAssignmentTarget<'a>,
+) -> Result<LoweredMemberExpression<'a>, CompilerError> {
     match target {
         oxc::SimpleAssignmentTarget::StaticMemberExpression(m) => {
             let loc = builder.source_location(m.span);
@@ -1426,10 +1380,10 @@ fn lower_member_expression_from_simple_target(
 /// `lower_member_expression_from_simple_target` for the `Expression` form the casts
 /// expose. Only member variants are reachable (callers guard with
 /// `simple_target_is_member_like`).
-fn lower_member_expression_from_expr(
-    builder: &mut HirBuilder,
-    expr: &oxc::Expression,
-) -> Result<LoweredMemberExpression, CompilerError> {
+fn lower_member_expression_from_expr<'a>(
+    builder: &mut HirBuilder<'a, '_>,
+    expr: &'a oxc::Expression<'a>,
+) -> Result<LoweredMemberExpression<'a>, CompilerError> {
     match expr {
         oxc::Expression::StaticMemberExpression(m) => {
             let loc = builder.source_location(m.span);
@@ -1522,9 +1476,9 @@ fn expr_is_member_like(expr: &oxc::Expression) -> bool {
     }
 }
 
-fn lower_arguments(
-    builder: &mut HirBuilder,
-    args: &[oxc::Argument],
+fn lower_arguments<'a>(
+    builder: &mut HirBuilder<'a, '_>,
+    args: &'a [oxc::Argument<'a>],
 ) -> Result<Vec<PlaceOrSpread>, CompilerError> {
     let mut result = Vec::new();
     for arg in args {
@@ -1552,7 +1506,7 @@ enum IdentifierForAssignment {
 /// Resolve an identifier as an assignment target. AST-agnostic. Returns None if
 /// the binding could not be found (error recorded).
 fn lower_identifier_for_assignment(
-    builder: &mut HirBuilder,
+    builder: &mut HirBuilder<'_, '_>,
     loc: Option<SourceLocation>,
     ident_loc: Option<SourceLocation>,
     kind: InstructionKind,
@@ -1640,11 +1594,11 @@ enum AssignmentStyle {
 /// patterns and assignment targets under `PatternLike`; oxc splits them, so this
 /// handles only the binding side. `kind` is never `Reassign` on this path, so
 /// `force_temporaries` is always false.
-fn lower_binding_assignment(
-    builder: &mut HirBuilder,
+fn lower_binding_assignment<'a>(
+    builder: &mut HirBuilder<'a, '_>,
     loc: Option<SourceLocation>,
     kind: InstructionKind,
-    target: &oxc::BindingPattern,
+    target: &'a oxc::BindingPattern<'a>,
     value: Place,
     assignment_style: AssignmentStyle,
 ) -> Result<Option<Place>, CompilerError> {
@@ -2050,10 +2004,10 @@ fn lower_binding_assignment(
 /// fresh temporary and return it. Shared by the `AssignmentPattern` arm and by the
 /// default-parameter (`FormalParameter.initializer`) lowering, which in Babel was a
 /// single `AssignmentPattern` param node.
-fn lower_default_to_temp(
-    builder: &mut HirBuilder,
+fn lower_default_to_temp<'a>(
+    builder: &mut HirBuilder<'a, '_>,
     pat_loc: Option<SourceLocation>,
-    default: &oxc::Expression,
+    default: &'a oxc::Expression<'a>,
     value: Place,
 ) -> Result<Place, CompilerError> {
     let temp = build_temporary_place(builder, pat_loc.clone());
@@ -2146,11 +2100,11 @@ fn lower_default_to_temp(
 /// `SimpleAssignmentTarget`) and store `value` into it, returning the store
 /// temporary. Mirrors the `PatternLike::MemberExpression` arm of the original
 /// `lower_assignment`.
-fn lower_member_assignment_target(
-    builder: &mut HirBuilder,
+fn lower_member_assignment_target<'a>(
+    builder: &mut HirBuilder<'a, '_>,
     loc: Option<SourceLocation>,
     kind: InstructionKind,
-    target: &oxc::SimpleAssignmentTarget,
+    target: &'a oxc::SimpleAssignmentTarget<'a>,
     value: Place,
 ) -> Result<Option<Place>, CompilerError> {
     // MemberExpression may only appear in an assignment expression (Reassign).
@@ -2229,7 +2183,7 @@ fn lower_member_assignment_target(
 /// True if `maybe` is a bare identifier assignment target that resolves to a local
 /// binding (used to compute `force_temporaries`).
 fn assignment_target_is_local_identifier(
-    builder: &mut HirBuilder,
+    builder: &mut HirBuilder<'_, '_>,
     maybe: &oxc::AssignmentTargetMaybeDefault,
 ) -> Result<bool, CompilerError> {
     match maybe {
@@ -2252,11 +2206,11 @@ fn assignment_target_is_local_identifier(
 /// `{a, b}`). Faithful translation of the original `lower_assignment` for the
 /// `PatternLike` cases that came from `AssignmentExpression.left` / destructuring
 /// targets; oxc models these as `AssignmentTarget`.
-fn lower_assignment_target(
-    builder: &mut HirBuilder,
+fn lower_assignment_target<'a>(
+    builder: &mut HirBuilder<'a, '_>,
     loc: Option<SourceLocation>,
     kind: InstructionKind,
-    target: &oxc::AssignmentTarget,
+    target: &'a oxc::AssignmentTarget<'a>,
     value: Place,
     assignment_style: AssignmentStyle,
 ) -> Result<Option<Place>, CompilerError> {
@@ -2848,7 +2802,7 @@ enum FollowupBinding<'a> {
 /// Mirrors the `PatternLike::Identifier` followup path of the original
 /// `lower_assignment` (re-resolving the binding for the store).
 fn lower_identifier_followup_store(
-    builder: &mut HirBuilder,
+    builder: &mut HirBuilder<'_, '_>,
     loc: Option<SourceLocation>,
     kind: InstructionKind,
     id: &oxc::IdentifierReference,
@@ -2899,11 +2853,11 @@ fn lower_identifier_followup_store(
 
 /// Lower a single destructuring followup (the recursion step shared by
 /// `lower_assignment_target`).
-fn lower_followup_target(
-    builder: &mut HirBuilder,
+fn lower_followup_target<'a>(
+    builder: &mut HirBuilder<'a, '_>,
     loc: Option<SourceLocation>,
     kind: InstructionKind,
-    target: FollowupTarget,
+    target: FollowupTarget<'a>,
     value: Place,
     assignment_style: AssignmentStyle,
 ) -> Result<Option<Place>, CompilerError> {
@@ -2934,11 +2888,11 @@ fn lower_followup_target(
 /// Lower an `AssignmentTargetMaybeDefault` (array element / object property
 /// binding). The with-default wrapper (`[a = 1]`, `{a: b = 1}`) is the Babel
 /// `AssignmentPattern` case.
-fn lower_assignment_target_maybe_default(
-    builder: &mut HirBuilder,
+fn lower_assignment_target_maybe_default<'a>(
+    builder: &mut HirBuilder<'a, '_>,
     loc: Option<SourceLocation>,
     kind: InstructionKind,
-    maybe: &oxc::AssignmentTargetMaybeDefault,
+    maybe: &'a oxc::AssignmentTargetMaybeDefault<'a>,
     value: Place,
     assignment_style: AssignmentStyle,
 ) -> Result<Option<Place>, CompilerError> {
@@ -2965,12 +2919,12 @@ fn lower_assignment_target_maybe_default(
 /// Lower a default-value assignment target (`AssignmentPattern`): if `value ===
 /// undefined`, use the default, else use `value`, then assign the result into the
 /// inner binding. Faithful translation of the `PatternLike::AssignmentPattern` arm.
-fn lower_assignment_target_default(
-    builder: &mut HirBuilder,
+fn lower_assignment_target_default<'a>(
+    builder: &mut HirBuilder<'a, '_>,
     span: oxc_span::Span,
     kind: InstructionKind,
-    default: &oxc::Expression,
-    binding: FollowupBinding,
+    default: &'a oxc::Expression<'a>,
+    binding: FollowupBinding<'a>,
     value: Place,
     assignment_style: AssignmentStyle,
 ) -> Result<Option<Place>, CompilerError> {
@@ -3101,10 +3055,10 @@ fn expr_contains_optional(expr: &oxc::Expression) -> bool {
 /// the original `lower_optional_member_expression` / `lower_optional_call_expression`
 /// dispatch, reproducing the same `Optional` terminal / `OptionalCall`-`OptionalLoad`
 /// HIR structure.
-fn lower_chain_expression(
-    builder: &mut HirBuilder,
-    chain: &oxc::ChainExpression,
-) -> Result<InstructionValue, CompilerError> {
+fn lower_chain_expression<'a>(
+    builder: &mut HirBuilder<'a, '_>,
+    chain: &'a oxc::ChainExpression<'a>,
+) -> Result<InstructionValue<'a>, CompilerError> {
     match &chain.expression {
         oxc::ChainElement::CallExpression(call) => {
             lower_optional_call_expression_impl(builder, call, None)
@@ -3134,10 +3088,10 @@ fn lower_chain_expression(
 /// `TSNonNullExpression` by recursing into its inner expression, while everything
 /// else went through normal lowering. The oxc equivalent uses `expr_contains_optional`
 /// to detect optional-context member/call nodes.
-fn lower_chain_subexpr(
-    builder: &mut HirBuilder,
-    expr: &oxc::Expression,
-) -> Result<InstructionValue, CompilerError> {
+fn lower_chain_subexpr<'a>(
+    builder: &mut HirBuilder<'a, '_>,
+    expr: &'a oxc::Expression<'a>,
+) -> Result<InstructionValue<'a>, CompilerError> {
     match expr {
         oxc::Expression::StaticMemberExpression(_)
         | oxc::Expression::ComputedMemberExpression(_)
@@ -3160,9 +3114,9 @@ fn lower_chain_subexpr(
 /// the top-level caller wraps it in `LoadLocal`. `member` is one of the three oxc
 /// member variants. `parent_alternate` threads the shared null/undefined block so a
 /// chain only creates one alternate at the first `?.`.
-fn lower_optional_member_expression_impl(
-    builder: &mut HirBuilder,
-    member: &oxc::MemberExpression,
+fn lower_optional_member_expression_impl<'a>(
+    builder: &mut HirBuilder<'a, '_>,
+    member: &'a oxc::MemberExpression<'a>,
     parent_alternate: Option<BlockId>,
 ) -> Result<(Place, Place), CompilerError> {
     let optional = member.optional();
@@ -3274,11 +3228,11 @@ fn lower_optional_member_expression_impl(
 
 /// Lower an oxc optional `CallExpression` (a call link inside a `ChainExpression`).
 /// `parent_alternate` threads the shared null/undefined block.
-fn lower_optional_call_expression_impl(
-    builder: &mut HirBuilder,
-    call: &oxc::CallExpression,
+fn lower_optional_call_expression_impl<'a>(
+    builder: &mut HirBuilder<'a, '_>,
+    call: &'a oxc::CallExpression<'a>,
     parent_alternate: Option<BlockId>,
-) -> Result<InstructionValue, CompilerError> {
+) -> Result<InstructionValue<'a>, CompilerError> {
     let optional = call.optional;
     let loc = builder.source_location(call.span);
     let place = build_temporary_place(builder, loc.clone());
@@ -3442,11 +3396,11 @@ fn lower_optional_call_expression_impl(
 
 /// Lower a function/arrow expression to a `FunctionExpression` instruction value.
 /// Mirrors the original `lower_function_to_value`.
-fn lower_function_to_value(
-    builder: &mut HirBuilder,
-    func: FunctionNode<'_>,
+fn lower_function_to_value<'a>(
+    builder: &mut HirBuilder<'a, '_>,
+    func: FunctionNode<'a>,
     expr_type: FunctionExpressionType,
-) -> Result<InstructionValue, CompilerError> {
+) -> Result<InstructionValue<'a>, CompilerError> {
     let loc = match func {
         FunctionNode::Arrow(arrow) => builder.source_location(arrow.span),
         FunctionNode::Function(f) => builder.source_location(f.span),
@@ -3461,9 +3415,9 @@ fn lower_function_to_value(
 
 /// Lower a nested function/arrow node into a `LoweredFunction`. Mirrors the
 /// original `lower_function`.
-fn lower_function(
-    builder: &mut HirBuilder,
-    func: FunctionNode<'_>,
+fn lower_function<'a>(
+    builder: &mut HirBuilder<'a, '_>,
+    func: FunctionNode<'a>,
 ) -> Result<LoweredFunction, CompilerError> {
     // Extract function parts from the AST node
     let (params, body, id, generator, is_async, func_start, func_end, func_loc, func_node_id) =
@@ -3636,9 +3590,9 @@ fn lower_function(
 }
 
 /// Lower a function declaration statement to a FunctionExpression + StoreLocal.
-fn lower_function_declaration(
-    builder: &mut HirBuilder,
-    func_decl: &oxc::Function,
+fn lower_function_declaration<'a>(
+    builder: &mut HirBuilder<'a, '_>,
+    func_decl: &'a oxc::Function<'a>,
 ) -> Result<(), CompilerError> {
     let loc = builder.source_location(func_decl.span);
     let func_start = func_decl.span.start;
@@ -3835,11 +3789,11 @@ fn lower_function_declaration(
 }
 
 /// Lower a function expression used as an object method.
-fn lower_function_for_object_method(
-    builder: &mut HirBuilder,
+fn lower_function_for_object_method<'a>(
+    builder: &mut HirBuilder<'a, '_>,
     method_span: oxc_span::Span,
-    params: &oxc::FormalParameters,
-    body: &oxc::FunctionBody,
+    params: &'a oxc::FormalParameters<'a>,
+    body: &'a oxc::FunctionBody<'a>,
     generator: bool,
     is_async: bool,
 ) -> Result<LoweredFunction, CompilerError> {
@@ -4315,10 +4269,10 @@ fn collect_identifier_node_ids_from_jsx_child(
     }
 }
 
-fn lower_expression(
-    builder: &mut HirBuilder,
-    expr: &oxc::Expression,
-) -> Result<InstructionValue, CompilerError> {
+fn lower_expression<'a>(
+    builder: &mut HirBuilder<'a, '_>,
+    expr: &'a oxc::Expression<'a>,
+) -> Result<InstructionValue<'a>, CompilerError> {
     match expr {
         oxc::Expression::Identifier(ident) => {
             let loc = builder.source_location(ident.span);
@@ -5089,10 +5043,10 @@ fn lower_expression(
 /// `Expression::AssignmentExpression` arm, adapted to oxc's `AssignmentTarget`
 /// split. `=` handles identifier / member / destructuring targets; compound
 /// operators (`+=` etc.) handle identifier / member targets and bail on patterns.
-fn lower_assignment_expression(
-    builder: &mut HirBuilder,
-    assign: &oxc::AssignmentExpression,
-) -> Result<InstructionValue, CompilerError> {
+fn lower_assignment_expression<'a>(
+    builder: &mut HirBuilder<'a, '_>,
+    assign: &'a oxc::AssignmentExpression<'a>,
+) -> Result<InstructionValue<'a>, CompilerError> {
     let loc = builder.source_location(assign.span);
 
     if matches!(assign.operator, oxc::AssignmentOperator::Assign) {
@@ -5438,10 +5392,10 @@ fn lower_assignment_expression(
 /// reported duplicates, and incremented `builder.fbt_depth` around the children so
 /// JSX text whitespace is preserved within fbt subtrees. Both behaviors are ported
 /// below.
-fn lower_jsx_element_expr(
-    builder: &mut HirBuilder,
-    jsx_element: &oxc::JSXElement,
-) -> Result<InstructionValue, CompilerError> {
+fn lower_jsx_element_expr<'a>(
+    builder: &mut HirBuilder<'a, '_>,
+    jsx_element: &'a oxc::JSXElement<'a>,
+) -> Result<InstructionValue<'a>, CompilerError> {
     let loc = builder.source_location(jsx_element.span);
     let opening_loc = builder.source_location(jsx_element.opening_element.span);
     let closing_loc =
@@ -5649,10 +5603,10 @@ fn lower_jsx_element_expr(
 
 /// Lower a JSX fragment expression. Faithful translation of the original
 /// `Expression::JSXFragment` arm.
-fn lower_jsx_fragment_expr(
-    builder: &mut HirBuilder,
-    jsx_fragment: &oxc::JSXFragment,
-) -> Result<InstructionValue, CompilerError> {
+fn lower_jsx_fragment_expr<'a>(
+    builder: &mut HirBuilder<'a, '_>,
+    jsx_fragment: &'a oxc::JSXFragment<'a>,
+) -> Result<InstructionValue<'a>, CompilerError> {
     let loc = builder.source_location(jsx_fragment.span);
 
     // Lower children
@@ -5673,12 +5627,12 @@ fn lower_jsx_fragment_expr(
 /// out `IdentifierReference`, `MemberExpression`, and `ThisExpression`; the latter
 /// maps to the identifier `"this"`).
 fn lower_jsx_element_name(
-    builder: &mut HirBuilder,
+    builder: &mut HirBuilder<'_, '_>,
     name: &oxc::JSXElementName,
 ) -> Result<JsxTag, CompilerError> {
     // Lower a simple JSX tag identifier (component-vs-builtin split on case).
     fn lower_tag_identifier(
-        builder: &mut HirBuilder,
+        builder: &mut HirBuilder<'_, '_>,
         tag: &str,
         span: oxc_span::Span,
     ) -> Result<JsxTag, CompilerError> {
@@ -5747,7 +5701,7 @@ fn lower_jsx_element_name(
 /// `JSXMemberExpressionObject` (where the leaf object may be a `ThisExpression`,
 /// which lowers as the identifier `"this"`).
 fn lower_jsx_member_expression(
-    builder: &mut HirBuilder,
+    builder: &mut HirBuilder<'_, '_>,
     expr: &oxc::JSXMemberExpression,
 ) -> Result<Place, CompilerError> {
     // Use the full member expression's loc for instruction locs (matching TS: exprPath.node.loc)
@@ -5776,7 +5730,7 @@ fn lower_jsx_member_expression(
 /// identifier's own loc for the place, but the enclosing member expression's loc
 /// for the load instruction (matching TS).
 fn lower_jsx_member_object_identifier(
-    builder: &mut HirBuilder,
+    builder: &mut HirBuilder<'_, '_>,
     name: &str,
     span: oxc_span::Span,
     expr_loc: &Option<SourceLocation>,
@@ -5794,9 +5748,9 @@ fn lower_jsx_member_object_identifier(
 
 /// Lower a single JSX child into an optional `Place`. Faithful translation of the
 /// original `lower_jsx_element` (the JSXChild handler), adapted to oxc's `JSXChild`.
-fn lower_jsx_element(
-    builder: &mut HirBuilder,
-    child: &oxc::JSXChild,
+fn lower_jsx_element<'a>(
+    builder: &mut HirBuilder<'a, '_>,
+    child: &'a oxc::JSXChild<'a>,
 ) -> Result<Option<Place>, CompilerError> {
     match child {
         oxc::JSXChild::Text(text) => {
@@ -5845,7 +5799,7 @@ fn lower_jsx_element(
 /// `<tag:pronoun>` sub-tags within fbt/fbs children. Faithful translation of the
 /// original Babel `collect_fbt_sub_tags`, adapted to oxc's JSX shapes.
 fn collect_fbt_sub_tags(
-    builder: &HirBuilder,
+    builder: &HirBuilder<'_, '_>,
     children: &[oxc::JSXChild],
     tag_name: &str,
     enum_locs: &mut Vec<Option<SourceLocation>>,
@@ -5892,7 +5846,7 @@ fn collect_fbt_sub_tags(
 }
 
 fn collect_fbt_sub_tags_from_element(
-    builder: &HirBuilder,
+    builder: &HirBuilder<'_, '_>,
     el: &oxc::JSXElement,
     tag_name: &str,
     enum_locs: &mut Vec<Option<SourceLocation>>,
@@ -5944,7 +5898,7 @@ fn collect_fbt_sub_tags_from_element(
 }
 
 fn collect_fbt_sub_tags_from_expr(
-    builder: &HirBuilder,
+    builder: &HirBuilder<'_, '_>,
     expr: &oxc::Expression,
     tag_name: &str,
     enum_locs: &mut Vec<Option<SourceLocation>>,
@@ -6061,7 +6015,7 @@ fn collect_fbt_sub_tags_from_expr(
 }
 
 fn collect_fbt_sub_tags_from_stmts(
-    builder: &HirBuilder,
+    builder: &HirBuilder<'_, '_>,
     stmts: &[oxc::Statement],
     tag_name: &str,
     enum_locs: &mut Vec<Option<SourceLocation>>,
@@ -6285,9 +6239,9 @@ fn expression_type_name(expr: &oxc::Expression) -> &'static str {
 /// `get`/`set` record a Todo error and are skipped. The `method` case lowers the
 /// key and the nested function (`lower_function_for_object_method`) and emits an
 /// `ObjectMethod` instruction value.
-fn lower_object_method(
-    builder: &mut HirBuilder,
-    method: &oxc::ObjectProperty,
+fn lower_object_method<'a>(
+    builder: &mut HirBuilder<'a, '_>,
+    method: &'a oxc::ObjectProperty<'a>,
 ) -> Result<Option<ObjectProperty>, CompilerError> {
     // In oxc, a shorthand method is encoded as `kind: Init, method: true`; only
     // getters/setters carry a non-`Init` `PropertyKind`.
@@ -6336,9 +6290,9 @@ fn lower_object_method(
 }
 
 /// Lower an object property key. Faithful to the original `lower_object_property_key`.
-fn lower_object_property_key(
-    builder: &mut HirBuilder,
-    key: &oxc::PropertyKey,
+fn lower_object_property_key<'a>(
+    builder: &mut HirBuilder<'a, '_>,
+    key: &'a oxc::PropertyKey<'a>,
     computed: bool,
 ) -> Result<Option<ObjectPropertyKey>, CompilerError> {
     match key {
@@ -6381,9 +6335,9 @@ fn lower_object_property_key(
 /// Lower a reorderable expression. Faithful to the original
 /// `lower_reorderable_expression`: records an error when the expression cannot be
 /// safely reordered, then lowers it to a temporary regardless.
-fn lower_reorderable_expression(
-    builder: &mut HirBuilder,
-    expr: &oxc::Expression,
+fn lower_reorderable_expression<'a>(
+    builder: &mut HirBuilder<'a, '_>,
+    expr: &'a oxc::Expression<'a>,
 ) -> Result<Place, CompilerError> {
     if !is_reorderable_expression(builder, expr, true) {
         builder.record_error(CompilerErrorDetail {
@@ -6405,7 +6359,7 @@ fn lower_reorderable_expression(
 /// arm; optional chains (`ChainExpression`) were not handled by the original
 /// (`OptionalMemberExpression` fell to `_ => false`), so they return false here.
 fn is_reorderable_expression(
-    builder: &HirBuilder,
+    builder: &HirBuilder<'_, '_>,
     expr: &oxc::Expression,
     allow_local_identifiers: bool,
 ) -> bool {
@@ -6555,9 +6509,9 @@ fn is_reorderable_expression(
     }
 }
 
-fn lower_statement(
-    builder: &mut HirBuilder,
-    stmt: &oxc::Statement,
+fn lower_statement<'a>(
+    builder: &mut HirBuilder<'a, '_>,
+    stmt: &'a oxc::Statement<'a>,
     _label: Option<&str>,
     parent_scope: Option<crate::scope::ScopeId>,
 ) -> Result<(), CompilerDiagnostic> {
@@ -7460,9 +7414,9 @@ fn lower_statement(
 /// Lower a `VariableDeclaration`, mirroring the original `Statement::VariableDeclaration`
 /// arm (extracted so the `ForStatement` init can reuse it without re-wrapping in a
 /// `Statement`).
-fn lower_variable_declaration(
-    builder: &mut HirBuilder,
-    var_decl: &oxc::VariableDeclaration,
+fn lower_variable_declaration<'a>(
+    builder: &mut HirBuilder<'a, '_>,
+    var_decl: &'a oxc::VariableDeclaration<'a>,
 ) -> Result<(), CompilerDiagnostic> {
     use oxc::VariableDeclarationKind as VK;
     if matches!(var_decl.kind, VK::Var) {
@@ -7591,9 +7545,9 @@ fn lower_variable_declaration(
 /// Lower the `left` target of a for-in / for-of loop, dispatching to the binding
 /// assignment (for `VariableDeclaration`) or assignment-target (for plain
 /// patterns) lowering. Mirrors the original `ForInOfLeft` match.
-fn lower_for_in_of_left(
-    builder: &mut HirBuilder,
-    left: &oxc::ForStatementLeft,
+fn lower_for_in_of_left<'a>(
+    builder: &mut HirBuilder<'a, '_>,
+    left: &'a oxc::ForStatementLeft<'a>,
     left_loc: Option<SourceLocation>,
     value: Place,
 ) -> Result<Option<Place>, CompilerError> {
@@ -7638,7 +7592,7 @@ fn lower_for_in_of_left(
 /// Collect identifier locs from a destructured catch-clause pattern, for error
 /// reporting (Babel doesn't register destructured catch bindings).
 fn collect_catch_pattern_identifier_locs(
-    builder: &HirBuilder,
+    builder: &HirBuilder<'_, '_>,
     pat: &oxc::BindingPattern,
     locs: &mut Vec<Option<SourceLocation>>,
 ) {

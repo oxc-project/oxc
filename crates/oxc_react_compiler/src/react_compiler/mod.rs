@@ -8,11 +8,15 @@ pub mod debug_print {
     use crate::react_compiler_hir::environment::Environment;
     use crate::react_compiler_hir::print::PrintFormatter;
 
-    pub fn debug_hir(_hir: &HirFunction, _env: &Environment) -> String {
+    pub fn debug_hir<'h>(_hir: &HirFunction<'h>, _env: &Environment<'h>) -> String {
         String::new()
     }
 
-    pub fn format_hir_function_into(_fmt: &mut PrintFormatter, _func: &HirFunction) {}
+    pub fn format_hir_function_into<'h>(
+        _fmt: &mut PrintFormatter<'_, 'h>,
+        _func: &HirFunction<'h>,
+    ) {
+    }
 }
 pub mod entrypoint;
 pub mod timing;

@@ -686,10 +686,12 @@ pub fn compile_fn<'a>(
         crate::react_compiler_reactive_scopes::build_reactive_function(&hir, &env)?;
     context.timing.stop();
 
-    let hir_formatter = |fmt: &mut crate::react_compiler_hir::print::PrintFormatter,
-                         func: &crate::react_compiler_hir::HirFunction| {
+    fn hir_formatter<'h>(
+        fmt: &mut crate::react_compiler_hir::print::PrintFormatter<'_, 'h>,
+        func: &crate::react_compiler_hir::HirFunction<'h>,
+    ) {
         debug_print::format_hir_function_into(fmt, func);
-    };
+    }
 
     if context.debug_enabled {
         context.timing.start("debug_print:BuildReactiveFunction");
@@ -1042,10 +1044,10 @@ pub fn compile_outlined_fn<'a>(
 /// Currently unused (kept for the outlined-function port); threads the oxc
 /// `AstBuilder` like `compile_fn`.
 #[allow(dead_code)]
-fn run_pipeline_passes<'a>(
+fn run_pipeline_passes<'a, 'b>(
     ast: &oxc_ast::AstBuilder<'a>,
-    hir: &mut crate::react_compiler_hir::HirFunction,
-    env: &mut Environment,
+    hir: &mut crate::react_compiler_hir::HirFunction<'b>,
+    env: &mut Environment<'b>,
     context: &mut ProgramContext,
 ) -> Result<CodegenFunction<'a>, CompilerError> {
     crate::react_compiler_optimization::prune_maybe_throws(hir, &mut env.functions)?;

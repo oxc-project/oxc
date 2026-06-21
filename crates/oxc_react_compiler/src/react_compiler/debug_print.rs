@@ -9,12 +9,12 @@ use crate::react_compiler_hir::{
 // DebugPrinter struct — thin wrapper around PrintFormatter for HIR-specific logic
 // =============================================================================
 
-struct DebugPrinter<'a> {
-    fmt: PrintFormatter<'a>,
+struct DebugPrinter<'a, 'h> {
+    fmt: PrintFormatter<'a, 'h>,
 }
 
-impl<'a> DebugPrinter<'a> {
-    fn new(env: &'a Environment) -> Self {
+impl<'a, 'h> DebugPrinter<'a, 'h> {
+    fn new(env: &'a Environment<'h>) -> Self {
         Self { fmt: PrintFormatter::new(env) }
     }
 
@@ -22,7 +22,7 @@ impl<'a> DebugPrinter<'a> {
     // Function
     // =========================================================================
 
-    fn format_function(&mut self, func: &HirFunction) {
+    fn format_function(&mut self, func: &HirFunction<'h>) {
         self.fmt.indent();
         self.fmt.line(&format!(
             "id: {}",
@@ -123,7 +123,7 @@ impl<'a> DebugPrinter<'a> {
         &mut self,
         block_id: &BlockId,
         block: &BasicBlock,
-        instructions: &[Instruction],
+        instructions: &[Instruction<'h>],
     ) {
         self.fmt.line(&format!("bb{} ({}):", block_id.0, block.kind));
         self.fmt.indent();
@@ -183,7 +183,7 @@ impl<'a> DebugPrinter<'a> {
     // Instruction
     // =========================================================================
 
-    fn format_instruction(&mut self, instr: &Instruction, index: usize) {
+    fn format_instruction(&mut self, instr: &Instruction<'h>, index: usize) {
         self.fmt.line(&format!("[{}] Instruction {{", index));
         self.fmt.indent();
         self.fmt.line(&format!("id: {}", instr.id.0));
@@ -193,7 +193,7 @@ impl<'a> DebugPrinter<'a> {
         // For the HIR printer, inner functions are formatted via format_function
         self.fmt.format_instruction_value(
             &instr.value,
-            Some(&|fmt: &mut PrintFormatter, func: &HirFunction| {
+            Some(&|fmt: &mut PrintFormatter<'_, 'h>, func: &HirFunction<'h>| {
                 // We need to recursively format the inner function
                 // Use a temporary DebugPrinter that shares the formatter state
                 let mut inner = DebugPrinter {
@@ -533,7 +533,7 @@ impl<'a> DebugPrinter<'a> {
 // Entry point
 // =============================================================================
 
-pub fn debug_hir(hir: &HirFunction, env: &Environment) -> String {
+pub fn debug_hir<'h>(hir: &HirFunction<'h>, env: &Environment<'h>) -> String {
     let mut printer = DebugPrinter::new(env);
     printer.format_function(hir);
 
@@ -566,7 +566,10 @@ pub fn format_errors(error: &CompilerError) -> String {
 /// Format an HIR function into a reactive PrintFormatter.
 /// This bridges the two debug printers so inner functions in FunctionExpression/ObjectMethod
 /// can be printed within the reactive function output.
-pub fn format_hir_function_into(reactive_fmt: &mut PrintFormatter, func: &HirFunction) {
+pub fn format_hir_function_into<'h>(
+    reactive_fmt: &mut PrintFormatter<'_, 'h>,
+    func: &HirFunction<'h>,
+) {
     // Create a temporary DebugPrinter that shares the same environment
     let mut printer = DebugPrinter {
         fmt: PrintFormatter {

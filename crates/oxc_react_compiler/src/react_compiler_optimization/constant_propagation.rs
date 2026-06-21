@@ -54,7 +54,7 @@ enum Constant {
 }
 
 impl Constant {
-    fn into_instruction_value(self) -> InstructionValue {
+    fn into_instruction_value<'a>(self) -> InstructionValue<'a> {
         match self {
             Constant::Primitive { value, loc } => InstructionValue::Primitive { value, loc },
             Constant::LoadGlobal { binding, loc } => InstructionValue::LoadGlobal { binding, loc },
@@ -70,14 +70,14 @@ type Constants = FxHashMap<IdentifierId, Constant>;
 // Public entry point
 // =============================================================================
 
-pub fn constant_propagation(func: &mut HirFunction, env: &mut Environment) {
+pub fn constant_propagation<'a>(func: &mut HirFunction<'a>, env: &mut Environment<'a>) {
     let mut constants: Constants = FxHashMap::default();
     constant_propagation_impl(func, env, &mut constants);
 }
 
-fn constant_propagation_impl(
-    func: &mut HirFunction,
-    env: &mut Environment,
+fn constant_propagation_impl<'a>(
+    func: &mut HirFunction<'a>,
+    env: &mut Environment<'a>,
     constants: &mut Constants,
 ) {
     loop {
@@ -121,9 +121,9 @@ fn constant_propagation_impl(
     }
 }
 
-fn apply_constant_propagation(
-    func: &mut HirFunction,
-    env: &mut Environment,
+fn apply_constant_propagation<'a>(
+    func: &mut HirFunction<'a>,
+    env: &mut Environment<'a>,
     constants: &mut Constants,
 ) -> bool {
     let mut has_changes = false;
@@ -256,10 +256,10 @@ fn evaluate_phi(phi: &Phi, constants: &Constants) -> Option<Constant> {
 // Instruction evaluation
 // =============================================================================
 
-fn evaluate_instruction(
+fn evaluate_instruction<'a>(
     constants: &mut Constants,
-    func: &mut HirFunction,
-    env: &mut Environment,
+    func: &mut HirFunction<'a>,
+    env: &mut Environment<'a>,
     instr_id: crate::react_compiler_hir::InstructionId,
 ) -> Option<Constant> {
     let instr = &func.instructions[instr_id.0 as usize];

@@ -127,7 +127,7 @@ fn new_block(id: BlockId, kind: BlockKind) -> WipBlock {
 // HirBuilder: helper struct for constructing a CFG
 // ---------------------------------------------------------------------------
 
-pub struct HirBuilder<'a> {
+pub struct HirBuilder<'a, 'b> {
     completed: FxIndexMap<BlockId, BasicBlock>,
     current: WipBlock,
     entry: BlockId,
@@ -140,11 +140,11 @@ pub struct HirBuilder<'a> {
     /// Names already used by bindings, for collision avoidance.
     /// Maps name string -> how many times it has been used (for appending _0, _1, ...).
     used_names: FxIndexMap<String, BindingId>,
-    env: &'a mut Environment,
-    scope_info: &'a ScopeInfo,
+    env: &'b mut Environment<'a>,
+    scope_info: &'b ScopeInfo,
     exception_handler_stack: Vec<BlockId>,
     /// Flat instruction table being built up.
-    instruction_table: Vec<Instruction>,
+    instruction_table: Vec<Instruction<'a>>,
     /// Traversal context: counts the number of `fbt` tag parents
     /// of the current babel node.
     pub fbt_depth: u32,
@@ -160,14 +160,14 @@ pub struct HirBuilder<'a> {
     /// Prevents the same scope from being reused for different synthetic nodes.
     claimed_synthetic_scopes: rustc_hash::FxHashSet<ScopeId>,
     /// Index mapping identifier byte offsets to source locations and JSX status.
-    identifier_locs: &'a IdentifierLocIndex,
+    identifier_locs: &'b IdentifierLocIndex,
     /// Line-offset table for computing `SourceLocation`s from oxc byte spans.
     /// Built once per file and shared; replaces the Babel `base.loc` the
     /// front-end used to read off the now-removed Babel-shaped AST.
-    line_offsets: &'a LineOffsets,
+    line_offsets: &'b LineOffsets,
 }
 
-impl<'a> HirBuilder<'a> {
+impl<'a, 'b> HirBuilder<'a, 'b> {
     // -----------------------------------------------------------------------
     // M2: Core methods
     // -----------------------------------------------------------------------
@@ -181,8 +181,8 @@ impl<'a> HirBuilder<'a> {
     /// - `context`: optional pre-existing captured context map
     /// - `entry_block_kind`: the kind of the entry block (defaults to `Block`)
     pub fn new(
-        env: &'a mut Environment,
-        scope_info: &'a ScopeInfo,
+        env: &'b mut Environment<'a>,
+        scope_info: &'b ScopeInfo,
         function_scope: ScopeId,
         component_scope: ScopeId,
         context_identifiers: rustc_hash::FxHashSet<BindingId>,
@@ -190,8 +190,8 @@ impl<'a> HirBuilder<'a> {
         context: Option<FxIndexMap<BindingId, Option<SourceLocation>>>,
         entry_block_kind: Option<BlockKind>,
         used_names: Option<FxIndexMap<String, BindingId>>,
-        identifier_locs: &'a IdentifierLocIndex,
-        line_offsets: &'a LineOffsets,
+        identifier_locs: &'b IdentifierLocIndex,
+        line_offsets: &'b LineOffsets,
     ) -> Self {
         let entry = env.next_block_id();
         let kind = entry_block_kind.unwrap_or(BlockKind::Block);
@@ -243,12 +243,12 @@ impl<'a> HirBuilder<'a> {
     }
 
     /// Access the environment.
-    pub fn environment(&self) -> &Environment {
+    pub fn environment(&self) -> &Environment<'a> {
         self.env
     }
 
     /// Access the environment mutably.
-    pub fn environment_mut(&mut self) -> &mut Environment {
+    pub fn environment_mut(&mut self) -> &mut Environment<'a> {
         self.env
     }
 
@@ -312,19 +312,19 @@ impl<'a> HirBuilder<'a> {
     /// Access scope_info and environment mutably at the same time.
     /// This is safe because they are disjoint fields, but Rust's borrow checker
     /// can't prove this through method calls alone.
-    pub fn scope_info_and_env_mut(&mut self) -> (&ScopeInfo, &mut Environment) {
+    pub fn scope_info_and_env_mut(&mut self) -> (&ScopeInfo, &mut Environment<'a>) {
         (self.scope_info, self.env)
     }
 
     /// Access the identifier location index.
     /// Returns the 'a reference to avoid conflicts with mutable borrows on self.
-    pub fn identifier_locs(&self) -> &'a IdentifierLocIndex {
+    pub fn identifier_locs(&self) -> &'b IdentifierLocIndex {
         self.identifier_locs
     }
 
     /// Access the line-offset table.
     /// Returns the 'a reference to avoid conflicts with mutable borrows on self.
-    pub fn line_offsets(&self) -> &'a LineOffsets {
+    pub fn line_offsets(&self) -> &'b LineOffsets {
         self.line_offsets
     }
 
@@ -363,7 +363,7 @@ impl<'a> HirBuilder<'a> {
     /// If an exception handler is active, also emits a MaybeThrow terminal
     /// after the instruction to model potential control flow to the handler,
     /// then continues in a new block.
-    pub fn push(&mut self, instruction: Instruction) {
+    pub fn push(&mut self, instruction: Instruction<'a>) {
         let loc = instruction.loc.clone();
         let instr_id = InstructionId(self.instruction_table.len() as u32);
         self.instruction_table.push(instruction);
@@ -733,7 +733,12 @@ impl<'a> HirBuilder<'a> {
     pub fn build(
         mut self,
     ) -> Result<
-        (HIR, Vec<Instruction>, FxIndexMap<String, BindingId>, FxIndexMap<BindingId, IdentifierId>),
+        (
+            HIR,
+            Vec<Instruction<'a>>,
+            FxIndexMap<String, BindingId>,
+            FxIndexMap<BindingId, IdentifierId>,
+        ),
         CompilerError,
     > {
         let mut hir = HIR { blocks: std::mem::take(&mut self.completed), entry: self.entry };

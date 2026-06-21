@@ -37,8 +37,8 @@ struct ManualMemoBlockState {
 }
 
 /// Top-level visitor state.
-struct VisitorState<'a> {
-    env: &'a mut Environment,
+struct VisitorState<'a, 'h> {
+    env: &'a mut Environment<'h>,
     manual_memo_state: Option<ManualMemoBlockState>,
     /// Completed (non-pruned) scope IDs.
     scopes: FxHashSet<ScopeId>,
@@ -55,7 +55,7 @@ struct VisitorState<'a> {
 /// 1. Dependencies' scopes have completed before the memo block starts
 /// 2. Memoized values are actually within scopes (not unmemoized)
 /// 3. Inferred scope dependencies match the source dependencies
-pub fn validate_preserved_manual_memoization(func: &ReactiveFunction, env: &mut Environment) {
+pub fn validate_preserved_manual_memoization(func: &ReactiveFunction<'_>, env: &mut Environment<'_>) {
     let mut state = VisitorState {
         env,
         manual_memo_state: None,
@@ -70,13 +70,13 @@ fn is_named(ident: &Identifier) -> bool {
     matches!(ident.name, Some(IdentifierName::Named(_)))
 }
 
-fn visit_block(block: &ReactiveBlock, state: &mut VisitorState) {
+fn visit_block(block: &ReactiveBlock, state: &mut VisitorState<'_, '_>) {
     for stmt in block {
         visit_statement(stmt, state);
     }
 }
 
-fn visit_statement(stmt: &ReactiveStatement, state: &mut VisitorState) {
+fn visit_statement(stmt: &ReactiveStatement, state: &mut VisitorState<'_, '_>) {
     match stmt {
         ReactiveStatement::Instruction(instr) => {
             visit_instruction(instr, state);
@@ -95,7 +95,7 @@ fn visit_statement(stmt: &ReactiveStatement, state: &mut VisitorState) {
 
 fn visit_terminal(
     terminal: &crate::react_compiler_hir::ReactiveTerminalStatement,
-    state: &mut VisitorState,
+    state: &mut VisitorState<'_, '_>,
 ) {
     use crate::react_compiler_hir::ReactiveTerminal;
     match &terminal.terminal {
@@ -130,7 +130,7 @@ fn visit_terminal(
     }
 }
 
-fn visit_scope(scope_block: &ReactiveScopeBlock, state: &mut VisitorState) {
+fn visit_scope(scope_block: &ReactiveScopeBlock, state: &mut VisitorState<'_, '_>) {
     // Traverse the scope's instructions first
     visit_block(&scope_block.instructions, state);
 
@@ -168,13 +168,13 @@ fn visit_scope(scope_block: &ReactiveScopeBlock, state: &mut VisitorState) {
 
 fn visit_pruned_scope(
     pruned: &crate::react_compiler_hir::PrunedReactiveScopeBlock,
-    state: &mut VisitorState,
+    state: &mut VisitorState<'_, '_>,
 ) {
     visit_block(&pruned.instructions, state);
     state.pruned_scopes.insert(pruned.scope);
 }
 
-fn visit_instruction(instr: &ReactiveInstruction, state: &mut VisitorState) {
+fn visit_instruction(instr: &ReactiveInstruction, state: &mut VisitorState<'_, '_>) {
     // Record temporaries and deps in the instruction's value
     record_temporaries(instr, state);
 
@@ -336,7 +336,7 @@ fn record_unmemoized_error(loc: Option<SourceLocation>, env: &mut Environment) {
 
 /// Record temporaries from an instruction.
 /// TS: `recordTemporaries`
-fn record_temporaries(instr: &ReactiveInstruction, state: &mut VisitorState) {
+fn record_temporaries(instr: &ReactiveInstruction, state: &mut VisitorState<'_, '_>) {
     let lvalue = &instr.lvalue;
     let lv_id = lvalue.as_ref().map(|lv| lv.identifier);
     if let Some(id) = lv_id {
@@ -373,7 +373,7 @@ fn record_temporaries(instr: &ReactiveInstruction, state: &mut VisitorState) {
 
 /// Record dependencies from a reactive value.
 /// TS: `recordDepsInValue`
-fn record_deps_in_value(value: &ReactiveValue, state: &mut VisitorState) {
+fn record_deps_in_value(value: &ReactiveValue, state: &mut VisitorState<'_, '_>) {
     match value {
         ReactiveValue::SequenceExpression { instructions, value, .. } => {
             for instr in instructions {
