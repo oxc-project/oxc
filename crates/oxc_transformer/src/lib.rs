@@ -645,7 +645,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
                 let Statement::ExpressionStatement(expr_stmt) = stmt else {
                     continue;
                 };
-                let expression = Some(expr_stmt.expression.take_in(ctx.ast));
+                let expression = Some(expr_stmt.expression.take_in(ctx));
                 *stmt = ctx.ast.statement_return(SPAN, expression);
                 return;
             }

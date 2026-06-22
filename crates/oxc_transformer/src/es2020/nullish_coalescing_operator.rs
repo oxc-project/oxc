@@ -54,9 +54,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for NullishCoalescingOperator {
         }
 
         // Take ownership of the `LogicalExpression`
-        let Expression::LogicalExpression(logical_expr) = expr.take_in(ctx.ast) else {
-            unreachable!()
-        };
+        let Expression::LogicalExpression(logical_expr) = expr.take_in(ctx) else { unreachable!() };
 
         *expr = self.transform_logical_expression(logical_expr, ctx);
     }

@@ -262,7 +262,8 @@ if (
 }
 // Named rule properties are optional, so the string index signature must
 // accept `undefined` to keep the generated declaration internally valid.
-dummyRuleMapAdditionalProperties.tsType = "DummyRule | undefined";
+// Set the type manually, so `strictIndexSignatures` will append `| undefined` to it.
+dummyRuleMapAdditionalProperties.tsType = "DummyRule";
 
 const bannerComment =
   "/*\n" +

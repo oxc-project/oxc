@@ -4,6 +4,32 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.71.0] - 2026-06-22
+
+### 🚀 Features
+
+- 0dc2405 linter: Add schema for `eslint/no-restricted-properties` (#23619) (Sysix)
+- b638d0e linter: Add schema for `node/callback-return` (#23615) (Sysix)
+- eb8bedc linter: Add schema for `import/extensions` (#23557) (WaterWhisperer)
+- 46f3625 linter: Implement node/no-sync rule (#23589) (fujitani sora)
+- b01739a linter: Add schema for `unicorn/numeric-separators-style` (#23554) (Mikhail Baev)
+- 68afd2a linter/node: Implement `no-mixed-requires` rule (#23539) (fujitani sora)
+- a421215 linter: Add schema for `eslint/prefer-destructuring` (#23410) (WaterWhisperer)
+- 84438be linter/jsdoc: Added missing options to `require-param-description` (#23416) (kapobajza)
+- 51910df linter/jsdoc: Add missing options to `require-param-type` rule (#23418) (kapobajza)
+- e90925f linter/unicorn: Implement prefer-number-coercion rule (#23497) (Shekhu☺️)
+- dd1c866 linter/vue: Implement no-async-in-computed-properties rule (#23493) (bab)
+- b02444e linter: Add schema for `react/jsx-no-script-url` (#23475) (WaterWhisperer)
+- a8dce46 linter/unicorn: Implement `max-nested-calls` rule (#23461) (arieleli01212)
+
+### 🐛 Bug Fixes
+
+- a303c23 linter/jsx-a11y: Align `anchor-is-valid` config with upstream (#23446) (camc314)
+
+### 📚 Documentation
+
+- b50bf4d linter: Remove manually written options doc for `eslint/arrow-body-style` (#23490) (Mikhail Baev)
+
 ## [1.70.0] - 2026-06-15
 
 ### 🚀 Features
