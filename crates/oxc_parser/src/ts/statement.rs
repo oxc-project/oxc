@@ -712,8 +712,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             let this_span = self.cur_token().span();
             self.error(diagnostics::identifier_reserved_word(this_span, "this"));
             self.bump_any();
-            // Recover by creating a dummy identifier
-            let ident = self.ast.alloc_identifier_reference(this_span, "this");
+            // Recover by creating an identifier
+            let this = this_span.source_text(self.source_text);
+            debug_assert_eq!(this, "this");
+            let ident = self.ast.alloc_identifier_reference(this_span, this);
             return TSModuleReference::IdentifierReference(ident);
         }
 
