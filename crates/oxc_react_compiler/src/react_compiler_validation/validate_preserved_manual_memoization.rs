@@ -55,7 +55,10 @@ struct VisitorState<'a, 'h> {
 /// 1. Dependencies' scopes have completed before the memo block starts
 /// 2. Memoized values are actually within scopes (not unmemoized)
 /// 3. Inferred scope dependencies match the source dependencies
-pub fn validate_preserved_manual_memoization(func: &ReactiveFunction<'_>, env: &mut Environment<'_>) {
+pub fn validate_preserved_manual_memoization(
+    func: &ReactiveFunction<'_>,
+    env: &mut Environment<'_>,
+) {
     let mut state = VisitorState {
         env,
         manual_memo_state: None,

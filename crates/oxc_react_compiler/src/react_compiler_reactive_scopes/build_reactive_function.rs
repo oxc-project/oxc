@@ -303,7 +303,10 @@ struct Driver<'a, 'b, 'h> {
 }
 
 impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
-    fn traverse_block(&mut self, block_id: BlockId) -> Result<ReactiveBlock<'a>, CompilerDiagnostic> {
+    fn traverse_block(
+        &mut self,
+        block_id: BlockId,
+    ) -> Result<ReactiveBlock<'a>, CompilerDiagnostic> {
         let mut block_value = Vec::new();
         self.visit_block(block_id, &mut block_value)?;
         Ok(block_value)

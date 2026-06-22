@@ -67,7 +67,8 @@ fn outline_jsx_impl<'a>(
         let block = &func.body.blocks[block_id];
         let instr_ids = block.instructions.clone();
 
-        let mut rewrite_instr: FxHashMap<EvaluationOrder, Vec<Instruction<'a>>> = FxHashMap::default();
+        let mut rewrite_instr: FxHashMap<EvaluationOrder, Vec<Instruction<'a>>> =
+            FxHashMap::default();
         let mut jsx_group: Vec<JsxInstrInfo> = Vec::new();
         let mut children_ids: FxHashSet<IdentifierId> = FxHashSet::default();
 

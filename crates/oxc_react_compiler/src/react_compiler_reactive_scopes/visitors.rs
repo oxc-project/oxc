@@ -135,11 +135,7 @@ pub trait ReactiveFunctionVisitor<'a> {
         self.traverse_instruction(instruction, state);
     }
 
-    fn traverse_instruction(
-        &self,
-        instruction: &ReactiveInstruction<'a>,
-        state: &mut Self::State,
-    ) {
+    fn traverse_instruction(&self, instruction: &ReactiveInstruction<'a>, state: &mut Self::State) {
         self.visit_id(instruction.id, state);
         // Visit instruction-level lvalue
         if let Some(lvalue) = &instruction.lvalue {
@@ -158,11 +154,7 @@ pub trait ReactiveFunctionVisitor<'a> {
         self.traverse_terminal(stmt, state);
     }
 
-    fn traverse_terminal(
-        &self,
-        stmt: &ReactiveTerminalStatement<'a>,
-        state: &mut Self::State,
-    ) {
+    fn traverse_terminal(&self, stmt: &ReactiveTerminalStatement<'a>, state: &mut Self::State) {
         let terminal = &stmt.terminal;
         let id = terminal_id(terminal);
         self.visit_id(id, state);
