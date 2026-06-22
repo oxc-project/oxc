@@ -121,6 +121,12 @@ pub struct ScopeInfo {
 
     /// The program-level (module) scope. Always scopes[0].
     pub program_scope: ScopeId,
+
+    /// Direct child scopes per scope (`children[id.0]` = its child scope ids),
+    /// built once from the parent links. Lets descendant queries
+    /// (`find_block_scope_by_bindings`) run in O(descendants) instead of a
+    /// per-call O(scopes²) fixpoint over every scope.
+    pub children: Vec<Vec<ScopeId>>,
 }
 
 impl ScopeInfo {
@@ -181,18 +187,18 @@ impl ScopeInfo {
         name: &str,
         ancestor: ScopeId,
     ) -> Option<&BindingData> {
+        // Collect `ancestor` plus all transitive descendants via the precomputed
+        // children adjacency — O(descendants). This previously ran a fixpoint that
+        // rescanned every scope on each pass (O(scopes²) per call); since these
+        // descendant queries run per block statement, they dominated lowering on
+        // large components. The resulting set is identical, so selection is unchanged.
         let mut descendants = rustc_hash::FxHashSet::default();
         descendants.insert(ancestor);
-        let mut changed = true;
-        while changed {
-            changed = false;
-            for (i, scope) in self.scopes.iter().enumerate() {
-                let sid = ScopeId(i as u32);
-                if let Some(parent) = scope.parent {
-                    if descendants.contains(&parent) && !descendants.contains(&sid) {
-                        descendants.insert(sid);
-                        changed = true;
-                    }
+        let mut stack = vec![ancestor];
+        while let Some(sid) = stack.pop() {
+            for &child in &self.children[sid.0 as usize] {
+                if descendants.insert(child) {
+                    stack.push(child);
                 }
             }
         }
@@ -212,18 +218,18 @@ impl ScopeInfo {
         name: &str,
         ancestor: ScopeId,
     ) -> Option<(BindingId, &BindingData)> {
+        // Collect `ancestor` plus all transitive descendants via the precomputed
+        // children adjacency — O(descendants). This previously ran a fixpoint that
+        // rescanned every scope on each pass (O(scopes²) per call); since these
+        // descendant queries run per block statement, they dominated lowering on
+        // large components. The resulting set is identical, so selection is unchanged.
         let mut descendants = rustc_hash::FxHashSet::default();
         descendants.insert(ancestor);
-        let mut changed = true;
-        while changed {
-            changed = false;
-            for (i, scope) in self.scopes.iter().enumerate() {
-                let sid = ScopeId(i as u32);
-                if let Some(parent) = scope.parent {
-                    if descendants.contains(&parent) && !descendants.contains(&sid) {
-                        descendants.insert(sid);
-                        changed = true;
-                    }
+        let mut stack = vec![ancestor];
+        while let Some(sid) = stack.pop() {
+            for &child in &self.children[sid.0 as usize] {
+                if descendants.insert(child) {
+                    stack.push(child);
                 }
             }
         }
@@ -275,18 +281,18 @@ impl ScopeInfo {
         ancestor: ScopeId,
         is_claimed: impl Fn(ScopeId) -> bool,
     ) -> Option<ScopeId> {
+        // Collect `ancestor` plus all transitive descendants via the precomputed
+        // children adjacency — O(descendants). This previously ran a fixpoint that
+        // rescanned every scope on each pass (O(scopes²) per call); since these
+        // descendant queries run per block statement, they dominated lowering on
+        // large components. The resulting set is identical, so selection is unchanged.
         let mut descendants = rustc_hash::FxHashSet::default();
         descendants.insert(ancestor);
-        let mut changed = true;
-        while changed {
-            changed = false;
-            for (i, scope) in self.scopes.iter().enumerate() {
-                let sid = ScopeId(i as u32);
-                if let Some(parent) = scope.parent {
-                    if descendants.contains(&parent) && !descendants.contains(&sid) {
-                        descendants.insert(sid);
-                        changed = true;
-                    }
+        let mut stack = vec![ancestor];
+        while let Some(sid) = stack.pop() {
+            for &child in &self.children[sid.0 as usize] {
+                if descendants.insert(child) {
+                    stack.push(child);
                 }
             }
         }

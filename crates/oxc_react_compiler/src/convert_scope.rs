@@ -252,6 +252,15 @@ pub fn convert_scope_info(semantic: &Semantic, _program: &Program) -> ScopeInfo 
 
     let program_scope = ScopeId(scoping.root_scope_id().index() as u32);
 
+    // Build the child-scope adjacency once from the parent links so descendant
+    // queries don't rescan every scope per call.
+    let mut children: Vec<Vec<ScopeId>> = vec![Vec::new(); scopes.len()];
+    for (i, scope) in scopes.iter().enumerate() {
+        if let Some(parent) = scope.parent {
+            children[parent.0 as usize].push(ScopeId(i as u32));
+        }
+    }
+
     ScopeInfo {
         scopes,
         bindings,
@@ -261,6 +270,7 @@ pub fn convert_scope_info(semantic: &Semantic, _program: &Program) -> ScopeInfo 
         ref_node_id_to_binding,
         node_id_to_scope,
         program_scope,
+        children,
     }
 }
 
