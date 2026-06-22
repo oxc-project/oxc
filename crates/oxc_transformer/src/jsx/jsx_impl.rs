@@ -427,8 +427,8 @@ impl<'a> Pragma<'a> {
             Self::ImportMeta(parts) => {
                 let object = ctx.ast.expression_meta_property(
                     SPAN,
-                    ctx.ast.identifier_name(SPAN, Str::from("import")),
-                    ctx.ast.identifier_name(SPAN, Str::from("meta")),
+                    ctx.ast.identifier_name(SPAN, "import"),
+                    ctx.ast.identifier_name(SPAN, "meta"),
                 );
                 (object, parts.iter())
             }

@@ -297,7 +297,7 @@ impl<'a> ClassProperties<'a> {
         call_expr.callee = Expression::from(ctx.ast.member_expression_static(
             SPAN,
             callee,
-            ctx.ast.identifier_name(SPAN, Str::from("call")),
+            ctx.ast.identifier_name(SPAN, "call"),
             // Make sure the `callee` can access `call` safely. i.e `callee?.()` -> `callee?.call()`
             mem::replace(&mut call_expr.optional, false),
         ));
@@ -1771,7 +1771,7 @@ impl<'a> ClassProperties<'a> {
         let callee = Expression::from(ctx.ast.member_expression_static(
             SPAN,
             callee,
-            ctx.ast.identifier_name(SPAN, Str::from("bind")),
+            ctx.ast.identifier_name(SPAN, "bind"),
             false,
         ));
         let arguments = ctx.ast.vec1(Argument::from(context));
