@@ -56,6 +56,7 @@ declare_oxc_lint!(
     suspicious,
     config = ConsistentReturnConfig,
     version = "0.0.8",
+    short_description = "Enforce consistent return behavior in functions.",
 );
 
 impl Rule for ConsistentReturn {

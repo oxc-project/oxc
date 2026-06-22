@@ -86,6 +86,7 @@ declare_oxc_lint!(
     typescript,
     style,
     version = "0.0.7",
+    short_description = "Require that function overload signatures be consecutive.",
 );
 
 #[derive(PartialEq, Debug)]

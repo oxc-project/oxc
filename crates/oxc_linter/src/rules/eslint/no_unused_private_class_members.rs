@@ -89,6 +89,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     version = "0.1.1",
+    short_description = "Disallow unused private class members.",
 );
 
 impl Rule for NoUnusedPrivateClassMembers {

@@ -64,6 +64,7 @@ declare_oxc_lint!(
     suggestion,
     config = NoInferrableTypes,
     version = "0.14.0",
+    short_description = "Disallow explicit type declarations for variables or parameters initialized to a number, string, or boolean.",
 );
 
 impl Rule for NoInferrableTypes {
@@ -520,7 +521,7 @@ fn test() {
         (
             "
             class A {
-              a!: number = 1;
+              a: number = 1;
             }
                   ",
             Some(serde_json::json!([ { "ignoreProperties": false, }, ])),
@@ -604,7 +605,7 @@ fn test() {
         (
             "
             class A {
-              a!: number = 1;
+              a: number = 1;
             }
                   ",
             "

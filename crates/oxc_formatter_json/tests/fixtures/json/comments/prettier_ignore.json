@@ -1,0 +1,9 @@
+{
+  // prettier-ignore
+  "with_line_marker": [1,2,3],
+
+  /* prettier-ignore */
+  "with_block_marker": {"a":1,"b":2},
+
+  "sibling_formats_normally": true
+}

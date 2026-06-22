@@ -2,15 +2,14 @@ use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
     rules::ContextHost,
-    utils::{is_es5_component, is_es6_component},
+    utils::{AllowedOrDisallowInFunc, function_count_before_lifecycle_component},
 };
 
 fn no_did_mount_set_state_diagnostic(span: Span) -> OxcDiagnostic {
@@ -19,18 +18,8 @@ fn no_did_mount_set_state_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "kebab-case")]
-pub enum NoDidMountSetStateConfig {
-    /// Allow `setState` calls in nested functions within `componentDidMount`, the default behavior.
-    #[default]
-    Allowed,
-    /// When set, also disallows `setState` calls in nested functions within `componentDidMount`.
-    DisallowInFunc,
-}
-
 #[derive(Debug, Default, Clone, Deserialize)]
-pub struct NoDidMountSetState(NoDidMountSetStateConfig);
+pub struct NoDidMountSetState(AllowedOrDisallowInFunc);
 
 declare_oxc_lint!(
     /// ### What it does
@@ -79,8 +68,9 @@ declare_oxc_lint!(
     NoDidMountSetState,
     react,
     correctness,
-    config = NoDidMountSetStateConfig,
+    config = AllowedOrDisallowInFunc,
     version = "1.36.0",
+    short_description = "Disallow usage of `setState` in `componentDidMount`.",
 );
 
 impl Rule for NoDidMountSetState {
@@ -99,53 +89,15 @@ impl Rule for NoDidMountSetState {
             return;
         }
 
-        let ancestors: Vec<_> = ctx.nodes().ancestors(node.id()).skip(1).collect();
-
-        let component_did_mount_index =
-            ancestors.iter().position(|ancestor| match ancestor.kind() {
-                AstKind::ObjectProperty(prop)
-                    if prop.key.static_name().is_some_and(|key| key == "componentDidMount") =>
-                {
-                    true
-                }
-                AstKind::MethodDefinition(method)
-                    if method.key.static_name().is_some_and(|name| name == "componentDidMount") =>
-                {
-                    true
-                }
-                AstKind::PropertyDefinition(prop)
-                    if prop.key.static_name().is_some_and(|name| name == "componentDidMount") =>
-                {
-                    true
-                }
-                _ => false,
-            });
-
-        let Some(component_did_mount_idx) = component_did_mount_index else {
+        let Some(function_count_before_component_did_mount) =
+            function_count_before_lifecycle_component(node, ctx, "componentDidMount")
+        else {
             return;
         };
 
-        let in_component_did_mount = ancestors[component_did_mount_idx..]
-            .iter()
-            .any(|ancestor| is_es5_component(ancestor) || is_es6_component(ancestor));
-
-        if !in_component_did_mount {
-            return;
-        }
-
-        let function_count_before_component_did_mount = ancestors[..component_did_mount_idx]
-            .iter()
-            .filter(|ancestor| {
-                matches!(
-                    ancestor.kind(),
-                    AstKind::Function(_) | AstKind::ArrowFunctionExpression(_)
-                )
-            })
-            .count();
-
         let in_nested_function = function_count_before_component_did_mount > 1;
 
-        if in_nested_function && !matches!(self.0, NoDidMountSetStateConfig::DisallowInFunc) {
+        if in_nested_function && !matches!(self.0, AllowedOrDisallowInFunc::DisallowInFunc) {
             return;
         }
 

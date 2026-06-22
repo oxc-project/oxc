@@ -19,7 +19,9 @@ use crate::{
     symbol_value::SymbolValue,
 };
 
-use super::TraverseCtx;
+use oxc_ast_visit::Visit;
+
+use super::{TraverseCtx, drop_diff::DropDiff};
 
 pub fn is_exact_int64(num: f64) -> bool {
     num.fract() == 0.0
@@ -297,7 +299,6 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
             write_references_count,
             member_write_target_read_count,
             is_fresh_value,
-            scope_id,
         };
         self.state.symbol_values.init_value(symbol_id, symbol_value);
     }
@@ -360,5 +361,114 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         }
         let is_class = matches!(expr.without_parentheses(), Expression::ClassExpression(_));
         (options.class && is_class) || (options.function && !is_class)
+    }
+
+    /// Construct a `DropDiff` borrowing the per-pass dirty accumulator.
+    /// Used by the `replace_*` / `drop_*` helpers.
+    #[inline]
+    fn dirty_diff(&mut self) -> DropDiff<'a, '_> {
+        DropDiff::new(&mut self.state.dirty)
+    }
+
+    /// Replace an expression slot. Marks the pass as having mutated the AST.
+    ///
+    /// Prefer this over a direct `*slot = new; ctx.notice_change();` pair —
+    /// the mutation flag is private to `MinifierState`, so the typed helpers
+    /// are the only way to record the mutation (compiler-enforced).
+    #[inline]
+    pub fn replace_expression(&mut self, slot: &mut Expression<'a>, new: Expression<'a>) {
+        self.dirty_diff().visit_expression(slot);
+        *slot = new;
+        self.state.record_mutation();
+    }
+
+    /// Replace a statement slot. Marks the pass as having mutated the AST.
+    #[inline]
+    pub fn replace_statement(&mut self, slot: &mut Statement<'a>, new: Statement<'a>) {
+        self.dirty_diff().visit_statement(slot);
+        *slot = new;
+        self.state.record_mutation();
+    }
+
+    /// Replace an assignment-target-property slot. Marks the pass as having mutated the AST.
+    #[inline]
+    pub fn replace_assignment_target_property(
+        &mut self,
+        slot: &mut AssignmentTargetProperty<'a>,
+        new: AssignmentTargetProperty<'a>,
+    ) {
+        self.dirty_diff().visit_assignment_target_property(slot);
+        *slot = new;
+        self.state.record_mutation();
+    }
+
+    /// Replace a property-key slot. Marks the pass as having mutated the AST.
+    #[inline]
+    pub fn replace_property_key(&mut self, slot: &mut PropertyKey<'a>, new: PropertyKey<'a>) {
+        self.dirty_diff().visit_property_key(slot);
+        *slot = new;
+        self.state.record_mutation();
+    }
+
+    /// Replace a `for-in` / `for-of` statement's `left` slot. Same contract
+    /// as `replace_expression`.
+    #[inline]
+    pub fn replace_for_statement_left(
+        &mut self,
+        slot: &mut ForStatementLeft<'a>,
+        new: ForStatementLeft<'a>,
+    ) {
+        self.dirty_diff().visit_for_statement_left(slot);
+        *slot = new;
+        self.state.record_mutation();
+    }
+
+    /// Mark the pass as having mutated the AST in place (operand swap, in-place
+    /// field flip, collection element removal, etc.) where no slot replacement
+    /// happened. Prefer the `replace_*` helpers when the mutation IS a slot
+    /// replacement.
+    #[inline]
+    pub fn notice_change(&mut self) {
+        self.state.record_mutation();
+    }
+
+    /// Mark an expression subtree as about to be dropped (popped from a collection,
+    /// taken out of an Option, etc.). Walks the subtree to record dead references
+    /// and dropped direct-eval calls into the per-pass `PassDirty` accumulator.
+    ///
+    /// Use this helper at every site where a subtree is being removed from the AST
+    /// without an immediate slot-replacement helper (e.g. inside a `retain_mut`
+    /// predicate, before `field = None`, after `vec.pop()`).
+    #[inline]
+    pub fn drop_expression(&mut self, expr: &Expression<'a>) {
+        self.dirty_diff().visit_expression(expr);
+        self.state.record_mutation();
+    }
+
+    /// Mark a statement subtree as about to be dropped. Same contract as
+    /// `drop_expression`.
+    #[inline]
+    pub fn drop_statement(&mut self, stmt: &Statement<'a>) {
+        self.dirty_diff().visit_statement(stmt);
+        self.state.record_mutation();
+    }
+
+    /// Mark a class element subtree as about to be dropped. Same contract as
+    /// `drop_expression`.
+    #[inline]
+    pub fn drop_class_element(&mut self, element: &ClassElement<'a>) {
+        self.dirty_diff().visit_class_element(element);
+        self.state.record_mutation();
+    }
+
+    /// Mark a variable declarator as about to be dropped. Walks the whole
+    /// declarator — binding pattern, TS type annotation (which can contain
+    /// references, e.g. computed keys in a type literal), and init if still
+    /// attached. Same contract as `drop_expression`. If the init is kept
+    /// alive elsewhere, `take()` it out of the declarator before calling this.
+    #[inline]
+    pub fn drop_variable_declarator(&mut self, decl: &VariableDeclarator<'a>) {
+        self.dirty_diff().visit_variable_declarator(decl);
+        self.state.record_mutation();
     }
 }

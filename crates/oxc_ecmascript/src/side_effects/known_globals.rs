@@ -101,7 +101,7 @@ pub(super) fn is_error_constructor(name: &str) -> bool {
 }
 
 #[rustfmt::skip]
-pub(super) fn is_typed_array_constructor(name: &str) -> bool {
+pub fn is_typed_array_constructor(name: &str) -> bool {
     matches!(name, "Int8Array" | "Uint8Array" | "Uint8ClampedArray"
             | "Int16Array" | "Uint16Array" | "Int32Array" | "Uint32Array"
             | "Float32Array" | "Float64Array" | "BigInt64Array" | "BigUint64Array")
@@ -400,8 +400,11 @@ pub(super) fn is_pure_global_method_call(object: &str, method: &str) -> bool {
         "Date" => matches!(method, "now" | "parse" | "UTC"),
         "Math" => is_pure_math_method(method),
         "Number" => matches!(method, "isFinite" | "isInteger" | "isNaN" | "isSafeInteger" | "parseFloat" | "parseInt"),
-        "Object" => matches!(method, "create" | "getOwnPropertyDescriptor" | "getOwnPropertyDescriptors" | "getOwnPropertyNames"
-                | "getOwnPropertySymbols" | "getPrototypeOf" | "hasOwn" | "is" | "isExtensible" | "isFrozen" | "isSealed" | "keys"),
+        // Only `Object.is` is unconditionally pure. The introspection methods
+        // (`keys`, `getOwnPropertyDescriptor`, ...) can trigger Proxy traps on their
+        // target, and `Object.create` reads its `properties` argument; both are
+        // handled in `CallExpression::may_have_side_effects`.
+        "Object" => method == "is",
         "String" => matches!(method, "fromCharCode" | "fromCodePoint" | "raw"),
         "Symbol" => matches!(method, "for" | "keyFor"),
         "URL" => method == "canParse",

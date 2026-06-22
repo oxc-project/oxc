@@ -260,7 +260,7 @@ pub struct Reference {
     symbol_id: Option<SymbolId>,
     /// The scope in which this reference occurs.
     scope_id: ScopeId,
-    /// Describes how this referenced is used by other AST nodes. References can
+    /// Describes how this reference is used by other AST nodes. References can
     /// be reads, writes, or both.
     flags: ReferenceFlags,
 }

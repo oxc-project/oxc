@@ -1,8 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, AssignmentTarget, BindingPattern, CallExpression, Expression, ForInStatement,
-        ForOfStatement, ForStatement, VariableDeclarationKind,
+        Argument, AssignmentExpression, AssignmentTarget, BindingPattern, CallExpression,
+        Expression, ForInStatement, ForOfStatement, ForStatement, VariableDeclarationKind,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -58,7 +58,7 @@ fn loop_spread_likely_object_diagnostic(
         .with_labels([
             accumulator_decl_span.label("From this accumulator"),
             spread_span.label("From this spread"),
-            loop_span.label("For this loop"),
+            loop_span.primary_label("For this loop"),
         ])
 }
 fn loop_spread_likely_array_diagnostic(
@@ -72,7 +72,7 @@ fn loop_spread_likely_array_diagnostic(
         .with_labels([
             accumulator_decl_span.label("From this accumulator"),
             spread_span.label("From this spread"),
-            loop_span.label("For this loop"),
+            loop_span.primary_label("For this loop"),
         ])
 }
 
@@ -127,6 +127,7 @@ declare_oxc_lint!(
     oxc,
     perf,
     version = "0.0.19",
+    short_description = "Prevents using object or array spreads on accumulators in `Array.prototype.reduce()` and in loops.",
 );
 
 impl Rule for NoAccumulatingSpread {
@@ -246,7 +247,7 @@ fn check_loop_usage<'a>(
 fn find_assignment_expression<'a>(
     referenced_symbol_id: SymbolId,
     ctx: &LintContext<'a>,
-) -> Option<&'a oxc_ast::ast::AssignmentExpression<'a>> {
+) -> Option<&'a AssignmentExpression<'a>> {
     let write_reference =
         ctx.semantic().symbol_references(referenced_symbol_id).find(|r| r.is_write())?;
     let parent_node = ctx.nodes().parent_node(write_reference.node_id());

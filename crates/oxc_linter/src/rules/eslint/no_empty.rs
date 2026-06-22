@@ -55,6 +55,7 @@ declare_oxc_lint!(
     suggestion,
     config = NoEmpty,
     version = "0.0.3",
+    short_description = "Disallows empty block statements.",
 );
 
 impl Rule for NoEmpty {

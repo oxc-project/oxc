@@ -67,6 +67,7 @@ use crate::{
         var_declarations::VarDeclarationsStore,
     },
     context::TraverseCtx,
+    decorator::DecoratorOptions,
     state::TransformState,
     utils::ast_builder::{create_assignment, create_class_method, create_prototype_member},
 };
@@ -124,10 +125,10 @@ pub struct LegacyDecorator<'a> {
 }
 
 impl LegacyDecorator<'_> {
-    pub fn new(emit_decorator_metadata: bool) -> Self {
+    pub fn new(options: DecoratorOptions) -> Self {
         Self {
-            emit_decorator_metadata,
-            metadata: LegacyDecoratorMetadata::new(),
+            emit_decorator_metadata: options.emit_decorator_metadata,
+            metadata: LegacyDecoratorMetadata::new(options),
             class_decorated_data: None,
             decorations: FxHashMap::default(),
             class_decorations_stack: NonEmptyStack::new(ClassDecorations::default()),
@@ -996,7 +997,7 @@ impl<'a> LegacyDecorator<'a> {
         let span = class.span;
         class.r#type = ClassType::ClassExpression;
         let initializer = Self::get_class_initializer(
-            Expression::ClassExpression(class.take_in_box(ctx.ast)),
+            Expression::ClassExpression(class.take_in_box(ctx)),
             alias_binding,
             ctx,
         );
@@ -1253,7 +1254,7 @@ impl<'a> LegacyDecorator<'a> {
         decorations.extend(
             method
                 .decorators
-                .take_in(ctx.ast)
+                .take_in(ctx)
                 .into_iter()
                 .map(|decorator| ArrayExpressionElement::from(decorator.expression)),
         );
@@ -1380,7 +1381,7 @@ impl<'a> LegacyDecorator<'a> {
                 let binding = VarDeclarationsStore::create_uid_var_based_on_node(key, ctx);
                 let operator = AssignmentOperator::Assign;
                 let left = binding.create_write_target(ctx);
-                let right = key.to_expression_mut().take_in(ctx.ast);
+                let right = key.to_expression_mut().take_in(ctx);
                 let key_expr = ctx.ast.expression_assignment(SPAN, operator, left, right);
                 *key = PropertyKey::from(key_expr);
                 binding.create_read_expression(ctx)

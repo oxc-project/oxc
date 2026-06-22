@@ -621,14 +621,13 @@ impl ConfigStoreBuilder {
         // Use alias if provided.
         // Otherwise use package name if the specifier is not relative, and normalize it.
         let plugin_name = if let Some(alias_name) = alias {
-            // Check that the alias is valid - does not start with `eslint-plugin-` etc
+            // Check that the alias is valid - does not start with common plugin package prefixes.
             if !is_normal_plugin_name(alias_name) {
                 return Err(ConfigBuilderError::PluginLoadFailed {
                     plugin_specifier: plugin_specifier.to_string(),
                     error: format!(
                         "Plugin alias '{alias_name}' is not valid. \
-                         Must not start with 'eslint-plugin-', or be of form '@scope/eslint-plugin' \
-                         or '@scope/eslint-plugin-name'."
+                         Strip plugin package prefixes, e.g. use 'foo' or '@scope/foo'."
                     ),
                 });
             }
@@ -1370,10 +1369,13 @@ mod test {
         assert_eq!(parent_config.plugins(), LintPlugins::REACT | LintPlugins::TYPESCRIPT);
 
         // Test 3: Child config that extends parent without specifying plugins
-        // Should inherit parent's plugins
+        // Should inherit parent's plugins and apply the default plugins from the child config
         let child_no_plugins_config =
             config_store_from_path("fixtures/extends_config/plugins/child_no_plugins.json");
-        assert_eq!(child_no_plugins_config.plugins(), LintPlugins::REACT | LintPlugins::TYPESCRIPT);
+        assert_eq!(
+            child_no_plugins_config.plugins(),
+            LintPlugins::REACT | LintPlugins::TYPESCRIPT | LintPlugins::OXC | LintPlugins::UNICORN
+        );
 
         // Test 4: Child config that extends parent and specifies additional plugins
         // Should have parent's plugins plus its own
@@ -1433,7 +1435,8 @@ mod test {
                 "extends": [
                     "fixtures/extends_config/plugins/jest.json",
                     "fixtures/extends_config/plugins/react.json"
-                ]
+                ],
+                "plugins": []
             }
             "#,
         );
@@ -1441,6 +1444,15 @@ mod test {
             plugin_config.plugins(),
             extends_plugin_config.plugins(),
             "Extending a config with a plugin is the same as adding it directly"
+        );
+
+        // Test 9: Child Config with plugins extends parent with default plugins (not specified by user)
+        let child_with_plugins_parent_no_plugin_config = config_store_from_path(
+            "fixtures/extends_config/plugins/child_with_plugins_parent_default_plugin.json",
+        );
+        assert_eq!(
+            child_with_plugins_parent_no_plugin_config.plugins(),
+            LintPlugins::JEST | LintPlugins::UNICORN | LintPlugins::TYPESCRIPT | LintPlugins::OXC
         );
     }
 

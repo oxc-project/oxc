@@ -302,6 +302,23 @@ pub fn is_same_expression(left: &Expression, right: &Expression, ctx: &LintConte
         }
 
         (
+            Expression::LogicalExpression(left_logical_expr),
+            Expression::LogicalExpression(right_logical_expr),
+        ) => {
+            return left_logical_expr.operator == right_logical_expr.operator
+                && is_same_expression(
+                    left_logical_expr.left.get_inner_expression(),
+                    right_logical_expr.left.get_inner_expression(),
+                    ctx,
+                )
+                && is_same_expression(
+                    left_logical_expr.right.get_inner_expression(),
+                    right_logical_expr.right.get_inner_expression(),
+                    ctx,
+                );
+        }
+
+        (
             Expression::UnaryExpression(left_unary_expr),
             Expression::UnaryExpression(right_unary_expr),
         ) => {

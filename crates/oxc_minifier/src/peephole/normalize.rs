@@ -3,7 +3,7 @@ use oxc_allocator::{TakeIn, Vec};
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
     constant_evaluation::{DetermineValueType, ValueType},
-    side_effects::is_valid_regexp,
+    side_effects::{is_typed_array_constructor, is_valid_regexp},
 };
 use oxc_semantic::IsGlobalReference;
 use oxc_syntax::scope::ScopeFlags;
@@ -55,12 +55,11 @@ impl<'a> Traverse<'a> for Normalize {
     }
 
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+        // No console handling here: `exit_expression` has already rewritten
+        // every console call (statement position included) to `void 0`.
         stmts.retain(|stmt| match stmt {
             Statement::EmptyStatement(_) => false,
             Statement::DebuggerStatement(_) if ctx.state.options.drop_debugger => false,
-            Statement::ExpressionStatement(expr) if ctx.state.options.drop_console => {
-                !Self::is_console_expression(&expr.expression)
-            }
             _ => true,
         });
     }
@@ -86,23 +85,24 @@ impl<'a> Traverse<'a> for Normalize {
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Expression::ParenthesizedExpression(paren_expr) = expr {
-            *expr = paren_expr.expression.take_in(ctx.ast);
+            *expr = paren_expr.expression.take_in(ctx);
+        }
+        // Handled outside the match below so the replacement can go through
+        // `ctx.replace_expression`, which walks the dropped call (its
+        // argument subtrees may contain resolved references) into `PassDirty`.
+        if ctx.state.options.drop_console
+            && let Expression::CallExpression(call_expr) = &*expr
+            && Self::is_console_call_expression(call_expr)
+        {
+            let new_expr = ctx.ast.void_0(call_expr.span);
+            ctx.replace_expression(expr, new_expr);
+            return;
         }
         if let Some(e) = match expr {
             Expression::Identifier(ident) => Self::try_compress_identifier(ident, ctx),
             Expression::UnaryExpression(e) if e.operator.is_void() => {
                 Self::fold_void_ident(e, ctx);
                 None
-            }
-            Expression::ArrowFunctionExpression(e) => {
-                Self::recover_arrow_expression_after_drop_console(e, ctx);
-                None
-            }
-            Expression::CallExpression(call_expr)
-                if ctx.state.options.drop_console
-                    && Self::is_console_call_expression(call_expr) =>
-            {
-                Some(ctx.ast.void_0(call_expr.span))
             }
             Expression::StaticMemberExpression(e) => Self::fold_number_nan_to_nan(e, ctx),
             _ => None,
@@ -131,19 +131,6 @@ impl<'a> Normalize {
         Self { options }
     }
 
-    fn recover_arrow_expression_after_drop_console(
-        expr: &mut ArrowFunctionExpression<'a>,
-        ctx: &TraverseCtx<'a>,
-    ) {
-        if ctx.state.options.drop_console && expr.expression && expr.body.is_empty() {
-            expr.expression = false;
-        }
-    }
-
-    fn is_console_expression(expr: &Expression<'_>) -> bool {
-        matches!(expr, Expression::CallExpression(call_expr) if Self::is_console_call_expression(call_expr))
-    }
-
     fn is_console_call_expression(call_expr: &CallExpression<'_>) -> bool {
         let Some(member_expr) = call_expr.callee.as_member_expression() else { return false };
         let obj = member_expr.object();
@@ -152,7 +139,7 @@ impl<'a> Normalize {
     }
 
     fn convert_while_to_for(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Statement::WhileStatement(while_stmt) = stmt.take_in(ctx.ast) else { return };
+        let Statement::WhileStatement(while_stmt) = stmt.take_in(ctx) else { return };
         let while_stmt = while_stmt.unbox();
         let for_stmt = ctx.ast.alloc_for_statement_with_scope_id(
             while_stmt.span,
@@ -244,13 +231,19 @@ impl<'a> Normalize {
         false
     }
 
-    fn fold_void_ident(e: &mut UnaryExpression<'a>, ctx: &TraverseCtx<'a>) {
+    fn fold_void_ident(e: &mut UnaryExpression<'a>, ctx: &mut TraverseCtx<'a>) {
         debug_assert!(e.operator.is_void());
         let Expression::Identifier(ident) = &e.argument else { return };
         if ident.is_global_reference(ctx.scoping()) {
             return;
         }
-        e.argument = ctx.ast.expression_numeric_literal(ident.span, 0.0, None, NumberBase::Decimal);
+        // `replace_expression` walks the dropped ident into `PassDirty`, so
+        // its resolved reference is pruned by the driver's pre-loop
+        // `flush_pass_dirty`, before pass 1 — otherwise the symbol would
+        // look referenced forever.
+        let new_arg =
+            ctx.ast.expression_numeric_literal(ident.span, 0.0, None, NumberBase::Decimal);
+        ctx.replace_expression(&mut e.argument, new_arg);
     }
 
     fn fold_number_nan_to_nan(
@@ -270,7 +263,10 @@ impl<'a> Normalize {
         Some(ctx.ast.nan(ident.span))
     }
 
-    fn set_no_side_effects_to_call_expr(call_expr: &mut CallExpression<'a>, ctx: &TraverseCtx<'a>) {
+    pub(crate) fn set_no_side_effects_to_call_expr(
+        call_expr: &mut CallExpression<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) {
         if call_expr.pure {
             return;
         }
@@ -287,7 +283,7 @@ impl<'a> Normalize {
 
     /// Set `pure` on side effect free `new Expr()`s.
     /// `PC` or `PC_WITH_ARRAY` in <https://github.com/rollup/rollup/blob/v4.42.0/src/ast/nodes/shared/knownGlobals.ts>
-    fn set_pure_or_no_side_effects_to_new_expr(
+    pub(crate) fn set_pure_or_no_side_effects_to_new_expr(
         new_expr: &mut NewExpression<'a>,
         ctx: &TraverseCtx<'a>,
     ) {
@@ -338,14 +334,24 @@ impl<'a> Normalize {
                     ValueType::Object,
                 ],
             ),
-            "Set" | "Map" | "WeakSet" | "WeakMap" => (
+            // `Set` accepts any iterable of values, so a string argument is pure.
+            "Set" => (
+                false,
+                false,
+                &[ValueType::Number, ValueType::Boolean, ValueType::BigInt, ValueType::Object],
+            ),
+            // `Map`/`WeakSet`/`WeakMap` need `[k, v]` entries / object keys, so a string
+            // argument throws (`new Map("ab")` — `"a"` is not an entry; `new WeakSet("a")`
+            // — `"a"` is not an object). Only `null`/`undefined` (empty) and the
+            // array-literal forms handled above are pure for these.
+            "Map" | "WeakSet" | "WeakMap" => (
                 false,
                 false,
                 &[
                     ValueType::Number,
                     ValueType::Boolean,
                     ValueType::BigInt,
-                    ValueType::Boolean,
+                    ValueType::String,
                     ValueType::Object,
                 ],
             ),
@@ -355,6 +361,30 @@ impl<'a> Normalize {
             // RegExp needs special validation using the regex parser
             "RegExp" => {
                 if Self::can_set_pure(ident, ctx) && is_valid_regexp(&new_expr.arguments) {
+                    new_expr.pure = true;
+                }
+                return;
+            }
+            // Typed arrays allocate a zeroed buffer and run no user code when the
+            // length argument is a non-negative numeric literal: it is either a valid
+            // length (pure) or too large, which throws a maximum-length `RangeError`
+            // that the minifier is allowed to drop (see `docs/ASSUMPTIONS.md`). The
+            // value must be checked explicitly because constant folding can turn `-1`
+            // into a negative-valued `NumericLiteral`. Other arguments are kept:
+            // `new Int8Array(-1)` throws a negative-length `RangeError`,
+            // `new Int8Array(0n)` throws a `TypeError` (BigInt), and an object argument
+            // can run user code via `Symbol.iterator` / `valueOf`. The 0-arg and
+            // `0`-literal forms (the latter folded to 0-arg by
+            // `substitute_typed_array_constructor`) are both covered, so the result is
+            // idempotent regardless of fold order.
+            name if is_typed_array_constructor(name) => {
+                let safe_length = new_expr.arguments.is_empty()
+                    || (new_expr.arguments.len() == 1
+                        && matches!(
+                            new_expr.arguments[0].as_expression(),
+                            Some(Expression::NumericLiteral(lit)) if lit.value >= 0.0
+                        ));
+                if safe_length && Self::can_set_pure(ident, ctx) {
                     new_expr.pure = true;
                 }
                 return;
@@ -370,7 +400,43 @@ impl<'a> Normalize {
             0 if !zero_arg_throws_error => true,
             1 => match new_expr.arguments[0].as_expression() {
                 Some(Expression::ArrayExpression(array_expr)) => {
-                    array_expr.elements.is_empty() && !one_arg_array_throws_error
+                    if one_arg_array_throws_error {
+                        false
+                    } else if array_expr.elements.is_empty() {
+                        true
+                    } else {
+                        // A non-empty array literal is iterated via the built-in
+                        // array iterator (side-effect-free; element side effects are
+                        // preserved when the call is dropped). Only `Set`/`Map` accept
+                        // arbitrary entries: `Set` takes any values; `Map` requires
+                        // every entry to be an array literal (`new Map([1])` throws —
+                        // `1` is not iterable). `WeakSet`/`WeakMap` are excluded —
+                        // their keys must be objects, so `new WeakSet([1])` /
+                        // `new WeakMap([[1, 2]])` throw.
+                        match ident.name.as_str() {
+                            "Set" => true,
+                            "Map" => array_expr
+                                .elements
+                                .iter()
+                                .all(|el| matches!(el, ArrayExpressionElement::ArrayExpression(_))),
+                            _ => false,
+                        }
+                    }
+                }
+                Some(Expression::StringLiteral(str_lit)) => {
+                    // A string is an iterable of its characters. For constructors that
+                    // don't list `String` as throwing (e.g. `Set`, `AggregateError`,
+                    // `Number`) it is pure. `Map`/`WeakSet`/`WeakMap` list `String`
+                    // because their entries must be `[k, v]` pairs / object keys, so a
+                    // non-empty string throws -- but an empty string yields no entries
+                    // and is still pure. (`DataView` also lists `String` and throws even
+                    // on the empty string, as it needs an `ArrayBuffer`.)
+                    if one_arg_throws_error.contains(&ValueType::String) {
+                        str_lit.value.is_empty()
+                            && matches!(ident.name.as_str(), "Map" | "WeakSet" | "WeakMap")
+                    } else {
+                        true
+                    }
                 }
                 Some(e) => {
                     if let Expression::NewExpression(new_expr) = e {

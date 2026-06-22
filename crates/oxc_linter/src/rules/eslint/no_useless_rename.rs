@@ -78,6 +78,7 @@ declare_oxc_lint!(
     fix,
     config = NoUselessRenameConfig,
     version = "0.2.14",
+    short_description = "Disallow renaming import, export, and destructured assignments to the same name.",
 );
 
 impl Rule for NoUselessRename {

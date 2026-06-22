@@ -26,13 +26,22 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let span = self.start_span();
         self.bump_any(); // bump `<`
         let kind = self.cur_kind();
-        if kind == Kind::RAngle {
+        let expr = if kind == Kind::RAngle {
             Expression::JSXFragment(self.parse_jsx_fragment(span, false))
         } else if kind.is_identifier_or_keyword() {
             Expression::JSXElement(self.parse_jsx_element(span, false))
         } else {
-            self.unexpected()
+            return self.unexpected();
+        };
+
+        // A top-level JSX element/fragment immediately followed by `<` is a second,
+        // adjacent JSX element that isn't wrapped in an enclosing tag, e.g.
+        // `<div></div><span></span>`.
+        if self.at(Kind::LAngle) && self.fatal_error.is_none() {
+            self.set_fatal_error(diagnostics::adjacent_jsx_elements(self.cur_token().span()));
         }
+
+        expr
     }
 
     /// `JSXFragment` :
@@ -352,6 +361,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.ast.jsx_expression_empty_expression(Span::new(span.start + 1, span.end - 1))
         } else {
             let expr = JSXExpression::from(self.parse_expr());
+            // JSX expressions may not use the comma operator.
+            if matches!(expr, JSXExpression::SequenceExpression(_)) {
+                self.error(diagnostics::jsx_expressions_may_not_use_the_comma_operator(
+                    expr.span(),
+                ));
+            }
             if in_jsx_child {
                 self.expect_jsx_child(Kind::RCurly);
             } else {

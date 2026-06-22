@@ -4,6 +4,55 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.137.0] - 2026-06-18
+
+### 🐛 Bug Fixes
+
+- 20375f9 react_compiler: Keep imports referenced only by a computed key (#23586) (Boshen)
+
+### ⚡ Performance
+
+- dfb52b6 transformer: Pre-size statement vecs in TS enum & namespace lowering (#23516) (Yunfei He)
+- 3fa8051 transformer: Pre-size JSX props vec to attribute count (#23466) (Yunfei He)
+
+## [0.136.0] - 2026-06-15
+
+### 💥 BREAKING CHANGES
+
+- bb0ed44 transformer: [**BREAKING**] Disable styled-components transpileTemplateLiterals by default (#23171) (Boshen)
+
+### 🚀 Features
+
+- 6c0bdf0 transformer/react-refresh: Support `module.property.useHook()` (#23190) (Dunqing)
+- ec266bb transformer: Run React Compiler as a feature-gated transform pass (#23201) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 2c28748 transformer/class: Parent generated constructors to class scope (#23222) (camc314)
+
+### 📚 Documentation
+
+- 09755ac transformer: Add `AGENTS.md` test guidance for agents (#23439) (camc314)
+
+## [0.135.0] - 2026-06-08
+
+### 💥 BREAKING CHANGES
+
+- 4c35362 ast: [**BREAKING**] Add `AstBuilder::template_element_escape_raw` and `template_element_escape_raw_with_lone_surrogates` methods (#23047) (overlookmotel)
+
+## [0.133.0] - 2026-05-26
+
+### 🚀 Features
+
+- ee659b6 transformer/legacy-decorator: Add `strictNullChecks` option for nullable-union design:type (#22266) (Kyle Cannon)
+
+### 🐛 Bug Fixes
+
+- e1d064e transformer/class-properties: Reparent lifted private method helpers (#22716) (Cameron)
+- 7baed9c transformer/private-method: Clear inherited strict flags (#22508) (camc314)
+- 69a6ba6 transformer/legacy-decorator: Emit Array for ReadonlyArray<T> in decorator metadata (#22265) (Kyle Cannon)
+- e421ef0 transformer/legacy-decorator: Return runtime binding for design:type (#22640) (Dunqing)
+
 ## [0.132.0] - 2026-05-18
 
 ### 🐛 Bug Fixes

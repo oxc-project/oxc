@@ -215,18 +215,24 @@ fn format_code_snippet(code: &str) -> String {
         return format!("\"{code}\"");
     }
 
-    // "document.querySelector("#foo");" => r##"document.querySelector("#foo");"##
-    if code.contains("\"#") {
-        return format!("r##\"{code}\"##");
-    }
-
     // 'import foo from "foo";' => r#"import foo from "foo";"#
     if code.contains('"') {
-        return format!("r#\"{}\"#", code.replace("\\\"", "\""));
+        return format_raw_string_literal(&code.replace("\\\"", "\""));
     }
 
     // `foo === bar` => `r"foo === bar"`
-    format!("r\"{code}\"")
+    format_raw_string_literal(&code)
+}
+
+fn format_raw_string_literal(code: &str) -> String {
+    let hashes = (0..=code.len())
+        .find(|hash_count| {
+            let terminator = format!("\"{}", "#".repeat(*hash_count));
+            !code.contains(&terminator)
+        })
+        .expect("raw string delimiter search should always terminate");
+    let hashes = "#".repeat(hashes);
+    format!("r{hashes}\"{code}\"{hashes}")
 }
 // TODO: handle `noFormat`(in typescript-eslint)
 fn format_tagged_template_expression(tag_expr: &TaggedTemplateExpression) -> Option<String> {
@@ -235,7 +241,7 @@ fn format_tagged_template_expression(tag_expr: &TaggedTemplateExpression) -> Opt
     // String.raw`foobar\n\t escapedthing`
     // ```
     if tag_expr.tag.is_specific_member_access("String", "raw") {
-        tag_expr.quasi.quasis.first().map(|quasi| format!("r#\"{}\"#", quasi.value.raw))
+        tag_expr.quasi.quasis.first().map(|quasi| format_raw_string_literal(&quasi.value.raw))
     } else if tag_expr.tag.is_specific_id("dedent") || tag_expr.tag.is_specific_id("outdent") {
         tag_expr.quasi.quasis.first().map(|quasi| util::dedent(&quasi.value.raw))
     } else {
@@ -1488,14 +1494,14 @@ fn main() {
             let allocator = Allocator::default();
             let source_type = SourceType::from_path(rule_test_path).unwrap();
             let ret = Parser::new(&allocator, &body, source_type).parse();
-            if !ret.errors.is_empty() {
-                let first_error = ret.errors.first().map_or_else(
+            if !ret.diagnostics.is_empty() {
+                let first_error = ret.diagnostics.first().map_or_else(
                     || "unknown parse error".to_string(),
                     std::string::ToString::to_string,
                 );
                 eprintln!(
                     "Warning: {} parse error(s) in test file (possibly due to unsupported or invalid syntax). First error: {}. Attempting to extract test cases anyway.",
-                    ret.errors.len(),
+                    ret.diagnostics.len(),
                     first_error
                 );
             }
@@ -1588,10 +1594,10 @@ fn main() {
             let allocator = Allocator::default();
             let source_type = SourceType::from_path(rule_src_path).unwrap();
             let ret = Parser::new(&allocator, &body, source_type).parse();
-            if !ret.errors.is_empty() {
+            if !ret.diagnostics.is_empty() {
                 eprintln!(
                     "Warning: {} parse error(s) in rule source file (possibly due to Flow types). Attempting to extract rule config anyway.",
-                    ret.errors.len()
+                    ret.diagnostics.len()
                 );
             }
             let debug_mode = false;
@@ -2131,6 +2137,18 @@ mod tests {
     }
 
     #[test]
+    fn test_format_code_snippet_raw_string_terminator() {
+        assert_eq!(
+            format_code_snippet("document.getElementById(\"#id\")"),
+            "r##\"document.getElementById(\"#id\")\"##"
+        );
+        assert_eq!(
+            format_code_snippet("document.getElementById(\"##id\")"),
+            "r###\"document.getElementById(\"##id\")\"###"
+        );
+    }
+
+    #[test]
     fn test_format_code_snippet_newline_normalization() {
         // Newline characters get indented with spaces, not tabs
         let input = "line1\nline2\nline3";
@@ -2153,5 +2171,25 @@ mod tests {
     fn test_format_code_snippet_single_quotes() {
         // Single quotes (no double quotes) - treated as regular string
         assert_eq!(format_code_snippet("const msg = 'hello';"), "\"const msg = 'hello';\"");
+    }
+
+    #[test]
+    fn test_string_raw_backslash_uses_unhashed_raw_string() {
+        let source_text = "String.raw`new RegExp('([\\\\q])', 'v')`";
+        let allocator = Allocator::default();
+        let ret = Parser::new(&allocator, source_text, SourceType::default()).parse();
+        assert!(ret.diagnostics.is_empty(), "{:?}", ret.diagnostics);
+
+        let Statement::ExpressionStatement(stmt) = ret.program.body.first().unwrap() else {
+            panic!("expected expression statement");
+        };
+        let Expression::TaggedTemplateExpression(tag_expr) = &stmt.expression else {
+            panic!("expected tagged template expression");
+        };
+
+        assert_eq!(
+            format_tagged_template_expression(tag_expr),
+            Some("r\"new RegExp('([\\\\q])', 'v')\"".to_string())
+        );
     }
 }

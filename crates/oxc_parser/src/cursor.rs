@@ -8,7 +8,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{
     Context, ParserConfig as Config, ParserImpl, diagnostics,
     error_handler::FatalError,
-    lexer::{Kind, LexerCheckpoint, Token},
+    lexer::{Kind, LexerCheckpoint, Token, cold_branch},
 };
 
 #[derive(Clone)]
@@ -143,9 +143,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if self.eat(Kind::Semicolon) || self.can_insert_semicolon() {
             /* no op */
         } else {
-            let span = Span::empty(self.prev_token_end);
-            let error = diagnostics::auto_semicolon_insertion(span);
-            self.set_fatal_error(error);
+            // ASI failure is a syntax error (cold). Build the diagnostic out of line so the
+            // ~232-byte `OxcDiagnostic` buffer does not inflate `asi`'s stack frame on the
+            // common (valid) path.
+            cold_branch(|| {
+                let span = Span::empty(self.prev_token_end);
+                let error = diagnostics::auto_semicolon_insertion(span);
+                self.set_fatal_error(error);
+            });
         }
     }
 
@@ -369,9 +374,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         result
     }
 
-    pub(crate) fn parse_normal_list<F, T>(&mut self, open: Kind, close: Kind, f: F) -> Vec<'a, T>
+    pub(crate) fn parse_normal_list<F, T>(
+        &mut self,
+        open: Kind,
+        close: Kind,
+        mut f: F,
+    ) -> Vec<'a, T>
     where
-        F: Fn(&mut Self) -> T,
+        F: FnMut(&mut Self) -> T,
     {
         let opening_span = self.cur_token().span();
         self.expect(open);
@@ -444,7 +454,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             {
                 return (list, None);
             }
-            if !self.at(separator) {
+            if kind != separator {
                 self.set_fatal_error(diagnostics::expect_closing_or_separator(
                     close.to_str(),
                     separator.to_str(),
@@ -491,7 +501,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             {
                 return None;
             }
-            if !self.at(separator) {
+            if kind != separator {
                 self.set_fatal_error(diagnostics::expect_closing_or_separator(
                     close.to_str(),
                     separator.to_str(),

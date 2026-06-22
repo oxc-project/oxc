@@ -133,6 +133,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     version = "0.0.3",
+    short_description = "Enforce correct usage of `super()` in class constructors.",
 );
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

@@ -10,7 +10,7 @@ use oxc_syntax::{
     operator::{BinaryOperator, UnaryOperator},
 };
 
-use crate::{IsolatedDeclarations, diagnostics::enum_member_initializers};
+use crate::{IsolatedDeclarations, diagnostics::const_enum_member_initializers};
 
 #[derive(Debug, Clone)]
 enum ConstantValue {
@@ -29,8 +29,8 @@ impl<'a> IsolatedDeclarations<'a> {
                 let computed_value =
                     self.computed_constant_value(initializer, &decl.id.name, &prev_members);
 
-                if computed_value.is_none() {
-                    self.error(enum_member_initializers(member.id.span()));
+                if decl.r#const && computed_value.is_none() {
+                    self.error(const_enum_member_initializers(initializer.span()));
                 }
 
                 computed_value

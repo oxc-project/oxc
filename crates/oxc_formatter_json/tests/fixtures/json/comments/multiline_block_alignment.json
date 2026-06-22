@@ -1,0 +1,11 @@
+{
+	/**
+	* Leading
+	**/
+	"a": 1,
+	/*
+	   indented
+	   block
+	*/
+	"b": 2
+}

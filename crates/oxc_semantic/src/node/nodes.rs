@@ -176,14 +176,18 @@ impl<'a> AstNodes<'a> {
     #[inline]
     pub fn add_node(
         &mut self,
+        node_id: NodeId,
         kind: AstKind<'a>,
         scope_id: ScopeId,
         parent_node_id: NodeId,
         #[cfg(feature = "cfg")] cfg_id: BlockNodeId,
         flags: NodeFlags,
-    ) -> NodeId {
-        let node_id = self.parent_ids.push(parent_node_id);
-        kind.set_node_id(node_id);
+    ) {
+        // `node_id` is allocated by the builder's standalone node-id counter; this
+        // store just records the node at the next index, which must equal `node_id`
+        // as nodes are added in id order.
+        debug_assert_eq!(self.parent_ids.len(), node_id.index());
+        self.parent_ids.push(parent_node_id);
         let node = AstNode::new(kind, scope_id);
         self.nodes.push(node);
         self.flags.push(flags);
@@ -191,7 +195,6 @@ impl<'a> AstNodes<'a> {
         self.cfg_ids.push(cfg_id);
         #[cfg(feature = "linter")]
         self.node_kinds_set.set(kind.ty());
-        node_id
     }
 
     /// Create and add an [`AstNode`] to the [`AstNodes`] tree and get its [`NodeId`].
@@ -205,13 +208,13 @@ impl<'a> AstNodes<'a> {
         scope_id: ScopeId,
         #[cfg(feature = "cfg")] cfg_id: BlockNodeId,
         flags: NodeFlags,
-    ) -> NodeId {
+    ) {
         assert!(self.parent_ids.is_empty(), "Program node must be the first node in the AST.");
         debug_assert!(
             matches!(kind, AstKind::Program(_)),
             "Program node must be of kind `AstKind::Program`"
         );
-        kind.set_node_id(NodeId::ROOT);
+        // `Program` always has node id `NodeId::ROOT`, set by the builder.
         self.parent_ids.push(NodeId::ROOT);
         self.nodes.push(AstNode::new(kind, scope_id));
         self.flags.push(flags);
@@ -219,7 +222,6 @@ impl<'a> AstNodes<'a> {
         self.cfg_ids.push(cfg_id);
         #[cfg(feature = "linter")]
         self.node_kinds_set.set(AstType::Program);
-        NodeId::ROOT
     }
 
     /// Reserve space for at least `additional` more nodes.

@@ -2,14 +2,13 @@ use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
-    utils::{is_es5_component, is_es6_component},
+    utils::{AllowedOrDisallowInFunc, function_count_before_lifecycle_component},
 };
 
 fn no_did_update_set_state_diagnostic(span: Span) -> OxcDiagnostic {
@@ -18,49 +17,8 @@ fn no_did_update_set_state_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "kebab-case")]
-pub enum NoDidUpdateSetStateConfig {
-    /// Forbids any call to `this.setState` in `componentDidUpdate`
-    /// outside of functions.
-    #[default]
-    Allowed,
-    /// The `disallow-in-func` mode makes this rule more strict by disallowing calls to
-    /// `this.setState` even within functions.
-    ///
-    /// Examples of **incorrect** code for this rule with the `"disallow-in-func"` option:
-    /// ```jsx
-    /// var Hello = createReactClass({
-    ///   componentDidUpdate: function() {
-    ///     this.setState({
-    ///       name: this.props.name.toUpperCase()
-    ///     });
-    ///   },
-    ///   render: function() {
-    ///     return <div>Hello {this.state.name}</div>;
-    ///   }
-    /// });
-    /// ```
-    ///
-    /// ```jsx
-    /// var Hello = createReactClass({
-    ///   componentDidUpdate: function() {
-    ///     this.onUpdate(function callback(newName) {
-    ///       this.setState({
-    ///         name: newName
-    ///       });
-    ///     });
-    ///   },
-    ///   render: function() {
-    ///     return <div>Hello {this.state.name}</div>;
-    ///   }
-    /// });
-    /// ```
-    DisallowInFunc,
-}
-
 #[derive(Debug, Default, Clone, Deserialize)]
-pub struct NoDidUpdateSetState(NoDidUpdateSetStateConfig);
+pub struct NoDidUpdateSetState(AllowedOrDisallowInFunc);
 
 declare_oxc_lint!(
     /// ### What it does
@@ -116,15 +74,14 @@ declare_oxc_lint!(
     NoDidUpdateSetState,
     react,
     correctness,
-    config = NoDidUpdateSetStateConfig,
-    version = "1.62.0"
+    config = AllowedOrDisallowInFunc,
+    version = "1.62.0",
+    short_description = "Disallow usage of `setState` in `componentDidUpdate`.",
 );
 
 impl Rule for NoDidUpdateSetState {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -138,56 +95,15 @@ impl Rule for NoDidUpdateSetState {
             return;
         }
 
-        let ancestors: Vec<_> = ctx.nodes().ancestors(node.id()).skip(1).collect();
-
-        let component_did_update_index =
-            ancestors.iter().position(|ancestor| match ancestor.kind() {
-                AstKind::ObjectProperty(prop)
-                    if prop.key.static_name().is_some_and(|key| key == "componentDidUpdate") =>
-                {
-                    true
-                }
-                AstKind::MethodDefinition(method)
-                    if method
-                        .key
-                        .static_name()
-                        .is_some_and(|name| name == "componentDidUpdate") =>
-                {
-                    true
-                }
-                AstKind::PropertyDefinition(prop)
-                    if prop.key.static_name().is_some_and(|name| name == "componentDidUpdate") =>
-                {
-                    true
-                }
-                _ => false,
-            });
-
-        let Some(component_did_update_idx) = component_did_update_index else {
+        let Some(function_count_before_component_did_update) =
+            function_count_before_lifecycle_component(node, ctx, "componentDidUpdate")
+        else {
             return;
         };
 
-        let in_component_did_update = ancestors[component_did_update_idx..]
-            .iter()
-            .any(|ancestor| is_es5_component(ancestor) || is_es6_component(ancestor));
-
-        if !in_component_did_update {
-            return;
-        }
-
-        let function_count_before_component_did_update = ancestors[..component_did_update_idx]
-            .iter()
-            .filter(|ancestor| {
-                matches!(
-                    ancestor.kind(),
-                    AstKind::Function(_) | AstKind::ArrowFunctionExpression(_)
-                )
-            })
-            .count();
-
         let in_nested_function = function_count_before_component_did_update > 1;
 
-        if in_nested_function && !matches!(self.0, NoDidUpdateSetStateConfig::DisallowInFunc) {
+        if in_nested_function && !matches!(self.0, AllowedOrDisallowInFunc::DisallowInFunc) {
             return;
         }
 

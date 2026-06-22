@@ -27,6 +27,10 @@ impl ValueType {
         self == Self::Null
     }
 
+    pub fn is_null_or_undefined(self) -> bool {
+        matches!(self, Self::Null | Self::Undefined)
+    }
+
     pub fn is_string(self) -> bool {
         self == Self::String
     }

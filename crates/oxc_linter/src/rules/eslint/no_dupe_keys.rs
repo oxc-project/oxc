@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{ObjectPropertyKind, PropertyKey, PropertyKind},
+    ast::{ObjectProperty, ObjectPropertyKind, PropertyKey, PropertyKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -65,6 +65,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     version = "0.0.3",
+    short_description = "Disallow duplicate keys in object literals.",
 );
 
 impl Rule for NoDupeKeys {
@@ -99,7 +100,7 @@ impl Rule for NoDupeKeys {
     }
 }
 
-fn is_proto_setter_property(prop: &oxc_ast::ast::ObjectProperty<'_>, name: &str) -> bool {
+fn is_proto_setter_property(prop: &ObjectProperty<'_>, name: &str) -> bool {
     name == "__proto__"
         && prop.kind == PropertyKind::Init
         && !prop.computed

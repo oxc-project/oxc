@@ -17,7 +17,7 @@ pub struct ConsistentTemplateLiteralEscape;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce consistent style for escaping ${ in template literals.
+    /// Enforce consistent style for escaping `${` in template literals.
     ///
     /// ### Why is this bad?
     /// Using `\${` instead of `${` can improve readability and prevent confusion.
@@ -41,7 +41,8 @@ declare_oxc_lint!(
     unicorn,
     style,
     fix,
-    version = "1.60.0"
+    version = "1.60.0",
+    short_description = "Enforce consistent style for escaping `${` in template literals.",
 );
 
 impl Rule for ConsistentTemplateLiteralEscape {

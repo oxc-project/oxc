@@ -40,7 +40,7 @@ pub struct PreferDefaultExport {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// In exporting files, this rule checks if there is default export or not.
+    /// Checks whether there is a default export.
     ///
     /// ### Why is this bad?
     ///
@@ -76,6 +76,7 @@ declare_oxc_lint!(
     style,
     config = PreferDefaultExport,
     version = "1.4.0",
+    short_description = "Checks whether there is a default export.",
 );
 
 impl Rule for PreferDefaultExport {

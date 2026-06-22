@@ -62,8 +62,13 @@ macro_rules! handle_string_literal {
             table: $table,
             start: after_opening_quote,
             handle_eof: {
-                $lexer.error(diagnostics::unterminated_string($lexer.unterminated_range()));
-                return Kind::Undetermined;
+                // Unterminated string is invalid JS, so a cold path. Building the diagnostic
+                // out-of-line keeps the `OxcDiagnostic` return buffer out of this handler's
+                // stack frame (matching the sibling `\\` and line-break arms below).
+                return cold_branch(|| {
+                    $lexer.error(diagnostics::unterminated_string($lexer.unterminated_range()));
+                    Kind::Undetermined
+                });
             },
         };
 

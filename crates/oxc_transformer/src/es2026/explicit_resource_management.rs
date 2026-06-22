@@ -134,7 +134,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                     for_of_init_symbol_id,
                 );
 
-                let old_body = for_of_stmt.body.take_in(ctx.ast);
+                let old_body = for_of_stmt.body.take_in(ctx);
                 let new_body = ctx.ast.vec_from_array([using_stmt, old_body]);
                 for_of_stmt.body = ctx.ast.statement_block_with_scope_id(SPAN, new_body, scope_id);
                 return;
@@ -161,7 +161,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                 for_of_init_symbol_id,
             );
 
-            let old_body = for_of_stmt.body.take_in(ctx.ast);
+            let old_body = for_of_stmt.body.take_in(ctx);
 
             let new_body = ctx.ast.vec_from_array([using_stmt, old_body]);
             for_of_stmt.body = ctx.ast.statement_block_with_scope_id(SPAN, new_body, scope_id);
@@ -364,7 +364,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
             return;
         }
 
-        let program_body = program.body.take_in(ctx.ast);
+        let program_body = program.body.take_in(ctx);
 
         let (mut program_body, inner_block): (
             ArenaVec<'a, Statement<'a>>,
@@ -471,17 +471,19 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                             return (program_body, inner_block);
                         }
 
-                        let export_specifiers = match decl.take_in(ctx.ast) {
+                        let export_specifiers = match decl.take_in(ctx) {
                             Declaration::ClassDeclaration(class_decl) => {
                                 let class_binding = class_decl.id.as_ref().unwrap();
                                 let class_binding_name = class_binding.name;
 
-                                let xx = BoundIdentifier::from_binding_ident(class_binding)
-                                    .create_read_reference(ctx);
+                                let class_binding_reference =
+                                    BoundIdentifier::from_binding_ident(class_binding)
+                                        .create_read_reference(ctx);
 
                                 inner_block.push(Self::transform_class_decl(class_decl, ctx));
 
-                                let local = ModuleExportName::IdentifierReference(xx);
+                                let local =
+                                    ModuleExportName::IdentifierReference(class_binding_reference);
                                 let exported = ctx
                                     .ast
                                     .module_export_name_identifier_name(SPAN, class_binding_name);
@@ -722,7 +724,7 @@ impl<'a> ExplicitResourceManagement<'a> {
                     )),
                     false,
                 )),
-                stmt.take_in(ctx.ast),
+                stmt.take_in(ctx),
             ]);
 
             ctx.ast.block_statement_with_scope_id(SPAN, vec, block_stmt_sid)
@@ -817,7 +819,7 @@ impl<'a> ExplicitResourceManagement<'a> {
 
         let using_ctx = using_ctx?;
 
-        let mut stmts = stmts.take_in(ctx.ast);
+        let mut stmts = stmts.take_in(ctx);
 
         // `var _usingCtx = babelHelpers.usingCtx();`
         let callee = helper_load(Helper::UsingCtx, ctx);

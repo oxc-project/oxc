@@ -39,7 +39,7 @@ impl std::ops::Deref for PreferImportingJestGlobals {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct PreferImportingJestGlobalsConfig {
     /// Jest function types to enforce importing for.
     types: Vec<JestFnType>,
@@ -125,7 +125,8 @@ declare_oxc_lint!(
     style,
     fix,
     config = PreferImportingJestGlobalsConfig,
-    version = "1.60.0"
+    version = "1.60.0",
+    short_description = "Prefer importing Jest globals from `@jest/globals` rather than relying on ambient globals.",
 );
 
 impl Rule for PreferImportingJestGlobals {

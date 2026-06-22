@@ -109,6 +109,7 @@ declare_oxc_lint!(
     style,
     config = JsxPascalCaseConfig,
     version = "1.19.0",
+    short_description = "Enforce PascalCase for user-defined JSX components.",
 );
 
 impl Rule for JsxPascalCase {

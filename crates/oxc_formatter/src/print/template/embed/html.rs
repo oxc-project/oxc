@@ -10,8 +10,7 @@ use crate::{
     external_formatter::EmbeddedDocResult,
     format_args,
     formatter::{
-        FormatElement, Formatter, buffer::RemoveSoftLinesBuffer, prelude::*,
-        trivia::FormatTrailingComments,
+        FormatElement, buffer::RemoveSoftLinesBuffer, prelude::*, trivia::FormatTrailingComments,
     },
     utils::format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
     write,
@@ -32,7 +31,7 @@ const COUNTER: &str = "0";
 /// Supports both html-in-js and angular-in-js (`@Component({ template })`).
 pub(super) fn format_html_doc<'a>(
     quasi: &AstNode<'a, TemplateLiteral<'a>>,
-    f: &mut Formatter<'_, 'a>,
+    f: &mut JsFormatter<'_, 'a>,
     is_angular: bool,
 ) -> bool {
     let embedded_language = if is_angular { "angular" } else { "html" };
@@ -142,14 +141,14 @@ pub(super) fn format_html_doc<'a>(
 
     // Phase 3: Replace placeholders in IR with expressions
     let indent_width = f.options().indent_width;
-    let format_content = format_once(move |f: &mut Formatter<'_, 'a>| {
+    let format_content = format_once(move |f: &mut JsFormatter<'_, 'a>| {
         for element in ir {
             match &element {
                 FormatElement::Text { text, .. } if text.contains(PLACEHOLDER_PREFIX) => {
                     let parts =
                         super::split_on_placeholders(text, PLACEHOLDER_PREFIX, PLACEHOLDER_SUFFIX);
                     for (i, part) in parts.iter().enumerate() {
-                        if i % 2 == 0 {
+                        if i.is_multiple_of(2) {
                             if !part.is_empty() {
                                 super::write_text_with_line_breaks(
                                     f,
@@ -209,8 +208,11 @@ pub(super) fn format_html_doc<'a>(
                                 // preserving hard line breaks (from comments).
                                 // Otherwise let it break naturally based on line width.
                                 let has_newline = has_trailing
-                                    && (f.source_text().has_newline_before(expr.span().start)
-                                        || f.source_text().has_newline_after(expr.span().end));
+                                    && (f
+                                        .source_text()
+                                        .has_line_terminator_before(expr.span().start)
+                                        || f.source_text()
+                                            .has_line_terminator_after(expr.span().end));
 
                                 let format_expr = format_with(|f| {
                                     let Some(element) = &interned else { return };
@@ -280,8 +282,8 @@ pub(super) fn format_html_doc<'a>(
 ///     → content hugs the backtick directly
 ///     → multiple root elements wraps with `indent`, single does not
 fn write_html_template<'a>(
-    f: &mut Formatter<'_, 'a>,
-    content: &impl Format<'a>,
+    f: &mut JsFormatter<'_, 'a>,
+    content: &impl Format<'a, JsFormatContext<'a>>,
     has_leading_ws: bool,
     has_trailing_ws: bool,
     has_multiple_root_elements: bool,
@@ -327,7 +329,7 @@ fn write_html_template<'a>(
 fn format_js_in_html_as_fallback<'a>(
     joined: &str,
     expressions: &[&AstNode<'a, Expression<'a>>],
-    f: &mut Formatter<'_, 'a>,
+    f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
     let Some(Ok(formatted)) = f.context().external_callbacks().format_embedded("html", joined)
     else {
@@ -346,8 +348,8 @@ fn format_js_in_html_as_fallback<'a>(
     }
 
     // Write line by line, same as `format_embedded_template()`
-    let format_content = format_with(|f: &mut Formatter<'_, 'a>| {
-        let content = f.context().allocator().alloc_str(&result);
+    let format_content = format_with(|f: &mut JsFormatter<'_, 'a>| {
+        let content = f.allocator().alloc_str(&result);
         for line in LineTerminatorSplitter::new(content) {
             if line.is_empty() {
                 write!(f, [empty_line()]);

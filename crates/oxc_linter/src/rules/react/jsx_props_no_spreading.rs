@@ -1,10 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use oxc_ast::{
-    AstKind,
-    ast::{Expression, JSXElementName, JSXMemberExpression, JSXMemberExpressionObject},
-};
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -14,7 +11,7 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
-    utils::is_react_component_name,
+    utils::{get_jsx_element_name, is_react_component_name},
 };
 
 fn jsx_props_no_spreading_diagnostic(span: Span) -> OxcDiagnostic {
@@ -89,6 +86,7 @@ declare_oxc_lint!(
     style,
     config = JsxPropsNoSpreadingConfig,
     version = "1.33.0",
+    short_description = "Disallow JSX prop spreading.",
 );
 
 impl Rule for JsxPropsNoSpreading {
@@ -107,14 +105,15 @@ impl Rule for JsxPropsNoSpreading {
             return;
         };
 
-        let tag_name = get_tag_name(&jsx_opening_element.name);
+        let tag_name = get_jsx_element_name(&jsx_opening_element.name);
+        let tag_name = tag_name.as_ref();
 
         // Check if first character is lowercase (HTML tag convention)
-        let is_html_tag = !is_react_component_name(&tag_name);
+        let is_html_tag = !is_react_component_name(tag_name);
         // Custom tags: uppercase first char OR contains '.' (member expressions like Nav.Item)
         let is_custom_tag = !is_html_tag || tag_name.contains('.');
 
-        let is_exception = is_exception(&tag_name, &self.exceptions);
+        let is_exception = is_exception(tag_name, &self.exceptions);
         let ignore_html_tags = self.html == IgnoreEnforceOption::Ignore;
         let ignore_custom_tags = self.custom == IgnoreEnforceOption::Ignore;
 
@@ -140,36 +139,8 @@ impl Rule for JsxPropsNoSpreading {
     }
 }
 
-fn is_exception(tag: &CompactStr, exceptions: &[CompactStr]) -> bool {
-    exceptions.contains(tag)
-}
-
-fn get_tag_name(name: &JSXElementName<'_>) -> CompactStr {
-    match name {
-        JSXElementName::Identifier(ident) => ident.name.as_str().into(),
-        JSXElementName::IdentifierReference(ident) => ident.name.as_str().into(),
-        JSXElementName::MemberExpression(member_expr) => get_member_expr_tag_name(member_expr),
-        JSXElementName::NamespacedName(namespaced_name) => format!(
-            "{}:{}",
-            namespaced_name.namespace.name.as_str(),
-            namespaced_name.name.name.as_str()
-        )
-        .into(),
-        JSXElementName::ThisExpression(_) => "this".into(),
-    }
-}
-
-/// gets full component name, e.g. "components.Group" in <components.Group />
-fn get_member_expr_tag_name(member_expr: &JSXMemberExpression) -> CompactStr {
-    let object_name = match &member_expr.object {
-        JSXMemberExpressionObject::IdentifierReference(ident) => ident.name.as_str(),
-        JSXMemberExpressionObject::ThisExpression(_) => "this",
-        JSXMemberExpressionObject::MemberExpression(next_expr) => {
-            &get_member_expr_tag_name(next_expr)
-        }
-    };
-
-    format!("{}.{}", object_name, member_expr.property.name.as_str()).into()
+fn is_exception(tag: &str, exceptions: &[CompactStr]) -> bool {
+    exceptions.iter().any(|exception| exception.as_str() == tag)
 }
 
 #[test]
