@@ -5,6 +5,7 @@ use oxc_syntax::node::NodeId;
 pub use crate::ast_builder_common::NONE;
 
 mod custom;
+mod primitives;
 
 /// Trait for types which can create AST nodes.
 ///
