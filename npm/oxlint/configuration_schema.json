@@ -1138,6 +1138,14 @@
       },
       "additionalProperties": false
     },
+    "CallbackReturn": {
+      "description": "The rule takes a single option - an array of possible callback names - which may include object methods. The default callback names are `callback`, `cb`, `next`.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "markdownDescription": "The rule takes a single option - an array of possible callback names - which may include object methods. The default callback names are `callback`, `cb`, `next`."
+    },
     "CapitalizedCommentsOptions": {
       "description": "Configuration for the capitalized-comments rule.\n\nThe first element specifies whether comments should `\"always\"` or `\"never\"`\nbegin with a capital letter. The second element is an optional object\ncontaining additional options.",
       "type": "array",
@@ -1479,6 +1487,18 @@
         }
       },
       "additionalProperties": false
+    },
+    "ComplexityConfigEnum": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        {
+          "$ref": "#/definitions/ComplexityConfig"
+        }
+      ]
     },
     "Config": {
       "type": "array",
@@ -2278,34 +2298,17 @@
               "$ref": "#/definitions/RuleNoConfig"
             },
             {
-              "anyOf": [
+              "type": "array",
+              "items": [
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "type": "number"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "$ref": "#/definitions/ComplexityConfig"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/ComplexityConfigEnum"
                 }
-              ]
+              ],
+              "maxItems": 2,
+              "minItems": 2
             }
           ]
         },
@@ -2605,7 +2608,57 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "import/extensions": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
+                    },
+                    {
+                      "$ref": "#/definitions/ExtensionRule"
+                    },
+                    {
+                      "$ref": "#/definitions/ImportExtensionsObject"
+                    }
+                  ],
+                  "maxItems": 3,
+                  "minItems": 2
+                },
+                {
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
+                    },
+                    {
+                      "$ref": "#/definitions/ExtensionRule"
+                    }
+                  ],
+                  "maxItems": 2,
+                  "minItems": 2
+                },
+                {
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
+                    },
+                    {
+                      "$ref": "#/definitions/ImportExtensionsObject"
+                    }
+                  ],
+                  "maxItems": 2,
+                  "minItems": 2
+                }
+              ]
+            }
+          ]
         },
         "import/first": {
           "anyOf": [
@@ -4083,34 +4136,17 @@
               "$ref": "#/definitions/RuleNoConfig"
             },
             {
-              "anyOf": [
+              "type": "array",
+              "items": [
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "type": "number"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "$ref": "#/definitions/MaxClassesPerFileConfig"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/MaxClassesPerFileConfigEnum"
                 }
-              ]
+              ],
+              "maxItems": 2,
+              "minItems": 2
             }
           ]
         },
@@ -4120,34 +4156,17 @@
               "$ref": "#/definitions/RuleNoConfig"
             },
             {
-              "anyOf": [
+              "type": "array",
+              "items": [
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "type": "number"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "$ref": "#/definitions/MaxDepth"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/MaxDepthConfigEnum"
                 }
-              ]
+              ],
+              "maxItems": 2,
+              "minItems": 2
             }
           ]
         },
@@ -4157,34 +4176,17 @@
               "$ref": "#/definitions/RuleNoConfig"
             },
             {
-              "anyOf": [
+              "type": "array",
+              "items": [
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "type": "number"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "$ref": "#/definitions/MaxLinesConfig"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/MaxLinesConfigEnum"
                 }
-              ]
+              ],
+              "maxItems": 2,
+              "minItems": 2
             }
           ]
         },
@@ -4194,34 +4196,17 @@
               "$ref": "#/definitions/RuleNoConfig"
             },
             {
-              "anyOf": [
+              "type": "array",
+              "items": [
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "type": "number"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "$ref": "#/definitions/MaxLinesPerFunctionConfig"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/MaxLinesPerFunctionConfigEnum"
                 }
-              ]
+              ],
+              "maxItems": 2,
+              "minItems": 2
             }
           ]
         },
@@ -4231,34 +4216,17 @@
               "$ref": "#/definitions/RuleNoConfig"
             },
             {
-              "anyOf": [
+              "type": "array",
+              "items": [
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "type": "number"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "$ref": "#/definitions/MaxNestedCallbacks"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/MaxNestedCallbacksConfigEnum"
                 }
-              ]
+              ],
+              "maxItems": 2,
+              "minItems": 2
             }
           ]
         },
@@ -4268,34 +4236,17 @@
               "$ref": "#/definitions/RuleNoConfig"
             },
             {
-              "anyOf": [
+              "type": "array",
+              "items": [
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "type": "number"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "$ref": "#/definitions/MaxParamsConfig"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/MaxParamsConfigEnum"
                 }
-              ]
+              ],
+              "maxItems": 2,
+              "minItems": 2
             }
           ]
         },
@@ -4305,34 +4256,17 @@
               "$ref": "#/definitions/RuleNoConfig"
             },
             {
-              "anyOf": [
+              "type": "array",
+              "items": [
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "type": "number"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "$ref": "#/definitions/MaxStatementsConfig"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/MaxStatementsConfigEnum"
                 }
-              ]
+              ],
+              "maxItems": 2,
+              "minItems": 2
             }
           ]
         },
@@ -5153,7 +5087,25 @@
           "$ref": "#/definitions/DummyRule"
         },
         "no-restricted-properties": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PropertyDetails"
+                }
+              ],
+              "additionalItems": {
+                "$ref": "#/definitions/PropertyDetails"
+              },
+              "minItems": 2
+            }
+          ]
         },
         "no-return-assign": {
           "anyOf": [
@@ -5591,7 +5543,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "node/callback-return": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/CallbackReturn"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "node/global-require": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -5658,6 +5627,26 @@
                 },
                 {
                   "$ref": "#/definitions/NoProcessEnvConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
+        "node/no-sync": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoSyncConfig"
                 }
               ],
               "maxItems": 2,
@@ -10694,6 +10683,16 @@
       },
       "additionalProperties": false
     },
+    "ExtensionRule": {
+      "description": "Extension rule configuration; Copy to avoid extra indirection.",
+      "type": "string",
+      "enum": [
+        "always",
+        "never",
+        "ignorePackages"
+      ],
+      "markdownDescription": "Extension rule configuration; Copy to avoid extra indirection."
+    },
     "ExternalPluginEntry": {
       "anyOf": [
         {
@@ -11455,6 +11454,53 @@
         }
       },
       "additionalProperties": false
+    },
+    "ImportExtensionsConfig": {
+      "type": "object",
+      "properties": {
+        "checkTypeImports": {
+          "description": "Whether to check type imports when enforcing extension rules.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to check type imports when enforcing extension rules."
+        },
+        "ignorePackages": {
+          "description": "Whether to ignore package imports when enforcing extension rules.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to ignore package imports when enforcing extension rules."
+        },
+        "pathGroupOverrides": {
+          "description": "Path group overrides for bespoke import specifiers.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PathGroupOverrideConfig"
+          },
+          "markdownDescription": "Path group overrides for bespoke import specifiers."
+        },
+        "pattern": {
+          "description": "Per-extension rules.",
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/ExtensionRule"
+          },
+          "markdownDescription": "Per-extension rules."
+        }
+      },
+      "additionalProperties": false
+    },
+    "ImportExtensionsObject": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ImportExtensionsConfig"
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/ExtensionRule"
+          }
+        }
+      ]
     },
     "ImportKind": {
       "type": "string",
@@ -12334,6 +12380,18 @@
       },
       "additionalProperties": false
     },
+    "MaxClassesPerFileConfigEnum": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        {
+          "$ref": "#/definitions/MaxClassesPerFileConfig"
+        }
+      ]
+    },
     "MaxDependenciesConfig": {
       "type": "object",
       "properties": {
@@ -12380,6 +12438,18 @@
       },
       "additionalProperties": false
     },
+    "MaxDepthConfigEnum": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        {
+          "$ref": "#/definitions/MaxDepth"
+        }
+      ]
+    },
     "MaxExpectsConfig": {
       "type": "object",
       "properties": {
@@ -12420,6 +12490,18 @@
       },
       "additionalProperties": false
     },
+    "MaxLinesConfigEnum": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        {
+          "$ref": "#/definitions/MaxLinesConfig"
+        }
+      ]
+    },
     "MaxLinesPerFunctionConfig": {
       "type": "object",
       "properties": {
@@ -12452,6 +12534,18 @@
       },
       "additionalProperties": false
     },
+    "MaxLinesPerFunctionConfigEnum": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        {
+          "$ref": "#/definitions/MaxLinesPerFunctionConfig"
+        }
+      ]
+    },
     "MaxNestedCallbacks": {
       "type": "object",
       "properties": {
@@ -12465,6 +12559,18 @@
         }
       },
       "additionalProperties": false
+    },
+    "MaxNestedCallbacksConfigEnum": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        {
+          "$ref": "#/definitions/MaxNestedCallbacks"
+        }
+      ]
     },
     "MaxNestedCalls": {
       "type": "object",
@@ -12523,6 +12629,18 @@
       },
       "additionalProperties": false
     },
+    "MaxParamsConfigEnum": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        {
+          "$ref": "#/definitions/MaxParamsConfig"
+        }
+      ]
+    },
     "MaxProps": {
       "type": "object",
       "properties": {
@@ -12556,6 +12674,18 @@
         }
       },
       "additionalProperties": false
+    },
+    "MaxStatementsConfigEnum": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        {
+          "$ref": "#/definitions/MaxStatementsConfig"
+        }
+      ]
     },
     "MediaHasCaptionConfig": {
       "type": "object",
@@ -14901,6 +15031,28 @@
       },
       "additionalProperties": false
     },
+    "NoSyncConfig": {
+      "type": "object",
+      "properties": {
+        "allowAtRootLevel": {
+          "description": "Whether synchronous methods should be allowed at the top level of a file.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether synchronous methods should be allowed at the top level of a file."
+        },
+        "ignores": {
+          "description": "Function names to ignore.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true,
+          "markdownDescription": "Function names to ignore."
+        }
+      },
+      "additionalProperties": false
+    },
     "NoThisAliasConfig": {
       "type": "object",
       "properties": {
@@ -16343,6 +16495,52 @@
       },
       "additionalProperties": false
     },
+    "PathGroupAction": {
+      "description": "Action to take for path group overrides.\n\nDetermines how import extensions are validated for matching bespoke import specifiers.",
+      "oneOf": [
+        {
+          "description": "Enforce extension validation for matching imports (require extensions based on config).",
+          "type": "string",
+          "enum": [
+            "enforce"
+          ],
+          "markdownDescription": "Enforce extension validation for matching imports (require extensions based on config)."
+        },
+        {
+          "description": "Ignore matching imports entirely (skip all extension validation).",
+          "type": "string",
+          "enum": [
+            "ignore"
+          ],
+          "markdownDescription": "Ignore matching imports entirely (skip all extension validation)."
+        }
+      ],
+      "markdownDescription": "Action to take for path group overrides.\n\nDetermines how import extensions are validated for matching bespoke import specifiers."
+    },
+    "PathGroupOverrideConfig": {
+      "type": "object",
+      "required": [
+        "action",
+        "pattern"
+      ],
+      "properties": {
+        "action": {
+          "description": "Action to take when pattern matches.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/PathGroupAction"
+            }
+          ],
+          "markdownDescription": "Action to take when pattern matches."
+        },
+        "pattern": {
+          "description": "Glob pattern to match import specifiers.",
+          "type": "string",
+          "markdownDescription": "Glob pattern to match import specifiers."
+        }
+      },
+      "additionalProperties": false
+    },
     "PathOption": {
       "oneOf": [
         {
@@ -17079,6 +17277,53 @@
       },
       "additionalProperties": false,
       "markdownDescription": "A prop with optional `disallowedFor` DOM node list and custom `message`."
+    },
+    "PropertyDetails": {
+      "type": "object",
+      "properties": {
+        "allowObjects": {
+          "description": "Objects where property access should be allowed. This must be used with `property` and\ncannot be used with `object`.",
+          "default": null,
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Objects where property access should be allowed. This must be used with `property` and\ncannot be used with `object`."
+        },
+        "allowProperties": {
+          "description": "Properties where property access should be allowed. This must be used with `object` and\ncannot be used with `property`.",
+          "default": null,
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Properties where property access should be allowed. This must be used with `object` and\ncannot be used with `property`."
+        },
+        "message": {
+          "description": "A custom message to display.",
+          "default": null,
+          "type": "string",
+          "markdownDescription": "A custom message to display."
+        },
+        "object": {
+          "description": "The object on which the property is being accessed.",
+          "default": null,
+          "type": "string",
+          "markdownDescription": "The object on which the property is being accessed."
+        },
+        "property": {
+          "description": "The property being accessed. If `object` is not specified, this applies to the named\nproperty on all objects.",
+          "default": null,
+          "type": "string",
+          "markdownDescription": "The property being accessed. If `object` is not specified, this applies to the named\nproperty on all objects."
+        }
+      },
+      "additionalProperties": false
+    },
+    "PropertyDetailsList": {
+      "additionalItems": {
+        "$ref": "#/definitions/PropertyDetails"
+      }
     },
     "RadixType": {
       "oneOf": [

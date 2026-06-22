@@ -690,7 +690,7 @@ impl Rule for ExhaustiveDeps {
             // lastly, we need co compare for any unnecessary deps
             // for example if `props.foo`, AND `props.foo.bar.baz` was declared in the deps array
             // `props.foo.bar.baz` is unnecessary (already covered by `props.foo`)
-            declared_dependencies.iter().tuple_combinations().for_each(|(a, b)| {
+            declared_dependencies.iter().array_combinations().for_each(|[a, b]| {
                 if a.contains(b) {
                     ctx.diagnostic(unnecessary_dependency_diagnostic(
                         hook_name,

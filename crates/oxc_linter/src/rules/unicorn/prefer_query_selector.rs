@@ -55,7 +55,7 @@ declare_oxc_lint!(
     /// document.querySelector('#foo');
     /// document.querySelector('.bar');
     /// document.querySelector('main #foo .bar');
-    /// document.querySelectorAll('.foo .bar');
+    /// document.querySelectorAll('.foo.bar');
     /// document.querySelectorAll('li a');
     /// document.querySelector('li').querySelectorAll('a');
     /// ```
@@ -129,9 +129,12 @@ impl Rule for PreferQuerySelector {
                     let argument = match property_name {
                         "getElementById" => format!("#{literal_value}"),
                         "getElementsByClassName" => {
+                            // `getElementsByClassName` matches elements having ALL the listed
+                            // classes, so multiple classes become a compound selector
+                            // (`.foo.bar`), not a descendant selector (`.foo .bar`).
                             format!(
                                 ".{}",
-                                literal_value.split_whitespace().collect::<Vec<_>>().join(" .")
+                                literal_value.split_whitespace().collect::<Vec<_>>().join(".")
                             )
                         }
                         "getElementsByName" => {
@@ -229,7 +232,7 @@ fn test() {
 
     let fix = vec![
         ("document.getElementsByTagName('foo');", "document.querySelectorAll('foo');"),
-        ("document.getElementsByClassName(`foo bar`);", "document.querySelectorAll(`.foo .bar`);"),
+        ("document.getElementsByClassName(`foo bar`);", "document.querySelectorAll(`.foo.bar`);"),
         ("document.getElementsByClassName(null);", "document.querySelectorAll(null);"),
         ("document.getElementsByTagName(`   `);", "document.querySelectorAll(`   `);"),
         ("document.getElementById(123);", "document.getElementById(123);"),

@@ -321,7 +321,7 @@ impl<'a> TypeScriptEnum {
 
         let mut prev_member_name = None;
 
-        for member in members.take_in(ctx.ast) {
+        for member in members.take_in(ctx) {
             let member_span = member.span;
             let member_name = member.id.static_name();
 

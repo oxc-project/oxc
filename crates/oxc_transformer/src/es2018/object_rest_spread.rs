@@ -239,7 +239,7 @@ impl<'a> ObjectRestSpread<'a> {
         expressions.push(ctx.ast.expression_assignment(
             SPAN,
             op,
-            assign_expr.left.take_in(ctx.ast),
+            assign_expr.left.take_in(ctx),
             reference_builder.create_read_expression(ctx),
         ));
 
@@ -380,7 +380,7 @@ impl<'a> ObjectRestSpread<'a> {
         let mut exprs = vec![];
         Self::recursive_walk_assignment_target(&mut assign_expr.left, &mut decls, &mut exprs, ctx);
         Self::insert_var_declaration_before_containing_statement(decls, ctx);
-        let mut expressions = ctx.ast.vec1(expr.take_in(ctx.ast));
+        let mut expressions = ctx.ast.vec1(expr.take_in(ctx));
         expressions.extend(exprs);
         *expr = ctx.ast.expression_sequence(SPAN, expressions);
     }
@@ -456,7 +456,7 @@ impl<'a> ObjectRestSpread<'a> {
                 exprs.push(ctx.ast.expression_assignment(
                     SPAN,
                     AssignmentOperator::Assign,
-                    pat.take_in(ctx.ast),
+                    pat.take_in(ctx),
                     bound_identifier.create_read_expression(ctx),
                 ));
                 *pat = bound_identifier.create_spanned_write_target(SPAN, ctx);
@@ -506,7 +506,7 @@ impl<'a> ObjectRestSpread<'a> {
         for prop in obj_expr.properties.drain(..) {
             if let ObjectPropertyKind::SpreadProperty(mut spread_prop) = prop {
                 Self::make_object_spread(&mut call_expr, &mut props, ctx);
-                let arg = spread_prop.argument.take_in(ctx.ast);
+                let arg = spread_prop.argument.take_in(ctx);
                 call_expr.as_mut().unwrap().arguments.push(Argument::from(arg));
             } else {
                 props.push(prop);
@@ -672,7 +672,7 @@ impl<'a> ObjectRestSpread<'a> {
             return;
         }
         let target = left.to_assignment_target_mut();
-        let assign_left = target.take_in(ctx.ast);
+        let assign_left = target.take_in(ctx);
         let flags = SymbolFlags::FunctionScopedVariable;
         let bound_identifier = ctx.generate_uid("ref", ctx.current_hoist_scope_id(), flags);
         let id = bound_identifier.create_binding_pattern(ctx);
@@ -705,7 +705,7 @@ impl<'a> ObjectRestSpread<'a> {
             (empty_stmt.span, ctx.ast.vec())
         } else {
             let span = stmt.span();
-            (span, ctx.ast.vec1(stmt.take_in(ctx.ast)))
+            (span, ctx.ast.vec1(stmt.take_in(ctx)))
         };
         *stmt = ctx.ast.statement_block_with_scope_id(span, stmts, scope_id);
         scope_id
@@ -1197,7 +1197,7 @@ impl<'a> ReferenceBuilder<'a> {
         force_create_binding: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> Self {
-        let expr = expr.take_in(ctx.ast);
+        let expr = expr.take_in(ctx);
         let binding;
         let maybe_bound_identifier;
         match &expr {
