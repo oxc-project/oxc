@@ -62,7 +62,7 @@ impl<'a> AstBuilder<'a> {
     /// Create a new arena-allocated [`Vec`] initialized with a single element.
     #[inline]
     pub fn vec1<T>(self, value: T) -> Vec<'a, T> {
-        self.vec_from_array([value])
+        Vec::from_value_in(value, self.allocator)
     }
 
     /// Collect an iterator into a new arena-allocated [`Vec`].
