@@ -261,6 +261,17 @@ pub fn convert_scope_info(semantic: &Semantic, _program: &Program) -> ScopeInfo 
         }
     }
 
+    // Candidate scopes for TS `this`-parameter validation: those declaring a
+    // `this` binding (usually none). Kept in `node_to_scope` iteration order so
+    // the validation visits them in the same order as before.
+    let this_binding_scopes: Vec<(u32, ScopeId)> = node_to_scope
+        .iter()
+        .filter(|(_, sid)| {
+            scopes.get(sid.0 as usize).is_some_and(|s| s.bindings.contains_key("this"))
+        })
+        .map(|(&start, &sid)| (start, sid))
+        .collect();
+
     ScopeInfo {
         scopes,
         bindings,
@@ -271,6 +282,7 @@ pub fn convert_scope_info(semantic: &Semantic, _program: &Program) -> ScopeInfo 
         node_id_to_scope,
         program_scope,
         children,
+        this_binding_scopes,
     }
 }
 

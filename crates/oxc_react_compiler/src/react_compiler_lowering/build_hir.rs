@@ -70,19 +70,22 @@ fn validate_ts_this_parameters_in_function_range(
     if start >= end {
         return Ok(());
     }
-    for (node_start, scope_id) in &scope_info.node_to_scope {
-        if *node_start < start || *node_start >= end {
+    // Only scopes that declare a `this` binding can fail this validation, so
+    // iterate that precomputed (usually empty) set instead of every scope in the
+    // program — the previous full scan was O(functions × all-scopes).
+    for &(node_start, scope_id) in &scope_info.this_binding_scopes {
+        if node_start < start || node_start >= end {
             continue;
         }
         let Some(scope) = scope_info.scopes.get(scope_id.0 as usize) else {
             continue;
         };
         if !matches!(scope.kind, ScopeKind::Function)
-            || is_class_scope_descendant(scope_info, *scope_id)
+            || is_class_scope_descendant(scope_info, scope_id)
         {
             continue;
         }
-        validate_ts_this_parameter(scope_info, *scope_id)?;
+        validate_ts_this_parameter(scope_info, scope_id)?;
     }
     Ok(())
 }

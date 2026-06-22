@@ -127,6 +127,12 @@ pub struct ScopeInfo {
     /// (`find_block_scope_by_bindings`) run in O(descendants) instead of a
     /// per-call O(scopes²) fixpoint over every scope.
     pub children: Vec<Vec<ScopeId>>,
+
+    /// `(node_start, scope_id)` for the scopes that declare a `this` binding, in
+    /// `node_to_scope` iteration order. The TS `this`-parameter validation only
+    /// concerns these (usually none), so it iterates this set instead of every
+    /// scope per function — avoiding an O(functions × all-scopes) scan.
+    pub this_binding_scopes: Vec<(u32, ScopeId)>,
 }
 
 impl ScopeInfo {
