@@ -1,4 +1,4 @@
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::react_compiler_utils::FxIndexMap;
 
@@ -133,6 +133,12 @@ pub struct ScopeInfo {
     /// concerns these (usually none), so it iterates this set instead of every
     /// scope per function — avoiding an O(functions × all-scopes) scan.
     pub this_binding_scopes: Vec<(u32, ScopeId)>,
+
+    /// `(binding_id, node_id)` pairs where a reference node id IS that binding's
+    /// own declaration site (so it isn't a real reference). Program-wide and
+    /// built once; `find_context_identifiers` consults it per function instead of
+    /// rebuilding it from every reference each time.
+    pub declaration_node_ids: FxHashSet<(BindingId, u32)>,
 }
 
 impl ScopeInfo {

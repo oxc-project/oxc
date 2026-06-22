@@ -10,7 +10,7 @@ use oxc_ast::ast::Program;
 use oxc_semantic::Semantic;
 use oxc_span::GetSpan;
 use oxc_syntax::symbol::SymbolFlags;
-use rustc_hash::{FxBuildHasher, FxHashMap};
+use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 
 /// `IndexMap` keyed with the deterministic Fx hasher, matching the `FxIndexMap`
 /// used by `crate::scope` fields (`crate::react_compiler_utils::FxIndexMap`).
@@ -272,6 +272,16 @@ pub fn convert_scope_info(semantic: &Semantic, _program: &Program) -> ScopeInfo 
         .map(|(&start, &sid)| (start, sid))
         .collect();
 
+    // Reference node-ids that are actually a binding's own declaration site.
+    // Program-wide, so build once here instead of per function in lowering.
+    let declaration_node_ids: FxHashSet<(BindingId, u32)> = ref_node_id_to_binding
+        .iter()
+        .filter_map(|(&ref_nid, &binding_id)| {
+            let binding = bindings.get(binding_id.0 as usize)?;
+            (binding.declaration_node_id == Some(ref_nid)).then_some((binding_id, ref_nid))
+        })
+        .collect();
+
     ScopeInfo {
         scopes,
         bindings,
@@ -283,6 +293,7 @@ pub fn convert_scope_info(semantic: &Semantic, _program: &Program) -> ScopeInfo 
         program_scope,
         children,
         this_binding_scopes,
+        declaration_node_ids,
     }
 }
 

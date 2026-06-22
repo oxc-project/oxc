@@ -445,21 +445,6 @@ fn is_captured_by_function(
     false
 }
 
-/// Build a set of (BindingId, node_id) pairs for declaration sites in
-/// ref_node_id_to_binding. These are entries where the reference's node_id
-/// matches the binding's declaration_node_id — i.e., the "reference" is
-/// actually the declaration itself.
-fn build_declaration_node_ids(scope_info: &ScopeInfo) -> FxHashSet<(BindingId, u32)> {
-    let mut result = FxHashSet::default();
-    for (&ref_nid, &binding_id) in &scope_info.ref_node_id_to_binding {
-        let binding = &scope_info.bindings[binding_id.0 as usize];
-        if binding.declaration_node_id == Some(ref_nid) {
-            result.insert((binding_id, ref_nid));
-        }
-    }
-    result
-}
-
 /// Find context identifiers for a function: variables that are captured across
 /// function boundaries and need StoreContext/LoadContext semantics.
 ///
@@ -531,7 +516,7 @@ pub fn find_context_identifiers(
     // which are included in reference_to_binding but are not true references.
     // Prefer node-ID comparison (immune to position-0 collisions from synthetic
     // nodes), falling back to position when node-IDs are unavailable.
-    let declaration_node_ids = build_declaration_node_ids(scope_info);
+    let declaration_node_ids = &scope_info.declaration_node_ids;
     for (&ref_nid, &binding_id) in &scope_info.ref_node_id_to_binding {
         match visitor.binding_info.get(&binding_id) {
             Some(info) if info.reassigned && !info.referenced_by_inner_fn => {}
