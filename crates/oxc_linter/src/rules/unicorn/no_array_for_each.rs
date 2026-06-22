@@ -56,6 +56,7 @@ declare_oxc_lint!(
     restriction,
     pending,
     version = "0.0.19",
+    short_description = "Forbids the use of `Array#forEach` in favor of a for loop.",
 );
 
 impl Rule for NoArrayForEach {

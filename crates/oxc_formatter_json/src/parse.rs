@@ -3,7 +3,7 @@ use oxc_ast::{
     Comment,
     ast::{Expression, Statement},
 };
-use oxc_diagnostics::OxcDiagnostic;
+use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_span::SourceType;
 
@@ -49,6 +49,10 @@ pub fn parse_json<'a>(
     // from being swallowed by a trailing line comment in `source`.
     let wrapped_source: &'a str = allocator.alloc_concat_strs_array(["(", source, "\n)"]);
 
+    // NOTE: We use `oxc_parser` which parses according to JavaScript rules, not JSON.
+    // So the JS lexer rules apply uniformly regardless of `variant`.
+    // e.g. line terminators (incl. U+2028 / U+2029), trailing commas, single quotes
+    // Downstream newline scans must therefore be LS/PS-aware for all variants, not just JSON5.
     let options = ParseOptions { preserve_parens: false, ..ParseOptions::default() };
     let ret =
         Parser::new(allocator, wrapped_source, SourceType::default()).with_options(options).parse();
@@ -57,14 +61,20 @@ pub fn parse_json<'a>(
     // we retry without the wrap and accept the result only when it contains no statements.
     // i.e. `source` is comments / whitespace only.
     // This lets comment-only JSON files round-trip without changing the normal path's cost.
-    if !ret.errors.is_empty() || ret.panicked {
+    if !ret.diagnostics.is_empty() || ret.panicked {
         if let Some(parsed) = try_parse_comments_only(allocator, source, options) {
             validate_comments_for_variant(variant, parsed.comments, false)?;
             return Ok(parsed);
         }
 
-        if let Some(err) = ret.errors.into_iter().next() {
-            return Err(err);
+        if let Some(err) = ret.diagnostics.into_iter().next() {
+            // The parser ran on `wrapped_source`, so its label spans are in wrapped coordinates.
+            // And can even point at the synthetic trailing `)` / `\n` (e.g. for an unterminated `{`).
+            // Remap them back to user-source coordinates so the diagnostic renders against the original `source`
+            // without going out of bounds.
+            // Out-of-bounds spans would otherwise make the graphical reporter fail to render.
+            let source_len = u32::try_from(source.len()).unwrap_or(u32::MAX);
+            return Err(remap_error_to_user_source(err, source_len));
         }
         return Err(OxcDiagnostic::error("Failed to parse JSON source"));
     }
@@ -96,6 +106,28 @@ pub fn parse_json<'a>(
     })
 }
 
+/// Remap a parser diagnostic from `wrapped_source` coordinates back to user-`source` coordinates.
+///
+/// `source_len` is the byte length of the original user source.
+/// Each label is shifted left by the leading-`(` of `wrapped_source` and clamped to `[0, source_len]`,
+/// so a span pointing at the synthetic trailing `)` / `\n` collapses to an end-of-input marker
+/// instead of an out-of-bounds span the reporter cannot render.
+fn remap_error_to_user_source(mut err: OxcDiagnostic, source_len: u32) -> OxcDiagnostic {
+    // The wrapper prepends a single `(`, so user-source byte N sits at wrapped byte `N + 1`.
+    const SOURCE_OFFSET: u32 = 1;
+    for label in err.labels.as_mut_slice() {
+        let start = label.offset().saturating_sub(SOURCE_OFFSET).min(source_len);
+        let end = (label.offset() + label.len()).saturating_sub(SOURCE_OFFSET).min(source_len);
+        let text = label.label().map(ToString::to_string);
+        *label = if label.primary() {
+            LabeledSpan::new_primary_with_span(text, start..end)
+        } else {
+            LabeledSpan::new_with_span(text, start..end)
+        };
+    }
+    err
+}
+
 /// Fallback path for the wrapped-parse failure:
 /// try parsing `source` as-is and accept it only when there are no statements.
 /// (i.e. comments / whitespace only)
@@ -110,7 +142,7 @@ fn try_parse_comments_only<'a>(
 
     let ret =
         Parser::new(allocator, bare_source, SourceType::default()).with_options(options).parse();
-    if !ret.errors.is_empty() || ret.panicked || !ret.program.body.is_empty() {
+    if !ret.diagnostics.is_empty() || ret.panicked || !ret.program.body.is_empty() {
         return None;
     }
 
@@ -190,6 +222,28 @@ mod tests {
             let allocator = Allocator::default();
             let result = parse_json(&allocator, src, variant);
             assert_eq!(result.is_ok(), should_succeed, "src={src:?} variant={variant:?}");
+        }
+    }
+
+    #[test]
+    fn parse_error_spans_stay_within_source() {
+        // Unterminated / truncated inputs whose error naturally lands at end-of-input.
+        let cases = ["{", "{\n", "[1,", "{\n  \"test\":\n}\n"];
+
+        for src in cases {
+            let allocator = Allocator::default();
+            let Err(err) = parse_json(&allocator, src, Json) else {
+                panic!("src={src:?} expected a parse error");
+            };
+            let len = src.len();
+            for label in err.labels.as_slice() {
+                let start = label.offset() as usize;
+                let end = start + label.len() as usize;
+                assert!(
+                    start <= len && end <= len,
+                    "src={src:?} label span {start}..{end} exceeds source len {len}",
+                );
+            }
         }
     }
 }

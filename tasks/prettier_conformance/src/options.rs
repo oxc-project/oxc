@@ -13,6 +13,9 @@ pub enum TestLanguage {
     Js,
     Ts,
     Json,
+    Jsonc,
+    Json5,
+    JsonStringify,
 }
 
 impl TestLanguage {
@@ -21,6 +24,9 @@ impl TestLanguage {
             Self::Js => "js",
             Self::Ts => "ts",
             Self::Json => "json",
+            Self::Jsonc => "jsonc",
+            Self::Json5 => "json5",
+            Self::JsonStringify => "json-stringify",
         }
     }
 
@@ -31,16 +37,26 @@ impl TestLanguage {
             // There is no `tsx` directory, just check it works with TS
             // `SourceType`.`variant` is handled by spec file extension
             Self::Ts => ["typescript", "jsx"].iter().map(|dir| base.join(dir)).collect::<Vec<_>>(),
-            // Phase 1 of the JSON formatter targets the `json` parser only.
-            // Out-of-scope siblings:
-            // - `jsonc/*` / `json5-as-json-with-trailing-commas/` — jsonc/json5 parsers
-            // - `json-superset/` — inline `snippets` shape, not parseable by spec.rs
-            // - `range/` — range-formatting tests, not a whole-file format
-            // `with-comment/` is included because each of its `format.test.js`
-            // entries lists a parser explicitly; spec.rs filters out non-`json` ones.
+            // For the JSON family (`Json`/`Jsonc`/`Json5`), the `json/` and `with-comment/` dirs are shared:
+            // each `format.test.js` call lists its own parser,
+            // so `spec.rs` keeps only the calls matching the active language.
+            //
+            // Out-of-scope siblings (all JSON variants):
+            // - `json-superset/`: inline `snippets`, not parseable by Rust(`spec.rs`)
+            // - `range/`: range-formatting, not whole-file
             Self::Json => {
                 vec![base.join("json").join("json"), base.join("json").join("with-comment")]
             }
+            Self::Jsonc => {
+                vec![base.join("json").join("jsonc"), base.join("json").join("with-comment")]
+            }
+            Self::Json5 => vec![
+                base.join("json").join("json"),
+                base.join("json").join("with-comment"),
+                base.join("json").join("json5-as-json-with-trailing-commas"),
+            ],
+            // `json-stringify` runs only on the shared `json/` dir
+            Self::JsonStringify => vec![base.join("json").join("json")],
         }
     }
 }

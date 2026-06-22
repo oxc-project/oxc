@@ -4,6 +4,41 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.137.0] - 2026-06-18
+
+### 🚀 Features
+
+- 53509a8 minifier: Treeshake pure typed arrays and Set/Map array literals (#23469) (Dunqing)
+- 09762d9 minifier: Inline const value for read-only vars (#22593) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 31bfd9b minifier: Keep Object introspection calls on a possible Proxy (#23483) (Dunqing)
+- e409fe0 minifier: Keep `new Map`/`WeakSet`/`WeakMap` with a string argument (#23470) (Dunqing)
+
+### ⚡ Performance
+
+- 970e09a minifier: Compute template-literal inline checks in a single pass (#23467) (Yunfei He)
+- 3170c0e semantic,mangler,minifier: Fix `Semantic::stats` node count and reuse stats in mangler builds (#23352) (Boshen)
+- d1fa6e0 minifier: Evaluate ternary branches once in minimize_conditional_expression (#23479) (Yunfei He)
+- bcb3894 minifier: Incremental scoping refresh, delete LiveUsageCollector (#23197) (Dunqing)
+
+## [0.136.0] - 2026-06-15
+
+### 💥 BREAKING CHANGES
+
+- 7a24911 codegen: [**BREAKING**] Borrow sourcemaps from codegen (#23422) (Boshen)
+
+## [0.135.0] - 2026-06-08
+
+### 💥 BREAKING CHANGES
+
+- 4c35362 ast: [**BREAKING**] Add `AstBuilder::template_element_escape_raw` and `template_element_escape_raw_with_lone_surrogates` methods (#23047) (overlookmotel)
+
+### 🚀 Features
+
+- 85efabf semantic: Make building the class table optional, off by default (#22862) (Boshen)
+
 ## [0.133.0] - 2026-05-26
 
 ### 🐛 Bug Fixes

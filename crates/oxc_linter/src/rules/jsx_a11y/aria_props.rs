@@ -53,6 +53,7 @@ declare_oxc_lint!(
     correctness,
     conditional_fix,
     version = "0.0.22",
+    short_description = "Enforces that elements do not use invalid ARIA attributes.",
 );
 
 impl Rule for AriaProps {

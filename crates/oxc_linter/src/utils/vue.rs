@@ -4,12 +4,15 @@ use oxc_ast::{
     AstKind,
     ast::{
         CallExpression, ExportDefaultDeclarationKind, Expression, IdentifierReference,
-        ObjectExpression, ObjectProperty, ObjectPropertyKind,
+        ObjectExpression, ObjectProperty, ObjectPropertyKind, TSSignature, TSType, TSTypeName,
     },
 };
-use oxc_span::GetSpan;
+use oxc_span::{GetSpan, Span};
 
-use crate::{AstNode, ContextSubHost, LintContext, frameworks::FrameworkOptions};
+use crate::{
+    AstNode, ContextSubHost, LintContext, ast_util::get_declaration_from_reference_id,
+    frameworks::FrameworkOptions, module_record::ImportImportName,
+};
 
 // These sets mirror eslint-plugin-vue's `vue/no-reserved-component-names`.
 // `globals::HTML_TAG` has a broader DOM/ARIA scope and different message
@@ -328,6 +331,29 @@ pub fn is_vue_component_options_call(call_expr: &CallExpression<'_>) -> bool {
     matches!(prop_name, "component" | "mixin")
 }
 
+/// Check whether the identifier is imported as `nextTick` or aliased from `'vue'`.
+pub fn is_vue_next_tick_import(ident: &IdentifierReference, ctx: &LintContext<'_>) -> bool {
+    let scoping = ctx.scoping();
+    let Some(symbol_id) = scoping.get_reference(ident.reference_id()).symbol_id() else {
+        return false;
+    };
+    for entry in &ctx.module_record().import_entries {
+        if entry.module_request.name() != "vue" {
+            continue;
+        }
+        let ImportImportName::Name(name_span) = &entry.import_name else {
+            continue;
+        };
+        if name_span.name() != "nextTick" {
+            continue;
+        }
+        if scoping.get_root_binding(entry.local_name.name().into()) == Some(symbol_id) {
+            return true;
+        }
+    }
+    false
+}
+
 /// Finds the first `ObjectProperty` whose static key matches `name` in the given object.
 /// `SpreadElement` entries are skipped.
 pub fn find_property<'a, 'b>(
@@ -337,5 +363,191 @@ pub fn find_property<'a, 'b>(
     obj.properties.iter().find_map(|prop| {
         let ObjectPropertyKind::ObjectProperty(obj_prop) = prop else { return None };
         obj_prop.key.is_specific_static_name(name).then_some(obj_prop.as_ref())
+    })
+}
+
+/// Walks a `defineProps<T>()` type argument and invokes `f` for every member
+/// signature it contains, mirroring eslint-plugin-vue's `flattenTypeNodes`:
+/// unions, intersections and `interface`/`type` references are resolved
+/// recursively down to their signatures. `f` receives every `TSSignature`
+/// member (including non-property kinds), leaving the caller to pick out what
+/// it needs.
+pub fn for_each_define_props_type_signature<'a>(
+    ts_type: &TSType<'a>,
+    ctx: &LintContext<'a>,
+    f: &mut dyn FnMut(&TSSignature<'a>),
+) {
+    match ts_type {
+        TSType::TSTypeLiteral(literal) => {
+            for signature in &literal.members {
+                f(signature);
+            }
+        }
+        TSType::TSUnionType(union) => {
+            for member in &union.types {
+                for_each_define_props_type_signature(member, ctx, f);
+            }
+        }
+        TSType::TSIntersectionType(intersection) => {
+            for member in &intersection.types {
+                for_each_define_props_type_signature(member, ctx, f);
+            }
+        }
+        TSType::TSTypeReference(type_ref) => {
+            let TSTypeName::IdentifierReference(ident) = &type_ref.type_name else { return };
+            if !ctx.scoping().get_reference(ident.reference_id()).is_type() {
+                return;
+            }
+            let Some(declaration) =
+                get_declaration_from_reference_id(ident.reference_id(), ctx.semantic())
+            else {
+                return;
+            };
+            match declaration.kind() {
+                AstKind::TSInterfaceDeclaration(interface) => {
+                    for signature in &interface.body.body {
+                        f(signature);
+                    }
+                }
+                AstKind::TSTypeAliasDeclaration(alias) => {
+                    for_each_define_props_type_signature(&alias.type_annotation, ctx, f);
+                }
+                _ => {}
+            }
+        }
+        _ => {}
+    }
+}
+
+/// Describe where a computed getter lives — shared by Vue rules that need to detect
+/// expressions inside `computed` getters (`no-side-effects-in-computed-properties`,
+/// `no-async-in-computed-properties`).
+pub enum ComputedContext {
+    /// Options API: `computed: { foo() {...} }` / `computed: { foo: { get() {...} } }`.
+    /// Carries the property key name (None if it can't be resolved statically).
+    OptionsApi(Option<String>),
+    /// Composition API: `computed(fn)` / `computed({ get: fn })`. Carries the span of
+    /// the getter function so callers can distinguish setup-scope vs getter-local
+    /// variables.
+    CompositionApi(Span),
+}
+
+/// Walk up from `node` to the nearest enclosing function, then return the computed
+/// getter context for that function (None if it isn't a computed getter, or if the
+/// walk reaches `Program` first).
+pub fn find_computed_context(node: &AstNode<'_>, ctx: &LintContext<'_>) -> Option<ComputedContext> {
+    let nodes = ctx.nodes();
+    let mut current = nodes.parent_node(node.id());
+    loop {
+        match current.kind() {
+            AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
+                return get_computed_getter_context(current, ctx);
+            }
+            AstKind::Program(_) => return None,
+            _ => {
+                current = nodes.parent_node(current.id());
+            }
+        }
+    }
+}
+
+/// Classify a function node: return `Some(ComputedContext)` if it is a Vue computed
+/// getter. Mirrors upstream `getComputedProperties` shape resolution.
+///
+/// Recognized shapes:
+/// - Options API Case A: `computed: { key() {...} }` / `computed: { key: function() {...} }`
+///   (FunctionExpression only — arrow functions are excluded to match upstream)
+/// - Options API Case B: `computed: { key: { get() {...} } }`
+///   (FunctionExpression only — same reasoning as Case A)
+/// - Composition API Case C: `computed(fn)` / `computed({ get: fn })` (both Function and Arrow)
+pub fn get_computed_getter_context(
+    fn_node: &AstNode<'_>,
+    ctx: &LintContext<'_>,
+) -> Option<ComputedContext> {
+    let nodes = ctx.nodes();
+    let fn_span = fn_node.span();
+    let parent = nodes.parent_node(fn_node.id());
+
+    match parent.kind() {
+        // Case C variant: `computed(fn)` / `computed(() => ...)` directly
+        AstKind::CallExpression(call) if is_vue_computed_call(call, ctx) => {
+            return Some(ComputedContext::CompositionApi(fn_span));
+        }
+
+        AstKind::ObjectProperty(prop) => {
+            let grandparent = nodes.parent_node(parent.id());
+            let AstKind::ObjectExpression(_) = grandparent.kind() else { return None };
+            let great = nodes.parent_node(grandparent.id());
+
+            match great.kind() {
+                // Case A: `computed: { key() {} }` or `computed: { key: function() {} }`
+                AstKind::ObjectProperty(outer)
+                    if outer.key.is_specific_static_name("computed")
+                        && matches!(fn_node.kind(), AstKind::Function(_)) =>
+                {
+                    let vue_options = nodes.parent_node(great.id());
+                    if is_vue_component_options_object(vue_options, ctx) {
+                        let key = prop.key.static_name().map(|s| s.to_string());
+                        return Some(ComputedContext::OptionsApi(key));
+                    }
+                }
+
+                // Case B: `computed: { key: { get() {} } }`
+                AstKind::ObjectProperty(key_prop)
+                    if prop.key.is_specific_static_name("get")
+                        && matches!(fn_node.kind(), AstKind::Function(_)) =>
+                {
+                    let key_obj_expr = nodes.parent_node(great.id());
+                    let AstKind::ObjectExpression(_) = key_obj_expr.kind() else { return None };
+                    let computed_prop_node = nodes.parent_node(key_obj_expr.id());
+                    if let AstKind::ObjectProperty(cp) = computed_prop_node.kind()
+                        && cp.key.is_specific_static_name("computed")
+                    {
+                        let vue_options = nodes.parent_node(computed_prop_node.id());
+                        if is_vue_component_options_object(vue_options, ctx) {
+                            let key = key_prop.key.static_name().map(|s| s.to_string());
+                            return Some(ComputedContext::OptionsApi(key));
+                        }
+                    }
+                }
+
+                // Case C variant: `computed({ get() {}, set() {} })`
+                AstKind::CallExpression(call)
+                    if prop.key.is_specific_static_name("get")
+                        && is_vue_computed_call(call, ctx) =>
+                {
+                    return Some(ComputedContext::CompositionApi(fn_span));
+                }
+
+                _ => {}
+            }
+        }
+
+        _ => {}
+    }
+
+    None
+}
+
+/// Whether `call` is a `computed(...)` call that imports from `'vue'`,
+/// `'@vue/composition-api'`, or `'#imports'` (Nuxt). Matches by symbol id so
+/// aliases (`import { computed as c } from 'vue'`) are also recognized.
+pub fn is_vue_computed_call(call: &CallExpression<'_>, ctx: &LintContext<'_>) -> bool {
+    let Expression::Identifier(ident) = call.callee.get_inner_expression() else {
+        return false;
+    };
+    let scoping = ctx.scoping();
+    let Some(symbol_id) = scoping.get_reference(ident.reference_id()).symbol_id() else {
+        return false;
+    };
+    ctx.module_record().import_entries.iter().any(|entry| {
+        if !matches!(entry.module_request.name(), "vue" | "@vue/composition-api" | "#imports") {
+            return false;
+        }
+        let ImportImportName::Name(name_span) = &entry.import_name else { return false };
+        if name_span.name() != "computed" {
+            return false;
+        }
+        scoping.get_root_binding(entry.local_name.name().into()) == Some(symbol_id)
     })
 }

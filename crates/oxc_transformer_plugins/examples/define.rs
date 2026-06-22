@@ -62,7 +62,7 @@ fn parse<'a>(
             ..ParseOptions::default()
         })
         .parse();
-    for error in ret.errors {
+    for error in ret.diagnostics {
         println!("{:?}", error.with_source_code(source_text.to_string()));
     }
     ret.program

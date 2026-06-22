@@ -1,6 +1,6 @@
 semantic_misc Summary:
-AST Parsed     : 67/67 (100.00%)
-Positive Passed: 53/67 (79.10%)
+AST Parsed     : 69/69 (100.00%)
+Positive Passed: 55/69 (79.71%)
 semantic Error: tasks/coverage/misc/pass/conditional-arrow-alternate-return-type.ts
 Unresolved references mismatch:
 after transform: ["Pick", "Record"]

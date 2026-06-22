@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.137.0] - 2026-06-18
+
+### 🚀 Features
+
+- 556cc6d data_structures: Add `CodeBuffer::as_str` method (#23571) (overlookmotel)
+
+### 📚 Documentation
+
+- f68641e data_structures: Improve docs on safety contract (#23575) (overlookmotel)
+
 ## [0.128.0] - 2026-04-27
 
 ### 📚 Documentation

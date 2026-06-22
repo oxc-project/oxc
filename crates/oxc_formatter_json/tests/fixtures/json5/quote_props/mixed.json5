@@ -1,0 +1,7 @@
+{
+  ident: 1,
+  "quoted": 2,
+  "needs-quote": 3,
+  "1.5": 4,
+  42: 5
+}

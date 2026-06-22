@@ -79,6 +79,7 @@ declare_oxc_lint!(
     fix,
     config = TextEncodingIdentifierCase,
     version = "0.0.15",
+    short_description = "Enforce consistent case for text encoding identifiers.",
 );
 
 impl Rule for TextEncodingIdentifierCase {

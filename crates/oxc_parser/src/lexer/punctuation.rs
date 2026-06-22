@@ -2,7 +2,7 @@ use oxc_span::Span;
 
 use crate::{config::LexerConfig as Config, diagnostics};
 
-use super::{Kind, Lexer, Token};
+use super::{Kind, Lexer, Token, cold_branch};
 
 impl<C: Config> Lexer<'_, C> {
     /// Section 12.8 Punctuators
@@ -33,8 +33,10 @@ impl<C: Config> Lexer<'_, C> {
                 self.consume_char();
                 Some(Kind::LtEq)
             }
-            // `<!--` HTML comment (Annex B.1.1)
-            Some(b'!') if self.remaining().starts_with("!--") => {
+            // `<!--` HTML comment (Annex B.1.1). Rare legacy syntax, so handle out of line:
+            // it builds/pushes a diagnostic, whose `OxcDiagnostic` buffer would otherwise inflate
+            // the `<` byte-handler's stack frame on the common `<`/`<<`/`<=` path.
+            Some(b'!') if self.remaining().starts_with("!--") => cold_branch(|| {
                 if self.source_type.is_module() {
                     if self.token.is_on_new_line() {
                         let span = Span::sized(self.token.start(), 4);
@@ -48,7 +50,7 @@ impl<C: Config> Lexer<'_, C> {
                     self.defer_html_comment_error(4);
                     None
                 }
-            }
+            }),
             _ => Some(Kind::LAngle),
         }
     }

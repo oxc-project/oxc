@@ -1,8 +1,8 @@
-commit: d9fe348c
+commit: 1fb0b771
 
 semantic_babel Summary:
 AST Parsed     : 2236/2236 (100.00%)
-Positive Passed: 2037/2236 (91.10%)
+Positive Passed: 2036/2236 (91.06%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
 Symbol span mismatch for "C":
 after transform: SymbolId(0): Span { start: 65, end: 66 }
@@ -309,7 +309,11 @@ semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescr
 A parameter cannot have a question mark and an initializer.
 A required parameter cannot follow an optional parameter.
 
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/private-fields/input.ts
+Declarations with definite assignment assertions must also have type annotations.
+
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/properties/input.ts
+Declarations with definite assignment assertions must also have type annotations.
 Identifier `x` has already been declared
 Identifier `x` has already been declared
 Identifier `x` has already been declared
@@ -635,6 +639,18 @@ rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body-export-named-declaration/input.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Symbol flags mismatch for "N":
+after transform: SymbolId(0): SymbolFlags(ValueModule)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "N":
+after transform: SymbolId(0): Span { start: 10, end: 11 }
+rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
+Symbol flags mismatch for "X":
+after transform: SymbolId(2): SymbolFlags(ValueModule)
+rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "X":
+after transform: SymbolId(2): Span { start: 53, end: 54 }
+rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body-import-equals-internal/input.ts
 Bindings mismatch:
@@ -657,6 +673,9 @@ rebuilt        : ScopeId(0): []
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/head/input.ts
 Ambient modules cannot be nested in other modules or namespaces.
 Ambient modules cannot be nested in other modules or namespaces.
+Bindings mismatch:
+after transform: ScopeId(0): ["M", "N"]
+rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/head-declare/input.ts
 Bindings mismatch:
@@ -779,6 +798,15 @@ rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/namespace-declaration-var-2/input.js
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Bindings mismatch:
+after transform: ScopeId(0): ["bar", "foo"]
+rebuilt        : ScopeId(0): ["bar"]
+Symbol flags mismatch for "bar":
+after transform: SymbolId(1): SymbolFlags(ValueModule)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "bar":
+after transform: SymbolId(1): Span { start: 32, end: 35 }
+rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-class-interface/input.ts
 Bindings mismatch:
@@ -1307,6 +1335,11 @@ after transform: ScopeId(0): ["a", "b"]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters/input.ts
+'const' modifier can only appear on a type parameter of a function, method or class
+'const' modifier can only appear on a type parameter of a function, method or class
+'const' modifier can only appear on a type parameter of a function, method or class
+'const' modifier can only appear on a type parameter of a function, method or class
+'const' modifier can only appear on a type parameter of a function, method or class
 Identifier `method` has already been declared
 Identifier `method` has already been declared
 

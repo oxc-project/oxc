@@ -164,6 +164,7 @@ declare_oxc_lint!(
     pending,
     config = ArrayCallbackReturn,
     version = "0.0.3",
+    short_description = "Enforce return statements in callbacks of array methods.",
 );
 
 impl Rule for ArrayCallbackReturn {

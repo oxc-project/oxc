@@ -1,7 +1,7 @@
 use oxc_ast::ast::*;
-use oxc_formatter_core::Expand;
 use oxc_span::GetSpan;
 
+use crate::source_text::SourceTextExt as _;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     formatter::{
@@ -9,6 +9,7 @@ use crate::{
         prelude::{format_with, group, soft_block_indent_with_maybe_space},
         trivia::format_dangling_comments,
     },
+    options::Expand,
     print::parameters::{get_this_param, should_hug_function_parameters},
     write,
 };

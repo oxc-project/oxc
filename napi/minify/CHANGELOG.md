@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.135.0] - 2026-06-08
+
+### 📚 Documentation
+
+- 275d318 napi/minifier: Point `target` to oxc docs (#23102) (camc314)
+
 ## [0.133.0] - 2026-05-26
 
 ### 🚀 Features

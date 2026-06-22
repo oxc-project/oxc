@@ -9,3 +9,4 @@ pub use super::{
     },
     trivia::{format_dangling_comments, format_leading_comments},
 };
+pub use crate::source_text::SourceTextExt as _;

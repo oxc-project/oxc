@@ -79,6 +79,7 @@ declare_oxc_lint!(
     fix,
     config = NoUselessUndefined,
     version = "0.6.1",
+    short_description = "Disallow useless `undefined`.",
 );
 
 // Create a static set for all function names

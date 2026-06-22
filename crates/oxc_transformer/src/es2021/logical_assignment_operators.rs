@@ -125,7 +125,7 @@ impl<'a> LogicalAssignmentOperators {
 
         let span = assignment_expr.span;
         let assign_op = AssignmentOperator::Assign;
-        let right = assignment_expr.right.take_in(ctx.ast);
+        let right = assignment_expr.right.take_in(ctx);
         let right = ctx.ast.expression_assignment(SPAN, assign_op, assign_target, right);
 
         let logical_expr = ctx.ast.expression_logical(span, left_expr, operator, right);
@@ -153,7 +153,7 @@ impl<'a> LogicalAssignmentOperators {
         static_expr: &mut StaticMemberExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> (Expression<'a>, AssignmentTarget<'a>) {
-        let object = static_expr.object.take_in(ctx.ast);
+        let object = static_expr.object.take_in(ctx);
         let (object, object_ref) = duplicate_expression(object, true, ctx);
 
         let left_expr = Expression::from(ctx.ast.member_expression_static(
@@ -180,10 +180,10 @@ impl<'a> LogicalAssignmentOperators {
         computed_expr: &mut ComputedMemberExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> (Expression<'a>, AssignmentTarget<'a>) {
-        let object = computed_expr.object.take_in(ctx.ast);
+        let object = computed_expr.object.take_in(ctx);
         let (object, object_ref) = duplicate_expression(object, true, ctx);
 
-        let expression = computed_expr.expression.take_in(ctx.ast);
+        let expression = computed_expr.expression.take_in(ctx);
         let (expression, expression_ref) = duplicate_expression(expression, true, ctx);
 
         let left_expr = Expression::from(ctx.ast.member_expression_computed(

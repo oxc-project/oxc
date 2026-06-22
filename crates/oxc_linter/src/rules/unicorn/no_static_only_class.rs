@@ -57,6 +57,7 @@ declare_oxc_lint!(
     pedantic,
     fix_dangerous,
     version = "0.0.16",
+    short_description = "Disallow `class` declarations that exclusively contain `static` members.",
 );
 
 impl Rule for NoStaticOnlyClass {

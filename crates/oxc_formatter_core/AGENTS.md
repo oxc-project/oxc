@@ -24,10 +24,46 @@ The core is parameterized over a consumer-supplied context so it stays language-
   - (avoids `oxc_allocator`'s `'ast` propagating through struct bounds and blocking anonymous lifetimes)
   - The allocator lives on `FormatState`, not the context
 - `FormatOptions` trait: `indent_style()`, `indent_width()`, `line_width()`, `line_ending()`, `as_print_options() -> PrinterOptions`
-  - Core option types: `IndentStyle`, `IndentWidth`, `LineWidth`, `LineEnding`, `Expand`, `BracketSpacing`
+  - Core option types: `IndentStyle`, `IndentWidth`, `LineWidth`, `LineEnding` (exactly the `PrinterOptions` inputs; see the boundary section below)
 - `Format<'ast, C>` trait + `FormatState<'ast, C>`, `Formatted<'ast, C>`, `Formatter<'buf, 'ast, C>`, `Buffer<'ast, C>`
   - All generic over the context `C`, consumers add a `C` bound only on `impl` blocks
   - Not on struct definitions, and typically define a `type FooFormatter<…> = Formatter<…, FooContext<…>>` alias to keep lifetimes aligned
+
+### What belongs in core (the boundary)
+
+Two layers, two admission rules. A type/fn that fits neither belongs in a consumer crate.
+
+- (1) engine: The IR + Printer + the option types the `Printer` actually consumes
+  - `PrinterOptions`: `IndentStyle`, `IndentWidth`, `LineWidth`, `LineEnding`
+
+Admission: the printing phase consumes it. "Shared by all languages" is NOT a reason on its own
+
+- (2) `spec/`: Shared formatter behaviors reused across language formatters
+
+Output targets Prettier compatibility, but the layer is defined by what it is, not by Prettier.
+
+Three gates, all required and note "shared across languages" describes what lives here but is not the admission test.
+The gates are:
+
+1. pure functions only (no option/config types),
+2. language differences arrive as explicit parameters, never hidden defaults or baked-in language rules,
+3. nothing is re-aliased as a language's public config type.
+
+Import discipline (convention): `spec/` only imports `std`, `cow-utils`, etc.
+
+A pure predicate over text shared by design (e.g. `is_suppression_marker`: all formatters honor the same ignore directives) is a desired contract and belongs here.
+Unlike option types like `QuoteStyle`, where sharing would encode a coincidental contract that breaks when languages diverge.
+
+Parameterizing language differences (sharpened gate 2), when a shared helper needs to vary per language:
+
+- a value / classifier / data parameter keeps it in core (core asserts nothing)
+  - e.g. `normalize_string` takes a raw quote byte, `SourceText` takes byte offsets
+- a parameter that would have to encode the language's grammar / logic structure is the language smuggled in disguise → it belongs in the consumer
+
+`SourceText` follows this line. Core owns mechanical, offset-keyed access only (slicing, raw-byte lookups).
+Lexical-semantic scanning whose answer is language-defined, what counts as a newline (U+2028/U+2029), a comment, or ASI/parens trivia lives in the consumer (`oxc_formatter`'s `SourceTextExt`), not here.
+Even raw newline detection proved to be consumer-owned (every consumer needs the LS/PS-aware variant in addition to `\r|\n`), so core keeps no newline helpers.
+Quote-style options, comment rules, and the like are likewise consumer-owned.
 
 ## Cargo features
 

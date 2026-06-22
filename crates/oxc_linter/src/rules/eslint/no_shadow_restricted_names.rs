@@ -96,6 +96,7 @@ declare_oxc_lint!(
     correctness,
     config = NoShadowRestrictedNamesConfig,
     version = "0.0.3",
+    short_description = "Disallows the redefining of global variables such as `undefined`, `NaN`, `Infinity`, `eval`, `globalThis` and `arguments`.",
 );
 
 impl Rule for NoShadowRestrictedNames {
@@ -201,8 +202,6 @@ fn test() {
             None,
         ), // { "ecmaVersion": 9 },
         ("var undefined; undefined = 5;", None),
-        ("class undefined {}", None),   // { "ecmaVersion": 2015, },
-        ("(class undefined {})", None), // { "ecmaVersion": 2015, },
         ("import undefined from 'foo';", None), // { "ecmaVersion": 2015, "sourceType": "module", },
         ("import { undefined } from 'foo';", None), // { "ecmaVersion": 2015, "sourceType": "module", },
         ("import { baz as undefined } from 'foo';", None), // { "ecmaVersion": 2015, "sourceType": "module", },

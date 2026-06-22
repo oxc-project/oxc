@@ -24,6 +24,18 @@ fn test_comment_inside_pife_function_alternate_of_conditional() {
     );
 }
 
+// A line comment between a conditional `:` and a plain (non-pife) alternate must
+// be preserved. It was previously treated as a trailing comment of `:` and
+// dropped, which broke codegen idempotency once a transform emits
+// `? consequent : // comment\nalternate` (e.g. lowered optional chaining).
+#[test]
+fn test_line_comment_after_conditional_colon() {
+    test("x = cond ? a : // c\nb;", "x = cond ? a : // c\nb;\n");
+    test_idempotency("x = cond ? a : // c\nb;");
+    // Real-world shape: `a?.b() ?? c` with a leading comment, after lowering.
+    test_idempotency("x = (_a = a) === null || _a === void 0 ? void 0 : // c1\n// c2\n_a.b();");
+}
+
 #[test]
 fn test_comment_at_top_of_file() {
     use oxc_allocator::Allocator;
@@ -44,6 +56,9 @@ fn test_comment_at_top_of_file() {
 #[test]
 fn unit() {
     test_same("<div>{/* Hello */}</div>;\n");
+    // A comment-only JSX expression container must not leak a leading space onto
+    // the following statement's indent.
+    test_same("x = <div>{/* Hello */}</div>;\ny = 1;\n");
     // https://github.com/oxc-project/oxc/issues/17266
     test("console.log(<div x={/*before*/ x} />)", "console.log(<div x={/*before*/ x} />);\n");
     test(

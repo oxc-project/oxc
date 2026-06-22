@@ -51,6 +51,7 @@ declare_oxc_lint!(
     pedantic,
     fix,
     version = "0.0.3",
+    short_description = "Disallows creating arrays with the `Array` constructor.",
 );
 
 impl Rule for NoArrayConstructor {

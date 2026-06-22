@@ -4,6 +4,38 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.56.0] - 2026-06-22
+
+### 🐛 Bug Fixes
+
+- 37a34a1 oxfmt/lsp: Avoid newlines line ending changes (#23463) (Sysix)
+
+## [0.55.0] - 2026-06-15
+
+### 🚀 Features
+
+- 0c6fb23 oxfmt: Format `parser:json-stringify` files by `oxc_formatter_json` (#23194) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 956309a lsp: Use protocol line breaks for positions (#23329) (konh)
+- 769de65 oxfmt: Handle compound json extensions (#23198) (leaysgur)
+
+## [0.54.0] - 2026-06-08
+
+### 🚀 Features
+
+- 3da77e0 oxfmt: Format `parser:json5` files by `oxc_formatter_json` (#22990) (leaysgur)
+- c786f0d oxfmt: Format `parser:jsonc` files by `oxc_formatter_json` (#22913) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 2aedd52 oxfmt: Avoid JS promise rejects for all TSFN call sites (#23107) (leaysgur)
+
+### 📚 Documentation
+
+- f88961a oxfmt: Annotate each config option with supported languages (#22953) (leaysgur)
+
 ## [0.53.0] - 2026-06-01
 
 ### 🚀 Features

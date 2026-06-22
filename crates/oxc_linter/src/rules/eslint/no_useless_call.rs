@@ -66,6 +66,7 @@ declare_oxc_lint!(
     eslint,
     perf,
     version = "0.15.9",
+    short_description = "Disallow unnecessary calls to `.call()` and `.apply()`",
 );
 
 impl Rule for NoUselessCall {

@@ -49,6 +49,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     version = "0.3.3",
+    short_description = "Disallow `new` operators with global non-constructor functions.",
 );
 
 impl Rule for NoNewNativeNonconstructor {

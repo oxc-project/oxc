@@ -14,13 +14,20 @@ pub fn test(source_text: &str, expected: &str, config: &ReplaceGlobalDefinesConf
     let source_type = SourceType::ts().with_module(true);
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
-    assert!(ret.errors.is_empty());
+    assert!(ret.diagnostics.is_empty());
     let mut program = ret.program;
     let mut scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
     let ret = ReplaceGlobalDefines::new(&allocator, config.clone()).build(scoping, &mut program);
     assert_eq!(ret.changed, source_text != expected);
-    // Use the updated scoping, instead of recreating one.
-    scoping = ret.scoping;
+    // Mirror the pipeline in crates/oxc/src/compiler.rs: it treats scoping as
+    // dirty whenever ReplaceGlobalDefines changed the AST (`scoping_dirty |=
+    // ret.changed`) and rebuilds it before DCE. Reuse RGD's scoping only on
+    // the unchanged path.
+    scoping = if ret.changed {
+        SemanticBuilder::new().build(&program).semantic.into_scoping()
+    } else {
+        ret.scoping
+    };
     AssertAst.visit_program(&program);
     // Run DCE, to align pipeline in crates/oxc/src/compiler.rs
     Compressor::new(&allocator).dead_code_elimination_with_scoping(
@@ -28,6 +35,25 @@ pub fn test(source_text: &str, expected: &str, config: &ReplaceGlobalDefinesConf
         scoping,
         CompressOptions::smallest(),
     );
+    let result = Codegen::new()
+        .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
+        .build(&program)
+        .code;
+    let expected = codegen(expected, source_type);
+    assert_eq!(result, expected, "for source {source_text}");
+}
+
+#[track_caller]
+fn test_define_only(source_text: &str, expected: &str, config: &ReplaceGlobalDefinesConfig) {
+    let source_type = SourceType::ts().with_module(true);
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    assert!(ret.diagnostics.is_empty());
+    let mut program = ret.program;
+    let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
+    let ret = ReplaceGlobalDefines::new(&allocator, config.clone()).build(scoping, &mut program);
+    assert_eq!(ret.changed, source_text != expected);
+    AssertAst.visit_program(&program);
     let result = Codegen::new()
         .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
         .build(&program)
@@ -282,6 +308,35 @@ fn declare_const() {
     test("declare const IS_PROD: boolean; if (IS_PROD) {} foo(IS_PROD)", "foo(true)", &config);
 }
 
+#[test]
+fn declare_const_assignment_target_bailout() {
+    // `IS_PROD = 0` cannot be rewritten to `true = 0` (literals are not valid
+    // assignment targets), so the LHS replacement bails out and the original
+    // identifier stays in the AST, its reference intact — downstream DCE must
+    // not treat IS_PROD as unused and drop the `declare const`.
+    let config = config(&[("IS_PROD", "true")]);
+    test(
+        "declare const IS_PROD: boolean; IS_PROD = 0;",
+        "declare const IS_PROD: boolean; IS_PROD = 0;",
+        &config,
+    );
+}
+
+#[test]
+fn declare_dot_define() {
+    let config = config(&[("process.env.NODE_ENV", "'production'")]);
+    test_define_then_transform_ts(
+        "declare let process: { env: { NODE_ENV: string } }; foo(process.env.NODE_ENV)",
+        "foo('production')",
+        &config,
+    );
+    test_define_only(
+        "declare let process: { env: { NODE_ENV: string } }; foo(process.env.NODE_ENV)",
+        "declare let process: { env: { NODE_ENV: string } }; foo('production')",
+        &config,
+    );
+}
+
 #[cfg(not(miri))]
 #[test]
 fn test_sourcemap() {
@@ -368,7 +423,7 @@ fn test_define_then_transform_impl(
 
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
-    assert!(ret.errors.is_empty());
+    assert!(ret.diagnostics.is_empty());
     let mut program = ret.program;
 
     // Step 1: Run define plugin first (like the playground does)
@@ -385,7 +440,7 @@ fn test_define_then_transform_impl(
     let filename = if source_type.is_typescript() { "test.ts" } else { "test.mjs" };
     let ret = Transformer::new(&allocator, Path::new(filename), &options)
         .build_with_scoping(scoping, &mut program);
-    assert!(ret.errors.is_empty());
+    assert!(ret.diagnostics.is_empty());
 
     let result = Codegen::new()
         .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })

@@ -83,6 +83,7 @@ declare_oxc_lint!(
     fix,
     config = CaseType,
     version = "1.68.0",
+    short_description = "Enforce specific casing for component definition names.",
 );
 
 impl Rule for ComponentDefinitionNameCasing {

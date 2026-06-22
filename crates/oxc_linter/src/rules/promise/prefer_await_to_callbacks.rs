@@ -56,6 +56,7 @@ declare_oxc_lint!(
     promise,
     style,
     version = "0.9.10",
+    short_description = "Prefer `async`/`await` over callback functions for handling asynchronous code.",
 );
 
 impl Rule for PreferAwaitToCallbacks {

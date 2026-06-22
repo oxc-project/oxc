@@ -7,6 +7,8 @@
 
 use oxc_span::{GetSpan, Span};
 
+use crate::source_text::SourceTextExt as _;
+
 use crate::formatter::{
     Buffer, Comments, Format, Formatter, GroupId, JsFormatContext, SourceText,
     UniqueGroupIdBuilder,

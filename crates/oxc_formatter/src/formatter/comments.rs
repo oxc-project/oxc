@@ -414,7 +414,7 @@ impl<'a> Comments<'a> {
     ///
     /// `prettier-ignore` is also supported for compatibility.
     pub fn is_suppression_comment(&self, comment: &Comment) -> bool {
-        oxc_formatter_core::util::is_suppression_marker(
+        oxc_formatter_core::spec::is_suppression_marker(
             self.source_text.text_for(&comment.content_span()),
         )
     }

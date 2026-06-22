@@ -30,8 +30,8 @@ impl<'a> PeepholeOptimizations {
 
         // Use constant evaluation for known method calls
         if let Some(constant_value) = ce.evaluate_value(ctx) {
-            ctx.state.changed = true;
-            *node = ctx.value_to_expr(ce.span, constant_value);
+            let new_expr = ctx.value_to_expr(ce.span, constant_value);
+            ctx.replace_expression(node, new_expr);
             return;
         }
 
@@ -56,8 +56,7 @@ impl<'a> PeepholeOptimizations {
             _ => None,
         };
         if let Some(replacement) = replacement {
-            ctx.state.changed = true;
-            *node = replacement;
+            ctx.replace_expression(node, replacement);
         }
     }
 
@@ -84,16 +83,16 @@ impl<'a> PeepholeOptimizations {
 
         let wrap_with_unary_plus_if_needed = |expr: &mut Expression<'a>| {
             if expr.value_type(ctx).is_number() {
-                expr.take_in(ctx.ast)
+                expr.take_in(ctx)
             } else {
-                ctx.ast.expression_unary(SPAN, UnaryOperator::UnaryPlus, expr.take_in(ctx.ast))
+                ctx.ast.expression_unary(SPAN, UnaryOperator::UnaryPlus, expr.take_in(ctx))
             }
         };
 
         Some(ctx.ast.expression_binary(
             span,
             // see [`PeepholeOptimizations::is_binary_operator_that_does_number_conversion`] why it does not require `wrap_with_unary_plus_if_needed` here
-            first_arg.take_in(ctx.ast),
+            first_arg.take_in(ctx),
             BinaryOperator::Exponential,
             wrap_with_unary_plus_if_needed(second_arg),
         ))
@@ -188,16 +187,16 @@ impl<'a> PeepholeOptimizations {
             return;
         }
 
-        *node = ctx.ast.expression_call(
+        let new_expr = ctx.ast.expression_call(
             original_span,
-            new_root_callee.take_in(ctx.ast),
+            new_root_callee.take_in(ctx),
             NONE,
             ctx.ast.vec_from_iter(
-                collected_arguments.into_iter().rev().flat_map(|arg| arg.take_in(ctx.ast)),
+                collected_arguments.into_iter().rev().flat_map(|arg| arg.take_in(ctx)),
             ),
             false,
         );
-        ctx.state.changed = true;
+        ctx.replace_expression(node, new_expr);
     }
 
     /// `[].concat(1, 2)` -> `[1, 2]`
@@ -254,13 +253,13 @@ impl<'a> PeepholeOptimizations {
                 }
 
                 if args.is_empty() {
-                    Some(object.take_in(ctx.ast))
+                    Some(object.take_in(ctx))
                 } else if can_merge_until.is_some() {
                     Some(ctx.ast.expression_call(
                         span,
-                        callee.take_in(ctx.ast),
+                        callee.take_in(ctx),
                         NONE,
-                        args.take_in(ctx.ast),
+                        args.take_in(ctx),
                         false,
                     ))
                 } else {
@@ -316,11 +315,11 @@ impl<'a> PeepholeOptimizations {
                         let cooked = ast.str(scratch);
                         let raw_cow = Self::escape_string_for_template_literal(scratch);
                         let raw = ast.str(&raw_cow);
+                        // `raw` is already escaped
                         quasis.push(ast.template_element(
                             SPAN,
                             TemplateElementValue { raw, cooked: Some(cooked) },
                             false,
-                            false, // raw is already escaped
                         ));
                         scratch.clear(); // maintains INVARIANT above
                         // checked that all the arguments are expression above
@@ -340,11 +339,11 @@ impl<'a> PeepholeOptimizations {
                 let cooked = ast.str(scratch);
                 let raw_cow = Self::escape_string_for_template_literal(scratch);
                 let raw = ast.str(&raw_cow);
+                // `raw` is already escaped
                 quasis.push(ast.template_element(
                     SPAN,
                     TemplateElementValue { raw, cooked: Some(cooked) },
                     true, // tail
-                    false,
                 ));
 
                 debug_assert_eq!(quasis.len(), expressions.len() + 1);
@@ -397,8 +396,7 @@ impl<'a> PeepholeOptimizations {
                                 span,
                                 ctx,
                             ) {
-                                ctx.state.changed = true;
-                                *node = replacement;
+                                ctx.replace_expression(node, replacement);
                             }
                         }
                         return;
@@ -415,8 +413,7 @@ impl<'a> PeepholeOptimizations {
                                 span,
                                 ctx,
                             ) {
-                                ctx.state.changed = true;
-                                *node = replacement;
+                                ctx.replace_expression(node, replacement);
                             }
                         }
                         return;
@@ -482,8 +479,7 @@ impl<'a> PeepholeOptimizations {
             _ => return,
         };
         if let Some(replacement) = replacement {
-            ctx.state.changed = true;
-            *node = replacement;
+            ctx.replace_expression(node, replacement);
         }
     }
 
@@ -571,7 +567,7 @@ impl<'a> PeepholeOptimizations {
                     s.span = span;
                     s.value = ctx.ast.str(&c.to_string());
                     s.raw = None;
-                    Some(object.take_in(ctx.ast))
+                    Some(object.take_in(ctx))
                 } else {
                     None
                 }

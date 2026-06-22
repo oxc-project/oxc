@@ -12,7 +12,7 @@ use oxc_span::SourceType;
 fn run(source_text: &str, source_type: SourceType, options: Option<CompressOptions>) -> String {
     let allocator = Allocator::default();
     let mut ret = Parser::new(&allocator, source_text, source_type).parse();
-    assert!(ret.errors.is_empty(), "Parser errors: {:?}", ret.errors);
+    assert!(ret.diagnostics.is_empty(), "Parser errors: {:?}", ret.diagnostics);
     let program = &mut ret.program;
     if let Some(options) = options {
         Compressor::new(&allocator).dead_code_elimination(program, options);
@@ -207,9 +207,10 @@ fn dce_var_hoisting() {
 }
 
 // Dropping a dead-after-throw statement (`module.exports = x`) removes the
-// only reference to `x`. Without flagging that as a change, the peephole loop
-// terminates before `LiveUsageCollector` refreshes scoping, leaving the
-// unused-declarator pass to see a stale reference and keep `var x = {}`.
+// only reference to `x`. Without recording that as a mutation, the peephole
+// loop terminates before `flush_pass_dirty` prunes the dropped reference,
+// leaving the unused-declarator pass to see a stale reference and keep
+// `var x = {}`.
 #[test]
 fn dead_after_throw_drop_triggers_unused_declarator_removal() {
     test(
@@ -673,4 +674,15 @@ fn fold_coalesce_on_tracked_non_nullish_binding() {
         "let n = 5n; export function a() { return n ?? other() } export function b() { return n ?? other() }",
         "let n = 5n; export function a() { return n } export function b() { return n }",
     );
+}
+
+// Convergence regression (monitor-oxc, bluebird.js): `try_fold_if` re-extracts
+// the dead branch's `var` names via `KeepVar` on every pass and filters the
+// synthesized statement through the unused-declarator removal. Dropping `x`
+// from that TRANSIENT statement must not record a mutation — when the slot is
+// already in canonical KeepVar shape nothing in the live tree changes, and a
+// spurious mutation spins the fixed-point loop past its iteration guard.
+#[test]
+fn test_fold_if_keep_var_filter_converges() {
+    test_same("function f() {\n\tif (0) var x, y;\n\ty = 1;\n\treturn y;\n}\nf();");
 }

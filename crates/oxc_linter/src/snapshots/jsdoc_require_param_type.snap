@@ -29,14 +29,14 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add {type} to `@param` tag.
 
-  ⚠ jsdoc(require-param-type): Missing JSDoc `@param` type.
+  ⚠ jsdoc(require-param-type): Missing root type for @param.
    ╭─[require_param_type.tsx:4:17]
  3 │                        * @param {number} foo
  4 │                        * @param root
    ·                          ──────
  5 │                        * @param {boolean} baz
    ╰────
-  help: Add {type} to `@param` tag.
+  help: Add {object} to `@param` tag.
 
   ⚠ jsdoc(require-param-type): Missing JSDoc `@param` type.
    ╭─[require_param_type.tsx:4:17]

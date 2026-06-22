@@ -200,10 +200,14 @@ impl<'a> BinaryExpressionVisitor<'a> {
                 }
             }
             BinaryishOperator::Binary(BinaryOperator::Exponential) => {
-                // Negative numbers are printed using a unary operator
+                // The base of `**` must be an `UpdateExpression`, so a unary/await base
+                // must be parenthesized. Negative numbers print as a unary operator.
                 if matches!(
                     e.left(),
-                    Expression::UnaryExpression(_) | Expression::NumericLiteral(_)
+                    Expression::UnaryExpression(_)
+                        | Expression::AwaitExpression(_)
+                        | Expression::TSTypeAssertion(_)
+                        | Expression::NumericLiteral(_)
                 ) {
                     self.left_precedence = Precedence::Call;
                 }

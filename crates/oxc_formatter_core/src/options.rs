@@ -1,9 +1,9 @@
 use std::{fmt, num::ParseIntError, str::FromStr};
 
-// ---
 // Language-agnostic format options shared by all formatter implementations.
+//
 // Part of [`crate::FormatOptions`] because the printing phase consumes these options.
-// ---
+// NOTE: Do NOT define language-specific options here, even if they look like they could be shared.
 
 #[derive(Debug, Default, Clone, Copy, Eq, Hash, PartialEq)]
 pub enum IndentStyle {
@@ -293,88 +293,5 @@ impl fmt::Display for LineWidthFromIntError {
 impl From<LineWidth> for u16 {
     fn from(value: LineWidth) -> Self {
         value.0
-    }
-}
-
-// ---
-// Shared formatting options across languages.
-// Not part of [`crate::FormatOptions`] because the printing phase does not consume it;
-// each language reads it from its own options struct when building the object IR.
-// ---
-
-/// Whether to insert spaces around brackets in object.
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-pub struct BracketSpacing(bool);
-
-impl BracketSpacing {
-    pub fn value(self) -> bool {
-        self.0
-    }
-}
-
-impl Default for BracketSpacing {
-    fn default() -> Self {
-        Self(true)
-    }
-}
-
-impl From<bool> for BracketSpacing {
-    fn from(value: bool) -> Self {
-        Self(value)
-    }
-}
-
-impl fmt::Display for BracketSpacing {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        fmt::Display::fmt(&self.value(), f)
-    }
-}
-
-impl FromStr for BracketSpacing {
-    type Err = &'static str;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match bool::from_str(s) {
-            Ok(value) => Ok(Self(value)),
-            Err(_) => Err(
-                "Value not supported for BracketSpacing. Supported values are 'true' and 'false'.",
-            ),
-        }
-    }
-}
-
-/// Whether objects keep their authored multi-line shape or collapse to one line when they fit.
-/// Mirrors Prettier's `objectWrap` option.
-#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
-pub enum Expand {
-    /// `objectWrap: "preserve"`.
-    /// An object stays multi-line when there is a newline right after `{` in the source;
-    /// otherwise it collapses when it fits.
-    #[default]
-    Auto,
-    /// `objectWrap: "collapse"`.
-    /// Objects collapse when they fit regardless of the authored shape.
-    Never,
-}
-
-impl FromStr for Expand {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "auto" => Ok(Self::Auto),
-            "never" => Ok(Self::Never),
-            _ => Err(std::format!("unknown expand literal: {s}")),
-        }
-    }
-}
-
-impl fmt::Display for Expand {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let s = match self {
-            Expand::Auto => "Auto",
-            Expand::Never => "Never",
-        };
-        f.write_str(s)
     }
 }

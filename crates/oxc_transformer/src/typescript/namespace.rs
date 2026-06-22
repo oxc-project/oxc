@@ -37,10 +37,12 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptNamespace {
 
         // Recreate the statements vec for memory efficiency.
         // Inserting the `let` declaration multiple times will reallocate the whole statements vec
-        // every time a namespace declaration is encountered.
-        let mut new_stmts = ctx.ast.vec();
+        // every time a namespace declaration is encountered. Pre-size to the current body length
+        // (a lower bound — namespaces expand) to avoid the growth reallocations for the common
+        // pass-through statements.
+        let mut new_stmts = ctx.ast.vec_with_capacity(program.body.len());
 
-        for stmt in program.body.take_in(ctx.ast) {
+        for stmt in program.body.take_in(ctx) {
             match stmt {
                 Statement::TSModuleDeclaration(decl) => {
                     if !self.allow_namespaces {
@@ -465,7 +467,7 @@ impl<'a> TypeScriptNamespace {
                                 false,
                             ))
                             .into(),
-                            init.take_in(ctx.ast),
+                            init.take_in(ctx),
                         ),
                     );
                 }

@@ -1,8 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::borrow::Cow;
 
-use oxc_ast::{AstKind, ast::ImportDeclarationSpecifier};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -70,7 +69,7 @@ pub struct ConsistentVitestConfig {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule triggers an error when an unexpected vitest accessor is used.
+    /// This rule triggers an error when an unexpected Vitest accessor is used.
     ///
     /// ### Why is this bad?
     ///
@@ -98,6 +97,7 @@ declare_oxc_lint!(
     fix,
     config = ConsistentVitestConfig,
     version = "1.37.0",
+    short_description = "This rule triggers an error when an unexpected Vitest accessor is used.",
 );
 
 impl Rule for ConsistentVitestVi {
@@ -124,14 +124,14 @@ impl Rule for ConsistentVitestVi {
                 ctx.diagnostic_with_fix(
                     consistent_vitest_vi_diagnostic(vitest_import.span(), &self.function),
                     |fixer| {
-                        let mut specifiers_without_opposite_accessor: Vec<Cow<str>> = import
+                        let mut specifiers_without_opposite_accessor: Vec<&str> = import
                             .specifiers
                             .as_ref()
                             .map(|specs| {
                                 specs
                                     .iter()
                                     .filter(|spec| spec.name() != opposite.as_str())
-                                    .map(ImportDeclarationSpecifier::name)
+                                    .map(|spec| fixer.source_range(spec.span()))
                                     .collect()
                             })
                             .unwrap_or_default();
@@ -139,12 +139,15 @@ impl Rule for ConsistentVitestVi {
                         if specifiers_without_opposite_accessor.is_empty() {
                             fixer.replace(vitest_import.local().span, self.function.as_str())
                         } else {
-                            if !specifiers_without_opposite_accessor
-                                .iter()
-                                .any(|s| s.as_ref() == self.function.as_str())
-                            {
-                                specifiers_without_opposite_accessor
-                                    .push(self.function.as_str().into());
+                            let target_already_bound =
+                                import.specifiers.as_ref().is_some_and(|specs| {
+                                    specs.iter().any(|spec| {
+                                        spec.name() != opposite.as_str()
+                                            && spec.name() == self.function.as_str()
+                                    })
+                                });
+                            if !target_already_bound {
+                                specifiers_without_opposite_accessor.push(self.function.as_str());
                             }
 
                             let import_text = specifiers_without_opposite_accessor.join(", ");
@@ -161,10 +164,8 @@ impl Rule for ConsistentVitestVi {
                                 return fixer.noop();
                             };
 
-                            let specifiers_span = Span::new(
-                                first_specifier.local().span.start,
-                                last_specifier.local().span.end,
-                            );
+                            let specifiers_span =
+                                Span::new(first_specifier.span().start, last_specifier.span().end);
 
                             fixer.replace(specifiers_span, import_text)
                         }
@@ -255,6 +256,26 @@ fn test() {
 			vi.clearAllMocks();"#,
             r#"vitest.stubEnv("NODE_ENV", "production");
 			vitest.clearAllMocks();"#,
+            Some(serde_json::json!([{ "fn": "vitest" }])),
+        ),
+        (
+            r#"import { vitest, expect as toBe } from "vitest";"#,
+            r#"import { expect as toBe, vi } from "vitest";"#,
+            None,
+        ),
+        (
+            r#"import { expect as e, vitest } from "vitest";"#,
+            r#"import { expect as e, vi } from "vitest";"#,
+            None,
+        ),
+        (
+            r#"import { x as vi, vitest } from "vitest";"#,
+            r#"import { x as vi } from "vitest";"#,
+            None,
+        ),
+        (
+            r#"import { x as vitest, vi } from "vitest";"#,
+            r#"import { x as vitest } from "vitest";"#,
             Some(serde_json::json!([{ "fn": "vitest" }])),
         ),
     ];

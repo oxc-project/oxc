@@ -539,7 +539,10 @@ impl Renderer {
         let m = schema.metadata.as_ref()?;
         let default = m.default.as_ref()?;
 
-        if default.as_u64().is_some_and(|value| value == usize::MAX as u64) {
+        if default
+            .as_u64()
+            .is_some_and(|value| value == usize::MAX as u64 || value == u64::from(u32::MAX))
+        {
             return Some("Infinity".to_string());
         }
 

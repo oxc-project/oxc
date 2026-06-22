@@ -45,6 +45,7 @@ use cow_utils::CowUtils;
 
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
+use oxc_formatter_core::arena_cow_str;
 use oxc_span::GetSpan;
 
 use crate::{
@@ -54,9 +55,7 @@ use crate::{
         Format, JsFormatter,
         prelude::*,
         separated::FormatSeparatedIter,
-        token::number::{
-            NumberFormatOptions, format_number_token, format_trimmed_number, is_simple_number,
-        },
+        token::number::{format_number_token, format_trimmed_number, is_simple_number},
         trivia::{
             DanglingIndentMode, FormatDanglingComments, FormatLeadingComments,
             FormatTrailingComments,
@@ -1002,7 +1001,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, NullLiteral> {
 impl<'a> FormatWrite<'a> for AstNode<'a, NumericLiteral<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let source_text = f.source_text().text_for(self);
-        let options = NumberFormatOptions::keep_one_trailing_decimal_zero();
+        // JS keeps one trailing decimal zero (`x.00000` -> `x.0`); see `format_trimmed_number`.
+        let keep_one_trailing_decimal_zero = true;
 
         // Check if this numeric literal is a property key (not a value) that should be quoted
         // when quoteProps is "consistent" and another property requires quotes.
@@ -1019,7 +1019,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, NumericLiteral<'a>> {
 
         if is_property_key && f.context().is_quote_needed() {
             // Get the formatted number text
-            let formatted = format_trimmed_number(source_text, options);
+            let formatted = format_trimmed_number(source_text, keep_one_trailing_decimal_zero);
 
             // Check if the number is "simple" (only digits, or digits.digits)
             // and the value matches the formatted representation.
@@ -1049,7 +1049,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, NumericLiteral<'a>> {
             }
         }
 
-        format_number_token(source_text, options).fmt(f);
+        format_number_token(source_text, keep_one_trailing_decimal_zero).fmt(f);
     }
 }
 
@@ -1075,7 +1075,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, StringLiteral<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, BigIntLiteral<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        write!(f, text(f.allocator().alloc_str(&self.raw().unwrap().cow_to_ascii_lowercase())));
+        // Already-lowercase bigints (the common case, e.g. `123n`) stay `Cow::Borrowed`, so the
+        // arena copy is avoided; only an uppercase literal (e.g. `0xFFn`) is copied.
+        let lowered = self.raw().unwrap().as_str().cow_to_ascii_lowercase();
+        write!(f, text(arena_cow_str(&lowered, f)));
     }
 }
 
