@@ -3,8 +3,9 @@ use std::cell::Cell;
 use oxc_allocator::StringBuilder;
 use oxc_ast::Comment;
 use oxc_formatter_core::{
-    Buffer, Format, SourceText,
+    Buffer, Format, LINE_TERMINATORS, SourceText, arena_cow_str,
     builders::{empty_line, expand_parent, hard_line_break, line_suffix, space, text},
+    normalize_newlines,
     spec::is_suppression_marker,
     write,
 };
@@ -310,7 +311,11 @@ pub struct FormatSuppressedNode(pub Span);
 impl<'a> Format<'a, JsonFormatContext<'a>> for FormatSuppressedNode {
     fn fmt(&self, f: &mut JsonFormatter<'_, 'a>) {
         write!(f, FormatLeadingComments(self.0));
-        write!(f, text(f.context().source_text().text_for(&self.0)));
+        // The IR only supports `\n` as a line break. Normalize CRLF / CR / LS / PS to LF;
+        // the printer will re-emit the configured `LineEnding` at the final stage.
+        let raw = f.context().source_text().text_for(&self.0);
+        let normalized = normalize_newlines(raw, LINE_TERMINATORS);
+        write!(f, text(arena_cow_str(&normalized, f)));
         // The verbatim text already includes inside-span comments;
         // advance the cursor so they aren't re-emitted as leading comments of a later node.
         let _ = f.context().comments().take_before(self.0.end);

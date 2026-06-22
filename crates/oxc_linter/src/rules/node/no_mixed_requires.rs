@@ -77,7 +77,7 @@ declare_oxc_lint!(
     node,
     style,
     config = NoMixedRequiresConfig,
-    version = "next",
+    version = "1.71.0",
     short_description = "Disallow `require` calls to be mixed with regular variable declarations.",
 );
 

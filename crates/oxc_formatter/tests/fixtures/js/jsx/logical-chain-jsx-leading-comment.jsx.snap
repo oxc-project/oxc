@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_formatter/tests/fixtures/mod.rs
-assertion_line: 232
 ---
 ==================== Input ====================
 // 1. Long `&&` chain whose final JSX operand has a `(`-trailing inline `//`

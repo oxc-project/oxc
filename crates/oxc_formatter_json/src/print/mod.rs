@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use oxc_ast::ast::Expression;
 use oxc_formatter_core::{Buffer, Format, Formatter, builders::FormatWith, builders::text, write};
 use oxc_span::{GetSpan, Span};
@@ -26,15 +24,6 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for &'static str {
     #[inline]
     fn fmt(&self, f: &mut JsonFormatter<'_, 'a>) {
         write!(f, oxc_formatter_core::builders::token(self));
-    }
-}
-
-/// Lifts a `Cow<'a, str>` to `&'a str`, allocating in the arena only for the owned case.
-/// Borrowed Cows already point into arena-resident source, so they pass through unchanged.
-pub fn arena_cow_str<'a>(cow: Cow<'a, str>, f: &JsonFormatter<'_, 'a>) -> &'a str {
-    match cow {
-        Cow::Borrowed(s) => s,
-        Cow::Owned(s) => f.allocator().alloc_str(&s),
     }
 }
 
