@@ -220,7 +220,7 @@ pub fn transform_source<'a>(
 ) -> (Option<oxc_ast::ast::Program<'a>>, TransformResult) {
     let mut parsed = oxc_parser::Parser::new(allocator, source_text, source_type).parse();
     let result = transform(&mut parsed.program, allocator, options);
-    let program = result.changed.then(|| parsed.program);
+    let program = result.changed.then_some(parsed.program);
     (program, result)
 }
 
