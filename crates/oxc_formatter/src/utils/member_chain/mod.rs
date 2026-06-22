@@ -209,7 +209,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for MemberChain<'a, '_> {
         let has_new_line_or_comment_between =
             self.tail.iter().any(MemberChainGroup::needs_empty_line);
 
-        if self.tail.len() <= 1 && !has_comment && !has_new_line_or_comment_between {
+        // If `tail` is empty (merged into `head`), early-return; any comment lives in `head`
+        if self.tail.is_empty()
+            || (self.tail.len() == 1 && !has_comment && !has_new_line_or_comment_between)
+        {
             return if is_long_curried_call(self.root) {
                 write!(f, [format_one_line]);
             } else {
