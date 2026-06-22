@@ -7396,9 +7396,15 @@ fn lower_statement<'a>(
                 suggestions: None,
             })?;
         }
-        oxc::Statement::TSEnumDeclaration(_) => {
-            // The original emitted an `UnsupportedNode` silently (no diagnostic)
-            // for `TSEnumDeclaration`; oxc has no such variant, so skip it.
+        oxc::Statement::TSEnumDeclaration(e) => {
+            // Inline TS `enum` has runtime semantics, so re-emit it verbatim at
+            // this position (the original captured it via `UnsupportedNode`).
+            // Lower as a value-less passthrough; codegen clones it through.
+            let loc = builder.source_location(e.span);
+            lower_value_to_temporary(
+                builder,
+                InstructionValue::PassthroughStatement { stmt, loc },
+            )?;
         }
         _ => {
             // Remaining statements are skipped: bodyless FunctionDeclaration

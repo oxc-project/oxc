@@ -200,6 +200,7 @@ fn may_allocate(value: &InstructionValue, lvalue_type_is_primitive: bool) -> boo
         | InstructionValue::IteratorNext { .. }
         | InstructionValue::NextPropertyOf { .. }
         | InstructionValue::Debugger { .. }
+        | InstructionValue::PassthroughStatement { .. }
         | InstructionValue::StartMemoize { .. }
         | InstructionValue::FinishMemoize { .. }
         | InstructionValue::UnaryExpression { .. }

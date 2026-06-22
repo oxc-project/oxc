@@ -1256,6 +1256,9 @@ impl<'a, 'h> PrintFormatter<'a, 'h> {
             InstructionValue::Debugger { loc } => {
                 self.line(&format!("Debugger {{ loc: {} }}", format_loc(loc)));
             }
+            InstructionValue::PassthroughStatement { loc, .. } => {
+                self.line(&format!("PassthroughStatement {{ loc: {} }}", format_loc(loc)));
+            }
             InstructionValue::PostfixUpdate { lvalue, operation, value: val, loc } => {
                 self.line("PostfixUpdate {");
                 self.indent();

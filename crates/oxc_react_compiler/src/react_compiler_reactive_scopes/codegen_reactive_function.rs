@@ -1313,6 +1313,11 @@ fn ox_codegen_instruction_nullable<'a, 'h>(
             InstructionValue::Debugger { .. } => {
                 return Ok(Some(cx.ast.statement_debugger(SPAN)));
             }
+            InstructionValue::PassthroughStatement { stmt, .. } => {
+                // Re-emit the preserved source statement (e.g. an inline TS
+                // `enum`) verbatim by cloning it into the output allocator.
+                return Ok(Some(stmt.clone_in(cx.ast.allocator)));
+            }
             InstructionValue::ObjectMethod { loc, .. } => {
                 invariant(
                     instr.lvalue.is_some(),
@@ -2030,6 +2035,7 @@ fn ox_codegen_base_instruction_value<'a, 'h>(
         InstructionValue::StartMemoize { .. }
         | InstructionValue::FinishMemoize { .. }
         | InstructionValue::Debugger { .. }
+        | InstructionValue::PassthroughStatement { .. }
         | InstructionValue::DeclareLocal { .. }
         | InstructionValue::DeclareContext { .. }
         | InstructionValue::Destructure { .. }
@@ -3086,7 +3092,10 @@ impl<'a, 'e> ReactiveFunctionVisitor<'a> for CountMemoBlockVisitor<'a, 'e> {
     }
 }
 
-fn count_memo_blocks<'a>(func: &ReactiveFunction<'a>, env: &Environment<'a>) -> (u32, u32, u32, u32) {
+fn count_memo_blocks<'a>(
+    func: &ReactiveFunction<'a>,
+    env: &Environment<'a>,
+) -> (u32, u32, u32, u32) {
     let visitor = CountMemoBlockVisitor { env };
     let mut state = CountMemoBlockState {
         memo_blocks: 0,

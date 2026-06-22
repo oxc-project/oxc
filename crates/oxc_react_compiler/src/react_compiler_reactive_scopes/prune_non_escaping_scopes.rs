@@ -446,6 +446,7 @@ impl<'a, 'e> CollectDependenciesVisitor<'a, 'e> {
             | InstructionValue::StartMemoize { .. }
             | InstructionValue::FinishMemoize { .. }
             | InstructionValue::Debugger { .. }
+            | InstructionValue::PassthroughStatement { .. }
             | InstructionValue::ComputedDelete { .. }
             | InstructionValue::PropertyDelete { .. }
             | InstructionValue::LoadGlobal { .. }

@@ -78,6 +78,7 @@ pub fn each_instruction_value_lvalue(value: &InstructionValue) -> Vec<Place> {
         | InstructionValue::IteratorNext { .. }
         | InstructionValue::NextPropertyOf { .. }
         | InstructionValue::Debugger { .. }
+        | InstructionValue::PassthroughStatement { .. }
         | InstructionValue::StartMemoize { .. }
         | InstructionValue::FinishMemoize { .. } => {}
     }
@@ -141,6 +142,7 @@ pub fn each_instruction_lvalue_with_kind(
         | InstructionValue::IteratorNext { .. }
         | InstructionValue::NextPropertyOf { .. }
         | InstructionValue::Debugger { .. }
+        | InstructionValue::PassthroughStatement { .. }
         | InstructionValue::StartMemoize { .. }
         | InstructionValue::FinishMemoize { .. } => {}
     }
@@ -339,6 +341,7 @@ pub fn each_instruction_value_operand_with_functions(
             result.push(decl.clone());
         }
         InstructionValue::Debugger { .. }
+        | InstructionValue::PassthroughStatement { .. }
         | InstructionValue::RegExpLiteral { .. }
         | InstructionValue::MetaProperty { .. }
         | InstructionValue::LoadGlobal { .. }
@@ -736,6 +739,7 @@ pub fn map_instruction_value_operands(
             *decl = f(decl.clone());
         }
         InstructionValue::Debugger { .. }
+        | InstructionValue::PassthroughStatement { .. }
         | InstructionValue::RegExpLiteral { .. }
         | InstructionValue::MetaProperty { .. }
         | InstructionValue::LoadGlobal { .. }
@@ -1377,6 +1381,7 @@ pub fn for_each_instruction_value_operand_mut(
             f(decl);
         }
         InstructionValue::Debugger { .. }
+        | InstructionValue::PassthroughStatement { .. }
         | InstructionValue::RegExpLiteral { .. }
         | InstructionValue::MetaProperty { .. }
         | InstructionValue::LoadGlobal { .. }

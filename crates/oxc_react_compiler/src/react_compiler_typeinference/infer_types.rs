@@ -832,6 +832,7 @@ fn generate_instruction_types(
         | InstructionValue::GetIterator { .. }
         | InstructionValue::IteratorNext { .. }
         | InstructionValue::Debugger { .. }
+        | InstructionValue::PassthroughStatement { .. }
         | InstructionValue::FinishMemoize { .. } => {
             // No type equations for these
         }
@@ -1175,7 +1176,8 @@ fn apply_instruction_operands(
         | InstructionValue::DeclareContext { .. }
         | InstructionValue::RegExpLiteral { .. }
         | InstructionValue::MetaProperty { .. }
-        | InstructionValue::Debugger { .. } => {
+        | InstructionValue::Debugger { .. }
+        | InstructionValue::PassthroughStatement { .. } => {
             // No operand places
         }
     }

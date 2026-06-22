@@ -27,8 +27,8 @@ pub use crate::react_compiler_diagnostics::Position;
 pub use crate::react_compiler_diagnostics::SourceLocation;
 use crate::react_compiler_utils::FxIndexMap;
 use crate::react_compiler_utils::FxIndexSet;
-pub use raw::{RawIdent, RawNode, RawTypeCategory};
 use oxc_ast::ast as oxc;
+pub use raw::{RawIdent, RawNode, RawTypeCategory};
 pub use reactive::*;
 
 // =============================================================================
@@ -778,6 +778,14 @@ pub enum InstructionValue<'a> {
     Debugger {
         loc: Option<SourceLocation>,
     },
+    /// A statement preserved verbatim from the source and re-emitted at this
+    /// position (e.g. an inline TS `enum`, which has runtime semantics). Holds
+    /// the borrowed oxc node; codegen clones it into the output allocator. The
+    /// original captured this via `UnsupportedNode`. Value-less, like `Debugger`.
+    PassthroughStatement {
+        stmt: &'a oxc::Statement<'a>,
+        loc: Option<SourceLocation>,
+    },
     StartMemoize {
         manual_memo_id: u32,
         deps: Option<Vec<ManualMemoDependency>>,
@@ -836,6 +844,7 @@ impl<'a> InstructionValue<'a> {
             | InstructionValue::PrefixUpdate { loc, .. }
             | InstructionValue::PostfixUpdate { loc, .. }
             | InstructionValue::Debugger { loc, .. }
+            | InstructionValue::PassthroughStatement { loc, .. }
             | InstructionValue::StartMemoize { loc, .. }
             | InstructionValue::FinishMemoize { loc, .. } => loc.as_ref(),
         }

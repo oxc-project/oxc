@@ -311,6 +311,11 @@ fn pruneable_value(value: &InstructionValue, state: &State, env: &Environment) -
             // explicitly retain debugger statements
             false
         }
+        InstructionValue::PassthroughStatement { .. } => {
+            // preserved source statements (e.g. inline TS `enum`) have runtime
+            // semantics — never prune them
+            false
+        }
         InstructionValue::CallExpression { callee, .. } => {
             if env.output_mode == OutputMode::Ssr {
                 let callee_ty =
