@@ -1284,11 +1284,11 @@ fn log_error(err: &CompilerError, fn_ast_loc: Option<&FnSourceLoc>, context: &mu
 /// Handle an error according to the panicThreshold setting.
 /// Returns Some(CompileResult::Error) if the error should be surfaced as fatal,
 /// otherwise returns None (error was logged only).
-fn handle_error<'a>(
+fn handle_error(
     err: &CompilerError,
     fn_ast_loc: Option<&FnSourceLoc>,
     context: &mut ProgramContext,
-) -> Option<CompileResult<'a>> {
+) -> Option<CompileResult> {
     // Log the error
     log_error(err, fn_ast_loc, context);
 
@@ -1437,7 +1437,7 @@ fn process_fn<'a>(
     output_mode: CompilerOutputMode,
     env_config: &EnvironmentConfig,
     context: &mut ProgramContext,
-) -> Result<Option<CodegenFunction<'a>>, CompileResult<'a>> {
+) -> Result<Option<CodegenFunction<'a>>, CompileResult> {
     // Parse directives from the function body
     let opt_in_result =
         try_find_directive_enabling_memoization(&source.body_directives, &context.opts);
@@ -2880,35 +2880,29 @@ impl<'a> oxc_ast_visit::VisitMut<'a> for OxcNonNullChainParensVisitor<'a> {
 
 fn ox_splice_program<'a>(
     ast: &oxc_ast::AstBuilder<'a>,
-    oxc_program: &oxc_ast::ast::Program<'a>,
+    program: &mut oxc_ast::ast::Program<'a>,
     replacements: &[OxcReplacement<'a>],
     context: &mut ProgramContext,
-) -> oxc_ast::ast::Program<'a> {
-    use oxc_allocator::CloneIn;
-
-    let mut program = oxc_program.clone_in(ast.allocator);
+) {
     // The parser sets `pife = true` on parenthesized function/arrow expressions
     // so codegen preserves the source parens. Passed-through (non-recompiled)
-    // code keeps that flag through `clone_in`, making oxc emit callee parens
+    // code keeps that flag, making oxc emit callee parens
     // (`(async function(){})()`) the original Babel path never produced. Clear it
     // so codegen parenthesizes by syntactic position only.
-    oxc_ast_visit::VisitMut::visit_program(&mut OxcClearPifeVisitor, &mut program);
+    oxc_ast_visit::VisitMut::visit_program(&mut OxcClearPifeVisitor, program);
     // The original pipeline decoded JSX text entities on parse and re-encoded them
     // on codegen. The de-Babeled path only does that round-trip for *recompiled*
     // JSX; passed-through JSX text is left raw, so e.g. `&gte;` is not re-escaped to
     // `&amp;gte;`. Run the same decode→encode over every JSXText in the spliced
     // program (idempotent for already-normalized, recompiled text).
-    oxc_ast_visit::VisitMut::visit_program(
-        &mut OxcNormalizeJsxTextVisitor { ast: *ast },
-        &mut program,
-    );
+    oxc_ast_visit::VisitMut::visit_program(&mut OxcNormalizeJsxTextVisitor { ast: *ast }, program);
     // The original Babel round-trip emitted a non-null assertion over an optional
     // chain with parens — `(a?.b)!` — whereas passed-through code keeps the source
     // form `a?.b!`. Re-wrap the chain so the output matches. (Recompiled chains
     // drop the `!` entirely, so only passed-through assertions are affected.)
     oxc_ast_visit::VisitMut::visit_program(
         &mut OxcNonNullChainParensVisitor { ast: *ast },
-        &mut program,
+        program,
     );
 
     // Outlined function declarations are placed differently depending on the
@@ -2939,16 +2933,16 @@ fn ox_splice_program<'a>(
         }
 
         if let Some(ref gating_config) = replacement.gating {
-            ox_apply_gated_conditional(ast, &mut program, replacement, gating_config, context);
+            ox_apply_gated_conditional(ast, program, replacement, gating_config, context);
         } else if let Some(node_id) = replacement.fn_node_id {
             let mut visitor =
                 OxcReplaceFnVisitor { ast, node_id, codegen: &replacement.codegen_fn, done: false };
-            oxc_ast_visit::VisitMut::visit_program(&mut visitor, &mut program);
+            oxc_ast_visit::VisitMut::visit_program(&mut visitor, program);
         }
 
         if !sibling_outlined_decls.is_empty() {
             if let Some(node_id) = replacement.fn_node_id {
-                ox_insert_outlined_after(&mut program, node_id, sibling_outlined_decls);
+                ox_insert_outlined_after(program, node_id, sibling_outlined_decls);
             }
         }
     }
@@ -2964,12 +2958,10 @@ fn ox_splice_program<'a>(
         let local_name = import_spec.name;
         let mut visitor =
             OxcRenameIdentifierVisitor { ast, old_name: "useMemoCache", new_name: &local_name };
-        oxc_ast_visit::VisitMut::visit_program(&mut visitor, &mut program);
+        oxc_ast_visit::VisitMut::visit_program(&mut visitor, program);
     }
 
-    ox_add_imports_to_program(ast, &mut program, context);
-
-    program
+    ox_add_imports_to_program(ast, program, context);
 }
 
 /// Insert outlined function declarations immediately after the statement that
@@ -3187,10 +3179,10 @@ fn ox_is_non_namespaced_import(import: &oxc_ast::ast::ImportDeclaration) -> bool
 /// - applyCompiledFunctions: replace original functions with compiled versions
 pub fn compile_program<'a, 'p>(
     ast: &oxc_ast::AstBuilder<'a>,
-    oxc_program: &'p oxc_ast::ast::Program<'a>,
+    oxc_program: &'p mut oxc_ast::ast::Program<'a>,
     scope: ScopeInfo,
     options: PluginOptions,
-) -> CompileResult<'a> {
+) -> CompileResult {
     // Compute output mode once, up front
     let output_mode = CompilerOutputMode::from_opts(&options);
 
@@ -3208,7 +3200,7 @@ pub fn compile_program<'a, 'p>(
     // Check if we should compile this file at all (pre-resolved by JS shim)
     if !options.should_compile {
         return CompileResult::Success {
-            ast: None,
+            changed: false,
             events: early_events,
             ordered_log: early_ordered_log,
             renames: Vec::new(),
@@ -3216,12 +3208,12 @@ pub fn compile_program<'a, 'p>(
         };
     }
 
-    let program = oxc_program;
+    let program = &*oxc_program;
 
     // Check for existing runtime imports (file already compiled)
     if should_skip_compilation(program, &options) {
         return CompileResult::Success {
-            ast: None,
+            changed: false,
             events: early_events,
             ordered_log: early_ordered_log,
             renames: Vec::new(),
@@ -3287,7 +3279,7 @@ pub fn compile_program<'a, 'p>(
             return result;
         }
         return CompileResult::Success {
-            ast: None,
+            changed: false,
             events: context.events,
             ordered_log: context.ordered_log,
             renames: convert_renames(&context.renames),
@@ -3388,7 +3380,7 @@ pub fn compile_program<'a, 'p>(
             handle_error(&err, None, &mut context);
         }
         return CompileResult::Success {
-            ast: None,
+            changed: false,
             events: context.events,
             ordered_log: context.ordered_log,
             renames: convert_renames(&context.renames),
@@ -3432,7 +3424,7 @@ pub fn compile_program<'a, 'p>(
         // when there are no replacements — matching TS behavior where
         // addImportsToProgram is only called when compiledFns.length > 0.
         return CompileResult::Success {
-            ast: None,
+            changed: false,
             events: context.events,
             ordered_log: context.ordered_log,
             renames: convert_renames(&context.renames),
@@ -3440,15 +3432,15 @@ pub fn compile_program<'a, 'p>(
         };
     }
 
-    // Build the memoized oxc program: splice each compiled oxc function in for its
-    // original (matched by `span.start == fn_node_id`), apply gating, insert outlined
-    // functions, and add the memo-cache / gating imports.
-    let compiled_program = ox_splice_program(ast, oxc_program, &replacements, &mut context);
+    // Splice each compiled oxc function into the program in place (matched by
+    // `span.start == fn_node_id`), apply gating, insert outlined functions, and add
+    // the memo-cache / gating imports.
+    ox_splice_program(ast, oxc_program, &replacements, &mut context);
 
     let timing_entries = context.timing.into_entries();
 
     CompileResult::Success {
-        ast: Some(compiled_program),
+        changed: true,
         events: context.events,
         ordered_log: context.ordered_log,
         renames: convert_renames(&context.renames),

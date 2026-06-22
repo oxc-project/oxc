@@ -49,7 +49,7 @@ fn react_compiler_impl(
     let allocator = Allocator::default();
     let options = options.unwrap_or_default();
 
-    let parsed = Parser::new(&allocator, source_text, source_type).parse();
+    let mut parsed = Parser::new(&allocator, source_text, source_type).parse();
 
     let mut plugin_options = oxc_react_compiler::default_plugin_options();
     plugin_options.filename = Some(filename.to_string());
@@ -60,30 +60,29 @@ fn react_compiler_impl(
         plugin_options.panic_threshold = threshold;
     }
 
-    let result = oxc_react_compiler::transform(&parsed.program, &allocator, plugin_options);
+    let result = oxc_react_compiler::transform(&mut parsed.program, &allocator, plugin_options);
 
-    let diagnostics = parsed.diagnostics.into_iter().chain(result.diagnostics).collect::<Vec<_>>();
+    let parser_diagnostics = std::mem::take(&mut parsed.diagnostics);
+    let diagnostics = parser_diagnostics.into_iter().chain(result.diagnostics).collect::<Vec<_>>();
     let errors = OxcError::from_diagnostics(filename, source_text, diagnostics);
 
-    match result.program {
-        Some(compiled) => {
-            let source_map_path = match options.sourcemap {
-                Some(true) => Some(source_path.to_path_buf()),
-                _ => None,
-            };
-            let codegen_ret = Codegen::new()
-                .with_options(CodegenOptions { source_map_path, ..CodegenOptions::default() })
-                .build(&compiled);
-            ReactCompilerResult {
-                code: codegen_ret.code,
-                map: codegen_ret.map.map(SourceMap::from),
-                changed: true,
-                errors,
-            }
+    if result.changed {
+        // The compiler spliced the memoized functions into `parsed.program` in place.
+        let source_map_path = match options.sourcemap {
+            Some(true) => Some(source_path.to_path_buf()),
+            _ => None,
+        };
+        let codegen_ret = Codegen::new()
+            .with_options(CodegenOptions { source_map_path, ..CodegenOptions::default() })
+            .build(&parsed.program);
+        ReactCompilerResult {
+            code: codegen_ret.code,
+            map: codegen_ret.map.map(SourceMap::from),
+            changed: true,
+            errors,
         }
-        None => {
-            ReactCompilerResult { code: source_text.to_string(), map: None, changed: false, errors }
-        }
+    } else {
+        ReactCompilerResult { code: source_text.to_string(), map: None, changed: false, errors }
     }
 }
 

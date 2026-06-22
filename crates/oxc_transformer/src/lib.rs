@@ -229,10 +229,12 @@ impl<'a> Transformer<'a> {
             return (scoping, Diagnostics::new());
         };
         let result = react_compiler_transform(program, self.allocator, options);
-        let Some(compiled) = result.program else {
+        if !result.changed {
+            // The program was left untouched; keep the existing scoping.
             return (scoping, result.diagnostics);
-        };
-        *program = compiled;
+        }
+        // The compiler spliced the memoized functions into `program` in place;
+        // rebuild scoping for the mutated AST.
         let scoping =
             SemanticBuilder::new().with_enum_eval(true).build(program).semantic.into_scoping();
         (scoping, result.diagnostics)

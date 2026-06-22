@@ -36,9 +36,9 @@ fn main() {
     println!("{source_text}");
 
     let allocator = Allocator::default();
-    let program = Parser::new(&allocator, &source_text, source_type).parse().program;
+    let mut program = Parser::new(&allocator, &source_text, source_type).parse().program;
 
-    let result = transform(&program, &allocator, default_plugin_options());
+    let result = transform(&mut program, &allocator, default_plugin_options());
 
     if !result.diagnostics.is_empty() {
         println!("Diagnostics:\n");
@@ -48,14 +48,12 @@ fn main() {
         println!();
     }
 
-    match result.program {
-        Some(compiled) => {
-            let output = Codegen::new().build(&compiled).code;
-            println!("Compiled:\n");
-            println!("{output}");
-        }
-        None => {
-            println!("No changes: no React component or hook found (or compilation bailed out).");
-        }
+    if result.changed {
+        // The compiler spliced the memoized functions into `program` in place.
+        let output = Codegen::new().build(&program).code;
+        println!("Compiled:\n");
+        println!("{output}");
+    } else {
+        println!("No changes: no React component or hook found (or compilation bailed out).");
     }
 }

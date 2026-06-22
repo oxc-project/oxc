@@ -38,16 +38,17 @@ fn main() {
     let source_type = SourceType::from_path(path).unwrap_or_else(|_| SourceType::tsx());
 
     let allocator = Allocator::default();
-    let program = Parser::new(&allocator, &source_text, source_type).parse().program;
-    let semantic = SemanticBuilder::new().with_build_nodes(true).build(&program).semantic;
-
-    let scope_info = convert_scope_info(&semantic, &program);
+    let mut program = Parser::new(&allocator, &source_text, source_type).parse().program;
+    let scope_info = {
+        let semantic = SemanticBuilder::new().with_build_nodes(true).build(&program).semantic;
+        convert_scope_info(&semantic, &program)
+    };
 
     let mut options = default_plugin_options();
     options.debug = true;
 
     let ast_builder = AstBuilder::new(&allocator);
-    let result = compile_program(&ast_builder, &program, scope_info, options);
+    let result = compile_program(&ast_builder, &mut program, scope_info, options);
     let ordered_log = match &result {
         CompileResult::Success { ordered_log, .. } | CompileResult::Error { ordered_log, .. } => {
             ordered_log

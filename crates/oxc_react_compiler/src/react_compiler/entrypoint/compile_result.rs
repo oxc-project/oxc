@@ -61,15 +61,15 @@ pub struct BindingRenameInfo {
 
 /// Main result type returned by the compile function.
 ///
-/// The compiled program is an arena-allocated oxc
-/// [`oxc_ast::ast::Program`] (lifetime `'a` of the arena), built directly by the
-/// codegen back-end (see `compile_program`).
+/// The compiler splices the compiled functions into the caller-owned
+/// `&mut Program` in place (see `compile_program`); `changed` reports whether
+/// any splice happened.
 #[derive(Debug)]
-pub enum CompileResult<'a> {
+pub enum CompileResult {
     /// Compilation succeeded (or no functions needed compilation).
-    /// `ast` is None if no changes were made to the program.
+    /// `changed` is false if no changes were made to the program.
     Success {
-        ast: Option<oxc_ast::ast::Program<'a>>,
+        changed: bool,
         events: Vec<LoggerEvent>,
         /// Unified ordered log interleaving events and debug entries.
         /// Items appear in the order they were emitted during compilation.
