@@ -36,7 +36,7 @@ type InnerVec<'a, T> = InnerVecGeneric<'a, T, Arena>;
 ///
 /// Static checks make this impossible to do. [`Vec::new_in`] and all other methods which create
 /// a [`Vec`] will refuse to compile if called with a [`Drop`] type.
-#[derive(PartialEq, Eq)]
+#[derive(Eq)]
 #[repr(transparent)]
 pub struct Vec<'alloc, T>(InnerVec<'alloc, T>);
 
@@ -249,6 +249,67 @@ impl<'alloc, T> ops::DerefMut for Vec<'alloc, T> {
     }
 }
 
+// Forward all `PartialEq` comparisons to the inner `Vec`, mirroring the set of impls it provides
+// (against another `Vec`, slices, and arrays). These are implemented on the wrapper directly because
+// trait resolution does not look through `Deref`.
+//
+// The `Vec`-vs-`Vec` impl takes the place of `#[derive(PartialEq)]`. The derive would only allow
+// comparing two `Vec`s with the same element type `T`, whereas this allows comparing `Vec`s with
+// different (but comparable) element types, matching the inner `Vec` and `std::vec::Vec`.
+impl<T: PartialEq<U>, U> PartialEq<Vec<'_, U>> for Vec<'_, T> {
+    #[inline]
+    fn eq(&self, other: &Vec<'_, U>) -> bool {
+        self.0 == other.0
+    }
+}
+
+macro_rules! impl_slice_partial_eq {
+    ($rhs:ty) => {
+        impl<T: PartialEq<U>, U> PartialEq<$rhs> for Vec<'_, T> {
+            #[inline]
+            fn eq(&self, other: &$rhs) -> bool {
+                self.0 == *other
+            }
+        }
+    };
+}
+
+impl_slice_partial_eq!([U]);
+impl_slice_partial_eq!(&[U]);
+impl_slice_partial_eq!(&mut [U]);
+
+macro_rules! impl_array_partial_eq {
+    ($rhs:ty) => {
+        impl<T: PartialEq<U>, U, const N: usize> PartialEq<$rhs> for Vec<'_, T> {
+            #[inline]
+            fn eq(&self, other: &$rhs) -> bool {
+                self.0 == *other
+            }
+        }
+    };
+}
+
+impl_array_partial_eq!([U; N]);
+impl_array_partial_eq!(&[U; N]);
+impl_array_partial_eq!(&mut [U; N]);
+
+// Reverse direction: slice on the left, `Vec` on the right (e.g. `&[T] == vec`), forwarding to the
+// inner `Vec`'s reverse impls. `std::vec::Vec` provides these, so mirror them here.
+macro_rules! impl_slice_partial_eq_reverse {
+    ($lhs:ty) => {
+        impl<T: PartialEq<U>, U> PartialEq<Vec<'_, U>> for $lhs {
+            #[inline]
+            fn eq(&self, other: &Vec<'_, U>) -> bool {
+                *self == other.0
+            }
+        }
+    };
+}
+
+impl_slice_partial_eq_reverse!([T]);
+impl_slice_partial_eq_reverse!(&[T]);
+impl_slice_partial_eq_reverse!(&mut [T]);
+
 impl<'alloc, T> IntoIterator for Vec<'alloc, T> {
     type IntoIter = <InnerVec<'alloc, T> as IntoIterator>::IntoIter;
     type Item = T;
@@ -398,6 +459,74 @@ mod test {
         v.serialize(&mut serializer);
         let s = serializer.into_string();
         assert_eq!(s, r#"["x"]"#);
+    }
+
+    #[test]
+    #[expect(clippy::op_ref)]
+    fn vec_partial_eq() {
+        let allocator = Allocator::default();
+
+        let v = Vec::from_array_in([1, 2, 3], &allocator);
+        let same = Vec::from_array_in([1, 2, 3], &allocator);
+
+        // `Vec` vs `Vec` (same element type), by value and by reference.
+        assert!(v == same);
+        assert_eq!(v, same);
+        assert!(&v == &same);
+
+        // `Vec` vs owned array `[U; N]`, and references to it.
+        assert!(v == [1, 2, 3]);
+        assert_eq!(v, [1, 2, 3]);
+        assert!(v == &[1, 2, 3]);
+        assert!(v == &mut [1, 2, 3]);
+
+        // `Vec` vs slice `&[U]` / `&mut [U]`.
+        let slice: &[i32] = &[1, 2, 3];
+        assert!(v == slice);
+        let mut_slice: &mut [i32] = &mut [1, 2, 3];
+        assert!(v == mut_slice);
+
+        // `Vec` vs unsized slice `[U]` (reached by dereferencing a slice reference).
+        assert!(v == *slice);
+
+        // Reverse direction: slice on the left, `Vec` on the right (std parity).
+        // Note: arrays on the left (`[1, 2, 3] == v`) are not supported - `std` doesn't provide
+        // `[T; N]: PartialEq<Vec>` either, only the slice forms below.
+        assert!(&[1, 2, 3][..] == v);
+        assert!(slice == v);
+        assert!(mut_slice == v);
+        assert!(*slice == v);
+
+        // Method-call form (no auto-ref). `v.eq(slice)` resolves through the unsized `[U]` impl.
+        assert!(v.eq(slice));
+        assert!(v.eq(&same));
+        assert!(v.eq(&[1, 2, 3]));
+        assert!(slice.eq(&v));
+
+        // Inequality still works.
+        assert!(v != [1, 2, 4]);
+        assert!(v != Vec::from_array_in([1, 2], &allocator));
+
+        // Cross element type: `T: PartialEq<U>` where `T != U`.
+        #[expect(clippy::items_after_statements)]
+        #[derive(Clone, Copy)]
+        struct Foo(u8);
+
+        #[derive(Clone, Copy)]
+        struct Bar(u8);
+
+        impl PartialEq<Bar> for Foo {
+            fn eq(&self, other: &Bar) -> bool {
+                self.0 == other.0
+            }
+        }
+
+        let foos = Vec::from_array_in([Foo(1), Foo(2)], &allocator);
+        let bars = Vec::from_array_in([Bar(1), Bar(2)], &allocator);
+        assert!(foos == bars);
+        assert!(foos == [Bar(1), Bar(2)]);
+        let bars_slice: &[Bar] = &[Bar(1), Bar(2)];
+        assert!(foos == bars_slice);
     }
 
     #[test]

@@ -2339,6 +2339,7 @@ macro_rules! __impl_slice_eq1 {
 }
 
 __impl_slice_eq1! { Vec<'_, U, A2>, A2: Alloc }
+__impl_slice_eq1! { [U] }
 __impl_slice_eq1! { &[U] }
 __impl_slice_eq1! { &mut [U] }
 
@@ -2360,6 +2361,27 @@ macro_rules! __impl_slice_eq1_array {
 __impl_slice_eq1_array! { [U; N] }
 __impl_slice_eq1_array! { &[U; N] }
 __impl_slice_eq1_array! { &mut [U; N] }
+
+// Reverse direction: slice/`Vec` on the left-hand side, `Vec` on the right (e.g. `&[T] == vec`).
+// `std::vec::Vec` provides these, so mirror them here.
+macro_rules! __impl_slice_eq1_reverse {
+    ($Lhs: ty) => {
+        impl<T, U, A> PartialEq<Vec<'_, U, A>> for $Lhs
+        where
+            T: PartialEq<U>,
+            A: Alloc,
+        {
+            #[inline]
+            fn eq(&self, other: &Vec<'_, U, A>) -> bool {
+                self[..] == other[..]
+            }
+        }
+    };
+}
+
+__impl_slice_eq1_reverse! { [T] }
+__impl_slice_eq1_reverse! { &[T] }
+__impl_slice_eq1_reverse! { &mut [T] }
 
 /// Implements comparison of vectors, lexicographically.
 impl<'a, T: 'a + PartialOrd, A: Alloc, A2: Alloc> PartialOrd<Vec<'a, T, A2>> for Vec<'a, T, A> {
