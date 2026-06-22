@@ -1,5 +1,4 @@
-use std::borrow::Cow;
-
+use oxc_formatter_core::arena_cow_str;
 pub use oxc_formatter_core::spec::{format_trimmed_number, is_simple_number};
 
 use crate::formatter::{Format, JsFormatter, prelude::*};
@@ -23,10 +22,6 @@ impl<'a> Format<'a, JsFormatContext<'a>> for CleanedNumberLiteralText<'a> {
         // returns a `Cow::Borrowed` slice of the source (lifetime `'a`); pass it straight
         // through and only copy into the arena for the owned (reformatted) case. Mirrors the
         // borrowed-passthrough for string literals in `utils/string.rs`.
-        let text_str: &'a str = match &text {
-            Cow::Borrowed(borrowed) => borrowed,
-            Cow::Owned(owned) => f.allocator().alloc_str(owned),
-        };
-        text_without_whitespace(text_str).fmt(f);
+        text_without_whitespace(arena_cow_str(&text, f)).fmt(f);
     }
 }

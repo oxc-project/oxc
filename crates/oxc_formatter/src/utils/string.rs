@@ -1,9 +1,10 @@
 use std::{borrow::Cow, ops::Deref};
 
-use oxc_formatter_core::spec::normalize_string;
+use unicode_width::UnicodeWidthStr;
+
+use oxc_formatter_core::{arena_cow_str, spec::normalize_string};
 use oxc_span::SourceType;
 use oxc_syntax::identifier::is_identifier_name_patched;
-use unicode_width::UnicodeWidthStr;
 
 use crate::{
     QuoteProperties, QuoteStyle,
@@ -85,11 +86,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for CleanedStringLiteralText<'a> {
         // In the common case the literal needs no normalization, so `text` borrows a slice of the
         // source (`Cow::Borrowed`) which already outlives the buffer; pass it straight through and
         // only copy into the arena for the owned (normalized) case.
-        let text_str: &'a str = match &self.text {
-            Cow::Borrowed(borrowed) => borrowed,
-            Cow::Owned(owned) => f.allocator().alloc_str(owned),
-        };
-        text(text_str).fmt(f);
+        text(arena_cow_str(&self.text, f)).fmt(f);
     }
 }
 

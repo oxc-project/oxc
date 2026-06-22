@@ -41,12 +41,11 @@ pub use binary_like_expression::{BinaryLikeExpression, should_flatten};
 pub use fragment::{FormatFunctionParams, FormatTypeParameters};
 pub use function::FormatFunctionOptions;
 
-use std::borrow::Cow;
-
 use cow_utils::CowUtils;
 
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
+use oxc_formatter_core::arena_cow_str;
 use oxc_span::GetSpan;
 
 use crate::{
@@ -1079,11 +1078,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, BigIntLiteral<'a>> {
         // Already-lowercase bigints (the common case, e.g. `123n`) stay `Cow::Borrowed`, so the
         // arena copy is avoided; only an uppercase literal (e.g. `0xFFn`) is copied.
         let lowered = self.raw().unwrap().as_str().cow_to_ascii_lowercase();
-        let text_str: &'a str = match lowered {
-            Cow::Borrowed(borrowed) => borrowed,
-            Cow::Owned(owned) => f.allocator().alloc_str(&owned),
-        };
-        write!(f, text(text_str));
+        write!(f, text(arena_cow_str(&lowered, f)));
     }
 }
 
