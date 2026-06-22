@@ -41,7 +41,7 @@ declare_oxc_lint!(
     unicorn,
     pedantic,
     suggestion,
-    version = "next",
+    version = "1.71.0",
     short_description = "Prefer `Number()` over `parseFloat()` and base-10 `parseInt()`.",
 );
 

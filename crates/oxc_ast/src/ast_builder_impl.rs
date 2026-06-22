@@ -62,7 +62,7 @@ impl<'a> AstBuilder<'a> {
     /// Create a new arena-allocated [`Vec`] initialized with a single element.
     #[inline]
     pub fn vec1<T>(self, value: T) -> Vec<'a, T> {
-        self.vec_from_array([value])
+        Vec::from_value_in(value, self.allocator)
     }
 
     /// Collect an iterator into a new arena-allocated [`Vec`].
@@ -137,12 +137,9 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn void_0(self, span: Span) -> Expression<'a> {
         let num = self.number_0();
-        Expression::UnaryExpression(self.alloc(self.unary_expression(
-            span,
-            UnaryOperator::Void,
-            num,
-        )))
+        Expression::UnaryExpression(self.alloc_unary_expression(span, UnaryOperator::Void, num))
     }
+
     /// `NaN`
     #[inline]
     pub fn nan(self, span: Span) -> Expression<'a> {
@@ -250,14 +247,14 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         declaration: Declaration<'a>,
     ) -> Box<'a, ExportNamedDeclaration<'a>> {
-        self.alloc(self.export_named_declaration(
+        self.alloc_export_named_declaration(
             span,
             Some(declaration),
             self.vec(),
             None,
             ImportOrExportKind::Value,
             NONE,
-        ))
+        )
     }
 
     /// Create an [`ExportNamedDeclaration`] with no modifiers that contains a
@@ -269,14 +266,14 @@ impl<'a> AstBuilder<'a> {
         specifiers: Vec<'a, ExportSpecifier<'a>>,
         source: Option<StringLiteral<'a>>,
     ) -> Box<'a, ExportNamedDeclaration<'a>> {
-        self.alloc(self.export_named_declaration(
+        self.alloc_export_named_declaration(
             span,
             None,
             specifiers,
             source,
             ImportOrExportKind::Value,
             NONE,
-        ))
+        )
     }
 
     /* ---------- Template literals ---------- */
