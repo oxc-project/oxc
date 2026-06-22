@@ -183,37 +183,37 @@ impl<T> Box<'static, [T]> {
     }
 }
 
-impl<'a, T> Box<'a, [T]> {
-    /// Convert a boxed slice [`Box<[T]>`] into slice [`&'a [T]`].
+impl<'alloc, T> Box<'alloc, [T]> {
+    /// Convert a boxed slice [`Box<[T]>`] into slice [`&'alloc [T]`].
     ///
     /// The returned slice has the same lifetime as the allocator.
     //
     // `#[inline(always)]` because this is a no-op. `Box<[T]>` and `&[T]` have the same layout.
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    pub fn into_arena_slice(self) -> &'a [T] {
+    pub fn into_arena_slice(self) -> &'alloc [T] {
         let r = self.as_ref();
         // Extend lifetime of reference to lifetime of the allocator.
         // SAFETY: `self` is consumed by this method, so there cannot be any mutable references to it.
-        // The reference lives until the allocator is dropped or reset (`'a` lifetime).
+        // The reference lives until the allocator is dropped or reset (`'alloc` lifetime).
         // Don't need `mem::forget(self)` here, because `Box` does not implement `Drop`.
-        unsafe { mem::transmute::<&[T], &'a [T]>(r) }
+        unsafe { mem::transmute::<&[T], &'alloc [T]>(r) }
     }
 
-    /// Convert a boxed slice [`Box<[T]>`] into mutable slice [`&'a mut [T]`].
+    /// Convert a boxed slice [`Box<[T]>`] into mutable slice [`&'alloc mut [T]`].
     ///
     /// The returned slice has the same lifetime as the allocator.
     //
     // `#[inline(always)]` because this is a no-op. `Box<[T]>` and `&mut [T]` have the same layout.
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    pub fn into_arena_slice_mut(mut self) -> &'a mut [T] {
+    pub fn into_arena_slice_mut(mut self) -> &'alloc mut [T] {
         let r = self.as_mut();
         // Extend lifetime of reference to lifetime of the allocator.
         // SAFETY: `self` is consumed by this method, so there cannot be any other references to it.
-        // The reference lives until the allocator is dropped or reset (`'a` lifetime).
+        // The reference lives until the allocator is dropped or reset (`'alloc` lifetime).
         // Don't need `mem::forget(self)` here, because `Box` does not implement `Drop`.
-        unsafe { mem::transmute::<&mut [T], &'a mut [T]>(r) }
+        unsafe { mem::transmute::<&mut [T], &'alloc mut [T]>(r) }
     }
 }
 
