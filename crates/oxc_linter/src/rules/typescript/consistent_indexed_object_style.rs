@@ -110,6 +110,7 @@ declare_oxc_lint!(
     conditional_fix,
     config = ConsistentIndexedObjectStyleConfig,
     version = "0.4.2",
+    short_description = "Choose between requiring either `Record` type or indexed signature types.",
 );
 
 impl Rule for ConsistentIndexedObjectStyle {
@@ -417,10 +418,44 @@ impl Rule for ConsistentIndexedObjectStyle {
                             tref.span,
                         ),
                         |fixer| {
-                            let key = fixer.source_range(key_span);
-                            let params_span = Span::new(key_span.end + 1, tref.span.end - 1);
-                            let params = fixer.source_range(params_span).trim();
-                            let content = format!("{{ [key: {key}]: {params} }}");
+                            // ```ts
+                            // type t = Record</* leading */ string /* trailing */, /* leading */ V /* trailing */>;
+                            // //             ┬                                   ┬                               ┬
+                            // //             │                                   │                               ╰ params.span().end
+                            // //             │                                   ╰ first_type_arg_comma_start
+                            // //             ╰ opening_angle_bracket_start
+                            // ```
+                            let opening_angle_bracket_start = {
+                                let type_name_end = tref.type_name.span().end;
+                                let first_param_start = key_span.start;
+                                ctx.find_next_token_within(type_name_end, first_param_start, "<")
+                                    .map(|offset| type_name_end + offset)
+                            };
+                            let first_type_arg_comma_start = {
+                                let first_param_end = key_span.end;
+                                let second_param_start = params.params[1].span().start;
+                                ctx.find_next_token_within(first_param_end, second_param_start, ",")
+                                    .map(|offset| first_param_end + offset)
+                            };
+
+                            let (
+                                Some(opening_angle_bracket_start),
+                                Some(first_type_arg_comma_start),
+                            ) = (opening_angle_bracket_start, first_type_arg_comma_start)
+                            else {
+                                return fixer.noop();
+                            };
+
+                            let key_span = Span::new(
+                                opening_angle_bracket_start + 1,
+                                first_type_arg_comma_start,
+                            );
+                            let value_span =
+                                Span::new(first_type_arg_comma_start + 1, params.span().end - 1);
+
+                            let key = fixer.source_range(key_span).trim();
+                            let value = fixer.source_range(value_span).trim();
+                            let content = format!("{{ [key: {key}]: {value} }}");
                             fixer.replace(tref.span, content)
                         },
                     );
@@ -967,6 +1002,9 @@ fn test() {
         ("function foo(): { readonly [key: string]: any } {}", None),
         ("type Foo = Record<string, any>;", Some(serde_json::json!(["index-signature"]))),
         ("type Foo<T> = Record<string, T>;", Some(serde_json::json!(["index-signature"]))),
+        ("type Foo = Record<string /* c */, Bar>;", Some(serde_json::json!(["index-signature"]))),
+        ("type Foo = Record<string, /* c */ Bar>;", Some(serde_json::json!(["index-signature"]))),
+        ("type Foo = Record<string, Bar /* c */>;", Some(serde_json::json!(["index-signature"]))),
         ("type Foo = { [k: string]: A.Foo };", None),
         ("type Foo = { [key: string]: AnotherFoo };", None),
         ("type Foo = { [key: string]: { [key: string]: Foo } };", None),
@@ -1260,6 +1298,14 @@ fn test() {
 ("function foo(): { readonly [key: string]: any } {}", "function foo(): Readonly<Record<string, any>> {}", None),
 ("type Foo = Record<string, any>;", "type Foo = { [key: string]: any };", Some(serde_json::json!(["index-signature"]))),
 ("type Foo<T> = Record<string, T>;", "type Foo<T> = { [key: string]: T };", Some(serde_json::json!(["index-signature"]))),
+// trivia before the comma must not leak a stray `,` into the value type
+("type Foo = Record<string , any>;", "type Foo = { [key: string]: any };", Some(serde_json::json!(["index-signature"]))),
+("type Foo = Record<number , () => void>;", "type Foo = { [key: number]: () => void };", Some(serde_json::json!(["index-signature"]))),
+("type Foo = Record<string /* c */, Bar>;", "type Foo = { [key: string /* c */]: Bar };", Some(serde_json::json!(["index-signature"]))),
+("type Foo = Record<string, /* c */ Bar>;", "type Foo = { [key: string]: /* c */ Bar };", Some(serde_json::json!(["index-signature"]))),
+("type Foo = Record<string, Bar /* c */>;", "type Foo = { [key: string]: Bar /* c */ };", Some(serde_json::json!(["index-signature"]))),
+("type Foo = Record<\n// line comment\nstring, Bar /* c */>;", "type Foo = { [key: // line comment\nstring]: Bar /* c */ };", Some(serde_json::json!(["index-signature"]))),
+("type Foo = Record<string, Map<string, number>>;", "type Foo = { [key: string]: Map<string, number> };", Some(serde_json::json!(["index-signature"]))),
 ("type Foo = { [k: string]: A.Foo };", "type Foo = Record<string, A.Foo>;", None),
 ("type Foo = { [key: string]: AnotherFoo };", "type Foo = Record<string, AnotherFoo>;", None),
 ("type Foo = { [key: string]: { [key: string]: Foo } };", "type Foo = { [key: string]: Record<string, Foo> };", None),

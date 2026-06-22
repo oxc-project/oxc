@@ -1041,20 +1041,7 @@ var Hello = createReactClass({
 
 This rule accepts one of the following string values:
 
-### `"allowed"`
-
-
-
-Forbids any call to `this.setState` in `componentWillUpdate` outside of functions.
-
-
-### `"disallow-in-func"`
-
-
-
-Makes this rule more strict by disallowing calls to `this.setState`` even within functions.
-
-
+type: `"allowed" | "disallow-in-func"`
 
 
 
@@ -1506,7 +1493,7 @@ const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_lin
 ### What it does
 
 Disallow the use of barrel files where the file contains `export *` statements,
-and the total number of modules exceed a threshold.
+and the total number of modules exceeds a threshold.
 
 The default threshold is 100.
 

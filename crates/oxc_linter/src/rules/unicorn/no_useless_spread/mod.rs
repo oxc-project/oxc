@@ -144,6 +144,7 @@ declare_oxc_lint!(
     correctness,
     fix_dangerous,
     version = "0.0.19",
+    short_description = "Disallow unnecessary spread.",
 );
 
 impl Rule for NoUselessSpread {
@@ -282,10 +283,8 @@ fn diagnose_array_in_array_spread<'a>(
             ctx.diagnostic_with_fix(diagnostic, |fixer| {
                 let mut codegen = fixer.codegen();
                 codegen.print_ascii_byte(b'[');
-                let elements =
-                    spreads.iter().flat_map(|arr| arr.elements.iter()).collect::<Vec<_>>();
-                let n = elements.len();
-                for (i, el) in elements.into_iter().enumerate() {
+                let n = spreads.iter().map(|arr| arr.elements.len()).sum::<usize>();
+                for (i, el) in spreads.iter().flat_map(|arr| arr.elements.iter()).enumerate() {
                     match el {
                         ArrayExpressionElement::Elision(_) => {
                             if i == n - 1 {

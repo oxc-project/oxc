@@ -215,6 +215,7 @@
     "react/jsx-uses-vars": "Handled by `eslint/no-unused-vars`, which already evaluates whether vars are used in JSX.",
 
     "unicorn/no-named-default": "Implemented via `import/no-named-default`.",
+    "unicorn/no-double-comparison": "Use `oxc/double-comparisons` instead.",
 
     "vue/no-lone-template": "Not currently possible, as it requires Vue template parsing.",
     "vue/no-v-html": "Not currently possible, as it requires Vue template parsing.",

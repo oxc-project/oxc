@@ -71,18 +71,6 @@ impl Default for MaxParamsConfig {
     }
 }
 
-#[cfg(feature = "ruledocs")]
-impl MaxParams {
-    #[expect(clippy::unnecessary_wraps)]
-    pub fn config_schema(
-        r#gen: &mut schemars::r#gen::SchemaGenerator,
-    ) -> Option<schemars::schema::Schema> {
-        let mut schema = r#gen.subschema_for::<MaxParamsConfig>();
-        crate::utils::number_as_object_schema(r#gen, &mut schema, None);
-        Some(schema)
-    }
-}
-
 impl MaxParamsConfig {
     fn count_this(&self) -> CountThis {
         self.count_this.unwrap_or(if self.count_void_this {
@@ -91,6 +79,14 @@ impl MaxParamsConfig {
             CountThis::ExceptVoid
         })
     }
+}
+
+#[derive(Debug, JsonSchema, Deserialize)]
+#[serde(untagged)]
+#[expect(unused)]
+enum MaxParamsConfigEnum {
+    Number(u32),
+    Object(MaxParamsConfig),
 }
 
 impl MaxParams {
@@ -162,8 +158,9 @@ declare_oxc_lint!(
     MaxParams,
     eslint,
     style,
-    config = MaxParamsConfig,
+    config = MaxParamsConfigEnum,
     version = "0.2.14",
+    short_description = "Enforce a maximum number of parameters in function definitions which by default is three.",
 );
 
 impl Rule for MaxParams {

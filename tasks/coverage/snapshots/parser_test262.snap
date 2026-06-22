@@ -1,9 +1,135 @@
-commit: 05bb0329
+commit: de8e621c
 
 parser_test262 Summary:
 AST Parsed     : 47240/47240 (100.00%)
 Positive Passed: 47240/47240 (100.00%)
-Negative Passed: 4588/4588 (100.00%)
+Negative Passed: 4588/4651 (98.65%)
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-assignment-expression-import-defer-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-assignment-expression-import-source-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-assignment-expression-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-import-defer-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-import-source-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-await-import-defer-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-await-import-source-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-await-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-return-await-import-defer-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-return-await-import-source-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-return-await-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-await-import-defer-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-await-import-source-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-await-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-import-defer-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-import-source-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-return-await-import-defer-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-return-await-import-source-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-return-await-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-gen-await-import-defer-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-gen-await-import-source-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-gen-await-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-import-defer-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-import-source-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-labeled-import-defer-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-labeled-import-source-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-labeled-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-do-while-import-defer-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-do-while-import-source-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-do-while-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-braceless-import-defer-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-braceless-import-source-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-braceless-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-import-defer-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-import-source-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-import-defer-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-import-source-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-return-import-defer-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-return-import-source-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-return-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-braceless-import-defer-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-braceless-import-source-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-braceless-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-import-defer-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-import-source-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-while-import-defer-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-while-import-source-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-while-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-expression-import-defer-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-expression-import-source-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-expression-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-import-defer-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-import-source-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/top-level-import-defer-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/top-level-import-source-no-new-call-expression-prop-access.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/top-level-no-new-call-expression-prop-access.js
+
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
     ╭─[test262/test/annexB/language/expressions/template-literal/legacy-octal-escape-sequence-strict.js:19:4]

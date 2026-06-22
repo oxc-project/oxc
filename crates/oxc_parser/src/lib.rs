@@ -87,7 +87,7 @@ mod lexer;
 #[doc(hidden)]
 pub mod lexer;
 
-use oxc_allocator::{Allocator, Box as ArenaBox, Dummy, Vec as ArenaVec};
+use oxc_allocator::{Allocator, Box as ArenaBox, Dummy, GetAllocator, Vec as ArenaVec};
 use oxc_ast::{
     AstBuilder,
     ast::{Expression, Program},
@@ -889,6 +889,13 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
     #[inline]
     fn alloc<T>(&self, value: T) -> ArenaBox<'a, T> {
         self.ast.alloc(value)
+    }
+}
+
+impl<'a, C: ParserConfig> GetAllocator<'a> for ParserImpl<'a, C> {
+    #[inline]
+    fn allocator(&self) -> &'a Allocator {
+        self.ast.allocator()
     }
 }
 

@@ -1,4 +1,4 @@
-commit: 7539c04d
+commit: 7964e22f
 
 parser_typescript Summary:
 AST Parsed     : 9779/9779 (100.00%)
@@ -24024,19 +24024,21 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  5 │ }
    ╰────
 
-  × Unexpected token
-   ╭─[typescript/tests/cases/conformance/jsx/tsxErrorRecovery2.tsx:4:7]
+  × Adjacent JSX elements must be wrapped in an enclosing tag.
+   ╭─[typescript/tests/cases/conformance/jsx/tsxErrorRecovery2.tsx:4:1]
  3 │ <div></div>
  4 │ <div></div>
-   ·       ─
+   · ─
    ╰────
+  help: Did you want a JSX fragment `<>...</>`?
 
-  × Unexpected token
-   ╭─[typescript/tests/cases/conformance/jsx/tsxErrorRecovery3.tsx:4:7]
+  × Adjacent JSX elements must be wrapped in an enclosing tag.
+   ╭─[typescript/tests/cases/conformance/jsx/tsxErrorRecovery3.tsx:4:1]
  3 │ <div></div>
  4 │ <div></div>
-   ·       ─
+   · ─
    ╰────
+  help: Did you want a JSX fragment `<>...</>`?
 
   × Expected corresponding closing tag for JSX fragment.
     ╭─[typescript/tests/cases/conformance/jsx/tsxFragmentErrors.tsx:9:7]
@@ -24048,12 +24050,13 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  10 │ 
     ╰────
 
-  × Unexpected token
-    ╭─[typescript/tests/cases/conformance/jsx/tsxFragmentErrors.tsx:11:2]
+  × Adjacent JSX elements must be wrapped in an enclosing tag.
+    ╭─[typescript/tests/cases/conformance/jsx/tsxFragmentErrors.tsx:11:1]
  10 │ 
  11 │ <>eof   // Error
-    ·  ─
+    · ─
     ╰────
+  help: Did you want a JSX fragment `<>...</>`?
 
   × Unexpected token. Did you mean `{'>'}` or `&gt;`?
    ╭─[typescript/tests/cases/conformance/jsx/tsxGenericArrowFunctionParsing.tsx:8:17]
@@ -30731,6 +30734,22 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
   help: Remove the duplicate modifier.
 
   × TS(1274): 'in' modifier can only appear on a type parameter of a class, interface or type alias.
+     ╭─[typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/varianceAnnotations.ts:100:21]
+  99 │ 
+ 100 │ declare function f1<in T>(x: T): void;  // Error
+     ·                     ──
+ 101 │ declare function f2<out T>(): T;  // Error
+     ╰────
+
+  × TS(1274): 'out' modifier can only appear on a type parameter of a class, interface or type alias.
+     ╭─[typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/varianceAnnotations.ts:101:21]
+ 100 │ declare function f1<in T>(x: T): void;  // Error
+ 101 │ declare function f2<out T>(): T;  // Error
+     ·                     ───
+ 102 │ 
+     ╰────
+
+  × TS(1274): 'in' modifier can only appear on a type parameter of a class, interface or type alias.
      ╭─[typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/varianceAnnotations.ts:104:5]
  103 │ class C {
  104 │     in a = 0;  // Error
@@ -30744,22 +30763,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  105 │     out b = 0;  // Error
      ·     ───
  106 │ }
-     ╰────
-
-  × TS(1274): 'in' modifier can only appear on a type parameter of a class, interface or type alias.
-     ╭─[typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/varianceAnnotations.ts:100:21]
-  99 │ 
- 100 │ declare function f1<in T>(x: T): void;  // Error
-     ·                     ────
- 101 │ declare function f2<out T>(): T;  // Error
-     ╰────
-
-  × TS(1274): 'out' modifier can only appear on a type parameter of a class, interface or type alias.
-     ╭─[typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/varianceAnnotations.ts:101:21]
- 100 │ declare function f1<in T>(x: T): void;  // Error
- 101 │ declare function f2<out T>(): T;  // Error
-     ·                     ─────
- 102 │ 
      ╰────
 
   × Identifier expected. 'in' is a reserved word that cannot be used here.

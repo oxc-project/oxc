@@ -45,6 +45,7 @@ use cow_utils::CowUtils;
 
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
+use oxc_formatter_core::arena_cow_str;
 use oxc_span::GetSpan;
 
 use crate::{
@@ -1074,7 +1075,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, StringLiteral<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, BigIntLiteral<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        write!(f, text(f.allocator().alloc_str(&self.raw().unwrap().cow_to_ascii_lowercase())));
+        // Already-lowercase bigints (the common case, e.g. `123n`) stay `Cow::Borrowed`, so the
+        // arena copy is avoided; only an uppercase literal (e.g. `0xFFn`) is copied.
+        let lowered = self.raw().unwrap().as_str().cow_to_ascii_lowercase();
+        write!(f, text(arena_cow_str(&lowered, f)));
     }
 }
 

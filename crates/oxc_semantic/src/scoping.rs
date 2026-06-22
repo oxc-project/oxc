@@ -599,18 +599,21 @@ impl Scoping {
         });
     }
 
-    /// Retain only resolved references that are in the given set.
+    /// Remove every `ReferenceId` whose bit is set in `excluded` from each
+    /// symbol's resolved-references list. O(total_references) in the worst
+    /// case; short-circuits when `excluded` has no bits set.
     ///
-    /// This is an O(n) batch operation across all symbols, much more efficient than
-    /// calling `delete_resolved_reference` repeatedly when many references from the
-    /// same symbol need to be removed (which would be O(n²) due to the linear scan
-    /// in each deletion).
-    ///
-    /// `live_references` should be sized to [`Self::references_len`] at construction time.
-    pub fn retain_resolved_references(&mut self, live_references: &BitSet<'_>) {
+    /// `excluded` should be sized to at least [`Self::references_len`] at the
+    /// time it was constructed. References created after the bitset was
+    /// constructed have indices beyond `excluded.capacity()` and are treated
+    /// as live (never excluded) — `BitSet::contains` is `false` past capacity.
+    pub fn retain_resolved_references_excluding(&mut self, excluded: &BitSet<'_>) {
+        if excluded.is_empty() {
+            return;
+        }
         self.cell.with_dependent_mut(|_allocator, cell| {
             for reference_ids in &mut cell.resolved_references {
-                reference_ids.retain(|id| live_references.has_bit(id.index()));
+                reference_ids.retain(|id| !excluded.contains(id.index()));
             }
         });
     }

@@ -65,6 +65,7 @@ declare_oxc_lint!(
     pedantic,
     config = DisplayNameConfig,
     version = "1.42.0",
+    short_description = "Enforces that React components have a `displayName` property.",
 );
 
 #[derive(Debug)]
@@ -489,7 +490,10 @@ fn is_react_component_node<'a>(
             // Check for function/arrow function components with JSX
             if let Some(expr) = &decl.init {
                 // Check if it's a direct component (has JSX directly)
-                if expression_contains_jsx(expr) {
+                let contains_jsx = expression_contains_jsx(expr);
+                if contains_jsx
+                    && name.as_ref().is_some_and(|name| is_react_component_name(name.as_str()))
+                {
                     return Some(ReactComponentInfo {
                         span: decl.id.span(),
                         is_context: false,
@@ -498,7 +502,9 @@ fn is_react_component_node<'a>(
                 }
 
                 // Check if it's a HOF pattern
-                if let Some(innermost) = find_innermost_function_with_jsx(expr, ctx) {
+                if !contains_jsx
+                    && let Some(innermost) = find_innermost_function_with_jsx(expr, ctx)
+                {
                     let inner_has_name = match innermost {
                         InnermostFunction::Function(func) => func.id.is_some(),
                         InnermostFunction::ArrowFunction => false,
@@ -1759,6 +1765,17 @@ fn test() {
                       return <div>Hello {this.props.name}</div>;
                     }
                     Hello.displayName = 'Hello';
+                  ",
+            Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
+            None,
+        ),
+        (
+            "
+                    export default function Testing() {
+                      const renderThing = () => <div>Thing</div>;
+                      return <div>{renderThing()}</div>;
+                    }
+                    Testing.displayName = 'Testing';
                   ",
             Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
             None,

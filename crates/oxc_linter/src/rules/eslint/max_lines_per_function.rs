@@ -70,16 +70,12 @@ impl Deref for MaxLinesPerFunction {
     }
 }
 
-#[cfg(feature = "ruledocs")]
-impl MaxLinesPerFunction {
-    #[expect(clippy::unnecessary_wraps)]
-    pub fn config_schema(
-        r#gen: &mut schemars::r#gen::SchemaGenerator,
-    ) -> Option<schemars::schema::Schema> {
-        let mut schema = r#gen.subschema_for::<MaxLinesPerFunctionConfig>();
-        crate::utils::number_as_object_schema(r#gen, &mut schema, None);
-        Some(schema)
-    }
+#[derive(Debug, JsonSchema, Deserialize)]
+#[serde(untagged)]
+#[expect(unused)]
+enum MaxLinesPerFunctionConfigEnum {
+    Number(u32),
+    Object(MaxLinesPerFunctionConfig),
 }
 
 declare_oxc_lint!(
@@ -130,8 +126,9 @@ declare_oxc_lint!(
     MaxLinesPerFunction,
     eslint,
     pedantic,
-    config = MaxLinesPerFunctionConfig,
+    config = MaxLinesPerFunctionConfigEnum,
     version = "0.15.12",
+    short_description = "Enforce a maximum number of lines of code in a function.",
 );
 
 impl Rule for MaxLinesPerFunction {

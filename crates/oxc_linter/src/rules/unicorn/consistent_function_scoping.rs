@@ -156,6 +156,7 @@ declare_oxc_lint!(
     pending,
     config = ConsistentFunctionScoping,
     version = "0.8.0",
+    short_description = "Disallow functions that are declared in a scope which does not capture any variables from the outer scope.",
 );
 
 impl Rule for ConsistentFunctionScoping {

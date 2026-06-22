@@ -91,6 +91,7 @@ declare_oxc_lint!(
     pedantic,
     suggestion,
     version = "1.22.0",
+    short_description = "Checks if the `if` and `else` blocks contain shared code that can be moved out of the blocks.",
 );
 
 impl Rule for BranchesSharingCode {
@@ -126,7 +127,7 @@ impl Rule for BranchesSharingCode {
                     .iter()
                     .map(|body| get_duplicated_delete_span(start, body, false))
                     .collect::<Vec<_>>();
-                let moved_code = ctx.source_range(spans[0]).to_string();
+                let moved_code = ctx.source_range(spans[0]);
                 ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
                     let fixer = fixer.for_multifix();
                     let mut fix = fixer.new_fix_with_capacity(spans.len() + 1);
@@ -155,7 +156,7 @@ impl Rule for BranchesSharingCode {
                     .iter()
                     .map(|body| get_duplicated_delete_span(end, body, true))
                     .collect::<Vec<_>>();
-                let moved_code = ctx.source_range(spans[0]).to_string();
+                let moved_code = ctx.source_range(spans[0]);
                 ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
                     let fixer = fixer.for_multifix();
                     let mut fix = fixer.new_fix_with_capacity(spans.len() + 1);

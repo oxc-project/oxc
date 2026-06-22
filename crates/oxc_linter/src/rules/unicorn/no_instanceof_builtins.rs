@@ -127,6 +127,7 @@ declare_oxc_lint!(
     conditional_suggestion,
     config = NoInstanceofBuiltinsConfig,
     version = "0.16.12",
+    short_description = "Disallow `instanceof` with built-in objects.",
 );
 
 impl Rule for NoInstanceofBuiltins {

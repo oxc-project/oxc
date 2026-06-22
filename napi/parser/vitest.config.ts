@@ -24,7 +24,7 @@ export default defineConfig({
       expand: false,
     },
     exclude,
-    reporters: process.env.CI ? ["dot"] : ["default"],
+    reporters: process.env.CI ? ["minimal"] : ["default"],
   },
   plugins: [
     // Enable Codspeed plugin in CI only

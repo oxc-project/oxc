@@ -61,16 +61,12 @@ impl std::ops::Deref for MaxStatements {
     }
 }
 
-#[cfg(feature = "ruledocs")]
-impl MaxStatements {
-    #[expect(clippy::unnecessary_wraps)]
-    pub fn config_schema(
-        r#gen: &mut schemars::r#gen::SchemaGenerator,
-    ) -> Option<schemars::schema::Schema> {
-        let mut schema = r#gen.subschema_for::<MaxStatementsConfig>();
-        crate::utils::number_as_object_schema(r#gen, &mut schema, None);
-        Some(schema)
-    }
+#[derive(Debug, JsonSchema, Deserialize)]
+#[serde(untagged)]
+#[expect(unused)]
+enum MaxStatementsConfigEnum {
+    Number(u32),
+    Object(MaxStatementsConfig),
 }
 
 declare_oxc_lint!(
@@ -208,8 +204,9 @@ declare_oxc_lint!(
     MaxStatements,
     eslint,
     style,
-    config = MaxStatementsConfig,
+    config = MaxStatementsConfigEnum,
     version = "1.35.0",
+    short_description = "Enforce a maximum number of statements in a function.",
 );
 
 impl Rule for MaxStatements {

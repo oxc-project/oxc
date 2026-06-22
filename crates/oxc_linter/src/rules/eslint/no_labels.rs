@@ -119,6 +119,7 @@ declare_oxc_lint!(
     style,
     config = NoLabels,
     version = "0.15.4",
+    short_description = "Disallow labeled statements.",
 );
 
 impl Rule for NoLabels {

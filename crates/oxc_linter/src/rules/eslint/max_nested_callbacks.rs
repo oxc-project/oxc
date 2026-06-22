@@ -35,16 +35,12 @@ impl Default for MaxNestedCallbacks {
     }
 }
 
-#[cfg(feature = "ruledocs")]
-impl MaxNestedCallbacks {
-    #[expect(clippy::unnecessary_wraps)]
-    pub fn config_schema(
-        r#gen: &mut schemars::r#gen::SchemaGenerator,
-    ) -> Option<schemars::schema::Schema> {
-        let mut schema = r#gen.subschema_for::<Self>();
-        crate::utils::number_as_object_schema(r#gen, &mut schema, None);
-        Some(schema)
-    }
+#[derive(Debug, JsonSchema, Deserialize)]
+#[serde(untagged)]
+#[expect(unused)]
+enum MaxNestedCallbacksConfigEnum {
+    Number(u32),
+    Object(MaxNestedCallbacks),
 }
 
 declare_oxc_lint!(
@@ -99,8 +95,9 @@ declare_oxc_lint!(
     MaxNestedCallbacks,
     eslint,
     pedantic,
-    config = MaxNestedCallbacks,
+    config = MaxNestedCallbacksConfigEnum,
     version = "0.15.12",
+    short_description = "Enforce a maximum depth that callbacks can be nested.",
 );
 
 impl Rule for MaxNestedCallbacks {

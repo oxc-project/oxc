@@ -1,22 +1,22 @@
-pub mod apply_renames;
 pub mod convert_ast;
 pub mod convert_ast_reverse;
 pub mod convert_scope;
 pub mod diagnostics;
 pub mod prefilter;
 
-use apply_renames::build_rename_plan;
 use convert_ast::convert_program;
 use convert_scope::convert_scope_info;
 use diagnostics::compile_result_to_diagnostics;
 use prefilter::{has_react_like_functions, has_resource_management_declarations};
 use react_compiler::entrypoint::compile_result::LoggerEvent;
-use react_compiler_hir::environment_config::EnvironmentConfig;
-use rustc_hash::FxHashSet;
-// Re-exported so integrations needn't depend on the upstream `react_compiler` crate.
+
+// Re-exported so integrations needn't depend on the upstream `react_compiler` crates.
 pub use react_compiler::entrypoint::plugin_options::{
     CompilerTarget, DynamicGatingConfig, GatingConfig, PluginOptions,
 };
+pub use react_compiler_hir::environment_config::EnvironmentConfig;
+
+use rustc_hash::FxHashSet;
 
 /// [`PluginOptions`] with the compiler's standard defaults (it has no `Default`).
 /// Override fields with struct-update syntax: `PluginOptions { ..default_plugin_options() }`.
@@ -87,38 +87,27 @@ pub fn transform<'a>(
         return TransformResult::default();
     }
 
-    let semantic = oxc_semantic::SemanticBuilder::new()
-        .with_build_nodes(true)
-        .with_enum_eval(true)
-        .build(program)
-        .semantic;
+    let semantic =
+        oxc_semantic::SemanticBuilder::new().with_build_nodes(true).build(program).semantic;
 
     let file = convert_program(program, source_text);
     let scope_info = convert_scope_info(&semantic, program);
-    let result =
-        react_compiler::entrypoint::program::compile_program(file, scope_info.clone(), options);
+    let result = react_compiler::entrypoint::program::compile_program(file, scope_info, options);
 
     let diagnostics = compile_result_to_diagnostics(&result);
-    let (program_ast, events, renames) = match result {
+    let (program_ast, events) = match result {
         react_compiler::entrypoint::compile_result::CompileResult::Success {
-            ast,
-            events,
-            renames,
-            ..
-        } => (ast, events, renames),
+            ast, events, ..
+        } => (ast, events),
         react_compiler::entrypoint::compile_result::CompileResult::Error { events, .. } => {
-            (None, events, Vec::new())
+            (None, events)
         }
     };
-
-    // Rename plan maps source positions of uncompiled references to new names.
-    let rename_plan = build_rename_plan(&scope_info, &renames);
 
     let compiled_program = program_ast.map(|file: react_compiler_ast::File| {
         let mut compiled =
             convert_ast_reverse::convert_program_to_oxc_with_source(&file, allocator, source_text);
         compiled.source_type = program.source_type;
-        apply_renames::apply_renames(&mut compiled, &rename_plan, allocator);
         preserve_comments(&mut compiled, program, allocator);
         compiled
     });
@@ -203,14 +192,12 @@ mod tests {
     use super::transform_source;
 
     fn options() -> PluginOptions {
-        // Only the non-`#[serde(default)]` fields are required; the rest default.
-        serde_json::from_value(serde_json::json!({
-            "shouldCompile": true,
-            "enableReanimated": false,
-            "isDev": false,
-            "filename": "Component.jsx",
-        }))
-        .unwrap()
+        // The upstream options type is constructed typed (it has no `Deserialize`);
+        // only `filename` differs from the compiler's standard defaults.
+        PluginOptions {
+            filename: Some("Component.jsx".to_string()),
+            ..super::default_plugin_options()
+        }
     }
 
     #[test]
@@ -454,55 +441,6 @@ function Component({ fields }: { fields: Field[] }) {\n\
             output.contains("typeof field_0.optionsInputs"),
             "type query binding was not renamed with the value binding:\n{output}"
         );
-    }
-
-    fn rename_collision_source_and_offset() -> (&'static str, usize) {
-        let rename_source = "\
-function makeResults(items, names) {\n\
-  const results = [...items.map((x) => use(x.value)), ...names.map((x) => use(x))];\n\
-  return results;\n\
-}\n";
-        let collision_offset = rename_source
-            .find("use(x))")
-            .map(|index| index + "use(".len())
-            .expect("test source should contain the renamed reference");
-        (rename_source, collision_offset)
-    }
-
-    fn assert_has_rename_collision_setup(output: &str) {
-        assert!(
-            output.contains("function _temp2(x_0)") || output.contains("function _temp(x_0)"),
-            "test setup did not produce a compiler rename:\n{output}"
-        );
-    }
-
-    #[test]
-    fn source_extracted_class_spans_do_not_collide_with_rename_plan() {
-        let (rename_source, collision_offset) = rename_collision_source_and_offset();
-
-        let class_prefix = "export class C {\n  m() {\n    ";
-        let declarator_prefix = "const [octokit, ";
-        let padding_len = collision_offset
-            .checked_sub(class_prefix.len() + declarator_prefix.len())
-            .expect("class binding should be padded to the earlier rename position");
-        let source = format!(
-            "{rename_source}{class_prefix}{}{declarator_prefix}ghRepository] = foo();\n    return ghRepository.full_name;\n  }}\n}}\n",
-            " ".repeat(padding_len)
-        );
-
-        let allocator = oxc_allocator::Allocator::default();
-        let mut opts = options();
-        opts.compilation_mode = "all".to_string();
-        let result = transform_source(&source, oxc_span::SourceType::tsx(), &allocator, opts);
-        let program = result.program.expect("file should be compiled");
-        let output = oxc_codegen::Codegen::new().build(&program).code;
-
-        assert_has_rename_collision_setup(&output);
-        assert!(
-            output.contains("const [octokit, ghRepository] = foo()"),
-            "source-preserved class binding was renamed by an unrelated plan entry:\n{output}"
-        );
-        assert!(!output.contains("const [octokit, x_0]"), "class binding was corrupted:\n{output}");
     }
 
     #[test]

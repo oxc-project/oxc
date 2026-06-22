@@ -51,6 +51,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     version = "1.10.0",
+    short_description = "Disallow let or var variables that are read but never assigned.",
 );
 
 impl Rule for NoUnassignedVars {

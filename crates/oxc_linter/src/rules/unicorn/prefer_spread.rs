@@ -45,6 +45,7 @@ declare_oxc_lint!(
     style,
     conditional_fix,
     version = "0.0.17",
+    short_description = "Enforces the use of the spread operator (`...`) over outdated patterns.",
 );
 
 impl Rule for PreferSpread {
@@ -114,6 +115,13 @@ fn check_unicorn_prefer_spread<'a>(
                 member_expr_obj,
                 Expression::ArrayExpression(_) | Expression::ThisExpression(_)
             ) {
+                return;
+            }
+
+            // Skip receivers that are statically known not to be arrays (e.g. string/number
+            // literals, template literals, `x.join()`). `"foo".slice()` returns a string, so the
+            // `[...x]` rewrite would change both value and type.
+            if is_not_array(member_expr_obj, ctx) {
                 return;
             }
 
@@ -361,6 +369,8 @@ fn test() {
         "array.slice(0, array.length)",
         "array.slice(0, 0)",
         "array.notSlice()",
+        r#""".slice()"#,
+        r#""foo".slice()"#,
         "[...foo].slice()",
         "[foo].slice()",
         "arrayBuffer.slice()",
@@ -576,7 +586,6 @@ fn test() {
         "(scopeManager?.scopes).slice()",
         "bar()
             foo.slice()",
-        r#""".slice()"#,
         "array.slice(0)",
         "array.slice(0b0)",
         "array.slice(0.00)",

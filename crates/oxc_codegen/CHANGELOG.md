@@ -4,6 +4,26 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.137.0] - 2026-06-18
+
+### 🐛 Bug Fixes
+
+- 837a395 parser: Treat a line comment after ':' as leading, not trailing (#23515) (Dunqing)
+
+## [0.136.0] - 2026-06-15
+
+### 💥 BREAKING CHANGES
+
+- 7a24911 codegen: [**BREAKING**] Borrow sourcemaps from codegen (#23422) (Boshen)
+
+### 🐛 Bug Fixes
+
+- f5721c2 codegen: Preserve parentheses around `intrinsic` type reference (#23156) (Boshen)
+
+### ⚡ Performance
+
+- e89729b codegen: Accept one-shot wrap closures (#23265) (camc314)
+
 ## [0.135.0] - 2026-06-08
 
 ### 💥 BREAKING CHANGES

@@ -56,6 +56,7 @@ declare_oxc_lint!(
     import,
     style,
     version = "0.15.13",
+    short_description = "Forbids the use of mutable exports with var or let.",
 );
 
 impl Rule for NoMutableExports {

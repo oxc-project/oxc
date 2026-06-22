@@ -57,6 +57,7 @@ declare_oxc_lint!(
     correctness,
     suggestion,
     version = "0.15.13",
+    short_description = "Prevents unnecessary assignment of parameter properties.",
 );
 
 impl Rule for NoUnnecessaryParameterPropertyAssignment {
@@ -68,10 +69,7 @@ impl Rule for NoUnnecessaryParameterPropertyAssignment {
             return;
         }
 
-        let parameter_properties: Vec<_> =
-            method.value.params.items.iter().filter(|param| param.has_modifier()).collect();
-
-        if parameter_properties.is_empty() {
+        if !method.value.params.items.iter().any(FormalParameter::has_modifier) {
             return;
         }
 
@@ -101,7 +99,7 @@ impl Rule for NoUnnecessaryParameterPropertyAssignment {
 
         let mut visitor = AssignmentVisitor {
             ctx,
-            parameter_properties,
+            parameters: &method.value.params.items,
             assigned_before_unnecessary: FxHashSet::default(),
             assigned_before_constructor,
         };
@@ -111,7 +109,7 @@ impl Rule for NoUnnecessaryParameterPropertyAssignment {
 
 struct AssignmentVisitor<'a, 'b> {
     ctx: &'b LintContext<'a>,
-    parameter_properties: Vec<&'b FormalParameter<'a>>,
+    parameters: &'b [FormalParameter<'a>],
     assigned_before_unnecessary: FxHashSet<Str<'a>>,
     assigned_before_constructor: FxHashSet<Str<'a>>,
 }
@@ -144,7 +142,7 @@ impl<'a> Visit<'a> for AssignmentVisitor<'a, '_> {
         }
         // the property of this matches the identifier name on the right
 
-        for param in &self.parameter_properties {
+        for param in self.parameters.iter().filter(|param| param.has_modifier()) {
             let Some(binding_identifier) = param.pattern.get_binding_identifier() else {
                 continue;
             };

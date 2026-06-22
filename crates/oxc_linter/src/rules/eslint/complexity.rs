@@ -42,6 +42,14 @@ impl Default for ComplexityConfig {
     }
 }
 
+#[derive(Debug, JsonSchema)]
+#[serde(untagged)]
+#[expect(unused)]
+enum ComplexityConfigEnum {
+    Number(u32),
+    Object(ComplexityConfig),
+}
+
 #[derive(Debug, Default, Clone, Copy, Serialize, Deserialize, JsonSchema, PartialEq, Eq)]
 #[serde(rename_all = "kebab-case")]
 pub enum Variant {
@@ -61,18 +69,6 @@ impl Deref for Complexity {
 
     fn deref(&self) -> &Self::Target {
         &self.0
-    }
-}
-
-#[cfg(feature = "ruledocs")]
-impl Complexity {
-    #[expect(clippy::unnecessary_wraps)]
-    pub fn config_schema(
-        r#gen: &mut schemars::r#gen::SchemaGenerator,
-    ) -> Option<schemars::schema::Schema> {
-        let mut schema = r#gen.subschema_for::<ComplexityConfig>();
-        crate::utils::number_as_object_schema(r#gen, &mut schema, None);
-        Some(schema)
     }
 }
 
@@ -146,8 +142,9 @@ declare_oxc_lint!(
     Complexity,
     eslint,
     restriction,
-    config = ComplexityConfig,
+    config = ComplexityConfigEnum,
     version = "1.37.0",
+    short_description = "Enforces a maximum cyclomatic complexity in a program, which is the number of linearly independent paths in a program.",
 );
 
 impl Rule for Complexity {
@@ -160,9 +157,8 @@ impl Rule for Complexity {
         {
             Ok(Self(Box::new(ComplexityConfig { max, variant: Variant::Classic })))
         } else {
-            Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-                .unwrap_or_default()
-                .into_inner())
+            serde_json::from_value::<DefaultRuleConfig<Self>>(value)
+                .map(DefaultRuleConfig::into_inner)
         }
     }
 

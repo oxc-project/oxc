@@ -463,6 +463,7 @@ pub(crate) mod react {
     pub mod only_export_components;
     pub mod prefer_es6_class;
     pub mod prefer_function_component;
+    pub mod react_compiler;
     pub mod react_in_jsx_scope;
     pub mod require_render_return;
     pub mod rules_of_hooks;
@@ -496,11 +497,13 @@ pub(crate) mod unicorn {
     pub mod explicit_length_check;
     pub mod filename_case;
     pub mod import_style;
+    pub mod max_nested_calls;
     pub mod new_for_builtins;
     pub mod no_abusive_eslint_disable;
     pub mod no_accessor_recursion;
     pub mod no_anonymous_default_export;
     pub mod no_array_callback_reference;
+    pub mod no_array_fill_with_reference_type;
     pub mod no_array_for_each;
     pub mod no_array_method_this_argument;
     pub mod no_array_reduce;
@@ -584,6 +587,7 @@ pub(crate) mod unicorn {
     pub mod prefer_native_coercion_functions;
     pub mod prefer_negative_index;
     pub mod prefer_node_protocol;
+    pub mod prefer_number_coercion;
     pub mod prefer_number_properties;
     pub mod prefer_object_from_entries;
     pub mod prefer_optional_catch_binding;
@@ -839,9 +843,11 @@ pub(crate) mod node {
     pub mod global_require;
     pub mod handle_callback_err;
     pub mod no_exports_assign;
+    pub mod no_mixed_requires;
     pub mod no_new_require;
     pub mod no_path_concat;
     pub mod no_process_env;
+    pub mod no_sync;
 }
 
 /// <https://github.com/vuejs/eslint-plugin-vue>
@@ -853,6 +859,7 @@ pub(crate) mod vue {
     pub mod max_props;
     pub mod next_tick_style;
     pub mod no_arrow_functions_in_watch;
+    pub mod no_async_in_computed_properties;
     pub mod no_computed_properties_in_data;
     pub mod no_deprecated_data_object_declaration;
     pub mod no_deprecated_delete_set;
@@ -861,6 +868,7 @@ pub(crate) mod vue {
     pub mod no_deprecated_model_definition;
     pub mod no_deprecated_props_default_this;
     pub mod no_deprecated_vue_config_keycodes;
+    pub mod no_dupe_keys;
     pub mod no_export_in_script_setup;
     pub mod no_expose_after_await;
     pub mod no_import_compiler_macros;

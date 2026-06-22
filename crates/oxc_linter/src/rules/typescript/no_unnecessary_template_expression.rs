@@ -65,6 +65,7 @@ declare_oxc_lint!(
     suspicious,
     fix,
     version = "1.12.0",
+    short_description = "Disallows unnecessary template expressions (interpolations) that can be simplified.",
 );
 
 impl Rule for NoUnnecessaryTemplateExpression {}

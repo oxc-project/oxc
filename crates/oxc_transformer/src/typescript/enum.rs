@@ -310,7 +310,9 @@ impl<'a> TypeScriptEnum {
     ) -> ArenaVec<'a, Statement<'a>> {
         let ast = ctx.ast;
 
-        let mut statements = ast.vec();
+        // Each member pushes exactly one statement, plus a final `return` statement,
+        // so the length is known up front — pre-size to avoid growth reallocations.
+        let mut statements = ast.vec_with_capacity(members.len() + 1);
 
         // If enum number has no initializer, its value will be the previous member value + 1,
         // if it's the first member, it will be `0`.
@@ -319,7 +321,7 @@ impl<'a> TypeScriptEnum {
 
         let mut prev_member_name = None;
 
-        for member in members.take_in(ctx.ast) {
+        for member in members.take_in(ctx) {
             let member_span = member.span;
             let member_name = member.id.static_name();
 

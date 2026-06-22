@@ -1,6 +1,6 @@
 use std::{alloc::Layout, borrow::Cow, mem::MaybeUninit, slice, str};
 
-use oxc_allocator::{Allocator, AllocatorAccessor, Box, FromIn, IntoIn, Vec};
+use oxc_allocator::{Allocator, Box, FromIn, GetAllocator, IntoIn, Vec};
 use oxc_span::{SPAN, Span};
 use oxc_str::{Ident, Str};
 use oxc_syntax::{number::NumberBase, operator::UnaryOperator, scope::ScopeId};
@@ -18,18 +18,18 @@ impl<'a, T> FromIn<'a, NONE> for Option<Box<'a, T>> {
     }
 }
 
-impl<'a> AllocatorAccessor<'a> for AstBuilder<'a> {
-    #[inline]
-    fn allocator(self) -> &'a Allocator {
-        self.allocator
-    }
-}
-
 /// AST builder for creating AST nodes.
 #[derive(Clone, Copy)]
 pub struct AstBuilder<'a> {
     /// The memory allocator used to allocate AST nodes in the arena.
     pub allocator: &'a Allocator,
+}
+
+impl<'a> GetAllocator<'a> for AstBuilder<'a> {
+    #[inline]
+    fn allocator(&self) -> &'a Allocator {
+        self.allocator
+    }
 }
 
 impl<'a> AstBuilder<'a> {
@@ -137,12 +137,9 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn void_0(self, span: Span) -> Expression<'a> {
         let num = self.number_0();
-        Expression::UnaryExpression(self.alloc(self.unary_expression(
-            span,
-            UnaryOperator::Void,
-            num,
-        )))
+        Expression::UnaryExpression(self.alloc_unary_expression(span, UnaryOperator::Void, num))
     }
+
     /// `NaN`
     #[inline]
     pub fn nan(self, span: Span) -> Expression<'a> {
@@ -250,14 +247,14 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         declaration: Declaration<'a>,
     ) -> Box<'a, ExportNamedDeclaration<'a>> {
-        self.alloc(self.export_named_declaration(
+        self.alloc_export_named_declaration(
             span,
             Some(declaration),
             self.vec(),
             None,
             ImportOrExportKind::Value,
             NONE,
-        ))
+        )
     }
 
     /// Create an [`ExportNamedDeclaration`] with no modifiers that contains a
@@ -269,14 +266,14 @@ impl<'a> AstBuilder<'a> {
         specifiers: Vec<'a, ExportSpecifier<'a>>,
         source: Option<StringLiteral<'a>>,
     ) -> Box<'a, ExportNamedDeclaration<'a>> {
-        self.alloc(self.export_named_declaration(
+        self.alloc_export_named_declaration(
             span,
             None,
             specifiers,
             source,
             ImportOrExportKind::Value,
             NONE,
-        ))
+        )
     }
 
     /* ---------- Template literals ---------- */

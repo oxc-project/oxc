@@ -526,7 +526,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for JsxImpl<'a> {
         if !expr.is_jsx() {
             return;
         }
-        *expr = match expr.take_in(ctx.ast) {
+        *expr = match expr.take_in(ctx) {
             Expression::JSXElement(e) => self.transform_jsx_element(e, ctx),
             Expression::JSXFragment(e) => self.transform_jsx(e.span, None, e.unbox().children, ctx),
             _ => unreachable!(),
@@ -589,8 +589,11 @@ impl<'a> JsxImpl<'a> {
         // The key prop in `<div key={true} />`
         let mut key_prop = None;
 
-        // The object properties for the second argument of `React.createElement`
-        let mut properties = ctx.ast.vec();
+        // The object properties for the second argument of `React.createElement`.
+        // Pre-size to the attribute count (one property per attribute in the common case) to avoid
+        // regrowing the arena vec, mirroring `arguments` above.
+        let mut properties =
+            ctx.ast.vec_with_capacity(opening_element.as_ref().map_or(0, |e| e.attributes.len()));
         let (element_name, attributes) = opening_element
             .map(|e| {
                 let e = e.unbox();

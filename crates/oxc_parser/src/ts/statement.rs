@@ -131,7 +131,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         let id = self.parse_binding_identifier();
         self.check_reserved_type_name(&id, "Type alias");
-        let params = self.parse_ts_type_parameters();
+        let params = self.parse_ts_type_parameters_with_variance();
         // A `const` modifier is only valid on a type parameter of a function, method, or class
         // (TS1277), so reject it on a type alias, e.g. `type T<const U> = ...`.
         if let Some(type_params) = &params {
@@ -216,7 +216,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> Declaration<'a> {
         let id = self.parse_binding_identifier();
         self.check_reserved_type_name(&id, "Interface");
-        let type_parameters = self.parse_ts_type_parameters();
+        let type_parameters = self.parse_ts_type_parameters_with_variance();
         if let Some(type_parameters) = &type_parameters {
             for param in &type_parameters.params {
                 if param.r#const {

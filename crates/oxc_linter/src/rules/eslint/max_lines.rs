@@ -45,16 +45,12 @@ impl Default for MaxLinesConfig {
     }
 }
 
-#[cfg(feature = "ruledocs")]
-impl MaxLines {
-    #[expect(clippy::unnecessary_wraps)]
-    pub fn config_schema(
-        r#gen: &mut schemars::r#gen::SchemaGenerator,
-    ) -> Option<schemars::schema::Schema> {
-        let mut schema = r#gen.subschema_for::<MaxLinesConfig>();
-        crate::utils::number_as_object_schema(r#gen, &mut schema, None);
-        Some(schema)
-    }
+#[derive(Debug, JsonSchema, Deserialize)]
+#[serde(untagged)]
+#[expect(unused)]
+enum MaxLinesConfigEnum {
+    Number(u32),
+    Object(MaxLinesConfig),
 }
 
 declare_oxc_lint!(
@@ -72,8 +68,9 @@ declare_oxc_lint!(
     MaxLines,
     eslint,
     pedantic,
-    config = MaxLinesConfig,
+    config = MaxLinesConfigEnum,
     version = "0.2.14",
+    short_description = "Enforce a maximum number of lines per file.",
 );
 
 impl Rule for MaxLines {

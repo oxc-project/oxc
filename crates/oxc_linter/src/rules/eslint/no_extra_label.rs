@@ -87,6 +87,7 @@ declare_oxc_lint!(
     style,
     fix,
     version = "0.15.4",
+    short_description = "Disallow unnecessary labels.",
 );
 
 impl Rule for NoExtraLabel {

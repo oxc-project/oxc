@@ -202,6 +202,7 @@ declare_oxc_lint!(
     style,
     fix,
     version = "1.66.0",
+    short_description = "Enforces having one or more empty lines after the last top-level import statement or require call.",
     config = NewlineAfterImport,
 );
 

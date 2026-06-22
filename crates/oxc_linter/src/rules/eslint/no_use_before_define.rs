@@ -112,6 +112,7 @@ declare_oxc_lint!(
     restriction,
     config = NoUseBeforeDefineConfigJson,
     version = "1.49.0",
+    short_description = "Disallows using variables before they are defined.",
 );
 
 impl Rule for NoUseBeforeDefine {

@@ -26,7 +26,7 @@ pub struct NoMisusedNew;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforces valid definition of new and constructor. This rule prevents classes from defining
+    /// Enforces valid definitions of `new` and `constructor`. This rule prevents classes from defining
     /// a method named `new`, interfaces from defining a method named `constructor`, and interfaces
     /// from defining a construct signature that returns the interface itself.
     ///
@@ -81,6 +81,7 @@ declare_oxc_lint!(
     typescript,
     correctness,
     version = "0.0.7",
+    short_description = "Enforce valid definitions of `new` and `constructor` in TypeScript.",
 );
 
 impl Rule for NoMisusedNew {

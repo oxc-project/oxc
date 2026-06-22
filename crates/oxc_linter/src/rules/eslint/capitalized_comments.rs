@@ -72,7 +72,8 @@ impl std::ops::Deref for CapitalizedComments {
 #[expect(clippy::struct_field_names)]
 struct CommentConfigJson {
     /// A regex pattern. Comments that match the pattern will not cause violations.
-    ignore_pattern: Option<String>,
+    #[serde(default, deserialize_with = "deserialize_ignore_pattern")]
+    ignore_pattern: Option<Regex>,
     /// If true, inline comments (comments in the middle of code) will be ignored.
     ignore_inline_comments: Option<bool>,
     /// If true, consecutive comments will be ignored after the first comment.
@@ -81,10 +82,8 @@ struct CommentConfigJson {
 
 impl CommentConfigJson {
     fn into_comment_config(self, base: &CommentConfigJson) -> CommentConfig {
-        let pattern = self.ignore_pattern.as_ref().or(base.ignore_pattern.as_ref());
         CommentConfig {
-            ignore_pattern: pattern
-                .and_then(|p| RegexBuilder::new(&format!(r"^\s*(?:{p})")).build().ok()),
+            ignore_pattern: self.ignore_pattern.or_else(|| base.ignore_pattern.clone()),
             ignore_inline_comments: self
                 .ignore_inline_comments
                 .or(base.ignore_inline_comments)
@@ -95,6 +94,18 @@ impl CommentConfigJson {
                 .unwrap_or(false),
         }
     }
+}
+
+fn deserialize_ignore_pattern<'de, D>(deserializer: D) -> Result<Option<Regex>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    use serde::de::Error;
+
+    Option::<String>::deserialize(deserializer)?
+        .map(|pattern| RegexBuilder::new(&format!(r"^\s*(?:{pattern})")).build())
+        .transpose()
+        .map_err(D::Error::custom)
 }
 
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
@@ -155,6 +166,7 @@ declare_oxc_lint!(
     fix,
     config = CapitalizedCommentsOptions,
     version = "1.34.0",
+    short_description = "Enforces or disallows capitalization of the first letter of a comment.",
 );
 
 impl Rule for CapitalizedComments {
@@ -166,8 +178,9 @@ impl Rule for CapitalizedComments {
         let capitalize =
             arr.first().and_then(|v| serde_json::from_value(v.clone()).ok()).unwrap_or_default();
 
-        let options: OptionsJson =
-            arr.get(1).and_then(|v| serde_json::from_value(v.clone()).ok()).unwrap_or_default();
+        let options: OptionsJson = arr
+            .get(1)
+            .map_or_else(|| Ok(OptionsJson::default()), |v| serde_json::from_value(v.clone()))?;
 
         let line_config = options.line.unwrap_or_default().into_comment_config(&options.base);
         let block_config = options.block.unwrap_or_default().into_comment_config(&options.base);

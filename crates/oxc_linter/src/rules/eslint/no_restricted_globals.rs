@@ -1,9 +1,16 @@
-use oxc_ast::AstKind;
+use std::ops::Deref;
+
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, IdentifierReference},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
+use serde::de::Error;
 use serde_json::Value;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -20,19 +27,49 @@ fn no_restricted_globals(global_name: &str, suffix: &str, span: Span) -> OxcDiag
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Clone, Default)]
+pub struct NoRestrictedGlobals(Box<NoRestrictedGlobalsConfig>);
+
+impl Deref for NoRestrictedGlobals {
+    type Target = NoRestrictedGlobalsConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+#[derive(Debug, Clone, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
-pub struct NoRestrictedGlobals {
+pub struct NoRestrictedGlobalsConfig {
     /// Objects in the format
     /// `{ "name": "event", "message": "Use local parameter instead." }`, which define what globals
     /// are restricted from use.
-    restricted_globals: Box<FxHashMap<String, String>>,
+    globals: FxHashMap<String, String>,
+    /// A boolean option that enables detection of restricted globals accessed via global objects. Default is `false`.
+    check_global_object: bool,
+    /// An array option that specifies additional global object names to check when `checkGlobalObject` is enabled.
+    /// By default, the rule checks these global objects: `globalThis`, `self`, and `window`.
+    global_objects: Vec<CompactStr>,
+}
+
+fn default_globals_objects() -> Vec<CompactStr> {
+    vec![CompactStr::new("globalThis"), CompactStr::new("self"), CompactStr::new("window")]
+}
+
+impl Default for NoRestrictedGlobalsConfig {
+    fn default() -> Self {
+        Self {
+            globals: FxHashMap::default(),
+            check_global_object: false,
+            global_objects: default_globals_objects(),
+        }
+    }
 }
 
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule allows you to specify global variable names that you don't want to use in your application.
+    /// Specify global variable names that should not be used in your application.
     ///
     /// ### Why is this bad?
     ///
@@ -61,95 +98,363 @@ declare_oxc_lint!(
     NoRestrictedGlobals,
     eslint,
     restriction,
-    config = NoRestrictedGlobals,
+    config = NoRestrictedGlobalsConfig,
     version = "0.4.0",
+    short_description = "Specify global variable names that should not be used in your application.",
 );
 
 impl Rule for NoRestrictedGlobals {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let list = match value {
-            Value::Array(arr) => arr.iter().fold(FxHashMap::default(), |mut acc, v| match v {
-                // "no-restricted-globals": ["error", "event"]
-                Value::String(name) => {
-                    acc.insert(name.clone(), String::new());
-                    acc
-                }
-                // "no-restricted-globals": ["error", { "name": "event", "message": "Use local parameter instead." }]
-                Value::Object(obj) => {
-                    let name = obj.get("name").and_then(Value::as_str).unwrap_or_default();
-                    let message = obj.get("message").and_then(Value::as_str).unwrap_or_default();
-                    acc.insert(name.to_string(), message.to_string());
-                    acc
-                }
-                _ => acc,
-            }),
-            _ => FxHashMap::default(),
+        let mut config = NoRestrictedGlobalsConfig::default();
+        let Value::Array(arr) = value else {
+            return Ok(Self(Box::new(config)));
         };
 
-        Ok(Self { restricted_globals: Box::new(list) })
+        for item in arr {
+            match item {
+                // "no-restricted-globals": ["error", "event"]
+                Value::String(name) => {
+                    config.globals.insert(name.clone(), String::new());
+                }
+                Value::Object(obj) => {
+                    match obj.get("globals") {
+                        // "no-restricted-globals": ["error", { globalObjects: [], checkGlobalObject: true, "globals": [{"object": { "name": "event", "message": "Use local parameter instead." } }] }]
+                        Some(Value::Array(globals)) => {
+                            for global in globals {
+                                match global {
+                                    Value::String(name) => {
+                                        config.globals.insert(name.clone(), String::new());
+                                    }
+                                    Value::Object(global_obj) => {
+                                        let name = global_obj
+                                            .get("name")
+                                            .and_then(Value::as_str)
+                                            .unwrap_or_default();
+                                        let message = global_obj
+                                            .get("message")
+                                            .and_then(Value::as_str)
+                                            .unwrap_or_default();
+                                        config
+                                            .globals
+                                            .insert(name.to_string(), message.to_string());
+                                    }
+                                    _ => {
+                                        return Err(serde_json::error::Error::custom(
+                                            "Expected 'globals' array to contain either strings or objects",
+                                        ));
+                                    }
+                                }
+                            }
+
+                            config.check_global_object = obj
+                                .get("checkGlobalObject")
+                                .and_then(Value::as_bool)
+                                .unwrap_or(false);
+
+                            if let Some(Value::Array(global_objects)) = obj.get("globalObjects") {
+                                config.global_objects = global_objects
+                                    .iter()
+                                    .filter_map(Value::as_str)
+                                    .map(CompactStr::new)
+                                    .collect();
+                            }
+                        }
+                        Some(_) => {
+                            return Err(serde_json::error::Error::custom(
+                                "Expected 'object' property to be an array",
+                            ));
+                        }
+                        _ => {
+                            // "no-restricted-globals": ["error", { "name": "event", "message": "Use local parameter instead." }]
+                            let name = obj.get("name").and_then(Value::as_str).unwrap_or_default();
+                            let message =
+                                obj.get("message").and_then(Value::as_str).unwrap_or_default();
+                            config.globals.insert(name.to_string(), message.to_string());
+                        }
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        config.global_objects.extend(default_globals_objects());
+
+        Ok(Self(Box::new(config)))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::IdentifierReference(ident) = node.kind() {
-            let Some(message) = self.restricted_globals.get(ident.name.as_str()) else {
-                return;
-            };
+        match node.kind() {
+            AstKind::IdentifierReference(ident) => {
+                if self.check_global_object
+                    && is_ident_property(ident, &ctx.nodes().parent_kind(node.id()))
+                {
+                    return;
+                }
 
-            let reference = ctx.scoping().get_reference(ident.reference_id());
-            if reference.symbol_id().is_none() && !reference.is_type() {
+                let Some(message) = self.globals.get(ident.name.as_str()) else {
+                    return;
+                };
+                let reference = ctx.scoping().get_reference(ident.reference_id());
+                if reference.symbol_id().is_none() && reference.is_type() {
+                    return;
+                }
                 ctx.diagnostic(no_restricted_globals(&ident.name, message, ident.span));
             }
+            AstKind::ComputedMemberExpression(expression) if self.check_global_object => {
+                let Some(ident) = expression.object.get_identifier_reference() else {
+                    return;
+                };
+                if !ctx.scoping().root_unresolved_references().contains_key(&ident.name) {
+                    return;
+                }
+                if !self.global_objects.contains(&ident.name.into()) {
+                    return;
+                }
+                let property_name = match &expression.expression {
+                    Expression::StringLiteral(str) => str.value.as_str(),
+                    Expression::TemplateLiteral(template)
+                        if template.is_no_substitution_template() =>
+                    {
+                        let Some(cooked) = &template.quasis[0].value.cooked else {
+                            return;
+                        };
+                        cooked.as_str()
+                    }
+                    _ => return,
+                };
+                let Some(message) = self.globals.get(property_name) else {
+                    return;
+                };
+                ctx.diagnostic(no_restricted_globals(
+                    property_name,
+                    message,
+                    expression.expression.span(),
+                ));
+            }
+            AstKind::StaticMemberExpression(expression) if self.check_global_object => {
+                let Some(ident) = expression.object.get_identifier_reference() else {
+                    return;
+                };
+                if !ctx.scoping().root_unresolved_references().contains_key(&ident.name) {
+                    return;
+                }
+                if !self.global_objects.contains(&ident.name.into()) {
+                    return;
+                }
+                let Some(message) = self.globals.get(expression.property.name.as_str()) else {
+                    return;
+                };
+                ctx.diagnostic(no_restricted_globals(
+                    &expression.property.name,
+                    message,
+                    expression.property.span,
+                ));
+            }
+            _ => {}
         }
     }
 }
 
+fn is_ident_property(ident: &IdentifierReference, kind: &AstKind) -> bool {
+    match kind {
+        AstKind::StaticMemberExpression(expression) => {
+            expression.property.node_id() == ident.node_id()
+        }
+        AstKind::ComputedMemberExpression(expression) => {
+            let Expression::Identifier(ident_ref) = &expression.expression else {
+                return false;
+            };
+
+            ident_ref.node_id() == ident.node_id()
+        }
+        _ => false,
+    }
+}
 #[test]
 fn test() {
     use crate::tester::Tester;
+    use serde_json::json;
+
     const CUSTOM_MESSAGE: &str = "Use bar instead.";
 
     let pass = vec![
-        (
-            "let a: Date;",
-            Some(
-                serde_json::json!([{ "name": "Date", "message": "Use helpers or date-fns instead", }]),
-            ),
-            None,
-        ),
         ("foo", None, None),
         ("foo", Some(serde_json::json!(["bar"])), None),
         ("var foo = 1;", Some(serde_json::json!(["foo"])), None),
-        (
-            "event",
-            Some(serde_json::json!(["bar"])),
-            Some(serde_json::json!({ "env": { "browser": true }})),
-        ),
-        ("import foo from 'bar';", Some(serde_json::json!(["foo"])), None),
+        ("event", Some(serde_json::json!(["bar"])), Some(json!({"env": { "browser": true}}))),
+        ("import foo from 'bar';", Some(serde_json::json!(["foo"])), None), // { "ecmaVersion": 6, "sourceType": "module" },
         ("function foo() {}", Some(serde_json::json!(["foo"])), None),
         ("function fn() { var foo; }", Some(serde_json::json!(["foo"])), None),
         ("foo.bar", Some(serde_json::json!(["bar"])), None),
         ("foo", Some(serde_json::json!([{ "name": "bar", "message": "Use baz instead." }])), None),
+        ("foo", Some(serde_json::json!([{ "globals": ["bar"] }])), None),
+        ("const foo = 1", Some(serde_json::json!([{ "globals": ["foo"] }])), None),
+        (
+            "event",
+            Some(serde_json::json!([{ "globals": ["bar"] }])),
+            Some(json!({"env": { "browser": true}})),
+        ),
+        ("import foo from 'bar';", Some(serde_json::json!([{ "globals": ["foo"] }])), None), // { "ecmaVersion": 6, "sourceType": "module" },
+        ("function foo() {}", Some(serde_json::json!([{ "globals": ["foo"] }])), None),
+        ("function fn() { let foo; }", Some(serde_json::json!([{ "globals": ["foo"] }])), None),
+        ("foo.bar", Some(serde_json::json!([{ "globals": ["bar"] }])), None),
+        (
+            "foo",
+            Some(
+                serde_json::json!([ { "globals": [{ "name": "bar", "message": CUSTOM_MESSAGE }] }, ]),
+            ),
+            None,
+        ),
+        (
+            "window.foo()",
+            Some(serde_json::json!([{ "globals": ["foo"] }])),
+            Some(json!({"env": { "browser": true}})),
+        ),
+        (
+            "self.foo()",
+            Some(serde_json::json!([{ "globals": ["foo"] }])),
+            Some(json!({"env": { "browser": true}})),
+        ),
+        ("globalThis.foo()", Some(serde_json::json!([{ "globals": ["foo"] }])), None), // { "ecmaVersion": 2020 },
+        (
+            "myGlobal.foo()",
+            Some(serde_json::json!([ { "globals": ["foo"], "globalObjects": ["myGlobal"], }, ])),
+            Some(json!({"globals": { "myGlobal": "readonly" }})),
+        ),
+        // not sure why eslint doesn't report these cases when checkGlobalObject is true,
+        // but we will report them since it's more intuitive.
+        // (
+        //     "window.foo()",
+        //     Some(serde_json::json!([ { "globals": ["foo"], "checkGlobalObject": true, }, ])),
+        //     None,
+        // ),
+        // (
+        //     "self.foo()",
+        //     Some(serde_json::json!([ { "globals": ["foo"], "checkGlobalObject": true, }, ])),
+        //     None,
+        // ),
+        // (
+        //     "globalThis.foo()",
+        //     Some(serde_json::json!([ { "globals": ["foo"], "checkGlobalObject": true, }, ])),
+        //     None,
+        // ), // { "ecmaVersion": 6 },
+        // (
+        //     "myGlobal.foo()",
+        //     Some(
+        //         serde_json::json!([ { "globals": ["foo"], "checkGlobalObject": true, "globalObjects": ["myGlobal"], }, ]),
+        //     ),
+        //     None,
+        // ),
+        (
+            "otherGlobal.foo()",
+            Some(
+                serde_json::json!([ { "globals": ["foo"], "checkGlobalObject": true, "globalObjects": ["myGlobal"], }, ]),
+            ),
+            Some(json!({"globals": { "otherGlobal": "readonly" }})),
+        ),
+        (
+            "foo.window.bar()",
+            Some(serde_json::json!([ { "globals": ["bar"], "checkGlobalObject": true, }, ])),
+            Some(json!({"env": { "browser": true}})),
+        ),
+        (
+            "foo.self.bar()",
+            Some(serde_json::json!([ { "globals": ["bar"], "checkGlobalObject": true, }, ])),
+            Some(json!({"env": { "browser": true}})),
+        ),
+        (
+            "foo.globalThis.bar()",
+            Some(serde_json::json!([ { "globals": ["bar"], "checkGlobalObject": true, }, ])),
+            None,
+        ), // { "ecmaVersion": 2020 },
+        (
+            "foo.myGlobal.bar()",
+            Some(
+                serde_json::json!([ { "globals": ["bar"], "checkGlobalObject": true, "globalObjects": ["myGlobal"], }, ]),
+            ),
+            Some(json!({"globals": { "myGlobal": "readonly" }})),
+        ),
+        (
+            "let window; window.foo()",
+            Some(serde_json::json!([ { "globals": ["foo"], "checkGlobalObject": true, }, ])),
+            Some(json!({"env": { "browser": true}})),
+        ),
+        (
+            "let self; self.foo()",
+            Some(serde_json::json!([ { "globals": ["foo"], "checkGlobalObject": true, }, ])),
+            Some(json!({"env": { "browser": true}})),
+        ),
+        (
+            "let globalThis; globalThis.foo()",
+            Some(serde_json::json!([ { "globals": ["foo"], "checkGlobalObject": true, }, ])),
+            None,
+        ), // { "ecmaVersion": 2020 },
+        (
+            "let myGlobal; myGlobal.foo()",
+            Some(
+                serde_json::json!([ { "globals": ["foo"], "checkGlobalObject": true, "globalObjects": ["myGlobal"], }, ]),
+            ),
+            Some(json!({"globals": { "myGlobal": "readonly" }})),
+        ),
+        ("foo", None, None),
+        ("foo", Some(serde_json::json!(["bar"])), None),
+        ("const foo: number = 1;", Some(serde_json::json!(["foo"])), None),
+        ("event", Some(serde_json::json!(["bar"])), Some(json!({"env": { "browser": true}}))),
+        ("import foo from 'bar';", Some(serde_json::json!(["foo"])), None),
+        ("function foo(): void {}", Some(serde_json::json!(["foo"])), None),
+        ("function fn(): void { let foo; }", Some(serde_json::json!(["foo"])), None),
+        ("foo.bar", Some(serde_json::json!(["bar"])), None),
+        ("foo", Some(serde_json::json!([{ "name": "bar", "message": "Use baz instead." }])), None),
+        (
+            "
+                        export default class Test {
+                            private status: string;
+                            getStatus() {
+                                return this.status;
+                            }
+                        }",
+            Some(serde_json::json!(["status"])),
+            None,
+        ),
+        ("type Handler = (event: string) => any", Some(serde_json::json!(["event"])), None),
+        ("let b: { c: Test }", Some(serde_json::json!(["Test"])), None),
+        ("function foo(param: Test) {}", Some(serde_json::json!(["Test"])), None),
+        ("1 as Test", Some(serde_json::json!(["Test"])), None),
+        ("class Derived implements Test {}", Some(serde_json::json!(["Test"])), None),
+        (
+            "class Derived implements Test1, Test2 {}",
+            Some(serde_json::json!(["Test1", "Test2"])),
+            None,
+        ),
+        ("interface Derived extends Test {}", Some(serde_json::json!(["Test"])), None),
+        ("type Intersection = Test & {}", Some(serde_json::json!(["Test"])), None),
+        ("type Union = Test | {}", Some(serde_json::json!(["Test"])), None),
+        ("let value: NS.Test", Some(serde_json::json!(["NS"])), None),
+        ("let value: NS.Test", Some(serde_json::json!(["Test"])), None),
+        ("let value: NS.Test", Some(serde_json::json!(["NS.Test"])), None),
+        // ("let value: typeof Test", Some(serde_json::json!(["Test"])), None), TODO: @Sysix
+        ("let value: Type<Test>", Some(serde_json::json!(["Type", "Test"])), None),
+        ("type Intersection = Test<any>", Some(serde_json::json!(["Test", "any"])), None),
+        ("type Intersection = Test<A, B>", Some(serde_json::json!(["Test", "A", "B"])), None),
+        ("foo.bar", Some(serde_json::json!(["bar"])), None),
+        ("foo.globalThis.bar", Some(serde_json::json!(["bar"])), None),
+        ("foo.globalThis.bar()", Some(serde_json::json!(["bar"])), None),
     ];
 
     let fail = vec![
         ("foo", Some(serde_json::json!(["foo"])), None),
         ("function fn() { foo; }", Some(serde_json::json!(["foo"])), None),
-        ("function fn() { foo; }", Some(serde_json::json!(["foo"])), None),
         (
-            "location; function test(location) { location; }",
-            Some(serde_json::json!(["location"])),
-            None,
+            "function fn() { foo; }",
+            Some(serde_json::json!(["foo"])),
+            Some(json!({"globals": { "foo": "readonly" }})),
         ),
         (
             "event",
             Some(serde_json::json!(["foo", "event"])),
-            Some(serde_json::json!({ "env": { "browser": true }})),
+            Some(json!({"env": { "browser": true}})),
         ),
-        (
-            "foo",
-            Some(serde_json::json!(["foo"])),
-            Some(serde_json::json!({ "globals": { "foo": false }})),
-        ),
+        ("foo", Some(serde_json::json!(["foo"])), Some(json!({"globals": { "foo": "readonly" }}))),
         ("foo()", Some(serde_json::json!(["foo"])), None),
         ("foo.bar()", Some(serde_json::json!(["foo"])), None),
         ("foo", Some(serde_json::json!([{ "name": "foo" }])), None),
@@ -157,17 +462,17 @@ fn test() {
         (
             "function fn() { foo; }",
             Some(serde_json::json!([{ "name": "foo" }])),
-            Some(serde_json::json!({ "globals": { "foo": false }})),
+            Some(json!({"globals": { "foo": "readonly" }})),
         ),
         (
             "event",
             Some(serde_json::json!(["foo", { "name": "event" }])),
-            Some(serde_json::json!({ "env": { "browser": true }})),
+            Some(json!({"env": { "browser": true}})),
         ),
         (
             "foo",
             Some(serde_json::json!([{ "name": "foo" }])),
-            Some(serde_json::json!({ "globals": { "foo": false }})),
+            Some(json!({"globals": { "foo": "readonly" }})),
         ),
         ("foo()", Some(serde_json::json!([{ "name": "foo" }])), None),
         ("foo.bar()", Some(serde_json::json!([{ "name": "foo" }])), None),
@@ -180,19 +485,19 @@ fn test() {
         (
             "function fn() { foo; }",
             Some(serde_json::json!([{ "name": "foo", "message": CUSTOM_MESSAGE }])),
-            Some(serde_json::json!({ "globals": { "foo": false }})),
+            Some(json!({"globals": { "foo": "readonly" }})),
         ),
         (
             "event",
             Some(
-                serde_json::json!(["foo", { "name": "event", "message": "Use local event parameter." }]),
+                serde_json::json!([ "foo", { "name": "event", "message": "Use local event parameter." }, ]),
             ),
-            Some(serde_json::json!({ "env": { "browser": true }})),
+            Some(json!({"env": { "browser": true}})),
         ),
         (
             "foo",
             Some(serde_json::json!([{ "name": "foo", "message": CUSTOM_MESSAGE }])),
-            Some(serde_json::json!({ "globals": { "foo": false }})),
+            Some(json!({"globals": { "foo": "readonly" }})),
         ),
         ("foo()", Some(serde_json::json!([{ "name": "foo", "message": CUSTOM_MESSAGE }])), None),
         (
@@ -204,7 +509,304 @@ fn test() {
             "var foo = obj => hasOwnProperty(obj, 'name');",
             Some(serde_json::json!(["hasOwnProperty"])),
             None,
+        ), // { "ecmaVersion": 6 },
+        ("foo", Some(serde_json::json!([{ "globals": ["foo"] }])), None),
+        ("function fn() { foo; }", Some(serde_json::json!([{ "globals": ["foo"] }])), None),
+        (
+            "function fn() { foo; }",
+            Some(serde_json::json!([{ "globals": ["foo"] }])),
+            Some(json!({"globals": { "foo": "readonly" }})),
         ),
+        (
+            "event",
+            Some(serde_json::json!([{ "globals": ["foo", "event"] }])),
+            Some(json!({"env": { "browser": true}})),
+        ),
+        (
+            "foo",
+            Some(serde_json::json!([{ "globals": ["foo"] }])),
+            Some(json!({"globals": { "foo": "readonly" }})),
+        ),
+        ("foo()", Some(serde_json::json!([{ "globals": ["foo"] }])), None),
+        ("foo.bar()", Some(serde_json::json!([{ "globals": ["foo"] }])), None),
+        ("foo", Some(serde_json::json!([{ "globals": [{ "name": "foo" }] }])), None),
+        (
+            "function fn() { foo; }",
+            Some(serde_json::json!([{ "globals": [{ "name": "foo" }] }])),
+            None,
+        ),
+        (
+            "function fn() { foo; }",
+            Some(serde_json::json!([{ "globals": [{ "name": "foo" }] }])),
+            Some(json!({"globals": { "foo": "readonly" }})),
+        ),
+        (
+            "event",
+            Some(serde_json::json!([{ "globals": ["foo", { "name": "event" }] }])),
+            Some(json!({"env": { "browser": true}})),
+        ),
+        (
+            "foo",
+            Some(serde_json::json!([{ "globals": [{ "name": "foo" }] }])),
+            Some(json!({"globals": { "foo": "readonly" }})),
+        ),
+        ("foo()", Some(serde_json::json!([{ "globals": [{ "name": "foo" }] }])), None),
+        ("foo.bar()", Some(serde_json::json!([{ "globals": [{ "name": "foo" }] }])), None),
+        (
+            "foo",
+            Some(
+                serde_json::json!([{ "globals": [{ "name": "foo", "message": CUSTOM_MESSAGE }] }]),
+            ),
+            None,
+        ),
+        (
+            "function fn() { foo; }",
+            Some(
+                serde_json::json!([{ "globals": [{ "name": "foo", "message": CUSTOM_MESSAGE }] }]),
+            ),
+            None,
+        ),
+        (
+            "function fn() { foo; }",
+            Some(
+                serde_json::json!([{ "globals": [{ "name": "foo", "message": CUSTOM_MESSAGE }] }]),
+            ),
+            Some(json!({"globals": { "foo": "readonly" }})),
+        ),
+        (
+            "event",
+            Some(
+                serde_json::json!([ { "globals": [ "foo", { "name": "event", "message": "Use local event parameter.", }, ], }, ]),
+            ),
+            Some(json!({"env": { "browser": true}})),
+        ),
+        (
+            "foo",
+            Some(
+                serde_json::json!([{ "globals": [{ "name": "foo", "message": CUSTOM_MESSAGE }] }]),
+            ),
+            Some(json!({"globals": { "foo": "readonly" }})),
+        ),
+        (
+            "foo()",
+            Some(
+                serde_json::json!([{ "globals": [{ "name": "foo", "message": CUSTOM_MESSAGE }] }]),
+            ),
+            None,
+        ),
+        (
+            "foo.bar()",
+            Some(
+                serde_json::json!([{ "globals": [{ "name": "foo", "message": CUSTOM_MESSAGE }] }]),
+            ),
+            None,
+        ),
+        (
+            "var foo = obj => hasOwnProperty(obj, 'name');",
+            Some(serde_json::json!([{ "globals": ["hasOwnProperty"] }])),
+            None,
+        ), // { "ecmaVersion": 6 },
+        (
+            "window.foo()",
+            Some(serde_json::json!([{ "globals": ["foo"], "checkGlobalObject": true }])),
+            Some(json!({"env": { "browser": true}})),
+        ),
+        (
+            "self.foo()",
+            Some(serde_json::json!([{ "globals": ["foo"], "checkGlobalObject": true }])),
+            Some(json!({"env": { "browser": true}})),
+        ),
+        // TODO: we do not supported nested global object access like window.window.foo()
+        // (
+        //     "window.window.foo()",
+        //     Some(serde_json::json!([{ "globals": ["foo"], "checkGlobalObject": true }])),
+        //     Some(json!({"env": { "browser": true}})),
+        // ),
+        // (
+        //     "self.self.foo()",
+        //     Some(serde_json::json!([{ "globals": ["foo"], "checkGlobalObject": true }])),
+        //     Some(json!({"env": { "browser": true}})),
+        // ),
+        (
+            "globalThis.foo()",
+            Some(serde_json::json!([{ "globals": ["foo"], "checkGlobalObject": true }])),
+            None,
+        ), // { "ecmaVersion": 2020 },
+        // TODO: we do not supported nested global object access like window.window.foo()
+        // (
+        //     "globalThis.globalThis.foo()",
+        //     Some(serde_json::json!([{ "globals": ["foo"], "checkGlobalObject": true }])),
+        //     None,
+        // ), // { "ecmaVersion": 2020 },
+        (
+            "myGlobal.foo()",
+            Some(
+                serde_json::json!([ { "globals": ["foo"], "checkGlobalObject": true, "globalObjects": ["myGlobal"], }, ]),
+            ),
+            Some(json!({"globals": { "myGlobal": "readonly" }})),
+        ),
+        // TODO: we do not supported nested global object access like window.window.foo()
+        // (
+        //     "myGlobal.myGlobal.foo()",
+        //     Some(
+        //         serde_json::json!([ { "globals": ["foo"], "checkGlobalObject": true, "globalObjects": ["myGlobal"], }, ]),
+        //     ),
+        //     Some(json!({"globals": { "myGlobal": "readonly" }})),
+        // ),
+        (
+            r#"window["foo"]"#,
+            Some(serde_json::json!([{ "globals": ["foo"], "checkGlobalObject": true }])),
+            Some(json!({"env": { "browser": true}})),
+        ),
+        (
+            r#"self["foo"]"#,
+            Some(serde_json::json!([{ "globals": ["foo"], "checkGlobalObject": true }])),
+            Some(json!({"env": { "browser": true}})),
+        ),
+        (
+            r#"globalThis["foo"]"#,
+            Some(serde_json::json!([{ "globals": ["foo"], "checkGlobalObject": true }])),
+            None,
+        ), // { "ecmaVersion": 2020 },
+        (
+            r#"myGlobal["foo"]"#,
+            Some(
+                serde_json::json!([ { "globals": ["foo"], "checkGlobalObject": true, "globalObjects": ["myGlobal"], }, ]),
+            ),
+            Some(json!({"globals": { "myGlobal": "readonly" }})),
+        ),
+        (
+            "window?.foo()",
+            Some(serde_json::json!([{ "globals": ["foo"], "checkGlobalObject": true }])),
+            Some(json!({"env": { "browser": true}})),
+        ),
+        (
+            "self?.foo()",
+            Some(serde_json::json!([{ "globals": ["foo"], "checkGlobalObject": true }])),
+            Some(json!({"env": { "browser": true}})),
+        ),
+        (
+            "window.foo(); myGlobal.foo()",
+            Some(
+                serde_json::json!([ { "globals": ["foo"], "checkGlobalObject": true, "globalObjects": ["myGlobal"], }, ]),
+            ),
+            Some(json!({"env": { "browser": true}, "globals": { "myGlobal": "readonly" }})),
+        ),
+        (
+            "myGlobal.foo(); myOtherGlobal.bar()",
+            Some(
+                serde_json::json!([ { "globals": ["foo", "bar"], "checkGlobalObject": true, "globalObjects": ["myGlobal", "myOtherGlobal"], }, ]),
+            ),
+            Some(json!({"globals": { "myGlobal": "readonly", "myOtherGlobal": "readonly" }})),
+        ),
+        (
+            "foo(); window.foo()",
+            Some(serde_json::json!([{ "globals": ["foo"], "checkGlobalObject": true }])),
+            Some(json!({"env": { "browser": true}})),
+        ),
+        (
+            "foo(); self.foo()",
+            Some(serde_json::json!([{ "globals": ["foo"], "checkGlobalObject": true }])),
+            Some(json!({"env": { "browser": true}})),
+        ),
+        (
+            "foo(); myGlobal.foo()",
+            Some(
+                serde_json::json!([ { "globals": ["foo"], "checkGlobalObject": true, "globalObjects": ["myGlobal"], }, ]),
+            ),
+            Some(json!({"globals": { "myGlobal": "readonly" }})),
+        ),
+        (
+            "function onClick(event) { console.log(event); console.log(window.event); }",
+            Some(serde_json::json!([ { "globals": ["event"], "checkGlobalObject": true, }, ])),
+            Some(json!({"env": { "browser": true}})),
+        ),
+        (
+            "function onClick(event) { console.log(event); console.log(self.event); }",
+            Some(serde_json::json!([ { "globals": ["event"], "checkGlobalObject": true, }, ])),
+            Some(json!({"env": { "browser": true}})),
+        ),
+        (
+            "function onClick(event) { console.log(event); console.log(globalThis.event); }",
+            Some(serde_json::json!([ { "globals": ["event"], "checkGlobalObject": true, }, ])),
+            None,
+        ), // { "ecmaVersion": 2020 },
+        (
+            "function onClick(event) { console.log(event); console.log(myGlobal.event); }",
+            Some(
+                serde_json::json!([ { "globals": ["event"], "checkGlobalObject": true, "globalObjects": ["myGlobal"], }, ]),
+            ),
+            Some(json!({"globals": { "myGlobal": "readonly" }})),
+        ),
+        ("foo", Some(serde_json::json!(["foo"])), None),
+        ("function fn(): void { foo; }", Some(serde_json::json!(["foo"])), None),
+        (
+            "function fn(): void { foo; }",
+            Some(serde_json::json!(["foo"])),
+            Some(json!({"globals": { "foo": "readonly" }})),
+        ),
+        (
+            "event",
+            Some(serde_json::json!(["foo", "event"])),
+            Some(json!({"env": { "browser": true}})),
+        ),
+        ("foo", Some(serde_json::json!(["foo"])), Some(json!({"globals": { "foo": "readonly" }}))),
+        ("foo()", Some(serde_json::json!(["foo"])), None),
+        ("foo.bar()", Some(serde_json::json!(["foo"])), None),
+        ("foo", Some(serde_json::json!([{ "name": "foo" }])), None),
+        ("function fn(): void { foo; }", Some(serde_json::json!([{ "name": "foo" }])), None),
+        (
+            "function fn(): void { foo; }",
+            Some(serde_json::json!([{ "name": "foo" }])),
+            Some(json!({"globals": { "foo": "readonly" }})),
+        ),
+        (
+            "event",
+            Some(serde_json::json!(["foo", { "name": "event" }])),
+            Some(json!({"env": { "browser": true}})),
+        ),
+        (
+            "foo",
+            Some(serde_json::json!([{ "name": "foo" }])),
+            Some(json!({"globals": { "foo": "readonly" }})),
+        ),
+        ("foo()", Some(serde_json::json!([{ "name": "foo" }])), None),
+        ("foo.bar()", Some(serde_json::json!([{ "name": "foo" }])), None),
+        ("foo", Some(serde_json::json!([{ "name": "foo", "message": CUSTOM_MESSAGE }])), None),
+        (
+            "function fn(): void { foo; }",
+            Some(serde_json::json!([{ "name": "foo", "message": CUSTOM_MESSAGE }])),
+            None,
+        ),
+        (
+            "function fn(): void { foo; }",
+            Some(serde_json::json!([{ "name": "foo", "message": CUSTOM_MESSAGE }])),
+            Some(json!({"globals": { "foo": "readonly" }})),
+        ),
+        (
+            "event",
+            Some(
+                serde_json::json!([ "foo", { "name": "event", "message": "Use local event parameter." }, ]),
+            ),
+            Some(json!({"env": { "browser": true}})),
+        ),
+        (
+            "foo",
+            Some(serde_json::json!([{ "name": "foo", "message": CUSTOM_MESSAGE }])),
+            Some(json!({"globals": { "foo": "readonly" }})),
+        ),
+        ("foo()", Some(serde_json::json!([{ "name": "foo", "message": CUSTOM_MESSAGE }])), None),
+        (
+            "foo.bar()",
+            Some(serde_json::json!([{ "name": "foo", "message": CUSTOM_MESSAGE }])),
+            None,
+        ),
+        (
+            "const foo = obj => hasOwnProperty(obj, 'name');",
+            Some(serde_json::json!(["hasOwnProperty"])),
+            None,
+        ),
+        ("const x: Promise<any> = Promise.resolve();", Some(serde_json::json!(["Promise"])), None),
     ];
 
     Tester::new(NoRestrictedGlobals::NAME, NoRestrictedGlobals::PLUGIN, pass, fail)

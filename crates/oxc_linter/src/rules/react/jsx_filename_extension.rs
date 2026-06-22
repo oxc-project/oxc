@@ -118,6 +118,7 @@ declare_oxc_lint!(
     pending,
     config = JsxFilenameExtensionConfig,
     version = "0.15.14",
+    short_description = "Enforces consistent use of the `.jsx` file extension.",
 );
 
 impl Rule for JsxFilenameExtension {

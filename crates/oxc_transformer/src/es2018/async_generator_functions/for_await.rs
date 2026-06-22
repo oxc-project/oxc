@@ -129,7 +129,7 @@ impl<'a> AsyncGeneratorFunctions<'a> {
             }
             left @ match_assignment_target!(ForStatementLeft) => {
                 // for await (i of test), for await ({ i } of test)
-                let target = left.to_assignment_target_mut().take_in(ctx.ast);
+                let target = left.to_assignment_target_mut().take_in(ctx);
                 let expression = ctx.ast.expression_assignment(
                     SPAN,
                     AssignmentOperator::Assign,
@@ -146,12 +146,12 @@ impl<'a> AsyncGeneratorFunctions<'a> {
             let stmt_body = &mut stmt.body;
             match stmt_body {
                 Statement::BlockStatement(block) if block.body.is_empty() => {}
-                _ => statements.push(stmt_body.take_in(ctx.ast)),
+                _ => statements.push(stmt_body.take_in(ctx)),
             }
             statements
         };
 
-        let iterator = stmt.right.take_in(ctx.ast);
+        let iterator = stmt.right.take_in(ctx);
         let iterator =
             helper_call_expr(Helper::AsyncIterator, ctx.ast.vec1(Argument::from(iterator)), ctx);
         Self::build_for_await(

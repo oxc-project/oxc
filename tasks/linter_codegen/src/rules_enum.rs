@@ -355,6 +355,20 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
                 }
             }
 
+            // The dispatch `match` has one arm per rule, so it is large. Keep it in a
+            // single non-generic `#[inline(never)]` helper so the giant `match` is
+            // emitted *once*, rather than being duplicated across both arms of the
+            // `if TIMINGS` below *and* across both monomorphizations of the
+            // `const TIMINGS: bool` parameter (i.e. up to 4 copies per dispatcher).
+            // `--timing` is a cold diagnostic path, so paying one direct call on the
+            // hot path to share the table is a good size trade.
+            #[inline(never)]
+            fn run_dispatch<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+                match self {
+                    #(#run_arms),*
+                }
+            }
+
             pub(crate) fn run<'a, const TIMINGS: bool>(
                 &self,
                 node: &AstNode<'a>,
@@ -362,13 +376,16 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
                 timing_stat: Option<&mut RuleTimingStat>,
             ) {
                 if TIMINGS {
-                    timing_stat.expect("missing rule timing stat").time(|| match self {
-                        #(#run_arms),*
-                    });
+                    timing_stat.expect("missing rule timing stat").time(|| self.run_dispatch(node, ctx));
                 } else {
-                    match self {
-                        #(#run_arms),*
-                    }
+                    self.run_dispatch(node, ctx);
+                }
+            }
+
+            #[inline(never)]
+            fn run_once_dispatch(&self, ctx: &LintContext<'_>) {
+                match self {
+                    #(#run_once_arms),*
                 }
             }
 
@@ -378,13 +395,20 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
                 timing_stat: Option<&mut RuleTimingStat>,
             ) {
                 if TIMINGS {
-                    timing_stat.expect("missing rule timing stat").time(|| match self {
-                        #(#run_once_arms),*
-                    });
+                    timing_stat.expect("missing rule timing stat").time(|| self.run_once_dispatch(ctx));
                 } else {
-                    match self {
-                        #(#run_once_arms),*
-                    }
+                    self.run_once_dispatch(ctx);
+                }
+            }
+
+            #[inline(never)]
+            fn run_on_jest_node_dispatch<'a, 'c>(
+                &self,
+                jest_node: &PossibleJestNode<'a, 'c>,
+                ctx: &'c LintContext<'a>,
+            ) {
+                match self {
+                    #(#run_on_jest_node_arms),*
                 }
             }
 
@@ -395,13 +419,9 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
                 timing_stat: Option<&mut RuleTimingStat>,
             ) {
                 if TIMINGS {
-                    timing_stat.expect("missing rule timing stat").time(|| match self {
-                        #(#run_on_jest_node_arms),*
-                    });
+                    timing_stat.expect("missing rule timing stat").time(|| self.run_on_jest_node_dispatch(jest_node, ctx));
                 } else {
-                    match self {
-                        #(#run_on_jest_node_arms),*
-                    }
+                    self.run_on_jest_node_dispatch(jest_node, ctx);
                 }
             }
 

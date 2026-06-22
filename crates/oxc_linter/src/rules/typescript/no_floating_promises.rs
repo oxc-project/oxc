@@ -109,6 +109,7 @@ declare_oxc_lint!(
     suggestion,
     config = NoFloatingPromisesConfig,
     version = "1.11.0",
+    short_description = "Require Promise-like statements to be handled appropriately.",
 );
 
 impl Rule for NoFloatingPromises {

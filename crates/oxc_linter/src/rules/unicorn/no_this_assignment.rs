@@ -57,6 +57,7 @@ declare_oxc_lint!(
     unicorn,
     pedantic,
     version = "0.0.18",
+    short_description = "Disallow assigning `this` to a variable.",
 );
 
 impl Rule for NoThisAssignment {
