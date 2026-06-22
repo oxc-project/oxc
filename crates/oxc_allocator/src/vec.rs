@@ -150,6 +150,26 @@ impl<'alloc, T> Vec<'alloc, T> {
         Self(vec)
     }
 
+    /// Create a new [`Vec`] containing only a single value, allocated in the given `allocator`.
+    ///
+    /// # Examples
+    /// ```
+    /// use oxc_allocator::{Allocator, Vec};
+    ///
+    /// let allocator = Allocator::default();
+    ///
+    /// let value = 123u32;
+    /// let vec = Vec::from_value_in(value, &allocator);
+    /// assert_eq!(vec, [123]);
+    /// ```
+    #[inline]
+    pub fn from_value_in(value: T, allocator: &'alloc Allocator) -> Self {
+        const { Self::ASSERT_T_IS_NOT_DROP };
+
+        let boxed = Box::new_in(value, allocator);
+        Self::from_box_in(boxed, allocator)
+    }
+
     /// Create a new [`Vec`] from a fixed-size array, allocated in the given `allocator`.
     ///
     /// This is preferable to `from_iter_in` where source is an array, as size is statically known,
@@ -587,6 +607,19 @@ mod test {
         assert!(foos == [Bar(1), Bar(2)]);
         let bars_slice: &[Bar] = &[Bar(1), Bar(2)];
         assert!(foos == bars_slice);
+    }
+
+    #[test]
+    fn vec_from_value_in() {
+        let allocator = Allocator::default();
+        let mut v = Vec::from_value_in(123u32, &allocator);
+        assert_eq!(v, [123]);
+        assert_eq!(v.len(), 1);
+        assert_eq!(v.capacity(), 1);
+
+        // Growing the `Vec` reallocates into the allocator, preserving the original value
+        v.push(456);
+        assert_eq!(v, [123, 456]);
     }
 
     #[test]
