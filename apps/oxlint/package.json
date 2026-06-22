@@ -37,7 +37,7 @@
   },
   "devDependencies": {
     "@arethetypeswrong/core": "catalog:",
-    "@babel/code-frame": "^7.28.6",
+    "@babel/code-frame": "^8.0.0",
     "@napi-rs/cli": "catalog:",
     "@oxapps/shared": "workspace:*",
     "@oxc-project/types": "^0.137.0",
