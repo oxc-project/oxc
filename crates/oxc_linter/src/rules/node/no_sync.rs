@@ -67,7 +67,7 @@ declare_oxc_lint!(
     node,
     style,
     config = NoSyncConfig,
-    version = "next",
+    version = "1.71.0",
     short_description = "Disallow synchronous methods.",
 );
 
