@@ -12,7 +12,7 @@ use oxc_minifier::{CompressOptions, MangleOptions, Minifier, MinifierOptions};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_semantic::SemanticBuilder;
 use oxc_tasks_common::{TestFiles, project_root};
-use oxc_transformer::{TransformOptions, Transformer};
+use oxc_transformer::{EnvOptions, TransformOptions, Transformer};
 
 use std::alloc::{GlobalAlloc, Layout};
 use std::sync::atomic::{AtomicUsize, Ordering::SeqCst};
@@ -151,14 +151,18 @@ pub fn run() -> Result<(), io::Error> {
             .parse();
         assert!(parsed.diagnostics.is_empty());
 
-        // Transform TypeScript to ESNext before minifying (minifier only works on esnext)
         let scoping = SemanticBuilder::new()
             .with_excess_capacity(2.0)
             .with_enum_eval(true)
             .build(&parsed.program)
             .semantic
             .into_scoping();
-        let transform_options = TransformOptions::from_target("esnext").unwrap();
+
+        let mut transform_options = TransformOptions::enable_all();
+        // Even the plugins are unfinished, we still want to enable all of them
+        // to track allocation changes during the development
+        transform_options.env = EnvOptions::enable_all(/* include_unfinished_plugins */ true);
+
         let _ =
             Transformer::new(&allocator, std::path::Path::new(&file.file_name), &transform_options)
                 .build_with_scoping(scoping, &mut parsed.program);
@@ -219,8 +223,11 @@ pub fn run() -> Result<(), io::Error> {
             .semantic
             .into_scoping();
 
-        // Transform TypeScript to ESNext before minifying (minifier only works on esnext)
-        let transform_options = TransformOptions::from_target("esnext").unwrap();
+        let mut transform_options = TransformOptions::enable_all();
+        // Even the plugins are unfinished, we still want to enable all of them
+        // to track allocation changes during the development
+        transform_options.env = EnvOptions::enable_all(/* include_unfinished_plugins */ true);
+
         let ((), transformer_stats) = record_stats_in(&allocator, || {
             let _ = Transformer::new(
                 &allocator,
