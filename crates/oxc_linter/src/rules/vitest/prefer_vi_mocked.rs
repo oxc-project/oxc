@@ -56,6 +56,7 @@ declare_oxc_lint!(
     style,
     fix,
     version = "next",
+    short_description = "Require `vi.mocked()` over Vitest mock type assertions."
 );
 
 impl Rule for PreferViMocked {
