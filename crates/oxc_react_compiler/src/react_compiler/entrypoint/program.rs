@@ -2791,12 +2791,21 @@ fn ox_clone_original_fn_as_expression<'a>(
 
 /// Splice every compiled oxc function into a clone of the original oxc program and
 /// add the required imports. Returns the final memoized program.
-/// Clears the parser's `pife` ("parenthesized immediately-invoked function
-/// expression") hint on every function/arrow so codegen does not preserve
-/// source-only parens, matching the original Babel `@babel/generator` behavior.
-struct OxcClearPifeVisitor;
+/// Applies all passed-through-code codegen fixups in ONE traversal. These rewrites
+/// target disjoint node kinds, so a single walk is identical to running them as
+/// three separate whole-program passes (which is what the splice used to do):
+///   - clear the parser's `pife` hint on functions/arrows (so codegen doesn't keep
+///     source-only parens — matching `@babel/generator`);
+///   - re-apply the JSX-text entity decode→encode round-trip on passed-through text
+///     (e.g. `&gte;` → `&amp;gte;`);
+///   - re-wrap a non-null over an optional chain (`a?.b!`, parsed as
+///     `ChainExpression(TSNonNull(member))`) into `TSNonNull(Paren(Chain(member)))`
+///     so codegen prints `(a?.b)!`, matching the original Babel round-trip.
+struct OxcPassthroughFixupVisitor<'a> {
+    ast: oxc_ast::AstBuilder<'a>,
+}
 
-impl<'a> oxc_ast_visit::VisitMut<'a> for OxcClearPifeVisitor {
+impl<'a> oxc_ast_visit::VisitMut<'a> for OxcPassthroughFixupVisitor<'a> {
     fn visit_function(
         &mut self,
         it: &mut oxc_ast::ast::Function<'a>,
@@ -2813,16 +2822,7 @@ impl<'a> oxc_ast_visit::VisitMut<'a> for OxcClearPifeVisitor {
         it.pife = false;
         oxc_ast_visit::walk_mut::walk_arrow_function_expression(self, it);
     }
-}
 
-/// Re-applies the original JSX-text entity round-trip (decode on parse, encode on
-/// codegen) to every JSXText in the spliced program, so passed-through JSX text is
-/// normalized identically to recompiled JSX (e.g. `&gte;` → `&amp;gte;`).
-struct OxcNormalizeJsxTextVisitor<'a> {
-    ast: oxc_ast::AstBuilder<'a>,
-}
-
-impl<'a> oxc_ast_visit::VisitMut<'a> for OxcNormalizeJsxTextVisitor<'a> {
     fn visit_jsx_text(&mut self, it: &mut oxc_ast::ast::JSXText<'a>) {
         let decoded =
             crate::react_compiler_lowering::build_hir::decode_jsx_entities(it.value.as_str());
@@ -2832,17 +2832,7 @@ impl<'a> oxc_ast_visit::VisitMut<'a> for OxcNormalizeJsxTextVisitor<'a> {
             );
         it.value = self.ast.str(&encoded);
     }
-}
 
-/// Rewrites a non-null assertion that oxc parses *inside* an optional chain
-/// (`a?.b!` => `ChainExpression(TSNonNull(member))`) into the shape the original
-/// Babel round-trip produced (`TSNonNull(Paren(Chain(member)))`), which codegen
-/// prints as `(a?.b)!`.
-struct OxcNonNullChainParensVisitor<'a> {
-    ast: oxc_ast::AstBuilder<'a>,
-}
-
-impl<'a> oxc_ast_visit::VisitMut<'a> for OxcNonNullChainParensVisitor<'a> {
     fn visit_expression(&mut self, it: &mut oxc_ast::ast::Expression<'a>) {
         use oxc_ast::ast::{ChainElement, Expression};
         oxc_ast_visit::walk_mut::walk_expression(self, it);
@@ -2884,26 +2874,17 @@ fn ox_splice_program<'a>(
     replacements: &[OxcReplacement<'a>],
     context: &mut ProgramContext,
 ) {
-    // The parser sets `pife = true` on parenthesized function/arrow expressions
-    // so codegen preserves the source parens. Passed-through (non-recompiled)
-    // code keeps that flag, making oxc emit callee parens
-    // (`(async function(){})()`) the original Babel path never produced. Clear it
-    // so codegen parenthesizes by syntactic position only.
-    oxc_ast_visit::VisitMut::visit_program(&mut OxcClearPifeVisitor, program);
-    // The original pipeline decoded JSX text entities on parse and re-encoded them
-    // on codegen. The de-Babeled path only does that round-trip for *recompiled*
-    // JSX; passed-through JSX text is left raw, so e.g. `&gte;` is not re-escaped to
-    // `&amp;gte;`. Run the same decode→encode over every JSXText in the spliced
-    // program (idempotent for already-normalized, recompiled text).
-    oxc_ast_visit::VisitMut::visit_program(&mut OxcNormalizeJsxTextVisitor { ast: *ast }, program);
-    // The original Babel round-trip emitted a non-null assertion over an optional
-    // chain with parens — `(a?.b)!` — whereas passed-through code keeps the source
-    // form `a?.b!`. Re-wrap the chain so the output matches. (Recompiled chains
-    // drop the `!` entirely, so only passed-through assertions are affected.)
-    oxc_ast_visit::VisitMut::visit_program(
-        &mut OxcNonNullChainParensVisitor { ast: *ast },
-        program,
-    );
+    // Apply all passed-through-code codegen fixups in a SINGLE traversal (they
+    // target disjoint node kinds, so the result is identical to running them as
+    // three separate whole-program walks):
+    //   - clear `pife` on functions/arrows (the parser set it on parenthesized
+    //     function/arrow expressions; passed-through code would otherwise emit
+    //     callee parens the original Babel path never produced);
+    //   - normalize JSX-text entities (the original decoded on parse + re-encoded
+    //     on codegen; do the same decode→encode for passed-through JSX text);
+    //   - re-wrap a non-null over an optional chain (`a?.b!`) as `(a?.b)!` to match
+    //     the original Babel round-trip's output.
+    oxc_ast_visit::VisitMut::visit_program(&mut OxcPassthroughFixupVisitor { ast: *ast }, program);
 
     // Outlined function declarations are placed differently depending on the
     // original function's syntactic kind, mirroring `insertNewOutlinedFunctionNode`
