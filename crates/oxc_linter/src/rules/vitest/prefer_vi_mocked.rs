@@ -61,12 +61,14 @@ declare_oxc_lint!(
 
 impl Rule for PreferViMocked {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::TSAsExpression(ts_expr) = node.kind() {
-            if !matches!(ctx.nodes().parent_kind(node.id()), AstKind::TSAsExpression(_)) {
+        match node.kind() {
+            AstKind::TSAsExpression(ts_expr)
+                if !matches!(ctx.nodes().parent_kind(node.id()), AstKind::TSAsExpression(_)) =>
+            {
                 check_ts_as_expression(ts_expr, ctx);
             }
-        } else if let AstKind::TSTypeAssertion(assert_type) = node.kind() {
-            check_assert_type(assert_type, ctx);
+            AstKind::TSTypeAssertion(assert_type) => check_assert_type(assert_type, ctx),
+            _ => {}
         }
     }
 }
