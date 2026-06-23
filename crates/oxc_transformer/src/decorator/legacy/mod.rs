@@ -1353,13 +1353,13 @@ impl<'a> LegacyDecorator<'a> {
             PropertyKey::PrivateIdentifier(_) => ctx.ast.expression_string_literal(SPAN, "", None),
             // Copiable literals
             PropertyKey::NumericLiteral(literal) => {
-                Expression::NumericLiteral(ctx.ast.alloc(literal.clone()))
+                Expression::NumericLiteral(literal.clone_in(ctx.ast.allocator))
             }
             PropertyKey::StringLiteral(literal) => {
-                Expression::StringLiteral(ctx.ast.alloc(literal.clone()))
+                Expression::StringLiteral(literal.clone_in(ctx.ast.allocator))
             }
             PropertyKey::TemplateLiteral(literal) if literal.expressions.is_empty() => {
-                let quasis = ctx.ast.vec_from_iter(literal.quasis.iter().cloned());
+                let quasis = literal.quasis.clone_in(ctx.ast.allocator);
                 ctx.ast.expression_template_literal(SPAN, quasis, ctx.ast.vec())
             }
             PropertyKey::NullLiteral(_) => ctx.ast.expression_null_literal(SPAN),

@@ -625,7 +625,11 @@ impl<'a> Assignment<'a> {
     // Creates `this.name = name`
     fn create_this_property_assignment(&self, ctx: &mut TraverseCtx<'a>) -> Statement<'a> {
         let reference_id = ctx.create_bound_reference(self.symbol_id, ReferenceFlags::Read);
-        let id = ctx.ast.identifier_reference_with_reference_id(self.span, self.name, reference_id);
+        let id = ctx.ast.alloc_identifier_reference_with_reference_id(
+            self.span,
+            self.name,
+            reference_id,
+        );
 
         ctx.ast.statement_expression(
             SPAN,
@@ -639,7 +643,7 @@ impl<'a> Assignment<'a> {
                     false,
                 ))
                 .into(),
-                Expression::Identifier(ctx.alloc(id)),
+                Expression::Identifier(id),
             ),
         )
     }

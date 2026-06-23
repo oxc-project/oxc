@@ -168,7 +168,10 @@ impl<'a> AutomaticScriptBindings<'a> {
         }
     }
 
-    fn require_create_element(&mut self, ctx: &mut TraverseCtx<'a>) -> IdentifierReference<'a> {
+    fn require_create_element(
+        &mut self,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> ArenaBox<'a, IdentifierReference<'a>> {
         if self.require_create_element.is_none() {
             let source =
                 get_import_source(self.jsx_runtime_importer.as_str(), self.react_importer_len);
@@ -178,17 +181,19 @@ impl<'a> AutomaticScriptBindings<'a> {
             let id = self.add_require_statement("react", source, true, ctx);
             self.require_create_element = Some(id);
         }
-        self.require_create_element.as_ref().unwrap().create_read_reference(ctx)
+        let ident = self.require_create_element.as_ref().unwrap().create_read_reference(ctx);
+        ctx.alloc(ident)
     }
 
-    fn require_jsx(&mut self, ctx: &mut TraverseCtx<'a>) -> IdentifierReference<'a> {
+    fn require_jsx(&mut self, ctx: &mut TraverseCtx<'a>) -> ArenaBox<'a, IdentifierReference<'a>> {
         if self.require_jsx.is_none() {
             let var_name =
                 if self.is_development { "reactJsxDevRuntime" } else { "reactJsxRuntime" };
             let id = self.add_require_statement(var_name, self.jsx_runtime_importer, false, ctx);
             self.require_jsx = Some(id);
         }
-        self.require_jsx.as_ref().unwrap().create_read_reference(ctx)
+        let ident = self.require_jsx.as_ref().unwrap().create_read_reference(ctx);
+        ctx.alloc(ident)
     }
 
     #[expect(clippy::unused_self)]
@@ -229,24 +234,32 @@ impl<'a> AutomaticModuleBindings<'a> {
         }
     }
 
-    fn import_create_element(&mut self, ctx: &mut TraverseCtx<'a>) -> IdentifierReference<'a> {
+    fn import_create_element(
+        &mut self,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> ArenaBox<'a, IdentifierReference<'a>> {
         if self.import_create_element.is_none() {
             let source =
                 get_import_source(self.jsx_runtime_importer.as_str(), self.react_importer_len);
             let id = self.add_import_statement("createElement", source, ctx);
             self.import_create_element = Some(id);
         }
-        self.import_create_element.as_ref().unwrap().create_read_reference(ctx)
+        let ident = self.import_create_element.as_ref().unwrap().create_read_reference(ctx);
+        ctx.alloc(ident)
     }
 
-    fn import_fragment(&mut self, ctx: &mut TraverseCtx<'a>) -> IdentifierReference<'a> {
+    fn import_fragment(
+        &mut self,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> ArenaBox<'a, IdentifierReference<'a>> {
         if self.import_fragment.is_none() {
             self.import_fragment = Some(self.add_jsx_import_statement("Fragment", ctx));
         }
-        self.import_fragment.as_ref().unwrap().create_read_reference(ctx)
+        let ident = self.import_fragment.as_ref().unwrap().create_read_reference(ctx);
+        ctx.alloc(ident)
     }
 
-    fn import_jsx(&mut self, ctx: &mut TraverseCtx<'a>) -> IdentifierReference<'a> {
+    fn import_jsx(&mut self, ctx: &mut TraverseCtx<'a>) -> ArenaBox<'a, IdentifierReference<'a>> {
         if self.import_jsx.is_none() {
             if self.is_development {
                 self.add_import_jsx_dev(ctx);
@@ -254,10 +267,11 @@ impl<'a> AutomaticModuleBindings<'a> {
                 self.import_jsx = Some(self.add_jsx_import_statement("jsx", ctx));
             }
         }
-        self.import_jsx.as_ref().unwrap().create_read_reference(ctx)
+        let ident = self.import_jsx.as_ref().unwrap().create_read_reference(ctx);
+        ctx.alloc(ident)
     }
 
-    fn import_jsxs(&mut self, ctx: &mut TraverseCtx<'a>) -> IdentifierReference<'a> {
+    fn import_jsxs(&mut self, ctx: &mut TraverseCtx<'a>) -> ArenaBox<'a, IdentifierReference<'a>> {
         if self.import_jsxs.is_none() {
             if self.is_development {
                 self.add_import_jsx_dev(ctx);
@@ -265,7 +279,8 @@ impl<'a> AutomaticModuleBindings<'a> {
                 self.import_jsxs = Some(self.add_jsx_import_statement("jsxs", ctx));
             }
         }
-        self.import_jsxs.as_ref().unwrap().create_read_reference(ctx)
+        let ident = self.import_jsxs.as_ref().unwrap().create_read_reference(ctx);
+        ctx.alloc(ident)
     }
 
     // Inline so that compiler can see in `import_jsx` and `import_jsxs` that fields
@@ -819,8 +834,7 @@ impl<'a> JsxImpl<'a> {
                 create_static_member_expression(object_ident, property_name, ctx)
             }
             Bindings::AutomaticModule(bindings) => {
-                let ident = bindings.import_fragment(ctx);
-                Expression::Identifier(ctx.alloc(ident))
+                Expression::Identifier(bindings.import_fragment(ctx))
             }
         }
     }
@@ -856,7 +870,7 @@ impl<'a> JsxImpl<'a> {
                 } else {
                     bindings.import_jsx(ctx)
                 };
-                Expression::Identifier(ctx.alloc(ident))
+                Expression::Identifier(ident)
             }
         }
     }
@@ -1211,11 +1225,11 @@ fn get_read_identifier_reference<'a>(
 }
 
 fn create_static_member_expression<'a>(
-    object_ident: IdentifierReference<'a>,
+    object_ident: ArenaBox<'a, IdentifierReference<'a>>,
     property_name: Str<'a>,
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
-    let object = Expression::Identifier(ctx.alloc(object_ident));
+    let object = Expression::Identifier(object_ident);
     let property = ctx.ast.identifier_name(SPAN, property_name);
     ctx.ast.member_expression_static(SPAN, object, property, false).into()
 }

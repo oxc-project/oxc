@@ -283,8 +283,11 @@ impl<'a> TypeScriptEnum {
             VariableDeclarationKind::Var
         };
         let decls = {
-            let binding_identifier = decl.id.clone();
-            let binding = BindingPattern::BindingIdentifier(ctx.alloc(binding_identifier));
+            let binding = ast.binding_pattern_binding_identifier_with_symbol_id(
+                decl.id.span,
+                decl.id.name,
+                enum_symbol_id,
+            );
             let decl =
                 ast.variable_declarator(span, kind, binding, NONE, Some(call_expression), false);
             ast.vec1(decl)
