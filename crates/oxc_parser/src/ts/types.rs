@@ -1193,14 +1193,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let key_name = self.cur_string();
         let with_key_span = self.start_span();
         self.bump_any();
-        let with_key = self.ast.identifier_name(self.end_span(with_key_span), key_name);
+        let with_key = self.ast.alloc_identifier_name(self.end_span(with_key_span), key_name);
 
         self.expect(Kind::Colon);
 
         // Parse the value - if it's an object literal, validate it
         let value = if self.at(Kind::LCurly) {
-            let inner_object = self.parse_ts_import_type_attributes();
-            Expression::ObjectExpression(self.alloc(inner_object))
+            Expression::ObjectExpression(self.parse_ts_import_type_attributes())
         } else {
             // Allow any expression (e.g., super.foo)
             self.parse_assignment_expression_or_higher()
@@ -1210,7 +1209,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let with_property = self.ast.alloc_object_property(
             self.end_span(with_key_span),
             PropertyKind::Init,
-            PropertyKey::StaticIdentifier(self.alloc(with_key)),
+            PropertyKey::StaticIdentifier(with_key),
             value,
             false,
             false,
@@ -1228,7 +1227,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Parse TypeScript import type attributes object: `{ type: "json" }`
     /// Only allows static key-value pairs (no computed keys, no spread elements).
-    fn parse_ts_import_type_attributes(&mut self) -> ObjectExpression<'a> {
+    fn parse_ts_import_type_attributes(&mut self) -> Box<'a, ObjectExpression<'a>> {
         let span = self.start_span();
         self.expect(Kind::LCurly);
 
@@ -1266,11 +1265,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.expect(Kind::RBrack);
                 self.expect(Kind::Colon);
                 let value = self.parse_assignment_expression_or_higher();
-                let key = PropertyKey::StringLiteral(self.alloc(self.ast.string_literal(
+                let key = PropertyKey::StringLiteral(self.ast.alloc_string_literal(
                     bracket_span,
                     "",
                     None,
-                )));
+                ));
                 properties.push(ObjectPropertyKind::ObjectProperty(
                     self.ast.alloc_object_property(
                         self.end_span(prop_span),
@@ -1309,7 +1308,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
 
         self.expect(Kind::RCurly);
-        self.ast.object_expression(self.end_span(span), properties)
+        self.ast.alloc_object_expression(self.end_span(span), properties)
     }
 
     pub(crate) fn parse_ts_return_type_annotation(

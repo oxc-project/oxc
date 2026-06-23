@@ -1,6 +1,6 @@
 //! Code related to navigating `Token`s from the lexer
 
-use oxc_allocator::Vec;
+use oxc_allocator::{Box, Vec};
 use oxc_ast::ast::{BindingRestElement, RegExpFlags};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
@@ -244,10 +244,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
-    /// Tell lexer to continue reading jsx identifier if the lexer character position is at `-` for `<component-name>`
-    pub(crate) fn continue_lex_jsx_identifier(&mut self) {
+    /// Tell lexer to continue reading jsx identifier if the lexer character position is at `-` for `<component-name>`.
+    ///
+    /// Returns `true` if was continued.
+    pub(crate) fn continue_lex_jsx_identifier(&mut self) -> bool {
         if let Some(token) = self.lexer.continue_lex_jsx_identifier(self.token.start()) {
             self.token = token;
+            true
+        } else {
+            false
         }
     }
 
@@ -527,14 +532,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         parse_element: E,
         parse_rest: R,
         rest_last_diagnostic: D,
-    ) -> (Vec<'a, A>, Option<BindingRestElement<'a>>)
+    ) -> (Vec<'a, A>, Option<Box<'a, BindingRestElement<'a>>>)
     where
         E: Fn(&mut Self) -> A,
-        R: Fn(&mut Self) -> BindingRestElement<'a>,
+        R: Fn(&mut Self) -> Box<'a, BindingRestElement<'a>>,
         D: Fn(Span) -> OxcDiagnostic,
     {
         let mut list = self.ast.vec();
-        let mut rest: Option<BindingRestElement<'a>> = None;
+        let mut rest: Option<Box<'a, BindingRestElement<'a>>> = None;
         let mut first = true;
         loop {
             let kind = self.cur_kind();

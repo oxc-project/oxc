@@ -64,7 +64,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if stmt_ctx.is_single_statement() {
             self.error(diagnostics::lexical_declaration_single_statement(decl.span));
         }
-        Statement::VariableDeclaration(self.alloc(decl))
+        Statement::VariableDeclaration(decl)
     }
 
     pub(crate) fn get_variable_declaration_kind(&self) -> VariableDeclarationKind {
@@ -182,7 +182,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_using_declaration(
         &mut self,
         statement_ctx: StatementContext,
-    ) -> VariableDeclaration<'a> {
+    ) -> Box<'a, VariableDeclaration<'a>> {
         let span = self.start_span();
 
         let is_await = self.eat(Kind::Await);
@@ -224,6 +224,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
         }
 
-        self.ast.variable_declaration(self.end_span(span), kind, declarations, false)
+        self.ast.alloc_variable_declaration(self.end_span(span), kind, declarations, false)
     }
 }

@@ -68,6 +68,7 @@ export type OptionsJsonEnum =
       line?: CommentConfigJson;
     };
 export type IgnoreClassWithImplements = "all" | "public-fields";
+export type ComplexityConfigEnum = number | ComplexityConfig;
 export type Variant = "classic" | "modified";
 /**
  * The enforcement type for the curly rule.
@@ -86,18 +87,40 @@ export type Style = "expression" | "declaration";
 export type NamedExports = "ignore" | "expression" | "declaration";
 export type PairOrder = "anyOrder" | "getBeforeSet" | "setBeforeGet";
 export type Mode = "prefer-top-level" | "prefer-inline";
-export type DummyRule = AllowWarnDeny | [AllowWarnDeny, ...unknown[]];
+/**
+ * Extension rule configuration; Copy to avoid extra indirection.
+ */
+export type ExtensionRule = "always" | "never" | "ignorePackages";
+export type ImportExtensionsObject =
+  | ImportExtensionsConfig
+  | {
+      [k: string]: ExtensionRule;
+    };
+/**
+ * Action to take for path group overrides.
+ *
+ * Determines how import extensions are validated for matching bespoke import specifiers.
+ */
+export type PathGroupAction = "enforce" | "ignore";
 export type AbsoluteFirst = "absolute-first" | "disable-absolute-first";
 export type MaxDependenciesConfigJson = number | MaxDependenciesConfig;
 export type Target = "single" | "any";
 export type TestCaseName = "it" | "test";
 export type JestFnType = "hook" | "describe" | "test" | "expect" | "jest" | "unknown";
+export type DummyRule = AllowWarnDeny | [AllowWarnDeny, ...unknown[]];
 export type SnapshotHintMode = "always" | "multi";
 export type AltTextElements = "img" | "object" | "area" | 'input[type="image"]';
 export type AnchorIsValidAspect = "noHref" | "invalidHref" | "preferButton";
 export type Assert = "htmlFor" | "nesting" | "both" | "either";
 export type DistractingElement = "marquee" | "blink";
+export type MaxClassesPerFileConfigEnum = number | MaxClassesPerFileConfig;
+export type MaxDepthConfigEnum = number | MaxDepth;
+export type MaxLinesConfigEnum = number | MaxLinesConfig;
+export type MaxLinesPerFunctionConfigEnum = number | MaxLinesPerFunctionConfig;
+export type MaxNestedCallbacksConfigEnum = number | MaxNestedCallbacks;
+export type MaxParamsConfigEnum = number | MaxParamsConfig;
 export type CountThis = "always" | "never" | "except-void";
+export type MaxStatementsConfigEnum = number | MaxStatementsConfig;
 export type NoCondAssignConfig = "except-parens" | "always";
 export type CheckLoopsConfig = boolean | CheckLoops;
 export type CheckLoops = "all" | "allExceptWhileTrue" | "none";
@@ -139,6 +162,10 @@ export type NoUnusedVarsFixMode = "off" | "suggestion" | "fix" | "safe-fix";
 export type NoUseBeforeDefineConfigJson = Nofunc | NoUseBeforeDefineConfig;
 export type Nofunc = "nofunc";
 export type Location = "start" | "anywhere";
+/**
+ * The rule takes a single option - an array of possible callback names - which may include object methods. The default callback names are `callback`, `cb`, `next`.
+ */
+export type CallbackReturn = string[];
 /**
  * The rule takes a single string option: the name of the error parameter.
  *
@@ -842,7 +869,7 @@ export interface DummyRuleMap {
   "block-scoped-var"?: RuleNoConfig;
   "capitalized-comments"?: RuleNoConfig | [AllowWarnDeny, AlwaysNever] | [AllowWarnDeny, AlwaysNever, OptionsJsonEnum];
   "class-methods-use-this"?: RuleNoConfig | [AllowWarnDeny, ClassMethodsUseThisConfig];
-  complexity?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, ComplexityConfig]);
+  complexity?: RuleNoConfig | [AllowWarnDeny, ComplexityConfigEnum];
   "constructor-super"?: RuleNoConfig;
   curly?: RuleNoConfig | [AllowWarnDeny, CurlyType] | [AllowWarnDeny, CurlyType, CurlyConsistent];
   "default-case"?: RuleNoConfig | [AllowWarnDeny, DefaultCaseConfig];
@@ -875,7 +902,14 @@ export interface DummyRuleMap {
   "import/default"?: RuleNoConfig;
   "import/export"?: RuleNoConfig;
   "import/exports-last"?: RuleNoConfig;
-  "import/extensions"?: DummyRule;
+  "import/extensions"?:
+    | RuleNoConfig
+    | (
+        | [AllowWarnDeny, ExtensionRule]
+        | [AllowWarnDeny, ExtensionRule, ImportExtensionsObject]
+        | [AllowWarnDeny, ExtensionRule]
+        | [AllowWarnDeny, ImportExtensionsObject]
+      );
   "import/first"?: RuleNoConfig | [AllowWarnDeny, AbsoluteFirst];
   "import/group-exports"?: RuleNoConfig;
   "import/max-dependencies"?: RuleNoConfig | [AllowWarnDeny, MaxDependenciesConfigJson];
@@ -1036,13 +1070,13 @@ export interface DummyRuleMap {
     | RuleNoConfig
     | [AllowWarnDeny, AlwaysNever]
     | [AllowWarnDeny, AlwaysNever, LogicalAssignmentOperatorsConfig];
-  "max-classes-per-file"?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, MaxClassesPerFileConfig]);
-  "max-depth"?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, MaxDepth]);
-  "max-lines"?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, MaxLinesConfig]);
-  "max-lines-per-function"?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, MaxLinesPerFunctionConfig]);
-  "max-nested-callbacks"?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, MaxNestedCallbacks]);
-  "max-params"?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, MaxParamsConfig]);
-  "max-statements"?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, MaxStatementsConfig]);
+  "max-classes-per-file"?: RuleNoConfig | [AllowWarnDeny, MaxClassesPerFileConfigEnum];
+  "max-depth"?: RuleNoConfig | [AllowWarnDeny, MaxDepthConfigEnum];
+  "max-lines"?: RuleNoConfig | [AllowWarnDeny, MaxLinesConfigEnum];
+  "max-lines-per-function"?: RuleNoConfig | [AllowWarnDeny, MaxLinesPerFunctionConfigEnum];
+  "max-nested-callbacks"?: RuleNoConfig | [AllowWarnDeny, MaxNestedCallbacksConfigEnum];
+  "max-params"?: RuleNoConfig | [AllowWarnDeny, MaxParamsConfigEnum];
+  "max-statements"?: RuleNoConfig | [AllowWarnDeny, MaxStatementsConfigEnum];
   "new-cap"?: RuleNoConfig | [AllowWarnDeny, NewCapConfig];
   "nextjs/google-font-display"?: RuleNoConfig;
   "nextjs/google-font-preconnect"?: RuleNoConfig;
@@ -1147,7 +1181,7 @@ export interface DummyRuleMap {
   "no-restricted-exports"?: RuleNoConfig | [AllowWarnDeny, NoRestrictedExportsConfig];
   "no-restricted-globals"?: DummyRule;
   "no-restricted-imports"?: DummyRule;
-  "no-restricted-properties"?: DummyRule;
+  "no-restricted-properties"?: RuleNoConfig | [AllowWarnDeny, PropertyDetails, ...PropertyDetails[]];
   "no-return-assign"?: RuleNoConfig | [AllowWarnDeny, NoReturnAssignMode];
   "no-script-url"?: RuleNoConfig;
   "no-self-assign"?: RuleNoConfig | [AllowWarnDeny, NoSelfAssign];
@@ -1191,7 +1225,7 @@ export interface DummyRuleMap {
   "no-void"?: RuleNoConfig | [AllowWarnDeny, NoVoid];
   "no-warning-comments"?: RuleNoConfig | [AllowWarnDeny, NoWarningCommentsConfigJson];
   "no-with"?: RuleNoConfig;
-  "node/callback-return"?: DummyRule;
+  "node/callback-return"?: RuleNoConfig | [AllowWarnDeny, CallbackReturn];
   "node/global-require"?: RuleNoConfig;
   "node/handle-callback-err"?: RuleNoConfig | [AllowWarnDeny, HandleCallbackErrConfig];
   "node/no-exports-assign"?: RuleNoConfig;
@@ -1720,7 +1754,7 @@ export interface DummyRuleMap {
   "vue/valid-define-props"?: RuleNoConfig;
   "vue/valid-next-tick"?: RuleNoConfig;
   yoda?: RuleNoConfig | [AllowWarnDeny, AllowYoda] | [AllowWarnDeny, AllowYoda, YodaOptions];
-  [k: string]: DummyRule | undefined | undefined;
+  [k: string]: DummyRule | undefined;
 }
 export interface AccessorPairsConfig {
   /**
@@ -1981,6 +2015,36 @@ export interface IdMatchOptions {
    * member names such as `obj.prop = value` are checked.
    */
   properties?: boolean;
+}
+export interface ImportExtensionsConfig {
+  /**
+   * Whether to check type imports when enforcing extension rules.
+   */
+  checkTypeImports?: boolean;
+  /**
+   * Whether to ignore package imports when enforcing extension rules.
+   */
+  ignorePackages?: boolean;
+  /**
+   * Path group overrides for bespoke import specifiers.
+   */
+  pathGroupOverrides?: PathGroupOverrideConfig[];
+  /**
+   * Per-extension rules.
+   */
+  pattern?: {
+    [k: string]: ExtensionRule;
+  };
+}
+export interface PathGroupOverrideConfig {
+  /**
+   * Action to take when pattern matches.
+   */
+  action: PathGroupAction;
+  /**
+   * Glob pattern to match import specifiers.
+   */
+  pattern: string;
 }
 export interface MaxDependenciesConfig {
   /**
@@ -3360,6 +3424,31 @@ export interface RestrictDefaultExports {
    * ```
    */
   namespaceFrom?: boolean;
+}
+export interface PropertyDetails {
+  /**
+   * Objects where property access should be allowed. This must be used with `property` and
+   * cannot be used with `object`.
+   */
+  allowObjects?: string[];
+  /**
+   * Properties where property access should be allowed. This must be used with `object` and
+   * cannot be used with `property`.
+   */
+  allowProperties?: string[];
+  /**
+   * A custom message to display.
+   */
+  message?: string;
+  /**
+   * The object on which the property is being accessed.
+   */
+  object?: string;
+  /**
+   * The property being accessed. If `object` is not specified, this applies to the named
+   * property on all objects.
+   */
+  property?: string;
 }
 export interface NoSelfAssign {
   /**

@@ -149,7 +149,7 @@ impl<'a> PeepholeOptimizations {
                 return;
             }
             let new_stmt = if boolean {
-                if_stmt.consequent.take_in(ctx.ast)
+                if_stmt.consequent.take_in(ctx)
             } else if let Some(alternate) = if_stmt.alternate.take() {
                 alternate
             } else {
@@ -205,11 +205,9 @@ impl<'a> PeepholeOptimizations {
                     };
                     if var_init.kind.is_var() {
                         if let Some(var_decl) = &mut var_decl {
-                            var_decl
-                                .declarations
-                                .splice(0..0, var_init.declarations.take_in(ctx.ast));
+                            var_decl.declarations.splice(0..0, var_init.declarations.take_in(ctx));
                         } else {
-                            var_decl = Some(var_init.take_in_box(ctx.ast));
+                            var_decl = Some(var_init.take_in_box(ctx));
                         }
                     }
                     let new_stmt = var_decl.map_or_else(
@@ -303,7 +301,7 @@ impl<'a> PeepholeOptimizations {
                 var.visit_block_statement(&handler.body);
                 let Some(handler) = &mut s.handler else { return };
 
-                for dropped in handler.body.body.take_in(ctx.ast) {
+                for dropped in handler.body.body.take_in(ctx) {
                     ctx.drop_statement(&dropped);
                 }
                 if let Some(var_decl) = var.get_variable_declaration_statement() {
@@ -323,9 +321,9 @@ impl<'a> PeepholeOptimizations {
             && s.handler.as_ref().is_none_or(|handler| handler.body.body.is_empty())
         {
             let new_stmt = if let Some(finalizer) = &mut s.finalizer {
-                let mut block = ctx.ast.block_statement(finalizer.span, ctx.ast.vec());
-                std::mem::swap(&mut **finalizer, &mut block);
-                Statement::BlockStatement(ctx.ast.alloc(block))
+                let mut block = ctx.ast.alloc_block_statement(finalizer.span, ctx.ast.vec());
+                std::mem::swap(finalizer, &mut block);
+                Statement::BlockStatement(block)
             } else {
                 ctx.ast.statement_empty(s.span)
             };
@@ -341,16 +339,15 @@ impl<'a> PeepholeOptimizations {
             // "(a, true) ? b : c" => "a, b"
             let exprs = ctx.ast.vec_from_array([
                 {
-                    let mut test = e.test.take_in(ctx.ast);
+                    let mut test = e.test.take_in(ctx);
                     Self::remove_unused_expression(&mut test, ctx);
                     test
                 },
-                if v { e.consequent.take_in(ctx.ast) } else { e.alternate.take_in(ctx.ast) },
+                if v { e.consequent.take_in(ctx) } else { e.alternate.take_in(ctx) },
             ]);
             ctx.ast.expression_sequence(e.span, exprs)
         } else {
-            let result_expr =
-                if v { e.consequent.take_in(ctx.ast) } else { e.alternate.take_in(ctx.ast) };
+            let result_expr = if v { e.consequent.take_in(ctx) } else { e.alternate.take_in(ctx) };
             let should_keep_as_sequence_expr = Self::should_keep_indirect_access(&result_expr, ctx);
             // "(1 ? a.b : 0)()" => "(0, a.b)()"
             if should_keep_as_sequence_expr {

@@ -70,7 +70,7 @@ use std::borrow::Cow;
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
-use oxc_allocator::Vec as ArenaVec;
+use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
 use oxc_ast::{
     NONE,
     ast::{Argument, CallExpression, Expression},
@@ -273,10 +273,10 @@ pub fn helper_call<'a>(
     helper: Helper,
     arguments: ArenaVec<'a, Argument<'a>>,
     ctx: &mut TraverseCtx<'a>,
-) -> CallExpression<'a> {
+) -> ArenaBox<'a, CallExpression<'a>> {
     let callee = helper_load(helper, ctx);
     let pure = helper.pure();
-    ctx.ast.call_expression_with_pure(SPAN, callee, NONE, arguments, false, pure)
+    ctx.ast.alloc_call_expression_with_pure(SPAN, callee, NONE, arguments, false, pure)
 }
 
 /// Same as [`helper_call`], but returns a `CallExpression` wrapped in an `Expression`.

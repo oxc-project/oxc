@@ -2,6 +2,7 @@ use oxc_allocator::TakeIn;
 use oxc_ast::{NONE, ast::*};
 use oxc_semantic::{Reference, SymbolFlags};
 use oxc_span::SPAN;
+use oxc_str::static_ident;
 use oxc_syntax::reference::ReferenceFlags;
 use oxc_traverse::Traverse;
 
@@ -79,7 +80,7 @@ impl<'a> TypeScriptModule {
         };
 
         let left = AssignmentTarget::from(SimpleAssignmentTarget::from(module_exports));
-        let right = export_assignment.expression.take_in(ctx.ast);
+        let right = export_assignment.expression.take_in(ctx);
         let assignment_expr =
             ctx.ast.expression_assignment(SPAN, AssignmentOperator::Assign, left, right);
         ctx.ast.statement_expression(SPAN, assignment_expr)
@@ -120,10 +121,16 @@ impl<'a> TypeScriptModule {
             TSModuleReference::IdentifierReference(ident) => {
                 flags.insert(SymbolFlags::FunctionScopedVariable);
 
-                let ident = ident.clone();
-                let reference = ctx.scoping_mut().get_reference_mut(ident.reference_id());
+                let reference_id = ident.reference_id();
+                let reference = ctx.scoping_mut().get_reference_mut(reference_id);
                 *reference.flags_mut() = ReferenceFlags::Read;
-                (VariableDeclarationKind::Var, Expression::Identifier(ctx.alloc(ident)))
+
+                let ident = ctx.ast.expression_identifier_with_reference_id(
+                    ident.span,
+                    ident.name,
+                    reference_id,
+                );
+                (VariableDeclarationKind::Var, ident)
             }
             TSModuleReference::QualifiedName(qualified_name) => {
                 flags.insert(SymbolFlags::FunctionScopedVariable);
@@ -146,12 +153,18 @@ impl<'a> TypeScriptModule {
                     ctx.state.error(diagnostics::import_equals_cannot_be_used_in_esm(decl_span));
                 }
 
-                let require = ctx.ast.ident("require");
+                let require = static_ident!("require");
                 let require_symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), require);
                 let callee =
                     ctx.create_ident_expr(SPAN, require, require_symbol_id, ReferenceFlags::Read);
-                let arguments =
-                    ctx.ast.vec1(Argument::StringLiteral(ctx.alloc(reference.expression.clone())));
+                let str_lit = &reference.expression;
+                let str_lit = ctx.ast.alloc_string_literal_with_lone_surrogates(
+                    str_lit.span,
+                    str_lit.value,
+                    str_lit.raw,
+                    str_lit.lone_surrogates,
+                );
+                let arguments = ctx.ast.vec1(Argument::StringLiteral(str_lit));
                 (
                     VariableDeclarationKind::Const,
                     ctx.ast.expression_call(SPAN, callee, NONE, arguments, false),
@@ -172,20 +185,23 @@ impl<'a> TypeScriptModule {
     ) -> Expression<'a> {
         match type_name {
             TSTypeName::IdentifierReference(ident) => {
-                let ident = ident.clone();
-                let reference = ctx.scoping_mut().get_reference_mut(ident.reference_id());
+                let reference_id = ident.reference_id();
+                let reference = ctx.scoping_mut().get_reference_mut(reference_id);
                 *reference.flags_mut() = ReferenceFlags::Read;
-                Expression::Identifier(ctx.alloc(ident))
+                ctx.ast.expression_identifier_with_reference_id(
+                    ident.span,
+                    ident.name,
+                    reference_id,
+                )
             }
-            TSTypeName::QualifiedName(qualified_name) => ctx
-                .ast
-                .member_expression_static(
+            TSTypeName::QualifiedName(qualified_name) => {
+                Expression::from(ctx.ast.member_expression_static(
                     SPAN,
                     self.transform_ts_type_name(&mut qualified_name.left, ctx),
                     qualified_name.right.clone(),
                     false,
-                )
-                .into(),
+                ))
+            }
             TSTypeName::ThisExpression(e) => ctx.ast.expression_this(e.span),
         }
     }

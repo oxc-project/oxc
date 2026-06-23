@@ -333,7 +333,7 @@ impl<'a> From<Ident<'a>> for Cow<'a, str> {
 impl PartialEq for Ident<'_> {
     /// Fast-reject equality: compare packed len+hash first, then bytes.
     #[inline]
-    fn eq(&self, other: &Self) -> bool {
+    fn eq(&self, other: &Ident<'_>) -> bool {
         self.len_and_hash == other.len_and_hash && self.as_str() == other.as_str()
     }
 }
