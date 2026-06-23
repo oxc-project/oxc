@@ -5084,7 +5084,25 @@
           "$ref": "#/definitions/DummyRule"
         },
         "no-restricted-imports": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoRestrictedImportsConfigEnum"
+                }
+              ],
+              "additionalItems": {
+                "$ref": "#/definitions/NoRestrictedImportsConfigEnum"
+              },
+              "minItems": 2
+            }
+          ]
         },
         "no-restricted-properties": {
           "anyOf": [
@@ -14822,6 +14840,42 @@
       },
       "additionalProperties": false
     },
+    "NoRestrictedImportsConfig": {
+      "type": "object",
+      "properties": {
+        "paths": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PossiblePaths"
+          }
+        },
+        "patterns": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PossiblePatterns"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoRestrictedImportsConfigEnum": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/definitions/RestrictedPath"
+        },
+        {
+          "$ref": "#/definitions/NoRestrictedImportsConfig"
+        }
+      ]
+    },
+    "NoRestrictedImportsConfigValue": {
+      "additionalItems": {
+        "$ref": "#/definitions/NoRestrictedImportsConfigEnum"
+      }
+    },
     "NoRestrictedMatchersConfig": {
       "type": "object",
       "additionalProperties": {
@@ -16558,6 +16612,26 @@
         }
       ]
     },
+    "PossiblePaths": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/definitions/RestrictedPath"
+        }
+      ]
+    },
+    "PossiblePatterns": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/definitions/RestrictedPattern"
+        }
+      ]
+    },
     "Prefer": {
       "oneOf": [
         {
@@ -17801,6 +17875,78 @@
           "default": true,
           "type": "boolean",
           "markdownDescription": "Whether to allow RegExp values in template expressions."
+        }
+      },
+      "additionalProperties": false
+    },
+    "RestrictedPath": {
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "allowImportNames": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "allowTypeImports": {
+          "type": "boolean"
+        },
+        "importNames": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "message": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "RestrictedPattern": {
+      "type": "object",
+      "properties": {
+        "allowImportNamePattern": {
+          "type": "string"
+        },
+        "allowImportNames": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "allowTypeImports": {
+          "type": "boolean"
+        },
+        "caseSensitive": {
+          "type": "boolean"
+        },
+        "group": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "importNamePattern": {
+          "type": "string"
+        },
+        "importNames": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "message": {
+          "type": "string"
+        },
+        "regex": {
+          "type": "string"
         }
       },
       "additionalProperties": false
