@@ -251,6 +251,47 @@ fn r#const() {
     test_options("export let foo = 1; log(foo)", "export let foo = 1; log(1)", &options);
 }
 
+// https://github.com/oxc-project/oxc/issues/20282
+// Dead code guarded by a condition that depends on a read-only `const` is
+// eliminated even when the `const` is referenced more than once. The value is
+// resolved through `SymbolValue` constant tracking during constant evaluation,
+// not single-use inlining, so the old refcount==1 restriction no longer blocks
+// it.
+#[test]
+fn dead_code_depending_on_const() {
+    // Exact reproduction from the issue: `ENABLE_PKG` is always `false`, so the
+    // guarded call and both now-unused declarations are removed.
+    test_smallest(
+        "const MODE = 'production';
+         const ENABLE_PKG = MODE === 'foo' || MODE === 'bar';
+         if (ENABLE_PKG) { longFunction() }",
+        "",
+    );
+
+    // Commenter's variant: `MODE` is read twice (in `ENABLE_PKG`'s initializer
+    // and in the `if` test), yet the dead branch still folds away.
+    test_smallest(
+        "const MODE = 'production';
+         const ENABLE_PKG = MODE === 'foo';
+         if (MODE !== 'production') { longFunction() }",
+        "",
+    );
+
+    // Negative case: a reassigned binding is not a constant, so the guard must
+    // be preserved (no flow-sensitive last-write analysis here).
+    test_smallest(
+        "let MODE = 'production'; MODE = 'dev'; if (MODE !== 'production') { longFunction() }",
+        "let MODE = 'production'; MODE = 'dev', MODE !== 'production' && longFunction();",
+    );
+
+    // Negative case: a non-constant initializer leaves the guard intact (the
+    // value is inlined, but the call is not eliminated).
+    test_smallest(
+        "const MODE = globalThis.mode; if (MODE !== 'production') { longFunction() }",
+        "globalThis.mode !== 'production' && longFunction();",
+    );
+}
+
 #[test]
 fn small_value() {
     let options = CompressOptions::smallest();
