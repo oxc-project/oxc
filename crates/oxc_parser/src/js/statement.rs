@@ -535,8 +535,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
         }
 
-        let init_declaration = self.alloc(using_decl);
-        self.parse_any_for_loop(span, parenthesis_opening_span, init_declaration, r#await)
+        self.parse_any_for_loop(span, parenthesis_opening_span, using_decl, r#await)
     }
 
     fn parse_any_for_loop(
