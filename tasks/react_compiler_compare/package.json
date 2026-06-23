@@ -1,0 +1,16 @@
+{
+  "name": "react-compiler-compare",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Compare babel-plugin-react-compiler vs oxc reactCompilerSync over real-world files",
+  "type": "module",
+  "scripts": {
+    "compare": "node compare.mjs"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.26.0",
+    "@babel/generator": "^7.26.0",
+    "@babel/parser": "^7.26.0",
+    "babel-plugin-react-compiler": "0.0.0-experimental-334f00b-20240725"
+  }
+}

@@ -3,17 +3,17 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the root directory of this source tree.
 
+use crate::scope::*;
 use indexmap::IndexMap;
 use oxc_ast::AstKind;
 use oxc_ast::ast::Program;
 use oxc_semantic::Semantic;
 use oxc_span::GetSpan;
 use oxc_syntax::symbol::SymbolFlags;
-use react_compiler_ast::scope::*;
-use rustc_hash::{FxBuildHasher, FxHashMap};
+use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 
 /// `IndexMap` keyed with the deterministic Fx hasher, matching the `FxIndexMap`
-/// used by `react_compiler_ast::scope` fields (`react_compiler_utils::FxIndexMap`).
+/// used by `crate::scope` fields (`crate::react_compiler_utils::FxIndexMap`).
 type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;
 
 /// Convert OXC's semantic analysis into React Compiler's ScopeInfo.
@@ -136,6 +136,46 @@ pub fn convert_scope_info(semantic: &Semantic, _program: &Program) -> ScopeInfo 
                 let reference = scoping.get_reference(ref_id);
                 let ref_node = nodes.get_node(reference.node_id());
                 let start = ref_node.kind().span().start;
+                // The old Babel scope analysis did not record pure type-position
+                // references that live in a *variable-declarator* type annotation
+                // (`const v: T`), so they must not enter the scope stream (else they
+                // drive the hoisting scan to treat a type parameter as a hoistable
+                // "Unknown" binding and bail). Param/return annotations and
+                // `as`/`satisfies` casts ARE recorded by the old path, so only the
+                // declarator-annotation case is skipped. Walk to the structural host
+                // of the reference: the first non-type ancestor decides.
+                if reference.is_type() && !reference.is_value() {
+                    let mut cur = reference.node_id();
+                    let skip = loop {
+                        let parent = nodes.parent_id(cur);
+                        if parent == cur {
+                            break false;
+                        }
+                        match nodes.get_node(parent).kind() {
+                            // Positions the old Babel scope analysis did NOT record:
+                            // variable-declarator annotations (`const v: T`) and type
+                            // arguments on calls/news (`foo.get<T>()`, `new Foo<T>()`).
+                            AstKind::VariableDeclarator(_)
+                            | AstKind::CallExpression(_)
+                            | AstKind::NewExpression(_)
+                            | AstKind::JSXOpeningElement(_) => break true,
+                            // Positions it DID record: param/return annotations and
+                            // `as`/`satisfies` casts. These are reached first when the
+                            // ref is nested inside them, so they win over the skips.
+                            AstKind::FormalParameter(_)
+                            | AstKind::FormalParameters(_)
+                            | AstKind::TSAsExpression(_)
+                            | AstKind::TSSatisfiesExpression(_)
+                            | AstKind::Function(_)
+                            | AstKind::ArrowFunctionExpression(_) => break false,
+                            _ => {}
+                        }
+                        cur = parent;
+                    };
+                    if skip {
+                        continue;
+                    }
+                }
                 ref_node_id_to_binding.insert(start, binding_id);
             }
         }
@@ -212,6 +252,36 @@ pub fn convert_scope_info(semantic: &Semantic, _program: &Program) -> ScopeInfo 
 
     let program_scope = ScopeId(scoping.root_scope_id().index() as u32);
 
+    // Build the child-scope adjacency once from the parent links so descendant
+    // queries don't rescan every scope per call.
+    let mut children: Vec<Vec<ScopeId>> = vec![Vec::new(); scopes.len()];
+    for (i, scope) in scopes.iter().enumerate() {
+        if let Some(parent) = scope.parent {
+            children[parent.0 as usize].push(ScopeId(i as u32));
+        }
+    }
+
+    // Candidate scopes for TS `this`-parameter validation: those declaring a
+    // `this` binding (usually none). Kept in `node_to_scope` iteration order so
+    // the validation visits them in the same order as before.
+    let this_binding_scopes: Vec<(u32, ScopeId)> = node_to_scope
+        .iter()
+        .filter(|(_, sid)| {
+            scopes.get(sid.0 as usize).is_some_and(|s| s.bindings.contains_key("this"))
+        })
+        .map(|(&start, &sid)| (start, sid))
+        .collect();
+
+    // Reference node-ids that are actually a binding's own declaration site.
+    // Program-wide, so build once here instead of per function in lowering.
+    let declaration_node_ids: FxHashSet<(BindingId, u32)> = ref_node_id_to_binding
+        .iter()
+        .filter_map(|(&ref_nid, &binding_id)| {
+            let binding = bindings.get(binding_id.0 as usize)?;
+            (binding.declaration_node_id == Some(ref_nid)).then_some((binding_id, ref_nid))
+        })
+        .collect();
+
     ScopeInfo {
         scopes,
         bindings,
@@ -221,6 +291,9 @@ pub fn convert_scope_info(semantic: &Semantic, _program: &Program) -> ScopeInfo 
         ref_node_id_to_binding,
         node_id_to_scope,
         program_scope,
+        children,
+        this_binding_scopes,
+        declaration_node_ids,
     }
 }
 

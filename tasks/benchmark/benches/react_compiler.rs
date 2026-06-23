@@ -25,10 +25,10 @@ fn bench_react_compiler(criterion: &mut Criterion) {
 
                 // Create a fresh AST for each iteration. The compiler builds
                 // semantic data and allocates the compiled program in the same arena.
-                let ParserReturn { program, .. } =
+                let ParserReturn { mut program, .. } =
                     Parser::new(&allocator, source_text, source_type).parse();
 
-                runner.run(|| transform(&program, &allocator, options.clone()));
+                runner.run(|| transform(&mut program, &allocator, options.clone()));
             });
         });
     }

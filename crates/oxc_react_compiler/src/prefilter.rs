@@ -21,7 +21,7 @@ pub fn has_resource_management_declarations(program: &Program) -> bool {
     visitor.found
 }
 
-use react_compiler_hir::environment::is_react_like_name;
+use crate::react_compiler_hir::environment::is_react_like_name;
 
 /// `memo`/`forwardRef` (optionally `React.`-qualified): their callback is a
 /// component even when anonymous, so such files must not be skipped.
