@@ -5,7 +5,10 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_str::CompactStr;
-use schemars::JsonSchema;
+use schemars::{
+    JsonSchema, SchemaGenerator,
+    schema::{Schema, SchemaObject, SubschemaValidation},
+};
 use serde::Deserialize;
 
 use crate::utils::{get_jsx_element_name, is_react_component_name};
@@ -84,8 +87,7 @@ pub enum ForbidItem {
     Object(ForbidItemObject),
 }
 
-#[derive(Debug, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[derive(Debug, Default, Clone)]
 pub struct ForbidItemObject {
     /// Exact prop name to forbid.
     prop_name: Option<CompactStr>,
@@ -103,6 +105,91 @@ pub struct ForbidItemObject {
     disallowed_for_patterns: Vec<CompactStr>,
     /// Custom message to display.
     message: Option<String>,
+}
+
+#[derive(JsonSchema)]
+#[schemars(rename_all = "camelCase", deny_unknown_fields)]
+#[expect(dead_code, reason = "schema-only type for `ForbidItemObject`")]
+struct ForbidItemObjectWithPropNameSchema {
+    /// Exact prop name to forbid.
+    prop_name: CompactStr,
+    /// Component names for which this prop is **allowed** (all others are
+    /// forbidden).
+    #[schemars(default)]
+    allowed_for: Vec<CompactStr>,
+    /// Glob patterns for component names where the prop is **allowed**.
+    #[schemars(default)]
+    allowed_for_patterns: Vec<CompactStr>,
+    /// Component names for which this prop is **disallowed** (all others are
+    /// allowed).
+    #[schemars(default)]
+    disallowed_for: Vec<CompactStr>,
+    /// Glob patterns for component names where the prop is **disallowed**.
+    #[schemars(default)]
+    disallowed_for_patterns: Vec<CompactStr>,
+    /// Custom message to display.
+    message: Option<String>,
+}
+
+#[derive(JsonSchema)]
+#[schemars(rename_all = "camelCase", deny_unknown_fields)]
+#[expect(dead_code, reason = "schema-only type for `ForbidItemObject`")]
+struct ForbidItemObjectWithPropNamePatternSchema {
+    /// Glob pattern to match prop names against.
+    prop_name_pattern: CompactStr,
+    /// Component names for which this prop is **allowed** (all others are
+    /// forbidden).
+    #[schemars(default)]
+    allowed_for: Vec<CompactStr>,
+    /// Glob patterns for component names where the prop is **allowed**.
+    #[schemars(default)]
+    allowed_for_patterns: Vec<CompactStr>,
+    /// Component names for which this prop is **disallowed** (all others are
+    /// allowed).
+    #[schemars(default)]
+    disallowed_for: Vec<CompactStr>,
+    /// Glob patterns for component names where the prop is **disallowed**.
+    #[schemars(default)]
+    disallowed_for_patterns: Vec<CompactStr>,
+    /// Custom message to display.
+    message: Option<String>,
+}
+
+impl JsonSchema for ForbidItemObject {
+    fn schema_name() -> String {
+        "ForbidItemObject".to_string()
+    }
+
+    fn json_schema(generator: &mut SchemaGenerator) -> Schema {
+        Schema::Object(SchemaObject {
+            subschemas: Some(Box::new(SubschemaValidation {
+                one_of: Some(vec![
+                    schema_with_forbidden_property::<ForbidItemObjectWithPropNameSchema>(
+                        generator,
+                        "propNamePattern",
+                    ),
+                    schema_with_forbidden_property::<ForbidItemObjectWithPropNamePatternSchema>(
+                        generator, "propName",
+                    ),
+                ]),
+                ..Default::default()
+            })),
+            ..Default::default()
+        })
+    }
+}
+
+fn schema_with_forbidden_property<T: JsonSchema>(
+    generator: &mut SchemaGenerator,
+    property: &str,
+) -> Schema {
+    let mut schema = T::json_schema(generator).into_object();
+    schema
+        .object
+        .get_or_insert_with(Default::default)
+        .properties
+        .insert(property.to_string(), Schema::Bool(false));
+    Schema::Object(schema)
 }
 
 #[derive(Debug, Clone, Default, Deserialize, JsonSchema)]

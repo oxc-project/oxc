@@ -10895,63 +10895,120 @@
       "markdownDescription": "A forbidden element, either as a plain element name or with a custom message."
     },
     "ForbidItemObject": {
-      "type": "object",
-      "required": [
-        "allowedFor",
-        "allowedForPatterns",
-        "disallowedFor",
-        "disallowedForPatterns"
-      ],
-      "properties": {
-        "allowedFor": {
-          "description": "Component names for which this prop is **allowed** (all others are\nforbidden).",
-          "type": "array",
-          "items": {
-            "type": "string"
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "propName"
+          ],
+          "properties": {
+            "allowedFor": {
+              "description": "Component names for which this prop is **allowed** (all others are\nforbidden).",
+              "default": [],
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "markdownDescription": "Component names for which this prop is **allowed** (all others are\nforbidden)."
+            },
+            "allowedForPatterns": {
+              "description": "Glob patterns for component names where the prop is **allowed**.",
+              "default": [],
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "markdownDescription": "Glob patterns for component names where the prop is **allowed**."
+            },
+            "disallowedFor": {
+              "description": "Component names for which this prop is **disallowed** (all others are\nallowed).",
+              "default": [],
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "markdownDescription": "Component names for which this prop is **disallowed** (all others are\nallowed)."
+            },
+            "disallowedForPatterns": {
+              "description": "Glob patterns for component names where the prop is **disallowed**.",
+              "default": [],
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "markdownDescription": "Glob patterns for component names where the prop is **disallowed**."
+            },
+            "message": {
+              "description": "Custom message to display.",
+              "type": "string",
+              "markdownDescription": "Custom message to display."
+            },
+            "propName": {
+              "description": "Exact prop name to forbid.",
+              "type": "string",
+              "markdownDescription": "Exact prop name to forbid."
+            },
+            "propNamePattern": false
           },
-          "markdownDescription": "Component names for which this prop is **allowed** (all others are\nforbidden)."
+          "additionalProperties": false
         },
-        "allowedForPatterns": {
-          "description": "Glob patterns for component names where the prop is **allowed**.",
-          "type": "array",
-          "items": {
-            "type": "string"
+        {
+          "type": "object",
+          "required": [
+            "propNamePattern"
+          ],
+          "properties": {
+            "allowedFor": {
+              "description": "Component names for which this prop is **allowed** (all others are\nforbidden).",
+              "default": [],
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "markdownDescription": "Component names for which this prop is **allowed** (all others are\nforbidden)."
+            },
+            "allowedForPatterns": {
+              "description": "Glob patterns for component names where the prop is **allowed**.",
+              "default": [],
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "markdownDescription": "Glob patterns for component names where the prop is **allowed**."
+            },
+            "disallowedFor": {
+              "description": "Component names for which this prop is **disallowed** (all others are\nallowed).",
+              "default": [],
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "markdownDescription": "Component names for which this prop is **disallowed** (all others are\nallowed)."
+            },
+            "disallowedForPatterns": {
+              "description": "Glob patterns for component names where the prop is **disallowed**.",
+              "default": [],
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "markdownDescription": "Glob patterns for component names where the prop is **disallowed**."
+            },
+            "message": {
+              "description": "Custom message to display.",
+              "type": "string",
+              "markdownDescription": "Custom message to display."
+            },
+            "propName": false,
+            "propNamePattern": {
+              "description": "Glob pattern to match prop names against.",
+              "type": "string",
+              "markdownDescription": "Glob pattern to match prop names against."
+            }
           },
-          "markdownDescription": "Glob patterns for component names where the prop is **allowed**."
-        },
-        "disallowedFor": {
-          "description": "Component names for which this prop is **disallowed** (all others are\nallowed).",
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "markdownDescription": "Component names for which this prop is **disallowed** (all others are\nallowed)."
-        },
-        "disallowedForPatterns": {
-          "description": "Glob patterns for component names where the prop is **disallowed**.",
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "markdownDescription": "Glob patterns for component names where the prop is **disallowed**."
-        },
-        "message": {
-          "description": "Custom message to display.",
-          "type": "string",
-          "markdownDescription": "Custom message to display."
-        },
-        "propName": {
-          "description": "Exact prop name to forbid.",
-          "type": "string",
-          "markdownDescription": "Exact prop name to forbid."
-        },
-        "propNamePattern": {
-          "description": "Glob pattern to match prop names against.",
-          "type": "string",
-          "markdownDescription": "Glob pattern to match prop names against."
+          "additionalProperties": false
         }
-      },
-      "additionalProperties": false
+      ]
     },
     "FragmentMode": {
       "oneOf": [
