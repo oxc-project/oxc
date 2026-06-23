@@ -11169,9 +11169,9 @@
       "additionalProperties": false
     },
     "HandleCallbackErrConfig": {
-      "description": "The rule takes a single string option: the name of the error parameter.\n\nThis can be either:\n- an exact name (e.g. `\"err\"`, `\"error\"`)\n- a regexp pattern (e.g. `\"^(err|error)$\"`)\n\nIf the configured name of the error variable begins with a `^` it is considered to be a regexp pattern.\n\nDefault: `\"err\"`.",
+      "description": "The rule takes a single string option: the name of the error parameter.\n\nThis can be either:\n- an exact name (e.g. `\"err\"`, `\"error\"`)\n- a regexp pattern (e.g. `\"^(err|error)$\"`)\n\nIf the configured name of the error variable begins with a `^` it is considered to be a regexp pattern.\nInvalid regexp patterns are rejected during configuration parsing.\n\nDefault: `\"err\"`.",
       "type": "string",
-      "markdownDescription": "The rule takes a single string option: the name of the error parameter.\n\nThis can be either:\n- an exact name (e.g. `\"err\"`, `\"error\"`)\n- a regexp pattern (e.g. `\"^(err|error)$\"`)\n\nIf the configured name of the error variable begins with a `^` it is considered to be a regexp pattern.\n\nDefault: `\"err\"`."
+      "markdownDescription": "The rule takes a single string option: the name of the error parameter.\n\nThis can be either:\n- an exact name (e.g. `\"err\"`, `\"error\"`)\n- a regexp pattern (e.g. `\"^(err|error)$\"`)\n\nIf the configured name of the error variable begins with a `^` it is considered to be a regexp pattern.\nInvalid regexp patterns are rejected during configuration parsing.\n\nDefault: `\"err\"`."
     },
     "HeadingHasContentConfig": {
       "type": "object",

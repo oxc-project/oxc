@@ -177,6 +177,7 @@ export type CallbackReturn = string[];
  * - a regexp pattern (e.g. `"^(err|error)$"`)
  *
  * If the configured name of the error variable begins with a `^` it is considered to be a regexp pattern.
+ * Invalid regexp patterns are rejected during configuration parsing.
  *
  * Default: `"err"`.
  */
