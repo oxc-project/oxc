@@ -24,7 +24,7 @@ doctest = false
 cow-utils = { workspace = true }
 itoa = { workspace = true }
 oxc_allocator = { workspace = true }
-oxc_ast = { workspace = true }
+oxc_ast = { workspace = true, features = ["builder"] }
 oxc_ast_visit = { workspace = true }
 oxc_diagnostics = { workspace = true }
 oxc_ecmascript = { workspace = true }

@@ -38,6 +38,8 @@ rustc-hash = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true }
+# `AstBuilder` is only used in tests
+oxc_ast = { workspace = true, features = ["builder"] }
 oxc_parser = { workspace = true }
 pico-args = { workspace = true }
 
