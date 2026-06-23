@@ -44,7 +44,6 @@ oxc_semantic = { workspace = true }
 oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
 
-hmac-sha256 = { workspace = true }
 indexmap = { workspace = true }
 rustc-hash = { workspace = true }
 

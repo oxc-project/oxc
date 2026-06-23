@@ -71,18 +71,6 @@ pub const EARLY_RETURN_SENTINEL: &str = "react.early_return_sentinel";
 /// FBT tags whose children get special codegen treatment.
 const SINGLE_CHILD_FBT_TAGS: &[&str] = &["fbt:param", "fbs:param"];
 
-/// Computes the Fast Refresh source hash used to bust the memo cache when the
-/// source file changes. Matches the TS compiler's
-/// `createHmac('sha256', code).digest('hex')`: an HMAC-SHA256 keyed by the
-/// source code, hashing empty data.
-///
-/// Not yet wired into the oxc emission path (Fast Refresh hashing is deferred);
-/// kept with its verified test as the primitive the port will reuse.
-#[allow(dead_code)]
-fn source_file_hash(code: &str) -> String {
-    hmac_sha256::HMAC::mac(b"", code.as_bytes()).iter().map(|b| format!("{b:02x}")).collect()
-}
-
 /// Top-level entry point: produces an oxc-shaped
 /// [`crate::react_compiler::entrypoint::compile_result::CodegenFunction`] from a
 /// reactive function, building oxc AST directly via [`oxc_ast::AstBuilder`].
@@ -3211,29 +3199,5 @@ fn ident_sort_key(id: IdentifierId, env: &Environment) -> String {
         Some(crate::react_compiler_hir::IdentifierName::Named(n)) => n.clone(),
         Some(crate::react_compiler_hir::IdentifierName::Promoted(n)) => n.clone(),
         None => format!("_t{}", id.0),
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    /// The Fast Refresh source hash must match Node's
-    /// `createHmac('sha256', code).digest('hex')` byte-for-byte, or hot-reload
-    /// cache invalidation would diverge from the TS compiler. Reference values
-    /// were computed with Node's `crypto` module.
-    #[test]
-    fn source_file_hash_matches_node_create_hmac() {
-        use super::source_file_hash;
-        assert_eq!(
-            source_file_hash("hello world"),
-            "0de8bee5d7f9c5d209f8c6fabed0ea84cb3fca1244e8ed38079a61b599a84c47"
-        );
-        assert_eq!(
-            source_file_hash(""),
-            "b613679a0814d9ec772f95d778c35fc5ff1697c493715653c6c712144292c5ad"
-        );
-        assert_eq!(
-            source_file_hash("function App(){}"),
-            "d637acb4985c789d6622c70197db2b62dda282f16f3276aa810b598d6e6cab7b"
-        );
     }
 }

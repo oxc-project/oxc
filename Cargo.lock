@@ -978,12 +978,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b0b3ba31f6dc772cc8221ce81dbbbd64fa1e668255a6737d95eeace59b5a8823"
 
 [[package]]
-name = "hmac-sha256"
-version = "1.1.14"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ec9d92d097f4749b64e8cc33d924d9f40a2d4eb91402b458014b781f5733d60f"
-
-[[package]]
 name = "http"
 version = "1.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2326,7 +2320,6 @@ dependencies = [
 name = "oxc_react_compiler"
 version = "0.137.0"
 dependencies = [
- "hmac-sha256",
  "indexmap",
  "oxc_allocator",
  "oxc_ast",
