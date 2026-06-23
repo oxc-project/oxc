@@ -13,7 +13,7 @@
 
 use std::{cell::Cell, marker::PhantomData};
 
-use oxc_allocator::Vec;
+use oxc_allocator::{Box, Vec};
 use oxc_ast::ast::*;
 use oxc_syntax::scope::ScopeId;
 

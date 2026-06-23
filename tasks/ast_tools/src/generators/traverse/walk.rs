@@ -89,7 +89,7 @@ pub(super) fn generate_walk(schema: &Schema, config: &WalkConfig) -> TokenStream
         use std::{cell::Cell, marker::PhantomData};
 
         ///@@line_break
-        use oxc_allocator::Vec;
+        use oxc_allocator::{Box, Vec};
         use oxc_ast::ast::*;
         use oxc_syntax::scope::ScopeId;
 
