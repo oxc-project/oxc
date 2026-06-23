@@ -2634,22 +2634,6 @@ impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcReplaceWithGatedVisitor<'a, 'b> 
     }
 }
 
-/// Visitor that renames every identifier reference matching `old_name` to `new_name`.
-/// Mirrors the Babel `RenameIdentifierVisitor` (used to rename `useMemoCache`).
-struct OxcRenameIdentifierVisitor<'a, 'b> {
-    ast: &'b oxc_ast::AstBuilder<'a>,
-    old_name: &'b str,
-    new_name: &'b str,
-}
-
-impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcRenameIdentifierVisitor<'a, 'b> {
-    fn visit_identifier_reference(&mut self, ident: &mut oxc_ast::ast::IdentifierReference<'a>) {
-        if ident.name == self.old_name {
-            ident.name = ox_atom(self.ast, self.new_name).into();
-        }
-    }
-}
-
 /// Allocate a `&'a str` in the arena (satisfies the builders' `Into<Ident>` /
 /// `IntoIn` slots; convert to `Atom` via `.into()` where a bare `Atom` is needed).
 fn ox_atom<'a>(ast: &oxc_ast::AstBuilder<'a>, s: &str) -> &'a str {
@@ -2801,11 +2785,23 @@ fn ox_clone_original_fn_as_expression<'a>(
 ///   - re-wrap a non-null over an optional chain (`a?.b!`, parsed as
 ///     `ChainExpression(TSNonNull(member))`) into `TSNonNull(Paren(Chain(member)))`
 ///     so codegen prints `(a?.b)!`, matching the original Babel round-trip.
-struct OxcPassthroughFixupVisitor<'a> {
+///   - (when `rename` is set) rename identifier references — used to rewrite the
+///     codegen placeholder `useMemoCache` to the actual memo-cache import name.
+///     Runs in the same pass since it walks the same program after splicing.
+struct OxcPassthroughFixupVisitor<'a, 'b> {
     ast: oxc_ast::AstBuilder<'a>,
+    rename: Option<(&'b str, &'b str)>,
 }
 
-impl<'a> oxc_ast_visit::VisitMut<'a> for OxcPassthroughFixupVisitor<'a> {
+impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcPassthroughFixupVisitor<'a, 'b> {
+    fn visit_identifier_reference(&mut self, ident: &mut oxc_ast::ast::IdentifierReference<'a>) {
+        if let Some((old, new)) = self.rename {
+            if ident.name == old {
+                ident.name = ox_atom(&self.ast, new).into();
+            }
+        }
+    }
+
     fn visit_function(
         &mut self,
         it: &mut oxc_ast::ast::Function<'a>,
@@ -2874,18 +2870,6 @@ fn ox_splice_program<'a>(
     replacements: &[OxcReplacement<'a>],
     context: &mut ProgramContext,
 ) {
-    // Apply all passed-through-code codegen fixups in a SINGLE traversal (they
-    // target disjoint node kinds, so the result is identical to running them as
-    // three separate whole-program walks):
-    //   - clear `pife` on functions/arrows (the parser set it on parenthesized
-    //     function/arrow expressions; passed-through code would otherwise emit
-    //     callee parens the original Babel path never produced);
-    //   - normalize JSX-text entities (the original decoded on parse + re-encoded
-    //     on codegen; do the same decode→encode for passed-through JSX text);
-    //   - re-wrap a non-null over an optional chain (`a?.b!`) as `(a?.b)!` to match
-    //     the original Babel round-trip's output.
-    oxc_ast_visit::VisitMut::visit_program(&mut OxcPassthroughFixupVisitor { ast: *ast }, program);
-
     // Outlined function declarations are placed differently depending on the
     // original function's syntactic kind, mirroring `insertNewOutlinedFunctionNode`
     // in TS `Program.ts`:
@@ -2932,15 +2916,27 @@ fn ox_splice_program<'a>(
     // the top level.
     program.body.extend(appended_outlined_decls);
 
-    // Register the memo cache import and rename `useMemoCache` references.
+    // Register the memo-cache import (if any function memoized), then run the
+    // passed-through-code codegen fixups over the final program in a SINGLE
+    // traversal, folding the `useMemoCache` -> import-name rename into the same
+    // walk. The fixups target disjoint node kinds and are no-ops/idempotent on the
+    // freshly compiled bodies, so running them once after splicing is equivalent to
+    // running them before, and saves two whole-program walks (the separate fixup
+    // pass and the separate rename pass). The fixups:
+    //   - clear `pife` on functions/arrows (the parser set it on parenthesized
+    //     function/arrow expressions; passed-through code would otherwise emit
+    //     callee parens the original Babel path never produced);
+    //   - normalize JSX-text entities (the original decoded on parse + re-encoded
+    //     on codegen; do the same decode→encode for passed-through JSX text);
+    //   - re-wrap a non-null over an optional chain (`a?.b!`) as `(a?.b)!` to match
+    //     the original Babel round-trip's output.
     let needs_memo_import = replacements.iter().any(|r| r.codegen_fn.memo_slots_used > 0);
-    if needs_memo_import {
-        let import_spec = context.add_memo_cache_import();
-        let local_name = import_spec.name;
-        let mut visitor =
-            OxcRenameIdentifierVisitor { ast, old_name: "useMemoCache", new_name: &local_name };
-        oxc_ast_visit::VisitMut::visit_program(&mut visitor, program);
-    }
+    let memo_local_name = needs_memo_import.then(|| context.add_memo_cache_import().name);
+    let rename = memo_local_name.as_deref().map(|new| ("useMemoCache", new));
+    oxc_ast_visit::VisitMut::visit_program(
+        &mut OxcPassthroughFixupVisitor { ast: *ast, rename },
+        program,
+    );
 
     ox_add_imports_to_program(ast, program, context);
 }
