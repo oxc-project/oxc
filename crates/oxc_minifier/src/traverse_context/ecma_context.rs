@@ -258,6 +258,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         symbol_id: SymbolId,
         constant: Option<ConstantValue<'a>>,
         is_fresh_value: bool,
+        falsy_init: bool,
     ) {
         let mut exported = false;
         if self.scoping.current_scope_id() == self.scoping().root_scope_id() {
@@ -289,8 +290,21 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         let scope_id = self.scoping().symbol_scope_id(symbol_id);
         let scope_flags = self.scoping().scope_flags(scope_id);
 
+        // `constant` is the value-context value, `None` when withheld (e.g. a hoisted
+        // `var` past a dirty prelude). Capture before it's moved just below.
+        let value_withheld = constant.is_none();
         let initialized_constant =
             if scope_flags.contains(ScopeFlags::DirectEval) { None } else { constant };
+
+        // `boolean_falsy` (see `SymbolValue::boolean_falsy`) gated to a sound subset:
+        // write-once, outside a direct-`eval` scope, and not a script's top-level
+        // global (another script could reassign it, so a 0 in-module write count
+        // doesn't prove write-once).
+        let boolean_falsy = falsy_init
+            && value_withheld
+            && write_references_count == 0
+            && !scope_flags.contains(ScopeFlags::DirectEval)
+            && !(self.source_type().is_script() && scope_id == self.scoping().root_scope_id());
 
         let symbol_value = SymbolValue {
             initialized_constant,
@@ -299,6 +313,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
             write_references_count,
             member_write_target_read_count,
             is_fresh_value,
+            boolean_falsy,
         };
         self.state.symbol_values.init_value(symbol_id, symbol_value);
     }

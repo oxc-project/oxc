@@ -93,11 +93,15 @@ fn readonly_var_with_imports_present() {
         "import './b.js'; var flag = true; export function check() { return flag; }",
         "import './b.js'; var flag = !0; export function check() { return flag; }",
     );
-    // Even with no export, an import anywhere disqualifies — we can't tell
-    // statically whether a cycle exists.
+    // A write-once falsy `var` read only in boolean context (`if (DEBUG)`) folds
+    // even with imports present: the cyclic-import hazard is that an observer sees
+    // the hoisted `undefined` instead of the init value, but in boolean context
+    // `undefined` and the falsy init are indistinguishable (`if (undefined)` ===
+    // `if (false)`), and an importer cannot write the binding to make it truthy.
+    // So `DEBUG` collapses and `log` becomes a no-op. (boolean_falsy, #14001)
     test_smallest(
         "import './side-effect.js'; var DEBUG = false; function log(x) { if (DEBUG) console.log(x); } log('hi');",
-        "import './side-effect.js'; var DEBUG = !1; function log(x) { DEBUG && console.log(x); } log('hi');",
+        "import './side-effect.js';",
     );
     // Imports are hoisted, so an import appearing *after* the var in source
     // still triggers the gate — the pre-scan checks the whole body.
@@ -202,6 +206,37 @@ fn readonly_var_after_type_declaration() {
         "type T = number; interface I {} var b = 2; function f() { return b; } log(f());",
         "type T = number; interface I {} function f() { return 2; } log(f());",
         SourceType::ts().with_module(true),
+        &CompressOptions::smallest(),
+    );
+}
+
+// A write-once falsy `var` flag read only in boolean context folds even past a
+// dirty declarative prelude — the bundled `var hydrating = false` shape read by
+// `if (hydrating)` throughout a framework runtime (Svelte/Vue, #14001). The
+// value-context constant is withheld for hoisting safety, but `undefined`
+// (pre-init) and the falsy init are indistinguishable in boolean context.
+#[test]
+fn fold_writeonce_falsy_var_in_boolean_context() {
+    // Multiple same-frame boolean reads.
+    test_smallest("var h = false; if (h) a(); if (h) b()", "");
+    // Read inside a function, past a side-effectful prelude (`g()` runs first):
+    // the hoisting gate withholds value-context folding; boolean context is sound.
+    test_smallest("g(); var h = false; function f() { if (h) a() } f()", "g();");
+
+    // Value context must NOT fold (a pre-init read would observe `undefined`).
+    test_smallest(
+        "g(); var h = false; function f() { sink(h) } f()",
+        "g(); var h = !1; function f() { sink(h); } f();",
+    );
+    // Reassigned => not write-once => not folded.
+    test_smallest("var h = false; h = 1; if (h) a()", "var h = !1; h = 1, h && a();");
+
+    // Script mode: a top-level `var` is a global another script can reassign, so
+    // an in-module write count of 0 doesn't prove write-once — not folded.
+    test_options_source_type(
+        "var h = false; function f() { if (h) a() } f()",
+        "var h = !1; function f() { h && a(); } f();",
+        SourceType::cjs().with_script(true),
         &CompressOptions::smallest(),
     );
 }
