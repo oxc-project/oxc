@@ -321,9 +321,9 @@ impl<'a> PeepholeOptimizations {
             && s.handler.as_ref().is_none_or(|handler| handler.body.body.is_empty())
         {
             let new_stmt = if let Some(finalizer) = &mut s.finalizer {
-                let mut block = ctx.ast.block_statement(finalizer.span, ctx.ast.vec());
-                std::mem::swap(&mut **finalizer, &mut block);
-                Statement::BlockStatement(ctx.ast.alloc(block))
+                let mut block = ctx.ast.alloc_block_statement(finalizer.span, ctx.ast.vec());
+                std::mem::swap(finalizer, &mut block);
+                Statement::BlockStatement(block)
             } else {
                 ctx.ast.statement_empty(s.span)
             };

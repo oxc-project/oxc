@@ -834,9 +834,7 @@ impl<'a> PeepholeOptimizations {
                             body.remove(0)
                         } else {
                             let scope_id = ctx.create_child_scope_of_current(ScopeFlags::empty());
-                            let block_stmt =
-                                ctx.ast.block_statement_with_scope_id(span, body, scope_id);
-                            Statement::BlockStatement(ctx.ast.alloc(block_stmt))
+                            ctx.ast.statement_block_with_scope_id(span, body, scope_id)
                         };
                         let mut if_stmt = ctx.ast.if_statement(test.span(), test, consequent, None);
                         let if_stmt = Self::try_minimize_if(&mut if_stmt, ctx)
