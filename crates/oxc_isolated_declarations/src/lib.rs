@@ -277,11 +277,8 @@ impl<'a> IsolatedDeclarations<'a> {
                         ModuleDeclaration::ExportNamedDeclaration(decl) => {
                             if let Some(new_decl) = self.transform_export_named_declaration(decl) {
                                 self.scope.visit_export_named_declaration(&new_decl);
-                                transformed_stmts[idx] = Some(Statement::from(
-                                    ModuleDeclaration::ExportNamedDeclaration(
-                                        self.ast.alloc(new_decl),
-                                    ),
-                                ));
+                                transformed_stmts[idx] =
+                                    Some(Statement::ExportNamedDeclaration(new_decl));
                             } else if decl.declaration.is_none() {
                                 need_empty_export_marker = false;
                                 self.scope.visit_export_named_declaration(decl);
@@ -340,14 +337,13 @@ impl<'a> IsolatedDeclarations<'a> {
                                 transformed_variable_declarator.remove(&declarator.span).unwrap()
                             }),
                         );
-                        let decl = self.ast.variable_declaration(
+                        let decl = self.ast.alloc_variable_declaration(
                             declaration.span,
                             declaration.kind,
                             declarations,
                             self.is_declare(),
                         );
-                        transformed_stmts[idx] =
-                            Some(Statement::VariableDeclaration(self.ast.alloc(decl)));
+                        transformed_stmts[idx] = Some(Statement::VariableDeclaration(decl));
                         transformed_count += 1;
                     }
                 } else if let Some(new_decl) = self.transform_declaration(decl, true) {
