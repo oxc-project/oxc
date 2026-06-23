@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
 
@@ -80,7 +82,11 @@ pub struct Environment<'a> {
     // Used by codegen to filter type annotation renames — only rename identifiers
     // whose node_id is in this set (type labels like ObjectTypeIndexer params
     // are NOT in this set and should keep their original names).
-    pub reference_node_ids: FxHashSet<u32>,
+    //
+    // Whole-program and read-only during compilation, so it is built once and
+    // shared (via `Rc`) across every per-function `Environment` rather than
+    // rebuilt for each function.
+    pub reference_node_ids: Rc<FxHashSet<u32>>,
 
     // Hoisted identifiers: tracks which bindings have already been hoisted
     // via DeclareContext to avoid duplicate hoisting. Keyed by node_id (u32).
@@ -185,7 +191,7 @@ impl<'a> Environment<'a> {
             instrument_gating_name: None,
             hook_guard_name: None,
             renames: Vec::new(),
-            reference_node_ids: FxHashSet::default(),
+            reference_node_ids: Rc::new(FxHashSet::default()),
             hoisted_identifiers: FxHashSet::default(),
             validate_preserve_existing_memoization_guarantees: config
                 .validate_preserve_existing_memoization_guarantees,
@@ -232,7 +238,7 @@ impl<'a> Environment<'a> {
             instrument_gating_name: self.instrument_gating_name.clone(),
             hook_guard_name: self.hook_guard_name.clone(),
             renames: Vec::new(),
-            reference_node_ids: FxHashSet::default(),
+            reference_node_ids: Rc::new(FxHashSet::default()),
             hoisted_identifiers: FxHashSet::default(),
             validate_preserve_existing_memoization_guarantees: self
                 .validate_preserve_existing_memoization_guarantees,

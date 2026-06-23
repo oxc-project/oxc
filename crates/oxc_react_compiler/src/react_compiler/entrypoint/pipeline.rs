@@ -56,7 +56,7 @@ pub fn compile_fn<'a>(
     env.hook_guard_name = context.hook_guard_name.clone();
     env.seed_uid_known_names(&context.known_referenced_names());
 
-    env.reference_node_ids = scope_info.ref_node_id_to_binding.keys().copied().collect();
+    env.reference_node_ids = std::rc::Rc::clone(&context.reference_node_ids);
 
     context.timing.start("lower");
     let mut hir = crate::react_compiler_lowering::lower(

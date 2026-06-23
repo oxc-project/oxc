@@ -59,6 +59,12 @@ pub struct ProgramContext {
     /// call rather than rebuilt for each function.
     pub line_offsets: crate::react_compiler_lowering::source_loc::LineOffsets,
 
+    /// Node IDs of identifiers that are actual references to bindings (the keys of
+    /// `ScopeInfo::ref_node_id_to_binding`). Whole-program and read-only, built
+    /// once from the scope info and shared (via `Rc`) into every per-function
+    /// `Environment` instead of being rebuilt for each function.
+    pub reference_node_ids: std::rc::Rc<FxHashSet<u32>>,
+
     /// Whether debug logging is enabled (HIR formatting after each pass).
     pub debug_enabled: bool,
 
@@ -98,6 +104,7 @@ impl ProgramContext {
             renames: Vec::new(),
             timing: TimingData::new(profiling),
             line_offsets,
+            reference_node_ids: std::rc::Rc::new(FxHashSet::default()),
             debug_enabled,
             already_compiled: FxHashSet::default(),
             known_referenced_names: FxHashSet::default(),
@@ -137,6 +144,10 @@ impl ProgramContext {
         for binding in &scope.bindings {
             self.known_referenced_names.insert(binding.name.clone());
         }
+        // Build the whole-program reference-node-id set once, here, so each
+        // per-function `Environment` can share it (see the field doc).
+        self.reference_node_ids =
+            std::rc::Rc::new(scope.ref_node_id_to_binding.keys().copied().collect());
     }
 
     /// Check if a name conflicts with known references.
