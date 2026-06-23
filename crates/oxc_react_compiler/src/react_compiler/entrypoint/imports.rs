@@ -53,6 +53,12 @@ pub struct ProgramContext {
     /// Timing data for profiling. Accumulates across all function compilations.
     pub timing: TimingData,
 
+    /// Line-offset index over the whole source, built once. The HIR front-end
+    /// resolves byte spans to `(line, column)` via this table; building it is an
+    /// O(source) scan, so it must be shared across every per-function `lower`
+    /// call rather than rebuilt for each function.
+    pub line_offsets: crate::react_compiler_lowering::source_loc::LineOffsets,
+
     /// Whether debug logging is enabled (HIR formatting after each pass).
     pub debug_enabled: bool,
 
@@ -73,6 +79,9 @@ impl ProgramContext {
         let react_runtime_module = get_react_compiler_runtime_module(&opts.target);
         let profiling = opts.profiling;
         let debug_enabled = opts.debug;
+        let line_offsets = crate::react_compiler_lowering::source_loc::LineOffsets::new(
+            code.as_deref().unwrap_or(""),
+        );
         Self {
             opts,
             filename,
@@ -88,6 +97,7 @@ impl ProgramContext {
             hook_guard_name: None,
             renames: Vec::new(),
             timing: TimingData::new(profiling),
+            line_offsets,
             debug_enabled,
             already_compiled: FxHashSet::default(),
             known_referenced_names: FxHashSet::default(),
