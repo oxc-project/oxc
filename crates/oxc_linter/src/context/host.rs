@@ -167,6 +167,11 @@ pub struct ContextHost<'a> {
     pub(super) config: Arc<LintConfig>,
     /// Front-end frameworks that might be in use in the target file.
     pub(super) frameworks: FrameworkFlags,
+    /// The arena that owns the parsed AST for this file. Rules that need to
+    /// allocate scratch AST nodes (e.g. the React Compiler lint rule, which runs
+    /// the compiler read-only) can reuse it instead of deep-cloning the program
+    /// into a private arena.
+    allocator: &'a oxc_allocator::Allocator,
 }
 
 impl std::fmt::Debug for ContextHost<'_> {
@@ -183,6 +188,7 @@ impl<'a> ContextHost<'a> {
         sub_hosts: Vec<ContextSubHost<'a>>,
         options: LintOptions,
         config: Arc<LintConfig>,
+        allocator: &'a oxc_allocator::Allocator,
     ) -> Self {
         const DIAGNOSTICS_INITIAL_CAPACITY: usize = 512;
 
@@ -203,6 +209,7 @@ impl<'a> ContextHost<'a> {
             file_extension,
             config,
             frameworks: options.framework_hints,
+            allocator,
         }
         .sniff_for_frameworks()
     }
@@ -226,6 +233,12 @@ impl<'a> ContextHost<'a> {
     #[inline]
     pub fn semantic(&self) -> &Semantic<'a> {
         &self.current_sub_host().semantic
+    }
+
+    /// The arena that owns this file's parsed AST.
+    #[inline]
+    pub fn allocator(&self) -> &'a oxc_allocator::Allocator {
+        self.allocator
     }
 
     /// Mutable reference to the [`Semantic`] analysis of current script block.

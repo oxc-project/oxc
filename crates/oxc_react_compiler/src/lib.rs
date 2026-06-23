@@ -150,12 +150,24 @@ pub fn transform<'a>(
     // `codegen_function` / `ox_splice_program`). Thread the arena's `AstBuilder`
     // and the program in. Function discovery and lowering walk it via reborrow.
     let ast_builder = oxc_ast::AstBuilder::new(allocator);
-    let result = crate::react_compiler::entrypoint::program::compile_program(
+    let output = crate::react_compiler::entrypoint::program::compile_program(
         &ast_builder,
-        program,
+        &*program,
         scope_info,
         options,
     );
+    let result = match output {
+        crate::react_compiler::entrypoint::program::CompileOutput::Final(result) => result,
+        crate::react_compiler::entrypoint::program::CompileOutput::Splice {
+            replacements,
+            context,
+        } => crate::react_compiler::entrypoint::program::splice_and_finalize(
+            &ast_builder,
+            program,
+            replacements,
+            context,
+        ),
+    };
 
     let diagnostics = compile_result_to_diagnostics(&result);
     let (changed, events) = match result {
@@ -231,15 +243,60 @@ pub fn transform_source<'a>(
 /// clone in a local arena. `no_emit` (lint mode) compiles no functions, so nothing
 /// is spliced — the clone is only to satisfy the in-place signature. The
 /// react_compiler lint rule is opt-in and off the hot transform path.
-pub fn lint(program: &oxc_ast::ast::Program, options: PluginOptions) -> LintResult {
-    use oxc_allocator::CloneIn;
+/// Lint a pre-parsed program — like [`transform`] but only collects diagnostics
+/// and never mutates the program.
+///
+/// In lint mode (`no_emit`) the compiler runs the full analysis (which produces
+/// the Rules-of-React diagnostics) but never splices anything back, so the
+/// program is only ever read. We therefore run directly on the borrowed
+/// `program` instead of deep-cloning it into a private arena. `allocator` is the
+/// arena that owns `program`; codegen still runs (so diagnostics are identical to
+/// the emit path) and allocates its throwaway output into that same arena, which
+/// is reset by the caller after the file is linted.
+pub fn lint<'a>(
+    program: &oxc_ast::ast::Program<'a>,
+    allocator: &'a oxc_allocator::Allocator,
+    options: PluginOptions,
+) -> LintResult {
     let mut opts = options;
     opts.no_emit = true;
 
-    let allocator = oxc_allocator::Allocator::default();
-    let mut cloned = program.clone_in(&allocator);
-    let result = transform(&mut cloned, &allocator, opts);
-    LintResult { diagnostics: result.diagnostics }
+    // Mirror `transform`'s early bail-outs (no clone, so they're just early returns).
+    if !matches!(opts.compilation_mode.as_str(), "all" | "annotation")
+        && !has_react_like_functions(program)
+    {
+        return LintResult { diagnostics: oxc_diagnostics::Diagnostics::default() };
+    }
+    if has_resource_management_declarations(program) {
+        return LintResult { diagnostics: oxc_diagnostics::Diagnostics::default() };
+    }
+    if opts.source_code.is_none() {
+        opts.source_code = Some(program.source_text.to_string());
+    }
+
+    let scope_info = {
+        let semantic =
+            oxc_semantic::SemanticBuilder::new().with_build_nodes(true).build(program).semantic;
+        convert_scope_info(&semantic, program)
+    };
+
+    let ast_builder = oxc_ast::AstBuilder::new(allocator);
+    let output = crate::react_compiler::entrypoint::program::compile_program(
+        &ast_builder,
+        program,
+        scope_info,
+        opts,
+    );
+    // Lint mode never produces replacements (every function returns `Ok(None)`),
+    // so this is always `Final`; the `Splice` arm is a defensive no-op fallback.
+    let result = match output {
+        crate::react_compiler::entrypoint::program::CompileOutput::Final(result) => result,
+        crate::react_compiler::entrypoint::program::CompileOutput::Splice { context, .. } => {
+            crate::react_compiler::entrypoint::program::finalize_without_splice(context)
+        }
+    };
+
+    LintResult { diagnostics: compile_result_to_diagnostics(&result) }
 }
 
 /// Convenience wrapper — parses source text, runs semantic analysis, then lints.

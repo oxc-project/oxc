@@ -113,6 +113,14 @@ impl<'a> LintContext<'a> {
         self.parent.module_record()
     }
 
+    /// The arena that owns this file's parsed AST. Rules that need scratch AST
+    /// allocations (e.g. the React Compiler rule) can reuse it instead of cloning
+    /// the program into a private arena.
+    #[inline]
+    pub fn allocator(&self) -> &'a oxc_allocator::Allocator {
+        self.parent.allocator()
+    }
+
     /// Get the control flow graph for the current program.
     #[inline]
     pub fn cfg(&self) -> &ControlFlowGraph {

@@ -2316,7 +2316,7 @@ enum OriginalFnKind {
 // =============================================================================
 
 /// An owned, oxc-shaped compiled function ready to splice into the program.
-struct OxcReplacement<'a> {
+pub(crate) struct OxcReplacement<'a> {
     fn_node_id: Option<u32>,
     original_kind: OriginalFnKind,
     codegen_fn: CodegenFunction<'a>,
@@ -3154,12 +3154,12 @@ fn ox_is_non_namespaced_import(import: &oxc_ast::ast::ImportDeclaration) -> bool
 /// - findFunctionsToCompile: traverse program to find components and hooks
 /// - processFn: per-function compilation with directive and suppression handling
 /// - applyCompiledFunctions: replace original functions with compiled versions
-pub fn compile_program<'a, 'p>(
+pub(crate) fn compile_program<'a>(
     ast: &oxc_ast::AstBuilder<'a>,
-    oxc_program: &'p mut oxc_ast::ast::Program<'a>,
+    program: &oxc_ast::ast::Program<'a>,
     scope: ScopeInfo,
     options: PluginOptions,
-) -> CompileResult {
+) -> CompileOutput<'a> {
     // Compute output mode once, up front
     let output_mode = CompilerOutputMode::from_opts(&options);
 
@@ -3176,26 +3176,24 @@ pub fn compile_program<'a, 'p>(
 
     // Check if we should compile this file at all (pre-resolved by JS shim)
     if !options.should_compile {
-        return CompileResult::Success {
+        return CompileOutput::Final(CompileResult::Success {
             changed: false,
             events: early_events,
             ordered_log: early_ordered_log,
             renames: Vec::new(),
             timing: Vec::new(),
-        };
+        });
     }
-
-    let program = &*oxc_program;
 
     // Check for existing runtime imports (file already compiled)
     if should_skip_compilation(program, &options) {
-        return CompileResult::Success {
+        return CompileOutput::Final(CompileResult::Success {
             changed: false,
             events: early_events,
             ordered_log: early_ordered_log,
             renames: Vec::new(),
             timing: Vec::new(),
-        };
+        });
     }
 
     // Validate restricted imports from the environment config
@@ -3253,15 +3251,15 @@ pub fn compile_program<'a, 'p>(
     // Validate restricted imports (needs context for handle_error)
     if let Some(err) = validate_restricted_imports(program, &restricted_imports) {
         if let Some(result) = handle_error(&err, None, &mut context) {
-            return result;
+            return CompileOutput::Final(result);
         }
-        return CompileResult::Success {
+        return CompileOutput::Final(CompileResult::Success {
             changed: false,
             events: context.events,
             ordered_log: context.ordered_log,
             renames: convert_renames(&context.renames),
             timing: Vec::new(),
-        };
+        });
     }
 
     // Pre-register instrumentation imports to get stable local names.
@@ -3321,7 +3319,7 @@ pub fn compile_program<'a, 'p>(
                 // Function was skipped or lint-only
             }
             Err(fatal_result) => {
-                return fatal_result;
+                return CompileOutput::Final(fatal_result);
             }
         }
     }
@@ -3356,13 +3354,13 @@ pub fn compile_program<'a, 'p>(
             ));
             handle_error(&err, None, &mut context);
         }
-        return CompileResult::Success {
+        return CompileOutput::Final(CompileResult::Success {
             changed: false,
             events: context.events,
             ordered_log: context.ordered_log,
             renames: convert_renames(&context.renames),
             timing: Vec::new(),
-        };
+        });
     }
 
     // Convert compiled functions to owned oxc replacements (dropping the borrows of
@@ -3400,19 +3398,67 @@ pub fn compile_program<'a, 'p>(
         // (e.g., variable shadowing renames in lint mode). Imports are NOT added
         // when there are no replacements — matching TS behavior where
         // addImportsToProgram is only called when compiledFns.length > 0.
-        return CompileResult::Success {
+        return CompileOutput::Final(CompileResult::Success {
             changed: false,
             events: context.events,
             ordered_log: context.ordered_log,
             renames: convert_renames(&context.renames),
             timing: Vec::new(),
-        };
+        });
     }
 
+    // Functions were compiled. The actual splice into the program needs `&mut
+    // Program`, which the analysis above never required (it only reads `program`).
+    // Hand the replacements back to the caller — which owns the `&mut Program` —
+    // so the lint path (read-only, no emit) can run this whole analysis without a
+    // mutable program (and therefore without cloning the program into a fresh
+    // arena). The emit path finalizes via `splice_and_finalize`.
+    CompileOutput::Splice { replacements, context }
+}
+
+/// Outcome of [`compile_program`]. The analysis phase never mutates the program;
+/// when functions were compiled it returns [`CompileOutput::Splice`] so the
+/// caller (the emit path, which owns `&mut Program`) can perform the only
+/// mutating step. The lint path never produces replacements, so it only ever
+/// sees [`CompileOutput::Final`].
+pub(crate) enum CompileOutput<'a> {
+    /// No splice needed — file skipped, lint mode, or nothing compiled.
+    Final(CompileResult),
+    /// Compiled functions to splice into a `&mut Program`. Finalize with
+    /// [`splice_and_finalize`].
+    Splice { replacements: Vec<OxcReplacement<'a>>, context: ProgramContext },
+}
+
+/// Run the analysis and splice in one call on a `&mut Program`, returning the
+/// finalized result. This is the convenience entrypoint for tools and examples;
+/// production callers use [`crate::transform`] (which also preserves comments) or
+/// [`crate::lint`] (read-only).
+pub fn compile_program_and_finalize<'a>(
+    ast: &oxc_ast::AstBuilder<'a>,
+    program: &mut oxc_ast::ast::Program<'a>,
+    scope: ScopeInfo,
+    options: PluginOptions,
+) -> CompileResult {
+    match compile_program(ast, program, scope, options) {
+        CompileOutput::Final(result) => result,
+        CompileOutput::Splice { replacements, context } => {
+            splice_and_finalize(ast, program, replacements, context)
+        }
+    }
+}
+
+/// Splice the compiled functions into `program` (the only step needing `&mut
+/// Program`) and finalize the [`CompileResult`]. Called by the emit path.
+pub(crate) fn splice_and_finalize<'a>(
+    ast: &oxc_ast::AstBuilder<'a>,
+    program: &mut oxc_ast::ast::Program<'a>,
+    replacements: Vec<OxcReplacement<'a>>,
+    mut context: ProgramContext,
+) -> CompileResult {
     // Splice each compiled oxc function into the program in place (matched by
     // `span.start == fn_node_id`), apply gating, insert outlined functions, and add
     // the memo-cache / gating imports.
-    ox_splice_program(ast, oxc_program, &replacements, &mut context);
+    ox_splice_program(ast, program, &replacements, &mut context);
 
     let timing_entries = context.timing.into_entries();
 
@@ -3422,6 +3468,19 @@ pub fn compile_program<'a, 'p>(
         ordered_log: context.ordered_log,
         renames: convert_renames(&context.renames),
         timing: timing_entries,
+    }
+}
+
+/// Finalize a [`CompileOutput::Splice`] without splicing — used only as a
+/// defensive fallback by the lint path, which never actually produces
+/// replacements (every function returns `Ok(None)` in lint mode).
+pub(crate) fn finalize_without_splice(context: ProgramContext) -> CompileResult {
+    CompileResult::Success {
+        changed: false,
+        events: context.events,
+        ordered_log: context.ordered_log,
+        renames: convert_renames(&context.renames),
+        timing: Vec::new(),
     }
 }
 

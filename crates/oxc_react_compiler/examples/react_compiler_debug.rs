@@ -23,7 +23,7 @@ use oxc_react_compiler::default_plugin_options;
 use oxc_react_compiler::react_compiler::entrypoint::compile_result::{
     CompileResult, OrderedLogItem,
 };
-use oxc_react_compiler::react_compiler::entrypoint::program::compile_program;
+use oxc_react_compiler::react_compiler::entrypoint::program::compile_program_and_finalize;
 
 fn main() {
     let mut args = std::env::args().skip(1);
@@ -48,7 +48,7 @@ fn main() {
     options.debug = true;
 
     let ast_builder = AstBuilder::new(&allocator);
-    let result = compile_program(&ast_builder, &mut program, scope_info, options);
+    let result = compile_program_and_finalize(&ast_builder, &mut program, scope_info, options);
     let ordered_log = match &result {
         CompileResult::Success { ordered_log, .. } | CompileResult::Error { ordered_log, .. } => {
             ordered_log
