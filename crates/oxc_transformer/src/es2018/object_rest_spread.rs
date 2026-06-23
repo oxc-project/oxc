@@ -792,15 +792,14 @@ impl<'a> ObjectRestSpread<'a> {
         let bound_identifier = ctx.generate_uid("ref", scope_id, flags);
         let kind = VariableDeclarationKind::Let;
         let id = mem::replace(pat, bound_identifier.create_binding_pattern(ctx));
-        let init = bound_identifier.create_read_expression(ctx);
-        let declarations =
-            ctx.ast.vec1(ctx.ast.variable_declarator(SPAN, kind, id, NONE, Some(init), false));
-        let decl = ctx.ast.alloc_variable_declaration(SPAN, kind, declarations, false);
-        decl.bound_names(&mut |ident| {
+        id.bound_names(&mut |ident| {
             *ctx.scoping_mut().symbol_flags_mut(ident.symbol_id()) =
                 SymbolFlags::BlockScopedVariable;
         });
-        decl
+        let init = bound_identifier.create_read_expression(ctx);
+        let declarations =
+            ctx.ast.vec1(ctx.ast.variable_declarator(SPAN, kind, id, NONE, Some(init), false));
+        ctx.ast.alloc_variable_declaration(SPAN, kind, declarations, false)
     }
 }
 
