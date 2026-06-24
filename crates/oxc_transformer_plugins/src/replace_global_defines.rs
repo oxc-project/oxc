@@ -163,7 +163,8 @@ impl ReplaceGlobalDefinesConfig {
 
     fn check_key(key: &str) -> Result<IdentifierType, Diagnostics> {
         if let Some(argument) = key.strip_prefix("typeof ") {
-            let parts = Self::check_identifier_parts(key, argument)?;
+            let parts: Vec<&str> = argument.split('.').collect();
+            let parts = Self::check_identifier_parts(key, &parts)?;
             return Ok(IdentifierType::Typeof { parts });
         }
 
@@ -185,24 +186,12 @@ impl ReplaceGlobalDefinesConfig {
         // We can ensure now the parts.len() >= 2
         let is_import_meta = parts[0] == "import" && parts[1] == "meta";
 
-        for part in &parts[0..normalized_parts_len] {
-            if !is_identifier_name(part) {
-                return Err(vec![OxcDiagnostic::error(format!(
-                    "The define key `{key}` contains an invalid identifier `{part}`."
-                ))]
-                .into());
-            }
-        }
+        let compact_parts = Self::check_identifier_parts(key, &parts[0..normalized_parts_len])?;
         if is_import_meta {
             match normalized_parts_len {
                 2 => Ok(IdentifierType::ImportMeta(normalized_parts_len != parts.len())),
                 _ => Ok(IdentifierType::ImportMetaWithParts {
-                    parts: parts
-                        .iter()
-                        .skip(2)
-                        .take(normalized_parts_len - 2)
-                        .map(|s| CompactStr::new(s))
-                        .collect(),
+                    parts: compact_parts.into_iter().skip(2).collect(),
                     postfix_wildcard: normalized_parts_len != parts.len(),
                 }),
             }
@@ -213,19 +202,12 @@ impl ReplaceGlobalDefinesConfig {
             )]
             .into())
         } else {
-            Ok(IdentifierType::DotDefines {
-                parts: parts
-                    .iter()
-                    .take(normalized_parts_len)
-                    .map(|s| CompactStr::new(s))
-                    .collect(),
-            })
+            Ok(IdentifierType::DotDefines { parts: compact_parts })
         }
     }
 
-    fn check_identifier_parts(key: &str, identifier: &str) -> Result<Vec<CompactStr>, Diagnostics> {
-        let parts: Vec<&str> = identifier.split('.').collect();
-        for part in &parts {
+    fn check_identifier_parts(key: &str, parts: &[&str]) -> Result<Vec<CompactStr>, Diagnostics> {
+        for part in parts {
             if !is_identifier_name(part) {
                 return Err(vec![OxcDiagnostic::error(format!(
                     "The define key `{key}` contains an invalid identifier `{part}`."
