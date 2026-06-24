@@ -92,15 +92,12 @@ impl LSPFileSystem {
         self.files.pin().get(uri).map(|(lang, _)| lang.clone())
     }
 
-    pub fn get_document<'a>(&self, uri: &'a Uri) -> TextDocument<'a> {
-        self.files.pin().get(uri).map_or_else(
-            || TextDocument { uri, language_id: LanguageId::default(), text: None },
-            |(language_id, content)| TextDocument {
-                uri,
-                language_id: language_id.clone(),
-                text: Some(Arc::clone(content)),
-            },
-        )
+    pub fn get_document(&self, uri: Uri) -> TextDocument {
+        let binding = self.files.pin();
+        let Some((language_id, content)) = binding.get(&uri) else {
+            return TextDocument { uri, language_id: LanguageId::default(), text: None };
+        };
+        TextDocument { uri, language_id: language_id.clone(), text: Some(Arc::clone(content)) }
     }
 
     pub fn remove(&self, uri: &Uri) {
