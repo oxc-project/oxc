@@ -161,3 +161,126 @@ fn renames_through_full_minify() {
     // (base54 frequency order) and survives the full compress + rewrite pipeline.
     test_min("({ _foo: 1 })._foo;", "({ e: 1 }).e;", "^_");
 }
+
+// ---------------------------------------------------------------------------
+// Regression tests: nesting, class members, bail conditions, and reservations.
+// Single-candidate cases assert the literal `e` (base54 frequency order); the
+// invariant under test is that every occurrence of one source name shares one
+// output name while reserved/untouched names are left unchanged.
+// ---------------------------------------------------------------------------
+
+/// Like [`test`] but parses as the given source type for both sides (e.g. a script for
+/// `with`, which is illegal in module/strict mode).
+#[track_caller]
+fn test_st(src: &str, expected: &str, regex: &str, st: SourceType) {
+    let got = mangle(src, regex, st);
+    let want = codegen(expected, st);
+    assert_eq!(got, want, "\nsrc {src}\nexpect {want}\ngot {got}");
+}
+
+/// PropertyMangler-direct run that also sets a `reserve` regex (carve-out).
+fn mangle_with_reserve(src: &str, mangle_re: &str, reserve_re: &str) -> String {
+    let alloc = Allocator::default();
+    let mut program = Parser::new(&alloc, src, SourceType::mjs()).parse().program;
+    let mut o = opts(mangle_re);
+    o.reserve = Some(lazy_regex::Regex::new(reserve_re).unwrap());
+    let mut m = PropertyMangler::new(o);
+    m.collect(&program);
+    m.rewrite(&mut program, &alloc);
+    Codegen::new().build(&program).code
+}
+
+#[test]
+fn deep_nested_member_chain() {
+    // The same name renames consistently through a deep member chain.
+    test("a.b._foo.c._foo; a._foo;", "a.b.e.c.e; a.e;", "^_");
+    // A nested object literal: `outer` doesn't match `^_` (untouched), `_foo` -> `e`.
+    test("({ outer: { _foo: 1 } })._foo;", "({ outer: { e: 1 } }).e;", "^_");
+}
+
+#[test]
+fn nested_in_array_and_call_args() {
+    // The walk recurses into array elements and call arguments: `_foo` -> `e` everywhere.
+    test("[{ _foo: 1 }]; f({ _foo: 2 })._foo;", "[{ e: 1 }]; f({ e: 2 }).e;", "^_");
+}
+
+#[test]
+fn class_method_field_accessor() {
+    // Method declaration + access rename together.
+    test("class C { _foo() {} } new C()._foo();", "class C { e() {} } new C().e();", "^_");
+    // Field declaration + access.
+    test("class C { _foo = 1 } new C()._foo;", "class C { e = 1 } new C().e;", "^_");
+    // Getter/setter pair + access.
+    test(
+        "class C { get _foo(){return 1} set _foo(v){} } o._foo;",
+        "class C { get e(){return 1} set e(v){} } o.e;",
+        "^_",
+    );
+    // Auto-accessor field + access.
+    test("class C { accessor _foo = 1 } o._foo;", "class C { accessor e = 1 } o.e;", "^_");
+}
+
+#[test]
+fn static_class_member() {
+    test("class C { static _foo() {} } C._foo();", "class C { static e() {} } C.e();", "^_");
+}
+
+#[test]
+fn this_and_super_member() {
+    test("class C { _m() { return this._m } }", "class C { e() { return this.e } }", "^_");
+    // A subclass calling `super._m()` renames consistently with the base declaration.
+    test(
+        "class C extends B { _m() { return super._m() } }",
+        "class C extends B { e() { return super.e() } }",
+        "^_",
+    );
+}
+
+#[test]
+fn optional_chain_member() {
+    test("a?._foo; a._foo;", "a?.e; a.e;", "^_");
+}
+
+#[test]
+fn delete_member() {
+    test("delete o._foo; o._foo;", "delete o.e; o.e;", "^_");
+}
+
+#[test]
+fn numeric_keys_untouched() {
+    // Numeric keys can't be candidates; nothing is renamed.
+    test("({ 0: 1 }); o[0];", "({ 0: 1 }); o[0];", "^_");
+}
+
+#[test]
+fn in_operator_reserves_name() {
+    // The `in`-LHS string reserves `_foo`, so the member is NOT renamed.
+    test("'_foo' in o; o._foo;", "'_foo' in o; o._foo;", "^_");
+}
+
+#[test]
+fn quoted_object_key_reserves_member() {
+    // A quoted object key reserves `_foo` program-wide, so the unquoted member survives.
+    test("({ '_foo': 1 }); o._foo;", "({ '_foo': 1 }); o._foo;", "^_");
+}
+
+#[test]
+fn with_statement_bails() {
+    // `with` makes the whole program bail. `with` is illegal in module/strict mode, so
+    // this must parse as a script (mirrors the inline `collect_bails_on_with_and_eval`).
+    test_st("with (o) {} o._foo;", "with (o) {} o._foo;", "^_", SourceType::cjs());
+}
+
+#[test]
+fn eval_bails() {
+    // A direct `eval` makes the whole program bail; `o._foo` is left unchanged.
+    test("eval('x'); o._foo;", "eval('x'); o._foo;", "^_");
+}
+
+#[test]
+fn reserve_regex_carves_out() {
+    // `mangle: ^_` plus `reserve: _keep$`: `_keep` stays, `_foo` -> `e`.
+    let got = mangle_with_reserve("o._keep; o._foo;", "^_", "_keep$");
+    let want = codegen("o._keep; o.e;", SourceType::mjs());
+    assert_eq!(got, want, "\nexpect {want}\ngot {got}");
+}
