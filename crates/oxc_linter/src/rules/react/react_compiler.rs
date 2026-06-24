@@ -2,7 +2,9 @@ use std::borrow::Cow;
 
 use oxc_diagnostics::Severity;
 use oxc_macros::declare_oxc_lint;
-use oxc_react_compiler::{CompilerOutputMode, EnvironmentConfig, PluginOptions};
+use oxc_react_compiler::{
+    CompilerOutputMode, EnvironmentConfig, ErrorCategory, PluginOptions, ReactCompilerDiagnostic,
+};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -235,41 +237,32 @@ impl Rule for ReactCompiler {
 
     fn run_once(&self, ctx: &LintContext) {
         let program = ctx.nodes().program();
-        let options =
-            react_compiler_options(self);
+        let options = react_compiler_options(self);
 
         let result = oxc_react_compiler::lint(program, ctx.semantic(), ctx.allocator(), options);
 
         let suppressed_lines = flow_suppression_lines(ctx);
-        for mut diagnostic in result.diagnostics.into_vec() {
+        for ReactCompilerDiagnostic { mut diagnostic, category } in result.diagnostics {
             // Bail-outs surface as non-error severities; hide them unless asked.
             if !self.report_all_bailouts && diagnostic.severity != Severity::Error {
                 continue;
             }
 
-            let category = react_compiler_category(&diagnostic.message);
-
             // `Immutability` and `UseMemo` have no compiler flag, so the
             // sub-rules are enforced here by dropping their diagnostics when the
             // toggle is off.
-            if !self.immutability && category == Some("Immutability") {
+            if !self.immutability && category == Some(ErrorCategory::Immutability) {
                 continue;
             }
-            if !self.use_memo && category == Some("UseMemo") {
+            if !self.use_memo && category == Some(ErrorCategory::UseMemo) {
                 continue;
             }
 
             // Internal compiler errors are not Rules of React violations; hide
             // them unless the user opts into the full firehose.
-            if !self.report_all_bailouts && category.is_some_and(is_internal_noise) {
+            if !self.report_all_bailouts && is_internal_noise(category) {
                 continue;
             }
-
-            // The sub-rule id (a `&'static str`) lets a disable directive like
-            // `react/react-compiler/refs` suppress just this category. Resolve it
-            // now so the borrow of `diagnostic.message` ends before the message
-            // is rewritten below.
-            let sub_rule = category.and_then(category_sub_rule);
 
             // If Flow already caught this error, we don't need to report it again.
             if is_flow_suppressed(&diagnostic, &suppressed_lines, ctx.source_text()) {
@@ -279,7 +272,9 @@ impl Rule for ReactCompiler {
             if let Some(message) = diagnostic.message.strip_prefix("[ReactCompiler] ") {
                 diagnostic.message = Cow::Owned(message.to_string());
             }
-            match sub_rule {
+            // A sub-rule id lets a disable directive like
+            // `react/react-compiler/refs` suppress just this category.
+            match category_sub_rule(category) {
                 Some(sub_rule) => ctx.diagnostic_with_sub_rule(sub_rule, diagnostic),
                 None => ctx.diagnostic(diagnostic),
             }
@@ -292,41 +287,46 @@ impl Rule for ReactCompiler {
 /// `"react/react-compiler": { "refs": false }` and
 /// `// oxlint-disable-next-line react/react-compiler/refs`. Categories without a
 /// dedicated toggle return `None` and can only be suppressed via the bare rule.
-fn category_sub_rule(category: &str) -> Option<&'static str> {
-    Some(match category {
-        "Hooks" => "hooks",
-        "Refs" => "refs",
-        "RenderSetState" => "setStateInRender",
-        "EffectSetState" => "setStateInEffect",
-        "ErrorBoundaries" => "errorBoundaries",
-        "Purity" => "purity",
-        "StaticComponents" => "staticComponents",
-        "VoidUseMemo" => "voidUseMemo",
-        "CapitalizedCalls" => "capitalizedCalls",
-        "EffectDerivationsOfState" => "derivedComputationsInEffect",
-        "MemoDependencies" => "memoDependencies",
-        "PreserveManualMemo" => "preserveManualMemo",
-        "Immutability" => "immutability",
-        "UseMemo" => "useMemo",
-        _ => return None,
+///
+/// The match is exhaustive so that a category added to the compiler has to be
+/// classified here rather than silently losing its sub-rule.
+fn category_sub_rule(category: Option<ErrorCategory>) -> Option<&'static str> {
+    Some(match category? {
+        ErrorCategory::Hooks => "hooks",
+        ErrorCategory::Refs => "refs",
+        ErrorCategory::RenderSetState => "setStateInRender",
+        ErrorCategory::EffectSetState => "setStateInEffect",
+        ErrorCategory::ErrorBoundaries => "errorBoundaries",
+        ErrorCategory::Purity => "purity",
+        ErrorCategory::StaticComponents => "staticComponents",
+        ErrorCategory::VoidUseMemo => "voidUseMemo",
+        ErrorCategory::CapitalizedCalls => "capitalizedCalls",
+        ErrorCategory::EffectDerivationsOfState => "derivedComputationsInEffect",
+        ErrorCategory::MemoDependencies => "memoDependencies",
+        ErrorCategory::PreserveManualMemo => "preserveManualMemo",
+        ErrorCategory::Immutability => "immutability",
+        ErrorCategory::UseMemo => "useMemo",
+        // Compiler-internal errors (see `is_internal_noise`), plus categories the
+        // rule exposes no toggle for. Suppressible only via the bare rule.
+        ErrorCategory::Invariant
+        | ErrorCategory::EffectExhaustiveDependencies
+        | ErrorCategory::IncompatibleLibrary
+        | ErrorCategory::Globals
+        | ErrorCategory::Todo
+        | ErrorCategory::Syntax
+        | ErrorCategory::UnsupportedSyntax
+        | ErrorCategory::Config
+        | ErrorCategory::Gating
+        | ErrorCategory::Suppression => return None,
     })
 }
 
-/// The leading category token of a React Compiler message — e.g. `Immutability`
-/// from `"[ReactCompiler] Immutability: Cannot reassign ..."`. Returns `None`
-/// when the message carries no category, as some fatal-error paths do. Reliable
-/// because the rule runs with `panicThreshold: "none"`, so categorized
-/// diagnostics always render with the `"{category}: {reason}"` shape.
-fn react_compiler_category(message: &str) -> Option<&str> {
-    message.strip_prefix("[ReactCompiler] ").and_then(|rest| rest.split_once(": ")).map(|(c, _)| c)
-}
-
-/// Categories that are internal compiler errors rather than Rules of React
-/// violations. `Invariant` is a compiler-internal assertion; `Unexpected error`
-/// and `Pipeline error` are thrown failures. They are hidden unless
-/// `reportAllBailouts` is set.
-fn is_internal_noise(category: &str) -> bool {
-    matches!(category, "Invariant" | "Unexpected error" | "Pipeline error")
+/// Whether a diagnostic is an internal compiler error rather than a Rules of
+/// React violation. `Invariant` is a compiler-internal assertion; a `None`
+/// category is the compiler's synthetic pipeline error for a thrown failure. Both
+/// are hidden unless `reportAllBailouts` is set.
+fn is_internal_noise(category: Option<ErrorCategory>) -> bool {
+    matches!(category, None | Some(ErrorCategory::Invariant))
 }
 
 /// Flow suppression codes that silence a React Compiler diagnostic on the next
@@ -529,6 +529,18 @@ function Component(props) {
         (
             "
 // oxlint-disable react/react-compiler/refs
+function Component(props) {
+  const ref = useRef(null);
+  const value = ref.current;
+  return value;
+}
+",
+            None,
+        ),
+        // A sub-rule directive may omit the plugin prefix, like a bare rule one.
+        (
+            "
+// oxlint-disable react-compiler/refs
 function Component(props) {
   const ref = useRef(null);
   const value = ref.current;

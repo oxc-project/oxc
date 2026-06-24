@@ -20,6 +20,10 @@ use oxc_span::Span;
 
 use crate::options::PanicThreshold;
 
+/// The category segment of the compiler's synthetic pipeline error (built in
+/// `program.rs::log_error`), which is deliberately not an [`ErrorCategory`].
+const PIPELINE_ERROR: &str = "Pipeline error";
+
 /// Error categories matching the TS `ErrorCategory` enum.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ErrorCategory {
@@ -79,6 +83,38 @@ impl ErrorCategory {
         }
     }
 
+    /// The inverse of [`Self::as_str`]. `None` for any name this enum does not
+    /// model — see [`Self::of`].
+    fn from_str(name: &str) -> Option<Self> {
+        Some(match name {
+            "Hooks" => Self::Hooks,
+            "CapitalizedCalls" => Self::CapitalizedCalls,
+            "StaticComponents" => Self::StaticComponents,
+            "UseMemo" => Self::UseMemo,
+            "VoidUseMemo" => Self::VoidUseMemo,
+            "PreserveManualMemo" => Self::PreserveManualMemo,
+            "MemoDependencies" => Self::MemoDependencies,
+            "IncompatibleLibrary" => Self::IncompatibleLibrary,
+            "Immutability" => Self::Immutability,
+            "Globals" => Self::Globals,
+            "Refs" => Self::Refs,
+            "EffectExhaustiveDependencies" => Self::EffectExhaustiveDependencies,
+            "EffectSetState" => Self::EffectSetState,
+            "EffectDerivationsOfState" => Self::EffectDerivationsOfState,
+            "ErrorBoundaries" => Self::ErrorBoundaries,
+            "Purity" => Self::Purity,
+            "RenderSetState" => Self::RenderSetState,
+            "Invariant" => Self::Invariant,
+            "Todo" => Self::Todo,
+            "Syntax" => Self::Syntax,
+            "UnsupportedSyntax" => Self::UnsupportedSyntax,
+            "Config" => Self::Config,
+            "Gating" => Self::Gating,
+            "Suppression" => Self::Suppression,
+            _ => return None,
+        })
+    }
+
     /// Displayed severity, matching the TS compiler's `getRuleForCategory()`.
     /// `PreserveManualMemo` displays as an error but does not count towards
     /// `panicThreshold: critical_errors` (see [`has_critical_errors`]).
@@ -103,11 +139,32 @@ impl ErrorCategory {
     /// Whether `diagnostic` was built for this category via [`Self::diagnostic`],
     /// recovered from the deterministic message prefix.
     pub fn matches(self, diagnostic: &OxcDiagnostic) -> bool {
-        Self::of(diagnostic) == Some(self.as_str())
+        Self::name_of(diagnostic) == Some(self.as_str())
+    }
+
+    /// The category `diagnostic` was built for by [`Self::diagnostic`], recovered
+    /// from the deterministic message prefix. Lets consumers branch on the
+    /// category (e.g. per-category lint suppression) without parsing messages
+    /// themselves.
+    ///
+    /// `None` for a diagnostic that carries no category: the only one the
+    /// compiler produces is the synthetic `[ReactCompiler] Pipeline error: …`
+    /// raised for an exception that is not a compiler error (see
+    /// `program.rs::log_error`).
+    pub fn of(diagnostic: &OxcDiagnostic) -> Option<Self> {
+        let name = Self::name_of(diagnostic)?;
+        let category = Self::from_str(name);
+        // A category [`Self::from_str`] does not know is indistinguishable from an
+        // uncategorized diagnostic, so a new variant must be added there too.
+        debug_assert!(
+            category.is_some() || name == PIPELINE_ERROR,
+            "`ErrorCategory::from_str` is missing `{name}`"
+        );
+        category
     }
 
     /// The category segment of a message built by [`Self::diagnostic`].
-    fn of(diagnostic: &OxcDiagnostic) -> Option<&str> {
+    fn name_of(diagnostic: &OxcDiagnostic) -> Option<&str> {
         let rest = diagnostic.message.strip_prefix("[ReactCompiler] ")?;
         rest.split_once(": ").map(|(category, _)| category)
     }
