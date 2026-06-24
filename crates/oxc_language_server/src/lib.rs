@@ -26,14 +26,14 @@ pub use crate::worker_manager::WorkerManager;
 pub type ConcurrentHashMap<K, V> = papaya::HashMap<K, V, FxBuildHasher>;
 
 #[derive(Debug)]
-pub struct TextDocument<'a> {
-    pub uri: &'a Uri,
+pub struct TextDocument {
+    pub uri: Uri,
     pub language_id: LanguageId,
     pub text: Option<Arc<str>>,
 }
 
-impl<'a> TextDocument<'a> {
-    pub fn new(uri: &'a Uri, language_id: LanguageId, text: Option<Arc<str>>) -> Self {
+impl TextDocument {
+    pub fn new(uri: Uri, language_id: LanguageId, text: Option<Arc<str>>) -> Self {
         Self { uri, language_id, text }
     }
 }
