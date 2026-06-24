@@ -483,7 +483,7 @@ impl CliRunner {
         {
             Ok(runner) => runner,
             Err(err) => {
-                print_and_flush_stdout(stdout, &err);
+                print_and_flush_stdout(stdout, &format!("{err}\n"));
                 return CliRunResult::TsGoLintError;
             }
         };
@@ -507,7 +507,7 @@ impl CliRunner {
                 lint_runner.report_unused_directives(report_unused_directives, &tx_error);
             }
             Err(err) => {
-                print_and_flush_stdout(stdout, &err);
+                print_and_flush_stdout(stdout, &format!("{err}\n"));
                 return CliRunResult::TsGoLintError;
             }
         }
