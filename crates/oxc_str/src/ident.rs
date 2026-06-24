@@ -11,7 +11,8 @@ use std::{
 };
 
 use oxc_allocator::{
-    Allocator, ArenaStringBuilder, CloneIn, Dummy, FromIn, IdentBuildHasher, ident_hash,
+    Allocator, ArenaStringBuilder, CloneIn, Dummy, FromIn, GetAllocator, IdentBuildHasher,
+    ident_hash,
 };
 #[cfg(feature = "serialize")]
 use oxc_estree::{ESTree, JsonSafeString, Serializer as ESTreeSerializer};
@@ -129,6 +130,12 @@ pub const fn new_const_ident(s: &str) -> Ident<'_> {
 }
 
 impl<'a> Ident<'a> {
+    /// Allocate provided `&str` into arena, and return an [`Ident<'a>`].
+    #[inline]
+    pub fn from_str_in<A: GetAllocator<'a>>(s: &str, allocator: &A) -> Self {
+        new_const_ident(allocator.allocator().alloc_str(s))
+    }
+
     /// Create an [`Ident`] from raw components.
     ///
     /// # SAFETY
@@ -703,6 +710,32 @@ mod test {
     fn static_ident_const_context() {
         const IDENT: Ident<'static> = static_ident!("hello");
         assert_eq!(IDENT.as_str(), "hello");
+    }
+
+    #[test]
+    #[expect(clippy::items_after_statements)]
+    fn ident_from_str_in() {
+        let allocator = Allocator::new();
+        let allocator: &Allocator = &allocator;
+
+        // Pass an actual `Allocator`
+        let ident = Ident::from_str_in("world", &allocator);
+        assert_eq!(ident.as_str(), "world");
+        assert_eq!(ident, Ident::from("world"));
+
+        // Pass a struct which implements `GetAllocator`
+        struct Wrapper<'a>(&'a Allocator);
+
+        impl<'a> GetAllocator<'a> for Wrapper<'a> {
+            fn allocator(&self) -> &'a Allocator {
+                self.0
+            }
+        }
+
+        let wrapper = Wrapper(allocator);
+        let ident = Ident::from_str_in("hello", &wrapper);
+        assert_eq!(ident.as_str(), "hello");
+        assert_eq!(ident, Ident::from("hello"));
     }
 
     #[test]
