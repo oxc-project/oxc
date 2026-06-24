@@ -19,11 +19,12 @@ use std::path::PathBuf;
 
 use napi::{Either, Task, bindgen_prelude::AsyncTask};
 use napi_derive::napi;
+use rustc_hash::FxHashMap;
 
 use oxc_allocator::Allocator;
 use oxc_codegen::Codegen;
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_minifier::Minifier;
+use oxc_minifier::{CacheValue, Minifier};
 use oxc_napi::OxcError;
 use oxc_parser::Parser;
 use oxc_sourcemap::napi::SourceMap;
@@ -40,6 +41,14 @@ pub struct MinifyResult {
     /// Legal comments extracted from the source code.
     /// Only populated when `codegen.legalComments` is `"linked"` or `"external"`.
     pub legal_comments: Vec<String>,
+    /// The property-name cache produced by property mangling.
+    ///
+    /// Only populated when {@link MinifyOptions#mangleProps mangleProps} is set.
+    /// Maps original property names to their mangled names (or `false` if the
+    /// name was reserved). Feed it back into {@link MinifyOptions#mangleCache}
+    /// to keep names stable across builds.
+    #[napi(ts_type = "Record<string, string | false>")]
+    pub mangle_cache: Option<FxHashMap<String, Either<String, bool>>>,
 }
 
 fn minify_impl(filename: &str, source_text: &str, options: Option<MinifyOptions>) -> MinifyResult {
@@ -71,7 +80,21 @@ fn minify_impl(filename: &str, source_text: &str, options: Option<MinifyOptions>
     let parser_ret = Parser::new(&allocator, source_text, source_type).parse();
     let mut program = parser_ret.program;
 
-    let scoping = Minifier::new(minifier_options).minify(&allocator, &mut program).scoping;
+    let minifier_ret = Minifier::new(minifier_options).minify(&allocator, &mut program);
+    let scoping = minifier_ret.scoping;
+    let mangle_cache = minifier_ret.property_mappings.map(|cache| {
+        cache
+            .map
+            .into_iter()
+            .map(|(name, value)| {
+                let value = match value {
+                    CacheValue::Name(new_name) => Either::A(new_name.to_string()),
+                    CacheValue::Reserved => Either::B(false),
+                };
+                (name.to_string(), value)
+            })
+            .collect::<FxHashMap<String, Either<String, bool>>>()
+    });
 
     let mut codegen_options = match &options.codegen {
         // Need to remove all comments.
@@ -106,6 +129,7 @@ fn minify_impl(filename: &str, source_text: &str, options: Option<MinifyOptions>
         map: ret.map.map(oxc_sourcemap::napi::SourceMap::from),
         errors: OxcError::from_diagnostics(filename, source_text, parser_ret.diagnostics),
         legal_comments,
+        mangle_cache,
     }
 }
 
