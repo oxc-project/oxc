@@ -93,11 +93,15 @@ fn readonly_var_with_imports_present() {
         "import './b.js'; var flag = true; export function check() { return flag; }",
         "import './b.js'; var flag = !0; export function check() { return flag; }",
     );
-    // Even with no export, an import anywhere disqualifies — we can't tell
-    // statically whether a cycle exists.
+    // A write-once falsy `var` read only in boolean context (`if (DEBUG)`) folds
+    // even with imports present: the cyclic-import hazard is that an observer sees
+    // the hoisted `undefined` instead of the init value, but in boolean context
+    // `undefined` and the falsy init are indistinguishable (`if (undefined)` ===
+    // `if (false)`), and an importer cannot write the binding to make it truthy.
+    // So `DEBUG` collapses and `log` becomes a no-op. (boolean_falsy, #14001)
     test_smallest(
         "import './side-effect.js'; var DEBUG = false; function log(x) { if (DEBUG) console.log(x); } log('hi');",
-        "import './side-effect.js'; var DEBUG = !1; function log(x) { DEBUG && console.log(x); } log('hi');",
+        "import './side-effect.js';",
     );
     // Imports are hoisted, so an import appearing *after* the var in source
     // still triggers the gate — the pre-scan checks the whole body.
@@ -206,6 +210,37 @@ fn readonly_var_after_type_declaration() {
     );
 }
 
+// A write-once falsy `var` flag read only in boolean context folds even past a
+// dirty declarative prelude — the bundled `var hydrating = false` shape read by
+// `if (hydrating)` throughout a framework runtime (Svelte/Vue, #14001). The
+// value-context constant is withheld for hoisting safety, but `undefined`
+// (pre-init) and the falsy init are indistinguishable in boolean context.
+#[test]
+fn fold_writeonce_falsy_var_in_boolean_context() {
+    // Multiple same-frame boolean reads.
+    test_smallest("var h = false; if (h) a(); if (h) b()", "");
+    // Read inside a function, past a side-effectful prelude (`g()` runs first):
+    // the hoisting gate withholds value-context folding; boolean context is sound.
+    test_smallest("g(); var h = false; function f() { if (h) a() } f()", "g();");
+
+    // Value context must NOT fold (a pre-init read would observe `undefined`).
+    test_smallest(
+        "g(); var h = false; function f() { sink(h) } f()",
+        "g(); var h = !1; function f() { sink(h); } f();",
+    );
+    // Reassigned => not write-once => not folded.
+    test_smallest("var h = false; h = 1; if (h) a()", "var h = !1; h = 1, h && a();");
+
+    // Script mode: a top-level `var` is a global another script can reassign, so
+    // an in-module write count of 0 doesn't prove write-once — not folded.
+    test_options_source_type(
+        "var h = false; function f() { if (h) a() } f()",
+        "var h = !1; function f() { h && a(); } f();",
+        SourceType::cjs().with_script(true),
+        &CompressOptions::smallest(),
+    );
+}
+
 #[test]
 fn r#const() {
     let options = CompressOptions::smallest();
@@ -214,6 +249,47 @@ fn r#const() {
 
     test_options("let foo = 1; log(foo)", "log(1)", &options);
     test_options("export let foo = 1; log(foo)", "export let foo = 1; log(1)", &options);
+}
+
+// https://github.com/oxc-project/oxc/issues/20282
+// Dead code guarded by a condition that depends on a read-only `const` is
+// eliminated even when the `const` is referenced more than once. The value is
+// resolved through `SymbolValue` constant tracking during constant evaluation,
+// not single-use inlining, so the old refcount==1 restriction no longer blocks
+// it.
+#[test]
+fn dead_code_depending_on_const() {
+    // Exact reproduction from the issue: `ENABLE_PKG` is always `false`, so the
+    // guarded call and both now-unused declarations are removed.
+    test_smallest(
+        "const MODE = 'production';
+         const ENABLE_PKG = MODE === 'foo' || MODE === 'bar';
+         if (ENABLE_PKG) { longFunction() }",
+        "",
+    );
+
+    // Commenter's variant: `MODE` is read twice (in `ENABLE_PKG`'s initializer
+    // and in the `if` test), yet the dead branch still folds away.
+    test_smallest(
+        "const MODE = 'production';
+         const ENABLE_PKG = MODE === 'foo';
+         if (MODE !== 'production') { longFunction() }",
+        "",
+    );
+
+    // Negative case: a reassigned binding is not a constant, so the guard must
+    // be preserved (no flow-sensitive last-write analysis here).
+    test_smallest(
+        "let MODE = 'production'; MODE = 'dev'; if (MODE !== 'production') { longFunction() }",
+        "let MODE = 'production'; MODE = 'dev', MODE !== 'production' && longFunction();",
+    );
+
+    // Negative case: a non-constant initializer leaves the guard intact (the
+    // value is inlined, but the call is not eliminated).
+    test_smallest(
+        "const MODE = globalThis.mode; if (MODE !== 'production') { longFunction() }",
+        "globalThis.mode !== 'production' && longFunction();",
+    );
 }
 
 #[test]

@@ -7,10 +7,7 @@ use base64::{
 use hmac_sha1_compact::Hash as Sha1;
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use oxc_allocator::{
-    CloneIn, GetAddress, StringBuilder as ArenaStringBuilder, TakeIn, UnstableAddress,
-    Vec as ArenaVec,
-};
+use oxc_allocator::{ArenaStringBuilder, ArenaVec, CloneIn, GetAddress, TakeIn, UnstableAddress};
 use oxc_ast::{AstBuilder, NONE, ast::*, match_expression};
 use oxc_ast_visit::{
     Visit,
@@ -148,7 +145,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
         self.used_in_jsx_bindings = UsedInJSXBindingsCollector::collect(program, ctx);
 
         let mut new_statements = ctx.ast.vec_with_capacity(program.body.len() * 2);
-        for mut statement in program.body.take_in(ctx.ast) {
+        for mut statement in program.body.take_in(ctx) {
             let next_statement = self.process_statement(&mut statement, ctx);
             new_statements.push(statement);
             if let Some(assignment_expression) = next_statement {
@@ -258,7 +255,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
         }
 
         let span = expr.span();
-        arguments.insert(0, Argument::from(expr.take_in(ctx.ast)));
+        arguments.insert(0, Argument::from(expr.take_in(ctx)));
         *expr = ctx.ast.expression_call(
             span,
             binding.create_read_expression(ctx),
@@ -532,7 +529,7 @@ impl<'a> ReactRefresh<'a> {
                 SPAN,
                 AssignmentOperator::Assign,
                 self.create_registration(ctx.ast.str(inferred_name), ctx),
-                expr.take_in(ctx.ast),
+                expr.take_in(ctx),
             );
         }
 

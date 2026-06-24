@@ -1,4 +1,4 @@
-use oxc_allocator::Box;
+use oxc_allocator::ArenaBox;
 use oxc_ast::{NONE, ast::*};
 use oxc_span::{FileExtension, GetSpan};
 use oxc_syntax::precedence::Precedence;
@@ -7,9 +7,9 @@ use super::{FunctionKind, Tristate};
 use crate::{Context, ParserConfig as Config, ParserImpl, diagnostics, lexer::Kind};
 
 struct ArrowFunctionHead<'a> {
-    type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-    params: Box<'a, FormalParameters<'a>>,
-    return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
+    type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+    params: ArenaBox<'a, FormalParameters<'a>>,
+    return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
     r#async: bool,
     span: u32,
 }

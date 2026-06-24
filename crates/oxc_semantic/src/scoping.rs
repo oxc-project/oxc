@@ -3,7 +3,7 @@ use std::{collections::hash_map::Entry, fmt, mem};
 use rustc_hash::{FxHashMap, FxHashSet};
 use self_cell::self_cell;
 
-use oxc_allocator::{Allocator, BitSet, CloneIn, Vec as ArenaVec};
+use oxc_allocator::{Allocator, ArenaVec, BitSet, CloneIn};
 use oxc_index::IndexVec;
 use oxc_span::Span;
 use oxc_str::{ArenaIdentHashMap, Ident};
@@ -122,8 +122,8 @@ impl Default for Scoping {
             enum_data: EnumData::default(),
             scope_table: ScopeTable::new(),
             cell: ScopingCell::new(Allocator::default(), |allocator| ScopingInner {
-                symbol_names: ArenaVec::new_in(allocator),
-                resolved_references: ArenaVec::new_in(allocator),
+                symbol_names: ArenaVec::new_in(&allocator),
+                resolved_references: ArenaVec::new_in(&allocator),
                 symbol_redeclarations: FxHashMap::default(),
                 bindings: IndexVec::new(),
                 root_unresolved_references: UnresolvedReferences::new_in(allocator),
@@ -441,7 +441,7 @@ impl Scoping {
     ) -> SymbolId {
         self.cell.with_dependent_mut(|allocator, cell| {
             cell.symbol_names.push(name.clone_in(allocator));
-            cell.resolved_references.push(ArenaVec::new_in(allocator));
+            cell.resolved_references.push(ArenaVec::new_in(&allocator));
         });
         self.symbol_table.push(span, flags, scope_id, node_id)
     }
@@ -460,7 +460,7 @@ impl Scoping {
         self.cell.with_dependent_mut(|allocator, cell| {
             let name = name.clone_in(allocator);
             cell.symbol_names.push(name);
-            cell.resolved_references.push(ArenaVec::new_in(allocator));
+            cell.resolved_references.push(ArenaVec::new_in(&allocator));
             cell.bindings[binding_scope_id].insert(name, symbol_id);
         });
         symbol_id
@@ -496,7 +496,7 @@ impl Scoping {
                             "The above step has already been checked, and it was first declared."
                         )
                     });
-                    let v = ArenaVec::from_array_in([first_declaration, redeclaration], allocator);
+                    let v = ArenaVec::from_array_in([first_declaration, redeclaration], &allocator);
                     vacant.insert(v);
                 }
             }
@@ -805,7 +805,7 @@ impl Scoping {
             let name = name.clone_in(allocator);
             cell.root_unresolved_references
                 .entry(name)
-                .or_insert_with(|| ArenaVec::new_in(allocator))
+                .or_insert_with(|| ArenaVec::new_in(&allocator))
                 .push(reference_id);
         });
     }

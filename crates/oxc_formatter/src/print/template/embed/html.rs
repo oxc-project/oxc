@@ -1,6 +1,6 @@
 use cow_utils::CowUtils;
 
-use oxc_allocator::StringBuilder;
+use oxc_allocator::ArenaStringBuilder;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 use oxc_syntax::line_terminator::LineTerminatorSplitter;
@@ -86,7 +86,7 @@ pub(super) fn format_html_doc<'a>(
     // quasis[0].cooked + "PRETTIER_HTML_PLACEHOLDER_0_0_IN_JS" + quasis[1].cooked + ...
     let allocator = f.allocator();
     let joined = {
-        let mut sb = StringBuilder::new_in(allocator);
+        let mut sb = ArenaStringBuilder::new_in(allocator);
         for (idx, quasi_elem) in quasis.iter().enumerate() {
             if idx > 0 {
                 sb.push_str(PLACEHOLDER_PREFIX);

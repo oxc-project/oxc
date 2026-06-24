@@ -53,12 +53,12 @@
 
 use std::{borrow::Cow, mem};
 
-use oxc_allocator::{Box as ArenaBox, StringBuilder as ArenaStringBuilder, TakeIn};
+use oxc_allocator::{ArenaBox, ArenaStringBuilder, TakeIn};
 use oxc_ast::{NONE, ast::*};
 use oxc_ast_visit::Visit;
 use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{GetSpan, SPAN};
-use oxc_str::Ident;
+use oxc_str::{Ident, static_ident};
 use oxc_syntax::{
     identifier::{is_identifier_name, is_identifier_part, is_identifier_start},
     keyword::is_reserved_keyword,
@@ -180,7 +180,7 @@ impl<'a> AsyncToGenerator<'a> {
     ) -> Option<Expression<'a>> {
         // We don't need to handle top-level await.
         if Self::is_inside_async_function(ctx) {
-            Some(ctx.ast.expression_yield(expr.span, false, Some(expr.argument.take_in(ctx.ast))))
+            Some(ctx.ast.expression_yield(expr.span, false, Some(expr.argument.take_in(ctx))))
         } else {
             None
         }
@@ -278,7 +278,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
             let this_argument = Argument::from(ctx.ast.expression_this(SPAN));
             let arguments_argument = Argument::from(ctx.create_unbound_ident_expr(
                 SPAN,
-                ctx.ast.ident("arguments"),
+                static_ident!("arguments"),
                 ReferenceFlags::Read,
             ));
             (callee, ctx.ast.vec_from_array([this_argument, arguments_argument]))
@@ -307,7 +307,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
     ) -> Expression<'a> {
         let span = wrapper_function.span;
         let body = wrapper_function.body.take().unwrap();
-        let params = wrapper_function.params.take_in_box(ctx.ast);
+        let params = wrapper_function.params.take_in_box(ctx);
         let id = wrapper_function.id.take();
         let has_function_id = id.is_some();
 
@@ -406,7 +406,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
         }
 
         // Construct the IIFE
-        let callee = Expression::FunctionExpression(wrapper_function.take_in_box(ctx.ast));
+        let callee = Expression::FunctionExpression(wrapper_function.take_in_box(ctx));
         ctx.ast.expression_call_with_pure(span, callee, NONE, ctx.ast.vec(), false, true)
     }
 
@@ -490,19 +490,19 @@ impl<'a> AsyncGeneratorExecutor<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let arrow_span = arrow.span;
-        let mut body = arrow.body.take_in_box(ctx.ast);
+        let mut body = arrow.body.take_in_box(ctx);
 
         // If the arrow's expression is true, we need to wrap the only one expression with return statement.
         if arrow.expression {
             let statement = body.statements.first_mut().unwrap();
             let expression = match statement {
-                Statement::ExpressionStatement(es) => es.expression.take_in(ctx.ast),
+                Statement::ExpressionStatement(es) => es.expression.take_in(ctx),
                 _ => unreachable!(),
             };
             *statement = ctx.ast.statement_return(expression.span(), Some(expression));
         }
 
-        let params = arrow.params.take_in_box(ctx.ast);
+        let params = arrow.params.take_in_box(ctx);
         let generator_function_id = arrow.scope_id();
         ctx.scoping_mut().scope_flags_mut(generator_function_id).remove(ScopeFlags::Arrow);
         let function_name = Self::infer_function_name_from_parent_node(ctx);
@@ -639,7 +639,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
         }
 
         if name.is_empty() {
-            return ctx.ast.ident("_");
+            return static_ident!("_");
         }
 
         if is_reserved_keyword(name.as_str()) {
@@ -687,7 +687,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
         bound_ident: &BoundIdentifier<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
-        let arguments = ctx.ast.ident("arguments");
+        let arguments = static_ident!("arguments");
         let symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), arguments);
         let arguments_ident =
             Argument::from(ctx.create_ident_expr(SPAN, arguments, symbol_id, ReferenceFlags::Read));

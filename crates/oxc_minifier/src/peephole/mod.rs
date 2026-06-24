@@ -25,7 +25,7 @@ use oxc_syntax::{
 };
 use rustc_hash::FxHashSet;
 
-use oxc_allocator::{BitSet, Vec};
+use oxc_allocator::{ArenaVec, BitSet};
 use oxc_ast::ast::*;
 
 use crate::{
@@ -467,7 +467,11 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         debug_assert!(ctx.state.dce || ctx.state.class_symbols_stack.is_exhausted());
     }
 
-    fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+    fn exit_statements(
+        &mut self,
+        stmts: &mut ArenaVec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         Self::minimize_statements(stmts, ctx);
     }
 

@@ -1,9 +1,10 @@
 //! This module is responsible for transforming `for await` to `for` statement
 
-use oxc_allocator::{TakeIn, Vec as ArenaVec};
+use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::{NONE, ast::*};
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{SPAN, Span};
+use oxc_str::static_ident;
 use oxc_traverse::{Ancestor, BoundIdentifier};
 
 use crate::{
@@ -129,7 +130,7 @@ impl<'a> AsyncGeneratorFunctions<'a> {
             }
             left @ match_assignment_target!(ForStatementLeft) => {
                 // for await (i of test), for await ({ i } of test)
-                let target = left.to_assignment_target_mut().take_in(ctx.ast);
+                let target = left.to_assignment_target_mut().take_in(ctx);
                 let expression = ctx.ast.expression_assignment(
                     SPAN,
                     AssignmentOperator::Assign,
@@ -146,12 +147,12 @@ impl<'a> AsyncGeneratorFunctions<'a> {
             let stmt_body = &mut stmt.body;
             match stmt_body {
                 Statement::BlockStatement(block) if block.body.is_empty() => {}
-                _ => statements.push(stmt_body.take_in(ctx.ast)),
+                _ => statements.push(stmt_body.take_in(ctx)),
             }
             statements
         };
 
-        let iterator = stmt.right.take_in(ctx.ast);
+        let iterator = stmt.right.take_in(ctx);
         let iterator =
             helper_call_expr(Helper::AsyncIterator, ctx.ast.vec1(Argument::from(iterator)), ctx);
         Self::build_for_await(
@@ -357,7 +358,7 @@ impl<'a> AsyncGeneratorFunctions<'a> {
             let catch_scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::CatchClause);
             let block_scope_id = ctx.create_child_scope(catch_scope_id, ScopeFlags::empty());
             let err_ident = ctx.generate_binding(
-                ctx.ast.ident("err"),
+                static_ident!("err"),
                 block_scope_id,
                 SymbolFlags::CatchVariable | SymbolFlags::FunctionScopedVariable,
             );

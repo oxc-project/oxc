@@ -47,7 +47,7 @@
 
 use oxc_ast::ast::*;
 use oxc_span::SPAN;
-use oxc_str::Str;
+use oxc_str::{Ident, Str, static_ident};
 use oxc_traverse::{Ancestor, Traverse};
 
 use crate::{context::TraverseCtx, state::TransformState};
@@ -154,7 +154,8 @@ impl<'a> ReactDisplayName {
 
     /// Add key value `displayName: name` to the `React.createClass` object.
     fn add_display_name(obj_expr: &mut ObjectExpression<'a>, name: Str<'a>, ctx: &TraverseCtx<'a>) {
-        const DISPLAY_NAME: &str = "displayName";
+        const DISPLAY_NAME: Ident<'static> = static_ident!("displayName");
+
         // Not safe with existing display name.
         let not_safe = obj_expr.properties.iter().any(|prop| {
             matches!(prop, ObjectPropertyKind::ObjectProperty(p) if p.key.static_name().is_some_and(|name| name == DISPLAY_NAME))

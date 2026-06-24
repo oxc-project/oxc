@@ -84,7 +84,7 @@ impl Generator for AstBuilderGenerator {
             use std::cell::Cell;
 
             ///@@line_break
-            use oxc_allocator::{Allocator, Box, IntoIn, Vec};
+            use oxc_allocator::{Allocator, ArenaBox, ArenaVec, IntoIn};
             use oxc_str::{Ident, Str};
             use oxc_syntax::{scope::ScopeId, symbol::SymbolId, reference::ReferenceId};
 
@@ -120,7 +120,7 @@ struct Param<'d> {
     /// * `Some(GenericType::Into)` if is generic and uses `Into`
     ///   e.g. `name: S1 where S1: Into<Str<'a>>`.
     /// * `Some(GenericType::IntoIn)` if is generic and uses `IntoIn`
-    ///   e.g. `type_annotation: T1 where T1: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>`.
+    ///   e.g. `type_annotation: T1 where T1: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>`.
     generic_type: Option<GenericType>,
 }
 
@@ -285,12 +285,12 @@ fn generate_builder_methods_for_struct_impl(
         ///@@line_break
         #[doc = #alloc_doc1]
         #[doc = ""]
-        #[doc = " Returns a [`Box`] containing the newly-allocated node."]
+        #[doc = " Returns a [`Box`](ArenaBox) containing the newly-allocated node."]
         #[doc = #alloc_doc2]
         #params_docs
         #[inline]
-        pub fn #alloc_fn_name #generic_params (self, #fn_params) -> Box<'a, #struct_ty> #where_clause {
-            Box::new_in(self.#fn_name(#(#args),*), self.allocator)
+        pub fn #alloc_fn_name #generic_params (self, #fn_params) -> ArenaBox<'a, #struct_ty> #where_clause {
+            ArenaBox::new_in(self.#fn_name(#(#args),*), &self)
         }
     }
 }
@@ -302,8 +302,8 @@ fn generate_builder_methods_for_struct_impl(
 /// ```
 /// //        ↓↓↓↓ generic params
 /// pub fn foo<T1>(self, span: Span, type_parameters: T1) -> Foo<'a>
-///     where T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>> {}
-/// //  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ where clause
+///     where T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>> {}
+/// //  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ where clause
 /// ```
 fn get_struct_params<'s>(
     struct_def: &'s StructDef,

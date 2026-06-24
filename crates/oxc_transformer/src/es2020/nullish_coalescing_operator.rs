@@ -28,7 +28,7 @@
 //! * Babel plugin implementation: <https://github.com/babel/babel/tree/v7.26.2/packages/babel-plugin-transform-nullish-coalescing-operator>
 //! * Nullish coalescing TC39 proposal: <https://github.com/tc39-transfer/proposal-nullish-coalescing>
 
-use oxc_allocator::{Box as ArenaBox, TakeIn};
+use oxc_allocator::{ArenaBox, TakeIn};
 use oxc_ast::{NONE, ast::*};
 use oxc_semantic::{ScopeFlags, SymbolFlags};
 use oxc_span::SPAN;
@@ -54,9 +54,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for NullishCoalescingOperator {
         }
 
         // Take ownership of the `LogicalExpression`
-        let Expression::LogicalExpression(logical_expr) = expr.take_in(ctx.ast) else {
-            unreachable!()
-        };
+        let Expression::LogicalExpression(logical_expr) = expr.take_in(ctx) else { unreachable!() };
 
         *expr = self.transform_logical_expression(logical_expr, ctx);
     }

@@ -1,7 +1,7 @@
 use std::{iter, ops::ControlFlow};
 
 use crate::generated::ancestor::Ancestor;
-use oxc_allocator::{Box, TakeIn, Vec};
+use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
 use oxc_ast::ast::*;
 use oxc_ast_visit::Visit;
 use oxc_ecmascript::{
@@ -47,13 +47,13 @@ impl<'a> PeepholeOptimizations {
     ///
     /// ## MinimizeExitPoints:
     /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/MinimizeExitPoints.java>
-    pub fn minimize_statements(stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
-        let mut old_stmts = stmts.take_in(ctx.ast);
+    pub fn minimize_statements(stmts: &mut ArenaVec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+        let mut old_stmts = stmts.take_in(ctx);
         let mut is_control_flow_dead = false;
         let mut keep_var = KeepVar::new(ctx.ast);
         let mut identity_drops = 0u32;
         for i in 0..old_stmts.len() {
-            let stmt = old_stmts[i].take_in(ctx.ast);
+            let stmt = old_stmts[i].take_in(ctx);
             if is_control_flow_dead
                 && !stmt.is_module_declaration()
                 && !matches!(stmt.as_declaration(), Some(Declaration::FunctionDeclaration(_)))
@@ -209,7 +209,7 @@ impl<'a> PeepholeOptimizations {
                             if let Expression::UnaryExpression(unary_expr) = &mut prev_if.test
                                 && unary_expr.operator.is_not()
                             {
-                                prev_if.test = unary_expr.argument.take_in(ctx.ast);
+                                prev_if.test = unary_expr.argument.take_in(ctx);
                                 std::mem::swap(&mut left, &mut right);
                             }
 
@@ -230,7 +230,7 @@ impl<'a> PeepholeOptimizations {
                                 // "if (a) return b; return c;" => "return a ? b : c;"
                                 Self::minimize_conditional(
                                     prev_if.span,
-                                    prev_if.test.take_in(ctx.ast),
+                                    prev_if.test.take_in(ctx),
                                     left,
                                     right,
                                     ctx,
@@ -304,7 +304,7 @@ impl<'a> PeepholeOptimizations {
                             if let Expression::UnaryExpression(unary_expr) = &mut prev_if.test
                                 && unary_expr.operator.is_not()
                             {
-                                prev_if.test = unary_expr.argument.take_in(ctx.ast);
+                                prev_if.test = unary_expr.argument.take_in(ctx);
                                 std::mem::swap(&mut left, &mut right);
                             }
 
@@ -325,7 +325,7 @@ impl<'a> PeepholeOptimizations {
                                 // "if (a) throw b; throw c;" => "throw a ? b : c;"
                                 Self::minimize_conditional(
                                     prev_if.span,
-                                    prev_if.test.take_in(ctx.ast),
+                                    prev_if.test.take_in(ctx),
                                     left,
                                     right,
                                     ctx,
@@ -359,8 +359,8 @@ impl<'a> PeepholeOptimizations {
     fn minimize_statement(
         stmt: Statement<'a>,
         i: usize,
-        stmts: &mut Vec<'a, Statement<'a>>,
-        result: &mut Vec<'a, Statement<'a>>,
+        stmts: &mut ArenaVec<'a, Statement<'a>>,
+        result: &mut ArenaVec<'a, Statement<'a>>,
         is_control_flow_dead: &mut bool,
 
         ctx: &mut TraverseCtx<'a>,
@@ -417,8 +417,8 @@ impl<'a> PeepholeOptimizations {
         b: &mut Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let a = a.take_in(ctx.ast);
-        let b = b.take_in(ctx.ast);
+        let a = a.take_in(ctx);
+        let b = b.take_in(ctx);
         if let Expression::SequenceExpression(mut sequence_expr) = a {
             // `(a, b); c`
             sequence_expr.expressions.push(b);
@@ -447,8 +447,8 @@ impl<'a> PeepholeOptimizations {
     /// * remove the variable declarator if it is unused
     /// * keep the initializer if it has side effects
     fn handle_variable_declaration(
-        mut var_decl: Box<'a, VariableDeclaration<'a>>,
-        result: &mut Vec<'a, Statement<'a>>,
+        mut var_decl: ArenaBox<'a, VariableDeclaration<'a>>,
+        result: &mut ArenaVec<'a, Statement<'a>>,
 
         ctx: &mut TraverseCtx<'a>,
     ) {
@@ -521,8 +521,8 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn handle_expression_statement(
-        mut expr_stmt: Box<'a, ExpressionStatement<'a>>,
-        result: &mut Vec<'a, Statement<'a>>,
+        mut expr_stmt: ArenaBox<'a, ExpressionStatement<'a>>,
+        result: &mut ArenaVec<'a, Statement<'a>>,
 
         ctx: &mut TraverseCtx<'a>,
     ) {
@@ -618,7 +618,7 @@ impl<'a> PeepholeOptimizations {
 
     fn merge_assignment_to_declaration(
         assign_expr: &mut AssignmentExpression<'a>,
-        result: &mut Vec<'a, Statement<'a>>,
+        result: &mut ArenaVec<'a, Statement<'a>>,
         ctx: &TraverseCtx<'a>,
     ) -> bool {
         if assign_expr.operator != AssignmentOperator::Assign {
@@ -643,7 +643,7 @@ impl<'a> PeepholeOptimizations {
                         || assign_expr.right.is_literal_value(true, ctx))
                 {
                     // "var a; a = b();" => "var a = b();"
-                    decl.init = Some(assign_expr.right.take_in(ctx.ast));
+                    decl.init = Some(assign_expr.right.take_in(ctx));
                     return true;
                 }
                 // Note it is not possible to compress like:
@@ -669,8 +669,8 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn handle_switch_statement(
-        mut switch_stmt: Box<'a, SwitchStatement<'a>>,
-        result: &mut Vec<'a, Statement<'a>>,
+        mut switch_stmt: ArenaBox<'a, SwitchStatement<'a>>,
+        result: &mut ArenaVec<'a, Statement<'a>>,
 
         ctx: &mut TraverseCtx<'a>,
     ) {
@@ -726,9 +726,9 @@ impl<'a> PeepholeOptimizations {
 
     fn handle_if_statement(
         i: usize,
-        stmts: &mut Vec<'a, Statement<'a>>,
-        mut if_stmt: Box<'a, IfStatement<'a>>,
-        result: &mut Vec<'a, Statement<'a>>,
+        stmts: &mut ArenaVec<'a, Statement<'a>>,
+        mut if_stmt: ArenaBox<'a, IfStatement<'a>>,
+        result: &mut ArenaVec<'a, Statement<'a>>,
 
         ctx: &mut TraverseCtx<'a>,
     ) -> ControlFlow<()> {
@@ -757,8 +757,8 @@ impl<'a> PeepholeOptimizations {
                     if_stmt.test = Self::join_with_left_associative_op(
                         if_stmt.test.span(),
                         LogicalOperator::Or,
-                        prev_if_stmt.test.take_in(ctx.ast),
-                        if_stmt.test.take_in(ctx.ast),
+                        prev_if_stmt.test.take_in(ctx),
+                        if_stmt.test.take_in(ctx),
                         ctx,
                     );
                     let dropped = result.pop().unwrap();
@@ -827,16 +827,14 @@ impl<'a> PeepholeOptimizations {
                         } else {
                             body[0].span()
                         };
-                        let test = if_stmt.test.take_in(ctx.ast);
+                        let test = if_stmt.test.take_in(ctx);
                         let mut test = Self::minimize_not(test.span(), test, ctx);
                         Self::minimize_expression_in_boolean_context(&mut test, ctx);
                         let consequent = if body.len() == 1 {
                             body.remove(0)
                         } else {
                             let scope_id = ctx.create_child_scope_of_current(ScopeFlags::empty());
-                            let block_stmt =
-                                ctx.ast.block_statement_with_scope_id(span, body, scope_id);
-                            Statement::BlockStatement(ctx.ast.alloc(block_stmt))
+                            ctx.ast.statement_block_with_scope_id(span, body, scope_id)
                         };
                         let mut if_stmt = ctx.ast.if_statement(test.span(), test, consequent, None);
                         let if_stmt = Self::try_minimize_if(&mut if_stmt, ctx)
@@ -875,8 +873,8 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn handle_return_statement(
-        mut ret_stmt: Box<'a, ReturnStatement<'a>>,
-        result: &mut Vec<'a, Statement<'a>>,
+        mut ret_stmt: ArenaBox<'a, ReturnStatement<'a>>,
+        result: &mut ArenaVec<'a, Statement<'a>>,
         is_control_flow_dead: &mut bool,
 
         ctx: &mut TraverseCtx<'a>,
@@ -897,9 +895,8 @@ impl<'a> PeepholeOptimizations {
                     let a = &mut prev_expr_stmt.expression;
                     prev_expr_stmt.expression = Self::join_sequence(a, argument, ctx);
                 } else {
-                    result.push(
-                        ctx.ast.statement_expression(argument.span(), argument.take_in(ctx.ast)),
-                    );
+                    result
+                        .push(ctx.ast.statement_expression(argument.span(), argument.take_in(ctx)));
                 }
             }
             if let Some(old) = ret_stmt.argument.take() {
@@ -926,8 +923,8 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn handle_throw_statement(
-        mut throw_stmt: Box<'a, ThrowStatement<'a>>,
-        result: &mut Vec<'a, Statement<'a>>,
+        mut throw_stmt: ArenaBox<'a, ThrowStatement<'a>>,
+        result: &mut ArenaVec<'a, Statement<'a>>,
         is_control_flow_dead: &mut bool,
 
         ctx: &mut TraverseCtx<'a>,
@@ -954,8 +951,8 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn handle_for_statement(
-        mut for_stmt: Box<'a, ForStatement<'a>>,
-        result: &mut Vec<'a, Statement<'a>>,
+        mut for_stmt: ArenaBox<'a, ForStatement<'a>>,
+        result: &mut ArenaVec<'a, Statement<'a>>,
 
         ctx: &mut TraverseCtx<'a>,
     ) {
@@ -1020,9 +1017,8 @@ impl<'a> PeepholeOptimizations {
                             ctx.drop_statement(&dropped);
                         }
                     } else {
-                        for_stmt.init = Some(ForStatementInit::from(
-                            prev_expr_stmt.expression.take_in(ctx.ast),
-                        ));
+                        for_stmt.init =
+                            Some(ForStatementInit::from(prev_expr_stmt.expression.take_in(ctx)));
                         let dropped = result.pop().unwrap();
                         ctx.drop_statement(&dropped);
                     }
@@ -1055,8 +1051,8 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn handle_for_in_statement(
-        mut for_in_stmt: Box<'a, ForInStatement<'a>>,
-        result: &mut Vec<'a, Statement<'a>>,
+        mut for_in_stmt: ArenaBox<'a, ForInStatement<'a>>,
+        result: &mut ArenaVec<'a, Statement<'a>>,
 
         ctx: &mut TraverseCtx<'a>,
     ) {
@@ -1146,8 +1142,8 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn handle_for_of_statement(
-        mut for_of_stmt: Box<'a, ForOfStatement<'a>>,
-        result: &mut Vec<'a, Statement<'a>>,
+        mut for_of_stmt: ArenaBox<'a, ForOfStatement<'a>>,
+        result: &mut ArenaVec<'a, Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         let is_block_scoped_decl = matches!(&for_of_stmt.left, ForStatementLeft::VariableDeclaration(var_decl) if !var_decl.kind.is_var());
@@ -1188,8 +1184,8 @@ impl<'a> PeepholeOptimizations {
 
     /// `appendIfOrLabelBodyPreservingScope`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L9852>
     fn handle_block(
-        result: &mut Vec<'a, Statement<'a>>,
-        block_stmt: Box<'a, BlockStatement<'a>>,
+        result: &mut ArenaVec<'a, Statement<'a>>,
+        block_stmt: ArenaBox<'a, BlockStatement<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         let keep_block = block_stmt.body.iter().any(Self::statement_cares_about_scope);
@@ -1241,7 +1237,7 @@ impl<'a> PeepholeOptimizations {
     /// `substituteSingleUseSymbolInStmt`: <https://github.com/evanw/esbuild/blob/v0.25.9/internal/js_parser/js_parser.go#L9583>
     fn substitute_single_use_symbol_in_statement(
         expr_in_stmt: &mut Expression<'a>,
-        stmts: &mut Vec<'a, Statement<'a>>,
+        stmts: &mut ArenaVec<'a, Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
         non_scoped_literal_only: bool,
     ) -> bool {
@@ -1286,7 +1282,7 @@ impl<'a> PeepholeOptimizations {
 
     fn substitute_single_use_symbol_within_declaration(
         kind: VariableDeclarationKind,
-        declarations: &mut Vec<'a, VariableDeclarator<'a>>,
+        declarations: &mut ArenaVec<'a, VariableDeclarator<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> bool {
         if Self::keep_top_level_var_in_script_mode(ctx)
@@ -1408,7 +1404,7 @@ impl<'a> PeepholeOptimizations {
                     // with the replacement expression.
                     // https://github.com/rolldown/rolldown/issues/8248
                     let target_span = target_expr.span();
-                    let mut new_expr = replacement.take_in(ctx.ast);
+                    let mut new_expr = replacement.take_in(ctx);
                     // Span fix-up on the still-owned new node before the slot replacement, not the slot replacement itself.
                     *new_expr.span_mut() = target_span;
                     ctx.replace_expression(target_expr, new_expr);
@@ -1917,7 +1913,7 @@ impl<'a> PeepholeOptimizations {
                 }
             }
             Expression::ChainExpression(chain_expr) => {
-                let mut expr = Expression::from(chain_expr.expression.take_in(ctx.ast));
+                let mut expr = Expression::from(chain_expr.expression.take_in(ctx));
                 let changed = Self::substitute_single_use_symbol_in_expression(
                     &mut expr,
                     search_for,

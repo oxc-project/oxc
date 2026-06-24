@@ -1,4 +1,4 @@
-use oxc_allocator::{Box as ArenaBox, CloneIn};
+use oxc_allocator::{ArenaBox, CloneIn};
 use oxc_ast::{NONE, ast::*};
 use oxc_span::{SPAN, Span};
 
@@ -137,11 +137,11 @@ impl<'a> IsolatedDeclarations<'a> {
 
     pub(crate) fn transform_formal_parameters(
         &self,
-        params: &FormalParameters<'a>,
+        params: &ArenaBox<'a, FormalParameters<'a>>,
         in_private_constructor: bool,
     ) -> ArenaBox<'a, FormalParameters<'a>> {
         if params.kind.is_signature() || (params.rest.is_none() && params.items.is_empty()) {
-            return self.ast.alloc(params.clone_in(self.ast.allocator));
+            return params.clone_in(self.ast.allocator);
         }
 
         let items = self.ast.vec_from_iter(

@@ -1,7 +1,7 @@
 //! ES2022: Class Properties
 //! Transform of `super` expressions.
 
-use oxc_allocator::{Box as ArenaBox, TakeIn, Vec as ArenaVec};
+use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
 use oxc_ast::ast::*;
 use oxc_span::SPAN;
 use oxc_traverse::ast_operations::get_var_name_from_node;
@@ -92,7 +92,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
         is_callee: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let property = member.expression.take_in(ctx.ast);
+        let property = member.expression.take_in(ctx);
         self.create_super_prop_get(member.span, property, is_callee, ctx)
     }
 
@@ -207,7 +207,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::AssignmentExpression(assign_expr) = expr.take_in(ctx.ast) else {
+        let Expression::AssignmentExpression(assign_expr) = expr.take_in(ctx) else {
             unreachable!()
         };
         let AssignmentExpression { span, operator, right: value, left, .. } = assign_expr.unbox();
@@ -235,7 +235,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::AssignmentExpression(assign_expr) = expr.take_in(ctx.ast) else {
+        let Expression::AssignmentExpression(assign_expr) = expr.take_in(ctx) else {
             unreachable!()
         };
         let AssignmentExpression { span, operator, right: value, left, .. } = assign_expr.unbox();
@@ -370,7 +370,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::UpdateExpression(mut update_expr) = expr.take_in(ctx.ast) else {
+        let Expression::UpdateExpression(mut update_expr) = expr.take_in(ctx) else {
             unreachable!()
         };
         let SimpleAssignmentTarget::StaticMemberExpression(member) = &mut update_expr.argument
@@ -433,7 +433,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::UpdateExpression(mut update_expr) = expr.take_in(ctx.ast) else {
+        let Expression::UpdateExpression(mut update_expr) = expr.take_in(ctx) else {
             unreachable!()
         };
         let SimpleAssignmentTarget::ComputedMemberExpression(member) = &mut update_expr.argument
@@ -443,7 +443,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
 
         let temp_var_name_base = get_var_name_from_node(member.as_ref());
 
-        let property = member.expression.get_inner_expression_mut().take_in(ctx.ast);
+        let property = member.expression.get_inner_expression_mut().take_in(ctx);
 
         *expr = self.transform_super_update_expression_impl(
             &temp_var_name_base,

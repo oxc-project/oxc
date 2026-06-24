@@ -54,7 +54,7 @@ pub use format_element::{
 };
 pub use format_extensions::{MemoizeFormat, Memoized};
 pub use formatted::Formatted;
-pub use formatter::Formatter;
+pub use formatter::{Formatter, arena_cow_str};
 pub use group_id::{GroupId, UniqueGroupIdBuilder};
 pub use options::{
     IndentStyle, IndentWidth, IndentWidthFromIntError, LineEnding, LineWidth,

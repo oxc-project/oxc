@@ -37,11 +37,12 @@ use std::mem;
 
 use rustc_hash::FxHashMap;
 
-use oxc_allocator::{Address, Box as ArenaBox, GetAddress, TakeIn, Vec as ArenaVec};
+use oxc_allocator::{Address, ArenaBox, ArenaVec, GetAddress, TakeIn};
 use oxc_ast::{NONE, ast::*};
 use oxc_ecmascript::BoundNames;
 use oxc_semantic::{NodeId, ScopeFlags, ScopeId, SymbolFlags, SymbolId};
 use oxc_span::{SPAN, Span};
+use oxc_str::static_ident;
 use oxc_traverse::{BoundIdentifier, Traverse};
 
 use crate::{
@@ -134,7 +135,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                     for_of_init_symbol_id,
                 );
 
-                let old_body = for_of_stmt.body.take_in(ctx.ast);
+                let old_body = for_of_stmt.body.take_in(ctx);
                 let new_body = ctx.ast.vec_from_array([using_stmt, old_body]);
                 for_of_stmt.body = ctx.ast.statement_block_with_scope_id(SPAN, new_body, scope_id);
                 return;
@@ -161,7 +162,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                 for_of_init_symbol_id,
             );
 
-            let old_body = for_of_stmt.body.take_in(ctx.ast);
+            let old_body = for_of_stmt.body.take_in(ctx);
 
             let new_body = ctx.ast.vec_from_array([using_stmt, old_body]);
             for_of_stmt.body = ctx.ast.statement_block_with_scope_id(SPAN, new_body, scope_id);
@@ -364,7 +365,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
             return;
         }
 
-        let program_body = program.body.take_in(ctx.ast);
+        let program_body = program.body.take_in(ctx);
 
         let (mut program_body, inner_block): (
             ArenaVec<'a, Statement<'a>>,
@@ -392,7 +393,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                             }
                             _ => (
                                 ctx.generate_binding_in_current_scope(
-                                    ctx.ast.ident("_default"),
+                                    static_ident!("_default"),
                                     SymbolFlags::FunctionScopedVariable,
                                 ),
                                 SPAN,
@@ -471,7 +472,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                             return (program_body, inner_block);
                         }
 
-                        let export_specifiers = match decl.take_in(ctx.ast) {
+                        let export_specifiers = match decl.take_in(ctx) {
                             Declaration::ClassDeclaration(class_decl) => {
                                 let class_binding = class_decl.id.as_ref().unwrap();
                                 let class_binding_name = class_binding.name;
@@ -686,7 +687,11 @@ impl<'a> ExplicitResourceManagement<'a> {
                                             .create_read_expression(ctx),
                                         ctx.ast.identifier_name(
                                             SPAN,
-                                            if needs_await { "a" } else { "u" },
+                                            if needs_await {
+                                                static_ident!("a")
+                                            } else {
+                                                static_ident!("u")
+                                            },
                                         ),
                                         false,
                                     ),
@@ -724,7 +729,7 @@ impl<'a> ExplicitResourceManagement<'a> {
                     )),
                     false,
                 )),
-                stmt.take_in(ctx.ast),
+                stmt.take_in(ctx),
             ]);
 
             ctx.ast.block_statement_with_scope_id(SPAN, vec, block_stmt_sid)
@@ -806,7 +811,14 @@ impl<'a> ExplicitResourceManagement<'a> {
                         Expression::from(ctx.ast.member_expression_static(
                             SPAN,
                             using_ctx.as_ref().unwrap().create_read_expression(ctx),
-                            ctx.ast.identifier_name(SPAN, if is_await_using { "a" } else { "u" }),
+                            ctx.ast.identifier_name(
+                                SPAN,
+                                if is_await_using {
+                                    static_ident!("a")
+                                } else {
+                                    static_ident!("u")
+                                },
+                            ),
                             false,
                         )),
                         NONE,
@@ -819,7 +831,7 @@ impl<'a> ExplicitResourceManagement<'a> {
 
         let using_ctx = using_ctx?;
 
-        let mut stmts = stmts.take_in(ctx.ast);
+        let mut stmts = stmts.take_in(ctx);
 
         // `var _usingCtx = babelHelpers.usingCtx();`
         let callee = helper_load(Helper::UsingCtx, ctx);
@@ -869,7 +881,7 @@ impl<'a> ExplicitResourceManagement<'a> {
         // We can skip using `generate_uid` here as no code within the `catch` block which can use a
         // binding called `_`. `using_ctx` is a UID with prefix `_usingCtx`.
         let ident = ctx.generate_binding(
-            ctx.ast.ident("_"),
+            static_ident!("_"),
             block_scope_id,
             SymbolFlags::CatchVariable | SymbolFlags::FunctionScopedVariable,
         );

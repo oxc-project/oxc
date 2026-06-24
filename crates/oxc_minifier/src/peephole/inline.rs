@@ -12,6 +12,15 @@ impl<'a> PeepholeOptimizations {
     pub fn init_symbol_value(decl: &VariableDeclarator<'a>, ctx: &mut TraverseCtx<'a>) {
         let BindingPattern::BindingIdentifier(ident) = &decl.id else { return };
         let Some(symbol_id) = ident.symbol_id.get() else { return };
+        // Evaluate the initializer's constant once; reuse it for the value-context
+        // constant and the boolean-falsy fact below. `None` for a non-constant or
+        // absent initializer.
+        let init_constant = decl.init.as_ref().and_then(|e| e.evaluate_value(ctx));
+        // Whether the initializer is an explicit falsy constant (not the implicit
+        // `undefined` of `var x;`, which `init_constant` leaves `None`). Fed to
+        // `init_value`, which turns it into the `boolean_falsy` fact (see
+        // `SymbolValue::boolean_falsy`).
+        let falsy_init = init_constant.as_ref().is_some_and(Self::is_falsy_constant);
         let value = if Self::is_for_statement_init(ctx) {
             // for-statement initializers have their value set by the for statement itself.
             None
@@ -20,10 +29,23 @@ impl<'a> PeepholeOptimizations {
             // Skip unless the safety predicate proves no such read exists.
             None
         } else {
-            decl.init.as_ref().map_or(Some(ConstantValue::Undefined), |e| e.evaluate_value(ctx))
+            // No initializer hoists to `undefined`; otherwise reuse the constant.
+            decl.init.as_ref().map_or(Some(ConstantValue::Undefined), |_| init_constant)
         };
         let is_fresh_value = decl.init.as_ref().is_some_and(Self::is_fresh_value_expression);
-        ctx.init_value(symbol_id, value, is_fresh_value);
+        ctx.init_value(symbol_id, value, is_fresh_value, falsy_init);
+    }
+
+    /// A `ConstantValue` that coerces to `false` (`false`, `0`/`-0`/`NaN`, `""`,
+    /// `null`, `undefined`). BigInt is skipped conservatively.
+    fn is_falsy_constant(cv: &ConstantValue<'a>) -> bool {
+        match cv {
+            ConstantValue::Boolean(b) => !b,
+            ConstantValue::Number(n) => n.is_nan() || *n == 0.0,
+            ConstantValue::String(s) => s.as_ref().is_empty(),
+            ConstantValue::Null | ConstantValue::Undefined => true,
+            ConstantValue::BigInt(_) => false,
+        }
     }
 
     /// Predicate for inlining a hoisted `var x = <literal>;`. True when no read
@@ -37,10 +59,13 @@ impl<'a> PeepholeOptimizations {
     ///   `export … from`, `export * from`), skip: a cyclic importer can call
     ///   into our exports and observe any var our exported functions/classes
     ///   close over, regardless of export status;
-    /// - exactly one read, and it sits inside a nested function/arrow body
-    ///   (multi-use and same-call-frame reads are handled by
-    ///   `inline_identifier_reference`'s small-value rule or by
-    ///   `substitute_single_use_symbol`).
+    /// - every read sits inside a nested function/arrow body (the gap
+    ///   `substitute_single_use_symbol` can't reach). Multiple such reads are
+    ///   fine: the prelude check proves none observes the hoisted `undefined`,
+    ///   so the value is constant at every read, and the small-value rule /
+    ///   write-count guard in `inline_identifier_reference` decide whether each
+    ///   read actually folds (e.g. a write-once falsy flag read by `if (flag)`
+    ///   throughout — the Svelte/Vue `hydrating` shape, #14001).
     ///
     /// Limitation: the constant is recorded here at the declarator's exit, so a
     /// reader in a function declared *before* the var in source order has
@@ -61,11 +86,13 @@ impl<'a> PeepholeOptimizations {
         if body_unsafe || ctx.current_scope_id() != body_scope {
             return false;
         }
-        // Exactly one read, and it crosses a function boundary.
+        // At least one read, and every read crosses a function boundary.
         let mut reads = ctx.scoping().get_resolved_references(symbol_id).filter(|r| r.is_read());
-        let Some(read) = reads.next() else { return false };
-        reads.next().is_none()
-            && Self::read_crosses_function_boundary(read.scope_id(), body_scope, ctx)
+        let Some(first) = reads.next() else { return false };
+        if !Self::read_crosses_function_boundary(first.scope_id(), body_scope, ctx) {
+            return false;
+        }
+        reads.all(|read| Self::read_crosses_function_boundary(read.scope_id(), body_scope, ctx))
     }
 
     /// True if the scope chain from `read_scope` to `body_scope` (exclusive of
@@ -168,7 +195,7 @@ impl<'a> PeepholeOptimizations {
     ) {
         let Some(id) = id else { return };
         let Some(symbol_id) = id.symbol_id.get() else { return };
-        ctx.init_value(symbol_id, None, true);
+        ctx.init_value(symbol_id, None, true, false);
     }
 
     /// Initialize symbol value for class declarations.
@@ -178,7 +205,7 @@ impl<'a> PeepholeOptimizations {
         let Some(id) = &class.id else { return };
         let Some(symbol_id) = id.symbol_id.get() else { return };
         let is_fresh = !Self::class_may_have_property_side_effects(class);
-        ctx.init_value(symbol_id, None, is_fresh);
+        ctx.init_value(symbol_id, None, is_fresh, false);
     }
 
     fn is_for_statement_init(ctx: &TraverseCtx<'a>) -> bool {

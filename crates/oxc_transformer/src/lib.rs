@@ -7,7 +7,7 @@
 
 use std::path::Path;
 
-use oxc_allocator::{Allocator, TakeIn, Vec as ArenaVec};
+use oxc_allocator::{Allocator, ArenaVec, TakeIn};
 use oxc_ast::{AstBuilder, ast::*};
 use oxc_diagnostics::Diagnostics;
 #[cfg(feature = "react_compiler")]
@@ -645,7 +645,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
                 let Statement::ExpressionStatement(expr_stmt) = stmt else {
                     continue;
                 };
-                let expression = Some(expr_stmt.expression.take_in(ctx.ast));
+                let expression = Some(expr_stmt.expression.take_in(ctx));
                 *stmt = ctx.ast.statement_return(SPAN, expression);
                 return;
             }

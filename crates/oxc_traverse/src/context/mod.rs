@@ -1,4 +1,4 @@
-use oxc_allocator::{Allocator, Box as ArenaBox, Vec as ArenaVec};
+use oxc_allocator::{Allocator, ArenaBox, ArenaVec, GetAllocator};
 use oxc_ast::{
     AstBuilder,
     ast::{Expression, IdentifierReference, Statement},
@@ -311,7 +311,7 @@ impl<'a, State> TraverseCtx<'a, State> {
     /// This is a shortcut for `ctx.scoping.insert_scope_below_statements`.
     pub fn insert_scope_below_statements(
         &mut self,
-        stmts: &ArenaVec<Statement>,
+        stmts: &ArenaVec<'a, Statement<'a>>,
         flags: ScopeFlags,
     ) -> ScopeId {
         self.scoping.insert_scope_below_statements(stmts, flags)
@@ -707,5 +707,12 @@ impl<'a, State> TraverseCtx<'a, State> {
     #[inline]
     pub(crate) fn set_current_block_scope_id(&mut self, scope_id: ScopeId) {
         self.scoping.set_current_block_scope_id(scope_id);
+    }
+}
+
+impl<'a, State> GetAllocator<'a> for TraverseCtx<'a, State> {
+    #[inline]
+    fn allocator(&self) -> &'a Allocator {
+        self.ast.allocator()
     }
 }

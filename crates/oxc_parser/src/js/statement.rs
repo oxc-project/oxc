@@ -1,4 +1,4 @@
-use oxc_allocator::{Box, Vec};
+use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 use oxc_str::Str;
@@ -33,7 +33,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_directives_and_statements(
         &mut self,
         in_ts_namespace_body: bool,
-    ) -> (Vec<'a, Directive<'a>>, Vec<'a, Statement<'a>>) {
+    ) -> (ArenaVec<'a, Directive<'a>>, ArenaVec<'a, Statement<'a>>) {
         let mut directives = self.ast.vec();
         let mut statements = self.ast.vec();
 
@@ -256,7 +256,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// Section 14.2 Block Statement
-    pub(crate) fn parse_block(&mut self) -> Box<'a, BlockStatement<'a>> {
+    pub(crate) fn parse_block(&mut self) -> ArenaBox<'a, BlockStatement<'a>> {
         let span = self.start_span();
         let body = self.parse_normal_list(Kind::LCurly, Kind::RCurly, |p| {
             p.parse_statement_list_item(StatementContext::StatementList)
@@ -535,15 +535,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
         }
 
-        let init_declaration = self.alloc(using_decl);
-        self.parse_any_for_loop(span, parenthesis_opening_span, init_declaration, r#await)
+        self.parse_any_for_loop(span, parenthesis_opening_span, using_decl, r#await)
     }
 
     fn parse_any_for_loop(
         &mut self,
         span: u32,
         parenthesis_opening_span: Span,
-        init_declaration: Box<'a, VariableDeclaration<'a>>,
+        init_declaration: ArenaBox<'a, VariableDeclaration<'a>>,
         r#await: bool,
     ) -> Statement<'a> {
         match self.cur_kind() {
@@ -790,7 +789,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.ast.statement_try(self.end_span(span), block, handler, finalizer)
     }
 
-    fn parse_catch_clause(&mut self) -> Box<'a, CatchClause<'a>> {
+    fn parse_catch_clause(&mut self) -> ArenaBox<'a, CatchClause<'a>> {
         let span = self.start_span();
         self.bump_any(); // advance `catch`
         let pattern = if self.eat(Kind::LParen) {

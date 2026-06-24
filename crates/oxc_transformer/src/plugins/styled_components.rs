@@ -63,7 +63,7 @@ use std::{
 use rustc_hash::FxHasher;
 use serde::Deserialize;
 
-use oxc_allocator::{TakeIn, Vec as ArenaVec};
+use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::{AstBuilder, NONE, ast::*};
 use oxc_data_structures::{inline_string::InlineString, slice_iter::SliceIter};
 use oxc_semantic::SymbolId;
@@ -411,7 +411,7 @@ impl<'a> StyledComponents<'a> {
             quasi: TemplateLiteral { span: quasi_span, quasis, expressions, .. },
             type_arguments,
             ..
-        } = expr.take_in(ctx.ast);
+        } = expr.take_in(ctx);
 
         let quasis_elements = ctx.ast.vec_from_iter(quasis.into_iter().map(|quasi| {
             ArrayExpressionElement::from(ctx.ast.expression_string_literal(
@@ -455,7 +455,7 @@ impl<'a> StyledComponents<'a> {
             self.add_properties(&mut properties, ctx);
             let object = ctx.ast.alloc_object_expression(SPAN, properties);
             let arguments = ctx.ast.vec1(Argument::ObjectExpression(object));
-            let object = expr.take_in(ctx.ast);
+            let object = expr.take_in(ctx);
             let property = ctx.ast.identifier_name(SPAN, "withConfig");
             let callee =
                 Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false));

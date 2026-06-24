@@ -1,7 +1,7 @@
 use std::iter;
 
 use crate::{CompressOptionsUnused, TraverseCtx, generated::ancestor::Ancestor};
-use oxc_allocator::{TakeIn, Vec};
+use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::ast::*;
 use oxc_compat::ESFeature;
 use oxc_ecmascript::{
@@ -65,7 +65,7 @@ impl<'a> PeepholeOptimizations {
         let Expression::UnaryExpression(unary_expr) = e else { return false };
         match unary_expr.operator {
             UnaryOperator::Void | UnaryOperator::LogicalNot => {
-                let new_expr = unary_expr.argument.take_in(ctx.ast);
+                let new_expr = unary_expr.argument.take_in(ctx);
                 ctx.replace_expression(e, new_expr);
                 Self::remove_unused_expression(e, ctx)
             }
@@ -73,7 +73,7 @@ impl<'a> PeepholeOptimizations {
                 if unary_expr.argument.is_identifier_reference() {
                     true
                 } else {
-                    let new_expr = unary_expr.argument.take_in(ctx.ast);
+                    let new_expr = unary_expr.argument.take_in(ctx);
                     ctx.replace_expression(e, new_expr);
                     Self::remove_unused_expression(e, ctx)
                 }
@@ -118,7 +118,7 @@ impl<'a> PeepholeOptimizations {
         }
         if Self::remove_unused_expression(&mut logical_expr.right, ctx) {
             Self::remove_unused_expression(&mut logical_expr.left, ctx);
-            let new_expr = logical_expr.left.take_in(ctx.ast);
+            let new_expr = logical_expr.left.take_in(ctx);
             ctx.replace_expression(e, new_expr);
             return false;
         }
@@ -159,7 +159,7 @@ impl<'a> PeepholeOptimizations {
                                 ctx,
                             )
                         {
-                            let new_expr = logical_right.take_in(ctx.ast);
+                            let new_expr = logical_right.take_in(ctx);
                             ctx.replace_expression(e, new_expr);
                             return false;
                         }
@@ -198,16 +198,16 @@ impl<'a> PeepholeOptimizations {
                                 assignment_expr.operator = AssignmentOperator::LogicalNullish;
                                 // `??=` reads the LHS to check for nullish, so update reference flags.
                                 Self::mark_assignment_target_as_read(&assignment_expr.left, ctx);
-                                let new_expr = logical_right.take_in(ctx.ast);
+                                let new_expr = logical_right.take_in(ctx);
                                 ctx.replace_expression(e, new_expr);
                                 return false;
                             }
 
                             let new_expr = ctx.ast.expression_logical(
                                 *logical_span,
-                                new_left_hand_expr.take_in(ctx.ast),
+                                new_left_hand_expr.take_in(ctx),
                                 LogicalOperator::Coalesce,
-                                logical_right.take_in(ctx.ast),
+                                logical_right.take_in(ctx),
                             );
                             ctx.replace_expression(e, new_expr);
                             return false;
@@ -498,7 +498,7 @@ impl<'a> PeepholeOptimizations {
             if test {
                 return true;
             }
-            let new_expr = conditional_expr.test.take_in(ctx.ast);
+            let new_expr = conditional_expr.test.take_in(ctx);
             ctx.replace_expression(e, new_expr);
             return false;
         }
@@ -508,8 +508,8 @@ impl<'a> PeepholeOptimizations {
             let new_expr = Self::join_with_left_associative_op(
                 conditional_expr.span,
                 LogicalOperator::Or,
-                conditional_expr.test.take_in(ctx.ast),
-                conditional_expr.alternate.take_in(ctx.ast),
+                conditional_expr.test.take_in(ctx),
+                conditional_expr.alternate.take_in(ctx),
                 ctx,
             );
             ctx.replace_expression(e, new_expr);
@@ -521,8 +521,8 @@ impl<'a> PeepholeOptimizations {
             let new_expr = Self::join_with_left_associative_op(
                 conditional_expr.span,
                 LogicalOperator::And,
-                conditional_expr.test.take_in(ctx.ast),
-                conditional_expr.consequent.take_in(ctx.ast),
+                conditional_expr.test.take_in(ctx),
+                conditional_expr.consequent.take_in(ctx),
                 ctx,
             );
             ctx.replace_expression(e, new_expr);
@@ -551,12 +551,12 @@ impl<'a> PeepholeOptimizations {
                 match (left, right) {
                     (true, true) => true,
                     (true, false) => {
-                        let new_expr = binary_expr.right.take_in(ctx.ast);
+                        let new_expr = binary_expr.right.take_in(ctx);
                         ctx.replace_expression(e, new_expr);
                         false
                     }
                     (false, true) => {
-                        let new_expr = binary_expr.left.take_in(ctx.ast);
+                        let new_expr = binary_expr.left.take_in(ctx);
                         ctx.replace_expression(e, new_expr);
                         false
                     }
@@ -564,8 +564,8 @@ impl<'a> PeepholeOptimizations {
                         let new_expr = ctx.ast.expression_sequence(
                             binary_expr.span,
                             ctx.ast.vec_from_array([
-                                binary_expr.left.take_in(ctx.ast),
-                                binary_expr.right.take_in(ctx.ast),
+                                binary_expr.left.take_in(ctx),
+                                binary_expr.right.take_in(ctx),
                             ]),
                         );
                         ctx.replace_expression(e, new_expr);
@@ -604,7 +604,7 @@ impl<'a> PeepholeOptimizations {
             if right_as_primitive.is_symbol() == Some(false)
                 && !binary_expr.right.may_have_side_effects(ctx)
             {
-                let new_expr = binary_expr.left.take_in(ctx.ast);
+                let new_expr = binary_expr.left.take_in(ctx);
                 ctx.replace_expression(e, new_expr);
                 return true;
             }
@@ -660,14 +660,14 @@ impl<'a> PeepholeOptimizations {
     }
 
     pub fn fold_arguments_into_needed_expressions(
-        args: &mut Vec<'a, Argument<'a>>,
+        args: &mut ArenaVec<'a, Argument<'a>>,
         ctx: &mut TraverseCtx<'a>,
-    ) -> Vec<'a, Expression<'a>> {
+    ) -> ArenaVec<'a, Expression<'a>> {
         // `args.drain(..)` would silently move owned `Argument`s out and the
         // filter would drop any whose inner expression `remove_unused_expression`
         // collapsed to nothing — leaking references in the dropped subtree.
         // Use a manual loop so we can `drop_expression` before discarding.
-        let mut out: Vec<'a, Expression<'a>> = ctx.ast.vec_with_capacity(args.len());
+        let mut out: ArenaVec<'a, Expression<'a>> = ctx.ast.vec_with_capacity(args.len());
         for arg in args.drain(..) {
             let mut expr = match arg {
                 Argument::SpreadElement(e) => ctx.ast.expression_array(
@@ -733,7 +733,7 @@ impl<'a> PeepholeOptimizations {
         if symbol_value.read_references_count > 0 {
             return false;
         }
-        let new_expr = assign_expr.right.take_in(ctx.ast);
+        let new_expr = assign_expr.right.take_in(ctx);
         ctx.replace_expression(e, new_expr);
         false
     }
@@ -859,7 +859,7 @@ impl<'a> PeepholeOptimizations {
     pub fn remove_unused_class(
         c: &mut Class<'a>,
         ctx: &mut TraverseCtx<'a>,
-    ) -> Option<Vec<'a, Expression<'a>>> {
+    ) -> Option<ArenaVec<'a, Expression<'a>>> {
         // TypeError `class C extends (() => {}) {}`
         if c.super_class
             .as_ref()
@@ -914,7 +914,7 @@ impl<'a> PeepholeOptimizations {
                 && let Some(expr) = key.as_expression_mut()
                 && expr.may_have_side_effects(ctx)
             {
-                exprs.push(expr.take_in(ctx.ast));
+                exprs.push(expr.take_in(ctx));
             }
             // Save static initializer.
             if e.r#static()

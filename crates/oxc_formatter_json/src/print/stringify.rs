@@ -11,7 +11,7 @@ use oxc_ast::ast::{
     ObjectPropertyKind, PropertyKey, StringLiteral, TemplateLiteral,
 };
 use oxc_formatter_core::{
-    Buffer, Format,
+    Buffer, Format, arena_cow_str,
     builders::{block_indent, hard_line_break, space, text},
     write,
 };
@@ -21,7 +21,7 @@ use oxc_syntax::operator::UnaryOperator;
 use crate::context::JsonFormatContext;
 
 use super::{
-    FormatInvalidJson, JsonFormatter, arena_cow_str, format_with, literal::FmtJsonString,
+    FormatInvalidJson, JsonFormatter, format_with, literal::FmtJsonString,
     number_string_round_trips, write_quoted_str,
 };
 
@@ -90,7 +90,7 @@ fn write_number_value<'a>(lit: &NumericLiteral<'a>, f: &mut JsonFormatter<'_, 'a
 fn write_string<'a>(lit: &StringLiteral<'a>, f: &mut JsonFormatter<'_, 'a>) {
     if COMPAT_PRE_18405 {
         let body = json_stringify_escape(lit.value.as_str(), lit.lone_surrogates);
-        write_quoted_str(f, b'"', arena_cow_str(body, f));
+        write_quoted_str(f, b'"', arena_cow_str(&body, f));
     } else {
         // `preferred_quote` already pins `json-stringify` to `"`.
         FmtJsonString { lit }.fmt(f);
@@ -212,7 +212,7 @@ fn write_template<'a>(template: &TemplateLiteral<'a>, f: &mut JsonFormatter<'_, 
         return;
     };
     let body = json_stringify_escape(cooked.as_str(), quasi.lone_surrogates);
-    write_quoted_str(f, b'"', arena_cow_str(body, f));
+    write_quoted_str(f, b'"', arena_cow_str(&body, f));
 }
 
 /// Escapes `content` the way `JSON.stringify` does for a string body

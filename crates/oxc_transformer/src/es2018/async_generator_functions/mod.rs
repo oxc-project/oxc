@@ -172,7 +172,7 @@ impl<'a> AsyncGeneratorFunctions<'a> {
         }
 
         expr.argument.as_mut().map(|argument| {
-            let argument = Argument::from(argument.take_in(ctx.ast));
+            let argument = Argument::from(argument.take_in(ctx));
             let arguments = ctx.ast.vec1(argument);
             let mut argument = helper_call_expr(Helper::AsyncIterator, arguments, ctx);
             let arguments = ctx.ast.vec1(Argument::from(argument));
@@ -206,7 +206,7 @@ impl<'a> AsyncGeneratorFunctions<'a> {
             return None;
         }
 
-        let mut argument = expr.argument.take_in(ctx.ast);
+        let mut argument = expr.argument.take_in(ctx);
         let arguments = ctx.ast.vec1(Argument::from(argument));
         argument = helper_call_expr(Helper::AwaitAsyncGenerator, arguments, ctx);
 

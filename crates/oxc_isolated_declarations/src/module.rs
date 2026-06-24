@@ -1,4 +1,4 @@
-use oxc_allocator::{Box as ArenaBox, CloneIn, TakeIn, Vec as ArenaVec};
+use oxc_allocator::{ArenaBox, ArenaVec, CloneIn, TakeIn};
 use oxc_ast::{NONE, ast::*};
 use oxc_span::{GetSpan, SPAN};
 use oxc_str::Str;
@@ -9,10 +9,10 @@ impl<'a> IsolatedDeclarations<'a> {
     pub(crate) fn transform_export_named_declaration(
         &mut self,
         prev_decl: &ExportNamedDeclaration<'a>,
-    ) -> Option<ExportNamedDeclaration<'a>> {
+    ) -> Option<ArenaBox<'a, ExportNamedDeclaration<'a>>> {
         let decl = self.transform_declaration(prev_decl.declaration.as_ref()?, false)?;
 
-        Some(self.ast.export_named_declaration(
+        Some(self.ast.alloc_export_named_declaration(
             prev_decl.span,
             Some(decl),
             self.ast.vec(),
@@ -192,7 +192,7 @@ impl<'a> IsolatedDeclarations<'a> {
             if let Statement::ExportNamedDeclaration(decl) = stmt
                 && let Some(declaration) = &mut decl.declaration
             {
-                *stmt = Statement::from(declaration.take_in(self.ast));
+                *stmt = Statement::from(declaration.take_in(self));
             }
         });
     }

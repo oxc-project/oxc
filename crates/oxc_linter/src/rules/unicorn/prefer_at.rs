@@ -394,20 +394,26 @@ impl PreferAt {
                 },
             );
         } else if let Some(second_negative) = get_negative_integer(second_arg, None) {
-            ctx.diagnostic_with_fix(
-                prefer_at_diagnostic(call_expr.span, "slice().pop/shift"),
-                |fixer| {
-                    if is_arguments_object(&slice_static.object) {
-                        return fixer.noop();
-                    }
-                    create_at_fix(
-                        &fixer,
-                        slice_static.object.span(),
-                        Span::new(slice_static.object.span().start, call_expr.span.end),
-                        second_negative,
-                    )
-                },
-            );
+            // `slice(start, end).pop()` returns the slice's LAST element. `.at()` can only
+            // express that when the slice is exactly one element (`end == start + 1`), in which
+            // case the element is at `start`. For a multi-element slice `.at()` cannot replicate
+            // `.pop()` (which takes the last element), so skip reporting in this case.
+            if second_negative == first_negative + 1 {
+                ctx.diagnostic_with_fix(
+                    prefer_at_diagnostic(call_expr.span, "slice().pop/shift"),
+                    |fixer| {
+                        if is_arguments_object(&slice_static.object) {
+                            return fixer.noop();
+                        }
+                        create_at_fix(
+                            &fixer,
+                            slice_static.object.span(),
+                            Span::new(slice_static.object.span().start, call_expr.span.end),
+                            first_negative,
+                        )
+                    },
+                );
+            }
         }
     }
 
@@ -732,6 +738,8 @@ fn test() {
         ("array.slice(-9, 0)[0]", None),
         ("array.slice(-5, 0).pop()", None),
         ("array.slice(-3, 0).shift()", None),
+        ("array.slice(-5, -3).pop()", None),
+        ("array.slice(-9, -2).pop()", None),
         ("++array[1]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
         (
             "const offset = 5;const extraArgument = 6;string.charAt(offset + 9, extraArgument)",
@@ -881,8 +889,8 @@ fn test() {
         // Two-arg slice patterns
         ("array.slice(-9, -8)[0]", "array.at(-9)", None),
         ("array.slice(-3, -2).shift()", "array.at(-3)", None),
-        ("array.slice(-9, -8).pop()", "array.at(-8)", None),
-        ("array.slice(-5, -3).pop()", "array.at(-3)", None),
+        ("array.slice(-9, -8).pop()", "array.at(-9)", None),
+        ("array.slice(-2, -1).pop()", "array.at(-2)", None),
         // Lodash patterns
         ("_.last(array)", "array.at(-1)", None),
         ("lodash.last(array)", "array.at(-1)", None),

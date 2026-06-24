@@ -40,7 +40,7 @@
 
 use std::iter;
 
-use oxc_allocator::{TakeIn, Vec as ArenaVec};
+use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::{NONE, ast::*};
 use oxc_semantic::SymbolFlags;
 use oxc_span::SPAN;
@@ -83,7 +83,7 @@ impl<'a> TaggedTemplateTransform {
             return;
         }
 
-        let Expression::TaggedTemplateExpression(tagged) = expr.take_in(ctx.ast) else {
+        let Expression::TaggedTemplateExpression(tagged) = expr.take_in(ctx) else {
             unreachable!();
         };
 

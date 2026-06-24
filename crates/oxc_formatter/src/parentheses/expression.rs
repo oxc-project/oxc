@@ -861,13 +861,13 @@ impl NeedsParentheses<'_> for AstNode<'_, JSXEmptyExpression> {
 
 impl NeedsParentheses<'_> for AstNode<'_, TSAsExpression<'_>> {
     fn needs_parentheses(&self, _f: &JsFormatter<'_, '_>) -> bool {
-        ts_as_or_satisfies_needs_parens(self.span(), &self.expression, self.parent())
+        ts_as_or_satisfies_needs_parens(self.span(), self.expression(), self.parent())
     }
 }
 
 impl NeedsParentheses<'_> for AstNode<'_, TSSatisfiesExpression<'_>> {
     fn needs_parentheses(&self, _f: &JsFormatter<'_, '_>) -> bool {
-        ts_as_or_satisfies_needs_parens(self.span(), &self.expression, self.parent())
+        ts_as_or_satisfies_needs_parens(self.span(), self.expression(), self.parent())
     }
 }
 
@@ -876,7 +876,12 @@ impl NeedsParentheses<'_> for AstNode<'_, TSTypeAssertion<'_>> {
         match self.parent() {
             AstNodes::TSAsExpression(_) | AstNodes::TSSatisfiesExpression(_) => true,
             AstNodes::BinaryExpression(binary) => {
+                // The base of `**` must be an `UpdateExpression`; a type assertion `<T>x` is a
+                // unary-like expression, so as the left operand it must be parenthesized
+                // (`<T>x ** 2` is a syntax error, same restriction as `-2 ** 2`).
                 matches!(binary.operator, BinaryOperator::ShiftLeft)
+                    || (binary.operator == BinaryOperator::Exponential
+                        && binary.left.span() == self.span())
             }
             _ => type_cast_like_needs_parens(self.span(), self.parent()),
         }
@@ -1170,7 +1175,7 @@ fn await_or_yield_needs_parens(span: Span, node: &AstNodes<'_>) -> bool {
 
 fn ts_as_or_satisfies_needs_parens(
     span: Span,
-    inner: &Expression<'_>,
+    inner: &AstNode<'_, Expression<'_>>,
     parent: &AstNodes<'_>,
 ) -> bool {
     match parent {
@@ -1178,9 +1183,23 @@ fn ts_as_or_satisfies_needs_parens(
         // Binary-like
         | AstNodes::LogicalExpression(_)
         | AstNodes::BinaryExpression(_) => true,
-        // `export default (function foo() {} as bar)` and `export default (class {} as bar)`
-        AstNodes::ExportDefaultDeclaration(_) =>
-            matches!(inner, Expression::FunctionExpression(_) | Expression::ClassExpression(_)),
+        // `export default (function foo() {} as bar)` and `export default (class {} as bar)`.
+        // Without parens, the leading `function`/`class` token makes `export default` parse the RHS as a declaration,
+        // detaching the cast.
+        // The leftmost expression is checked (not just `inner`) so chained casts and member chains are covered too,
+        // e.g. `export default (function () {} as A as B)` and `export default (function () {}.bar as A)`.
+        //
+        // When the leftmost function/class already wraps itself,
+        // the outer cast doesn't need its own parens, or we'd emit `((function () {})() as A)`.
+        // Mirrors `Function::needs_parentheses`.
+        AstNodes::ExportDefaultDeclaration(_) => {
+            let leftmost = ExpressionLeftSide::leftmost(inner);
+            matches!(
+                leftmost.as_ref(),
+                Expression::FunctionExpression(_) | Expression::ClassExpression(_)
+            ) && !matches!(leftmost.parent(), AstNodes::TaggedTemplateExpression(_))
+                && !leftmost.is_call_like_callee()
+        }
         _ => {
             type_cast_like_needs_parens(span, parent)
         }

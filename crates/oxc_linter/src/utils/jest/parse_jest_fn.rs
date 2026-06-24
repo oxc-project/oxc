@@ -1,6 +1,8 @@
 use std::{borrow::Cow, cmp::Ordering};
 
 use cow_utils::CowUtils;
+
+use oxc_allocator::ArenaVec;
 use oxc_ast::{
     AstKind,
     ast::{
@@ -402,7 +404,7 @@ pub struct ParsedExpectFnCall<'a> {
     /// this args changed bases on condition
     /// In `expect(fn).toBeCalledTimes(2)`, it will be `[2]`
     /// In `expect(fn)`, it will be `fn`
-    pub args: &'a oxc_allocator::Vec<'a, Argument<'a>>,
+    pub args: &'a ArenaVec<'a, Argument<'a>>,
     // In `expect(1).not.resolved.toBe()`, "not", "resolved" will be modifier
     // it save a group of modifier index from members
     pub modifier_indices: Vec<usize>,
@@ -413,11 +415,11 @@ pub struct ParsedExpectFnCall<'a> {
 
     /// the arguments passed to the expect function
     /// In `expect(1).toBe(2)`, it will be `[1]`
-    pub expect_arguments: Option<&'a oxc_allocator::Vec<'a, Argument<'a>>>,
+    pub expect_arguments: Option<&'a ArenaVec<'a, Argument<'a>>>,
     /// the arguments passed to the matcher function
     /// In `expect(1).toBe(2)`, it will be `[2]
     /// In `expect(1)`, it will be `None`
-    pub matcher_arguments: Option<&'a oxc_allocator::Vec<'a, Argument<'a>>>,
+    pub matcher_arguments: Option<&'a ArenaVec<'a, Argument<'a>>>,
 }
 
 impl<'a> ParsedExpectFnCall<'a> {
