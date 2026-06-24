@@ -1,7 +1,9 @@
 use napi::Either;
 use napi_derive::napi;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_compat::EngineTargets;
+use oxc_minifier::{CacheValue, ManglePropertiesOptions, PropertyMangleCache};
 use oxc_str::CompactStr;
 
 #[napi(object)]
@@ -367,6 +369,43 @@ pub struct MinifyOptions {
     pub codegen: Option<Either<bool, CodegenOptions>>,
 
     pub sourcemap: Option<bool>,
+
+    /// Mangle (rename) property names matching this regular expression.
+    ///
+    /// Property mangling is **off by default** and **unsafe**: it can break
+    /// reflection, JSON serialization, dynamic property access, and DOM APIs.
+    /// Only enable it when you control all the properties being renamed (the
+    /// common convention is to prefix such properties with `_` and pass
+    /// `mangleProps: "^_"`).
+    ///
+    /// The value is a regular expression **source string** (not a `RegExp`).
+    ///
+    /// Aligned with esbuild's `mangleProps`.
+    pub mangle_props: Option<String>,
+
+    /// Do not mangle property names matching this regular expression, even if
+    /// they match {@link MinifyOptions#mangleProps mangleProps}.
+    ///
+    /// The value is a regular expression **source string** (not a `RegExp`).
+    ///
+    /// Aligned with esbuild's `reserveProps`.
+    pub reserve_props: Option<String>,
+
+    /// A list of literal property names that must never be mangled.
+    ///
+    /// These are added to (never replace) the always-reserved set.
+    ///
+    /// Terser-style `reserved` list.
+    pub reserved_props: Option<Vec<String>>,
+
+    /// A name cache for stable property mangling across builds.
+    ///
+    /// Pass an empty object `{}` to receive the resulting cache on
+    /// {@link MinifyResult#mangleCache}, then feed it back into subsequent
+    /// builds to keep names stable. A value of `false` reserves the property
+    /// (it will never be mangled).
+    #[napi(ts_type = "Record<string, string | false>")]
+    pub mangle_cache: Option<FxHashMap<String, Either<String, bool>>>,
 }
 
 impl TryFrom<&MinifyOptions> for oxc_minifier::MinifierOptions {
@@ -383,6 +422,63 @@ impl TryFrom<&MinifyOptions> for oxc_minifier::MinifierOptions {
             None | Some(Either::A(true)) => Some(oxc_minifier::MangleOptions::default()),
             Some(Either::B(o)) => Some(oxc_minifier::MangleOptions::from(o)),
         };
-        Ok(oxc_minifier::MinifierOptions { compress, mangle, mangle_properties: None })
+        let mangle_properties = build_mangle_properties(o)?;
+        Ok(oxc_minifier::MinifierOptions { compress, mangle, mangle_properties })
     }
+}
+
+/// Build [`ManglePropertiesOptions`] from the N-API options.
+///
+/// Returns `Ok(None)` when property mangling is disabled (no `mangleProps` regex).
+///
+/// # Errors
+///
+/// Returns an error string if a regex fails to compile, or if the
+/// `mangleCache` contains an invalid key/value (e.g. `__proto__` or `true`).
+fn build_mangle_properties(o: &MinifyOptions) -> Result<Option<ManglePropertiesOptions>, String> {
+    // Off by default: only enabled by a user-supplied `mangleProps` regex.
+    let Some(mangle_props) = &o.mangle_props else {
+        return Ok(None);
+    };
+
+    let mangle = Some(lazy_regex::Regex::new(mangle_props).map_err(|e| e.to_string())?);
+
+    let reserve = match &o.reserve_props {
+        Some(s) => Some(lazy_regex::Regex::new(s).map_err(|e| e.to_string())?),
+        None => None,
+    };
+
+    let reserved: FxHashSet<CompactStr> =
+        o.reserved_props.iter().flatten().map(|s| CompactStr::from(s.as_str())).collect();
+
+    let mut cache = PropertyMangleCache::default();
+    if let Some(map) = &o.mangle_cache {
+        for (k, v) in map {
+            if k == "__proto__" {
+                return Err("mangleCache keys must not be `__proto__`".into());
+            }
+            let value = match v {
+                Either::A(s) => {
+                    if s == "__proto__" {
+                        return Err("mangleCache values must not be `__proto__`".into());
+                    }
+                    CacheValue::Name(CompactStr::from(s.as_str()))
+                }
+                Either::B(false) => CacheValue::Reserved,
+                Either::B(true) => {
+                    return Err("mangleCache values must be a string or false".into());
+                }
+            };
+            cache.map.insert(CompactStr::from(k.as_str()), value);
+        }
+    }
+
+    Ok(Some(ManglePropertiesOptions {
+        mangle,
+        reserve,
+        reserved,
+        mangle_quoted: false,
+        debug: false,
+        cache,
+    }))
 }

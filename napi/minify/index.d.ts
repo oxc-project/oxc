@@ -181,6 +181,46 @@ export interface MinifyOptions {
   mangle?: boolean | MangleOptions
   codegen?: boolean | CodegenOptions
   sourcemap?: boolean
+  /**
+   * Mangle (rename) property names matching this regular expression.
+   *
+   * Property mangling is **off by default** and **unsafe**: it can break
+   * reflection, JSON serialization, dynamic property access, and DOM APIs.
+   * Only enable it when you control all the properties being renamed (the
+   * common convention is to prefix such properties with `_` and pass
+   * `mangleProps: "^_"`).
+   *
+   * The value is a regular expression **source string** (not a `RegExp`).
+   *
+   * Aligned with esbuild's `mangleProps`.
+   */
+  mangleProps?: string
+  /**
+   * Do not mangle property names matching this regular expression, even if
+   * they match {@link MinifyOptions#mangleProps mangleProps}.
+   *
+   * The value is a regular expression **source string** (not a `RegExp`).
+   *
+   * Aligned with esbuild's `reserveProps`.
+   */
+  reserveProps?: string
+  /**
+   * A list of literal property names that must never be mangled.
+   *
+   * These are added to (never replace) the always-reserved set.
+   *
+   * Terser-style `reserved` list.
+   */
+  reservedProps?: Array<string>
+  /**
+   * A name cache for stable property mangling across builds.
+   *
+   * Pass an empty object `{}` to receive the resulting cache on
+   * {@link MinifyResult#mangleCache}, then feed it back into subsequent
+   * builds to keep names stable. A value of `false` reserves the property
+   * (it will never be mangled).
+   */
+  mangleCache?: Record<string, string | false>
 }
 
 export interface MinifyResult {
@@ -192,6 +232,15 @@ export interface MinifyResult {
    * Only populated when `codegen.legalComments` is `"linked"` or `"external"`.
    */
   legalComments: Array<string>
+  /**
+   * The property-name cache produced by property mangling.
+   *
+   * Only populated when {@link MinifyOptions#mangleProps mangleProps} is set.
+   * Maps original property names to their mangled names (or `false` if the
+   * name was reserved). Feed it back into {@link MinifyOptions#mangleCache}
+   * to keep names stable across builds.
+   */
+  mangleCache?: Record<string, string | false>
 }
 
 /** Minify synchronously. */
