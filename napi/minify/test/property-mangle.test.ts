@@ -1,3 +1,5 @@
+// Property-mangling *behavioral* conformance lives in `esbuild-mangle-props.test.ts`;
+// this file covers the NAPI option/cache/error surface.
 import { describe, expect, it } from "vitest";
 
 import { minifySync } from "../index";
@@ -6,25 +8,6 @@ describe("property mangling", () => {
   it("is off by default", () => {
     const r = minifySync("t.js", "globalThis.addEventListener()", { mangle: true });
     expect(r.code).toContain("addEventListener");
-  });
-
-  it("renames matching properties", () => {
-    // base54 names start at `e`, not `a`. `compress: false` so the pure
-    // expression is not DCE'd away.
-    const r = minifySync("t.js", "x._foo", { mangleProps: "^_", compress: false });
-    expect(r.code).toContain("x.e");
-    expect(r.code).not.toContain("x._foo");
-    expect(r.code).not.toContain("x.a");
-  });
-
-  it("reserveProps carves out a subset", () => {
-    const r = minifySync("t.js", "x._keep; x._foo;", {
-      mangleProps: "^_",
-      reserveProps: "_keep$",
-      compress: false,
-    });
-    expect(r.code).toContain("_keep");
-    expect(r.code).not.toContain("_foo");
   });
 
   it("returns a cache and reuses it for stable names", () => {
@@ -56,18 +39,6 @@ describe("property mangling", () => {
     });
     expect(r.code).toContain("_keep");
     expect(r.code).not.toContain("_foo");
-  });
-
-  it("a quoted access reserves the unquoted property", () => {
-    // `o['_foo']` is a quoted access, which reserves `_foo` program-wide, so the
-    // unquoted `o._foo` must survive. `compress: false` isolates the property pass
-    // (compress would otherwise un-quote `o['_foo']`).
-    const r = minifySync("t.js", "o['_foo']; o._foo;", {
-      mangleProps: "^_",
-      compress: false,
-    });
-    expect(r.code).toContain("_foo");
-    expect(r.code).not.toContain("o.e");
   });
 
   it("rejects an invalid regex", () => {
