@@ -210,6 +210,23 @@ export interface MinifyOptions {
    * (it will never be mangled).
    */
   mangleCache?: Record<string, string | false>
+  /**
+   * Also mangle quoted property names that match
+   * {@link MinifyOptions#mangleProps mangleProps}.
+   *
+   * When `false` (default), a quoted property occurrence (`x['_foo']`,
+   * `{ '_foo': 1 }`, `'_foo' in x`) reserves that name program-wide, so it is
+   * never mangled. When `true`, such quoted keys become mangle candidates and
+   * are renamed consistently with their unquoted siblings (computed string
+   * indices are un-quoted to dot access where possible).
+   *
+   * Has no effect unless {@link MinifyOptions#mangleProps mangleProps} is set.
+   *
+   * Aligned with esbuild's `mangleQuoted`.
+   *
+   * @default false
+   */
+  mangleQuoted?: boolean
 }
 
 export interface MinifyResult {
