@@ -8,7 +8,7 @@ use oxc_syntax::symbol::SymbolId;
 
 pub struct KeepVar<'a> {
     ast: AstBuilder<'a>,
-    vars: std::vec::Vec<(Str<'a>, Span, Option<SymbolId>)>,
+    vars: Vec<(Str<'a>, Span, Option<SymbolId>)>,
     all_hoisted: bool,
 }
 

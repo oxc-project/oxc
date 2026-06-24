@@ -553,7 +553,7 @@ impl<'a> PatternParser<'a> {
                 // [SS:EE] AtomEscape :: k GroupName
                 // It is a Syntax Error if GroupSpecifiersThatMatch(GroupName) is empty.
                 if !self.state.capturing_group_names.contains(name.as_str()) {
-                    let names: std::vec::Vec<&str> =
+                    let names: Vec<&str> =
                         self.state.capturing_group_names.iter().map(Str::as_str).collect();
                     return Err(diagnostics::invalid_named_reference(
                         self.span_factory.create(span_start, self.reader.offset()),

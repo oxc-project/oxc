@@ -26,7 +26,7 @@ impl<'a> ModuleRecordBuilder<'a> {
         }
     }
 
-    pub fn build(mut self) -> (ModuleRecord<'a>, std::vec::Vec<OxcDiagnostic>) {
+    pub fn build(mut self) -> (ModuleRecord<'a>, Vec<OxcDiagnostic>) {
         // The `ParseModule` algorithm requires `importedBoundNames` (import entries) to be
         // resolved before resolving export entries.
         self.resolve_export_entries();
@@ -39,7 +39,7 @@ impl<'a> ModuleRecordBuilder<'a> {
         self.module_record.has_module_syntax
     }
 
-    pub fn errors(&self) -> std::vec::Vec<OxcDiagnostic> {
+    pub fn errors(&self) -> Vec<OxcDiagnostic> {
         let mut errors = vec![];
 
         let module_record = &self.module_record;

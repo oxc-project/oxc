@@ -168,7 +168,7 @@ impl<'a> ModuleImportsStore<'a> {
 
     pub(crate) fn get_require(
         source: Str<'a>,
-        names: std::vec::Vec<Import<'a>>,
+        names: Vec<Import<'a>>,
         require_symbol_id: Option<SymbolId>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {

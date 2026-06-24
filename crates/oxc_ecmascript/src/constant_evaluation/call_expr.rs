@@ -496,7 +496,7 @@ fn try_fold_math_variadic<'a>(
     if !ctx.is_global_expr("Math", object) {
         return None;
     }
-    let mut numbers = std::vec::Vec::new();
+    let mut numbers = Vec::new();
     for arg in args {
         let expr = arg.as_expression()?;
         let value = expr.get_side_free_number_value(ctx)?;

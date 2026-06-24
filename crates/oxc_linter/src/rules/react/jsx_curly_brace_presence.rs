@@ -680,13 +680,12 @@ fn report_missing_curly_for_text_node(ctx: &LintContext, span: Span, string_valu
         let fixer = fixer.for_multifix();
         let alloc = Allocator::default();
         let ast_builder = AstBuilder::new(&alloc);
-        let line_matches =
-            string_value.match_indices('\n').map(|(i, _)| i).collect::<std::vec::Vec<_>>();
+        let line_matches = string_value.match_indices('\n').map(|(i, _)| i).collect::<Vec<_>>();
         let fix_contexts = if line_matches.is_empty() {
             build_missing_curly_fix_context_for_part(span, string_value, 0)
                 .iter()
                 .copied()
-                .collect::<std::vec::Vec<_>>()
+                .collect::<Vec<_>>()
         } else {
             string_value
                 .split('\n')
@@ -695,7 +694,7 @@ fn report_missing_curly_for_text_node(ctx: &LintContext, span: Span, string_valu
                     let line_start = calculate_line_start(line_matches.as_slice(), index);
                     build_missing_curly_fix_context_for_line(span, line, line_start)
                 })
-                .collect::<std::vec::Vec<_>>()
+                .collect::<Vec<_>>()
         };
         if fix_contexts.is_empty() {
             return fixer.noop();
@@ -720,9 +719,8 @@ fn build_missing_curly_fix_context_for_line(
     span: Span,
     line: &str,
     line_start: u32,
-) -> std::vec::Vec<(Span, &str)> {
-    let html_entities =
-        HTML_ENTITY_REGEX.find_iter(line).map(|mat| mat.end()).collect::<std::vec::Vec<_>>();
+) -> Vec<(Span, &str)> {
+    let html_entities = HTML_ENTITY_REGEX.find_iter(line).map(|mat| mat.end()).collect::<Vec<_>>();
     HTML_ENTITY_REGEX
         .split(line)
         .enumerate()
@@ -730,7 +728,7 @@ fn build_missing_curly_fix_context_for_line(
             let part_start = calculate_part_start(html_entities.as_slice(), index);
             build_missing_curly_fix_context_for_part(span, part, line_start + part_start)
         })
-        .collect::<std::vec::Vec<_>>()
+        .collect::<Vec<_>>()
 }
 
 fn build_missing_curly_fix_context_for_part(

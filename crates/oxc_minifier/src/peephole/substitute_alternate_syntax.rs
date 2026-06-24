@@ -1703,7 +1703,7 @@ impl<'a> PeepholeOptimizations {
         });
         let Some(delimiter) = Self::pick_delimiter(&strings) else { return };
 
-        let concatenated_string = strings.collect::<std::vec::Vec<_>>().join(delimiter);
+        let concatenated_string = strings.collect::<Vec<_>>().join(delimiter);
 
         // "str1,str2".split(',')
         let new_value = ctx.ast.expression_call_with_pure(
