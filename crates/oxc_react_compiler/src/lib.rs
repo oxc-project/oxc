@@ -1,5 +1,6 @@
 use oxc_allocator::{Allocator, ArenaVec};
 
+pub mod category;
 pub mod convert_scope;
 pub mod diagnostics;
 pub mod prefilter;
@@ -38,9 +39,10 @@ pub mod react_compiler_validation;
 use crate::react_compiler::entrypoint::compile_result::{CompileResult, LoggerEvent};
 use crate::react_compiler::entrypoint::program::compile_program;
 use convert_scope::convert_scope_info;
-use diagnostics::compile_result_to_diagnostics;
+use diagnostics::compile_result_to_categorized_diagnostics;
 use prefilter::{has_react_like_functions, has_resource_management_declarations};
 
+pub use category::{ReactCompilerCategory, ReactCompilerDiagnostic};
 // Re-exported so integrations needn't depend on the upstream `react_compiler` crates.
 pub use crate::react_compiler::entrypoint::plugin_options::{
     CompilerTarget, DynamicGatingConfig, GatingConfig, PluginOptions,
@@ -96,8 +98,9 @@ pub struct TransformResult {
 }
 
 pub struct LintResult {
-    /// Errors and warnings produced by the compile.
-    pub diagnostics: Diagnostics,
+    /// Errors and warnings produced by the compile, each paired with its
+    /// [`ReactCompilerCategory`].
+    pub diagnostics: Vec<ReactCompilerDiagnostic>,
 }
 
 /// Run the React Compiler on a pre-parsed program, rewriting `program` in place
@@ -114,6 +117,9 @@ pub fn transform<'a>(
     if let Some(compiled) = compiled {
         *program = compiled;
     }
+    // `transform` reports plain diagnostics; the per-diagnostic categories are only
+    // needed by `lint`, so flatten them away here.
+    let diagnostics = diagnostics.into_iter().map(|d| d.diagnostic).collect();
     TransformResult { changed, diagnostics, events }
 }
 
@@ -126,7 +132,7 @@ fn compile<'a>(
     program: &Program<'a>,
     allocator: &'a Allocator,
     options: PluginOptions,
-) -> (Option<Program<'a>>, Diagnostics, Vec<LoggerEvent>) {
+) -> (Option<Program<'a>>, Vec<ReactCompilerDiagnostic>, Vec<LoggerEvent>) {
     let source_text = program.source_text;
 
     // The HIR lowering computes `SourceLocation` line/column from a line-offset
@@ -144,12 +150,12 @@ fn compile<'a>(
     if !matches!(options.compilation_mode.as_str(), "all" | "annotation")
         && !has_react_like_functions(program)
     {
-        return (None, Diagnostics::default(), Vec::new());
+        return (None, Vec::new(), Vec::new());
     }
 
     // `using`/`await using` disposal semantics aren't preserved yet — skip the file.
     if has_resource_management_declarations(program) {
-        return (None, Diagnostics::default(), Vec::new());
+        return (None, Vec::new(), Vec::new());
     }
 
     let semantic = SemanticBuilder::new().with_build_nodes(true).build(program).semantic;
@@ -161,7 +167,7 @@ fn compile<'a>(
     // Function discovery and lowering both walk the oxc `Program` directly.
     let result = compile_program(&ast_builder, program, scope_info, options);
 
-    let diagnostics = compile_result_to_diagnostics(&result);
+    let diagnostics = compile_result_to_categorized_diagnostics(&result);
     let (program_ast, events) = match result {
         CompileResult::Success { ast, events, .. } => (ast, events),
         CompileResult::Error { events, .. } => (None, events),

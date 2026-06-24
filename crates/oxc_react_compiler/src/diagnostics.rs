@@ -10,10 +10,21 @@ use crate::react_compiler::entrypoint::compile_result::{
     CompileResult, CompilerErrorDetailInfo, CompilerErrorInfo, LoggerEvent, LoggerSourceLocation,
 };
 
+use crate::category::{ReactCompilerCategory, ReactCompilerDiagnostic};
+
 /// Convert a `CompileResult` into OXC diagnostics. Each diagnostic carries its
 /// own severity (set by [`OxcDiagnostic::error`]/[`OxcDiagnostic::warn`]).
 pub fn compile_result_to_diagnostics(result: &CompileResult) -> Diagnostics {
-    let mut diagnostics = Diagnostics::new();
+    compile_result_to_categorized_diagnostics(result).into_iter().map(|d| d.diagnostic).collect()
+}
+
+/// Like [`compile_result_to_diagnostics`], but pairs each diagnostic with its
+/// [`ReactCompilerCategory`] so consumers can filter or suppress by category
+/// without parsing the message text.
+pub fn compile_result_to_categorized_diagnostics(
+    result: &CompileResult,
+) -> Vec<ReactCompilerDiagnostic> {
+    let mut diagnostics = Vec::new();
 
     match result {
         CompileResult::Success { events, .. } => {
@@ -71,7 +82,7 @@ fn detail_labels(
     fn_loc.and_then(loc_to_span).map(|span| vec![LabeledSpan::underline(span)]).unwrap_or_default()
 }
 
-fn error_info_to_diagnostic(error: &CompilerErrorInfo) -> OxcDiagnostic {
+fn error_info_to_diagnostic(error: &CompilerErrorInfo) -> ReactCompilerDiagnostic {
     let message = format!("[ReactCompiler] {}", error.reason);
     let mut diag = OxcDiagnostic::error(message);
 
@@ -85,7 +96,8 @@ fn error_info_to_diagnostic(error: &CompilerErrorInfo) -> OxcDiagnostic {
         diag = diag.with_labels(labels);
     }
 
-    diag
+    // The top-level fatal error carries no category of its own.
+    ReactCompilerDiagnostic { diagnostic: diag, category: ReactCompilerCategory::Other }
 }
 
 /// Map a detail to an [`OxcDiagnostic`] at the compiler's own *display* severity
@@ -94,7 +106,7 @@ fn error_info_to_diagnostic(error: &CompilerErrorInfo) -> OxcDiagnostic {
 fn error_detail_to_diagnostic(
     detail: &CompilerErrorDetailInfo,
     fn_loc: Option<&LoggerSourceLocation>,
-) -> Option<OxcDiagnostic> {
+) -> Option<ReactCompilerDiagnostic> {
     let message = format!("[ReactCompiler] {}: {}", detail.category, detail.reason);
 
     let mut diagnostic = match detail.severity.as_str() {
@@ -113,10 +125,13 @@ fn error_detail_to_diagnostic(
         diagnostic = diagnostic.with_labels(labels);
     }
 
-    Some(diagnostic)
+    Some(ReactCompilerDiagnostic {
+        diagnostic,
+        category: ReactCompilerCategory::from_compiler_string(&detail.category),
+    })
 }
 
-fn event_to_diagnostic(event: &LoggerEvent) -> Option<OxcDiagnostic> {
+fn event_to_diagnostic(event: &LoggerEvent) -> Option<ReactCompilerDiagnostic> {
     match event {
         LoggerEvent::CompileSuccess { .. } | LoggerEvent::CompileSkip { .. } => None,
         LoggerEvent::CompileError { detail, fn_loc } => {
@@ -131,7 +146,10 @@ fn event_to_diagnostic(event: &LoggerEvent) -> Option<OxcDiagnostic> {
             if let Some(span) = fn_loc.as_ref().and_then(loc_to_span) {
                 diagnostic = diagnostic.with_label(LabeledSpan::underline(span));
             }
-            Some(diagnostic)
+            Some(ReactCompilerDiagnostic {
+                diagnostic,
+                category: ReactCompilerCategory::UnexpectedError,
+            })
         }
         LoggerEvent::PipelineError { data, fn_loc } => {
             let mut diagnostic =
@@ -139,7 +157,10 @@ fn event_to_diagnostic(event: &LoggerEvent) -> Option<OxcDiagnostic> {
             if let Some(span) = fn_loc.as_ref().and_then(loc_to_span) {
                 diagnostic = diagnostic.with_label(LabeledSpan::underline(span));
             }
-            Some(diagnostic)
+            Some(ReactCompilerDiagnostic {
+                diagnostic,
+                category: ReactCompilerCategory::PipelineError,
+            })
         }
     }
 }
