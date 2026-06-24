@@ -47,6 +47,29 @@ describe("property mangling", () => {
     expect(r.code).toContain("_foo");
   });
 
+  it("reservedProps (literal list) carves out a name", () => {
+    // `reservedProps` is the explicit literal list (vs `reserveProps`, a regex).
+    const r = minifySync("t.js", "o._keep; o._foo;", {
+      mangleProps: "^_",
+      reservedProps: ["_keep"],
+      compress: false,
+    });
+    expect(r.code).toContain("_keep");
+    expect(r.code).not.toContain("_foo");
+  });
+
+  it("a quoted access reserves the unquoted property", () => {
+    // `o['_foo']` is a quoted access, which reserves `_foo` program-wide, so the
+    // unquoted `o._foo` must survive. `compress: false` isolates the property pass
+    // (compress would otherwise un-quote `o['_foo']`).
+    const r = minifySync("t.js", "o['_foo']; o._foo;", {
+      mangleProps: "^_",
+      compress: false,
+    });
+    expect(r.code).toContain("_foo");
+    expect(r.code).not.toContain("o.e");
+  });
+
   it("rejects an invalid regex", () => {
     const r = minifySync("t.js", "x._foo", { mangleProps: "(" });
     expect(r.errors.length).toBe(1);
