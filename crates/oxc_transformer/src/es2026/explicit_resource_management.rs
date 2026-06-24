@@ -42,6 +42,7 @@ use oxc_ast::{NONE, ast::*};
 use oxc_ecmascript::BoundNames;
 use oxc_semantic::{NodeId, ScopeFlags, ScopeId, SymbolFlags, SymbolId};
 use oxc_span::{SPAN, Span};
+use oxc_str::static_ident;
 use oxc_traverse::{BoundIdentifier, Traverse};
 
 use crate::{
@@ -392,7 +393,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                             }
                             _ => (
                                 ctx.generate_binding_in_current_scope(
-                                    ctx.ast.ident("_default"),
+                                    static_ident!("_default"),
                                     SymbolFlags::FunctionScopedVariable,
                                 ),
                                 SPAN,
@@ -686,7 +687,11 @@ impl<'a> ExplicitResourceManagement<'a> {
                                             .create_read_expression(ctx),
                                         ctx.ast.identifier_name(
                                             SPAN,
-                                            if needs_await { "a" } else { "u" },
+                                            if needs_await {
+                                                static_ident!("a")
+                                            } else {
+                                                static_ident!("u")
+                                            },
                                         ),
                                         false,
                                     ),
@@ -806,7 +811,14 @@ impl<'a> ExplicitResourceManagement<'a> {
                         Expression::from(ctx.ast.member_expression_static(
                             SPAN,
                             using_ctx.as_ref().unwrap().create_read_expression(ctx),
-                            ctx.ast.identifier_name(SPAN, if is_await_using { "a" } else { "u" }),
+                            ctx.ast.identifier_name(
+                                SPAN,
+                                if is_await_using {
+                                    static_ident!("a")
+                                } else {
+                                    static_ident!("u")
+                                },
+                            ),
                             false,
                         )),
                         NONE,
@@ -869,7 +881,7 @@ impl<'a> ExplicitResourceManagement<'a> {
         // We can skip using `generate_uid` here as no code within the `catch` block which can use a
         // binding called `_`. `using_ctx` is a UID with prefix `_usingCtx`.
         let ident = ctx.generate_binding(
-            ctx.ast.ident("_"),
+            static_ident!("_"),
             block_scope_id,
             SymbolFlags::CatchVariable | SymbolFlags::FunctionScopedVariable,
         );

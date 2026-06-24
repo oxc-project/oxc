@@ -13,6 +13,7 @@ use oxc_ecmascript::{
 use oxc_semantic::ReferenceFlags;
 use oxc_span::GetSpan;
 use oxc_span::SPAN;
+use oxc_str::static_ident;
 use oxc_syntax::precedence::GetPrecedence;
 use oxc_syntax::{
     identifier::is_identifier_name_patched,
@@ -1336,11 +1337,11 @@ impl<'a> PeepholeOptimizations {
                     .as_member_expression()
                     .is_some_and(|mem_expr| mem_expr.is_specific_member_access("window", "Object"))
             {
-                let object = ctx.ast.ident("Object");
+                let object = static_ident!("Object");
                 let reference_id = ctx.create_unbound_reference(object, ReferenceFlags::Read);
                 let new_callee = ctx.ast.expression_identifier_with_reference_id(
                     call_expr.callee.span(),
-                    "Object",
+                    object,
                     reference_id,
                 );
                 ctx.replace_expression(&mut call_expr.callee, new_callee);

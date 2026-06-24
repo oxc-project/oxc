@@ -58,7 +58,7 @@ use oxc_ast::{NONE, ast::*};
 use oxc_ast_visit::Visit;
 use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{GetSpan, SPAN};
-use oxc_str::Ident;
+use oxc_str::{Ident, static_ident};
 use oxc_syntax::{
     identifier::{is_identifier_name, is_identifier_part, is_identifier_start},
     keyword::is_reserved_keyword,
@@ -278,7 +278,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
             let this_argument = Argument::from(ctx.ast.expression_this(SPAN));
             let arguments_argument = Argument::from(ctx.create_unbound_ident_expr(
                 SPAN,
-                ctx.ast.ident("arguments"),
+                static_ident!("arguments"),
                 ReferenceFlags::Read,
             ));
             (callee, ctx.ast.vec_from_array([this_argument, arguments_argument]))
@@ -639,7 +639,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
         }
 
         if name.is_empty() {
-            return ctx.ast.ident("_");
+            return static_ident!("_");
         }
 
         if is_reserved_keyword(name.as_str()) {
@@ -687,7 +687,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
         bound_ident: &BoundIdentifier<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
-        let arguments = ctx.ast.ident("arguments");
+        let arguments = static_ident!("arguments");
         let symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), arguments);
         let arguments_ident =
             Argument::from(ctx.create_ident_expr(SPAN, arguments, symbol_id, ReferenceFlags::Read));

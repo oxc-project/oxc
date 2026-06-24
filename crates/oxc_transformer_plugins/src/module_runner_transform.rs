@@ -725,8 +725,8 @@ impl<'a> ModuleRunnerTransform<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let object =
-            ctx.create_unbound_ident_expr(SPAN, ctx.ast.ident("Object"), ReferenceFlags::Read);
-        let member = create_member_callee(object, "defineProperty", ctx);
+            ctx.create_unbound_ident_expr(SPAN, static_ident!("Object"), ReferenceFlags::Read);
+        let member = create_member_callee(object, static_ident!("defineProperty"), ctx);
         ctx.ast.expression_call(SPAN, member, NONE, arguments, false)
     }
 
@@ -852,10 +852,10 @@ fn create_compute_property_access<'a>(
 /// `object` -> `object.call`.
 pub fn create_member_callee<'a>(
     object: Expression<'a>,
-    property: &'static str,
+    property: Ident<'a>,
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
-    let property = ctx.ast.identifier_name(SPAN, Str::from(property));
+    let property = ctx.ast.identifier_name(SPAN, property);
     Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false))
 }
 

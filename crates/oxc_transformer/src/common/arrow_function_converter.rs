@@ -97,7 +97,7 @@ use oxc_ast_visit::{VisitMut, walk_mut::walk_expression};
 use oxc_data_structures::stack::{NonEmptyStack, SparseStack};
 use oxc_semantic::{ReferenceFlags, SymbolId};
 use oxc_span::{GetSpan, SPAN};
-use oxc_str::Ident;
+use oxc_str::{Ident, static_ident};
 use oxc_syntax::{
     scope::{ScopeFlags, ScopeId},
     symbol::SymbolFlags,
@@ -1111,14 +1111,14 @@ impl<'a> ArrowFunctionConverter<'a> {
         Self::adjust_binding_scope(target_scope_id, &arguments_var, ctx);
 
         let mut init =
-            ctx.create_unbound_ident_expr(SPAN, ctx.ast.ident("arguments"), ReferenceFlags::Read);
+            ctx.create_unbound_ident_expr(SPAN, static_ident!("arguments"), ReferenceFlags::Read);
 
         // Top level may not have `arguments`, so we need to check it.
         // `typeof arguments === "undefined" ? void 0 : arguments;`
         if ctx.scoping().root_scope_id() == target_scope_id {
             let argument = ctx.create_unbound_ident_expr(
                 SPAN,
-                ctx.ast.ident("arguments"),
+                static_ident!("arguments"),
                 ReferenceFlags::Read,
             );
             let typeof_arguments = ctx.ast.expression_unary(SPAN, UnaryOperator::Typeof, argument);

@@ -3,6 +3,7 @@
 
 use oxc_ast::{NONE, ast::*};
 use oxc_span::{SPAN, Span};
+use oxc_str::static_ident;
 use oxc_syntax::reference::ReferenceFlags;
 
 use crate::{
@@ -347,7 +348,7 @@ impl<'a> ClassProperties<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         // `Object.defineProperty`
-        let object_name = ctx.ast.ident("Object");
+        let object_name = static_ident!("Object");
         let object_symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), object_name);
         let object =
             ctx.create_ident_expr(SPAN, object_name, object_symbol_id, ReferenceFlags::Read);

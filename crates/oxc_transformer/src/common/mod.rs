@@ -3,6 +3,7 @@
 use arrow_function_converter::ArrowFunctionConverter;
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
+use oxc_str::static_ident;
 use oxc_traverse::{Ancestor, Traverse};
 
 use crate::{EnvOptions, context::TraverseCtx, state::TransformState};
@@ -42,7 +43,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for Common<'a> {
                     .collect();
                 ctx.state.top_level_statements.insert_statements(stmts);
             } else {
-                let require_symbol_id = ctx.scoping().get_root_binding(ctx.ast.ident("require"));
+                let require_symbol_id = ctx.scoping().get_root_binding(static_ident!("require"));
                 let stmts: Vec<_> = imports
                     .into_iter()
                     .map(|(source, names)| {

@@ -6,7 +6,7 @@ use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_semantic::{ScopeFlags, ScopeId};
 use oxc_span::{SPAN, Span};
-use oxc_str::Ident;
+use oxc_str::{Ident, static_ident};
 use oxc_syntax::{
     constant_value::ConstantValue,
     number::NumberBase,
@@ -481,7 +481,7 @@ impl<'a> TypeScriptEnum {
 
         // Infinity
         let expr = if value.is_infinite() {
-            let infinity = ctx.ast.ident("Infinity");
+            let infinity = static_ident!("Infinity");
             let infinity_symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), infinity);
             ctx.create_ident_expr(SPAN, infinity, infinity_symbol_id, ReferenceFlags::Read)
         } else {
