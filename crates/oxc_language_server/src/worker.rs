@@ -102,7 +102,7 @@ impl WorkspaceWorker {
     /// Common aggregator for tool-provided diagnostics.
     async fn collect_diagnostics_with<F>(
         &self,
-        document: &TextDocument<'_>,
+        document: &TextDocument,
         run: F,
     ) -> Result<Vec<(Uri, Vec<Diagnostic>)>, String>
     where
@@ -149,7 +149,7 @@ impl WorkspaceWorker {
     /// When calling `Tool::run_diagnostic` results into an error.
     pub async fn run_diagnostic(
         &self,
-        document: &TextDocument<'_>,
+        document: &TextDocument,
     ) -> Result<Vec<(Uri, Vec<Diagnostic>)>, String> {
         self.collect_diagnostics_with(document, |tool, document| tool.run_diagnostic(document))
             .await
@@ -161,7 +161,7 @@ impl WorkspaceWorker {
     /// When calling `Tool::run_diagnostic_on_change` results into an error.
     pub async fn run_diagnostic_on_change(
         &self,
-        document: &TextDocument<'_>,
+        document: &TextDocument,
     ) -> Result<Vec<(Uri, Vec<Diagnostic>)>, String> {
         self.collect_diagnostics_with(document, |tool, document| {
             tool.run_diagnostic_on_change(document)
@@ -175,7 +175,7 @@ impl WorkspaceWorker {
     /// When calling `Tool::run_diagnostic_on_save` results into an error.
     pub async fn run_diagnostic_on_save(
         &self,
-        document: &TextDocument<'_>,
+        document: &TextDocument,
     ) -> Result<Vec<(Uri, Vec<Diagnostic>)>, String> {
         self.collect_diagnostics_with(document, |tool, document| {
             tool.run_diagnostic_on_save(document)
@@ -190,7 +190,7 @@ impl WorkspaceWorker {
     ///
     /// # Errors
     /// When calling `Tool::run_format` results into an error.
-    pub async fn format_file(&self, document: &TextDocument<'_>) -> Result<Vec<TextEdit>, String> {
+    pub async fn format_file(&self, document: &TextDocument) -> Result<Vec<TextEdit>, String> {
         let tool_guard = self.tool.read().await;
         let Some(tool) = tool_guard.as_ref() else {
             return Ok(Vec::new());
@@ -348,7 +348,7 @@ impl WorkspaceWorker {
             };
 
             for uri in file_system.keys() {
-                let document = file_system.get_document(&uri);
+                let document = file_system.get_document(uri);
                 let Ok(mut reports) = tool.run_diagnostic(&document) else {
                     // If diagnostics could not be run, skip this URI, but continue with others
                     // TODO: Should we aggregate errors instead? One by one, or all together?
@@ -735,7 +735,7 @@ mod tests {
         worker.start_worker(serde_json::Value::Null).await;
 
         let diagnostics_no_content = worker
-            .run_diagnostic(&TextDocument::new(&uri, LanguageId::default(), None))
+            .run_diagnostic(&TextDocument::new(uri.clone(), LanguageId::default(), None))
             .await
             .unwrap();
 
@@ -749,7 +749,7 @@ mod tests {
 
         let diagnostics_with_content = worker
             .run_diagnostic(&TextDocument::new(
-                &uri,
+                uri.clone(),
                 LanguageId::default(),
                 Some(Arc::from("helloworld")),
             ))
@@ -766,7 +766,7 @@ mod tests {
 
         let no_diagnostics = worker
             .run_diagnostic(&TextDocument::new(
-                &Uri::from_str("file:///root/unknown.file").unwrap(),
+                Uri::from_str("file:///root/unknown.file").unwrap(),
                 LanguageId::default(),
                 None,
             ))
@@ -777,7 +777,7 @@ mod tests {
 
         let error = worker
             .run_diagnostic(&TextDocument::new(
-                &Uri::from_str("file:///root/error.config").unwrap(),
+                Uri::from_str("file:///root/error.config").unwrap(),
                 LanguageId::default(),
                 None,
             ))
@@ -799,7 +799,7 @@ mod tests {
         worker.start_worker(serde_json::Value::Null).await;
 
         let diagnostics_no_content = worker
-            .run_diagnostic_on_change(&TextDocument::new(&uri, LanguageId::default(), None))
+            .run_diagnostic_on_change(&TextDocument::new(uri.clone(), LanguageId::default(), None))
             .await
             .unwrap();
 
@@ -813,7 +813,7 @@ mod tests {
 
         let diagnostics_with_content = worker
             .run_diagnostic_on_change(&TextDocument::new(
-                &uri,
+                uri.clone(),
                 LanguageId::default(),
                 Some(Arc::from("helloworld")),
             ))
@@ -830,7 +830,7 @@ mod tests {
 
         let no_diagnostics = worker
             .run_diagnostic_on_change(&TextDocument::new(
-                &Uri::from_str("file:///root/unknown.file").unwrap(),
+                Uri::from_str("file:///root/unknown.file").unwrap(),
                 LanguageId::default(),
                 None,
             ))
@@ -841,7 +841,7 @@ mod tests {
 
         let error = worker
             .run_diagnostic_on_change(&TextDocument::new(
-                &Uri::from_str("file:///root/error.config").unwrap(),
+                Uri::from_str("file:///root/error.config").unwrap(),
                 LanguageId::default(),
                 None,
             ))
@@ -862,7 +862,7 @@ mod tests {
         worker.start_worker(serde_json::Value::Null).await;
 
         let diagnostics_no_content = worker
-            .run_diagnostic_on_save(&TextDocument::new(&uri, LanguageId::default(), None))
+            .run_diagnostic_on_save(&TextDocument::new(uri.clone(), LanguageId::default(), None))
             .await
             .unwrap();
 
@@ -876,7 +876,7 @@ mod tests {
 
         let diagnostics_with_content = worker
             .run_diagnostic_on_save(&TextDocument::new(
-                &uri,
+                uri.clone(),
                 LanguageId::default(),
                 Some(Arc::from("helloworld")),
             ))
@@ -893,7 +893,7 @@ mod tests {
 
         let no_diagnostics = worker
             .run_diagnostic_on_save(&TextDocument::new(
-                &Uri::from_str("file:///root/unknown.file").unwrap(),
+                Uri::from_str("file:///root/unknown.file").unwrap(),
                 LanguageId::default(),
                 None,
             ))
@@ -904,7 +904,7 @@ mod tests {
 
         let error = worker
             .run_diagnostic_on_save(&TextDocument::new(
-                &Uri::from_str("file:///root/error.config").unwrap(),
+                Uri::from_str("file:///root/error.config").unwrap(),
                 LanguageId::default(),
                 None,
             ))

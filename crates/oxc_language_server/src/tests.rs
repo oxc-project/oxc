@@ -2235,8 +2235,8 @@ mod test_suite {
         use crate::tests::{FakeToolDelays, create_dynamic_workspace_manager};
 
         use super::*;
+
         #[tokio::test]
-        #[ignore = "This needs to be fixed"]
         async fn test_request_locks() {
             let delay = 100;
             let mut server = TestServer::new_initialized(
