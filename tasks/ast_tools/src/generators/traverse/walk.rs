@@ -89,7 +89,7 @@ pub(super) fn generate_walk(schema: &Schema, config: &WalkConfig) -> TokenStream
         use std::{cell::Cell, marker::PhantomData};
 
         ///@@line_break
-        use oxc_allocator::{Box, Vec};
+        use oxc_allocator::{ArenaBox, ArenaVec};
         use oxc_ast::ast::*;
         use oxc_syntax::scope::ScopeId;
 
@@ -117,7 +117,7 @@ pub(super) fn generate_walk(schema: &Schema, config: &WalkConfig) -> TokenStream
         ///@@line_break
         unsafe fn walk_statements<#walk_generics>(
             traverser: &mut Tr,
-            stmts: *mut Vec<'a, Statement<'a>>,
+            stmts: *mut ArenaVec<'a, Statement<'a>>,
             ctx: &mut #ctx_ty,
         ) {
             traverser.enter_statements(&mut *stmts, ctx);
@@ -627,9 +627,9 @@ fn collect_inherited_patterns(
 /// Generate a type signature without lifetimes.
 ///
 /// Matches the JS behavior: `rawTypeName.replace(/<'a>/g, "").replace(/<'a, ?/g, "<")`
-/// e.g. `Box<'a, TSTypeAnnotation<'a>>` -> `Box<TSTypeAnnotation>`
-/// e.g. `Vec<'a, Statement<'a>>` -> `Vec<Statement>`
-/// e.g. `Option<Box<'a, FunctionBody<'a>>>` -> `Option<Box<FunctionBody>>`
+/// e.g. `ArenaBox<'a, TSTypeAnnotation<'a>>` -> `ArenaBox<TSTypeAnnotation>`
+/// e.g. `ArenaVec<'a, Statement<'a>>` -> `ArenaVec<Statement>`
+/// e.g. `Option<ArenaBox<'a, FunctionBody<'a>>>` -> `Option<ArenaBox<FunctionBody>>`
 fn ty_no_lifetime(type_def: &TypeDef, schema: &Schema) -> TokenStream {
     match type_def {
         TypeDef::Struct(s) => {
@@ -646,11 +646,11 @@ fn ty_no_lifetime(type_def: &TypeDef, schema: &Schema) -> TokenStream {
         }
         TypeDef::Box(b) => {
             let inner = ty_no_lifetime(b.inner_type(schema), schema);
-            quote!(Box<#inner>)
+            quote!(ArenaBox<#inner>)
         }
         TypeDef::Vec(v) => {
             let inner = ty_no_lifetime(v.inner_type(schema), schema);
-            quote!(Vec<#inner>)
+            quote!(ArenaVec<#inner>)
         }
         TypeDef::Cell(c) => {
             let inner = ty_no_lifetime(&schema.types[c.inner_type_id], schema);
