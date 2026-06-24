@@ -1203,7 +1203,7 @@ impl<'a> AstBuilder<'a> {
     /// * `name`
     /// * `arguments`
     #[inline]
-    pub fn expression_v_8_intrinsic(
+    pub fn expression_v8_intrinsic(
         self,
         span: Span,
         name: IdentifierName<'a>,

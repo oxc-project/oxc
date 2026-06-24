@@ -699,7 +699,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             )
         });
         self.expect(Kind::RParen);
-        self.ast.expression_v_8_intrinsic(self.end_span(span), name, arguments)
+        self.ast.expression_v8_intrinsic(self.end_span(span), name, arguments)
     }
 
     fn parse_v8_intrinsic_argument(&mut self) -> Argument<'a> {
