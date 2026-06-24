@@ -3,6 +3,7 @@
 mod ecmascript;
 mod mangler;
 mod peephole;
+mod property_mangler;
 
 use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};

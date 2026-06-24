@@ -4,27 +4,28 @@
 //! It is **off by default**: nothing is mangled unless the user supplies a `mangle`
 //! regex via [`ManglePropertiesOptions`].
 //!
-//! This file currently contains the pure-logic foundation: the option/cache types,
-//! the eligibility check, and the name-assignment function. The AST collect/rewrite
-//! passes are added in later stages.
+//! This file contains the whole engine: the option/cache types, the eligibility check,
+//! the name-assignment function, the read-only collect pass, the in-place rewrite pass,
+//! and the [`PropertyMangler`] driver that runs the two halves around compress/mangle.
 
-// The eligibility/assignment helpers are the foundation consumed by the collect/rewrite
-// passes added in a later stage; they are currently exercised only by unit tests.
-#![allow(dead_code)]
-
-use oxc_ast::ast::{
-    AssignmentTargetPropertyIdentifier, AssignmentTargetPropertyProperty, BinaryExpression,
-    BinaryOperator, CallExpression, ComputedMemberExpression, Expression, JSXAttributeName,
-    NewExpression, Program, PropertyKey, StaticMemberExpression, WithStatement,
+use oxc_allocator::Allocator;
+use oxc_ast::{
+    AstBuilder,
+    ast::{
+        AssignmentTargetPropertyIdentifier, AssignmentTargetPropertyProperty, BinaryExpression,
+        BinaryOperator, CallExpression, ComputedMemberExpression, Expression, JSXAttributeName,
+        NewExpression, Program, PropertyKey, StaticMemberExpression, WithStatement,
+    },
 };
 use oxc_ast_visit::{
-    Visit,
+    Visit, VisitMut,
     walk::{
         walk_assignment_target_property_identifier, walk_assignment_target_property_property,
         walk_binary_expression, walk_call_expression, walk_computed_member_expression,
         walk_jsx_attribute_name, walk_new_expression, walk_property_key,
         walk_static_member_expression, walk_with_statement,
     },
+    walk_mut,
 };
 use oxc_mangler::base54;
 use oxc_str::CompactStr;
@@ -292,6 +293,86 @@ fn collect(opts: &ManglePropertiesOptions, program: &Program) -> PropertyCollect
     let mut collector = PropertyCollector::new(opts);
     collector.visit_program(program);
     collector.state
+}
+
+/// Mutable visitor that renames every property occurrence whose name is in `map`.
+///
+/// Renamed positions are unquoted member properties (`StaticMemberExpression.property`) and
+/// `StaticIdentifier` property keys (object/binding/class member keys, and the key of an
+/// `AssignmentTargetPropertyProperty`, which is reached through the `PropertyKey` walk).
+///
+/// `AssignmentTargetPropertyIdentifier` shorthands are **not** renamed: their names were
+/// added to the reserved set during collect, so they never appear in `map`.
+struct PropertyRewriter<'a, 'm> {
+    /// Old name -> new (mangled) name.
+    map: &'m FxHashMap<CompactStr, CompactStr>,
+    /// Allocates the new name strings into the program's arena.
+    ast: AstBuilder<'a>,
+}
+
+impl<'a> VisitMut<'a> for PropertyRewriter<'a, '_> {
+    fn visit_static_member_expression(&mut self, it: &mut StaticMemberExpression<'a>) {
+        if let Some(new_name) = self.map.get(it.property.name.as_str()) {
+            it.property.name = self.ast.ident(new_name.as_str());
+        }
+        walk_mut::walk_static_member_expression(self, it);
+    }
+
+    fn visit_property_key(&mut self, it: &mut PropertyKey<'a>) {
+        if let PropertyKey::StaticIdentifier(ident) = it
+            && let Some(new_name) = self.map.get(ident.name.as_str())
+        {
+            ident.name = self.ast.ident(new_name.as_str());
+        }
+        walk_mut::walk_property_key(self, it);
+    }
+}
+
+/// Driver that runs the two halves of property mangling around the compress/mangle passes.
+///
+/// Usage:
+/// 1. [`PropertyMangler::new`] with the options.
+/// 2. [`PropertyMangler::collect`] over the **original** program (before compress un-quotes keys).
+/// 3. [`PropertyMangler::rewrite`] over the program **after** variable mangling.
+pub struct PropertyMangler {
+    opts: ManglePropertiesOptions,
+    state: PropertyCollectState,
+}
+
+impl PropertyMangler {
+    /// Create a new driver from the property-mangling options.
+    pub fn new(opts: ManglePropertiesOptions) -> Self {
+        Self { opts, state: PropertyCollectState::default() }
+    }
+
+    /// Run the read-only collect pass over the **original** (pre-compress) program.
+    ///
+    /// Call this before compress un-quotes any keys, so the reserved set captures the
+    /// original quoting.
+    pub fn collect(&mut self, program: &Program) {
+        self.state = collect(&self.opts, program);
+    }
+
+    /// Assign final names and rewrite the program in place, returning the updated cache.
+    ///
+    /// Does nothing (returns the unchanged cache) when the collect pass bailed, or when no
+    /// name ends up being mangled. Call this **after** variable mangling.
+    pub fn rewrite<'a>(
+        mut self,
+        program: &mut Program<'a>,
+        allocator: &'a Allocator,
+    ) -> PropertyMangleCache {
+        if self.state.bail {
+            return self.opts.cache;
+        }
+        let map = assign(&self.state.candidates, &self.state.reserved, &mut self.opts.cache);
+        if map.is_empty() {
+            return self.opts.cache;
+        }
+        let mut rewriter = PropertyRewriter { map: &map, ast: AstBuilder::new(allocator) };
+        rewriter.visit_program(program);
+        self.opts.cache
+    }
 }
 
 #[cfg(test)]
