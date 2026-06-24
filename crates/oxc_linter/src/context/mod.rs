@@ -278,8 +278,21 @@ impl<'a> LintContext<'a> {
 
     /// Add a diagnostic message to the list of diagnostics. Outputs a diagnostic with the current rule
     /// name, severity, and a link to the rule's documentation URL.
-    fn add_diagnostic(&self, mut message: Message) {
-        if self.parent.disable_directives().contains(self.current_rule_name, message.span) {
+    fn add_diagnostic(&self, message: Message) {
+        self.add_diagnostic_impl(message, None);
+    }
+
+    /// [`Self::add_diagnostic`], for a diagnostic tagged with a sub-rule.
+    fn add_diagnostic_impl(&self, mut message: Message, sub_rule: Option<&str>) {
+        let disable_directives = self.parent.disable_directives();
+        // A directive naming the bare rule suppresses every diagnostic it emits.
+        if disable_directives.contains(self.current_rule_name, message.span) {
+            return;
+        }
+        // A directive naming `{rule}/{sub_rule}` suppresses only that category.
+        if let Some(sub_rule) = sub_rule
+            && disable_directives.contains_sub_rule(self.current_rule_name, sub_rule, message.span)
+        {
             return;
         }
         message.error = message
@@ -302,6 +315,17 @@ impl<'a> LintContext<'a> {
     #[inline]
     pub fn diagnostic(&self, diagnostic: OxcDiagnostic) {
         self.add_diagnostic(Message::new(diagnostic, PossibleFixes::None));
+    }
+
+    /// Report a lint rule violation, tagging it with a sub-rule.
+    ///
+    /// Used by "umbrella" rules that emit several diagnostic categories under one
+    /// rule name: the sub-rule lets a `{rule}/{sub_rule}` disable directive
+    /// suppress just this category. A directive naming the bare rule still
+    /// suppresses every category.
+    #[inline]
+    pub fn diagnostic_with_sub_rule(&self, sub_rule: &str, diagnostic: OxcDiagnostic) {
+        self.add_diagnostic_impl(Message::new(diagnostic, PossibleFixes::None), Some(sub_rule));
     }
 
     /// Report a lint rule violation and provide an automatic fix.
