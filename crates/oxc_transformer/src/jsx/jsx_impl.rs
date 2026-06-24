@@ -88,9 +88,7 @@
 //!
 //! * Babel plugin implementation: <https://github.com/babel/babel/tree/v7.26.2/packages/babel-helper-builder-react-jsx>
 
-use oxc_allocator::{
-    Box as ArenaBox, StringBuilder as ArenaStringBuilder, TakeIn, Vec as ArenaVec,
-};
+use oxc_allocator::{ArenaBox, ArenaStringBuilder, ArenaVec, TakeIn};
 use oxc_ast::{AstBuilder, NONE, ast::*};
 use oxc_ecmascript::PropName;
 use oxc_span::{SPAN, Span};
@@ -586,7 +584,7 @@ impl<'a> JsxImpl<'a> {
         &mut self,
         span: Span,
         opening_element: Option<ArenaBox<'a, JSXOpeningElement<'a>>>,
-        children: ArenaVec<JSXChild<'a>>,
+        children: ArenaVec<'a, JSXChild<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let has_key_after_props_spread =

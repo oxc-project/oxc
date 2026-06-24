@@ -1,4 +1,4 @@
-use oxc_allocator::{TakeIn, Vec as ArenaVec};
+use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::{Reference, SymbolFlags};

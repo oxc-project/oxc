@@ -35,7 +35,7 @@ use indexmap::{IndexMap, map::Entry as IndexMapEntry};
 use oxc_ast::{NONE, ast::*};
 use oxc_semantic::ReferenceFlags;
 use oxc_span::SPAN;
-use oxc_str::Str;
+use oxc_str::{Str, static_ident};
 use oxc_syntax::symbol::SymbolId;
 use oxc_traverse::BoundIdentifier;
 
@@ -168,13 +168,13 @@ impl<'a> ModuleImportsStore<'a> {
 
     pub(crate) fn get_require(
         source: Str<'a>,
-        names: std::vec::Vec<Import<'a>>,
+        names: Vec<Import<'a>>,
         require_symbol_id: Option<SymbolId>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
         let callee = ctx.create_ident_expr(
             SPAN,
-            ctx.ast.ident("require"),
+            static_ident!("require"),
             require_symbol_id,
             ReferenceFlags::read(),
         );

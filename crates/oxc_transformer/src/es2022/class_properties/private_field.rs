@@ -3,9 +3,10 @@
 
 use std::mem;
 
-use oxc_allocator::{Box as ArenaBox, TakeIn};
+use oxc_allocator::{ArenaBox, TakeIn};
 use oxc_ast::{NONE, ast::*};
 use oxc_span::SPAN;
+use oxc_str::static_ident;
 use oxc_syntax::{reference::ReferenceId, symbol::SymbolId};
 use oxc_traverse::{Ancestor, BoundIdentifier, ast_operations::get_var_name_from_node};
 
@@ -1870,7 +1871,7 @@ impl<'a> ClassProperties<'a> {
         } else {
             prop_binding.create_read_expression(ctx)
         };
-        let callee = create_member_callee(callee, "has", span, ctx);
+        let callee = create_member_callee(callee, static_ident!("has"), span, ctx);
         let argument = self.create_check_in_rhs(right, ctx);
         ctx.ast.expression_call(span, callee, NONE, ctx.ast.vec1(Argument::from(argument)), false)
     }
@@ -2145,7 +2146,7 @@ impl<'a> ClassProperties<'a> {
             let class_ident = class_binding.create_read_expression(ctx);
             let object = self.create_assert_class_brand_without_value(class_ident, object, ctx);
             let arguments = ctx.ast.vec_from_array([Argument::from(object), Argument::from(value)]);
-            let callee = create_member_callee(prop_ident, "call", span, ctx);
+            let callee = create_member_callee(prop_ident, static_ident!("call"), span, ctx);
             // `_prop.call(_assertClassBrand(Class, object), value)`
             ctx.ast.expression_call(span, callee, NONE, arguments, false)
         } else {

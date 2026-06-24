@@ -1,6 +1,6 @@
 use std::ops::Range;
 
-use oxc_allocator::Vec as ArenaVec;
+use oxc_allocator::ArenaVec;
 
 use crate::{
     JsLabels,

@@ -70,10 +70,10 @@ impl<'a> TypeScriptModule {
 
         // module.exports
         let module_exports = {
-            let reference_id = ctx
-                .create_reference_in_current_scope(ctx.ast.ident("module"), ReferenceFlags::Read);
+            let module = static_ident!("module");
+            let reference_id = ctx.create_reference_in_current_scope(module, ReferenceFlags::Read);
             let reference =
-                ctx.ast.alloc_identifier_reference_with_reference_id(SPAN, "module", reference_id);
+                ctx.ast.alloc_identifier_reference_with_reference_id(SPAN, module, reference_id);
             let object = Expression::Identifier(reference);
             let property = ctx.ast.identifier_name(SPAN, "exports");
             ctx.ast.member_expression_static(SPAN, object, property, false)

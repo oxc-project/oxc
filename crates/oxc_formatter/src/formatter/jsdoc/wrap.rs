@@ -81,7 +81,7 @@ pub fn format_table_block(table_lines: &[&str]) -> Vec<String> {
     }
 
     // Determine number of columns
-    let num_cols = all_cells.iter().map(std::vec::Vec::len).max().unwrap_or(0);
+    let num_cols = all_cells.iter().map(Vec::len).max().unwrap_or(0);
     if num_cols == 0 {
         return to_owned();
     }

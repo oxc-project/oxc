@@ -1,7 +1,7 @@
 use std::{iter, ops::ControlFlow};
 
 use crate::generated::ancestor::Ancestor;
-use oxc_allocator::{Box, TakeIn, Vec};
+use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
 use oxc_ast::ast::*;
 use oxc_ast_visit::Visit;
 use oxc_ecmascript::{
@@ -47,7 +47,7 @@ impl<'a> PeepholeOptimizations {
     ///
     /// ## MinimizeExitPoints:
     /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/MinimizeExitPoints.java>
-    pub fn minimize_statements(stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+    pub fn minimize_statements(stmts: &mut ArenaVec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
         let mut old_stmts = stmts.take_in(ctx);
         let mut is_control_flow_dead = false;
         let mut keep_var = KeepVar::new(ctx.ast);
@@ -359,8 +359,8 @@ impl<'a> PeepholeOptimizations {
     fn minimize_statement(
         stmt: Statement<'a>,
         i: usize,
-        stmts: &mut Vec<'a, Statement<'a>>,
-        result: &mut Vec<'a, Statement<'a>>,
+        stmts: &mut ArenaVec<'a, Statement<'a>>,
+        result: &mut ArenaVec<'a, Statement<'a>>,
         is_control_flow_dead: &mut bool,
 
         ctx: &mut TraverseCtx<'a>,
@@ -447,8 +447,8 @@ impl<'a> PeepholeOptimizations {
     /// * remove the variable declarator if it is unused
     /// * keep the initializer if it has side effects
     fn handle_variable_declaration(
-        mut var_decl: Box<'a, VariableDeclaration<'a>>,
-        result: &mut Vec<'a, Statement<'a>>,
+        mut var_decl: ArenaBox<'a, VariableDeclaration<'a>>,
+        result: &mut ArenaVec<'a, Statement<'a>>,
 
         ctx: &mut TraverseCtx<'a>,
     ) {
@@ -521,8 +521,8 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn handle_expression_statement(
-        mut expr_stmt: Box<'a, ExpressionStatement<'a>>,
-        result: &mut Vec<'a, Statement<'a>>,
+        mut expr_stmt: ArenaBox<'a, ExpressionStatement<'a>>,
+        result: &mut ArenaVec<'a, Statement<'a>>,
 
         ctx: &mut TraverseCtx<'a>,
     ) {
@@ -618,7 +618,7 @@ impl<'a> PeepholeOptimizations {
 
     fn merge_assignment_to_declaration(
         assign_expr: &mut AssignmentExpression<'a>,
-        result: &mut Vec<'a, Statement<'a>>,
+        result: &mut ArenaVec<'a, Statement<'a>>,
         ctx: &TraverseCtx<'a>,
     ) -> bool {
         if assign_expr.operator != AssignmentOperator::Assign {
@@ -669,8 +669,8 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn handle_switch_statement(
-        mut switch_stmt: Box<'a, SwitchStatement<'a>>,
-        result: &mut Vec<'a, Statement<'a>>,
+        mut switch_stmt: ArenaBox<'a, SwitchStatement<'a>>,
+        result: &mut ArenaVec<'a, Statement<'a>>,
 
         ctx: &mut TraverseCtx<'a>,
     ) {
@@ -726,9 +726,9 @@ impl<'a> PeepholeOptimizations {
 
     fn handle_if_statement(
         i: usize,
-        stmts: &mut Vec<'a, Statement<'a>>,
-        mut if_stmt: Box<'a, IfStatement<'a>>,
-        result: &mut Vec<'a, Statement<'a>>,
+        stmts: &mut ArenaVec<'a, Statement<'a>>,
+        mut if_stmt: ArenaBox<'a, IfStatement<'a>>,
+        result: &mut ArenaVec<'a, Statement<'a>>,
 
         ctx: &mut TraverseCtx<'a>,
     ) -> ControlFlow<()> {
@@ -873,8 +873,8 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn handle_return_statement(
-        mut ret_stmt: Box<'a, ReturnStatement<'a>>,
-        result: &mut Vec<'a, Statement<'a>>,
+        mut ret_stmt: ArenaBox<'a, ReturnStatement<'a>>,
+        result: &mut ArenaVec<'a, Statement<'a>>,
         is_control_flow_dead: &mut bool,
 
         ctx: &mut TraverseCtx<'a>,
@@ -923,8 +923,8 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn handle_throw_statement(
-        mut throw_stmt: Box<'a, ThrowStatement<'a>>,
-        result: &mut Vec<'a, Statement<'a>>,
+        mut throw_stmt: ArenaBox<'a, ThrowStatement<'a>>,
+        result: &mut ArenaVec<'a, Statement<'a>>,
         is_control_flow_dead: &mut bool,
 
         ctx: &mut TraverseCtx<'a>,
@@ -951,8 +951,8 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn handle_for_statement(
-        mut for_stmt: Box<'a, ForStatement<'a>>,
-        result: &mut Vec<'a, Statement<'a>>,
+        mut for_stmt: ArenaBox<'a, ForStatement<'a>>,
+        result: &mut ArenaVec<'a, Statement<'a>>,
 
         ctx: &mut TraverseCtx<'a>,
     ) {
@@ -1051,8 +1051,8 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn handle_for_in_statement(
-        mut for_in_stmt: Box<'a, ForInStatement<'a>>,
-        result: &mut Vec<'a, Statement<'a>>,
+        mut for_in_stmt: ArenaBox<'a, ForInStatement<'a>>,
+        result: &mut ArenaVec<'a, Statement<'a>>,
 
         ctx: &mut TraverseCtx<'a>,
     ) {
@@ -1142,8 +1142,8 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn handle_for_of_statement(
-        mut for_of_stmt: Box<'a, ForOfStatement<'a>>,
-        result: &mut Vec<'a, Statement<'a>>,
+        mut for_of_stmt: ArenaBox<'a, ForOfStatement<'a>>,
+        result: &mut ArenaVec<'a, Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         let is_block_scoped_decl = matches!(&for_of_stmt.left, ForStatementLeft::VariableDeclaration(var_decl) if !var_decl.kind.is_var());
@@ -1184,8 +1184,8 @@ impl<'a> PeepholeOptimizations {
 
     /// `appendIfOrLabelBodyPreservingScope`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L9852>
     fn handle_block(
-        result: &mut Vec<'a, Statement<'a>>,
-        block_stmt: Box<'a, BlockStatement<'a>>,
+        result: &mut ArenaVec<'a, Statement<'a>>,
+        block_stmt: ArenaBox<'a, BlockStatement<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         let keep_block = block_stmt.body.iter().any(Self::statement_cares_about_scope);
@@ -1237,7 +1237,7 @@ impl<'a> PeepholeOptimizations {
     /// `substituteSingleUseSymbolInStmt`: <https://github.com/evanw/esbuild/blob/v0.25.9/internal/js_parser/js_parser.go#L9583>
     fn substitute_single_use_symbol_in_statement(
         expr_in_stmt: &mut Expression<'a>,
-        stmts: &mut Vec<'a, Statement<'a>>,
+        stmts: &mut ArenaVec<'a, Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
         non_scoped_literal_only: bool,
     ) -> bool {
@@ -1282,7 +1282,7 @@ impl<'a> PeepholeOptimizations {
 
     fn substitute_single_use_symbol_within_declaration(
         kind: VariableDeclarationKind,
-        declarations: &mut Vec<'a, VariableDeclarator<'a>>,
+        declarations: &mut ArenaVec<'a, VariableDeclarator<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> bool {
         if Self::keep_top_level_var_in_script_mode(ctx)

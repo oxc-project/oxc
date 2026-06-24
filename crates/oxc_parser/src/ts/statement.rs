@@ -1,4 +1,4 @@
-use oxc_allocator::{Box, Vec};
+use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::ast::*;
 use oxc_span::{FileExtension, GetSpan};
 
@@ -109,7 +109,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /* ------------------- Annotation ----------------- */
 
-    pub(crate) fn parse_ts_type_annotation(&mut self) -> Option<Box<'a, TSTypeAnnotation<'a>>> {
+    pub(crate) fn parse_ts_type_annotation(
+        &mut self,
+    ) -> Option<ArenaBox<'a, TSTypeAnnotation<'a>>> {
         if !self.is_ts {
             return None;
         }
@@ -254,7 +256,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         )
     }
 
-    fn parse_ts_interface_body(&mut self) -> Box<'a, TSInterfaceBody<'a>> {
+    fn parse_ts_interface_body(&mut self) -> ArenaBox<'a, TSInterfaceBody<'a>> {
         let span = self.start_span();
         let body_list =
             self.parse_normal_list(Kind::LCurly, Kind::RCurly, Self::parse_ts_type_signature);
@@ -345,7 +347,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         span: u32,
         modifiers: &Modifiers,
-    ) -> Box<'a, TSModuleDeclaration<'a>> {
+    ) -> ArenaBox<'a, TSModuleDeclaration<'a>> {
         let kind = if self.eat(Kind::Namespace) {
             TSModuleDeclarationKind::Namespace
         } else {
@@ -362,7 +364,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         span: u32,
         modifiers: &Modifiers,
-    ) -> Box<'a, TSModuleDeclaration<'a>> {
+    ) -> ArenaBox<'a, TSModuleDeclaration<'a>> {
         let id = TSModuleDeclarationName::StringLiteral(self.parse_literal_string());
         let body = if self.at(Kind::LCurly) {
             // External module body (`declare module "x" {}`); `import`/`export` are allowed here.
@@ -428,7 +430,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
-    fn parse_ts_module_block(&mut self, in_ts_namespace_body: bool) -> Box<'a, TSModuleBlock<'a>> {
+    fn parse_ts_module_block(
+        &mut self,
+        in_ts_namespace_body: bool,
+    ) -> ArenaBox<'a, TSModuleBlock<'a>> {
         let span = self.start_span();
         self.expect(Kind::LCurly);
         // Remove TopLevel context for module block
@@ -444,7 +449,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         span: u32,
         kind: TSModuleDeclarationKind,
         modifiers: &Modifiers,
-    ) -> Box<'a, TSModuleDeclaration<'a>> {
+    ) -> ArenaBox<'a, TSModuleDeclaration<'a>> {
         let id = TSModuleDeclarationName::Identifier(self.parse_binding_identifier());
         let body = if self.eat(Kind::Dot) {
             let span = self.start_span();
@@ -475,7 +480,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         span: u32,
         modifiers: &Modifiers,
-    ) -> Box<'a, TSGlobalDeclaration<'a>> {
+    ) -> ArenaBox<'a, TSGlobalDeclaration<'a>> {
         let keyword_span_start = self.start_span();
         self.expect(Kind::Global);
         let keyword_span = self.end_span(keyword_span_start);
@@ -531,7 +536,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         start_span: u32,
         modifiers: &Modifiers,
-        decorators: Vec<'a, Decorator<'a>>,
+        decorators: ArenaVec<'a, Decorator<'a>>,
     ) -> Declaration<'a> {
         let kind = self.cur_kind();
         if kind != Kind::Class {
@@ -634,7 +639,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         start_span: u32,
         modifiers: &Modifiers,
-    ) -> Box<'a, Function<'a>> {
+    ) -> ArenaBox<'a, Function<'a>> {
         let r#async = modifiers.contains(ModifierKind::Async);
         self.expect(Kind::Function);
         let generator = self.eat(Kind::Star);

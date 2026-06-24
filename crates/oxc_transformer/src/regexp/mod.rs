@@ -50,6 +50,7 @@ use oxc_regular_expression::{
 };
 use oxc_semantic::ReferenceFlags;
 use oxc_span::SPAN;
+use oxc_str::static_ident;
 use oxc_traverse::Traverse;
 
 use crate::{context::TraverseCtx, state::TransformState};
@@ -158,7 +159,7 @@ impl<'a> RegExp {
         }
 
         let callee = {
-            let regexp = ctx.ast.ident("RegExp");
+            let regexp = static_ident!("RegExp");
             let symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), regexp);
             ctx.create_ident_expr(SPAN, regexp, symbol_id, ReferenceFlags::read())
         };

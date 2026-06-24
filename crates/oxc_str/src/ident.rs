@@ -11,8 +11,7 @@ use std::{
 };
 
 use oxc_allocator::{
-    Allocator, CloneIn, Dummy, FromIn, IdentBuildHasher, StringBuilder as ArenaStringBuilder,
-    ident_hash,
+    Allocator, ArenaStringBuilder, CloneIn, Dummy, FromIn, IdentBuildHasher, ident_hash,
 };
 #[cfg(feature = "serialize")]
 use oxc_estree::{ESTree, JsonSafeString, Serializer as ESTreeSerializer};
@@ -486,7 +485,7 @@ pub type IdentHashMap<'a, V> = hashbrown::HashMap<Ident<'a>, V, IdentBuildHasher
 
 /// Arena-allocated hash map keyed by [`Ident`], using precomputed ident hash.
 pub type ArenaIdentHashMap<'alloc, V> =
-    oxc_allocator::HashMap<'alloc, Ident<'alloc>, V, IdentBuildHasher>;
+    oxc_allocator::ArenaHashMap<'alloc, Ident<'alloc>, V, IdentBuildHasher>;
 
 /// Hash set of [`Ident`], using precomputed ident hash.
 pub type IdentHashSet<'a> = hashbrown::HashSet<Ident<'a>, IdentBuildHasher>;

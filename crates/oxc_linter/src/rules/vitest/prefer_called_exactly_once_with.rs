@@ -1,5 +1,5 @@
 use itertools::Itertools;
-use oxc_allocator::Vec as OxcVec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::{
     AstKind,
     ast::{CallExpression, Expression, FunctionBody, MemberExpression, Statement},
@@ -211,7 +211,7 @@ const MOCK_RESET_METHODS: [&str; 3] = ["mockClear", "mockReset", "mockRestore"];
 
 impl PreferCalledExactlyOnceWith {
     fn check_block_body<'a>(
-        statements: &'a OxcVec<'a, Statement<'_>>,
+        statements: &'a ArenaVec<'a, Statement<'_>>,
         node: &AstNode<'a>,
         ctx: &LintContext<'a>,
     ) {
@@ -353,7 +353,7 @@ impl PreferCalledExactlyOnceWith {
 }
 
 enum TestCallExpression<'a> {
-    TestBlock(&'a oxc_allocator::Vec<'a, Statement<'a>>),
+    TestBlock(&'a ArenaVec<'a, Statement<'a>>),
     MockReset,
     ExpectFnCall(ParsedExpectFnCall<'a>),
 }

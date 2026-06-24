@@ -1,4 +1,4 @@
-use oxc_allocator::{Box, Vec};
+use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_span::GetSpan;
 use rustc_hash::FxHashMap;
@@ -254,7 +254,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // A default specifier, if we already saw any identifier after `import`
         default_specifier: Option<BindingIdentifier<'a>>,
         import_kind: ImportOrExportKind,
-    ) -> Vec<'a, ImportDeclarationSpecifier<'a>> {
+    ) -> ArenaVec<'a, ImportDeclarationSpecifier<'a>> {
         // If there is a default specifier, create a Vec with the default specifier in it,
         // otherwise, create an empty Vec.
         let mut specifiers = if default_specifier.is_some() {
@@ -328,7 +328,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     // import { export1 , export2 as alias2 , [...] } from "module-name";
     fn parse_import_specifiers_into(
         &mut self,
-        specifiers: &mut Vec<'a, ImportDeclarationSpecifier<'a>>,
+        specifiers: &mut ArenaVec<'a, ImportDeclarationSpecifier<'a>>,
         import_kind: ImportOrExportKind,
     ) {
         let opening_span = self.cur_token().span();
@@ -399,7 +399,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_ts_export_assignment_declaration(
         &mut self,
         start_span: u32,
-    ) -> Box<'a, TSExportAssignment<'a>> {
+    ) -> ArenaBox<'a, TSExportAssignment<'a>> {
         self.expect(Kind::Eq);
         let expression = self.parse_assignment_expression_or_higher();
         self.asi();
@@ -412,7 +412,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_ts_export_namespace(
         &mut self,
         start_span: u32,
-    ) -> Box<'a, TSNamespaceExportDeclaration<'a>> {
+    ) -> ArenaBox<'a, TSNamespaceExportDeclaration<'a>> {
         self.expect(Kind::As);
         self.expect(Kind::Namespace);
         let id = self.parse_identifier_name();
@@ -427,7 +427,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_export_declaration(
         &mut self,
         span: u32,
-        mut decorators: Vec<'a, Decorator<'a>>,
+        mut decorators: ArenaVec<'a, Decorator<'a>>,
     ) -> Statement<'a> {
         self.bump_any(); // bump `export`
         // `export` is unambiguously module syntax (ECMA-262 §16.2.3): commit to the
@@ -549,7 +549,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     // ExportSpecifier :
     //   ModuleExportName
     //   ModuleExportName as ModuleExportName
-    fn parse_export_named_specifiers(&mut self, span: u32) -> Box<'a, ExportNamedDeclaration<'a>> {
+    fn parse_export_named_specifiers(
+        &mut self,
+        span: u32,
+    ) -> ArenaBox<'a, ExportNamedDeclaration<'a>> {
         let export_kind = self.parse_import_or_export_kind();
         let opening_span = self.cur_token().span();
         self.expect(Kind::LCurly);
@@ -624,8 +627,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_export_named_declaration(
         &mut self,
         span: u32,
-        decorators: Vec<'a, Decorator<'a>>,
-    ) -> Box<'a, ExportNamedDeclaration<'a>> {
+        decorators: ArenaVec<'a, Decorator<'a>>,
+    ) -> ArenaBox<'a, ExportNamedDeclaration<'a>> {
         let decl_span = self.start_span();
         let reserved_ctx = self.ctx;
         let modifiers =
@@ -659,8 +662,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_export_default_declaration(
         &mut self,
         span: u32,
-        decorators: Vec<'a, Decorator<'a>>,
-    ) -> Box<'a, ExportDefaultDeclaration<'a>> {
+        decorators: ArenaVec<'a, Decorator<'a>>,
+    ) -> ArenaBox<'a, ExportDefaultDeclaration<'a>> {
         let default_keyword_span = self.cur_token().span();
         self.advance(Kind::Default);
         let declaration = self.parse_export_default_declaration_kind(decorators);
@@ -675,7 +678,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     fn parse_export_default_declaration_kind(
         &mut self,
-        mut decorators: Vec<'a, Decorator<'a>>,
+        mut decorators: ArenaVec<'a, Decorator<'a>>,
     ) -> ExportDefaultDeclarationKind<'a> {
         let decl_span = self.start_span();
 
@@ -791,7 +794,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     //   *
     //   * as ModuleExportName
     //   NamedExports
-    fn parse_export_all_declaration(&mut self, span: u32) -> Box<'a, ExportAllDeclaration<'a>> {
+    fn parse_export_all_declaration(
+        &mut self,
+        span: u32,
+    ) -> ArenaBox<'a, ExportAllDeclaration<'a>> {
         let export_kind = self.parse_import_or_export_kind();
         self.bump_any(); // bump `star`
         let exported = self.eat(Kind::As).then(|| self.parse_module_export_name());
@@ -1037,7 +1043,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
 #[cfg(test)]
 mod test {
-    use oxc_allocator::Allocator;
+    use oxc_allocator::{Allocator, ArenaBox};
     use oxc_ast::ast::{ImportDeclarationSpecifier, ImportOrExportKind, ImportPhase, Statement};
     use oxc_span::SourceType;
 
@@ -1385,7 +1391,7 @@ mod test {
     fn parse_and_assert_import_declarations(
         src: &'static str,
         // takes a function which accepts the list of statements
-        f: fn(Vec<&oxc_allocator::Box<'_, oxc_ast::ast::ImportDeclaration<'_>>>) -> (),
+        f: fn(Vec<&ArenaBox<'_, oxc_ast::ast::ImportDeclaration<'_>>>) -> (),
     ) {
         let source_type = SourceType::default().with_typescript(true);
         let allocator = Allocator::default();

@@ -17,7 +17,7 @@ use std::collections::hash_map::Entry;
 
 use rustc_hash::FxHashMap;
 
-use oxc_allocator::{Address, GetAddress, Vec as ArenaVec};
+use oxc_allocator::{Address, ArenaVec, GetAddress};
 use oxc_ast::{AstBuilder, ast::*};
 
 /// Store for statements to be added to the statements.

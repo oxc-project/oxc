@@ -1,4 +1,4 @@
-use oxc_allocator::Vec as AllocatorVec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::{ArrowFunctionExpression, Function, FunctionBody, ReturnStatement, Statement};
 use oxc_ast_visit::Visit;
 use oxc_cfg::{
@@ -231,7 +231,7 @@ impl Visit<'_> for ReturnStatementFinder {
     fn visit_arrow_function_expression(&mut self, _it: &ArrowFunctionExpression<'_>) {}
 }
 
-pub fn is_void_arrow_return(statements: &AllocatorVec<'_, Statement>) -> bool {
+pub fn is_void_arrow_return(statements: &ArenaVec<'_, Statement>) -> bool {
     if statements.is_empty() {
         return false;
     }

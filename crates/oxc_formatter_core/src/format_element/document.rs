@@ -1,7 +1,7 @@
 #![expect(clippy::mutable_key_type)]
 use std::ops::Deref;
 
-use oxc_allocator::Vec as ArenaVec;
+use oxc_allocator::ArenaVec;
 use rustc_hash::FxHashMap;
 
 use super::{

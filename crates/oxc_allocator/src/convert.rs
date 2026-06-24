@@ -50,13 +50,14 @@ impl<'a> FromIn<'a, String> for &'a str {
 impl<'a, T> FromIn<'a, T> for Box<'a, T> {
     #[inline(always)]
     fn from_in(value: T, allocator: &'a Allocator) -> Self {
-        Box::new_in(value, allocator)
+        Box::new_in(value, &allocator)
     }
 }
 
 impl<'a, T> FromIn<'a, Option<T>> for Option<Box<'a, T>> {
     #[inline(always)]
+    #[expect(clippy::single_option_map)]
     fn from_in(value: Option<T>, allocator: &'a Allocator) -> Self {
-        value.map(|it| Box::new_in(it, allocator))
+        value.map(|it| Box::new_in(it, &allocator))
     }
 }
