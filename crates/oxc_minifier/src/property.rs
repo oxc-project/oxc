@@ -13,8 +13,9 @@ use oxc_ast::{
     AstBuilder,
     ast::{
         AssignmentTargetPropertyIdentifier, AssignmentTargetPropertyProperty, BinaryExpression,
-        BinaryOperator, CallExpression, ComputedMemberExpression, Expression, JSXAttributeName,
-        NewExpression, Program, PropertyKey, StaticMemberExpression, StringLiteral, WithStatement,
+        BinaryOperator, CallExpression, Comment, ComputedMemberExpression, Expression,
+        JSXAttributeName, NewExpression, Program, PropertyKey, StaticMemberExpression,
+        StringLiteral, TemplateLiteral, WithStatement,
     },
 };
 use oxc_ast_visit::{
@@ -23,7 +24,7 @@ use oxc_ast_visit::{
         walk_assignment_target_property_identifier, walk_assignment_target_property_property,
         walk_binary_expression, walk_call_expression, walk_computed_member_expression,
         walk_jsx_attribute_name, walk_new_expression, walk_property_key,
-        walk_static_member_expression, walk_with_statement,
+        walk_static_member_expression, walk_template_literal, walk_with_statement,
     },
     walk_mut,
 };
@@ -80,6 +81,31 @@ pub enum CacheValue {
 /// Whether `name` is always reserved, regardless of the user's regex.
 fn is_always_reserved(name: &str) -> bool {
     matches!(name, "__proto__" | "constructor" | "prototype") || PROTOCOL_DENYLIST.contains(&name)
+}
+
+/// Whether `comment`'s text is exactly a `/* @__KEY__ */` or `/* #__KEY__ */` annotation.
+///
+/// The leading `@` or `#` is required: a bare `/* __KEY__ */` does NOT count (esbuild
+/// parity — see `TestManglePropsKeyComment`). Surrounding whitespace is ignored.
+fn is_key_annotation(comment: &Comment, source_text: &str) -> bool {
+    let text = comment.content_span().source_text(source_text).trim();
+    matches!(text.strip_prefix(['@', '#']), Some("__KEY__"))
+}
+
+/// Build the set of start offsets of string/template literals that are immediately
+/// preceded by a `/* @__KEY__ */` / `/* #__KEY__ */` comment.
+///
+/// Each leading comment's `attached_to` is the start offset of the token it precedes,
+/// which for an annotated literal is exactly that literal's `span.start`. So the set
+/// of `attached_to` offsets of all key-annotation comments is the set of annotated
+/// literal spans.
+fn key_annotated_spans(program: &Program) -> FxHashSet<u32> {
+    program
+        .comments
+        .iter()
+        .filter(|comment| is_key_annotation(comment, program.source_text))
+        .map(|comment| comment.attached_to)
+        .collect()
 }
 
 /// Whether `name` is eligible for mangling under `opts`.
@@ -195,12 +221,19 @@ pub struct PropertyCollectState {
 struct PropertyCollector<'a, 'o> {
     opts: &'o ManglePropertiesOptions,
     state: PropertyCollectState,
+    /// Start offsets of string/template literals annotated with `/* @__KEY__ */` / `/* #__KEY__ */`.
+    key_annotated: FxHashSet<u32>,
     _marker: std::marker::PhantomData<&'a ()>,
 }
 
 impl<'a, 'o> PropertyCollector<'a, 'o> {
-    fn new(opts: &'o ManglePropertiesOptions) -> Self {
-        Self { opts, state: PropertyCollectState::default(), _marker: std::marker::PhantomData }
+    fn new(opts: &'o ManglePropertiesOptions, key_annotated: FxHashSet<u32>) -> Self {
+        Self {
+            opts,
+            state: PropertyCollectState::default(),
+            key_annotated,
+            _marker: std::marker::PhantomData,
+        }
     }
 
     /// An unquoted occurrence: mangle it if eligible, otherwise it is reserved program-wide.
@@ -237,6 +270,9 @@ impl<'a, 'o> PropertyCollector<'a, 'o> {
     /// statically-known keys).
     fn classify_key_expression(&mut self, expr: &Expression<'a>) {
         match expr.get_inner_expression() {
+            // A key-annotated string is a candidate (handled by `visit_string_literal`);
+            // the annotation overrides the default quoted-reserve, so skip it here.
+            Expression::StringLiteral(lit) if self.key_annotated.contains(&lit.span.start) => {}
             Expression::StringLiteral(lit) => self.quoted(lit.value.as_str()),
             Expression::ConditionalExpression(cond) => {
                 self.classify_key_expression(&cond.consequent);
@@ -354,13 +390,41 @@ impl<'a> Visit<'a> for PropertyCollector<'a, '_> {
         }
         walk_new_expression(self, it);
     }
+
+    fn visit_string_literal(&mut self, it: &StringLiteral<'a>) {
+        // A string literal directly preceded by `/* @__KEY__ */` / `/* #__KEY__ */`
+        // is treated as a property name even outside a key position (e.g. a call
+        // argument). The eligibility/regex still gates it.
+        if self.key_annotated.contains(&it.span.start) {
+            self.candidate(it.value.as_str());
+        }
+    }
+
+    fn visit_template_literal(&mut self, it: &TemplateLiteral<'a>) {
+        // A no-substitution template (`` `_foo` ``) preceded by a key annotation is
+        // also treated as a property name. Templates with interpolations are not
+        // themselves property names; their interpolated string operands are visited
+        // recursively (each may carry its own annotation), so recurse.
+        if it.expressions.is_empty()
+            && self.key_annotated.contains(&it.span.start)
+            && let [quasi] = it.quasis.as_slice()
+            && let Some(cooked) = quasi.value.cooked
+        {
+            self.candidate(cooked.as_str());
+        }
+        walk_template_literal(self, it);
+    }
 }
 
 /// Walk the **original** (pre-compress) program and classify every property occurrence.
 ///
 /// Returns the candidate/reserved sets and the whole-program `bail` flag.
-fn collect(opts: &ManglePropertiesOptions, program: &Program) -> PropertyCollectState {
-    let mut collector = PropertyCollector::new(opts);
+fn collect(
+    opts: &ManglePropertiesOptions,
+    key_annotated: &FxHashSet<u32>,
+    program: &Program,
+) -> PropertyCollectState {
+    let mut collector = PropertyCollector::new(opts, key_annotated.clone());
     collector.visit_program(program);
     collector.state
 }
@@ -384,6 +448,11 @@ struct PropertyRewriter<'a, 'm> {
     map: &'m FxHashMap<CompactStr, CompactStr>,
     /// Whether quoted keys are renamed (else only the unquoted positions are touched).
     mangle_quoted: bool,
+    /// Start offsets of string/template literals annotated with a key comment.
+    key_annotated: &'m FxHashSet<u32>,
+    /// When `true`, ONLY key-annotated string/template literals are renamed; member and key
+    /// positions are left untouched. Used by the pre-compress `rename_annotated_literals` pass.
+    rename_annotated_only: bool,
     /// Allocates the new name strings into the program's arena.
     ast: AstBuilder<'a>,
 }
@@ -438,7 +507,9 @@ impl<'a> PropertyRewriter<'a, '_> {
 
 impl<'a> VisitMut<'a> for PropertyRewriter<'a, '_> {
     fn visit_static_member_expression(&mut self, it: &mut StaticMemberExpression<'a>) {
-        if let Some(new_name) = self.map.get(it.property.name.as_str()) {
+        if !self.rename_annotated_only
+            && let Some(new_name) = self.map.get(it.property.name.as_str())
+        {
             it.property.name = self.ast.ident(new_name.as_str());
         }
         walk_mut::walk_static_member_expression(self, it);
@@ -448,7 +519,8 @@ impl<'a> VisitMut<'a> for PropertyRewriter<'a, '_> {
         // Un-quote a direct string index `x['_a']` -> `x.<new>`, preserving optional chaining.
         // Wrapped index forms (`x[y ? '_a' : z]`) are renamed in place via the
         // computed-member visitor below.
-        if self.mangle_quoted
+        if !self.rename_annotated_only
+            && self.mangle_quoted
             && let Expression::ComputedMemberExpression(member) = it
             && let Expression::StringLiteral(lit) = &member.expression
             && let Some(new_name) = self.map.get(lit.value.as_str())
@@ -467,14 +539,15 @@ impl<'a> VisitMut<'a> for PropertyRewriter<'a, '_> {
 
     fn visit_computed_member_expression(&mut self, it: &mut ComputedMemberExpression<'a>) {
         // Wrapped index forms that cannot be un-quoted: rename in place.
-        if self.mangle_quoted {
+        if !self.rename_annotated_only && self.mangle_quoted {
             self.rename_key_expression(&mut it.expression);
         }
         walk_mut::walk_computed_member_expression(self, it);
     }
 
     fn visit_property_key(&mut self, it: &mut PropertyKey<'a>) {
-        if let PropertyKey::StaticIdentifier(ident) = it
+        if !self.rename_annotated_only
+            && let PropertyKey::StaticIdentifier(ident) = it
             && let Some(new_name) = self.map.get(ident.name.as_str())
         {
             ident.name = self.ast.ident(new_name.as_str());
@@ -483,7 +556,7 @@ impl<'a> VisitMut<'a> for PropertyRewriter<'a, '_> {
     }
 
     fn visit_object_property(&mut self, it: &mut oxc_ast::ast::ObjectProperty<'a>) {
-        if self.mangle_quoted {
+        if !self.rename_annotated_only && self.mangle_quoted {
             // A shorthand string key cannot exist, so un-quoting the key is always safe.
             self.rewrite_string_key(&mut it.key, &mut it.computed);
             if it.computed {
@@ -494,7 +567,7 @@ impl<'a> VisitMut<'a> for PropertyRewriter<'a, '_> {
     }
 
     fn visit_property_definition(&mut self, it: &mut oxc_ast::ast::PropertyDefinition<'a>) {
-        if self.mangle_quoted {
+        if !self.rename_annotated_only && self.mangle_quoted {
             self.rewrite_string_key(&mut it.key, &mut it.computed);
             if it.computed {
                 self.rename_key_expression_in_key(&mut it.key);
@@ -504,7 +577,7 @@ impl<'a> VisitMut<'a> for PropertyRewriter<'a, '_> {
     }
 
     fn visit_accessor_property(&mut self, it: &mut oxc_ast::ast::AccessorProperty<'a>) {
-        if self.mangle_quoted {
+        if !self.rename_annotated_only && self.mangle_quoted {
             self.rewrite_string_key(&mut it.key, &mut it.computed);
             if it.computed {
                 self.rename_key_expression_in_key(&mut it.key);
@@ -514,7 +587,7 @@ impl<'a> VisitMut<'a> for PropertyRewriter<'a, '_> {
     }
 
     fn visit_method_definition(&mut self, it: &mut oxc_ast::ast::MethodDefinition<'a>) {
-        if self.mangle_quoted {
+        if !self.rename_annotated_only && self.mangle_quoted {
             self.rewrite_string_key(&mut it.key, &mut it.computed);
             if it.computed {
                 self.rename_key_expression_in_key(&mut it.key);
@@ -524,7 +597,7 @@ impl<'a> VisitMut<'a> for PropertyRewriter<'a, '_> {
     }
 
     fn visit_binding_property(&mut self, it: &mut oxc_ast::ast::BindingProperty<'a>) {
-        if self.mangle_quoted {
+        if !self.rename_annotated_only && self.mangle_quoted {
             self.rewrite_string_key(&mut it.key, &mut it.computed);
             if it.computed {
                 self.rename_key_expression_in_key(&mut it.key);
@@ -537,7 +610,7 @@ impl<'a> VisitMut<'a> for PropertyRewriter<'a, '_> {
         &mut self,
         it: &mut AssignmentTargetPropertyProperty<'a>,
     ) {
-        if self.mangle_quoted {
+        if !self.rename_annotated_only && self.mangle_quoted {
             self.rewrite_string_key(&mut it.name, &mut it.computed);
             if it.computed {
                 self.rename_key_expression_in_key(&mut it.name);
@@ -548,10 +621,40 @@ impl<'a> VisitMut<'a> for PropertyRewriter<'a, '_> {
 
     fn visit_binary_expression(&mut self, it: &mut BinaryExpression<'a>) {
         // `'_a' in x` (and wrapped forms) keep the string literal but rename in place.
-        if self.mangle_quoted && it.operator == BinaryOperator::In {
+        if !self.rename_annotated_only && self.mangle_quoted && it.operator == BinaryOperator::In {
             self.rename_key_expression(&mut it.left);
         }
         walk_mut::walk_binary_expression(self, it);
+    }
+
+    fn visit_string_literal(&mut self, it: &mut StringLiteral<'a>) {
+        // A key-annotated string literal is renamed in place (it stays a string),
+        // regardless of `mangle_quoted` and regardless of its syntactic position
+        // (call argument, `in`-LHS, template interpolation, computed key, ...).
+        if self.key_annotated.contains(&it.span.start)
+            && let Some(new_name) = self.map.get(it.value.as_str())
+        {
+            it.value = self.ast.str(new_name.as_str());
+            // Drop the now-stale raw text so codegen re-serializes from `value`.
+            it.raw = None;
+        }
+    }
+
+    fn visit_template_literal(&mut self, it: &mut TemplateLiteral<'a>) {
+        // A key-annotated no-substitution template is renamed in place (stays a template).
+        // Templates with interpolations are not themselves property names; their string
+        // operands are renamed by `visit_string_literal` through the recursion below.
+        if it.expressions.is_empty()
+            && self.key_annotated.contains(&it.span.start)
+            && let [quasi] = it.quasis.as_mut_slice()
+            && let Some(cooked) = quasi.value.cooked
+            && let Some(new_name) = self.map.get(cooked.as_str())
+        {
+            let new_str = self.ast.str(new_name.as_str());
+            quasi.value.cooked = Some(new_str);
+            quasi.value.raw = new_str;
+        }
+        walk_mut::walk_template_literal(self, it);
     }
 }
 
@@ -570,16 +673,30 @@ impl<'a> PropertyRewriter<'a, '_> {
 /// Usage:
 /// 1. [`PropertyMangler::new`] with the options.
 /// 2. [`PropertyMangler::collect`] over the **original** program (before compress un-quotes keys).
-/// 3. [`PropertyMangler::rewrite`] over the program **after** variable mangling.
+/// 3. [`PropertyMangler::rename_annotated_literals`] over the **original** program (before compress,
+///    so key-annotated strings inside template interpolations are renamed before the compressor
+///    folds them into the surrounding quasi).
+/// 4. [`PropertyMangler::rewrite`] over the program **after** variable mangling.
 pub struct PropertyMangler {
     opts: ManglePropertiesOptions,
     state: PropertyCollectState,
+    /// Start offsets of string/template literals annotated with `/* @__KEY__ */` /
+    /// `/* #__KEY__ */`, computed during `collect` and reused during the rename passes.
+    key_annotated: FxHashSet<u32>,
+    /// Final old -> new name map, assigned once in `rename_annotated_literals` and reused by
+    /// `rewrite`. `None` until names are assigned.
+    map: Option<FxHashMap<CompactStr, CompactStr>>,
 }
 
 impl PropertyMangler {
     /// Create a new driver from the property-mangling options.
     pub fn new(opts: ManglePropertiesOptions) -> Self {
-        Self { opts, state: PropertyCollectState::default() }
+        Self {
+            opts,
+            state: PropertyCollectState::default(),
+            key_annotated: FxHashSet::default(),
+            map: None,
+        }
     }
 
     /// Run the read-only collect pass over the **original** (pre-compress) program.
@@ -587,10 +704,46 @@ impl PropertyMangler {
     /// Call this before compress un-quotes any keys, so the reserved set captures the
     /// original quoting.
     pub fn collect(&mut self, program: &Program) {
-        self.state = collect(&self.opts, program);
+        self.key_annotated = key_annotated_spans(program);
+        self.state = collect(&self.opts, &self.key_annotated, program);
     }
 
-    /// Assign final names and rewrite the program in place, returning the updated cache.
+    /// Assign the final names and rename key-annotated string/template literals **in place**,
+    /// over the **original** program (before compress).
+    ///
+    /// Annotated strings inside template interpolations (`` `${/* @__KEY__ */ '_x'}` ``) must be
+    /// renamed here, because the compressor folds constant interpolations into the surrounding
+    /// quasi — after which the annotated string node no longer exists to rewrite. Renaming an
+    /// annotated literal's value in place is position-independent and safe to do this early.
+    ///
+    /// Does nothing when collect bailed or nothing is mangled. Idempotent w.r.t. `rewrite`:
+    /// the renamed literals now hold the new name, which is not a key in `map`.
+    pub fn rename_annotated_literals<'a>(
+        &mut self,
+        program: &mut Program<'a>,
+        allocator: &'a Allocator,
+    ) {
+        if self.state.bail || self.key_annotated.is_empty() {
+            return;
+        }
+        let map = assign(&self.state.candidates, &self.state.reserved, &mut self.opts.cache);
+        if map.is_empty() {
+            self.map = Some(map);
+            return;
+        }
+        let mut rewriter = PropertyRewriter {
+            map: &map,
+            mangle_quoted: self.opts.mangle_quoted,
+            key_annotated: &self.key_annotated,
+            rename_annotated_only: true,
+            ast: AstBuilder::new(allocator),
+        };
+        rewriter.visit_program(program);
+        self.map = Some(map);
+    }
+
+    /// Assign final names (if not already) and rewrite the program in place, returning the
+    /// updated cache.
     ///
     /// Does nothing (returns the unchanged cache) when the collect pass bailed, or when no
     /// name ends up being mangled. Call this **after** variable mangling.
@@ -602,13 +755,19 @@ impl PropertyMangler {
         if self.state.bail {
             return self.opts.cache;
         }
-        let map = assign(&self.state.candidates, &self.state.reserved, &mut self.opts.cache);
+        // `map` is already assigned if `rename_annotated_literals` ran; otherwise assign now.
+        let map = match self.map.take() {
+            Some(map) => map,
+            None => assign(&self.state.candidates, &self.state.reserved, &mut self.opts.cache),
+        };
         if map.is_empty() {
             return self.opts.cache;
         }
         let mut rewriter = PropertyRewriter {
             map: &map,
             mangle_quoted: self.opts.mangle_quoted,
+            key_annotated: &self.key_annotated,
+            rename_annotated_only: false,
             ast: AstBuilder::new(allocator),
         };
         rewriter.visit_program(program);
@@ -733,7 +892,8 @@ mod tests {
     ) -> PropertyCollectState {
         let st = oxc_span::SourceType::mjs();
         let ret = oxc_parser::Parser::new(alloc, src, st).parse();
-        collect(opts, &ret.program)
+        let key_annotated = key_annotated_spans(&ret.program);
+        collect(opts, &key_annotated, &ret.program)
     }
 
     #[test]
@@ -778,6 +938,30 @@ mod tests {
         // The assignment-target shorthand is still reserved regardless of mangle_quoted.
         let s2 = collect_src(&alloc, &opts_quoted("^_"), "({ _k } = o);");
         assert!(s2.reserved.contains("_k"));
+    }
+
+    #[test]
+    fn collect_key_annotation() {
+        let alloc = oxc_allocator::Allocator::default();
+        // `@__KEY__` / `#__KEY__` annotate the following string/template as a property name,
+        // even in non-key positions. A bare `/* __KEY__ */` (no `@`/`#`) does NOT.
+        let s = collect_src(
+            &alloc,
+            &opts("_"),
+            "x(/* __KEY__ */ '_doNotMangleThis', /* __KEY__ */ `_doNotMangleThis`);\n\
+             x(/* @__KEY__ */ '_mangleThis', /* @__KEY__ */ `_mangleThis2`);\n\
+             x(/* #__KEY__ */ '_mangleHash');\n\
+             /* @__KEY__ */ 'notMangled';",
+        );
+        // Annotated and regex-matching => candidate.
+        assert!(s.candidates.contains("_mangleThis"));
+        assert!(s.candidates.contains("_mangleThis2"));
+        assert!(s.candidates.contains("_mangleHash"));
+        // No `@`/`#` => not an annotation => plain argument string, not a candidate.
+        assert!(!s.candidates.contains("_doNotMangleThis"));
+        assert!(!s.reserved.contains("_doNotMangleThis"));
+        // Annotated but regex does not match => not a candidate (eligibility still gates).
+        assert!(!s.candidates.contains("notMangled"));
     }
 
     #[test]

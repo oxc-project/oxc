@@ -29,7 +29,10 @@ import { minifySync } from "../index";
 //     With `mangleQuoted: true`, quoted keys in key/index positions (including
 //     the wrapped conditional / comma forms esbuild handles) become candidates
 //     and are renamed consistently with their unquoted siblings.
-//   * No `/* @__KEY__ */` annotation support -> it.skip.
+//   * `/* @__KEY__ */` / `/* #__KEY__ */` annotation comments ARE supported: a
+//     string / no-substitution-template directly preceded by one is treated as a
+//     property NAME to mangle even outside a key position (the regex still gates
+//     it). A bare `/* __KEY__ */` (no `@`/`#`) is NOT an annotation.
 //   * Syntax lowering (optional-chain / class-field lowering) is a transformer
 //     concern, not minify; the non-lowered essence is covered separately.
 
@@ -601,14 +604,114 @@ var { [(z, '_mangleThis')]: x } = y;
     expect(mangle.code).not.toContain("_mangleThis");
   });
 
-  // bundler_default_test.go:7623 TestManglePropsKeyComment
-  // SKIP: depends on `/* @__KEY__ */` annotation comments to opt string literals
-  // into property mangling. oxc-minify v1 does not support `@__KEY__`
-  // annotations.
-  it.skip("TestManglePropsKeyComment (@__KEY__ annotations not supported)", () => {});
+  // Ported from bundler_default_test.go:7623 TestManglePropsKeyComment
+  // esbuild input (MangleProps: regexp("_"), MinifySyntax unset -> compress:false):
+  //   x(/* __KEY__ */ '_doNotMangleThis', /* __KEY__ */ `_doNotMangleThis`)
+  //   x._mangleThis(/* @__KEY__ */ '_mangleThis', /* @__KEY__ */ `_mangleThis`)
+  //   x._mangleThisToo(/* #__KEY__ */ '_mangleThisToo', /* #__KEY__ */ `_mangleThisToo`)
+  //   x._someKey = /* #__KEY__ */ '_someKey' in y
+  //   x([
+  //     `foo.${/* @__KEY__ */ '_mangleThis'} = bar.${/* @__KEY__ */ '_mangleThisToo'}`,
+  //     `foo.${/* @__KEY__ */ 'notMangled'} = bar.${/* @__KEY__ */ 'notMangledEither'}`,
+  //   ])
+  //
+  // A string/no-substitution-template directly preceded by `/* @__KEY__ */` or
+  // `/* #__KEY__ */` is treated as a property name even outside a key position,
+  // so it is mangled (the regex still gates it). A bare `/* __KEY__ */` (no `@`/`#`)
+  // is NOT an annotation, so `_doNotMangleThis` is left untouched. `_mangleThis` /
+  // `_mangleThisToo` / `_someKey` are renamed consistently (the member `.foo`
+  // positions AND the annotated string args share one global map). `notMangled` /
+  // `notMangledEither` are annotated but do not match the regex `_`, so they stay.
+  //
+  // oxc's base54 names start at `e`/`t`/`n` (vs esbuild's `a`/`b`/`c`), and oxc's
+  // codegen prints string call-arguments as template literals — so the
+  // unannotated `'_doNotMangleThis'` arg is printed as `` `_doNotMangleThis` ``
+  // purely by codegen, NOT by any rename (confirmed: this happens with no
+  // mangleProps at all).
+  it("TestManglePropsKeyComment", () => {
+    const r = minifySync(
+      "entry.js",
+      `x(/* __KEY__ */ '_doNotMangleThis', /* __KEY__ */ \`_doNotMangleThis\`)
+x._mangleThis(/* @__KEY__ */ '_mangleThis', /* @__KEY__ */ \`_mangleThis\`)
+x._mangleThisToo(/* #__KEY__ */ '_mangleThisToo', /* #__KEY__ */ \`_mangleThisToo\`)
+x._someKey = /* #__KEY__ */ '_someKey' in y
+x([
+  \`foo.\${/* @__KEY__ */ '_mangleThis'} = bar.\${/* @__KEY__ */ '_mangleThisToo'}\`,
+  \`foo.\${/* @__KEY__ */ 'notMangled'} = bar.\${/* @__KEY__ */ 'notMangledEither'}\`,
+])`,
+      { mangleProps: "_", compress: false },
+    );
+    expect(r.code).toBe(
+      "x(`_doNotMangleThis`,`_doNotMangleThis`);x.e(`e`,`e`);x.t(`t`,`t`);x.n=`n`in y;x([`foo.${`e`} = bar.${`t`}`,`foo.${`notMangled`} = bar.${`notMangledEither`}`]);",
+    );
+    // _mangleThis -> e, _mangleThisToo -> t, _someKey -> n (consistent member + annotation).
+    expect(r.mangleCache).toEqual({ _mangleThis: "e", _mangleThisToo: "t", _someKey: "n" });
+    // The non-annotated `_doNotMangleThis` and the regex-non-matching annotated
+    // strings survive verbatim.
+    expect(r.code).toContain("_doNotMangleThis");
+    expect(r.code).toContain("notMangled");
+    expect(r.code).toContain("notMangledEither");
+  });
 
-  // bundler_default_test.go:7646 TestManglePropsKeyCommentMinify
-  // SKIP: same `/* @__KEY__ */` annotation dependency, with MinifySyntax. Not
-  // supported in oxc-minify v1.
-  it.skip("TestManglePropsKeyCommentMinify (@__KEY__ annotations not supported)", () => {});
+  // Ported from bundler_default_test.go:7646 TestManglePropsKeyCommentMinify
+  // esbuild input (MangleProps: regexp("_"), MinifySyntax: true -> compress:true):
+  //   x = class {
+  //     _mangleThis = 1;
+  //     [/* @__KEY__ */ '_mangleThisToo'] = 2;
+  //     '_doNotMangleThis' = 3;
+  //   }
+  //   x = {
+  //     _mangleThis: 1,
+  //     [/* @__KEY__ */ '_mangleThisToo']: 2,
+  //     '_doNotMangleThis': 3,
+  //   }
+  //   x._mangleThis = 1
+  //   x[/* @__KEY__ */ '_mangleThisToo'] = 2
+  //   x['_doNotMangleThis'] = 3
+  //   x([
+  //     `${foo}.${/* @__KEY__ */ '_mangleThis'} = bar.${/* @__KEY__ */ '_mangleThisToo'}`,
+  //     `${foo}.${/* @__KEY__ */ 'notMangled'} = bar.${/* @__KEY__ */ 'notMangledEither'}`,
+  //   ])
+  //
+  // `_mangleThis` is a real (unquoted) class-field/object/member key -> mangled to
+  // `e`. `_mangleThisToo` appears only as an annotated computed key/index
+  // (`[/* @__KEY__ */ '_mangleThisToo']`) -> mangled to `t` (compress un-quotes the
+  // resulting static key). `'_doNotMangleThis'` is a quoted key with no annotation
+  // and mangleQuoted off -> reserved program-wide (kept). The annotated strings
+  // inside the template interpolations are renamed BEFORE compress folds them into
+  // the quasi, so `${...}` interpolations become `.e`/`.t`; `notMangled` /
+  // `notMangledEither` are annotated but do not match `_`, so they stay.
+  it("TestManglePropsKeyCommentMinify", () => {
+    const r = minifySync(
+      "entry.js",
+      `x = class {
+  _mangleThis = 1;
+  [/* @__KEY__ */ '_mangleThisToo'] = 2;
+  '_doNotMangleThis' = 3;
+}
+x = {
+  _mangleThis: 1,
+  [/* @__KEY__ */ '_mangleThisToo']: 2,
+  '_doNotMangleThis': 3,
+}
+x._mangleThis = 1
+x[/* @__KEY__ */ '_mangleThisToo'] = 2
+x['_doNotMangleThis'] = 3
+x([
+  \`\${foo}.\${/* @__KEY__ */ '_mangleThis'} = bar.\${/* @__KEY__ */ '_mangleThisToo'}\`,
+  \`\${foo}.\${/* @__KEY__ */ 'notMangled'} = bar.\${/* @__KEY__ */ 'notMangledEither'}\`,
+])`,
+      { mangleProps: "_", compress: true },
+    );
+    expect(r.code).toBe(
+      "x=class{e=1;t=2;_doNotMangleThis=3},x={e:1,t:2,_doNotMangleThis:3},x.e=1,x.t=2,x._doNotMangleThis=3,x([`${foo}.e = bar.t`,`${foo}.notMangled = bar.notMangledEither`]);",
+    );
+    // _mangleThis -> e (real key), _mangleThisToo -> t (annotated computed key).
+    expect(r.mangleCache).toEqual({ _mangleThis: "e", _mangleThisToo: "t" });
+    // Quoted-but-unannotated `_doNotMangleThis` reserved; regex-non-matching
+    // annotated strings survive.
+    expect(r.code).toContain("_doNotMangleThis");
+    expect(r.code).toContain("notMangled");
+    expect(r.code).toContain("notMangledEither");
+  });
 });
