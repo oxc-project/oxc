@@ -341,7 +341,7 @@ impl Rule for NoMapSpread {
         // Look for return statements that contain an object or array spread.
         let visitor = SpreadInReturnVisitor::<'a, '_>::iter_spreads(ctx, mapper, |spread| {
             // SAFETY: references to arena-allocated objects are valid for the
-            // lifetime of the arena. Unfortunately, `AsRef` on `Box<'a, T>`
+            // lifetime of the arena. Unfortunately, `AsRef` on `ArenaBox<'a, T>`
             // returns a reference with a lifetime of 'self instead of 'a.
             spreads.push(unsafe { std::mem::transmute::<Spread<'a, '_>, Spread<'a, 'a>>(spread) });
         });

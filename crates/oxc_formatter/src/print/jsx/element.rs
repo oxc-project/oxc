@@ -1,4 +1,4 @@
-use oxc_allocator::Vec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::{JSXChild, JSXElement, JSXExpression, JSXExpressionContainer, JSXFragment};
 use oxc_span::{GetSpan, Span};
 
@@ -297,7 +297,7 @@ impl<'a, 'b> AnyJsxTagWithChildren<'a, 'b> {
         }
     }
 
-    fn children(&self) -> &'b AstNode<'a, Vec<'a, JSXChild<'a>>> {
+    fn children(&self) -> &'b AstNode<'a, ArenaVec<'a, JSXChild<'a>>> {
         match self {
             Self::Element(element) => element.children(),
             Self::Fragment(fragment) => fragment.children(),

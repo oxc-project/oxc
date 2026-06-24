@@ -7,7 +7,7 @@ use std::{
 
 use rustc_hash::FxHashMap;
 
-use oxc_allocator::{Allocator, TakeIn, Vec as ArenaVec};
+use oxc_allocator::{Allocator, ArenaVec, TakeIn};
 
 use crate::{
     Argument, Arguments, Format, FormatElement, FormatState,

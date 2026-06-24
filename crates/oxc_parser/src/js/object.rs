@@ -1,4 +1,4 @@
-use oxc_allocator::Box;
+use oxc_allocator::ArenaBox;
 use oxc_ast::ast::*;
 use oxc_syntax::operator::AssignmentOperator;
 
@@ -16,7 +16,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ///     { }
     ///     { `PropertyDefinitionList`[?Yield, ?Await] }
     ///     { `PropertyDefinitionList`[?Yield, ?Await] , }
-    pub(crate) fn parse_object_expression(&mut self) -> Box<'a, ObjectExpression<'a>> {
+    pub(crate) fn parse_object_expression(&mut self) -> ArenaBox<'a, ObjectExpression<'a>> {
         let span = self.start_span();
         let opening_span = self.cur_token().span();
         self.expect(Kind::LCurly);
@@ -43,7 +43,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// `PropertyDefinition`[Yield, Await]
-    fn parse_object_literal_element(&mut self) -> Box<'a, ObjectProperty<'a>> {
+    fn parse_object_literal_element(&mut self) -> ArenaBox<'a, ObjectProperty<'a>> {
         let span = self.start_span();
 
         let modifiers = self.parse_modifiers(
@@ -135,7 +135,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// `PropertyDefinition`[Yield, Await] :
     ///   ... `AssignmentExpression`[+In, ?Yield, ?Await]
-    pub(crate) fn parse_spread_element(&mut self) -> Box<'a, SpreadElement<'a>> {
+    pub(crate) fn parse_spread_element(&mut self) -> ArenaBox<'a, SpreadElement<'a>> {
         let span = self.start_span();
         self.bump_any(); // advance `...`
         let argument = self.parse_assignment_expression_or_higher();
@@ -149,7 +149,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         span: u32,
         key: PropertyKey<'a>,
         computed: bool,
-    ) -> Box<'a, ObjectProperty<'a>> {
+    ) -> ArenaBox<'a, ObjectProperty<'a>> {
         self.expect(Kind::Colon);
         let value = self.parse_assignment_expression_or_higher();
         self.ast.alloc_object_property(
@@ -210,7 +210,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         span: u32,
         kind: PropertyKind,
         modifiers: &Modifiers,
-    ) -> Box<'a, ObjectProperty<'a>> {
+    ) -> ArenaBox<'a, ObjectProperty<'a>> {
         let (key, computed) = self.parse_property_name();
         let function = self.parse_method(false, false, FunctionKind::ObjectMethod);
         match kind {

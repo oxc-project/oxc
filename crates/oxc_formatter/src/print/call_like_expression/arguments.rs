@@ -1,4 +1,4 @@
-use oxc_allocator::Vec as ArenaVec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
@@ -1136,7 +1136,7 @@ fn is_huggable_html_embed_single_arg(arguments: &[Argument], f: &JsFormatter<'_,
 /// useMemo(() => {}, [])
 /// ```
 fn is_react_hook_with_deps_array(
-    arguments: &AstNode<ArenaVec<Argument>>,
+    arguments: &AstNode<'_, ArenaVec<'_, Argument<'_>>>,
     comments: &Comments,
 ) -> bool {
     if arguments.len() > 3 || arguments.len() < 2 {

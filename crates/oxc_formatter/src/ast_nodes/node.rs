@@ -4,7 +4,7 @@ use std::{
     ops::Deref,
 };
 
-use oxc_allocator::{Allocator, Vec};
+use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 
@@ -156,18 +156,18 @@ impl<'a> AstNode<'a, ExpressionStatement<'a>> {
 impl<'a> AstNode<'a, ImportExpression<'a>> {
     /// Converts the arguments of the ImportExpression into an `AstNode` representing a `Vec` of `Argument`.
     #[inline]
-    pub fn to_arguments(&self) -> &AstNode<'a, Vec<'a, Argument<'a>>> {
-        // Convert ImportExpression's source and options to Vec<'a, Argument<'a>>.
+    pub fn to_arguments(&self) -> &AstNode<'a, ArenaVec<'a, Argument<'a>>> {
+        // Convert ImportExpression's source and options to ArenaVec<'a, Argument<'a>>.
         // This allows us to reuse CallExpression's argument formatting logic when printing
         // import expressions, since import(source, options) has the same structure as
         // a function call with arguments.
-        let mut arguments = Vec::new_in(self.allocator);
+        let mut arguments = ArenaVec::new_in(self.allocator);
 
         // SAFETY: Argument inherits all Expression variants through the inherit_variants! macro,
         // so Expression and Argument have identical memory layout for shared variants.
         // Both are discriminated unions where each Expression variant (e.g., Expression::Identifier)
         // has a corresponding Argument variant (e.g., Argument::Identifier) with the same discriminant
-        // and the same inner type (Box<'a, T>). Transmuting Expression to Argument via transmute_copy
+        // and the same inner type (ArenaBox<'a, T>). Transmuting Expression to Argument via transmute_copy
         // is safe because we're just copying the bits (discriminant + pointer).
         unsafe {
             arguments.push(transmute_copy(&self.inner.source));

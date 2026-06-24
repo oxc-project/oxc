@@ -30,11 +30,12 @@
 
 use oxc_ast::ast::*;
 use oxc_span::SPAN;
+use oxc_str::{Ident, static_ident};
 use oxc_traverse::{Ancestor, Traverse};
 
 use crate::{context::TraverseCtx, state::TransformState};
 
-const SELF: &str = "__self";
+const SELF: Ident<'static> = static_ident!("__self");
 
 pub struct JsxSelf;
 

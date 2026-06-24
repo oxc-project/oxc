@@ -3,7 +3,7 @@ use std::str;
 use itoa::Buffer as ItoaBuffer;
 use rustc_hash::FxHashMap;
 
-use oxc_allocator::{Allocator, StringBuilder as ArenaStringBuilder};
+use oxc_allocator::{Allocator, ArenaStringBuilder};
 use oxc_semantic::Scoping;
 use oxc_str::Ident;
 

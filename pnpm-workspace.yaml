@@ -16,13 +16,13 @@ catalog:
   "@types/node": 24.1.0
   cross-env: ^10.1.0
   degit: 3.4.7
-  eslint: 10.4.1
+  eslint: 10.5.0
   json-schema-to-typescript: ^15.0.4
   publint: 0.3.21
   rolldown: 1.1.2
   tsdown: 0.22.3
   vite-plus: 0.2.1
-  vitest: 4.1.8
+  vitest: 4.1.9
 
 overrides:
   rolldown: "catalog:"

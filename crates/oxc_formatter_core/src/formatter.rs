@@ -1,6 +1,8 @@
 #![allow(clippy::module_inception)]
 
-use oxc_allocator::{Allocator, GetAllocator, Vec as ArenaVec};
+use std::borrow::Cow;
+
+use oxc_allocator::{Allocator, ArenaVec, GetAllocator};
 
 use crate::{
     Argument, Arguments, Buffer, FormatContext, FormatElement, FormatState, VecBuffer,
@@ -8,6 +10,15 @@ use crate::{
     format::{Format, write},
     format_element::Interned,
 };
+
+/// Lifts a `Cow<'ast, str>` to `&'ast str`, allocating in the arena only for the owned case.
+/// Borrowed Cows already point into arena-resident source, so they pass through unchanged.
+pub fn arena_cow_str<'ast, C>(cow: &Cow<'ast, str>, f: &Formatter<'_, 'ast, C>) -> &'ast str {
+    match cow {
+        Cow::Borrowed(s) => s,
+        Cow::Owned(s) => f.allocator().alloc_str(s),
+    }
+}
 
 /// Handles the formatting of a CST and stores the context how the CST should be formatted (user preferences).
 ///

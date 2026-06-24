@@ -48,14 +48,13 @@ mod metadata;
 use std::borrow::Cow;
 use std::mem;
 
-use oxc_allocator::{
-    Address, Box as ArenaBox, CloneIn, GetAddress, TakeIn, UnstableAddress, Vec as ArenaVec,
-};
+use oxc_allocator::{Address, ArenaBox, ArenaVec, CloneIn, GetAddress, TakeIn, UnstableAddress};
 use oxc_ast::{NONE, ast::*};
 use oxc_ast_visit::{Visit, VisitMut};
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::SPAN;
+use oxc_str::static_ident;
 use oxc_syntax::operator::AssignmentOperator;
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, ast_operations::get_var_name_from_node};
 use rustc_hash::FxHashMap;
@@ -511,7 +510,7 @@ impl<'a> LegacyDecorator<'a> {
             (params, stmt)
         } else {
             let value_binding = ctx.generate_binding(
-                Str::from("value").into(),
+                static_ident!("value"),
                 scope_id,
                 SymbolFlags::FunctionScopedVariable,
             );
@@ -1353,13 +1352,13 @@ impl<'a> LegacyDecorator<'a> {
             PropertyKey::PrivateIdentifier(_) => ctx.ast.expression_string_literal(SPAN, "", None),
             // Copiable literals
             PropertyKey::NumericLiteral(literal) => {
-                Expression::NumericLiteral(ctx.ast.alloc(literal.clone()))
+                Expression::NumericLiteral(literal.clone_in(ctx.ast.allocator))
             }
             PropertyKey::StringLiteral(literal) => {
-                Expression::StringLiteral(ctx.ast.alloc(literal.clone()))
+                Expression::StringLiteral(literal.clone_in(ctx.ast.allocator))
             }
             PropertyKey::TemplateLiteral(literal) if literal.expressions.is_empty() => {
-                let quasis = ctx.ast.vec_from_iter(literal.quasis.iter().cloned());
+                let quasis = literal.quasis.clone_in(ctx.ast.allocator);
                 ctx.ast.expression_template_literal(SPAN, quasis, ctx.ast.vec())
             }
             PropertyKey::NullLiteral(_) => ctx.ast.expression_null_literal(SPAN),

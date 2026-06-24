@@ -1,4 +1,4 @@
-use oxc_allocator::{Allocator, Vec};
+use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::BoundNames;
@@ -11,8 +11,8 @@ pub struct ModuleRecordBuilder<'a> {
     allocator: &'a Allocator,
     source_type: SourceType,
     module_record: ModuleRecord<'a>,
-    export_entries: Vec<'a, ExportEntry<'a>>,
-    exported_bindings_duplicated: Vec<'a, NameSpan<'a>>,
+    export_entries: ArenaVec<'a, ExportEntry<'a>>,
+    exported_bindings_duplicated: ArenaVec<'a, NameSpan<'a>>,
 }
 
 impl<'a> ModuleRecordBuilder<'a> {
@@ -21,12 +21,12 @@ impl<'a> ModuleRecordBuilder<'a> {
             allocator,
             source_type,
             module_record: ModuleRecord::new(allocator),
-            export_entries: Vec::new_in(allocator),
-            exported_bindings_duplicated: Vec::new_in(allocator),
+            export_entries: ArenaVec::new_in(allocator),
+            exported_bindings_duplicated: ArenaVec::new_in(allocator),
         }
     }
 
-    pub fn build(mut self) -> (ModuleRecord<'a>, std::vec::Vec<OxcDiagnostic>) {
+    pub fn build(mut self) -> (ModuleRecord<'a>, Vec<OxcDiagnostic>) {
         // The `ParseModule` algorithm requires `importedBoundNames` (import entries) to be
         // resolved before resolving export entries.
         self.resolve_export_entries();
@@ -39,7 +39,7 @@ impl<'a> ModuleRecordBuilder<'a> {
         self.module_record.has_module_syntax
     }
 
-    pub fn errors(&self) -> std::vec::Vec<OxcDiagnostic> {
+    pub fn errors(&self) -> Vec<OxcDiagnostic> {
         let mut errors = vec![];
 
         let module_record = &self.module_record;
@@ -81,7 +81,7 @@ impl<'a> ModuleRecordBuilder<'a> {
         self.module_record
             .requested_modules
             .entry(name)
-            .or_insert_with(|| oxc_allocator::Vec::new_in(self.allocator))
+            .or_insert_with(|| ArenaVec::new_in(self.allocator))
             .push(requested_module);
     }
 
@@ -116,7 +116,7 @@ impl<'a> ModuleRecordBuilder<'a> {
     fn resolve_export_entries(&mut self) {
         // let export_entries = self.export_entries.drain(..).collect::<Vec<_>>();
         let export_entries =
-            std::mem::replace(&mut self.export_entries, Vec::new_in(self.allocator));
+            std::mem::replace(&mut self.export_entries, ArenaVec::new_in(self.allocator));
         // 10. For each ExportEntry Record ee of exportEntries, do
         for ee in export_entries {
             // a. If ee.[[ModuleRequest]] is null, then

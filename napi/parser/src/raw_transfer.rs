@@ -12,7 +12,7 @@ use napi::{
 use napi_derive::napi;
 
 use oxc::{
-    allocator::{Allocator, FromIn, Vec as ArenaVec},
+    allocator::{Allocator, ArenaVec, FromIn},
     ast_visit::utf8_to_utf16::Utf8ToUtf16,
     semantic::SemanticBuilder,
 };

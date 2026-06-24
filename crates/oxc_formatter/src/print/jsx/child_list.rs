@@ -1,4 +1,4 @@
-use oxc_allocator::{Allocator, TakeIn, Vec as ArenaVec};
+use oxc_allocator::{Allocator, ArenaVec, TakeIn};
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 

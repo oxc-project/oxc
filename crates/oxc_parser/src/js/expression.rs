@@ -1,5 +1,5 @@
 use cow_utils::CowUtils;
-use oxc_allocator::{Box, TakeIn, Vec};
+use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
 use oxc_ast::ast::*;
 #[cfg(feature = "regular_expression")]
 use oxc_regular_expression::ast::Pattern;
@@ -233,10 +233,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Kind::Super => self.parse_super(),
             Kind::Import => self.parse_import_meta_or_call(),
             Kind::LParen => self.parse_parenthesized_expression(),
-            Kind::Slash | Kind::SlashEq => {
-                let literal = self.parse_literal_regexp();
-                Expression::RegExpLiteral(self.alloc(literal))
-            }
+            Kind::Slash | Kind::SlashEq => Expression::RegExpLiteral(self.parse_literal_regexp()),
             Kind::At => self.parse_decorated_expression(),
             // Literal, RegularExpressionLiteral
             kind if kind.is_literal() => self.parse_literal_expression(),
@@ -324,27 +321,17 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 let lit = self.parse_literal_string();
                 Expression::StringLiteral(self.alloc(lit))
             }
-            Kind::True | Kind::False => {
-                let lit = self.parse_literal_boolean();
-                Expression::BooleanLiteral(self.alloc(lit))
-            }
-            Kind::Null => {
-                let lit = self.parse_literal_null();
-                Expression::NullLiteral(self.alloc(lit))
-            }
+            Kind::True | Kind::False => Expression::BooleanLiteral(self.parse_literal_boolean()),
+            Kind::Null => Expression::NullLiteral(self.parse_literal_null()),
             Kind::DecimalBigInt | Kind::BinaryBigInt | Kind::OctalBigInt | Kind::HexBigInt => {
-                let lit = self.parse_literal_bigint();
-                Expression::BigIntLiteral(self.alloc(lit))
+                Expression::BigIntLiteral(self.parse_literal_bigint())
             }
-            kind if kind.is_number() => {
-                let lit = self.parse_literal_number();
-                Expression::NumericLiteral(self.alloc(lit))
-            }
+            kind if kind.is_number() => Expression::NumericLiteral(self.parse_literal_number()),
             _ => self.unexpected(),
         }
     }
 
-    pub(crate) fn parse_literal_boolean(&mut self) -> BooleanLiteral {
+    pub(crate) fn parse_literal_boolean(&mut self) -> ArenaBox<'a, BooleanLiteral> {
         let span = self.start_span();
         let value = match self.cur_kind() {
             Kind::True => true,
@@ -352,16 +339,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             _ => return self.unexpected(),
         };
         self.bump_any();
-        self.ast.boolean_literal(self.end_span(span), value)
+        self.ast.alloc_boolean_literal(self.end_span(span), value)
     }
 
-    pub(crate) fn parse_literal_null(&mut self) -> NullLiteral {
+    pub(crate) fn parse_literal_null(&mut self) -> ArenaBox<'a, NullLiteral> {
         let span = self.cur_token().span();
         self.bump_any(); // bump `null`
-        self.ast.null_literal(span)
+        self.ast.alloc_null_literal(span)
     }
 
-    pub(crate) fn parse_literal_number(&mut self) -> NumericLiteral<'a> {
+    pub(crate) fn parse_literal_number(&mut self) -> ArenaBox<'a, NumericLiteral<'a>> {
         let token = self.cur_token();
         let span = token.span();
         let kind = token.kind();
@@ -396,10 +383,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             _ => return self.unexpected(),
         };
         self.bump_any();
-        self.ast.numeric_literal(span, value, Some(Str::from(src)), base)
+        self.ast.alloc_numeric_literal(span, value, Some(Str::from(src)), base)
     }
 
-    pub(crate) fn parse_literal_bigint(&mut self) -> BigIntLiteral<'a> {
+    pub(crate) fn parse_literal_bigint(&mut self) -> ArenaBox<'a, BigIntLiteral<'a>> {
         let token = self.cur_token();
         let kind = token.kind();
         let has_separator = token.has_separator();
@@ -416,10 +403,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let value = parse_big_int(src, number_kind, has_separator, self.ast.allocator);
 
         self.bump_any();
-        self.ast.big_int_literal(span, value, Some(Str::from(raw)), base)
+        self.ast.alloc_big_int_literal(span, value, Some(Str::from(raw)), base)
     }
 
-    pub(crate) fn parse_literal_regexp(&mut self) -> RegExpLiteral<'a> {
+    pub(crate) fn parse_literal_regexp(&mut self) -> ArenaBox<'a, RegExpLiteral<'a>> {
         let (pattern_end, flags, flags_error) = self.read_regex();
         if !self.lexer.errors.is_empty() {
             return self.unexpected();
@@ -451,7 +438,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.error(diagnostics::reg_exp_flag_u_and_v(span));
         }
 
-        self.ast.reg_exp_literal(span, RegExp { pattern, flags }, Some(Str::from(raw)))
+        self.ast.alloc_reg_exp_literal(span, RegExp { pattern, flags }, Some(Str::from(raw)))
     }
 
     #[cfg(feature = "regular_expression")]
@@ -461,7 +448,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         pattern: &'a str,
         flags_span_offset: u32,
         flags: &'a str,
-    ) -> Option<Box<'a, Pattern<'a>>> {
+    ) -> Option<ArenaBox<'a, Pattern<'a>>> {
         use oxc_regular_expression::{LiteralParser, Options};
         match LiteralParser::new(
             self.ast.allocator,
@@ -589,7 +576,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         span: u32,
         lhs: Expression<'a>,
         in_optional_chain: bool,
-        type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
     ) -> Expression<'a> {
         let quasi = self.parse_template_literal(true);
         let span = self.end_span(span);
@@ -1117,7 +1104,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         lhs_span: u32,
         lhs: Expression<'a>,
         optional: bool,
-        type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
     ) -> Expression<'a> {
         // ArgumentList[Yield, Await] :
         //   AssignmentExpression[+In, ?Yield, ?Await]
@@ -1701,7 +1688,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
-    pub(crate) fn parse_decorators(&mut self) -> Vec<'a, Decorator<'a>> {
+    pub(crate) fn parse_decorators(&mut self) -> ArenaVec<'a, Decorator<'a>> {
         if self.at(Kind::At) {
             let mut decorators = self.ast.vec_with_capacity(1);
             while self.at(Kind::At) {

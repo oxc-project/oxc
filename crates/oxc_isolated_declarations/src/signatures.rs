@@ -1,6 +1,6 @@
 use rustc_hash::FxHashMap;
 
-use oxc_allocator::{CloneIn, Vec as ArenaVec};
+use oxc_allocator::{ArenaVec, CloneIn};
 use oxc_ast::ast::{TSMethodSignatureKind, TSSignature};
 use oxc_span::GetSpan;
 

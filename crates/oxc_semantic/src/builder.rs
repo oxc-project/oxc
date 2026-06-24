@@ -7,7 +7,7 @@ use std::{
 
 use rustc_hash::FxHashMap;
 
-use oxc_allocator::Address;
+use oxc_allocator::{Address, ArenaVec};
 use oxc_ast::{AstKind, ast::*};
 use oxc_ast_visit::Visit;
 #[cfg(feature = "cfg")]
@@ -747,7 +747,7 @@ impl<'a> SemanticBuilder<'a> {
         );
     }
 
-    fn visit_parameter_decorators(&mut self, decorators: &oxc_allocator::Vec<'a, Decorator<'a>>) {
+    fn visit_parameter_decorators(&mut self, decorators: &ArenaVec<'a, Decorator<'a>>) {
         if decorators.is_empty() {
             return;
         }

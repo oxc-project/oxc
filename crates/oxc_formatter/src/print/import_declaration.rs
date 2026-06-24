@@ -1,4 +1,4 @@
-use oxc_allocator::Vec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 use oxc_syntax::identifier::is_identifier_name_patched;
@@ -74,7 +74,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ImportDeclaration<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Vec<'a, ImportDeclarationSpecifier<'a>>> {
+impl<'a> Format<'a, JsFormatContext<'a>>
+    for AstNode<'a, ArenaVec<'a, ImportDeclarationSpecifier<'a>>>
+{
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let mut specifiers_iter = self.iter().peekable();
 
@@ -204,7 +206,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, WithClause<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Vec<'a, ImportAttribute<'a>>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, ImportAttribute<'a>>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         if self.is_empty() {
             return write!(f, "{}");
