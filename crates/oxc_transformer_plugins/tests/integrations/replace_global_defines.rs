@@ -100,11 +100,12 @@ fn typeof_define() {
         ("typeof window", "'undefined'"),
         ("typeof process.env", "'object'"),
         ("typeof import.meta", "'object'"),
+        ("typeof import.meta.env", "'object'"),
     ]);
 
     test_define_only(
-        "foo(typeof window, typeof (window), typeof process.env, typeof (process).env, typeof process['env'], typeof (process)['env'], typeof process?.env, typeof import.meta)",
-        "foo('undefined', 'undefined', 'object', 'object', 'object', 'object', 'object', 'object')",
+        "foo(typeof window, typeof (window), typeof process.env, typeof (process).env, typeof process['env'], typeof (process)['env'], typeof process?.env, typeof import.meta, typeof import.meta.env)",
+        "foo('undefined', 'undefined', 'object', 'object', 'object', 'object', 'object', 'object', 'object')",
         &config,
     );
     test("if (typeof window === 'undefined') server(); else client();", "server()", &config);
@@ -158,6 +159,19 @@ fn typeof_define_is_scope_aware() {
     test_define_only(
         "type WindowType = typeof window; foo(typeof window)",
         "type WindowType = typeof window; foo('undefined')",
+        &config,
+    );
+}
+
+#[test]
+fn typeof_define_this_expr() {
+    let config = config(&[("typeof this", "'object'")]);
+
+    test_define_only("foo(typeof this)", "foo('object')", &config);
+    test_define_only("(() => foo(typeof this))()", "(() => foo('object'))()", &config);
+    test_define_only(
+        "function f() { foo(typeof this); (() => foo(typeof this))() }",
+        "function f() { foo(typeof this); (() => foo(typeof this))() }",
         &config,
     );
 }
