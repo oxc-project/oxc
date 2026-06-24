@@ -50,6 +50,7 @@ mod keep_var;
 mod minifier_traverse;
 mod options;
 mod peephole;
+mod property;
 mod state;
 mod symbol_value;
 mod traverse_context;
@@ -64,6 +65,7 @@ use oxc_syntax::class::ClassId;
 use rustc_hash::FxHashMap;
 
 pub use oxc_mangler::{MangleOptions, MangleOptionsKeepNames};
+pub use property::{CacheValue, ManglePropertiesOptions, PropertyMangleCache};
 
 pub(crate) use crate::generated::traverse::Traverse;
 #[doc(hidden)]
