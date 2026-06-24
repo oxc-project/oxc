@@ -1,5 +1,6 @@
 use oxc_allocator::Allocator;
 
+mod category;
 mod diagnostics;
 mod options;
 mod scope;
@@ -23,6 +24,7 @@ use crate::react_compiler::entrypoint::program::compile_program;
 
 pub use crate::react_compiler::entrypoint::program::CompileOutput;
 
+pub use category::{ReactCompilerCategory, ReactCompilerDiagnostic};
 // Re-exported so integrations needn't depend on the upstream `react_compiler` crates.
 pub use crate::options::{
     CompilationMode, CompilerOutputMode, CompilerTarget, DynamicGatingConfig, GatingConfig,
@@ -44,8 +46,10 @@ use oxc_diagnostics::Diagnostics;
 use oxc_semantic::Semantic;
 
 pub struct LintResult {
-    /// Errors and warnings produced by the compile.
-    pub diagnostics: Diagnostics,
+    /// Errors and warnings produced by the compile, each paired with its
+    /// [`ReactCompilerCategory`] so consumers can filter or suppress by category
+    /// (e.g. per-sub-rule disable directives) without re-parsing the message.
+    pub diagnostics: Vec<ReactCompilerDiagnostic>,
 }
 
 /// Run the React Compiler on a pre-parsed program.
@@ -110,5 +114,38 @@ pub fn lint<'a>(
     options.no_emit = true;
 
     let (_output, diagnostics) = compile(program, semantic, allocator, options);
+    // The compiler emits already-formatted `OxcDiagnostic`s (categories are
+    // flattened into the message inside `diagnostics::detail_to_diagnostic`). Pair
+    // each back up with its typed category here, so consumers match on the enum
+    // instead of re-parsing the message.
+    let diagnostics = diagnostics
+        .into_vec()
+        .into_iter()
+        .map(|diagnostic| ReactCompilerDiagnostic {
+            category: message_category(&diagnostic.message),
+            diagnostic,
+        })
+        .collect();
     LintResult { diagnostics }
+}
+
+/// Recover a [`ReactCompilerCategory`] from a formatted diagnostic message.
+///
+/// The compiler formats per-detail diagnostics as
+/// `[ReactCompiler] {Category:?}: {reason}` (see `diagnostics::detail_to_diagnostic`,
+/// which stringifies the typed `ErrorCategory`), and its two synthetic error paths
+/// as `[ReactCompiler] Pipeline error: …` / `[ReactCompiler] Unexpected error: …`
+/// (see `program.rs`). This is the inverse of that formatting; anything else maps
+/// to [`ReactCompilerCategory::Other`].
+fn message_category(message: &str) -> ReactCompilerCategory {
+    match message
+        .strip_prefix("[ReactCompiler] ")
+        .and_then(|rest| rest.split_once(": "))
+        .map(|(category, _)| category)
+    {
+        Some("Pipeline error") => ReactCompilerCategory::PipelineError,
+        Some("Unexpected error") => ReactCompilerCategory::UnexpectedError,
+        Some(name) => ReactCompilerCategory::from_compiler_string(name),
+        None => ReactCompilerCategory::Other,
+    }
 }
