@@ -1,4 +1,4 @@
-use oxc_allocator::Box;
+use oxc_allocator::ArenaBox;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
@@ -20,7 +20,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     pub(super) fn parse_binding_pattern_with_type_annotation(
         &mut self,
-    ) -> (BindingPattern<'a>, Option<Box<'a, TSTypeAnnotation<'a>>>) {
+    ) -> (BindingPattern<'a>, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>) {
         let pattern = self.parse_binding_pattern_kind();
         let type_annotation = self.parse_ts_type_annotation();
         (pattern, type_annotation)
@@ -87,7 +87,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// Section 14.3.3 Binding Rest Property
-    pub(crate) fn parse_rest_element(&mut self) -> Box<'a, BindingRestElement<'a>> {
+    pub(crate) fn parse_rest_element(&mut self) -> ArenaBox<'a, BindingRestElement<'a>> {
         let span = self.start_span();
         self.bump_any(); // advance `...`
         let init_span = self.start_span();

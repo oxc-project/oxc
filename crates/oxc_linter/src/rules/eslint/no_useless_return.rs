@@ -268,7 +268,7 @@ impl NoUselessReturn {
     /// Check if a span is contained in the last statement of a statement list
     #[inline]
     fn is_span_in_last_statement(
-        statements: &ArenaVec<oxc_ast::ast::Statement>,
+        statements: &ArenaVec<'_, oxc_ast::ast::Statement<'_>>,
         span: Span,
     ) -> bool {
         statements.last().is_some_and(|last| last.span().contains_inclusive(span))

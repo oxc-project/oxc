@@ -4,7 +4,7 @@ use crate::{
     rule::{DefaultRuleConfig, Rule},
 };
 use lazy_regex::{Lazy, Regex, lazy_regex};
-use oxc_allocator::{Allocator, Vec};
+use oxc_allocator::{Allocator, ArenaVec};
 
 use oxc_ast::{
     AstBuilder, AstKind,
@@ -373,7 +373,7 @@ impl JsxCurlyBracePresence {
     fn check_jsx_child<'a>(
         &self,
         ctx: &LintContext<'a>,
-        children: &Vec<'a, JSXChild<'a>>,
+        children: &ArenaVec<'a, JSXChild<'a>>,
         node: &AstNode<'a>,
     ) {
         for child in children {

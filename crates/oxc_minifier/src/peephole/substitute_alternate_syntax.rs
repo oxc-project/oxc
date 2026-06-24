@@ -1,7 +1,7 @@
 use std::iter::repeat_with;
 
 use crate::generated::ancestor::Ancestor;
-use oxc_allocator::{CloneIn, TakeIn, Vec};
+use oxc_allocator::{ArenaVec, CloneIn, TakeIn};
 use oxc_ast::{NONE, ast::*};
 use oxc_compat::ESFeature;
 use oxc_ecmascript::side_effects::MayHaveSideEffectsContext;
@@ -1403,7 +1403,7 @@ impl<'a> PeepholeOptimizations {
 
     // `foo(...[1,2,3])` -> `foo(1,2,3)`
     // `new Foo(...[1,2,3])` -> `new Foo(1,2,3)`
-    fn try_flatten_arguments(args: &mut Vec<'a, Argument<'a>>, ctx: &mut TraverseCtx<'a>) {
+    fn try_flatten_arguments(args: &mut ArenaVec<'a, Argument<'a>>, ctx: &mut TraverseCtx<'a>) {
         let (new_size, should_fold) =
             args.iter().fold((0, false), |(mut new_size, mut should_fold), arg| {
                 new_size += if let Argument::SpreadElement(spread_el) = arg {

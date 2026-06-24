@@ -1,7 +1,7 @@
 use std::iter;
 
 use crate::{CompressOptionsUnused, TraverseCtx, generated::ancestor::Ancestor};
-use oxc_allocator::{TakeIn, Vec};
+use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::ast::*;
 use oxc_compat::ESFeature;
 use oxc_ecmascript::{
@@ -660,14 +660,14 @@ impl<'a> PeepholeOptimizations {
     }
 
     pub fn fold_arguments_into_needed_expressions(
-        args: &mut Vec<'a, Argument<'a>>,
+        args: &mut ArenaVec<'a, Argument<'a>>,
         ctx: &mut TraverseCtx<'a>,
-    ) -> Vec<'a, Expression<'a>> {
+    ) -> ArenaVec<'a, Expression<'a>> {
         // `args.drain(..)` would silently move owned `Argument`s out and the
         // filter would drop any whose inner expression `remove_unused_expression`
         // collapsed to nothing — leaking references in the dropped subtree.
         // Use a manual loop so we can `drop_expression` before discarding.
-        let mut out: Vec<'a, Expression<'a>> = ctx.ast.vec_with_capacity(args.len());
+        let mut out: ArenaVec<'a, Expression<'a>> = ctx.ast.vec_with_capacity(args.len());
         for arg in args.drain(..) {
             let mut expr = match arg {
                 Argument::SpreadElement(e) => ctx.ast.expression_array(
@@ -859,7 +859,7 @@ impl<'a> PeepholeOptimizations {
     pub fn remove_unused_class(
         c: &mut Class<'a>,
         ctx: &mut TraverseCtx<'a>,
-    ) -> Option<Vec<'a, Expression<'a>>> {
+    ) -> Option<ArenaVec<'a, Expression<'a>>> {
         // TypeError `class C extends (() => {}) {}`
         if c.super_class
             .as_ref()

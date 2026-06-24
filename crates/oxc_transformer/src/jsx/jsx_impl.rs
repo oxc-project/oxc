@@ -584,7 +584,7 @@ impl<'a> JsxImpl<'a> {
         &mut self,
         span: Span,
         opening_element: Option<ArenaBox<'a, JSXOpeningElement<'a>>>,
-        children: ArenaVec<JSXChild<'a>>,
+        children: ArenaVec<'a, JSXChild<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let has_key_after_props_spread =

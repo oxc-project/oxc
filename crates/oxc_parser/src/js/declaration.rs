@@ -1,4 +1,4 @@
-use oxc_allocator::Box;
+use oxc_allocator::ArenaBox;
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 
@@ -82,7 +82,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         kind: VariableDeclarationKind,
         decl_parent: VariableDeclarationParent,
         declare: bool,
-    ) -> Box<'a, VariableDeclaration<'a>> {
+    ) -> ArenaBox<'a, VariableDeclaration<'a>> {
         let mut declarations = self.ast.vec();
         loop {
             let declaration = self.parse_variable_declarator(decl_parent, kind);
@@ -182,7 +182,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_using_declaration(
         &mut self,
         statement_ctx: StatementContext,
-    ) -> Box<'a, VariableDeclaration<'a>> {
+    ) -> ArenaBox<'a, VariableDeclaration<'a>> {
         let span = self.start_span();
 
         let is_await = self.eat(Kind::Await);

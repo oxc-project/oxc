@@ -1,6 +1,6 @@
 use std::{alloc::Layout, borrow::Cow, mem::MaybeUninit, slice, str};
 
-use oxc_allocator::{Allocator, Box, FromIn, GetAllocator, IntoIn, Vec};
+use oxc_allocator::{Allocator, ArenaBox, ArenaVec, FromIn, GetAllocator, IntoIn};
 use oxc_span::{SPAN, Span};
 use oxc_str::{Ident, Str};
 use oxc_syntax::{number::NumberBase, operator::UnaryOperator, scope::ScopeId};
@@ -12,7 +12,7 @@ use crate::ast::*;
 #[expect(clippy::upper_case_acronyms)]
 pub struct NONE;
 
-impl<'a, T> FromIn<'a, NONE> for Option<Box<'a, T>> {
+impl<'a, T> FromIn<'a, NONE> for Option<ArenaBox<'a, T>> {
     fn from_in(_: NONE, _: &'a Allocator) -> Self {
         None
     }
@@ -41,34 +41,42 @@ impl<'a> AstBuilder<'a> {
 
     /// Move a value into the memory arena.
     #[inline]
-    pub fn alloc<T>(self, value: T) -> Box<'a, T> {
-        Box::new_in(value, self.allocator)
+    pub fn alloc<T>(self, value: T) -> ArenaBox<'a, T> {
+        ArenaBox::new_in(value, self.allocator)
     }
 
     /// Create a new empty [`Vec`] that stores its elements in the memory arena.
+    ///
+    /// [`Vec`]: ArenaVec
     #[inline]
-    pub fn vec<T>(self) -> Vec<'a, T> {
-        Vec::new_in(self.allocator)
+    pub fn vec<T>(self) -> ArenaVec<'a, T> {
+        ArenaVec::new_in(self.allocator)
     }
 
     /// Create a new empty [`Vec`] that stores its elements in the memory arena.
     /// Enough memory will be pre-allocated to store at least `capacity`
     /// elements.
+    ///
+    /// [`Vec`]: ArenaVec
     #[inline]
-    pub fn vec_with_capacity<T>(self, capacity: usize) -> Vec<'a, T> {
-        Vec::with_capacity_in(capacity, self.allocator)
+    pub fn vec_with_capacity<T>(self, capacity: usize) -> ArenaVec<'a, T> {
+        ArenaVec::with_capacity_in(capacity, self.allocator)
     }
 
     /// Create a new arena-allocated [`Vec`] initialized with a single element.
+    ///
+    /// [`Vec`]: ArenaVec
     #[inline]
-    pub fn vec1<T>(self, value: T) -> Vec<'a, T> {
-        Vec::from_value_in(value, self.allocator)
+    pub fn vec1<T>(self, value: T) -> ArenaVec<'a, T> {
+        ArenaVec::from_value_in(value, self.allocator)
     }
 
     /// Collect an iterator into a new arena-allocated [`Vec`].
+    ///
+    /// [`Vec`]: ArenaVec
     #[inline]
-    pub fn vec_from_iter<T, I: IntoIterator<Item = T>>(self, iter: I) -> Vec<'a, T> {
-        Vec::from_iter_in(iter, self.allocator)
+    pub fn vec_from_iter<T, I: IntoIterator<Item = T>>(self, iter: I) -> ArenaVec<'a, T> {
+        ArenaVec::from_iter_in(iter, self.allocator)
     }
 
     /// Create [`Vec`] from a fixed-size array.
@@ -76,9 +84,11 @@ impl<'a> AstBuilder<'a> {
     /// This is preferable to `vec_from_iter` where source is an array, as size is statically known,
     /// and compiler is more likely to construct the values directly in arena, rather than constructing
     /// on stack and then copying to arena.
+    ///
+    /// [`Vec`]: ArenaVec
     #[inline]
-    pub fn vec_from_array<T, const N: usize>(self, array: [T; N]) -> Vec<'a, T> {
-        Vec::from_array_in(array, self.allocator)
+    pub fn vec_from_array<T, const N: usize>(self, array: [T; N]) -> ArenaVec<'a, T> {
+        ArenaVec::from_array_in(array, self.allocator)
     }
 
     /// Allocate an [`Ident`] from a string slice.
@@ -177,7 +187,7 @@ impl<'a> AstBuilder<'a> {
         params: FormalParameters<'a>,
         body: FunctionBody<'a>,
         scope_id: ScopeId,
-    ) -> Box<'a, Function<'a>> {
+    ) -> ArenaBox<'a, Function<'a>> {
         self.alloc_function_with_scope_id_and_pure_and_pife(
             span,
             r#type,
@@ -212,13 +222,13 @@ impl<'a> AstBuilder<'a> {
         return_type: T4,
         body: T5,
         scope_id: ScopeId,
-    ) -> Box<'a, Function<'a>>
+    ) -> ArenaBox<'a, Function<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
-        T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
+        T5: IntoIn<'a, Option<ArenaBox<'a, FunctionBody<'a>>>>,
     {
         self.alloc_function_with_scope_id_and_pure_and_pife(
             span,
@@ -246,7 +256,7 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         declaration: Declaration<'a>,
-    ) -> Box<'a, ExportNamedDeclaration<'a>> {
+    ) -> ArenaBox<'a, ExportNamedDeclaration<'a>> {
         self.alloc_export_named_declaration(
             span,
             Some(declaration),
@@ -263,9 +273,9 @@ impl<'a> AstBuilder<'a> {
     pub fn plain_export_named_declaration(
         self,
         span: Span,
-        specifiers: Vec<'a, ExportSpecifier<'a>>,
+        specifiers: ArenaVec<'a, ExportSpecifier<'a>>,
         source: Option<StringLiteral<'a>>,
-    ) -> Box<'a, ExportNamedDeclaration<'a>> {
+    ) -> ArenaBox<'a, ExportNamedDeclaration<'a>> {
         self.alloc_export_named_declaration(
             span,
             None,

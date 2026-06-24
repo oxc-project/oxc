@@ -9,7 +9,7 @@
 //! (which represents the compiler's Babel-compatible output) and produces OXC AST
 //! nodes allocated in an OXC arena, suitable for code generation via `oxc_codegen`.
 
-use oxc_allocator::{Allocator, ArenaBox};
+use oxc_allocator::{Allocator, ArenaBox, ArenaVec};
 use oxc_ast::ast as oxc;
 use oxc_ast_visit::VisitMut;
 use oxc_span::SPAN;
@@ -177,7 +177,7 @@ impl<'a> ReverseCtx<'a> {
     }
 
     fn copy_source_text_to_allocator(&self, text: &str) -> &'a str {
-        oxc_allocator::StringBuilder::from_str_in(text, self.allocator).into_str()
+        oxc_allocator::ArenaStringBuilder::from_str_in(text, self.allocator).into_str()
     }
 
     fn extract_source_class_expression(
@@ -945,7 +945,7 @@ impl<'a> ReverseCtx<'a> {
     /// The returned `&'a str` converts into both `Ident` and `Str` (identifier
     /// and string-literal name types), so it feeds every `AstBuilder` method.
     fn atom(&self, s: &str) -> &'a str {
-        oxc_allocator::StringBuilder::from_str_in(s, self.allocator).into_str()
+        oxc_allocator::ArenaStringBuilder::from_str_in(s, self.allocator).into_str()
     }
 
     /// Convert a BaseNode's start/end into an OXC Span.
@@ -982,10 +982,7 @@ impl<'a> ReverseCtx<'a> {
 
     // ===== Directives =====
 
-    fn convert_directives(
-        &self,
-        directives: &[Directive],
-    ) -> oxc_allocator::Vec<'a, oxc::Directive<'a>> {
+    fn convert_directives(&self, directives: &[Directive]) -> ArenaVec<'a, oxc::Directive<'a>> {
         self.builder.vec_from_iter(directives.iter().map(|d| self.convert_directive(d)))
     }
 
@@ -1002,7 +999,7 @@ impl<'a> ReverseCtx<'a> {
     fn convert_statements_with_spans(
         &self,
         stmts: &[Statement],
-    ) -> oxc_allocator::Vec<'a, oxc::Statement<'a>> {
+    ) -> ArenaVec<'a, oxc::Statement<'a>> {
         self.builder.vec_from_iter(stmts.iter().map(|s| {
             let span = self.get_statement_span(s);
             let mut oxc_stmt = self.convert_statement(s);
@@ -1239,10 +1236,7 @@ impl<'a> ReverseCtx<'a> {
         }
     }
 
-    fn convert_statement_vec(
-        &self,
-        stmts: &[Statement],
-    ) -> oxc_allocator::Vec<'a, oxc::Statement<'a>> {
+    fn convert_statement_vec(&self, stmts: &[Statement]) -> ArenaVec<'a, oxc::Statement<'a>> {
         self.builder.vec_from_iter(stmts.iter().map(|s| self.convert_statement(s)))
     }
 
@@ -1734,7 +1728,7 @@ impl<'a> ReverseCtx<'a> {
         &self,
         args: &[Expression],
         source_args: Option<Vec<oxc::Argument<'a>>>,
-    ) -> oxc_allocator::Vec<'a, oxc::Argument<'a>> {
+    ) -> ArenaVec<'a, oxc::Argument<'a>> {
         let mut source_args = source_args.map(Vec::into_iter);
         self.builder.vec_from_iter(args.iter().map(|arg| {
             let source_arg = source_args.as_mut().and_then(Iterator::next);
@@ -1918,10 +1912,10 @@ impl<'a> ReverseCtx<'a> {
             f.generator,
             f.is_async,
             f.declare.unwrap_or(false),
-            None::<oxc_allocator::Box<'a, oxc::TSTypeParameterDeclaration<'a>>>,
-            None::<oxc_allocator::Box<'a, oxc::TSThisParameter<'a>>>,
+            None::<ArenaBox<'a, oxc::TSTypeParameterDeclaration<'a>>>,
+            None::<ArenaBox<'a, oxc::TSThisParameter<'a>>>,
             params,
-            None::<oxc_allocator::Box<'a, oxc::TSTypeAnnotation<'a>>>,
+            None::<ArenaBox<'a, oxc::TSTypeAnnotation<'a>>>,
             Some(body),
         );
         if !self.block_initializes_react_cache(&f.body)
@@ -1945,9 +1939,9 @@ impl<'a> ReverseCtx<'a> {
             oxc::ClassType::ClassDeclaration,
             self.builder.vec(), // decorators
             id,
-            None::<oxc_allocator::Box<'a, oxc::TSTypeParameterDeclaration<'a>>>,
+            None::<ArenaBox<'a, oxc::TSTypeParameterDeclaration<'a>>>,
             super_class,
-            None::<oxc_allocator::Box<'a, oxc::TSTypeParameterInstantiation<'a>>>,
+            None::<ArenaBox<'a, oxc::TSTypeParameterInstantiation<'a>>>,
             self.builder.vec(), // implements
             body,
             c.is_abstract.unwrap_or(false),
@@ -1968,9 +1962,9 @@ impl<'a> ReverseCtx<'a> {
             class_type,
             self.builder.vec(), // decorators
             id,
-            None::<oxc_allocator::Box<'a, oxc::TSTypeParameterDeclaration<'a>>>,
+            None::<ArenaBox<'a, oxc::TSTypeParameterDeclaration<'a>>>,
             super_class,
-            None::<oxc_allocator::Box<'a, oxc::TSTypeParameterInstantiation<'a>>>,
+            None::<ArenaBox<'a, oxc::TSTypeParameterInstantiation<'a>>>,
             self.builder.vec(), // implements
             body,
             false, // is_abstract
@@ -1997,8 +1991,8 @@ impl<'a> ReverseCtx<'a> {
             f.generator,
             f.is_async,
             false,
-            None::<oxc_allocator::Box<'a, oxc::TSTypeParameterDeclaration<'a>>>,
-            None::<oxc_allocator::Box<'a, oxc::TSThisParameter<'a>>>,
+            None::<ArenaBox<'a, oxc::TSTypeParameterDeclaration<'a>>>,
+            None::<ArenaBox<'a, oxc::TSThisParameter<'a>>>,
             params,
             return_type,
             Some(body),
@@ -2029,8 +2023,8 @@ impl<'a> ReverseCtx<'a> {
             m.generator,
             m.is_async,
             false,
-            None::<oxc_allocator::Box<'a, oxc::TSTypeParameterDeclaration<'a>>>,
-            None::<oxc_allocator::Box<'a, oxc::TSThisParameter<'a>>>,
+            None::<ArenaBox<'a, oxc::TSTypeParameterDeclaration<'a>>>,
+            None::<ArenaBox<'a, oxc::TSThisParameter<'a>>>,
             params,
             return_type,
             Some(body),
@@ -2065,7 +2059,7 @@ impl<'a> ReverseCtx<'a> {
             SPAN,
             is_expression,
             arrow.is_async,
-            None::<oxc_allocator::Box<'a, oxc::TSTypeParameterDeclaration<'a>>>,
+            None::<ArenaBox<'a, oxc::TSTypeParameterDeclaration<'a>>>,
             params,
             if arrow_initializes_react_cache {
                 None
@@ -2118,7 +2112,7 @@ impl<'a> ReverseCtx<'a> {
                     // invalid in FormalParameter position).
                     let left = self.convert_pattern_to_binding_pattern(&ap.left);
                     let right = self.convert_expression(&ap.right);
-                    let initializer = Some(oxc_allocator::Box::new_in(right, self.allocator));
+                    let initializer = Some(ArenaBox::new_in(right, self.allocator));
                     let type_annotation = self
                         .pattern_type_annotation(param)
                         .or_else(|| self.pattern_type_annotation(&ap.left));
@@ -2145,7 +2139,7 @@ impl<'a> ReverseCtx<'a> {
                         self.builder.vec(), // decorators
                         pattern,
                         type_annotation,
-                        None::<oxc_allocator::Box<'a, oxc::Expression<'a>>>,
+                        None::<ArenaBox<'a, oxc::Expression<'a>>>,
                         optional,
                         None,  // accessibility
                         false, // readonly
@@ -2778,7 +2772,7 @@ impl<'a> ReverseCtx<'a> {
     fn convert_with_clause(
         &self,
         attributes: Option<&[ImportAttribute]>,
-    ) -> Option<oxc_allocator::Box<'a, oxc::WithClause<'a>>> {
+    ) -> Option<ArenaBox<'a, oxc::WithClause<'a>>> {
         attributes.map(|attributes| {
             let with_entries = self
                 .builder

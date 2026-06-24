@@ -4,7 +4,7 @@ use unicode_width::UnicodeWidthStr;
 
 use std::cmp;
 
-use oxc_allocator::{ArenaVec, StringBuilder};
+use oxc_allocator::{ArenaStringBuilder, ArenaVec};
 use oxc_ast::ast::*;
 use oxc_formatter_core::IndentWidth;
 use oxc_span::{GetSpan, Span};
@@ -747,9 +747,12 @@ impl<'a> Format<'a, JsFormatContext<'a>> for EachTemplateTable<'a> {
                         let mut content = if current_column != 0
                             && (!is_last_in_row || !column.text.is_empty())
                         {
-                            StringBuilder::from_strs_array_in([" ", column.text], f.allocator())
+                            ArenaStringBuilder::from_strs_array_in(
+                                [" ", column.text],
+                                f.allocator(),
+                            )
                         } else {
-                            StringBuilder::from_str_in(column.text, f.allocator())
+                            ArenaStringBuilder::from_str_in(column.text, f.allocator())
                         };
 
                         // align the column based on the maximum column width in the table

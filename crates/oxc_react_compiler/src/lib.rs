@@ -1,3 +1,5 @@
+use oxc_allocator::ArenaVec;
+
 pub mod convert_ast;
 pub mod convert_ast_reverse;
 pub mod convert_scope;
@@ -137,7 +139,7 @@ fn preserve_comments<'a>(
     }
 
     // Copy only comments attached to top-level statements.
-    let mut comments = oxc_allocator::Vec::with_capacity_in(source.comments.len(), allocator);
+    let mut comments = ArenaVec::with_capacity_in(source.comments.len(), allocator);
     for comment in &source.comments {
         if top_level_starts.contains(&comment.attached_to) {
             comments.push(*comment);

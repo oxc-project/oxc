@@ -143,7 +143,7 @@ impl<'a> TraverseScoping<'a> {
     /// `flags` provided are amended to inherit from parent scope's flags.
     pub fn insert_scope_below_statements(
         &mut self,
-        stmts: &ArenaVec<Statement>,
+        stmts: &ArenaVec<'a, Statement<'a>>,
         flags: ScopeFlags,
     ) -> ScopeId {
         let mut collector = ChildScopeCollector::new();

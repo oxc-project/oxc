@@ -1,4 +1,4 @@
-use oxc_allocator::{Box, Vec};
+use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_span::GetSpan;
 use oxc_syntax::operator::UnaryOperator;
@@ -150,13 +150,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     pub(crate) fn parse_ts_type_parameters(
         &mut self,
-    ) -> Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+    ) -> Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>> {
         self.parse_ts_type_parameters_impl(false).0
     }
 
     pub(crate) fn parse_ts_type_parameters_with_variance(
         &mut self,
-    ) -> Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+    ) -> Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>> {
         self.parse_ts_type_parameters_impl(true).0
     }
 
@@ -164,14 +164,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// Used for arrow functions to check for TS7060 (JSX-like type parameters in .mts/.cts).
     pub(crate) fn parse_ts_type_parameters_with_trailing_comma(
         &mut self,
-    ) -> (Option<Box<'a, TSTypeParameterDeclaration<'a>>>, bool) {
+    ) -> (Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>, bool) {
         self.parse_ts_type_parameters_impl(false)
     }
 
     fn parse_ts_type_parameters_impl(
         &mut self,
         allow_variance: bool,
-    ) -> (Option<Box<'a, TSTypeParameterDeclaration<'a>>>, bool) {
+    ) -> (Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>, bool) {
         if !self.is_ts {
             return (None, false);
         }
@@ -193,7 +193,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         (Some(self.ast.alloc_ts_type_parameter_declaration(span, params)), trailing_comma.is_some())
     }
 
-    pub(crate) fn parse_ts_implements_clause(&mut self) -> Vec<'a, TSClassImplements<'a>> {
+    pub(crate) fn parse_ts_implements_clause(&mut self) -> ArenaVec<'a, TSClassImplements<'a>> {
         self.expect(Kind::Implements);
         let first = self.parse_ts_implement_name();
         let mut implements = self.ast.vec1(first);
@@ -318,7 +318,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.ast.ts_type_infer_type(self.end_span(span), type_parameter)
     }
 
-    fn parse_type_parameter_of_infer_type(&mut self) -> Box<'a, TSTypeParameter<'a>> {
+    fn parse_type_parameter_of_infer_type(&mut self) -> ArenaBox<'a, TSTypeParameter<'a>> {
         let span = self.start_span();
         let name = self.parse_binding_identifier();
         self.check_reserved_type_name(&name, "Type parameter");
@@ -721,7 +721,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.ast.ts_type_type_query(self.end_span(span), entity_name, type_arguments)
     }
 
-    fn parse_this_type_predicate(&mut self, span: u32, this_ty: Box<'a, TSThisType>) -> TSType<'a> {
+    fn parse_this_type_predicate(
+        &mut self,
+        span: u32,
+        this_ty: ArenaBox<'a, TSThisType>,
+    ) -> TSType<'a> {
         self.bump_any(); // bump `is`
         let ty = self.parse_ts_type();
         let type_annotation = Some(self.ast.ts_type_annotation(ty.span(), ty));
@@ -733,7 +737,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         )
     }
 
-    fn parse_this_type_node(&mut self) -> Box<'a, TSThisType> {
+    fn parse_this_type_node(&mut self) -> ArenaBox<'a, TSThisType> {
         let span = self.start_span();
         self.bump_any(); // bump `this`
         self.ast.alloc_ts_this_type(self.end_span(span))
@@ -854,7 +858,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     pub(crate) fn try_parse_type_arguments(
         &mut self,
-    ) -> Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+    ) -> Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>> {
         if self.re_lex_ts_l_angle() {
             let span = self.start_span();
             let opening_span = self.cur_token().span();
@@ -877,7 +881,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     pub(crate) fn parse_type_arguments_of_type_reference(
         &mut self,
-    ) -> Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+    ) -> Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>> {
         if !self.cur_token().is_on_new_line() && self.re_lex_ts_l_angle() {
             let span = self.start_span();
             let opening_span = self.cur_token().span();
@@ -904,7 +908,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// valid type-argument list.
     pub(crate) fn parse_type_arguments_in_expression(
         &mut self,
-    ) -> Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+    ) -> Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>> {
         // A type-argument list can only open with `<`, or `<<` for nested generics like
         // `f<<T>() => U>()`. This mirrors TypeScript's `reScanLessThanToken`, which re-scans only
         // `<`/`<<`. `<=`/`<<=` can never open one — splitting off the leading `<` leaves a `=`, and
@@ -1124,7 +1128,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.ast.ts_type_literal_type(span, literal)
     }
 
-    fn parse_ts_import_type(&mut self) -> Box<'a, TSImportType<'a>> {
+    fn parse_ts_import_type(&mut self) -> ArenaBox<'a, TSImportType<'a>> {
         let span = self.start_span();
         self.expect(Kind::Import);
         self.expect(Kind::LParen);
@@ -1177,7 +1181,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// The options must have a property with key `with` or `assert` (as identifier, not string).
     /// If the value is an object literal, it must have only static key-value pairs
     /// (no computed keys, no spread elements).
-    fn parse_ts_import_type_options(&mut self) -> Box<'a, ObjectExpression<'a>> {
+    fn parse_ts_import_type_options(&mut self) -> ArenaBox<'a, ObjectExpression<'a>> {
         let span = self.start_span();
         self.expect(Kind::LCurly);
 
@@ -1227,7 +1231,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Parse TypeScript import type attributes object: `{ type: "json" }`
     /// Only allows static key-value pairs (no computed keys, no spread elements).
-    fn parse_ts_import_type_attributes(&mut self) -> Box<'a, ObjectExpression<'a>> {
+    fn parse_ts_import_type_attributes(&mut self) -> ArenaBox<'a, ObjectExpression<'a>> {
         let span = self.start_span();
         self.expect(Kind::LCurly);
 
@@ -1313,7 +1317,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     pub(crate) fn parse_ts_return_type_annotation(
         &mut self,
-    ) -> Option<Box<'a, TSTypeAnnotation<'a>>> {
+    ) -> Option<ArenaBox<'a, TSTypeAnnotation<'a>>> {
         if !self.at(Kind::Colon) {
             return None;
         }
@@ -1511,7 +1515,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         span: u32,
         modifiers: &Modifiers,
-    ) -> Box<'a, TSIndexSignature<'a>> {
+    ) -> ArenaBox<'a, TSIndexSignature<'a>> {
         let opening_span = self.cur_token().span();
         self.expect(Kind::LBrack);
         let (params, comma_span) = self.parse_delimited_list(

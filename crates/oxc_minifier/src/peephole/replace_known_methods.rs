@@ -2,8 +2,7 @@ use std::borrow::Cow;
 
 use cow_utils::CowUtils;
 
-use crate::generated::ancestor::Ancestor;
-use oxc_allocator::{Box, TakeIn};
+use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
 use oxc_ast::{NONE, ast::*};
 use oxc_compat::ESFeature;
 use oxc_ecmascript::{
@@ -16,11 +15,11 @@ use oxc_regular_expression::{
 };
 use oxc_span::SPAN;
 
-use crate::TraverseCtx;
+use crate::{TraverseCtx, generated::ancestor::Ancestor};
 
 use super::PeepholeOptimizations;
 
-type Arguments<'a> = oxc_allocator::Vec<'a, Argument<'a>>;
+type Arguments<'a> = ArenaVec<'a, Argument<'a>>;
 
 /// Minimize With Known Methods
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeReplaceKnownMethods.java>
@@ -453,7 +452,8 @@ impl<'a> PeepholeOptimizations {
                     if regex.regex.pattern.pattern.is_none()
                         && let Ok(pattern) = regex.parse_pattern(ctx.ast.allocator)
                     {
-                        regex.regex.pattern.pattern = Some(Box::new_in(pattern, ctx.ast.allocator));
+                        regex.regex.pattern.pattern =
+                            Some(ArenaBox::new_in(pattern, ctx.ast.allocator));
                     }
                     if let Some(pattern) = &regex.regex.pattern.pattern
                         // for now, only replace regexes that are supported by ES2015 to preserve the syntax error

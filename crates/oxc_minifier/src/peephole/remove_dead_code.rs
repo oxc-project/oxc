@@ -1,5 +1,5 @@
 use crate::generated::ancestor::Ancestor;
-use oxc_allocator::{TakeIn, Vec};
+use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::ast::*;
 use oxc_ast_visit::Visit;
 use oxc_ecmascript::{
@@ -587,7 +587,7 @@ impl<'a> PeepholeOptimizations {
         body.body.retain(|e| !matches!(e, ClassElement::StaticBlock(s) if s.body.is_empty()));
     }
 
-    pub fn remove_empty_spread_arguments(args: &mut Vec<'a, Argument<'a>>) {
+    pub fn remove_empty_spread_arguments(args: &mut ArenaVec<'a, Argument<'a>>) {
         if args.len() != 1 {
             return;
         }
