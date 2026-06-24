@@ -266,6 +266,12 @@ impl Rule for ReactCompiler {
                 continue;
             }
 
+            // The sub-rule id (a `&'static str`) lets a disable directive like
+            // `react/react-compiler/refs` suppress just this category. Resolve it
+            // now so the borrow of `diagnostic.message` ends before the message
+            // is rewritten below.
+            let sub_rule = category.and_then(category_sub_rule);
+
             // If Flow already caught this error, we don't need to report it again.
             if is_flow_suppressed(&diagnostic, &suppressed_lines, ctx.source_text()) {
                 continue;
@@ -274,9 +280,37 @@ impl Rule for ReactCompiler {
             if let Some(message) = diagnostic.message.strip_prefix("[ReactCompiler] ") {
                 diagnostic.message = Cow::Owned(message.to_string());
             }
-            ctx.diagnostic(diagnostic);
+            match sub_rule {
+                Some(sub_rule) => ctx.diagnostic_with_sub_rule(sub_rule, diagnostic),
+                None => ctx.diagnostic(diagnostic),
+            }
         }
     }
+}
+
+/// Maps a React Compiler diagnostic category to the rule's sub-rule id. The id
+/// matches the config toggle name, so the same identifier works in both places:
+/// `"react/react-compiler": { "refs": false }` and
+/// `// oxlint-disable-next-line react/react-compiler/refs`. Categories without a
+/// dedicated toggle return `None` and can only be suppressed via the bare rule.
+fn category_sub_rule(category: &str) -> Option<&'static str> {
+    Some(match category {
+        "Hooks" => "hooks",
+        "Refs" => "refs",
+        "RenderSetState" => "setStateInRender",
+        "EffectSetState" => "setStateInEffect",
+        "ErrorBoundaries" => "errorBoundaries",
+        "Purity" => "purity",
+        "StaticComponents" => "staticComponents",
+        "VoidUseMemo" => "voidUseMemo",
+        "CapitalizedCalls" => "capitalizedCalls",
+        "EffectDerivationsOfState" => "derivedComputationsInEffect",
+        "MemoDependencies" => "memoDependencies",
+        "PreserveManualMemo" => "preserveManualMemo",
+        "Immutability" => "immutability",
+        "UseMemo" => "useMemo",
+        _ => return None,
+    })
 }
 
 /// The leading category token of a React Compiler message — e.g. `Immutability`
@@ -492,6 +526,30 @@ function Component(props) {
 ",
             Some(json!([{ "useMemo": false }])),
         ),
+        // A `{rule}/{sub-rule}` disable directive suppresses just that category.
+        (
+            "
+// oxlint-disable react/react-compiler/refs
+function Component(props) {
+  const ref = useRef(null);
+  const value = ref.current;
+  return value;
+}
+",
+            None,
+        ),
+        // A directive naming the bare rule still suppresses every category.
+        (
+            "
+// oxlint-disable react/react-compiler
+function Component(props) {
+  const ref = useRef(null);
+  const value = ref.current;
+  return value;
+}
+",
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -703,6 +761,19 @@ function useConditional2(props) {
                 return <fbt desc='label'>Hello</fbt>;
             }",
             Some(json!([{ "reportAllBailouts": true }])),
+        ),
+        // A disable directive for a *different* sub-rule does not suppress: this
+        // `Refs` violation still surfaces despite the `.../hooks` directive.
+        (
+            "
+// oxlint-disable react/react-compiler/hooks
+function Component(props) {
+  const ref = useRef(null);
+  const value = ref.current;
+  return value;
+}
+",
+            None,
         ),
     ];
 
