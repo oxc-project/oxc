@@ -407,17 +407,75 @@ var { '_doNotMangleThis': x } = y;
   // TestManglePropsOptionalChain above.
   it.skip("TestManglePropsLoweredOptionalChain (lowering is a transformer concern)", () => {});
 
-  // bundler_default_test.go:7090 TestManglePropsImportExport
-  // SKIP: multi-file (/esm.js + /cjs.js) and depends on ESM-vs-CJS module-record
-  // semantics (export/import names don't count as properties; CJS `exports.foo_`
-  // does). oxc-minify v1 is a single self-contained JS program with no module
-  // graph, so this cannot be reproduced.
-  it.skip("TestManglePropsImportExport (multi-file / module-record semantics)", () => {});
+  // Ported from bundler_default_test.go:7090 TestManglePropsImportExport
+  // esbuild input (two passthrough files):
+  //   /esm.js:  export let foo_ = 123       // NOT a property name -> not mangled
+  //             import { bar_ } from 'xyz'  // NOT a property name -> not mangled
+  //   /cjs.js:  exports.foo_ = 123          // member access -> mangled
+  //             let bar_ = require('xyz').bar_  // `.bar_` member -> mangled; `let bar_` binding NOT
+  //
+  // The single-file-portable essence (the only part that doesn't need a module
+  // graph): import/export SPECIFIER names and VARIABLE bindings are not property
+  // keys and must be left alone, while MEMBER accesses are mangled. We split the
+  // two files into two oxc-minify runs (ESM via `module: true`, CJS plain).
+  //
+  // Confirmed oxc behaves correctly: it leaves the `export let foo_` binding and
+  // the `import { bar_ }` specifier untouched, and mangles the `o.member_` /
+  // `exports.foo_` / `require(...).bar_` member accesses. (oxc-minify always
+  // renames local bindings to short names — so the import's LOCAL binding becomes
+  // `import { bar_ as e }`; the EXTERNAL specifier name `bar_` is still preserved
+  // and never enters the mangle cache. That local rename is identifier
+  // minification, not property mangling.)
+  it("TestManglePropsImportExport (ESM: export/import specifiers not mangled, member is)", () => {
+    const r = minifySync(
+      "esm.mjs",
+      `export let foo_ = 123
+import { bar_ } from 'xyz'
+console.log(bar_)
+o.member_ = 1`,
+      { mangleProps: "_$", compress: false, module: true },
+    );
+    // `export let foo_` binding kept; import specifier `bar_` kept (only its local
+    // binding is shortened by identifier minification); `o.member_` member mangled.
+    expect(r.code).toBe(
+      `export let foo_=123;import{bar_ as e}from"xyz";console.log(e);o.e=1;`,
+    );
+    expect(r.code).toContain("export let foo_=123"); // export binding NOT mangled
+    expect(r.code).toContain("import{bar_ as"); // import specifier NOT mangled
+    // Only the member access is a property; the binding/specifier names are absent.
+    expect(r.mangleCache).toEqual({ member_: "e" });
+  });
+
+  it("TestManglePropsImportExport (CJS: exports./require() members mangled, binding not)", () => {
+    const r = minifySync(
+      "cjs.js",
+      `exports.foo_ = 123
+let baz_ = require('xyz').bar_
+console.log(baz_)`,
+      { mangleProps: "_$", compress: false },
+    );
+    // `exports.foo_` and `require(...).bar_` are member accesses -> mangled; the
+    // `let baz_` variable binding is not a property -> kept.
+    expect(r.code).toBe(
+      `exports.t=123;let baz_=require("xyz").e;console.log(baz_);`,
+    );
+    expect(r.code).toContain("let baz_="); // variable binding NOT mangled
+    expect(r.mangleCache).toEqual({ bar_: "e", foo_: "t" });
+  });
 
   // bundler_default_test.go:7117 TestManglePropsImportExportBundled
-  // SKIP: bundler test (config.ModeBundle) across four files. Out of scope for
-  // single-file oxc-minify.
-  it.skip("TestManglePropsImportExportBundled (bundler/multi-file)", () => {});
+  // SKIP (by design, not a deferred feature): this is a four-file bundler test
+  // (config.ModeBundle) whose whole point is cross-module property-name
+  // CONSISTENCY — the same `esm_foo_`/`cjs_foo_` must mangle identically across
+  // the files that share them. oxc-minify operates on a single self-contained
+  // program and is deliberately NOT a bundler, so there is no module graph to make
+  // names consistent across; this is permanently out of v1 scope. The
+  // single-file-portable essence (import/export specifiers are bindings, not
+  // property keys, and so are not mangled) is already covered by the now-ported
+  // TestManglePropsImportExport above. Note esbuild's own test comment documents
+  // this code as deliberately "broken" — it exists only to pin the behavior, not
+  // to assert a useful result.
+  it.skip("TestManglePropsImportExportBundled (bundler cross-module consistency; not a bundler by design)", () => {});
 
   // bundler_default_test.go:7162 TestManglePropsJSXTransform
   // SKIP: input is JSX and relies on esbuild's JSX transform wiring the factory/
@@ -437,9 +495,22 @@ var { '_doNotMangleThis': x } = y;
   it.skip("TestManglePropsJSXTransformNamespace (JSX namespaces)", () => {});
 
   // bundler_default_test.go:7261 TestManglePropsTypeScriptFeatures
-  // SKIP: TypeScript-only — parameter properties, namespace exports, and enum
-  // members. oxc-minify v1 is JS-only and does not run the TS transform.
-  it.skip("TestManglePropsTypeScriptFeatures (TypeScript-only)", () => {});
+  // SKIP (N/A by design, not a deferred feature): every construct this test
+  // exercises — TS parameter properties (`constructor(public MANGLE_FIELD_)`), TS
+  // `namespace` exports, and `enum` members — is TypeScript-only SYNTAX. The oxc
+  // minifier is JS-only and runs AFTER the TypeScript transform has already
+  // erased/lowered these forms, so by minify time none of them exist as TS syntax:
+  // parameter properties have become plain constructor assignments + class fields,
+  // namespaces have become IIFE-wrapped objects, and enums have become objects.
+  // There is therefore nothing TS-specific left for the property mangler to act on
+  // here; this is permanently N/A, not something to implement later.
+  //
+  // Additionally, esbuild itself DELIBERATELY does not mangle TS enum members (see
+  // its own comment at /enum-values.ts in this test): the TypeScript compiler
+  // emits enum values as quoted strings, which a JS-level property mangler can't
+  // pick up, so esbuild keeps enum members consistent by never mangling them and
+  // recommends enum inlining instead. So even enum-member mangling is not a goal.
+  it.skip("TestManglePropsTypeScriptFeatures (TS-only syntax; erased before JS minify by design)", () => {});
 
   // bundler_default_test.go:7387 TestManglePropsNoShorthand
   // SKIP: relies on UnsupportedJSFeatures: ObjectExtensions to force
