@@ -93,6 +93,15 @@ fn eligible(opts: &ManglePropertiesOptions, name: &str) -> bool {
 /// The iteration order is deterministic (sorted) so that a shared cache reproduces
 /// the same names across builds, and the produced names are pairwise disjoint and
 /// never collide with reserved/always-reserved names.
+///
+/// When a cached name (`CacheValue::Name`) cannot be honored because its target
+/// collides with something already occupied this build (a program-wide reservation,
+/// an always-reserved name, a `Reserved`-pinned candidate's original spelling, or a
+/// name already claimed by another candidate), the candidate is **regenerated** a
+/// fresh valid name and the cache is rewritten — it is never left with its original
+/// spelling. The only names that keep their original spelling are cache `Reserved`
+/// entries (the user explicitly pinned them); those are marked occupied up front so
+/// they can never be handed to another candidate.
 fn assign(
     candidates: &FxHashSet<CompactStr>,
     reserved: &FxHashSet<CompactStr>,
@@ -101,46 +110,58 @@ fn assign(
     // Deterministic order so a shared cache is reproducible.
     let mut names: Vec<&CompactStr> = candidates.difference(reserved).collect();
     names.sort_unstable();
-    // Seed `seeded` with existing cache targets so freshly-generated names never alias
-    // a name that a (possibly later) cached candidate will reuse. This set is used only
-    // to constrain newly generated names; reusing a candidate's own cached name is fine.
-    let seeded: FxHashSet<CompactStr> = cache
+
+    // Candidates the user pinned as Reserved keep their original spelling, so those
+    // names are occupied and must never be handed to another candidate.
+    let kept: FxHashSet<CompactStr> = names
+        .iter()
+        .filter(|n| matches!(cache.map.get(**n), Some(CacheValue::Reserved)))
+        .map(|n| (*n).clone())
+        .collect();
+
+    // Existing cache targets are avoided when GENERATING new names, so cross-build
+    // reuse stays stable (a future build honoring the cache won't collide).
+    let existing_targets: FxHashSet<CompactStr> = cache
         .map
         .values()
-        .filter_map(|v| match v {
-            CacheValue::Name(n) => Some(n.clone()),
-            CacheValue::Reserved => None,
-        })
+        .filter_map(|v| if let CacheValue::Name(n) = v { Some(n.clone()) } else { None })
         .collect();
-    // Names actually claimed by an output during this build.
-    let mut assigned: FxHashSet<CompactStr> = FxHashSet::default();
+
+    let mut claimed: FxHashSet<CompactStr> = FxHashSet::default(); // outputs assigned this build
     let mut counter: u32 = 0;
     let mut map = FxHashMap::default();
+
     for name in names {
         match cache.map.get(name) {
+            // Pinned: keep the original name, don't mangle.
             Some(CacheValue::Reserved) => {}
-            Some(CacheValue::Name(n)) => {
-                // Cache validation: never reuse a name that collides this build.
-                if reserved.contains(n.as_str()) || assigned.contains(n) || is_always_reserved(n) {
-                    continue; // safe-skip
-                }
+            // Honor the cached name only if it doesn't collide with anything occupied.
+            Some(CacheValue::Name(n))
+                if !reserved.contains(n.as_str())
+                    && !is_always_reserved(n)
+                    && !kept.contains(n)
+                    && !claimed.contains(n) =>
+            {
                 map.insert(name.clone(), n.clone());
-                assigned.insert(n.clone());
+                claimed.insert(n.clone());
             }
-            None => {
+            // No cache entry, or the cached name collided -> generate a fresh valid name
+            // and (re)write it into the cache.
+            _ => {
                 let n = loop {
                     let c = CompactStr::from(base54(counter).as_str());
-                    counter += 1;
-                    if !seeded.contains(&c)
-                        && !assigned.contains(&c)
-                        && !reserved.contains(&c)
+                    counter = counter.checked_add(1).expect("property name space exhausted");
+                    if !reserved.contains(&c)
                         && !is_always_reserved(&c)
+                        && !kept.contains(&c)
+                        && !claimed.contains(&c)
+                        && !existing_targets.contains(&c)
                     {
                         break c;
                     }
                 };
                 map.insert(name.clone(), n.clone());
-                assigned.insert(n.clone());
+                claimed.insert(n.clone());
                 cache.map.insert(name.clone(), CacheValue::Name(n));
             }
         }
@@ -197,14 +218,9 @@ impl<'a, 'o> PropertyCollector<'a, 'o> {
             PropertyKey::StaticIdentifier(ident) => self.candidate(ident.name.as_str()),
             PropertyKey::StringLiteral(lit) => self.reserve(lit.value.as_str()),
             PropertyKey::NumericLiteral(lit) => self.reserve(&lit.value.to_string()),
-            // Private identifiers are never object properties; skip.
-            PropertyKey::PrivateIdentifier(_) => {}
-            // Computed key: reserve only if it is a string literal, otherwise skip.
-            key => {
-                if let PropertyKey::StringLiteral(lit) = key {
-                    self.reserve(lit.value.as_str());
-                }
-            }
+            // Private identifiers are never object properties, and any other computed key
+            // (the already-matched StringLiteral excluded) is not a manglable name: skip.
+            _ => {}
         }
     }
 }
@@ -427,13 +443,57 @@ mod tests {
     }
 
     #[test]
-    fn cache_collision_is_skipped_not_corrupted() {
+    fn cache_collision_is_remangled_not_corrupted() {
         let cands: FxHashSet<CompactStr> = std::iter::once(CompactStr::from("_a")).collect();
         let reserved: FxHashSet<CompactStr> = std::iter::once(CompactStr::from("b")).collect();
         let mut cache = PropertyMangleCache::default();
         cache.map.insert("_a".into(), CacheValue::Name("b".into())); // collides with reserved `b`
         let m = assign(&cands, &reserved, &mut cache);
-        assert!(!m.contains_key(&CompactStr::from("_a"))); // skipped, not mapped to `b`
+        // The cached name `b` collides with a reservation, so `_a` is regenerated a fresh
+        // valid name instead of being kept/skipped. It must be mapped, and never to `b`.
+        let out = &m[&CompactStr::from("_a")];
+        assert_ne!(out.as_str(), "b"); // never collides with the reservation
+        // The cache is rewritten to the fresh name so future builds stay consistent.
+        assert_eq!(cache.map.get(&CompactStr::from("_a")), Some(&CacheValue::Name(out.clone())));
+    }
+
+    #[test]
+    fn generation_collision_does_not_corrupt() {
+        // `e` is cached to `Name("b")`, but `b` is reserved -> `e` must be regenerated.
+        // `_x` has no cache entry -> it is generated fresh. Neither output may collide.
+        let cands: FxHashSet<CompactStr> =
+            ["_x", "e"].iter().map(|s| CompactStr::from(*s)).collect();
+        let reserved: FxHashSet<CompactStr> = std::iter::once(CompactStr::from("b")).collect();
+        let mut cache = PropertyMangleCache::default();
+        cache.map.insert("e".into(), CacheValue::Name("b".into()));
+        let m = assign(&cands, &reserved, &mut cache);
+        let x_out = m.get(&CompactStr::from("_x"));
+        let e_out = m.get(&CompactStr::from("e"));
+        assert!(x_out.is_some());
+        assert!(e_out.is_some());
+        // The two outputs must be distinct: no two source props map to one name.
+        assert_ne!(x_out, e_out);
+        // `e`'s collided cache name was dropped; its output is a fresh name, not `b`.
+        assert_ne!(e_out.unwrap().as_str(), "b");
+        // `_x`'s output must not be the literal `e` left dangling, nor `b`.
+        assert_ne!(x_out.unwrap().as_str(), "b");
+    }
+
+    #[test]
+    fn cache_reuse_collision_does_not_corrupt() {
+        // `_a` is cached to `_z`, but `_z` is itself a candidate cached to `q`.
+        // `q` is reserved, so `_z` is regenerated; `_a`'s cached `_z` must NOT be reused
+        // as `_z`'s own (now different) output, and the two outputs must be distinct.
+        let cands: FxHashSet<CompactStr> =
+            ["_a", "_z"].iter().map(|s| CompactStr::from(*s)).collect();
+        let reserved: FxHashSet<CompactStr> = std::iter::once(CompactStr::from("q")).collect();
+        let mut cache = PropertyMangleCache::default();
+        cache.map.insert("_a".into(), CacheValue::Name("_z".into()));
+        cache.map.insert("_z".into(), CacheValue::Name("q".into()));
+        let m = assign(&cands, &reserved, &mut cache);
+        let a_out = &m[&CompactStr::from("_a")];
+        let z_out = &m[&CompactStr::from("_z")];
+        assert_ne!(a_out, z_out); // the two outputs are distinct
     }
 
     fn collect_src(src: &str, re: &str) -> PropertyCollectState {
