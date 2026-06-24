@@ -341,6 +341,7 @@ pub fn print_minified<'a>(program: &mut Program<'a>, allocator: &'a Allocator) -
             },
             ..CompressOptions::default()
         }),
+        mangle_properties: None,
     };
     Minifier::new(minify_options).minify(allocator, program);
 
