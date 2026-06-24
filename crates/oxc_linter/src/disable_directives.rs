@@ -331,7 +331,13 @@ impl DisableDirectives {
                 // rule because `"no-re-export".contains("export")` is true.
                 DisabledRule::Single { rule_name: name, .. } => {
                     if rule_name.contains('/') {
+                        // `rule_name` is already qualified (`plugin/rule`, or a
+                        // `rule/sub-rule` query from an umbrella rule). Match the
+                        // directive verbatim, or after dropping one leading
+                        // plugin segment so `react/react-compiler/refs` still
+                        // matches a `react-compiler/refs` query.
                         name == rule_name
+                            || name.split_once('/').is_some_and(|(_, rest)| rest == rule_name)
                     } else {
                         name.rsplit_once('/').map_or(name.as_str(), |(_, rule)| rule) == rule_name
                     }
