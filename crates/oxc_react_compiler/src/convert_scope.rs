@@ -21,16 +21,30 @@ pub fn convert_scope_info(semantic: &Semantic, _program: &Program) -> ScopeInfo 
     let scoping = semantic.scoping();
     let nodes = semantic.nodes();
 
-    let mut scopes: Vec<ScopeData> = Vec::new();
-    let mut bindings: Vec<BindingData> = Vec::new();
-    let mut node_to_scope: FxHashMap<u32, ScopeId> = FxHashMap::default();
-    let mut node_to_scope_end: FxHashMap<u32, u32> = FxHashMap::default();
+    // Pre-size the long-lived collections to their known final sizes (taken from the
+    // semantic counts) so they don't rehash/realloc while being populated. Profiling the
+    // React-compiler showed `convert_scope_info`'s maps repeatedly rehashing — the largest
+    // rehash source in oxc's own glue code. This is a capacity-only change with no behavioral
+    // difference: `node_*`/`bindings`/`scopes` get ~one entry per scope/symbol, and
+    // `ref_node_id_to_binding` one per resolved reference (`references_len` is an upper bound).
+    let symbol_count = scoping.symbols_len();
+    let scope_count = scoping.scopes_len();
+    let reference_count = scoping.references_len();
+
+    let mut scopes: Vec<ScopeData> = Vec::with_capacity(scope_count);
+    let mut bindings: Vec<BindingData> = Vec::with_capacity(symbol_count);
+    let mut node_to_scope: FxHashMap<u32, ScopeId> =
+        FxHashMap::with_capacity_and_hasher(scope_count, FxBuildHasher);
+    let mut node_to_scope_end: FxHashMap<u32, u32> =
+        FxHashMap::with_capacity_and_hasher(scope_count, FxBuildHasher);
     // In OXC, span.start is used as node_id (OXC spans are unique).
-    let mut node_id_to_scope: FxHashMap<u32, ScopeId> = FxHashMap::default();
-    let mut ref_node_id_to_binding: FxIndexMap<u32, BindingId> = FxIndexMap::default();
+    let mut node_id_to_scope: FxHashMap<u32, ScopeId> =
+        FxHashMap::with_capacity_and_hasher(scope_count, FxBuildHasher);
+    let mut ref_node_id_to_binding: FxIndexMap<u32, BindingId> =
+        FxIndexMap::with_capacity_and_hasher(reference_count, FxBuildHasher);
 
     let mut symbol_to_binding: FxHashMap<oxc_syntax::symbol::SymbolId, BindingId> =
-        FxHashMap::default();
+        FxHashMap::with_capacity_and_hasher(symbol_count, FxBuildHasher);
 
     // First pass: Create all bindings from symbols
     for symbol_id in scoping.symbol_ids() {
