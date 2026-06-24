@@ -7,7 +7,7 @@ use oxc_syntax::{number::NumberBase, operator::UnaryOperator, scope::ScopeId};
 
 use crate::ast::*;
 
-/// Type that can be used in any AST builder method call which requires an `IntoIn<'a, Anything<'a>>`.
+/// Type that can be used in any AST builder method call which requires an `IntoIn<'a, Option<Anything<'a>>>`.
 /// Pass `NONE` instead of `None::<Anything<'a>>`.
 #[expect(clippy::upper_case_acronyms)]
 pub struct NONE;
