@@ -133,9 +133,9 @@ impl<'a, C: Config> Lexer<'a, C> {
         //
         // However, we should choose a better heuristic based on real-world observation, and bring this usage down.
         let tokens = if config.tokens() {
-            ArenaVec::with_capacity_in(source_text.len() + 1, allocator)
+            ArenaVec::with_capacity_in(source_text.len() + 1, &allocator)
         } else {
-            ArenaVec::new_in(allocator)
+            ArenaVec::new_in(&allocator)
         };
 
         // The first token is at the start of file, so is allows on a new line
@@ -355,7 +355,7 @@ impl<'a, C: Config> Lexer<'a, C> {
     }
 
     pub(crate) fn take_tokens(&mut self) -> ArenaVec<'a, Token> {
-        mem::replace(&mut self.tokens, ArenaVec::new_in(self.allocator))
+        mem::replace(&mut self.tokens, ArenaVec::new_in(&self.allocator))
     }
 
     pub(crate) fn set_tokens(&mut self, tokens: ArenaVec<'a, Token>) {
@@ -374,7 +374,7 @@ impl<'a, C: Config> Lexer<'a, C> {
         } else {
             // Tokens are disabled. Just return an empty vec.
             debug_assert!(self.tokens.is_empty());
-            ArenaVec::new_in(self.allocator)
+            ArenaVec::new_in(&self.allocator)
         }
     }
 

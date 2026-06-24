@@ -324,6 +324,7 @@ mod test {
     #[test]
     fn boxed_slice_into_arena_slice() {
         let allocator = Allocator::default();
+        let allocator = &allocator;
         let v = Vec::from_iter_in([1, 2, 3], &allocator);
         let b = v.into_boxed_slice();
         let slice = b.into_arena_slice();
@@ -333,6 +334,7 @@ mod test {
     #[test]
     fn boxed_slice_into_arena_slice_mut() {
         let allocator = Allocator::default();
+        let allocator = &allocator;
         let v = Vec::from_iter_in([10, 20, 30], &allocator);
         let b = v.into_boxed_slice();
         let slice = b.into_arena_slice_mut();

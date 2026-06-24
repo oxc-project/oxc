@@ -139,7 +139,7 @@ fn preserve_comments<'a>(
     }
 
     // Copy only comments attached to top-level statements.
-    let mut comments = ArenaVec::with_capacity_in(source.comments.len(), allocator);
+    let mut comments = ArenaVec::with_capacity_in(source.comments.len(), &allocator);
     for comment in &source.comments {
         if top_level_starts.contains(&comment.attached_to) {
             comments.push(*comment);

@@ -60,7 +60,7 @@ impl<'a, T> Dummy<'a> for Vec<'a, T> {
     /// Create a dummy [`Vec`].
     #[inline]
     fn dummy(allocator: &'a Allocator) -> Self {
-        Vec::new_in(allocator)
+        Vec::new_in(&allocator)
     }
 }
 

@@ -218,7 +218,7 @@ fn gen_value_import_declaration<'c, 'a: 'c>(
     let specifiers: Vec<_> = specifiers.iter().map(|it| it.clone_in(&alloc)).collect();
     let import_declaration = ast_builder.alloc_import_declaration(
         SPAN,
-        Some(ArenaVec::from_iter_in(specifiers, &alloc)),
+        Some(ArenaVec::from_iter_in(specifiers, &ast_builder)),
         import_decl.source.clone_in(&alloc),
         None,
         import_decl.with_clause.clone_in(&alloc),
@@ -255,7 +255,7 @@ fn gen_type_import_declaration<'c, 'a: 'c>(
         .collect();
     let import_declaration = ast_builder.alloc_import_declaration(
         SPAN,
-        Some(ArenaVec::from_iter_in(specifiers, &alloc)),
+        Some(ArenaVec::from_iter_in(specifiers, &ast_builder)),
         import_decl.source.clone_in(&alloc),
         None,
         import_decl.with_clause.clone_in(&alloc),

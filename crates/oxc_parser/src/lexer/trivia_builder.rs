@@ -38,7 +38,7 @@ pub struct TriviaBuilder<'a> {
 impl<'a> TriviaBuilder<'a> {
     pub fn new_in(allocator: &'a Allocator) -> Self {
         Self {
-            comments: ArenaVec::new_in(allocator),
+            comments: ArenaVec::new_in(&allocator),
             irregular_whitespaces: vec![],
             processed: 0,
             saw_newline: true,

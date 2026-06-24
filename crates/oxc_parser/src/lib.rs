@@ -730,11 +730,8 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             }
         }
 
-        let tokens = if panicked {
-            ArenaVec::new_in(self.ast.allocator)
-        } else {
-            self.lexer.finalize_tokens()
-        };
+        let tokens =
+            if panicked { ArenaVec::new_in(&self.ast) } else { self.lexer.finalize_tokens() };
 
         program.comments = self.lexer.trivia_builder.comments;
 

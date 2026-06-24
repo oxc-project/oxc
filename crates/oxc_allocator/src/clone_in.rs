@@ -173,7 +173,7 @@ where
 
         let slice = self.as_slice();
 
-        let mut vec = Vec::<C>::with_capacity_in(slice.len(), allocator);
+        let mut vec = Vec::<C>::with_capacity_in(slice.len(), &allocator);
 
         // SAFETY: We allocated capacity for `slice.len()` elements in `vec`.
         // Therefore, writing `slice.len()` elements to that memory region is safe.
@@ -194,7 +194,7 @@ where
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         let slice = self.as_slice();
 
-        let mut vec = Vec::<C>::with_capacity_in(slice.len(), allocator);
+        let mut vec = Vec::<C>::with_capacity_in(slice.len(), &allocator);
 
         // SAFETY: We allocated capacity for `slice.len()` elements in `vec`.
         // Therefore, writing `slice.len()` elements to that memory region is safe.
@@ -293,11 +293,12 @@ mod test {
     #[test]
     fn clone_in_boxed_slice() {
         let allocator = Allocator::default();
+        let allocator = &allocator;
 
         let mut original = Vec::from_iter_in([1, 2, 3], &allocator).into_boxed_slice();
 
-        let cloned = original.clone_in(&allocator);
-        let cloned2 = original.clone_in_with_semantic_ids(&allocator);
+        let cloned = original.clone_in(allocator);
+        let cloned2 = original.clone_in_with_semantic_ids(allocator);
         original[1] = 4;
 
         assert_eq!(original.as_ref(), &[1, 4, 3]);
@@ -308,12 +309,13 @@ mod test {
     #[test]
     fn clone_in_vec() {
         let allocator = Allocator::default();
+        let allocator = &allocator;
 
         let mut original = Vec::with_capacity_in(8, &allocator);
         original.extend_from_slice(&[1, 2, 3]);
 
-        let cloned = original.clone_in(&allocator);
-        let cloned2 = original.clone_in_with_semantic_ids(&allocator);
+        let cloned = original.clone_in(allocator);
+        let cloned2 = original.clone_in_with_semantic_ids(allocator);
         original[1] = 4;
 
         assert_eq!(original.as_slice(), &[1, 4, 3]);

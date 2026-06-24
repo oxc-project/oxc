@@ -50,7 +50,7 @@ impl<'a> AstBuilder<'a> {
     /// [`Vec`]: ArenaVec
     #[inline]
     pub fn vec<T>(self) -> ArenaVec<'a, T> {
-        ArenaVec::new_in(self.allocator)
+        ArenaVec::new_in(&self)
     }
 
     /// Create a new empty [`Vec`] that stores its elements in the memory arena.
@@ -60,7 +60,7 @@ impl<'a> AstBuilder<'a> {
     /// [`Vec`]: ArenaVec
     #[inline]
     pub fn vec_with_capacity<T>(self, capacity: usize) -> ArenaVec<'a, T> {
-        ArenaVec::with_capacity_in(capacity, self.allocator)
+        ArenaVec::with_capacity_in(capacity, &self)
     }
 
     /// Create a new arena-allocated [`Vec`] initialized with a single element.
@@ -68,7 +68,7 @@ impl<'a> AstBuilder<'a> {
     /// [`Vec`]: ArenaVec
     #[inline]
     pub fn vec1<T>(self, value: T) -> ArenaVec<'a, T> {
-        ArenaVec::from_value_in(value, self.allocator)
+        ArenaVec::from_value_in(value, &self)
     }
 
     /// Collect an iterator into a new arena-allocated [`Vec`].
@@ -76,7 +76,7 @@ impl<'a> AstBuilder<'a> {
     /// [`Vec`]: ArenaVec
     #[inline]
     pub fn vec_from_iter<T, I: IntoIterator<Item = T>>(self, iter: I) -> ArenaVec<'a, T> {
-        ArenaVec::from_iter_in(iter, self.allocator)
+        ArenaVec::from_iter_in(iter, &self)
     }
 
     /// Create [`Vec`] from a fixed-size array.
@@ -88,7 +88,7 @@ impl<'a> AstBuilder<'a> {
     /// [`Vec`]: ArenaVec
     #[inline]
     pub fn vec_from_array<T, const N: usize>(self, array: [T; N]) -> ArenaVec<'a, T> {
-        ArenaVec::from_array_in(array, self.allocator)
+        ArenaVec::from_array_in(array, &self)
     }
 
     /// Allocate an [`Ident`] from a string slice.

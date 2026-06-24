@@ -71,13 +71,13 @@ impl<'a> ModuleRecord<'a> {
         Self {
             has_module_syntax: false,
             requested_modules: ArenaHashMap::new_in(allocator),
-            import_entries: ArenaVec::new_in(allocator),
-            local_export_entries: ArenaVec::new_in(allocator),
-            indirect_export_entries: ArenaVec::new_in(allocator),
-            star_export_entries: ArenaVec::new_in(allocator),
+            import_entries: ArenaVec::new_in(&allocator),
+            local_export_entries: ArenaVec::new_in(&allocator),
+            indirect_export_entries: ArenaVec::new_in(&allocator),
+            star_export_entries: ArenaVec::new_in(&allocator),
             exported_bindings: ArenaHashMap::new_in(allocator),
-            dynamic_imports: ArenaVec::new_in(allocator),
-            import_metas: ArenaVec::new_in(allocator),
+            dynamic_imports: ArenaVec::new_in(&allocator),
+            import_metas: ArenaVec::new_in(&allocator),
         }
     }
 }

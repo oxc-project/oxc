@@ -21,8 +21,8 @@ impl<'a> ModuleRecordBuilder<'a> {
             allocator,
             source_type,
             module_record: ModuleRecord::new(allocator),
-            export_entries: ArenaVec::new_in(allocator),
-            exported_bindings_duplicated: ArenaVec::new_in(allocator),
+            export_entries: ArenaVec::new_in(&allocator),
+            exported_bindings_duplicated: ArenaVec::new_in(&allocator),
         }
     }
 
@@ -81,7 +81,7 @@ impl<'a> ModuleRecordBuilder<'a> {
         self.module_record
             .requested_modules
             .entry(name)
-            .or_insert_with(|| ArenaVec::new_in(self.allocator))
+            .or_insert_with(|| ArenaVec::new_in(&self.allocator))
             .push(requested_module);
     }
 
@@ -116,7 +116,7 @@ impl<'a> ModuleRecordBuilder<'a> {
     fn resolve_export_entries(&mut self) {
         // let export_entries = self.export_entries.drain(..).collect::<Vec<_>>();
         let export_entries =
-            std::mem::replace(&mut self.export_entries, ArenaVec::new_in(self.allocator));
+            std::mem::replace(&mut self.export_entries, ArenaVec::new_in(&self.allocator));
         // 10. For each ExportEntry Record ee of exportEntries, do
         for ee in export_entries {
             // a. If ee.[[ModuleRequest]] is null, then

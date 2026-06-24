@@ -1657,7 +1657,8 @@ mod fix {
             .map(|el| el.clone_in(&alloc));
 
         codegen.print_expression(&Expression::ArrayExpression(
-            ast_builder.alloc_array_expression(deps.span, ArenaVec::from_iter_in(new_deps, &alloc)),
+            ast_builder
+                .alloc_array_expression(deps.span, ArenaVec::from_iter_in(new_deps, &ast_builder)),
         ));
         fixer.replace(deps.span, codegen.into_source_text())
     }
