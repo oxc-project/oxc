@@ -406,6 +406,22 @@ pub struct MinifyOptions {
     /// (it will never be mangled).
     #[napi(ts_type = "Record<string, string | false>")]
     pub mangle_cache: Option<FxHashMap<String, Either<String, bool>>>,
+
+    /// Also mangle quoted property names that match
+    /// {@link MinifyOptions#mangleProps mangleProps}.
+    ///
+    /// When `false` (default), a quoted property occurrence (`x['_foo']`,
+    /// `{ '_foo': 1 }`, `'_foo' in x`) reserves that name program-wide, so it is
+    /// never mangled. When `true`, such quoted keys become mangle candidates and
+    /// are renamed consistently with their unquoted siblings (computed string
+    /// indices are un-quoted to dot access where possible).
+    ///
+    /// Has no effect unless {@link MinifyOptions#mangleProps mangleProps} is set.
+    ///
+    /// Aligned with esbuild's `mangleQuoted`.
+    ///
+    /// @default false
+    pub mangle_quoted: Option<bool>,
 }
 
 impl TryFrom<&MinifyOptions> for oxc_minifier::MinifierOptions {
@@ -477,7 +493,7 @@ fn build_mangle_properties(o: &MinifyOptions) -> Result<Option<ManglePropertiesO
         mangle,
         reserve,
         reserved,
-        mangle_quoted: false,
+        mangle_quoted: o.mangle_quoted.unwrap_or(false),
         debug: false,
         cache,
     }))

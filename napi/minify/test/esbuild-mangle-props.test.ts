@@ -23,9 +23,12 @@ import { minifySync } from "../index";
 //   * Single self-contained JS program. Multi-file/bundler & import/export tests
 //     are out of scope -> it.skip with reason.
 //   * JS-only. TypeScript-feature tests are out of scope -> it.skip.
-//   * No `mangleQuoted`: a quoted property access (`o['_x']`) RESERVES the
-//     unquoted name `_x` program-wide rather than mangling it. So MangleQuoted
-//     tests are out of scope -> it.skip.
+//   * `mangleQuoted` is supported (`mangleQuoted: true`). By DEFAULT (the flag
+//     off), a quoted property access (`o['_x']`) RESERVES the unquoted name `_x`
+//     program-wide rather than mangling it (the safe terser-"strict" behavior).
+//     With `mangleQuoted: true`, quoted keys in key/index positions (including
+//     the wrapped conditional / comma forms esbuild handles) become candidates
+//     and are renamed consistently with their unquoted siblings.
 //   * No `/* @__KEY__ */` annotation support -> it.skip.
 //   * Syntax lowering (optional-chain / class-field lowering) is a transformer
 //     concern, not minify; the non-lowered essence is covered separately.
@@ -451,16 +454,152 @@ var { '_doNotMangleThis': x } = y;
   // class-field positions in TestMangleProps above.
   it.skip("TestManglePropsLoweredClassFields (class-field lowering)", () => {});
 
-  // bundler_default_test.go:7509 TestMangleQuotedProps
-  // SKIP: requires MangleQuoted: true (mangle quoted property strings). oxc-minify
-  // v1 has no mangleQuoted mode — it always RESERVES quoted properties rather
-  // than mangling them — so this test's behavior is intentionally not supported.
-  it.skip("TestMangleQuotedProps (mangleQuoted not supported in v1)", () => {});
+  // Ported from bundler_default_test.go:7509 TestMangleQuotedProps
+  // esbuild input — two passthrough parts (`/keep.js` and `/mangle.js`) built
+  // with MangleProps: "_", MangleQuoted: true, MinifySyntax: false.
+  //
+  //   /keep.js (the strings here are CALL ARGUMENTS / non-literal computed
+  //   indices, i.e. NOT statically-known keys, so they must NOT be mangled):
+  //     foo("_keepThisProperty");
+  //     foo((x, "_keepThisProperty"));
+  //     foo(x ? "_keepThisProperty" : "_keepThisPropertyToo");
+  //     x[foo("_keepThisProperty")];
+  //     x?.[foo("_keepThisProperty")];
+  //     ({ [foo("_keepThisProperty")]: x });
+  //     (class { [foo("_keepThisProperty")] = x });
+  //     var { [foo("_keepThisProperty")]: x } = y;
+  //     foo("_keepThisProperty") in x;
+  //
+  //   /mangle.js (every `_mangleThis` is in a KEY/INDEX position — direct or
+  //   wrapped in a conditional / comma — so with mangleQuoted it is renamed):
+  //     x['_mangleThis']; x?.['_mangleThis'];
+  //     x[y ? '_mangleThis' : z]; x?.[y ? '_mangleThis' : z];
+  //     x[y ? z : '_mangleThis']; x?.[y ? z : '_mangleThis'];
+  //     x[y, '_mangleThis']; x?.[y, '_mangleThis'];
+  //     ({ '_mangleThis': x }); ({ ['_mangleThis']: x }); ({ [(y, '_mangleThis')]: x });
+  //     (class { '_mangleThis' = x }); (class { ['_mangleThis'] = x }); (class { [(y, '_mangleThis')] = x });
+  //     var { '_mangleThis': x } = y; var { ['_mangleThis']: x } = y; var { [(z, '_mangleThis')]: x } = y;
+  //     '_mangleThis' in x; (y ? '_mangleThis' : z) in x; (y ? z : '_mangleThis') in x; (y, '_mangleThis') in x;
+  //
+  // oxc supports `mangleQuoted: true` and handles ALL of esbuild's cases here,
+  // including the wrapped conditional/comma forms in member-index, object/class
+  // computed-key, destructuring computed-key, and `in`-LHS positions. A direct
+  // string index/key is un-quoted (`x['_mangleThis']` -> `x.e`, `{'_mangleThis':x}`
+  // -> `{e:x}`); a wrapped form keeps its structure and is renamed in place
+  // (printed as a template literal, oxc's codegen choice for string keys in
+  // computed/expression positions — same as the existing TestMangleNoQuotedProps).
+  // `_keepThisProperty` is never a statically-known key, so it stays untouched.
+  it("TestMangleQuotedProps", () => {
+    // keep.js: nothing is a statically-known key -> no mangling.
+    const keep = minifySync(
+      "keep.js",
+      `foo("_keepThisProperty");
+foo((x, "_keepThisProperty"));
+foo(x ? "_keepThisProperty" : "_keepThisPropertyToo");
+x[foo("_keepThisProperty")];
+x?.[foo("_keepThisProperty")];
+({ [foo("_keepThisProperty")]: x });
+(class { [foo("_keepThisProperty")] = x });
+var { [foo("_keepThisProperty")]: x } = y;
+foo("_keepThisProperty") in x;`,
+      { mangleProps: "_", mangleQuoted: true, compress: false },
+    );
+    expect(keep.code).toBe(
+      "foo(`_keepThisProperty`);foo((x,`_keepThisProperty`));foo(x?`_keepThisProperty`:`_keepThisPropertyToo`);x[foo(`_keepThisProperty`)];x?.[foo(`_keepThisProperty`)];({[foo(`_keepThisProperty`)]:x});(class{[foo(`_keepThisProperty`)]=x});var{[foo(`_keepThisProperty`)]:x}=y;foo(`_keepThisProperty`)in x;",
+    );
+    expect(keep.mangleCache).toEqual({});
 
-  // bundler_default_test.go:7557 TestMangleQuotedPropsMinifySyntax
-  // SKIP: same as above (MangleQuoted: true) plus MinifySyntax. No mangleQuoted
-  // mode in oxc-minify v1.
-  it.skip("TestMangleQuotedPropsMinifySyntax (mangleQuoted not supported in v1)", () => {});
+    // mangle.js: every `_mangleThis` key/index occurrence is renamed to `e`.
+    const mangle = minifySync(
+      "mangle.js",
+      `x['_mangleThis'];
+x?.['_mangleThis'];
+x[y ? '_mangleThis' : z];
+x?.[y ? '_mangleThis' : z];
+x[y ? z : '_mangleThis'];
+x?.[y ? z : '_mangleThis'];
+x[y, '_mangleThis'];
+x?.[y, '_mangleThis'];
+({ '_mangleThis': x });
+({ ['_mangleThis']: x });
+({ [(y, '_mangleThis')]: x });
+(class { '_mangleThis' = x });
+(class { ['_mangleThis'] = x });
+(class { [(y, '_mangleThis')] = x });
+var { '_mangleThis': x } = y;
+var { ['_mangleThis']: x } = y;
+var { [(z, '_mangleThis')]: x } = y;
+'_mangleThis' in x;
+(y ? '_mangleThis' : z) in x;
+(y ? z : '_mangleThis') in x;
+(y, '_mangleThis') in x;`,
+      { mangleProps: "_", mangleQuoted: true, compress: false },
+    );
+    expect(mangle.code).toBe(
+      "x.e;x?.[`e`];x[y?`e`:z];x?.[y?`e`:z];x[y?z:`e`];x?.[y?z:`e`];x[y,`e`];x?.[y,`e`];({e:x});({e:x});({[(y,`e`)]:x});(class{e=x});(class{e=x});(class{[(y,`e`)]=x});var{e:x}=y;var{e:x}=y;var{[(z,`e`)]:x}=y;`e`in x;(y?`e`:z)in x;(y?z:`e`)in x;(y,`e`)in x;",
+    );
+    // Every occurrence renamed consistently to one name; nothing kept as `_mangleThis`.
+    expect(mangle.mangleCache).toEqual({ _mangleThis: "e" });
+    expect(mangle.code).not.toContain("_mangleThis");
+  });
+
+  // Ported from bundler_default_test.go:7557 TestMangleQuotedPropsMinifySyntax
+  // Same two parts as TestMangleQuotedProps, with MinifySyntax (compress: true).
+  // `_keepThisProperty` is still never mangled; every `_mangleThis` key/index is
+  // still renamed to `e`. compress additionally un-quotes some optional-chain
+  // bracket accesses to dot form (`x?.['_mangleThis']` -> `x?.e`), folds the
+  // pure object/class expression statements, and joins statements with commas —
+  // but the property NAME decision is identical to the uncompressed case.
+  it("TestMangleQuotedPropsMinifySyntax", () => {
+    const keep = minifySync(
+      "keep.js",
+      `foo("_keepThisProperty");
+foo((x, "_keepThisProperty"));
+foo(x ? "_keepThisProperty" : "_keepThisPropertyToo");
+x[foo("_keepThisProperty")];
+x?.[foo("_keepThisProperty")];
+({ [foo("_keepThisProperty")]: x });
+(class { [foo("_keepThisProperty")] = x });
+var { [foo("_keepThisProperty")]: x } = y;
+foo("_keepThisProperty") in x;`,
+      { mangleProps: "_", mangleQuoted: true, compress: true },
+    );
+    expect(keep.code).toBe(
+      "foo(`_keepThisProperty`),foo(`_keepThisProperty`),foo(x?`_keepThisProperty`:`_keepThisPropertyToo`),x[foo(`_keepThisProperty`)],x?.[foo(`_keepThisProperty`)],foo(`_keepThisProperty`),foo(`_keepThisProperty`);var{[foo(`_keepThisProperty`)]:x}=y;foo(`_keepThisProperty`)in x;",
+    );
+    expect(keep.mangleCache).toEqual({});
+
+    const mangle = minifySync(
+      "mangle.js",
+      `x['_mangleThis'];
+x?.['_mangleThis'];
+x[y ? '_mangleThis' : z];
+x?.[y ? '_mangleThis' : z];
+x[y ? z : '_mangleThis'];
+x?.[y ? z : '_mangleThis'];
+x[y, '_mangleThis'];
+x?.[y, '_mangleThis'];
+({ '_mangleThis': x });
+({ ['_mangleThis']: x });
+({ [(y, '_mangleThis')]: x });
+(class { '_mangleThis' = x });
+(class { ['_mangleThis'] = x });
+(class { [(y, '_mangleThis')] = x });
+var { '_mangleThis': x } = y;
+var { ['_mangleThis']: x } = y;
+var { [(z, '_mangleThis')]: x } = y;
+'_mangleThis' in x;
+(y ? '_mangleThis' : z) in x;
+(y ? z : '_mangleThis') in x;
+(y, '_mangleThis') in x;`,
+      { mangleProps: "_", mangleQuoted: true, compress: true },
+    );
+    expect(mangle.code).toBe(
+      "x.e,x?.e,x[y?`e`:z],x?.[y?`e`:z],x[y?z:`e`],x?.[y?z:`e`],x[y,`e`],x?.[y,`e`],y,y;var{e:x}=y,{e:x}=y,{[(z,`e`)]:x}=y;`e`in x,(y?`e`:z)in x,(y?z:`e`)in x,(y,`e`)in x;",
+    );
+    expect(mangle.mangleCache).toEqual({ _mangleThis: "e" });
+    expect(mangle.code).not.toContain("_mangleThis");
+  });
 
   // bundler_default_test.go:7623 TestManglePropsKeyComment
   // SKIP: depends on `/* @__KEY__ */` annotation comments to opt string literals
