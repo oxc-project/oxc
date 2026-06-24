@@ -1,4 +1,4 @@
-use oxc_allocator::{Allocator, Vec as ArenaVec};
+use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::{
     Comment,
     ast::{Expression, Statement},

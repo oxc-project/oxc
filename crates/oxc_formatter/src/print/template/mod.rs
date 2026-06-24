@@ -4,7 +4,7 @@ use unicode_width::UnicodeWidthStr;
 
 use std::cmp;
 
-use oxc_allocator::{StringBuilder, Vec as ArenaVec};
+use oxc_allocator::{ArenaVec, StringBuilder};
 use oxc_ast::ast::*;
 use oxc_formatter_core::IndentWidth;
 use oxc_span::{GetSpan, Span};

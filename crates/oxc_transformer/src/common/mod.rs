@@ -1,7 +1,7 @@
 //! Utility transforms which are in common between other transforms.
 
 use arrow_function_converter::ArrowFunctionConverter;
-use oxc_allocator::Vec as ArenaVec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 use oxc_traverse::{Ancestor, Traverse};
 

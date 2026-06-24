@@ -77,7 +77,7 @@
 ///
 /// ## References
 /// * TypeScript's [emitDecoratorMetadata](https://www.typescriptlang.org/tsconfig#emitDecoratorMetadata)
-use oxc_allocator::Box as ArenaBox;
+use oxc_allocator::ArenaBox;
 use oxc_ast::ast::*;
 use oxc_data_structures::stack::SparseStack;
 use oxc_semantic::{Reference, ReferenceFlags, SymbolId};

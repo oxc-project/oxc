@@ -15,7 +15,7 @@ use std::{
     string::ToString,
 };
 
-use oxc_allocator::{Allocator, AllocatorPool, CloneIn, TakeIn, Vec as ArenaVec};
+use oxc_allocator::{Allocator, AllocatorPool, ArenaVec, CloneIn, TakeIn};
 use oxc_ast::{
     ast::{Comment, CommentContent, CommentKind, Program},
     ast_kind::AST_TYPE_MAX,

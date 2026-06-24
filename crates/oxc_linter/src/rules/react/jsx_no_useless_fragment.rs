@@ -5,7 +5,7 @@ use crate::{
     rule::{DefaultRuleConfig, Rule},
     utils::is_jsx_fragment,
 };
-use oxc_allocator::Vec as ArenaVec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::{
     AstKind,
     ast::{

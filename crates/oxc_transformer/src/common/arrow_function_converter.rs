@@ -91,7 +91,7 @@ use compact_str::CompactString;
 use indexmap::IndexMap;
 use rustc_hash::{FxBuildHasher, FxHashSet};
 
-use oxc_allocator::{Box as ArenaBox, TakeIn, Vec as ArenaVec};
+use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
 use oxc_ast::{NONE, ast::*};
 use oxc_ast_visit::{VisitMut, walk_mut::walk_expression};
 use oxc_data_structures::stack::{NonEmptyStack, SparseStack};

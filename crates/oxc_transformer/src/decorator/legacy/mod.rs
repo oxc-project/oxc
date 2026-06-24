@@ -48,9 +48,7 @@ mod metadata;
 use std::borrow::Cow;
 use std::mem;
 
-use oxc_allocator::{
-    Address, Box as ArenaBox, CloneIn, GetAddress, TakeIn, UnstableAddress, Vec as ArenaVec,
-};
+use oxc_allocator::{Address, ArenaBox, ArenaVec, CloneIn, GetAddress, TakeIn, UnstableAddress};
 use oxc_ast::{NONE, ast::*};
 use oxc_ast_visit::{Visit, VisitMut};
 use oxc_data_structures::stack::NonEmptyStack;

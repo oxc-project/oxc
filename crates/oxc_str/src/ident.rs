@@ -11,8 +11,7 @@ use std::{
 };
 
 use oxc_allocator::{
-    Allocator, CloneIn, Dummy, FromIn, IdentBuildHasher, StringBuilder as ArenaStringBuilder,
-    ident_hash,
+    Allocator, ArenaStringBuilder, CloneIn, Dummy, FromIn, IdentBuildHasher, ident_hash,
 };
 #[cfg(feature = "serialize")]
 use oxc_estree::{ESTree, JsonSafeString, Serializer as ESTreeSerializer};

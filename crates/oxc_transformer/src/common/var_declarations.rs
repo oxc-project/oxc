@@ -14,7 +14,7 @@
 //! ctx.state.var_declarations.insert_let(name2, binding2, None, ctx.ast);
 //! ```
 
-use oxc_allocator::Vec as ArenaVec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::{AstBuilder, NONE, ast::*};
 use oxc_data_structures::stack::SparseStack;
 use oxc_span::SPAN;

@@ -1,7 +1,7 @@
 //! ES2022: Class Properties
 //! Transform of `super` expressions.
 
-use oxc_allocator::{Box as ArenaBox, TakeIn, Vec as ArenaVec};
+use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
 use oxc_ast::ast::*;
 use oxc_span::SPAN;
 use oxc_traverse::ast_operations::get_var_name_from_node;

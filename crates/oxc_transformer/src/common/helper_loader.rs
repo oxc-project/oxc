@@ -70,7 +70,7 @@ use std::borrow::Cow;
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
-use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
+use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::{
     NONE,
     ast::{Argument, CallExpression, Expression},

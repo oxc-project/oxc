@@ -1,4 +1,4 @@
-use oxc_allocator::{Allocator, Box as ArenaBox, GetAllocator, Vec as ArenaVec};
+use oxc_allocator::{Allocator, ArenaBox, ArenaVec, GetAllocator};
 use oxc_ast::{
     AstBuilder,
     ast::{Expression, IdentifierReference, Statement},

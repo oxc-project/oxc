@@ -1,4 +1,4 @@
-use oxc_allocator::{Box as ArenaBox, CloneIn, TakeIn, Vec as ArenaVec};
+use oxc_allocator::{ArenaBox, ArenaVec, CloneIn, TakeIn};
 use oxc_ast::{NONE, ast::*};
 use oxc_span::{GetSpan, SPAN};
 use oxc_str::Str;

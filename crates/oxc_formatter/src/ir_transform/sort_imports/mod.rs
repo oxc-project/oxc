@@ -6,7 +6,7 @@ mod partitioned_chunk;
 mod sortable_imports;
 mod source_line;
 
-use oxc_allocator::{Allocator, Vec as ArenaVec};
+use oxc_allocator::{Allocator, ArenaVec};
 
 use crate::{
     Buffer, JsLabels, SortImportsOptions,

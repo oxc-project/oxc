@@ -3,7 +3,7 @@
 
 use std::mem;
 
-use oxc_allocator::{Box as ArenaBox, TakeIn};
+use oxc_allocator::{ArenaBox, TakeIn};
 use oxc_ast::{NONE, ast::*};
 use oxc_span::SPAN;
 use oxc_syntax::{reference::ReferenceId, symbol::SymbolId};

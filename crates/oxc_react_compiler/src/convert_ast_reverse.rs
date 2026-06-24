@@ -9,7 +9,7 @@
 //! (which represents the compiler's Babel-compatible output) and produces OXC AST
 //! nodes allocated in an OXC arena, suitable for code generation via `oxc_codegen`.
 
-use oxc_allocator::{Allocator, Box as ArenaBox};
+use oxc_allocator::{Allocator, ArenaBox};
 use oxc_ast::ast as oxc;
 use oxc_ast_visit::VisitMut;
 use oxc_span::SPAN;

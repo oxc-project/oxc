@@ -1,4 +1,4 @@
-use oxc_allocator::{Box as ArenaBox, CloneIn};
+use oxc_allocator::{ArenaBox, CloneIn};
 use oxc_ast::ast::{
     ArrowFunctionExpression, Expression, FormalParameter, Function, Statement, TSType,
     TSTypeAnnotation, UnaryExpression,
