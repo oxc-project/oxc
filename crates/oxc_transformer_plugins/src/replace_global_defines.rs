@@ -254,6 +254,8 @@ pub struct ReplaceGlobalDefines<'a> {
     /// Depth of non-arrow functions we're inside of. Used to compute scope flags for `this`
     /// replacement.
     non_arrow_function_depth: u32,
+    /// Depth of class field initializers or static blocks where `this` is the instance/class.
+    class_this_depth: u32,
     /// Destructuring keys from the parent `VariableDeclarator` when its `id` is an
     /// `ObjectPattern`. Used to optimize object expression replacements by only keeping needed
     /// keys.
@@ -314,6 +316,38 @@ impl<'a> VisitMut<'a> for ReplaceGlobalDefines<'a> {
         self.non_arrow_function_depth -= 1;
     }
 
+    fn visit_property_definition(&mut self, property: &mut PropertyDefinition<'a>) {
+        self.visit_decorators(&mut property.decorators);
+        self.visit_property_key(&mut property.key);
+        if let Some(type_annotation) = &mut property.type_annotation {
+            self.visit_ts_type_annotation(type_annotation);
+        }
+        if let Some(value) = &mut property.value {
+            self.class_this_depth += 1;
+            self.visit_expression(value);
+            self.class_this_depth -= 1;
+        }
+    }
+
+    fn visit_static_block(&mut self, block: &mut StaticBlock<'a>) {
+        self.class_this_depth += 1;
+        walk_mut::walk_static_block(self, block);
+        self.class_this_depth -= 1;
+    }
+
+    fn visit_accessor_property(&mut self, property: &mut AccessorProperty<'a>) {
+        self.visit_decorators(&mut property.decorators);
+        self.visit_property_key(&mut property.key);
+        if let Some(type_annotation) = &mut property.type_annotation {
+            self.visit_ts_type_annotation(type_annotation);
+        }
+        if let Some(value) = &mut property.value {
+            self.class_this_depth += 1;
+            self.visit_expression(value);
+            self.class_this_depth -= 1;
+        }
+    }
+
     fn visit_variable_declarator(&mut self, declarator: &mut VariableDeclarator<'a>) {
         // Collect destructuring keys if LHS is an ObjectPattern.
         // `visit_expression` clears `destructuring_keys` after the first expression check,
@@ -346,6 +380,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
             changed: false,
             scoping: None,
             non_arrow_function_depth: 0,
+            class_this_depth: 0,
             destructuring_keys: None,
         }
     }
@@ -781,9 +816,15 @@ impl<'a> ReplaceGlobalDefines<'a> {
         false
     }
 
-    /// Compute the current scope flags based on function depth tracking.
+    /// Compute the current scope flags based on function and class `this` depth tracking.
     fn current_scope_flags(&self) -> ScopeFlags {
-        if self.non_arrow_function_depth > 0 { ScopeFlags::Function } else { ScopeFlags::Top }
+        if self.non_arrow_function_depth > 0 {
+            ScopeFlags::Function
+        } else if self.class_this_depth > 0 {
+            ScopeFlags::ClassStaticBlock
+        } else {
+            ScopeFlags::Top
+        }
     }
 
     /// If `expr` is a `ChainExpression` whose chain no longer contains any
@@ -1025,7 +1066,8 @@ fn static_property_name_of_computed_expr<'b, 'a: 'b>(
 }
 
 const fn should_replace_this_expr(scope_flags: ScopeFlags) -> bool {
-    !scope_flags.contains(ScopeFlags::Function) || scope_flags.contains(ScopeFlags::Arrow)
+    !scope_flags.contains(ScopeFlags::ClassStaticBlock)
+        && (!scope_flags.contains(ScopeFlags::Function) || scope_flags.contains(ScopeFlags::Arrow))
 }
 
 fn assignment_target_from_expr(expr: Expression) -> Option<AssignmentTarget> {

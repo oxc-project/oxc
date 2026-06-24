@@ -174,6 +174,16 @@ fn typeof_define_this_expr() {
         "function f() { foo(typeof this); (() => foo(typeof this))() }",
         &config,
     );
+    test_define_only(
+        "class C { field = typeof this; static field = typeof this; static { foo(typeof this) } }",
+        "class C { field = typeof this; static field = typeof this; static { foo(typeof this) } }",
+        &config,
+    );
+    test_define_only(
+        "class C { [typeof this] = typeof this }",
+        "class C { ['object'] = typeof this }",
+        &config,
+    );
 }
 
 #[test]
@@ -341,6 +351,12 @@ fn this_expr() {
 	);
 })();
     ",
+        &config,
+    );
+
+    test_define_only(
+        "class C { field = this; static field = this.foo; static { foo(this, this.foo) } }",
+        "class C { field = this; static field = this.foo; static { foo(this, this.foo) } }",
         &config,
     );
 }
