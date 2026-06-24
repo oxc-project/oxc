@@ -68,11 +68,11 @@ where
     type Cloned = Box<'new_alloc, C>;
 
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        Box::new_in(self.as_ref().clone_in(allocator), allocator)
+        Box::new_in(self.as_ref().clone_in(allocator), &allocator)
     }
 
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        Box::new_in(self.as_ref().clone_in_with_semantic_ids(allocator), allocator)
+        Box::new_in(self.as_ref().clone_in_with_semantic_ids(allocator), &allocator)
     }
 }
 

@@ -452,8 +452,7 @@ impl<'a> PeepholeOptimizations {
                     if regex.regex.pattern.pattern.is_none()
                         && let Ok(pattern) = regex.parse_pattern(ctx.ast.allocator)
                     {
-                        regex.regex.pattern.pattern =
-                            Some(ArenaBox::new_in(pattern, ctx.ast.allocator));
+                        regex.regex.pattern.pattern = Some(ArenaBox::new_in(pattern, ctx));
                     }
                     if let Some(pattern) = &regex.regex.pattern.pattern
                         // for now, only replace regexes that are supported by ES2015 to preserve the syntax error

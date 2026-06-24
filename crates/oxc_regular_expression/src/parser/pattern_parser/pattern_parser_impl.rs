@@ -165,7 +165,7 @@ impl<'a> PatternParser<'a> {
                             max,
                             body: atom,
                         },
-                        self.allocator,
+                        self,
                     ))))
                 }
                 (Some(atom), None) => Ok(Some(atom)),
@@ -200,7 +200,7 @@ impl<'a> PatternParser<'a> {
                         max,
                         body: assertion,
                     },
-                    self.allocator,
+                    self,
                 ))));
             }
 
@@ -217,7 +217,7 @@ impl<'a> PatternParser<'a> {
                         greedy,
                         body: extended_atom,
                     },
-                    self.allocator,
+                    self,
                 ))))
             }
             (Some(extended_atom), None) => Ok(Some(extended_atom)),
@@ -267,7 +267,7 @@ impl<'a> PatternParser<'a> {
                     span: self.span_factory.create(span_start, self.reader.offset()),
                     kind,
                 },
-                self.allocator,
+                self,
             ))));
         }
 
@@ -299,7 +299,7 @@ impl<'a> PatternParser<'a> {
                     kind,
                     body: disjunction,
                 },
-                self.allocator,
+                self,
             ))));
         }
 
@@ -330,7 +330,7 @@ impl<'a> PatternParser<'a> {
                     kind,
                     value: cp,
                 },
-                self.allocator,
+                self,
             ))));
         }
 
@@ -350,29 +350,20 @@ impl<'a> PatternParser<'a> {
 
         // CharacterClass[?UnicodeMode, ?UnicodeSetsMode]
         if let Some(character_class) = self.parse_character_class()? {
-            return Ok(Some(ast::Term::CharacterClass(ArenaBox::new_in(
-                character_class,
-                self.allocator,
-            ))));
+            return Ok(Some(ast::Term::CharacterClass(ArenaBox::new_in(character_class, self))));
         }
 
         // ( GroupSpecifier[?UnicodeMode][opt] Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
         // ( Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
         if let Some(capturing_group) = self.parse_capturing_group()? {
-            return Ok(Some(ast::Term::CapturingGroup(ArenaBox::new_in(
-                capturing_group,
-                self.allocator,
-            ))));
+            return Ok(Some(ast::Term::CapturingGroup(ArenaBox::new_in(capturing_group, self))));
         }
 
         // (?: Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
         // (? RegularExpressionModifiers : Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
         // (? RegularExpressionModifiers - RegularExpressionModifiers : Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
         if let Some(ignore_group) = self.parse_ignore_group()? {
-            return Ok(Some(ast::Term::IgnoreGroup(ArenaBox::new_in(
-                ignore_group,
-                self.allocator,
-            ))));
+            return Ok(Some(ast::Term::IgnoreGroup(ArenaBox::new_in(ignore_group, self))));
         }
 
         Ok(None)
@@ -414,7 +405,7 @@ impl<'a> PatternParser<'a> {
                         kind: ast::CharacterKind::Symbol,
                         value: '\\' as u32,
                     },
-                    self.allocator,
+                    self,
                 ))));
             }
 
@@ -425,29 +416,20 @@ impl<'a> PatternParser<'a> {
 
         // CharacterClass[~UnicodeMode, ~UnicodeSetsMode]
         if let Some(character_class) = self.parse_character_class()? {
-            return Ok(Some(ast::Term::CharacterClass(ArenaBox::new_in(
-                character_class,
-                self.allocator,
-            ))));
+            return Ok(Some(ast::Term::CharacterClass(ArenaBox::new_in(character_class, self))));
         }
 
         // ( GroupSpecifier[?UnicodeMode][opt] Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
         // ( Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
         if let Some(capturing_group) = self.parse_capturing_group()? {
-            return Ok(Some(ast::Term::CapturingGroup(ArenaBox::new_in(
-                capturing_group,
-                self.allocator,
-            ))));
+            return Ok(Some(ast::Term::CapturingGroup(ArenaBox::new_in(capturing_group, self))));
         }
 
         // (?: Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
         // (? RegularExpressionModifiers : Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
         // (? RegularExpressionModifiers - RegularExpressionModifiers : Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
         if let Some(ignore_group) = self.parse_ignore_group()? {
-            return Ok(Some(ast::Term::IgnoreGroup(ArenaBox::new_in(
-                ignore_group,
-                self.allocator,
-            ))));
+            return Ok(Some(ast::Term::IgnoreGroup(ArenaBox::new_in(ignore_group, self))));
         }
 
         // InvalidBracedQuantifier
@@ -470,7 +452,7 @@ impl<'a> PatternParser<'a> {
                     kind: Self::escape_kind_to_character_kind(escape_kind),
                     value: cp,
                 },
-                self.allocator,
+                self,
             ))));
         }
 
@@ -506,7 +488,7 @@ impl<'a> PatternParser<'a> {
                         span: self.span_factory.create(span_start, self.reader.offset()),
                         index,
                     },
-                    self.allocator,
+                    self,
                 ))));
             }
 
@@ -516,7 +498,7 @@ impl<'a> PatternParser<'a> {
                         span: self.span_factory.create(span_start, self.reader.offset()),
                         index,
                     },
-                    self.allocator,
+                    self,
                 ))));
             }
 
@@ -527,7 +509,7 @@ impl<'a> PatternParser<'a> {
         if let Some(character_class_escape) = self.parse_character_class_escape(span_start) {
             return Ok(Some(ast::Term::CharacterClassEscape(ArenaBox::new_in(
                 character_class_escape,
-                self.allocator,
+                self,
             ))));
         }
         if let Some(unicode_property_escape) =
@@ -535,16 +517,13 @@ impl<'a> PatternParser<'a> {
         {
             return Ok(Some(ast::Term::UnicodePropertyEscape(ArenaBox::new_in(
                 unicode_property_escape,
-                self.allocator,
+                self,
             ))));
         }
 
         // CharacterEscape: \n, \cM, \0, etc...
         if let Some(character_escape) = self.parse_character_escape(span_start)? {
-            return Ok(Some(ast::Term::Character(ArenaBox::new_in(
-                character_escape,
-                self.allocator,
-            ))));
+            return Ok(Some(ast::Term::Character(ArenaBox::new_in(character_escape, self))));
         }
 
         // k GroupName: \k<name> means named reference
@@ -566,7 +545,7 @@ impl<'a> PatternParser<'a> {
                         span: self.span_factory.create(span_start, self.reader.offset()),
                         name,
                     },
-                    self.allocator,
+                    self,
                 ))));
             }
 
@@ -875,7 +854,7 @@ impl<'a> PatternParser<'a> {
                     kind: ast::CharacterKind::Symbol,
                     value: '-' as u32,
                 },
-                self.allocator,
+                self,
             ));
 
             let Some(class_atom_to) = self.parse_class_atom()? else {
@@ -915,7 +894,7 @@ impl<'a> PatternParser<'a> {
                         min: **from,
                         max: **to,
                     },
-                    self.allocator,
+                    self,
                 )));
                 continue;
             }
@@ -958,7 +937,7 @@ impl<'a> PatternParser<'a> {
                     kind: ast::CharacterKind::Symbol,
                     value: '-' as u32,
                 },
-                self.allocator,
+                self,
             ))));
         }
 
@@ -989,7 +968,7 @@ impl<'a> PatternParser<'a> {
                     kind,
                     value: cp,
                 },
-                self.allocator,
+                self,
             ))));
         }
 
@@ -1001,7 +980,7 @@ impl<'a> PatternParser<'a> {
                         kind: ast::CharacterKind::Symbol,
                         value: '\\' as u32,
                     },
-                    self.allocator,
+                    self,
                 ))));
             }
 
@@ -1042,7 +1021,7 @@ impl<'a> PatternParser<'a> {
                     kind: ast::CharacterKind::SingleEscape,
                     value: 0x08,
                 },
-                self.allocator,
+                self,
             ))));
         }
 
@@ -1054,7 +1033,7 @@ impl<'a> PatternParser<'a> {
                     kind: ast::CharacterKind::SingleEscape,
                     value: '-' as u32,
                 },
-                self.allocator,
+                self,
             ))));
         }
 
@@ -1076,7 +1055,7 @@ impl<'a> PatternParser<'a> {
                             kind: ast::CharacterKind::ControlLetter,
                             value: cp,
                         },
-                        self.allocator,
+                        self,
                     ))));
                 }
 
@@ -1088,7 +1067,7 @@ impl<'a> PatternParser<'a> {
         if let Some(character_class_escape) = self.parse_character_class_escape(span_start) {
             return Ok(Some(ast::CharacterClassContents::CharacterClassEscape(ArenaBox::new_in(
                 character_class_escape,
-                self.allocator,
+                self,
             ))));
         }
         if let Some(unicode_property_escape) =
@@ -1096,7 +1075,7 @@ impl<'a> PatternParser<'a> {
         {
             return Ok(Some(ast::CharacterClassContents::UnicodePropertyEscape(ArenaBox::new_in(
                 unicode_property_escape,
-                self.allocator,
+                self,
             ))));
         }
 
@@ -1104,7 +1083,7 @@ impl<'a> PatternParser<'a> {
         if let Some(character_escape) = self.parse_character_escape(span_start)? {
             return Ok(Some(ast::CharacterClassContents::Character(ArenaBox::new_in(
                 character_escape,
-                self.allocator,
+                self,
             ))));
         }
 
@@ -1282,7 +1261,7 @@ impl<'a> PatternParser<'a> {
                     min: class_set_character,
                     max: class_set_character_to,
                 },
-                self.allocator,
+                self,
             ))));
         }
         self.reader.rewind(checkpoint);
@@ -1317,7 +1296,7 @@ impl<'a> PatternParser<'a> {
                             strings,
                             body: class_string_disjunction_contents,
                         },
-                        self.allocator,
+                        self,
                     ),
                 )));
             }
@@ -1331,7 +1310,7 @@ impl<'a> PatternParser<'a> {
         if let Some(class_set_character) = self.parse_class_set_character()? {
             return Ok(Some(ast::CharacterClassContents::Character(ArenaBox::new_in(
                 class_set_character,
-                self.allocator,
+                self,
             ))));
         }
 
@@ -1373,7 +1352,7 @@ impl<'a> PatternParser<'a> {
                             strings,
                             body,
                         },
-                        self.allocator,
+                        self,
                     ),
                 )));
             }
@@ -1390,14 +1369,14 @@ impl<'a> PatternParser<'a> {
         if self.reader.eat('\\') {
             if let Some(character_class_escape) = self.parse_character_class_escape(span_start) {
                 return Ok(Some(ast::CharacterClassContents::CharacterClassEscape(
-                    ArenaBox::new_in(character_class_escape, self.allocator),
+                    ArenaBox::new_in(character_class_escape, self),
                 )));
             }
             if let Some(unicode_property_escape) =
                 self.parse_character_class_escape_unicode(span_start)?
             {
                 return Ok(Some(ast::CharacterClassContents::UnicodePropertyEscape(
-                    ArenaBox::new_in(unicode_property_escape, self.allocator),
+                    ArenaBox::new_in(unicode_property_escape, self),
                 )));
             }
 

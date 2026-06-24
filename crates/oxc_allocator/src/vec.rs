@@ -173,7 +173,7 @@ impl<'alloc, T> Vec<'alloc, T> {
         const { Self::ASSERT_T_IS_NOT_DROP };
 
         let allocator = allocator.allocator();
-        let boxed = Box::new_in(value, allocator);
+        let boxed = Box::new_in(value, &allocator);
         Self::from_box_in(boxed, &allocator)
     }
 
@@ -201,7 +201,7 @@ impl<'alloc, T> Vec<'alloc, T> {
         const { Self::ASSERT_T_IS_NOT_DROP };
 
         let allocator = allocator.allocator();
-        let boxed = Box::new_in(array, allocator);
+        let boxed = Box::new_in(array, &allocator);
         let ptr = Box::into_non_null(boxed).as_ptr().cast::<T>();
         // SAFETY: `ptr` has correct alignment - it was just allocated as `[T; N]`.
         // `ptr` was allocated with correct size for `[T; N]`.
@@ -224,7 +224,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     ///
     /// let allocator = Allocator::default();
     /// let allocator = &allocator;
-    /// let boxed = Box::new_in(123u32, allocator);
+    /// let boxed = Box::new_in(123u32, &allocator);
     /// let vec = Vec::from_box_in(boxed, &allocator);
     /// assert_eq!(vec, [123]);
     /// ```
@@ -239,6 +239,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// let vec_allocator = &vec_allocator;
     /// let vec = {
     ///     let box_allocator = Allocator::default();
+    ///     let box_allocator = &box_allocator;
     ///     let boxed = Box::new_in(123u32, &box_allocator);
     ///     Vec::from_box_in(boxed, &vec_allocator)
     /// };
@@ -251,6 +252,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// use oxc_allocator::{Allocator, Box, Vec};
     ///
     /// let box_allocator = Allocator::default();
+    /// let box_allocator = &box_allocator;
     /// let boxed = Box::new_in(123u32, &box_allocator);
     /// let vec = {
     ///     let vec_allocator = Allocator::default();
@@ -650,7 +652,7 @@ mod test {
     fn vec_from_box_in() {
         let allocator = Allocator::default();
         let allocator = &allocator;
-        let boxed = Box::new_in(123u32, allocator);
+        let boxed = Box::new_in(123u32, &allocator);
         let mut v = Vec::from_box_in(boxed, &allocator);
         assert_eq!(v, [123]);
         assert_eq!(v.len(), 1);
@@ -667,6 +669,7 @@ mod test {
         let vec_allocator = Allocator::default();
         let vec_allocator = &vec_allocator;
         let box_allocator = Allocator::default();
+        let box_allocator = &box_allocator;
         let boxed = Box::new_in(123u32, &box_allocator);
         let mut v = Vec::from_box_in(boxed, &vec_allocator);
         assert_eq!(v, [123]);

@@ -42,7 +42,7 @@ impl<'a> AstBuilder<'a> {
     /// Move a value into the memory arena.
     #[inline]
     pub fn alloc<T>(self, value: T) -> ArenaBox<'a, T> {
-        ArenaBox::new_in(value, self.allocator)
+        ArenaBox::new_in(value, &self)
     }
 
     /// Create a new empty [`Vec`] that stores its elements in the memory arena.

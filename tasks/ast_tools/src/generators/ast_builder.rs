@@ -290,7 +290,7 @@ fn generate_builder_methods_for_struct_impl(
         #params_docs
         #[inline]
         pub fn #alloc_fn_name #generic_params (self, #fn_params) -> ArenaBox<'a, #struct_ty> #where_clause {
-            ArenaBox::new_in(self.#fn_name(#(#args),*), self.allocator)
+            ArenaBox::new_in(self.#fn_name(#(#args),*), &self)
         }
     }
 }

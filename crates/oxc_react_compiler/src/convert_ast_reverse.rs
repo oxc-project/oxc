@@ -2112,7 +2112,7 @@ impl<'a> ReverseCtx<'a> {
                     // invalid in FormalParameter position).
                     let left = self.convert_pattern_to_binding_pattern(&ap.left);
                     let right = self.convert_expression(&ap.right);
-                    let initializer = Some(ArenaBox::new_in(right, self.allocator));
+                    let initializer = Some(ArenaBox::new_in(right, &self.allocator));
                     let type_annotation = self
                         .pattern_type_annotation(param)
                         .or_else(|| self.pattern_type_annotation(&ap.left));
