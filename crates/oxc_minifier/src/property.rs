@@ -12,6 +12,20 @@
 // passes added in a later stage; they are currently exercised only by unit tests.
 #![allow(dead_code)]
 
+use oxc_ast::ast::{
+    AssignmentTargetPropertyIdentifier, AssignmentTargetPropertyProperty, BinaryExpression,
+    BinaryOperator, CallExpression, ComputedMemberExpression, Expression, JSXAttributeName,
+    NewExpression, Program, PropertyKey, StaticMemberExpression, WithStatement,
+};
+use oxc_ast_visit::{
+    Visit,
+    walk::{
+        walk_assignment_target_property_identifier, walk_assignment_target_property_property,
+        walk_binary_expression, walk_call_expression, walk_computed_member_expression,
+        walk_jsx_attribute_name, walk_new_expression, walk_property_key,
+        walk_static_member_expression, walk_with_statement,
+    },
+};
 use oxc_mangler::base54;
 use oxc_str::CompactStr;
 use rustc_hash::{FxHashMap, FxHashSet};
@@ -133,6 +147,153 @@ fn assign(
     map
 }
 
+/// The result of the read-only collect pass over the original (pre-compress) program.
+///
+/// `candidates` are eligible names seen unquoted (mangle these); `reserved` are names
+/// seen in a position that must keep its spelling (quoted/computed keys, the LHS string
+/// of `'x' in obj`, JSX attribute names, assignment-target shorthands). `bail` is set when
+/// the program contains `with` or a direct `eval` / `Function` constructor, which makes
+/// property mangling unsafe for the whole program.
+#[derive(Default)]
+pub struct PropertyCollectState {
+    /// Eligible names seen unquoted.
+    pub candidates: FxHashSet<CompactStr>,
+    /// Names that must never be mangled (quoted/computed/in-LHS/JSX-attr/assignment-target).
+    pub reserved: FxHashSet<CompactStr>,
+    /// `with` or direct `eval` / `Function` present anywhere => disable mangling.
+    pub bail: bool,
+}
+
+/// Read-only visitor that classifies every property-bearing position in the program.
+struct PropertyCollector<'a, 'o> {
+    opts: &'o ManglePropertiesOptions,
+    state: PropertyCollectState,
+    _marker: std::marker::PhantomData<&'a ()>,
+}
+
+impl<'a, 'o> PropertyCollector<'a, 'o> {
+    fn new(opts: &'o ManglePropertiesOptions) -> Self {
+        Self { opts, state: PropertyCollectState::default(), _marker: std::marker::PhantomData }
+    }
+
+    /// An unquoted occurrence: mangle it if eligible, otherwise it is reserved program-wide.
+    fn candidate(&mut self, name: &str) {
+        if eligible(self.opts, name) {
+            self.state.candidates.insert(CompactStr::from(name));
+        } else {
+            self.state.reserved.insert(CompactStr::from(name));
+        }
+    }
+
+    /// A quoted/computed/never-mangle occurrence: reserve the name program-wide.
+    fn reserve(&mut self, name: &str) {
+        self.state.reserved.insert(CompactStr::from(name));
+    }
+
+    /// Classify a [`PropertyKey`] (object/binding/class member key, or assignment-target name).
+    fn classify_property_key(&mut self, key: &PropertyKey<'a>) {
+        match key {
+            PropertyKey::StaticIdentifier(ident) => self.candidate(ident.name.as_str()),
+            PropertyKey::StringLiteral(lit) => self.reserve(lit.value.as_str()),
+            PropertyKey::NumericLiteral(lit) => self.reserve(&lit.value.to_string()),
+            // Private identifiers are never object properties; skip.
+            PropertyKey::PrivateIdentifier(_) => {}
+            // Computed key: reserve only if it is a string literal, otherwise skip.
+            key => {
+                if let PropertyKey::StringLiteral(lit) = key {
+                    self.reserve(lit.value.as_str());
+                }
+            }
+        }
+    }
+}
+
+impl<'a> Visit<'a> for PropertyCollector<'a, '_> {
+    fn visit_static_member_expression(&mut self, it: &StaticMemberExpression<'a>) {
+        self.candidate(it.property.name.as_str());
+        walk_static_member_expression(self, it);
+    }
+
+    fn visit_computed_member_expression(&mut self, it: &ComputedMemberExpression<'a>) {
+        if let Expression::StringLiteral(lit) = &it.expression {
+            self.reserve(lit.value.as_str());
+        }
+        walk_computed_member_expression(self, it);
+    }
+
+    fn visit_property_key(&mut self, it: &PropertyKey<'a>) {
+        self.classify_property_key(it);
+        walk_property_key(self, it);
+    }
+
+    fn visit_assignment_target_property_identifier(
+        &mut self,
+        it: &AssignmentTargetPropertyIdentifier<'a>,
+    ) {
+        // Decision #2: the shorthand `({ foo } = obj)` is reserved in v1, never mangled.
+        self.reserve(it.binding.name.as_str());
+        walk_assignment_target_property_identifier(self, it);
+    }
+
+    fn visit_assignment_target_property_property(
+        &mut self,
+        it: &AssignmentTargetPropertyProperty<'a>,
+    ) {
+        self.classify_property_key(&it.name);
+        walk_assignment_target_property_property(self, it);
+    }
+
+    fn visit_jsx_attribute_name(&mut self, it: &JSXAttributeName<'a>) {
+        // A JSX attribute becomes a props key, so reserve it.
+        if let JSXAttributeName::Identifier(ident) = it {
+            self.reserve(ident.name.as_str());
+        }
+        walk_jsx_attribute_name(self, it);
+    }
+
+    fn visit_binary_expression(&mut self, it: &BinaryExpression<'a>) {
+        // `'foo' in obj` reserves `foo`.
+        if it.operator == BinaryOperator::In
+            && let Expression::StringLiteral(lit) = &it.left
+        {
+            self.reserve(lit.value.as_str());
+        }
+        walk_binary_expression(self, it);
+    }
+
+    fn visit_with_statement(&mut self, it: &WithStatement<'a>) {
+        self.state.bail = true;
+        walk_with_statement(self, it);
+    }
+
+    fn visit_call_expression(&mut self, it: &CallExpression<'a>) {
+        if let Expression::Identifier(ident) = &it.callee
+            && matches!(ident.name.as_str(), "eval" | "Function")
+        {
+            self.state.bail = true;
+        }
+        walk_call_expression(self, it);
+    }
+
+    fn visit_new_expression(&mut self, it: &NewExpression<'a>) {
+        if let Expression::Identifier(ident) = &it.callee
+            && ident.name.as_str() == "Function"
+        {
+            self.state.bail = true;
+        }
+        walk_new_expression(self, it);
+    }
+}
+
+/// Walk the **original** (pre-compress) program and classify every property occurrence.
+///
+/// Returns the candidate/reserved sets and the whole-program `bail` flag.
+fn collect(opts: &ManglePropertiesOptions, program: &Program) -> PropertyCollectState {
+    let mut collector = PropertyCollector::new(opts);
+    collector.visit_program(program);
+    collector.state
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -192,5 +353,35 @@ mod tests {
         cache.map.insert("_a".into(), CacheValue::Name("b".into())); // collides with reserved `b`
         let m = assign(&cands, &reserved, &mut cache);
         assert!(!m.contains_key(&CompactStr::from("_a"))); // skipped, not mapped to `b`
+    }
+
+    fn collect_src(src: &str, re: &str) -> PropertyCollectState {
+        let alloc = oxc_allocator::Allocator::default();
+        let st = oxc_span::SourceType::mjs();
+        let ret = oxc_parser::Parser::new(&alloc, src, st).parse();
+        collect(&opts(re), &ret.program)
+    }
+
+    #[test]
+    fn collect_classifies() {
+        let s = collect_src("a._x; b['_y']; ({ _z: 1, q: 2 });", "^_");
+        assert!(s.candidates.contains("_x")); // unquoted member
+        assert!(s.reserved.contains("_y")); // quoted member
+        assert!(s.candidates.contains("_z")); // identifier key matching regex
+        assert!(s.reserved.contains("q")); // identifier key not matching => reserved
+        assert!(!s.bail);
+    }
+
+    #[test]
+    fn collect_bails_on_with_and_eval() {
+        assert!(collect_src("with (o) { a._x }", "^_").bail);
+        assert!(collect_src("eval('a._x')", "^_").bail);
+    }
+
+    #[test]
+    fn collect_reserves_in_operator_and_assignment_target() {
+        let s = collect_src("'_x' in o; ({ _y } = o);", "^_");
+        assert!(s.reserved.contains("_x")); // `in` LHS
+        assert!(s.reserved.contains("_y")); // assignment-target shorthand
     }
 }
