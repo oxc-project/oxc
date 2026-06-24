@@ -133,9 +133,13 @@ impl<'a> Minifier {
 
         // Collect property-mangling candidates/reserved names on the ORIGINAL (pre-compress)
         // program: compress later un-quotes keys, so the reserved set must be captured first.
+        // Key-annotated string/template literals are also renamed here (before compress), so
+        // annotated strings inside template interpolations survive — the compressor would
+        // otherwise fold them into the surrounding quasi before the post-mangle rewrite runs.
         let prop_mangler = mangle_properties.map(|options| {
             let mut mangler = PropertyMangler::new(options);
             mangler.collect(program);
+            mangler.rename_annotated_literals(program, allocator);
             mangler
         });
 
