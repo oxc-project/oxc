@@ -1,6 +1,9 @@
 use oxc_allocator::Allocator;
 use oxc_codegen::Codegen;
-use oxc_minifier::{ManglePropertiesOptions, PropertyMangleCache, PropertyMangler};
+use oxc_minifier::{
+    CompressOptions, ManglePropertiesOptions, Minifier, MinifierOptions, PropertyMangleCache,
+    PropertyMangler,
+};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 use rustc_hash::FxHashSet;
@@ -105,4 +108,56 @@ fn jsx_attr_reserved() {
 #[test]
 fn off_when_no_match() {
     test("o.addEventListener();", "o.addEventListener();", "^_");
+}
+
+// ---------------------------------------------------------------------------
+// Full-minifier integration: exercises the collect (pre-compress) / rewrite
+// (post-mangle) wiring inside `Minifier::build`, so the compress pass runs in
+// between (and un-quotes string keys, etc.).
+// ---------------------------------------------------------------------------
+
+/// Run the full minifier (compress on, variable mangle off) with property mangling enabled.
+fn minify_with_props(src: &str, regex: Option<&str>) -> String {
+    let alloc = Allocator::default();
+    let mut program = Parser::new(&alloc, src, SourceType::mjs()).parse().program;
+    let options = MinifierOptions {
+        mangle: None,
+        compress: Some(CompressOptions::default()),
+        mangle_properties: regex.map(opts),
+    };
+    let ret = Minifier::new(options).minify(&alloc, &mut program);
+    Codegen::new().with_scoping(ret.scoping).build(&program).code
+}
+
+/// Compare the full minifier output (property mangling on via `regex`) against the
+/// compress-only output of `expected` (so codegen formatting matches).
+#[track_caller]
+fn test_min(src: &str, expected: &str, regex: &str) {
+    let got = minify_with_props(src, Some(regex));
+    let want = minify_with_props(expected, None);
+    assert_eq!(got, want, "\nsrc {src}\nexpect {want}\ngot {got}");
+}
+
+#[test]
+fn quoted_key_reserved_across_compress() {
+    // Compress un-quotes `o['_foo']` -> `o._foo`, but collect ran pre-compress and reserved
+    // `_foo` (it was quoted), so it must NOT be renamed even after un-quoting.
+    test_min("o['_foo']; o._foo;", "o._foo; o._foo;", "^_");
+}
+
+#[test]
+fn default_off_leaves_keys() {
+    // `mangle_properties: None` => property names are left completely untouched.
+    // Use `globalThis` so the member access has an observable side effect and survives DCE.
+    let src = "globalThis.addEventListener(); globalThis._foo;";
+    let got = minify_with_props(src, None);
+    assert!(got.contains("addEventListener"), "method name must survive: {got}");
+    assert!(got.contains("_foo"), "property name must survive: {got}");
+}
+
+#[test]
+fn renames_through_full_minify() {
+    // A clear case: `_foo` is an unquoted member/key everywhere, so it mangles to `e`
+    // (base54 frequency order) and survives the full compress + rewrite pipeline.
+    test_min("({ _foo: 1 })._foo;", "({ e: 1 }).e;", "^_");
 }

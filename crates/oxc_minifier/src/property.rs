@@ -41,7 +41,7 @@ const PROTOCOL_DENYLIST: &[&str] =
 /// Options controlling property mangling.
 ///
 /// Feature is **off** when `mangle` is `None`.
-#[derive(Default)]
+#[derive(Default, Clone, Debug)]
 pub struct ManglePropertiesOptions {
     /// Names matching this regex are candidates for mangling. `None` => feature off.
     pub mangle: Option<lazy_regex::Regex>,

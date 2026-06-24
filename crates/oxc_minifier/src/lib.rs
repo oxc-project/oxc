@@ -77,11 +77,17 @@ pub use crate::{compressor::Compressor, options::*};
 pub struct MinifierOptions {
     pub mangle: Option<MangleOptions>,
     pub compress: Option<CompressOptions>,
+    /// Opt-in property-name mangling. `None` (the default) leaves all property names intact.
+    pub mangle_properties: Option<ManglePropertiesOptions>,
 }
 
 impl Default for MinifierOptions {
     fn default() -> Self {
-        Self { mangle: Some(MangleOptions::default()), compress: Some(CompressOptions::default()) }
+        Self {
+            mangle: Some(MangleOptions::default()),
+            compress: Some(CompressOptions::default()),
+            mangle_properties: None,
+        }
     }
 }
 
@@ -91,6 +97,10 @@ pub struct MinifierReturn {
     /// A vector where each element corresponds to a class in declaration order.
     /// Each element is a mapping from original private member names to their mangled names.
     pub class_private_mappings: Option<IndexVec<ClassId, FxHashMap<String, CompactStr>>>,
+
+    /// The updated property-mangling cache (old name -> assigned name / reserved).
+    /// `None` unless property mangling ran.
+    pub property_mappings: Option<PropertyMangleCache>,
 
     /// Total number of iterations ran. Useful for debugging performance issues.
     pub iterations: u8,
@@ -119,9 +129,17 @@ impl<'a> Minifier {
         allocator: &'a Allocator,
         program: &mut Program<'a>,
     ) -> MinifierReturn {
-        let (stats, iterations) = self
-            .options
-            .compress
+        let MinifierOptions { mangle, compress, mangle_properties } = self.options;
+
+        // Collect property-mangling candidates/reserved names on the ORIGINAL (pre-compress)
+        // program: compress later un-quotes keys, so the reserved set must be captured first.
+        let prop_mangler = mangle_properties.map(|options| {
+            let mut mangler = PropertyMangler::new(options);
+            mangler.collect(program);
+            mangler
+        });
+
+        let (stats, iterations) = compress
             .map(|options| {
                 let semantic = SemanticBuilder::new().build(program).semantic;
                 let stats = semantic.stats();
@@ -140,9 +158,7 @@ impl<'a> Minifier {
                 (Some(stats), iterations)
             })
             .unwrap_or_default();
-        let (scoping, class_private_mappings) = self
-            .options
-            .mangle
+        let (scoping, class_private_mappings) = mangle
             .map(|options| {
                 let mut builder =
                     SemanticBuilder::new().with_build_nodes(true).with_class_table(true);
@@ -156,6 +172,10 @@ impl<'a> Minifier {
                 (semantic.into_scoping(), class_private_mappings)
             })
             .map_or((None, None), |(scoping, mappings)| (Some(scoping), Some(mappings)));
-        MinifierReturn { scoping, class_private_mappings, iterations }
+
+        // Rewrite property names in place AFTER variable mangling, returning the updated cache.
+        let property_mappings = prop_mangler.map(|mangler| mangler.rewrite(program, allocator));
+
+        MinifierReturn { scoping, class_private_mappings, property_mappings, iterations }
     }
 }

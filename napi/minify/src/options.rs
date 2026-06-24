@@ -369,6 +369,6 @@ impl TryFrom<&MinifyOptions> for oxc_minifier::MinifierOptions {
             None | Some(Either::A(true)) => Some(oxc_minifier::MangleOptions::default()),
             Some(Either::B(o)) => Some(oxc_minifier::MangleOptions::from(o)),
         };
-        Ok(oxc_minifier::MinifierOptions { compress, mangle })
+        Ok(oxc_minifier::MinifierOptions { compress, mangle, mangle_properties: None })
     }
 }
