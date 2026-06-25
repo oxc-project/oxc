@@ -623,7 +623,7 @@ impl LanguageServer for Backend {
             .next()
             .map(|c: TextDocumentContentChangeEvent| c.text)
         {
-            self.file_system.set(uri.clone(), content);
+            self.file_system.set_with_version(uri.clone(), params.text_document.version, content);
         }
         let Some(worker) = self.worker_manager.get_worker_for_uri(&uri).await else {
             return;
@@ -699,6 +699,7 @@ impl LanguageServer for Backend {
         self.file_system.set_with_language(
             uri.clone(),
             LanguageId::new(params.text_document.language_id),
+            params.text_document.version,
             content,
         );
 
