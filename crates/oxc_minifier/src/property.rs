@@ -180,15 +180,18 @@ fn assign(
             // and (re)write it into the cache.
             _ => {
                 let n = loop {
-                    let c = CompactStr::from(base54(counter).as_str());
+                    let candidate = base54(counter);
                     counter = counter.checked_add(1).expect("property name space exhausted");
-                    if !reserved.contains(&c)
-                        && !is_always_reserved(&c)
-                        && !kept.contains(&c)
-                        && !claimed.contains(&c)
-                        && !existing_targets.contains(&c)
+                    let candidate = candidate.as_str();
+                    // Test the `&str` view against every set, allocating a `CompactStr` only
+                    // once a name survives (discarded names on collision cost nothing).
+                    if !reserved.contains(candidate)
+                        && !is_always_reserved(candidate)
+                        && !kept.contains(candidate)
+                        && !claimed.contains(candidate)
+                        && !existing_targets.contains(candidate)
                     {
-                        break c;
+                        break CompactStr::from(candidate);
                     }
                 };
                 map.insert(name.clone(), n.clone());
@@ -218,30 +221,29 @@ pub struct PropertyCollectState {
 }
 
 /// Read-only visitor that classifies every property-bearing position in the program.
-struct PropertyCollector<'a, 'o> {
+struct PropertyCollector<'o> {
     opts: &'o ManglePropertiesOptions,
     state: PropertyCollectState,
     /// Start offsets of string/template literals annotated with `/* @__KEY__ */` / `/* #__KEY__ */`.
-    key_annotated: FxHashSet<u32>,
-    _marker: std::marker::PhantomData<&'a ()>,
+    key_annotated: &'o FxHashSet<u32>,
 }
 
-impl<'a, 'o> PropertyCollector<'a, 'o> {
-    fn new(opts: &'o ManglePropertiesOptions, key_annotated: FxHashSet<u32>) -> Self {
-        Self {
-            opts,
-            state: PropertyCollectState::default(),
-            key_annotated,
-            _marker: std::marker::PhantomData,
-        }
+impl<'o> PropertyCollector<'o> {
+    fn new(opts: &'o ManglePropertiesOptions, key_annotated: &'o FxHashSet<u32>) -> Self {
+        Self { opts, state: PropertyCollectState::default(), key_annotated }
     }
 
     /// An unquoted occurrence: mangle it if eligible, otherwise it is reserved program-wide.
     fn candidate(&mut self, name: &str) {
-        if eligible(self.opts, name) {
-            self.state.candidates.insert(CompactStr::from(name));
+        let set = if eligible(self.opts, name) {
+            &mut self.state.candidates
         } else {
-            self.state.reserved.insert(CompactStr::from(name));
+            &mut self.state.reserved
+        };
+        // A property name repeats many times in a real bundle; only allocate a `CompactStr`
+        // the first time we see it (`CompactStr: Borrow<str>`, so `contains` needs no alloc).
+        if !set.contains(name) {
+            set.insert(CompactStr::from(name));
         }
     }
 
@@ -254,13 +256,15 @@ impl<'a, 'o> PropertyCollector<'a, 'o> {
         if self.opts.mangle_quoted {
             self.candidate(name);
         } else {
-            self.state.reserved.insert(CompactStr::from(name));
+            self.reserve(name);
         }
     }
 
     /// Reserve a name program-wide, regardless of `mangle_quoted`.
     fn reserve(&mut self, name: &str) {
-        self.state.reserved.insert(CompactStr::from(name));
+        if !self.state.reserved.contains(name) {
+            self.state.reserved.insert(CompactStr::from(name));
+        }
     }
 
     /// Classify a quoted/computed string occurrence in a key/index position, recursing
@@ -268,7 +272,7 @@ impl<'a, 'o> PropertyCollector<'a, 'o> {
     /// comma/sequence expressions (`(y, '_a')`). Only the statically-reachable key
     /// strings are classified; non-literal sub-expressions are ignored (they are not
     /// statically-known keys).
-    fn classify_key_expression(&mut self, expr: &Expression<'a>) {
+    fn classify_key_expression(&mut self, expr: &Expression<'_>) {
         match expr.get_inner_expression() {
             // A key-annotated string is a candidate (handled by `visit_string_literal`);
             // the annotation overrides the default quoted-reserve, so skip it here.
@@ -309,7 +313,7 @@ impl<'a, 'o> PropertyCollector<'a, 'o> {
     ///   to the statically-reachable key strings.
     /// - `{ 0: 1 }` -> reserve the numeric key.
     /// - `{ [foo('_keep')]: 1 }`, `{ [x]: 1 }`, `#priv` -> nothing (not a statically-known key).
-    fn classify_property_key(&mut self, key: &PropertyKey<'a>) {
+    fn classify_property_key(&mut self, key: &PropertyKey<'_>) {
         match key {
             PropertyKey::StaticIdentifier(ident) => self.candidate(ident.name.as_str()),
             PropertyKey::NumericLiteral(lit) => self.reserve(&lit.value.to_string()),
@@ -326,7 +330,7 @@ impl<'a, 'o> PropertyCollector<'a, 'o> {
     }
 }
 
-impl<'a> Visit<'a> for PropertyCollector<'a, '_> {
+impl<'a> Visit<'a> for PropertyCollector<'_> {
     fn visit_static_member_expression(&mut self, it: &StaticMemberExpression<'a>) {
         self.candidate(it.property.name.as_str());
         walk_static_member_expression(self, it);
@@ -437,7 +441,7 @@ fn collect(
     key_annotated: &FxHashSet<u32>,
     program: &Program,
 ) -> PropertyCollectState {
-    let mut collector = PropertyCollector::new(opts, key_annotated.clone());
+    let mut collector = PropertyCollector::new(opts, key_annotated);
     collector.visit_program(program);
     collector.state
 }
@@ -496,12 +500,11 @@ impl<'a> PropertyRewriter<'a, '_> {
     /// sequence), in place. Used for the `in`-LHS, member-index, and computed-key wrappers
     /// that cannot be un-quoted.
     fn rename_key_expression(&self, expr: &mut Expression<'a>) {
-        match expr {
+        // Unwrap the same wrappers (parens + TS `as`/`satisfies`/`!`/...) that the collect
+        // side strips via `get_inner_expression`, so the two passes stay in lockstep.
+        match expr.get_inner_expression_mut() {
             Expression::StringLiteral(lit) => self.rename_string_literal(lit),
             Expression::TemplateLiteral(tmpl) => self.rename_template_literal(tmpl),
-            Expression::ParenthesizedExpression(paren) => {
-                self.rename_key_expression(&mut paren.expression);
-            }
             Expression::ConditionalExpression(cond) => {
                 self.rename_key_expression(&mut cond.consequent);
                 self.rename_key_expression(&mut cond.alternate);
@@ -529,6 +532,16 @@ impl<'a> PropertyRewriter<'a, '_> {
             true
         } else {
             false
+        }
+    }
+
+    /// Rewrite a member-key position (object/class/binding member key, assignment target):
+    /// un-quote a direct string key, then rename string literals inside a wrapped computed key.
+    /// Shared by the six `visit_*` methods, which differ only in the key field they pass.
+    fn rewrite_key_position(&self, key: &mut PropertyKey<'a>, computed: &mut bool) {
+        self.rewrite_string_key(key, computed);
+        if *computed {
+            self.rename_key_expression_in_key(key);
         }
     }
 }
@@ -584,52 +597,37 @@ impl<'a> VisitMut<'a> for PropertyRewriter<'a, '_> {
     }
 
     fn visit_object_property(&mut self, it: &mut oxc_ast::ast::ObjectProperty<'a>) {
+        // A shorthand string key cannot exist, so un-quoting the key is always safe.
         if !self.rename_annotated_only && self.mangle_quoted {
-            // A shorthand string key cannot exist, so un-quoting the key is always safe.
-            self.rewrite_string_key(&mut it.key, &mut it.computed);
-            if it.computed {
-                self.rename_key_expression_in_key(&mut it.key);
-            }
+            self.rewrite_key_position(&mut it.key, &mut it.computed);
         }
         walk_mut::walk_object_property(self, it);
     }
 
     fn visit_property_definition(&mut self, it: &mut oxc_ast::ast::PropertyDefinition<'a>) {
         if !self.rename_annotated_only && self.mangle_quoted {
-            self.rewrite_string_key(&mut it.key, &mut it.computed);
-            if it.computed {
-                self.rename_key_expression_in_key(&mut it.key);
-            }
+            self.rewrite_key_position(&mut it.key, &mut it.computed);
         }
         walk_mut::walk_property_definition(self, it);
     }
 
     fn visit_accessor_property(&mut self, it: &mut oxc_ast::ast::AccessorProperty<'a>) {
         if !self.rename_annotated_only && self.mangle_quoted {
-            self.rewrite_string_key(&mut it.key, &mut it.computed);
-            if it.computed {
-                self.rename_key_expression_in_key(&mut it.key);
-            }
+            self.rewrite_key_position(&mut it.key, &mut it.computed);
         }
         walk_mut::walk_accessor_property(self, it);
     }
 
     fn visit_method_definition(&mut self, it: &mut oxc_ast::ast::MethodDefinition<'a>) {
         if !self.rename_annotated_only && self.mangle_quoted {
-            self.rewrite_string_key(&mut it.key, &mut it.computed);
-            if it.computed {
-                self.rename_key_expression_in_key(&mut it.key);
-            }
+            self.rewrite_key_position(&mut it.key, &mut it.computed);
         }
         walk_mut::walk_method_definition(self, it);
     }
 
     fn visit_binding_property(&mut self, it: &mut oxc_ast::ast::BindingProperty<'a>) {
         if !self.rename_annotated_only && self.mangle_quoted {
-            self.rewrite_string_key(&mut it.key, &mut it.computed);
-            if it.computed {
-                self.rename_key_expression_in_key(&mut it.key);
-            }
+            self.rewrite_key_position(&mut it.key, &mut it.computed);
         }
         walk_mut::walk_binding_property(self, it);
     }
@@ -639,10 +637,7 @@ impl<'a> VisitMut<'a> for PropertyRewriter<'a, '_> {
         it: &mut AssignmentTargetPropertyProperty<'a>,
     ) {
         if !self.rename_annotated_only && self.mangle_quoted {
-            self.rewrite_string_key(&mut it.name, &mut it.computed);
-            if it.computed {
-                self.rename_key_expression_in_key(&mut it.name);
-            }
+            self.rewrite_key_position(&mut it.name, &mut it.computed);
         }
         walk_mut::walk_assignment_target_property_property(self, it);
     }
