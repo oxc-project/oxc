@@ -1114,7 +1114,7 @@ fn is_stable_value<'a, 'b>(
                 return true;
             }
 
-            let Expression::CallExpression(init_expr) = &init else {
+            let Expression::CallExpression(init_expr) = init.get_inner_expression() else {
                 return false;
             };
 
@@ -2869,6 +2869,19 @@ const Component = ({ filter }) => {
 
     return <div>test</div>;
 };",
+        r"const Component = () => {
+          const setRef = React.useRef<(value: string) => void | null>(
+            null,
+          ) as React.MutableRefObject<(value: string) => void | null>;
+
+          React.useEffect(() => {
+            if (setRef.current) {
+              console.log(setRef.current);
+            }
+          }, []);
+
+          return <div>test</div>;
+        };",
     ];
 
     let fail = vec![
