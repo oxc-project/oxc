@@ -174,20 +174,20 @@ impl<'a> Function<'a> {
 
 impl<'a> ExportNamedDeclaration<'a> {
     /// Build an [`ExportNamedDeclaration`] with no modifiers, containing a set of
-    /// [exported symbol names](ExportSpecifier).
+    /// [exported symbol names](ExportSpecifier), and store it in the memory arena.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `specifiers`
     /// * `source`
     #[inline]
-    pub fn new_plain<B: GetAstBuilder<'a>>(
+    pub fn boxed_plain<B: GetAstBuilder<'a>>(
         span: Span,
         specifiers: ArenaVec<'a, ExportSpecifier<'a>>,
         source: Option<StringLiteral<'a>>,
         builder: &B,
-    ) -> Self {
-        ExportNamedDeclaration::new(
+    ) -> ArenaBox<'a, Self> {
+        ExportNamedDeclaration::boxed(
             span,
             None,
             specifiers,
@@ -198,19 +198,20 @@ impl<'a> ExportNamedDeclaration<'a> {
         )
     }
 
-    /// Build an [`ExportNamedDeclaration`] with no modifiers, wrapping a [`Declaration`].
+    /// Build an [`ExportNamedDeclaration`] with no modifiers, wrapping a [`Declaration`],
+    /// and store it in the memory arena.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `declaration`
     #[inline]
-    pub fn new_plain_declaration<B: GetAstBuilder<'a>>(
+    pub fn boxed_plain_declaration<B: GetAstBuilder<'a>>(
         span: Span,
         declaration: Declaration<'a>,
         builder: &B,
-    ) -> Self {
+    ) -> ArenaBox<'a, Self> {
         let specifiers = ArenaVec::new_in(builder.builder());
-        ExportNamedDeclaration::new(
+        ExportNamedDeclaration::boxed(
             span,
             Some(declaration),
             specifiers,
