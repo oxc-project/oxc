@@ -1911,12 +1911,13 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         /* cfg - body basic block */
         #[cfg(feature = "cfg")]
-        let body_graph_ix = control_flow!(self, |cfg| {
+        let (after_test_graph_ix, body_graph_ix) = control_flow!(self, |cfg| {
             cfg.append_condition_to(condition_graph_ix, test_node_id);
+            let after_test_graph_ix = cfg.current_node_ix;
             let body_graph_ix = cfg.new_basic_block_normal();
 
             cfg.ctx(None).default().allow_break().allow_continue();
-            body_graph_ix
+            (after_test_graph_ix, body_graph_ix)
         });
         /* cfg */
 
@@ -1928,9 +1929,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             let after_while_graph_ix = cfg.new_basic_block_normal();
 
             cfg.add_edge(before_while_stmt_graph_ix, condition_graph_ix, EdgeType::Normal);
-            cfg.add_edge(condition_graph_ix, body_graph_ix, EdgeType::Jump);
+            cfg.add_edge(after_test_graph_ix, body_graph_ix, EdgeType::Jump);
             cfg.add_edge(after_body_graph_ix, condition_graph_ix, EdgeType::Backedge);
-            cfg.add_edge(condition_graph_ix, after_while_graph_ix, EdgeType::Normal);
+            cfg.add_edge(after_test_graph_ix, after_while_graph_ix, EdgeType::Normal);
 
             cfg.ctx(None)
                 .mark_break(after_while_graph_ix)
