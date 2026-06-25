@@ -1,3 +1,5 @@
+mod esbuild;
+
 use oxc_allocator::Allocator;
 use oxc_codegen::Codegen;
 use oxc_minifier::{
