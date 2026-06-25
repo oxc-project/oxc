@@ -100,7 +100,7 @@ impl<'a> AstBuilder<'a> {
     /// Allocate an [`Ident`] from an array of string slices.
     #[inline]
     pub fn ident_from_strs_array<const N: usize>(self, strings: [&str; N]) -> Ident<'a> {
-        Ident::from_strs_array_in(strings, self.allocator)
+        Ident::from_strs_array_in(strings, &self)
     }
 
     /// Convert a [`Cow<'a, str>`] to an [`Ident<'a>`].
@@ -111,7 +111,7 @@ impl<'a> AstBuilder<'a> {
     /// If the `Cow` is owned, allocates the string into arena to generate a new `Ident`.
     #[inline]
     pub fn ident_from_cow(self, value: &Cow<'a, str>) -> Ident<'a> {
-        Ident::from_cow_in(value, self.allocator)
+        Ident::from_cow_in(value, &self)
     }
 
     /// Allocate a [`Str`] from a string slice.
@@ -123,7 +123,7 @@ impl<'a> AstBuilder<'a> {
     /// Allocate a [`Str`] from an array of string slices.
     #[inline]
     pub fn str_from_strs_array<const N: usize>(self, strings: [&str; N]) -> Str<'a> {
-        Str::from_strs_array_in(strings, self.allocator)
+        Str::from_strs_array_in(strings, &self)
     }
 
     /// Convert a [`Cow<'a, str>`] to a [`Str<'a>`].
@@ -134,7 +134,7 @@ impl<'a> AstBuilder<'a> {
     /// If the `Cow` is owned, allocates the string into arena to generate a new `Str`.
     #[inline]
     pub fn str_from_cow(self, value: &Cow<'a, str>) -> Str<'a> {
-        Str::from_cow_in(value, self.allocator)
+        Str::from_cow_in(value, &self)
     }
 
     /// `0`

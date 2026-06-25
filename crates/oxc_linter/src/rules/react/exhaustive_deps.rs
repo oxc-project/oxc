@@ -1624,9 +1624,10 @@ mod fix {
         let mut codegen = fixer.codegen();
 
         let alloc = Allocator::default();
-        let ast_builder = AstBuilder::new(&alloc);
+        let alloc = &alloc;
+        let ast_builder = AstBuilder::new(alloc);
 
-        let mut vec = deps.elements.clone_in(&alloc);
+        let mut vec = deps.elements.clone_in(alloc);
 
         for name in names {
             vec.push(
