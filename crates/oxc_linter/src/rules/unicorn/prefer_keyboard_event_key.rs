@@ -2,11 +2,12 @@ use phf::{Map, phf_map};
 
 use oxc_allocator::{Allocator, GetAddress, UnstableAddress};
 use oxc_ast::{
-    AstBuilder, AstKind,
+    AstKind,
     ast::{
         Argument, BindingPattern, BindingProperty, CallExpression, Expression, Function,
-        MemberExpression, PropertyKey,
+        MemberExpression, PropertyKey, Str,
     },
+    builder::AstBuilder,
 };
 use oxc_codegen::CodegenOptions;
 use oxc_diagnostics::OxcDiagnostic;
@@ -420,10 +421,11 @@ impl PreferKeyboardEventKey {
                     .with_options(CodegenOptions { single_quote: true, ..Default::default() });
                 let alloc = Allocator::default();
                 let ast = AstBuilder::new(&alloc);
-                codegen.print_expression(&ast.expression_string_literal(
+                codegen.print_expression(&Expression::new_string_literal(
                     SPAN,
-                    ast.str(&key_name),
+                    Str::from_str_in(&key_name, &ast),
                     None,
+                    &ast,
                 ));
                 let key_str = codegen.into_source_text();
 

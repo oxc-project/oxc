@@ -1605,8 +1605,8 @@ mod fix {
     use super::Name;
     use oxc_allocator::{Allocator, ArenaVec, CloneIn};
     use oxc_ast::{
-        AstBuilder,
         ast::{ArrayExpression, Expression},
+        builder::AstBuilder,
     };
     use oxc_span::{GetSpan, SPAN};
     use oxc_str::Str;
@@ -1631,13 +1631,16 @@ mod fix {
 
         for name in names {
             vec.push(
-                ast_builder
-                    .expression_identifier(SPAN, Str::from_cow_in(&name.name, &alloc))
-                    .into(),
+                Expression::new_identifier(
+                    SPAN,
+                    Str::from_cow_in(&name.name, &alloc),
+                    &ast_builder,
+                )
+                .into(),
             );
         }
 
-        codegen.print_expression(&ast_builder.expression_array(SPAN, vec));
+        codegen.print_expression(&Expression::new_array_expression(SPAN, vec, &ast_builder));
         fixer.replace(deps.span, codegen.into_source_text())
     }
 
@@ -1657,9 +1660,10 @@ mod fix {
             .filter(|el| (*el).span() != dependency.span)
             .map(|el| el.clone_in(&alloc));
 
-        codegen.print_expression(&Expression::ArrayExpression(
-            ast_builder
-                .alloc_array_expression(deps.span, ArenaVec::from_iter_in(new_deps, &ast_builder)),
+        codegen.print_expression(&Expression::new_array_expression(
+            deps.span,
+            ArenaVec::from_iter_in(new_deps, &ast_builder),
+            &ast_builder,
         ));
         fixer.replace(deps.span, codegen.into_source_text())
     }

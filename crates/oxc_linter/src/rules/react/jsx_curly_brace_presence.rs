@@ -7,11 +7,12 @@ use lazy_regex::{Lazy, Regex, lazy_regex};
 use oxc_allocator::{Allocator, ArenaVec};
 
 use oxc_ast::{
-    AstBuilder, AstKind,
+    AstKind,
     ast::{
         Expression, JSXAttributeItem, JSXAttributeValue, JSXChild, JSXElementName, JSXExpression,
         JSXExpressionContainer,
     },
+    builder::AstBuilder,
 };
 use oxc_codegen::CodegenOptions;
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
@@ -632,10 +633,11 @@ fn report_unnecessary_curly_for_attribute_value<'a>(
             fix = fix.with_options(CodegenOptions::default());
         }
 
-        fix.print_expression(&ast_builder.expression_string_literal(
+        fix.print_expression(&Expression::new_string_literal(
             Span::default(),
             str.as_str(),
             None,
+            &ast_builder,
         ));
 
         fixer.replace(container.span, fix.into_source_text())
@@ -662,10 +664,11 @@ fn report_missing_curly_for_string_attribute_value(
         let alloc = Allocator::default();
         let ast_builder = AstBuilder::new(&alloc);
 
-        replace.print_expression(&ast_builder.expression_string_literal(
+        replace.print_expression(&Expression::new_string_literal(
             Span::default(),
             string_value,
             None,
+            &ast_builder,
         ));
 
         let mut fix = fixer.new_fix_with_capacity(3);
@@ -702,10 +705,11 @@ fn report_missing_curly_for_text_node(ctx: &LintContext, span: Span, string_valu
         let mut fix = fixer.new_fix_with_capacity(fix_contexts.len() * 3);
         for (span_from_first_char, text) in fix_contexts {
             let mut replace = fixer.codegen().with_options(CodegenOptions::default());
-            replace.print_expression(&ast_builder.expression_string_literal(
+            replace.print_expression(&Expression::new_string_literal(
                 Span::default(),
                 text,
                 None,
+                &ast_builder,
             ));
             fix.push(fixer.replace(span_from_first_char, replace.into_source_text()));
             fix.push(fixer.insert_text_before(&span_from_first_char, "{"));

@@ -1,8 +1,9 @@
 use cow_utils::CowUtils;
 use oxc_allocator::Allocator;
 use oxc_ast::{
-    AstBuilder, AstKind,
-    ast::{Argument, CallExpression, Expression},
+    AstKind,
+    ast::{Argument, CallExpression, Expression, Str},
+    builder::AstBuilder,
 };
 use oxc_codegen::CodegenOptions;
 use oxc_diagnostics::OxcDiagnostic;
@@ -271,7 +272,12 @@ fn to_string_literal_text(fixer: RuleFixer, text: &str) -> String {
     let mut codegen = fixer.codegen().with_options(CodegenOptions::default());
     let alloc = Allocator::default();
     let ast = AstBuilder::new(&alloc);
-    codegen.print_expression(&ast.expression_string_literal(SPAN, ast.str(text), None));
+    codegen.print_expression(&Expression::new_string_literal(
+        SPAN,
+        Str::from_str_in(text, &ast),
+        None,
+        &ast,
+    ));
     codegen.into_source_text()
 }
 
