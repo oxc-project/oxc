@@ -125,7 +125,7 @@ impl Rule for NoStaticElementInteractions {
             return;
         }
 
-        if is_interactive_element(&element_type, jsx_el) {
+        if is_interactive_element(ctx, &element_type, jsx_el) {
             return;
         }
 
@@ -570,4 +570,46 @@ fn test() {
 
     Tester::new(NoStaticElementInteractions::NAME, NoStaticElementInteractions::PLUGIN, pass, fail)
         .test_and_snapshot();
+
+    // `settings.jsx-a11y.attributes` maps `href` to the prop names a codebase uses
+    // (e.g. react-router's `<Link to>`), so an element mapped to `a` via `components`
+    // is treated as an interactive anchor.
+    let attributes_settings = || {
+        serde_json::json!({
+            "settings": { "jsx-a11y": {
+                "components": { "Link": "a" },
+                "attributes": { "href": ["href", "to"] }
+            } }
+        })
+    };
+
+    let attributes_pass = vec![
+        (r#"<Link to="/x" onClick={() => void 0}>label</Link>"#, None, Some(attributes_settings())),
+        (
+            r#"<Link to="/x" onClick={(e) => { e.preventDefault(); }}>label</Link>"#,
+            None,
+            Some(attributes_settings()),
+        ),
+    ];
+
+    let attributes_fail = vec![
+        // Regression guard: a `<Link>` without any `href` alias prop stays static.
+        (r#"<Link onClick={() => void 0}>label</Link>"#, None, Some(attributes_settings())),
+        // Without the `attributes` setting, `to` is not treated as `href`.
+        (
+            r#"<Link to="/x" onClick={() => void 0}>label</Link>"#,
+            None,
+            Some(serde_json::json!({
+                "settings": { "jsx-a11y": { "components": { "Link": "a" } } }
+            })),
+        ),
+    ];
+
+    Tester::new(
+        NoStaticElementInteractions::NAME,
+        NoStaticElementInteractions::PLUGIN,
+        attributes_pass,
+        attributes_fail,
+    )
+    .test();
 }

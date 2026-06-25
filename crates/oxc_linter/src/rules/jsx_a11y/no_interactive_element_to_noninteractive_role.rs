@@ -98,7 +98,7 @@ impl Rule for NoInteractiveElementToNoninteractiveRole {
         }
 
         let is_interactive =
-            element_type.as_ref() == "input" || is_interactive_element(&element_type, jsx_el);
+            element_type.as_ref() == "input" || is_interactive_element(ctx, &element_type, jsx_el);
         if !is_interactive {
             return;
         }

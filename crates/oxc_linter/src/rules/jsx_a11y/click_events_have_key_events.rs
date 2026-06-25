@@ -73,7 +73,7 @@ impl Rule for ClickEventsHaveKeyEvents {
             return;
         }
 
-        if is_interactive_element(&element_type, jsx_opening_el) {
+        if is_interactive_element(ctx, &element_type, jsx_opening_el) {
             return;
         }
 
@@ -117,6 +117,28 @@ fn test() {
         (r"<TestComponent onClick={doFoo} />", None, None),
         (r"<Button onClick={doFoo} />", None, None),
         (r"<Footer onClick={doFoo} />", None, None),
+        // `settings.jsx-a11y.attributes` maps `href` to `to`, so a component
+        // mapped to `a` via `components` is recognized as an interactive anchor.
+        (
+            r#"<Link to="/x" onClick={() => void 0}>label</Link>"#,
+            None,
+            Some(serde_json::json!({
+                "settings": { "jsx-a11y": {
+                    "components": { "Link": "a" },
+                    "attributes": { "href": ["href", "to"] }
+                } }
+            })),
+        ),
+        (
+            r#"<Link to="/x" onClick={(e) => { e.preventDefault(); }}>label</Link>"#,
+            None,
+            Some(serde_json::json!({
+                "settings": { "jsx-a11y": {
+                    "components": { "Link": "a" },
+                    "attributes": { "href": ["href", "to"] }
+                } }
+            })),
+        ),
     ];
 
     let fail = vec![
@@ -139,6 +161,29 @@ fn test() {
                     "components": {
                         "Footer": "footer",
                     }
+                } }
+            })),
+        ),
+        // Regression guard: a `<Link>` without any `href` alias prop is still a
+        // non-interactive anchor, even with the `attributes` setting.
+        (
+            r#"<Link onClick={() => void 0}>label</Link>"#,
+            None,
+            Some(serde_json::json!({
+                "settings": { "jsx-a11y": {
+                    "components": { "Link": "a" },
+                    "attributes": { "href": ["href", "to"] }
+                } }
+            })),
+        ),
+        // Without the `attributes` setting, `to` is not treated as `href`, so the
+        // default behavior is unchanged.
+        (
+            r#"<Link to="/x" onClick={() => void 0}>label</Link>"#,
+            None,
+            Some(serde_json::json!({
+                "settings": { "jsx-a11y": {
+                    "components": { "Link": "a" }
                 } }
             })),
         ),

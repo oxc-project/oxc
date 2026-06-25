@@ -134,7 +134,7 @@ impl Rule for NoNoninteractiveTabindex {
             return;
         }
 
-        if is_interactive_element(component, jsx_el) {
+        if is_interactive_element(ctx, component, jsx_el) {
             return;
         }
 
