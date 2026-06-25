@@ -9,13 +9,15 @@ use tower_lsp_server::{
     jsonrpc::{Error, ErrorCode, Result},
     ls_types::{
         CodeActionParams, CodeActionResponse, ConfigurationItem, Diagnostic,
-        DidChangeConfigurationParams, DidChangeTextDocumentParams, DidChangeWatchedFilesParams,
-        DidChangeWorkspaceFoldersParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
-        DidSaveTextDocumentParams, DocumentDiagnosticParams, DocumentDiagnosticReport,
-        DocumentDiagnosticReportKind, DocumentDiagnosticReportResult, DocumentFormattingParams,
-        ExecuteCommandParams, FullDocumentDiagnosticReport, InitializeParams, InitializeResult,
-        InitializedParams, MessageType, RelatedFullDocumentDiagnosticReport, ServerInfo,
+        DiagnosticServerCancellationData, DidChangeConfigurationParams,
+        DidChangeTextDocumentParams, DidChangeWatchedFilesParams, DidChangeWorkspaceFoldersParams,
+        DidCloseTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams,
+        DocumentDiagnosticParams, DocumentDiagnosticReport, DocumentDiagnosticReportKind,
+        DocumentDiagnosticReportResult, DocumentFormattingParams, ExecuteCommandParams,
+        FullDocumentDiagnosticReport, InitializeParams, InitializeResult, InitializedParams,
+        MessageType, RelatedFullDocumentDiagnosticReport, ServerInfo,
         TextDocumentContentChangeEvent, TextEdit, Uri, WorkspaceEdit,
+        error_codes::SERVER_CANCELLED,
     },
 };
 use tracing::{debug, error, info, warn};
@@ -583,6 +585,7 @@ impl LanguageServer for Backend {
             let Some(worker) = self.worker_manager.get_worker_for_uri(&uri).await else {
                 return;
             };
+            let document_version = self.file_system.get_version(&uri);
             let document = self.file_system.get_document(uri);
             let document_uri = document.uri.clone();
             let handle = tokio::runtime::Handle::current();
@@ -594,6 +597,14 @@ impl LanguageServer for Backend {
             // unwrap because we want to panic if the task panics,
             // because it should not happen and we want to know about it.
             .unwrap();
+
+            if document_version != self.file_system.get_version(&document_uri) {
+                debug!(
+                    "document version changed while diagnostics were running, skipping diagnostics for {}",
+                    document_uri.as_str()
+                );
+                return;
+            }
 
             match diagnostics {
                 Err(err) => {
@@ -875,6 +886,7 @@ impl LanguageServer for Backend {
                 RelatedFullDocumentDiagnosticReport::default(),
             )));
         };
+        let document_version = self.file_system.get_version(&uri);
         let document = self.file_system.get_document(uri.clone());
 
         let handle = tokio::runtime::Handle::current();
@@ -886,6 +898,20 @@ impl LanguageServer for Backend {
         // unwrap because we want to panic if the task panics,
         // because it should not happen and we want to know about it.
         .unwrap();
+
+        if self.file_system.get_version(&uri) != document_version {
+            return Err(Error {
+                code: ErrorCode::ServerError(SERVER_CANCELLED),
+                message: Cow::Borrowed("document version changed while diagnostics were running"),
+                data: Some(
+                    // We expect that the client already requested a new diagnostics request, so we do not need to retrigger it.
+                    serde_json::to_value(DiagnosticServerCancellationData {
+                        retrigger_request: false,
+                    })
+                    .unwrap(),
+                ),
+            });
+        }
 
         let diagnostics = match diagnostics {
             Err(err) => {
