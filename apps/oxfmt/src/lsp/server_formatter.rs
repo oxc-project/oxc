@@ -9,7 +9,7 @@ use tracing::{debug, error, warn};
 
 use oxc_language_server::{
     Capabilities, LanguageId, TextDocument, Tool, ToolBuilder, ToolRestartChanges,
-    offset_to_position,
+    offset_to_position, utils::normalize_user_config_path_to_watch_pattern,
 };
 
 use crate::core::{
@@ -169,7 +169,7 @@ impl Tool for ServerFormatter {
 
         let mut patterns: Vec<Pattern> =
             if let Some(config_path) = options.config_path.as_ref().filter(|s| !s.is_empty()) {
-                vec![config_path.clone()]
+                vec![normalize_user_config_path_to_watch_pattern(config_path)]
             } else {
                 // Watch for config files in all subdirectories (nested config support)
                 config_discovery()

@@ -8,7 +8,7 @@
 
 use std::cell::Cell;
 
-use oxc_allocator::{Allocator, Box, IntoIn, Vec};
+use oxc_allocator::{Allocator, ArenaBox, ArenaVec, IntoIn};
 use oxc_str::{Ident, Str};
 use oxc_syntax::{reference::ReferenceId, scope::ScopeId, symbol::SymbolId};
 
@@ -31,10 +31,10 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         source_type: SourceType,
         source_text: &'a str,
-        comments: Vec<'a, Comment>,
+        comments: ArenaVec<'a, Comment>,
         hashbang: Option<Hashbang<'a>>,
-        directives: Vec<'a, Directive<'a>>,
-        body: Vec<'a, Statement<'a>>,
+        directives: ArenaVec<'a, Directive<'a>>,
+        body: ArenaVec<'a, Statement<'a>>,
     ) -> Program<'a> {
         Program {
             node_id: Default::default(),
@@ -66,10 +66,10 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         source_type: SourceType,
         source_text: &'a str,
-        comments: Vec<'a, Comment>,
+        comments: ArenaVec<'a, Comment>,
         hashbang: Option<Hashbang<'a>>,
-        directives: Vec<'a, Directive<'a>>,
-        body: Vec<'a, Statement<'a>>,
+        directives: ArenaVec<'a, Directive<'a>>,
+        body: ArenaVec<'a, Statement<'a>>,
         scope_id: ScopeId,
     ) -> Program<'a> {
         Program {
@@ -230,8 +230,8 @@ impl<'a> AstBuilder<'a> {
     pub fn expression_template_literal(
         self,
         span: Span,
-        quasis: Vec<'a, TemplateElement<'a>>,
-        expressions: Vec<'a, Expression<'a>>,
+        quasis: ArenaVec<'a, TemplateElement<'a>>,
+        expressions: ArenaVec<'a, Expression<'a>>,
     ) -> Expression<'a> {
         Expression::TemplateLiteral(self.alloc_template_literal(span, quasis, expressions))
     }
@@ -316,7 +316,7 @@ impl<'a> AstBuilder<'a> {
     pub fn expression_array(
         self,
         span: Span,
-        elements: Vec<'a, ArrayExpressionElement<'a>>,
+        elements: ArenaVec<'a, ArrayExpressionElement<'a>>,
     ) -> Expression<'a> {
         Expression::ArrayExpression(self.alloc_array_expression(span, elements))
     }
@@ -345,10 +345,10 @@ impl<'a> AstBuilder<'a> {
         body: T4,
     ) -> Expression<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
-        T4: IntoIn<'a, Box<'a, FunctionBody<'a>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
+        T4: IntoIn<'a, ArenaBox<'a, FunctionBody<'a>>>,
     {
         Expression::ArrowFunctionExpression(self.alloc_arrow_function_expression(
             span,
@@ -391,10 +391,10 @@ impl<'a> AstBuilder<'a> {
         pife: bool,
     ) -> Expression<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
-        T4: IntoIn<'a, Box<'a, FunctionBody<'a>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
+        T4: IntoIn<'a, ArenaBox<'a, FunctionBody<'a>>>,
     {
         Expression::ArrowFunctionExpression(
             self.alloc_arrow_function_expression_with_scope_id_and_pure_and_pife(
@@ -482,11 +482,11 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: Vec<'a, Argument<'a>>,
+        arguments: ArenaVec<'a, Argument<'a>>,
         optional: bool,
     ) -> Expression<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         Expression::CallExpression(self.alloc_call_expression(
             span,
@@ -514,12 +514,12 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: Vec<'a, Argument<'a>>,
+        arguments: ArenaVec<'a, Argument<'a>>,
         optional: bool,
         pure: bool,
     ) -> Expression<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         Expression::CallExpression(self.alloc_call_expression_with_pure(
             span,
@@ -564,20 +564,20 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         r#type: ClassType,
-        decorators: Vec<'a, Decorator<'a>>,
+        decorators: ArenaVec<'a, Decorator<'a>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
         super_class: Option<Expression<'a>>,
         super_type_arguments: T2,
-        implements: Vec<'a, TSClassImplements<'a>>,
+        implements: ArenaVec<'a, TSClassImplements<'a>>,
         body: T3,
         r#abstract: bool,
         declare: bool,
     ) -> Expression<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
-        T3: IntoIn<'a, Box<'a, ClassBody<'a>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T3: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
     {
         Expression::ClassExpression(self.alloc_class(
             span,
@@ -616,21 +616,21 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         r#type: ClassType,
-        decorators: Vec<'a, Decorator<'a>>,
+        decorators: ArenaVec<'a, Decorator<'a>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
         super_class: Option<Expression<'a>>,
         super_type_arguments: T2,
-        implements: Vec<'a, TSClassImplements<'a>>,
+        implements: ArenaVec<'a, TSClassImplements<'a>>,
         body: T3,
         r#abstract: bool,
         declare: bool,
         scope_id: ScopeId,
     ) -> Expression<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
-        T3: IntoIn<'a, Box<'a, ClassBody<'a>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T3: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
     {
         Expression::ClassExpression(self.alloc_class_with_scope_id(
             span,
@@ -702,11 +702,11 @@ impl<'a> AstBuilder<'a> {
         body: T5,
     ) -> Expression<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
-        T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
+        T5: IntoIn<'a, Option<ArenaBox<'a, FunctionBody<'a>>>>,
     {
         Expression::FunctionExpression(self.alloc_function(
             span,
@@ -761,11 +761,11 @@ impl<'a> AstBuilder<'a> {
         pife: bool,
     ) -> Expression<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
-        T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
+        T5: IntoIn<'a, Option<ArenaBox<'a, FunctionBody<'a>>>>,
     {
         Expression::FunctionExpression(self.alloc_function_with_scope_id_and_pure_and_pife(
             span,
@@ -840,10 +840,10 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: Vec<'a, Argument<'a>>,
+        arguments: ArenaVec<'a, Argument<'a>>,
     ) -> Expression<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         Expression::NewExpression(self.alloc_new_expression(
             span,
@@ -869,11 +869,11 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: Vec<'a, Argument<'a>>,
+        arguments: ArenaVec<'a, Argument<'a>>,
         pure: bool,
     ) -> Expression<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         Expression::NewExpression(self.alloc_new_expression_with_pure(
             span,
@@ -895,7 +895,7 @@ impl<'a> AstBuilder<'a> {
     pub fn expression_object(
         self,
         span: Span,
-        properties: Vec<'a, ObjectPropertyKind<'a>>,
+        properties: ArenaVec<'a, ObjectPropertyKind<'a>>,
     ) -> Expression<'a> {
         Expression::ObjectExpression(self.alloc_object_expression(span, properties))
     }
@@ -927,7 +927,7 @@ impl<'a> AstBuilder<'a> {
     pub fn expression_sequence(
         self,
         span: Span,
-        expressions: Vec<'a, Expression<'a>>,
+        expressions: ArenaVec<'a, Expression<'a>>,
     ) -> Expression<'a> {
         Expression::SequenceExpression(self.alloc_sequence_expression(span, expressions))
     }
@@ -950,7 +950,7 @@ impl<'a> AstBuilder<'a> {
         quasi: TemplateLiteral<'a>,
     ) -> Expression<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         Expression::TaggedTemplateExpression(self.alloc_tagged_template_expression(
             span,
@@ -1059,12 +1059,12 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         opening_element: T1,
-        children: Vec<'a, JSXChild<'a>>,
+        children: ArenaVec<'a, JSXChild<'a>>,
         closing_element: T2,
     ) -> Expression<'a>
     where
-        T1: IntoIn<'a, Box<'a, JSXOpeningElement<'a>>>,
-        T2: IntoIn<'a, Option<Box<'a, JSXClosingElement<'a>>>>,
+        T1: IntoIn<'a, ArenaBox<'a, JSXOpeningElement<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, JSXClosingElement<'a>>>>,
     {
         Expression::JSXElement(self.alloc_jsx_element(
             span,
@@ -1088,7 +1088,7 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         opening_fragment: JSXOpeningFragment,
-        children: Vec<'a, JSXChild<'a>>,
+        children: ArenaVec<'a, JSXChild<'a>>,
         closing_fragment: JSXClosingFragment,
     ) -> Expression<'a> {
         Expression::JSXFragment(self.alloc_jsx_fragment(
@@ -1185,7 +1185,7 @@ impl<'a> AstBuilder<'a> {
         type_arguments: T1,
     ) -> Expression<'a>
     where
-        T1: IntoIn<'a, Box<'a, TSTypeParameterInstantiation<'a>>>,
+        T1: IntoIn<'a, ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
     {
         Expression::TSInstantiationExpression(self.alloc_ts_instantiation_expression(
             span,
@@ -1203,11 +1203,11 @@ impl<'a> AstBuilder<'a> {
     /// * `name`
     /// * `arguments`
     #[inline]
-    pub fn expression_v_8_intrinsic(
+    pub fn expression_v8_intrinsic(
         self,
         span: Span,
         name: IdentifierName<'a>,
-        arguments: Vec<'a, Argument<'a>>,
+        arguments: ArenaVec<'a, Argument<'a>>,
     ) -> Expression<'a> {
         Expression::V8IntrinsicExpression(self.alloc_v8_intrinsic_expression(span, name, arguments))
     }
@@ -1230,18 +1230,18 @@ impl<'a> AstBuilder<'a> {
 
     /// Build an [`IdentifierName`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::identifier_name`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `name`
     #[inline]
-    pub fn alloc_identifier_name<S1>(self, span: Span, name: S1) -> Box<'a, IdentifierName<'a>>
+    pub fn alloc_identifier_name<S1>(self, span: Span, name: S1) -> ArenaBox<'a, IdentifierName<'a>>
     where
         S1: Into<Ident<'a>>,
     {
-        Box::new_in(self.identifier_name(span, name), self.allocator)
+        ArenaBox::new_in(self.identifier_name(span, name), &self)
     }
 
     /// Build an [`IdentifierReference`].
@@ -1267,7 +1267,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build an [`IdentifierReference`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::identifier_reference`] instead.
     ///
     /// ## Parameters
@@ -1278,11 +1278,11 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         name: S1,
-    ) -> Box<'a, IdentifierReference<'a>>
+    ) -> ArenaBox<'a, IdentifierReference<'a>>
     where
         S1: Into<Ident<'a>>,
     {
-        Box::new_in(self.identifier_reference(span, name), self.allocator)
+        ArenaBox::new_in(self.identifier_reference(span, name), &self)
     }
 
     /// Build an [`IdentifierReference`] with `reference_id`.
@@ -1314,7 +1314,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build an [`IdentifierReference`] with `reference_id`, and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::identifier_reference_with_reference_id`] instead.
     ///
     /// ## Parameters
@@ -1327,13 +1327,13 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         name: S1,
         reference_id: ReferenceId,
-    ) -> Box<'a, IdentifierReference<'a>>
+    ) -> ArenaBox<'a, IdentifierReference<'a>>
     where
         S1: Into<Ident<'a>>,
     {
-        Box::new_in(
+        ArenaBox::new_in(
             self.identifier_reference_with_reference_id(span, name, reference_id),
-            self.allocator,
+            &self,
         )
     }
 
@@ -1360,7 +1360,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`BindingIdentifier`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::binding_identifier`] instead.
     ///
     /// ## Parameters
@@ -1371,11 +1371,11 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         name: S1,
-    ) -> Box<'a, BindingIdentifier<'a>>
+    ) -> ArenaBox<'a, BindingIdentifier<'a>>
     where
         S1: Into<Ident<'a>>,
     {
-        Box::new_in(self.binding_identifier(span, name), self.allocator)
+        ArenaBox::new_in(self.binding_identifier(span, name), &self)
     }
 
     /// Build a [`BindingIdentifier`] with `symbol_id`.
@@ -1407,7 +1407,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`BindingIdentifier`] with `symbol_id`, and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::binding_identifier_with_symbol_id`] instead.
     ///
     /// ## Parameters
@@ -1420,11 +1420,11 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         name: S1,
         symbol_id: SymbolId,
-    ) -> Box<'a, BindingIdentifier<'a>>
+    ) -> ArenaBox<'a, BindingIdentifier<'a>>
     where
         S1: Into<Ident<'a>>,
     {
-        Box::new_in(self.binding_identifier_with_symbol_id(span, name, symbol_id), self.allocator)
+        ArenaBox::new_in(self.binding_identifier_with_symbol_id(span, name, symbol_id), &self)
     }
 
     /// Build a [`LabelIdentifier`].
@@ -1454,14 +1454,14 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`ThisExpression`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::this_expression`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_this_expression(self, span: Span) -> Box<'a, ThisExpression> {
-        Box::new_in(self.this_expression(span), self.allocator)
+    pub fn alloc_this_expression(self, span: Span) -> ArenaBox<'a, ThisExpression> {
+        ArenaBox::new_in(self.this_expression(span), &self)
     }
 
     /// Build an [`ArrayExpression`].
@@ -1476,14 +1476,14 @@ impl<'a> AstBuilder<'a> {
     pub fn array_expression(
         self,
         span: Span,
-        elements: Vec<'a, ArrayExpressionElement<'a>>,
+        elements: ArenaVec<'a, ArrayExpressionElement<'a>>,
     ) -> ArrayExpression<'a> {
         ArrayExpression { node_id: Default::default(), span, elements }
     }
 
     /// Build an [`ArrayExpression`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::array_expression`] instead.
     ///
     /// ## Parameters
@@ -1493,9 +1493,9 @@ impl<'a> AstBuilder<'a> {
     pub fn alloc_array_expression(
         self,
         span: Span,
-        elements: Vec<'a, ArrayExpressionElement<'a>>,
-    ) -> Box<'a, ArrayExpression<'a>> {
-        Box::new_in(self.array_expression(span, elements), self.allocator)
+        elements: ArenaVec<'a, ArrayExpressionElement<'a>>,
+    ) -> ArenaBox<'a, ArrayExpression<'a>> {
+        ArenaBox::new_in(self.array_expression(span, elements), &self)
     }
 
     /// Build an [`ArrayExpressionElement::SpreadElement`].
@@ -1539,14 +1539,14 @@ impl<'a> AstBuilder<'a> {
 
     /// Build an [`Elision`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::elision`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_elision(self, span: Span) -> Box<'a, Elision> {
-        Box::new_in(self.elision(span), self.allocator)
+    pub fn alloc_elision(self, span: Span) -> ArenaBox<'a, Elision> {
+        ArenaBox::new_in(self.elision(span), &self)
     }
 
     /// Build an [`ObjectExpression`].
@@ -1561,14 +1561,14 @@ impl<'a> AstBuilder<'a> {
     pub fn object_expression(
         self,
         span: Span,
-        properties: Vec<'a, ObjectPropertyKind<'a>>,
+        properties: ArenaVec<'a, ObjectPropertyKind<'a>>,
     ) -> ObjectExpression<'a> {
         ObjectExpression { node_id: Default::default(), span, properties }
     }
 
     /// Build an [`ObjectExpression`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::object_expression`] instead.
     ///
     /// ## Parameters
@@ -1578,9 +1578,9 @@ impl<'a> AstBuilder<'a> {
     pub fn alloc_object_expression(
         self,
         span: Span,
-        properties: Vec<'a, ObjectPropertyKind<'a>>,
-    ) -> Box<'a, ObjectExpression<'a>> {
-        Box::new_in(self.object_expression(span, properties), self.allocator)
+        properties: ArenaVec<'a, ObjectPropertyKind<'a>>,
+    ) -> ArenaBox<'a, ObjectExpression<'a>> {
+        ArenaBox::new_in(self.object_expression(span, properties), &self)
     }
 
     /// Build an [`ObjectPropertyKind::ObjectProperty`].
@@ -1665,7 +1665,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build an [`ObjectProperty`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::object_property`] instead.
     ///
     /// ## Parameters
@@ -1686,10 +1686,10 @@ impl<'a> AstBuilder<'a> {
         method: bool,
         shorthand: bool,
         computed: bool,
-    ) -> Box<'a, ObjectProperty<'a>> {
-        Box::new_in(
+    ) -> ArenaBox<'a, ObjectProperty<'a>> {
+        ArenaBox::new_in(
             self.object_property(span, kind, key, value, method, shorthand, computed),
-            self.allocator,
+            &self,
         )
     }
 
@@ -1736,15 +1736,15 @@ impl<'a> AstBuilder<'a> {
     pub fn template_literal(
         self,
         span: Span,
-        quasis: Vec<'a, TemplateElement<'a>>,
-        expressions: Vec<'a, Expression<'a>>,
+        quasis: ArenaVec<'a, TemplateElement<'a>>,
+        expressions: ArenaVec<'a, Expression<'a>>,
     ) -> TemplateLiteral<'a> {
         TemplateLiteral { node_id: Default::default(), span, quasis, expressions }
     }
 
     /// Build a [`TemplateLiteral`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::template_literal`] instead.
     ///
     /// ## Parameters
@@ -1755,10 +1755,10 @@ impl<'a> AstBuilder<'a> {
     pub fn alloc_template_literal(
         self,
         span: Span,
-        quasis: Vec<'a, TemplateElement<'a>>,
-        expressions: Vec<'a, Expression<'a>>,
-    ) -> Box<'a, TemplateLiteral<'a>> {
-        Box::new_in(self.template_literal(span, quasis, expressions), self.allocator)
+        quasis: ArenaVec<'a, TemplateElement<'a>>,
+        expressions: ArenaVec<'a, Expression<'a>>,
+    ) -> ArenaBox<'a, TemplateLiteral<'a>> {
+        ArenaBox::new_in(self.template_literal(span, quasis, expressions), &self)
     }
 
     /// Build a [`TaggedTemplateExpression`].
@@ -1780,7 +1780,7 @@ impl<'a> AstBuilder<'a> {
         quasi: TemplateLiteral<'a>,
     ) -> TaggedTemplateExpression<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         TaggedTemplateExpression {
             node_id: Default::default(),
@@ -1793,7 +1793,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TaggedTemplateExpression`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::tagged_template_expression`] instead.
     ///
     /// ## Parameters
@@ -1808,14 +1808,11 @@ impl<'a> AstBuilder<'a> {
         tag: Expression<'a>,
         type_arguments: T1,
         quasi: TemplateLiteral<'a>,
-    ) -> Box<'a, TaggedTemplateExpression<'a>>
+    ) -> ArenaBox<'a, TaggedTemplateExpression<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
     {
-        Box::new_in(
-            self.tagged_template_expression(span, tag, type_arguments, quasi),
-            self.allocator,
-        )
+        ArenaBox::new_in(self.tagged_template_expression(span, tag, type_arguments, quasi), &self)
     }
 
     /// Build a [`TemplateElement`].
@@ -1947,7 +1944,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`ComputedMemberExpression`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::computed_member_expression`] instead.
     ///
     /// ## Parameters
@@ -1962,11 +1959,8 @@ impl<'a> AstBuilder<'a> {
         object: Expression<'a>,
         expression: Expression<'a>,
         optional: bool,
-    ) -> Box<'a, ComputedMemberExpression<'a>> {
-        Box::new_in(
-            self.computed_member_expression(span, object, expression, optional),
-            self.allocator,
-        )
+    ) -> ArenaBox<'a, ComputedMemberExpression<'a>> {
+        ArenaBox::new_in(self.computed_member_expression(span, object, expression, optional), &self)
     }
 
     /// Build a [`StaticMemberExpression`].
@@ -1992,7 +1986,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`StaticMemberExpression`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::static_member_expression`] instead.
     ///
     /// ## Parameters
@@ -2007,8 +2001,8 @@ impl<'a> AstBuilder<'a> {
         object: Expression<'a>,
         property: IdentifierName<'a>,
         optional: bool,
-    ) -> Box<'a, StaticMemberExpression<'a>> {
-        Box::new_in(self.static_member_expression(span, object, property, optional), self.allocator)
+    ) -> ArenaBox<'a, StaticMemberExpression<'a>> {
+        ArenaBox::new_in(self.static_member_expression(span, object, property, optional), &self)
     }
 
     /// Build a [`PrivateFieldExpression`].
@@ -2034,7 +2028,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`PrivateFieldExpression`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::private_field_expression`] instead.
     ///
     /// ## Parameters
@@ -2049,8 +2043,8 @@ impl<'a> AstBuilder<'a> {
         object: Expression<'a>,
         field: PrivateIdentifier<'a>,
         optional: bool,
-    ) -> Box<'a, PrivateFieldExpression<'a>> {
-        Box::new_in(self.private_field_expression(span, object, field, optional), self.allocator)
+    ) -> ArenaBox<'a, PrivateFieldExpression<'a>> {
+        ArenaBox::new_in(self.private_field_expression(span, object, field, optional), &self)
     }
 
     /// Build a [`CallExpression`].
@@ -2070,11 +2064,11 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: Vec<'a, Argument<'a>>,
+        arguments: ArenaVec<'a, Argument<'a>>,
         optional: bool,
     ) -> CallExpression<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         CallExpression {
             node_id: Default::default(),
@@ -2089,7 +2083,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`CallExpression`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::call_expression`] instead.
     ///
     /// ## Parameters
@@ -2104,15 +2098,15 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: Vec<'a, Argument<'a>>,
+        arguments: ArenaVec<'a, Argument<'a>>,
         optional: bool,
-    ) -> Box<'a, CallExpression<'a>>
+    ) -> ArenaBox<'a, CallExpression<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
     {
-        Box::new_in(
+        ArenaBox::new_in(
             self.call_expression(span, callee, type_arguments, arguments, optional),
-            self.allocator,
+            &self,
         )
     }
 
@@ -2134,12 +2128,12 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: Vec<'a, Argument<'a>>,
+        arguments: ArenaVec<'a, Argument<'a>>,
         optional: bool,
         pure: bool,
     ) -> CallExpression<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         CallExpression {
             node_id: Default::default(),
@@ -2154,7 +2148,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`CallExpression`] with `pure`, and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::call_expression_with_pure`] instead.
     ///
     /// ## Parameters
@@ -2170,16 +2164,16 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: Vec<'a, Argument<'a>>,
+        arguments: ArenaVec<'a, Argument<'a>>,
         optional: bool,
         pure: bool,
-    ) -> Box<'a, CallExpression<'a>>
+    ) -> ArenaBox<'a, CallExpression<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
     {
-        Box::new_in(
+        ArenaBox::new_in(
             self.call_expression_with_pure(span, callee, type_arguments, arguments, optional, pure),
-            self.allocator,
+            &self,
         )
     }
 
@@ -2199,10 +2193,10 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: Vec<'a, Argument<'a>>,
+        arguments: ArenaVec<'a, Argument<'a>>,
     ) -> NewExpression<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         NewExpression {
             node_id: Default::default(),
@@ -2216,7 +2210,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`NewExpression`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::new_expression`] instead.
     ///
     /// ## Parameters
@@ -2230,12 +2224,12 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: Vec<'a, Argument<'a>>,
-    ) -> Box<'a, NewExpression<'a>>
+        arguments: ArenaVec<'a, Argument<'a>>,
+    ) -> ArenaBox<'a, NewExpression<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
     {
-        Box::new_in(self.new_expression(span, callee, type_arguments, arguments), self.allocator)
+        ArenaBox::new_in(self.new_expression(span, callee, type_arguments, arguments), &self)
     }
 
     /// Build a [`NewExpression`] with `pure`.
@@ -2255,11 +2249,11 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: Vec<'a, Argument<'a>>,
+        arguments: ArenaVec<'a, Argument<'a>>,
         pure: bool,
     ) -> NewExpression<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         NewExpression {
             node_id: Default::default(),
@@ -2273,7 +2267,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`NewExpression`] with `pure`, and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::new_expression_with_pure`] instead.
     ///
     /// ## Parameters
@@ -2288,15 +2282,15 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: Vec<'a, Argument<'a>>,
+        arguments: ArenaVec<'a, Argument<'a>>,
         pure: bool,
-    ) -> Box<'a, NewExpression<'a>>
+    ) -> ArenaBox<'a, NewExpression<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
     {
-        Box::new_in(
+        ArenaBox::new_in(
             self.new_expression_with_pure(span, callee, type_arguments, arguments, pure),
-            self.allocator,
+            &self,
         )
     }
 
@@ -2321,7 +2315,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`MetaProperty`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::meta_property`] instead.
     ///
     /// ## Parameters
@@ -2334,8 +2328,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         meta: IdentifierName<'a>,
         property: IdentifierName<'a>,
-    ) -> Box<'a, MetaProperty<'a>> {
-        Box::new_in(self.meta_property(span, meta, property), self.allocator)
+    ) -> ArenaBox<'a, MetaProperty<'a>> {
+        ArenaBox::new_in(self.meta_property(span, meta, property), &self)
     }
 
     /// Build a [`SpreadElement`].
@@ -2353,7 +2347,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`SpreadElement`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::spread_element`] instead.
     ///
     /// ## Parameters
@@ -2364,8 +2358,8 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         argument: Expression<'a>,
-    ) -> Box<'a, SpreadElement<'a>> {
-        Box::new_in(self.spread_element(span, argument), self.allocator)
+    ) -> ArenaBox<'a, SpreadElement<'a>> {
+        ArenaBox::new_in(self.spread_element(span, argument), &self)
     }
 
     /// Build an [`Argument::SpreadElement`].
@@ -2403,7 +2397,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build an [`UpdateExpression`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::update_expression`] instead.
     ///
     /// ## Parameters
@@ -2418,8 +2412,8 @@ impl<'a> AstBuilder<'a> {
         operator: UpdateOperator,
         prefix: bool,
         argument: SimpleAssignmentTarget<'a>,
-    ) -> Box<'a, UpdateExpression<'a>> {
-        Box::new_in(self.update_expression(span, operator, prefix, argument), self.allocator)
+    ) -> ArenaBox<'a, UpdateExpression<'a>> {
+        ArenaBox::new_in(self.update_expression(span, operator, prefix, argument), &self)
     }
 
     /// Build an [`UnaryExpression`].
@@ -2443,7 +2437,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build an [`UnaryExpression`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::unary_expression`] instead.
     ///
     /// ## Parameters
@@ -2456,8 +2450,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         operator: UnaryOperator,
         argument: Expression<'a>,
-    ) -> Box<'a, UnaryExpression<'a>> {
-        Box::new_in(self.unary_expression(span, operator, argument), self.allocator)
+    ) -> ArenaBox<'a, UnaryExpression<'a>> {
+        ArenaBox::new_in(self.unary_expression(span, operator, argument), &self)
     }
 
     /// Build a [`BinaryExpression`].
@@ -2483,7 +2477,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`BinaryExpression`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::binary_expression`] instead.
     ///
     /// ## Parameters
@@ -2498,8 +2492,8 @@ impl<'a> AstBuilder<'a> {
         left: Expression<'a>,
         operator: BinaryOperator,
         right: Expression<'a>,
-    ) -> Box<'a, BinaryExpression<'a>> {
-        Box::new_in(self.binary_expression(span, left, operator, right), self.allocator)
+    ) -> ArenaBox<'a, BinaryExpression<'a>> {
+        ArenaBox::new_in(self.binary_expression(span, left, operator, right), &self)
     }
 
     /// Build a [`PrivateInExpression`].
@@ -2523,7 +2517,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`PrivateInExpression`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::private_in_expression`] instead.
     ///
     /// ## Parameters
@@ -2536,8 +2530,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         left: PrivateIdentifier<'a>,
         right: Expression<'a>,
-    ) -> Box<'a, PrivateInExpression<'a>> {
-        Box::new_in(self.private_in_expression(span, left, right), self.allocator)
+    ) -> ArenaBox<'a, PrivateInExpression<'a>> {
+        ArenaBox::new_in(self.private_in_expression(span, left, right), &self)
     }
 
     /// Build a [`LogicalExpression`].
@@ -2563,7 +2557,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`LogicalExpression`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::logical_expression`] instead.
     ///
     /// ## Parameters
@@ -2578,8 +2572,8 @@ impl<'a> AstBuilder<'a> {
         left: Expression<'a>,
         operator: LogicalOperator,
         right: Expression<'a>,
-    ) -> Box<'a, LogicalExpression<'a>> {
-        Box::new_in(self.logical_expression(span, left, operator, right), self.allocator)
+    ) -> ArenaBox<'a, LogicalExpression<'a>> {
+        ArenaBox::new_in(self.logical_expression(span, left, operator, right), &self)
     }
 
     /// Build a [`ConditionalExpression`].
@@ -2605,7 +2599,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`ConditionalExpression`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::conditional_expression`] instead.
     ///
     /// ## Parameters
@@ -2620,8 +2614,8 @@ impl<'a> AstBuilder<'a> {
         test: Expression<'a>,
         consequent: Expression<'a>,
         alternate: Expression<'a>,
-    ) -> Box<'a, ConditionalExpression<'a>> {
-        Box::new_in(self.conditional_expression(span, test, consequent, alternate), self.allocator)
+    ) -> ArenaBox<'a, ConditionalExpression<'a>> {
+        ArenaBox::new_in(self.conditional_expression(span, test, consequent, alternate), &self)
     }
 
     /// Build an [`AssignmentExpression`].
@@ -2647,7 +2641,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build an [`AssignmentExpression`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::assignment_expression`] instead.
     ///
     /// ## Parameters
@@ -2662,8 +2656,8 @@ impl<'a> AstBuilder<'a> {
         operator: AssignmentOperator,
         left: AssignmentTarget<'a>,
         right: Expression<'a>,
-    ) -> Box<'a, AssignmentExpression<'a>> {
-        Box::new_in(self.assignment_expression(span, operator, left, right), self.allocator)
+    ) -> ArenaBox<'a, AssignmentExpression<'a>> {
+        ArenaBox::new_in(self.assignment_expression(span, operator, left, right), &self)
     }
 
     /// Build a [`SimpleAssignmentTarget::AssignmentTargetIdentifier`].
@@ -2806,11 +2800,11 @@ impl<'a> AstBuilder<'a> {
     pub fn assignment_target_pattern_array_assignment_target<T1>(
         self,
         span: Span,
-        elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
+        elements: ArenaVec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
         rest: T1,
     ) -> AssignmentTargetPattern<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, AssignmentTargetRest<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
     {
         AssignmentTargetPattern::ArrayAssignmentTarget(
             self.alloc_array_assignment_target(span, elements, rest),
@@ -2829,11 +2823,11 @@ impl<'a> AstBuilder<'a> {
     pub fn assignment_target_pattern_object_assignment_target<T1>(
         self,
         span: Span,
-        properties: Vec<'a, AssignmentTargetProperty<'a>>,
+        properties: ArenaVec<'a, AssignmentTargetProperty<'a>>,
         rest: T1,
     ) -> AssignmentTargetPattern<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, AssignmentTargetRest<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
     {
         AssignmentTargetPattern::ObjectAssignmentTarget(
             self.alloc_object_assignment_target(span, properties, rest),
@@ -2853,11 +2847,11 @@ impl<'a> AstBuilder<'a> {
     pub fn array_assignment_target<T1>(
         self,
         span: Span,
-        elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
+        elements: ArenaVec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
         rest: T1,
     ) -> ArrayAssignmentTarget<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, AssignmentTargetRest<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
     {
         ArrayAssignmentTarget {
             node_id: Default::default(),
@@ -2869,7 +2863,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build an [`ArrayAssignmentTarget`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::array_assignment_target`] instead.
     ///
     /// ## Parameters
@@ -2880,13 +2874,13 @@ impl<'a> AstBuilder<'a> {
     pub fn alloc_array_assignment_target<T1>(
         self,
         span: Span,
-        elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
+        elements: ArenaVec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
         rest: T1,
-    ) -> Box<'a, ArrayAssignmentTarget<'a>>
+    ) -> ArenaBox<'a, ArrayAssignmentTarget<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, AssignmentTargetRest<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
     {
-        Box::new_in(self.array_assignment_target(span, elements, rest), self.allocator)
+        ArenaBox::new_in(self.array_assignment_target(span, elements, rest), &self)
     }
 
     /// Build an [`ObjectAssignmentTarget`].
@@ -2902,11 +2896,11 @@ impl<'a> AstBuilder<'a> {
     pub fn object_assignment_target<T1>(
         self,
         span: Span,
-        properties: Vec<'a, AssignmentTargetProperty<'a>>,
+        properties: ArenaVec<'a, AssignmentTargetProperty<'a>>,
         rest: T1,
     ) -> ObjectAssignmentTarget<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, AssignmentTargetRest<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
     {
         ObjectAssignmentTarget {
             node_id: Default::default(),
@@ -2918,7 +2912,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build an [`ObjectAssignmentTarget`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::object_assignment_target`] instead.
     ///
     /// ## Parameters
@@ -2929,13 +2923,13 @@ impl<'a> AstBuilder<'a> {
     pub fn alloc_object_assignment_target<T1>(
         self,
         span: Span,
-        properties: Vec<'a, AssignmentTargetProperty<'a>>,
+        properties: ArenaVec<'a, AssignmentTargetProperty<'a>>,
         rest: T1,
-    ) -> Box<'a, ObjectAssignmentTarget<'a>>
+    ) -> ArenaBox<'a, ObjectAssignmentTarget<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, AssignmentTargetRest<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
     {
-        Box::new_in(self.object_assignment_target(span, properties, rest), self.allocator)
+        ArenaBox::new_in(self.object_assignment_target(span, properties, rest), &self)
     }
 
     /// Build an [`AssignmentTargetRest`].
@@ -2957,7 +2951,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build an [`AssignmentTargetRest`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::assignment_target_rest`] instead.
     ///
     /// ## Parameters
@@ -2968,8 +2962,8 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         target: AssignmentTarget<'a>,
-    ) -> Box<'a, AssignmentTargetRest<'a>> {
-        Box::new_in(self.assignment_target_rest(span, target), self.allocator)
+    ) -> ArenaBox<'a, AssignmentTargetRest<'a>> {
+        ArenaBox::new_in(self.assignment_target_rest(span, target), &self)
     }
 
     /// Build an [`AssignmentTargetMaybeDefault::AssignmentTargetWithDefault`].
@@ -3013,7 +3007,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build an [`AssignmentTargetWithDefault`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::assignment_target_with_default`] instead.
     ///
     /// ## Parameters
@@ -3026,8 +3020,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         binding: AssignmentTarget<'a>,
         init: Expression<'a>,
-    ) -> Box<'a, AssignmentTargetWithDefault<'a>> {
-        Box::new_in(self.assignment_target_with_default(span, binding, init), self.allocator)
+    ) -> ArenaBox<'a, AssignmentTargetWithDefault<'a>> {
+        ArenaBox::new_in(self.assignment_target_with_default(span, binding, init), &self)
     }
 
     /// Build an [`AssignmentTargetProperty::AssignmentTargetPropertyIdentifier`].
@@ -3093,7 +3087,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build an [`AssignmentTargetPropertyIdentifier`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::assignment_target_property_identifier`] instead.
     ///
     /// ## Parameters
@@ -3106,8 +3100,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         binding: IdentifierReference<'a>,
         init: Option<Expression<'a>>,
-    ) -> Box<'a, AssignmentTargetPropertyIdentifier<'a>> {
-        Box::new_in(self.assignment_target_property_identifier(span, binding, init), self.allocator)
+    ) -> ArenaBox<'a, AssignmentTargetPropertyIdentifier<'a>> {
+        ArenaBox::new_in(self.assignment_target_property_identifier(span, binding, init), &self)
     }
 
     /// Build an [`AssignmentTargetPropertyProperty`].
@@ -3139,7 +3133,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build an [`AssignmentTargetPropertyProperty`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::assignment_target_property_property`] instead.
     ///
     /// ## Parameters
@@ -3154,10 +3148,10 @@ impl<'a> AstBuilder<'a> {
         name: PropertyKey<'a>,
         binding: AssignmentTargetMaybeDefault<'a>,
         computed: bool,
-    ) -> Box<'a, AssignmentTargetPropertyProperty<'a>> {
-        Box::new_in(
+    ) -> ArenaBox<'a, AssignmentTargetPropertyProperty<'a>> {
+        ArenaBox::new_in(
             self.assignment_target_property_property(span, name, binding, computed),
-            self.allocator,
+            &self,
         )
     }
 
@@ -3173,14 +3167,14 @@ impl<'a> AstBuilder<'a> {
     pub fn sequence_expression(
         self,
         span: Span,
-        expressions: Vec<'a, Expression<'a>>,
+        expressions: ArenaVec<'a, Expression<'a>>,
     ) -> SequenceExpression<'a> {
         SequenceExpression { node_id: Default::default(), span, expressions }
     }
 
     /// Build a [`SequenceExpression`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::sequence_expression`] instead.
     ///
     /// ## Parameters
@@ -3190,9 +3184,9 @@ impl<'a> AstBuilder<'a> {
     pub fn alloc_sequence_expression(
         self,
         span: Span,
-        expressions: Vec<'a, Expression<'a>>,
-    ) -> Box<'a, SequenceExpression<'a>> {
-        Box::new_in(self.sequence_expression(span, expressions), self.allocator)
+        expressions: ArenaVec<'a, Expression<'a>>,
+    ) -> ArenaBox<'a, SequenceExpression<'a>> {
+        ArenaBox::new_in(self.sequence_expression(span, expressions), &self)
     }
 
     /// Build a [`Super`].
@@ -3209,14 +3203,14 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`Super`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::super_`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_super(self, span: Span) -> Box<'a, Super> {
-        Box::new_in(self.super_(span), self.allocator)
+    pub fn alloc_super(self, span: Span) -> ArenaBox<'a, Super> {
+        ArenaBox::new_in(self.super_(span), &self)
     }
 
     /// Build an [`AwaitExpression`].
@@ -3234,7 +3228,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build an [`AwaitExpression`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::await_expression`] instead.
     ///
     /// ## Parameters
@@ -3245,8 +3239,8 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         argument: Expression<'a>,
-    ) -> Box<'a, AwaitExpression<'a>> {
-        Box::new_in(self.await_expression(span, argument), self.allocator)
+    ) -> ArenaBox<'a, AwaitExpression<'a>> {
+        ArenaBox::new_in(self.await_expression(span, argument), &self)
     }
 
     /// Build a [`ChainExpression`].
@@ -3264,7 +3258,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`ChainExpression`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::chain_expression`] instead.
     ///
     /// ## Parameters
@@ -3275,8 +3269,8 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         expression: ChainElement<'a>,
-    ) -> Box<'a, ChainExpression<'a>> {
-        Box::new_in(self.chain_expression(span, expression), self.allocator)
+    ) -> ArenaBox<'a, ChainExpression<'a>> {
+        ArenaBox::new_in(self.chain_expression(span, expression), &self)
     }
 
     /// Build a [`ChainElement::CallExpression`].
@@ -3295,11 +3289,11 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: Vec<'a, Argument<'a>>,
+        arguments: ArenaVec<'a, Argument<'a>>,
         optional: bool,
     ) -> ChainElement<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         ChainElement::CallExpression(self.alloc_call_expression(
             span,
@@ -3327,12 +3321,12 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: Vec<'a, Argument<'a>>,
+        arguments: ArenaVec<'a, Argument<'a>>,
         optional: bool,
         pure: bool,
     ) -> ChainElement<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         ChainElement::CallExpression(self.alloc_call_expression_with_pure(
             span,
@@ -3379,7 +3373,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`ParenthesizedExpression`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::parenthesized_expression`] instead.
     ///
     /// ## Parameters
@@ -3390,8 +3384,8 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         expression: Expression<'a>,
-    ) -> Box<'a, ParenthesizedExpression<'a>> {
-        Box::new_in(self.parenthesized_expression(span, expression), self.allocator)
+    ) -> ArenaBox<'a, ParenthesizedExpression<'a>> {
+        ArenaBox::new_in(self.parenthesized_expression(span, expression), &self)
     }
 
     /// Build a [`Statement::BlockStatement`].
@@ -3402,7 +3396,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `body`
     #[inline]
-    pub fn statement_block(self, span: Span, body: Vec<'a, Statement<'a>>) -> Statement<'a> {
+    pub fn statement_block(self, span: Span, body: ArenaVec<'a, Statement<'a>>) -> Statement<'a> {
         Statement::BlockStatement(self.alloc_block_statement(span, body))
     }
 
@@ -3418,7 +3412,7 @@ impl<'a> AstBuilder<'a> {
     pub fn statement_block_with_scope_id(
         self,
         span: Span,
-        body: Vec<'a, Statement<'a>>,
+        body: ArenaVec<'a, Statement<'a>>,
         scope_id: ScopeId,
     ) -> Statement<'a> {
         Statement::BlockStatement(self.alloc_block_statement_with_scope_id(span, body, scope_id))
@@ -3707,7 +3701,7 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         discriminant: Expression<'a>,
-        cases: Vec<'a, SwitchCase<'a>>,
+        cases: ArenaVec<'a, SwitchCase<'a>>,
     ) -> Statement<'a> {
         Statement::SwitchStatement(self.alloc_switch_statement(span, discriminant, cases))
     }
@@ -3726,7 +3720,7 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         discriminant: Expression<'a>,
-        cases: Vec<'a, SwitchCase<'a>>,
+        cases: ArenaVec<'a, SwitchCase<'a>>,
         scope_id: ScopeId,
     ) -> Statement<'a> {
         Statement::SwitchStatement(self.alloc_switch_statement_with_scope_id(
@@ -3767,9 +3761,9 @@ impl<'a> AstBuilder<'a> {
         finalizer: T3,
     ) -> Statement<'a>
     where
-        T1: IntoIn<'a, Box<'a, BlockStatement<'a>>>,
-        T2: IntoIn<'a, Option<Box<'a, CatchClause<'a>>>>,
-        T3: IntoIn<'a, Option<Box<'a, BlockStatement<'a>>>>,
+        T1: IntoIn<'a, ArenaBox<'a, BlockStatement<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, CatchClause<'a>>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, BlockStatement<'a>>>>,
     {
         Statement::TryStatement(self.alloc_try_statement(span, block, handler, finalizer))
     }
@@ -3873,13 +3867,17 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `body`
     #[inline]
-    pub fn block_statement(self, span: Span, body: Vec<'a, Statement<'a>>) -> BlockStatement<'a> {
+    pub fn block_statement(
+        self,
+        span: Span,
+        body: ArenaVec<'a, Statement<'a>>,
+    ) -> BlockStatement<'a> {
         BlockStatement { node_id: Default::default(), span, body, scope_id: Default::default() }
     }
 
     /// Build a [`BlockStatement`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::block_statement`] instead.
     ///
     /// ## Parameters
@@ -3889,9 +3887,9 @@ impl<'a> AstBuilder<'a> {
     pub fn alloc_block_statement(
         self,
         span: Span,
-        body: Vec<'a, Statement<'a>>,
-    ) -> Box<'a, BlockStatement<'a>> {
-        Box::new_in(self.block_statement(span, body), self.allocator)
+        body: ArenaVec<'a, Statement<'a>>,
+    ) -> ArenaBox<'a, BlockStatement<'a>> {
+        ArenaBox::new_in(self.block_statement(span, body), &self)
     }
 
     /// Build a [`BlockStatement`] with `scope_id`.
@@ -3907,7 +3905,7 @@ impl<'a> AstBuilder<'a> {
     pub fn block_statement_with_scope_id(
         self,
         span: Span,
-        body: Vec<'a, Statement<'a>>,
+        body: ArenaVec<'a, Statement<'a>>,
         scope_id: ScopeId,
     ) -> BlockStatement<'a> {
         BlockStatement {
@@ -3920,7 +3918,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`BlockStatement`] with `scope_id`, and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::block_statement_with_scope_id`] instead.
     ///
     /// ## Parameters
@@ -3931,10 +3929,10 @@ impl<'a> AstBuilder<'a> {
     pub fn alloc_block_statement_with_scope_id(
         self,
         span: Span,
-        body: Vec<'a, Statement<'a>>,
+        body: ArenaVec<'a, Statement<'a>>,
         scope_id: ScopeId,
-    ) -> Box<'a, BlockStatement<'a>> {
-        Box::new_in(self.block_statement_with_scope_id(span, body, scope_id), self.allocator)
+    ) -> ArenaBox<'a, BlockStatement<'a>> {
+        ArenaBox::new_in(self.block_statement_with_scope_id(span, body, scope_id), &self)
     }
 
     /// Build a [`Declaration::VariableDeclaration`].
@@ -3951,7 +3949,7 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         kind: VariableDeclarationKind,
-        declarations: Vec<'a, VariableDeclarator<'a>>,
+        declarations: ArenaVec<'a, VariableDeclarator<'a>>,
         declare: bool,
     ) -> Declaration<'a> {
         Declaration::VariableDeclaration(self.alloc_variable_declaration(
@@ -3994,11 +3992,11 @@ impl<'a> AstBuilder<'a> {
         body: T5,
     ) -> Declaration<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
-        T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
+        T5: IntoIn<'a, Option<ArenaBox<'a, FunctionBody<'a>>>>,
     {
         Declaration::FunctionDeclaration(self.alloc_function(
             span,
@@ -4053,11 +4051,11 @@ impl<'a> AstBuilder<'a> {
         pife: bool,
     ) -> Declaration<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
-        T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
+        T5: IntoIn<'a, Option<ArenaBox<'a, FunctionBody<'a>>>>,
     {
         Declaration::FunctionDeclaration(self.alloc_function_with_scope_id_and_pure_and_pife(
             span,
@@ -4098,20 +4096,20 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         r#type: ClassType,
-        decorators: Vec<'a, Decorator<'a>>,
+        decorators: ArenaVec<'a, Decorator<'a>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
         super_class: Option<Expression<'a>>,
         super_type_arguments: T2,
-        implements: Vec<'a, TSClassImplements<'a>>,
+        implements: ArenaVec<'a, TSClassImplements<'a>>,
         body: T3,
         r#abstract: bool,
         declare: bool,
     ) -> Declaration<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
-        T3: IntoIn<'a, Box<'a, ClassBody<'a>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T3: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
     {
         Declaration::ClassDeclaration(self.alloc_class(
             span,
@@ -4150,21 +4148,21 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         r#type: ClassType,
-        decorators: Vec<'a, Decorator<'a>>,
+        decorators: ArenaVec<'a, Decorator<'a>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
         super_class: Option<Expression<'a>>,
         super_type_arguments: T2,
-        implements: Vec<'a, TSClassImplements<'a>>,
+        implements: ArenaVec<'a, TSClassImplements<'a>>,
         body: T3,
         r#abstract: bool,
         declare: bool,
         scope_id: ScopeId,
     ) -> Declaration<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
-        T3: IntoIn<'a, Box<'a, ClassBody<'a>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T3: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
     {
         Declaration::ClassDeclaration(self.alloc_class_with_scope_id(
             span,
@@ -4202,7 +4200,7 @@ impl<'a> AstBuilder<'a> {
         declare: bool,
     ) -> Declaration<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
     {
         Declaration::TSTypeAliasDeclaration(self.alloc_ts_type_alias_declaration(
             span,
@@ -4235,7 +4233,7 @@ impl<'a> AstBuilder<'a> {
         scope_id: ScopeId,
     ) -> Declaration<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
     {
         Declaration::TSTypeAliasDeclaration(self.alloc_ts_type_alias_declaration_with_scope_id(
             span,
@@ -4264,13 +4262,13 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         id: BindingIdentifier<'a>,
         type_parameters: T1,
-        extends: Vec<'a, TSInterfaceHeritage<'a>>,
+        extends: ArenaVec<'a, TSInterfaceHeritage<'a>>,
         body: T2,
         declare: bool,
     ) -> Declaration<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Box<'a, TSInterfaceBody<'a>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, ArenaBox<'a, TSInterfaceBody<'a>>>,
     {
         Declaration::TSInterfaceDeclaration(self.alloc_ts_interface_declaration(
             span,
@@ -4300,14 +4298,14 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         id: BindingIdentifier<'a>,
         type_parameters: T1,
-        extends: Vec<'a, TSInterfaceHeritage<'a>>,
+        extends: ArenaVec<'a, TSInterfaceHeritage<'a>>,
         body: T2,
         declare: bool,
         scope_id: ScopeId,
     ) -> Declaration<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Box<'a, TSInterfaceBody<'a>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, ArenaBox<'a, TSInterfaceBody<'a>>>,
     {
         Declaration::TSInterfaceDeclaration(self.alloc_ts_interface_declaration_with_scope_id(
             span,
@@ -4487,7 +4485,7 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         kind: VariableDeclarationKind,
-        declarations: Vec<'a, VariableDeclarator<'a>>,
+        declarations: ArenaVec<'a, VariableDeclarator<'a>>,
         declare: bool,
     ) -> VariableDeclaration<'a> {
         VariableDeclaration { node_id: Default::default(), span, kind, declarations, declare }
@@ -4495,7 +4493,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`VariableDeclaration`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::variable_declaration`] instead.
     ///
     /// ## Parameters
@@ -4508,10 +4506,10 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         kind: VariableDeclarationKind,
-        declarations: Vec<'a, VariableDeclarator<'a>>,
+        declarations: ArenaVec<'a, VariableDeclarator<'a>>,
         declare: bool,
-    ) -> Box<'a, VariableDeclaration<'a>> {
-        Box::new_in(self.variable_declaration(span, kind, declarations, declare), self.allocator)
+    ) -> ArenaBox<'a, VariableDeclaration<'a>> {
+        ArenaBox::new_in(self.variable_declaration(span, kind, declarations, declare), &self)
     }
 
     /// Build a [`VariableDeclarator`].
@@ -4534,7 +4532,7 @@ impl<'a> AstBuilder<'a> {
         definite: bool,
     ) -> VariableDeclarator<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
         VariableDeclarator {
             node_id: Default::default(),
@@ -4561,14 +4559,14 @@ impl<'a> AstBuilder<'a> {
 
     /// Build an [`EmptyStatement`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::empty_statement`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_empty_statement(self, span: Span) -> Box<'a, EmptyStatement> {
-        Box::new_in(self.empty_statement(span), self.allocator)
+    pub fn alloc_empty_statement(self, span: Span) -> ArenaBox<'a, EmptyStatement> {
+        ArenaBox::new_in(self.empty_statement(span), &self)
     }
 
     /// Build an [`ExpressionStatement`].
@@ -4590,7 +4588,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build an [`ExpressionStatement`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::expression_statement`] instead.
     ///
     /// ## Parameters
@@ -4601,8 +4599,8 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         expression: Expression<'a>,
-    ) -> Box<'a, ExpressionStatement<'a>> {
-        Box::new_in(self.expression_statement(span, expression), self.allocator)
+    ) -> ArenaBox<'a, ExpressionStatement<'a>> {
+        ArenaBox::new_in(self.expression_statement(span, expression), &self)
     }
 
     /// Build an [`IfStatement`].
@@ -4628,7 +4626,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build an [`IfStatement`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::if_statement`] instead.
     ///
     /// ## Parameters
@@ -4643,8 +4641,8 @@ impl<'a> AstBuilder<'a> {
         test: Expression<'a>,
         consequent: Statement<'a>,
         alternate: Option<Statement<'a>>,
-    ) -> Box<'a, IfStatement<'a>> {
-        Box::new_in(self.if_statement(span, test, consequent, alternate), self.allocator)
+    ) -> ArenaBox<'a, IfStatement<'a>> {
+        ArenaBox::new_in(self.if_statement(span, test, consequent, alternate), &self)
     }
 
     /// Build a [`DoWhileStatement`].
@@ -4668,7 +4666,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`DoWhileStatement`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::do_while_statement`] instead.
     ///
     /// ## Parameters
@@ -4681,8 +4679,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         body: Statement<'a>,
         test: Expression<'a>,
-    ) -> Box<'a, DoWhileStatement<'a>> {
-        Box::new_in(self.do_while_statement(span, body, test), self.allocator)
+    ) -> ArenaBox<'a, DoWhileStatement<'a>> {
+        ArenaBox::new_in(self.do_while_statement(span, body, test), &self)
     }
 
     /// Build a [`WhileStatement`].
@@ -4706,7 +4704,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`WhileStatement`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::while_statement`] instead.
     ///
     /// ## Parameters
@@ -4719,8 +4717,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         test: Expression<'a>,
         body: Statement<'a>,
-    ) -> Box<'a, WhileStatement<'a>> {
-        Box::new_in(self.while_statement(span, test, body), self.allocator)
+    ) -> ArenaBox<'a, WhileStatement<'a>> {
+        ArenaBox::new_in(self.while_statement(span, test, body), &self)
     }
 
     /// Build a [`ForStatement`].
@@ -4756,7 +4754,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`ForStatement`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::for_statement`] instead.
     ///
     /// ## Parameters
@@ -4773,8 +4771,8 @@ impl<'a> AstBuilder<'a> {
         test: Option<Expression<'a>>,
         update: Option<Expression<'a>>,
         body: Statement<'a>,
-    ) -> Box<'a, ForStatement<'a>> {
-        Box::new_in(self.for_statement(span, init, test, update, body), self.allocator)
+    ) -> ArenaBox<'a, ForStatement<'a>> {
+        ArenaBox::new_in(self.for_statement(span, init, test, update, body), &self)
     }
 
     /// Build a [`ForStatement`] with `scope_id`.
@@ -4812,7 +4810,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`ForStatement`] with `scope_id`, and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::for_statement_with_scope_id`] instead.
     ///
     /// ## Parameters
@@ -4831,10 +4829,10 @@ impl<'a> AstBuilder<'a> {
         update: Option<Expression<'a>>,
         body: Statement<'a>,
         scope_id: ScopeId,
-    ) -> Box<'a, ForStatement<'a>> {
-        Box::new_in(
+    ) -> ArenaBox<'a, ForStatement<'a>> {
+        ArenaBox::new_in(
             self.for_statement_with_scope_id(span, init, test, update, body, scope_id),
-            self.allocator,
+            &self,
         )
     }
 
@@ -4852,7 +4850,7 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         kind: VariableDeclarationKind,
-        declarations: Vec<'a, VariableDeclarator<'a>>,
+        declarations: ArenaVec<'a, VariableDeclarator<'a>>,
         declare: bool,
     ) -> ForStatementInit<'a> {
         ForStatementInit::VariableDeclaration(self.alloc_variable_declaration(
@@ -4893,7 +4891,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`ForInStatement`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::for_in_statement`] instead.
     ///
     /// ## Parameters
@@ -4908,8 +4906,8 @@ impl<'a> AstBuilder<'a> {
         left: ForStatementLeft<'a>,
         right: Expression<'a>,
         body: Statement<'a>,
-    ) -> Box<'a, ForInStatement<'a>> {
-        Box::new_in(self.for_in_statement(span, left, right, body), self.allocator)
+    ) -> ArenaBox<'a, ForInStatement<'a>> {
+        ArenaBox::new_in(self.for_in_statement(span, left, right, body), &self)
     }
 
     /// Build a [`ForInStatement`] with `scope_id`.
@@ -4944,7 +4942,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`ForInStatement`] with `scope_id`, and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::for_in_statement_with_scope_id`] instead.
     ///
     /// ## Parameters
@@ -4961,10 +4959,10 @@ impl<'a> AstBuilder<'a> {
         right: Expression<'a>,
         body: Statement<'a>,
         scope_id: ScopeId,
-    ) -> Box<'a, ForInStatement<'a>> {
-        Box::new_in(
+    ) -> ArenaBox<'a, ForInStatement<'a>> {
+        ArenaBox::new_in(
             self.for_in_statement_with_scope_id(span, left, right, body, scope_id),
-            self.allocator,
+            &self,
         )
     }
 
@@ -4982,7 +4980,7 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         kind: VariableDeclarationKind,
-        declarations: Vec<'a, VariableDeclarator<'a>>,
+        declarations: ArenaVec<'a, VariableDeclarator<'a>>,
         declare: bool,
     ) -> ForStatementLeft<'a> {
         ForStatementLeft::VariableDeclaration(self.alloc_variable_declaration(
@@ -5026,7 +5024,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`ForOfStatement`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::for_of_statement`] instead.
     ///
     /// ## Parameters
@@ -5043,8 +5041,8 @@ impl<'a> AstBuilder<'a> {
         left: ForStatementLeft<'a>,
         right: Expression<'a>,
         body: Statement<'a>,
-    ) -> Box<'a, ForOfStatement<'a>> {
-        Box::new_in(self.for_of_statement(span, r#await, left, right, body), self.allocator)
+    ) -> ArenaBox<'a, ForOfStatement<'a>> {
+        ArenaBox::new_in(self.for_of_statement(span, r#await, left, right, body), &self)
     }
 
     /// Build a [`ForOfStatement`] with `scope_id`.
@@ -5082,7 +5080,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`ForOfStatement`] with `scope_id`, and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::for_of_statement_with_scope_id`] instead.
     ///
     /// ## Parameters
@@ -5101,10 +5099,10 @@ impl<'a> AstBuilder<'a> {
         right: Expression<'a>,
         body: Statement<'a>,
         scope_id: ScopeId,
-    ) -> Box<'a, ForOfStatement<'a>> {
-        Box::new_in(
+    ) -> ArenaBox<'a, ForOfStatement<'a>> {
+        ArenaBox::new_in(
             self.for_of_statement_with_scope_id(span, r#await, left, right, body, scope_id),
-            self.allocator,
+            &self,
         )
     }
 
@@ -5127,7 +5125,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`ContinueStatement`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::continue_statement`] instead.
     ///
     /// ## Parameters
@@ -5138,8 +5136,8 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         label: Option<LabelIdentifier<'a>>,
-    ) -> Box<'a, ContinueStatement<'a>> {
-        Box::new_in(self.continue_statement(span, label), self.allocator)
+    ) -> ArenaBox<'a, ContinueStatement<'a>> {
+        ArenaBox::new_in(self.continue_statement(span, label), &self)
     }
 
     /// Build a [`BreakStatement`].
@@ -5161,7 +5159,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`BreakStatement`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::break_statement`] instead.
     ///
     /// ## Parameters
@@ -5172,8 +5170,8 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         label: Option<LabelIdentifier<'a>>,
-    ) -> Box<'a, BreakStatement<'a>> {
-        Box::new_in(self.break_statement(span, label), self.allocator)
+    ) -> ArenaBox<'a, BreakStatement<'a>> {
+        ArenaBox::new_in(self.break_statement(span, label), &self)
     }
 
     /// Build a [`ReturnStatement`].
@@ -5195,7 +5193,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`ReturnStatement`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::return_statement`] instead.
     ///
     /// ## Parameters
@@ -5206,8 +5204,8 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         argument: Option<Expression<'a>>,
-    ) -> Box<'a, ReturnStatement<'a>> {
-        Box::new_in(self.return_statement(span, argument), self.allocator)
+    ) -> ArenaBox<'a, ReturnStatement<'a>> {
+        ArenaBox::new_in(self.return_statement(span, argument), &self)
     }
 
     /// Build a [`WithStatement`].
@@ -5237,7 +5235,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`WithStatement`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::with_statement`] instead.
     ///
     /// ## Parameters
@@ -5250,8 +5248,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         object: Expression<'a>,
         body: Statement<'a>,
-    ) -> Box<'a, WithStatement<'a>> {
-        Box::new_in(self.with_statement(span, object, body), self.allocator)
+    ) -> ArenaBox<'a, WithStatement<'a>> {
+        ArenaBox::new_in(self.with_statement(span, object, body), &self)
     }
 
     /// Build a [`WithStatement`] with `scope_id`.
@@ -5283,7 +5281,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`WithStatement`] with `scope_id`, and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::with_statement_with_scope_id`] instead.
     ///
     /// ## Parameters
@@ -5298,8 +5296,8 @@ impl<'a> AstBuilder<'a> {
         object: Expression<'a>,
         body: Statement<'a>,
         scope_id: ScopeId,
-    ) -> Box<'a, WithStatement<'a>> {
-        Box::new_in(self.with_statement_with_scope_id(span, object, body, scope_id), self.allocator)
+    ) -> ArenaBox<'a, WithStatement<'a>> {
+        ArenaBox::new_in(self.with_statement_with_scope_id(span, object, body, scope_id), &self)
     }
 
     /// Build a [`SwitchStatement`].
@@ -5316,7 +5314,7 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         discriminant: Expression<'a>,
-        cases: Vec<'a, SwitchCase<'a>>,
+        cases: ArenaVec<'a, SwitchCase<'a>>,
     ) -> SwitchStatement<'a> {
         SwitchStatement {
             node_id: Default::default(),
@@ -5329,7 +5327,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`SwitchStatement`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::switch_statement`] instead.
     ///
     /// ## Parameters
@@ -5341,9 +5339,9 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         discriminant: Expression<'a>,
-        cases: Vec<'a, SwitchCase<'a>>,
-    ) -> Box<'a, SwitchStatement<'a>> {
-        Box::new_in(self.switch_statement(span, discriminant, cases), self.allocator)
+        cases: ArenaVec<'a, SwitchCase<'a>>,
+    ) -> ArenaBox<'a, SwitchStatement<'a>> {
+        ArenaBox::new_in(self.switch_statement(span, discriminant, cases), &self)
     }
 
     /// Build a [`SwitchStatement`] with `scope_id`.
@@ -5361,7 +5359,7 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         discriminant: Expression<'a>,
-        cases: Vec<'a, SwitchCase<'a>>,
+        cases: ArenaVec<'a, SwitchCase<'a>>,
         scope_id: ScopeId,
     ) -> SwitchStatement<'a> {
         SwitchStatement {
@@ -5375,7 +5373,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`SwitchStatement`] with `scope_id`, and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::switch_statement_with_scope_id`] instead.
     ///
     /// ## Parameters
@@ -5388,12 +5386,12 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         discriminant: Expression<'a>,
-        cases: Vec<'a, SwitchCase<'a>>,
+        cases: ArenaVec<'a, SwitchCase<'a>>,
         scope_id: ScopeId,
-    ) -> Box<'a, SwitchStatement<'a>> {
-        Box::new_in(
+    ) -> ArenaBox<'a, SwitchStatement<'a>> {
+        ArenaBox::new_in(
             self.switch_statement_with_scope_id(span, discriminant, cases, scope_id),
-            self.allocator,
+            &self,
         )
     }
 
@@ -5408,7 +5406,7 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         test: Option<Expression<'a>>,
-        consequent: Vec<'a, Statement<'a>>,
+        consequent: ArenaVec<'a, Statement<'a>>,
     ) -> SwitchCase<'a> {
         SwitchCase { node_id: Default::default(), span, test, consequent }
     }
@@ -5434,7 +5432,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`LabeledStatement`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::labeled_statement`] instead.
     ///
     /// ## Parameters
@@ -5447,8 +5445,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         label: LabelIdentifier<'a>,
         body: Statement<'a>,
-    ) -> Box<'a, LabeledStatement<'a>> {
-        Box::new_in(self.labeled_statement(span, label, body), self.allocator)
+    ) -> ArenaBox<'a, LabeledStatement<'a>> {
+        ArenaBox::new_in(self.labeled_statement(span, label, body), &self)
     }
 
     /// Build a [`ThrowStatement`].
@@ -5466,7 +5464,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`ThrowStatement`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::throw_statement`] instead.
     ///
     /// ## Parameters
@@ -5477,8 +5475,8 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         argument: Expression<'a>,
-    ) -> Box<'a, ThrowStatement<'a>> {
-        Box::new_in(self.throw_statement(span, argument), self.allocator)
+    ) -> ArenaBox<'a, ThrowStatement<'a>> {
+        ArenaBox::new_in(self.throw_statement(span, argument), &self)
     }
 
     /// Build a [`TryStatement`].
@@ -5500,9 +5498,9 @@ impl<'a> AstBuilder<'a> {
         finalizer: T3,
     ) -> TryStatement<'a>
     where
-        T1: IntoIn<'a, Box<'a, BlockStatement<'a>>>,
-        T2: IntoIn<'a, Option<Box<'a, CatchClause<'a>>>>,
-        T3: IntoIn<'a, Option<Box<'a, BlockStatement<'a>>>>,
+        T1: IntoIn<'a, ArenaBox<'a, BlockStatement<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, CatchClause<'a>>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, BlockStatement<'a>>>>,
     {
         TryStatement {
             node_id: Default::default(),
@@ -5515,7 +5513,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TryStatement`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::try_statement`] instead.
     ///
     /// ## Parameters
@@ -5530,13 +5528,13 @@ impl<'a> AstBuilder<'a> {
         block: T1,
         handler: T2,
         finalizer: T3,
-    ) -> Box<'a, TryStatement<'a>>
+    ) -> ArenaBox<'a, TryStatement<'a>>
     where
-        T1: IntoIn<'a, Box<'a, BlockStatement<'a>>>,
-        T2: IntoIn<'a, Option<Box<'a, CatchClause<'a>>>>,
-        T3: IntoIn<'a, Option<Box<'a, BlockStatement<'a>>>>,
+        T1: IntoIn<'a, ArenaBox<'a, BlockStatement<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, CatchClause<'a>>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, BlockStatement<'a>>>>,
     {
-        Box::new_in(self.try_statement(span, block, handler, finalizer), self.allocator)
+        ArenaBox::new_in(self.try_statement(span, block, handler, finalizer), &self)
     }
 
     /// Build a [`CatchClause`].
@@ -5556,7 +5554,7 @@ impl<'a> AstBuilder<'a> {
         body: T1,
     ) -> CatchClause<'a>
     where
-        T1: IntoIn<'a, Box<'a, BlockStatement<'a>>>,
+        T1: IntoIn<'a, ArenaBox<'a, BlockStatement<'a>>>,
     {
         CatchClause {
             node_id: Default::default(),
@@ -5569,7 +5567,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`CatchClause`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::catch_clause`] instead.
     ///
     /// ## Parameters
@@ -5582,11 +5580,11 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         param: Option<CatchParameter<'a>>,
         body: T1,
-    ) -> Box<'a, CatchClause<'a>>
+    ) -> ArenaBox<'a, CatchClause<'a>>
     where
-        T1: IntoIn<'a, Box<'a, BlockStatement<'a>>>,
+        T1: IntoIn<'a, ArenaBox<'a, BlockStatement<'a>>>,
     {
-        Box::new_in(self.catch_clause(span, param, body), self.allocator)
+        ArenaBox::new_in(self.catch_clause(span, param, body), &self)
     }
 
     /// Build a [`CatchClause`] with `scope_id`.
@@ -5608,7 +5606,7 @@ impl<'a> AstBuilder<'a> {
         scope_id: ScopeId,
     ) -> CatchClause<'a>
     where
-        T1: IntoIn<'a, Box<'a, BlockStatement<'a>>>,
+        T1: IntoIn<'a, ArenaBox<'a, BlockStatement<'a>>>,
     {
         CatchClause {
             node_id: Default::default(),
@@ -5621,7 +5619,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`CatchClause`] with `scope_id`, and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::catch_clause_with_scope_id`] instead.
     ///
     /// ## Parameters
@@ -5636,11 +5634,11 @@ impl<'a> AstBuilder<'a> {
         param: Option<CatchParameter<'a>>,
         body: T1,
         scope_id: ScopeId,
-    ) -> Box<'a, CatchClause<'a>>
+    ) -> ArenaBox<'a, CatchClause<'a>>
     where
-        T1: IntoIn<'a, Box<'a, BlockStatement<'a>>>,
+        T1: IntoIn<'a, ArenaBox<'a, BlockStatement<'a>>>,
     {
-        Box::new_in(self.catch_clause_with_scope_id(span, param, body, scope_id), self.allocator)
+        ArenaBox::new_in(self.catch_clause_with_scope_id(span, param, body, scope_id), &self)
     }
 
     /// Build a [`CatchParameter`].
@@ -5657,7 +5655,7 @@ impl<'a> AstBuilder<'a> {
         type_annotation: T1,
     ) -> CatchParameter<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
         CatchParameter {
             node_id: Default::default(),
@@ -5681,14 +5679,14 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`DebuggerStatement`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::debugger_statement`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_debugger_statement(self, span: Span) -> Box<'a, DebuggerStatement> {
-        Box::new_in(self.debugger_statement(span), self.allocator)
+    pub fn alloc_debugger_statement(self, span: Span) -> ArenaBox<'a, DebuggerStatement> {
+        ArenaBox::new_in(self.debugger_statement(span), &self)
     }
 
     /// Build a [`BindingPattern::BindingIdentifier`].
@@ -5741,11 +5739,11 @@ impl<'a> AstBuilder<'a> {
     pub fn binding_pattern_object_pattern<T1>(
         self,
         span: Span,
-        properties: Vec<'a, BindingProperty<'a>>,
+        properties: ArenaVec<'a, BindingProperty<'a>>,
         rest: T1,
     ) -> BindingPattern<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, BindingRestElement<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, BindingRestElement<'a>>>>,
     {
         BindingPattern::ObjectPattern(self.alloc_object_pattern(span, properties, rest))
     }
@@ -5762,11 +5760,11 @@ impl<'a> AstBuilder<'a> {
     pub fn binding_pattern_array_pattern<T1>(
         self,
         span: Span,
-        elements: Vec<'a, Option<BindingPattern<'a>>>,
+        elements: ArenaVec<'a, Option<BindingPattern<'a>>>,
         rest: T1,
     ) -> BindingPattern<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, BindingRestElement<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, BindingRestElement<'a>>>>,
     {
         BindingPattern::ArrayPattern(self.alloc_array_pattern(span, elements, rest))
     }
@@ -5810,7 +5808,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build an [`AssignmentPattern`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::assignment_pattern`] instead.
     ///
     /// ## Parameters
@@ -5823,8 +5821,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         left: BindingPattern<'a>,
         right: Expression<'a>,
-    ) -> Box<'a, AssignmentPattern<'a>> {
-        Box::new_in(self.assignment_pattern(span, left, right), self.allocator)
+    ) -> ArenaBox<'a, AssignmentPattern<'a>> {
+        ArenaBox::new_in(self.assignment_pattern(span, left, right), &self)
     }
 
     /// Build an [`ObjectPattern`].
@@ -5840,11 +5838,11 @@ impl<'a> AstBuilder<'a> {
     pub fn object_pattern<T1>(
         self,
         span: Span,
-        properties: Vec<'a, BindingProperty<'a>>,
+        properties: ArenaVec<'a, BindingProperty<'a>>,
         rest: T1,
     ) -> ObjectPattern<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, BindingRestElement<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, BindingRestElement<'a>>>>,
     {
         ObjectPattern {
             node_id: Default::default(),
@@ -5856,7 +5854,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build an [`ObjectPattern`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::object_pattern`] instead.
     ///
     /// ## Parameters
@@ -5867,13 +5865,13 @@ impl<'a> AstBuilder<'a> {
     pub fn alloc_object_pattern<T1>(
         self,
         span: Span,
-        properties: Vec<'a, BindingProperty<'a>>,
+        properties: ArenaVec<'a, BindingProperty<'a>>,
         rest: T1,
-    ) -> Box<'a, ObjectPattern<'a>>
+    ) -> ArenaBox<'a, ObjectPattern<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, BindingRestElement<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, BindingRestElement<'a>>>>,
     {
-        Box::new_in(self.object_pattern(span, properties, rest), self.allocator)
+        ArenaBox::new_in(self.object_pattern(span, properties, rest), &self)
     }
 
     /// Build a [`BindingProperty`].
@@ -5909,11 +5907,11 @@ impl<'a> AstBuilder<'a> {
     pub fn array_pattern<T1>(
         self,
         span: Span,
-        elements: Vec<'a, Option<BindingPattern<'a>>>,
+        elements: ArenaVec<'a, Option<BindingPattern<'a>>>,
         rest: T1,
     ) -> ArrayPattern<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, BindingRestElement<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, BindingRestElement<'a>>>>,
     {
         ArrayPattern {
             node_id: Default::default(),
@@ -5925,7 +5923,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build an [`ArrayPattern`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::array_pattern`] instead.
     ///
     /// ## Parameters
@@ -5936,13 +5934,13 @@ impl<'a> AstBuilder<'a> {
     pub fn alloc_array_pattern<T1>(
         self,
         span: Span,
-        elements: Vec<'a, Option<BindingPattern<'a>>>,
+        elements: ArenaVec<'a, Option<BindingPattern<'a>>>,
         rest: T1,
-    ) -> Box<'a, ArrayPattern<'a>>
+    ) -> ArenaBox<'a, ArrayPattern<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, BindingRestElement<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, BindingRestElement<'a>>>>,
     {
-        Box::new_in(self.array_pattern(span, elements, rest), self.allocator)
+        ArenaBox::new_in(self.array_pattern(span, elements, rest), &self)
     }
 
     /// Build a [`BindingRestElement`].
@@ -5964,7 +5962,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`BindingRestElement`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::binding_rest_element`] instead.
     ///
     /// ## Parameters
@@ -5975,8 +5973,8 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         argument: BindingPattern<'a>,
-    ) -> Box<'a, BindingRestElement<'a>> {
-        Box::new_in(self.binding_rest_element(span, argument), self.allocator)
+    ) -> ArenaBox<'a, BindingRestElement<'a>> {
+        ArenaBox::new_in(self.binding_rest_element(span, argument), &self)
     }
 
     /// Build a [`Function`].
@@ -6012,11 +6010,11 @@ impl<'a> AstBuilder<'a> {
         body: T5,
     ) -> Function<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
-        T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
+        T5: IntoIn<'a, Option<ArenaBox<'a, FunctionBody<'a>>>>,
     {
         Function {
             node_id: Default::default(),
@@ -6039,7 +6037,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`Function`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::function`] instead.
     ///
     /// ## Parameters
@@ -6068,15 +6066,15 @@ impl<'a> AstBuilder<'a> {
         params: T3,
         return_type: T4,
         body: T5,
-    ) -> Box<'a, Function<'a>>
+    ) -> ArenaBox<'a, Function<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
-        T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
+        T5: IntoIn<'a, Option<ArenaBox<'a, FunctionBody<'a>>>>,
     {
-        Box::new_in(
+        ArenaBox::new_in(
             self.function(
                 span,
                 r#type,
@@ -6090,7 +6088,7 @@ impl<'a> AstBuilder<'a> {
                 return_type,
                 body,
             ),
-            self.allocator,
+            &self,
         )
     }
 
@@ -6133,11 +6131,11 @@ impl<'a> AstBuilder<'a> {
         pife: bool,
     ) -> Function<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
-        T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
+        T5: IntoIn<'a, Option<ArenaBox<'a, FunctionBody<'a>>>>,
     {
         Function {
             node_id: Default::default(),
@@ -6160,7 +6158,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`Function`] with `scope_id` and `pure` and `pife`, and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::function_with_scope_id_and_pure_and_pife`] instead.
     ///
     /// ## Parameters
@@ -6195,15 +6193,15 @@ impl<'a> AstBuilder<'a> {
         scope_id: ScopeId,
         pure: bool,
         pife: bool,
-    ) -> Box<'a, Function<'a>>
+    ) -> ArenaBox<'a, Function<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
-        T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
+        T5: IntoIn<'a, Option<ArenaBox<'a, FunctionBody<'a>>>>,
     {
-        Box::new_in(
+        ArenaBox::new_in(
             self.function_with_scope_id_and_pure_and_pife(
                 span,
                 r#type,
@@ -6220,7 +6218,7 @@ impl<'a> AstBuilder<'a> {
                 pure,
                 pife,
             ),
-            self.allocator,
+            &self,
         )
     }
 
@@ -6239,11 +6237,11 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         kind: FormalParameterKind,
-        items: Vec<'a, FormalParameter<'a>>,
+        items: ArenaVec<'a, FormalParameter<'a>>,
         rest: T1,
     ) -> FormalParameters<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, FormalParameterRest<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, FormalParameterRest<'a>>>>,
     {
         FormalParameters {
             node_id: Default::default(),
@@ -6256,7 +6254,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`FormalParameters`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::formal_parameters`] instead.
     ///
     /// ## Parameters
@@ -6269,13 +6267,13 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         kind: FormalParameterKind,
-        items: Vec<'a, FormalParameter<'a>>,
+        items: ArenaVec<'a, FormalParameter<'a>>,
         rest: T1,
-    ) -> Box<'a, FormalParameters<'a>>
+    ) -> ArenaBox<'a, FormalParameters<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, FormalParameterRest<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, FormalParameterRest<'a>>>>,
     {
-        Box::new_in(self.formal_parameters(span, kind, items, rest), self.allocator)
+        ArenaBox::new_in(self.formal_parameters(span, kind, items, rest), &self)
     }
 
     /// Build a [`FormalParameter`].
@@ -6294,7 +6292,7 @@ impl<'a> AstBuilder<'a> {
     pub fn formal_parameter<T1, T2>(
         self,
         span: Span,
-        decorators: Vec<'a, Decorator<'a>>,
+        decorators: ArenaVec<'a, Decorator<'a>>,
         pattern: BindingPattern<'a>,
         type_annotation: T1,
         initializer: T2,
@@ -6304,8 +6302,8 @@ impl<'a> AstBuilder<'a> {
         r#override: bool,
     ) -> FormalParameter<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, Expression<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, Expression<'a>>>>,
     {
         FormalParameter {
             node_id: Default::default(),
@@ -6335,12 +6333,12 @@ impl<'a> AstBuilder<'a> {
     pub fn formal_parameter_rest<T1>(
         self,
         span: Span,
-        decorators: Vec<'a, Decorator<'a>>,
+        decorators: ArenaVec<'a, Decorator<'a>>,
         rest: BindingRestElement<'a>,
         type_annotation: T1,
     ) -> FormalParameterRest<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
         FormalParameterRest {
             node_id: Default::default(),
@@ -6353,7 +6351,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`FormalParameterRest`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::formal_parameter_rest`] instead.
     ///
     /// ## Parameters
@@ -6365,17 +6363,14 @@ impl<'a> AstBuilder<'a> {
     pub fn alloc_formal_parameter_rest<T1>(
         self,
         span: Span,
-        decorators: Vec<'a, Decorator<'a>>,
+        decorators: ArenaVec<'a, Decorator<'a>>,
         rest: BindingRestElement<'a>,
         type_annotation: T1,
-    ) -> Box<'a, FormalParameterRest<'a>>
+    ) -> ArenaBox<'a, FormalParameterRest<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
-        Box::new_in(
-            self.formal_parameter_rest(span, decorators, rest, type_annotation),
-            self.allocator,
-        )
+        ArenaBox::new_in(self.formal_parameter_rest(span, decorators, rest, type_annotation), &self)
     }
 
     /// Build a [`FunctionBody`].
@@ -6391,15 +6386,15 @@ impl<'a> AstBuilder<'a> {
     pub fn function_body(
         self,
         span: Span,
-        directives: Vec<'a, Directive<'a>>,
-        statements: Vec<'a, Statement<'a>>,
+        directives: ArenaVec<'a, Directive<'a>>,
+        statements: ArenaVec<'a, Statement<'a>>,
     ) -> FunctionBody<'a> {
         FunctionBody { node_id: Default::default(), span, directives, statements }
     }
 
     /// Build a [`FunctionBody`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::function_body`] instead.
     ///
     /// ## Parameters
@@ -6410,10 +6405,10 @@ impl<'a> AstBuilder<'a> {
     pub fn alloc_function_body(
         self,
         span: Span,
-        directives: Vec<'a, Directive<'a>>,
-        statements: Vec<'a, Statement<'a>>,
-    ) -> Box<'a, FunctionBody<'a>> {
-        Box::new_in(self.function_body(span, directives, statements), self.allocator)
+        directives: ArenaVec<'a, Directive<'a>>,
+        statements: ArenaVec<'a, Statement<'a>>,
+    ) -> ArenaBox<'a, FunctionBody<'a>> {
+        ArenaBox::new_in(self.function_body(span, directives, statements), &self)
     }
 
     /// Build an [`ArrowFunctionExpression`].
@@ -6441,10 +6436,10 @@ impl<'a> AstBuilder<'a> {
         body: T4,
     ) -> ArrowFunctionExpression<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
-        T4: IntoIn<'a, Box<'a, FunctionBody<'a>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
+        T4: IntoIn<'a, ArenaBox<'a, FunctionBody<'a>>>,
     {
         ArrowFunctionExpression {
             node_id: Default::default(),
@@ -6463,7 +6458,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build an [`ArrowFunctionExpression`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::arrow_function_expression`] instead.
     ///
     /// ## Parameters
@@ -6484,14 +6479,14 @@ impl<'a> AstBuilder<'a> {
         params: T2,
         return_type: T3,
         body: T4,
-    ) -> Box<'a, ArrowFunctionExpression<'a>>
+    ) -> ArenaBox<'a, ArrowFunctionExpression<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
-        T4: IntoIn<'a, Box<'a, FunctionBody<'a>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
+        T4: IntoIn<'a, ArenaBox<'a, FunctionBody<'a>>>,
     {
-        Box::new_in(
+        ArenaBox::new_in(
             self.arrow_function_expression(
                 span,
                 expression,
@@ -6501,7 +6496,7 @@ impl<'a> AstBuilder<'a> {
                 return_type,
                 body,
             ),
-            self.allocator,
+            &self,
         )
     }
 
@@ -6536,10 +6531,10 @@ impl<'a> AstBuilder<'a> {
         pife: bool,
     ) -> ArrowFunctionExpression<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
-        T4: IntoIn<'a, Box<'a, FunctionBody<'a>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
+        T4: IntoIn<'a, ArenaBox<'a, FunctionBody<'a>>>,
     {
         ArrowFunctionExpression {
             node_id: Default::default(),
@@ -6558,7 +6553,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build an [`ArrowFunctionExpression`] with `scope_id` and `pure` and `pife`, and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::arrow_function_expression_with_scope_id_and_pure_and_pife`] instead.
     ///
     /// ## Parameters
@@ -6585,14 +6580,14 @@ impl<'a> AstBuilder<'a> {
         scope_id: ScopeId,
         pure: bool,
         pife: bool,
-    ) -> Box<'a, ArrowFunctionExpression<'a>>
+    ) -> ArenaBox<'a, ArrowFunctionExpression<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
-        T4: IntoIn<'a, Box<'a, FunctionBody<'a>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
+        T4: IntoIn<'a, ArenaBox<'a, FunctionBody<'a>>>,
     {
-        Box::new_in(
+        ArenaBox::new_in(
             self.arrow_function_expression_with_scope_id_and_pure_and_pife(
                 span,
                 expression,
@@ -6605,7 +6600,7 @@ impl<'a> AstBuilder<'a> {
                 pure,
                 pife,
             ),
-            self.allocator,
+            &self,
         )
     }
 
@@ -6630,7 +6625,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`YieldExpression`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::yield_expression`] instead.
     ///
     /// ## Parameters
@@ -6643,8 +6638,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         delegate: bool,
         argument: Option<Expression<'a>>,
-    ) -> Box<'a, YieldExpression<'a>> {
-        Box::new_in(self.yield_expression(span, delegate, argument), self.allocator)
+    ) -> ArenaBox<'a, YieldExpression<'a>> {
+        ArenaBox::new_in(self.yield_expression(span, delegate, argument), &self)
     }
 
     /// Build a [`Class`].
@@ -6669,20 +6664,20 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         r#type: ClassType,
-        decorators: Vec<'a, Decorator<'a>>,
+        decorators: ArenaVec<'a, Decorator<'a>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
         super_class: Option<Expression<'a>>,
         super_type_arguments: T2,
-        implements: Vec<'a, TSClassImplements<'a>>,
+        implements: ArenaVec<'a, TSClassImplements<'a>>,
         body: T3,
         r#abstract: bool,
         declare: bool,
     ) -> Class<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
-        T3: IntoIn<'a, Box<'a, ClassBody<'a>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T3: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
     {
         Class {
             node_id: Default::default(),
@@ -6703,7 +6698,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`Class`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::class`] instead.
     ///
     /// ## Parameters
@@ -6723,22 +6718,22 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         r#type: ClassType,
-        decorators: Vec<'a, Decorator<'a>>,
+        decorators: ArenaVec<'a, Decorator<'a>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
         super_class: Option<Expression<'a>>,
         super_type_arguments: T2,
-        implements: Vec<'a, TSClassImplements<'a>>,
+        implements: ArenaVec<'a, TSClassImplements<'a>>,
         body: T3,
         r#abstract: bool,
         declare: bool,
-    ) -> Box<'a, Class<'a>>
+    ) -> ArenaBox<'a, Class<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
-        T3: IntoIn<'a, Box<'a, ClassBody<'a>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T3: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
     {
-        Box::new_in(
+        ArenaBox::new_in(
             self.class(
                 span,
                 r#type,
@@ -6752,7 +6747,7 @@ impl<'a> AstBuilder<'a> {
                 r#abstract,
                 declare,
             ),
-            self.allocator,
+            &self,
         )
     }
 
@@ -6779,21 +6774,21 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         r#type: ClassType,
-        decorators: Vec<'a, Decorator<'a>>,
+        decorators: ArenaVec<'a, Decorator<'a>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
         super_class: Option<Expression<'a>>,
         super_type_arguments: T2,
-        implements: Vec<'a, TSClassImplements<'a>>,
+        implements: ArenaVec<'a, TSClassImplements<'a>>,
         body: T3,
         r#abstract: bool,
         declare: bool,
         scope_id: ScopeId,
     ) -> Class<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
-        T3: IntoIn<'a, Box<'a, ClassBody<'a>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T3: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
     {
         Class {
             node_id: Default::default(),
@@ -6814,7 +6809,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`Class`] with `scope_id`, and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::class_with_scope_id`] instead.
     ///
     /// ## Parameters
@@ -6835,23 +6830,23 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         r#type: ClassType,
-        decorators: Vec<'a, Decorator<'a>>,
+        decorators: ArenaVec<'a, Decorator<'a>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
         super_class: Option<Expression<'a>>,
         super_type_arguments: T2,
-        implements: Vec<'a, TSClassImplements<'a>>,
+        implements: ArenaVec<'a, TSClassImplements<'a>>,
         body: T3,
         r#abstract: bool,
         declare: bool,
         scope_id: ScopeId,
-    ) -> Box<'a, Class<'a>>
+    ) -> ArenaBox<'a, Class<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
-        T3: IntoIn<'a, Box<'a, ClassBody<'a>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T3: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
     {
-        Box::new_in(
+        ArenaBox::new_in(
             self.class_with_scope_id(
                 span,
                 r#type,
@@ -6866,7 +6861,7 @@ impl<'a> AstBuilder<'a> {
                 declare,
                 scope_id,
             ),
-            self.allocator,
+            &self,
         )
     }
 
@@ -6879,13 +6874,13 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `body`
     #[inline]
-    pub fn class_body(self, span: Span, body: Vec<'a, ClassElement<'a>>) -> ClassBody<'a> {
+    pub fn class_body(self, span: Span, body: ArenaVec<'a, ClassElement<'a>>) -> ClassBody<'a> {
         ClassBody { node_id: Default::default(), span, body }
     }
 
     /// Build a [`ClassBody`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::class_body`] instead.
     ///
     /// ## Parameters
@@ -6895,9 +6890,9 @@ impl<'a> AstBuilder<'a> {
     pub fn alloc_class_body(
         self,
         span: Span,
-        body: Vec<'a, ClassElement<'a>>,
-    ) -> Box<'a, ClassBody<'a>> {
-        Box::new_in(self.class_body(span, body), self.allocator)
+        body: ArenaVec<'a, ClassElement<'a>>,
+    ) -> ArenaBox<'a, ClassBody<'a>> {
+        ArenaBox::new_in(self.class_body(span, body), &self)
     }
 
     /// Build a [`ClassElement::StaticBlock`].
@@ -6911,7 +6906,7 @@ impl<'a> AstBuilder<'a> {
     pub fn class_element_static_block(
         self,
         span: Span,
-        body: Vec<'a, Statement<'a>>,
+        body: ArenaVec<'a, Statement<'a>>,
     ) -> ClassElement<'a> {
         ClassElement::StaticBlock(self.alloc_static_block(span, body))
     }
@@ -6928,7 +6923,7 @@ impl<'a> AstBuilder<'a> {
     pub fn class_element_static_block_with_scope_id(
         self,
         span: Span,
-        body: Vec<'a, Statement<'a>>,
+        body: ArenaVec<'a, Statement<'a>>,
         scope_id: ScopeId,
     ) -> ClassElement<'a> {
         ClassElement::StaticBlock(self.alloc_static_block_with_scope_id(span, body, scope_id))
@@ -6955,7 +6950,7 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         r#type: MethodDefinitionType,
-        decorators: Vec<'a, Decorator<'a>>,
+        decorators: ArenaVec<'a, Decorator<'a>>,
         key: PropertyKey<'a>,
         value: T1,
         kind: MethodDefinitionKind,
@@ -6966,7 +6961,7 @@ impl<'a> AstBuilder<'a> {
         accessibility: Option<TSAccessibility>,
     ) -> ClassElement<'a>
     where
-        T1: IntoIn<'a, Box<'a, Function<'a>>>,
+        T1: IntoIn<'a, ArenaBox<'a, Function<'a>>>,
     {
         ClassElement::MethodDefinition(self.alloc_method_definition(
             span,
@@ -7007,7 +7002,7 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         r#type: PropertyDefinitionType,
-        decorators: Vec<'a, Decorator<'a>>,
+        decorators: ArenaVec<'a, Decorator<'a>>,
         key: PropertyKey<'a>,
         type_annotation: T1,
         value: Option<Expression<'a>>,
@@ -7021,7 +7016,7 @@ impl<'a> AstBuilder<'a> {
         accessibility: Option<TSAccessibility>,
     ) -> ClassElement<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
         ClassElement::PropertyDefinition(self.alloc_property_definition(
             span,
@@ -7062,7 +7057,7 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         r#type: AccessorPropertyType,
-        decorators: Vec<'a, Decorator<'a>>,
+        decorators: ArenaVec<'a, Decorator<'a>>,
         key: PropertyKey<'a>,
         type_annotation: T1,
         value: Option<Expression<'a>>,
@@ -7073,7 +7068,7 @@ impl<'a> AstBuilder<'a> {
         accessibility: Option<TSAccessibility>,
     ) -> ClassElement<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
         ClassElement::AccessorProperty(self.alloc_accessor_property(
             span,
@@ -7104,13 +7099,13 @@ impl<'a> AstBuilder<'a> {
     pub fn class_element_ts_index_signature<T1>(
         self,
         span: Span,
-        parameters: Vec<'a, TSIndexSignatureName<'a>>,
+        parameters: ArenaVec<'a, TSIndexSignatureName<'a>>,
         type_annotation: T1,
         readonly: bool,
         r#static: bool,
     ) -> ClassElement<'a>
     where
-        T1: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
+        T1: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
     {
         ClassElement::TSIndexSignature(self.alloc_ts_index_signature(
             span,
@@ -7143,7 +7138,7 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         r#type: MethodDefinitionType,
-        decorators: Vec<'a, Decorator<'a>>,
+        decorators: ArenaVec<'a, Decorator<'a>>,
         key: PropertyKey<'a>,
         value: T1,
         kind: MethodDefinitionKind,
@@ -7154,7 +7149,7 @@ impl<'a> AstBuilder<'a> {
         accessibility: Option<TSAccessibility>,
     ) -> MethodDefinition<'a>
     where
-        T1: IntoIn<'a, Box<'a, Function<'a>>>,
+        T1: IntoIn<'a, ArenaBox<'a, Function<'a>>>,
     {
         MethodDefinition {
             node_id: Default::default(),
@@ -7174,7 +7169,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`MethodDefinition`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::method_definition`] instead.
     ///
     /// ## Parameters
@@ -7194,7 +7189,7 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         r#type: MethodDefinitionType,
-        decorators: Vec<'a, Decorator<'a>>,
+        decorators: ArenaVec<'a, Decorator<'a>>,
         key: PropertyKey<'a>,
         value: T1,
         kind: MethodDefinitionKind,
@@ -7203,11 +7198,11 @@ impl<'a> AstBuilder<'a> {
         r#override: bool,
         optional: bool,
         accessibility: Option<TSAccessibility>,
-    ) -> Box<'a, MethodDefinition<'a>>
+    ) -> ArenaBox<'a, MethodDefinition<'a>>
     where
-        T1: IntoIn<'a, Box<'a, Function<'a>>>,
+        T1: IntoIn<'a, ArenaBox<'a, Function<'a>>>,
     {
-        Box::new_in(
+        ArenaBox::new_in(
             self.method_definition(
                 span,
                 r#type,
@@ -7221,7 +7216,7 @@ impl<'a> AstBuilder<'a> {
                 optional,
                 accessibility,
             ),
-            self.allocator,
+            &self,
         )
     }
 
@@ -7250,7 +7245,7 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         r#type: PropertyDefinitionType,
-        decorators: Vec<'a, Decorator<'a>>,
+        decorators: ArenaVec<'a, Decorator<'a>>,
         key: PropertyKey<'a>,
         type_annotation: T1,
         value: Option<Expression<'a>>,
@@ -7264,7 +7259,7 @@ impl<'a> AstBuilder<'a> {
         accessibility: Option<TSAccessibility>,
     ) -> PropertyDefinition<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
         PropertyDefinition {
             node_id: Default::default(),
@@ -7287,7 +7282,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`PropertyDefinition`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::property_definition`] instead.
     ///
     /// ## Parameters
@@ -7310,7 +7305,7 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         r#type: PropertyDefinitionType,
-        decorators: Vec<'a, Decorator<'a>>,
+        decorators: ArenaVec<'a, Decorator<'a>>,
         key: PropertyKey<'a>,
         type_annotation: T1,
         value: Option<Expression<'a>>,
@@ -7322,11 +7317,11 @@ impl<'a> AstBuilder<'a> {
         definite: bool,
         readonly: bool,
         accessibility: Option<TSAccessibility>,
-    ) -> Box<'a, PropertyDefinition<'a>>
+    ) -> ArenaBox<'a, PropertyDefinition<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
-        Box::new_in(
+        ArenaBox::new_in(
             self.property_definition(
                 span,
                 r#type,
@@ -7343,7 +7338,7 @@ impl<'a> AstBuilder<'a> {
                 readonly,
                 accessibility,
             ),
-            self.allocator,
+            &self,
         )
     }
 
@@ -7365,7 +7360,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`PrivateIdentifier`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::private_identifier`] instead.
     ///
     /// ## Parameters
@@ -7376,11 +7371,11 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         name: S1,
-    ) -> Box<'a, PrivateIdentifier<'a>>
+    ) -> ArenaBox<'a, PrivateIdentifier<'a>>
     where
         S1: Into<Ident<'a>>,
     {
-        Box::new_in(self.private_identifier(span, name), self.allocator)
+        ArenaBox::new_in(self.private_identifier(span, name), &self)
     }
 
     /// Build a [`StaticBlock`].
@@ -7392,13 +7387,13 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `body`
     #[inline]
-    pub fn static_block(self, span: Span, body: Vec<'a, Statement<'a>>) -> StaticBlock<'a> {
+    pub fn static_block(self, span: Span, body: ArenaVec<'a, Statement<'a>>) -> StaticBlock<'a> {
         StaticBlock { node_id: Default::default(), span, body, scope_id: Default::default() }
     }
 
     /// Build a [`StaticBlock`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::static_block`] instead.
     ///
     /// ## Parameters
@@ -7408,9 +7403,9 @@ impl<'a> AstBuilder<'a> {
     pub fn alloc_static_block(
         self,
         span: Span,
-        body: Vec<'a, Statement<'a>>,
-    ) -> Box<'a, StaticBlock<'a>> {
-        Box::new_in(self.static_block(span, body), self.allocator)
+        body: ArenaVec<'a, Statement<'a>>,
+    ) -> ArenaBox<'a, StaticBlock<'a>> {
+        ArenaBox::new_in(self.static_block(span, body), &self)
     }
 
     /// Build a [`StaticBlock`] with `scope_id`.
@@ -7426,7 +7421,7 @@ impl<'a> AstBuilder<'a> {
     pub fn static_block_with_scope_id(
         self,
         span: Span,
-        body: Vec<'a, Statement<'a>>,
+        body: ArenaVec<'a, Statement<'a>>,
         scope_id: ScopeId,
     ) -> StaticBlock<'a> {
         StaticBlock { node_id: Default::default(), span, body, scope_id: Cell::new(Some(scope_id)) }
@@ -7434,7 +7429,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`StaticBlock`] with `scope_id`, and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::static_block_with_scope_id`] instead.
     ///
     /// ## Parameters
@@ -7445,10 +7440,10 @@ impl<'a> AstBuilder<'a> {
     pub fn alloc_static_block_with_scope_id(
         self,
         span: Span,
-        body: Vec<'a, Statement<'a>>,
+        body: ArenaVec<'a, Statement<'a>>,
         scope_id: ScopeId,
-    ) -> Box<'a, StaticBlock<'a>> {
-        Box::new_in(self.static_block_with_scope_id(span, body, scope_id), self.allocator)
+    ) -> ArenaBox<'a, StaticBlock<'a>> {
+        ArenaBox::new_in(self.static_block_with_scope_id(span, body, scope_id), &self)
     }
 
     /// Build a [`ModuleDeclaration::ImportDeclaration`].
@@ -7466,14 +7461,14 @@ impl<'a> AstBuilder<'a> {
     pub fn module_declaration_import_declaration<T1>(
         self,
         span: Span,
-        specifiers: Option<Vec<'a, ImportDeclarationSpecifier<'a>>>,
+        specifiers: Option<ArenaVec<'a, ImportDeclarationSpecifier<'a>>>,
         source: StringLiteral<'a>,
         phase: Option<ImportPhase>,
         with_clause: T1,
         import_kind: ImportOrExportKind,
     ) -> ModuleDeclaration<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, WithClause<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, WithClause<'a>>>>,
     {
         ModuleDeclaration::ImportDeclaration(self.alloc_import_declaration(
             span,
@@ -7505,7 +7500,7 @@ impl<'a> AstBuilder<'a> {
         export_kind: ImportOrExportKind,
     ) -> ModuleDeclaration<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, WithClause<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, WithClause<'a>>>>,
     {
         ModuleDeclaration::ExportAllDeclaration(self.alloc_export_all_declaration(
             span,
@@ -7550,13 +7545,13 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         declaration: Option<Declaration<'a>>,
-        specifiers: Vec<'a, ExportSpecifier<'a>>,
+        specifiers: ArenaVec<'a, ExportSpecifier<'a>>,
         source: Option<StringLiteral<'a>>,
         export_kind: ImportOrExportKind,
         with_clause: T1,
     ) -> ModuleDeclaration<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, WithClause<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, WithClause<'a>>>>,
     {
         ModuleDeclaration::ExportNamedDeclaration(self.alloc_export_named_declaration(
             span,
@@ -7624,7 +7619,7 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         r#type: AccessorPropertyType,
-        decorators: Vec<'a, Decorator<'a>>,
+        decorators: ArenaVec<'a, Decorator<'a>>,
         key: PropertyKey<'a>,
         type_annotation: T1,
         value: Option<Expression<'a>>,
@@ -7635,7 +7630,7 @@ impl<'a> AstBuilder<'a> {
         accessibility: Option<TSAccessibility>,
     ) -> AccessorProperty<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
         AccessorProperty {
             node_id: Default::default(),
@@ -7655,7 +7650,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build an [`AccessorProperty`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::accessor_property`] instead.
     ///
     /// ## Parameters
@@ -7675,7 +7670,7 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         r#type: AccessorPropertyType,
-        decorators: Vec<'a, Decorator<'a>>,
+        decorators: ArenaVec<'a, Decorator<'a>>,
         key: PropertyKey<'a>,
         type_annotation: T1,
         value: Option<Expression<'a>>,
@@ -7684,11 +7679,11 @@ impl<'a> AstBuilder<'a> {
         r#override: bool,
         definite: bool,
         accessibility: Option<TSAccessibility>,
-    ) -> Box<'a, AccessorProperty<'a>>
+    ) -> ArenaBox<'a, AccessorProperty<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
-        Box::new_in(
+        ArenaBox::new_in(
             self.accessor_property(
                 span,
                 r#type,
@@ -7702,7 +7697,7 @@ impl<'a> AstBuilder<'a> {
                 definite,
                 accessibility,
             ),
-            self.allocator,
+            &self,
         )
     }
 
@@ -7729,7 +7724,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build an [`ImportExpression`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::import_expression`] instead.
     ///
     /// ## Parameters
@@ -7744,8 +7739,8 @@ impl<'a> AstBuilder<'a> {
         source: Expression<'a>,
         options: Option<Expression<'a>>,
         phase: Option<ImportPhase>,
-    ) -> Box<'a, ImportExpression<'a>> {
-        Box::new_in(self.import_expression(span, source, options, phase), self.allocator)
+    ) -> ArenaBox<'a, ImportExpression<'a>> {
+        ArenaBox::new_in(self.import_expression(span, source, options, phase), &self)
     }
 
     /// Build an [`ImportDeclaration`].
@@ -7764,14 +7759,14 @@ impl<'a> AstBuilder<'a> {
     pub fn import_declaration<T1>(
         self,
         span: Span,
-        specifiers: Option<Vec<'a, ImportDeclarationSpecifier<'a>>>,
+        specifiers: Option<ArenaVec<'a, ImportDeclarationSpecifier<'a>>>,
         source: StringLiteral<'a>,
         phase: Option<ImportPhase>,
         with_clause: T1,
         import_kind: ImportOrExportKind,
     ) -> ImportDeclaration<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, WithClause<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, WithClause<'a>>>>,
     {
         ImportDeclaration {
             node_id: Default::default(),
@@ -7786,7 +7781,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build an [`ImportDeclaration`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::import_declaration`] instead.
     ///
     /// ## Parameters
@@ -7800,18 +7795,18 @@ impl<'a> AstBuilder<'a> {
     pub fn alloc_import_declaration<T1>(
         self,
         span: Span,
-        specifiers: Option<Vec<'a, ImportDeclarationSpecifier<'a>>>,
+        specifiers: Option<ArenaVec<'a, ImportDeclarationSpecifier<'a>>>,
         source: StringLiteral<'a>,
         phase: Option<ImportPhase>,
         with_clause: T1,
         import_kind: ImportOrExportKind,
-    ) -> Box<'a, ImportDeclaration<'a>>
+    ) -> ArenaBox<'a, ImportDeclaration<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, WithClause<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, WithClause<'a>>>>,
     {
-        Box::new_in(
+        ArenaBox::new_in(
             self.import_declaration(span, specifiers, source, phase, with_clause, import_kind),
-            self.allocator,
+            &self,
         )
     }
 
@@ -7899,7 +7894,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build an [`ImportSpecifier`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::import_specifier`] instead.
     ///
     /// ## Parameters
@@ -7914,8 +7909,8 @@ impl<'a> AstBuilder<'a> {
         imported: ModuleExportName<'a>,
         local: BindingIdentifier<'a>,
         import_kind: ImportOrExportKind,
-    ) -> Box<'a, ImportSpecifier<'a>> {
-        Box::new_in(self.import_specifier(span, imported, local, import_kind), self.allocator)
+    ) -> ArenaBox<'a, ImportSpecifier<'a>> {
+        ArenaBox::new_in(self.import_specifier(span, imported, local, import_kind), &self)
     }
 
     /// Build an [`ImportDefaultSpecifier`].
@@ -7937,7 +7932,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build an [`ImportDefaultSpecifier`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::import_default_specifier`] instead.
     ///
     /// ## Parameters
@@ -7948,8 +7943,8 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         local: BindingIdentifier<'a>,
-    ) -> Box<'a, ImportDefaultSpecifier<'a>> {
-        Box::new_in(self.import_default_specifier(span, local), self.allocator)
+    ) -> ArenaBox<'a, ImportDefaultSpecifier<'a>> {
+        ArenaBox::new_in(self.import_default_specifier(span, local), &self)
     }
 
     /// Build an [`ImportNamespaceSpecifier`].
@@ -7971,7 +7966,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build an [`ImportNamespaceSpecifier`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::import_namespace_specifier`] instead.
     ///
     /// ## Parameters
@@ -7982,8 +7977,8 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         local: BindingIdentifier<'a>,
-    ) -> Box<'a, ImportNamespaceSpecifier<'a>> {
-        Box::new_in(self.import_namespace_specifier(span, local), self.allocator)
+    ) -> ArenaBox<'a, ImportNamespaceSpecifier<'a>> {
+        ArenaBox::new_in(self.import_namespace_specifier(span, local), &self)
     }
 
     /// Build a [`WithClause`].
@@ -8000,14 +7995,14 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         keyword: WithClauseKeyword,
-        with_entries: Vec<'a, ImportAttribute<'a>>,
+        with_entries: ArenaVec<'a, ImportAttribute<'a>>,
     ) -> WithClause<'a> {
         WithClause { node_id: Default::default(), span, keyword, with_entries }
     }
 
     /// Build a [`WithClause`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::with_clause`] instead.
     ///
     /// ## Parameters
@@ -8019,9 +8014,9 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         keyword: WithClauseKeyword,
-        with_entries: Vec<'a, ImportAttribute<'a>>,
-    ) -> Box<'a, WithClause<'a>> {
-        Box::new_in(self.with_clause(span, keyword, with_entries), self.allocator)
+        with_entries: ArenaVec<'a, ImportAttribute<'a>>,
+    ) -> ArenaBox<'a, WithClause<'a>> {
+        ArenaBox::new_in(self.with_clause(span, keyword, with_entries), &self)
     }
 
     /// Build an [`ImportAttribute`].
@@ -8115,13 +8110,13 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         declaration: Option<Declaration<'a>>,
-        specifiers: Vec<'a, ExportSpecifier<'a>>,
+        specifiers: ArenaVec<'a, ExportSpecifier<'a>>,
         source: Option<StringLiteral<'a>>,
         export_kind: ImportOrExportKind,
         with_clause: T1,
     ) -> ExportNamedDeclaration<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, WithClause<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, WithClause<'a>>>>,
     {
         ExportNamedDeclaration {
             node_id: Default::default(),
@@ -8136,7 +8131,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build an [`ExportNamedDeclaration`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::export_named_declaration`] instead.
     ///
     /// ## Parameters
@@ -8151,15 +8146,15 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         declaration: Option<Declaration<'a>>,
-        specifiers: Vec<'a, ExportSpecifier<'a>>,
+        specifiers: ArenaVec<'a, ExportSpecifier<'a>>,
         source: Option<StringLiteral<'a>>,
         export_kind: ImportOrExportKind,
         with_clause: T1,
-    ) -> Box<'a, ExportNamedDeclaration<'a>>
+    ) -> ArenaBox<'a, ExportNamedDeclaration<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, WithClause<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, WithClause<'a>>>>,
     {
-        Box::new_in(
+        ArenaBox::new_in(
             self.export_named_declaration(
                 span,
                 declaration,
@@ -8168,7 +8163,7 @@ impl<'a> AstBuilder<'a> {
                 export_kind,
                 with_clause,
             ),
-            self.allocator,
+            &self,
         )
     }
 
@@ -8191,7 +8186,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build an [`ExportDefaultDeclaration`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::export_default_declaration`] instead.
     ///
     /// ## Parameters
@@ -8202,8 +8197,8 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         declaration: ExportDefaultDeclarationKind<'a>,
-    ) -> Box<'a, ExportDefaultDeclaration<'a>> {
-        Box::new_in(self.export_default_declaration(span, declaration), self.allocator)
+    ) -> ArenaBox<'a, ExportDefaultDeclaration<'a>> {
+        ArenaBox::new_in(self.export_default_declaration(span, declaration), &self)
     }
 
     /// Build an [`ExportAllDeclaration`].
@@ -8227,7 +8222,7 @@ impl<'a> AstBuilder<'a> {
         export_kind: ImportOrExportKind,
     ) -> ExportAllDeclaration<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, WithClause<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, WithClause<'a>>>>,
     {
         ExportAllDeclaration {
             node_id: Default::default(),
@@ -8241,7 +8236,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build an [`ExportAllDeclaration`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::export_all_declaration`] instead.
     ///
     /// ## Parameters
@@ -8258,13 +8253,13 @@ impl<'a> AstBuilder<'a> {
         source: StringLiteral<'a>,
         with_clause: T1,
         export_kind: ImportOrExportKind,
-    ) -> Box<'a, ExportAllDeclaration<'a>>
+    ) -> ArenaBox<'a, ExportAllDeclaration<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, WithClause<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, WithClause<'a>>>>,
     {
-        Box::new_in(
+        ArenaBox::new_in(
             self.export_all_declaration(span, exported, source, with_clause, export_kind),
-            self.allocator,
+            &self,
         )
     }
 
@@ -8318,11 +8313,11 @@ impl<'a> AstBuilder<'a> {
         body: T5,
     ) -> ExportDefaultDeclarationKind<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
-        T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
+        T5: IntoIn<'a, Option<ArenaBox<'a, FunctionBody<'a>>>>,
     {
         ExportDefaultDeclarationKind::FunctionDeclaration(self.alloc_function(
             span,
@@ -8383,11 +8378,11 @@ impl<'a> AstBuilder<'a> {
         pife: bool,
     ) -> ExportDefaultDeclarationKind<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
-        T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
+        T5: IntoIn<'a, Option<ArenaBox<'a, FunctionBody<'a>>>>,
     {
         ExportDefaultDeclarationKind::FunctionDeclaration(
             self.alloc_function_with_scope_id_and_pure_and_pife(
@@ -8430,20 +8425,20 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         r#type: ClassType,
-        decorators: Vec<'a, Decorator<'a>>,
+        decorators: ArenaVec<'a, Decorator<'a>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
         super_class: Option<Expression<'a>>,
         super_type_arguments: T2,
-        implements: Vec<'a, TSClassImplements<'a>>,
+        implements: ArenaVec<'a, TSClassImplements<'a>>,
         body: T3,
         r#abstract: bool,
         declare: bool,
     ) -> ExportDefaultDeclarationKind<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
-        T3: IntoIn<'a, Box<'a, ClassBody<'a>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T3: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
     {
         ExportDefaultDeclarationKind::ClassDeclaration(self.alloc_class(
             span,
@@ -8482,21 +8477,21 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         r#type: ClassType,
-        decorators: Vec<'a, Decorator<'a>>,
+        decorators: ArenaVec<'a, Decorator<'a>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
         super_class: Option<Expression<'a>>,
         super_type_arguments: T2,
-        implements: Vec<'a, TSClassImplements<'a>>,
+        implements: ArenaVec<'a, TSClassImplements<'a>>,
         body: T3,
         r#abstract: bool,
         declare: bool,
         scope_id: ScopeId,
     ) -> ExportDefaultDeclarationKind<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
-        T3: IntoIn<'a, Box<'a, ClassBody<'a>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T3: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
     {
         ExportDefaultDeclarationKind::ClassDeclaration(self.alloc_class_with_scope_id(
             span,
@@ -8531,13 +8526,13 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         id: BindingIdentifier<'a>,
         type_parameters: T1,
-        extends: Vec<'a, TSInterfaceHeritage<'a>>,
+        extends: ArenaVec<'a, TSInterfaceHeritage<'a>>,
         body: T2,
         declare: bool,
     ) -> ExportDefaultDeclarationKind<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Box<'a, TSInterfaceBody<'a>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, ArenaBox<'a, TSInterfaceBody<'a>>>,
     {
         ExportDefaultDeclarationKind::TSInterfaceDeclaration(self.alloc_ts_interface_declaration(
             span,
@@ -8567,14 +8562,14 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         id: BindingIdentifier<'a>,
         type_parameters: T1,
-        extends: Vec<'a, TSInterfaceHeritage<'a>>,
+        extends: ArenaVec<'a, TSInterfaceHeritage<'a>>,
         body: T2,
         declare: bool,
         scope_id: ScopeId,
     ) -> ExportDefaultDeclarationKind<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Box<'a, TSInterfaceBody<'a>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, ArenaBox<'a, TSInterfaceBody<'a>>>,
     {
         ExportDefaultDeclarationKind::TSInterfaceDeclaration(
             self.alloc_ts_interface_declaration_with_scope_id(
@@ -8705,14 +8700,14 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         name: IdentifierName<'a>,
-        arguments: Vec<'a, Argument<'a>>,
+        arguments: ArenaVec<'a, Argument<'a>>,
     ) -> V8IntrinsicExpression<'a> {
         V8IntrinsicExpression { node_id: Default::default(), span, name, arguments }
     }
 
     /// Build a [`V8IntrinsicExpression`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::v8_intrinsic_expression`] instead.
     ///
     /// ## Parameters
@@ -8724,9 +8719,9 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         name: IdentifierName<'a>,
-        arguments: Vec<'a, Argument<'a>>,
-    ) -> Box<'a, V8IntrinsicExpression<'a>> {
-        Box::new_in(self.v8_intrinsic_expression(span, name, arguments), self.allocator)
+        arguments: ArenaVec<'a, Argument<'a>>,
+    ) -> ArenaBox<'a, V8IntrinsicExpression<'a>> {
+        ArenaBox::new_in(self.v8_intrinsic_expression(span, name, arguments), &self)
     }
 
     /// Build a [`BooleanLiteral`].
@@ -8744,15 +8739,15 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`BooleanLiteral`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::boolean_literal`] instead.
     ///
     /// ## Parameters
     /// * `span`: Node location in source code.
     /// * `value`: The boolean value itself
     #[inline]
-    pub fn alloc_boolean_literal(self, span: Span, value: bool) -> Box<'a, BooleanLiteral> {
-        Box::new_in(self.boolean_literal(span, value), self.allocator)
+    pub fn alloc_boolean_literal(self, span: Span, value: bool) -> ArenaBox<'a, BooleanLiteral> {
+        ArenaBox::new_in(self.boolean_literal(span, value), &self)
     }
 
     /// Build a [`NullLiteral`].
@@ -8769,14 +8764,14 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`NullLiteral`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::null_literal`] instead.
     ///
     /// ## Parameters
     /// * `span`: Node location in source code.
     #[inline]
-    pub fn alloc_null_literal(self, span: Span) -> Box<'a, NullLiteral> {
-        Box::new_in(self.null_literal(span), self.allocator)
+    pub fn alloc_null_literal(self, span: Span) -> ArenaBox<'a, NullLiteral> {
+        ArenaBox::new_in(self.null_literal(span), &self)
     }
 
     /// Build a [`NumericLiteral`].
@@ -8802,7 +8797,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`NumericLiteral`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::numeric_literal`] instead.
     ///
     /// ## Parameters
@@ -8817,8 +8812,8 @@ impl<'a> AstBuilder<'a> {
         value: f64,
         raw: Option<Str<'a>>,
         base: NumberBase,
-    ) -> Box<'a, NumericLiteral<'a>> {
-        Box::new_in(self.numeric_literal(span, value, raw, base), self.allocator)
+    ) -> ArenaBox<'a, NumericLiteral<'a>> {
+        ArenaBox::new_in(self.numeric_literal(span, value, raw, base), &self)
     }
 
     /// Build a [`StringLiteral`].
@@ -8851,7 +8846,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`StringLiteral`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::string_literal`] instead.
     ///
     /// ## Parameters
@@ -8864,11 +8859,11 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         value: S1,
         raw: Option<Str<'a>>,
-    ) -> Box<'a, StringLiteral<'a>>
+    ) -> ArenaBox<'a, StringLiteral<'a>>
     where
         S1: Into<Str<'a>>,
     {
-        Box::new_in(self.string_literal(span, value, raw), self.allocator)
+        ArenaBox::new_in(self.string_literal(span, value, raw), &self)
     }
 
     /// Build a [`StringLiteral`] with `lone_surrogates`.
@@ -8903,7 +8898,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`StringLiteral`] with `lone_surrogates`, and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::string_literal_with_lone_surrogates`] instead.
     ///
     /// ## Parameters
@@ -8918,13 +8913,13 @@ impl<'a> AstBuilder<'a> {
         value: S1,
         raw: Option<Str<'a>>,
         lone_surrogates: bool,
-    ) -> Box<'a, StringLiteral<'a>>
+    ) -> ArenaBox<'a, StringLiteral<'a>>
     where
         S1: Into<Str<'a>>,
     {
-        Box::new_in(
+        ArenaBox::new_in(
             self.string_literal_with_lone_surrogates(span, value, raw, lone_surrogates),
-            self.allocator,
+            &self,
         )
     }
 
@@ -8954,7 +8949,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`BigIntLiteral`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::big_int_literal`] instead.
     ///
     /// ## Parameters
@@ -8969,11 +8964,11 @@ impl<'a> AstBuilder<'a> {
         value: S1,
         raw: Option<Str<'a>>,
         base: BigintBase,
-    ) -> Box<'a, BigIntLiteral<'a>>
+    ) -> ArenaBox<'a, BigIntLiteral<'a>>
     where
         S1: Into<Str<'a>>,
     {
-        Box::new_in(self.big_int_literal(span, value, raw, base), self.allocator)
+        ArenaBox::new_in(self.big_int_literal(span, value, raw, base), &self)
     }
 
     /// Build a [`RegExpLiteral`].
@@ -8997,7 +8992,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`RegExpLiteral`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::reg_exp_literal`] instead.
     ///
     /// ## Parameters
@@ -9010,8 +9005,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         regex: RegExp<'a>,
         raw: Option<Str<'a>>,
-    ) -> Box<'a, RegExpLiteral<'a>> {
-        Box::new_in(self.reg_exp_literal(span, regex, raw), self.allocator)
+    ) -> ArenaBox<'a, RegExpLiteral<'a>> {
+        ArenaBox::new_in(self.reg_exp_literal(span, regex, raw), &self)
     }
 
     /// Build a [`JSXElement`].
@@ -9029,12 +9024,12 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         opening_element: T1,
-        children: Vec<'a, JSXChild<'a>>,
+        children: ArenaVec<'a, JSXChild<'a>>,
         closing_element: T2,
     ) -> JSXElement<'a>
     where
-        T1: IntoIn<'a, Box<'a, JSXOpeningElement<'a>>>,
-        T2: IntoIn<'a, Option<Box<'a, JSXClosingElement<'a>>>>,
+        T1: IntoIn<'a, ArenaBox<'a, JSXOpeningElement<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, JSXClosingElement<'a>>>>,
     {
         JSXElement {
             node_id: Default::default(),
@@ -9047,7 +9042,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`JSXElement`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::jsx_element`] instead.
     ///
     /// ## Parameters
@@ -9060,17 +9055,14 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         opening_element: T1,
-        children: Vec<'a, JSXChild<'a>>,
+        children: ArenaVec<'a, JSXChild<'a>>,
         closing_element: T2,
-    ) -> Box<'a, JSXElement<'a>>
+    ) -> ArenaBox<'a, JSXElement<'a>>
     where
-        T1: IntoIn<'a, Box<'a, JSXOpeningElement<'a>>>,
-        T2: IntoIn<'a, Option<Box<'a, JSXClosingElement<'a>>>>,
+        T1: IntoIn<'a, ArenaBox<'a, JSXOpeningElement<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, JSXClosingElement<'a>>>>,
     {
-        Box::new_in(
-            self.jsx_element(span, opening_element, children, closing_element),
-            self.allocator,
-        )
+        ArenaBox::new_in(self.jsx_element(span, opening_element, children, closing_element), &self)
     }
 
     /// Build a [`JSXOpeningElement`].
@@ -9089,10 +9081,10 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         name: JSXElementName<'a>,
         type_arguments: T1,
-        attributes: Vec<'a, JSXAttributeItem<'a>>,
+        attributes: ArenaVec<'a, JSXAttributeItem<'a>>,
     ) -> JSXOpeningElement<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         JSXOpeningElement {
             node_id: Default::default(),
@@ -9105,7 +9097,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`JSXOpeningElement`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::jsx_opening_element`] instead.
     ///
     /// ## Parameters
@@ -9119,15 +9111,12 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         name: JSXElementName<'a>,
         type_arguments: T1,
-        attributes: Vec<'a, JSXAttributeItem<'a>>,
-    ) -> Box<'a, JSXOpeningElement<'a>>
+        attributes: ArenaVec<'a, JSXAttributeItem<'a>>,
+    ) -> ArenaBox<'a, JSXOpeningElement<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
     {
-        Box::new_in(
-            self.jsx_opening_element(span, name, type_arguments, attributes),
-            self.allocator,
-        )
+        ArenaBox::new_in(self.jsx_opening_element(span, name, type_arguments, attributes), &self)
     }
 
     /// Build a [`JSXClosingElement`].
@@ -9149,7 +9138,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`JSXClosingElement`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::jsx_closing_element`] instead.
     ///
     /// ## Parameters
@@ -9160,8 +9149,8 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         name: JSXElementName<'a>,
-    ) -> Box<'a, JSXClosingElement<'a>> {
-        Box::new_in(self.jsx_closing_element(span, name), self.allocator)
+    ) -> ArenaBox<'a, JSXClosingElement<'a>> {
+        ArenaBox::new_in(self.jsx_closing_element(span, name), &self)
     }
 
     /// Build a [`JSXFragment`].
@@ -9179,7 +9168,7 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         opening_fragment: JSXOpeningFragment,
-        children: Vec<'a, JSXChild<'a>>,
+        children: ArenaVec<'a, JSXChild<'a>>,
         closing_fragment: JSXClosingFragment,
     ) -> JSXFragment<'a> {
         JSXFragment {
@@ -9193,7 +9182,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`JSXFragment`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::jsx_fragment`] instead.
     ///
     /// ## Parameters
@@ -9206,12 +9195,12 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         opening_fragment: JSXOpeningFragment,
-        children: Vec<'a, JSXChild<'a>>,
+        children: ArenaVec<'a, JSXChild<'a>>,
         closing_fragment: JSXClosingFragment,
-    ) -> Box<'a, JSXFragment<'a>> {
-        Box::new_in(
+    ) -> ArenaBox<'a, JSXFragment<'a>> {
+        ArenaBox::new_in(
             self.jsx_fragment(span, opening_fragment, children, closing_fragment),
-            self.allocator,
+            &self,
         )
     }
 
@@ -9360,7 +9349,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`JSXNamespacedName`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::jsx_namespaced_name`] instead.
     ///
     /// ## Parameters
@@ -9373,8 +9362,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         namespace: JSXIdentifier<'a>,
         name: JSXIdentifier<'a>,
-    ) -> Box<'a, JSXNamespacedName<'a>> {
-        Box::new_in(self.jsx_namespaced_name(span, namespace, name), self.allocator)
+    ) -> ArenaBox<'a, JSXNamespacedName<'a>> {
+        ArenaBox::new_in(self.jsx_namespaced_name(span, namespace, name), &self)
     }
 
     /// Build a [`JSXMemberExpression`].
@@ -9398,7 +9387,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`JSXMemberExpression`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::jsx_member_expression`] instead.
     ///
     /// ## Parameters
@@ -9411,8 +9400,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         object: JSXMemberExpressionObject<'a>,
         property: JSXIdentifier<'a>,
-    ) -> Box<'a, JSXMemberExpression<'a>> {
-        Box::new_in(self.jsx_member_expression(span, object, property), self.allocator)
+    ) -> ArenaBox<'a, JSXMemberExpression<'a>> {
+        ArenaBox::new_in(self.jsx_member_expression(span, object, property), &self)
     }
 
     /// Build a [`JSXMemberExpressionObject::IdentifierReference`].
@@ -9510,7 +9499,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`JSXExpressionContainer`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::jsx_expression_container`] instead.
     ///
     /// ## Parameters
@@ -9521,8 +9510,8 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         expression: JSXExpression<'a>,
-    ) -> Box<'a, JSXExpressionContainer<'a>> {
-        Box::new_in(self.jsx_expression_container(span, expression), self.allocator)
+    ) -> ArenaBox<'a, JSXExpressionContainer<'a>> {
+        ArenaBox::new_in(self.jsx_expression_container(span, expression), &self)
     }
 
     /// Build a [`JSXExpression::EmptyExpression`].
@@ -9550,14 +9539,14 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`JSXEmptyExpression`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::jsx_empty_expression`] instead.
     ///
     /// ## Parameters
     /// * `span`: Node location in source code.
     #[inline]
-    pub fn alloc_jsx_empty_expression(self, span: Span) -> Box<'a, JSXEmptyExpression> {
-        Box::new_in(self.jsx_empty_expression(span), self.allocator)
+    pub fn alloc_jsx_empty_expression(self, span: Span) -> ArenaBox<'a, JSXEmptyExpression> {
+        ArenaBox::new_in(self.jsx_empty_expression(span), &self)
     }
 
     /// Build a [`JSXAttributeItem::Attribute`].
@@ -9615,7 +9604,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`JSXAttribute`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::jsx_attribute`] instead.
     ///
     /// ## Parameters
@@ -9628,8 +9617,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         name: JSXAttributeName<'a>,
         value: Option<JSXAttributeValue<'a>>,
-    ) -> Box<'a, JSXAttribute<'a>> {
-        Box::new_in(self.jsx_attribute(span, name, value), self.allocator)
+    ) -> ArenaBox<'a, JSXAttribute<'a>> {
+        ArenaBox::new_in(self.jsx_attribute(span, name, value), &self)
     }
 
     /// Build a [`JSXSpreadAttribute`].
@@ -9651,7 +9640,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`JSXSpreadAttribute`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::jsx_spread_attribute`] instead.
     ///
     /// ## Parameters
@@ -9662,8 +9651,8 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         argument: Expression<'a>,
-    ) -> Box<'a, JSXSpreadAttribute<'a>> {
-        Box::new_in(self.jsx_spread_attribute(span, argument), self.allocator)
+    ) -> ArenaBox<'a, JSXSpreadAttribute<'a>> {
+        ArenaBox::new_in(self.jsx_spread_attribute(span, argument), &self)
     }
 
     /// Build a [`JSXAttributeName::Identifier`].
@@ -9780,12 +9769,12 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         opening_element: T1,
-        children: Vec<'a, JSXChild<'a>>,
+        children: ArenaVec<'a, JSXChild<'a>>,
         closing_element: T2,
     ) -> JSXAttributeValue<'a>
     where
-        T1: IntoIn<'a, Box<'a, JSXOpeningElement<'a>>>,
-        T2: IntoIn<'a, Option<Box<'a, JSXClosingElement<'a>>>>,
+        T1: IntoIn<'a, ArenaBox<'a, JSXOpeningElement<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, JSXClosingElement<'a>>>>,
     {
         JSXAttributeValue::Element(self.alloc_jsx_element(
             span,
@@ -9809,7 +9798,7 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         opening_fragment: JSXOpeningFragment,
-        children: Vec<'a, JSXChild<'a>>,
+        children: ArenaVec<'a, JSXChild<'a>>,
         closing_fragment: JSXClosingFragment,
     ) -> JSXAttributeValue<'a> {
         JSXAttributeValue::Fragment(self.alloc_jsx_fragment(
@@ -9838,18 +9827,18 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`JSXIdentifier`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::jsx_identifier`] instead.
     ///
     /// ## Parameters
     /// * `span`: Node location in source code.
     /// * `name`: The name of the identifier.
     #[inline]
-    pub fn alloc_jsx_identifier<S1>(self, span: Span, name: S1) -> Box<'a, JSXIdentifier<'a>>
+    pub fn alloc_jsx_identifier<S1>(self, span: Span, name: S1) -> ArenaBox<'a, JSXIdentifier<'a>>
     where
         S1: Into<Str<'a>>,
     {
-        Box::new_in(self.jsx_identifier(span, name), self.allocator)
+        ArenaBox::new_in(self.jsx_identifier(span, name), &self)
     }
 
     /// Build a [`JSXChild::Text`].
@@ -9882,12 +9871,12 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         opening_element: T1,
-        children: Vec<'a, JSXChild<'a>>,
+        children: ArenaVec<'a, JSXChild<'a>>,
         closing_element: T2,
     ) -> JSXChild<'a>
     where
-        T1: IntoIn<'a, Box<'a, JSXOpeningElement<'a>>>,
-        T2: IntoIn<'a, Option<Box<'a, JSXClosingElement<'a>>>>,
+        T1: IntoIn<'a, ArenaBox<'a, JSXOpeningElement<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, JSXClosingElement<'a>>>>,
     {
         JSXChild::Element(self.alloc_jsx_element(span, opening_element, children, closing_element))
     }
@@ -9906,7 +9895,7 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         opening_fragment: JSXOpeningFragment,
-        children: Vec<'a, JSXChild<'a>>,
+        children: ArenaVec<'a, JSXChild<'a>>,
         closing_fragment: JSXClosingFragment,
     ) -> JSXChild<'a> {
         JSXChild::Fragment(self.alloc_jsx_fragment(
@@ -9960,7 +9949,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`JSXSpreadChild`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::jsx_spread_child`] instead.
     ///
     /// ## Parameters
@@ -9971,8 +9960,8 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         expression: Expression<'a>,
-    ) -> Box<'a, JSXSpreadChild<'a>> {
-        Box::new_in(self.jsx_spread_child(span, expression), self.allocator)
+    ) -> ArenaBox<'a, JSXSpreadChild<'a>> {
+        ArenaBox::new_in(self.jsx_spread_child(span, expression), &self)
     }
 
     /// Build a [`JSXText`].
@@ -9994,7 +9983,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`JSXText`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::jsx_text`] instead.
     ///
     /// ## Parameters
@@ -10007,11 +9996,11 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         value: S1,
         raw: Option<Str<'a>>,
-    ) -> Box<'a, JSXText<'a>>
+    ) -> ArenaBox<'a, JSXText<'a>>
     where
         S1: Into<Str<'a>>,
     {
-        Box::new_in(self.jsx_text(span, value, raw), self.allocator)
+        ArenaBox::new_in(self.jsx_text(span, value, raw), &self)
     }
 
     /// Build a [`TSThisParameter`].
@@ -10031,7 +10020,7 @@ impl<'a> AstBuilder<'a> {
         type_annotation: T1,
     ) -> TSThisParameter<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
         TSThisParameter {
             node_id: Default::default(),
@@ -10043,7 +10032,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSThisParameter`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_this_parameter`] instead.
     ///
     /// ## Parameters
@@ -10056,11 +10045,11 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         this_span: Span,
         type_annotation: T1,
-    ) -> Box<'a, TSThisParameter<'a>>
+    ) -> ArenaBox<'a, TSThisParameter<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
-        Box::new_in(self.ts_this_parameter(span, this_span, type_annotation), self.allocator)
+        ArenaBox::new_in(self.ts_this_parameter(span, this_span, type_annotation), &self)
     }
 
     /// Build a [`TSEnumDeclaration`].
@@ -10088,7 +10077,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSEnumDeclaration`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_enum_declaration`] instead.
     ///
     /// ## Parameters
@@ -10105,8 +10094,8 @@ impl<'a> AstBuilder<'a> {
         body: TSEnumBody<'a>,
         r#const: bool,
         declare: bool,
-    ) -> Box<'a, TSEnumDeclaration<'a>> {
-        Box::new_in(self.ts_enum_declaration(span, id, body, r#const, declare), self.allocator)
+    ) -> ArenaBox<'a, TSEnumDeclaration<'a>> {
+        ArenaBox::new_in(self.ts_enum_declaration(span, id, body, r#const, declare), &self)
     }
 
     /// Build a [`TSEnumBody`].
@@ -10115,7 +10104,11 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `members`
     #[inline]
-    pub fn ts_enum_body(self, span: Span, members: Vec<'a, TSEnumMember<'a>>) -> TSEnumBody<'a> {
+    pub fn ts_enum_body(
+        self,
+        span: Span,
+        members: ArenaVec<'a, TSEnumMember<'a>>,
+    ) -> TSEnumBody<'a> {
         TSEnumBody { node_id: Default::default(), span, members, scope_id: Default::default() }
     }
 
@@ -10129,7 +10122,7 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_enum_body_with_scope_id(
         self,
         span: Span,
-        members: Vec<'a, TSEnumMember<'a>>,
+        members: ArenaVec<'a, TSEnumMember<'a>>,
         scope_id: ScopeId,
     ) -> TSEnumBody<'a> {
         TSEnumBody {
@@ -10281,8 +10274,8 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_enum_member_name_computed_template_string(
         self,
         span: Span,
-        quasis: Vec<'a, TemplateElement<'a>>,
-        expressions: Vec<'a, Expression<'a>>,
+        quasis: ArenaVec<'a, TemplateElement<'a>>,
+        expressions: ArenaVec<'a, Expression<'a>>,
     ) -> TSEnumMemberName<'a> {
         TSEnumMemberName::ComputedTemplateString(self.alloc_template_literal(
             span,
@@ -10310,7 +10303,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSTypeAnnotation`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_type_annotation`] instead.
     ///
     /// ## Parameters
@@ -10321,8 +10314,8 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         type_annotation: TSType<'a>,
-    ) -> Box<'a, TSTypeAnnotation<'a>> {
-        Box::new_in(self.ts_type_annotation(span, type_annotation), self.allocator)
+    ) -> ArenaBox<'a, TSTypeAnnotation<'a>> {
+        ArenaBox::new_in(self.ts_type_annotation(span, type_annotation), &self)
     }
 
     /// Build a [`TSLiteralType`].
@@ -10340,7 +10333,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSLiteralType`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_literal_type`] instead.
     ///
     /// ## Parameters
@@ -10351,8 +10344,8 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         literal: TSLiteral<'a>,
-    ) -> Box<'a, TSLiteralType<'a>> {
-        Box::new_in(self.ts_literal_type(span, literal), self.allocator)
+    ) -> ArenaBox<'a, TSLiteralType<'a>> {
+        ArenaBox::new_in(self.ts_literal_type(span, literal), &self)
     }
 
     /// Build a [`TSLiteral::BooleanLiteral`].
@@ -10471,8 +10464,8 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_literal_template_literal(
         self,
         span: Span,
-        quasis: Vec<'a, TemplateElement<'a>>,
-        expressions: Vec<'a, Expression<'a>>,
+        quasis: ArenaVec<'a, TemplateElement<'a>>,
+        expressions: ArenaVec<'a, Expression<'a>>,
     ) -> TSLiteral<'a> {
         TSLiteral::TemplateLiteral(self.alloc_template_literal(span, quasis, expressions))
     }
@@ -10729,9 +10722,9 @@ impl<'a> AstBuilder<'a> {
         return_type: T3,
     ) -> TSType<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T3: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
     {
         TSType::TSConstructorType(self.alloc_ts_constructor_type(
             span,
@@ -10764,9 +10757,9 @@ impl<'a> AstBuilder<'a> {
         scope_id: ScopeId,
     ) -> TSType<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T3: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
     {
         TSType::TSConstructorType(self.alloc_ts_constructor_type_with_scope_id(
             span,
@@ -10798,10 +10791,10 @@ impl<'a> AstBuilder<'a> {
         return_type: T4,
     ) -> TSType<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
     {
         TSType::TSFunctionType(self.alloc_ts_function_type(
             span,
@@ -10834,10 +10827,10 @@ impl<'a> AstBuilder<'a> {
         scope_id: ScopeId,
     ) -> TSType<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
     {
         TSType::TSFunctionType(self.alloc_ts_function_type_with_scope_id(
             span,
@@ -10869,8 +10862,8 @@ impl<'a> AstBuilder<'a> {
         type_arguments: T2,
     ) -> TSType<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, ObjectExpression<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, ObjectExpression<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         TSType::TSImportType(self.alloc_ts_import_type(
             span,
@@ -10913,7 +10906,7 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn ts_type_infer_type<T1>(self, span: Span, type_parameter: T1) -> TSType<'a>
     where
-        T1: IntoIn<'a, Box<'a, TSTypeParameter<'a>>>,
+        T1: IntoIn<'a, ArenaBox<'a, TSTypeParameter<'a>>>,
     {
         TSType::TSInferType(self.alloc_ts_infer_type(span, type_parameter))
     }
@@ -10926,7 +10919,11 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `types`
     #[inline]
-    pub fn ts_type_intersection_type(self, span: Span, types: Vec<'a, TSType<'a>>) -> TSType<'a> {
+    pub fn ts_type_intersection_type(
+        self,
+        span: Span,
+        types: ArenaVec<'a, TSType<'a>>,
+    ) -> TSType<'a> {
         TSType::TSIntersectionType(self.alloc_ts_intersection_type(span, types))
     }
 
@@ -11050,8 +11047,8 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_type_template_literal_type(
         self,
         span: Span,
-        quasis: Vec<'a, TemplateElement<'a>>,
-        types: Vec<'a, TSType<'a>>,
+        quasis: ArenaVec<'a, TemplateElement<'a>>,
+        types: ArenaVec<'a, TSType<'a>>,
     ) -> TSType<'a> {
         TSType::TSTemplateLiteralType(self.alloc_ts_template_literal_type(span, quasis, types))
     }
@@ -11078,7 +11075,7 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_type_tuple_type(
         self,
         span: Span,
-        element_types: Vec<'a, TSTupleElement<'a>>,
+        element_types: ArenaVec<'a, TSTupleElement<'a>>,
     ) -> TSType<'a> {
         TSType::TSTupleType(self.alloc_ts_tuple_type(span, element_types))
     }
@@ -11091,7 +11088,11 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `members`
     #[inline]
-    pub fn ts_type_type_literal(self, span: Span, members: Vec<'a, TSSignature<'a>>) -> TSType<'a> {
+    pub fn ts_type_type_literal(
+        self,
+        span: Span,
+        members: ArenaVec<'a, TSSignature<'a>>,
+    ) -> TSType<'a> {
         TSType::TSTypeLiteral(self.alloc_ts_type_literal(span, members))
     }
 
@@ -11131,7 +11132,7 @@ impl<'a> AstBuilder<'a> {
         type_annotation: T1,
     ) -> TSType<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
         TSType::TSTypePredicate(self.alloc_ts_type_predicate(
             span,
@@ -11157,7 +11158,7 @@ impl<'a> AstBuilder<'a> {
         type_arguments: T1,
     ) -> TSType<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         TSType::TSTypeQuery(self.alloc_ts_type_query(span, expr_name, type_arguments))
     }
@@ -11178,7 +11179,7 @@ impl<'a> AstBuilder<'a> {
         type_arguments: T1,
     ) -> TSType<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         TSType::TSTypeReference(self.alloc_ts_type_reference(span, type_name, type_arguments))
     }
@@ -11191,7 +11192,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `types`: The types in the union.
     #[inline]
-    pub fn ts_type_union_type(self, span: Span, types: Vec<'a, TSType<'a>>) -> TSType<'a> {
+    pub fn ts_type_union_type(self, span: Span, types: ArenaVec<'a, TSType<'a>>) -> TSType<'a> {
         TSType::TSUnionType(self.alloc_ts_union_type(span, types))
     }
 
@@ -11291,7 +11292,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSConditionalType`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_conditional_type`] instead.
     ///
     /// ## Parameters
@@ -11308,10 +11309,10 @@ impl<'a> AstBuilder<'a> {
         extends_type: TSType<'a>,
         true_type: TSType<'a>,
         false_type: TSType<'a>,
-    ) -> Box<'a, TSConditionalType<'a>> {
-        Box::new_in(
+    ) -> ArenaBox<'a, TSConditionalType<'a>> {
+        ArenaBox::new_in(
             self.ts_conditional_type(span, check_type, extends_type, true_type, false_type),
-            self.allocator,
+            &self,
         )
     }
 
@@ -11350,7 +11351,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSConditionalType`] with `scope_id`, and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_conditional_type_with_scope_id`] instead.
     ///
     /// ## Parameters
@@ -11369,8 +11370,8 @@ impl<'a> AstBuilder<'a> {
         true_type: TSType<'a>,
         false_type: TSType<'a>,
         scope_id: ScopeId,
-    ) -> Box<'a, TSConditionalType<'a>> {
-        Box::new_in(
+    ) -> ArenaBox<'a, TSConditionalType<'a>> {
+        ArenaBox::new_in(
             self.ts_conditional_type_with_scope_id(
                 span,
                 check_type,
@@ -11379,7 +11380,7 @@ impl<'a> AstBuilder<'a> {
                 false_type,
                 scope_id,
             ),
-            self.allocator,
+            &self,
         )
     }
 
@@ -11392,13 +11393,13 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `types`: The types in the union.
     #[inline]
-    pub fn ts_union_type(self, span: Span, types: Vec<'a, TSType<'a>>) -> TSUnionType<'a> {
+    pub fn ts_union_type(self, span: Span, types: ArenaVec<'a, TSType<'a>>) -> TSUnionType<'a> {
         TSUnionType { node_id: Default::default(), span, types }
     }
 
     /// Build a [`TSUnionType`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_union_type`] instead.
     ///
     /// ## Parameters
@@ -11408,9 +11409,9 @@ impl<'a> AstBuilder<'a> {
     pub fn alloc_ts_union_type(
         self,
         span: Span,
-        types: Vec<'a, TSType<'a>>,
-    ) -> Box<'a, TSUnionType<'a>> {
-        Box::new_in(self.ts_union_type(span, types), self.allocator)
+        types: ArenaVec<'a, TSType<'a>>,
+    ) -> ArenaBox<'a, TSUnionType<'a>> {
+        ArenaBox::new_in(self.ts_union_type(span, types), &self)
     }
 
     /// Build a [`TSIntersectionType`].
@@ -11425,14 +11426,14 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_intersection_type(
         self,
         span: Span,
-        types: Vec<'a, TSType<'a>>,
+        types: ArenaVec<'a, TSType<'a>>,
     ) -> TSIntersectionType<'a> {
         TSIntersectionType { node_id: Default::default(), span, types }
     }
 
     /// Build a [`TSIntersectionType`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_intersection_type`] instead.
     ///
     /// ## Parameters
@@ -11442,9 +11443,9 @@ impl<'a> AstBuilder<'a> {
     pub fn alloc_ts_intersection_type(
         self,
         span: Span,
-        types: Vec<'a, TSType<'a>>,
-    ) -> Box<'a, TSIntersectionType<'a>> {
-        Box::new_in(self.ts_intersection_type(span, types), self.allocator)
+        types: ArenaVec<'a, TSType<'a>>,
+    ) -> ArenaBox<'a, TSIntersectionType<'a>> {
+        ArenaBox::new_in(self.ts_intersection_type(span, types), &self)
     }
 
     /// Build a [`TSParenthesizedType`].
@@ -11466,7 +11467,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSParenthesizedType`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_parenthesized_type`] instead.
     ///
     /// ## Parameters
@@ -11477,8 +11478,8 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         type_annotation: TSType<'a>,
-    ) -> Box<'a, TSParenthesizedType<'a>> {
-        Box::new_in(self.ts_parenthesized_type(span, type_annotation), self.allocator)
+    ) -> ArenaBox<'a, TSParenthesizedType<'a>> {
+        ArenaBox::new_in(self.ts_parenthesized_type(span, type_annotation), &self)
     }
 
     /// Build a [`TSTypeOperator`].
@@ -11502,7 +11503,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSTypeOperator`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_type_operator`] instead.
     ///
     /// ## Parameters
@@ -11515,8 +11516,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         operator: TSTypeOperatorOperator,
         type_annotation: TSType<'a>,
-    ) -> Box<'a, TSTypeOperator<'a>> {
-        Box::new_in(self.ts_type_operator(span, operator, type_annotation), self.allocator)
+    ) -> ArenaBox<'a, TSTypeOperator<'a>> {
+        ArenaBox::new_in(self.ts_type_operator(span, operator, type_annotation), &self)
     }
 
     /// Build a [`TSArrayType`].
@@ -11534,7 +11535,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSArrayType`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_array_type`] instead.
     ///
     /// ## Parameters
@@ -11545,8 +11546,8 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         element_type: TSType<'a>,
-    ) -> Box<'a, TSArrayType<'a>> {
-        Box::new_in(self.ts_array_type(span, element_type), self.allocator)
+    ) -> ArenaBox<'a, TSArrayType<'a>> {
+        ArenaBox::new_in(self.ts_array_type(span, element_type), &self)
     }
 
     /// Build a [`TSIndexedAccessType`].
@@ -11570,7 +11571,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSIndexedAccessType`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_indexed_access_type`] instead.
     ///
     /// ## Parameters
@@ -11583,8 +11584,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         object_type: TSType<'a>,
         index_type: TSType<'a>,
-    ) -> Box<'a, TSIndexedAccessType<'a>> {
-        Box::new_in(self.ts_indexed_access_type(span, object_type, index_type), self.allocator)
+    ) -> ArenaBox<'a, TSIndexedAccessType<'a>> {
+        ArenaBox::new_in(self.ts_indexed_access_type(span, object_type, index_type), &self)
     }
 
     /// Build a [`TSTupleType`].
@@ -11599,14 +11600,14 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_tuple_type(
         self,
         span: Span,
-        element_types: Vec<'a, TSTupleElement<'a>>,
+        element_types: ArenaVec<'a, TSTupleElement<'a>>,
     ) -> TSTupleType<'a> {
         TSTupleType { node_id: Default::default(), span, element_types }
     }
 
     /// Build a [`TSTupleType`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_tuple_type`] instead.
     ///
     /// ## Parameters
@@ -11616,9 +11617,9 @@ impl<'a> AstBuilder<'a> {
     pub fn alloc_ts_tuple_type(
         self,
         span: Span,
-        element_types: Vec<'a, TSTupleElement<'a>>,
-    ) -> Box<'a, TSTupleType<'a>> {
-        Box::new_in(self.ts_tuple_type(span, element_types), self.allocator)
+        element_types: ArenaVec<'a, TSTupleElement<'a>>,
+    ) -> ArenaBox<'a, TSTupleType<'a>> {
+        ArenaBox::new_in(self.ts_tuple_type(span, element_types), &self)
     }
 
     /// Build a [`TSNamedTupleMember`].
@@ -11644,7 +11645,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSNamedTupleMember`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_named_tuple_member`] instead.
     ///
     /// ## Parameters
@@ -11659,8 +11660,8 @@ impl<'a> AstBuilder<'a> {
         label: IdentifierName<'a>,
         element_type: TSTupleElement<'a>,
         optional: bool,
-    ) -> Box<'a, TSNamedTupleMember<'a>> {
-        Box::new_in(self.ts_named_tuple_member(span, label, element_type, optional), self.allocator)
+    ) -> ArenaBox<'a, TSNamedTupleMember<'a>> {
+        ArenaBox::new_in(self.ts_named_tuple_member(span, label, element_type, optional), &self)
     }
 
     /// Build a [`TSOptionalType`].
@@ -11678,7 +11679,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSOptionalType`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_optional_type`] instead.
     ///
     /// ## Parameters
@@ -11689,8 +11690,8 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         type_annotation: TSType<'a>,
-    ) -> Box<'a, TSOptionalType<'a>> {
-        Box::new_in(self.ts_optional_type(span, type_annotation), self.allocator)
+    ) -> ArenaBox<'a, TSOptionalType<'a>> {
+        ArenaBox::new_in(self.ts_optional_type(span, type_annotation), &self)
     }
 
     /// Build a [`TSRestType`].
@@ -11708,7 +11709,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSRestType`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_rest_type`] instead.
     ///
     /// ## Parameters
@@ -11719,8 +11720,8 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         type_annotation: TSType<'a>,
-    ) -> Box<'a, TSRestType<'a>> {
-        Box::new_in(self.ts_rest_type(span, type_annotation), self.allocator)
+    ) -> ArenaBox<'a, TSRestType<'a>> {
+        ArenaBox::new_in(self.ts_rest_type(span, type_annotation), &self)
     }
 
     /// Build a [`TSTupleElement::TSOptionalType`].
@@ -11769,14 +11770,14 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSAnyKeyword`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_any_keyword`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_ts_any_keyword(self, span: Span) -> Box<'a, TSAnyKeyword> {
-        Box::new_in(self.ts_any_keyword(span), self.allocator)
+    pub fn alloc_ts_any_keyword(self, span: Span) -> ArenaBox<'a, TSAnyKeyword> {
+        ArenaBox::new_in(self.ts_any_keyword(span), &self)
     }
 
     /// Build a [`TSStringKeyword`].
@@ -11793,14 +11794,14 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSStringKeyword`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_string_keyword`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_ts_string_keyword(self, span: Span) -> Box<'a, TSStringKeyword> {
-        Box::new_in(self.ts_string_keyword(span), self.allocator)
+    pub fn alloc_ts_string_keyword(self, span: Span) -> ArenaBox<'a, TSStringKeyword> {
+        ArenaBox::new_in(self.ts_string_keyword(span), &self)
     }
 
     /// Build a [`TSBooleanKeyword`].
@@ -11817,14 +11818,14 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSBooleanKeyword`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_boolean_keyword`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_ts_boolean_keyword(self, span: Span) -> Box<'a, TSBooleanKeyword> {
-        Box::new_in(self.ts_boolean_keyword(span), self.allocator)
+    pub fn alloc_ts_boolean_keyword(self, span: Span) -> ArenaBox<'a, TSBooleanKeyword> {
+        ArenaBox::new_in(self.ts_boolean_keyword(span), &self)
     }
 
     /// Build a [`TSNumberKeyword`].
@@ -11841,14 +11842,14 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSNumberKeyword`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_number_keyword`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_ts_number_keyword(self, span: Span) -> Box<'a, TSNumberKeyword> {
-        Box::new_in(self.ts_number_keyword(span), self.allocator)
+    pub fn alloc_ts_number_keyword(self, span: Span) -> ArenaBox<'a, TSNumberKeyword> {
+        ArenaBox::new_in(self.ts_number_keyword(span), &self)
     }
 
     /// Build a [`TSNeverKeyword`].
@@ -11865,14 +11866,14 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSNeverKeyword`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_never_keyword`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_ts_never_keyword(self, span: Span) -> Box<'a, TSNeverKeyword> {
-        Box::new_in(self.ts_never_keyword(span), self.allocator)
+    pub fn alloc_ts_never_keyword(self, span: Span) -> ArenaBox<'a, TSNeverKeyword> {
+        ArenaBox::new_in(self.ts_never_keyword(span), &self)
     }
 
     /// Build a [`TSIntrinsicKeyword`].
@@ -11889,14 +11890,14 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSIntrinsicKeyword`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_intrinsic_keyword`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_ts_intrinsic_keyword(self, span: Span) -> Box<'a, TSIntrinsicKeyword> {
-        Box::new_in(self.ts_intrinsic_keyword(span), self.allocator)
+    pub fn alloc_ts_intrinsic_keyword(self, span: Span) -> ArenaBox<'a, TSIntrinsicKeyword> {
+        ArenaBox::new_in(self.ts_intrinsic_keyword(span), &self)
     }
 
     /// Build a [`TSUnknownKeyword`].
@@ -11913,14 +11914,14 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSUnknownKeyword`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_unknown_keyword`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_ts_unknown_keyword(self, span: Span) -> Box<'a, TSUnknownKeyword> {
-        Box::new_in(self.ts_unknown_keyword(span), self.allocator)
+    pub fn alloc_ts_unknown_keyword(self, span: Span) -> ArenaBox<'a, TSUnknownKeyword> {
+        ArenaBox::new_in(self.ts_unknown_keyword(span), &self)
     }
 
     /// Build a [`TSNullKeyword`].
@@ -11937,14 +11938,14 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSNullKeyword`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_null_keyword`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_ts_null_keyword(self, span: Span) -> Box<'a, TSNullKeyword> {
-        Box::new_in(self.ts_null_keyword(span), self.allocator)
+    pub fn alloc_ts_null_keyword(self, span: Span) -> ArenaBox<'a, TSNullKeyword> {
+        ArenaBox::new_in(self.ts_null_keyword(span), &self)
     }
 
     /// Build a [`TSUndefinedKeyword`].
@@ -11961,14 +11962,14 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSUndefinedKeyword`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_undefined_keyword`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_ts_undefined_keyword(self, span: Span) -> Box<'a, TSUndefinedKeyword> {
-        Box::new_in(self.ts_undefined_keyword(span), self.allocator)
+    pub fn alloc_ts_undefined_keyword(self, span: Span) -> ArenaBox<'a, TSUndefinedKeyword> {
+        ArenaBox::new_in(self.ts_undefined_keyword(span), &self)
     }
 
     /// Build a [`TSVoidKeyword`].
@@ -11985,14 +11986,14 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSVoidKeyword`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_void_keyword`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_ts_void_keyword(self, span: Span) -> Box<'a, TSVoidKeyword> {
-        Box::new_in(self.ts_void_keyword(span), self.allocator)
+    pub fn alloc_ts_void_keyword(self, span: Span) -> ArenaBox<'a, TSVoidKeyword> {
+        ArenaBox::new_in(self.ts_void_keyword(span), &self)
     }
 
     /// Build a [`TSSymbolKeyword`].
@@ -12009,14 +12010,14 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSSymbolKeyword`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_symbol_keyword`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_ts_symbol_keyword(self, span: Span) -> Box<'a, TSSymbolKeyword> {
-        Box::new_in(self.ts_symbol_keyword(span), self.allocator)
+    pub fn alloc_ts_symbol_keyword(self, span: Span) -> ArenaBox<'a, TSSymbolKeyword> {
+        ArenaBox::new_in(self.ts_symbol_keyword(span), &self)
     }
 
     /// Build a [`TSThisType`].
@@ -12033,14 +12034,14 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSThisType`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_this_type`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_ts_this_type(self, span: Span) -> Box<'a, TSThisType> {
-        Box::new_in(self.ts_this_type(span), self.allocator)
+    pub fn alloc_ts_this_type(self, span: Span) -> ArenaBox<'a, TSThisType> {
+        ArenaBox::new_in(self.ts_this_type(span), &self)
     }
 
     /// Build a [`TSObjectKeyword`].
@@ -12057,14 +12058,14 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSObjectKeyword`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_object_keyword`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_ts_object_keyword(self, span: Span) -> Box<'a, TSObjectKeyword> {
-        Box::new_in(self.ts_object_keyword(span), self.allocator)
+    pub fn alloc_ts_object_keyword(self, span: Span) -> ArenaBox<'a, TSObjectKeyword> {
+        ArenaBox::new_in(self.ts_object_keyword(span), &self)
     }
 
     /// Build a [`TSBigIntKeyword`].
@@ -12081,14 +12082,14 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSBigIntKeyword`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_big_int_keyword`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_ts_big_int_keyword(self, span: Span) -> Box<'a, TSBigIntKeyword> {
-        Box::new_in(self.ts_big_int_keyword(span), self.allocator)
+    pub fn alloc_ts_big_int_keyword(self, span: Span) -> ArenaBox<'a, TSBigIntKeyword> {
+        ArenaBox::new_in(self.ts_big_int_keyword(span), &self)
     }
 
     /// Build a [`TSTypeReference`].
@@ -12108,7 +12109,7 @@ impl<'a> AstBuilder<'a> {
         type_arguments: T1,
     ) -> TSTypeReference<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         TSTypeReference {
             node_id: Default::default(),
@@ -12120,7 +12121,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSTypeReference`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_type_reference`] instead.
     ///
     /// ## Parameters
@@ -12133,11 +12134,11 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         type_name: TSTypeName<'a>,
         type_arguments: T1,
-    ) -> Box<'a, TSTypeReference<'a>>
+    ) -> ArenaBox<'a, TSTypeReference<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
     {
-        Box::new_in(self.ts_type_reference(span, type_name, type_arguments), self.allocator)
+        ArenaBox::new_in(self.ts_type_reference(span, type_name, type_arguments), &self)
     }
 
     /// Build a [`TSTypeName::IdentifierReference`].
@@ -12230,7 +12231,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSQualifiedName`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_qualified_name`] instead.
     ///
     /// ## Parameters
@@ -12243,8 +12244,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         left: TSTypeName<'a>,
         right: IdentifierName<'a>,
-    ) -> Box<'a, TSQualifiedName<'a>> {
-        Box::new_in(self.ts_qualified_name(span, left, right), self.allocator)
+    ) -> ArenaBox<'a, TSQualifiedName<'a>> {
+        ArenaBox::new_in(self.ts_qualified_name(span, left, right), &self)
     }
 
     /// Build a [`TSTypeParameterInstantiation`].
@@ -12259,14 +12260,14 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_type_parameter_instantiation(
         self,
         span: Span,
-        params: Vec<'a, TSType<'a>>,
+        params: ArenaVec<'a, TSType<'a>>,
     ) -> TSTypeParameterInstantiation<'a> {
         TSTypeParameterInstantiation { node_id: Default::default(), span, params }
     }
 
     /// Build a [`TSTypeParameterInstantiation`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_type_parameter_instantiation`] instead.
     ///
     /// ## Parameters
@@ -12276,9 +12277,9 @@ impl<'a> AstBuilder<'a> {
     pub fn alloc_ts_type_parameter_instantiation(
         self,
         span: Span,
-        params: Vec<'a, TSType<'a>>,
-    ) -> Box<'a, TSTypeParameterInstantiation<'a>> {
-        Box::new_in(self.ts_type_parameter_instantiation(span, params), self.allocator)
+        params: ArenaVec<'a, TSType<'a>>,
+    ) -> ArenaBox<'a, TSTypeParameterInstantiation<'a>> {
+        ArenaBox::new_in(self.ts_type_parameter_instantiation(span, params), &self)
     }
 
     /// Build a [`TSTypeParameter`].
@@ -12319,7 +12320,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSTypeParameter`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_type_parameter`] instead.
     ///
     /// ## Parameters
@@ -12340,10 +12341,10 @@ impl<'a> AstBuilder<'a> {
         r#in: bool,
         out: bool,
         r#const: bool,
-    ) -> Box<'a, TSTypeParameter<'a>> {
-        Box::new_in(
+    ) -> ArenaBox<'a, TSTypeParameter<'a>> {
+        ArenaBox::new_in(
             self.ts_type_parameter(span, name, constraint, default, r#in, out, r#const),
-            self.allocator,
+            &self,
         )
     }
 
@@ -12359,14 +12360,14 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_type_parameter_declaration(
         self,
         span: Span,
-        params: Vec<'a, TSTypeParameter<'a>>,
+        params: ArenaVec<'a, TSTypeParameter<'a>>,
     ) -> TSTypeParameterDeclaration<'a> {
         TSTypeParameterDeclaration { node_id: Default::default(), span, params }
     }
 
     /// Build a [`TSTypeParameterDeclaration`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_type_parameter_declaration`] instead.
     ///
     /// ## Parameters
@@ -12376,9 +12377,9 @@ impl<'a> AstBuilder<'a> {
     pub fn alloc_ts_type_parameter_declaration(
         self,
         span: Span,
-        params: Vec<'a, TSTypeParameter<'a>>,
-    ) -> Box<'a, TSTypeParameterDeclaration<'a>> {
-        Box::new_in(self.ts_type_parameter_declaration(span, params), self.allocator)
+        params: ArenaVec<'a, TSTypeParameter<'a>>,
+    ) -> ArenaBox<'a, TSTypeParameterDeclaration<'a>> {
+        ArenaBox::new_in(self.ts_type_parameter_declaration(span, params), &self)
     }
 
     /// Build a [`TSTypeAliasDeclaration`].
@@ -12402,7 +12403,7 @@ impl<'a> AstBuilder<'a> {
         declare: bool,
     ) -> TSTypeAliasDeclaration<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
     {
         TSTypeAliasDeclaration {
             node_id: Default::default(),
@@ -12417,7 +12418,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSTypeAliasDeclaration`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_type_alias_declaration`] instead.
     ///
     /// ## Parameters
@@ -12434,13 +12435,13 @@ impl<'a> AstBuilder<'a> {
         type_parameters: T1,
         type_annotation: TSType<'a>,
         declare: bool,
-    ) -> Box<'a, TSTypeAliasDeclaration<'a>>
+    ) -> ArenaBox<'a, TSTypeAliasDeclaration<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
     {
-        Box::new_in(
+        ArenaBox::new_in(
             self.ts_type_alias_declaration(span, id, type_parameters, type_annotation, declare),
-            self.allocator,
+            &self,
         )
     }
 
@@ -12467,7 +12468,7 @@ impl<'a> AstBuilder<'a> {
         scope_id: ScopeId,
     ) -> TSTypeAliasDeclaration<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
     {
         TSTypeAliasDeclaration {
             node_id: Default::default(),
@@ -12482,7 +12483,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSTypeAliasDeclaration`] with `scope_id`, and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_type_alias_declaration_with_scope_id`] instead.
     ///
     /// ## Parameters
@@ -12501,11 +12502,11 @@ impl<'a> AstBuilder<'a> {
         type_annotation: TSType<'a>,
         declare: bool,
         scope_id: ScopeId,
-    ) -> Box<'a, TSTypeAliasDeclaration<'a>>
+    ) -> ArenaBox<'a, TSTypeAliasDeclaration<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
     {
-        Box::new_in(
+        ArenaBox::new_in(
             self.ts_type_alias_declaration_with_scope_id(
                 span,
                 id,
@@ -12514,7 +12515,7 @@ impl<'a> AstBuilder<'a> {
                 declare,
                 scope_id,
             ),
-            self.allocator,
+            &self,
         )
     }
 
@@ -12532,7 +12533,7 @@ impl<'a> AstBuilder<'a> {
         type_arguments: T1,
     ) -> TSClassImplements<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         TSClassImplements {
             node_id: Default::default(),
@@ -12560,13 +12561,13 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         id: BindingIdentifier<'a>,
         type_parameters: T1,
-        extends: Vec<'a, TSInterfaceHeritage<'a>>,
+        extends: ArenaVec<'a, TSInterfaceHeritage<'a>>,
         body: T2,
         declare: bool,
     ) -> TSInterfaceDeclaration<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Box<'a, TSInterfaceBody<'a>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, ArenaBox<'a, TSInterfaceBody<'a>>>,
     {
         TSInterfaceDeclaration {
             node_id: Default::default(),
@@ -12582,7 +12583,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSInterfaceDeclaration`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_interface_declaration`] instead.
     ///
     /// ## Parameters
@@ -12598,17 +12599,17 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         id: BindingIdentifier<'a>,
         type_parameters: T1,
-        extends: Vec<'a, TSInterfaceHeritage<'a>>,
+        extends: ArenaVec<'a, TSInterfaceHeritage<'a>>,
         body: T2,
         declare: bool,
-    ) -> Box<'a, TSInterfaceDeclaration<'a>>
+    ) -> ArenaBox<'a, TSInterfaceDeclaration<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Box<'a, TSInterfaceBody<'a>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, ArenaBox<'a, TSInterfaceBody<'a>>>,
     {
-        Box::new_in(
+        ArenaBox::new_in(
             self.ts_interface_declaration(span, id, type_parameters, extends, body, declare),
-            self.allocator,
+            &self,
         )
     }
 
@@ -12631,14 +12632,14 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         id: BindingIdentifier<'a>,
         type_parameters: T1,
-        extends: Vec<'a, TSInterfaceHeritage<'a>>,
+        extends: ArenaVec<'a, TSInterfaceHeritage<'a>>,
         body: T2,
         declare: bool,
         scope_id: ScopeId,
     ) -> TSInterfaceDeclaration<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Box<'a, TSInterfaceBody<'a>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, ArenaBox<'a, TSInterfaceBody<'a>>>,
     {
         TSInterfaceDeclaration {
             node_id: Default::default(),
@@ -12654,7 +12655,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSInterfaceDeclaration`] with `scope_id`, and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_interface_declaration_with_scope_id`] instead.
     ///
     /// ## Parameters
@@ -12671,16 +12672,16 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         id: BindingIdentifier<'a>,
         type_parameters: T1,
-        extends: Vec<'a, TSInterfaceHeritage<'a>>,
+        extends: ArenaVec<'a, TSInterfaceHeritage<'a>>,
         body: T2,
         declare: bool,
         scope_id: ScopeId,
-    ) -> Box<'a, TSInterfaceDeclaration<'a>>
+    ) -> ArenaBox<'a, TSInterfaceDeclaration<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Box<'a, TSInterfaceBody<'a>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, ArenaBox<'a, TSInterfaceBody<'a>>>,
     {
-        Box::new_in(
+        ArenaBox::new_in(
             self.ts_interface_declaration_with_scope_id(
                 span,
                 id,
@@ -12690,7 +12691,7 @@ impl<'a> AstBuilder<'a> {
                 declare,
                 scope_id,
             ),
-            self.allocator,
+            &self,
         )
     }
 
@@ -12706,14 +12707,14 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_interface_body(
         self,
         span: Span,
-        body: Vec<'a, TSSignature<'a>>,
+        body: ArenaVec<'a, TSSignature<'a>>,
     ) -> TSInterfaceBody<'a> {
         TSInterfaceBody { node_id: Default::default(), span, body }
     }
 
     /// Build a [`TSInterfaceBody`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_interface_body`] instead.
     ///
     /// ## Parameters
@@ -12723,9 +12724,9 @@ impl<'a> AstBuilder<'a> {
     pub fn alloc_ts_interface_body(
         self,
         span: Span,
-        body: Vec<'a, TSSignature<'a>>,
-    ) -> Box<'a, TSInterfaceBody<'a>> {
-        Box::new_in(self.ts_interface_body(span, body), self.allocator)
+        body: ArenaVec<'a, TSSignature<'a>>,
+    ) -> ArenaBox<'a, TSInterfaceBody<'a>> {
+        ArenaBox::new_in(self.ts_interface_body(span, body), &self)
     }
 
     /// Build a [`TSPropertySignature`].
@@ -12751,7 +12752,7 @@ impl<'a> AstBuilder<'a> {
         type_annotation: T1,
     ) -> TSPropertySignature<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
         TSPropertySignature {
             node_id: Default::default(),
@@ -12766,7 +12767,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSPropertySignature`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_property_signature`] instead.
     ///
     /// ## Parameters
@@ -12785,13 +12786,13 @@ impl<'a> AstBuilder<'a> {
         readonly: bool,
         key: PropertyKey<'a>,
         type_annotation: T1,
-    ) -> Box<'a, TSPropertySignature<'a>>
+    ) -> ArenaBox<'a, TSPropertySignature<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
-        Box::new_in(
+        ArenaBox::new_in(
             self.ts_property_signature(span, computed, optional, readonly, key, type_annotation),
-            self.allocator,
+            &self,
         )
     }
 
@@ -12809,13 +12810,13 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_signature_index_signature<T1>(
         self,
         span: Span,
-        parameters: Vec<'a, TSIndexSignatureName<'a>>,
+        parameters: ArenaVec<'a, TSIndexSignatureName<'a>>,
         type_annotation: T1,
         readonly: bool,
         r#static: bool,
     ) -> TSSignature<'a>
     where
-        T1: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
+        T1: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
     {
         TSSignature::TSIndexSignature(self.alloc_ts_index_signature(
             span,
@@ -12848,7 +12849,7 @@ impl<'a> AstBuilder<'a> {
         type_annotation: T1,
     ) -> TSSignature<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
         TSSignature::TSPropertySignature(self.alloc_ts_property_signature(
             span,
@@ -12880,10 +12881,10 @@ impl<'a> AstBuilder<'a> {
         return_type: T4,
     ) -> TSSignature<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
         TSSignature::TSCallSignatureDeclaration(self.alloc_ts_call_signature_declaration(
             span,
@@ -12916,10 +12917,10 @@ impl<'a> AstBuilder<'a> {
         scope_id: ScopeId,
     ) -> TSSignature<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
         TSSignature::TSCallSignatureDeclaration(
             self.alloc_ts_call_signature_declaration_with_scope_id(
@@ -12951,9 +12952,9 @@ impl<'a> AstBuilder<'a> {
         return_type: T3,
     ) -> TSSignature<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
         TSSignature::TSConstructSignatureDeclaration(self.alloc_ts_construct_signature_declaration(
             span,
@@ -12983,9 +12984,9 @@ impl<'a> AstBuilder<'a> {
         scope_id: ScopeId,
     ) -> TSSignature<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
         TSSignature::TSConstructSignatureDeclaration(
             self.alloc_ts_construct_signature_declaration_with_scope_id(
@@ -13026,10 +13027,10 @@ impl<'a> AstBuilder<'a> {
         return_type: T4,
     ) -> TSSignature<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
         TSSignature::TSMethodSignature(self.alloc_ts_method_signature(
             span,
@@ -13074,10 +13075,10 @@ impl<'a> AstBuilder<'a> {
         scope_id: ScopeId,
     ) -> TSSignature<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
         TSSignature::TSMethodSignature(self.alloc_ts_method_signature_with_scope_id(
             span,
@@ -13108,13 +13109,13 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_index_signature<T1>(
         self,
         span: Span,
-        parameters: Vec<'a, TSIndexSignatureName<'a>>,
+        parameters: ArenaVec<'a, TSIndexSignatureName<'a>>,
         type_annotation: T1,
         readonly: bool,
         r#static: bool,
     ) -> TSIndexSignature<'a>
     where
-        T1: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
+        T1: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
     {
         TSIndexSignature {
             node_id: Default::default(),
@@ -13128,7 +13129,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSIndexSignature`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_index_signature`] instead.
     ///
     /// ## Parameters
@@ -13141,17 +13142,17 @@ impl<'a> AstBuilder<'a> {
     pub fn alloc_ts_index_signature<T1>(
         self,
         span: Span,
-        parameters: Vec<'a, TSIndexSignatureName<'a>>,
+        parameters: ArenaVec<'a, TSIndexSignatureName<'a>>,
         type_annotation: T1,
         readonly: bool,
         r#static: bool,
-    ) -> Box<'a, TSIndexSignature<'a>>
+    ) -> ArenaBox<'a, TSIndexSignature<'a>>
     where
-        T1: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
+        T1: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
     {
-        Box::new_in(
+        ArenaBox::new_in(
             self.ts_index_signature(span, parameters, type_annotation, readonly, r#static),
-            self.allocator,
+            &self,
         )
     }
 
@@ -13176,10 +13177,10 @@ impl<'a> AstBuilder<'a> {
         return_type: T4,
     ) -> TSCallSignatureDeclaration<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
         TSCallSignatureDeclaration {
             node_id: Default::default(),
@@ -13194,7 +13195,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSCallSignatureDeclaration`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_call_signature_declaration`] instead.
     ///
     /// ## Parameters
@@ -13211,14 +13212,14 @@ impl<'a> AstBuilder<'a> {
         this_param: T2,
         params: T3,
         return_type: T4,
-    ) -> Box<'a, TSCallSignatureDeclaration<'a>>
+    ) -> ArenaBox<'a, TSCallSignatureDeclaration<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
-        Box::new_in(
+        ArenaBox::new_in(
             self.ts_call_signature_declaration(
                 span,
                 type_parameters,
@@ -13226,7 +13227,7 @@ impl<'a> AstBuilder<'a> {
                 params,
                 return_type,
             ),
-            self.allocator,
+            &self,
         )
     }
 
@@ -13253,10 +13254,10 @@ impl<'a> AstBuilder<'a> {
         scope_id: ScopeId,
     ) -> TSCallSignatureDeclaration<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
         TSCallSignatureDeclaration {
             node_id: Default::default(),
@@ -13271,7 +13272,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSCallSignatureDeclaration`] with `scope_id`, and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_call_signature_declaration_with_scope_id`] instead.
     ///
     /// ## Parameters
@@ -13290,14 +13291,14 @@ impl<'a> AstBuilder<'a> {
         params: T3,
         return_type: T4,
         scope_id: ScopeId,
-    ) -> Box<'a, TSCallSignatureDeclaration<'a>>
+    ) -> ArenaBox<'a, TSCallSignatureDeclaration<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
-        Box::new_in(
+        ArenaBox::new_in(
             self.ts_call_signature_declaration_with_scope_id(
                 span,
                 type_parameters,
@@ -13306,7 +13307,7 @@ impl<'a> AstBuilder<'a> {
                 return_type,
                 scope_id,
             ),
-            self.allocator,
+            &self,
         )
     }
 
@@ -13339,10 +13340,10 @@ impl<'a> AstBuilder<'a> {
         return_type: T4,
     ) -> TSMethodSignature<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
         TSMethodSignature {
             node_id: Default::default(),
@@ -13361,7 +13362,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSMethodSignature`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_method_signature`] instead.
     ///
     /// ## Parameters
@@ -13386,14 +13387,14 @@ impl<'a> AstBuilder<'a> {
         this_param: T2,
         params: T3,
         return_type: T4,
-    ) -> Box<'a, TSMethodSignature<'a>>
+    ) -> ArenaBox<'a, TSMethodSignature<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
-        Box::new_in(
+        ArenaBox::new_in(
             self.ts_method_signature(
                 span,
                 key,
@@ -13405,7 +13406,7 @@ impl<'a> AstBuilder<'a> {
                 params,
                 return_type,
             ),
-            self.allocator,
+            &self,
         )
     }
 
@@ -13440,10 +13441,10 @@ impl<'a> AstBuilder<'a> {
         scope_id: ScopeId,
     ) -> TSMethodSignature<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
         TSMethodSignature {
             node_id: Default::default(),
@@ -13462,7 +13463,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSMethodSignature`] with `scope_id`, and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_method_signature_with_scope_id`] instead.
     ///
     /// ## Parameters
@@ -13489,14 +13490,14 @@ impl<'a> AstBuilder<'a> {
         params: T3,
         return_type: T4,
         scope_id: ScopeId,
-    ) -> Box<'a, TSMethodSignature<'a>>
+    ) -> ArenaBox<'a, TSMethodSignature<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
-        Box::new_in(
+        ArenaBox::new_in(
             self.ts_method_signature_with_scope_id(
                 span,
                 key,
@@ -13509,7 +13510,7 @@ impl<'a> AstBuilder<'a> {
                 return_type,
                 scope_id,
             ),
-            self.allocator,
+            &self,
         )
     }
 
@@ -13532,9 +13533,9 @@ impl<'a> AstBuilder<'a> {
         return_type: T3,
     ) -> TSConstructSignatureDeclaration<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
         TSConstructSignatureDeclaration {
             node_id: Default::default(),
@@ -13548,7 +13549,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSConstructSignatureDeclaration`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_construct_signature_declaration`] instead.
     ///
     /// ## Parameters
@@ -13563,15 +13564,15 @@ impl<'a> AstBuilder<'a> {
         type_parameters: T1,
         params: T2,
         return_type: T3,
-    ) -> Box<'a, TSConstructSignatureDeclaration<'a>>
+    ) -> ArenaBox<'a, TSConstructSignatureDeclaration<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
-        Box::new_in(
+        ArenaBox::new_in(
             self.ts_construct_signature_declaration(span, type_parameters, params, return_type),
-            self.allocator,
+            &self,
         )
     }
 
@@ -13596,9 +13597,9 @@ impl<'a> AstBuilder<'a> {
         scope_id: ScopeId,
     ) -> TSConstructSignatureDeclaration<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
         TSConstructSignatureDeclaration {
             node_id: Default::default(),
@@ -13612,7 +13613,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSConstructSignatureDeclaration`] with `scope_id`, and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_construct_signature_declaration_with_scope_id`] instead.
     ///
     /// ## Parameters
@@ -13629,13 +13630,13 @@ impl<'a> AstBuilder<'a> {
         params: T2,
         return_type: T3,
         scope_id: ScopeId,
-    ) -> Box<'a, TSConstructSignatureDeclaration<'a>>
+    ) -> ArenaBox<'a, TSConstructSignatureDeclaration<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
-        Box::new_in(
+        ArenaBox::new_in(
             self.ts_construct_signature_declaration_with_scope_id(
                 span,
                 type_parameters,
@@ -13643,7 +13644,7 @@ impl<'a> AstBuilder<'a> {
                 return_type,
                 scope_id,
             ),
-            self.allocator,
+            &self,
         )
     }
 
@@ -13662,7 +13663,7 @@ impl<'a> AstBuilder<'a> {
     ) -> TSIndexSignatureName<'a>
     where
         S1: Into<Str<'a>>,
-        T1: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
+        T1: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
     {
         TSIndexSignatureName {
             node_id: Default::default(),
@@ -13686,7 +13687,7 @@ impl<'a> AstBuilder<'a> {
         type_arguments: T1,
     ) -> TSInterfaceHeritage<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         TSInterfaceHeritage {
             node_id: Default::default(),
@@ -13715,7 +13716,7 @@ impl<'a> AstBuilder<'a> {
         type_annotation: T1,
     ) -> TSTypePredicate<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
         TSTypePredicate {
             node_id: Default::default(),
@@ -13728,7 +13729,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSTypePredicate`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_type_predicate`] instead.
     ///
     /// ## Parameters
@@ -13743,13 +13744,13 @@ impl<'a> AstBuilder<'a> {
         parameter_name: TSTypePredicateName<'a>,
         asserts: bool,
         type_annotation: T1,
-    ) -> Box<'a, TSTypePredicate<'a>>
+    ) -> ArenaBox<'a, TSTypePredicate<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
-        Box::new_in(
+        ArenaBox::new_in(
             self.ts_type_predicate(span, parameter_name, asserts, type_annotation),
-            self.allocator,
+            &self,
         )
     }
 
@@ -13816,7 +13817,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSModuleDeclaration`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_module_declaration`] instead.
     ///
     /// ## Parameters
@@ -13833,8 +13834,8 @@ impl<'a> AstBuilder<'a> {
         body: Option<TSModuleDeclarationBody<'a>>,
         kind: TSModuleDeclarationKind,
         declare: bool,
-    ) -> Box<'a, TSModuleDeclaration<'a>> {
-        Box::new_in(self.ts_module_declaration(span, id, body, kind, declare), self.allocator)
+    ) -> ArenaBox<'a, TSModuleDeclaration<'a>> {
+        ArenaBox::new_in(self.ts_module_declaration(span, id, body, kind, declare), &self)
     }
 
     /// Build a [`TSModuleDeclaration`] with `scope_id`.
@@ -13872,7 +13873,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSModuleDeclaration`] with `scope_id`, and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_module_declaration_with_scope_id`] instead.
     ///
     /// ## Parameters
@@ -13891,10 +13892,10 @@ impl<'a> AstBuilder<'a> {
         kind: TSModuleDeclarationKind,
         declare: bool,
         scope_id: ScopeId,
-    ) -> Box<'a, TSModuleDeclaration<'a>> {
-        Box::new_in(
+    ) -> ArenaBox<'a, TSModuleDeclaration<'a>> {
+        ArenaBox::new_in(
             self.ts_module_declaration_with_scope_id(span, id, body, kind, declare, scope_id),
-            self.allocator,
+            &self,
         )
     }
 
@@ -14043,8 +14044,8 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_module_declaration_body_module_block(
         self,
         span: Span,
-        directives: Vec<'a, Directive<'a>>,
-        body: Vec<'a, Statement<'a>>,
+        directives: ArenaVec<'a, Directive<'a>>,
+        body: ArenaVec<'a, Statement<'a>>,
     ) -> TSModuleDeclarationBody<'a> {
         TSModuleDeclarationBody::TSModuleBlock(self.alloc_ts_module_block(span, directives, body))
     }
@@ -14079,7 +14080,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSGlobalDeclaration`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_global_declaration`] instead.
     ///
     /// ## Parameters
@@ -14094,8 +14095,8 @@ impl<'a> AstBuilder<'a> {
         global_span: Span,
         body: TSModuleBlock<'a>,
         declare: bool,
-    ) -> Box<'a, TSGlobalDeclaration<'a>> {
-        Box::new_in(self.ts_global_declaration(span, global_span, body, declare), self.allocator)
+    ) -> ArenaBox<'a, TSGlobalDeclaration<'a>> {
+        ArenaBox::new_in(self.ts_global_declaration(span, global_span, body, declare), &self)
     }
 
     /// Build a [`TSGlobalDeclaration`] with `scope_id`.
@@ -14130,7 +14131,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSGlobalDeclaration`] with `scope_id`, and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_global_declaration_with_scope_id`] instead.
     ///
     /// ## Parameters
@@ -14147,10 +14148,10 @@ impl<'a> AstBuilder<'a> {
         body: TSModuleBlock<'a>,
         declare: bool,
         scope_id: ScopeId,
-    ) -> Box<'a, TSGlobalDeclaration<'a>> {
-        Box::new_in(
+    ) -> ArenaBox<'a, TSGlobalDeclaration<'a>> {
+        ArenaBox::new_in(
             self.ts_global_declaration_with_scope_id(span, global_span, body, declare, scope_id),
-            self.allocator,
+            &self,
         )
     }
 
@@ -14167,15 +14168,15 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_module_block(
         self,
         span: Span,
-        directives: Vec<'a, Directive<'a>>,
-        body: Vec<'a, Statement<'a>>,
+        directives: ArenaVec<'a, Directive<'a>>,
+        body: ArenaVec<'a, Statement<'a>>,
     ) -> TSModuleBlock<'a> {
         TSModuleBlock { node_id: Default::default(), span, directives, body }
     }
 
     /// Build a [`TSModuleBlock`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_module_block`] instead.
     ///
     /// ## Parameters
@@ -14186,10 +14187,10 @@ impl<'a> AstBuilder<'a> {
     pub fn alloc_ts_module_block(
         self,
         span: Span,
-        directives: Vec<'a, Directive<'a>>,
-        body: Vec<'a, Statement<'a>>,
-    ) -> Box<'a, TSModuleBlock<'a>> {
-        Box::new_in(self.ts_module_block(span, directives, body), self.allocator)
+        directives: ArenaVec<'a, Directive<'a>>,
+        body: ArenaVec<'a, Statement<'a>>,
+    ) -> ArenaBox<'a, TSModuleBlock<'a>> {
+        ArenaBox::new_in(self.ts_module_block(span, directives, body), &self)
     }
 
     /// Build a [`TSTypeLiteral`].
@@ -14204,14 +14205,14 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_type_literal(
         self,
         span: Span,
-        members: Vec<'a, TSSignature<'a>>,
+        members: ArenaVec<'a, TSSignature<'a>>,
     ) -> TSTypeLiteral<'a> {
         TSTypeLiteral { node_id: Default::default(), span, members }
     }
 
     /// Build a [`TSTypeLiteral`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_type_literal`] instead.
     ///
     /// ## Parameters
@@ -14221,9 +14222,9 @@ impl<'a> AstBuilder<'a> {
     pub fn alloc_ts_type_literal(
         self,
         span: Span,
-        members: Vec<'a, TSSignature<'a>>,
-    ) -> Box<'a, TSTypeLiteral<'a>> {
-        Box::new_in(self.ts_type_literal(span, members), self.allocator)
+        members: ArenaVec<'a, TSSignature<'a>>,
+    ) -> ArenaBox<'a, TSTypeLiteral<'a>> {
+        ArenaBox::new_in(self.ts_type_literal(span, members), &self)
     }
 
     /// Build a [`TSInferType`].
@@ -14237,7 +14238,7 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn ts_infer_type<T1>(self, span: Span, type_parameter: T1) -> TSInferType<'a>
     where
-        T1: IntoIn<'a, Box<'a, TSTypeParameter<'a>>>,
+        T1: IntoIn<'a, ArenaBox<'a, TSTypeParameter<'a>>>,
     {
         TSInferType {
             node_id: Default::default(),
@@ -14248,18 +14249,22 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSInferType`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_infer_type`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `type_parameter`: The type bound when the
     #[inline]
-    pub fn alloc_ts_infer_type<T1>(self, span: Span, type_parameter: T1) -> Box<'a, TSInferType<'a>>
+    pub fn alloc_ts_infer_type<T1>(
+        self,
+        span: Span,
+        type_parameter: T1,
+    ) -> ArenaBox<'a, TSInferType<'a>>
     where
-        T1: IntoIn<'a, Box<'a, TSTypeParameter<'a>>>,
+        T1: IntoIn<'a, ArenaBox<'a, TSTypeParameter<'a>>>,
     {
-        Box::new_in(self.ts_infer_type(span, type_parameter), self.allocator)
+        ArenaBox::new_in(self.ts_infer_type(span, type_parameter), &self)
     }
 
     /// Build a [`TSTypeQuery`].
@@ -14279,7 +14284,7 @@ impl<'a> AstBuilder<'a> {
         type_arguments: T1,
     ) -> TSTypeQuery<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         TSTypeQuery {
             node_id: Default::default(),
@@ -14291,7 +14296,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSTypeQuery`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_type_query`] instead.
     ///
     /// ## Parameters
@@ -14304,11 +14309,11 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expr_name: TSTypeQueryExprName<'a>,
         type_arguments: T1,
-    ) -> Box<'a, TSTypeQuery<'a>>
+    ) -> ArenaBox<'a, TSTypeQuery<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
     {
-        Box::new_in(self.ts_type_query(span, expr_name, type_arguments), self.allocator)
+        ArenaBox::new_in(self.ts_type_query(span, expr_name, type_arguments), &self)
     }
 
     /// Build a [`TSTypeQueryExprName::TSImportType`].
@@ -14331,8 +14336,8 @@ impl<'a> AstBuilder<'a> {
         type_arguments: T2,
     ) -> TSTypeQueryExprName<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, ObjectExpression<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, ObjectExpression<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         TSTypeQueryExprName::TSImportType(self.alloc_ts_import_type(
             span,
@@ -14364,8 +14369,8 @@ impl<'a> AstBuilder<'a> {
         type_arguments: T2,
     ) -> TSImportType<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, ObjectExpression<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, ObjectExpression<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         TSImportType {
             node_id: Default::default(),
@@ -14379,7 +14384,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSImportType`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_import_type`] instead.
     ///
     /// ## Parameters
@@ -14396,14 +14401,14 @@ impl<'a> AstBuilder<'a> {
         options: T1,
         qualifier: Option<TSImportTypeQualifier<'a>>,
         type_arguments: T2,
-    ) -> Box<'a, TSImportType<'a>>
+    ) -> ArenaBox<'a, TSImportType<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, ObjectExpression<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, ObjectExpression<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
     {
-        Box::new_in(
+        ArenaBox::new_in(
             self.ts_import_type(span, source, options, qualifier, type_arguments),
-            self.allocator,
+            &self,
         )
     }
 
@@ -14467,7 +14472,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSImportTypeQualifiedName`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_import_type_qualified_name`] instead.
     ///
     /// ## Parameters
@@ -14480,8 +14485,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         left: TSImportTypeQualifier<'a>,
         right: IdentifierName<'a>,
-    ) -> Box<'a, TSImportTypeQualifiedName<'a>> {
-        Box::new_in(self.ts_import_type_qualified_name(span, left, right), self.allocator)
+    ) -> ArenaBox<'a, TSImportTypeQualifiedName<'a>> {
+        ArenaBox::new_in(self.ts_import_type_qualified_name(span, left, right), &self)
     }
 
     /// Build a [`TSFunctionType`].
@@ -14505,10 +14510,10 @@ impl<'a> AstBuilder<'a> {
         return_type: T4,
     ) -> TSFunctionType<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
     {
         TSFunctionType {
             node_id: Default::default(),
@@ -14523,7 +14528,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSFunctionType`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_function_type`] instead.
     ///
     /// ## Parameters
@@ -14540,16 +14545,16 @@ impl<'a> AstBuilder<'a> {
         this_param: T2,
         params: T3,
         return_type: T4,
-    ) -> Box<'a, TSFunctionType<'a>>
+    ) -> ArenaBox<'a, TSFunctionType<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
     {
-        Box::new_in(
+        ArenaBox::new_in(
             self.ts_function_type(span, type_parameters, this_param, params, return_type),
-            self.allocator,
+            &self,
         )
     }
 
@@ -14576,10 +14581,10 @@ impl<'a> AstBuilder<'a> {
         scope_id: ScopeId,
     ) -> TSFunctionType<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
     {
         TSFunctionType {
             node_id: Default::default(),
@@ -14594,7 +14599,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSFunctionType`] with `scope_id`, and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_function_type_with_scope_id`] instead.
     ///
     /// ## Parameters
@@ -14613,14 +14618,14 @@ impl<'a> AstBuilder<'a> {
         params: T3,
         return_type: T4,
         scope_id: ScopeId,
-    ) -> Box<'a, TSFunctionType<'a>>
+    ) -> ArenaBox<'a, TSFunctionType<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
     {
-        Box::new_in(
+        ArenaBox::new_in(
             self.ts_function_type_with_scope_id(
                 span,
                 type_parameters,
@@ -14629,7 +14634,7 @@ impl<'a> AstBuilder<'a> {
                 return_type,
                 scope_id,
             ),
-            self.allocator,
+            &self,
         )
     }
 
@@ -14654,9 +14659,9 @@ impl<'a> AstBuilder<'a> {
         return_type: T3,
     ) -> TSConstructorType<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T3: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
     {
         TSConstructorType {
             node_id: Default::default(),
@@ -14671,7 +14676,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSConstructorType`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_constructor_type`] instead.
     ///
     /// ## Parameters
@@ -14688,15 +14693,15 @@ impl<'a> AstBuilder<'a> {
         type_parameters: T1,
         params: T2,
         return_type: T3,
-    ) -> Box<'a, TSConstructorType<'a>>
+    ) -> ArenaBox<'a, TSConstructorType<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T3: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
     {
-        Box::new_in(
+        ArenaBox::new_in(
             self.ts_constructor_type(span, r#abstract, type_parameters, params, return_type),
-            self.allocator,
+            &self,
         )
     }
 
@@ -14723,9 +14728,9 @@ impl<'a> AstBuilder<'a> {
         scope_id: ScopeId,
     ) -> TSConstructorType<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T3: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
     {
         TSConstructorType {
             node_id: Default::default(),
@@ -14740,7 +14745,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSConstructorType`] with `scope_id`, and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_constructor_type_with_scope_id`] instead.
     ///
     /// ## Parameters
@@ -14759,13 +14764,13 @@ impl<'a> AstBuilder<'a> {
         params: T2,
         return_type: T3,
         scope_id: ScopeId,
-    ) -> Box<'a, TSConstructorType<'a>>
+    ) -> ArenaBox<'a, TSConstructorType<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T3: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
     {
-        Box::new_in(
+        ArenaBox::new_in(
             self.ts_constructor_type_with_scope_id(
                 span,
                 r#abstract,
@@ -14774,7 +14779,7 @@ impl<'a> AstBuilder<'a> {
                 return_type,
                 scope_id,
             ),
-            self.allocator,
+            &self,
         )
     }
 
@@ -14817,7 +14822,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSMappedType`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_mapped_type`] instead.
     ///
     /// ## Parameters
@@ -14838,8 +14843,8 @@ impl<'a> AstBuilder<'a> {
         type_annotation: Option<TSType<'a>>,
         optional: Option<TSMappedTypeModifierOperator>,
         readonly: Option<TSMappedTypeModifierOperator>,
-    ) -> Box<'a, TSMappedType<'a>> {
-        Box::new_in(
+    ) -> ArenaBox<'a, TSMappedType<'a>> {
+        ArenaBox::new_in(
             self.ts_mapped_type(
                 span,
                 key,
@@ -14849,7 +14854,7 @@ impl<'a> AstBuilder<'a> {
                 optional,
                 readonly,
             ),
-            self.allocator,
+            &self,
         )
     }
 
@@ -14894,7 +14899,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSMappedType`] with `scope_id`, and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_mapped_type_with_scope_id`] instead.
     ///
     /// ## Parameters
@@ -14917,8 +14922,8 @@ impl<'a> AstBuilder<'a> {
         optional: Option<TSMappedTypeModifierOperator>,
         readonly: Option<TSMappedTypeModifierOperator>,
         scope_id: ScopeId,
-    ) -> Box<'a, TSMappedType<'a>> {
-        Box::new_in(
+    ) -> ArenaBox<'a, TSMappedType<'a>> {
+        ArenaBox::new_in(
             self.ts_mapped_type_with_scope_id(
                 span,
                 key,
@@ -14929,7 +14934,7 @@ impl<'a> AstBuilder<'a> {
                 readonly,
                 scope_id,
             ),
-            self.allocator,
+            &self,
         )
     }
 
@@ -14946,15 +14951,15 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_template_literal_type(
         self,
         span: Span,
-        quasis: Vec<'a, TemplateElement<'a>>,
-        types: Vec<'a, TSType<'a>>,
+        quasis: ArenaVec<'a, TemplateElement<'a>>,
+        types: ArenaVec<'a, TSType<'a>>,
     ) -> TSTemplateLiteralType<'a> {
         TSTemplateLiteralType { node_id: Default::default(), span, quasis, types }
     }
 
     /// Build a [`TSTemplateLiteralType`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_template_literal_type`] instead.
     ///
     /// ## Parameters
@@ -14965,10 +14970,10 @@ impl<'a> AstBuilder<'a> {
     pub fn alloc_ts_template_literal_type(
         self,
         span: Span,
-        quasis: Vec<'a, TemplateElement<'a>>,
-        types: Vec<'a, TSType<'a>>,
-    ) -> Box<'a, TSTemplateLiteralType<'a>> {
-        Box::new_in(self.ts_template_literal_type(span, quasis, types), self.allocator)
+        quasis: ArenaVec<'a, TemplateElement<'a>>,
+        types: ArenaVec<'a, TSType<'a>>,
+    ) -> ArenaBox<'a, TSTemplateLiteralType<'a>> {
+        ArenaBox::new_in(self.ts_template_literal_type(span, quasis, types), &self)
     }
 
     /// Build a [`TSAsExpression`].
@@ -14992,7 +14997,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSAsExpression`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_as_expression`] instead.
     ///
     /// ## Parameters
@@ -15005,8 +15010,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expression: Expression<'a>,
         type_annotation: TSType<'a>,
-    ) -> Box<'a, TSAsExpression<'a>> {
-        Box::new_in(self.ts_as_expression(span, expression, type_annotation), self.allocator)
+    ) -> ArenaBox<'a, TSAsExpression<'a>> {
+        ArenaBox::new_in(self.ts_as_expression(span, expression, type_annotation), &self)
     }
 
     /// Build a [`TSSatisfiesExpression`].
@@ -15030,7 +15035,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSSatisfiesExpression`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_satisfies_expression`] instead.
     ///
     /// ## Parameters
@@ -15043,8 +15048,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expression: Expression<'a>,
         type_annotation: TSType<'a>,
-    ) -> Box<'a, TSSatisfiesExpression<'a>> {
-        Box::new_in(self.ts_satisfies_expression(span, expression, type_annotation), self.allocator)
+    ) -> ArenaBox<'a, TSSatisfiesExpression<'a>> {
+        ArenaBox::new_in(self.ts_satisfies_expression(span, expression, type_annotation), &self)
     }
 
     /// Build a [`TSTypeAssertion`].
@@ -15068,7 +15073,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSTypeAssertion`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_type_assertion`] instead.
     ///
     /// ## Parameters
@@ -15081,8 +15086,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         type_annotation: TSType<'a>,
         expression: Expression<'a>,
-    ) -> Box<'a, TSTypeAssertion<'a>> {
-        Box::new_in(self.ts_type_assertion(span, type_annotation, expression), self.allocator)
+    ) -> ArenaBox<'a, TSTypeAssertion<'a>> {
+        ArenaBox::new_in(self.ts_type_assertion(span, type_annotation, expression), &self)
     }
 
     /// Build a [`TSImportEqualsDeclaration`].
@@ -15114,7 +15119,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSImportEqualsDeclaration`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_import_equals_declaration`] instead.
     ///
     /// ## Parameters
@@ -15129,10 +15134,10 @@ impl<'a> AstBuilder<'a> {
         id: BindingIdentifier<'a>,
         module_reference: TSModuleReference<'a>,
         import_kind: ImportOrExportKind,
-    ) -> Box<'a, TSImportEqualsDeclaration<'a>> {
-        Box::new_in(
+    ) -> ArenaBox<'a, TSImportEqualsDeclaration<'a>> {
+        ArenaBox::new_in(
             self.ts_import_equals_declaration(span, id, module_reference, import_kind),
-            self.allocator,
+            &self,
         )
     }
 
@@ -15235,7 +15240,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSExternalModuleReference`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_external_module_reference`] instead.
     ///
     /// ## Parameters
@@ -15246,8 +15251,8 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         expression: StringLiteral<'a>,
-    ) -> Box<'a, TSExternalModuleReference<'a>> {
-        Box::new_in(self.ts_external_module_reference(span, expression), self.allocator)
+    ) -> ArenaBox<'a, TSExternalModuleReference<'a>> {
+        ArenaBox::new_in(self.ts_external_module_reference(span, expression), &self)
     }
 
     /// Build a [`TSNonNullExpression`].
@@ -15269,7 +15274,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSNonNullExpression`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_non_null_expression`] instead.
     ///
     /// ## Parameters
@@ -15280,8 +15285,8 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         expression: Expression<'a>,
-    ) -> Box<'a, TSNonNullExpression<'a>> {
-        Box::new_in(self.ts_non_null_expression(span, expression), self.allocator)
+    ) -> ArenaBox<'a, TSNonNullExpression<'a>> {
+        ArenaBox::new_in(self.ts_non_null_expression(span, expression), &self)
     }
 
     /// Build a [`Decorator`].
@@ -15313,7 +15318,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSExportAssignment`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_export_assignment`] instead.
     ///
     /// ## Parameters
@@ -15324,8 +15329,8 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         expression: Expression<'a>,
-    ) -> Box<'a, TSExportAssignment<'a>> {
-        Box::new_in(self.ts_export_assignment(span, expression), self.allocator)
+    ) -> ArenaBox<'a, TSExportAssignment<'a>> {
+        ArenaBox::new_in(self.ts_export_assignment(span, expression), &self)
     }
 
     /// Build a [`TSNamespaceExportDeclaration`].
@@ -15347,7 +15352,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSNamespaceExportDeclaration`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_namespace_export_declaration`] instead.
     ///
     /// ## Parameters
@@ -15358,8 +15363,8 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         id: IdentifierName<'a>,
-    ) -> Box<'a, TSNamespaceExportDeclaration<'a>> {
-        Box::new_in(self.ts_namespace_export_declaration(span, id), self.allocator)
+    ) -> ArenaBox<'a, TSNamespaceExportDeclaration<'a>> {
+        ArenaBox::new_in(self.ts_namespace_export_declaration(span, id), &self)
     }
 
     /// Build a [`TSInstantiationExpression`].
@@ -15379,7 +15384,7 @@ impl<'a> AstBuilder<'a> {
         type_arguments: T1,
     ) -> TSInstantiationExpression<'a>
     where
-        T1: IntoIn<'a, Box<'a, TSTypeParameterInstantiation<'a>>>,
+        T1: IntoIn<'a, ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
     {
         TSInstantiationExpression {
             node_id: Default::default(),
@@ -15391,7 +15396,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`TSInstantiationExpression`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::ts_instantiation_expression`] instead.
     ///
     /// ## Parameters
@@ -15404,14 +15409,11 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expression: Expression<'a>,
         type_arguments: T1,
-    ) -> Box<'a, TSInstantiationExpression<'a>>
+    ) -> ArenaBox<'a, TSInstantiationExpression<'a>>
     where
-        T1: IntoIn<'a, Box<'a, TSTypeParameterInstantiation<'a>>>,
+        T1: IntoIn<'a, ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
     {
-        Box::new_in(
-            self.ts_instantiation_expression(span, expression, type_arguments),
-            self.allocator,
-        )
+        ArenaBox::new_in(self.ts_instantiation_expression(span, expression, type_arguments), &self)
     }
 
     /// Build a [`JSDocNullableType`].
@@ -15435,7 +15437,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`JSDocNullableType`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::js_doc_nullable_type`] instead.
     ///
     /// ## Parameters
@@ -15448,8 +15450,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         type_annotation: TSType<'a>,
         postfix: bool,
-    ) -> Box<'a, JSDocNullableType<'a>> {
-        Box::new_in(self.js_doc_nullable_type(span, type_annotation, postfix), self.allocator)
+    ) -> ArenaBox<'a, JSDocNullableType<'a>> {
+        ArenaBox::new_in(self.js_doc_nullable_type(span, type_annotation, postfix), &self)
     }
 
     /// Build a [`JSDocNonNullableType`].
@@ -15473,7 +15475,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`JSDocNonNullableType`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::js_doc_non_nullable_type`] instead.
     ///
     /// ## Parameters
@@ -15486,8 +15488,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         type_annotation: TSType<'a>,
         postfix: bool,
-    ) -> Box<'a, JSDocNonNullableType<'a>> {
-        Box::new_in(self.js_doc_non_nullable_type(span, type_annotation, postfix), self.allocator)
+    ) -> ArenaBox<'a, JSDocNonNullableType<'a>> {
+        ArenaBox::new_in(self.js_doc_non_nullable_type(span, type_annotation, postfix), &self)
     }
 
     /// Build a [`JSDocUnknownType`].
@@ -15504,13 +15506,13 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`JSDocUnknownType`], and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node.
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`AstBuilder::js_doc_unknown_type`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_js_doc_unknown_type(self, span: Span) -> Box<'a, JSDocUnknownType> {
-        Box::new_in(self.js_doc_unknown_type(span), self.allocator)
+    pub fn alloc_js_doc_unknown_type(self, span: Span) -> ArenaBox<'a, JSDocUnknownType> {
+        ArenaBox::new_in(self.js_doc_unknown_type(span), &self)
     }
 }

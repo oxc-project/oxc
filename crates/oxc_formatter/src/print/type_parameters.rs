@@ -1,4 +1,4 @@
-use oxc_allocator::Vec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 use oxc_span::FileExtension;
 
@@ -66,7 +66,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeParameter<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Vec<'a, TSTypeParameter<'a>>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, TSTypeParameter<'a>>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         // Type parameter lists of arrow function expressions have to include at least one comma
         // to avoid any ambiguity with JSX elements, and in `.mts`/`.cts` sources.
@@ -91,7 +91,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Vec<'a, TSTypeParameter
 ///
 /// <https://github.com/prettier/prettier/blob/070c89bba46235f4948560ed612a11e89ccd2da9/src/language-js/print/type-parameters.js#L33-L42>
 fn should_force_trailing_comma_for_arrow_function(
-    params: &AstNode<'_, Vec<'_, TSTypeParameter<'_>>>,
+    params: &AstNode<'_, ArenaVec<'_, TSTypeParameter<'_>>>,
     f: &JsFormatter<'_, '_>,
 ) -> bool {
     if params.len() != 1 {

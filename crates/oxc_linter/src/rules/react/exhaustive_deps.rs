@@ -1603,7 +1603,7 @@ fn is_inside_effect_cleanup(stack: &[AstType]) -> bool {
 
 mod fix {
     use super::Name;
-    use oxc_allocator::{Allocator, CloneIn};
+    use oxc_allocator::{Allocator, ArenaVec, CloneIn};
     use oxc_ast::{
         AstBuilder,
         ast::{ArrayExpression, Expression},
@@ -1656,10 +1656,10 @@ mod fix {
             .filter(|el| (*el).span() != dependency.span)
             .map(|el| el.clone_in(&alloc));
 
-        codegen.print_expression(&Expression::ArrayExpression(ast_builder.alloc_array_expression(
-            deps.span,
-            oxc_allocator::Vec::from_iter_in(new_deps, &alloc),
-        )));
+        codegen.print_expression(&Expression::ArrayExpression(
+            ast_builder
+                .alloc_array_expression(deps.span, ArenaVec::from_iter_in(new_deps, &ast_builder)),
+        ));
         fixer.replace(deps.span, codegen.into_source_text())
     }
 }

@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.56.0] - 2026-06-22
+
+### 🐛 Bug Fixes
+
+- 37a34a1 oxfmt/lsp: Avoid newlines line ending changes (#23463) (Sysix)
+
 ## [0.55.0] - 2026-06-15
 
 ### 🚀 Features

@@ -195,7 +195,7 @@ impl Rule for NoRestrictedGlobals {
                     return;
                 };
                 let reference = ctx.scoping().get_reference(ident.reference_id());
-                if reference.symbol_id().is_none() && reference.is_type() {
+                if reference.symbol_id().is_some() || reference.is_type() {
                     return;
                 }
                 ctx.diagnostic(no_restricted_globals(&ident.name, message, ident.span));
@@ -439,6 +439,12 @@ fn test() {
         ("foo.bar", Some(serde_json::json!(["bar"])), None),
         ("foo.globalThis.bar", Some(serde_json::json!(["bar"])), None),
         ("foo.globalThis.bar()", Some(serde_json::json!(["bar"])), None),
+        (
+            "function handler(event) { return event.target; }",
+            Some(serde_json::json!(["event"])),
+            None,
+        ),
+        ("function handler(name) { return name.length; }", Some(serde_json::json!(["name"])), None),
     ];
 
     let fail = vec![

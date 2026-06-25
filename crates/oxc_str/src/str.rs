@@ -4,7 +4,7 @@ use std::{
     ops::Deref,
 };
 
-use oxc_allocator::{Allocator, CloneIn, Dummy, FromIn, StringBuilder as ArenaStringBuilder};
+use oxc_allocator::{Allocator, ArenaStringBuilder, CloneIn, Dummy, FromIn, GetAllocator};
 #[cfg(feature = "serialize")]
 use oxc_estree::{ESTree, Serializer as ESTreeSerializer};
 #[cfg(feature = "serialize")]
@@ -36,6 +36,12 @@ impl Str<'static> {
 }
 
 impl<'a> Str<'a> {
+    /// Allocate provided `&str` into arena, and return a [`Str<'a>`].
+    #[inline]
+    pub fn from_str_in<A: GetAllocator<'a>>(s: &str, allocator: &A) -> Self {
+        Self(allocator.allocator().alloc_str(s))
+    }
+
     /// Borrow a string slice.
     #[expect(clippy::inline_always)]
     #[inline(always)] // Because this is a no-op
@@ -329,4 +335,37 @@ macro_rules! format_str {
         write!(s, $($arg)*).unwrap();
         Str::from(s)
     }}
+}
+
+#[cfg(test)]
+mod test {
+    use oxc_allocator::Allocator;
+
+    use super::*;
+
+    #[test]
+    #[expect(clippy::items_after_statements)]
+    fn str_from_str_in() {
+        let allocator = Allocator::new();
+        let allocator = &allocator;
+
+        // Pass an actual `Allocator`
+        let s = Str::from_str_in("world", &allocator);
+        assert_eq!(s.as_str(), "world");
+        assert_eq!(s, Str::from("world"));
+
+        // Pass a struct which implements `GetAllocator`
+        struct Wrapper<'a>(&'a Allocator);
+
+        impl<'a> GetAllocator<'a> for Wrapper<'a> {
+            fn allocator(&self) -> &'a Allocator {
+                self.0
+            }
+        }
+
+        let wrapper = Wrapper(allocator);
+        let s = Str::from_str_in("hello", &wrapper);
+        assert_eq!(s.as_str(), "hello");
+        assert_eq!(s, Str::from("hello"));
+    }
 }

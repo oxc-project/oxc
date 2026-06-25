@@ -9,7 +9,10 @@ use std::{
 
 use convert_case::{Case, Casing};
 use lazy_regex::regex;
-use oxc_allocator::Allocator;
+use rustc_hash::{FxHashMap, FxHashSet};
+use serde::Serialize;
+
+use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::ast::{
     Argument, ArrayExpression, ArrayExpressionElement, AssignmentTarget, CallExpression,
     Expression, ExpressionStatement, IdentifierName, ObjectExpression, ObjectProperty,
@@ -20,8 +23,6 @@ use oxc_ast_visit::Visit;
 use oxc_parser::Parser;
 use oxc_span::{GetSpan, SourceType, Span};
 use oxc_tasks_common::project_root;
-use rustc_hash::{FxHashMap, FxHashSet};
-use serde::Serialize;
 
 mod json;
 mod template;
@@ -648,7 +649,7 @@ impl<'a> Visit<'a> for State<'a> {
 
 fn find_parser_arguments<'a, 'b>(
     mut expr: &'b Expression<'a>,
-) -> Option<&'b oxc_allocator::Vec<'a, Argument<'a>>> {
+) -> Option<&'b ArenaVec<'a, Argument<'a>>> {
     loop {
         let Expression::CallExpression(call_expr) = expr else { return None };
         let Expression::StaticMemberExpression(static_member_expr) = &call_expr.callee else {

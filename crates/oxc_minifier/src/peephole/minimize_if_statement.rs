@@ -132,12 +132,11 @@ impl<'a> PeepholeOptimizations {
             && if2.alternate.is_some()
         {
             let scope_id = ctx.create_child_scope_of_current(ScopeFlags::empty());
-            let new_consequent =
-                Statement::BlockStatement(ctx.ast.alloc(ctx.ast.block_statement_with_scope_id(
-                    if_stmt.consequent.span(),
-                    ctx.ast.vec1(if_stmt.consequent.take_in(ctx)),
-                    scope_id,
-                )));
+            let new_consequent = ctx.ast.statement_block_with_scope_id(
+                if_stmt.consequent.span(),
+                ctx.ast.vec1(if_stmt.consequent.take_in(ctx)),
+                scope_id,
+            );
             ctx.replace_statement(&mut if_stmt.consequent, new_consequent);
         }
     }

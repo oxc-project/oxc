@@ -3,7 +3,7 @@ use std::num::NonZeroU8;
 use rustc_hash::FxHashMap;
 use serde_json::Value;
 
-use oxc_allocator::{Allocator, StringBuilder};
+use oxc_allocator::{Allocator, ArenaStringBuilder};
 use oxc_formatter::EmbeddedDocResult;
 use oxc_formatter_core::{
     Align, Condition, DedentMode, FormatElement, Group, GroupId, GroupMode, IndentWidth, LineMode,
@@ -523,7 +523,7 @@ fn postprocess<'a>(
                 let FormatElement::Text { text, .. } = &ir[run_start] else { unreachable!() };
                 text
             } else {
-                let mut sb = StringBuilder::new_in(allocator);
+                let mut sb = ArenaStringBuilder::new_in(allocator);
                 for element in &ir[run_start..read] {
                     if let FormatElement::Text { text, .. } = element {
                         sb.push_str(text);
@@ -612,7 +612,7 @@ fn escape_template_characters<'a>(s: &'a str, allocator: &'a Allocator) -> &'a s
     };
 
     // Slow path: build escaped string in the arena, reusing the clean prefix.
-    let mut result = StringBuilder::with_capacity_in(len + 1, allocator);
+    let mut result = ArenaStringBuilder::with_capacity_in(len + 1, allocator);
     result.push_str(&s[..first]);
 
     // Iterate by chars (not bytes) to correctly handle multi-byte UTF-8.
@@ -647,7 +647,7 @@ fn escape_backticks_raw_str<'a>(s: &'a str, allocator: &'a Allocator) -> &'a str
     if !s.contains('`') {
         return s;
     }
-    let mut result = StringBuilder::with_capacity_in(s.len() + 1, allocator);
+    let mut result = ArenaStringBuilder::with_capacity_in(s.len() + 1, allocator);
     let mut bs_count: usize = 0;
     for ch in s.chars() {
         if ch == '\\' {

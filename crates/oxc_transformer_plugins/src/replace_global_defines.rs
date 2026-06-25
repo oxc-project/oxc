@@ -2,7 +2,7 @@ use std::{cmp::Ordering, sync::Arc};
 
 use rustc_hash::FxHashSet;
 
-use oxc_allocator::{Address, Allocator, GetAddress, TakeIn, UnstableAddress};
+use oxc_allocator::{Address, Allocator, ArenaBox, GetAddress, TakeIn, UnstableAddress};
 use oxc_ast::ast::*;
 use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
@@ -397,7 +397,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
 
     fn replace_identifier_define_impl(
         &mut self,
-        ident: &oxc_allocator::Box<'_, IdentifierReference<'_>>,
+        ident: &ArenaBox<'_, IdentifierReference<'_>>,
     ) -> Option<Expression<'a>> {
         if !Self::is_global_or_ambient_reference(self.scoping(), ident) {
             return None;

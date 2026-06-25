@@ -5,7 +5,7 @@
 
 use std::num::NonZeroU8;
 
-use oxc_allocator::Vec as ArenaVec;
+use oxc_allocator::ArenaVec;
 
 use crate::{
     Argument, Arguments, Buffer, Format, FormatContext, FormatElement, FormatOptions, Formatter,
@@ -828,7 +828,7 @@ impl<'ast, C> Format<'ast, C> for BestFitting<'_, 'ast, C> {
             formatted_variants.push(buffer.take_vec().into_arena_slice());
         }
 
-        let formatted_variants = ArenaVec::from_iter_in(formatted_variants, f.allocator());
+        let formatted_variants = ArenaVec::from_iter_in(formatted_variants, f);
 
         // SAFETY: The constructor guarantees that there are always at least two variants. It's, therefore,
         // safe to call into the unsafe `from_vec_unchecked` function

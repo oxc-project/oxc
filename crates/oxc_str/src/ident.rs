@@ -11,7 +11,7 @@ use std::{
 };
 
 use oxc_allocator::{
-    Allocator, CloneIn, Dummy, FromIn, IdentBuildHasher, StringBuilder as ArenaStringBuilder,
+    Allocator, ArenaStringBuilder, CloneIn, Dummy, FromIn, GetAllocator, IdentBuildHasher,
     ident_hash,
 };
 #[cfg(feature = "serialize")]
@@ -130,6 +130,12 @@ pub const fn new_const_ident(s: &str) -> Ident<'_> {
 }
 
 impl<'a> Ident<'a> {
+    /// Allocate provided `&str` into arena, and return an [`Ident<'a>`].
+    #[inline]
+    pub fn from_str_in<A: GetAllocator<'a>>(s: &str, allocator: &A) -> Self {
+        new_const_ident(allocator.allocator().alloc_str(s))
+    }
+
     /// Create an [`Ident`] from raw components.
     ///
     /// # SAFETY
@@ -333,7 +339,7 @@ impl<'a> From<Ident<'a>> for Cow<'a, str> {
 impl PartialEq for Ident<'_> {
     /// Fast-reject equality: compare packed len+hash first, then bytes.
     #[inline]
-    fn eq(&self, other: &Self) -> bool {
+    fn eq(&self, other: &Ident<'_>) -> bool {
         self.len_and_hash == other.len_and_hash && self.as_str() == other.as_str()
     }
 }
@@ -486,7 +492,7 @@ pub type IdentHashMap<'a, V> = hashbrown::HashMap<Ident<'a>, V, IdentBuildHasher
 
 /// Arena-allocated hash map keyed by [`Ident`], using precomputed ident hash.
 pub type ArenaIdentHashMap<'alloc, V> =
-    oxc_allocator::HashMap<'alloc, Ident<'alloc>, V, IdentBuildHasher>;
+    oxc_allocator::ArenaHashMap<'alloc, Ident<'alloc>, V, IdentBuildHasher>;
 
 /// Hash set of [`Ident`], using precomputed ident hash.
 pub type IdentHashSet<'a> = hashbrown::HashSet<Ident<'a>, IdentBuildHasher>;
@@ -704,6 +710,32 @@ mod test {
     fn static_ident_const_context() {
         const IDENT: Ident<'static> = static_ident!("hello");
         assert_eq!(IDENT.as_str(), "hello");
+    }
+
+    #[test]
+    #[expect(clippy::items_after_statements)]
+    fn ident_from_str_in() {
+        let allocator = Allocator::new();
+        let allocator: &Allocator = &allocator;
+
+        // Pass an actual `Allocator`
+        let ident = Ident::from_str_in("world", &allocator);
+        assert_eq!(ident.as_str(), "world");
+        assert_eq!(ident, Ident::from("world"));
+
+        // Pass a struct which implements `GetAllocator`
+        struct Wrapper<'a>(&'a Allocator);
+
+        impl<'a> GetAllocator<'a> for Wrapper<'a> {
+            fn allocator(&self) -> &'a Allocator {
+                self.0
+            }
+        }
+
+        let wrapper = Wrapper(allocator);
+        let ident = Ident::from_str_in("hello", &wrapper);
+        assert_eq!(ident.as_str(), "hello");
+        assert_eq!(ident, Ident::from("hello"));
     }
 
     #[test]

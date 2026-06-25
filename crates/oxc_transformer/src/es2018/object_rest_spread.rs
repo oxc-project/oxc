@@ -31,7 +31,7 @@ use std::mem;
 
 use serde::Deserialize;
 
-use oxc_allocator::{Address, Box as ArenaBox, GetAddress, TakeIn, Vec as ArenaVec};
+use oxc_allocator::{Address, ArenaBox, ArenaVec, GetAddress, TakeIn};
 use oxc_ast::{NONE, ast::*};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::{BoundNames, ToJsString, WithoutGlobalReferenceInformation};
@@ -546,7 +546,7 @@ impl<'a> ObjectRestSpread<'a> {
             ctx.ast.vec1(Argument::from(obj))
         };
         let new_expr = helper_call(Helper::ObjectSpread2, arguments, ctx);
-        expr.replace(ctx.ast.alloc(new_expr));
+        expr.replace(new_expr);
     }
 }
 
@@ -774,7 +774,7 @@ impl<'a> ObjectRestSpread<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let decl = Self::create_temporary_reference_for_binding(kind, pat, scope_id, ctx);
-        body.insert(0, Statement::VariableDeclaration(ctx.ast.alloc(decl)));
+        body.insert(0, Statement::VariableDeclaration(decl));
     }
 
     fn create_temporary_reference_for_binding(
@@ -782,7 +782,7 @@ impl<'a> ObjectRestSpread<'a> {
         pat: &mut BindingPattern<'a>,
         scope_id: ScopeId,
         ctx: &mut TraverseCtx<'a>,
-    ) -> VariableDeclaration<'a> {
+    ) -> ArenaBox<'a, VariableDeclaration<'a>> {
         let mut flags = kind_to_symbol_flags(kind);
         if matches!(ctx.parent(), Ancestor::TryStatementHandler(_)) {
             // try {} catch (ref) {}
@@ -792,15 +792,14 @@ impl<'a> ObjectRestSpread<'a> {
         let bound_identifier = ctx.generate_uid("ref", scope_id, flags);
         let kind = VariableDeclarationKind::Let;
         let id = mem::replace(pat, bound_identifier.create_binding_pattern(ctx));
-        let init = bound_identifier.create_read_expression(ctx);
-        let declarations =
-            ctx.ast.vec1(ctx.ast.variable_declarator(SPAN, kind, id, NONE, Some(init), false));
-        let decl = ctx.ast.variable_declaration(SPAN, kind, declarations, false);
-        decl.bound_names(&mut |ident| {
+        id.bound_names(&mut |ident| {
             *ctx.scoping_mut().symbol_flags_mut(ident.symbol_id()) =
                 SymbolFlags::BlockScopedVariable;
         });
-        decl
+        let init = bound_identifier.create_read_expression(ctx);
+        let declarations =
+            ctx.ast.vec1(ctx.ast.variable_declarator(SPAN, kind, id, NONE, Some(init), false));
+        ctx.ast.alloc_variable_declaration(SPAN, kind, declarations, false)
     }
 }
 

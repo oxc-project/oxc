@@ -35,7 +35,7 @@ pub mod __internal {
     // Used by `format_compact_str!` macro defined in `oxc_str`
     pub use compact_str::format_compact;
     // Used by `format_str!` and `format_ident!` macros defined in `oxc_str`
-    pub use oxc_allocator::StringBuilder as ArenaStringBuilder;
+    pub use oxc_allocator::ArenaStringBuilder;
 }
 
 // Additional trait implementations for types re-exported from oxc_str

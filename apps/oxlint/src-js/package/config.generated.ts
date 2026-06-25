@@ -148,6 +148,9 @@ export type AllowKind =
 export type NoInnerDeclarationsConfig = "functions" | "both";
 export type BlockScopedFunctions = "allow" | "disallow";
 export type NoMagicNumbersNumber = number | string;
+export type NoRestrictedImportsConfigEnum = string | RestrictedPath | NoRestrictedImportsConfig;
+export type PossiblePaths = string | RestrictedPath;
+export type PossiblePatterns = string | RestrictedPattern;
 export type NoReturnAssignMode = "always" | "except-parens";
 /**
  * Controls how hoisting is handled when checking for shadowing.
@@ -174,6 +177,7 @@ export type CallbackReturn = string[];
  * - a regexp pattern (e.g. `"^(err|error)$"`)
  *
  * If the configured name of the error variable begins with a `^` it is considered to be a regexp pattern.
+ * Invalid regexp patterns are rejected during configuration parsing.
  *
  * Default: `"err"`.
  */
@@ -1179,7 +1183,9 @@ export interface DummyRuleMap {
   "no-regex-spaces"?: RuleNoConfig;
   "no-restricted-exports"?: RuleNoConfig | [AllowWarnDeny, NoRestrictedExportsConfig];
   "no-restricted-globals"?: DummyRule;
-  "no-restricted-imports"?: DummyRule;
+  "no-restricted-imports"?:
+    | RuleNoConfig
+    | [AllowWarnDeny, NoRestrictedImportsConfigEnum, ...NoRestrictedImportsConfigEnum[]];
   "no-restricted-properties"?: RuleNoConfig | [AllowWarnDeny, PropertyDetails, ...PropertyDetails[]];
   "no-return-assign"?: RuleNoConfig | [AllowWarnDeny, NoReturnAssignMode];
   "no-script-url"?: RuleNoConfig;
@@ -3422,6 +3428,28 @@ export interface RestrictDefaultExports {
    * ```
    */
   namespaceFrom?: boolean;
+}
+export interface RestrictedPath {
+  allowImportNames?: string[];
+  allowTypeImports?: boolean;
+  importNames?: string[];
+  message?: string;
+  name: string;
+}
+export interface NoRestrictedImportsConfig {
+  paths?: PossiblePaths[];
+  patterns?: PossiblePatterns[];
+}
+export interface RestrictedPattern {
+  allowImportNamePattern?: string;
+  allowImportNames?: string[];
+  allowTypeImports?: boolean;
+  caseSensitive?: boolean;
+  group?: string[];
+  importNamePattern?: string;
+  importNames?: string[];
+  message?: string;
+  regex?: string;
 }
 export interface PropertyDetails {
   /**

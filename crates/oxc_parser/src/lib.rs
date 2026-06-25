@@ -87,10 +87,10 @@ mod lexer;
 #[doc(hidden)]
 pub mod lexer;
 
-use oxc_allocator::{Allocator, Box as ArenaBox, Dummy, GetAllocator, Vec as ArenaVec};
+use oxc_allocator::{Allocator, ArenaBox, ArenaVec, Dummy, GetAllocator};
 use oxc_ast::{
-    AstBuilder,
-    ast::{Expression, Program},
+    ast::{Expression, Program, Statement},
+    builder::{AstBuilder, GetAstBuilder},
 };
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 use oxc_span::{SourceType, Span};
@@ -176,7 +176,7 @@ pub struct ParserReturn<'a> {
     /// Lexed tokens in source order.
     ///
     /// Tokens are only collected when tokens are enabled in [`ParserConfig`].
-    pub tokens: oxc_allocator::Vec<'a, Token>,
+    pub tokens: ArenaVec<'a, Token>,
 
     /// Whether the parser panicked and terminated early.
     ///
@@ -730,11 +730,8 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             }
         }
 
-        let tokens = if panicked {
-            ArenaVec::new_in(self.ast.allocator)
-        } else {
-            self.lexer.finalize_tokens()
-        };
+        let tokens =
+            if panicked { ArenaVec::new_in(&self.ast) } else { self.lexer.finalize_tokens() };
 
         program.comments = self.lexer.trivia_builder.comments;
 
@@ -788,8 +785,8 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
 
         let span = Span::new(0, self.source_text.len() as u32);
         // Populated at the end of `parse` after `flow_error` has read from `trivia_builder.comments`.
-        let comments = self.ast.vec();
-        self.ast.program(
+        let comments = ArenaVec::new_in(self);
+        Program::new(
             span,
             self.source_type,
             self.source_text,
@@ -797,6 +794,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             hashbang,
             directives,
             statements,
+            self,
         )
     }
 
@@ -805,10 +803,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
     /// In unambiguous mode, statements like `await /x/u` are initially parsed as
     /// `await / x / u` (identifier with divisions). If ESM syntax is detected,
     /// we need to reparse them with the await context enabled.
-    fn reparse_potential_top_level_awaits(
-        &mut self,
-        statements: &mut oxc_allocator::Vec<'a, oxc_ast::ast::Statement<'a>>,
-    ) {
+    fn reparse_potential_top_level_awaits(&mut self, statements: &mut ArenaVec<'a, Statement<'a>>) {
         // Token stream is already complete from the first parse.
         // Reparsing here is only to patch AST nodes, so keep the original token stream.
         let original_tokens =
@@ -888,7 +883,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
 
     #[inline]
     fn alloc<T>(&self, value: T) -> ArenaBox<'a, T> {
-        self.ast.alloc(value)
+        ArenaBox::new_in(value, self)
     }
 }
 
@@ -896,6 +891,15 @@ impl<'a, C: ParserConfig> GetAllocator<'a> for ParserImpl<'a, C> {
     #[inline]
     fn allocator(&self) -> &'a Allocator {
         self.ast.allocator()
+    }
+}
+
+impl<'a, C: ParserConfig> GetAstBuilder<'a> for ParserImpl<'a, C> {
+    type Builder = AstBuilder<'a>;
+
+    #[inline]
+    fn builder(&self) -> &AstBuilder<'a> {
+        &self.ast
     }
 }
 

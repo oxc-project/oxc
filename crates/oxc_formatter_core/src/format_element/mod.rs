@@ -10,7 +10,7 @@ use std::{borrow::Cow, ops::Deref};
 
 use unicode_width::UnicodeWidthStr;
 
-use oxc_allocator::Vec as ArenaVec;
+use oxc_allocator::ArenaVec;
 
 use crate::IndentWidth;
 

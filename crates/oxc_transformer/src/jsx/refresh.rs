@@ -7,10 +7,7 @@ use base64::{
 use hmac_sha1_compact::Hash as Sha1;
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use oxc_allocator::{
-    CloneIn, GetAddress, StringBuilder as ArenaStringBuilder, TakeIn, UnstableAddress,
-    Vec as ArenaVec,
-};
+use oxc_allocator::{ArenaStringBuilder, ArenaVec, CloneIn, GetAddress, TakeIn, UnstableAddress};
 use oxc_ast::{AstBuilder, NONE, ast::*, match_expression};
 use oxc_ast_visit::{
     Visit,

@@ -1,4 +1,4 @@
-use oxc_allocator::Vec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
@@ -9,7 +9,7 @@ use crate::{
 };
 
 pub struct BindingPropertyList<'a, 'b> {
-    properties: &'b AstNode<'a, Vec<'a, BindingProperty<'a>>>,
+    properties: &'b AstNode<'a, ArenaVec<'a, BindingProperty<'a>>>,
     rest: Option<&'b AstNode<'a, BindingRestElement<'a>>>,
 }
 
@@ -55,7 +55,7 @@ impl<'a, 'b> Iterator for BindingPropertyListIter<'a, 'b> {
 
 impl<'a, 'b> BindingPropertyList<'a, 'b> {
     pub fn new(
-        properties: &'b AstNode<'a, Vec<'a, BindingProperty<'a>>>,
+        properties: &'b AstNode<'a, ArenaVec<'a, BindingProperty<'a>>>,
         rest: Option<&'b AstNode<'a, BindingRestElement<'a>>>,
     ) -> Self {
         Self { properties, rest }

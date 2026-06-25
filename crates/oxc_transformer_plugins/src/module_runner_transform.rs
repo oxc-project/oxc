@@ -50,7 +50,7 @@ use std::iter;
 use itoa::Buffer as ItoaBuffer;
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use oxc_allocator::{Allocator, Box as ArenaBox, TakeIn, Vec as ArenaVec};
+use oxc_allocator::{Allocator, ArenaBox, ArenaVec, TakeIn};
 use oxc_ast::{NONE, ast::*};
 use oxc_ecmascript::BoundNames;
 use oxc_semantic::{ReferenceFlags, ScopeFlags, Scoping, SymbolFlags, SymbolId};
@@ -327,13 +327,13 @@ impl<'a> ModuleRunnerTransform<'a> {
                 };
 
                 // Reuse the `vue` binding identifier by renaming it to `__vite_ssr_import_0__`
-                let mut local = specifier.unbox().local;
+                let mut local = ctx.alloc(specifier.unbox().local);
                 local.name = self.generate_import_binding_name(ctx);
                 let binding = BoundIdentifier::from_binding_ident(&local);
                 ctx.scoping_mut().set_symbol_name(binding.symbol_id, binding.name);
                 self.import_bindings.insert(binding.symbol_id, (binding, None));
 
-                BindingPattern::BindingIdentifier(ctx.alloc(local))
+                BindingPattern::BindingIdentifier(local)
             } else {
                 let binding = self.generate_import_binding(ctx);
                 arguments.push(self.transform_import_specifiers(&binding, specifiers, ctx));
@@ -436,7 +436,7 @@ impl<'a> ModuleRunnerTransform<'a> {
                     ArrayExpressionElement::from(local_name_expr)
                 }));
                 let arguments = ctx.ast.vec_from_array([
-                    Argument::from(Expression::StringLiteral(ctx.ast.alloc(source))),
+                    Argument::StringLiteral(ctx.ast.alloc(source)),
                     Self::create_imported_names_object(imported_names, ctx),
                 ]);
                 hoist_imports.push(Self::create_import(SPAN, pattern, arguments, ctx));
@@ -725,8 +725,8 @@ impl<'a> ModuleRunnerTransform<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let object =
-            ctx.create_unbound_ident_expr(SPAN, ctx.ast.ident("Object"), ReferenceFlags::Read);
-        let member = create_member_callee(object, "defineProperty", ctx);
+            ctx.create_unbound_ident_expr(SPAN, static_ident!("Object"), ReferenceFlags::Read);
+        let member = create_member_callee(object, static_ident!("defineProperty"), ctx);
         ctx.ast.expression_call(SPAN, member, NONE, arguments, false)
     }
 
@@ -852,10 +852,10 @@ fn create_compute_property_access<'a>(
 /// `object` -> `object.call`.
 pub fn create_member_callee<'a>(
     object: Expression<'a>,
-    property: &'static str,
+    property: Ident<'a>,
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
-    let property = ctx.ast.identifier_name(SPAN, Str::from(property));
+    let property = ctx.ast.identifier_name(SPAN, property);
     Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false))
 }
 

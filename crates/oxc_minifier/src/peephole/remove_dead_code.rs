@@ -1,5 +1,5 @@
 use crate::generated::ancestor::Ancestor;
-use oxc_allocator::{TakeIn, Vec};
+use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::ast::*;
 use oxc_ast_visit::Visit;
 use oxc_ecmascript::{
@@ -321,9 +321,9 @@ impl<'a> PeepholeOptimizations {
             && s.handler.as_ref().is_none_or(|handler| handler.body.body.is_empty())
         {
             let new_stmt = if let Some(finalizer) = &mut s.finalizer {
-                let mut block = ctx.ast.block_statement(finalizer.span, ctx.ast.vec());
-                std::mem::swap(&mut **finalizer, &mut block);
-                Statement::BlockStatement(ctx.ast.alloc(block))
+                let mut block = ctx.ast.alloc_block_statement(finalizer.span, ctx.ast.vec());
+                std::mem::swap(finalizer, &mut block);
+                Statement::BlockStatement(block)
             } else {
                 ctx.ast.statement_empty(s.span)
             };
@@ -587,7 +587,7 @@ impl<'a> PeepholeOptimizations {
         body.body.retain(|e| !matches!(e, ClassElement::StaticBlock(s) if s.body.is_empty()));
     }
 
-    pub fn remove_empty_spread_arguments(args: &mut Vec<'a, Argument<'a>>) {
+    pub fn remove_empty_spread_arguments(args: &mut ArenaVec<'a, Argument<'a>>) {
         if args.len() != 1 {
             return;
         }

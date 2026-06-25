@@ -77,11 +77,12 @@
 ///
 /// ## References
 /// * TypeScript's [emitDecoratorMetadata](https://www.typescriptlang.org/tsconfig#emitDecoratorMetadata)
-use oxc_allocator::Box as ArenaBox;
+use oxc_allocator::ArenaBox;
 use oxc_ast::ast::*;
 use oxc_data_structures::stack::SparseStack;
 use oxc_semantic::{Reference, ReferenceFlags, SymbolId};
 use oxc_span::{ContentEq, SPAN};
+use oxc_str::{Ident, static_ident};
 use oxc_traverse::{MaybeBoundIdentifier, Traverse};
 use rustc_hash::FxHashMap;
 
@@ -708,53 +709,53 @@ impl<'a> LegacyDecoratorMetadata<'a> {
     }
 
     #[inline]
-    fn create_global_identifier(ident: &'static str, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
-        ctx.create_unbound_ident_expr(SPAN, ctx.ast.ident(ident), ReferenceFlags::Read)
+    fn create_global_identifier(ident: Ident<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
+        ctx.create_unbound_ident_expr(SPAN, ident, ReferenceFlags::Read)
     }
 
     #[inline]
     fn global_object(ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
-        Self::create_global_identifier("Object", ctx)
+        Self::create_global_identifier(static_ident!("Object"), ctx)
     }
 
     #[inline]
     fn global_function(ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
-        Self::create_global_identifier("Function", ctx)
+        Self::create_global_identifier(static_ident!("Function"), ctx)
     }
 
     #[inline]
     fn global_array(ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
-        Self::create_global_identifier("Array", ctx)
+        Self::create_global_identifier(static_ident!("Array"), ctx)
     }
 
     #[inline]
     fn global_boolean(ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
-        Self::create_global_identifier("Boolean", ctx)
+        Self::create_global_identifier(static_ident!("Boolean"), ctx)
     }
 
     #[inline]
     fn global_string(ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
-        Self::create_global_identifier("String", ctx)
+        Self::create_global_identifier(static_ident!("String"), ctx)
     }
 
     #[inline]
     fn global_number(ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
-        Self::create_global_identifier("Number", ctx)
+        Self::create_global_identifier(static_ident!("Number"), ctx)
     }
 
     #[inline]
     fn global_bigint(ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
-        Self::create_global_identifier("BigInt", ctx)
+        Self::create_global_identifier(static_ident!("BigInt"), ctx)
     }
 
     #[inline]
     fn global_symbol(ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
-        Self::create_global_identifier("Symbol", ctx)
+        Self::create_global_identifier(static_ident!("Symbol"), ctx)
     }
 
     #[inline]
     fn global_promise(ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
-        Self::create_global_identifier("Promise", ctx)
+        Self::create_global_identifier(static_ident!("Promise"), ctx)
     }
 
     // `_metadata(key, value)
