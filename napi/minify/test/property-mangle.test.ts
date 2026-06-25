@@ -1,5 +1,7 @@
-// Property-mangling *behavioral* conformance lives in `esbuild-mangle-props.test.ts`;
-// this file covers the NAPI option/cache/error surface.
+// Property-mangling *behavioral* conformance lives in the Rust tests at
+// `crates/oxc_minifier/tests/property_mangler/` (run via `cargo test -p oxc_minifier`);
+// this file covers only the NAPI option/cache/error surface plus a couple of thin
+// smoke tests that the option-conversion path actually reaches the engine.
 import { describe, expect, it } from "vitest";
 
 import { minifySync } from "../index";
@@ -8,6 +10,25 @@ describe("property mangling", () => {
   it("is off by default", () => {
     const r = minifySync("t.js", "globalThis.addEventListener()", { mangle: true });
     expect(r.code).toContain("addEventListener");
+  });
+
+  it("`mangleProps` renames a matching property", () => {
+    // Smoke test: the `mangleProps` regex reaches the engine and renames a member.
+    const r = minifySync("t.js", "x._foo", { mangleProps: "^_", compress: false });
+    expect(r.code).not.toContain("_foo");
+    expect(r.mangleCache).toEqual({ _foo: "e" });
+  });
+
+  it("`mangleQuoted: true` mangles a quoted access", () => {
+    // Smoke test: the `mangleQuoted` flag reaches the engine; a quoted index that would be
+    // reserved by default becomes a mangle candidate.
+    const r = minifySync("t.js", "x['_foo']", {
+      mangleProps: "^_",
+      mangleQuoted: true,
+      compress: false,
+    });
+    expect(r.code).not.toContain("_foo");
+    expect(r.mangleCache).toEqual({ _foo: "e" });
   });
 
   it("returns a cache and reuses it for stable names", () => {
