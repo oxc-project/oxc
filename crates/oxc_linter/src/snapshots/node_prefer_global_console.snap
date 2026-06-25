@@ -1,0 +1,52 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ node(prefer-global-console): Unexpected use of 'require("console")'. Use the global variable 'console' instead.
+   ╭─[prefer_global_console.tsx:1:5]
+ 1 │ var console = require('console'); console.log(10)
+   ·     ────────────────────────────
+   ╰────
+  help: Use the global `console` variable instead of importing it from the `console` module.
+
+  ⚠ node(prefer-global-console): Unexpected use of 'require("console")'. Use the global variable 'console' instead.
+   ╭─[prefer_global_console.tsx:1:5]
+ 1 │ var console = require('node:console'); console.log(10)
+   ·     ─────────────────────────────────
+   ╰────
+  help: Use the global `console` variable instead of importing it from the `console` module.
+
+  ⚠ node(prefer-global-console): Unexpected use of 'require("console")'. Use the global variable 'console' instead.
+   ╭─[prefer_global_console.tsx:1:5]
+ 1 │ var console = require('console'); console.log(10)
+   ·     ────────────────────────────
+   ╰────
+  help: Use the global `console` variable instead of importing it from the `console` module.
+
+  ⚠ node(prefer-global-console): Unexpected use of 'require("console")'. Use the global variable 'console' instead.
+   ╭─[prefer_global_console.tsx:1:5]
+ 1 │ var console = require('node:console'); console.log(10)
+   ·     ─────────────────────────────────
+   ╰────
+  help: Use the global `console` variable instead of importing it from the `console` module.
+
+  ⚠ node(prefer-global-console): Unexpected use of 'require("console")'. Use the global variable 'console' instead.
+   ╭─[prefer_global_console.tsx:1:5]
+ 1 │ var console = process.getBuiltinModule('console'); console.log(10)
+   ·     ─────────────────────────────────────────────
+   ╰────
+  help: Use the global `console` variable instead of importing it from the `console` module.
+
+  ⚠ node(prefer-global-console): Unexpected use of 'require("console")'. Use the global variable 'console' instead.
+   ╭─[prefer_global_console.tsx:1:5]
+ 1 │ var console = process.getBuiltinModule('node:console'); console.log(10)
+   ·     ──────────────────────────────────────────────────
+   ╰────
+  help: Use the global `console` variable instead of importing it from the `console` module.
+
+  ⚠ node(prefer-global-console): Unexpected use of the global variable 'console'. Use 'require("console")' instead.
+   ╭─[prefer_global_console.tsx:1:1]
+ 1 │ console.log(10)
+   · ───────
+   ╰────
+  help: Import `console` from the `console` module instead of using the global variable.

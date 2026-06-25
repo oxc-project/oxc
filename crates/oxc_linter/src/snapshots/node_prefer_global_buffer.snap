@@ -1,0 +1,52 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ node(prefer-global-buffer): Unexpected use of 'require("buffer").Buffer'. Use the global variable 'Buffer' instead.
+   ╭─[prefer_global_buffer.tsx:1:5]
+ 1 │ var { Buffer } = require('buffer'); var b = Buffer.alloc(10)
+   ·     ──────────────────────────────
+   ╰────
+  help: Use the global `Buffer` variable instead of importing it from the `buffer` module.
+
+  ⚠ node(prefer-global-buffer): Unexpected use of 'require("buffer").Buffer'. Use the global variable 'Buffer' instead.
+   ╭─[prefer_global_buffer.tsx:1:5]
+ 1 │ var { Buffer } = require('node:buffer'); var b = Buffer.alloc(10)
+   ·     ───────────────────────────────────
+   ╰────
+  help: Use the global `Buffer` variable instead of importing it from the `buffer` module.
+
+  ⚠ node(prefer-global-buffer): Unexpected use of 'require("buffer").Buffer'. Use the global variable 'Buffer' instead.
+   ╭─[prefer_global_buffer.tsx:1:5]
+ 1 │ var { Buffer } = require('buffer'); var b = Buffer.alloc(10)
+   ·     ──────────────────────────────
+   ╰────
+  help: Use the global `Buffer` variable instead of importing it from the `buffer` module.
+
+  ⚠ node(prefer-global-buffer): Unexpected use of 'require("buffer").Buffer'. Use the global variable 'Buffer' instead.
+   ╭─[prefer_global_buffer.tsx:1:5]
+ 1 │ var { Buffer } = require('node:buffer'); var b = Buffer.alloc(10)
+   ·     ───────────────────────────────────
+   ╰────
+  help: Use the global `Buffer` variable instead of importing it from the `buffer` module.
+
+  ⚠ node(prefer-global-buffer): Unexpected use of 'require("buffer").Buffer'. Use the global variable 'Buffer' instead.
+   ╭─[prefer_global_buffer.tsx:1:5]
+ 1 │ var { Buffer } = process.getBuiltinModule('buffer'); var b = Buffer.alloc(10)
+   ·     ───────────────────────────────────────────────
+   ╰────
+  help: Use the global `Buffer` variable instead of importing it from the `buffer` module.
+
+  ⚠ node(prefer-global-buffer): Unexpected use of 'require("buffer").Buffer'. Use the global variable 'Buffer' instead.
+   ╭─[prefer_global_buffer.tsx:1:5]
+ 1 │ var { Buffer } = process.getBuiltinModule('node:buffer'); var b = Buffer.alloc(10)
+   ·     ────────────────────────────────────────────────────
+   ╰────
+  help: Use the global `Buffer` variable instead of importing it from the `buffer` module.
+
+  ⚠ node(prefer-global-buffer): Unexpected use of the global variable 'Buffer'. Use 'require("buffer").Buffer' instead.
+   ╭─[prefer_global_buffer.tsx:1:9]
+ 1 │ var b = Buffer.alloc(10)
+   ·         ──────
+   ╰────
+  help: Import `Buffer` from the `buffer` module instead of using the global variable.

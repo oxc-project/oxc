@@ -848,6 +848,8 @@ pub(crate) mod node {
     pub mod no_path_concat;
     pub mod no_process_env;
     pub mod no_sync;
+    pub mod prefer_global_buffer;
+    pub mod prefer_global_console;
 }
 
 /// <https://github.com/vuejs/eslint-plugin-vue>

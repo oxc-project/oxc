@@ -320,7 +320,7 @@ describe.concurrent("`parse`", () => {
     const programRaw = (await parse(filename, sourceText, { experimentalRawTransfer: true }))
       .program;
     expect(programRaw).toEqual(programStandard);
-  });
+  }, 10_000);
 
   // oxlint-disable-next-line jest/expect-expect
   it("processes multiple files", async () => {

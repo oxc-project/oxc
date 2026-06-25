@@ -5672,6 +5672,46 @@
             }
           ]
         },
+        "node/prefer-global-buffer": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PreferGlobalBufferMode"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
+        "node/prefer-global-console": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PreferGlobalConsoleMode"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "object-shorthand": {
           "anyOf": [
             {
@@ -16903,6 +16943,20 @@
           ],
           "markdownDescription": "Type arguments that only appear on the constructor are disallowed."
         }
+      ]
+    },
+    "PreferGlobalBufferMode": {
+      "type": "string",
+      "enum": [
+        "always",
+        "never"
+      ]
+    },
+    "PreferGlobalConsoleMode": {
+      "type": "string",
+      "enum": [
+        "always",
+        "never"
       ]
     },
     "PreferImportInMockConfig": {
