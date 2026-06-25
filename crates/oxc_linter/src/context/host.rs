@@ -29,8 +29,6 @@ use crate::frameworks::{has_jest_imports, has_vitest_imports, is_jestlike_file};
 
 use super::{LintContext, plugin_display_name};
 
-const DIAGNOSTICS_INITIAL_CAPACITY: usize = 16;
-
 /// Stores shared information about a script block being linted.
 pub struct ContextSubHost<'a> {
     /// Semantic information about the file being linted, which includes scopes, symbols and AST nodes.
@@ -186,6 +184,8 @@ impl<'a> ContextHost<'a> {
         options: LintOptions,
         config: Arc<LintConfig>,
     ) -> Self {
+        const DIAGNOSTICS_INITIAL_CAPACITY: usize = 16;
+
         assert!(
             !sub_hosts.is_empty(),
             "ContextHost requires at least one ContextSubHost to be analyzed"
