@@ -4,6 +4,8 @@ use oxc_syntax::node::NodeId;
 // Re-export as part of `builder` module
 pub use crate::NONE;
 
+mod custom;
+
 /// Trait for types which can create AST nodes.
 ///
 /// Implemented by [`AstBuilder`], and provides the memory arena and [`NodeId`]s used by the AST node
