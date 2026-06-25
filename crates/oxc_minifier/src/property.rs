@@ -274,6 +274,19 @@ impl<'a, 'o> PropertyCollector<'a, 'o> {
             // the annotation overrides the default quoted-reserve, so skip it here.
             Expression::StringLiteral(lit) if self.key_annotated.contains(&lit.span.start) => {}
             Expression::StringLiteral(lit) => self.quoted(lit.value.as_str()),
+            // A no-substitution template (`` `_a` ``) in a key/index position is runtime-
+            // equivalent to the string `'_a'`, so classify it the same way. An annotated
+            // template is a candidate (handled by `visit_template_literal`); skip it here.
+            Expression::TemplateLiteral(tmpl)
+                if tmpl.expressions.is_empty() && self.key_annotated.contains(&tmpl.span.start) => {
+            }
+            Expression::TemplateLiteral(tmpl) if tmpl.expressions.is_empty() => {
+                if let [quasi] = tmpl.quasis.as_slice()
+                    && let Some(cooked) = quasi.value.cooked
+                {
+                    self.quoted(cooked.as_str());
+                }
+            }
             Expression::ConditionalExpression(cond) => {
                 self.classify_key_expression(&cond.consequent);
                 self.classify_key_expression(&cond.alternate);
@@ -465,12 +478,27 @@ impl<'a> PropertyRewriter<'a, '_> {
         }
     }
 
+    /// Rename an in-place no-substitution template literal (the template analogue of
+    /// [`Self::rename_string_literal`], for the `in`-LHS and wrapped computed keys).
+    fn rename_template_literal(&self, tmpl: &mut TemplateLiteral<'a>) {
+        if tmpl.expressions.is_empty()
+            && let [quasi] = tmpl.quasis.as_mut_slice()
+            && let Some(cooked) = quasi.value.cooked
+            && let Some(new_name) = self.map.get(cooked.as_str())
+        {
+            let new_str = self.ast.str(new_name.as_str());
+            quasi.value.cooked = Some(new_str);
+            quasi.value.raw = new_str;
+        }
+    }
+
     /// Rename the string literals reachable through the wrapped key forms (conditional /
     /// sequence), in place. Used for the `in`-LHS, member-index, and computed-key wrappers
     /// that cannot be un-quoted.
     fn rename_key_expression(&self, expr: &mut Expression<'a>) {
         match expr {
             Expression::StringLiteral(lit) => self.rename_string_literal(lit),
+            Expression::TemplateLiteral(tmpl) => self.rename_template_literal(tmpl),
             Expression::ParenthesizedExpression(paren) => {
                 self.rename_key_expression(&mut paren.expression);
             }
@@ -938,6 +966,42 @@ mod tests {
         // The assignment-target shorthand is still reserved regardless of mangle_quoted.
         let s2 = collect_src(&alloc, &opts_quoted("^_"), "({ _k } = o);");
         assert!(s2.reserved.contains("_k"));
+    }
+
+    #[test]
+    fn collect_classifies_no_substitution_template_keys() {
+        let alloc = oxc_allocator::Allocator::default();
+        // A no-substitution template (`` `_a` ``) in a key/index position is runtime-equivalent
+        // to the string `'_a'`, so (mangle_quoted off) it reserves the name program-wide.
+        let s = collect_src(
+            &alloc,
+            &opts("^_"),
+            "a[`_x`]; `_v` in o; ({ [`_z`]: 1 }); ({ [(q, `_w`)]: 1 }); a[c ? `_u` : d];",
+        );
+        for name in ["_x", "_v", "_z", "_w", "_u"] {
+            assert!(s.reserved.contains(name), "{name} should be reserved");
+            assert!(!s.candidates.contains(name), "{name} should not be a candidate");
+        }
+        // A template WITH a substitution is not a statically-known key: neither classified.
+        let s2 = collect_src(&alloc, &opts("^_"), "a[`_d${y}`];");
+        assert!(!s2.reserved.contains("_d"));
+        assert!(!s2.candidates.contains("_d"));
+    }
+
+    #[test]
+    fn collect_template_candidates_when_mangle_quoted() {
+        let alloc = oxc_allocator::Allocator::default();
+        // With mangle_quoted on, the same no-substitution templates become candidates,
+        // renamed consistently with their unquoted siblings.
+        let s = collect_src(
+            &alloc,
+            &opts_quoted("^_"),
+            "a[`_x`]; `_v` in o; ({ [`_z`]: 1 }); a[c ? `_u` : d];",
+        );
+        for name in ["_x", "_v", "_z", "_u"] {
+            assert!(s.candidates.contains(name), "{name} should be a candidate");
+            assert!(!s.reserved.contains(name), "{name} should not be reserved");
+        }
     }
 
     #[test]

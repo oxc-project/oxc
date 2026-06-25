@@ -286,3 +286,74 @@ fn reserve_regex_carves_out() {
     let want = codegen("o._keep; o.e;", SourceType::mjs());
     assert_eq!(got, want, "\nexpect {want}\ngot {got}");
 }
+
+// ---------------------------------------------------------------------------
+// No-substitution template literals (`` `_foo` ``) in key/index positions are
+// runtime-equivalent to the quoted string `'_foo'`, so they must be classified
+// identically: reserved by default, candidates under `mangle_quoted`.
+// ---------------------------------------------------------------------------
+
+/// PropertyMangler-direct run with `mangle_quoted` enabled.
+fn mangle_quoted(src: &str, regex: &str) -> String {
+    let alloc = Allocator::default();
+    let mut program = Parser::new(&alloc, src, SourceType::mjs()).parse().program;
+    let mut o = opts(regex);
+    o.mangle_quoted = true;
+    let mut m = PropertyMangler::new(o);
+    m.collect(&program);
+    m.rewrite(&mut program, &alloc);
+    Codegen::new().build(&program).code
+}
+
+#[test]
+fn template_member_reserves_unquoted() {
+    // A template index `o[`_foo`]` reserves `_foo`, so the unquoted member must NOT be
+    // renamed (else `o.e` and `o[`_foo`]` would access different properties).
+    test("o[`_foo`]; o._foo;", "o[`_foo`]; o._foo;", "^_");
+}
+
+#[test]
+fn template_in_operator_reserves_name() {
+    test("`_foo` in o; o._foo;", "`_foo` in o; o._foo;", "^_");
+}
+
+#[test]
+fn template_object_key_reserves_member() {
+    test("({ [`_foo`]: 1 }); o._foo;", "({ [`_foo`]: 1 }); o._foo;", "^_");
+}
+
+#[test]
+fn substitution_template_is_not_a_key() {
+    // A template WITH a substitution is a dynamic key, never statically `_foo`, so it does
+    // not reserve `_foo`; the unquoted member is still a candidate and renames to `e`.
+    test("o[`_foo${x}`]; o._foo;", "o[`_foo${x}`]; o.e;", "^_");
+}
+
+#[test]
+fn mangle_quoted_renames_template_member() {
+    // With `mangle_quoted`, the template index becomes a candidate and is renamed in place
+    // (kept as a template), consistently with the unquoted member.
+    let got = mangle_quoted("o[`_foo`]; o._foo;", "^_");
+    let want = codegen("o[`e`]; o.e;", SourceType::mjs());
+    assert_eq!(got, want, "\nexpect {want}\ngot {got}");
+}
+
+#[test]
+fn mangle_quoted_renames_template_in_operator_and_key() {
+    let got = mangle_quoted("`_foo` in o; ({ [`_foo`]: 1 }); o._foo;", "^_");
+    let want = codegen("`e` in o; ({ [`e`]: 1 }); o.e;", SourceType::mjs());
+    assert_eq!(got, want, "\nexpect {want}\ngot {got}");
+}
+
+#[test]
+fn template_member_reserved_through_full_minify() {
+    // The real bug: through the full pipeline (compress runs between the pre-compress collect
+    // and the post-mangle rewrite), the template index reserves `_foo`, so neither occurrence
+    // is renamed regardless of how compress reshapes the access. `globalThis` keeps the reads
+    // observable so they survive DCE.
+    test_min(
+        "globalThis.o[`_foo`]; globalThis.o._foo;",
+        "globalThis.o[`_foo`]; globalThis.o._foo;",
+        "^_",
+    );
+}
