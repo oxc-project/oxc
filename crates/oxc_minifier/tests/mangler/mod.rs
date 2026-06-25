@@ -1,3 +1,5 @@
+mod property;
+
 use std::fmt::Write;
 
 use oxc_allocator::Allocator;
