@@ -42,6 +42,11 @@ impl<'a> AstNodes<'a> {
         self.nodes.iter()
     }
 
+    /// Iterate over all [`AstNode`]s with their [`NodeId`].
+    pub fn iter_enumerated(&self) -> impl Iterator<Item = (NodeId, &AstNode<'a>)> + '_ {
+        self.nodes.iter_enumerated()
+    }
+
     /// Returns the number of node in this AST.
     #[inline]
     pub fn len(&self) -> usize {
@@ -84,6 +89,18 @@ impl<'a> AstNodes<'a> {
         self.ancestor_ids(node_id).map(|id| self.get_node(id))
     }
 
+    /// Walk up the AST, iterating over each parent [`NodeId`] and [`AstNode`].
+    ///
+    /// The first node produced by this iterator is the parent of `node_id`.
+    /// The last node will always be [`AstKind::Program`].
+    #[inline]
+    pub fn ancestors_enumerated(
+        &self,
+        node_id: NodeId,
+    ) -> impl Iterator<Item = (NodeId, &AstNode<'a>)> + Clone + '_ {
+        self.ancestor_ids(node_id).map(|id| (id, self.get_node(id)))
+    }
+
     /// Access the underlying struct from [`oxc_ast`].
     #[inline]
     pub fn kind(&self, node_id: NodeId) -> AstKind<'a> {
@@ -107,11 +124,13 @@ impl<'a> AstNodes<'a> {
     }
 
     #[inline]
+    /// Get a node by [`NodeId`].
     pub fn get_node(&self, node_id: NodeId) -> &AstNode<'a> {
         &self.nodes[node_id]
     }
 
     #[inline]
+    /// Get a mutable node by [`NodeId`].
     pub fn get_node_mut(&mut self, node_id: NodeId) -> &mut AstNode<'a> {
         &mut self.nodes[node_id]
     }
@@ -157,21 +176,25 @@ impl<'a> AstNodes<'a> {
     #[inline]
     pub fn add_node(
         &mut self,
+        node_id: NodeId,
         kind: AstKind<'a>,
         scope_id: ScopeId,
         parent_node_id: NodeId,
         #[cfg(feature = "cfg")] cfg_id: BlockNodeId,
         flags: NodeFlags,
-    ) -> NodeId {
-        let node_id = self.parent_ids.push(parent_node_id);
-        let node = AstNode::new(kind, scope_id, node_id);
+    ) {
+        // `node_id` is allocated by the builder's standalone node-id counter; this
+        // store just records the node at the next index, which must equal `node_id`
+        // as nodes are added in id order.
+        debug_assert_eq!(self.parent_ids.len(), node_id.index());
+        self.parent_ids.push(parent_node_id);
+        let node = AstNode::new(kind, scope_id);
         self.nodes.push(node);
         self.flags.push(flags);
         #[cfg(feature = "cfg")]
         self.cfg_ids.push(cfg_id);
         #[cfg(feature = "linter")]
         self.node_kinds_set.set(kind.ty());
-        node_id
     }
 
     /// Create and add an [`AstNode`] to the [`AstNodes`] tree and get its [`NodeId`].
@@ -185,20 +208,20 @@ impl<'a> AstNodes<'a> {
         scope_id: ScopeId,
         #[cfg(feature = "cfg")] cfg_id: BlockNodeId,
         flags: NodeFlags,
-    ) -> NodeId {
+    ) {
         assert!(self.parent_ids.is_empty(), "Program node must be the first node in the AST.");
         debug_assert!(
             matches!(kind, AstKind::Program(_)),
             "Program node must be of kind `AstKind::Program`"
         );
+        // `Program` always has node id `NodeId::ROOT`, set by the builder.
         self.parent_ids.push(NodeId::ROOT);
-        self.nodes.push(AstNode::new(kind, scope_id, NodeId::ROOT));
+        self.nodes.push(AstNode::new(kind, scope_id));
         self.flags.push(flags);
         #[cfg(feature = "cfg")]
         self.cfg_ids.push(cfg_id);
         #[cfg(feature = "linter")]
         self.node_kinds_set.set(AstType::Program);
-        NodeId::ROOT
     }
 
     /// Reserve space for at least `additional` more nodes.

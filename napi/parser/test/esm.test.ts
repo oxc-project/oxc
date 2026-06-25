@@ -1,11 +1,11 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from "vitest";
 
-import { parseSync } from '../src-js/index.js';
+import { parseSync } from "../src-js/index.js";
 
-describe('esm', () => {
+describe("esm", () => {
   // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import#syntax
   // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/export#syntax
-  let code = `
+  const code = `
 import defaultExport from "module-name";
 import * as name from "module-name";
 import { export1 } from "module-name";
@@ -46,23 +46,23 @@ export { import1 as name1, import2 as name2, /* …, */ nameN } from "module-nam
 export { default, /* …, */ } from "module-name";
 export { default as name1 } from "module-name";
 `
-    .split('\n')
+    .split("\n")
     .map((s) => s.trim())
     .filter(Boolean);
 
-  test.each(code)('%s', (s) => {
-    const ret = parseSync('test.js', s);
+  test.each(code)("%s", (s) => {
+    const ret = parseSync("test.js", s);
     expect(ret.program.body.length).toBeGreaterThan(0);
     expect(ret.errors.length).toBe(0);
     expect(JSON.stringify(ret.module, null, 2)).toMatchSnapshot();
     expect(ret.module.hasModuleSyntax).toBe(true);
 
     // oxlint-disable jest/no-conditional-expect
-    if (s.startsWith('import')) {
+    if (s.startsWith("import")) {
       expect(ret.module.staticImports.length).toBe(1);
       expect(ret.module.staticExports.length).toBe(0);
     }
-    if (s.startsWith('export')) {
+    if (s.startsWith("export")) {
       expect(ret.module.staticImports.length).toBe(0);
       expect(ret.module.staticExports.length).toBe(1);
     }
@@ -70,39 +70,41 @@ export { default as name1 } from "module-name";
   });
 });
 
-describe('hasModuleSyntax', () => {
-  test('import.meta', () => {
-    const ret = parseSync('test.js', 'import.meta.foo');
+describe("hasModuleSyntax", () => {
+  test("import.meta", () => {
+    const ret = parseSync("test.js", "import.meta.foo");
     expect(ret.module.hasModuleSyntax).toBe(true);
     expect(ret.module.importMetas).toEqual([{ start: 0, end: 11 }]);
   });
 
-  test('import expression', () => {
-    const ret = parseSync('test.js', "import('foo')");
+  test("import expression", () => {
+    const ret = parseSync("test.js", "import('foo')");
     expect(ret.module.hasModuleSyntax).toBe(false);
-    expect(ret.module.dynamicImports).toStrictEqual([{ start: 0, end: 13, moduleRequest: { start: 7, end: 12 } }]);
+    expect(ret.module.dynamicImports).toStrictEqual([
+      { start: 0, end: 13, moduleRequest: { start: 7, end: 12 } },
+    ]);
   });
 
-  test('script', () => {
-    const ret = parseSync('test.js', "require('foo')");
+  test("script", () => {
+    const ret = parseSync("test.js", "require('foo')");
     expect(ret.module.hasModuleSyntax).toBe(false);
   });
 });
 
-describe('export type', () => {
+describe("export type", () => {
   const inputs = [
     ["export type * from 'mod'", true],
     ["export type * as ns from 'mod'", true],
-    ['export type { foo }', true],
-    ['export { type foo }', true],
+    ["export type { foo }", true],
+    ["export { type foo }", true],
     ["export type { foo } from 'mod'", true],
-    ['export type Foo = {}', true],
-    ['export interface Foo {}', true],
-    ['export default interface Foo {}', true],
-    ['export namespace Foo {}', false], // namespace isn't considered a typed export
+    ["export type Foo = {}", true],
+    ["export interface Foo {}", true],
+    ["export default interface Foo {}", true],
+    ["export namespace Foo {}", false], // namespace isn't considered a typed export
   ] as const;
-  test.each(inputs)('%s', (source, isType) => {
-    const ret = parseSync('test.ts', source);
+  test.each(inputs)("%s", (source, isType) => {
+    const ret = parseSync("test.ts", source);
     expect(ret.module.staticExports.length).toBe(1);
     expect(ret.module.staticExports[0].entries.length).toBe(1);
     expect(ret.module.staticExports[0].entries[0].isType).toBe(isType);

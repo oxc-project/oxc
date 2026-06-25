@@ -1,10 +1,10 @@
-import { DATA_POINTER_POS_32, PROGRAM_OFFSET } from '../../generated/constants.js';
-import { RawTransferData } from '../../generated/lazy/constructors.js';
-import { walkProgram } from '../../generated/lazy/walk.js';
-import { parseAsyncRawImpl, parseSyncRawImpl, returnBufferToCache } from './common.js';
-import { TOKEN } from './lazy-common.js';
-import { getVisitorsArr } from './visitor.js';
-export { Visitor } from './visitor.js';
+import { DATA_POINTER_POS_32, PROGRAM_OFFSET } from "../generated/constants.js";
+import { RawTransferData } from "../generated/lazy/constructors.js";
+import { walkProgram } from "../generated/lazy/walk.js";
+import { parseAsyncRawImpl, parseSyncRawImpl, returnBufferToCache } from "./common.js";
+import { TOKEN } from "./lazy-common.js";
+import { getVisitorsArr } from "./visitor.js";
+export { Visitor } from "./visitor.js";
 
 /**
  * Parse JS/TS source synchronously on current thread.
@@ -30,8 +30,6 @@ export { Visitor } from './visitor.js';
  *   and `dispose` and `visit` methods
  */
 export function parseSyncLazy(filename, sourceText, options) {
-  let _;
-  ({ experimentalLazy: _, ...options } = options);
   return parseSyncRawImpl(filename, sourceText, options, construct);
 }
 
@@ -44,7 +42,7 @@ export function parseSyncLazy(filename, sourceText, options) {
  * e.g. `program` in returned object is an instance of `Program` class, with getters for `start`, `end`,
  * `body` etc.
  *
- * Because this function does not deserialize the AST, unlike `parseAsyncRaw`, very little work happens
+ * Because this function does not deserialize the AST, unlike `parse`, very little work happens
  * on current thread in this function. Deserialization work only occurs when properties of the objects
  * are accessed.
  *
@@ -62,9 +60,7 @@ export function parseSyncLazy(filename, sourceText, options) {
  * @returns {Object} - Object with property getters for `program`, `module`, `comments`, and `errors`,
  *   and `dispose` and `visit` methods
  */
-export function parseAsyncLazy(filename, sourceText, options) {
-  let _;
-  ({ experimentalLazy: _, ...options } = options);
+export function parse(filename, sourceText, options) {
   return parseAsyncRawImpl(filename, sourceText, options, construct);
 }
 
@@ -76,7 +72,9 @@ export function parseAsyncLazy(filename, sourceText, options) {
 // Raw transfer is disabled on NodeJS before v22, so it doesn't matter if this is `null` on old NodeJS
 // - it'll never be accessed in that case.
 const bufferRecycleRegistry =
-  typeof FinalizationRegistry === 'undefined' ? null : new FinalizationRegistry(returnBufferToCache);
+  typeof FinalizationRegistry === "undefined"
+    ? null
+    : new FinalizationRegistry(returnBufferToCache);
 
 /**
  * Get an object with getters which lazy deserialize AST and other data from buffer.
@@ -85,22 +83,31 @@ const bufferRecycleRegistry =
  *
  * @param {Uint8Array} buffer - Buffer containing AST in raw form
  * @param {string} sourceText - Source for the file
+ * @param {number} sourceStartPos - Position of first byte of source text in buffer
  * @param {number} sourceByteLen - Length of source text in UTF-8 bytes
  * @param {Object} _options - Parsing options
  * @returns {Object} - Object with property getters for `program`, `module`, `comments`, and `errors`,
  *   and `dispose` and `visit` methods
  */
-function construct(buffer, sourceText, sourceByteLen, _options) {
+function construct(buffer, sourceText, sourceStartPos, sourceByteLen, _options) {
   // Create AST object
   const sourceIsAscii = sourceText.length === sourceByteLen;
-  const ast = { buffer, sourceText, sourceByteLen, sourceIsAscii, nodes: new Map(), token: TOKEN };
+  const ast = {
+    buffer,
+    sourceText,
+    sourceStartPos,
+    sourceByteLen,
+    sourceIsAscii,
+    nodes: new Map(),
+    token: TOKEN,
+  };
 
   // Register `ast` with the recycle registry so buffer is returned to cache
   // when `ast` is garbage collected
   bufferRecycleRegistry.register(ast, buffer, ast);
 
   // Get root data class instance
-  const rawDataPos = buffer.uint32[DATA_POINTER_POS_32];
+  const rawDataPos = buffer.int32[DATA_POINTER_POS_32];
   const data = new RawTransferData(rawDataPos, ast);
 
   return {

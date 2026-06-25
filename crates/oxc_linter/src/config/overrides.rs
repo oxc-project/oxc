@@ -1,14 +1,17 @@
 use std::{
     borrow::Cow,
     ops::{Deref, DerefMut},
-    path::PathBuf,
 };
 
 use rustc_hash::FxHashSet;
 use schemars::{JsonSchema, r#gen, schema::Schema};
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Deserialize, Serialize};
+
+use oxc_config::GlobSet;
 
 use crate::{LintPlugins, OxlintEnv, OxlintGlobals, config::OxlintRules};
+
+use super::external_plugins::{ExternalPluginEntry, external_plugins_schema};
 
 // nominal wrapper required to add JsonSchema impl
 #[derive(Debug, Default, Clone, Deserialize, Serialize)]
@@ -76,12 +79,23 @@ impl JsonSchema for OxlintOverrides {
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
 #[non_exhaustive]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
 pub struct OxlintOverride {
     /// A list of glob patterns to override.
     ///
     /// ## Example
     /// `[ "*.test.ts", "*.spec.ts" ]`
     pub files: GlobSet,
+
+    /// A list of glob patterns to exclude from this override.
+    ///
+    /// Files matching these patterns are not globally ignored; this override
+    /// simply does not apply to them.
+    ///
+    /// ## Example
+    /// `[ "*.generated.ts", "fixtures/**" ]`
+    #[serde(default, skip_serializing_if = "GlobSet::is_empty")]
+    pub exclude_files: GlobSet,
 
     /// Environments enable and disable collections of global variables.
     pub env: Option<OxlintEnv>,
@@ -94,85 +108,18 @@ pub struct OxlintOverride {
     #[serde(default)]
     pub plugins: Option<LintPlugins>,
 
-    /// JS plugins for this override.
+    /// JS plugins for this override, allows usage of ESLint plugins with Oxlint.
     ///
-    /// Note: JS plugins are experimental and not subject to semver.
-    /// They are not supported in language server at present.
-    #[serde(
-        rename = "jsPlugins",
-        deserialize_with = "deserialize_external_plugins_override",
-        serialize_with = "serialize_external_plugins_override",
-        default,
-        skip_serializing_if = "Option::is_none"
-    )]
-    #[schemars(with = "Option<FxHashSet<String>>")]
-    pub external_plugins: Option<
-        FxHashSet<(PathBuf /* config file directory */, String /* plugin specifier */)>,
-    >,
+    /// Read more about JS plugins in
+    /// [the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).
+    ///
+    /// Note: JS plugins are in alpha and not subject to semver.
+    #[serde(rename = "jsPlugins", default, skip_serializing_if = "Option::is_none")]
+    #[schemars(schema_with = "external_plugins_schema")]
+    pub external_plugins: Option<FxHashSet<ExternalPluginEntry>>,
 
     #[serde(default)]
     pub rules: OxlintRules,
-}
-
-/// A set of glob patterns.
-#[derive(Debug, Default, Clone, Serialize, JsonSchema)]
-pub struct GlobSet(Vec<String>);
-
-impl<'de> Deserialize<'de> for GlobSet {
-    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        Ok(Self::new(Vec::<String>::deserialize(deserializer)?))
-    }
-}
-
-impl GlobSet {
-    pub fn new<S: AsRef<str>, I: IntoIterator<Item = S>>(patterns: I) -> Self {
-        Self(
-            patterns
-                .into_iter()
-                .map(|pat| {
-                    let pattern = pat.as_ref();
-                    if pattern.contains('/') {
-                        pattern.to_owned()
-                    } else {
-                        let mut s = String::with_capacity(pattern.len() + 3);
-                        s.push_str("**/");
-                        s.push_str(pattern);
-                        s
-                    }
-                })
-                .collect::<Vec<_>>(),
-        )
-    }
-
-    pub fn is_match(&self, path: &str) -> bool {
-        self.0.iter().any(|glob| fast_glob::glob_match(glob, path))
-    }
-}
-
-fn deserialize_external_plugins_override<'de, D>(
-    deserializer: D,
-) -> Result<Option<FxHashSet<(PathBuf, String)>>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let opt_set: Option<FxHashSet<String>> = Option::deserialize(deserializer)?;
-    Ok(opt_set
-        .map(|set| set.into_iter().map(|specifier| (PathBuf::default(), specifier)).collect()))
-}
-
-#[expect(clippy::ref_option)]
-fn serialize_external_plugins_override<S>(
-    plugins: &Option<FxHashSet<(PathBuf, String)>>,
-    serializer: S,
-) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    // Serialize as an array of original specifiers (the values in the map)
-    match plugins {
-        Some(set) => serializer.collect_seq(set.iter().map(|(_, specifier)| specifier)),
-        None => serializer.serialize_none(),
-    }
 }
 
 #[cfg(test)]
@@ -181,23 +128,6 @@ mod test {
 
     use super::*;
     use serde_json::{from_value, json};
-
-    #[test]
-    fn test_globset() {
-        let config: OxlintOverride = from_value(json!({
-            "files": ["*.tsx",],
-        }))
-        .unwrap();
-        assert!(config.files.is_match("/some/path/foo.tsx"));
-        assert!(!config.files.is_match("/some/path/foo.ts"));
-
-        let config: OxlintOverride = from_value(json!({
-            "files": ["lib/*.ts",],
-        }))
-        .unwrap();
-        assert!(config.files.is_match("lib/foo.ts"));
-        assert!(!config.files.is_match("src/foo.ts"));
-    }
 
     #[test]
     fn test_parsing_plugins() {
@@ -220,6 +150,18 @@ mod test {
         }))
         .unwrap();
         assert_eq!(config.plugins, Some(LintPlugins::REACT | LintPlugins::TYPESCRIPT));
+    }
+
+    #[test]
+    fn test_parsing_exclude_files() {
+        let config: OxlintOverride = from_value(json!({
+            "files": ["*.tsx"],
+            "excludeFiles": ["*.generated.tsx"],
+        }))
+        .unwrap();
+
+        assert!(config.exclude_files.is_match("App.generated.tsx"));
+        assert!(!config.exclude_files.is_match("App.tsx"));
     }
 
     #[test]

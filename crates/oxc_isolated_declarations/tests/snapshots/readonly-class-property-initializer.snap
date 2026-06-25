@@ -1,0 +1,93 @@
+---
+source: crates/oxc_isolated_declarations/tests/mod.rs
+input_file: crates/oxc_isolated_declarations/tests/fixtures/readonly-class-property-initializer.ts
+---
+```
+==================== .D.TS ====================
+
+export declare class ReadonlyLiteralInitializers {
+	readonly directTrue = true;
+	readonly parenTrue = true;
+	readonly constAssertTrue = true;
+	readonly nestedConstAssert = true;
+	readonly directString = "x";
+	readonly parenString = "x";
+	readonly templateNoExpr = "x";
+	readonly constAssertString = "x";
+	readonly unaryNumber = -1;
+	readonly unaryParenNumber = -1;
+	readonly constAssertNumber = 1;
+	readonly directObject: {
+		a: number;
+	};
+	readonly parenObject: {
+		a: number;
+	};
+	readonly constAssertObject: {
+		readonly a: 1;
+	};
+	readonly nestedConstAssertObject: {
+		readonly a: 1;
+	};
+	readonly directNestedObject: {
+		nested: {
+			a: number;
+		};
+	};
+	readonly constAssertNestedObject: {
+		readonly nested: {
+			readonly a: 1;
+		};
+	};
+	writableObject: {
+		a: number;
+	};
+	writableTrue: boolean;
+}
+export declare class ReadonlyArrayInitializers {
+	readonly emptyArray: unknown;
+	readonly arrayAsConst: readonly [];
+	readonly arrayWithTypeAnnotation: number[];
+	readonly nonEmptyArray: unknown;
+	readonly arrayWithSpread: unknown;
+	readonly arrayIdentifierReference: unknown;
+	readonly arrayIdentifierReferenceAndAnnotation: [readonly [1, 2]];
+}
+
+
+==================== Errors ====================
+
+  x TS9017: Only const arrays can be inferred with --isolatedDeclarations.
+    ,-[31:25]
+ 30 | export class ReadonlyArrayInitializers {
+ 31 |   readonly emptyArray = [];
+    :                         ^^
+ 32 |   readonly arrayAsConst = [] as const;
+    `----
+
+  x TS9017: Only const arrays can be inferred with --isolatedDeclarations.
+    ,-[34:28]
+ 33 |   readonly arrayWithTypeAnnotation: number[] = [];
+ 34 |   readonly nonEmptyArray = [1, 2];
+    :                            ^^^^^^
+ 35 |   readonly arrayWithSpread = [...values];
+    `----
+
+  x TS9017: Only const arrays can be inferred with --isolatedDeclarations.
+    ,-[35:30]
+ 34 |   readonly nonEmptyArray = [1, 2];
+ 35 |   readonly arrayWithSpread = [...values];
+    :                              ^^^^^^^^^^^
+ 36 |   readonly arrayIdentifierReference = [values];
+    `----
+
+  x TS9017: Only const arrays can be inferred with --isolatedDeclarations.
+    ,-[36:39]
+ 35 |   readonly arrayWithSpread = [...values];
+ 36 |   readonly arrayIdentifierReference = [values];
+    :                                       ^^^^^^^^
+ 37 |   readonly arrayIdentifierReferenceAndAnnotation: [readonly [1,2]] = [values];
+    `----
+
+
+```

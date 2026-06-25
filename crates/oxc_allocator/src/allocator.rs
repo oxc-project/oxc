@@ -4,15 +4,9 @@ use std::{
     slice, str,
 };
 
-#[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
-use std::mem::offset_of;
-
-use bumpalo::Bump;
+use crate::arena::Arena;
 
 use oxc_data_structures::assert_unchecked;
-
-#[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
-use crate::tracking::AllocationStats;
 
 /// A bump-allocated memory arena.
 ///
@@ -119,7 +113,8 @@ use crate::tracking::AllocationStats;
 ///
 /// If workload is completely uniform, it reaches stable state on the 3rd round.
 ///
-/// ```
+/// ```no_run
+/// # // This isn't run as a doctest. It's much too slow.
 /// # use oxc_allocator::Allocator;
 /// let mut allocator = Allocator::new();
 ///
@@ -210,7 +205,7 @@ use crate::tracking::AllocationStats;
 ///
 /// let allocator = Allocator::default();
 /// let parsed = Parser::new(&allocator, "let x = 1;", SourceType::default());
-/// assert!(parsed.errors.is_empty());
+/// assert!(parsed.diagnostics.is_empty());
 /// ```
 ///
 /// [`reset`]: Allocator::reset
@@ -219,19 +214,10 @@ use crate::tracking::AllocationStats;
 /// [`Vec::new_in`]: crate::Vec::new_in
 /// [`HashMap::new_in`]: crate::HashMap::new_in
 #[derive(Default)]
+#[repr(transparent)]
 pub struct Allocator {
-    bump: Bump,
-    /// Used to track number of allocations made in this allocator when `track_allocations` feature is enabled
-    #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
-    pub(crate) stats: AllocationStats,
+    arena: Arena,
 }
-
-/// Offset of `stats` field, relative to `bump` field.
-/// Used in `tracking` module for allocation tracking.
-#[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
-#[expect(clippy::cast_possible_wrap)]
-pub const STATS_FIELD_OFFSET: isize =
-    (offset_of!(Allocator, stats) as isize) - (offset_of!(Allocator, bump) as isize);
 
 impl Allocator {
     /// Create a new [`Allocator`] with no initial capacity.
@@ -253,30 +239,22 @@ impl Allocator {
     /// [`Vec::new_in`]: crate::Vec::new_in
     /// [`HashMap::new_in`]: crate::HashMap::new_in
     //
-    // `#[inline(always)]` because just delegates to `bumpalo` method
+    // `#[inline(always)]` because just delegates to `Arena` method
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub fn new() -> Self {
-        Self {
-            bump: Bump::new(),
-            #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
-            stats: AllocationStats::default(),
-        }
+        Self { arena: Arena::new() }
     }
 
     /// Create a new [`Allocator`] with specified capacity.
     ///
     /// See [`Allocator`] docs for more information on efficient use of [`Allocator`].
     //
-    // `#[inline(always)]` because just delegates to `bumpalo` method
+    // `#[inline(always)]` because just delegates to `Arena` method
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub fn with_capacity(capacity: usize) -> Self {
-        Self {
-            bump: Bump::with_capacity(capacity),
-            #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
-            stats: AllocationStats::default(),
-        }
+        Self { arena: Arena::with_capacity(capacity) }
     }
 
     /// Allocate an object in this [`Allocator`] and return an exclusive reference to it.
@@ -293,17 +271,14 @@ impl Allocator {
     /// assert_eq!(x, &[1u8; 20]);
     /// ```
     //
-    // `#[inline(always)]` because this is a very hot path and `Bump::alloc` is a very small function.
+    // `#[inline(always)]` because this is a very hot path and `Arena::alloc` is a very small function.
     // We always want it to be inlined.
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub fn alloc<T>(&self, val: T) -> &mut T {
         const { assert!(!std::mem::needs_drop::<T>(), "Cannot allocate Drop type in arena") };
 
-        #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
-        self.stats.record_allocation();
-
-        self.bump.alloc(val)
+        self.arena.alloc(val)
     }
 
     /// Copy a string slice into this [`Allocator`] and return a reference to it.
@@ -319,18 +294,15 @@ impl Allocator {
     /// assert_eq!(hello, "hello world");
     /// ```
     //
-    // `#[inline(always)]` because this is a hot path and `Bump::alloc_str` is a very small function.
+    // `#[inline(always)]` because this is a hot path and `Arena::alloc_str` is a very small function.
     // We always want it to be inlined.
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub fn alloc_str<'alloc>(&'alloc self, src: &str) -> &'alloc str {
-        #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
-        self.stats.record_allocation();
-
-        self.bump.alloc_str(src)
+        self.arena.alloc_str(src)
     }
 
-    /// `Copy` a slice into this `Bump` and return an exclusive reference to the copy.
+    /// `Copy` a slice into this [`Allocator`] and return an exclusive reference to the copy.
     ///
     /// # Panics
     /// Panics if reserving space for the slice fails.
@@ -342,15 +314,13 @@ impl Allocator {
     /// let x = allocator.alloc_slice_copy(&[1, 2, 3]);
     /// assert_eq!(x, &[1, 2, 3]);
     /// ```
-    // `#[inline(always)]` because this is a hot path and `Bump::alloc_slice_copy` is a very small function.
+    //
+    // `#[inline(always)]` because this is a hot path and `Arena::alloc_slice_copy` is a very small function.
     // We always want it to be inlined.
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub fn alloc_slice_copy<T: Copy>(&self, src: &[T]) -> &mut [T] {
-        #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
-        self.stats.record_allocation();
-
-        self.bump.alloc_slice_copy(src)
+        self.arena.alloc_slice_copy(src)
     }
 
     /// Allocate space for an object with the given [`Layout`].
@@ -361,11 +331,13 @@ impl Allocator {
     /// # Panics
     ///
     /// Panics if reserving space matching `layout` fails.
+    //
+    // `#[inline(always)]` because this is a hot path and `Arena::alloc_layout` is a very small function.
+    // We always want it to be inlined.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     pub fn alloc_layout(&self, layout: Layout) -> NonNull<u8> {
-        #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
-        self.stats.record_allocation();
-
-        self.bump.alloc_layout(layout)
+        self.arena.alloc_layout(layout)
     }
 
     /// Create new `&str` from a fixed-size array of `&str`s concatenated together,
@@ -410,13 +382,15 @@ impl Allocator {
             unsafe { assert_unchecked!(len <= (isize::MAX as usize)) };
             total_len.checked_add(len).unwrap()
         });
+
+        if total_len == 0 {
+            return "";
+        }
+
         assert!(
             isize::try_from(total_len).is_ok(),
             "attempted to create a string longer than `isize::MAX` bytes"
         );
-
-        #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
-        self.stats.record_allocation();
 
         // Create actual `&str` in a separate function, to ensure that `alloc_concat_strs_array`
         // is inlined, so that compiler has knowledge to remove the overflow checks above.
@@ -438,14 +412,10 @@ impl Allocator {
         strings: [&str; N],
         total_len: usize,
     ) -> &'a str {
-        if total_len == 0 {
-            return "";
-        }
-
         // Allocate `total_len` bytes.
         // SAFETY: Caller guarantees `total_len <= isize::MAX`.
         let layout = unsafe { Layout::from_size_align_unchecked(total_len, 1) };
-        let start_ptr = self.bump().alloc_layout(layout);
+        let start_ptr = self.alloc_layout(layout);
 
         let mut end_ptr = start_ptr;
         for str in strings {
@@ -506,14 +476,11 @@ impl Allocator {
     /// }
     /// ```
     //
-    // `#[inline(always)]` because it just delegates to `bumpalo`
+    // `#[inline(always)]` because just delegates to `Arena` method
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub fn reset(&mut self) {
-        #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
-        self.stats.reset();
-
-        self.bump.reset();
+        self.arena.reset();
     }
 
     /// Calculate the total capacity of this [`Allocator`] including all chunks, in bytes.
@@ -536,11 +503,11 @@ impl Allocator {
     ///
     /// [`used_bytes`]: Allocator::used_bytes
     //
-    // `#[inline(always)]` because it just delegates to `bumpalo`
+    // `#[inline(always)]` because just delegates to `Arena` method
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub fn capacity(&self) -> usize {
-        self.bump.allocated_bytes()
+        self.arena.allocated_bytes()
     }
 
     /// Calculate the total size of data used in this [`Allocator`], in bytes.
@@ -585,7 +552,7 @@ impl Allocator {
     ///
     /// allocator.reset();
     ///
-    /// let mut vec = Vec::<u64>::with_capacity_in(2, &allocator);
+    /// let mut vec = Vec::<u64>::with_capacity_in(2, &&allocator);
     ///
     /// // Allocate something else, so `vec`'s allocation is not the most recent
     /// allocator.alloc(123u64);
@@ -603,29 +570,27 @@ impl Allocator {
     /// [`Vec`]: crate::Vec
     /// [`StringBuilder`]: crate::StringBuilder
     /// [`HashMap`]: crate::HashMap
+    //
+    // `#[inline(always)]` because just delegates to `Arena` method
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     pub fn used_bytes(&self) -> usize {
-        let mut bytes = 0;
-        // SAFETY: No allocations are made while `chunks_iter` is alive. No data is read from the chunks.
-        let chunks_iter = unsafe { self.bump.iter_allocated_chunks_raw() };
-        for (_, size) in chunks_iter {
-            bytes += size;
-        }
-        bytes
+        self.arena.used_bytes()
     }
 
-    /// Get inner [`bumpalo::Bump`].
+    /// Get inner [`Arena`].
     ///
-    /// This method is not public. We don't want to expose `Bump` to user.
-    /// The fact that we're using `bumpalo` is an internal implementation detail.
+    /// This method is not public. We don't want to expose `Arena` to user.
+    /// The inner `Arena` is an internal implementation detail.
     //
     // `#[inline(always)]` because it's a no-op
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    pub(crate) fn bump(&self) -> &Bump {
-        &self.bump
+    pub(crate) fn arena(&self) -> &Arena {
+        &self.arena
     }
 
-    /// Create [`Allocator`] from a [`bumpalo::Bump`].
+    /// Create [`Allocator`] from an [`Arena`].
     ///
     /// This method is not public. Only used by [`Allocator::from_raw_parts`].
     //
@@ -633,12 +598,8 @@ impl Allocator {
     #[cfg(feature = "from_raw_parts")]
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    pub(crate) fn from_bump(bump: Bump) -> Self {
-        Self {
-            bump,
-            #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
-            stats: AllocationStats::default(),
-        }
+    pub(crate) fn from_arena(arena: Arena) -> Self {
+        Self { arena }
     }
 }
 

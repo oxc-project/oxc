@@ -1,0 +1,5 @@
+[
+  { "args": ["--stdin-filepath", "test.ts"], "stdin": "input.ts" },
+  { "args": ["--stdin-filepath", "test.graphql"], "stdin": "input.graphql" },
+  { "args": ["--stdin-filepath", "test.rb"], "stdin": "input.rb" }
+]

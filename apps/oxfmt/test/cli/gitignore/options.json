@@ -1,0 +1,15 @@
+[
+  {
+    "args": ["--check"],
+    "gitignore": {
+      ".gitignore": "ignored-by-root.js\nsubdir/"
+    }
+  },
+  {
+    "args": ["--check"],
+    "gitignore": {
+      ".gitignore": "ignored-by-root.js",
+      "subdir/.gitignore": "ignored-by-subdir.js\n"
+    }
+  }
+]

@@ -4,34 +4,43 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::Semantic;
 use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
+use serde::Deserialize;
 use serde_json::Value;
 
 use crate::{
     AstNode,
     ast_util::{is_function_node, iter_outer_expressions},
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
 
-fn max_nested_callbacks_diagnostic(num: usize, max: usize, span: Span) -> OxcDiagnostic {
+fn max_nested_callbacks_diagnostic(num: u32, max: u32, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Too many nested callbacks ({num}). Maximum allowed is {max}."))
         .with_help("Reduce nesting with promises or refactoring your code.")
         .with_label(span)
 }
 
-#[derive(Debug, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct MaxNestedCallbacks {
     /// The `max` enforces a maximum depth that callbacks can be nested.
-    max: usize,
+    max: u32,
 }
 
-const DEFAULT_MAX_NESTED_CALLBACKS: usize = 10;
+const DEFAULT_MAX_NESTED_CALLBACKS: u32 = 10;
 
 impl Default for MaxNestedCallbacks {
     fn default() -> Self {
         Self { max: DEFAULT_MAX_NESTED_CALLBACKS }
     }
+}
+
+#[derive(Debug, JsonSchema, Deserialize)]
+#[serde(untagged)]
+#[expect(unused)]
+enum MaxNestedCallbacksConfigEnum {
+    Number(u32),
+    Object(MaxNestedCallbacks),
 }
 
 declare_oxc_lint!(
@@ -86,42 +95,46 @@ declare_oxc_lint!(
     MaxNestedCallbacks,
     eslint,
     pedantic,
-    config = MaxNestedCallbacks,
+    config = MaxNestedCallbacksConfigEnum,
+    version = "0.15.12",
+    short_description = "Enforce a maximum depth that callbacks can be nested.",
 );
 
 impl Rule for MaxNestedCallbacks {
+    #[expect(clippy::cast_possible_truncation)] // the length of nested ancestors can't be over u32::MAX, because the source code is already limited by u32::MAX.
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        match node.kind() {
+            AstKind::Function(f) if f.is_function_declaration() => {}
+            AstKind::Function(f) if f.is_expression() => {}
+            AstKind::ArrowFunctionExpression(_) => {}
+            _ => return,
+        }
+
         if is_callback(node, ctx) {
             let depth = 1 + ctx
                 .semantic()
                 .nodes()
                 .ancestors(node.id())
                 .filter(|node| is_callback(node, ctx))
-                .count();
+                .count() as u32;
             if depth > self.max {
                 ctx.diagnostic(max_nested_callbacks_diagnostic(depth, self.max, node.span()));
             }
         }
     }
 
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let config = value.get(0);
-        let max = if let Some(max) = config
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        if let Some(max) = value
+            .get(0)
             .and_then(Value::as_number)
             .and_then(serde_json::Number::as_u64)
-            .and_then(|v| usize::try_from(v).ok())
+            .and_then(|v| u32::try_from(v).ok())
         {
-            max
+            Ok(Self { max })
         } else {
-            config
-                .and_then(|config| config.get("max"))
-                .and_then(Value::as_number)
-                .and_then(serde_json::Number::as_u64)
-                .map_or(DEFAULT_MAX_NESTED_CALLBACKS, |v| {
-                    usize::try_from(v).unwrap_or(DEFAULT_MAX_NESTED_CALLBACKS)
-                })
-        };
-        Self { max }
+            serde_json::from_value::<DefaultRuleConfig<Self>>(value)
+                .map(DefaultRuleConfig::into_inner)
+        }
     }
 }
 
@@ -129,7 +142,7 @@ fn is_callback<'a>(node: &AstNode<'a>, semantic: &Semantic<'a>) -> bool {
     is_function_node(node)
         && matches!(
             iter_outer_expressions(semantic.nodes(), node.id()).next(),
-            Some(AstKind::Argument(_))
+            Some(AstKind::CallExpression(_))
         )
 }
 

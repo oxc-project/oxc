@@ -1,24 +1,20 @@
 {
   "name": "oxc",
   "private": true,
-  "packageManager": "pnpm@10.20.0",
   "scripts": {
     "build": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" --filter \"./apps/*\" build",
     "build-dev": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" --filter \"./apps/*\" build-dev",
     "build-test": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" --filter \"./apps/*\" build-test",
+    "build-wasm-dev": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" build-wasm-dev",
     "test": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" --filter \"./apps/*\" test",
     "fmt": "oxfmt -c oxfmtrc.jsonc",
-    "lint": "oxlint -c oxlintrc.json --deny-warnings --type-aware"
+    "lint": "oxlint -c oxlintrc.json --deny-warnings --report-unused-disable-directives"
   },
   "devDependencies": {
-    "@arethetypeswrong/core": "0.18.2",
     "@napi-rs/cli": "catalog:",
-    "emnapi": "1.6.0",
-    "oxfmt": "^0.9.0",
-    "oxlint": "^1.25.0",
-    "oxlint-tsgolint": "0.5.1",
-    "publint": "catalog:",
-    "typescript": "catalog:",
-    "vitest": "catalog:"
-  }
+    "oxfmt": "^0.56.0",
+    "oxlint": "^1.66.0",
+    "oxlint-tsgolint": "0.23.0"
+  },
+  "packageManager": "pnpm@11.4.0"
 }

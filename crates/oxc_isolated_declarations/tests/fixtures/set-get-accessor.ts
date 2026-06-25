@@ -3,7 +3,7 @@ class Cls {
   get a() {
     return 1;
   }
-  set a() {
+  set a(v) {
     return;
   }
 
@@ -13,11 +13,14 @@ class Cls {
   }
 
   private get c() {}
-  private set c() {}
+  private set c(v) {}
 
   accessor d: string;
   private accessor e: string;
   private static accessor f: string;
+  accessor g!: string;
+  private accessor h!: string;
+  public accessor i!: string;
 }
 
 // Incorrect
@@ -65,5 +68,3 @@ class GlobalSymbol4 {
     return GlobalSymbol4;
   }
 }
-
-

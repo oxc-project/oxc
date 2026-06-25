@@ -90,7 +90,10 @@ fn get_scope_snapshot(semantic: &Semantic, scopes: impl Iterator<Item = ScopeId>
                             format!("\"name\": {:?},", semantic.reference_name(reference)).as_str(),
                         );
                         result.push_str(
-                            format!("\"node_id\": {}", reference.node_id().index()).as_str(),
+                            format!("\"node_id\": {},", reference.node_id().index()).as_str(),
+                        );
+                        result.push_str(
+                            format!("\"scope_id\": {}", reference.scope_id().index()).as_str(),
                         );
                         result.push('}');
                     });
@@ -123,8 +126,9 @@ fn analyze(
     let allocator = Allocator::default();
     let source_type = SourceType::from_path(path).unwrap();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
+    // The conformance checks read `Semantic::nodes()`, so use the linter preset.
     let semantic =
-        SemanticBuilder::new().with_check_syntax_error(true).build(&ret.program).semantic;
+        SemanticBuilder::new_compiler().with_build_nodes(true).build(&ret.program).semantic;
     let ctx = TestContext { path, semantic };
     let scope_snapshot = run_scope_snapshot_test(&ctx);
     let conformance_snapshot = conformance_suite.run_on_source(&ctx);

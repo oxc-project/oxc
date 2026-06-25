@@ -8,38 +8,68 @@ This crate provides an [LSP](https://microsoft.github.io/language-server-protoco
 - Workspace
   - [Workspace Folders](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspaceFoldersServerCapabilities): `true`
   - File Operations: `false`
-  - [Workspace commands](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspace_executeCommand)
-    - `oxc.fixAll`, requires `{ uri: URL }` as command argument. Does safe fixes in `uri` file.
+
+### For oxlint
+
+- [Workspace commands](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspace_executeCommand)
+  - `oxc.fixAll`, requires `{ uri: URL }` as command argument. Does safe fixes in `uri` file.
 - [Code Actions Provider](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#codeActionKind):
   - `quickfix`
   - `source.fixAll.oxc`, behaves the same as `quickfix` only used when the `CodeActionContext#only` contains
     `source.fixAll.oxc`.
+- [Diagnostic Provider](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_pullDiagnostics)
+  - Only when [Diagnostics Refresh](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#diagnostic_refresh) is supported by your client
+
+### For oxfmt
+
+- [DocumentFormattingProvider](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_formatting)
 
 ## Workspace Options
 
 These options can be passed with [initialize](#initialize), [workspace/didChangeConfiguration](#workspace/didChangeConfiguration) and [workspace/configuration](#workspace/configuration).
 
-| Option Key                | Value(s)                          | Default    | Description                                                                                                                                            |
-| ------------------------- | --------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `run`                     | `"onSave" \| "onType"`            | `"onType"` | Should the server lint the files when the user is typing or saving                                                                                     |
-| `configPath`              | `<string>` \| `null`              | `null`     | Path to a oxlint configuration file, passing a string will disable nested configuration                                                                |
-| `tsConfigPath`            | `<string>` \| `null`              | `null`     | Path to a TypeScript configuration file. If your `tsconfig.json` is not at the root, alias paths will not be resolve correctly for the `import` plugin |
-| `unusedDisableDirectives` | `"allow" \| "warn"` \| "deny"`    | `"allow"`  | Define how directive comments like `// oxlint-disable-line` should be reported, when no errors would have been reported on that line anyway            |
-| `typeAware`               | `true` \| `false`                 | `false`    | Enables type-aware linting                                                                                                                             |
-| `disableNestedConfig`     | `false` \| `true`                 | `false`    | Disabled nested configuration and searches only for `configPath`.                                                                                      |
-| `fixKind`                 | [fixKind values](#fixkind-values) | `safe_fix` | The level of a possible fix for a diagnostic, will be applied for the complete workspace (diagnostic, code action, commands and more).                 |
-| `fmt.experimental`        | `true` \| `false`                 | `false`    | Enables experimental formatting with `oxc_formatter`                                                                                                   |
-| `fmt.configPath`          | `<string>` \| `null`              | `null`     | Path to a oxfmt configuration file, when `null` is passed, the server will use `.oxfmtrc.json` and the workspace root                                  |
-| `flags`                   | `Map<string, string>`             | `<empty>`  | (deprecated) Custom flags passed to the language server.                                                                                               |
+| Option Key                | Value(s)                          | Default                  | Description                                                                                                                                            |
+| ------------------------- | --------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `configPath`              | `<string>` \| `null`              | `null`                   | Path to a oxlint configuration file, passing a string will disable nested configuration                                                                |
+| `tsConfigPath`            | `<string>` \| `null`              | `null`                   | Path to a TypeScript configuration file. If your `tsconfig.json` is not at the root, alias paths will not be resolve correctly for the `import` plugin |
+| `unusedDisableDirectives` | `"allow" \| "warn"` \| "deny"`    | `"allow"`                | Define how directive comments like `// oxlint-disable-line` should be reported, when no errors would have been reported on that line anyway            |
+| `typeAware`               | `<boolean>` \| `null`             | `null`                   | Enables type-aware linting. When unset (`null`), uses the root config's `options.typeAware` value.                                                     |
+| `disableNestedConfig`     | `false` \| `true`                 | `false`                  | Disabled nested configuration and searches only for `configPath`.                                                                                      |
+| `fixKind`                 | [fixKind values](#fixkind-values) | `safe_fix_or_suggestion` | The level of a possible fix for a diagnostic, will be applied for the complete workspace (diagnostic, code action, commands and more).                 |
+| `rulesCustomization`      | `Map<string, RulesCustomization>` | `<empty>`                | Rules customization, overriding severity or autofix with `source.fixAll.oxc`. The map key is the rule name, example: `typescript/no-unused-vars`       |
+| `fmt.configPath`          | `<string>` \| `null`              | `null`                   | Path to a oxfmt configuration file, when `null` is passed, the server will use `.oxfmtrc.json` and the workspace root                                  |
+| Diagnostic Pull Mode      |                                   |                          |                                                                                                                                                        |
+| `run`                     | `"onSave" \| "onType"`            | `"onType"`               | Should the server lint the files when the user is typing or saving. In Pull Mode, the editor requests the diagnostic.                                  |
+| Deprecated                |                                   |                          |                                                                                                                                                        |
+| `fmt.experimental`        | `true` \| `false`                 | `false`                  | (deprecated) Enables experimental formatting with `oxc_formatter`                                                                                      |
+| `flags`                   | `Map<string, string>`             | `<empty>`                | (deprecated) Custom flags passed to the language server.                                                                                               |
 
 ### `fixKind` values:
 
-- `"safe_fix"` (default)
-- `"safe_fix_or_suggestion"`
+- `"safe_fix"`
+- `"safe_fix_or_suggestion"` (default)
 - `"dangerous_fix"`
 - `"dangerous_fix_or_suggestion"`
 - `"none"`
 - `"all"`
+
+### `RulesCustomization` struct:
+
+```ts
+interface RulesCustomization {
+  // overriding the rule severity, when "off", the rule will not output diagnostics.
+  severity?: "off" | "warn" | "error" | "hint" | "info";
+
+  // allows to disable the autofix for a specific rule, even when the rule has a fix and the workspace `fixKind` allows it.
+  // the user code action `quickfix` will still be available, but the `source.fixAll.oxc` & `source.fixAllDangerous.oxc` will ignore the rule.
+  autofix?: boolean;
+}
+```
+
+## Diagnostics Modes
+
+Depending on the client, the server will push diagnostics, or will wait for a pull request from the client.
+The server will prefer pull diagnostics when the client supports it and is also supporting [workspace/diagnostic/refresh](#workspacediagnosticrefresh).
 
 ## Supported LSP Specifications from Server
 
@@ -50,20 +80,23 @@ The client can pass the workspace options like following:
 
 ```json
 {
-  "initializationOptions": [{
-    "workspaceUri": "file://workspace-directory",
-    "options": {
-      "run": "onType",
-      "configPath": null,
-      "tsConfigPath": null,
-      "unusedDisableDirectives": "allow",
-      "typeAware": false,
-      "disableNestedConfig": false,
-      "fixKind": "safe_fix",
-      "fmt.experimental": false,
-      "fmt.configPath": null
+  "initializationOptions": [
+    {
+      "workspaceUri": "file://workspace-directory",
+      "options": {
+        "run": "onType",
+        "configPath": null,
+        "tsConfigPath": null,
+        "unusedDisableDirectives": "allow",
+        "typeAware": false,
+        "disableNestedConfig": false,
+        "fixKind": "safe_fix",
+        "rulesCustomization": {},
+        "fmt.configPath": null,
+        }
+      }
     }
-  }]
+  ]
 }
 ```
 
@@ -89,20 +122,22 @@ The client can pass the workspace options like following:
 
 ```json
 {
-  "settings": [{
-    "workspaceUri": "file://workspace-directory",
-    "options": {
-      "run": "onType",
-      "configPath": null,
-      "tsConfigPath": null,
-      "unusedDisableDirectives": "allow",
-      "typeAware": false,
-      "disableNestedConfig": false,
-      "fixKind": "safe_fix",
-      "fmt.experimental": false,
-      "fmt.configPath": null
+  "settings": [
+    {
+      "workspaceUri": "file://workspace-directory",
+      "options": {
+        "run": "onType",
+        "configPath": null,
+        "tsConfigPath": null,
+        "unusedDisableDirectives": "allow",
+        "typeAware": false,
+        "disableNestedConfig": false,
+        "fixKind": "safe_fix",
+        "rulesCustomization": {},
+        "fmt.configPath": null
+      }
     }
-  }]
+  ]
 }
 ```
 
@@ -116,9 +151,10 @@ The server will tell clients with [client/unregisterCapability](#clientunregiste
 #### [workspace/didChangeWatchedFiles](https://microsoft.github.io/language-server-protocol/specification#workspace_didChangeWatchedFiles)
 
 The server expects this request when one oxlint configuration is changed, added or deleted.
-The server will revalidate the diagnostics for all open files and send one or more [textDocument/publishDiagnostics](#textdocumentpublishdiagnostics) requests to the client.
-
-Note: When nested configuration is active, the client should send all `.oxlintrc.json` configurations to the server after the [initialized](#initialized) response.
+When the server is using [Push Mode](#diagnostics-modes),
+the server will revalidate the diagnostics for all open files and send one or more [textDocument/publishDiagnostics](#textdocumentpublishdiagnostics) requests to the client.
+When the server is using [Pull Mode](#diagnostics-modes),
+the server will tell the client to revalidate all diagnostics with [`workspace/diagnostic/refresh`](#workspacediagnosticrefresh).
 
 #### [workspace/didChangeWorkspaceFolders](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspace_didChangeWorkspaceFolders)
 
@@ -126,6 +162,10 @@ The server expects this request when adding or removing workspace folders.
 The server will request the specific workspace configuration, if the client supports it.
 The server will tell clients with [client/registerCapability](#clientregistercapability) to watch for `.oxlintrc.json` files or a custom `oxc.configPath`.
 The server will tell clients with [client/unregisterCapability](#clientunregistercapability) to stop watching for `.oxlintrc.json` files or a custom `oxc.configPath`.
+When the server is using [Push Mode](#diagnostics-modes),
+the server will revalidate the diagnostics for all open files and send one or more [textDocument/publishDiagnostics](#textdocumentpublishdiagnostics) requests to the client.
+When the server is using [Pull Mode](#diagnostics-modes),
+the server will tell the client to revalidate all diagnostics with [`workspace/diagnostic/refresh`](#workspacediagnosticrefresh).
 
 #### [workspace/executeCommand](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspace_executeCommand)
 
@@ -135,15 +175,19 @@ Executes a [Command](https://microsoft.github.io/language-server-protocol/specif
 
 #### [textDocument/didOpen](https://microsoft.github.io/language-server-protocol/specification#textDocument_didOpen)
 
-The server will validate the file content and send a [textDocument/publishDiagnostics](#textdocumentpublishdiagnostics) request to the client.
+The server will cache the internal content of the text document.
+When the server is using [Push Mode](#diagnostics-modes), the server will validate the text document and send a [textDocument/publishDiagnostics](#textdocumentpublishdiagnostics) request to the client.
 
 #### [textDocument/didSave](https://microsoft.github.io/language-server-protocol/specification#textDocument_didSave)
 
-When the configuration `run` is set to `onSave`, the server will validate the file content and send a [textDocument/publishDiagnostics](#textdocumentpublishdiagnostics) request to the client.
+When the server is using [Push Mode](#diagnostics-modes) and configuration `run` is set to `onSave`,
+the server will validate the text document and send a [textDocument/publishDiagnostics](#textdocumentpublishdiagnostics) request to the client.
 
 #### [textDocument/didChange](https://microsoft.github.io/language-server-protocol/specification#textDocument_didChange)
 
-When the configuration `run` is set to `onType`, the server will validate the file content and send a [textDocument/publishDiagnostics](#textdocumentpublishdiagnostics) request to the client.
+The server will cache the internal content of the text document.
+When the server is using [Push Mode](#diagnostics-modes) and configuration `run` is set to `onType`,
+the server will validate the text document and send a [textDocument/publishDiagnostics](#textdocumentpublishdiagnostics) request to the client.
 
 #### [textDocument/didClose](https://microsoft.github.io/language-server-protocol/specification#textDocument_didClose)
 
@@ -153,13 +197,10 @@ It will remove the reference internal.
 
 Returns a list of [CodeAction](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_codeAction)
 
-## Expected LSP Specification from Client
+#### [textDocument/diagnostics](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_diagnostic)
 
-### TextDocument
-
-#### [textDocument/publishDiagnostics](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_publishDiagnostics)
-
-Returns a [PublishDiagnostic object](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#publishDiagnosticsParams)
+Should only be used when the server is using the [Pull Mode](#diagnostics-modes) for diagnostics.
+The server will lint the file and report the diagnostics back to the client.
 
 #### [textDocument/formatting](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_formatting)
 
@@ -168,6 +209,16 @@ Returns a list of [TextEdit](https://microsoft.github.io/language-server-protoco
 ## Optional LSP Specifications from Client
 
 ### Client
+
+#### [textDocument/publishDiagnostics](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_publishDiagnostics)
+
+When the server is using [Push Mode](#diagnostics-modes) it will lint the file [onOpen](#textdocumentdidopen) and [onChange](#textdocumentdidchange) or [onSave](#textdocumentdidsave)
+(depending on the configuration the client passed).
+
+#### [workspace/diagnostic/refresh](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#diagnostic_refresh)
+
+When the server is using the [Pull Mode](#diagnostics-modes) it will request the client sometimes to re-pull the diagnostics.
+This will happen when changing watched files or specific server configurations.
 
 #### [client/registerCapability](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#client_registerCapability)
 
@@ -187,15 +238,17 @@ Only will be requested when the `ClientCapabilities` has `workspace.configuratio
 The client can return a response like:
 
 ```json
-[{
-  "run": "onType",
-  "configPath": null,
-  "tsConfigPath": null,
-  "unusedDisableDirectives": "allow",
-  "typeAware": false,
-  "disableNestedConfig": false,
-  "fixKind": "safe_fix",
-  "fmt.experimental": false,
-  "fmt.configPath": null
-}]
+[
+  {
+    "run": "onType",
+    "configPath": null,
+    "tsConfigPath": null,
+    "unusedDisableDirectives": "allow",
+    "typeAware": false,
+    "disableNestedConfig": false,
+    "fixKind": "safe_fix",
+    "rulesCustomization": {},
+    "fmt.configPath": null
+  }
+]
 ```

@@ -33,6 +33,10 @@ impl DiagnosticReporter for UnixReporter {
         None
     }
 
+    fn supports_minified_file_fallback(&self) -> bool {
+        false
+    }
+
     fn render_error(&mut self, error: Error) -> Option<String> {
         self.total += 1;
         Some(format_unix(&error))
@@ -96,5 +100,20 @@ mod test {
 
         assert!(result.is_some());
         assert_eq!(result.unwrap(), "file://test.ts:1:1: error message [Warning]\n");
+    }
+
+    /// Regression test: messages containing colons (e.g. parser errors like
+    /// 'Expected `;` but found `:`') must not be truncated.
+    #[test]
+    fn reporter_error_message_with_colon() {
+        let mut reporter = UnixReporter::default();
+        let error = OxcDiagnostic::error("Expected `;` but found `:`")
+            .with_label(Span::new(0, 1))
+            .with_source_code(NamedSource::new("file://test.js", ":"));
+
+        let result = reporter.render_error(error);
+
+        assert!(result.is_some());
+        assert_eq!(result.unwrap(), "file://test.js:1:1: Expected `;` but found `:` [Error]\n");
     }
 }

@@ -6,7 +6,7 @@ use crate::{context::LintContext, module_record::ImportImportName, rule::Rule};
 
 fn default_diagnostic(imported_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("No default export found in imported module {imported_name:?}"))
-        .with_help(format!("does {imported_name:?} have the default export?"))
+        .with_help(format!("Does {imported_name:?} have the default export?"))
         .with_label(span)
 }
 
@@ -48,7 +48,9 @@ declare_oxc_lint!(
     /// ```
     Default,
     import,
-    correctness
+    correctness,
+    version = "0.0.13",
+    short_description = "If a default import is requested, this rule will report if there is no default export in the imported module.",
 );
 
 impl Rule for Default {

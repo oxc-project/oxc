@@ -10,6 +10,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::BinaryOperator;
 use schemars::JsonSchema;
+use serde::Deserialize;
 use serde_json::Value;
 
 use crate::{
@@ -17,18 +18,26 @@ use crate::{
     ast_util::{is_method_call, iter_outer_expressions},
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 fn no_null_diagnostic(null: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not use `null` literals").with_label(null)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoNull {
     /// When set to `true`, the rule will also check strict equality/inequality comparisons (`===` and `!==`) against `null`.
     check_strict_equality: bool,
+    /// When set to `true`, disallow the use of `null` as a direct function call or constructor argument.
+    check_arguments: bool,
+}
+
+impl Default for NoNull {
+    fn default() -> Self {
+        Self { check_strict_equality: false, check_arguments: true }
+    }
 }
 
 declare_oxc_lint!(
@@ -57,8 +66,10 @@ declare_oxc_lint!(
     NoNull,
     unicorn,
     style,
-    conditional_fix,
-    config = NoNull
+    conditional_dangerous_fix,
+    config = NoNull,
+    version = "0.0.21",
+    short_description = "Disallow the use of the `null` literal, to encourage using `undefined` instead.",
 );
 
 fn match_null_arg(call_expr: &CallExpression, index: usize, span: Span) -> bool {
@@ -73,6 +84,13 @@ fn match_null_arg(call_expr: &CallExpression, index: usize, span: Span) -> bool 
     }
 }
 
+fn match_direct_null_arg(arguments: &[Argument], span: Span) -> bool {
+    arguments
+        .iter()
+        .filter_map(Argument::as_expression)
+        .any(|expr| matches!(expr.get_inner_expression(), Expression::NullLiteral(null_lit) if span.contains_inclusive(null_lit.span)))
+}
+
 impl NoNull {
     fn diagnose_binary_expression(
         &self,
@@ -83,7 +101,7 @@ impl NoNull {
         match binary_expr.operator {
             // `if (foo != null) {}`
             BinaryOperator::Equality | BinaryOperator::Inequality => {
-                ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
+                ctx.diagnostic_with_dangerous_fix(no_null_diagnostic(null_literal.span), |fixer| {
                     fix_null(fixer, null_literal)
                 });
             }
@@ -91,13 +109,14 @@ impl NoNull {
             // `if (foo !== null) {}`
             BinaryOperator::StrictEquality | BinaryOperator::StrictInequality => {
                 if self.check_strict_equality {
-                    ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
-                        fix_null(fixer, null_literal)
-                    });
+                    ctx.diagnostic_with_dangerous_fix(
+                        no_null_diagnostic(null_literal.span),
+                        |fixer| fix_null(fixer, null_literal),
+                    );
                 }
             }
             _ => {
-                ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
+                ctx.diagnostic_with_dangerous_fix(no_null_diagnostic(null_literal.span), |fixer| {
                     fix_null(fixer, null_literal)
                 });
             }
@@ -115,7 +134,7 @@ fn diagnose_variable_declarator(
     if matches!(&variable_declarator.init, Some(Expression::NullLiteral(expr)) if expr.span == null_literal.span)
         && matches!(parent_kind, Some(AstKind::VariableDeclaration(var_declaration)) if !var_declaration.kind.is_const() )
     {
-        ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
+        ctx.diagnostic_with_dangerous_fix(no_null_diagnostic(null_literal.span), |fixer| {
             fixer.delete_range(Span::new(variable_declarator.id.span().end, null_literal.span.end))
         });
 
@@ -123,7 +142,7 @@ fn diagnose_variable_declarator(
     }
 
     // `const foo = null`
-    ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
+    ctx.diagnostic_with_dangerous_fix(no_null_diagnostic(null_literal.span), |fixer| {
         fix_null(fixer, null_literal)
     });
 }
@@ -171,14 +190,8 @@ fn match_call_expression_pass_case(null_literal: &NullLiteral, call_expr: &CallE
 }
 
 impl Rule for NoNull {
-    fn from_configuration(value: Value) -> Self {
-        Self {
-            check_strict_equality: value
-                .get(0)
-                .and_then(|v| v.get("checkStrictEquality"))
-                .and_then(Value::as_bool)
-                .unwrap_or_default(),
-        }
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -188,7 +201,7 @@ impl Rule for NoNull {
 
         let mut parents = iter_outer_expressions(ctx.nodes(), node.id());
         let Some(parent_kind) = parents.next() else {
-            ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
+            ctx.diagnostic_with_dangerous_fix(no_null_diagnostic(null_literal.span), |fixer| {
                 fix_null(fixer, null_literal)
             });
             return;
@@ -196,8 +209,20 @@ impl Rule for NoNull {
 
         let grandparent_kind = parents.next();
         match (parent_kind, grandparent_kind) {
-            (AstKind::Argument(_), Some(AstKind::CallExpression(call_expr)))
+            (AstKind::CallExpression(call_expr), _)
                 if match_call_expression_pass_case(null_literal, call_expr) =>
+            {
+                // no violation
+            }
+            (AstKind::CallExpression(call_expr), _)
+                if !self.check_arguments
+                    && match_direct_null_arg(&call_expr.arguments, null_literal.span) =>
+            {
+                // no violation
+            }
+            (AstKind::NewExpression(new_expr), _)
+                if !self.check_arguments
+                    && match_direct_null_arg(&new_expr.arguments, null_literal.span) =>
             {
                 // no violation
             }
@@ -208,7 +233,7 @@ impl Rule for NoNull {
                 diagnose_variable_declarator(ctx, null_literal, decl, grandparent_kind);
             }
             (AstKind::ReturnStatement(_), _) => {
-                ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
+                ctx.diagnostic_with_dangerous_fix(no_null_diagnostic(null_literal.span), |fixer| {
                     let mut null_span = null_literal.span;
                     // Find the last parent that is a TSAsExpression (`null as any`) or TSNonNullExpression (`null!`)
                     for parent in ctx.nodes().ancestors(node.id()) {
@@ -228,12 +253,12 @@ impl Rule for NoNull {
                 });
             }
             (AstKind::SwitchCase(_), Some(AstKind::SwitchStatement(switch))) => {
-                ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
+                ctx.diagnostic_with_dangerous_fix(no_null_diagnostic(null_literal.span), |fixer| {
                     try_fix_case(fixer, null_literal, switch)
                 });
             }
             _ => {
-                ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
+                ctx.diagnostic_with_dangerous_fix(no_null_diagnostic(null_literal.span), |fixer| {
                     fix_null(fixer, null_literal)
                 });
             }
@@ -267,6 +292,17 @@ fn test() {
             "checkStrictEquality": option,
         }])
     }
+    fn check_arguments(option: bool) -> serde_json::Value {
+        serde_json::json!([{
+            "checkArguments": option,
+        }])
+    }
+    fn check_arguments_and_strict_equality() -> serde_json::Value {
+        serde_json::json!([{
+            "checkArguments": false,
+            "checkStrictEquality": true,
+        }])
+    }
 
     let pass = vec![
         ("let foo", None),
@@ -274,6 +310,7 @@ fn test() {
         ("Object.create(null as any)", None),
         ("Object.create(null, {foo: {value:1}})", None),
         ("let insertedNode = parentNode.insertBefore(newNode, null)", None),
+        ("let insertedNode = parentNode?.insertBefore(newNode, null)", None),
         ("const foo = \"null\";", None),
         ("Object.create()", None),
         ("Object.create(bar)", None),
@@ -292,6 +329,14 @@ fn test() {
         ("if (foo !== null) {}", Some(check_strict_equality(false))),
         ("if (null !== foo) {}", Some(check_strict_equality(false))),
         ("if (foo === null || foo === undefined) {}", None),
+        ("foo(null)", Some(check_arguments(false))),
+        ("foo(bar, null)", Some(check_arguments(false))),
+        ("drawingManager.setMap(null)", Some(check_arguments(false))),
+        ("markers[index].setMap(null)", Some(check_arguments(false))),
+        ("object?.method?.(null)", Some(check_arguments(false))),
+        ("foo?.(null)", Some(check_arguments(false))),
+        ("new HttpResponse(null)", Some(check_arguments(false))),
+        ("new HttpResponse(body, null)", Some(check_arguments(false))),
     ];
 
     let fail = vec![
@@ -314,6 +359,18 @@ fn test() {
         ("var foo = null;", None),
         ("var foo = 1, bar = null, baz = 2;", None),
         ("const foo = null;", None),
+        ("const foo = null;", Some(check_arguments(false))),
+        (
+            "function foo() {
+            return null;
+            }",
+            Some(check_arguments(false)),
+        ),
+        ("if (foo === null) {}", Some(check_arguments_and_strict_equality())),
+        ("foo([null])", Some(check_arguments(false))),
+        ("foo(bar ?? null)", Some(check_arguments(false))),
+        ("foo(...[null])", Some(check_arguments(false))),
+        ("new HttpResponse([null])", Some(check_arguments(false))),
         // `checkStrictEquality`
         ("if (foo === null) {}", Some(check_strict_equality(true))),
         ("if (null === foo) {}", Some(check_strict_equality(true))),
@@ -394,23 +451,23 @@ fn test() {
         ("() => { return null as any as typeof Array }", "() => { return  }", None),
         (
             r"const newDecorations = enabled ?
-	this._debugService.getModel().getBreakpoints().map(breakpoint => {
-		const parsed = test()
-		if (!parsed ) {
-			return null;
-		}
-		return { handle: parsed.handle};
-	}).filter(x => !!x) as INotebookDeltaDecoration[]
-	: [];",
+    this._debugService.getModel().getBreakpoints().map(breakpoint => {
+        const parsed = test()
+        if (!parsed ) {
+            return null;
+        }
+        return { handle: parsed.handle};
+    }).filter(x => !!x) as INotebookDeltaDecoration[]
+    : [];",
             r"const newDecorations = enabled ?
-	this._debugService.getModel().getBreakpoints().map(breakpoint => {
-		const parsed = test()
-		if (!parsed ) {
-			return ;
-		}
-		return { handle: parsed.handle};
-	}).filter(x => !!x) as INotebookDeltaDecoration[]
-	: [];",
+    this._debugService.getModel().getBreakpoints().map(breakpoint => {
+        const parsed = test()
+        if (!parsed ) {
+            return ;
+        }
+        return { handle: parsed.handle};
+    }).filter(x => !!x) as INotebookDeltaDecoration[]
+    : [];",
             None,
         ),
     ];

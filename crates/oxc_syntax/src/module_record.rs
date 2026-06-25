@@ -1,9 +1,10 @@
 //! [ECMAScript Module Record](https://tc39.es/ecma262/#sec-abstract-module-records)
 
-use oxc_allocator::{Allocator, HashMap, Vec};
+use oxc_allocator::{Allocator, ArenaHashMap, ArenaVec};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
-use oxc_span::{Atom, Span};
+use oxc_span::Span;
+use oxc_str::Str;
 
 /// ESM Module Record
 ///
@@ -27,41 +28,41 @@ pub struct ModuleRecord<'a> {
     ///   export ExportFromClause FromClause
     ///
     /// Keyed by ModuleSpecifier, valued by all node occurrences
-    pub requested_modules: HashMap<'a, Atom<'a>, Vec<'a, RequestedModule>>,
+    pub requested_modules: ArenaHashMap<'a, Str<'a>, ArenaVec<'a, RequestedModule>>,
 
     /// `[[ImportEntries]]`
     ///
     /// A List of ImportEntry records derived from the code of this module
-    pub import_entries: Vec<'a, ImportEntry<'a>>,
+    pub import_entries: ArenaVec<'a, ImportEntry<'a>>,
 
     /// `[[LocalExportEntries]]`
     ///
     /// A List of [`ExportEntry`] records derived from the code of this module
     /// that correspond to declarations that occur within the module
-    pub local_export_entries: Vec<'a, ExportEntry<'a>>,
+    pub local_export_entries: ArenaVec<'a, ExportEntry<'a>>,
 
     /// `[[IndirectExportEntries]]`
     ///
     /// A List of [`ExportEntry`] records derived from the code of this module
     /// that correspond to reexported imports that occur within the module
     /// or exports from `export * as namespace` declarations.
-    pub indirect_export_entries: Vec<'a, ExportEntry<'a>>,
+    pub indirect_export_entries: ArenaVec<'a, ExportEntry<'a>>,
 
     /// `[[StarExportEntries]]`
     ///
     /// A List of [`ExportEntry`] records derived from the code of this module
     /// that correspond to `export *` declarations that occur within the module,
     /// not including `export * as namespace` declarations.
-    pub star_export_entries: Vec<'a, ExportEntry<'a>>,
+    pub star_export_entries: ArenaVec<'a, ExportEntry<'a>>,
 
     /// Local exported bindings
-    pub exported_bindings: HashMap<'a, Atom<'a>, Span>,
+    pub exported_bindings: ArenaHashMap<'a, Str<'a>, Span>,
 
     /// Dynamic import expressions `import(specifier)`.
-    pub dynamic_imports: Vec<'a, DynamicImport>,
+    pub dynamic_imports: ArenaVec<'a, DynamicImport>,
 
     /// Span position of `import.meta`.
-    pub import_metas: Vec<'a, Span>,
+    pub import_metas: ArenaVec<'a, Span>,
 }
 
 impl<'a> ModuleRecord<'a> {
@@ -69,14 +70,14 @@ impl<'a> ModuleRecord<'a> {
     pub fn new(allocator: &'a Allocator) -> Self {
         Self {
             has_module_syntax: false,
-            requested_modules: HashMap::new_in(allocator),
-            import_entries: Vec::new_in(allocator),
-            local_export_entries: Vec::new_in(allocator),
-            indirect_export_entries: Vec::new_in(allocator),
-            star_export_entries: Vec::new_in(allocator),
-            exported_bindings: HashMap::new_in(allocator),
-            dynamic_imports: Vec::new_in(allocator),
-            import_metas: Vec::new_in(allocator),
+            requested_modules: ArenaHashMap::new_in(allocator),
+            import_entries: ArenaVec::new_in(&allocator),
+            local_export_entries: ArenaVec::new_in(&allocator),
+            indirect_export_entries: ArenaVec::new_in(&allocator),
+            star_export_entries: ArenaVec::new_in(&allocator),
+            exported_bindings: ArenaHashMap::new_in(allocator),
+            dynamic_imports: ArenaVec::new_in(&allocator),
+            import_metas: ArenaVec::new_in(&allocator),
         }
     }
 }
@@ -89,7 +90,7 @@ impl<'a> ModuleRecord<'a> {
 pub struct NameSpan<'a> {
     /// Name
     #[estree(rename = "value")]
-    pub name: Atom<'a>,
+    pub name: Str<'a>,
 
     /// Span
     pub span: Span,
@@ -97,7 +98,7 @@ pub struct NameSpan<'a> {
 
 impl<'a> NameSpan<'a> {
     /// Constructor
-    pub fn new(name: Atom<'a>, span: Span) -> Self {
+    pub fn new(name: Str<'a>, span: Span) -> Self {
         Self { span, name }
     }
 }
@@ -385,7 +386,7 @@ impl<'a> ExportLocalName<'a> {
     }
 
     /// Get the bound name of this export. [`None`] for [`ExportLocalName::Null`].
-    pub fn name(&self) -> Option<Atom<'a>> {
+    pub fn name(&self) -> Option<Str<'a>> {
         match self {
             Self::Name(name) | Self::Default(name) => Some(name.name),
             Self::Null => None,
@@ -429,7 +430,6 @@ pub struct DynamicImport {
     pub module_request: Span,
 }
 
-#[expect(missing_docs)]
 pub trait VisitMutModuleRecord {
     fn visit_module_record(&mut self, module_record: &mut ModuleRecord) {
         module_record.requested_modules.values_mut().for_each(|e| {

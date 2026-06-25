@@ -7,9 +7,15 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_unassigned_import_diagnostic(span: Span, msg: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(msg.to_string())
@@ -17,14 +23,15 @@ fn no_unassigned_import_diagnostic(span: Span, msg: &str) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct NoUnassignedImport(Box<NoUnassignedImportConfig>);
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct NoUnassignedImportConfig {
     /// A list of glob patterns to allow unassigned imports for specific modules.
     /// For example:
-    /// `{ "allow": ["*.css"] }` will allow unassigned imports for any module ending with `.css`.
+    /// `{ "allow": ["**/*.css"] }` will allow unassigned imports for any module ending with `.css`.
     #[serde(rename = "allow", default)]
     globs: Vec<CompactStr>,
 }
@@ -74,19 +81,16 @@ declare_oxc_lint!(
     NoUnassignedImport,
     import,
     suspicious,
-    config = NoUnassignedImportConfig
+    config = NoUnassignedImportConfig,
+    version = "0.16.11",
+    short_description = "This rule aims to remove modules with side-effects by reporting when a module is imported but not assigned.",
 );
 
 impl Rule for NoUnassignedImport {
-    fn from_configuration(value: Value) -> Self {
-        let obj = value.get(0);
-        let globs = obj
-            .and_then(|v| v.get("allow"))
-            .and_then(Value::as_array)
-            .map(|v| v.iter().filter_map(Value::as_str).map(CompactStr::from).collect())
-            .unwrap_or_default();
-        Self(Box::new(NoUnassignedImportConfig { globs }))
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::ImportDeclaration(import_decl) => {

@@ -5,14 +5,15 @@ use std::sync::Arc;
 use rustc_hash::FxHashMap;
 
 use oxc::{
-    allocator::{Allocator, FromIn, Vec},
+    allocator::{Allocator, ArenaVec, FromIn},
     ast::ast::{Comment, Program},
     diagnostics::{LabeledSpan, NamedSource, OxcDiagnostic, Severity},
-    span::{Atom, Span, format_atom},
+    span::Span,
     syntax::module_record::{DynamicImport, ExportEntry, ImportEntry, ModuleRecord, NameSpan},
 };
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
+use oxc_str::{Str, format_str};
 
 /// The main struct containing all deserializable data in raw transfer.
 #[ast]
@@ -20,9 +21,9 @@ use oxc_estree::ESTree;
 #[estree(no_type, no_ts_def)]
 pub struct RawTransferData<'a> {
     pub program: Program<'a>,
-    pub comments: Vec<'a, Comment>,
+    pub comments: ArenaVec<'a, Comment>,
     pub module: EcmaScriptModule<'a>,
-    pub errors: Vec<'a, Error<'a>>,
+    pub errors: ArenaVec<'a, Error<'a>>,
 }
 
 /// Metadata written to end of buffer.
@@ -36,13 +37,19 @@ pub struct RawTransferMetadata {
     pub data_offset: u32,
     /// `true` if AST is TypeScript.
     pub is_ts: bool,
-    /// Padding to pad struct to size 16.
-    pub(crate) _padding: u64,
+    /// This field always contains `false` in parser. It's only used in linter.
+    pub is_jsx: bool,
+    /// This field always contains `false` in parser. It's only used in linter.
+    pub has_bom: bool,
+    /// Offset of lexer `Token`s within buffer.
+    pub tokens_offset: u32,
+    /// Number of lexer `Token`s.
+    pub tokens_len: u32,
 }
 
 impl RawTransferMetadata {
-    pub fn new(data_offset: u32, is_ts: bool) -> Self {
-        Self { data_offset, is_ts, _padding: 0 }
+    pub fn new(data_offset: u32, is_ts: bool, tokens_offset: u32, tokens_len: u32) -> Self {
+        Self { data_offset, is_ts, is_jsx: false, has_bom: false, tokens_offset, tokens_len }
     }
 }
 
@@ -57,10 +64,10 @@ impl RawTransferMetadata {
 #[estree(no_type, no_ts_def)]
 pub struct Error<'a> {
     pub severity: ErrorSeverity,
-    pub message: Atom<'a>,
-    pub labels: Vec<'a, ErrorLabel<'a>>,
-    pub help_message: Option<Atom<'a>>,
-    pub codeframe: Atom<'a>,
+    pub message: Str<'a>,
+    pub labels: ArenaVec<'a, ErrorLabel<'a>>,
+    pub help_message: Option<Str<'a>>,
+    pub codeframe: Str<'a>,
 }
 
 impl<'a> Error<'a> {
@@ -69,14 +76,14 @@ impl<'a> Error<'a> {
         source_text: &str,
         filename: &str,
         allocator: &'a Allocator,
-    ) -> Vec<'a, Self> {
+    ) -> ArenaVec<'a, Self> {
         let named_source = Arc::new(NamedSource::new(filename, source_text.to_string()));
 
-        Vec::from_iter_in(
+        ArenaVec::from_iter_in(
             diagnostics
                 .into_iter()
                 .map(|diagnostic| Self::from_diagnostic_in(diagnostic, &named_source, allocator)),
-            allocator,
+            &allocator,
         )
     }
 
@@ -85,22 +92,17 @@ impl<'a> Error<'a> {
         named_source: &Arc<NamedSource<String>>,
         allocator: &'a Allocator,
     ) -> Self {
-        let labels = diagnostic.labels.as_ref().map_or_else(
-            || Vec::new_in(allocator),
-            |labels| {
-                Vec::from_iter_in(
-                    labels.iter().map(|label| ErrorLabel::from_in(label, allocator)),
-                    allocator,
-                )
-            },
+        let labels = ArenaVec::from_iter_in(
+            diagnostic.labels.iter().map(|label| ErrorLabel::from_in(label, allocator)),
+            &allocator,
         );
 
         let severity = ErrorSeverity::from(diagnostic.severity);
-        let message = Atom::from_in(diagnostic.message.as_ref(), allocator);
+        let message = Str::from_in(diagnostic.message.as_ref(), allocator);
         let help_message =
-            diagnostic.help.as_ref().map(|help| Atom::from_in(help.as_ref(), allocator));
+            diagnostic.help.as_ref().map(|help| Str::from_in(help.as_ref(), allocator));
         let report = diagnostic.with_source_code(Arc::clone(named_source));
-        let codeframe = format_atom!(allocator, "{report:?}");
+        let codeframe = format_str!(allocator, "{report:?}");
 
         #[expect(clippy::inconsistent_struct_constructor)] // `#[ast]` macro re-orders struct fields
         Self { severity, message, labels, help_message, codeframe }
@@ -131,16 +133,15 @@ impl From<Severity> for ErrorSeverity {
 #[generate_derive(ESTree)]
 #[estree(no_type, no_ts_def)]
 pub struct ErrorLabel<'a> {
-    pub message: Option<Atom<'a>>,
+    pub message: Option<Str<'a>>,
     pub span: Span,
 }
 
 impl<'a> FromIn<'a, &LabeledSpan> for ErrorLabel<'a> {
     fn from_in(label: &LabeledSpan, allocator: &'a Allocator) -> Self {
         Self {
-            message: label.label().map(|message| Atom::from_in(message, allocator)),
-            #[expect(clippy::cast_possible_truncation)]
-            span: Span::sized(label.offset() as u32, label.len() as u32),
+            message: label.label().map(|message| Str::from_in(message, allocator)),
+            span: Span::sized(label.offset(), label.len()),
         }
     }
 }
@@ -150,7 +151,7 @@ impl<'a> FromIn<'a, &LabeledSpan> for ErrorLabel<'a> {
 // These types and the `From` impl mirror the implementation in `types.rs` and `convert.rs`.
 // However, a lot of the data can be left as is, because it's already in the arena,
 // and that's what raw transfer needs - unlike the other implementation which requires owned types.
-// In particular, there's no need to copy or convert the many `Atom`s in `ModuleRecord`.
+// In particular, there's no need to copy or convert the many `Str`s in `ModuleRecord`.
 
 #[ast]
 #[generate_derive(ESTree)]
@@ -163,13 +164,13 @@ pub struct EcmaScriptModule<'a> {
     /// Dynamic imports `import('foo')` are ignored since they can be used in non-ESM files.
     pub has_module_syntax: bool,
     /// Import statements.
-    pub static_imports: Vec<'a, StaticImport<'a>>,
+    pub static_imports: ArenaVec<'a, StaticImport<'a>>,
     /// Export statements.
-    pub static_exports: Vec<'a, StaticExport<'a>>,
+    pub static_exports: ArenaVec<'a, StaticExport<'a>>,
     /// Dynamic import expressions.
-    pub dynamic_imports: Vec<'a, DynamicImport>,
+    pub dynamic_imports: ArenaVec<'a, DynamicImport>,
     /// Span positions` of `import.meta`
-    pub import_metas: Vec<'a, Span>,
+    pub import_metas: ArenaVec<'a, Span>,
 }
 
 #[ast]
@@ -188,7 +189,7 @@ pub struct StaticImport<'a> {
     /// Import specifiers.
     ///
     /// Empty for `import "mod"`.
-    pub entries: Vec<'a, ImportEntry<'a>>,
+    pub entries: ArenaVec<'a, ImportEntry<'a>>,
 }
 
 #[ast]
@@ -196,7 +197,7 @@ pub struct StaticImport<'a> {
 #[estree(no_type, no_ts_def)]
 pub struct StaticExport<'a> {
     pub span: Span,
-    pub entries: Vec<'a, ExportEntry<'a>>,
+    pub entries: ArenaVec<'a, ExportEntry<'a>>,
 }
 
 impl<'a> FromIn<'a, ModuleRecord<'a>> for EcmaScriptModule<'a> {
@@ -209,7 +210,7 @@ impl<'a> FromIn<'a, ModuleRecord<'a>> for EcmaScriptModule<'a> {
                         .iter()
                         .filter(|e| e.statement_span == m.statement_span)
                         .cloned();
-                    let entries = Vec::from_iter_in(entries, allocator);
+                    let entries = ArenaVec::from_iter_in(entries, &allocator);
 
                     StaticImport {
                         span: m.statement_span,
@@ -218,7 +219,7 @@ impl<'a> FromIn<'a, ModuleRecord<'a>> for EcmaScriptModule<'a> {
                     }
                 })
             });
-        let mut static_imports = Vec::from_iter_in(static_imports, allocator);
+        let mut static_imports = ArenaVec::from_iter_in(static_imports, &allocator);
         static_imports.sort_unstable_by_key(|e| e.span.start);
 
         let static_exports = record
@@ -226,15 +227,15 @@ impl<'a> FromIn<'a, ModuleRecord<'a>> for EcmaScriptModule<'a> {
             .iter()
             .chain(&record.indirect_export_entries)
             .chain(&record.star_export_entries)
-            .fold(FxHashMap::<Span, Vec<'a, ExportEntry>>::default(), |mut acc, e| {
+            .fold(FxHashMap::<Span, ArenaVec<'a, ExportEntry>>::default(), |mut acc, e| {
                 acc.entry(e.statement_span)
-                    .or_insert_with(|| Vec::new_in(allocator))
+                    .or_insert_with(|| ArenaVec::new_in(&allocator))
                     .push(e.clone());
                 acc
             })
             .into_iter()
             .map(|(span, entries)| StaticExport { span, entries });
-        let mut static_exports = Vec::from_iter_in(static_exports, allocator);
+        let mut static_exports = ArenaVec::from_iter_in(static_exports, &allocator);
         static_exports.sort_unstable_by_key(|e| e.span.start);
 
         Self {

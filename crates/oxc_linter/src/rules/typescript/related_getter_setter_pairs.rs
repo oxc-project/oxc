@@ -72,7 +72,8 @@ declare_oxc_lint!(
     RelatedGetterSetterPairs(tsgolint),
     typescript,
     pedantic,
-    pending,
+    version = "1.12.0",
+    short_description = "This rule enforces that getters and setters for the same property are defined together and have related types.",
 );
 
 impl Rule for RelatedGetterSetterPairs {}

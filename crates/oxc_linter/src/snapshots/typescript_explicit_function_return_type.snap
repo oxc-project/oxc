@@ -1,8 +1,9 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:2:10]
+
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:2:13]
  1 │ 
  2 │             function test(a: number, b: number) {
    ·             ─────────────
@@ -10,8 +11,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:2:10]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:2:13]
  1 │ 
  2 │             function test() {
    ·             ─────────────
@@ -19,8 +20,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:2:19]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:2:22]
  1 │ 
  2 │             var fn = function () {
    ·                      ─────────
@@ -28,8 +29,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:2:27]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:2:30]
  1 │ 
  2 │             var arrowFn = () => 'test';
    ·                              ──
@@ -37,8 +38,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:4:12]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:4:15]
  3 │               constructor() {}
  4 │               get prop() {
    ·               ────────
@@ -46,8 +47,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:8:12]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:8:15]
  7 │               set prop(_foo) {}
  8 │               method() {
    ·               ──────
@@ -55,8 +56,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-    ╭─[explicit_function_return_type.tsx:11:12]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+    ╭─[explicit_function_return_type.tsx:11:15]
  10 │               }
  11 │               arrow = () => 'arrow';
     ·               ────────
@@ -64,8 +65,8 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-    ╭─[explicit_function_return_type.tsx:12:12]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+    ╭─[explicit_function_return_type.tsx:12:15]
  11 │               arrow = () => 'arrow';
  12 │               private method() {
     ·               ──────────────
@@ -73,8 +74,8 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:2:10]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:2:13]
  1 │ 
  2 │             function test() {
    ·             ─────────────
@@ -82,36 +83,36 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
    ╭─[explicit_function_return_type.tsx:1:16]
  1 │ const foo = () => {};
    ·                ──
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
    ╭─[explicit_function_return_type.tsx:1:13]
  1 │ const foo = function () {};
    ·             ─────────
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
    ╭─[explicit_function_return_type.tsx:1:19]
  1 │ export default () => {};
    ·                   ──
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
    ╭─[explicit_function_return_type.tsx:1:16]
  1 │ export default function () {}
    ·                ─────────
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:3:12]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:3:15]
  2 │             class Foo {
  3 │               public a = () => {};
    ·               ───────────
@@ -119,8 +120,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:4:12]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:4:15]
  3 │               public a = () => {};
  4 │               public b = function () {};
    ·               ────────────────────
@@ -128,8 +129,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:5:12]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:5:15]
  4 │               public b = function () {};
  5 │               public c = function test() {};
    ·               ────────────────────────
@@ -137,8 +138,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:7:12]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:7:15]
  6 │ 
  7 │               static d = () => {};
    ·               ───────────
@@ -146,8 +147,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:8:12]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:8:15]
  7 │               static d = () => {};
  8 │               static e = function () {};
    ·               ────────────────────
@@ -155,15 +156,15 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
    ╭─[explicit_function_return_type.tsx:1:18]
  1 │ var arrowFn = () => 'test';
    ·                  ──
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:3:33]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:3:36]
  2 │             function foo(): any {
  3 │               const bar = () => () => console.log('aa');
    ·                                    ──
@@ -171,8 +172,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:4:32]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:4:35]
  3 │             function foo(): any {
  4 │               anyValue = () => () => console.log('aa');
    ·                                   ──
@@ -180,8 +181,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:4:35]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:4:38]
  3 │               foo(): any {
  4 │                 const bar = () => () => {
    ·                                      ──
@@ -189,8 +190,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:2:25]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:2:28]
  1 │ 
  2 │             var funcExpr = function () {
    ·                            ─────────
@@ -198,15 +199,15 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
    ╭─[explicit_function_return_type.tsx:1:15]
  1 │ const x = (() => {}) as Foo;
    ·               ──
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:4:12]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:4:15]
  3 │             const x = {
  4 │               foo: () => {},
    ·               ─────
@@ -214,8 +215,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:4:12]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:4:15]
  3 │             const x: Foo = {
  4 │               foo: () => {},
    ·               ─────
@@ -223,43 +224,43 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
    ╭─[explicit_function_return_type.tsx:1:33]
  1 │ const foo = <button onClick={() => {}} />;
    ·                                 ──
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
    ╭─[explicit_function_return_type.tsx:1:27]
  1 │ const foo = <button on={{ click: () => {} }} />;
    ·                           ───────
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
    ╭─[explicit_function_return_type.tsx:1:22]
  1 │ const foo = <Bar>{() => {}}</Bar>;
    ·                      ──
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
    ╭─[explicit_function_return_type.tsx:1:21]
  1 │ const foo = <Bar>{{ on: () => {} }}</Bar>;
    ·                     ────
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
    ╭─[explicit_function_return_type.tsx:1:27]
  1 │ const foo = <button {...{ onClick: () => {} }} />;
    ·                           ─────────
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:4:29]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:4:32]
  3 │               class Foo {
  4 │                 foo = () => () => {
    ·                                ──
@@ -267,22 +268,22 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
    ╭─[explicit_function_return_type.tsx:1:10]
  1 │ () => () => {};
    ·          ──
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
    ╭─[explicit_function_return_type.tsx:1:7]
  1 │ () => function () {};
    ·       ─────────
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:3:22]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:3:25]
  2 │             () => {
  3 │               return () => {};
    ·                         ──
@@ -290,8 +291,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:3:19]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:3:22]
  2 │             () => {
  3 │               return function () {};
    ·                      ─────────
@@ -299,8 +300,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:3:22]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:3:25]
  2 │             function fn() {
  3 │               return () => {};
    ·                         ──
@@ -308,8 +309,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:3:19]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:3:22]
  2 │             function fn() {
  3 │               return function () {};
    ·                      ─────────
@@ -317,8 +318,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:4:33]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:4:36]
  3 │               const bar = () => (): number => 1;
  4 │               const baz = () => () => 'baz';
    ·                                    ──
@@ -326,8 +327,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:2:10]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:2:13]
  1 │ 
  2 │             function fn(arg: boolean) {
    ·             ───────────
@@ -335,8 +336,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-    ╭─[explicit_function_return_type.tsx:9:23]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+    ╭─[explicit_function_return_type.tsx:9:26]
   8 │                       // ArrowFunctionExpression_Within_ArrowFunctionExpression
   9 │                       () =>
     ·                          ──
@@ -344,8 +345,8 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:3:22]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:3:25]
  2 │             () => () => {
  3 │               return () => {
    ·                         ──
@@ -353,8 +354,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:3:17]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:3:20]
  2 │             declare function foo(arg: () => void): void;
  3 │             foo(() => 1);
    ·                    ──
@@ -362,8 +363,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:4:17]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:4:20]
  3 │             foo(() => 1);
  4 │             foo(() => {});
    ·                    ──
@@ -371,8 +372,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:5:17]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:5:20]
  4 │             foo(() => {});
  5 │             foo(() => null);
    ·                    ──
@@ -380,8 +381,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:6:17]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:6:20]
  5 │             foo(() => null);
  6 │             foo(() => true);
    ·                    ──
@@ -389,8 +390,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:7:17]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:7:20]
  6 │             foo(() => true);
  7 │             foo(() => '');
    ·                    ──
@@ -398,8 +399,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-    ╭─[explicit_function_return_type.tsx:10:42]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+    ╭─[explicit_function_return_type.tsx:10:45]
   9 │ 
  10 │             new Accumulator().accumulate(() => 1);
     ·                                             ──
@@ -407,15 +408,15 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
    ╭─[explicit_function_return_type.tsx:1:5]
  1 │ (() => true)();
    ·     ──
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:4:12]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:4:15]
  3 │             foo({
  4 │               meth() {
    ·               ────
@@ -423,8 +424,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-    ╭─[explicit_function_return_type.tsx:9:12]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+    ╭─[explicit_function_return_type.tsx:9:15]
   8 │             foo({
   9 │               meth: function () {
     ·               ───────────────
@@ -432,8 +433,8 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-    ╭─[explicit_function_return_type.tsx:14:12]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+    ╭─[explicit_function_return_type.tsx:14:15]
  13 │             foo({
  14 │               meth: () => {
     ·               ──────
@@ -441,8 +442,8 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:3:56]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:3:59]
  2 │             type HigherOrderType = () => (arg1: string) => (arg2: number) => string;
  3 │             const x: HigherOrderType = () => arg1 => arg2 => 'foo';
    ·                                                           ──
@@ -450,8 +451,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:3:40]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:3:43]
  2 │             type HigherOrderType = () => (arg1: string) => (arg2: number) => string;
  3 │             const x: HigherOrderType = () => arg1 => arg2 => 'foo';
    ·                                           ──
@@ -459,8 +460,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:3:48]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:3:51]
  2 │             type HigherOrderType = () => (arg1: string) => (arg2: number) => string;
  3 │             const x: HigherOrderType = () => arg1 => arg2 => 'foo';
    ·                                                   ──
@@ -468,8 +469,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:3:56]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:3:59]
  2 │             type HigherOrderType = () => (arg1: string) => (arg2: number) => string;
  3 │             const x: HigherOrderType = () => arg1 => arg2 => 'foo';
    ·                                                           ──
@@ -477,8 +478,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:2:40]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:2:43]
  1 │ 
  2 │             const func1 = (value: number) => ({ type: 'X', value }) as any;
    ·                                           ──
@@ -486,8 +487,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:3:40]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:3:43]
  2 │             const func1 = (value: number) => ({ type: 'X', value }) as any;
  3 │             const func2 = (value: number) => ({ type: 'X', value }) as Action;
    ·                                           ──
@@ -495,22 +496,22 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
    ╭─[explicit_function_return_type.tsx:1:30]
  1 │ const func = (value: number) => ({ type: 'X', value }) as const;
    ·                              ──
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
    ╭─[explicit_function_return_type.tsx:1:31]
  1 │ const log = (message: string) => void console.log(message);
    ·                               ──
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:2:40]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:2:43]
  1 │ 
  2 │             const log = (message: string) => {
    ·                                           ──
@@ -518,15 +519,15 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
    ╭─[explicit_function_return_type.tsx:1:24]
  1 │ const log = <A,>(a: A) => a;
    ·                        ──
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:2:10]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:2:13]
  1 │ 
  2 │             function log<A>(a: A) {
    ·             ────────────
@@ -534,8 +535,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:2:22]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:2:25]
  1 │ 
  2 │             const log = function <A>(a: A) {
    ·                         ────────────
@@ -543,8 +544,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:2:10]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:2:13]
  1 │ 
  2 │             function hoge() {
    ·             ─────────────
@@ -552,8 +553,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:5:25]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:5:28]
  4 │             }
  5 │             const foo = () => {
    ·                            ──
@@ -561,8 +562,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:8:22]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:8:25]
  7 │             };
  8 │             const baz = function () {
    ·                         ─────────
@@ -570,8 +571,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-    ╭─[explicit_function_return_type.tsx:11:30]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+    ╭─[explicit_function_return_type.tsx:11:33]
  10 │             };
  11 │             let [test, test2] = function () {
     ·                                 ─────────
@@ -579,8 +580,8 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-    ╭─[explicit_function_return_type.tsx:15:12]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+    ╭─[explicit_function_return_type.tsx:15:15]
  14 │             class X {
  15 │               [test] = function () {
     ·               ──────────────────
@@ -588,8 +589,8 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-    ╭─[explicit_function_return_type.tsx:20:12]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+    ╭─[explicit_function_return_type.tsx:20:15]
  19 │             const x = {
  20 │               1: function () {
     ·               ────────────
@@ -597,8 +598,8 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:4:12]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:4:15]
  3 │             class Foo {
  4 │               [ignoredName]() {}
    ·               ─────────────
@@ -606,8 +607,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:5:16]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:5:19]
  4 │                 {
  5 │                   foo: x => x + 1,
    ·                   ─────
@@ -615,8 +616,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:2:23]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:2:26]
  1 │ 
  2 │             const foo = (function () {
    ·                          ─────────
@@ -624,8 +625,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:3:22]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:3:25]
  2 │             const foo = (function () {
  3 │               return () => {
    ·                         ──
@@ -633,8 +634,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:2:20]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:2:23]
  1 │ 
  2 │             let foo = function () {
    ·                       ─────────
@@ -642,15 +643,15 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
    ╭─[explicit_function_return_type.tsx:1:21]
  1 │ let foo = (() => () => {})()();
    ·                     ──
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:4:43]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:4:46]
  3 │ 
  4 │             function f(gotcha: CallBack = () => {}): void {}
    ·                                              ──
@@ -658,8 +659,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:4:43]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:4:46]
  3 │ 
  4 │             const f = (gotcha: CallBack = () => {}): void => {};
    ·                                              ──
@@ -667,11 +668,25 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require explicit return types on functions and class methods.
 
-  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:4:52]
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:4:55]
  3 │ 
  4 │             const f = (gotcha: ObjectWithCallback = { callback: () => {} }): void => {};
    ·                                                       ──────────
  5 │             
+   ╰────
+  help: Require explicit return types on functions and class methods.
+
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:1:8]
+ 1 │ export function myFunction2() { try { return 'something'; } catch (error) { throw new Error('some wrapped', { cause: error }); } }
+   ·        ────────────────────
+   ╰────
+  help: Require explicit return types on functions and class methods.
+
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:1:8]
+ 1 │ export function myFunction3() { try { throw new Error('some error'); } catch (error) { throw error; } }
+   ·        ────────────────────
    ╰────
   help: Require explicit return types on functions and class methods.

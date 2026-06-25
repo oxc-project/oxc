@@ -1,57 +1,69 @@
 {
+  "name": "oxfmt-app",
+  "version": "0.56.0",
   "private": true,
-  "name": "oxfmt",
-  "version": "0.9.0",
+  "description": "Internal development package for oxfmt. For the published package.json template, see `npm/oxfmt/package.json`.",
+  "license": "MIT",
   "type": "module",
   "main": "dist/index.js",
-  "bin": "dist/cli.js",
-  "types": "dist/index.d.ts",
   "scripts": {
     "build": "pnpm run build-napi-release && pnpm run build-js",
     "build-dev": "pnpm run build-napi && pnpm run build-js",
     "build-test": "pnpm run build-napi-test && pnpm run build-js",
     "build-napi": "napi build --esm --platform --js ./bindings.js --dts ./bindings.d.ts --output-dir src-js --no-dts-cache",
-    "build-napi-test": "pnpm run build-napi",
+    "build-napi-test": "pnpm run build-napi --profile coverage",
     "build-napi-release": "pnpm run build-napi --release --features allocator",
     "build-js": "node scripts/build.js",
-    "test": "tsc && vitest --dir test run"
+    "test": "vitest run",
+    "conformance": "node conformance/run.ts",
+    "download-fixtures": "node conformance/download-fixtures.js",
+    "generate-config-types": "node scripts/generate-config-types.ts"
   },
-  "engines": {
-    "node": "^20.19.0 || >=22.12.0"
-  },
-  "author": "Boshen and oxc contributors",
-  "license": "MIT",
-  "homepage": "https://oxc.rs",
-  "bugs": "https://github.com/oxc-project/oxc/issues",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/oxc-project/oxc.git",
-    "directory": "apps/oxfmt"
-  },
-  "description": "Local project to build and publish `npm/oxfmt`. Be sure to sync dependencies!",
   "dependencies": {
-    "prettier": "3.6.2",
-    "@prettier/sync": "0.6.1"
+    "prettier": "3.8.4",
+    "prettier-plugin-svelte": "4.1.1",
+    "prettier-plugin-tailwindcss": "0.0.0-insiders.2b6f3c2",
+    "tinypool": "2.1.0"
   },
   "devDependencies": {
+    "@arethetypeswrong/core": "catalog:",
+    "@napi-rs/cli": "catalog:",
+    "@oxapps/shared": "workspace:*",
     "@types/node": "catalog:",
+    "degit": "catalog:",
+    "diff": "^9.0.0",
     "execa": "^9.6.0",
+    "json-schema-to-typescript": "catalog:",
+    "svelte": "^5.56.2",
     "tsdown": "catalog:",
-    "typescript": "catalog:",
-    "vitest": "catalog:"
+    "vite-plus": "catalog:",
+    "vitest": "catalog:",
+    "vscode-languageserver-protocol": "^3.17.5",
+    "vscode-languageserver-textdocument": "^1.0.12"
   },
   "napi": {
     "binaryName": "oxfmt",
     "packageName": "@oxfmt/binding",
     "targets": [
-      "win32-x64",
-      "win32-arm64",
-      "linux-x64-gnu",
-      "linux-arm64-gnu",
-      "linux-x64-musl",
-      "linux-arm64-musl",
-      "darwin-x64",
-      "darwin-arm64"
+      "aarch64-apple-darwin",
+      "aarch64-linux-android",
+      "aarch64-pc-windows-msvc",
+      "aarch64-unknown-linux-gnu",
+      "aarch64-unknown-linux-musl",
+      "aarch64-unknown-linux-ohos",
+      "armv7-linux-androideabi",
+      "armv7-unknown-linux-gnueabihf",
+      "armv7-unknown-linux-musleabihf",
+      "i686-pc-windows-msvc",
+      "powerpc64le-unknown-linux-gnu",
+      "x86_64-apple-darwin",
+      "x86_64-pc-windows-msvc",
+      "x86_64-unknown-freebsd",
+      "x86_64-unknown-linux-gnu",
+      "x86_64-unknown-linux-musl"
     ]
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
   }
 }

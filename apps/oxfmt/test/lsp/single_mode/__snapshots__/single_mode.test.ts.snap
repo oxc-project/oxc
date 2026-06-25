@@ -1,0 +1,33 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`LSP formatting in single mode > basic formatting > should handle basic/test.ts 1`] = `
+"--- URI -----------
+file://<fixture>/basic/test.ts
+--- BEFORE ---------
+class C { method() { return 1; } }
+
+--- AFTER ----------
+class C {
+  method() {
+    return 1;
+  }
+}
+
+--------------------"
+`;
+
+exports[`LSP formatting in single mode > basic formatting > should handle with-config-same-level/test.ts 1`] = `
+"--- URI -----------
+file://<fixture>/with-config-same-level/test.ts
+--- BEFORE ---------
+class C { method() { return 1; } }
+
+--- AFTER ----------
+class C {
+  method() {
+    return 1
+  }
+}
+
+--------------------"
+`;

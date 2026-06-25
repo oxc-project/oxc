@@ -1,99 +1,52 @@
-use std::{borrow::Cow, iter::FusedIterator};
+use std::borrow::Cow;
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_ast::{Comment, CommentKind, ast::Program};
-use oxc_syntax::identifier::is_line_terminator;
+use oxc_syntax::line_terminator::LineTerminatorSplitter;
 
-use crate::{
-    Codegen, LegalComment,
-    options::CommentOptions,
-    str::{LS_LAST_2_BYTES, LS_OR_PS_FIRST_BYTE, PS_LAST_2_BYTES},
-};
+use crate::{Codegen, LegalComment, options::CommentOptions};
 
 pub type CommentsMap = FxHashMap</* attached_to */ u32, Vec<Comment>>;
 
-/// Custom iterator that splits text on line terminators while handling CRLF as a single unit.
-/// This avoids creating empty strings between CR and LF characters.
+/// Which annotation kind an emission site expects to recover from
+/// [`Codegen::annotation_comments`].
 ///
-/// Also splits on irregular line breaks (LS and PS).
-///
-/// # Example
-/// Standard split would turn `"line1\r\nline2"` into `["line1", "", "line2"]` because
-/// it treats `\r` and `\n` as separate terminators. This iterator correctly produces
-/// `["line1", "line2"]` by treating `\r\n` as a single terminator.
-struct LineTerminatorSplitter<'a> {
-    text: &'a str,
+/// `@__PURE__` / `#__PURE__` on a `CallExpression` or `NewExpression`, and
+/// `@__NO_SIDE_EFFECTS__` / `#__NO_SIDE_EFFECTS__` on a function declaration or
+/// expression, are not interchangeable: downstream tree-shakers only honor
+/// each on its corresponding node kind. The filter prevents
+/// [`Codegen::print_annotation_comment`] from emitting one kind where the
+/// other was expected when both share an `attached_to`.
+#[derive(Clone, Copy)]
+pub enum AnnotationKind {
+    Pure,
+    NoSideEffects,
 }
 
-impl<'a> LineTerminatorSplitter<'a> {
-    fn new(text: &'a str) -> Self {
-        Self { text }
+impl AnnotationKind {
+    #[inline]
+    fn matches(self, comment: &Comment) -> bool {
+        match self {
+            Self::Pure => comment.is_pure(),
+            Self::NoSideEffects => comment.is_no_side_effects(),
+        }
+    }
+
+    /// Canonical literal to emit when no verbatim source is available.
+    /// `newline_after = true` is used at statement-level emission sites
+    /// (function declarations, exports), `false` at inline emission sites
+    /// (call / new / function expressions).
+    #[inline]
+    fn canonical(self, newline_after: bool) -> &'static str {
+        match (self, newline_after) {
+            (Self::Pure, false) => "/* @__PURE__ */ ",
+            (Self::Pure, true) => "/* @__PURE__ */\n",
+            (Self::NoSideEffects, false) => "/* @__NO_SIDE_EFFECTS__ */ ",
+            (Self::NoSideEffects, true) => "/* @__NO_SIDE_EFFECTS__ */\n",
+        }
     }
 }
-
-impl<'a> Iterator for LineTerminatorSplitter<'a> {
-    type Item = &'a str;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.text.is_empty() {
-            return None;
-        }
-
-        for (index, &byte) in self.text.as_bytes().iter().enumerate() {
-            match byte {
-                b'\n' => {
-                    // SAFETY: Byte at `index` is `\n`, so `index` and `index + 1` are both UTF-8 char boundaries.
-                    // Therefore, slices up to `index` and from `index + 1` are both valid `&str`s.
-                    unsafe {
-                        let line = self.text.get_unchecked(..index);
-                        self.text = self.text.get_unchecked(index + 1..);
-                        return Some(line);
-                    }
-                }
-                b'\r' => {
-                    // SAFETY: Byte at `index` is `\r`, so `index` is on a UTF-8 char boundary
-                    let line = unsafe { self.text.get_unchecked(..index) };
-                    // If the next byte is `\n`, consume it as well
-                    let skip_bytes =
-                        if self.text.as_bytes().get(index + 1) == Some(&b'\n') { 2 } else { 1 };
-                    // SAFETY: `index + skip_bytes` is after `\r` or `\n`, so on a UTF-8 char boundary.
-                    // Therefore slice from `index + skip_bytes` is a valid `&str`.
-                    self.text = unsafe { self.text.get_unchecked(index + skip_bytes..) };
-                    return Some(line);
-                }
-                LS_OR_PS_FIRST_BYTE => {
-                    let next2: [u8; 2] = {
-                        // SAFETY: 0xE2 is always the start of a 3-byte Unicode character,
-                        // so there must be 2 more bytes available to consume
-                        let next2 =
-                            unsafe { self.text.as_bytes().get_unchecked(index + 1..index + 3) };
-                        next2.try_into().unwrap()
-                    };
-                    // If this is LS or PS, treat it as a line terminator
-                    if matches!(next2, LS_LAST_2_BYTES | PS_LAST_2_BYTES) {
-                        // SAFETY: `index` is the start of a 3-byte Unicode character,
-                        // so `index` and `index + 3` are both UTF-8 char boundaries.
-                        // Therefore, slices up to `index` and from `index + 3` are both valid `&str`s.
-                        unsafe {
-                            let line = self.text.get_unchecked(..index);
-                            self.text = self.text.get_unchecked(index + 3..);
-                            return Some(line);
-                        }
-                    }
-                }
-                _ => {}
-            }
-        }
-
-        // No line break found - return the remaining text. Next call will return `None`.
-        let line = self.text;
-        self.text = "";
-        Some(line)
-    }
-}
-
-impl FusedIterator for LineTerminatorSplitter<'_> {}
 
 impl Codegen<'_> {
     pub(crate) fn build_comments(&mut self, comments: &[Comment]) {
@@ -101,8 +54,16 @@ impl Codegen<'_> {
             return;
         }
         for comment in comments {
-            // Omit pure comments because they are handled separately.
+            // Stash pure / no-side-effects comments by `attached_to` so the
+            // emission site can recover the verbatim source text instead of
+            // falling back to the canonical literal (rolldown#9408).
+            // Best-effort: when several annotation comments share an
+            // `attached_to`, only the last survives; the emission site falls
+            // back to the canonical literal for the dropped ones.
             if comment.is_pure() || comment.is_no_side_effects() {
+                if comment.is_leading() && self.options.print_annotation_comment() {
+                    self.annotation_comments.insert(comment.attached_to, *comment);
+                }
                 continue;
             }
             let mut add = false;
@@ -121,6 +82,11 @@ impl Codegen<'_> {
                 }
             }
             if add {
+                if comment.is_legal()
+                    && let Err(idx) = self.legal_comment_keys.binary_search(&comment.attached_to)
+                {
+                    self.legal_comment_keys.insert(idx, comment.attached_to);
+                }
                 self.comments.entry(comment.attached_to).or_default().push(*comment);
             }
         }
@@ -128,6 +94,48 @@ impl Codegen<'_> {
 
     pub(crate) fn has_comment(&self, start: u32) -> bool {
         self.comments.contains_key(&start)
+    }
+
+    /// Emit a pure / no-side-effects annotation comment for the AST node at
+    /// `start`, falling back to the canonical literal when no verbatim source
+    /// can be recovered.
+    ///
+    /// The fallback covers four cases:
+    /// - no annotation comment is stashed at `start`,
+    /// - the stashed comment's kind doesn't match the emission site (e.g. a
+    ///   `@__NO_SIDE_EFFECTS__` slot being queried by a `CallExpression`
+    ///   site that needs `@__PURE__`),
+    /// - the comment is a line comment but the site can't break the line, or
+    /// - source text is unavailable (e.g. the [`Codegen::print_expression`]
+    ///   path that skips [`Codegen::build_comments`]).
+    ///
+    /// Export sites pass `self.span.start` and only recover verbatim when the
+    /// annotation precedes the `export` keyword. The rarer
+    /// `export /* @__NO_SIDE_EFFECTS__ */ function …` form (annotation between
+    /// `export` and `function`) attaches to the inner function's span and
+    /// falls back to canonical here.
+    pub(crate) fn print_annotation_comment(
+        &mut self,
+        start: u32,
+        kind: AnnotationKind,
+        newline_after: bool,
+    ) {
+        if self.source_text.is_some()
+            && let Some(comment) = self.annotation_comments.get(&start).copied()
+            && kind.matches(&comment)
+            // Inline line comments would swallow the rest of the line.
+            && (!comment.is_line() || newline_after)
+        {
+            self.annotation_comments.remove(&start);
+            self.print_comment(&comment);
+            if newline_after {
+                self.print_hard_newline();
+            } else {
+                self.print_str(" ");
+            }
+            return;
+        }
+        self.print_str(kind.canonical(newline_after));
     }
 
     pub(crate) fn print_leading_comments(&mut self, start: u32) {
@@ -148,6 +156,78 @@ impl Codegen<'_> {
         if let Some(comments) = self.get_comments(start) {
             self.print_comments(&comments);
         }
+    }
+
+    /// Print leading comments at `start` and consume any pending indent-as-space,
+    /// so the next token glues to the comment instead of breaking onto a new line.
+    #[inline]
+    pub(crate) fn print_leading_comments_anchored_to_self(&mut self, start: u32) {
+        if let Some(comments) = self.get_comments(start) {
+            self.print_comments(&comments);
+            self.consume_pending_indent_space();
+        }
+    }
+
+    /// Whether a legal-comment orphan with `attached_to < end` is still
+    /// pending. Used by block emitters to keep an empty body multi-line.
+    #[inline]
+    pub(crate) fn has_legal_orphans_before(&self, end: u32) -> bool {
+        self.legal_comment_keys
+            .iter()
+            .take_while(|&&k| k < end)
+            .any(|k| self.comments.contains_key(k))
+    }
+
+    /// Drain pending legal-comment orphans with `attached_to < end` and emit
+    /// them in source order. Called at every statement boundary so legal
+    /// comments survive when their original anchor was removed by DCE.
+    #[inline]
+    pub(crate) fn print_legal_orphans_before(&mut self, end: u32) {
+        if self.legal_comment_keys.is_empty() {
+            return;
+        }
+        let idx = self.legal_comment_keys.partition_point(|&k| k < end);
+        if idx == 0 {
+            return;
+        }
+        // Concatenate across keys so `print_comments` sees one sequence;
+        // per-key calls would leak `print_next_indent_as_space` and produce
+        // stray leading spaces.
+        let mut legals: Vec<Comment> = Vec::new();
+        let comments = &mut self.comments;
+        for k in self.legal_comment_keys.drain(..idx) {
+            let Some(entry) = comments.get_mut(&k) else { continue };
+            debug_assert!(entry.iter().any(|c| c.is_legal()));
+            legals.extend(entry.extract_if(.., |c| c.is_legal()));
+            if entry.is_empty() {
+                comments.remove(&k);
+            }
+        }
+        if let Some(last) = legals.last_mut() {
+            // Orphans aren't in their original position, so the source's
+            // `followed_by_newline` hint no longer applies. Force it on so
+            // `print_comments` emits a trailing newline instead of setting
+            // `print_next_indent_as_space` — otherwise the next indent (often
+            // before `}`) collapses to a space and pass 2 stops matching.
+            last.set_followed_by_newline(true);
+            self.print_comments(&legals);
+        }
+    }
+
+    /// Print comments attached to any position in the given range `(start, end)` (exclusive).
+    /// Returns `true` if any comments were printed.
+    pub(crate) fn print_comments_in_range(&mut self, start: u32, end: u32) -> bool {
+        if self.comments.is_empty() {
+            return false;
+        }
+        // Find and remove the first key in the range.
+        let key = self.comments.keys().find(|&&k| k > start && k < end).copied();
+        if let Some(key) = key {
+            let comments = self.comments.remove(&key).unwrap();
+            self.print_comments(&comments);
+            return true;
+        }
+        false
     }
 
     pub(crate) fn print_expr_comments(&mut self, start: u32) -> bool {
@@ -171,40 +251,59 @@ impl Codegen<'_> {
     }
 
     pub(crate) fn print_comments(&mut self, comments: &[Comment]) {
-        for (i, comment) in comments.iter().enumerate() {
-            if i == 0 {
-                if comment.preceded_by_newline() {
-                    // Skip printing newline if this comment is already on a newline.
-                    if let Some(b) = self.last_byte() {
-                        match b {
-                            b'\n' => self.print_indent(),
-                            b'\t' => { /* noop */ }
-                            _ => {
-                                self.print_hard_newline();
-                                self.print_indent();
-                            }
-                        }
+        let Some((first, rest)) = comments.split_first() else {
+            return;
+        };
+
+        if first.preceded_by_newline() {
+            // Skip printing newline if this comment is already on a newline.
+            if let Some(b) = self.last_byte() {
+                match b {
+                    b'\n' => self.print_indent(),
+                    b'\t' => { /* noop */ }
+                    _ => {
+                        self.print_hard_newline();
+                        self.print_indent();
                     }
-                } else {
-                    self.print_indent();
                 }
             }
-            if i >= 1 {
+        } else {
+            self.print_indent();
+        }
+        self.print_comment(first);
+
+        if let Some((last, middle)) = rest.split_last() {
+            for comment in middle {
                 if comment.preceded_by_newline() {
                     self.print_hard_newline();
                     self.print_indent();
                 } else if comment.is_legal() {
                     self.print_hard_newline();
-                }
-            }
-            self.print_comment(comment);
-            if i == comments.len() - 1 {
-                if comment.is_line() || comment.followed_by_newline() {
-                    self.print_hard_newline();
                 } else {
-                    self.print_next_indent_as_space = true;
+                    self.print_soft_space();
                 }
+                self.print_comment(comment);
             }
+
+            if last.preceded_by_newline() {
+                self.print_hard_newline();
+                self.print_indent();
+            } else if last.is_legal() {
+                self.print_hard_newline();
+            } else {
+                self.print_soft_space();
+            }
+            self.print_comment(last);
+
+            if last.is_line() || last.followed_by_newline() {
+                self.print_hard_newline();
+            } else {
+                self.print_next_indent_as_space = true;
+            }
+        } else if first.is_line() || first.followed_by_newline() {
+            self.print_hard_newline();
+        } else {
+            self.print_next_indent_as_space = true;
         }
     }
 
@@ -214,10 +313,10 @@ impl Codegen<'_> {
         };
         let comment_source = comment.span.source_text(source_text);
         match comment.kind {
-            CommentKind::Line => {
+            CommentKind::Line | CommentKind::SingleLineBlock => {
                 self.print_str_escaping_script_close_tag(comment_source);
             }
-            CommentKind::Block => {
+            CommentKind::MultiLineBlock => {
                 for line in LineTerminatorSplitter::new(comment_source) {
                     if !line.starts_with("/*") {
                         self.print_indent();
@@ -249,7 +348,7 @@ impl Codegen<'_> {
         let source_text = program.source_text;
         for comment in program.comments.iter().filter(|c| c.is_legal()) {
             let mut text = Cow::Borrowed(comment.span.source_text(source_text));
-            if comment.is_block() && text.contains(is_line_terminator) {
+            if comment.is_multiline_block() {
                 let mut buffer = String::with_capacity(text.len());
                 // Print block comments with our own indentation.
                 for line in LineTerminatorSplitter::new(&text) {
@@ -275,6 +374,8 @@ impl Codegen<'_> {
         match legal_comments {
             LegalComment::Eof => {
                 self.print_hard_newline();
+                // Clear the flag to ensure consistent formatting for all EOF comments
+                self.print_next_indent_as_space = false;
                 for c in comments {
                     self.print_comment(&c);
                     self.print_hard_newline();

@@ -26,7 +26,7 @@ pub trait StackCommon<T>: StackCapacity<T> {
     ///
     /// # SAFETY
     /// * `capacity_bytes` must not be 0.
-    /// * `capacity_bytes` must be a multiple of `mem::size_of::<T>()`.
+    /// * `capacity_bytes` must be a multiple of `size_of::<T>()`.
     /// * `capacity_bytes` must not exceed `Self::MAX_CAPACITY_BYTES`.
     #[inline]
     unsafe fn allocate(capacity_bytes: usize) -> (NonNull<T>, NonNull<T>) {
@@ -118,7 +118,7 @@ pub trait StackCommon<T>: StackCapacity<T> {
     ///
     /// # SAFETY
     /// * `capacity_bytes` must not be 0.
-    /// * `capacity_bytes` must be a multiple of `mem::size_of::<T>()`.
+    /// * `capacity_bytes` must be a multiple of `size_of::<T>()`.
     /// * `capacity_bytes` must not exceed `Self::MAX_CAPACITY_BYTES`.
     #[inline]
     unsafe fn layout_for(capacity_bytes: usize) -> Layout {

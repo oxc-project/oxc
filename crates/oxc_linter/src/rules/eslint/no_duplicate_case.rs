@@ -17,7 +17,7 @@ pub struct NoDuplicateCase;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow duplicate case labels
+    /// Disallow duplicate case labels.
     ///
     /// ### Why is this bad?
     ///
@@ -76,7 +76,9 @@ declare_oxc_lint!(
     /// ```
     NoDuplicateCase,
     eslint,
-    correctness
+    correctness,
+    version = "0.0.3",
+    short_description = "Disallow duplicate case labels.",
 );
 
 impl Rule for NoDuplicateCase {

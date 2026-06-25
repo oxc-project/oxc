@@ -1,6 +1,6 @@
 use std::{borrow::Cow, ops::Deref};
 
-use oxc_allocator::Address;
+use oxc_allocator::{Address, ArenaVec, UnstableAddress};
 use oxc_ast::{AstKind, ast::*};
 use oxc_ast_visit::{
     Visit,
@@ -9,71 +9,76 @@ use oxc_ast_visit::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
-use oxc_span::{CompactStr, GetSpan, Span};
-use rustc_hash::FxHashMap;
+use oxc_span::GetSpan;
+use oxc_str::CompactStr;
+use rustc_hash::{FxHashMap, FxHashSet};
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::Value;
 use smallvec::SmallVec;
 
-use crate::{AstNode, context::LintContext, rule::Rule, utils::default_true};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn func_missing_return_type(fn_span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Missing return type on function").with_label(fn_span)
+    OxcDiagnostic::warn("Missing return type on function")
+        .with_help("Define an explicit return type for the function.")
+        .with_label(fn_span)
 }
+
 fn func_missing_argument_type(param_span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Missing argument type on function").with_label(param_span)
+    OxcDiagnostic::warn("Missing argument type on function")
+        .with_help("Define an explicit argument type for each argument.")
+        .with_label(param_span)
 }
+
 fn func_argument_is_explicitly_any(param_span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Argument is explicitly typed as `any`").with_label(param_span)
+    OxcDiagnostic::warn("Argument is explicitly typed as `any`")
+        .with_help(
+            "Avoid explicit `any` at module boundaries; prefer `unknown` and narrow before use.",
+        )
+        .with_label(param_span)
 }
 
 #[derive(Debug, Default, Clone, Deserialize)]
-pub struct ExplicitModuleBoundaryTypes(Box<Config>);
-impl From<Config> for ExplicitModuleBoundaryTypes {
-    fn from(config: Config) -> Self {
-        Self(Box::new(config))
-    }
-}
+pub struct ExplicitModuleBoundaryTypes(Box<ExplicitModuleBoundaryTypesConfig>);
+
 impl Deref for ExplicitModuleBoundaryTypes {
-    type Target = Config;
+    type Target = ExplicitModuleBoundaryTypesConfig;
+
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-#[derive(Debug, Clone, Deserialize, JsonSchema)]
-#[cfg_attr(test, derive(PartialEq, Eq))]
-#[serde(rename_all = "camelCase")]
-pub struct Config {
+#[derive(Debug, Clone, Deserialize, JsonSchema, PartialEq, Eq)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+pub struct ExplicitModuleBoundaryTypesConfig {
     /// Whether to ignore arguments that are explicitly typed as `any`.
-    #[serde(default)]
     allow_arguments_explicitly_typed_as_any: bool,
     /// Whether to ignore return type annotations on body-less arrow functions
     /// that return an `as const` type assertion. You must still type the
     /// parameters of the function.
-    #[serde(default = "default_true")]
     allow_direct_const_assertion_in_arrow_functions: bool,
     /// An array of function/method names that will not have their arguments or
     /// return values checked.
-    #[serde(default)]
     allowed_names: Vec<CompactStr>,
     /// Whether to ignore return type annotations on functions immediately
     /// returning another function expression. You must still type the
     /// parameters of the function.
-    #[serde(default = "default_true")]
     allow_higher_order_functions: bool,
     /// Whether to ignore return type annotations on functions with overload
     /// signatures.
-    #[serde(default)]
     allow_overload_functions: bool,
     /// Whether to ignore type annotations on the variable of a function
     /// expression.
-    #[serde(default = "default_true")]
     allow_typed_function_expressions: bool,
 }
 
-impl Default for Config {
+impl Default for ExplicitModuleBoundaryTypesConfig {
     fn default() -> Self {
         Self {
             allow_arguments_explicitly_typed_as_any: false,
@@ -86,16 +91,11 @@ impl Default for Config {
     }
 }
 
-impl TryFrom<Value> for Config {
-    type Error = serde_json::Error;
-    fn try_from(value: Value) -> Result<Self, Self::Error> {
-        serde_json::from_value(value)
-    }
-}
-impl Config {
+impl ExplicitModuleBoundaryTypesConfig {
     fn is_allowed_name(&self, name: &str) -> bool {
         self.allowed_names.iter().any(|n| n == name)
     }
+
     fn is_some_allowed_name<S: AsRef<str>>(&self, name: Option<S>) -> bool {
         name.is_some_and(|name| self.is_allowed_name(name.as_ref()))
     }
@@ -167,15 +167,14 @@ declare_oxc_lint!(
     ExplicitModuleBoundaryTypes,
     typescript,
     restriction,
-    config = Config,
+    config = ExplicitModuleBoundaryTypesConfig,
+    version = "1.9.0",
+    short_description = "Require explicit return and argument types on exported functions' and classes' public class methods.",
 );
 
 impl Rule for ExplicitModuleBoundaryTypes {
-    fn from_configuration(mut value: Value) -> Self {
-        let Some(value) = value.get_mut(0).filter(|v| v.is_object()) else {
-            return Self::default();
-        };
-        serde_json::from_value(value.take()).unwrap_or_default()
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -227,6 +226,7 @@ impl Rule for ExplicitModuleBoundaryTypes {
         ctx.source_type().is_typescript()
     }
 }
+
 impl ExplicitModuleBoundaryTypes {
     fn run_on_exported_expression<'a>(&self, ctx: &LintContext<'a>, expr: &Expression<'a>) {
         self.run_on_exported_expression_inner(ctx, expr, true);
@@ -243,7 +243,10 @@ impl ExplicitModuleBoundaryTypes {
                 Self::run_on_identifier_reference(ctx, id, &mut checker);
             }
             Expression::ArrowFunctionExpression(arrow) => {
-                walk::walk_arrow_function_expression(&mut checker, arrow);
+                checker.visit_arrow_function_expression(arrow);
+            }
+            Expression::FunctionExpression(func) => {
+                checker.visit_function(func, ScopeFlags::Function);
             }
             // const foo = arg => arg;
             // export default [foo];
@@ -297,20 +300,33 @@ enum Fn<'a> {
     Arrow(&'a ArrowFunctionExpression<'a>),
     None,
 }
+
 impl Fn<'_> {
     fn address(self) -> Option<Address> {
+        // AST is immutable in linter, so `unstable_address` produces stable `Address`es
         match self {
-            Fn::Fn(f) => Some(Address::from_ref(f)),
-            Fn::Arrow(a) => Some(Address::from_ref(a)),
+            Fn::Fn(f) => Some(f.unstable_address()),
+            Fn::Arrow(a) => Some(a.unstable_address()),
             Fn::None => None,
         }
     }
 }
 
+/// Name and span of the symbol an anonymous function or arrow is assigned to - a variable binding,
+/// class property, or object property key.
+///
+/// Used so that diagnostics point at, and refer to, that name rather than the anonymous function
+/// expression itself, and so the name can be checked against the `allowedNames` option.
+#[derive(Clone, Copy)]
+struct TargetSymbol<'a> {
+    span: Span,
+    name: &'a str,
+}
+
 struct ExplicitTypesChecker<'a, 'c> {
     rule: &'c ExplicitModuleBoundaryTypes,
     ctx: &'c LintContext<'a>,
-    target_symbol: Option<IdentifierName<'a>>,
+    target_symbol: Option<TargetSymbol<'a>>,
     // note: we avoid allocations by reserving space on the stack. Yes this
     // struct is large, but reserving space for it is just a offset op from the
     // stack pointer.
@@ -320,7 +336,11 @@ struct ExplicitTypesChecker<'a, 'c> {
     /// [`Address`]es of those functions.
     fn_returns: FxHashMap<Address, SmallVec<[&'a ReturnStatement<'a>; 2]>>,
     scope_flags: ScopeFlags,
+    /// Spans of methods that have overload signatures in the current class.
+    /// Pre-computed in `visit_class` to avoid storing a reference to `ClassBody`.
+    overloaded_methods: FxHashSet<Span>,
 }
+
 impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
     fn new(rule: &'c ExplicitModuleBoundaryTypes, ctx: &'c LintContext<'a>) -> Self {
         Self {
@@ -330,31 +350,35 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
             fns: smallvec::smallvec![],
             fn_returns: FxHashMap::default(),
             scope_flags: ScopeFlags::empty(),
+            overloaded_methods: FxHashSet::default(),
         }
     }
+
     // fn target_span(&self) -> Option<Span> {
     //     self.target_symbol.as_ref().map(|id| id.span)
     // }
 
     fn with_target_binding(&mut self, binding: Option<&BindingIdentifier<'a>>) -> bool {
         if let Some(id) = binding {
-            self.target_symbol.replace(IdentifierName { name: id.name, span: id.span });
+            self.target_symbol = Some(TargetSymbol { span: id.span, name: id.name.as_str() });
             true
         } else {
             false
         }
     }
+
     fn with_target_property(&mut self, prop: Option<&PropertyKey<'a>>) -> bool {
         let Some(id) = prop else {
             return false;
         };
         if let Some(Cow::Borrowed(name)) = id.static_name() {
-            self.target_symbol.replace(IdentifierName { name: Atom::from(name), span: id.span() });
+            self.target_symbol = Some(TargetSymbol { span: id.span(), name });
             true
         } else {
             false
         }
     }
+
     #[inline]
     fn reset_target(&mut self, had_target: bool) {
         if had_target {
@@ -365,17 +389,15 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
     fn check_function_without_return(&mut self, func: &Function<'a>) {
         debug_assert!(func.return_type.is_none());
 
-        let target_span = self.target_symbol.as_ref();
-        let target_name = target_span.map(|t| t.name);
+        let target = self.target_symbol.as_ref();
+        let target_name = target.map(|t| t.name);
         #[expect(clippy::cast_possible_truncation)]
-        let span =
-            target_span.map_or(Span::sized(func.span.start, "function".len() as u32), |t| t.span);
-        let is_allowed = || self.rule.is_some_allowed_name(func.name().or(target_name));
+        let span = target.map_or(Span::sized(func.span.start, "function".len() as u32), |t| t.span);
+        let is_allowed = || {
+            self.rule.is_some_allowed_name(func.name().map(|name| name.as_str()).or(target_name))
+        };
 
-        // When allow_overload_functions is enabled, skip return type checking for all functions
-        // This is a simplified implementation - a proper implementation would only skip
-        // functions that are actually part of an overload set
-        if self.rule.allow_overload_functions {
+        if self.rule.allow_overload_functions && self.function_has_overload_signatures(func) {
             return;
         }
 
@@ -392,18 +414,92 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
         let Some(body) = func.body.as_deref() else {
             return;
         };
+
         walk::walk_function_body(self, body);
-        let is_hof = self.is_higher_order_function(Address::from_ref(func));
+
+        // AST is immutable in linter, so `unstable_address` produces stable `Address`es
+        let is_hof = self.is_higher_order_function(func.unstable_address());
         if !is_hof && !is_allowed() {
             self.ctx.diagnostic(func_missing_return_type(span));
         }
     }
 
+    fn function_has_overload_signatures(&self, func: &Function<'a>) -> bool {
+        if let Some(id) = &func.id {
+            return self.ctx.scoping().symbol_declarations(id.symbol_id()).any(|declaration| {
+                let AstKind::Function(candidate) = self.ctx.nodes().get_node(declaration).kind()
+                else {
+                    return false;
+                };
+
+                candidate.span != func.span && candidate.is_typescript_syntax()
+            });
+        }
+
+        self.has_unnamed_default_overload_signature(func)
+    }
+
+    fn has_unnamed_default_overload_signature(&self, func: &Function<'a>) -> bool {
+        self.ctx.nodes().program().body.iter().any(|statement| {
+            let match_module_declaration!(Statement) = statement else {
+                return false;
+            };
+            let ModuleDeclaration::ExportDefaultDeclaration(default) =
+                statement.to_module_declaration()
+            else {
+                return false;
+            };
+            let ExportDefaultDeclarationKind::FunctionDeclaration(candidate) = &default.declaration
+            else {
+                return false;
+            };
+            let candidate = candidate.as_ref();
+
+            candidate.span != func.span
+                && candidate.id.is_none()
+                && candidate.is_typescript_syntax()
+        })
+    }
+
+    /// Pre-computes which methods in `class_body` have overload signatures,
+    /// populating `self.overloaded_methods` with their spans.
+    fn collect_overloaded_methods(&mut self, class_body: &ClassBody<'a>) {
+        self.overloaded_methods.clear();
+        let mut overload_keys = FxHashSet::default();
+
+        for element in &class_body.body {
+            let ClassElement::MethodDefinition(method) = element else {
+                continue;
+            };
+            let Some(method_name) = method.key.static_name() else {
+                continue;
+            };
+            if method.value.is_typescript_syntax() {
+                overload_keys.insert((method.r#static, CompactStr::from(method_name.as_ref())));
+            }
+        }
+
+        for element in &class_body.body {
+            let ClassElement::MethodDefinition(method) = element else {
+                continue;
+            };
+            if method.value.is_typescript_syntax() {
+                continue;
+            }
+            let Some(method_name) = method.key.static_name() else {
+                continue;
+            };
+            if overload_keys.contains(&(method.r#static, CompactStr::from(method_name.as_ref()))) {
+                self.overloaded_methods.insert(method.span);
+            }
+        }
+    }
+
     fn check_arrow_without_return(&mut self, arrow: &ArrowFunctionExpression<'a>) {
         debug_assert!(arrow.return_type.is_none());
-        let target_span = self.target_symbol.as_ref();
-        let target_name = target_span.map(|t| t.name);
-        let span = target_span.map_or(arrow.params.span, |t| t.span);
+        let target = self.target_symbol.as_ref();
+        let target_name = target.map(|t| t.name);
+        let span = target.map_or(arrow.params.span, |t| t.span);
         let is_allowed = || self.rule.is_some_allowed_name(target_name);
 
         if !self.rule.allow_higher_order_functions {
@@ -450,7 +546,9 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
             }
         } else {
             walk::walk_function_body(self, &arrow.body);
-            let is_hof = self.is_higher_order_function(Address::from_ref(arrow));
+
+            // AST is immutable in linter, so `unstable_address` produces stable `Address`es
+            let is_hof = self.is_higher_order_function(arrow.unstable_address());
             if !is_hof && !is_allowed() {
                 self.ctx.diagnostic(func_missing_return_type(span));
             }
@@ -514,7 +612,7 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
         }
     }
 
-    fn visit_statements(&mut self, it: &oxc_allocator::Vec<'a, Statement<'a>>) {
+    fn visit_statements(&mut self, it: &ArenaVec<'a, Statement<'a>>) {
         for stmt in it {
             match stmt {
                 Statement::ReturnStatement(_) => {
@@ -532,11 +630,13 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
     }
 
     fn visit_variable_declarator(&mut self, var: &VariableDeclarator<'a>) {
-        if self.rule.allow_typed_function_expressions && var.id.type_annotation.is_some() {
+        if self.rule.allow_typed_function_expressions && var.type_annotation.is_some() {
             return;
         }
         let Some(init) = &var.init else {
-            return; // TODO: what do we do here?
+            // Variable declarators without initializers (e.g., `let x;`) have
+            // no expression to check, so we skip them.
+            return;
         };
         let Some(binding) = var.id.get_binding_identifier() else {
             return;
@@ -547,7 +647,9 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
 
         match get_typed_inner_expression(init) {
             // we consider these well-typed
-            Expression::TSAsExpression(_) | Expression::TSTypeAssertion(_) => {}
+            Expression::TSAsExpression(_)
+            | Expression::TSTypeAssertion(_)
+            | Expression::TSSatisfiesExpression(_) => {}
             expr if expr.is_literal() => {}
             expr => {
                 self.with_target_binding(Some(binding));
@@ -561,19 +663,36 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
         // ignore
     }
 
+    fn visit_new_expression(&mut self, it: &NewExpression<'a>) {
+        // Constructor arguments are implementation details of the exported value,
+        // not part of the module boundary. Still inspect the callee so class
+        // expressions used with `new` continue to be checked.
+        self.visit_expression(&it.callee);
+        if let Some(type_arguments) = &it.type_arguments {
+            self.visit_ts_type_parameter_instantiation(type_arguments);
+        }
+    }
+
     fn visit_jsx_element(&mut self, _it: &JSXElement<'a>) {
         // ignore
     }
 
     fn visit_class(&mut self, class: &Class<'a>) {
         let had_id = self.with_target_binding(class.id.as_ref());
-        walk::walk_class_body(self, class.body.as_ref());
+        if self.rule.allow_overload_functions {
+            let prev_overloaded = std::mem::take(&mut self.overloaded_methods);
+            self.collect_overloaded_methods(class.body.as_ref());
+            walk::walk_class_body(self, class.body.as_ref());
+            self.overloaded_methods = prev_overloaded;
+        } else {
+            walk::walk_class_body(self, class.body.as_ref());
+        }
         self.reset_target(had_id);
     }
 
     fn visit_class_element(&mut self, el: &ClassElement<'a>) {
-        // dont check non-public members
-        if el.accessibility().is_some_and(|a| a != TSAccessibility::Public)
+        // only skip private members
+        if el.accessibility().is_some_and(|a| a == TSAccessibility::Private)
             || el.property_key().is_some_and(|key| matches!(key, PropertyKey::PrivateIdentifier(_)))
         {
             return;
@@ -592,6 +711,7 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
         walk::walk_class_element(self, el);
         self.reset_target(is_target);
     }
+
     fn visit_object_property(&mut self, it: &ObjectProperty<'a>) {
         let is_set = it.kind == PropertyKind::Set;
         let prev_flags = self.scope_flags;
@@ -607,11 +727,24 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
     fn visit_method_definition(&mut self, m: &MethodDefinition<'a>) {
         match m.kind {
             MethodDefinitionKind::Constructor | MethodDefinitionKind::Set => {
-                // skip return type
-                // TODO: adjust target_symbol
+                // skip return type, but set target_symbol so diagnostics
+                // point to the method name
+                let had_name = self.with_target_property(Some(&m.key));
                 self.visit_formal_parameters(m.value.as_ref().params.as_ref());
+                self.reset_target(had_name);
             }
-            _ => walk::walk_method_definition(self, m),
+            MethodDefinitionKind::Method | MethodDefinitionKind::Get => {
+                // For methods with allowOverloadFunctions, check if this
+                // method has overload signatures in the same class body.
+                if self.rule.allow_overload_functions && self.overloaded_methods.contains(&m.span) {
+                    // Only check parameters, skip return type.
+                    let had_name = self.with_target_property(Some(&m.key));
+                    self.visit_formal_parameters(m.value.as_ref().params.as_ref());
+                    self.reset_target(had_name);
+                    return;
+                }
+                walk::walk_method_definition(self, m);
+            }
         }
     }
 
@@ -649,7 +782,7 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
             self.visit_formal_parameter(param);
         }
         if let Some(rest) = &it.rest {
-            if let Some(ty) = &rest.argument.type_annotation {
+            if let Some(ty) = &rest.type_annotation {
                 if !self.rule.allow_arguments_explicitly_typed_as_any
                     && matches!(ty.type_annotation, TSType::TSAnyKeyword(_))
                 {
@@ -661,9 +794,8 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
         }
     }
     fn visit_formal_parameter(&mut self, it: &FormalParameter<'a>) {
-        let param = &it.pattern;
         // let name = param.get_identifier_name();
-        if let Some(ty) = &param.type_annotation {
+        if let Some(ty) = &it.type_annotation {
             if !self.rule.allow_arguments_explicitly_typed_as_any
                 && matches!(ty.type_annotation, TSType::TSAnyKeyword(_))
             {
@@ -672,11 +804,32 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
             return;
         }
 
-        if matches!(param.kind, BindingPatternKind::AssignmentPattern(_)) {
+        if it.initializer.is_some() {
             return;
         }
 
         self.ctx.diagnostic(func_missing_argument_type(it.span));
+    }
+
+    fn visit_ts_as_expression(&mut self, it: &TSAsExpression<'a>) {
+        if is_skippable_typed_expression(&it.expression) {
+            return;
+        }
+        walk::walk_ts_as_expression(self, it);
+    }
+
+    fn visit_ts_satisfies_expression(&mut self, it: &TSSatisfiesExpression<'a>) {
+        if is_skippable_typed_expression(&it.expression) {
+            return;
+        }
+        walk::walk_ts_satisfies_expression(self, it);
+    }
+
+    fn visit_ts_type_assertion(&mut self, it: &TSTypeAssertion<'a>) {
+        if is_skippable_typed_expression(&it.expression) {
+            return;
+        }
+        walk::walk_ts_type_assertion(self, it);
     }
 }
 
@@ -689,55 +842,40 @@ fn get_typed_inner_expression<'a, 'e>(expr: &'e Expression<'a>) -> &'e Expressio
     }
 }
 
+fn is_skippable_typed_expression(expr: &Expression<'_>) -> bool {
+    matches!(
+        get_typed_inner_expression(expr),
+        Expression::ArrowFunctionExpression(_)
+            | Expression::FunctionExpression(_)
+            | Expression::ObjectExpression(_)
+            | Expression::ArrayExpression(_)
+    )
+}
+
 #[cfg(test)]
 mod test {
-    use super::{Config, ExplicitModuleBoundaryTypes};
+    use super::{ExplicitModuleBoundaryTypes, ExplicitModuleBoundaryTypesConfig};
     use crate::{RuleMeta as _, rule::Rule as _, tester::Tester};
     use serde_json::{Value, json};
     use std::path::PathBuf;
 
     #[test]
     fn config() {
-        let cases: Vec<(Config, Value)> = vec![(Config::default(), json!({}))];
+        let cases: Vec<(ExplicitModuleBoundaryTypesConfig, Value)> =
+            vec![(ExplicitModuleBoundaryTypesConfig::default(), json!({}))];
         for (config, expected) in cases {
-            assert_eq!(config, expected.try_into().unwrap());
+            let actual: ExplicitModuleBoundaryTypesConfig =
+                serde_json::from_value(expected).unwrap();
+            assert_eq!(config, actual);
         }
 
         // test from_configuration, which suppresses invalid configs
-        let cases: Vec<(Config, Value)> = vec![(Config::default(), json!([{}]))];
+        let cases: Vec<(ExplicitModuleBoundaryTypesConfig, Value)> =
+            vec![(ExplicitModuleBoundaryTypesConfig::default(), json!([{}]))];
         for (expected, value) in cases {
-            let actual = ExplicitModuleBoundaryTypes::from_configuration(value);
+            let actual = ExplicitModuleBoundaryTypes::from_configuration(value).unwrap();
             assert_eq!(*actual, expected);
         }
-    }
-
-    #[test]
-    fn debug_test() {
-        let pass: Vec<(&'static str, Option<Value>)> = vec![
-            //
-        ];
-        let fail: Vec<(&'static str, Option<Value>)> = vec![
-            // line break
-            // ("export default () => (true ? () => {} : (): void => {});", None),
-            (
-                "
-            const foo = arg => arg;
-            export default foo;
-            ",
-                None,
-            ),
-            // (
-            //     "export default () => () => () => 1",
-            //     Some(json!([{ "allowHigherOrderFunctions": true }])),
-            // ),
-        ];
-        Tester::new(
-            ExplicitModuleBoundaryTypes::NAME,
-            ExplicitModuleBoundaryTypes::PLUGIN,
-            pass,
-            fail,
-        )
-        .test();
     }
 
     #[test]
@@ -771,7 +909,7 @@ mod test {
               get prop(): void {
                 return 1;
               }
-              set prop(one: string): void {}
+              set prop(one: string) {}
               method(one: string): void {
                 return;
               }
@@ -793,7 +931,18 @@ mod test {
                 return;
               }
               private arrow = one => 'arrow';
-              private abstract abs(one);
+              private abs(one) {}
+            }
+            ",
+                None,
+            ),
+            (
+                "
+            export class Test {
+              protected method(one: string): string {
+                return one;
+              }
+              protected arrow = (one: string): string => one;
             }
             ",
                 None,
@@ -1509,6 +1658,45 @@ mod test {
                 "function Test(): void { const _x = () => { }; } function Test2() { return (): void => { }; } export { Test2 };",
                 None,
             ),
+            (
+                "
+            export const widgetSettingsDeserializer = new JsonInterfaceDeserializer<WidgetSettings, SupportedWidget>(
+              raw => raw.widgetSpecificationId as SupportedWidget
+            );
+            ",
+                None,
+            ),
+            (
+                "type F = (x: number) => number; export const f = (x => x) satisfies F;",
+                None,
+            ),
+            (
+                "
+            type F = () => number;
+
+            export const OBJ = {
+              f: (() => 42) satisfies F,
+            };
+            ",
+                None,
+            ),
+            (
+                "
+            type F = () => number;
+
+            export class Class {
+              g = (() => 42) satisfies F;
+            }
+            ",
+                None,
+            ),
+            (
+                "
+            interface T { f: () => number; }
+            export const NESTED_OBJ = { t: { f: () => 42, } satisfies T, };
+            ",
+                None,
+            ),
         ];
 
         let fail = vec![
@@ -1545,6 +1733,17 @@ mod test {
 
               static d = () => {};
               static e = function () {};
+            }
+            ",
+                None,
+            ),
+            (
+                "
+            export class Test {
+              protected method(one: string) {
+                return one;
+              }
+              protected arrow = (one: string) => one;
             }
             ",
                 None,
@@ -1948,6 +2147,14 @@ mod test {
             ),
             (
                 "
+            export function add(a: number, b: number) {
+              return a + b;
+            }
+            ",
+                Some(json!([{ "allowOverloadFunctions": true, }])),
+            ),
+            (
+                "
             export function test(a: string): string;
             export function test(a: number): number;
             export function test(a: unknown) {
@@ -1993,6 +2200,23 @@ mod test {
                 None,
             ),
             ("function App() { return 42; } export default App", None),
+            (
+                "
+            export default ({
+                a,
+                b,
+                c,
+            }: {
+                a: string;
+                b: string;
+                c: string;
+            }) => {
+                return `${a} ${b} ${c}`;
+            };
+            ",
+                None,
+            ),
+            ("export default (function() { return 'test'; });", None),
         ];
 
         Tester::new(

@@ -4,6 +4,280 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.137.0] - 2026-06-18
+
+### 🐛 Bug Fixes
+
+- 837a395 parser: Treat a line comment after ':' as leading, not trailing (#23515) (Dunqing)
+
+## [0.136.0] - 2026-06-15
+
+### 💥 BREAKING CHANGES
+
+- 7a24911 codegen: [**BREAKING**] Borrow sourcemaps from codegen (#23422) (Boshen)
+
+### 🐛 Bug Fixes
+
+- f5721c2 codegen: Preserve parentheses around `intrinsic` type reference (#23156) (Boshen)
+
+### ⚡ Performance
+
+- e89729b codegen: Accept one-shot wrap closures (#23265) (camc314)
+
+## [0.135.0] - 2026-06-08
+
+### 💥 BREAKING CHANGES
+
+- 4c35362 ast: [**BREAKING**] Add `AstBuilder::template_element_escape_raw` and `template_element_escape_raw_with_lone_surrogates` methods (#23047) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 556acdc codegen: Parenthesize TS-cast assignment targets (#23112) (Boshen)
+- 37169ff codegen: Don't emit space between postfix `--` and `>` when minifying (#23036) (Boshen)
+- a4b1bf7 codegen: Drop redundant whitespace in minified TypeScript output (#23038) (Boshen)
+- 325c94f codegen: Tighten conditional-type and constructor-type whitespace when minifying (#23033) (Boshen)
+- 90180b8 codegen: Drop space after `:` in function return type when minifying (#23028) (Boshen)
+- 28467ce codegen: Don't emit space before a postfix update operand when minifying (#23027) (Boshen)
+- cb29926 codegen: Drop redundant space after `export default` when minifying (#23024) (Boshen)
+- 62965ae codegen: Drop redundant space after `else` when minifying (#23025) (Boshen)
+- 184edef codegen: Print space before `const`/`declare` enum modifier (#23013) (Boshen)
+- 597ed85 codegen: Parenthesize `let`/`async` for-of head target (#23008) (Boshen)
+- 8b631bf codegen: Remove stray space before mapped type value colon (#23010) (Boshen)
+- c08407e codegen: Don't over-parenthesize `in` inside an arrow in a for-init (#23009) (Boshen)
+- 600cd6f codegen: Parenthesize lower-precedence `TSInstantiationExpression` operand (#23007) (Boshen)
+- 187e1a5 codegen: Don't leak space after comment-only JSX expression container (#23006) (Boshen)
+- 294c473 codegen: Don't over-parenthesize `TSTypeAssertion` operand (#23004) (Boshen)
+- 786d96f codegen: Give `TSTypeAssertion` unary precedence (#23002) (Boshen)
+- d727b6b codegen: Parenthesize `await` expression as base of `**` (#23001) (Boshen)
+- 67dfa08 codegen: Keep parentheses around `new` callees containing a call (#22997) (Boshen)
+
+## [0.134.0] - 2026-06-01
+
+### 🚀 Features
+
+- 9c71f2e ast, codegen, formatter: Add `WithClauseKeyword::as_str` helper and use it (#22791) (camc314)
+
+### 🐛 Bug Fixes
+
+- c645615 parser: Reject incompatible class member modifiers (#22843) (Boshen)
+
+## [0.133.0] - 2026-05-26
+
+### 🐛 Bug Fixes
+
+- 2f7b210 codegen: Emit pife-arrow/function leading comments inside the wrap (#22720) (Dunqing)
+- d61e1d7 codegen: Preserve verbatim text of pure/no-side-effects comments (#22525) (Dunqing)
+- 917da24 parser: Apply PURE comment through member-access chains (#22566) (Dunqing)
+- a069b1c codegen: Preserve quotes for cjs-module-lexer equality strings (#22551) (Dunqing)
+
+## [0.132.0] - 2026-05-18
+
+### 🐛 Bug Fixes
+
+- b9615b2 codegen: Preserve string quotes in require() calls during minification (#22475) (zennnnnnn11)
+
+## [0.131.0] - 2026-05-15
+
+### 🚀 Features
+
+- bc91a17 codegen: Expose `Codegen::with_source_type` method (#22432) (camc314)
+
+### 🐛 Bug Fixes
+
+- 18edc2c codegen: Keep `Object.defineProperty` property name as plain string in minify (#22400) (Dunqing)
+
+### ⚡ Performance
+
+- 2c7d781 codegen: Inline identifier-name accessors (#22411) (Boshen)
+- 5f3bdd0 codegen: Add `#[inline]` to `code`, `code_len` (#22373) (camc314)
+
+## [0.130.0] - 2026-05-11
+
+### 🐛 Bug Fixes
+
+- 6a8852d codegen: Emit newline after legal-comment orphan flush (#22304) (Dunqing)
+- 29a3cd7 codegen: Swap mapping/indent order for top-level decls (#22206) (Dunqing)
+- a6aff7e codegen: Emit block/array/object end mapping at close char (#22200) (Dunqing)
+- a099b03 codegen: Emit call end mapping at `)` position, not past it (#22199) (Dunqing)
+- 2493bdd codegen: Correct sourcemap end mappings for closing delimiters (#22001) (Mark Dalgleish)
+
+## [0.129.0] - 2026-05-05
+
+### 🐛 Bug Fixes
+
+- e852911 codegen: Preserve legal comments orphaned by upstream passes (#21575) (Dunqing)
+- aaabde4 parser: Attach legal comments to following token (#21670) (Dunqing)
+
+## [0.128.0] - 2026-04-27
+
+### 🐛 Bug Fixes
+
+- 503dc86 codegen: Map sourcemaps from visible output starts (#21662) (Dunqing)
+- 0d80441 codegen: Add mapping before printing `#` for private ident (#21619) (camc314)
+
+## [0.127.0] - 2026-04-20
+
+### 🐛 Bug Fixes
+
+- 00fc136 codegen: Preserve coverage comments before object properties (#21312) (bab)
+
+## [0.125.0] - 2026-04-13
+
+### 💥 BREAKING CHANGES
+
+- 382958a span: [**BREAKING**] Remove re-exports of string types from `oxc_span` crate (#21246) (overlookmotel)
+
+## [0.123.0] - 2026-03-30
+
+### 🚀 Features
+
+- 59fd797 parser: Mark pure comments that cannot be applied (#20687) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 77abf54 codegen: Preserve coverage comments before `ConditionalExpression` alternate and between `SwitchCase`s (#20718) (Boshen)
+
+## [0.117.0] - 2026-03-09
+
+### 🐛 Bug Fixes
+
+- 36b2e56 codegen: Print type for TSImportEqualsDeclaration (#20128) (camc314)
+- 5a246ec codegen: Print type arguments for JSXOpeningElement (#20127) (camc314)
+- a40870e codegen: Preserve parens for TSNonNullExpression (#20125) (camc314)
+- ae830b2 codegen: Print `declare` for `TSInterfaceDeclaration` (#20124) (camc314)
+- 588009e codegen: Print `static` keyword for TSIndexSignature (#19755) (Dunqing)
+- 5a8799c codegen: Print `with_clause` for `ExportNamedDeclaration` (#20002) (Dunqing)
+
+## [0.116.0] - 2026-03-02
+
+### 🐛 Bug Fixes
+
+- abc7e19 codegen: Improve parenthesised checks when printing types (#19880) (camc314)
+- 1710f56 codegen: Remove double indentation for enum inside namespace (#19775) (Dunqing)
+- 9e4995c codegen: Print type annotation on `CatchParameter` (#19790) (camc314)
+- 297b2bb codegen: Wrap `TSConditionalType` in parens when necessary (#19788) (camc314)
+- cec7878 codegen: Print `definite` property on AccessorProperty (#19786) (camc314)
+- 6f395cf codegen: Print `definite` property on PropertyDefinition (#19785) (camc314)
+- b749373 codegen: Correctly parenthesise TSArrayType (#19784) (camc314)
+- 876dc1b codegen: Print object property `this` param (#19783) (camc314)
+- ed17bbf codegen: Print `override` keyword for method and property definitions (#19753) (Dunqing)
+- 3b96f41 codegen: Print comments in JSX expression containers and spread attributes (#19701) (Boshen)
+
+## [0.115.0] - 2026-02-23
+
+### 🐛 Bug Fixes
+
+- e316694 codegen: Avoid sourcemap panic on `U+2028`/`U+2029` (#19548) (camc314)
+
+### ⚡ Performance
+
+- b5fa195 codegen: Remove bounds check from `SourcemapBuilder` (#19578) (overlookmotel)
+
+## [0.114.0] - 2026-02-16
+
+### 📚 Documentation
+
+- 569aa61 rust: Add missing rustdocs and remove missing_docs lint attrs (#19306) (Boshen)
+
+## [0.113.0] - 2026-02-10
+
+### 💥 BREAKING CHANGES
+
+- 48b0542 span: [**BREAKING**] SourceType::ts should set module to unambigious (#18873) (Boshen)
+
+## [0.111.0] - 2026-01-26
+
+### 🚀 Features
+
+- 2ef5647 ast: Add escape_raw parameter to template_element builders (#18121) (Boshen)
+
+### 🐛 Bug Fixes
+
+- c205b0d ast: Remove `ThisExpression` from `TSModuleReference` (#18489) (Boshen)
+- aed3669 parser: Parse HTML-like comments in unambiguous mode (#18442) (Boshen)
+
+## [0.109.0] - 2026-01-19
+
+### 🐛 Bug Fixes
+
+- 4c16ae7 codegen: Remove spaces around `=` in minified type parameter defaults (#17989) (Boshen)
+- 06bd17b codegen: Remove unnecessary double parentheses from satisfies expressions (#17986) (Boshen)
+- 1874765 codegen: Fix inconsistent multiline EOF comment formatting (#17983) (Boshen)
+- 2619c66 codegen: Remove leading whitespace from export statements after comments (#17982) (Boshen)
+
+## [0.108.0] - 2026-01-12
+
+### 🚀 Features
+
+- 10426af codegen: Print soft space between inline block comments on the same line (#17799) (camc314)
+
+### 🐛 Bug Fixes
+
+- 7422b7e parser/trivia: Correctly mark whether a block comment is on a newline (#17754) (camc314)
+- c32e8d5 codegen: Wrap `TSAsExpression` in parens when used with in/instanceof operators (#17752) (camc314)
+- ef7e014 parser: Preserve `@__NO_SIDE_EFFECTS__` annotation with parenthesized expressions (#17711) (camc314)
+
+## [0.106.0] - 2025-12-29
+
+### 🚀 Features
+
+- e031056 codegen: Add `sourcemap` feature flag (#17305) (Boshen)
+
+### ⚡ Performance
+
+- 722fffa codegen: Restructure print_comments to avoid index comparisons in loop (#17402) (camc314)
+- 7ec39d0 codegen: Use print_ascii_byte in more places (#17401) (camc314)
+- 510ec00 codegen: Avoid allocation in PrivateIdentifier gen when not mangling (#17395) (camc314)
+
+## [0.104.0] - 2025-12-19
+
+### 🚀 Features
+
+- 67e9f9e codegen: Keep comments on the export specifiers (#16943) (夕舞八弦)
+
+## [0.103.0] - 2025-12-15
+
+### 💥 BREAKING CHANGES
+
+- 320c09f ast, parser, linter, codegen, formatter: [**BREAKING**] Rename `CommentKind::Block` to `CommentKind::SinglelineBlock` (#16501) (Dunqing)
+
+### 🚀 Features
+
+- 30a9076 ast, parser, codegen: Add `CommentKind::MultilineBlock` (#16479) (Dunqing)
+
+## [0.102.0] - 2025-12-08
+
+### 🚀 Features
+
+- a607cc4 codegen: Preserve comments between CatchClause's param and body (#16167) (copilot-swe-agent)
+
+## [0.100.0] - 2025-12-01
+
+### 💥 BREAKING CHANGES
+
+- 74cf572 ast: [**BREAKING**] Make `source` field of `TSImportType` a `StringLiteral` (#16114) (copilot-swe-agent)
+- 43156ae ast: [**BREAKING**] Rename `TSImportType` `argument` field to `source` (#16110) (overlookmotel)
+
+## [0.99.0] - 2025-11-24
+
+### 💥 BREAKING CHANGES
+
+- cbb27fd ast: [**BREAKING**] Add `TSGlobalDeclaration` type (#15712) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- e2ca770 codegen: Add support for printing type arguments in new expressions (#15963) (Ives van Hoorne)
+
+## [0.97.0] - 2025-11-11
+
+### 🐛 Bug Fixes
+
+- 020aa4f codegen: Print space before `BindingRestElement` in `ObjectPattern` (#15315) (overlookmotel)
+
+### ⚡ Performance
+
+- ab4b12b codegen: Reduce branches printing `ObjectPattern` (#15316) (overlookmotel)
+
 ## [0.96.0] - 2025-10-30
 
 ### 🐛 Bug Fixes

@@ -2,36 +2,29 @@ use lazy_regex::Regex;
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 
-use oxc_ast::{
-    AstKind,
-    ast::{
-        AssignmentExpression, AssignmentTargetPropertyIdentifier, AssignmentTargetPropertyProperty,
-        CallExpression, ChainExpression, ComputedMemberExpression, ForInStatement, ForOfStatement,
-        ObjectProperty, ParenthesizedExpression, StaticMemberExpression, TSAsExpression,
-        TSNonNullExpression, TSSatisfiesExpression, TSTypeAssertion, UnaryExpression,
-        UpdateExpression,
-    },
-};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{AstNode, NodeId, Reference};
-use oxc_span::{GetSpan, Span};
-use oxc_syntax::operator::UnaryOperator;
+use oxc_semantic::{AstNode, NodeId};
+use oxc_span::Span;
 use serde_json::Value;
 
 use crate::{context::LintContext, rule::Rule};
 
 fn assignment_to_param_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Assignment to function parameter '{name}'.")).with_label(span)
+    OxcDiagnostic::warn(format!("Assignment to function parameter '{name}'."))
+        .with_help("Consider using a different variable to avoid unintended side effects on the parameter.")
+        .with_label(span)
 }
 
 fn assignment_to_param_property_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Assignment to property of function parameter '{name}'."))
+        .with_help("Consider using a different variable to avoid unintended side effects on the parameter's properties.")
         .with_label(span)
 }
 
 #[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct NoParamReassignConfig {
     /// When true, also check for modifications to properties of parameters.
     props: bool,
@@ -83,21 +76,23 @@ declare_oxc_lint!(
     eslint,
     restriction,
     config = NoParamReassignConfig,
+    version = "1.20.0",
+    short_description = "Disallow reassigning function parameters or, optionally, their properties.",
 );
 
 impl Rule for NoParamReassign {
-    fn from_configuration(value: Value) -> Self {
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
         let mut rule = Self::default();
         let config = &mut *rule.0;
-        let Value::Array(array) = value else { return rule };
-        let Some(Value::Object(options)) = array.first() else { return rule };
+        let Value::Array(array) = value else { return Ok(rule) };
+        let Some(Value::Object(options)) = array.first() else { return Ok(rule) };
 
         if let Some(Value::Bool(props)) = options.get("props") {
             config.props = *props;
         }
 
         if !config.props {
-            return rule;
+            return Ok(rule);
         }
 
         if let Some(Value::Array(items)) = options.get("ignorePropertyModificationsFor") {
@@ -118,7 +113,7 @@ impl Rule for NoParamReassign {
             }
         }
 
-        rule
+        Ok(rule)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -154,110 +149,14 @@ impl Rule for NoParamReassign {
                     continue;
                 }
 
-                if self.0.props && !self.0.is_ignored(name) && is_modifying_property(reference, ctx)
+                if self.0.props
+                    && !self.0.is_ignored(name)
+                    && reference.flags().is_member_write_target()
                 {
                     ctx.diagnostic(assignment_to_param_property_diagnostic(name, span));
                 }
             }
         }
-    }
-}
-
-fn is_modifying_property(reference: &Reference, ctx: &LintContext<'_>) -> bool {
-    let nodes = ctx.nodes();
-    let mut current_id = reference.node_id();
-    let mut current_span = nodes.get_node(current_id).span();
-
-    loop {
-        let parent_id = nodes.parent_id(current_id);
-        if parent_id == NodeId::ROOT {
-            return false;
-        }
-
-        let parent_node = nodes.get_node(parent_id);
-        match parent_node.kind() {
-            AstKind::AssignmentExpression(AssignmentExpression { left, .. }) => {
-                return left.span().contains_inclusive(current_span);
-            }
-            AstKind::UpdateExpression(UpdateExpression { argument, .. }) => {
-                return argument.span().contains_inclusive(current_span);
-            }
-            AstKind::UnaryExpression(UnaryExpression {
-                operator: UnaryOperator::Delete,
-                argument,
-                ..
-            }) => {
-                return argument.span().contains_inclusive(current_span);
-            }
-            AstKind::UnaryExpression(_) => {
-                return false;
-            }
-            AstKind::ForInStatement(ForInStatement { left, .. })
-            | AstKind::ForOfStatement(ForOfStatement { left, .. }) => {
-                return left.span().contains_inclusive(current_span);
-            }
-            AstKind::StaticMemberExpression(StaticMemberExpression { object, .. })
-            | AstKind::ComputedMemberExpression(ComputedMemberExpression { object, .. }) => {
-                if object.span() != current_span {
-                    return false;
-                }
-            }
-            AstKind::ObjectProperty(ObjectProperty { key, .. }) => {
-                if key.span() == current_span {
-                    return false;
-                }
-            }
-            AstKind::AssignmentTargetPropertyIdentifier(AssignmentTargetPropertyIdentifier {
-                binding,
-                ..
-            }) => {
-                if binding.span == current_span {
-                    return false;
-                }
-            }
-            AstKind::AssignmentTargetPropertyProperty(AssignmentTargetPropertyProperty {
-                name,
-                ..
-            }) => {
-                if name.span().contains_inclusive(current_span) {
-                    return false;
-                }
-            }
-            AstKind::ConditionalExpression(conditional) => {
-                if conditional.test.span() == current_span {
-                    return false;
-                }
-            }
-            AstKind::ParenthesizedExpression(ParenthesizedExpression { expression, .. })
-            | AstKind::TSAsExpression(TSAsExpression { expression, .. })
-            | AstKind::TSNonNullExpression(TSNonNullExpression { expression, .. })
-            | AstKind::TSSatisfiesExpression(TSSatisfiesExpression { expression, .. })
-            | AstKind::TSTypeAssertion(TSTypeAssertion { expression, .. }) => {
-                if expression.span() != current_span {
-                    return false;
-                }
-            }
-            AstKind::ChainExpression(ChainExpression { expression, .. }) => {
-                if expression.span() != current_span {
-                    return false;
-                }
-            }
-            AstKind::CallExpression(CallExpression { callee, .. }) => {
-                if callee.span() != current_span {
-                    return false;
-                }
-            }
-            kind if kind.is_statement() || kind.is_declaration() => {
-                return false;
-            }
-            AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) | AstKind::Program(_) => {
-                return false;
-            }
-            _ => {}
-        }
-
-        current_id = parent_id;
-        current_span = parent_node.span();
     }
 }
 
@@ -310,7 +209,7 @@ fn test() {
         (
             "function foo(a, z) { a.b = 0; x.y = 0; }",
             Some(
-                serde_json::json!([				{ "props": true, "ignorePropertyModificationsFor": ["a", "x"] },			]),
+                serde_json::json!([ { "props": true, "ignorePropertyModificationsFor": ["a", "x"] }, ]),
             ),
         ),
         (
@@ -320,31 +219,31 @@ fn test() {
         (
             "function foo(aFoo) { aFoo.b = 0; }",
             Some(
-                serde_json::json!([				{ "props": true, "ignorePropertyModificationsForRegex": ["^a.*$"] },			]),
+                serde_json::json!([ { "props": true, "ignorePropertyModificationsForRegex": ["^a.*$"] }, ]),
             ),
         ),
         (
             "function foo(aFoo) { ++aFoo.b; }",
             Some(
-                serde_json::json!([				{ "props": true, "ignorePropertyModificationsForRegex": ["^a.*$"] },			]),
+                serde_json::json!([ { "props": true, "ignorePropertyModificationsForRegex": ["^a.*$"] }, ]),
             ),
         ),
         (
             "function foo(aFoo) { delete aFoo.b; }",
             Some(
-                serde_json::json!([				{ "props": true, "ignorePropertyModificationsForRegex": ["^a.*$"] },			]),
+                serde_json::json!([ { "props": true, "ignorePropertyModificationsForRegex": ["^a.*$"] }, ]),
             ),
         ),
         (
             "function foo(a, z) { aFoo.b = 0; x.y = 0; }",
             Some(
-                serde_json::json!([				{					"props": true,					"ignorePropertyModificationsForRegex": ["^a.*$", "^x.*$"],				},			]),
+                serde_json::json!([ { "props": true, "ignorePropertyModificationsForRegex": ["^a.*$", "^x.*$"], }, ]),
             ),
         ),
         (
             "function foo(aFoo) { aFoo.b.c = 0;}",
             Some(
-                serde_json::json!([				{ "props": true, "ignorePropertyModificationsForRegex": ["^a.*$"] },			]),
+                serde_json::json!([ { "props": true, "ignorePropertyModificationsForRegex": ["^a.*$"] }, ]),
             ),
         ),
         (
@@ -368,8 +267,21 @@ fn test() {
         (
             "function foo(bar, baz) { bar.a = true; baz.b = false; }",
             Some(
-                serde_json::json!([				{					"props": true,					"ignorePropertyModificationsForRegex": ["^(foo|bar)$"],					"ignorePropertyModificationsFor": ["baz"],				},			]),
+                serde_json::json!([ { "props": true, "ignorePropertyModificationsForRegex": ["^(foo|bar)$"], "ignorePropertyModificationsFor": ["baz"], }, ]),
             ),
+        ),
+        (
+            "function foo(key, value) { this[key] = value; }",
+            Some(serde_json::json!([{ "props": true }])),
+        ),
+        (
+            "function foo(key, value) { this[key] += value; }",
+            Some(serde_json::json!([{ "props": true }])),
+        ),
+        ("function foo(key) { delete this[key]; }", Some(serde_json::json!([{ "props": true }]))),
+        (
+            "function foo<T>(this: Record<PropertyKey, T>, key: PropertyKey, value: T) { this[key] = value; }",
+            Some(serde_json::json!([{ "props": true }])),
         ),
     ];
 
@@ -419,13 +331,13 @@ fn test() {
         (
             "function foo(bar) { [bar.a] = []; }",
             Some(
-                serde_json::json!([				{ "props": true, "ignorePropertyModificationsForRegex": ["^a.*$"] },			]),
+                serde_json::json!([ { "props": true, "ignorePropertyModificationsForRegex": ["^a.*$"] }, ]),
             ),
         ), // { "ecmaVersion": 6 },
         (
             "function foo(bar) { [bar.a] = []; }",
             Some(
-                serde_json::json!([				{ "props": true, "ignorePropertyModificationsForRegex": ["^B.*$"] },			]),
+                serde_json::json!([ { "props": true, "ignorePropertyModificationsForRegex": ["^B.*$"] }, ]),
             ),
         ), // { "ecmaVersion": 6 },
         (

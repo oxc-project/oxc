@@ -78,7 +78,9 @@ declare_oxc_lint!(
     PreferReturnThisType(tsgolint),
     typescript,
     style,
-    pending,
+    fix,
+    version = "1.12.0",
+    short_description = "This rule enforces using `this` types for return types when possible.",
 );
 
 impl Rule for PreferReturnThisType {}

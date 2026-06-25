@@ -21,8 +21,7 @@ use crate::{
     ast_util::{is_method_call, leftmost_identifier_reference},
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
-    rule::Rule,
-    utils::default_true,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 fn no_map_spread_diagnostic(
@@ -34,9 +33,9 @@ fn no_map_spread_diagnostic(
     assert!(!spans.is_empty());
     let mut spread_labels = spread.spread_spans().into_iter();
     let first_message = if spans.len() == 1 {
-        "It should be mutated in place"
+        "This spread allocates a new value on each iteration"
     } else {
-        "They should be mutated in place"
+        "These spreads allocate new values on each iteration"
     };
     let first = spread_labels.next().unwrap().label(first_message);
     let others = spread_labels.map(LabeledSpan::from);
@@ -52,26 +51,35 @@ fn no_map_spread_diagnostic(
                 "Spreading to modify object properties in `map` calls is inefficient",
             )
             .with_labels([map_call.label("This map call spreads an object"), first])
-            .with_help("Consider using `Object.assign` instead"),
+            .with_help(
+                "If in-place mutation is acceptable, use `Object.assign` or direct property assignment instead of spreading",
+            )
+            .with_note(
+                "`Object.assign` mutates the first argument. Disable this rule if copy-on-write behavior is required.",
+            ),
             // Array
             Spread::Array(_) => OxcDiagnostic::warn(
                 "Spreading to modify array elements in `map` calls is inefficient",
             )
             .with_labels([map_call.label("This map call spreads an array"), first])
-            .with_help("Consider using `Array.prototype.concat` or `Array.prototype.push` instead"),
+            .with_help(
+                "If in-place mutation is acceptable, use `push` (or `concat` when semantics match) instead of spreading",
+            )
+            .with_note(
+                "`push` mutates the array. `concat` returns a new array and is not equivalent for every iterable.",
+            ),
         };
 
     diagnostic.and_labels(others).and_labels(returned_label)
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoMapSpreadConfig {
     /// Ignore mapped arrays that are re-read after the `map` call.
     ///
     /// Re-used arrays may rely on shallow copying behavior to avoid mutations.
     /// In these cases, `Object.assign` is not really more performant than spreads.
-    #[serde(default = "default_true")]
     ignore_rereads: bool,
     /// Ignore maps on arrays passed as parameters to a function.
     ///
@@ -97,15 +105,15 @@ pub struct NoMapSpreadConfig {
     ///     return arr.map(x => ({ ...x }));
     /// }
     /// ```
-    #[serde(default = "default_true")]
     ignore_args: bool,
     // todo: ignore_arrays?
 }
 
 // NOTE: not boxing the config for now because of how small it is. If we add
 // more than 16 bytes of options, we need to add a box back.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct NoMapSpread(NoMapSpreadConfig);
+
 impl Deref for NoMapSpread {
     type Target = NoMapSpreadConfig;
 
@@ -223,26 +231,21 @@ declare_oxc_lint!(
     /// let d = arr.concat(set); // [1, 2, 3, 4]
     /// ```
     ///
-    /// ### Automatic Fixing
-    /// This rule can automatically fix violations caused by object spreads, but
-    /// does not fix arrays. Object spreads will get replaced with
-    /// [`Object.assign`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign).  Array fixing may be added in the future.
+    /// ### Fix Suggestions
+    /// This rule can suggest fixes for violations caused by object spreads, but
+    /// does not fix arrays. Object spreads can get replaced with
+    /// [`Object.assign`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign). Array fixing may be added in the future.
     ///
     /// Object expressions with a single element (the spread) are not fixed.
     /// ```js
     /// arr.map(x => ({ ...x })) // not fixed
     /// ```
     ///
-    /// A `fix` is available (using `--fix`) for objects with "normal" elements before the
-    /// spread. Since `Object.apply` mutates the first argument, and a new
-    /// object will be created with those elements, the spread identifier will
-    /// not be mutated. In effect, the spread semantics are preserved
+    /// Object expressions with "normal" properties before the spread are not
+    /// fixed, because preserving semantics with `Object.assign` requires
+    /// allocating a new object.
     /// ```js
-    /// // before
-    /// arr.map(({ x, y }) => ({ x, ...y }))
-    ///
-    /// // after
-    /// arr.map(({ x, y }) => (Object.assign({ x }, y)))
+    /// arr.map(({ x, y }) => ({ x, ...y })) // not fixed
     /// ```
     ///
     /// A suggestion (using `--fix-suggestions`) is provided when a spread is
@@ -309,24 +312,18 @@ declare_oxc_lint!(
     /// - [JSPerf - `concat` vs array spread performance](https://jsperf.app/pihevu)
     NoMapSpread,
     oxc,
-    nursery, // TODO: make this `perf` once we've battle-tested this a bit
-    conditional_fix_suggestion,
+    perf,
+    conditional_suggestion,
     config = NoMapSpreadConfig,
+    version = "0.11.0",
+    short_description = "Disallow object or array spreads in `Array.prototype.map` and `Array.prototype.flatMap` to add properties or elements to array items.",
 );
 
 const MAP_FN_NAMES: [&str; 2] = ["map", "flatMap"];
 
 impl Rule for NoMapSpread {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let config: NoMapSpreadConfig = value
-            .get(0)
-            .map(|obj| {
-                serde_json::from_value(obj.clone())
-                    .expect("Invalid configuration for `oxc/no-map-spread`")
-            })
-            .unwrap_or_default();
-
-        Self::from(config)
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -344,7 +341,7 @@ impl Rule for NoMapSpread {
         // Look for return statements that contain an object or array spread.
         let visitor = SpreadInReturnVisitor::<'a, '_>::iter_spreads(ctx, mapper, |spread| {
             // SAFETY: references to arena-allocated objects are valid for the
-            // lifetime of the arena. Unfortunately, `AsRef` on `Box<'a, T>`
+            // lifetime of the arena. Unfortunately, `AsRef` on `ArenaBox<'a, T>`
             // returns a reference with a lifetime of 'self instead of 'a.
             spreads.push(unsafe { std::mem::transmute::<Spread<'a, '_>, Spread<'a, 'a>>(spread) });
         });
@@ -379,14 +376,14 @@ impl Rule for NoMapSpread {
             let diagnostic = no_map_spread_diagnostic(map_call_site, &spread, returned_span);
             if let Some(obj) = spread.as_object() {
                 debug_assert!(!obj.properties.is_empty());
-                if obj.properties.first().is_some_and(ObjectPropertyKind::is_spread) {
+                if obj.properties.len() > 1
+                    && obj.properties.first().is_some_and(ObjectPropertyKind::is_spread)
+                {
                     ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
                         fix_spread_to_object_assign(fixer, obj)
                     });
                 } else {
-                    ctx.diagnostic_with_fix(diagnostic, |fixer| {
-                        fix_spread_to_object_assign(fixer, obj)
-                    });
+                    ctx.diagnostic(diagnostic);
                 }
             } else {
                 ctx.diagnostic(diagnostic);
@@ -470,7 +467,6 @@ fn fix_spread_to_object_assign<'a>(
 ) -> RuleFix {
     use oxc_allocator::{Allocator, CloneIn};
     use oxc_ast::AstBuilder;
-    use oxc_codegen::CodegenOptions;
     use oxc_span::SPAN;
 
     if obj.properties.len() <= 1 {
@@ -484,8 +480,7 @@ fn fix_spread_to_object_assign<'a>(
     // than creating an empty vec.
     // let mut args = ast.vec_with_capacity::<Argument>(obj.properties.len());
     let mut curr_obj_properties = ast.vec::<ObjectPropertyKind>();
-    let mut codegen =
-        fixer.codegen().with_options(CodegenOptions { minify: true, ..Default::default() });
+    let mut codegen = fixer.codegen();
     let mut is_first = true;
     codegen.print_str("Object.assign(");
 
@@ -676,11 +671,11 @@ where
                 let declaration_scope = self.ctx.scoping().symbol_scope_id(symbol_id);
 
                 // symbol is not declared within the mapper callback
-                if !self
-                    .ctx
-                    .scoping()
-                    .scope_ancestors(declaration_scope)
-                    .any(|parent_id| parent_id == self.cb_scope_id)
+                if declaration_scope != self.cb_scope_id
+                    && !self
+                        .ctx
+                        .scoping()
+                        .scope_is_descendant_of(declaration_scope, self.cb_scope_id)
                 {
                     return;
                 }
@@ -721,7 +716,10 @@ where
 fn test() {
     use serde_json::json;
 
-    use crate::tester::Tester;
+    use crate::{
+        fixer::FixKind,
+        tester::{ExpectFixTestCase, Tester},
+    };
 
     let pass = vec![
         ("let a = b.map(x => x)", None),
@@ -814,41 +812,58 @@ fn test() {
         ("const foo = a => a.map(x => ({ ...(x ?? y) }))", Some(json!([{ "ignoreArgs": false }]))),
     ];
 
-    let fix = vec![
+    let fix: Vec<ExpectFixTestCase> = vec![
         // single spreads cannot be fixed with `Object.assign`. We'll assume the
         // spread is happening intentionally, to force a shallow clone. Maybe we
         // shouldn't even report these cases?
-        ("let a = b.map(x => ({ ...x }))", "let a = b.map(x => ({ ...x }))"),
+        ("let a = b.map(x => ({ ...x }))", "let a = b.map(x => ({ ...x }))").into(),
         // two
         (
             "let a = b.map(({ x, y }) => ({ ...x, ...y }))",
             "let a = b.map(({ x, y }) => (Object.assign(x, y)))",
-        ),
+        )
+        .into(),
         (
             "let a = b.map(({ x, y }) => { return { ...x, ...y }; })",
             "let a = b.map(({ x, y }) => { return Object.assign(x, y); })",
-        ),
+        )
+        .into(),
         (
             "let a = b.map(({ x, y }) => ({ x, ...y }))",
-            "let a = b.map(({ x, y }) => (Object.assign({x}, y)))",
-        ),
+            "let a = b.map(({ x, y }) => ({ x, ...y }))",
+        )
+        .into(),
         (
             "let a = b.map(({ x, y }) => ({ ...x, y }))",
-            "let a = b.map(({ x, y }) => (Object.assign(x, {y})))",
-        ),
+            "let a = b.map(({ x, y }) => (Object.assign(x, { y })))",
+        )
+        .into(),
         // three
         (
             "let a = b.map(({ x, y, z }) => ({ ...x, y, z }))",
-            "let a = b.map(({ x, y, z }) => (Object.assign(x, {y,z})))",
-        ),
+            "let a = b.map(({ x, y, z }) => (Object.assign(x, {
+	y,
+	z
+})))",
+        )
+        .into(),
         (
             "let a = b.map(({ x, y, z }) => ({ x, ...y, z }))",
-            "let a = b.map(({ x, y, z }) => (Object.assign({x}, y, {z})))",
-        ),
+            "let a = b.map(({ x, y, z }) => ({ x, ...y, z }))",
+        )
+        .into(),
         (
             "let a = b.map(({ x, y, z }) => ({ x, y, ...z }))",
-            "let a = b.map(({ x, y, z }) => (Object.assign({x,y}, z)))",
-        ),
+            "let a = b.map(({ x, y, z }) => ({ x, y, ...z }))",
+        )
+        .into(),
+        (
+            "head.push({ link: [...assets.js.map((attrs: any) => ({ rel: 'modulepreload', ...attrs }))] })",
+            "head.push({ link: [...assets.js.map((attrs: any) => ({ rel: 'modulepreload', ...attrs }))] })",
+            None,
+            FixKind::SafeFix,
+        )
+        .into(),
     ];
 
     Tester::new(NoMapSpread::NAME, NoMapSpread::PLUGIN, pass, fail)

@@ -10,7 +10,12 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
+use schemars::{
+    JsonSchema, SchemaGenerator,
+    schema::{Schema, SchemaObject, SubschemaValidation},
+};
 use serde_json::Value;
 
 fn bad_handler_name_diagnostic(
@@ -25,7 +30,7 @@ fn bad_handler_name_diagnostic(
         } else {
             "Bad handler name".to_string()
         },
-)
+    )
         .with_help(format!(
             "Handler function for {prop_key} prop key must be a camelCase name beginning with \'{handler_prefix}\' only"
         ))
@@ -50,22 +55,57 @@ fn bad_handler_prop_name_diagnostic(
 #[derive(Debug, Default, Clone)]
 pub struct JsxHandlerNames(Box<JsxHandlerNamesConfig>);
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct JsxHandlerNamesConfig {
     /// Whether to check for inline functions in JSX attributes.
+    #[serde(rename = "checkInlineFunction")]
     check_inline_functions: bool,
     /// Whether to check for local variables in JSX attributes.
     check_local_variables: bool,
     /// Event handler prop prefixes to check against.
+    #[serde(rename = "eventHandlerPropPrefix")]
+    #[schemars(with = "HandlerPrefix")]
     event_handler_prop_prefixes: CompactStr,
     /// Event handler prefixes to check against.
+    #[serde(rename = "eventHandlerPrefix")]
+    #[schemars(with = "HandlerPrefix")]
     event_handler_prefixes: CompactStr,
     /// Component names to ignore when checking for event handler prefixes.
     ignore_component_names: Vec<CompactStr>,
     /// Compiled regex for event handler prefixes.
+    #[schemars(skip)]
     event_handler_regex: Option<Regex>,
     /// Compiled regex for event handler prop prefixes.
+    #[schemars(skip)]
     event_handler_prop_regex: Option<Regex>,
+}
+
+#[derive(Debug)]
+struct HandlerPrefix;
+
+impl JsonSchema for HandlerPrefix {
+    fn schema_name() -> String {
+        "HandlerPrefix".to_string()
+    }
+
+    fn json_schema(r#gen: &mut SchemaGenerator) -> Schema {
+        let mut false_schema = <bool as JsonSchema>::json_schema(r#gen).into_object();
+        false_schema.const_value = Some(serde_json::Value::Bool(false));
+
+        SchemaObject {
+            subschemas: Some(Box::new(SubschemaValidation {
+                any_of: Some(vec![<String as JsonSchema>::json_schema(r#gen), false_schema.into()]),
+                ..Default::default()
+            })),
+            ..Default::default()
+        }
+        .into()
+    }
+
+    fn is_referenceable() -> bool {
+        false
+    }
 }
 
 impl std::ops::Deref for JsxHandlerNames {
@@ -98,35 +138,12 @@ declare_oxc_lint!(
     /// <MyComponent onChange={this.handleChange} />
     /// <MyComponent onChange={this.props.onFoo} />
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// ```json
-    /// {
-    ///   "react/jsx-handler-names": [<enabled>, {
-    ///     "eventHandlerPrefix": <eventHandlerPrefix>,
-    ///     "eventHandlerPropPrefix": <eventHandlerPropPrefix>,
-    ///     "checkLocalVariables": <boolean>,
-    ///     "checkInlineFunction": <boolean>,
-    ///     "ignoreComponentNames": Array<string>
-    ///   }]
-    /// }
-    /// ```
-    ///
-    /// - `eventHandlerPrefix`: Prefix for component methods used as event handlers.
-    ///   Defaults to `handle`
-    /// - `eventHandlerPropPrefix`: Prefix for props that are used as event handlers
-    ///   Defaults to `on`
-    /// - `checkLocalVariables`: Determines whether event handlers stored as local variables
-    ///   are checked. Defaults to `false`
-    /// - `checkInlineFunction`: Determines whether event handlers set as inline functions are
-    ///   checked. Defaults to `false`
-    /// - `ignoreComponentNames`: Array of glob strings, when matched with component name,
-    ///   ignores the rule on that component. Defaults to `[]`
-    ///
     JsxHandlerNames,
     react,
     style,
+    config = JsxHandlerNamesConfig,
+    version = "1.13.0",
+    short_description = "Ensures that any component or prop methods used to handle events are correctly prefixed.",
 );
 
 fn build_event_handler_regex(handler_prefix: &str, handler_prop_prefix: &str) -> Option<Regex> {
@@ -191,7 +208,7 @@ impl Default for JsxHandlerNamesConfig {
 }
 
 impl Rule for JsxHandlerNames {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let mut check_inline_functions = false;
         let mut check_local_variables = false;
         let mut event_handler_prop_prefixes = DEFAULT_HANDLER_PROP_PREFIX;
@@ -235,7 +252,7 @@ impl Rule for JsxHandlerNames {
             build_event_handler_regex(event_handler_prefixes, event_handler_prop_prefixes);
         let event_handler_prop_regex = build_event_handler_prop_regex(event_handler_prop_prefixes);
 
-        Self(Box::new(JsxHandlerNamesConfig {
+        Ok(Self(Box::new(JsxHandlerNamesConfig {
             check_inline_functions,
             check_local_variables,
             event_handler_prop_prefixes: CompactStr::from(event_handler_prop_prefixes),
@@ -243,7 +260,7 @@ impl Rule for JsxHandlerNames {
             ignore_component_names,
             event_handler_regex,
             event_handler_prop_regex,
-        }))
+        })))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

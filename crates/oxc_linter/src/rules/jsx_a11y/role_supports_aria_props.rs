@@ -18,10 +18,20 @@ use crate::{
     },
 };
 
+#[derive(Debug, Default, Clone)]
+pub struct RoleSupportsAriaProps;
+
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce that elements with explicit or implicit roles defined contain only `aria-*` properties supported by that `role`. Many ARIA attributes (states and properties) can only be used on elements with particular roles. Some elements have implicit roles, such as `<a href="#" />`, which will resolve to `role="link"`.
+    /// Enforce that elements with explicit or implicit roles defined contain only `aria-*` properties supported by that `role`.
+    /// Many ARIA attributes (states and properties) can only be used on elements with particular roles.
+    /// Some elements have implicit roles, such as `<a href="#" />`, which will resolve to `role="link"`.
+    ///
+    /// ### Why is this bad?
+    ///
+    /// Using ARIA attributes that are inconsistent with the element's role can cause problems for assistive
+    /// technologies and their ability to understand or engage with the content of a page.
     ///
     /// ### Examples
     ///
@@ -44,21 +54,22 @@ declare_oxc_lint!(
     /// ```
     RoleSupportsAriaProps,
     jsx_a11y,
-    correctness
+    correctness,
+    version = "0.2.0",
+    short_description = "Enforce that elements only contain `aria-*` properties supported by their explicit or implicit role.",
 );
 
-#[derive(Debug, Default, Clone)]
-pub struct RoleSupportsAriaProps;
-
 fn default(span: Span, attr_name: &str, role: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("The attribute {attr_name} is not supported by the role {role}."))
-        .with_help(format!("Try to remove invalid attribute {attr_name}."))
-        .with_label(span)
+    OxcDiagnostic::warn(format!(
+        "The attribute `{attr_name}` is not supported by the role `{role}`."
+    ))
+    .with_help(format!("Try to remove invalid attribute `{attr_name}`."))
+    .with_label(span)
 }
 
 fn is_implicit_diagnostic(span: Span, attr_name: &str, role: &str, el_name: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("The attribute {attr_name} is not supported by the role {role}. This role is implicit on the element {el_name}."))
-        .with_help(format!("Try to remove invalid attribute {attr_name}."))
+    OxcDiagnostic::warn(format!("The attribute `{attr_name}` is not supported by the role `{role}`. This role is implicit on the element `{el_name}`."))
+        .with_help(format!("Try to remove invalid attribute `{attr_name}`."))
         .with_label(span)
 }
 
@@ -389,6 +400,7 @@ const COMBOBOX_PROPS: &[AriaProperty] = &[
     AriaProperty::Expanded,
     AriaProperty::FlowTo,
     AriaProperty::Grabbed,
+    AriaProperty::HasPopup,
     AriaProperty::Hidden,
     AriaProperty::Invalid,
     AriaProperty::KeyShortcuts,
@@ -883,6 +895,7 @@ const OPTION_PROPS: &[AriaProperty] = &[
     AriaProperty::LabelledBy,
     AriaProperty::Live,
     AriaProperty::Owns,
+    AriaProperty::PosInSet,
     AriaProperty::Relevant,
     AriaProperty::RoleDescription,
     AriaProperty::Selected,
@@ -1630,6 +1643,8 @@ fn test() {
         (r"<datalist aria-expanded />", None, None),
         (r#"<div role="heading" aria-level />"#, None, None),
         (r#"<div role="heading" aria-level="1" />"#, None, None),
+        (r#"<option aria-posinset="1" />"#, None, None),
+        (r#"<input role="combobox" aria-haspopup="listbox" />"#, None, None),
     ];
 
     let fail = vec![

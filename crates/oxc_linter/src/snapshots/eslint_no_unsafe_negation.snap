@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-unsafe-negation): Unexpected negation of the left operand of 'in' operator.
    ╭─[no_unsafe_negation.tsx:1:1]
  1 │ !a in b

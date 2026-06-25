@@ -1,3 +1,8 @@
+use oxc_syntax::precedence::Precedence;
+use schemars::JsonSchema;
+use serde::Deserialize;
+use serde_json::Value;
+
 use oxc_ast::{
     AstKind,
     ast::{
@@ -9,21 +14,19 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use schemars::JsonSchema;
-use serde::Deserialize;
-use serde_json::Value;
 
 use crate::{
     AstNode,
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::Rule,
-    utils::is_same_expression,
+    utils::{get_precedence, is_same_expression},
 };
 
 fn prefer_at_diagnostic(span: Span, method: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Prefer `.at()` over `{method}`"))
-        .with_help("Use `.at()` for index access")
+    OxcDiagnostic::warn(format!("Prefer `.at()` over `{method}`."))
+        .with_help("Use `.at()` for index access.")
+        .with_note("https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at")
         .with_label(span)
 }
 
@@ -31,7 +34,7 @@ fn prefer_at_diagnostic(span: Span, method: &str) -> OxcDiagnostic {
 pub struct PreferAt(Box<PreferAtConfig>);
 
 #[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct PreferAtConfig {
     /// Check all index access, not just special patterns like `array.length - 1`.
     /// When enabled, `array[0]`, `array[1]`, etc. will also be flagged.
@@ -52,12 +55,16 @@ impl std::ops::Deref for PreferAt {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Prefer `.at()` method for index access and `String#charAt()`.
+    /// Prefer the [`Array#at()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at) and
+    /// [`String#at()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/at)
+    /// methods for index access.
+    ///
+    /// This rule also discourages using [`String#charAt()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/charAt).
     ///
     /// ### Why is this bad?
     ///
     /// The `.at()` method is more readable and consistent for accessing elements by index,
-    /// especially for negative indices which access elements from the end.
+    /// especially for negative indices which access elements from the end of the array or string.
     ///
     /// ### Examples
     ///
@@ -79,13 +86,15 @@ declare_oxc_lint!(
     pedantic,
     dangerous_fix,
     config = PreferAtConfig,
+    version = "1.20.0",
+    short_description = "Prefer the `Array#at()` and `String#at()` methods for index access.",
 );
 
 impl Rule for PreferAt {
-    fn from_configuration(value: Value) -> Self {
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
         let config = value.as_array().and_then(|arr| arr.first().and_then(|v| v.as_object()));
 
-        Self(Box::new(PreferAtConfig {
+        Ok(Self(Box::new(PreferAtConfig {
             check_all_index_access: config
                 .and_then(|c| c.get("checkAllIndexAccess"))
                 .and_then(serde_json::Value::as_bool)
@@ -102,20 +111,16 @@ impl Rule for PreferAt {
                         .collect()
                 })
                 .unwrap_or_default(),
-        }))
+        })))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::ComputedMemberExpression(computed) => {
-                if !is_assignment_target(node, ctx) {
-                    self.handle_computed_member(computed, node, ctx);
-                }
+            AstKind::ComputedMemberExpression(computed) if !is_assignment_target(node, ctx) => {
+                self.handle_computed_member(computed, node, ctx);
             }
-            AstKind::CallExpression(call) => {
-                if !is_assignment_target(node, ctx) {
-                    self.check_call_expression(call, node, ctx);
-                }
+            AstKind::CallExpression(call) if !is_assignment_target(node, ctx) => {
+                self.check_call_expression(call, node, ctx);
             }
             _ => {}
         }
@@ -130,8 +135,10 @@ impl PreferAt {
         ctx: &LintContext<'a>,
     ) {
         // Check if this is accessing [0] on various expression types
-        if computed.expression.get_inner_expression().is_number_0() {
-            Self::check_slice_with_zero_index(computed, node.id(), ctx);
+        if computed.expression.get_inner_expression().is_number_0()
+            && Self::check_slice_with_zero_index(computed, node.id(), ctx)
+        {
+            return;
         }
 
         // Check for object.length - N pattern
@@ -140,6 +147,9 @@ impl PreferAt {
                 ctx.diagnostic_with_fix(
                     prefer_at_diagnostic(computed.span(), "[index]"),
                     |fixer| {
+                        if is_arguments_object(&computed.object) {
+                            return fixer.noop();
+                        }
                         create_at_fix(
                             &fixer,
                             computed.object.span(),
@@ -151,11 +161,35 @@ impl PreferAt {
             }
         } else if self.check_all_index_access
             && let Some(index) = get_positive_index(&computed.expression)
-            && index != 0
         {
             ctx.diagnostic_with_fix(prefer_at_diagnostic(computed.span(), "[index]"), |fixer| {
+                if is_arguments_object(&computed.object) {
+                    return fixer.noop();
+                }
+
                 create_at_fix(&fixer, computed.object.span(), computed.span(), index)
             });
+        } else if self.check_all_index_access && is_addition_index_expression(&computed.expression)
+        {
+            if is_static_positive_index_expression(&computed.expression) {
+                ctx.diagnostic_with_fix(
+                    prefer_at_diagnostic(computed.span(), "[index]"),
+                    |fixer| {
+                        if is_arguments_object(&computed.object) {
+                            return fixer.noop();
+                        }
+
+                        create_at_fix_with_arg(
+                            &fixer,
+                            computed.object.span(),
+                            computed.span(),
+                            fixer.source_range(computed.expression.span()),
+                        )
+                    },
+                );
+            } else {
+                ctx.diagnostic(prefer_at_diagnostic(computed.span(), "[index]"));
+            }
         }
     }
 
@@ -163,20 +197,20 @@ impl PreferAt {
         computed: &ComputedMemberExpression<'a>,
         node_id: oxc_syntax::node::NodeId,
         ctx: &LintContext<'a>,
-    ) {
+    ) -> bool {
         let call_expr = match &computed.object {
             Expression::ChainExpression(chain) => {
                 if let ChainElement::CallExpression(call) = &chain.expression {
                     call
                 } else {
-                    return;
+                    return false;
                 }
             }
             expr => {
                 if let Expression::CallExpression(call) = expr.get_inner_expression() {
                     call
                 } else {
-                    return;
+                    return false;
                 }
             }
         };
@@ -185,8 +219,10 @@ impl PreferAt {
             call_expr.callee.get_member_expr()
             && static_member.property.name == "slice"
         {
-            Self::check_slice_index_access(call_expr, computed, node_id, ctx);
+            return Self::check_slice_index_access(call_expr, computed, node_id, ctx);
         }
+
+        false
     }
 
     fn check_call_expression<'a>(
@@ -234,25 +270,23 @@ impl PreferAt {
 
         let Some(arg) = call_expr.arguments[0].as_expression() else { return };
 
-        // Check for string.length - N pattern
-        if let Some((object, negative_value)) = extract_length_minus_pattern(arg) {
-            if is_same_expression(static_member.object.get_inner_expression(), object, ctx) {
+        if let Some((object, negative_value)) = extract_length_minus_pattern(arg)
+            && is_same_expression(static_member.object.get_inner_expression(), object, ctx)
+        {
+            ctx.diagnostic_with_fix(prefer_at_diagnostic(call_expr.span, "charAt()"), |fixer| {
+                create_at_fix(&fixer, static_member.object.span(), call_expr.span, negative_value)
+            });
+        } else if check_all_index_access {
+            if let Some(index) = get_positive_index(arg) {
                 ctx.diagnostic_with_fix(
                     prefer_at_diagnostic(call_expr.span, "charAt()"),
                     |fixer| {
-                        create_at_fix(
-                            &fixer,
-                            static_member.object.span(),
-                            call_expr.span,
-                            negative_value,
-                        )
+                        create_at_fix(&fixer, static_member.object.span(), call_expr.span, index)
                     },
                 );
+            } else {
+                ctx.diagnostic(prefer_at_diagnostic(call_expr.span, "charAt()"));
             }
-        } else if check_all_index_access && let Some(index) = get_positive_index(arg) {
-            ctx.diagnostic_with_fix(prefer_at_diagnostic(call_expr.span, "charAt()"), |fixer| {
-                create_at_fix(&fixer, static_member.object.span(), call_expr.span, index)
-            });
         }
     }
 
@@ -316,6 +350,9 @@ impl PreferAt {
             ctx.diagnostic_with_fix(
                 prefer_at_diagnostic(call_expr.span, "slice().pop/shift"),
                 |fixer| {
+                    if is_arguments_object(&slice_static.object) {
+                        return fixer.noop();
+                    }
                     create_at_fix(
                         &fixer,
                         slice_static.object.span(),
@@ -345,6 +382,9 @@ impl PreferAt {
             ctx.diagnostic_with_fix(
                 prefer_at_diagnostic(call_expr.span, "slice().pop/shift"),
                 |fixer| {
+                    if is_arguments_object(&slice_static.object) {
+                        return fixer.noop();
+                    }
                     create_at_fix(
                         &fixer,
                         slice_static.object.span(),
@@ -354,17 +394,26 @@ impl PreferAt {
                 },
             );
         } else if let Some(second_negative) = get_negative_integer(second_arg, None) {
-            ctx.diagnostic_with_fix(
-                prefer_at_diagnostic(call_expr.span, "slice().pop/shift"),
-                |fixer| {
-                    create_at_fix(
-                        &fixer,
-                        slice_static.object.span(),
-                        Span::new(slice_static.object.span().start, call_expr.span.end),
-                        second_negative,
-                    )
-                },
-            );
+            // `slice(start, end).pop()` returns the slice's LAST element. `.at()` can only
+            // express that when the slice is exactly one element (`end == start + 1`), in which
+            // case the element is at `start`. For a multi-element slice `.at()` cannot replicate
+            // `.pop()` (which takes the last element), so skip reporting in this case.
+            if second_negative == first_negative + 1 {
+                ctx.diagnostic_with_fix(
+                    prefer_at_diagnostic(call_expr.span, "slice().pop/shift"),
+                    |fixer| {
+                        if is_arguments_object(&slice_static.object) {
+                            return fixer.noop();
+                        }
+                        create_at_fix(
+                            &fixer,
+                            slice_static.object.span(),
+                            Span::new(slice_static.object.span().start, call_expr.span.end),
+                            first_negative,
+                        )
+                    },
+                );
+            }
         }
     }
 
@@ -373,9 +422,9 @@ impl PreferAt {
         computed: &ComputedMemberExpression<'a>,
         computed_node_id: oxc_syntax::node::NodeId,
         ctx: &LintContext<'a>,
-    ) {
+    ) -> bool {
         if computed.optional {
-            return;
+            return false;
         }
 
         // Skip if this computed member is being assigned to or deleted
@@ -386,43 +435,43 @@ impl PreferAt {
                 | AstKind::UpdateExpression(_)
                 | AstKind::ArrayPattern(_)
         ) {
-            return;
+            return false;
         }
 
         if let AstKind::UnaryExpression(unary) = computed_parent_kind
             && unary.operator == UnaryOperator::Delete
         {
-            return;
+            return false;
         }
 
         let Some(MemberExpression::StaticMemberExpression(static_member)) =
             call_expr.callee.get_member_expr()
         else {
-            return;
+            return false;
         };
 
         if call_expr.optional
             || static_member.property.name != "slice"
             || call_expr.arguments.is_empty()
         {
-            return;
+            return false;
         }
 
         if call_expr.arguments.iter().any(Argument::is_spread) {
-            return;
+            return false;
         }
 
-        let Some(first_arg) = call_expr.arguments[0].as_expression() else { return };
+        let Some(first_arg) = call_expr.arguments[0].as_expression() else { return false };
 
         let negative_value = match call_expr.arguments.len() {
             1 => get_negative_integer(first_arg, Some(5)),
             2 => {
                 // Check if second argument is 0, which means slice returns empty array
-                let Some(second_arg) = call_expr.arguments[1].as_expression() else { return };
+                let Some(second_arg) = call_expr.arguments[1].as_expression() else { return false };
                 if is_zero_index(second_arg) {
                     // slice(-N, 0) returns empty array, so [0] would be undefined
                     // This is not equivalent to .at(-N)
-                    return;
+                    return false;
                 }
                 get_negative_integer(first_arg, None)
             }
@@ -431,6 +480,9 @@ impl PreferAt {
 
         if let Some(value) = negative_value {
             ctx.diagnostic_with_fix(prefer_at_diagnostic(computed.span(), "slice()[0]"), |fixer| {
+                if is_arguments_object(&static_member.object) {
+                    return fixer.noop();
+                }
                 create_at_fix(
                     &fixer,
                     static_member.object.span(),
@@ -438,11 +490,18 @@ impl PreferAt {
                     value,
                 )
             });
+            return true;
         }
+
+        false
     }
 }
 
 // Helper functions
+
+fn is_arguments_object(expr: &Expression) -> bool {
+    expr.get_identifier_reference().is_some_and(|ident| ident.name == "arguments")
+}
 
 fn is_assignment_target<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     let parent_kind = ctx.nodes().parent_kind(node.id());
@@ -478,6 +537,20 @@ fn get_positive_index(expr: &Expression) -> Option<i64> {
     }
 }
 
+fn is_addition_index_expression(expr: &Expression) -> bool {
+    let Expression::BinaryExpression(binary) = expr.get_inner_expression() else { return false };
+    binary.operator == BinaryOperator::Addition
+        && (get_positive_index(&binary.left).is_some()
+            || get_positive_index(&binary.right).is_some())
+}
+
+fn is_static_positive_index_expression(expr: &Expression) -> bool {
+    let Expression::BinaryExpression(binary) = expr.get_inner_expression() else { return false };
+    binary.operator == BinaryOperator::Addition
+        && get_positive_index(&binary.left).is_some()
+        && get_positive_index(&binary.right).is_some()
+}
+
 fn get_negative_integer(expr: &Expression, max_abs_value: Option<u32>) -> Option<i64> {
     let value = match expr.get_inner_expression() {
         Expression::UnaryExpression(unary) if unary.operator == UnaryOperator::UnaryNegation =>
@@ -495,6 +568,7 @@ fn get_negative_integer(expr: &Expression, max_abs_value: Option<u32>) -> Option
         }
         Expression::NumericLiteral(num) if num.value < 0.0 && num.value.fract() == 0.0 => {
             #[expect(clippy::cast_precision_loss, clippy::cast_possible_truncation)]
+            #[expect(clippy::collapsible_match)]
             if num.value >= i64::MIN as f64 {
                 num.value as i64
             } else {
@@ -559,7 +633,16 @@ fn create_at_fix(
     full_span: Span,
     index: i64,
 ) -> RuleFix {
-    let new_code = format!("{}.at({})", fixer.source_range(object_span), index);
+    create_at_fix_with_arg(fixer, object_span, full_span, &index.to_string())
+}
+
+fn create_at_fix_with_arg(
+    fixer: &RuleFixer<'_, '_>,
+    object_span: Span,
+    full_span: Span,
+    argument: &str,
+) -> RuleFix {
+    let new_code = format!("{}.at({})", fixer.source_range(object_span), argument);
     fixer.replace(full_span, new_code)
 }
 
@@ -579,7 +662,18 @@ fn check_lodash_last<'a>(
             ctx.diagnostic_with_fix(
                 prefer_at_diagnostic(call_expr.span, &format!("{name}.last()")),
                 |fixer| {
-                    let new_code = format!("{}.at(-1)", fixer.source_range(arg.span()));
+                    if is_arguments_object(arg) {
+                        return fixer.noop();
+                    }
+
+                    let arg_text = fixer.source_range(arg.span());
+                    let new_code = if get_precedence(arg)
+                        .is_some_and(|precedence| precedence < Precedence::Member)
+                    {
+                        format!("({arg_text}).at(-1)")
+                    } else {
+                        format!("{arg_text}.at(-1)")
+                    };
                     fixer.replace(call_expr.span, new_code)
                 },
             );
@@ -644,6 +738,17 @@ fn test() {
         ("array.slice(-9, 0)[0]", None),
         ("array.slice(-5, 0).pop()", None),
         ("array.slice(-3, 0).shift()", None),
+        ("array.slice(-5, -3).pop()", None),
+        ("array.slice(-9, -2).pop()", None),
+        ("++array[1]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        (
+            "const offset = 5;const extraArgument = 6;string.charAt(offset + 9, extraArgument)",
+            Some(serde_json::json!([{ "checkAllIndexAccess": true }])),
+        ),
+        ("array[unknown]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        ("array[-1]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        ("array[1.5]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        ("array[1n]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
     ];
 
     let fail = vec![
@@ -679,6 +784,7 @@ fn test() {
         ("(( string.charAt ))(string.length - 1);", None),
         ("(( string.charAt(string.length - 1) ));", None),
         ("array.slice(-1)[0]", None),
+        ("array.slice(-1)[0]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
         ("array?.slice(-1)[0]", None),
         ("array.slice(-1).pop()", None),
         ("array.slice(-1.0).shift()", None),
@@ -710,17 +816,17 @@ fn test() {
         ("_.last(new Array)", None),
         (
             "const foo = []
-			_.last([bar])",
+            _.last([bar])",
             None,
         ),
         (
             "const foo = []
-			_.last( new Array )",
+            _.last( new Array )",
             None,
         ),
         (
             "const foo = []
-			_.last( (( new Array )) )",
+            _.last( (( new Array )) )",
             None,
         ),
         ("if (foo) _.last([bar])", None),
@@ -731,6 +837,35 @@ fn test() {
             ),
         ),
         ("function foo() {return _.last(arguments)}", None),
+        // checkAllIndexAccess: true, generated dynamically so not picked up by rulegen.
+        ("array[0]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        ("array[1]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        ("array[5 + 9]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        (
+            "const offset = 5;array[offset + 9]",
+            Some(serde_json::json!([{ "checkAllIndexAccess": true }])),
+        ),
+        (
+            "const offset = -10;array[offset + 9]",
+            Some(serde_json::json!([{ "checkAllIndexAccess": true }])),
+        ),
+        ("array[array.length - 1]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        // `charAt` doesn't care about value.
+        ("string.charAt(9)", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        ("string.charAt(5 + 9)", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        (
+            "const offset = 5;string.charAt(offset + 9)",
+            Some(serde_json::json!([{ "checkAllIndexAccess": true }])),
+        ),
+        ("string.charAt(unknown)", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        ("string.charAt(-1)", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        ("string.charAt(1.5)", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        ("string.charAt(1n)", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        (
+            "string.charAt(string.length - 1)",
+            Some(serde_json::json!([{ "checkAllIndexAccess": true }])),
+        ),
+        ("foo.charAt(bar.length - 1)", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
     ];
 
     let fix = vec![
@@ -743,19 +878,48 @@ fn test() {
         // array.slice(-N)[0] patterns
         ("array.slice(-1)[0]", "array.at(-1)", None),
         ("array.slice(-2)[0]", "array.at(-2)", None),
+        (
+            "array.slice(-1)[0]",
+            "array.at(-1)",
+            Some(serde_json::json!([{ "checkAllIndexAccess": true }])),
+        ),
         // array.slice(-N).pop/shift patterns
         ("array.slice(-1).pop()", "array.at(-1)", None),
         ("array.slice(-1).shift()", "array.at(-1)", None),
         // Two-arg slice patterns
         ("array.slice(-9, -8)[0]", "array.at(-9)", None),
         ("array.slice(-3, -2).shift()", "array.at(-3)", None),
-        ("array.slice(-9, -8).pop()", "array.at(-8)", None),
-        ("array.slice(-5, -3).pop()", "array.at(-3)", None),
+        ("array.slice(-9, -8).pop()", "array.at(-9)", None),
+        ("array.slice(-2, -1).pop()", "array.at(-2)", None),
         // Lodash patterns
         ("_.last(array)", "array.at(-1)", None),
         ("lodash.last(array)", "array.at(-1)", None),
         // Edge cases with very large numbers
         ("array[array.length - 9007199254740992]", "array.at(-9007199254740992)", None),
+        ("array[0]", "array.at(0)", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        (
+            "array[5 + 9]",
+            "array.at(5 + 9)",
+            Some(serde_json::json!([{ "checkAllIndexAccess": true }])),
+        ),
+        (
+            "string.charAt(9)",
+            "string.at(9)",
+            Some(serde_json::json!([{ "checkAllIndexAccess": true }])),
+        ),
+        ("_.last([] as [])", "([] as []).at(-1)", None),
+        ("_.last([1, 2, 3] as const)", "([1, 2, 3] as const).at(-1)", None),
+        // `arguments` is not an Array, so `.at()` is not guaranteed to exist.
+        ("arguments[arguments.length - 1]", "arguments[arguments.length - 1]", None),
+        (
+            "arguments[1]",
+            "arguments[1]",
+            Some(serde_json::json!([{ "checkAllIndexAccess": true }])),
+        ),
+        ("_.last(arguments)", "_.last(arguments)", None),
+        ("arguments.slice(-1)[0]", "arguments.slice(-1)[0]", None),
+        ("arguments.slice(-1).pop()", "arguments.slice(-1).pop()", None),
+        ("arguments.slice(-1).shift()", "arguments.slice(-1).shift()", None),
     ];
 
     Tester::new(PreferAt::NAME, PreferAt::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();

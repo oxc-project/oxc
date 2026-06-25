@@ -1,11 +1,11 @@
-import fs from 'node:fs';
-import { join as pathJoin } from 'node:path';
+import fs from "node:fs";
+import { join as pathJoin } from "node:path";
 
-const path = pathJoin(import.meta.dirname, '../index.js');
+const path = pathJoin(import.meta.dirname, "../index.js");
 
-let data = fs.readFileSync(path, 'utf-8');
+let data = fs.readFileSync(path, "utf-8");
 data = data.replace(
-  '\nif (!nativeBinding) {',
+  "\nif (!nativeBinding) {",
   (s) =>
     `
 if (!nativeBinding && globalThis.process?.versions?.["webcontainer"]) {

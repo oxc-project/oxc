@@ -36,6 +36,7 @@ const {
       type: 'module',
     })
 
+
     return worker
   },
   overwriteImports(importObject) {
@@ -62,6 +63,6 @@ export const ExportExportNameKind = __napiModule.exports.ExportExportNameKind
 export const ExportImportNameKind = __napiModule.exports.ExportImportNameKind
 export const ExportLocalNameKind = __napiModule.exports.ExportLocalNameKind
 export const ImportNameKind = __napiModule.exports.ImportNameKind
-export const parseAsync = __napiModule.exports.parseAsync
+export const parse = __napiModule.exports.parse
 export const parseSync = __napiModule.exports.parseSync
 export const rawTransferSupported = __napiModule.exports.rawTransferSupported

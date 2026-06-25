@@ -33,7 +33,9 @@ pub fn convert_utf8_to_utf16(
             Comment {
                 r#type: match comment.kind {
                     CommentKind::Line => String::from("Line"),
-                    CommentKind::Block => String::from("Block"),
+                    CommentKind::SingleLineBlock | CommentKind::MultiLineBlock => {
+                        String::from("Block")
+                    }
                 },
                 value,
                 start: span.start,
@@ -63,17 +65,20 @@ pub fn get_source_type(
     lang: Option<&str>,
     source_type: Option<&str>,
 ) -> SourceType {
+    // When `lang` is specified, use unambiguous module kind to match the behavior of
+    // `SourceType::from_path` for .js/.jsx/.ts/.tsx extensions.
     let ty = match lang {
-        Some("js") => SourceType::mjs(),
-        Some("jsx") => SourceType::jsx(),
-        Some("ts") => SourceType::ts(),
-        Some("tsx") => SourceType::tsx(),
+        Some("js") => SourceType::unambiguous(),
+        Some("jsx") => SourceType::unambiguous().with_jsx(true),
+        Some("ts") => SourceType::unambiguous().with_typescript(true),
+        Some("tsx") => SourceType::unambiguous().with_typescript(true).with_jsx(true),
         Some("dts") => SourceType::d_ts(),
         _ => SourceType::from_path(filename).unwrap_or_default(),
     };
     match source_type {
         Some("script") => ty.with_script(true),
         Some("module") => ty.with_module(true),
+        Some("commonjs") => ty.with_commonjs(true),
         Some("unambiguous") => ty.with_unambiguous(true),
         _ => ty,
     }

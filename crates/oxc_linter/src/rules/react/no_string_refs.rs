@@ -9,11 +9,12 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     AstNode,
     context::{ContextHost, LintContext},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::get_parent_component,
 };
 
@@ -29,8 +30,8 @@ fn string_in_ref_deprecated(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoStringRefs {
     /// Disallow template literals in addition to string literals.
     no_template_literals: bool,
@@ -39,11 +40,14 @@ pub struct NoStringRefs {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule prevents using string literals in ref attributes.
+    /// This rule prevents using the deprecated behavior of string literals in ref attributes.
     ///
     /// ### Why is this bad?
     ///
-    /// Using string literals in ref attributes is deprecated in React.
+    /// Using string literals in ref attributes has been deprecated since React 16.3.0.
+    ///
+    /// String refs are [removed entirely in React 19](https://react.dev/blog/2024/04/25/react-19-upgrade-guide#removed-string-refs),
+    /// and so this rule can be disabled if on React 19+.
     ///
     /// ### Examples
     ///
@@ -82,6 +86,8 @@ declare_oxc_lint!(
     react,
     correctness,
     config = NoStringRefs,
+    version = "0.0.15",
+    short_description = "This rule prevents using the deprecated behavior of string literals in ref attributes.",
 );
 
 fn contains_string_literal(
@@ -113,19 +119,16 @@ fn is_literal_ref_attribute(attr: &JSXAttribute, no_template_literals: bool) -> 
 }
 
 impl Rule for NoStringRefs {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let no_template_literals =
-            value.get("noTemplateLiterals").and_then(serde_json::Value::as_bool).unwrap_or(false);
-
-        Self { no_template_literals }
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::JSXAttribute(attr) => {
-                if is_literal_ref_attribute(attr, self.no_template_literals) {
-                    ctx.diagnostic(string_in_ref_deprecated(attr.span));
-                }
+            AstKind::JSXAttribute(attr)
+                if is_literal_ref_attribute(attr, self.no_template_literals) =>
+            {
+                ctx.diagnostic(string_in_ref_deprecated(attr.span));
             }
             member_expr if member_expr.is_member_expression_kind() => {
                 let Some(member_expr) = member_expr.as_member_expression_kind() else {
@@ -279,7 +282,7 @@ fn test() {
                 }
               });
             ",
-            Some(serde_json::json!({ "noTemplateLiterals": true })),
+            Some(serde_json::json!([{ "noTemplateLiterals": true }])),
         ),
         (
             "
@@ -292,7 +295,7 @@ fn test() {
                 }
               });
             ",
-            Some(serde_json::json!({ "noTemplateLiterals": true })),
+            Some(serde_json::json!([{ "noTemplateLiterals": true }])),
         ),
         (
             "
@@ -302,7 +305,7 @@ fn test() {
                 }
               });
             ",
-            Some(serde_json::json!({ "noTemplateLiterals": true })),
+            Some(serde_json::json!([{ "noTemplateLiterals": true }])),
         ),
         (
             "
@@ -335,7 +338,7 @@ fn test() {
                 }
               }
             ",
-            Some(serde_json::json!({ "noTemplateLiterals": true })),
+            Some(serde_json::json!([{ "noTemplateLiterals": true }])),
         ),
     ];
 

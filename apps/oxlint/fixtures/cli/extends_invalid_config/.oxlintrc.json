@@ -1,0 +1,4 @@
+{
+  // Ensure that invalid config options from an extended config works fine.
+  "extends": ["./invalid_config.json"]
+}

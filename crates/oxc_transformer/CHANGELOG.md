@@ -4,6 +4,320 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.137.0] - 2026-06-18
+
+### 🐛 Bug Fixes
+
+- 20375f9 react_compiler: Keep imports referenced only by a computed key (#23586) (Boshen)
+
+### ⚡ Performance
+
+- dfb52b6 transformer: Pre-size statement vecs in TS enum & namespace lowering (#23516) (Yunfei He)
+- 3fa8051 transformer: Pre-size JSX props vec to attribute count (#23466) (Yunfei He)
+
+## [0.136.0] - 2026-06-15
+
+### 💥 BREAKING CHANGES
+
+- bb0ed44 transformer: [**BREAKING**] Disable styled-components transpileTemplateLiterals by default (#23171) (Boshen)
+
+### 🚀 Features
+
+- 6c0bdf0 transformer/react-refresh: Support `module.property.useHook()` (#23190) (Dunqing)
+- ec266bb transformer: Run React Compiler as a feature-gated transform pass (#23201) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 2c28748 transformer/class: Parent generated constructors to class scope (#23222) (camc314)
+
+### 📚 Documentation
+
+- 09755ac transformer: Add `AGENTS.md` test guidance for agents (#23439) (camc314)
+
+## [0.135.0] - 2026-06-08
+
+### 💥 BREAKING CHANGES
+
+- 4c35362 ast: [**BREAKING**] Add `AstBuilder::template_element_escape_raw` and `template_element_escape_raw_with_lone_surrogates` methods (#23047) (overlookmotel)
+
+## [0.133.0] - 2026-05-26
+
+### 🚀 Features
+
+- ee659b6 transformer/legacy-decorator: Add `strictNullChecks` option for nullable-union design:type (#22266) (Kyle Cannon)
+
+### 🐛 Bug Fixes
+
+- e1d064e transformer/class-properties: Reparent lifted private method helpers (#22716) (Cameron)
+- 7baed9c transformer/private-method: Clear inherited strict flags (#22508) (camc314)
+- 69a6ba6 transformer/legacy-decorator: Emit Array for ReadonlyArray<T> in decorator metadata (#22265) (Kyle Cannon)
+- e421ef0 transformer/legacy-decorator: Return runtime binding for design:type (#22640) (Dunqing)
+
+## [0.132.0] - 2026-05-18
+
+### 🐛 Bug Fixes
+
+- e6090e7 transformer: Keep enum IIFE when a non-inlinable value reference remains (#22501) (Dunqing)
+- 931b7d6 transformer: Inline const enum members through type-cast wrappers (#22500) (Dunqing)
+- c73c159 transformer/async-to-generator: Reparent parameter initializer scopes (#22507) (camc314)
+- ecfd3ca transformer/async-to-generator: Move only parameter bindings (#22503) (camc314)
+- 3ce3431 transformer/explicit-resource-managment: Preserve shadowed for-head block (#22451) (camc314)
+
+## [0.131.0] - 2026-05-15
+
+### 🐛 Bug Fixes
+
+- b8fbc1f transformer/object-rest-spread: Correct scope id when moving bindings (#22419) (camc314)
+- dda33de transformer/explicit-resource-management: Align lexical binding scopes (#22320) (camc314)
+- 8e79de8 transformer: Preserve for-await statement bodies (#22361) (camc314)
+- 0cba210 transformer/class: Replace `new.target` in static blocks (#22360) (camc314)
+- 67ab1c9 transformer/es2018/for-await: Hoist for-await generated bindings (#22355) (camc314)
+- c3ceb4a transformer/object-rest-spread: Use hoisted scope for `for-of` temp refs (#22347) (camc314)
+
+### ⚡ Performance
+
+- 8b2f4f9 transformer/object-rest-spread: Collect `Vec<SymbolId` over `Vec<BindingIdentifier>` (#22418) (camc314)
+
+## [0.130.0] - 2026-05-11
+
+### 🚀 Features
+
+- 66c9b01 transformer/typescript: Debug_assert that `enum_eval` ran in semantic (#22252) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 4e880de transformer/object-rest-spread: Declare temp vars for computed keys (#22284) (camc314)
+- 5da9fda transformer/explicit-resource-management: Preserve class names (#22306) (Dunqing)
+- b5d970f transformer/explicit-resource-management: Preserve class names (#22290) (camc314)
+- dd88726 transformer/legacy-decorator: Preserve accessor type annotation for emitDecoratorMetadata (#21966) (Dunqing)
+- 0c7c01c transformer/typescript: Inline optional-chain enum member access (#21834) (Dunqing)
+
+## [0.129.0] - 2026-05-05
+
+### 🚀 Features
+
+- 9593ec8 transformer/jsx: Add jsxDEV source metadata for fragments (#21932) (Ido Rosenthal)
+
+### 🐛 Bug Fixes
+
+- e3399ec transformer/class-properties: Preserve RHS in logical-assignment to static private field (#21950) (Dunqing)
+- c59c199 transformer/typescript: Emit class fields for parameter properties (#21831) (Dunqing)
+
+## [0.128.0] - 2026-04-27
+
+### 🐛 Bug Fixes
+
+- c92bd3b transformer: Use SPAN for synthesized helper calls to prevent comment misattribution (#21578) (Dunqing)
+
+### 📚 Documentation
+
+- 295db8d transformer: Fix comment (#21717) (overlookmotel)
+
+## [0.127.0] - 2026-04-20
+
+### 🐛 Bug Fixes
+
+- 91e5bde transformer/typescript: Preserve computed-key static block when class has an empty constructor (#21562) (Dunqing)
+
+## [0.126.0] - 2026-04-15
+
+### 🐛 Bug Fixes
+
+- 56af2f4 transformer/async-to-generator: Correct scope of inferred named FE in async-to-generator (#21458) (Dunqing)
+- 4fb73a7 transformer/typescript: Preserve execution order for accessor with `useDefineForClassFields: false` (#21369) (Dunqing)
+
+## [0.125.0] - 2026-04-13
+
+### 💥 BREAKING CHANGES
+
+- 382958a span: [**BREAKING**] Remove re-exports of string types from `oxc_span` crate (#21246) (overlookmotel)
+
+### 🚀 Features
+
+- e7e1aea transformer/typescript: Add `optimize_enums` option for regular enum inlining (#20539) (Dunqing)
+- 679f57f transformer/typescript: Implement const enum inlining and declaration removal (#20508) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- af1a586 transformer/class-properties: Use correct property name when converting parameter properties (#21268) (Amal Jossy)
+- eab13b3 transformer/decorators: Avoid accessor storage name collisions (#21106) (Dunqing)
+- 07e8a30 transformer/react-refresh: Handle parenthesized variable initializers (#21047) (camc314)
+
+## [0.123.0] - 2026-03-30
+
+### 🐛 Bug Fixes
+
+- 3375627 transformer: Remove false positive duplicate `__source`/`__self` prop error (#20678) (Dunqing)
+- 3931b98 transformer: Ignore `@jsxImportSource` inside inline code spans in comments (#20674) (Dunqing)
+
+### ⚡ Performance
+
+- bd10021 transformer: Only scan comments before first statement for JSX pragmas (#20675) (Dunqing)
+
+## [0.121.0] - 2026-03-19
+
+### 🚀 Features
+
+- 7215d9e transformer: Support lowering `accessor` with legacy decorators (#20348) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 3bbd0cd transformer: Emit `Object` instead of `void 0` for untyped getter/setter `design:type` metadata (#20488) (Dunqing)
+- 11f9695 transformer: Legacy decorator on computed property key leaves variable unassigned (#20430) (bab)
+
+## [0.120.0] - 2026-03-16
+
+### 🐛 Bug Fixes
+
+- 1f65c3f transformer: Emit design:paramtypes when class has static anonymous class expression (#20382) (bab)
+- fa70d5c transformer: Use implementation signature for design:paramtypes when constructor is overloaded (#20394) (bab)
+
+## [0.119.0] - 2026-03-14
+
+### 🐛 Bug Fixes
+
+- 1ff5c1d transformer/typescript: Rewrite extensions in dynamic `import()` expressions (#20121) (Sverre Johansen)
+
+## [0.114.0] - 2026-02-16
+
+### 🚀 Features
+
+- ebb80b3 ast: Add `node_id` field to all AST struct nodes (#18138) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 41c50a5 transformer: Ignore invalid JSX pragma identifiers (#19296) (Boshen)
+- deed3d8 transformer: Remove unnecessary trailing expression in object rest spread assignment (#19259) (Boshen)
+- 5bdaacc transformer: Propagate source spans for sourcemap correctness (#19258) (Boshen)
+
+### ⚡ Performance
+
+- dd0220f transformer: Remove TS-only nodes earlier in `enter_statements` (#19166) (Dunqing)
+
+### 📚 Documentation
+
+- 569aa61 rust: Add missing rustdocs and remove missing_docs lint attrs (#19306) (Boshen)
+
+## [0.113.0] - 2026-02-10
+
+### 🐛 Bug Fixes
+
+- 35e32c6 coverage: Match Babel's options.json inheritance for test fixtures (#19002) (Boshen)
+- 57917ee parser: Parse decorators on rest parameters (#18938) (Boshen)
+
+### ⚡ Performance
+
+- ed8c054 oxc_str: Add precomputed hash to Ident for fast HashMap lookups (#19143) (Boshen)
+
+## [0.112.0] - 2026-02-02
+
+### 📚 Documentation
+
+- 3d01fa1 transformer: Update links to use Oxc docs (#18722) (sapphi-red)
+
+## [0.111.0] - 2026-01-26
+
+### 💥 BREAKING CHANGES
+
+- 22dec6a semantic: [**BREAKING**] Remove `Scoping::scope_build_child_ids` and all related APIs (#18362) (Dunqing)
+- 777fc40 ast: [**BREAKING**] Add `Ident` type (#18354) (Boshen)
+
+### 🚀 Features
+
+- 2ef5647 ast: Add escape_raw parameter to template_element builders (#18121) (Boshen)
+
+### 🐛 Bug Fixes
+
+- c205b0d ast: Remove `ThisExpression` from `TSModuleReference` (#18489) (Boshen)
+
+## [0.110.0] - 2026-01-19
+
+### 🐛 Bug Fixes
+
+- 645c3f0 transformer: Use `require` not `import` in CommonJS files (#18226) (overlookmotel)
+
+## [0.109.0] - 2026-01-19
+
+### 💥 BREAKING CHANGES
+
+- 9135b0b ast: [**BREAKING**] Move scope from `TSEnumDeclaration` to `TSEnumBody` (#18058) (Boshen)
+
+### 🚀 Features
+
+- 08dad63 span: Add `sourceType: 'commonjs'` support (#18089) (Boshen)
+
+### ⚡ Performance
+
+- 837edf6 transformer/typescript: Reduce `scope_id()` calls (#18097) (overlookmotel)
+- 8ee6f80 transformer/tagged-template: Add `#[cold]` hint to unlikely path (#18034) (overlookmotel)
+- 23449e0 transformer/tagged-template-transform: Improve performance (#15834) (Dunqing)
+
+## [0.107.0] - 2026-01-05
+
+### ⚡ Performance
+
+- ea82b50 transformer: Mark all diagnostic functions as `#[cold]` (#17486) (camc314)
+
+## [0.106.0] - 2025-12-29
+
+### 🚀 Features
+
+- 289bff7 transformer: Export `ESFeature` from options (#17347) (shulaoda)
+- e031056 codegen: Add `sourcemap` feature flag (#17305) (Boshen)
+
+### ⚡ Performance
+
+- e35049b transformer: Avoid unneccessary vec allocation (#17270) (camc314)
+
+## [0.105.0] - 2025-12-22
+
+### ⚡ Performance
+
+- 14e5016 transformer/enum: Avoid cloning HashMap in IdentifierReferenceRename (#17210) (camc314)
+
+## [0.104.0] - 2025-12-19
+
+### 🐛 Bug Fixes
+
+- 3002649 transformer/typescript: Remove unused import equals declaration (#16776) (Dunqing)
+
+## [0.103.0] - 2025-12-15
+
+### 🐛 Bug Fixes
+
+- 99c022e transformer: Revert "fix(transformer): validate JSX pragma values and reject invalid identifiers" (#16793) (Copilot)
+- 853c20d transformer: Validate JSX pragma values and reject invalid identifiers (#16675) (Copilot)
+
+## [0.99.0] - 2025-11-24
+
+### 💥 BREAKING CHANGES
+
+- cbb27fd ast: [**BREAKING**] Add `TSGlobalDeclaration` type (#15712) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 7c46a9e transformer/tagged-template-transform: Handle `\n` escape sequences (#15830) (Dunqing)
+
+### ⚡ Performance
+
+- b4b0ed8 transformer/typescript: Reverse order of checks (#15722) (overlookmotel)
+
+## [0.97.0] - 2025-11-11
+
+### 🚀 Features
+
+- 8d69661 allocator: Add `Address::from_ref` method (#15318) (overlookmotel)
+- 2c15353 transformer: Warn top level await usage if not supported (#14276) (Copilot)
+- aee6310 transformer: Add warning for arbitrary module namespace identifier names (#15035) (Copilot)
+
+### 🐛 Bug Fixes
+
+- 7a5c011 transformer: Convert enum numbers to strings in template literals (#15183) (Copilot)
+
+### 📚 Documentation
+
+- 4b904b1 transformer: Clarify `jsx.pure` option would affect JSX elements (#15376) (sapphi-red)
+
 ## [0.96.0] - 2025-10-30
 
 ### 🐛 Bug Fixes

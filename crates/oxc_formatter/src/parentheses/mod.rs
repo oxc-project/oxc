@@ -41,16 +41,17 @@
 //! The parentheses that get removed by the pre-processing step are re-inserted by the nodes' formatter.
 //! The rule inserts parentheses for each node where `FormatNodeRule::needs_parentheses` returns true.
 
-mod assignment;
 mod expression;
 mod ts_type;
 
-use crate::formatter::Formatter;
+pub use expression::chain_expression_needs_parens;
+
+use crate::formatter::JsFormatter;
 
 /// Node that may be parenthesized to ensure it forms valid syntax or to improve readability
 pub trait NeedsParentheses<'a> {
     /// Returns `true` if this node requires parentheses to form valid syntax or improve readability.
     ///
     /// Returns `false` if the parentheses can be omitted safely without changing the semantic.
-    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool;
+    fn needs_parentheses(&self, f: &JsFormatter<'_, 'a>) -> bool;
 }

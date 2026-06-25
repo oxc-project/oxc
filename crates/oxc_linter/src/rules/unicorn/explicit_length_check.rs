@@ -12,8 +12,8 @@ use serde::{Deserialize, Serialize};
 use crate::{
     AstNode,
     context::LintContext,
-    rule::Rule,
-    utils::{get_boolean_ancestor, is_boolean_node},
+    rule::{DefaultRuleConfig, Rule},
+    utils::{get_boolean_ancestor, is_boolean_call, is_boolean_node, pad_fix_with_token_boundary},
 };
 
 fn non_zero(span: Span, prop_name: &str, op_and_rhs: &str, help: Option<String>) -> OxcDiagnostic {
@@ -40,35 +40,30 @@ fn zero(span: Span, prop_name: &str, op_and_rhs: &str, help: Option<String>) -> 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 enum NonZero {
+    /// Enforces non-zero to be checked with `foo.length > 0`.
     #[default]
     GreaterThan,
+    /// Enforces non-zero to be checked with `foo.length !== 0`.
     NotEqual,
 }
 
-impl NonZero {
-    pub fn from(raw: &str) -> Self {
-        match raw {
-            "not-equal" => Self::NotEqual,
-            _ => Self::GreaterThan,
-        }
-    }
-}
-#[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "kebab-case", default, deny_unknown_fields)]
 pub struct ExplicitLengthCheck {
     /// Configuration option to specify how non-zero length checks should be enforced.
-    ///
-    /// `greater-than`: Enforces non-zero to be checked with `foo.length > 0`
-    /// `not-equal`: Enforces non-zero to be checked with `foo.length !== 0`
     non_zero: NonZero,
 }
 
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce explicitly comparing the length or size property of a value.
+    /// Enforce explicitly comparing the `length` or `size` property of a value.
     ///
     /// ### Why is this bad?
+    ///
+    /// Using the explicit `length` or `size` properties can help make code clearer
+    /// and easier to understand, as it avoids relying on implicit truthy/falsy
+    /// evaluations.
     ///
     /// ### Examples
     ///
@@ -88,12 +83,18 @@ declare_oxc_lint!(
     /// Examples of **correct** code for this rule:
     /// ```javascript
     /// const isEmpty = foo.length === 0;
+    ///
+    /// if (foo.length > 0 || bar.length > 0) {}
+    ///
+    /// const unicorn = foo.length > 0 ? 1 : 2;
     /// ```
     ExplicitLengthCheck,
     unicorn,
     pedantic,
     conditional_fix,
     config = ExplicitLengthCheck,
+    version = "0.0.19",
+    short_description = "Enforce explicitly comparing the `length` or `size` property of a value.",
 );
 
 fn is_literal(expr: &Expression, value: f64) -> bool {
@@ -120,6 +121,24 @@ fn is_compare_right(expr: &BinaryExpression, op: BinaryOperator, value: f64) -> 
             ..
         } if is_literal(right, value) && op == *operator
     )
+}
+
+fn expression_uses_optional_chain(expr: &Expression) -> bool {
+    let expr = expr.get_inner_expression();
+
+    if matches!(expr, Expression::ChainExpression(_)) {
+        return true;
+    }
+
+    if let Some(member_expr) = expr.as_member_expression() {
+        return member_expr.optional() || expression_uses_optional_chain(member_expr.object());
+    }
+
+    if let Expression::CallExpression(call_expr) = expr {
+        return call_expr.optional || expression_uses_optional_chain(&call_expr.callee);
+    }
+
+    false
 }
 
 fn get_length_check_node<'a, 'b>(
@@ -206,30 +225,38 @@ impl ExplicitLengthCheck {
             }
         };
 
-        let span = kind.span();
-        let mut need_pad_start = false;
-        let mut need_pad_end = false;
+        let span = match node.kind() {
+            AstKind::CallExpression(call) if is_boolean_call(&node.kind()) => {
+                // Check if we should replace just the member expression or the whole call
+                call.arguments
+                    .first()
+                    .and_then(|arg| arg.as_expression())
+                    .filter(|expr| matches!(expr, Expression::LogicalExpression(_)))
+                    .map_or_else(|| node.span(), |_| static_member_expr.span)
+            }
+            _ => node.span(),
+        };
         let parent = ctx.nodes().parent_kind(node.id());
         let need_paren = matches!(kind, AstKind::UnaryExpression(_))
             && matches!(parent, AstKind::UnaryExpression(_) | AstKind::AwaitExpression(_));
-        if span.start > 1 {
-            let start = ctx.source_text().as_bytes()[span.start as usize - 1];
-            need_pad_start = start.is_ascii_alphabetic() || !start.is_ascii();
-        }
-        if (span.end as usize) < ctx.source_text().len() {
-            let end = ctx.source_text().as_bytes()[span.end as usize];
-            need_pad_end = end.is_ascii_alphabetic() || !end.is_ascii();
-        }
 
-        let fixed = format!(
-            "{}{}{} {}{}{}",
-            if need_pad_start { " " } else { "" },
-            if need_paren { "(" } else { "" },
-            static_member_expr.span.source_text(ctx.source_text()),
-            check_code,
-            if need_paren { ")" } else { "" },
-            if need_pad_end { " " } else { "" },
-        );
+        // Pre-compute source text to avoid repeated calls
+        let source_text = static_member_expr.span.source_text(ctx.source_text());
+
+        // Use capacity hint to reduce allocations - estimate based on components
+        let estimated_capacity = source_text.len() + check_code.len() + 6; // +6 for spaces and parens
+        let mut fixed = String::with_capacity(estimated_capacity);
+
+        if need_paren {
+            fixed.push('(');
+        }
+        fixed.push_str(source_text);
+        fixed.push(' ');
+        fixed.push_str(check_code);
+        if need_paren {
+            fixed.push(')');
+        }
+        pad_fix_with_token_boundary(ctx.source_text(), span, &mut fixed);
         let property = static_member_expr.property.name;
         let help = if auto_fix {
             None
@@ -248,11 +275,19 @@ impl ExplicitLengthCheck {
         }
     }
 }
+
 impl Rule for ExplicitLengthCheck {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::StaticMemberExpression(static_member_expr) = node.kind() {
             let StaticMemberExpression { object, property, .. } = static_member_expr;
             if property.name != "length" && property.name != "size" {
+                return;
+            }
+            if static_member_expr.optional || expression_uses_optional_chain(object) {
                 return;
             }
             if let Expression::ThisExpression(_) = object {
@@ -284,17 +319,6 @@ impl Rule for ExplicitLengthCheck {
                     _ => {}
                 }
             }
-        }
-    }
-
-    fn from_configuration(value: serde_json::Value) -> Self {
-        Self {
-            non_zero: value
-                .get(0)
-                .and_then(|v| v.get("non-zero"))
-                .and_then(serde_json::Value::as_str)
-                .map(NonZero::from)
-                .unwrap_or_default(),
         }
     }
 }
@@ -352,6 +376,9 @@ fn test() {
             "const totalCount = tests.reduce((count, test) => count + (test.enabled ? test.maxSize : test.size), 0)",
             None,
         ),
+        ("const hasList = Boolean(foo.list?.length)", None),
+        ("const hasList = Boolean(foo?.list.length)", None),
+        ("const hasList = Boolean(foo?.list?.length)", None),
     ];
 
     let fail = vec![
@@ -362,7 +389,6 @@ fn test() {
         // (r#"const NON_NUMBER = "2"; const x = foo.length || NON_NUMBER"#, None),
         ("const x = foo.length || bar()", Some(serde_json::json!([{"non-zero": "not-equal"}]))),
         ("const x = foo.length || bar()", Some(serde_json::json!([{"non-zero": "greater-than"}]))),
-        ("const x = foo.length || bar()", None),
         ("() => foo.length && bar()", None),
         ("alert(foo.length && bar())", None),
         // Use of .size in conditional "test" position
@@ -402,12 +428,12 @@ fn test() {
         // Space after keywords
         ("function foo() {return!foo.length}", "function foo() {return foo.length === 0}", None),
         ("function foo() {throw!foo.length}", "function foo() {throw foo.length === 0}", None),
-        ("async function foo() {await!foo.length}", "async function foo() {await (foo.length === 0)}", None),
+        ("async function foo() {await!foo.length}", "async function foo() {await(foo.length === 0)}", None),
         ("function * foo() {yield!foo.length}", "function * foo() {yield foo.length === 0}", None),
         ("function * foo() {yield*!foo.length}", "function * foo() {yield*foo.length === 0}", None),
-        ("delete!foo.length", "delete (foo.length === 0)", None),
-        ("typeof!foo.length", "typeof (foo.length === 0)", None),
-        ("void!foo.length", "void (foo.length === 0)", None),
+        ("delete!foo.length", "delete(foo.length === 0)", None),
+        ("typeof!foo.length", "typeof(foo.length === 0)", None),
+        ("void!foo.length", "void(foo.length === 0)", None),
         ("a instanceof!foo.length", "a instanceof foo.length === 0", None),
         ("a in!foo.length", "a in foo.length === 0", None),
         ("export default!foo.length", "export default foo.length === 0", None),

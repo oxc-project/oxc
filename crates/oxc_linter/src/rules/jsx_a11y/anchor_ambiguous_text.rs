@@ -6,13 +6,15 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
 use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     AstNode,
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{
         get_element_type, get_string_literal_prop_value, has_jsx_prop_ignore_case,
         is_hidden_from_screen_reader,
@@ -27,11 +29,11 @@ fn anchor_has_ambiguous_text(span: Span, text: &CompactStr) -> OxcDiagnostic {
     .with_help(format!("Avoid using ambiguous text like \"{text}\", replace it with more descriptive text that provides context."))
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct AnchorAmbiguousText(Box<AnchorAmbiguousTextConfig>);
 
-#[derive(Debug, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct AnchorAmbiguousTextConfig {
     /// List of ambiguous words or phrases that should be flagged in anchor text.
     words: Vec<CompactStr>,
@@ -92,23 +94,13 @@ declare_oxc_lint!(
     jsx_a11y,
     restriction,
     config = AnchorAmbiguousTextConfig,
+    version = "0.13.2",
+    short_description = "Inspects anchor link text for the use of ambiguous words.",
 );
 
 impl Rule for AnchorAmbiguousText {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let mut config = AnchorAmbiguousTextConfig::default();
-
-        if let Some(words_array) =
-            value.get(0).and_then(|v| v.get("words")).and_then(serde_json::Value::as_array)
-        {
-            config.words = words_array
-                .iter()
-                .filter_map(serde_json::Value::as_str)
-                .map(CompactStr::from)
-                .collect();
-        }
-
-        Self(Box::new(config))
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -224,7 +216,7 @@ fn test() {
         (r#"<a><img alt="documentation" /></a>;"#, None, None),
         (
             "<a>click here</a>",
-            Some(serde_json::json!([{        "words": ["disabling the defaults"],      }])),
+            Some(serde_json::json!([{ "words": ["disabling the defaults"] }])),
             None,
         ),
         (
@@ -257,9 +249,7 @@ fn test() {
         ),
         (
             "<Link>click here</Link>",
-            Some(
-                serde_json::json!([{        "words": ["disabling the defaults with components"],      }]),
-            ),
+            Some(serde_json::json!([{ "words": ["disabling the defaults with components"] }])),
             Some(
                 serde_json::json!({ "settings": { "jsx-a11y": { "components": { "Link": "a" } } } }),
             ),
@@ -312,7 +302,7 @@ fn test() {
         ),
         (
             "<a>a disallowed word</a>",
-            Some(serde_json::json!([{        "words": ["a disallowed word"],      }])),
+            Some(serde_json::json!([{ "words": ["a disallowed word"] }])),
             None,
         ),
     ];

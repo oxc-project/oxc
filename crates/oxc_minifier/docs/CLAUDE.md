@@ -57,10 +57,19 @@ pub fn optimize_something(expr: &mut Expression, ctx: &mut Ctx) {
     }
 
     // Apply transformation
-    *expr = create_optimized_form(ctx);
-    ctx.state.changed = true;
+    let new_expr = create_optimized_form(ctx);
+    ctx.replace_expression(expr, new_expr);
 }
 ```
+
+Always route slot replacements through the typed `ctx.replace_*` helpers —
+they are the only way to signal a mutation: the mutation flag is private to
+`MinifierState` (compiler-enforced), so a bare `*slot = …` write cannot mark
+the pass as changed and will stall the fixed-point loop. For in-place edits
+that don't replace a slot (operand swaps, field flips, element removals), call
+`ctx.notice_change()`; if a raw slot write is genuinely required (e.g. an enum
+slot with no typed helper), pair it with `ctx.notice_change()` and a comment
+explaining why.
 
 #### Traversal Hook
 
@@ -138,6 +147,7 @@ cargo run -p oxc_minifier --example minifier test.js --twice
    - Preserve semantics
 
 3. **Test thoroughly**
+
    ```bash
    cargo test -p oxc_minifier
    cargo coverage

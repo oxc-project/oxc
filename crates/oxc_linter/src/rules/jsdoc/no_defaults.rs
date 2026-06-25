@@ -8,7 +8,7 @@ use serde::Deserialize;
 use crate::{
     AstNode,
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{get_function_nearest_jsdoc_node, should_ignore_as_internal, should_ignore_as_private},
 };
 
@@ -16,7 +16,7 @@ fn no_defaults_diagnostic(span: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Defaults are not permitted.").with_help(x1.to_string()).with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct NoDefaults(Box<NoDefaultsConfig>);
 
 declare_oxc_lint!(
@@ -49,23 +49,22 @@ declare_oxc_lint!(
     NoDefaults,
     jsdoc,
     correctness,
+    pending,
     config = NoDefaultsConfig,
+    version = "0.3.2",
+    short_description = "Reports defaults being used on `@param` or `@default` tags.",
 );
 
 #[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct NoDefaultsConfig {
     /// If true, report the presence of optional param names (square brackets) on `@param` tags.
     no_optional_param_names: bool,
 }
 
 impl Rule for NoDefaults {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        value
-            .as_array()
-            .and_then(|arr| arr.first())
-            .and_then(|value| serde_json::from_value(value.clone()).ok())
-            .map_or_else(Self::default, |value| Self(Box::new(value)))
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

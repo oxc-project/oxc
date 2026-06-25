@@ -1,0 +1,10 @@
+[
+  {
+    "args": ["--stdin-filepath", "App.svelte", "--config", "./fmt-with-svelte.json"],
+    "stdin": "input.svelte"
+  },
+  {
+    "args": ["--stdin-filepath", "App.svelte", "--config", "./fmt-without-svelte.json"],
+    "stdin": "input.svelte"
+  }
+]

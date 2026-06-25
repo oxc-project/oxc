@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{BindingPatternKind, ExportDefaultDeclarationKind, Expression, Statement},
+    ast::{BindingPattern, ExportDefaultDeclarationKind, Expression, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -85,7 +85,9 @@ declare_oxc_lint!(
     /// ```
     NoAsyncClientComponent,
     nextjs,
-    correctness
+    correctness,
+    version = "0.2.0",
+    short_description = "Prevent client components from being async functions.",
 );
 
 impl Rule for NoAsyncClientComponent {
@@ -142,8 +144,7 @@ impl Rule for NoAsyncClientComponent {
                     continue;
                 };
 
-                let BindingPatternKind::BindingIdentifier(binding_ident) = &var_declarator.id.kind
-                else {
+                let BindingPattern::BindingIdentifier(binding_ident) = &var_declarator.id else {
                     continue;
                 };
                 // `binding_ident.name` MUST be > 0 chars
@@ -165,89 +166,88 @@ fn test() {
 
     let pass = vec![
         r"
-			    export default async function MyComponent() {
-			      return <></>
-			    }
-			    ",
+                export default async function MyComponent() {
+                  return <></>
+                }
+                ",
         r#"
-			    "use client"
-			
-			    export default async function myFunction() {
-			      return ''
-			    }
-			    "#,
+                "use client"
+
+                export default async function myFunction() {
+                  return ''
+                }
+                "#,
         r"
-			    async function MyComponent() {
-			      return <></>
-			    }
-			
-			    export default MyComponent
-			    ",
+                async function MyComponent() {
+                  return <></>
+                }
+
+                export default MyComponent
+                ",
         r#"
-			    "use client"
-			
-			    async function myFunction() {
-			      return ''
-			    }
-			
-			    export default myFunction
-			    "#,
+                "use client"
+
+                async function myFunction() {
+                  return ''
+                }
+
+                export default myFunction
+                "#,
         r#"
-			    "use client"
-			
-			    const myFunction = () => {
-			      return ''
-			    }
-			
-			    export default myFunction
-			    "#,
+                "use client"
+
+                const myFunction = () => {
+                  return ''
+                }
+
+                export default myFunction
+                "#,
     ];
 
     let fail = vec![
         r#"
-			      "use client"
-			
-			      export default async function MyComponent() {
-			        return <></>
-			      }
-			      "#,
+                  "use client"
+
+                  export default async function MyComponent() {
+                    return <></>
+                  }
+                  "#,
         r#"
-			      "use client"
-			
-			      export default async function MyFunction() {
-			        return ''
-			      }
-			      "#,
+                  "use client"
+
+                  export default async function MyFunction() {
+                    return ''
+                  }
+                  "#,
         r#"
-			      "use client"
-			
-			      async function MyComponent() {
-			        return <></>
-			      }
-			
-			      export default MyComponent
-			      "#,
+                  "use client"
+
+                  async function MyComponent() {
+                    return <></>
+                  }
+
+                  export default MyComponent
+                  "#,
         r#"
-			      "use client"
-			
-			      async function MyFunction() {
-			        return ''
-			      }
-			
-			      export default MyFunction
-			      "#,
+                  "use client"
+
+                  async function MyFunction() {
+                    return ''
+                  }
+
+                  export default MyFunction
+                  "#,
         r#"
-			      "use client"
-			
-			      const MyFunction = async () => {
-			        return '123'
-			      }
-			
-			      export default MyFunction
-			      "#,
+                  "use client"
+
+                  const MyFunction = async () => {
+                    return '123'
+                  }
+
+                  export default MyFunction
+                  "#,
     ];
 
     Tester::new(NoAsyncClientComponent::NAME, NoAsyncClientComponent::PLUGIN, pass, fail)
-        .with_nextjs_plugin(true)
         .test_and_snapshot();
 }

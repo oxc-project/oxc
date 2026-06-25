@@ -3,22 +3,23 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use schemars::JsonSchema;
+use serde::Deserialize;
 use serde_json::Value;
 
 use crate::{
     AstNode,
     context::{ContextHost, LintContext},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 fn no_explicit_any_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unexpected any. Specify a different type.")
+    OxcDiagnostic::warn("Unexpected `any`. Specify a different type.")
         .with_help("Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.")
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoExplicitAny {
     /// Whether to enable auto-fixing in which the `any` type is converted to the `unknown` type.
     fix_to_unknown: bool,
@@ -73,9 +74,15 @@ declare_oxc_lint!(
     restriction,
     conditional_fix,
     config = NoExplicitAny,
+    version = "0.0.13",
+    short_description = "Disallows explicit use of the `any` type.",
 );
 
 impl Rule for NoExplicitAny {
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::TSAnyKeyword(any) = node.kind() else {
             return;
@@ -93,16 +100,6 @@ impl Rule for NoExplicitAny {
         }
     }
 
-    fn from_configuration(value: Value) -> Self {
-        let Some(cfg) = value.get(0) else {
-            return Self::default();
-        };
-        let fix_to_unknown = cfg.get("fixToUnknown").and_then(Value::as_bool).unwrap_or(false);
-        let ignore_rest_args = cfg.get("ignoreRestArgs").and_then(Value::as_bool).unwrap_or(false);
-
-        Self { fix_to_unknown, ignore_rest_args }
-    }
-
     fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_typescript()
     }
@@ -113,7 +110,7 @@ impl NoExplicitAny {
         debug_assert!(matches!(node.kind(), AstKind::TSAnyKeyword(_)));
         ctx.nodes()
             .ancestors(node.id())
-            .any(|parent| matches!(parent.kind(), AstKind::BindingRestElement(_)))
+            .any(|parent| matches!(parent.kind(), AstKind::FormalParameterRest(_)))
     }
 }
 

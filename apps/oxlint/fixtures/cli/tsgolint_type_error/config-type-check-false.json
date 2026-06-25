@@ -1,0 +1,6 @@
+{
+  "options": {
+    "typeAware": true,
+    "typeCheck": false
+  }
+}

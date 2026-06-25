@@ -1,0 +1,10 @@
+{
+  "plugins": ["jest"],
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    // Invalid config, the only valid option is `allow`.
+    "jest/no-hooks": ["error", { "foo": "bar" }]
+  }
+}

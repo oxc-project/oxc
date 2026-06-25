@@ -2,13 +2,53 @@ use std::fmt;
 
 use oxc_ast::{
     AstKind,
-    ast::{BindingIdentifier, BindingPattern, BindingPatternKind, Expression, JSXAttributeValue},
+    ast::{BindingIdentifier, BindingPattern, Expression, JSXAttributeValue},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::SymbolId;
 use oxc_span::Span;
+use oxc_str::CompactStr;
+use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, LintContext, context::ContextHost, rule::Rule};
+use crate::{
+    AstNode, LintContext,
+    context::ContextHost,
+    rule::{DefaultRuleConfig, Rule},
+    utils::is_react_component_name,
+};
+
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+pub struct ReactPerfConfig {
+    /// Controls whether native elements (lowercase-first-letter tags such as `div`)
+    /// are ignored by the rule. Set to `"all"` to ignore every attribute on native
+    /// elements, or to an array of attribute names to ignore only those attributes
+    /// on native elements.
+    native_allow_list: NativeAllowList,
+}
+
+impl ReactPerfConfig {
+    pub fn native_allow_list(&self) -> &NativeAllowList {
+        &self.native_allow_list
+    }
+}
+
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
+#[serde(untagged)]
+pub enum NativeAllowList {
+    All(AllKeyword),
+    List(Vec<CompactStr>),
+    #[default]
+    #[serde(skip)]
+    None,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum AllKeyword {
+    All,
+}
 
 fn react_perf_inline_diagnostic(message: &'static str, attr_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(message)
@@ -37,6 +77,9 @@ fn react_perf_reference_diagnostic(
 pub trait ReactPerfRule: Sized + Default + fmt::Debug {
     const MESSAGE: &'static str;
 
+    /// The `nativeAllowList` configuration for this rule.
+    fn native_allow_list(&self) -> &NativeAllowList;
+
     /// Check if an [`Expression`] violates a react perf rule. If it does,
     /// report the [`OxcDiagnostic`] and return `true`.
     ///
@@ -55,8 +98,12 @@ pub trait ReactPerfRule: Sized + Default + fmt::Debug {
 
 impl<R> Rule for R
 where
-    R: ReactPerfRule,
+    R: ReactPerfRule + serde::de::DeserializeOwned,
 {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         // new objects/arrays/etc created at the root scope do not get
         // re-created on each render and thus do not affect performance.
@@ -75,6 +122,26 @@ where
         let Some(expr) = container.expression.as_expression() else {
             return;
         };
+
+        // skip native elements (lowercase-first-letter tags like `div`) that are
+        // exempted by the `nativeAllowList` configuration.
+        if !matches!(self.native_allow_list(), NativeAllowList::None)
+            && let AstKind::JSXOpeningElement(opening) = ctx.nodes().parent_kind(node.id())
+            && let Some(tag_name) = opening.name.get_identifier_name()
+            && !is_react_component_name(&tag_name)
+        {
+            match self.native_allow_list() {
+                NativeAllowList::All(_) => return,
+                NativeAllowList::List(names) => {
+                    if let Some(attr_name) = attr.name.as_identifier()
+                        && names.iter().any(|n| n.as_str().eq_ignore_ascii_case(&attr_name.name))
+                    {
+                        return;
+                    }
+                }
+                NativeAllowList::None => {}
+            }
+        }
 
         // strip parenthesis and TS type casting expressions
         let expr = expr.get_inner_expression();
@@ -130,17 +197,17 @@ pub fn find_initialized_binding<'a, 'b>(
     binding: &'b BindingPattern<'a>,
     symbol_id: SymbolId,
 ) -> Option<(&'b BindingIdentifier<'a>, &'b Expression<'a>)> {
-    match &binding.kind {
-        BindingPatternKind::AssignmentPattern(assignment) => {
-            match &assignment.left.kind {
-                BindingPatternKind::BindingIdentifier(id) => {
+    match &binding {
+        BindingPattern::AssignmentPattern(assignment) => {
+            match &assignment.left {
+                BindingPattern::BindingIdentifier(id) => {
                     // look for `x = {}`, or recurse if lhs is a binding pattern
                     if id.symbol_id() == symbol_id {
                         return Some((id.as_ref(), &assignment.right));
                     }
                     None
                 }
-                BindingPatternKind::ObjectPattern(obj) => {
+                BindingPattern::ObjectPattern(obj) => {
                     for prop in &obj.properties {
                         let maybe_initialized_binding =
                             find_initialized_binding(&prop.value, symbol_id);
@@ -150,7 +217,7 @@ pub fn find_initialized_binding<'a, 'b>(
                     }
                     None
                 }
-                BindingPatternKind::ArrayPattern(arr) => {
+                BindingPattern::ArrayPattern(arr) => {
                     for el in &arr.elements {
                         let Some(el) = el else {
                             continue;
@@ -164,10 +231,10 @@ pub fn find_initialized_binding<'a, 'b>(
                 }
                 // assignment patterns should not have an assignment pattern on
                 // the left.
-                BindingPatternKind::AssignmentPattern(_) => None,
+                BindingPattern::AssignmentPattern(_) => None,
             }
         }
-        BindingPatternKind::ObjectPattern(obj) => {
+        BindingPattern::ObjectPattern(obj) => {
             for prop in &obj.properties {
                 let maybe_initialized_binding = find_initialized_binding(&prop.value, symbol_id);
                 if maybe_initialized_binding.is_some() {
@@ -176,7 +243,7 @@ pub fn find_initialized_binding<'a, 'b>(
             }
             None
         }
-        BindingPatternKind::ArrayPattern(arr) => {
+        BindingPattern::ArrayPattern(arr) => {
             for el in &arr.elements {
                 let Some(el) = el else {
                     continue;
@@ -188,6 +255,6 @@ pub fn find_initialized_binding<'a, 'b>(
             }
             None
         }
-        BindingPatternKind::BindingIdentifier(_) => None,
+        BindingPattern::BindingIdentifier(_) => None,
     }
 }

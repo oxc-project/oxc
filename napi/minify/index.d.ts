@@ -7,6 +7,18 @@ export interface CodegenOptions {
    * @default true
    */
   removeWhitespace?: boolean
+  /**
+   * How to handle legal comments (comments containing `@license`, `@preserve`, or starting with `//!`/`/*!`).
+   *
+   * * `"none"` - Do not preserve any legal comments.
+   * * `"inline"` - Preserve all legal comments inline.
+   * * `"eof"` - Move all legal comments to the end of the file.
+   * * `"external"` - Extract legal comments without linking.
+   * * `{ linked: "path/to/legal.txt" }` - Extract legal comments and add a link comment to the given path.
+   *
+   * @default "none" (when minifying)
+   */
+legalComments?: 'none' | 'inline' | 'eof' | 'external' | { linked: string }
 }
 
 export interface CompressOptions {
@@ -22,7 +34,7 @@ export interface CompressOptions {
    *
    * @default 'esnext'
    *
-   * @see [esbuild#target](https://esbuild.github.io/api/#target)
+   * @see [oxc#target](https://oxc.rs/docs/guide/usage/transformer/lowering#target)
    */
   target?: string | Array<string>
   /**
@@ -93,11 +105,30 @@ export interface CompressOptionsKeepNames {
   class: boolean
 }
 
+export interface LegalCommentsLinked {
+  /**
+   * Extract legal comments and write them to the given path, with a link
+   * comment appended to the generated code.
+   */
+  linked: string
+}
+
+export declare const enum LegalCommentsMode {
+  /** Do not preserve any legal comments. */
+  None = 'none',
+  /** Preserve all legal comments inline. */
+  Inline = 'inline',
+  /** Move all legal comments to the end of the file. */
+  Eof = 'eof',
+  /** Extract legal comments without linking. */
+  External = 'external'
+}
+
 export interface MangleOptions {
   /**
    * Pass `true` to mangle names declared in the top level scope.
    *
-   * @default false
+   * @default true for modules and commonjs, otherwise false
    */
   toplevel?: boolean
   /**
@@ -125,8 +156,12 @@ export interface MangleOptionsKeepNames {
   class: boolean
 }
 
-/** Minify synchronously. */
-export declare function minify(filename: string, sourceText: string, options?: MinifyOptions | undefined | null): MinifyResult
+/**
+ * Minify asynchronously.
+ *
+ * Note: This function can be slower than `minifySync` due to the overhead of spawning a thread.
+ */
+export declare function minify(filename: string, sourceText: string, options?: MinifyOptions | undefined | null): Promise<MinifyResult>
 
 export interface MinifyOptions {
   /** Use when minifying an ES module. */
@@ -141,7 +176,15 @@ export interface MinifyResult {
   code: string
   map?: SourceMap
   errors: Array<OxcError>
+  /**
+   * Legal comments extracted from the source code.
+   * Only populated when `codegen.legalComments` is `"linked"` or `"external"`.
+   */
+  legalComments: Array<string>
 }
+
+/** Minify synchronously. */
+export declare function minifySync(filename: string, sourceText: string, options?: MinifyOptions | undefined | null): MinifyResult
 
 export interface TreeShakeOptions {
   /**
@@ -167,6 +210,15 @@ export interface TreeShakeOptions {
    */
   propertyReadSideEffects?: boolean | 'always'
   /**
+   * Whether property write accesses (assignments to member expressions) have side effects.
+   *
+   * When false, assignments like `obj.prop = value` are considered side-effect-free
+   * (assuming the object and value expressions themselves are side-effect-free).
+   *
+   * @default true
+   */
+  propertyWriteSideEffects?: boolean
+  /**
    * Whether accessing a global variable has side effects.
    *
    * Accessing a non-existing global variable will throw an error.
@@ -175,6 +227,15 @@ export interface TreeShakeOptions {
    * @default true
    */
   unknownGlobalSideEffects?: boolean
+  /**
+   * Whether invalid import statements have side effects.
+   *
+   * Accessing a non-existing import name will throw an error.
+   * Also import statements that cannot be resolved will throw an error.
+   *
+   * @default true
+   */
+  invalidImportSideEffects?: boolean
 }
 export interface Comment {
   type: 'Line' | 'Block'
@@ -184,7 +245,7 @@ export interface Comment {
 }
 
 export interface ErrorLabel {
-  message?: string
+  message: string | null
   start: number
   end: number
 }
@@ -193,8 +254,8 @@ export interface OxcError {
   severity: Severity
   message: string
   labels: Array<ErrorLabel>
-  helpMessage?: string
-  codeframe?: string
+  helpMessage: string | null
+  codeframe: string | null
 }
 
 export declare const enum Severity {

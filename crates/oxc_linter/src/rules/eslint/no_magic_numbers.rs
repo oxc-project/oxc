@@ -18,11 +18,15 @@ enum NoMagicNumberReportReason {
 }
 
 fn must_use_const_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Number constants declarations must use 'const'.").with_label(span)
+    OxcDiagnostic::warn("Number constants declarations must use 'const'.")
+        .with_help("Use 'const' instead of 'let' or 'var' to declare number constants to make their immutability explicit.")
+        .with_label(span)
 }
 
 fn no_magic_number_diagnostic(span: Span, raw: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("No magic number: {raw}")).with_label(span)
+    OxcDiagnostic::warn(format!("No magic number: {raw}"))
+        .with_help("Use a named constant instead of a magic number to make the code more readable and maintainable.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -37,13 +41,14 @@ impl std::ops::Deref for NoMagicNumbers {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(untagged)]
 pub enum NoMagicNumbersNumber {
     Float(f64),
     BigInt(String),
 }
 
 #[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoMagicNumbersConfig {
     /// An array of numbers to ignore if used as magic numbers. Can include floats or BigInt strings.
     ignore: Vec<NoMagicNumbersNumber>,
@@ -239,7 +244,9 @@ declare_oxc_lint!(
     eslint,
     style,
     pending, // TODO: enforceConst, probably copy from https://github.com/oxc-project/oxc/pull/5144
-    config = NoMagicNumbersConfig
+    config = NoMagicNumbersConfig,
+    version = "0.9.3",
+    short_description = "Disallow magic numbers.",
 );
 
 #[derive(Debug)]
@@ -298,8 +305,8 @@ impl InternConfig<'_> {
 }
 
 impl Rule for NoMagicNumbers {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        Self(Box::new(NoMagicNumbersConfig::try_from(&value).unwrap()))
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        Ok(Self(Box::new(NoMagicNumbersConfig::try_from(&value).unwrap())))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -332,7 +339,12 @@ impl Rule for NoMagicNumbers {
 }
 
 fn is_default_value(parent_kind: &AstKind<'_>) -> bool {
-    matches!(parent_kind, AstKind::AssignmentTargetWithDefault(_) | AstKind::AssignmentPattern(_))
+    matches!(
+        parent_kind,
+        AstKind::AssignmentTargetWithDefault(_)
+            | AstKind::AssignmentPattern(_)
+            | AstKind::FormalParameter(_)
+    )
 }
 
 fn is_class_field_initial_value(current_kind: &AstKind<'_>, parent_kind: &AstKind<'_>) -> bool {
@@ -355,8 +367,8 @@ fn is_detectable_object(parent_kind: &AstKind<'_>) -> bool {
     matches!(parent_kind, AstKind::ObjectExpression(_) | AstKind::ObjectProperty(_))
 }
 
-fn is_parse_int_radix(parent_parent_node: &AstNode<'_>) -> bool {
-    let AstKind::CallExpression(expression) = parent_parent_node.kind() else {
+fn is_parse_int_radix(parent_kind: &AstKind<'_>) -> bool {
+    let AstKind::CallExpression(expression) = parent_kind else {
         return false;
     };
 
@@ -483,7 +495,7 @@ impl NoMagicNumbers {
 
         let parent_parent = nodes.parent_node(parent.id());
 
-        if is_parse_int_radix(parent_parent) {
+        if is_parse_int_radix(&parent.kind()) {
             return true;
         }
 
@@ -545,25 +557,14 @@ fn test() {
         ("var x = parseInt(y, 10);", None),
         ("var x = parseInt(y, -10);", None),
         ("var x = Number.parseInt(y, 10);", None),
+        ("const MY_NUMBER = +42;", None),
         ("const foo = 42;", None), // { "ecmaVersion": 6 },
-        (
-            "var foo = 42;",
-            Some(serde_json::json!([{                "enforceConst": false            }])),
-        ), // { "ecmaVersion": 6 },
+        ("var foo = 42;", Some(serde_json::json!([{ "enforceConst": false }]))), // { "ecmaVersion": 6 },
         ("var foo = -42;", None),
-        (
-            "var foo = 0 + 1 - 2 + -2;",
-            Some(serde_json::json!([{                "ignore": [0, 1, 2, -2]            }])),
-        ),
-        (
-            "var foo = 0 + 1 + 2 + 3 + 4;",
-            Some(serde_json::json!([{                "ignore": [0, 1, 2, 3, 4]            }])),
-        ),
+        ("var foo = 0 + 1 - 2 + -2;", Some(serde_json::json!([{ "ignore": [0, 1, 2, -2] }]))),
+        ("var foo = 0 + 1 + 2 + 3 + 4;", Some(serde_json::json!([{ "ignore": [0, 1, 2, 3, 4] }]))),
         ("var foo = { bar:10 }", None),
-        (
-            "setTimeout(function() {return 1;}, 0);",
-            Some(serde_json::json!([{                "ignore": [0, 1]            }])),
-        ),
+        ("setTimeout(function() {return 1;}, 0);", Some(serde_json::json!([{ "ignore": [0, 1] }]))),
         ("var data = ['foo', 'bar', 'baz']; var third = data[3];", ignore_array_indexes.clone()),
         ("foo[0]", ignore_array_indexes.clone()),
         ("foo[-0]", ignore_array_indexes.clone()),
@@ -604,6 +605,11 @@ fn test() {
         ("class C { #foo = 2; }", ignore_class_field_initial_values.clone()), // { "ecmaVersion": 2022 },
         ("class C { static #foo = 2; }", ignore_class_field_initial_values.clone()), // { "ecmaVersion": 2022 }
         ("const FOO = 10;", ignore_numeric_literal_types.clone()),
+        // TODO: Get these two passing?
+        // ("foo[+0]", ignore_array_indexes.clone()),
+        // ("foo[+1]", ignore_array_indexes.clone()),
+        ("foo[+0n]", ignore_array_indexes.clone()), // { "ecmaVersion": 2020 },
+        ("foo[+1n]", ignore_array_indexes.clone()), // { "ecmaVersion": 2020 },
         ("type Foo = 'bar';", None),
         ("type Foo = true;", None),
         ("type Foo = 1;", ignore_numeric_literal_types.clone()),
@@ -706,7 +712,7 @@ fn test() {
 			}
 			      ",
             Some(
-                serde_json::json!([        {          "ignoreReadonlyClassProperties": false,          "ignore": [1, 2, 3, 4, -5, 6, "100n", "-2000n"],        },      ]),
+                serde_json::json!([ { "ignoreReadonlyClassProperties": false, "ignore": [1, 2, 3, 4, -5, 6, "100n", "-2000n"] } ]),
             ),
         ),
         (
@@ -730,24 +736,15 @@ fn test() {
     let fail = vec![
         ("var foo = 42", enforce_const.clone()), // { "ecmaVersion": 6 },
         ("var foo = 0 + 1;", None),
-        ("var foo = 42n", enforce_const), // {                "ecmaVersion": 2020            },
-        ("var foo = 0n + 1n;", None),     // {                "ecmaVersion": 2020            },
+        ("var foo = 42n", enforce_const), // { "ecmaVersion": 2020 },
+        ("var foo = 0n + 1n;", None),     // { "ecmaVersion": 2020 },
         ("a = a + 5;", None),
         ("a += 5;", None),
         ("var foo = 0 + 1 + -2 + 2;", None),
-        (
-            "var foo = 0 + 1 + 2;",
-            Some(serde_json::json!([{                "ignore": [0, 1]            }])),
-        ),
-        (
-            "var foo = { bar:10 }",
-            Some(serde_json::json!([{                "detectObjects": true            }])),
-        ),
-        ("console.log(0x1A + 0x02); console.log(071);", None), // {                "sourceType": "script"            },
-        (
-            "var stats = {avg: 42};",
-            Some(serde_json::json!([{                "detectObjects": true            }])),
-        ),
+        ("var foo = 0 + 1 + 2;", Some(serde_json::json!([{ "ignore": [0, 1] }]))),
+        ("var foo = { bar:10 }", Some(serde_json::json!([{ "detectObjects": true }]))),
+        ("console.log(0x1A + 0x02); console.log(071);", None), // { "sourceType": "script" },
+        ("var stats = {avg: 42};", Some(serde_json::json!([{ "detectObjects": true }]))),
         ("var colors = {}; colors.RED = 2; colors.YELLOW = 3; colors.BLUE = 4 + 5;", None),
         ("function getSecondsInMinute() {return 60;}", None),
         ("function getNegativeSecondsInMinute() {return -60;}", None),
@@ -788,7 +785,7 @@ fn test() {
         // ("foo[- -1n]", ignore_array_indexes.clone()), // { "ecmaVersion": 2020 },
         ("100 .toString()", ignore_array_indexes.clone()),
         ("200[100]", ignore_array_indexes),
-        ("var a = <div arrayProp={[1,2,3]}></div>;", None), // {                "parserOptions": {                    "ecmaFeatures": {                        "jsx": true                    }                }            },
+        ("var a = <div arrayProp={[1,2,3]}></div>;", None), // { "parserOptions": { "ecmaFeatures": { "jsx": true } } },
         ("var min, max, mean; min = 1; max = 10; mean = 4;", Some(serde_json::json!([{}]))),
         ("f(100n)", Some(serde_json::json!([{ "ignore": [100] }]))), // { "ecmaVersion": 2020 },
         ("f(-100n)", Some(serde_json::json!([{ "ignore": ["100n"] }]))), // { "ecmaVersion": 2020 },
@@ -939,6 +936,18 @@ fn test() {
         ("type Foo = -3.1e4;", Some(serde_json::json!([{ "ignore": [3.1e4] }]))),
         ("type Foo = 5.1e-6;", Some(serde_json::json!([{ "ignore": [-5.1e-6] }]))),
         ("type Foo = -7.1e-8;", Some(serde_json::json!([{ "ignore": [7.1e-8] }]))),
+        (
+            "type Foo = { bar: 42 };",
+            Some(serde_json::json!([{ "ignoreNumericLiteralTypes": true }])),
+        ),
+        (
+            "type Foo = { bar: 2 | 3 };",
+            Some(serde_json::json!([{ "ignoreNumericLiteralTypes": true }])),
+        ),
+        (
+            "type Foo = { bar: Bar[((1 & -2) | 3) | 4] };",
+            Some(serde_json::json!([{ "ignoreNumericLiteralTypes": true }])),
+        ),
     ];
 
     Tester::new(NoMagicNumbers::NAME, NoMagicNumbers::PLUGIN, pass, fail).test_and_snapshot();

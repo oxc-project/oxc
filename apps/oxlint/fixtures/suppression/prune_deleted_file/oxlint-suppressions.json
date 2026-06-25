@@ -1,0 +1,13 @@
+{
+  "deleted_file.js": {
+    "no-console": {
+      "count": 3
+    }
+  },
+  "folder_a/empty.ts": {},
+  "folder_a/test.js": {
+    "no-console": {
+      "count": 1
+    }
+  }
+}

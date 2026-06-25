@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ oxc(no-async-await): async is not allowed
    ╭─[no_async_await.tsx:1:1]
  1 │ async function foo() {}
@@ -89,5 +90,19 @@ source: crates/oxc_linter/src/tester.rs
  6 │                         async: async () => {},
    ·                                ─────
  7 │                     }
+   ╰────
+  help: Remove the `async` keyword
+
+  ⚠ oxc(no-async-await): async is not allowed
+   ╭─[no_async_await.tsx:1:13]
+ 1 │ /* async */ async function foo() {}
+   ·             ─────
+   ╰────
+  help: Remove the `async` keyword
+
+  ⚠ oxc(no-async-await): async is not allowed
+   ╭─[no_async_await.tsx:1:25]
+ 1 │ class Foo { /* async */ async bar() {} }
+   ·                         ─────
    ╰────
   help: Remove the `async` keyword

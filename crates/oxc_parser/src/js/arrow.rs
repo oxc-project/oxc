@@ -1,20 +1,20 @@
-use oxc_allocator::Box;
+use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::{NONE, ast::*};
-use oxc_span::GetSpan;
+use oxc_span::{FileExtension, GetSpan};
 use oxc_syntax::precedence::Precedence;
 
 use super::{FunctionKind, Tristate};
-use crate::{ParserImpl, diagnostics, lexer::Kind};
+use crate::{Context, ParserConfig as Config, ParserImpl, diagnostics, lexer::Kind};
 
 struct ArrowFunctionHead<'a> {
-    type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-    params: Box<'a, FormalParameters<'a>>,
-    return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
+    type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+    params: ArenaBox<'a, FormalParameters<'a>>,
+    return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
     r#async: bool,
     span: u32,
 }
 
-impl<'a> ParserImpl<'a> {
+impl<'a, C: Config> ParserImpl<'a, C> {
     pub(super) fn try_parse_parenthesized_arrow_function_expression(
         &mut self,
         allow_return_type_in_arrow_function: bool,
@@ -22,7 +22,7 @@ impl<'a> ParserImpl<'a> {
         match self.is_parenthesized_arrow_function_expression() {
             Tristate::False => None,
             Tristate::True => Some(self.parse_parenthesized_arrow_function_expression(
-                /* allow_return_type_in_arrow_function */ true,
+                allow_return_type_in_arrow_function,
             )),
             Tristate::Maybe => self.parse_possible_parenthesized_arrow_function_expression(
                 allow_return_type_in_arrow_function,
@@ -57,7 +57,17 @@ impl<'a> ParserImpl<'a> {
 
     fn is_parenthesized_arrow_function_expression(&mut self) -> Tristate {
         match self.cur_kind() {
-            Kind::LParen | Kind::LAngle | Kind::Async => {
+            Kind::LParen => {
+                // `(1 + a)` can never be arrow parameters: the leading literal is not the start of
+                // a `BindingElement`, so the worker would bump past it and return `Tristate::False`
+                // (`!second.is_binding_identifier() && second != This`). Skip the lookahead.
+                if self.lexer.peek_token().kind().is_literal() {
+                    Tristate::False
+                } else {
+                    self.lookahead(Self::is_parenthesized_arrow_function_expression_worker)
+                }
+            }
+            Kind::LAngle | Kind::Async => {
                 self.lookahead(Self::is_parenthesized_arrow_function_expression_worker)
             }
             _ => Tristate::False,
@@ -222,16 +232,14 @@ impl<'a> ParserImpl<'a> {
         r#async: bool,
         allow_return_type_in_arrow_function: bool,
     ) -> Expression<'a> {
-        let binding_identifier = BindingPatternKind::BindingIdentifier(
-            self.ast.alloc_binding_identifier(ident.span, ident.name),
-        );
-        let pattern = self.ast.binding_pattern(binding_identifier, NONE, false);
-        let formal_parameter = self.ast.plain_formal_parameter(ident.span, pattern);
-        let params = self.ast.alloc_formal_parameters(
+        let pattern = BindingPattern::new_binding_identifier(ident.span, ident.name, self);
+        let formal_parameter = FormalParameter::new_plain(ident.span, pattern, self);
+        let params = FormalParameters::boxed(
             ident.span,
             FormalParameterKind::ArrowFormalParameters,
-            self.ast.vec1(formal_parameter),
+            ArenaVec::from_value_in(formal_parameter, self),
             NONE,
+            self,
         );
 
         if self.cur_token().is_on_new_line() {
@@ -253,7 +261,17 @@ impl<'a> ParserImpl<'a> {
         let has_await = self.ctx.has_await();
         self.ctx = self.ctx.union_await_if(r#async);
 
-        let type_parameters = self.parse_ts_type_parameters();
+        let (type_parameters, has_trailing_comma) =
+            self.parse_ts_type_parameters_with_trailing_comma();
+
+        if let Some(type_params) = &type_parameters
+            && matches!(self.source_type.extension(), Some(FileExtension::Mts | FileExtension::Cts))
+            && type_params.params.len() == 1
+            && type_params.params[0].constraint.is_none()
+            && !has_trailing_comma
+        {
+            self.error(diagnostics::jsx_type_parameter_in_mts_cts(type_params.params[0].name.span));
+        }
 
         let (this_param, params) = self.parse_formal_parameters(
             FunctionKind::Expression,
@@ -296,18 +314,25 @@ impl<'a> ParserImpl<'a> {
 
         let expression = !self.at(Kind::LCurly);
         let body = if expression {
-            let expr = self
-                .parse_assignment_expression_or_higher_impl(allow_return_type_in_arrow_function);
+            // Remove TopLevel context for arrow function expression body
+            let expr = self.context_remove(Context::TopLevel, |p| {
+                p.parse_assignment_expression_or_higher_impl(allow_return_type_in_arrow_function)
+            });
             let span = expr.span();
-            let expr_stmt = self.ast.statement_expression(span, expr);
-            self.ast.alloc_function_body(span, self.ast.vec(), self.ast.vec1(expr_stmt))
+            let expr_stmt = Statement::new_expression_statement(span, expr, self);
+            FunctionBody::boxed(
+                span,
+                ArenaVec::new_in(self),
+                ArenaVec::from_value_in(expr_stmt, self),
+                self,
+            )
         } else {
             self.parse_function_body()
         };
 
         self.ctx = self.ctx.and_await(has_await).and_yield(has_yield);
 
-        self.ast.expression_arrow_function(
+        Expression::new_arrow_function_expression(
             self.end_span(span),
             expression,
             r#async,
@@ -315,6 +340,7 @@ impl<'a> ParserImpl<'a> {
             params,
             return_type,
             body,
+            self,
         )
     }
 

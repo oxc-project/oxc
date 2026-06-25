@@ -5,7 +5,11 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::{context::LintContext, module_record::ExportEntry, rule::Rule};
+use crate::{
+    context::LintContext,
+    module_record::ExportEntry,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn prefer_default_export_diagnostic(span: Span, target: Target) -> OxcDiagnostic {
     let msg = if target == Target::Single {
@@ -19,30 +23,24 @@ fn prefer_default_export_diagnostic(span: Span, target: Target) -> OxcDiagnostic
 #[derive(Debug, Default, PartialEq, Clone, Copy, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 enum Target {
+    /// Prefer default export when there is only one export in the module.
     #[default]
     Single,
+    /// Prefer default export in any module that has exports.
     Any,
 }
 
-impl From<&str> for Target {
-    fn from(raw: &str) -> Self {
-        if raw == "any" { Self::Any } else { Self::Single }
-    }
-}
-
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct PreferDefaultExport {
     /// Configuration option to specify the target type for preferring default exports.
-    /// - `"single"`: Prefer default export when there is only one export in the module.
-    /// - `"any"`: Prefer default export in any module that has exports.
     target: Target,
 }
 
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// In exporting files, this rule checks if there is default export or not.
+    /// Checks whether there is a default export.
     ///
     /// ### Why is this bad?
     ///
@@ -77,18 +75,13 @@ declare_oxc_lint!(
     import,
     style,
     config = PreferDefaultExport,
+    version = "1.4.0",
+    short_description = "Checks whether there is a default export.",
 );
 
 impl Rule for PreferDefaultExport {
-    fn from_configuration(value: Value) -> Self {
-        let obj = value.get(0);
-        Self {
-            target: obj
-                .and_then(|v| v.get("target"))
-                .and_then(Value::as_str)
-                .map(Target::from)
-                .unwrap_or_default(),
-        }
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {

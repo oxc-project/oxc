@@ -7,14 +7,14 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/ts-module/decla
     "children": [
       {
         "children": [],
-        "flags": "ScopeFlags(StrictMode | Function)",
+        "flags": "ScopeFlags(Function)",
         "id": 1,
         "node": "Function(Foo)",
         "symbols": []
       },
       {
         "children": [],
-        "flags": "ScopeFlags(StrictMode | TsModuleBlock)",
+        "flags": "ScopeFlags(TsModuleBlock)",
         "id": 2,
         "node": "TSModuleDeclaration(Foo)",
         "symbols": [
@@ -28,7 +28,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/ts-module/decla
         ]
       }
     ],
-    "flags": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
@@ -42,7 +42,8 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/ts-module/decla
             "flags": "ReferenceFlags(Read)",
             "id": 0,
             "name": "Foo",
-            "node_id": 16
+            "node_id": 16,
+            "scope_id": 0
           }
         ]
       },

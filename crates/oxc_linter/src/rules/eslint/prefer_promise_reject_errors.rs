@@ -1,26 +1,30 @@
-use oxc_allocator::Box;
+use oxc_allocator::ArenaBox;
 use oxc_ast::{
     AstKind,
     ast::{Argument, CallExpression, Expression, FormalParameters},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
+use serde::Deserialize;
+use serde_json::Value;
 
 use crate::{
     AstNode,
     ast_util::{could_be_error, is_method_call},
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 fn prefer_promise_reject_errors_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Expected the Promise rejection reason to be an Error").with_label(span)
+    OxcDiagnostic::warn("Expected the Promise rejection reason to be an Error")
+        .with_help("Only pass an Error object to the reject() function for user-defined errors in Promises.")
+        .with_label(span)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct PreferPromiseRejectErrors {
     /// Whether to allow calls to `Promise.reject()` with no arguments.
     allow_empty_reject: bool,
@@ -76,15 +80,13 @@ declare_oxc_lint!(
     style,
     none,
     config = PreferPromiseRejectErrors,
+    version = "0.15.7",
+    short_description = "Require using Error objects as Promise rejection reasons.",
 );
 
 impl Rule for PreferPromiseRejectErrors {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let allow_empty_reject = value.get(0).is_some_and(|v| {
-            v.get("allowEmptyReject").is_some_and(|b| b.as_bool().unwrap_or(false))
-        });
-
-        Self { allow_empty_reject }
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -141,7 +143,7 @@ fn check_reject_call(call_expr: &CallExpression, ctx: &LintContext, allow_empty_
 
 #[expect(clippy::float_cmp, clippy::cast_precision_loss)]
 fn check_reject_in_function(
-    params: &Box<'_, FormalParameters<'_>>,
+    params: &ArenaBox<'_, FormalParameters<'_>>,
     ctx: &LintContext,
     allow_empty_reject: bool,
 ) {
@@ -153,14 +155,18 @@ fn check_reject_in_function(
         ctx.symbol_references(reject_arg.symbol_id()).for_each(|reference| {
             if let AstKind::CallExpression(call_expr) = ctx.nodes().parent_kind(reference.node_id())
             {
-                check_reject_call(call_expr, ctx, allow_empty_reject);
+                let ref_node = ctx.nodes().get_node(reference.node_id());
+
+                if call_expr.callee.span().contains_inclusive(ref_node.span()) {
+                    check_reject_call(call_expr, ctx, allow_empty_reject);
+                }
             }
         });
         return;
     }
 
     let Some(rest_param) = &params.rest else { return };
-    let Some(rest_arg) = rest_param.argument.get_binding_identifier() else { return };
+    let Some(rest_arg) = rest_param.rest.argument.get_binding_identifier() else { return };
     let rest_index = (1 - params.items.len()) as f64;
     for reference in ctx.symbol_references(rest_arg.symbol_id()) {
         let node = ctx.nodes().get_node(reference.node_id());

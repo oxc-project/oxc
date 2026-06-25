@@ -1,0 +1,294 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(no-useless-iterator-to-array): `new Set(…)` accepts an iterable, `.toArray()` is unnecessary.
+   ╭─[no_useless_iterator_to_array.tsx:1:18]
+ 1 │ new Set(iterator.toArray())
+   ·                  ───────
+   ╰────
+  help: Remove `.toArray()`.
+
+  ⚠ unicorn(no-useless-iterator-to-array): Spread works on iterables, `.toArray()` is unnecessary.
+   ╭─[no_useless_iterator_to_array.tsx:1:21]
+ 1 │ new Set(...iterator.toArray())
+   ·                     ───────
+   ╰────
+  help: Remove `.toArray()`.
+
+  ⚠ unicorn(no-useless-iterator-to-array): `new Map(…)` accepts an iterable, `.toArray()` is unnecessary.
+   ╭─[no_useless_iterator_to_array.tsx:1:18]
+ 1 │ new Map(iterator.toArray())
+   ·                  ───────
+   ╰────
+  help: Remove `.toArray()`.
+
+  ⚠ unicorn(no-useless-iterator-to-array): `new WeakSet(…)` accepts an iterable, `.toArray()` is unnecessary.
+   ╭─[no_useless_iterator_to_array.tsx:1:22]
+ 1 │ new WeakSet(iterator.toArray())
+   ·                      ───────
+   ╰────
+  help: Remove `.toArray()`.
+
+  ⚠ unicorn(no-useless-iterator-to-array): `new WeakMap(…)` accepts an iterable, `.toArray()` is unnecessary.
+   ╭─[no_useless_iterator_to_array.tsx:1:22]
+ 1 │ new WeakMap(iterator.toArray())
+   ·                      ───────
+   ╰────
+  help: Remove `.toArray()`.
+
+  ⚠ unicorn(no-useless-iterator-to-array): `new Int8Array(…)` accepts an iterable, `.toArray()` is unnecessary.
+   ╭─[no_useless_iterator_to_array.tsx:1:24]
+ 1 │ new Int8Array(iterator.toArray())
+   ·                        ───────
+   ╰────
+  help: Remove `.toArray()`.
+
+  ⚠ unicorn(no-useless-iterator-to-array): `new Uint8Array(…)` accepts an iterable, `.toArray()` is unnecessary.
+   ╭─[no_useless_iterator_to_array.tsx:1:25]
+ 1 │ new Uint8Array(iterator.toArray())
+   ·                         ───────
+   ╰────
+  help: Remove `.toArray()`.
+
+  ⚠ unicorn(no-useless-iterator-to-array): `new Float64Array(…)` accepts an iterable, `.toArray()` is unnecessary.
+   ╭─[no_useless_iterator_to_array.tsx:1:27]
+ 1 │ new Float64Array(iterator.toArray())
+   ·                           ───────
+   ╰────
+  help: Remove `.toArray()`.
+
+  ⚠ unicorn(no-useless-iterator-to-array): `Promise.all(…)` accepts an iterable, `.toArray()` is unnecessary.
+   ╭─[no_useless_iterator_to_array.tsx:1:22]
+ 1 │ Promise.all(iterator.toArray())
+   ·                      ───────
+   ╰────
+  help: Remove `.toArray()`.
+
+  ⚠ unicorn(no-useless-iterator-to-array): `Promise.allSettled(…)` accepts an iterable, `.toArray()` is unnecessary.
+   ╭─[no_useless_iterator_to_array.tsx:1:29]
+ 1 │ Promise.allSettled(iterator.toArray())
+   ·                             ───────
+   ╰────
+  help: Remove `.toArray()`.
+
+  ⚠ unicorn(no-useless-iterator-to-array): `Promise.any(…)` accepts an iterable, `.toArray()` is unnecessary.
+   ╭─[no_useless_iterator_to_array.tsx:1:22]
+ 1 │ Promise.any(iterator.toArray())
+   ·                      ───────
+   ╰────
+  help: Remove `.toArray()`.
+
+  ⚠ unicorn(no-useless-iterator-to-array): `Promise.race(…)` accepts an iterable, `.toArray()` is unnecessary.
+   ╭─[no_useless_iterator_to_array.tsx:1:23]
+ 1 │ Promise.race(iterator.toArray())
+   ·                       ───────
+   ╰────
+  help: Remove `.toArray()`.
+
+  ⚠ unicorn(no-useless-iterator-to-array): `Array.from(…)` accepts an iterable, `.toArray()` is unnecessary.
+   ╭─[no_useless_iterator_to_array.tsx:1:21]
+ 1 │ Array.from(iterator.toArray())
+   ·                     ───────
+   ╰────
+  help: Remove `.toArray()`.
+
+  ⚠ unicorn(no-useless-iterator-to-array): `Object.fromEntries(…)` accepts an iterable, `.toArray()` is unnecessary.
+   ╭─[no_useless_iterator_to_array.tsx:1:29]
+ 1 │ Object.fromEntries(iterator.toArray())
+   ·                             ───────
+   ╰────
+  help: Remove `.toArray()`.
+
+  ⚠ unicorn(no-useless-iterator-to-array): `Uint8Array.from(…)` accepts an iterable, `.toArray()` is unnecessary.
+   ╭─[no_useless_iterator_to_array.tsx:1:26]
+ 1 │ Uint8Array.from(iterator.toArray())
+   ·                          ───────
+   ╰────
+  help: Remove `.toArray()`.
+
+  ⚠ unicorn(no-useless-iterator-to-array): `Array.from(…)` accepts an iterable, `.toArray()` is unnecessary.
+   ╭─[no_useless_iterator_to_array.tsx:1:21]
+ 1 │ Array.from(iterator.toArray(), mapFn)
+   ·                     ───────
+   ╰────
+  help: Remove `.toArray()`.
+
+  ⚠ unicorn(no-useless-iterator-to-array): `Object.fromEntries(…)` accepts an iterable, `.toArray()` is unnecessary.
+   ╭─[no_useless_iterator_to_array.tsx:1:29]
+ 1 │ Object.fromEntries(iterator.toArray(), extra)
+   ·                             ───────
+   ╰────
+  help: Remove `.toArray()`.
+
+  ⚠ unicorn(no-useless-iterator-to-array): `for…of` can iterate over an iterable, `.toArray()` is unnecessary.
+   ╭─[no_useless_iterator_to_array.tsx:1:26]
+ 1 │ for (const x of iterator.toArray());
+   ·                          ───────
+   ╰────
+  help: Remove `.toArray()`.
+
+  ⚠ unicorn(no-useless-iterator-to-array): `for…of` can iterate over an iterable, `.toArray()` is unnecessary.
+   ╭─[no_useless_iterator_to_array.tsx:1:27]
+ 1 │ for (const x of foo.bar().toArray());
+   ·                           ───────
+   ╰────
+  help: Remove `.toArray()`.
+
+  ⚠ unicorn(no-useless-iterator-to-array): `for…of` can iterate over an iterable, `.toArray()` is unnecessary.
+   ╭─[no_useless_iterator_to_array.tsx:1:46]
+ 1 │ async () => { for await (const x of iterator.toArray()); }
+   ·                                              ───────
+   ╰────
+  help: Remove `.toArray()`.
+
+  ⚠ unicorn(no-useless-iterator-to-array): `yield*` can delegate to an iterable, `.toArray()` is unnecessary.
+   ╭─[no_useless_iterator_to_array.tsx:2:34]
+ 1 │ function * foo() {
+ 2 │                 yield * iterator.toArray();
+   ·                                  ───────
+ 3 │             }
+   ╰────
+  help: Remove `.toArray()`.
+
+  ⚠ unicorn(no-useless-iterator-to-array): `Iterator` has a `.every()` method, `.toArray()` is unnecessary.
+   ╭─[no_useless_iterator_to_array.tsx:1:10]
+ 1 │ iterator.toArray().every(fn)
+   ·          ───────
+   ╰────
+  help: Remove `.toArray()`.
+
+  ⚠ unicorn(no-useless-iterator-to-array): `Iterator` has a `.find()` method, `.toArray()` is unnecessary.
+   ╭─[no_useless_iterator_to_array.tsx:1:10]
+ 1 │ iterator.toArray().find(fn)
+   ·          ───────
+   ╰────
+  help: Remove `.toArray()`.
+
+  ⚠ unicorn(no-useless-iterator-to-array): `Iterator` has a `.forEach()` method, `.toArray()` is unnecessary.
+   ╭─[no_useless_iterator_to_array.tsx:1:10]
+ 1 │ iterator.toArray().forEach(fn)
+   ·          ───────
+   ╰────
+  help: Remove `.toArray()`.
+
+  ⚠ unicorn(no-useless-iterator-to-array): `Iterator` has a `.reduce()` method, `.toArray()` is unnecessary.
+   ╭─[no_useless_iterator_to_array.tsx:1:10]
+ 1 │ iterator.toArray().reduce(fn, init)
+   ·          ───────
+   ╰────
+  help: Remove `.toArray()`.
+
+  ⚠ unicorn(no-useless-iterator-to-array): `Iterator` has a `.some()` method, `.toArray()` is unnecessary.
+   ╭─[no_useless_iterator_to_array.tsx:1:10]
+ 1 │ iterator.toArray().some(fn)
+   ·          ───────
+   ╰────
+  help: Remove `.toArray()`.
+
+  ⚠ unicorn(no-useless-iterator-to-array): `Iterator` has a `.every()` method, `.toArray()` is unnecessary.
+   ╭─[no_useless_iterator_to_array.tsx:3:18]
+ 2 │                 .take(10)
+ 3 │                 .toArray()
+   ·                  ───────
+ 4 │                 .every(x => x > 0);
+   ╰────
+  help: Remove `.toArray()`.
+
+  ⚠ unicorn(no-useless-iterator-to-array): Spread works on iterables, `.toArray()` is unnecessary.
+   ╭─[no_useless_iterator_to_array.tsx:1:14]
+ 1 │ [...iterator.toArray()]
+   ·              ───────
+   ╰────
+  help: Remove `.toArray()`.
+
+  ⚠ unicorn(no-useless-iterator-to-array): Spread works on iterables, `.toArray()` is unnecessary.
+   ╭─[no_useless_iterator_to_array.tsx:1:17]
+ 1 │ [a, ...iterator.toArray()]
+   ·                 ───────
+   ╰────
+  help: Remove `.toArray()`.
+
+  ⚠ unicorn(no-useless-iterator-to-array): Spread works on iterables, `.toArray()` is unnecessary.
+   ╭─[no_useless_iterator_to_array.tsx:1:14]
+ 1 │ [...iterator.toArray(), b]
+   ·              ───────
+   ╰────
+  help: Remove `.toArray()`.
+
+  ⚠ unicorn(no-useless-iterator-to-array): Spread works on iterables, `.toArray()` is unnecessary.
+   ╭─[no_useless_iterator_to_array.tsx:1:18]
+ 1 │ call(...iterator.toArray())
+   ·                  ───────
+   ╰────
+  help: Remove `.toArray()`.
+
+  ⚠ unicorn(no-useless-iterator-to-array): Spread works on iterables, `.toArray()` is unnecessary.
+   ╭─[no_useless_iterator_to_array.tsx:1:21]
+ 1 │ call(a, ...iterator.toArray())
+   ·                     ───────
+   ╰────
+  help: Remove `.toArray()`.
+
+  ⚠ unicorn(no-useless-iterator-to-array): Spread works on iterables, `.toArray()` is unnecessary.
+   ╭─[no_useless_iterator_to_array.tsx:1:21]
+ 1 │ new Foo(...iterator.toArray())
+   ·                     ───────
+   ╰────
+  help: Remove `.toArray()`.
+
+  ⚠ unicorn(no-useless-iterator-to-array): `new Set(…)` accepts an iterable, `.toArray()` is unnecessary.
+   ╭─[no_useless_iterator_to_array.tsx:1:19]
+ 1 │ new Set((iterator.toArray()))
+   ·                   ───────
+   ╰────
+  help: Remove `.toArray()`.
+
+  ⚠ unicorn(no-useless-iterator-to-array): `Promise.all(…)` accepts an iterable, `.toArray()` is unnecessary.
+   ╭─[no_useless_iterator_to_array.tsx:1:23]
+ 1 │ Promise.all((iterator.toArray()))
+   ·                       ───────
+   ╰────
+  help: Remove `.toArray()`.
+
+  ⚠ unicorn(no-useless-iterator-to-array): `Array.from(…)` accepts an iterable, `.toArray()` is unnecessary.
+   ╭─[no_useless_iterator_to_array.tsx:1:22]
+ 1 │ Array.from((iterator.toArray()))
+   ·                      ───────
+   ╰────
+  help: Remove `.toArray()`.
+
+  ⚠ unicorn(no-useless-iterator-to-array): `Object.fromEntries(…)` accepts an iterable, `.toArray()` is unnecessary.
+   ╭─[no_useless_iterator_to_array.tsx:1:30]
+ 1 │ Object.fromEntries((iterator.toArray()))
+   ·                              ───────
+   ╰────
+  help: Remove `.toArray()`.
+
+  ⚠ unicorn(no-useless-iterator-to-array): `for…of` can iterate over an iterable, `.toArray()` is unnecessary.
+   ╭─[no_useless_iterator_to_array.tsx:1:27]
+ 1 │ for (const x of (iterator.toArray()));
+   ·                           ───────
+   ╰────
+  help: Remove `.toArray()`.
+
+  ⚠ unicorn(no-useless-iterator-to-array): Spread works on iterables, `.toArray()` is unnecessary.
+   ╭─[no_useless_iterator_to_array.tsx:1:15]
+ 1 │ [...(iterator.toArray())]
+   ·               ───────
+   ╰────
+  help: Remove `.toArray()`.
+
+  ⚠ unicorn(no-useless-iterator-to-array): Spread works on iterables, `.toArray()` is unnecessary.
+   ╭─[no_useless_iterator_to_array.tsx:1:19]
+ 1 │ call(...(iterator.toArray()))
+   ·                   ───────
+   ╰────
+  help: Remove `.toArray()`.
+
+  ⚠ unicorn(no-useless-iterator-to-array): Spread works on iterables, `.toArray()` is unnecessary.
+   ╭─[no_useless_iterator_to_array.tsx:1:22]
+ 1 │ new Foo(...(iterator.toArray()))
+   ·                      ───────
+   ╰────
+  help: Remove `.toArray()`.

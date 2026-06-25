@@ -91,7 +91,9 @@ declare_oxc_lint!(
     /// ```
     InlineScriptId,
     nextjs,
-    correctness
+    correctness,
+    version = "0.2.0",
+    short_description = "Enforces that all `next/script` components with inline content or `dangerouslySetInnerHTML` must have an `id` prop.",
 );
 
 impl Rule for InlineScriptId {
@@ -136,7 +138,7 @@ impl Rule for InlineScriptId {
                                 if let ObjectPropertyKind::ObjectProperty(obj_prop) = prop
                                     && let PropertyKey::StaticIdentifier(ident) = &obj_prop.key
                                 {
-                                    prop_names_hash_set.insert(ident.name);
+                                    prop_names_hash_set.insert(ident.name.into());
                                 }
                             }
                         } else {
@@ -165,7 +167,7 @@ fn test() {
 
     let pass = vec![
         r#"import Script from 'next/script';
-			
+
 			      export default function TestPage() {
 			        return (
 			          <Script id="test-script">
@@ -174,7 +176,7 @@ fn test() {
 			        )
 			      }"#,
         r#"import Script from 'next/script';
-			
+
 			      export default function TestPage() {
 			        return (
 			          <Script
@@ -186,14 +188,14 @@ fn test() {
 			        )
 			      }"#,
         r#"import Script from 'next/script';
-			
+
 			      export default function TestPage() {
 			        return (
 			          <Script src="https://example.com" />
 			        )
 			      }"#,
         r#"import MyScript from 'next/script';
-			
+
 			      export default function TestPage() {
 			        return (
 			          <MyScript id="test-script">
@@ -202,7 +204,7 @@ fn test() {
 			        )
 			      }"#,
         r#"import MyScript from 'next/script';
-			
+
 			      export default function TestPage() {
 			        return (
 			          <MyScript
@@ -214,7 +216,7 @@ fn test() {
 			        )
 			      }"#,
         r#"import Script from 'next/script';
-			
+
 			      export default function TestPage() {
 			        return (
 			          <Script {...{ strategy: "lazyOnload" }} id={"test-script"}>
@@ -223,7 +225,7 @@ fn test() {
 			        )
 			      }"#,
         r#"import Script from 'next/script';
-			
+
 			      export default function TestPage() {
 			        return (
 			          <Script {...{ strategy: "lazyOnload", id: "test-script" }}>
@@ -244,7 +246,7 @@ fn test() {
 
     let fail = vec![
         r"import Script from 'next/script';
-			
+
 			        export default function TestPage() {
 			          return (
 			            <Script>
@@ -253,7 +255,7 @@ fn test() {
 			          )
 			        }",
         r"import Script from 'next/script';
-			
+
 			        export default function TestPage() {
 			          return (
 			            <Script
@@ -264,7 +266,7 @@ fn test() {
 			          )
 			        }",
         r"import MyScript from 'next/script';
-			
+
 			        export default function TestPage() {
 			          return (
 			            <MyScript>
@@ -273,7 +275,7 @@ fn test() {
 			          )
 			        }",
         r"import MyScript from 'next/script';
-			
+
 			        export default function TestPage() {
 			          return (
 			            <MyScript
@@ -285,7 +287,5 @@ fn test() {
 			        }",
     ];
 
-    Tester::new(InlineScriptId::NAME, InlineScriptId::PLUGIN, pass, fail)
-        .with_nextjs_plugin(true)
-        .test_and_snapshot();
+    Tester::new(InlineScriptId::NAME, InlineScriptId::PLUGIN, pass, fail).test_and_snapshot();
 }

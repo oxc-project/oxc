@@ -10,7 +10,9 @@ use oxc_span::{GetSpan, Span};
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn prefer_await_to_callbacks(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Prefer `async`/`await` to the callback pattern").with_label(span)
+    OxcDiagnostic::warn("Prefer `async`/`await` to the callback pattern")
+        .with_help("Refactor to use an `async` function with `await` instead of passing callbacks for cleaner error handling and control flow.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -53,6 +55,8 @@ declare_oxc_lint!(
     PreferAwaitToCallbacks,
     promise,
     style,
+    version = "0.9.10",
+    short_description = "Prefer `async`/`await` over callback functions for handling asynchronous code.",
 );
 
 impl Rule for PreferAwaitToCallbacks {

@@ -1,24 +1,53 @@
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+#[derive(Clone, Copy)]
+enum SpreadKind {
+    ObjectSpreadProperty,
+    ObjectRestProperty,
+}
+
+impl SpreadKind {
+    fn details(self) -> (&'static str, &'static str) {
+        match self {
+            Self::ObjectSpreadProperty => (
+                "object spread property",
+                "Use `Object.assign()` to combine objects instead of object spread syntax.",
+            ),
+            Self::ObjectRestProperty => (
+                "object rest property",
+                "List the properties you need explicitly instead of using object rest syntax.",
+            ),
+        }
+    }
+}
 
 fn no_rest_spread_properties_diagnostic(
     span: Span,
-    spread_kind: &str,
+    spread_kind: SpreadKind,
     message_suffix: &str,
 ) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("{spread_kind} are not allowed. {message_suffix}")).with_label(span)
+    let (kind, help) = spread_kind.details();
+
+    OxcDiagnostic::warn(format!("{kind} are not allowed. {message_suffix}"))
+        .with_help(help)
+        .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct NoRestSpreadProperties(Box<NoRestSpreadPropertiesOptions>);
 
-#[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoRestSpreadPropertiesOptions {
     /// A message to display when object spread properties are found.
     object_spread_message: String,
@@ -58,24 +87,13 @@ declare_oxc_lint!(
     oxc,
     restriction,
     config = NoRestSpreadPropertiesOptions,
+    version = "0.4.2",
+    short_description = "Disallow Object Rest/Spread Properties.",
 );
 
 impl Rule for NoRestSpreadProperties {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let config = value.get(0);
-        let object_spread_message = config
-            .and_then(|v| v.get("objectSpreadMessage"))
-            .and_then(serde_json::Value::as_str)
-            .unwrap_or_default();
-        let object_rest_message = config
-            .and_then(|v| v.get("objectRestMessage"))
-            .and_then(serde_json::Value::as_str)
-            .unwrap_or_default();
-
-        Self(Box::new(NoRestSpreadPropertiesOptions {
-            object_spread_message: object_spread_message.to_string(),
-            object_rest_message: object_rest_message.to_string(),
-        }))
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -84,7 +102,7 @@ impl Rule for NoRestSpreadProperties {
                 if matches!(ctx.nodes().parent_kind(node.id()), AstKind::ObjectExpression(_)) {
                     ctx.diagnostic(no_rest_spread_properties_diagnostic(
                         spread_element.span,
-                        "object spread property",
+                        SpreadKind::ObjectSpreadProperty,
                         self.object_spread_message.as_str(),
                     ));
                 }
@@ -93,7 +111,7 @@ impl Rule for NoRestSpreadProperties {
                 if matches!(ctx.nodes().parent_kind(node.id()), AstKind::ObjectPattern(_)) {
                     ctx.diagnostic(no_rest_spread_properties_diagnostic(
                         rest_element.span,
-                        "object rest property",
+                        SpreadKind::ObjectRestProperty,
                         self.object_rest_message.as_str(),
                     ));
                 }
@@ -105,7 +123,7 @@ impl Rule for NoRestSpreadProperties {
 
                 ctx.diagnostic(no_rest_spread_properties_diagnostic(
                     rest.span,
-                    "object rest property",
+                    SpreadKind::ObjectRestProperty,
                     self.object_rest_message.as_str(),
                 ));
             }

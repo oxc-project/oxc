@@ -39,7 +39,10 @@ impl Derive for DeriveDummy {
 
     fn prelude(&self) -> TokenStream {
         quote! {
-            #![allow(unused_variables, clippy::inline_always)]
+            #![allow(unused_imports, unused_variables, clippy::inline_always)]
+
+            ///@@line_break
+            use std::cell::Cell;
 
             ///@@line_break
             use oxc_allocator::{Allocator, Dummy};

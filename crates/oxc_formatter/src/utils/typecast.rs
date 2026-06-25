@@ -1,19 +1,10 @@
-use oxc_ast::{
-    Comment,
-    ast::{ArrowFunctionExpression, Function},
-};
+use oxc_ast::Comment;
 use oxc_span::GetSpan;
 
 use crate::{
-    Buffer, Format, FormatResult,
-    ast_nodes::AstNode,
-    format_args,
-    formatter::{Formatter, SourceText, prelude::*, trivia::FormatLeadingComments},
+    Buffer, Format, format_args,
+    formatter::{JsFormatter, prelude::*, trivia::FormatLeadingComments},
     write,
-    write::{
-        FormatFunctionOptions, FormatJsArrowFunctionExpression,
-        FormatJsArrowFunctionExpressionOptions,
-    },
 };
 
 /// Checks if a node is a type cast node and returns the comments to be printed.
@@ -25,7 +16,10 @@ use crate::{
 /// - `Some(&[])` if the node is a type cast node but no comments need to be printed
 /// - `Some(&[Comment, ...])` if the node is a type cast node with comments to print
 /// - `None` if the node is not a type cast node
-pub fn is_type_cast_node<'a>(node: &impl GetSpan, f: &Formatter<'_, 'a>) -> Option<&'a [Comment]> {
+pub fn is_type_cast_node<'a>(
+    node: &impl GetSpan,
+    f: &JsFormatter<'_, 'a>,
+) -> Option<&'a [Comment]> {
     let comments = f.context().comments();
     let span = node.span();
     let source = f.source_text();
@@ -102,19 +96,19 @@ pub fn is_type_cast_node<'a>(node: &impl GetSpan, f: &Formatter<'_, 'a>) -> Opti
 ///
 /// Returns `Ok(true)` if the node was formatted as a type cast, `Ok(false)` otherwise.
 /// This allows callers to know whether they need to apply their own formatting.
-pub fn format_type_cast_comment_node<'a, T>(
-    node: &(impl Format<'a, T> + GetSpan),
+pub fn format_type_cast_comment_node<'a>(
+    node: &(impl Format<'a, JsFormatContext<'a>> + GetSpan),
     is_object_or_array_expression: bool,
-    f: &mut Formatter<'_, 'a>,
-) -> FormatResult<bool> {
+    f: &mut JsFormatter<'_, 'a>,
+) -> bool {
     // Check if this is a type cast node and get the comments to print
     let Some(type_cast_comments) = is_type_cast_node(node, f) else {
-        return Ok(false);
+        return false;
     };
 
     // Print the type cast comments if any
     if !type_cast_comments.is_empty() {
-        write!(f, [FormatLeadingComments::Comments(type_cast_comments)])?;
+        write!(f, [FormatLeadingComments::Comments(type_cast_comments)]);
     }
 
     let span = node.span();
@@ -122,15 +116,12 @@ pub fn format_type_cast_comment_node<'a, T>(
 
     // https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/print/estree.js#L117-L120
     if is_object_or_array_expression && !f.comments().has_comment_before(span.start) {
-        write!(f, group(&format_args!("(", &format_once(|f| node.fmt(f)), ")")))?;
+        write!(f, group(&format_args!("(", &format_with(|f| node.fmt(f)), ")")));
     } else {
-        write!(
-            f,
-            group(&format_args!("(", soft_block_indent(&format_once(|f| node.fmt(f))), ")"))
-        )?;
+        write!(f, group(&format_args!("(", soft_block_indent(&format_with(|f| node.fmt(f))), ")")));
     }
 
-    Ok(true)
+    true
 }
 
 /// Check if the source text has properly closed parentheses starting with '('.

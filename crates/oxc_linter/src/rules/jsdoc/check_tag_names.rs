@@ -6,7 +6,7 @@ use serde::Deserialize;
 
 use crate::{
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{should_ignore_as_internal, should_ignore_as_private},
 };
 
@@ -14,7 +14,7 @@ fn check_tag_names_diagnostic(span: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Invalid tag name found.").with_help(x1.to_string()).with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct CheckTagNames(Box<CheckTagNamesConfig>);
 
 declare_oxc_lint!(
@@ -81,11 +81,14 @@ declare_oxc_lint!(
     CheckTagNames,
     jsdoc,
     correctness,
+    pending,
     config = CheckTagNamesConfig,
+    version = "0.3.2",
+    short_description = "Reports invalid block tag names.",
 );
 
 #[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct CheckTagNamesConfig {
     /// Additional tag names to allow.
     defined_tags: Vec<String>,
@@ -231,12 +234,8 @@ const OUTSIDE_AMBIENT_INVALID_TAGS_IF_TYPED: [&str; 27] = [
 ];
 
 impl Rule for CheckTagNames {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        value
-            .as_array()
-            .and_then(|arr| arr.first())
-            .and_then(|value| serde_json::from_value(value.clone()).ok())
-            .map_or_else(Self::default, |value| Self(Box::new(value)))
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext) {
@@ -324,37 +323,37 @@ fn test() {
     let pass = vec![
         (
             "
-			          /**
-			           * @param foo (pass: valid name)
-			           */
-			          function quux (foo) {
+                      /**
+                       * @param foo (pass: valid name)
+                       */
+                      function quux (foo) {
 
-			          }
-			      ",
+                      }
+                  ",
             None,
             None,
         ),
         (
             "
-			          /**
-			           * @memberof! foo (pass: valid name)
-			           */
-			          function quux (foo) {
+                      /**
+                       * @memberof! foo (pass: valid name)
+                       */
+                      function quux (foo) {
 
-			          }
-			      ",
+                      }
+                  ",
             None,
             None,
         ),
         (
             "
-			          /**
-			           * @bar foo (pass: invalid name but defined)
-			           */
-			          function quux (foo) {
+                      /**
+                       * @bar foo (pass: invalid name but defined)
+                       */
+                      function quux (foo) {
 
-			          }
-			      ",
+                      }
+                  ",
             Some(serde_json::json!([
               {
                 "definedTags": [
@@ -366,13 +365,13 @@ fn test() {
         ),
         (
             "
-			          /**
-			           * @baz @bar foo (pass: invalid names but defined)
-			           */
-			          function quux (foo) {
+                      /**
+                       * @baz @bar foo (pass: invalid names but defined)
+                       */
+                      function quux (foo) {
 
-			          }
-			      ",
+                      }
+                  ",
             Some(serde_json::json!([
               {
                 "definedTags": [
@@ -384,13 +383,13 @@ fn test() {
         ),
         (
             "
-			          /**
-			           * @baz @bar foo (pass: invalid names but user preferred)
-			           */
-			          function quux (foo) {
+                      /**
+                       * @baz @bar foo (pass: invalid names but user preferred)
+                       */
+                      function quux (foo) {
 
-			          }
-			      ",
+                      }
+                  ",
             None,
             Some(serde_json::json!({
               "settings": { "jsdoc": {
@@ -407,13 +406,13 @@ fn test() {
         ),
         (
             "
-			          /**
-			           * @arg foo (pass: invalid name but user preferred)
-			           */
-			          function quux (foo) {
+                      /**
+                       * @arg foo (pass: invalid name but user preferred)
+                       */
+                      function quux (foo) {
 
-			          }
-			      ",
+                      }
+                  ",
             None,
             Some(serde_json::json!({
               "settings" : { "jsdoc": {
@@ -425,48 +424,48 @@ fn test() {
         ),
         (
             "
-			      /**
-			       * @returns (pass: valid name)
-			       */
-			      function quux (foo) {}
-			      ",
+                  /**
+                   * @returns (pass: valid name)
+                   */
+                  function quux (foo) {}
+                  ",
             None,
             None,
         ),
         ("", None, None),
         (
             "
-			          /**
-			           * (pass: no tag)
-			           */
-			          function quux (foo) {
+                      /**
+                       * (pass: no tag)
+                       */
+                      function quux (foo) {
 
-			          }
-			      ",
+                      }
+                  ",
             None,
             None,
         ),
         (
             "
-			          /**
-			           * @todo (pass: valid name)
-			           */
-			          function quux () {
+                      /**
+                       * @todo (pass: valid name)
+                       */
+                      function quux () {
 
-			          }
-			      ",
+                      }
+                  ",
             None,
             None,
         ),
         (
             "
-			          /**
-			           * @extends Foo (pass: invalid name but user preferred)
-			           */
-			          function quux () {
+                      /**
+                       * @extends Foo (pass: invalid name but user preferred)
+                       */
+                      function quux () {
 
-			          }
-			      ",
+                      }
+                  ",
             None,
             Some(serde_json::json!({
               "settings" : { "jsdoc": {
@@ -481,15 +480,15 @@ fn test() {
         ),
         (
             "
-			          /**
-			           * (Set tag name preference to itself to get aliases to
-			           *   work along with main tag name.)
-			           * @augments Bar
-			           * @extends Foo (pass: invalid name but user preferred)
-			           */
-			          function quux () {
-			          }
-			      ",
+                      /**
+                       * (Set tag name preference to itself to get aliases to
+                       *   work along with main tag name.)
+                       * @augments Bar
+                       * @extends Foo (pass: invalid name but user preferred)
+                       */
+                      function quux () {
+                      }
+                  ",
             None,
             Some(serde_json::json!({
               "settings" : { "jsdoc": {
@@ -501,31 +500,31 @@ fn test() {
         ),
         (
             "
-			      /**
-			       * Registers the `target` class as a transient dependency; each time the dependency is resolved a new instance will be created.
-			       *
-			       * @param target - The class / constructor function to register as transient.
-			       *
-			       * @example ```ts
-			      @transient()
-			      class Foo { }
-			      ```
-			       * @param Time for a new tag (pass: valid names)
-			       */
-			      export function transient<T>(target?: T): T {
-			        // ...
-			      }
-			",
+                  /**
+                   * Registers the `target` class as a transient dependency; each time the dependency is resolved a new instance will be created.
+                   *
+                   * @param target - The class / constructor function to register as transient.
+                   *
+                   * @example ```ts
+                  @transient()
+                  class Foo { }
+                  ```
+                   * @param Time for a new tag (pass: valid names)
+                   */
+                  export function transient<T>(target?: T): T {
+                    // ...
+                  }
+            ",
             None,
             None,
         ),
         (
             "
-			        /** @jsx h */
-			        /** @jsxFrag Fragment */
-			        /** @jsxImportSource preact */
-			        /** @jsxRuntime automatic (pass: valid jsx names)*/
-			      ",
+                    /** @jsx h */
+                    /** @jsxFrag Fragment */
+                    /** @jsxImportSource preact */
+                    /** @jsxRuntime automatic (pass: valid jsx names)*/
+                  ",
             Some(serde_json::json!([
               {
                 "jsxTags": true,
@@ -535,10 +534,10 @@ fn test() {
         ),
         (
             "
-			      /**
-			       * @internal (pass: valid name)
-			       */
-			      ",
+                  /**
+                   * @internal (pass: valid name)
+                   */
+                  ",
             None,
             Some(serde_json::json!({
               "settings" : { "jsdoc": { }},
@@ -546,11 +545,11 @@ fn test() {
         ),
         (
             "
-			        /**
-			         * @overload
-			         * @satisfies (pass: valid names)
-			         */
-			      ",
+                    /**
+                     * @overload
+                     * @satisfies (pass: valid names)
+                     */
+                  ",
             None,
             Some(serde_json::json!({
               "settings" : { "jsdoc": { }},
@@ -558,20 +557,20 @@ fn test() {
         ),
         (
             "
-			        /**
-			         * @module
-			         * A comment related to the module
-			         */
-			      ",
+                    /**
+                     * @module
+                     * A comment related to the module
+                     */
+                  ",
             None,
             None,
         ),
         // Typed
         (
             "
-      			        /** @default 0 */
-      			        let a;
-      			      ",
+                          /** @default 0 */
+                          let a;
+                        ",
             Some(serde_json::json!([
               {
                 "typed": true,
@@ -581,9 +580,9 @@ fn test() {
         ),
         (
             "
-			        /** @template name */
-			        let a;
-			      ",
+                    /** @template name */
+                    let a;
+                  ",
             Some(serde_json::json!([
               {
                 "typed": true,
@@ -593,9 +592,9 @@ fn test() {
         ),
         (
             "
-			        /** @param param - takes information */
-			        function takesOne(param) {}
-			      ",
+                    /** @param param - takes information */
+                    function takesOne(param) {}
+                  ",
             Some(serde_json::json!([
               {
                 "typed": true,
@@ -635,62 +634,83 @@ fn test() {
           None,
           None,
       ),
+      (
+          "
+          /**
+           * @license bcrypt.js (c) 2013 Daniel Wirtz <dcode@dcode.io>
+           * Released under the Apache License, Version 2.0
+           */
+          function quux () { }
+      ",
+          None,
+          None,
+      ),
+      (
+          "
+          /**
+           * @see Uses @vue/shared package
+           */
+          function quux () { }
+      ",
+          None,
+          None,
+      ),
     ];
 
     let fail = vec![
         (
             "
-        			        /** @typoo {string} (fail: invalid name) */
-        			        let a;
-        			      ",
+                            /** @typoo {string} (fail: invalid name) */
+                            let a;
+                          ",
             None,
             None,
         ),
         (
             "
-        			          /**
-        			           * @Param (fail: invalid name)
-        			           */
-        			          function quux () {
+                              /**
+                               * @Param (fail: invalid name)
+                               */
+                              function quux () {
 
-        			          }
-        			      ",
+                              }
+                          ",
             None,
             None,
         ),
         (
             "
-        			          /**
-        			           * @foo (fail: invalid name)
-        			           */
-        			          function quux () {
+                              /**
+                               * @foo (fail: invalid name)
+                               */
+                              function quux () {
 
-        			          }
-        			      ",
+                              }
+                          ",
             None,
             None,
         ),
         (
             "
-        			          /**
-        			           * @arg foo (fail: invalid name, default aliased)
-        			           */
-        			          function quux (foo) {
+                              /**
+                               * @arg foo (fail: invalid name, default aliased)
+                               */
+                              function quux (foo) {
 
-        			          }
-        			      ",
+                              }
+                          ",
             None,
             None,
         ),
         (
             "
-        			          /**
-        			           * @param foo (fail: valid name but user preferred)
-        			           */
-        			          function quux (foo) {
+                              /**
+                               * @param foo (fail: valid name but user preferred)
+                               */
+                              function quux (foo) {
 
-        			          }
-        			      ",
+                              }
+                          ",
             None,
             Some(serde_json::json!({
               "settings" : { "jsdoc": {
@@ -702,13 +722,13 @@ fn test() {
         ),
         (
             "
-        			          /**
-        			           * @constructor foo (fail: invalid name and user preferred)
-        			           */
-        			          function quux (foo) {
+                              /**
+                               * @constructor foo (fail: invalid name and user preferred)
+                               */
+                              function quux (foo) {
 
-        			          }
-        			      ",
+                              }
+                          ",
             None,
             Some(serde_json::json!({
               "settings" : { "jsdoc": {
@@ -720,13 +740,13 @@ fn test() {
         ),
         (
             "
-        			          /**
+                              /**
                                * @arg foo (fail: invalid name and user preferred)
-        			           */
-        			          function quux (foo) {
+                               */
+                              function quux (foo) {
 
-        			          }
-        			      ",
+                              }
+                          ",
             None,
             Some(serde_json::json!({
               "settings" : { "jsdoc": {
@@ -738,13 +758,13 @@ fn test() {
         ),
         (
             "
-        			          /**
-        			           * @param foo (fail: valid name but user preferred)
-        			           */
-        			          function quux (foo) {
+                              /**
+                               * @param foo (fail: valid name but user preferred)
+                               */
+                              function quux (foo) {
 
-        			          }
-        			      ",
+                              }
+                          ",
             None,
             Some(serde_json::json!({
               "settings" : { "jsdoc": {
@@ -756,25 +776,25 @@ fn test() {
         ),
         (
             "
-        			          /**
-        			           * @bar foo (fail: invalid name)
-        			           */
-        			          function quux (foo) {
+                              /**
+                               * @bar foo (fail: invalid name)
+                               */
+                              function quux (foo) {
 
-        			          }
-        			      ",
+                              }
+                          ",
             None,
             None,
         ),
         (
             "
-        			          /**
-        			           * @baz @bar foo (fail: invalid name)
-        			           */
-        			          function quux (foo) {
+                              /**
+                               * @baz @bar foo (fail: invalid name)
+                               */
+                              function quux (foo) {
 
-        			          }
-        			      ",
+                              }
+                          ",
             Some(serde_json::json!([
               {
                 "definedTags": [
@@ -786,14 +806,14 @@ fn test() {
         ),
         (
             "
-        			            /**
-        			             * @bar
-        			             * @baz (fail: invalid name)
-        			             */
-        			            function quux (foo) {
+                                /**
+                                 * @bar
+                                 * @baz (fail: invalid name)
+                                 */
+                                function quux (foo) {
 
-        			            }
-        			        ",
+                                }
+                            ",
             Some(serde_json::json!([
               {
                 "definedTags": [
@@ -805,13 +825,13 @@ fn test() {
         ),
         (
             "
-        			          /**
-        			           * @todo (fail: valid name but blocked)
-        			           */
-        			          function quux () {
+                              /**
+                               * @todo (fail: valid name but blocked)
+                               */
+                              function quux () {
 
-        			          }
-        			      ",
+                              }
+                          ",
             None,
             Some(serde_json::json!({
               "settings" : { "jsdoc": {
@@ -823,13 +843,13 @@ fn test() {
         ),
         (
             "
-        			          /**
-        			           * @todo (fail: valid name but blocked)
-        			           */
-        			          function quux () {
+                              /**
+                               * @todo (fail: valid name but blocked)
+                               */
+                              function quux () {
 
-        			          }
-        			      ",
+                              }
+                          ",
             None,
             Some(serde_json::json!({
               "settings" : { "jsdoc": {
@@ -843,13 +863,13 @@ fn test() {
         ),
         (
             "
-        			          /**
-        			           * @todo (fail: valid name but blocked)
-        			           */
-        			          function quux () {
+                              /**
+                               * @todo (fail: valid name but blocked)
+                               */
+                              function quux () {
 
-        			          }
-        			      ",
+                              }
+                          ",
             None,
             Some(serde_json::json!({
               "settings" : { "jsdoc": {
@@ -864,27 +884,27 @@ fn test() {
         ),
         (
             "
-        			          /**
-        			           * @property {object} a
-        			           * @prop {boolean} b (fail: invalid name, default aliased)
-        			           */
-        			          function quux () {
+                              /**
+                               * @property {object} a
+                               * @prop {boolean} b (fail: invalid name, default aliased)
+                               */
+                              function quux () {
 
-        			          }
-        			      ",
+                              }
+                          ",
             None,
             None,
         ),
         (
             "
-        			          /**
-        			           * @abc foo (fail: invalid name and user preferred)
-        			           * @abcd bar
-        			           */
-        			          function quux () {
+                              /**
+                               * @abc foo (fail: invalid name and user preferred)
+                               * @abcd bar
+                               */
+                              function quux () {
 
-        			          }
-        			      ",
+                              }
+                          ",
             Some(serde_json::json!([
               {
                 "definedTags": [
@@ -902,14 +922,14 @@ fn test() {
         ),
         (
             "
-        			          /**
+                              /**
                                * @abc (fail: invalid name and user preferred)
-        			           * @abcd
-        			           */
-        			          function quux () {
+                               * @abcd
+                               */
+                              function quux () {
 
-        			          }
-        			      ",
+                              }
+                          ",
             None,
             Some(serde_json::json!({
               "settings" : { "jsdoc": {
@@ -921,23 +941,23 @@ fn test() {
         ),
         (
             "
-        			        /** @jsx h */
-        			        /** @jsxFrag Fragment */
-        			        /** @jsxImportSource preact */
-        			        /** @jsxRuntime automatic */
-        			      ",
+                            /** @jsx h */
+                            /** @jsxFrag Fragment */
+                            /** @jsxImportSource preact */
+                            /** @jsxRuntime automatic */
+                          ",
             None,
             None,
         ),
         (
             "
-        			      /**
-        			       * @constructor (fail: invalid name)
-        			       */
-        			      function Test() {
-        			        this.works = false;
-        			      }
-        			      ",
+                          /**
+                           * @constructor (fail: invalid name)
+                           */
+                          function Test() {
+                            this.works = false;
+                          }
+                          ",
             None,
             Some(serde_json::json!({
               "settings" : { "jsdoc": {
@@ -949,13 +969,13 @@ fn test() {
         ),
         (
             "
-        			          /**
-        			           * @todo (fail: valid name but blocked)
-        			           */
-        			          function quux () {
+                              /**
+                               * @todo (fail: valid name but blocked)
+                               */
+                              function quux () {
 
-        			          }
-        			      ",
+                              }
+                          ",
             None,
             Some(serde_json::json!({
               "settings" : { "jsdoc": {
@@ -970,11 +990,11 @@ fn test() {
         // Typed
         (
             "
-			        /**
-			         * @module
-			         * A comment related to the module
-			         */
-			      ",
+                    /**
+                     * @module
+                     * A comment related to the module
+                     */
+                  ",
             Some(serde_json::json!([
               {
                 "typed": true,
@@ -984,7 +1004,7 @@ fn test() {
         ),
         (
             "/** @type {string} */let a;
-        			      ",
+                          ",
             Some(serde_json::json!([
               {
                 "typed": true,
@@ -994,12 +1014,12 @@ fn test() {
         ),
         (
             "
-        			        /**
-        			         * Existing comment.
-        			         *  @type {string}
-        			         */
-        			        let a;
-        			      ",
+                            /**
+                             * Existing comment.
+                             *  @type {string}
+                             */
+                            let a;
+                          ",
             Some(serde_json::json!([
               {
                 "typed": true,
@@ -1009,10 +1029,10 @@ fn test() {
         ),
         (
             "
-        			      /** @typedef {Object} MyObject
-        			       * @property {string} id - my id
-        			       */
-        			      ",
+                          /** @typedef {Object} MyObject
+                           * @property {string} id - my id
+                           */
+                          ",
             Some(serde_json::json!([
               {
                 "typed": true,
@@ -1022,10 +1042,10 @@ fn test() {
         ),
         (
             "
-        			      /**
-        			       * @property {string} id - my id
-        			       */
-        			      ",
+                          /**
+                           * @property {string} id - my id
+                           */
+                          ",
             Some(serde_json::json!([
               {
                 "typed": true,
@@ -1035,8 +1055,8 @@ fn test() {
         ),
         (
             "
-        			      /** @typedef {Object} MyObject */
-        			      ",
+                          /** @typedef {Object} MyObject */
+                          ",
             Some(serde_json::json!([
               {
                 "typed": true,
@@ -1046,9 +1066,9 @@ fn test() {
         ),
         (
             "
-        			      /** @typedef {Object} MyObject
-        			       */
-        			      ",
+                          /** @typedef {Object} MyObject
+                           */
+                          ",
             Some(serde_json::json!([
               {
                 "typed": true,
@@ -1058,9 +1078,9 @@ fn test() {
         ),
         (
             "
-        			        /** @abstract */
-        			        let a;
-        			      ",
+                            /** @abstract */
+                            let a;
+                          ",
             Some(serde_json::json!([
               {
                 "typed": true,
@@ -1070,11 +1090,11 @@ fn test() {
         ),
         (
             "
-        			        const a = {
-        			          /** @abstract */
-        			          b: true,
-        			        };
-        			      ",
+                            const a = {
+                              /** @abstract */
+                              b: true,
+                            };
+                          ",
             Some(serde_json::json!([
               {
                 "typed": true,
@@ -1084,9 +1104,9 @@ fn test() {
         ),
         (
             "
-        			        /** @template */
-        			        let a;
-        			      ",
+                            /** @template */
+                            let a;
+                          ",
             Some(serde_json::json!([
               {
                 "typed": true,
@@ -1096,13 +1116,13 @@ fn test() {
         ),
         (
             "
-        			        /**
-        			         * Prior description.
-        			         *
-        			         * @template
-        			         */
-        			        let a;
-        			      ",
+                            /**
+                             * Prior description.
+                             *
+                             * @template
+                             */
+                            let a;
+                          ",
             Some(serde_json::json!([
               {
                 "typed": true,
@@ -1115,9 +1135,9 @@ fn test() {
     let dts_pass: Vec<(&'static str, Option<serde_json::Value>, Option<serde_json::Value>)> = vec![
         (
             "
-        			        /** @default 0 */
-        			        declare let a;
-        			      ",
+                            /** @default 0 */
+                            declare let a;
+                          ",
             Some(serde_json::json!([
               {
                 "typed": true,
@@ -1127,9 +1147,9 @@ fn test() {
         ),
         (
             "
-        			        /** @abstract */
-        			        let a;
-        			      ",
+                            /** @abstract */
+                            let a;
+                          ",
             Some(serde_json::json!([
               {
                 "typed": true,
@@ -1139,9 +1159,9 @@ fn test() {
         ),
         (
             "
-        			        /** @abstract */
-        			        declare let a;
-        			      ",
+                            /** @abstract */
+                            declare let a;
+                          ",
             Some(serde_json::json!([
               {
                 "typed": true,
@@ -1151,9 +1171,9 @@ fn test() {
         ),
         (
             "
-        			        /** @abstract */
-        			        { declare let a; }
-        			      ",
+                            /** @abstract */
+                            declare namespace b { let a; }
+                          ",
             Some(serde_json::json!([
               {
                 "typed": true,
@@ -1163,11 +1183,11 @@ fn test() {
         ),
         (
             "
-        			        function test() {
-        			          /** @abstract */
-        			          declare let a;
-        			        }
-        			      ",
+                            declare namespace test {
+                              /** @abstract */
+                              let a;
+                            }
+                          ",
             Some(serde_json::json!([
               {
                 "typed": true,
@@ -1179,9 +1199,9 @@ fn test() {
     let dts_fail: Vec<(&'static str, Option<serde_json::Value>, Option<serde_json::Value>)> =
         vec![(
             "
-        			        /** @typoo {string} (fail: invalid name) */
-        			        let a;
-        			      ",
+                            /** @typoo {string} (fail: invalid name) */
+                            let a;
+                          ",
             None,
             None,
         )];

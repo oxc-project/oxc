@@ -4,7 +4,8 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
 use schemars::JsonSchema;
 
 use crate::{
@@ -71,7 +72,7 @@ fn input_type_image(span: Span) -> OxcDiagnostic {
 pub struct AltText(Box<AltTextConfig>);
 
 #[derive(Debug, Clone, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct AltTextConfig {
     /// Custom components to check for alt text on `img` elements.
     img: Option<Vec<CompactStr>>,
@@ -101,6 +102,26 @@ impl std::default::Default for AltTextConfig {
             input_type_image: Some(vec![]),
         }
     }
+}
+#[derive(Debug, Default, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+#[expect(unused)]
+struct AltTextConfigSchema {
+    #[serde(flatten)]
+    base: AltTextConfig,
+    /// Custom components to check for alt text on any of the supported elements.
+    elements: Option<Vec<AltTextElements>>,
+}
+
+#[derive(Debug, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+#[expect(unused)]
+enum AltTextElements {
+    Img,
+    Object,
+    Area,
+    #[serde(rename = "input[type=\"image\"]")]
+    InputTypeImage,
 }
 
 declare_oxc_lint!(
@@ -136,11 +157,13 @@ declare_oxc_lint!(
     AltText,
     jsx_a11y,
     correctness,
-    config = AltTextConfig,
+    config = AltTextConfigSchema,
+    version = "0.0.16",
+    short_description = "Enforce that all elements that require alternative text have meaningful information to relay back to the end user.",
 );
 
 impl Rule for AltText {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let mut alt_text = AltTextConfig::default();
         if let Some(config) = value.get(0) {
             if let Some(elements) = config.get("elements").and_then(|v| v.as_array()) {
@@ -171,7 +194,7 @@ impl Rule for AltText {
             }
         }
 
-        Self(Box::new(alt_text))
+        Ok(Self(Box::new(alt_text)))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -532,7 +555,5 @@ fn test() {
         (r#"<Input type="image" />"#, None, None),
     ];
 
-    Tester::new(AltText::NAME, AltText::PLUGIN, pass, fail)
-        .with_jsx_a11y_plugin(true)
-        .test_and_snapshot();
+    Tester::new(AltText::NAME, AltText::PLUGIN, pass, fail).test_and_snapshot();
 }

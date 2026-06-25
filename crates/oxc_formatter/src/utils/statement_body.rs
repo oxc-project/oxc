@@ -3,17 +3,15 @@ use oxc_span::GetSpan;
 
 use crate::{
     ast_nodes::{AstNode, AstNodes},
-    format_args,
     formatter::{
-        Buffer, Format, FormatResult, Formatter,
-        prelude::{
-            format_once, group, indent, soft_line_break_or_space, soft_line_indent_or_space, space,
-        },
-        trivia::FormatTrailingComments,
+        Buffer, Format, JsFormatContext, JsFormatter,
+        prelude::{format_once, soft_line_indent_or_space, space},
+        trivia::{FormatTrailingComments, format_leading_comments},
     },
+    print::FormatWrite,
     utils::format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
+    utils::suppressed::FormatSuppressedNode,
     write,
-    write::FormatWrite,
 };
 
 pub struct FormatStatementBody<'a, 'b> {
@@ -34,17 +32,27 @@ impl<'a, 'b> FormatStatementBody<'a, 'b> {
     }
 }
 
-impl<'a> Format<'a> for FormatStatementBody<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatStatementBody<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         if let AstNodes::EmptyStatement(empty) = self.body.as_ast_nodes() {
-            write!(f, empty)
+            // Add space before empty statement if it has leading comments
+            // e.g., `for (x of y) /*comment*/ ;`
+            let has_leading_comments = f.context().comments().has_comment_before(empty.span.start);
+            if has_leading_comments {
+                write!(f, [space()]);
+            }
+            write!(f, empty);
         } else if let AstNodes::BlockStatement(block) = self.body.as_ast_nodes() {
             write!(f, [space()]);
-            // Use `write` instead of `format` to avoid printing leading comments of the block.
-            // Those comments should be printed inside the block statement.
-            block.write(f)
+            if matches!(self.body.parent(), AstNodes::IfStatement(_)) {
+                write!(f, [block]);
+            } else {
+                // Use `write` instead of `format` to avoid printing leading comments of the block.
+                // Those comments should be printed inside the block statement.
+                block.write(f);
+            }
         } else if self.force_space {
-            write!(f, [space(), self.body])
+            write!(f, [space(), self.body]);
         } else {
             write!(
                 f,
@@ -60,20 +68,25 @@ impl<'a> Format<'a> for FormatStatementBody<'a, '_> {
 
                     let body_span = self.body.span();
                     let is_consequent_of_if_statement_parent = matches!(
-                        self.body.parent,
+                        self.body.parent(),
                         AstNodes::IfStatement(if_stmt)
                         if if_stmt.consequent.span() == body_span && if_stmt.alternate.is_some()
                     );
                     if is_consequent_of_if_statement_parent {
-                        write!(f, FormatNodeWithoutTrailingComments(self.body))?;
+                        if f.context().comments().has_trailing_suppression_comment(body_span.end) {
+                            write!(f, format_leading_comments(body_span));
+                            write!(f, FormatSuppressedNode(body_span));
+                        } else {
+                            write!(f, FormatNodeWithoutTrailingComments(self.body));
+                        }
                         let comments =
                             f.context().comments().end_of_line_comments_after(body_span.end);
-                        FormatTrailingComments::Comments(comments).fmt(f)
+                        FormatTrailingComments::Comments(comments).fmt(f);
                     } else {
-                        write!(f, self.body)
+                        write!(f, self.body);
                     }
                 }))]
-            )
+            );
         }
     }
 }

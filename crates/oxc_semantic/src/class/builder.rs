@@ -8,7 +8,7 @@ use oxc_ast::{
 use oxc_span::GetSpan;
 use oxc_syntax::class::{ClassId, ElementKind};
 
-use crate::{AstNodes, NodeId};
+use crate::NodeId;
 
 use super::{
     ClassTable,
@@ -17,27 +17,26 @@ use super::{
 
 #[derive(Debug, Default)]
 pub struct ClassTableBuilder<'a> {
+    pub enabled: bool,
     pub current_class_id: Option<ClassId>,
     pub classes: ClassTable<'a>,
 }
 
 impl<'a> ClassTableBuilder<'a> {
     pub fn new() -> Self {
-        Self { current_class_id: None, classes: ClassTable::default() }
+        Self { enabled: false, current_class_id: None, classes: ClassTable::default() }
     }
 
     pub fn build(self) -> ClassTable<'a> {
         self.classes
     }
 
-    pub fn declare_class_body(
-        &mut self,
-        class: &ClassBody<'a>,
-        current_node_id: NodeId,
-        nodes: &AstNodes,
-    ) {
-        let parent_id = nodes.parent_id(current_node_id);
-        self.current_class_id = Some(self.classes.declare_class(self.current_class_id, parent_id));
+    pub fn declare_class_body(&mut self, class: &ClassBody<'a>, parent_node_id: NodeId) {
+        if !self.enabled {
+            return;
+        }
+        self.current_class_id =
+            Some(self.classes.declare_class(self.current_class_id, parent_node_id));
 
         for element in &class.body {
             match element {
@@ -99,16 +98,17 @@ impl<'a> ClassTableBuilder<'a> {
         &mut self,
         ident: &PrivateIdentifier<'a>,
         current_node_id: NodeId,
-        nodes: &AstNodes,
+        parent_kind: AstKind<'a>,
     ) {
-        let parent_kind = nodes.parent_kind(current_node_id);
-
+        if !self.enabled {
+            return;
+        }
         if (matches!(parent_kind, AstKind::PrivateInExpression(_))
             || parent_kind.is_member_expression_kind())
             && let Some(class_id) = self.current_class_id
         {
             let element_ids =
-                self.classes.get_element_ids(class_id, &ident.name, /* is_private */ true);
+                self.classes.get_element_ids(class_id, ident.name, /* is_private */ true);
 
             let reference = PrivateIdentifierReference::new(
                 current_node_id,
@@ -152,6 +152,9 @@ impl<'a> ClassTableBuilder<'a> {
     }
 
     pub fn pop_class(&mut self) {
+        if !self.enabled {
+            return;
+        }
         self.current_class_id = self
             .current_class_id
             .and_then(|current_class_id| self.classes.parent_ids.get(&current_class_id).copied());

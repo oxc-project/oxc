@@ -1,3 +1,7 @@
+use schemars::JsonSchema;
+use serde::Deserialize;
+use serde_json::Value;
+
 use oxc_ast::{
     AstKind,
     ast::{Argument, ArrayExpressionElement, Expression},
@@ -5,11 +9,14 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use schemars::JsonSchema;
-use serde::Deserialize;
-use serde_json::Value;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    ast_util::leftmost_identifier_reference,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+    utils::is_import_symbol,
+};
 
 fn no_array_sort_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use `Array#toSorted()` instead of `Array#sort()`.")
@@ -18,7 +25,7 @@ fn no_array_sort_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoArraySort {
     /// When set to `true` (default), allows `array.sort()` as an expression statement.
     /// Set to `false` to forbid `Array#sort()` even if it's an expression statement.
@@ -62,17 +69,13 @@ declare_oxc_lint!(
     suspicious,
     fix,
     config = NoArraySort,
+    version = "1.15.0",
+    short_description = "Prefer using `Array#toSorted()` over `Array#sort()`.",
 );
 
 impl Rule for NoArraySort {
-    fn from_configuration(value: Value) -> Self {
-        Self {
-            allow_expression_statement: value
-                .get(0)
-                .and_then(|v| v.get("allowExpressionStatement"))
-                .and_then(Value::as_bool)
-                .unwrap_or(true),
-        }
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -90,6 +93,16 @@ impl Rule for NoArraySort {
         {
             return;
         }
+        // Skip calls whose single argument is incompatible with
+        // `Array.prototype.sort(compareFn?)`. The legitimate signature accepts
+        // either zero arguments or a function-shaped value. Object, string,
+        // numeric, template-literal, and array-literal arguments cannot be
+        // valid `compareFn`s, so they almost always indicate a non-array
+        // receiver (e.g. a query-builder API like Mongoose's
+        // `Model.find().sort({ field: 1 })`). See issue #22487.
+        if call_expr.arguments.len() == 1 && is_non_compare_fn_argument(&call_expr.arguments[0]) {
+            return;
+        }
         let Some(member_expr) = call_expr.callee.get_member_expr() else {
             return;
         };
@@ -97,6 +110,11 @@ impl Rule for NoArraySort {
             return;
         };
         if static_property_name != "sort" {
+            return;
+        }
+        if leftmost_identifier_reference(member_expr.object())
+            .is_ok_and(|ident| is_import_symbol(ident, "effect", "Chunk", ctx))
+        {
             return;
         }
 
@@ -129,15 +147,40 @@ impl Rule for NoArraySort {
     }
 }
 
+/// Returns `true` when `arg` cannot be a valid `compareFn` for
+/// `Array.prototype.sort`. Used to filter out query-builder style calls such
+/// as Mongoose's `Model.find().sort({ field: 1 })` or
+/// `query.sort("-createdAt")` which are not `Array#sort` despite the shared
+/// method name.
+fn is_non_compare_fn_argument(arg: &Argument<'_>) -> bool {
+    let Some(expr) = arg.as_expression().map(Expression::without_parentheses) else {
+        return false;
+    };
+
+    match expr {
+        Expression::ObjectExpression(_)
+        | Expression::StringLiteral(_)
+        | Expression::TemplateLiteral(_)
+        | Expression::NumericLiteral(_)
+        | Expression::ArrayExpression(_) => true,
+        // `query.sort(-1)` / `query.sort(+1)` — unary on a numeric literal.
+        Expression::UnaryExpression(unary) => {
+            unary.operator.is_arithmetic()
+                && unary.argument.without_parentheses().is_number_literal()
+        }
+        _ => false,
+    }
+}
+
 #[test]
 fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        ("sorted = [...array].toSorted()", None),
-        ("sorted = array.toSorted()", None),
-        ("sorted = [...array].sort", None),
-        ("sorted = [...array].sort?.()", None),
+        ("sorted =[...array].toSorted()", None),
+        ("sorted =array.toSorted()", None),
+        ("sorted =[...array].sort", None),
+        ("sorted =[...array].sort?.()", None),
         ("array.sort()", None),
         ("array.sort?.()", None),
         ("array?.sort()", None),
@@ -145,6 +188,26 @@ fn test() {
         ("sorted = array.sort(...[])", None),
         ("sorted = array.sort(...[compareFn])", None),
         ("sorted = array.sort(compareFn, extraArgument)", None),
+        (r#"import { Chunk } from "effect"; const sorted = Chunk.sort(compareFn)"#, None),
+        (r#"import { Chunk as C } from "effect"; const sorted = C.sort(compareFn)"#, None),
+        ("sorted = collection.sort({field: 1})", None),
+        (r#"sorted = query.sort("field")"#, None),
+        ("sorted = query.sort(1)", None),
+        ("sorted = query.sort(-1)", None),
+        ("sorted = query.sort(+1)", None),
+        ("sorted = query.sort(`field`)", None),
+        ("sorted = query.sort([criteria])", None),
+        ("const docs = collection.find({id}).sort({expireAt: -1}).limit(1).toArray()", None),
+        ("[...array].sort({field: 1})", None),
+        (
+            "collection.sort({field: 1})",
+            Some(serde_json::json!([{ "allowExpressionStatement": false }])),
+        ),
+        ("User.find().sort({ createdAt: -1 })", None),
+        (r#"User.find().sort("-createdAt")"#, None),
+        (r#"Post.find({ published: true }).sort({ updatedAt: "desc" })"#, None),
+        ("sorted = collection.sort(({field: 1}))", None),
+        (r#"sorted = query.sort(("field"))"#, None),
     ];
 
     let fail = vec![
@@ -156,9 +219,9 @@ fn test() {
         ("sorted = [...array]?.sort(compareFn)", None),
         ("sorted = array.sort(compareFn)", None),
         ("sorted = array?.sort(compareFn)", None),
-        ("array.sort()", Some(serde_json::json!([{"allowExpressionStatement": false}]))),
-        ("array?.sort()", Some(serde_json::json!([{"allowExpressionStatement": false}]))),
-        ("[...array].sort()", Some(serde_json::json!([{"allowExpressionStatement": false}]))),
+        ("array.sort()", Some(serde_json::json!([{ "allowExpressionStatement": false }]))),
+        ("array?.sort()", Some(serde_json::json!([{ "allowExpressionStatement": false }]))),
+        ("[...array].sort()", Some(serde_json::json!([{ "allowExpressionStatement": false }]))),
         ("sorted = [...(0, array)].sort()", None),
     ];
 
@@ -168,7 +231,7 @@ fn test() {
         (
             "a.sort()",
             "a.toSorted()",
-            Some(serde_json::json!([{"allowExpressionStatement": false}])),
+            Some(serde_json::json!([{ "allowExpressionStatement": false }])),
         ),
         ("sorted = array?.sort()", "sorted = array?.toSorted()", None),
     ];

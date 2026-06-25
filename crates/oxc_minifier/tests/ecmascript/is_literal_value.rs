@@ -1,6 +1,6 @@
 use std::iter;
 
-use javascript_globals::GLOBALS;
+use javascript_globals::GLOBALS_BUILTIN;
 
 use rustc_hash::FxHashSet;
 
@@ -17,7 +17,7 @@ struct Ctx {
 impl Default for Ctx {
     fn default() -> Self {
         Self {
-            global_variable_names: GLOBALS["builtin"]
+            global_variable_names: GLOBALS_BUILTIN
                 .keys()
                 .copied()
                 .chain(iter::once("arguments"))
@@ -69,7 +69,7 @@ fn test_with_ctx_and_functions_option(
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
     assert!(!ret.panicked, "{source_text}");
-    assert!(ret.errors.is_empty(), "{source_text}");
+    assert!(ret.diagnostics.is_empty(), "{source_text}");
 
     let Some(Statement::ExpressionStatement(stmt)) = &ret.program.body.first() else {
         panic!("should have a expression statement body: {source_text}");

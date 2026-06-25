@@ -1,35 +1,40 @@
-import { DATA_POINTER_POS_32, SOURCE_LEN_OFFSET } from '../generated/constants.js';
+import {
+  DATA_POINTER_POS_32,
+  SOURCE_START_OFFSET,
+  SOURCE_LEN_OFFSET,
+  IS_JSX_FLAG_POS,
+  IS_TS_FLAG_POS,
+} from "../generated/constants.ts";
 
 // We use the deserializer which removes `ParenthesizedExpression`s from AST,
 // and with `range`, `loc`, and `parent` properties on AST nodes, to match ESLint
-// @ts-expect-error we need to generate `.d.ts` file for this module
-import { deserializeProgramOnly, resetBuffer } from '../../dist/generated/deserialize.js';
+import { deserializeProgramOnly, resetBuffer } from "../generated/deserialize.js";
 
-import visitorKeys from '../generated/keys.js';
-import * as commentMethods from './comments.js';
-import {
-  getLineColumnFromOffset,
-  getNodeLoc,
-  getOffsetFromLineColumn,
-  initLines,
-  lines,
-  resetLines,
-} from './location.js';
-import { resetScopeManager, SCOPE_MANAGER } from './scope.js';
-import * as scopeMethods from './scope.js';
-import * as tokenMethods from './tokens.js';
+import visitorKeys from "../generated/keys.ts";
+import { resetComments } from "./comments.ts";
+import * as commentMethods from "./comments_methods.ts";
+import { ecmaVersion } from "./context.ts";
+import * as directiveMethods from "./directives.ts";
+import * as locationMethods from "./location.ts";
+import { initLines, lines, lineStartIndices, resetLinesAndLocs } from "./location.ts";
+import { resetScopeManager, SCOPE_MANAGER } from "./scope.ts";
+import * as scopeMethods from "./scope.ts";
+import { resetTokens } from "./tokens.ts";
+import * as tokenMethods from "./tokens_methods.ts";
+import { getTokensAndComments, resetTokensAndComments } from "./tokens_and_comments.ts";
+import { debugAssertIsNonNull } from "../utils/asserts.ts";
 
-import type { Program } from '../generated/types.d.ts';
-import type { BufferWithArrays, Node, NodeOrToken, Ranged } from './types.ts';
-import type { ScopeManager } from './scope.ts';
+import type { Program } from "../generated/types.d.ts";
+import type { Comment } from "./comments.ts";
+import type { Ranged } from "./location.ts";
+import type { ScopeManager } from "./scope.ts";
+import type { Token } from "./tokens.ts";
+import type { BufferWithArrays, Node } from "./types.ts";
 
-const { max } = Math;
-
-// Text decoder, for decoding source text from buffer
-const textDecoder = new TextDecoder('utf-8', { ignoreBOM: true });
+const { utf8Slice } = Buffer.prototype;
 
 // Buffer containing AST. Set before linting a file by `setupSourceForFile`.
-let buffer: BufferWithArrays | null = null;
+export let buffer: BufferWithArrays | null = null;
 
 // Indicates if the original source text has a BOM. Set before linting a file by `setupSourceForFile`.
 let hasBOM = false;
@@ -37,36 +42,37 @@ let hasBOM = false;
 // Lazily populated when `SOURCE_CODE.text` or `SOURCE_CODE.ast` is accessed,
 // or `initAst()` is called before the AST is walked.
 export let sourceText: string | null = null;
+let sourceStartPos: number = 0;
 let sourceByteLen: number = 0;
 export let ast: Program | null = null;
-
-// Parser services object. Set before linting a file by `setupSourceForFile`.
-let parserServices: Record<string, unknown> | null = null;
 
 /**
  * Set up source for the file about to be linted.
  * @param bufferInput - Buffer containing AST
  * @param hasBOMInput - `true` if file's original source text has Unicode BOM
- * @param parserServicesInput - Parser services object for the file
  */
-export function setupSourceForFile(
-  bufferInput: BufferWithArrays,
-  hasBOMInput: boolean,
-  parserServicesInput: Record<string, unknown>,
-): void {
+export function setupSourceForFile(bufferInput: BufferWithArrays, hasBOMInput: boolean): void {
   buffer = bufferInput;
   hasBOM = hasBOMInput;
-  parserServices = parserServicesInput;
 }
 
 /**
  * Decode source text from buffer.
  */
 export function initSourceText(): void {
-  const { uint32 } = buffer,
-    programPos = uint32[DATA_POINTER_POS_32];
-  sourceByteLen = uint32[(programPos + SOURCE_LEN_OFFSET) >> 2];
-  sourceText = textDecoder.decode(buffer.subarray(0, sourceByteLen));
+  debugAssertIsNonNull(buffer);
+  const { int32 } = buffer,
+    programPos = int32[DATA_POINTER_POS_32];
+  sourceStartPos = int32[(programPos + SOURCE_START_OFFSET) >> 2];
+  sourceByteLen = int32[(programPos + SOURCE_LEN_OFFSET) >> 2];
+
+  // This will throw an error "Cannot create a string longer than 0x1fffffe8 characters"
+  // if `sourceByteLen > (2 ** 29 - 24)` (slightly less than 512 MiB).
+  // This is a useful invariant as it means source text offsets, number of lines, and number of tokens are limited
+  // in range so they're always valid SMIs.
+  // This makes it safe to use `>>` for division on these numbers without risking turning them into negative numbers.
+  // So we can use the cheaper `>>` operator instead of `>>>` in various places.
+  sourceText = utf8Slice.call(buffer, sourceStartPos, sourceStartPos + sourceByteLen);
 }
 
 /**
@@ -74,7 +80,52 @@ export function initSourceText(): void {
  */
 export function initAst(): void {
   if (sourceText === null) initSourceText();
-  ast = deserializeProgramOnly(buffer, sourceText, sourceByteLen, getNodeLoc);
+  debugAssertIsNonNull(sourceText);
+  debugAssertIsNonNull(buffer);
+
+  ast = deserializeProgramOnly(buffer, sourceText, sourceStartPos, sourceByteLen);
+
+  // In conformance tests, fix AST when parsing as ES3
+  if (CONFORMANCE) fixES3Ast();
+
+  debugAssertIsNonNull(ast);
+}
+
+/**
+ * Fix AST for conformance tests.
+ *
+ * Oxc parser always parses as latest ECMAScript version.
+ * Some conformance tests request parsing with `ecmaVersion: 3`, and expect directives to be parsed as string literals.
+ * When using ES3, traverse the AST and remove the `directive` property from `ExpressionStatement`s.
+ *
+ * This function is only called in conformance tests. In standard builds, minifier removes this function entirely.
+ */
+function fixES3Ast(): void {
+  if (!CONFORMANCE) throw new Error("Should be unreachable outside of conformance tests");
+
+  debugAssertIsNonNull(ast);
+  if (ecmaVersion === 3) fixES3NodesArray(ast.body);
+}
+
+function fixES3NodesArray(nodes: any[]): void {
+  for (const node of nodes) {
+    if (node !== null) fixES3Node(node);
+  }
+}
+
+function fixES3Node(node: any): void {
+  if (node.type === "ExpressionStatement") node.directive = null;
+
+  for (const key in node) {
+    if (key === "parent" || key === "range" || key === "loc") continue;
+
+    const child = node[key];
+    if (Array.isArray(child)) {
+      fixES3NodesArray(child);
+    } else if (typeof child === "object" && child !== null) {
+      fixES3Node(child);
+    }
+  }
 }
 
 /**
@@ -91,10 +142,32 @@ export function resetSourceAndAst(): void {
   buffer = null;
   sourceText = null;
   ast = null;
-  parserServices = null;
   resetBuffer();
-  resetLines();
+  resetLinesAndLocs();
   resetScopeManager();
+  resetTokens();
+  resetComments();
+  resetTokensAndComments();
+}
+
+/**
+ * Get whether file is JSX.
+ * @returns `true` if file is JSX, `false` if not
+ */
+export function fileIsJsx(): boolean {
+  debugAssertIsNonNull(buffer);
+  // Flag is `bool` in Rust, so 0 = false, 1 = true
+  return buffer[IS_JSX_FLAG_POS] === 1;
+}
+
+/**
+ * Get whether file is TypeScript.
+ * @returns `true` if file is TypeScript, `false` if not
+ */
+export function fileIsTs(): boolean {
+  debugAssertIsNonNull(buffer);
+  // Flag is `bool` in Rust, so 0 = false, 1 = true
+  return buffer[IS_TS_FLAG_POS] === 1;
 }
 
 // `SourceCode` object.
@@ -108,42 +181,81 @@ export function resetSourceAndAst(): void {
 //
 // Freeze the object to prevent user mutating it.
 export const SOURCE_CODE = Object.freeze({
-  // Get source text.
+  /**
+   * Source text.
+   */
   get text(): string {
     if (sourceText === null) initSourceText();
+    debugAssertIsNonNull(sourceText);
     return sourceText;
   },
 
-  // `true` if source text has Unicode BOM.
+  /**
+   * `true` if file has Unicode BOM.
+   */
   get hasBOM(): boolean {
     return hasBOM;
   },
 
-  // Get AST of the file.
+  /**
+   * AST of the file.
+   */
   get ast(): Program {
     if (ast === null) initAst();
+    debugAssertIsNonNull(ast);
     return ast;
   },
 
-  // Get `ScopeManager` for the file.
+  /**
+   * `true` if the AST is in ESTree format.
+   */
+  // This property is present in ESLint's `SourceCode`, but is undocumented
+  isESTree: true,
+
+  /**
+   * `ScopeManager` for the file.
+   */
   get scopeManager(): ScopeManager {
     return SCOPE_MANAGER;
   },
 
-  // Get visitor keys to traverse this AST.
-  get visitorKeys(): Record<string, string[]> {
+  /**
+   * Visitor keys to traverse this AST.
+   */
+  get visitorKeys(): Readonly<Record<string, readonly string[]>> {
     return visitorKeys;
   },
 
-  // Get parser services for the file.
-  get parserServices(): Record<string, unknown> {
-    return parserServices;
-  },
+  /**
+   * Parser services for the file.
+   *
+   * Oxlint does not offer any parser services.
+   */
+  parserServices: Object.freeze({} as Record<string, unknown>),
 
-  // Get source text as array of lines, split according to specification's definition of line breaks.
+  /**
+   * Source text as array of lines, split according to specification's definition of line breaks.
+   */
   get lines(): string[] {
     if (lines.length === 0) initLines();
     return lines;
+  },
+
+  /**
+   * Character offset of the first character of each line in source text,
+   * split according to specification's definition of line breaks.
+   */
+  get lineStartIndices(): number[] {
+    if (lines.length === 0) initLines();
+    return lineStartIndices;
+  },
+
+  /**
+   * Array of all tokens and comments in the file, in source order.
+   */
+  // This property is present in ESLint's `SourceCode`, but is undocumented
+  get tokensAndComments(): (Token | Comment)[] {
+    return getTokensAndComments();
   },
 
   /**
@@ -153,12 +265,9 @@ export const SOURCE_CODE = Object.freeze({
    * @param afterCount? - The number of characters after the node to retrieve.
    * @returns Source text representing the AST node.
    */
-  getText(
-    node?: Ranged | null | undefined,
-    beforeCount?: number | null | undefined,
-    afterCount?: number | null | undefined,
-  ): string {
+  getText(node?: Ranged | null, beforeCount?: number | null, afterCount?: number | null): string {
     if (sourceText === null) initSourceText();
+    debugAssertIsNonNull(sourceText);
 
     // ESLint treats all falsy values for `node` as undefined
     if (!node) return sourceText;
@@ -167,7 +276,7 @@ export const SOURCE_CODE = Object.freeze({
     const { range } = node;
     let start = range[0],
       end = range[1];
-    if (beforeCount) start = max(start - beforeCount, 0);
+    if (beforeCount) start = Math.max(start - beforeCount, 0);
     if (afterCount) end += afterCount;
     return sourceText.slice(start, end);
   },
@@ -182,7 +291,7 @@ export const SOURCE_CODE = Object.freeze({
     const ancestors = [];
 
     while (true) {
-      // @ts-expect-error `parent` property should be present on `Node` type
+      // @ts-expect-error - TODO: `parent` property should be present on `Node` type
       node = node.parent;
       if (node === null) break;
       ancestors.push(node);
@@ -192,31 +301,19 @@ export const SOURCE_CODE = Object.freeze({
   },
 
   /**
-   * Determine if two nodes or tokens have at least one whitespace character between them.
-   * Order does not matter. Returns `false` if the given nodes or tokens overlap.
-   * @param nodeOrToken1 - The first node or token to check between.
-   * @param nodeOrToken2 - The second node or token to check between.
-   * @returns `true` if there is a whitespace character between
-   *   any of the tokens found between the two given nodes or tokens.
+   * Get source text as array of lines, split according to specification's definition of line breaks.
    */
-  // oxlint-disable-next-line no-unused-vars
-  isSpaceBetween(nodeOrToken1: NodeOrToken, nodeOrToken2: NodeOrToken): boolean {
-    throw new Error('`sourceCode.isSpaceBetween` not implemented yet'); // TODO
-  },
-
-  /**
-   * Get the deepest node containing a range index.
-   * @param index Range index of the desired node.
-   * @returns The node if found, or `null` if not found.
-   */
-  // oxlint-disable-next-line no-unused-vars
-  getNodeByRangeIndex(index: number): Node | null {
-    throw new Error('`sourceCode.getNodeByRangeIndex` not implemented yet'); // TODO
+  getLines(): string[] {
+    if (lines.length === 0) initLines();
+    return lines;
   },
 
   // Location methods
-  getLocFromIndex: getLineColumnFromOffset,
-  getIndexFromLoc: getOffsetFromLineColumn,
+  getRange: locationMethods.getRange,
+  getLoc: locationMethods.getLoc,
+  getNodeByRangeIndex: locationMethods.getNodeByRangeIndex,
+  getLocFromIndex: locationMethods.getLineColumnFromOffset,
+  getIndexFromLoc: locationMethods.getOffsetFromLineColumn,
 
   // Comment methods
   getAllComments: commentMethods.getAllComments,
@@ -224,11 +321,13 @@ export const SOURCE_CODE = Object.freeze({
   getCommentsAfter: commentMethods.getCommentsAfter,
   getCommentsInside: commentMethods.getCommentsInside,
   commentsExistBetween: commentMethods.commentsExistBetween,
+  getJSDocComment: commentMethods.getJSDocComment,
 
   // Scope methods
   isGlobalReference: scopeMethods.isGlobalReference,
   getDeclaredVariables: scopeMethods.getDeclaredVariables,
   getScope: scopeMethods.getScope,
+  markVariableAsUsed: scopeMethods.markVariableAsUsed,
 
   // Token methods
   getTokens: tokenMethods.getTokens,
@@ -237,8 +336,10 @@ export const SOURCE_CODE = Object.freeze({
   getLastToken: tokenMethods.getLastToken,
   getLastTokens: tokenMethods.getLastTokens,
   getTokenBefore: tokenMethods.getTokenBefore,
+  getTokenOrCommentBefore: tokenMethods.getTokenOrCommentBefore,
   getTokensBefore: tokenMethods.getTokensBefore,
   getTokenAfter: tokenMethods.getTokenAfter,
+  getTokenOrCommentAfter: tokenMethods.getTokenOrCommentAfter,
   getTokensAfter: tokenMethods.getTokensAfter,
   getTokensBetween: tokenMethods.getTokensBetween,
   getFirstTokenBetween: tokenMethods.getFirstTokenBetween,
@@ -246,6 +347,11 @@ export const SOURCE_CODE = Object.freeze({
   getLastTokenBetween: tokenMethods.getLastTokenBetween,
   getLastTokensBetween: tokenMethods.getLastTokensBetween,
   getTokenByRangeStart: tokenMethods.getTokenByRangeStart,
+  isSpaceBetween: tokenMethods.isSpaceBetween,
+  isSpaceBetweenTokens: tokenMethods.isSpaceBetweenTokens,
+
+  // Directive methods
+  getDisableDirectives: directiveMethods.getDisableDirectives,
 });
 
 export type SourceCode = typeof SOURCE_CODE;

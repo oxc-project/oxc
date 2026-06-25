@@ -20,7 +20,7 @@ pub struct NoStyledJsxInDocument;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Prevent usage of styled-jsx in pages/_document.js.
+    /// Prevent usage of styled-jsx in `pages/_document.js`.
     ///
     /// ### Why is this bad?
     ///
@@ -75,6 +75,8 @@ declare_oxc_lint!(
     NoStyledJsxInDocument,
     nextjs,
     correctness,
+    version = "0.3.3",
+    short_description = "Prevent usage of styled-jsx in `pages/_document.js`.",
 );
 
 impl Rule for NoStyledJsxInDocument {

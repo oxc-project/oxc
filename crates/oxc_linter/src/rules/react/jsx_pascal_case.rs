@@ -2,10 +2,16 @@ use fast_glob::glob_match;
 use oxc_ast::{AstKind, ast::JSXElementName};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
 use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn jsx_pascal_case_diagnostic(
     span: Span,
@@ -21,11 +27,11 @@ fn jsx_pascal_case_diagnostic(
     OxcDiagnostic::warn(message).with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct JsxPascalCase(Box<JsxPascalCaseConfig>);
 
-#[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct JsxPascalCaseConfig {
     /// Whether to allow all-caps component names.
     pub allow_all_caps: bool,
@@ -48,7 +54,7 @@ impl std::ops::Deref for JsxPascalCase {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce PascalCase for user-defined JSX components
+    /// Enforce PascalCase for user-defined JSX components.
     ///
     /// ### Why is this bad?
     ///
@@ -102,39 +108,13 @@ declare_oxc_lint!(
     react,
     style,
     config = JsxPascalCaseConfig,
+    version = "1.19.0",
+    short_description = "Enforce PascalCase for user-defined JSX components.",
 );
 
 impl Rule for JsxPascalCase {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let config = value.get(0);
-
-        let allow_all_caps = config
-            .and_then(|v| v.get("allowAllCaps"))
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or_default();
-
-        let allow_namespace = config
-            .and_then(|v| v.get("allowNamespace"))
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or_default();
-
-        let allow_leading_underscore = config
-            .and_then(|v| v.get("allowLeadingUnderscore"))
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or_default();
-
-        let ignore = config
-            .and_then(|v| v.get("ignore"))
-            .and_then(serde_json::Value::as_array)
-            .map(|v| v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect())
-            .unwrap_or_default();
-
-        Self(Box::new(JsxPascalCaseConfig {
-            allow_all_caps,
-            allow_namespace,
-            allow_leading_underscore,
-            ignore,
-        }))
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

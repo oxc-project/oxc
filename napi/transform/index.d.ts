@@ -8,7 +8,7 @@ export interface Comment {
 }
 
 export interface ErrorLabel {
-  message?: string
+  message: string | null
   start: number
   end: number
 }
@@ -17,8 +17,8 @@ export interface OxcError {
   severity: Severity
   message: string
   labels: Array<ErrorLabel>
-  helpMessage?: string
-  codeframe?: string
+  helpMessage: string | null
+  codeframe: string | null
 }
 
 export declare const enum Severity {
@@ -118,6 +118,18 @@ export interface DecoratorOptions {
    * @default false
    */
   emitDecoratorMetadata?: boolean
+  /**
+   * Aligns nullable-union `design:type` emission with `--strictNullChecks`.
+   *
+   * When `true` (default), `T | null` and `T | undefined` emit `Object`, matching tsc strict.
+   * When `false`, `null` and `undefined` are elided from the union so the underlying
+   * primitive constructor is emitted, matching tsc with `--strictNullChecks=false`
+   * and `babel-plugin-transform-typescript-metadata`.
+   *
+   * @see https://www.typescriptlang.org/tsconfig/#strictNullChecks
+   * @default true
+   */
+  strictNullChecks?: boolean
 }
 
 export interface Es2015Options {
@@ -153,8 +165,12 @@ export interface Helpers {
   mode?: HelperMode
 }
 
-/** TypeScript Isolated Declarations for Standalone DTS Emit */
-export declare function isolatedDeclaration(filename: string, sourceText: string, options?: IsolatedDeclarationsOptions | undefined | null): IsolatedDeclarationsResult
+/**
+ * TypeScript Isolated Declarations for Standalone DTS Emit (async)
+ *
+ * Note: This function can be slower than `isolatedDeclarationSync` due to the overhead of spawning a thread.
+ */
+export declare function isolatedDeclaration(filename: string, sourceText: string, options?: IsolatedDeclarationsOptions | undefined | null): Promise<IsolatedDeclarationsResult>
 
 export interface IsolatedDeclarationsOptions {
   /**
@@ -175,10 +191,13 @@ export interface IsolatedDeclarationsResult {
   errors: Array<OxcError>
 }
 
+/** TypeScript Isolated Declarations for Standalone DTS Emit */
+export declare function isolatedDeclarationSync(filename: string, sourceText: string, options?: IsolatedDeclarationsOptions | undefined | null): IsolatedDeclarationsResult
+
 /**
  * Configure how TSX and JSX are transformed.
  *
- * @see {@link https://babeljs.io/docs/babel-plugin-transform-react-jsx#options}
+ * @see {@link https://oxc.rs/docs/guide/usage/transformer/jsx}
  */
 export interface JsxOptions {
   /**
@@ -194,8 +213,6 @@ export interface JsxOptions {
    * Emit development-specific information, such as `__source` and `__self`.
    *
    * @default false
-   *
-   * @see {@link https://babeljs.io/docs/babel-plugin-transform-react-jsx-development}
    */
   development?: boolean
   /**
@@ -209,11 +226,7 @@ export interface JsxOptions {
    */
   throwIfNamespace?: boolean
   /**
-   * Enables `@babel/plugin-transform-react-pure-annotations`.
-   *
-   * It will mark JSX elements and top-level React method calls as pure for tree shaking.
-   *
-   * @see {@link https://babeljs.io/docs/en/babel-plugin-transform-react-pure-annotations}
+   * Mark JSX elements and top-level React method calls as pure for tree shaking.
    *
    * @default true
    */
@@ -244,23 +257,6 @@ export interface JsxOptions {
    */
   pragmaFrag?: string
   /**
-   * When spreading props, use `Object.assign` directly instead of an extend helper.
-   *
-   * Only used for `classic` {@link runtime}.
-   *
-   * @default false
-   */
-  useBuiltIns?: boolean
-  /**
-   * When spreading props, use inline object with spread elements directly
-   * instead of an extend helper or Object.assign.
-   *
-   * Only used for `classic` {@link runtime}.
-   *
-   * @default false
-   */
-  useSpread?: boolean
-  /**
    * Enable React Fast Refresh .
    *
    * Conforms to the implementation in {@link https://github.com/facebook/react/tree/v18.3.1/packages/react-refresh}
@@ -281,9 +277,11 @@ export interface JsxOptions {
  * @returns an object containing the transformed code, source maps, and any
  * errors that occurred during parsing or transformation.
  *
+ * Note: This function can be slower than `moduleRunnerTransformSync` due to the overhead of spawning a thread.
+ *
  * @deprecated Only works for Vite.
  */
-export declare function moduleRunnerTransform(filename: string, sourceText: string, options?: ModuleRunnerTransformOptions | undefined | null): ModuleRunnerTransformResult
+export declare function moduleRunnerTransform(filename: string, sourceText: string, options?: ModuleRunnerTransformOptions | undefined | null): Promise<ModuleRunnerTransformResult>
 
 export interface ModuleRunnerTransformOptions {
   /**
@@ -323,8 +321,12 @@ export interface ModuleRunnerTransformResult {
   errors: Array<OxcError>
 }
 
+/** @deprecated Only works for Vite. */
+export declare function moduleRunnerTransformSync(filename: string, sourceText: string, options?: ModuleRunnerTransformOptions | undefined | null): ModuleRunnerTransformResult
+
 export interface PluginsOptions {
   styledComponents?: StyledComponentsOptions
+  taggedTemplateEscape?: boolean
 }
 
 export interface ReactRefreshOptions {
@@ -346,7 +348,7 @@ export interface ReactRefreshOptions {
 /**
  * Configure how styled-components are transformed.
  *
- * @see {@link https://styled-components.com/docs/tooling#babel-plugin}
+ * @see {@link https://oxc.rs/docs/guide/usage/transformer/plugins#styled-components}
  */
 export interface StyledComponentsOptions {
   /**
@@ -374,7 +376,10 @@ export interface StyledComponentsOptions {
    * Transpiles styled-components tagged template literals to a smaller representation
    * than what Babel normally creates, helping to reduce bundle size.
    *
-   * @default true
+   * Disabled by default because Oxc does not down-level template literals, so this
+   * transform only increases output size.
+   *
+   * @default false
    */
   transpileTemplateLiterals?: boolean
   /**
@@ -423,20 +428,6 @@ export interface StyledComponentsOptions {
 }
 
 /**
- * Transpile a JavaScript or TypeScript into a target ECMAScript version.
- *
- * @param filename The name of the file being transformed. If this is a
- * relative path, consider setting the {@link TransformOptions#cwd} option..
- * @param sourceText the source code itself
- * @param options The options for the transformation. See {@link
- * TransformOptions} for more information.
- *
- * @returns an object containing the transformed code, source maps, and any
- * errors that occurred during parsing or transformation.
- */
-export declare function transform(filename: string, sourceText: string, options?: TransformOptions | undefined | null): TransformResult
-
-/**
  * Transpile a JavaScript or TypeScript into a target ECMAScript version, asynchronously.
  *
  * Note: This function can be slower than `transform` due to the overhead of spawning a thread.
@@ -450,10 +441,17 @@ export declare function transform(filename: string, sourceText: string, options?
  * @returns a promise that resolves to an object containing the transformed code,
  * source maps, and any errors that occurred during parsing or transformation.
  */
-export declare function transformAsync(filename: string, sourceText: string, options?: TransformOptions | undefined | null): Promise<TransformResult>
+export declare function transform(filename: string, sourceText: string, options?: TransformOptions | undefined | null): Promise<TransformResult>
 
 /**
  * Options for transforming a JavaScript or TypeScript file.
+ *
+ * Options are listed in evaluation order: the source is parsed (`lang`,
+ * `sourceType`), declarations are emitted (`typescript.declaration`), then
+ * transforms run (`typescript`, `decorator`, `plugins`,
+ * `jsx`, `target`), followed by the `inject` and `define` plugins, and
+ * finally codegen (`sourcemap`). `helpers` configures the runtime helpers
+ * the transforms emit.
  *
  * @see {@link transform}
  */
@@ -461,27 +459,33 @@ export interface TransformOptions {
   /** Treat the source text as `js`, `jsx`, `ts`, `tsx`, or `dts`. */
   lang?: 'js' | 'jsx' | 'ts' | 'tsx' | 'dts'
   /** Treat the source text as `script` or `module` code. */
-  sourceType?: 'script' | 'module' | 'unambiguous' | undefined
+  sourceType?: 'script' | 'module' | 'commonjs' | 'unambiguous' | undefined
   /**
    * The current working directory. Used to resolve relative paths in other
    * options.
    */
   cwd?: string
-  /**
-   * Enable source map generation.
-   *
-   * When `true`, the `sourceMap` field of transform result objects will be populated.
-   *
-   * @default false
-   *
-   * @see {@link SourceMap}
-   */
-  sourcemap?: boolean
   /** Set assumptions in order to produce smaller output. */
   assumptions?: CompilerAssumptions
-  /** Configure how TypeScript is transformed. */
+  /**
+   * Configure how TypeScript is transformed.
+   *
+   * `typescript.declaration` is evaluated before all transforms.
+   *
+   * @see {@link https://oxc.rs/docs/guide/usage/transformer/typescript}
+   */
   typescript?: TypeScriptOptions
-  /** Configure how TSX and JSX are transformed. */
+  /** Decorator plugin */
+  decorator?: DecoratorOptions
+  /**
+   * Third-party plugins to use.
+   * @see {@link https://oxc.rs/docs/guide/usage/transformer/plugins}
+   */
+  plugins?: PluginsOptions
+  /**
+   * Configure how TSX and JSX are transformed.
+   * @see {@link https://oxc.rs/docs/guide/usage/transformer/jsx}
+   */
   jsx?: 'preserve' | JsxOptions
   /**
    * Sets the target environment for the generated JavaScript.
@@ -495,19 +499,37 @@ export interface TransformOptions {
    *
    * @default `esnext` (No transformation)
    *
-   * @see [esbuild#target](https://esbuild.github.io/api/#target)
+   * @see {@link https://oxc.rs/docs/guide/usage/transformer/lowering#target}
    */
   target?: string | Array<string>
   /** Behaviour for runtime helpers. */
   helpers?: Helpers
-  /** Define Plugin */
-  define?: Record<string, string>
-  /** Inject Plugin */
+  /**
+   * Inject Plugin
+   *
+   * Runs after all transforms.
+   *
+   * @see {@link https://oxc.rs/docs/guide/usage/transformer/global-variable-replacement#inject}
+   */
   inject?: Record<string, string | [string, string]>
-  /** Decorator plugin */
-  decorator?: DecoratorOptions
-  /** Third-party plugins to use. */
-  plugins?: PluginsOptions
+  /**
+   * Define Plugin
+   *
+   * Runs after the inject plugin.
+   *
+   * @see {@link https://oxc.rs/docs/guide/usage/transformer/global-variable-replacement#define}
+   */
+  define?: Record<string, string>
+  /**
+   * Enable source map generation.
+   *
+   * When `true`, the `sourceMap` field of transform result objects will be populated.
+   *
+   * @default false
+   *
+   * @see {@link SourceMap}
+   */
+  sourcemap?: boolean
 }
 
 export interface TransformResult {
@@ -562,6 +584,20 @@ export interface TransformResult {
   errors: Array<OxcError>
 }
 
+/**
+ * Transpile a JavaScript or TypeScript into a target ECMAScript version.
+ *
+ * @param filename The name of the file being transformed. If this is a
+ * relative path, consider setting the {@link TransformOptions#cwd} option..
+ * @param sourceText the source code itself
+ * @param options The options for the transformation. See {@link
+ * TransformOptions} for more information.
+ *
+ * @returns an object containing the transformed code, source maps, and any
+ * errors that occurred during parsing or transformation.
+ */
+export declare function transformSync(filename: string, sourceText: string, options?: TransformOptions | undefined | null): TransformResult
+
 export interface TypeScriptOptions {
   jsxPragma?: string
   jsxPragmaFrag?: string
@@ -611,6 +647,24 @@ export interface TypeScriptOptions {
    * Defaults to `false`.
    */
   removeClassFieldsWithoutInitializer?: boolean
+  /**
+   * When true, optimize const enums by inlining their values at usage sites
+   * and removing the enum declaration.
+   *
+   * @default false
+   */
+  optimizeConstEnums?: boolean
+  /**
+   * When true, optimize regular (non-const) enums by inlining their member
+   * accesses at usage sites when the member value is statically known.
+   *
+   * Non-exported enum declarations are also removed when all members are
+   * evaluable and no references to the enum as a runtime value exist
+   * (e.g., `console.log(Foo)`, `typeof Foo`, or passing the enum as an argument).
+   *
+   * @default false
+   */
+  optimizeEnums?: boolean
   /**
    * Also generate a `.d.ts` declaration file for TypeScript files.
    *

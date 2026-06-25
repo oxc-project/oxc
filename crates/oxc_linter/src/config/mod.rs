@@ -4,6 +4,7 @@ mod categories;
 mod config_builder;
 mod config_store;
 mod env;
+mod external_plugins;
 mod globals;
 mod ignore_matcher;
 mod overrides;
@@ -20,7 +21,11 @@ pub use overrides::OxlintOverrides;
 pub use oxlintrc::Oxlintrc;
 pub use plugins::LintPlugins;
 pub use rules::{ESLintRule, OxlintRules};
-pub use settings::{OxlintSettings, jsdoc::JSDocPluginSettings};
+pub use settings::{OxlintSettings, ReactVersion, jsdoc::JSDocPluginSettings};
+
+pub use oxc_config::GlobSet;
+
+use crate::config::oxlintrc::OxlintOptions;
 
 #[derive(Debug, Default, Clone)]
 pub struct LintConfig {
@@ -32,6 +37,8 @@ pub struct LintConfig {
     pub(crate) globals: OxlintGlobals,
     /// Absolute path to the configuration file (may be `None` if there is no file).
     pub(crate) path: Option<PathBuf>,
+    /// Options for the linter.
+    pub(crate) options: OxlintOptions,
 }
 
 impl From<Oxlintrc> for LintConfig {
@@ -42,6 +49,7 @@ impl From<Oxlintrc> for LintConfig {
             env: config.env,
             globals: config.globals,
             path: Some(config.path),
+            options: config.options,
         }
     }
 }
@@ -50,9 +58,10 @@ impl From<Oxlintrc> for LintConfig {
 mod test {
     use std::env;
 
-    use oxc_span::CompactStr;
     use rustc_hash::FxHashMap;
     use serde::Deserialize;
+
+    use oxc_str::CompactStr;
 
     use super::Oxlintrc;
     use crate::{ExternalPluginStore, rules::RULES};
@@ -105,6 +114,35 @@ mod test {
         );
         assert_eq!(env.iter().count(), 1);
         assert!(globals.is_enabled("foo"));
+        assert_eq!(globals.get("foo"), Some(&super::GlobalValue::Readonly));
+    }
+
+    #[test]
+    fn test_deserialize_globals() {
+        let config = Oxlintrc::deserialize(&serde_json::json!({
+            "globals": {
+                "foo": "readable",
+                "bar": "writeable",
+                "baz": "off",
+                "qux": true,
+                "quux": false,
+                "corge": "readonly",
+                "grault": "writable"
+            }
+        }));
+        assert!(config.is_ok());
+
+        let Oxlintrc { globals, .. } = config.unwrap();
+        assert!(globals.is_enabled("foo"));
+        assert!(globals.is_enabled("bar"));
+        // Ensure they map to the correct variants
+        assert_eq!(globals.get("foo"), Some(&super::GlobalValue::Readonly));
+        assert_eq!(globals.get("bar"), Some(&super::GlobalValue::Writable));
+        assert_eq!(globals.get("baz"), Some(&super::GlobalValue::Off));
+        assert_eq!(globals.get("qux"), Some(&super::GlobalValue::Writable));
+        assert_eq!(globals.get("quux"), Some(&super::GlobalValue::Readonly));
+        assert_eq!(globals.get("corge"), Some(&super::GlobalValue::Readonly));
+        assert_eq!(globals.get("grault"), Some(&super::GlobalValue::Writable));
     }
 
     #[test]
@@ -114,19 +152,19 @@ mod test {
         let config = Oxlintrc::from_file(&fixture_path).unwrap();
         let mut set = FxHashMap::default();
         let mut external_rules_for_override = FxHashMap::default();
-        let external_linter_store = ExternalPluginStore::default();
+        let mut external_linter_store = ExternalPluginStore::default();
         config
             .rules
             .override_rules(
                 &mut set,
                 &mut external_rules_for_override,
                 &RULES,
-                &external_linter_store,
+                &mut external_linter_store,
             )
             .unwrap();
 
         let (rule, _) = set.into_iter().next().unwrap();
-        assert_eq!(rule.name(), "no-disabled-tests");
-        assert_eq!(rule.plugin_name(), "jest");
+        assert_eq!(rule.name(), "valid-expect");
+        assert_eq!(rule.plugin_name(), "vitest");
     }
 }

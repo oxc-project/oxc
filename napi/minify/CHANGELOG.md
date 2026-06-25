@@ -4,6 +4,105 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.135.0] - 2026-06-08
+
+### 📚 Documentation
+
+- 275d318 napi/minifier: Point `target` to oxc docs (#23102) (camc314)
+
+## [0.133.0] - 2026-05-26
+
+### 🚀 Features
+
+- e857b0c napi/minify: Expose legalComments option and result (#20370) (Boshen)
+
+## [0.128.0] - 2026-04-27
+
+### 🛡️ Security
+
+- d8076c9 deps: Update rolldown (#21639) (renovate)
+
+## [0.125.0] - 2026-04-13
+
+### 🚀 Features
+
+- f134e24 minifier: Support `property_write_side_effects` option to drop unused property assignments (#20773) (Dunqing)
+
+## [0.119.0] - 2026-03-14
+
+### 🚀 Features
+
+- e7163b6 ecmascript: Add known-globals to side-effect-free property reads (#20212) (Dunqing)
+
+## [0.117.0] - 2026-03-09
+
+### 🐛 Bug Fixes
+
+- ee0491e apps,napi: Explicitly specify libs in tsconfigs (#20071) (camc314)
+
+### ⚡ Performance
+
+- 2baa5fb napi: Unify build-test profile to coverage for cache sharing (#20090) (Boshen)
+
+## [0.113.0] - 2026-02-10
+
+### 💥 BREAKING CHANGES
+
+- 2bf7293 mangler: [**BREAKING**] Enable `top_level` by default for modules and commonjs (#18278) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 487601b napi: Disable mimalloc on Windows to fix worker_threads crash (#18923) (Boshen)
+
+## [0.111.0] - 2026-01-26
+
+### 💥 BREAKING CHANGES
+
+- af0ca46 span: [**BREAKING**] Use `ModuleKind::CommonJS` for `SourceType::cjs()` (#18276) (sapphi-red)
+
+### 📚 Documentation
+
+- 8ccd853 npm: Update package homepage URLs and add keywords (#18509) (Boshen)
+
+## [0.106.0] - 2025-12-29
+
+### 🚀 Features
+
+- e031056 codegen: Add `sourcemap` feature flag (#17305) (Boshen)
+- 8e4409a minifier: Add `invalid_import_side_effects` option (#17300) (sapphi-red)
+
+## [0.102.0] - 2025-12-08
+
+### 💥 BREAKING CHANGES
+
+- 083fea9 napi/parser: [**BREAKING**] Represent empty optional fields on JS side as `null` (#16411) (overlookmotel)
+
+## [0.100.0] - 2025-12-01
+
+### 💥 BREAKING CHANGES
+
+- 934d873 napi: [**BREAKING**] Drop `armv7-unknown-linux-musleabihf` support (#16105) (Boshen)
+
+## [0.98.0] - 2025-11-17
+
+### 💥 BREAKING CHANGES
+
+- ea51b0b napi: [**BREAKING**] Standardize function naming with sync suffixes (#15661) (Boshen)
+
+### 🚀 Features
+
+- f5ce55a napi: Export all options using wildcard exports (Boshen)
+
+## [0.97.0] - 2025-11-11
+
+### 🚀 Features
+
+- 1c31cb1 napi/minify: Expose `treeshake` options (#15109) (copilot-swe-agent)
+
+### 📚 Documentation
+
+- 3dc24b5 linter,minifier: Always refer as "ES Modules" instead of "ES6 Modules" (#15409) (sapphi-red)
+
 ## [0.96.0] - 2025-10-30
 
 ### 🚀 Features

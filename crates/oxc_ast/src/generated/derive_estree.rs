@@ -74,7 +74,7 @@ impl ESTree for IdentifierName<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("Identifier"));
         state.serialize_ts_field("decorators", &crate::serialize::basic::TsEmptyArray(self));
-        state.serialize_field("name", &JsonSafeString(self.name.as_str()));
+        state.serialize_field("name", &self.name);
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
         state.serialize_ts_field("typeAnnotation", &crate::serialize::basic::TsNull(self));
         state.serialize_span(self.span);
@@ -87,7 +87,7 @@ impl ESTree for IdentifierReference<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("Identifier"));
         state.serialize_ts_field("decorators", &crate::serialize::basic::TsEmptyArray(self));
-        state.serialize_field("name", &JsonSafeString(self.name.as_str()));
+        state.serialize_field("name", &self.name);
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
         state.serialize_ts_field("typeAnnotation", &crate::serialize::basic::TsNull(self));
         state.serialize_span(self.span);
@@ -100,7 +100,7 @@ impl ESTree for BindingIdentifier<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("Identifier"));
         state.serialize_ts_field("decorators", &crate::serialize::basic::TsEmptyArray(self));
-        state.serialize_field("name", &JsonSafeString(self.name.as_str()));
+        state.serialize_field("name", &self.name);
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
         state.serialize_ts_field("typeAnnotation", &crate::serialize::basic::TsNull(self));
         state.serialize_span(self.span);
@@ -113,7 +113,7 @@ impl ESTree for LabelIdentifier<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("Identifier"));
         state.serialize_ts_field("decorators", &crate::serialize::basic::TsEmptyArray(self));
-        state.serialize_field("name", &JsonSafeString(self.name.as_str()));
+        state.serialize_field("name", &self.name);
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
         state.serialize_ts_field("typeAnnotation", &crate::serialize::basic::TsNull(self));
         state.serialize_span(self.span);
@@ -805,6 +805,7 @@ impl ESTree for Statement<'_> {
             Self::TSInterfaceDeclaration(it) => it.serialize(serializer),
             Self::TSEnumDeclaration(it) => it.serialize(serializer),
             Self::TSModuleDeclaration(it) => it.serialize(serializer),
+            Self::TSGlobalDeclaration(it) => it.serialize(serializer),
             Self::TSImportEqualsDeclaration(it) => it.serialize(serializer),
             Self::ImportDeclaration(it) => it.serialize(serializer),
             Self::ExportAllDeclaration(it) => it.serialize(serializer),
@@ -857,6 +858,7 @@ impl ESTree for Declaration<'_> {
             Self::TSInterfaceDeclaration(it) => it.serialize(serializer),
             Self::TSEnumDeclaration(it) => it.serialize(serializer),
             Self::TSModuleDeclaration(it) => it.serialize(serializer),
+            Self::TSGlobalDeclaration(it) => it.serialize(serializer),
             Self::TSImportEqualsDeclaration(it) => it.serialize(serializer),
         }
     }
@@ -890,7 +892,7 @@ impl ESTree for VariableDeclarator<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("VariableDeclarator"));
-        state.serialize_field("id", &self.id);
+        state.serialize_field("id", &crate::serialize::js::VariableDeclaratorId(self));
         state.serialize_field("init", &self.init);
         state.serialize_ts_field("definite", &self.definite);
         state.serialize_span(self.span);
@@ -1185,12 +1187,6 @@ impl ESTree for DebuggerStatement {
 }
 
 impl ESTree for BindingPattern<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
-        crate::serialize::js::BindingPatternConverter(self).serialize(serializer)
-    }
-}
-
-impl ESTree for BindingPatternKind<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
             Self::BindingIdentifier(it) => it.serialize(serializer),
@@ -2886,7 +2882,6 @@ impl ESTree for TSModuleDeclaration<'_> {
 impl ESTree for TSModuleDeclarationKind {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            Self::Global => JsonSafeString("global").serialize(serializer),
             Self::Module => JsonSafeString("module").serialize(serializer),
             Self::Namespace => JsonSafeString("namespace").serialize(serializer),
         }
@@ -2908,6 +2903,20 @@ impl ESTree for TSModuleDeclarationBody<'_> {
             Self::TSModuleDeclaration(it) => it.serialize(serializer),
             Self::TSModuleBlock(it) => it.serialize(serializer),
         }
+    }
+}
+
+impl ESTree for TSGlobalDeclaration<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSModuleDeclaration"));
+        state.serialize_field("id", &crate::serialize::ts::TSGlobalDeclarationId(self));
+        state.serialize_field("body", &self.body);
+        state.serialize_field("kind", &crate::serialize::basic::Global(self));
+        state.serialize_field("declare", &self.declare);
+        state.serialize_field("global", &crate::serialize::basic::True(self));
+        state.serialize_span(self.span);
+        state.end();
     }
 }
 
@@ -2967,7 +2976,7 @@ impl ESTree for TSImportType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSImportType"));
-        state.serialize_field("argument", &self.argument);
+        state.serialize_field("source", &self.source);
         state.serialize_field("options", &self.options);
         state.serialize_field("qualifier", &self.qualifier);
         state.serialize_field("typeArguments", &self.type_arguments);
@@ -3025,8 +3034,8 @@ impl ESTree for TSMappedType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSMappedType"));
-        state.serialize_field("key", &crate::serialize::ts::TSMappedTypeKey(self));
-        state.serialize_field("constraint", &crate::serialize::ts::TSMappedTypeConstraint(self));
+        state.serialize_field("key", &self.key);
+        state.serialize_field("constraint", &self.constraint);
         state.serialize_field("nameType", &self.name_type);
         state.serialize_field("typeAnnotation", &self.type_annotation);
         state.serialize_field("optional", &crate::serialize::ts::TSMappedTypeOptional(self));
@@ -3108,7 +3117,6 @@ impl ESTree for TSModuleReference<'_> {
             Self::ExternalModuleReference(it) => it.serialize(serializer),
             Self::IdentifierReference(it) => it.serialize(serializer),
             Self::QualifiedName(it) => it.serialize(serializer),
-            Self::ThisExpression(it) => it.serialize(serializer),
         }
     }
 }
@@ -3218,7 +3226,8 @@ impl ESTree for CommentKind {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
             Self::Line => JsonSafeString("Line").serialize(serializer),
-            Self::Block => JsonSafeString("Block").serialize(serializer),
+            Self::SingleLineBlock => JsonSafeString("Block").serialize(serializer),
+            Self::MultiLineBlock => JsonSafeString("Block").serialize(serializer),
         }
     }
 }

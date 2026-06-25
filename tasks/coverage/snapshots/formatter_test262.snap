@@ -1,25 +1,23 @@
-commit: d2940bdb
+commit: de8e621c
 
 formatter_test262 Summary:
-AST Parsed     : 44651/44651 (100.00%)
-Positive Passed: 44641/44651 (99.98%)
-Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression-as-for-in-lhs.js
-Cannot assign to this expression
-Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression-as-for-of-lhs.js
-Cannot assign to this expression
-Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression-in-compound-assignment.js
-Cannot assign to this expression
-Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression-in-postfix-update.js
-Cannot assign to this expression
-Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression-in-prefix-update.js
-Cannot assign to this expression
-Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression.js
-Cannot assign to this expression
-Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/cover-callexpression-and-asyncarrowhead.js
-Cannot assign to this expression
+AST Parsed     : 47240/47240 (100.00%)
+Positive Passed: 47231/47240 (99.98%)
 Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/toString/line-terminator-normalisation-CR-LF.js
 
 Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/toString/line-terminator-normalisation-CR.js
 
 Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/toString/line-terminator-normalisation-LF.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/arrow-function/scope-paramsbody-var-close.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/call/scope-lex-close.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/call/scope-var-close.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/function/scope-paramsbody-var-close.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/generators/scope-paramsbody-var-close.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/let/syntax/escaped-let.js
 

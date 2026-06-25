@@ -10,9 +10,14 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::Span;
 use schemars::JsonSchema;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+    utils::deserialize_regex_option,
+};
 
 fn no_empty_object_type_diagnostic<S: Into<Cow<'static, str>>>(
     span: Span,
@@ -28,28 +33,11 @@ pub struct NoEmptyObjectType(Box<NoEmptyObjectTypeConfig>);
 
 #[expect(clippy::struct_field_names)]
 #[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoEmptyObjectTypeConfig {
     /// Whether to allow empty interfaces.
-    ///
-    /// Allowed values are:
-    /// - `'always'`: to always allow interfaces with no fields
-    /// - `'never'` _(default)_: to never allow interfaces with no fields
-    /// - `'with-single-extends'`: to allow empty interfaces that `extend` from a single base interface
-    ///
-    /// Examples of **correct** code for this rule with `{ allowInterfaces: 'with-single-extends' }`:
-    /// ```ts
-    /// interface Base {
-    ///   value: boolean;
-    /// }
-    /// interface Derived extends Base {}
-    /// ```
     allow_interfaces: AllowInterfaces,
     /// Whether to allow empty object type literals.
-    ///
-    /// Allowed values are:
-    /// - `'always'`: to always allow object type literals with no fields
-    /// - `'never'` _(default)_: to never allow object type literals with no fields
     allow_object_types: AllowObjectTypes,
     /// A stringified regular expression to allow interfaces and object type aliases with the configured name.
     ///
@@ -66,8 +54,57 @@ pub struct NoEmptyObjectTypeConfig {
     /// interface InterfaceProps {}
     /// type TypeProps = {};
     /// ```
-    #[serde(skip)] // TODO: Serialize this so it can be documented properly.
+    #[serde(default, deserialize_with = "deserialize_regex_option")]
     allow_with_name: Option<Regex>,
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
+enum AllowInterfaces {
+    /// Never allow interfaces with no fields.
+    #[default]
+    Never,
+    /// Always allow interfaces with no fields.
+    Always,
+    /// Allow empty interfaces that `extend` from a single base interface.
+    ///
+    /// Examples of **correct** code for this rule with `{ allowInterfaces: 'with-single-extends' }`:
+    /// ```ts
+    /// interface Base {
+    ///   value: boolean;
+    /// }
+    /// interface Derived extends Base {}
+    /// ```
+    WithSingleExtends,
+}
+
+impl From<&str> for AllowInterfaces {
+    fn from(raw: &str) -> Self {
+        match raw {
+            "always" => Self::Always,
+            "with-single-extends" => Self::WithSingleExtends,
+            _ => Self::Never,
+        }
+    }
+}
+
+#[derive(Debug, Default, Clone, Copy, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
+enum AllowObjectTypes {
+    /// Never allow object type literals with no fields.
+    #[default]
+    Never,
+    /// Always allow object type literals with no fields.
+    Always,
+}
+
+impl From<&str> for AllowObjectTypes {
+    fn from(raw: &str) -> Self {
+        match raw {
+            "always" => Self::Always,
+            _ => Self::Never,
+        }
+    }
 }
 
 impl std::ops::Deref for NoEmptyObjectType {
@@ -88,7 +125,7 @@ declare_oxc_lint!(
     /// The `{}`, or "empty object" type in TypeScript is a common source of confusion for developers unfamiliar with TypeScript's structural typing. `{}` represents any non-nullish value, including literals like 0 and "".
     /// Often, developers writing `{}` actually mean either:
     /// - object: representing any object value
-    /// - unknown: representing any value at all, including null and undefined
+    /// - unknown: representing any value at all, including `null` and `undefined`
     /// In other words, the "empty object" type {}` really means "any value that is defined". That includes arrays, class instances, functions, and primitives such as string and symbol.
     ///
     /// Note that this rule does not report on:
@@ -124,37 +161,17 @@ declare_oxc_lint!(
     NoEmptyObjectType,
     typescript,
     restriction,
+    pending,
     config = NoEmptyObjectTypeConfig,
+    version = "0.12.0",
+    short_description = "Disallow accidentally using the \"empty object\" type.",
 );
 
 impl Rule for NoEmptyObjectType {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let (allow_interfaces, allow_object_types, allow_with_name) = value.get(0).map_or(
-            (AllowInterfaces::Never, AllowObjectTypes::Never, None),
-            |config| {
-                (
-                    config
-                        .get("allowInterfaces")
-                        .and_then(serde_json::Value::as_str)
-                        .map(AllowInterfaces::from)
-                        .unwrap_or_default(),
-                    config
-                        .get("allowObjectTypes")
-                        .and_then(serde_json::Value::as_str)
-                        .map(AllowObjectTypes::from)
-                        .unwrap_or_default(),
-                    config
-                        .get("allowWithName")
-                        .and_then(serde_json::Value::as_str)
-                        .and_then(|pattern| Regex::new(pattern).ok()),
-                )
-            },
-        );
-        Self(Box::new(NoEmptyObjectTypeConfig {
-            allow_interfaces,
-            allow_object_types,
-            allow_with_name,
-        }))
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<NoEmptyObjectTypeConfig>>(value)
+            .map(DefaultRuleConfig::into_inner)
+            .map(|config| Self(Box::new(config)))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -236,42 +253,6 @@ fn check_type_literal(
     ));
 }
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Deserialize, JsonSchema)]
-#[serde(rename_all = "kebab-case")]
-enum AllowInterfaces {
-    #[default]
-    Never,
-    Always,
-    WithSingleExtends,
-}
-
-impl From<&str> for AllowInterfaces {
-    fn from(raw: &str) -> Self {
-        match raw {
-            "always" => Self::Always,
-            "with-single-extends" => Self::WithSingleExtends,
-            _ => Self::Never,
-        }
-    }
-}
-
-#[derive(Debug, Default, Clone, Copy, Deserialize, JsonSchema)]
-#[serde(rename_all = "lowercase")]
-enum AllowObjectTypes {
-    #[default]
-    Never,
-    Always,
-}
-
-impl From<&str> for AllowObjectTypes {
-    fn from(raw: &str) -> Self {
-        match raw {
-            "always" => Self::Always,
-            _ => Self::Never,
-        }
-    }
-}
-
 #[test]
 fn test() {
     use crate::tester::Tester;
@@ -279,48 +260,48 @@ fn test() {
     let pass = vec![
         (
             "
-			interface Base {
-			  name: string;
-			}
-			    ",
+            interface Base {
+              name: string;
+            }
+                ",
             None,
         ),
         (
             "
-			interface Base {
-			  name: string;
-			}
+            interface Base {
+              name: string;
+            }
 
-			interface Derived {
-			  age: number;
-			}
+            interface Derived {
+              age: number;
+            }
 
-			// valid because extending multiple interfaces can be used instead of a union type
-			interface Both extends Base, Derived {}
-			    ",
+            // valid because extending multiple interfaces can be used instead of a union type
+            interface Both extends Base, Derived {}
+                ",
             None,
         ),
         ("interface Base {}", Some(serde_json::json!([{ "allowInterfaces": "always" }]))),
         (
             "
-			interface Base {
-			  name: string;
-			}
+            interface Base {
+              name: string;
+            }
 
-			interface Derived extends Base {}
-			      ",
+            interface Derived extends Base {}
+                  ",
             Some(serde_json::json!([{ "allowInterfaces": "with-single-extends" }])),
         ),
         (
             "
-			interface Base {
-			  props: string;
-			}
+            interface Base {
+              props: string;
+            }
 
-			interface Derived extends Base {}
+            interface Derived extends Base {}
 
-			class Derived {}
-			      ",
+            class Derived {}
+                  ",
             Some(serde_json::json!([{ "allowInterfaces": "with-single-extends" }])),
         ),
         ("let value: object;", None),
@@ -341,76 +322,76 @@ fn test() {
         ("interface Base {}", Some(serde_json::json!([{ "allowInterfaces": "never" }]))),
         (
             "
-			interface Base {
-			  props: string;
-			}
+            interface Base {
+              props: string;
+            }
 
-			interface Derived extends Base {}
+            interface Derived extends Base {}
 
-			class Other {}
-			      ",
+            class Other {}
+                  ",
             None,
         ),
         (
             "
-			interface Base {
-			  props: string;
-			}
+            interface Base {
+              props: string;
+            }
 
-			interface Derived extends Base {}
+            interface Derived extends Base {}
 
-			class Derived {}
-			      ",
+            class Derived {}
+                  ",
             None,
         ),
         (
             "
-			interface Base {
-			  props: string;
-			}
+            interface Base {
+              props: string;
+            }
 
-			interface Derived extends Base {}
+            interface Derived extends Base {}
 
-			const derived = class Derived {};
-			      ",
+            const derived = class Derived {};
+                  ",
             None,
         ),
         (
             "
-			interface Base {
-			  name: string;
-			}
+            interface Base {
+              name: string;
+            }
 
-			interface Derived extends Base {}
-			      ",
+            interface Derived extends Base {}
+                  ",
             None,
         ),
         ("interface Base extends Array<number> {}", None),
         ("interface Base extends Array<number | {}> {}", None),
         (
             "
-			interface Derived {
-			  property: string;
-			}
-			interface Base extends Array<Derived> {}
-			      ",
+            interface Derived {
+              property: string;
+            }
+            interface Base extends Array<Derived> {}
+                  ",
             None,
         ),
         (
             "
-			type R = Record<string, unknown>;
-			interface Base extends R {}
-			      ",
+            type R = Record<string, unknown>;
+            interface Base extends R {}
+                  ",
             None,
         ),
         ("interface Base<T> extends Derived<T> {}", None),
         (
             "
-			declare namespace BaseAndDerived {
-			  type Base = typeof base;
-			  export interface Derived extends Base {}
-			}
-			      ",
+            declare namespace BaseAndDerived {
+              type Base = typeof base;
+              export interface Derived extends Base {}
+            }
+                  ",
             None,
         ),
         ("type Base = {};", None),
@@ -419,10 +400,10 @@ fn test() {
         ("let value: {};", Some(serde_json::json!([{ "allowObjectTypes": "never" }]))),
         (
             "
-			let value: {
-			  /* ... */
-			};
-			      ",
+            let value: {
+              /* ... */
+            };
+                  ",
             None,
         ),
         ("type MyUnion<T> = T | {};", None),

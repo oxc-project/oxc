@@ -1,37 +1,69 @@
 use itertools::Itertools;
+use oxc_allocator::Allocator;
+use oxc_ast::{
+    AstKind,
+    ast::{Argument, Expression, RegExpLiteral},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_regular_expression::{
+    ConstructorParser, LiteralParser, Options,
     ast::{Character, CharacterClassContents, CharacterKind},
     visit::{RegExpAstKind, Visit},
 };
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule, utils::run_on_regex_node};
+use crate::{
+    AstNode,
+    context::LintContext,
+    fixer::{RuleFix, RuleFixer},
+    rule::{DefaultRuleConfig, Rule},
+    utils::{
+        RegexFlagsParseResult, get_regex_flags_span, get_regex_pattern_span, is_regexp_callee,
+        run_on_regex_node,
+    },
+};
 
 fn surrogate_pair_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unexpected surrogate pair in character class.").with_label(span)
+    OxcDiagnostic::warn("Unexpected surrogate pair in character class.")
+        .with_help("Use Unicode code point escapes (e.g., \\u{1F44D}) instead of surrogate pairs.")
+        .with_label(span)
+}
+
+fn surrogate_pair_without_flag_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unexpected surrogate pair in character class.")
+        .with_help("Add the Unicode flag 'u'.")
+        .with_label(span)
 }
 
 fn combining_class_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unexpected combining class in character class.").with_label(span)
+    OxcDiagnostic::warn("Unexpected combining class in character class.")
+        .with_help("Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.")
+        .with_label(span)
 }
 
 fn emoji_modifiers_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unexpected emoji modifier in character class.").with_label(span)
+    OxcDiagnostic::warn("Unexpected emoji modifier in character class.")
+        .with_help("Use Unicode code point escapes (e.g., \\u{1F3FB} for the light skin tone modifier) instead of emoji modifier sequences in character classes.")
+        .with_label(span)
 }
 
 fn regional_indicator_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unexpected regional indicator in character class.").with_label(span)
+    OxcDiagnostic::warn("Unexpected regional indicator in character class.")
+        .with_help("Use Unicode code point escapes (e.g., \\u{1F1EF} for the regional indicator symbol for 'J') instead of regional indicator symbol pairs in character classes.")
+        .with_label(span)
 }
 
 fn zwj_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unexpected joined character sequence in character class.").with_label(span)
+    OxcDiagnostic::warn("Unexpected joined character sequence in character class.")
+        .with_help("Use Unicode code point escapes (e.g., \\u{1F468}\\u200D\\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.")
+        .with_label(span)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoMisleadingCharacterClass {
     /// When set to `true`, the rule allows any grouping of code points
     /// inside a character class as long as they are written using escape sequences.
@@ -99,8 +131,11 @@ declare_oxc_lint!(
     /// ```
     NoMisleadingCharacterClass,
     eslint,
-    nursery, // TODO: change category to `correctness`, after oxc-project/oxc#13660 and oxc-project/oxc#13436
+    correctness,
+    suggestion,
     config = NoMisleadingCharacterClass,
+    version = "1.17.0",
+    short_description = "This rule reports regular expressions which include multiple code point characters in character class syntax.",
 );
 
 #[derive(Debug)]
@@ -130,39 +165,38 @@ impl<'ast> Visit<'ast> for CharacterSequenceCollector<'ast> {
                 self.sequences.push(std::mem::take(&mut self.current_seq));
                 self.current_seq.push(&range.max);
             }
-            CharacterClassContents::ClassStringDisjunction(_) => {
+
+
+            CharacterClassContents::ClassStringDisjunction(_) // \q{...}
+            | CharacterClassContents::UnicodePropertyEscape(_) // \p{...}
+            | CharacterClassContents::NestedCharacterClass(_) // [[]] nested character class
+            | CharacterClassContents::CharacterClassEscape(_) // \d, \w, etc.
+             => {
                 if !self.current_seq.is_empty() {
                     self.sequences.push(std::mem::take(&mut self.current_seq));
                 }
             }
-            _ => {}
         }
     }
 
-    fn leave_node(&mut self, _kind: RegExpAstKind<'ast>) {}
+    fn leave_node(&mut self, kind: RegExpAstKind<'ast>) {
+        // Flush the current sequence when leaving a character class to ensure
+        // sequences don't span across different character classes
+        if matches!(kind, RegExpAstKind::CharacterClass(_)) && !self.current_seq.is_empty() {
+            self.sequences.push(std::mem::take(&mut self.current_seq));
+        }
+    }
 }
 
 impl Rule for NoMisleadingCharacterClass {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let allow_escape = value
-            .get(0)
-            .and_then(|v| v.as_object())
-            .and_then(|v| v.get("allowEscape"))
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or_default();
-
-        Self { allow_escape }
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         run_on_regex_node(node, ctx, |pattern, _span| {
             let mut collector = CharacterSequenceCollector::new();
             collector.visit_pattern(pattern);
-
-            // Restore: push any remaining sequence after visiting
-            if !collector.current_seq.is_empty() {
-                collector.sequences.push(std::mem::take(&mut collector.current_seq));
-            }
 
             for unfiltered_chars in &collector.sequences {
                 if self.allow_escape {
@@ -180,24 +214,12 @@ impl Rule for NoMisleadingCharacterClass {
                 }
 
                 // Always check for combining marks, regional indicator, ZWJ, and emoji modifier sequences
-                if combining_class_sequences(unfiltered_chars) {
-                    ctx.diagnostic(combining_class_diagnostic(pattern.span));
-                }
-                if regional_indicator_symbol_sequences(unfiltered_chars) {
-                    ctx.diagnostic(regional_indicator_diagnostic(pattern.span));
-                }
-                if zwj_sequences(unfiltered_chars) {
-                    ctx.diagnostic(zwj_diagnostic(pattern.span));
-                }
-                if emoji_modifier_sequences(unfiltered_chars) {
-                    ctx.diagnostic(emoji_modifiers_diagnostic(pattern.span));
-                }
-                if surrogate_pair_sequences(unfiltered_chars) {
-                    ctx.diagnostic(surrogate_pair_diagnostic(pattern.span));
-                }
-                if surrogate_pair_sequences_without_flag(unfiltered_chars) {
-                    ctx.diagnostic(surrogate_pair_diagnostic(pattern.span));
-                }
+                combining_class_sequences(unfiltered_chars, ctx);
+                regional_indicator_symbol_sequences(unfiltered_chars, ctx);
+                zwj_sequences(unfiltered_chars, ctx);
+                emoji_modifier_sequences(unfiltered_chars, ctx);
+                surrogate_pair_sequences(unfiltered_chars, ctx);
+                surrogate_pair_sequences_without_flag(unfiltered_chars, node, ctx);
             }
         });
     }
@@ -215,13 +237,15 @@ fn is_regional_indicator_symbol(value: u32) -> bool {
 }
 
 // Find regional indicator symbol pairs
-fn regional_indicator_symbol_sequences(chars: &[&Character]) -> bool {
+fn regional_indicator_symbol_sequences(chars: &[&Character], ctx: &LintContext<'_>) {
     for (prev, curr) in chars.iter().tuple_windows() {
         if is_regional_indicator_symbol(prev.value) && is_regional_indicator_symbol(curr.value) {
-            return true;
+            ctx.diagnostic(regional_indicator_diagnostic(Span::new(
+                prev.span.start,
+                curr.span.end,
+            )));
         }
     }
-    false
 }
 
 // Returns true if the code point is a combining mark (Unicode category Mn, Mc, or Me)
@@ -264,21 +288,23 @@ fn is_combining_character(value: u32) -> bool {
 }
 
 // Find combining mark sequences: previous is not combining, current is combining
-fn combining_class_sequences(chars: &[&Character]) -> bool {
+fn combining_class_sequences(chars: &[&Character], ctx: &LintContext<'_>) {
     for (index, &char) in chars.iter().enumerate() {
         if index == 0 {
             continue;
         }
         let previous = chars[index - 1];
         if is_combining_character(char.value) && !is_combining_character(previous.value) {
-            return true;
+            ctx.diagnostic(combining_class_diagnostic(Span::new(
+                previous.span.start,
+                char.span.end,
+            )));
         }
     }
-    false
 }
 
-// Returns true if a zero width joiner character is detected between two characters
-fn zwj_sequences(chars: &[&Character]) -> bool {
+// Reports the span of a zero width joiner sequence detected between two non-ZWJ characters, if any
+fn zwj_sequences(chars: &[&Character], ctx: &LintContext<'_>) {
     for (index, &char) in chars.iter().enumerate() {
         let previous = if index > 0 { Some(chars[index - 1]) } else { None };
         let next = chars.get(index + 1).copied();
@@ -287,17 +313,16 @@ fn zwj_sequences(chars: &[&Character]) -> bool {
             && previous.value != 0x200D
             && next.value != 0x200D
         {
-            return true;
+            ctx.diagnostic(zwj_diagnostic(Span::new(previous.span.start, next.span.end)));
         }
     }
-    false
 }
 
 fn is_emoji_modifier(char: &Character) -> bool {
     char.value >= 0x1f3fb && char.value <= 0x1f3ff
 }
 
-// Returns true if a emoji modifier sequence is detected
+// Reports one or multiple spans of an emoji modifier sequence detected between a non-emoji-modifier character and an emoji modifier.
 //
 // Emoji modifiers are special Unicode characters used to modify the appearance of other emojis, such as:
 // - Skin tone
@@ -306,7 +331,7 @@ fn is_emoji_modifier(char: &Character) -> bool {
 // - etc.
 //
 // They’re combined with base emojis (like people or body parts) to create variant emoji sequences.
-fn emoji_modifier_sequences(chars: &[&Character]) -> bool {
+fn emoji_modifier_sequences(chars: &[&Character], ctx: &LintContext<'_>) {
     for (index, &char) in chars.iter().enumerate() {
         if index == 0 {
             continue;
@@ -314,11 +339,12 @@ fn emoji_modifier_sequences(chars: &[&Character]) -> bool {
         let previous = chars[index - 1];
 
         if is_emoji_modifier(char) && !is_emoji_modifier(previous) {
-            return true;
+            ctx.diagnostic(emoji_modifiers_diagnostic(Span::new(
+                previous.span.start,
+                char.span.end,
+            )));
         }
     }
-
-    false
 }
 
 // Returns true if the two code units form a surrogate pair
@@ -337,41 +363,191 @@ fn is_surrogate_pair(hi: u32, lo: u32) -> bool {
 }
 
 // Returns true if the character was written as a Unicode code point escape (e.g., \u{1F44D})
-fn is_unicode_code_point_escape(char: &Character) -> bool {
-    matches!(char.kind, CharacterKind::UnicodeEscape)
+// tries to align how `oxc_parser` uses `unicode_code_point`
+fn is_unicode_code_point_escape(char: &Character, source_text: &str) -> bool {
+    let char_source = char.span.source_text(source_text);
+    let Some(hex) = char_source.strip_prefix("\\u{").and_then(|s| s.strip_suffix('}')) else {
+        return false;
+    };
+
+    if hex.is_empty() {
+        return false;
+    }
+
+    let mut value: u32 = 0;
+    for ch in hex.chars() {
+        let Some(digit) = ch.to_digit(16) else {
+            return false;
+        };
+
+        let Some(next) = value.checked_mul(16).and_then(|v| v.checked_add(digit)) else {
+            return false;
+        };
+        value = next;
+    }
+
+    value <= 0x10_FFFF
 }
 
-// Find surrogate pairs where at least one is a Unicode code point escape
-fn surrogate_pair_sequences_without_flag(chars: &[&Character]) -> bool {
+// Find surrogate pairs where neither character is a Unicode code point escape
+fn surrogate_pair_sequences_without_flag(
+    chars: &[&Character],
+    node: &AstNode,
+    ctx: &LintContext<'_>,
+) {
     for (index, &char) in chars.iter().enumerate() {
         if index == 0 {
             continue;
         }
         let previous = chars[index - 1];
         if is_surrogate_pair(previous.value, char.value)
-            && !is_unicode_code_point_escape(previous)
-            && !is_unicode_code_point_escape(char)
+            && !is_unicode_code_point_escape(previous, ctx.source_text())
+            && !is_unicode_code_point_escape(char, ctx.source_text())
         {
-            return true;
+            ctx.diagnostic_with_suggestion(
+                surrogate_pair_without_flag_diagnostic(Span::new(
+                    previous.span.start,
+                    char.span.end,
+                )),
+                |fixer| {
+                    match node.kind() {
+                        AstKind::RegExpLiteral(lit) => fix_regexp_literal(fixer, lit),
+                        AstKind::NewExpression(expr) if is_regexp_callee(&expr.callee, ctx) => {
+                            fix_on_arguments(
+                                fixer,
+                                expr.arguments.first(),
+                                expr.arguments.get(1),
+                                ctx,
+                            )
+                        }
+
+                        // RegExp()
+                        AstKind::CallExpression(expr) if is_regexp_callee(&expr.callee, ctx) => {
+                            fix_on_arguments(
+                                fixer,
+                                expr.arguments.first(),
+                                expr.arguments.get(1),
+                                ctx,
+                            )
+                        }
+                        _ => fixer.noop(),
+                    }
+                },
+            );
         }
     }
-    false
 }
 
-// Find surrogate pairs where at least one is a Unicode code point escape
-fn surrogate_pair_sequences(chars: &[&Character]) -> bool {
+// Reports the spans of any zero width joiner sequences detected between two non-ZWJ characters.
+fn surrogate_pair_sequences(chars: &[&Character], ctx: &LintContext<'_>) {
     for (index, &char) in chars.iter().enumerate() {
         if index == 0 {
             continue;
         }
         let previous = chars[index - 1];
         if is_surrogate_pair(previous.value, char.value)
-            && (is_unicode_code_point_escape(previous) || is_unicode_code_point_escape(char))
+            && (is_unicode_code_point_escape(previous, ctx.source_text())
+                || is_unicode_code_point_escape(char, ctx.source_text()))
         {
-            return true;
+            ctx.diagnostic(surrogate_pair_diagnostic(Span::new(
+                previous.span.start,
+                char.span.end,
+            )));
         }
     }
-    false
+}
+
+fn fix_regexp_literal(fixer: RuleFixer<'_, '_>, literal: &RegExpLiteral) -> RuleFix {
+    let literal_text = literal.regex.pattern.text;
+    if !validate_regex_pattern(&literal_text, true, Some("u")) {
+        return fixer.noop();
+    }
+    fixer.insert_text_after_range(literal.span(), "u")
+}
+
+fn fix_on_arguments<'a>(
+    fixer: RuleFixer<'_, 'a>,
+    arg1: Option<&Argument>,
+    arg2: Option<&Argument>,
+    ctx: &LintContext<'a>,
+) -> RuleFix {
+    match get_regex_flags_span(arg2) {
+        RegexFlagsParseResult::Valid(span) => {
+            let Some(arg1_expr) = arg1
+                .expect("invalid patterns should be filtered out by `run_on_regex_node`")
+                .as_expression()
+                .map(Expression::get_inner_expression)
+            else {
+                return fixer.noop();
+            };
+            if span.is_none()
+                && let Expression::RegExpLiteral(lit) = &arg1_expr
+            {
+                return fix_regexp_literal(fixer, lit);
+            }
+
+            fix_regexp_call_or_new(
+                fixer,
+                get_regex_pattern_span(arg1)
+                    .expect("invalid patterns should be filtered out by `run_on_regex_node`"),
+                arg1.unwrap().span(),
+                span.map(|span: Span| span.shrink(1)),
+                matches!(arg1_expr, Expression::RegExpLiteral(_)),
+                ctx,
+            )
+        }
+        _ => fixer.noop(),
+    }
+}
+
+fn fix_regexp_call_or_new<'a>(
+    fixer: RuleFixer<'_, 'a>,
+    pattern_span: Span,
+    first_arg_span: Span,
+    flag_span: Option<Span>,
+    is_regex_literal: bool,
+    ctx: &LintContext<'a>,
+) -> RuleFix {
+    let flags_text = flag_span.map(|span| span.source_text(ctx.source_text()));
+    if flags_text.is_some_and(|flags| flags.contains('u') || flags.contains('v')) {
+        return fixer.noop();
+    }
+
+    let pattern_text = pattern_span.source_text(ctx.source_text());
+    let flags_text =
+        if let Some(flags) = flags_text { format!("{flags}u") } else { "u".to_string() };
+
+    if is_regex_literal {
+        if !validate_regex_pattern(pattern_text, true, Some(&flags_text)) {
+            return fixer.noop();
+        }
+    } else if !validate_regex_pattern(pattern_text, false, Some(&format!(r#""{flags_text}""#))) {
+        return fixer.noop();
+    }
+
+    if let Some(flag_span) = flag_span {
+        if flag_span.is_empty() {
+            fixer.insert_text_after(&flag_span, "u")
+        } else {
+            fixer.replace(flag_span, flags_text)
+        }
+    } else {
+        fixer.insert_text_after(&first_arg_span, r#", "u""#)
+    }
+}
+
+fn validate_regex_pattern(pattern: &str, is_regex_literal: bool, flags: Option<&str>) -> bool {
+    let allocator = Allocator::default();
+    // we do not care about the actual span positions for this validation, so we can set them to 0
+    let options = Options { pattern_span_offset: 0, flags_span_offset: 0 };
+
+    if is_regex_literal {
+        let parser = LiteralParser::new(&allocator, pattern, flags, options);
+        parser.parse().is_ok()
+    } else {
+        let parser = ConstructorParser::new(&allocator, pattern, flags, options);
+        parser.parse().is_ok()
+    }
 }
 
 #[test]
@@ -443,13 +619,20 @@ fn test() {
         (r"/[👨\u200d👩\u200d👦]/u", Some(serde_json::json!([{ "allowEscape": true }]))),
         (r"/[\u00B7\u0300-\u036F]/u", Some(serde_json::json!([{ "allowEscape": true }]))),
         (r"/[\n\u0305]/", Some(serde_json::json!([{ "allowEscape": true }]))),
-        // (r#"RegExp("[\uD83D\uDC4D]")"#, Some(serde_json::json!([{ "allowEscape": true }]))),
-        // (r#"RegExp("[A\u0301]")"#, Some(serde_json::json!([{ "allowEscape": true }]))),
+        (r#"RegExp("[\uD83D\uDC4D]")"#, Some(serde_json::json!([{ "allowEscape": true }]))),
+        (r#"RegExp("[A\u0301]")"#, Some(serde_json::json!([{ "allowEscape": true }]))),
         (r#"RegExp("[\x41\\u0301]")"#, Some(serde_json::json!([{ "allowEscape": true }]))),
-        // (
-        //     r#"RegExp(`[\uD83D\uDC4D]`) // Backslash + "uD83D" + Backslash + "uDC4D""#,
-        //     Some(serde_json::json!([{ "allowEscape": true }])),
-        // ),
+        (
+            r#"RegExp(`[\uD83D\uDC4D]`) // Backslash + "uD83D" + Backslash + "uDC4D""#,
+            Some(serde_json::json!([{ "allowEscape": true }])),
+        ),
+        // https://github.com/oxc-project/oxc/issues/19090
+        (r"/[\u200c\u200d\p{ID_Continue}.]/u", None),
+        // Separate character classes should not trigger warnings for cross-class sequences
+        (r"/[\u200c][\u200d][a]/", None),
+        (r"/[\uD83D][\uDC4D]/", None), // Solo surrogates in separate classes
+        // with overridden flags it is valid
+        ("RegExp(/[👍]/, 'u');", None),
     ];
 
     let fail = vec![
@@ -586,8 +769,7 @@ fn test() {
         // (r#"new RegExp(`${"[👍🇯🇵]"}[😊]`);"#, None),
         // references from variables
         // (r#"const pattern = "[👍]"; new RegExp(pattern);"#, None),
-        // flag overrides, see oxc-project/oxc#13436
-        // ("RegExp(/[a👍z]/u, '');", None),
+        ("RegExp(/[a👍z]/u, '');", None),
         ("RegExp(/[👍]/)", None),
         ("RegExp(/[👍]/, 'i');", None),
         ("RegExp(/[👍]/, 'g');", None), // { "globals": { "RegExp": "off" } },
@@ -619,9 +801,8 @@ fn test() {
             r"new RegExp(`[.\\\x75200D.]`)", // "u" escaped as "\x75"
             None,
         ),
-        ("var r = /[[👶🏻]]/v", None), // { "ecmaVersion": 2024 },
-        // flag overrides, see oxc-project/oxc#13436
-        // ("new RegExp(/^[👍]$/v, '')", None), // {				"ecmaVersion": 2024,			},
+        ("var r = /[[👶🏻]]/v", None),         // { "ecmaVersion": 2024 },
+        ("new RegExp(/^[👍]$/v, '')", None), // { "ecmaVersion": 2024, },
         (r"/[Á]/", Some(serde_json::json!([{ "allowEscape": false }]))),
         (r"/[\\̶]/", Some(serde_json::json!([{ "allowEscape": true }]))),
         (r"/[\n̅]/", Some(serde_json::json!([{ "allowEscape": true }]))),
@@ -639,8 +820,126 @@ fn test() {
         //     r#"const pattern = "[\x41\u0301]"; RegExp(pattern);"#,
         //     Some(serde_json::json!([{ "allowEscape": true }])),
         // ),
+        // https://github.com/oxc-project/oxc/issues/19090 -- without u flag it should fail
+        // this should not be a `UnicodePropertyEscape`
+        (r"/[\u200c\u200d\p{ID_Continue}.]/", None),
+    ];
+
+    let fix = vec![
+        ("var r = /[👍]/", "var r = /[👍]/u", None),
+        (r"var r = /[\uD83D\uDC4D]/", r"var r = /[\uD83D\uDC4D]/u", None),
+        (r"var r = /before[\uD83D\uDC4D]after/", r"var r = /before[\uD83D\uDC4D]after/u", None),
+        (r"var r = /[before\uD83D\uDC4Dafter]/", r"var r = /[before\uD83D\uDC4Dafter]/u", None),
+        (r"var r = /\uDC4D[\uD83D\uDC4D]/", r"var r = /\uDC4D[\uD83D\uDC4D]/u", None),
+        ("var r = /(?<=[👍])/", "var r = /(?<=[👍])/u", None),
+        ("var r = /[👶🏻]/", "var r = /[👶🏻]/u", None),
+        ("var r = /[🇯🇵]/", "var r = /[🇯🇵]/u", None),
+        ("var r = /[🇯🇵]/i", "var r = /[🇯🇵]/iu", None),
+        ("var r = /[👨‍👩‍👦]/", "var r = /[👨‍👩‍👦]/u", None),
+        (r#"var r = RegExp("[👍]", "")"#, r#"var r = RegExp("[👍]", "u")"#, None),
+        (r#"var r = new RegExp("[👍]", "")"#, r#"var r = new RegExp("[👍]", "u")"#, None),
+        (r#"var r = RegExp("[👍]", ``)"#, r#"var r = RegExp("[👍]", `u`)"#, None),
+        (
+            "var r = new RegExp(`
+                [👍]`)",
+            r#"var r = new RegExp(`
+                [👍]`, "u")"#,
+            None,
+        ),
+        (
+            r#"const flags = ""; var r = new RegExp("[👍]", flags)"#,
+            r#"const flags = ""; var r = new RegExp("[👍]", flags)"#, // no fix, regex would be invalid
+            None,
+        ),
+        (
+            r#"var r = RegExp("[\\uD83D\\uDC4D]", "")"#,
+            r#"var r = RegExp("[\\uD83D\\uDC4D]", "u")"#,
+            None,
+        ),
+        (
+            r#"var r = RegExp("before[\\uD83D\\uDC4D]after", "")"#,
+            r#"var r = RegExp("before[\\uD83D\\uDC4D]after", "u")"#,
+            None,
+        ),
+        (
+            r#"var r = RegExp("[before\\uD83D\\uDC4Dafter]", "")"#,
+            r#"var r = RegExp("[before\\uD83D\\uDC4Dafter]", "u")"#,
+            None,
+        ),
+        (r#"var r = RegExp("\t\t\t👍[👍]")"#, r#"var r = RegExp("\t\t\t👍[👍]", "u")"#, None),
+        (
+            r#"var r = new RegExp("\u1234[\\uD83D\\uDC4D]")"#,
+            r#"var r = new RegExp("\u1234[\\uD83D\\uDC4D]", "u")"#,
+            None,
+        ),
+        (
+            r#"var r = new RegExp("\\u1234\\u5678👎[👍]")"#,
+            r#"var r = new RegExp("\\u1234\\u5678👎[👍]", "u")"#,
+            None,
+        ),
+        (
+            r#"var r = new RegExp("\\u1234\\u5678👍[👍]")"#,
+            r#"var r = new RegExp("\\u1234\\u5678👍[👍]", "u")"#,
+            None,
+        ),
+        (
+            r#"var r = new RegExp("/(?<=[👍])", "")"#,
+            r#"var r = new RegExp("/(?<=[👍])", "u")"#,
+            None,
+        ),
+        (r#"var r = new RegExp("[👶🏻]", "")"#, r#"var r = new RegExp("[👶🏻]", "u")"#, None),
+        (r"var r = RegExp(`\t\t\t👍[👍]`)", r#"var r = RegExp(`\t\t\t👍[👍]`, "u")"#, None),
+        (r"var r = RegExp(`\\t\\t\\t👍[👍]`)", r#"var r = RegExp(`\\t\\t\\t👍[👍]`, "u")"#, None),
+        (r#"var r = new RegExp("[🇯🇵]", "")"#, r#"var r = new RegExp("[🇯🇵]", "u")"#, None),
+        (r#"var r = new RegExp("[🇯🇵]", "i")"#, r#"var r = new RegExp("[🇯🇵]", "iu")"#, None),
+        ("var r = new RegExp('[🇯🇵]', `i`)", "var r = new RegExp('[🇯🇵]', `iu`)", None),
+        (r#"var r = new RegExp("[🇯🇵]")"#, r#"var r = new RegExp("[🇯🇵]", "u")"#, None),
+        (r#"var r = new RegExp("[🇯🇵]",)"#, r#"var r = new RegExp("[🇯🇵]", "u",)"#, None),
+        (r#"var r = new RegExp(("[🇯🇵]"))"#, r#"var r = new RegExp(("[🇯🇵]"), "u")"#, None),
+        (r#"var r = new RegExp((("[🇯🇵]")))"#, r#"var r = new RegExp((("[🇯🇵]")), "u")"#, None),
+        (
+            r#"var r = new RegExp((("[🇯🇵]")) as string)"#,
+            r#"var r = new RegExp((("[🇯🇵]")) as string, "u")"#,
+            None,
+        ),
+        (r#"var r = new RegExp(("[🇯🇵]"),)"#, r#"var r = new RegExp(("[🇯🇵]"), "u",)"#, None),
+        (r#"var r = new RegExp("[👨‍👩‍👦]", "")"#, r#"var r = new RegExp("[👨‍👩‍👦]", "u")"#, None),
+        (
+            r#"var r = new globalThis.RegExp("[🇯🇵]", "")"#,
+            r#"var r = new globalThis.RegExp("[🇯🇵]", "u")"#,
+            None,
+        ),
+        // complex template literal
+        // (r#"new RegExp(`${"[👍🇯🇵]"}[😊]`);"#, r#"new RegExp(`${"[👍🇯🇵]"}[😊]`, "u");"#, None),
+        // references from variables
+        // (
+        //     r#"const pattern = "[👍]"; new RegExp(pattern);"#,
+        //     r#"const pattern = "[👍]"; new RegExp(pattern, "u");"#,
+        //     None,
+        // ),
+        //
+        // see https://github.com/oxc-project/oxc/issues/13436
+        ("RegExp(/[a👍z]/u, '');", "RegExp(/[a👍z]/u, 'u');", None),
+        ("RegExp(/[👍]/)", "RegExp(/[👍]/u)", None),
+        ("RegExp(/[👍]/, 'i');", "RegExp(/[👍]/, 'iu');", None),
+        // ("RegExp(/[👍]/, 'g')", "RegExp(/[👍]/u, 'g');", None), // languageOptions: { globals: { RegExp: "off" } },
+        ("new RegExp(/^[👍]$/v, '')", "new RegExp(/^[👍]$/v, 'u')", None),
+        (r"/[\👍]/", r"/[\👍]/", Some(serde_json::json!([{ "allowEscape": true }]))), // no fix, regex would be invalid
+        (r"RegExp('[\👍]')", r#"RegExp('[\👍]', "u")"#, None),
+        (
+            r"RegExp('[\\👍]')",
+            r"RegExp('[\\👍]')", // no fix, regex would be invalid
+            Some(serde_json::json!([{ "allowEscape": true }])),
+        ),
+        // Backslash + U+D83D + U+DC4D
+        (
+            r"RegExp(`[\👍]`)",
+            r#"RegExp(`[\👍]`, "u")"#,
+            Some(serde_json::json!([{ "allowEscape": true }])),
+        ),
     ];
 
     Tester::new(NoMisleadingCharacterClass::NAME, NoMisleadingCharacterClass::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

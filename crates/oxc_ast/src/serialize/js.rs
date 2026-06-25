@@ -3,6 +3,7 @@ use oxc_estree::{
     Concat2, ConcatElement, ESTree, JsonSafeString, SequenceSerializer, Serializer,
     StructSerializer,
 };
+use oxc_span::{GetSpan, Span};
 
 use crate::ast::*;
 
@@ -12,83 +13,72 @@ use super::{EmptyArray, Null};
 // Binding patterns and function params
 // ----------------------------------------
 
-/// Converter for [`BindingPattern`].
-///
-/// Take `typeAnnotation` and `optional` fields from `BindingPattern`,
-/// remaining fields from flattening `BindingPatternKind`.
-#[ast_meta]
-#[estree(raw_deser = "
-    const pattern = DESER[BindingPatternKind](POS_OFFSET.kind);
-    if (IS_TS) {
-        const previousParent = parent;
-        parent = pattern;
-        pattern.optional = DESER[bool](POS_OFFSET.optional);
-        pattern.typeAnnotation = DESER[Option<Box<TSTypeAnnotation>>](POS_OFFSET.type_annotation);
-        if (PARENT) parent = previousParent;
-    }
-    pattern
-")]
-pub struct BindingPatternConverter<'a, 'b>(pub &'b BindingPattern<'a>);
-
-impl ESTree for BindingPatternConverter<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
-        let pattern = self.0;
-
-        if S::INCLUDE_TS_FIELDS {
-            BindingPatternKindAndTsFields {
-                kind: &pattern.kind,
-                decorators: &[],
-                optional: pattern.optional,
-                type_annotation: pattern.type_annotation.as_deref(),
-            }
-            .serialize(serializer);
-        } else {
-            pattern.kind.serialize(serializer);
-        }
-    }
-}
-
 struct BindingPatternKindAndTsFields<'a, 'b> {
-    kind: &'b BindingPatternKind<'a>,
-    decorators: &'b [Decorator<'a>],
+    kind: &'b BindingPattern<'a>,
+    decorators: Option<&'b [Decorator<'a>]>,
     optional: bool,
     type_annotation: Option<&'b TSTypeAnnotation<'a>>,
+    override_span: Option<Span>,
 }
 
 impl ESTree for BindingPatternKindAndTsFields<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
 
-        let span = match &self.kind {
-            BindingPatternKind::BindingIdentifier(ident) => {
+        let mut span = match &self.kind {
+            BindingPattern::BindingIdentifier(ident) => {
                 state.serialize_field("type", &JsonSafeString("Identifier"));
-                state.serialize_field("decorators", &self.decorators);
+                if let Some(d) = &self.decorators {
+                    state.serialize_ts_field("decorators", d);
+                }
                 state.serialize_field("name", &JsonSafeString(ident.name.as_str()));
                 ident.span
             }
-            BindingPatternKind::ObjectPattern(object) => {
+            BindingPattern::ObjectPattern(object) => {
                 state.serialize_field("type", &JsonSafeString("ObjectPattern"));
-                state.serialize_field("decorators", &self.decorators);
+                if let Some(d) = &self.decorators {
+                    state.serialize_ts_field("decorators", d);
+                }
                 state.serialize_field("properties", &Concat2(&object.properties, &object.rest));
                 object.span
             }
-            BindingPatternKind::ArrayPattern(array) => {
+            BindingPattern::ArrayPattern(array) => {
                 state.serialize_field("type", &JsonSafeString("ArrayPattern"));
-                state.serialize_field("decorators", &self.decorators);
+                if let Some(d) = &self.decorators {
+                    state.serialize_ts_field("decorators", d);
+                }
                 state.serialize_field("elements", &Concat2(&array.elements, &array.rest));
                 array.span
             }
-            BindingPatternKind::AssignmentPattern(assignment) => {
+            BindingPattern::AssignmentPattern(assignment) => {
                 state.serialize_field("type", &JsonSafeString("AssignmentPattern"));
-                state.serialize_field("decorators", &self.decorators);
-                state.serialize_field("left", &assignment.left);
+                if let Some(d) = &self.decorators {
+                    state.serialize_ts_field("decorators", d);
+                }
+                // Serialize left with decorators in TS mode
+                state.serialize_field(
+                    "left",
+                    &BindingPatternKindAndTsFields {
+                        kind: &assignment.left,
+                        decorators: Some(&[]),
+                        optional: false,
+                        type_annotation: None,
+                        override_span: None,
+                    },
+                );
                 state.serialize_field("right", &assignment.right);
                 assignment.span
             }
         };
 
-        state.serialize_field("optional", &self.optional);
-        state.serialize_field("typeAnnotation", &self.type_annotation);
+        state.serialize_ts_field("optional", &self.optional);
+        state.serialize_ts_field("typeAnnotation", &self.type_annotation);
+
+        if let Some(override_span) = self.override_span {
+            span = override_span;
+        } else if let Some(type_annotation) = self.type_annotation {
+            span = span.merge(type_annotation.span);
+        }
 
         state.serialize_span(span);
 
@@ -96,19 +86,80 @@ impl ESTree for BindingPatternKindAndTsFields<'_, '_> {
     }
 }
 
+/// Converter for `id` field of [`VariableDeclarator`].
+///
+/// Merges `type_annotation` from the parent into the binding pattern.
+#[ast_meta]
+#[estree(
+    ts_type = "BindingPattern",
+    raw_deser = "
+        const pattern = DESER[BindingPattern](POS_OFFSET.id);
+        if (IS_TS) {
+            const previousParent = parent;
+            if (PARENT) parent = pattern;
+            const typeAnnotation = DESER[Option<Box<TSTypeAnnotation>>](POS_OFFSET.type_annotation);
+            if (typeAnnotation !== null) {
+                pattern.typeAnnotation = typeAnnotation;
+                if (RANGE) {
+                    pattern.range[1] = pattern.end = typeAnnotation.end;
+                } else {
+                    pattern.end = typeAnnotation.end;
+                }
+            }
+            if (PARENT) parent = previousParent;
+        }
+        pattern
+    "
+)]
+pub struct VariableDeclaratorId<'a, 'b>(pub &'b VariableDeclarator<'a>);
+
+impl ESTree for VariableDeclaratorId<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        BindingPatternKindAndTsFields {
+            kind: &self.0.id,
+            decorators: Some(&[]),
+            optional: false,
+            type_annotation: self.0.type_annotation.as_deref(),
+            override_span: None,
+        }
+        .serialize(serializer);
+    }
+}
+
 /// Converter for [`CatchParameter`].
 ///
-/// Just delegate to [`BindingPattern`] serializer, ignoring `span` field.
-///
-/// We could do this just with `#[estree(skip)]` and `#[estree(flatten)]` on the Rust type def.
-/// This converter only exists to generate more efficient raw deser code.
+/// Serializes as the pattern with type annotation if in TS mode.
 #[ast_meta]
-#[estree(ts_type = "BindingPattern", raw_deser = "DESER[BindingPattern](POS_OFFSET.pattern)")]
+#[estree(
+    ts_type = "BindingPattern",
+    raw_deser = "
+        const previousParent = parent;
+        const pattern = DESER[BindingPattern](POS_OFFSET.pattern);
+        if (IS_TS) {
+            if (PARENT) parent = pattern;
+            const typeAnnotation = DESER[Option<Box<TSTypeAnnotation>>](POS_OFFSET.type_annotation);
+            pattern.typeAnnotation = typeAnnotation;
+            if (typeAnnotation !== null) {
+                pattern.end = typeAnnotation.end;
+                if (RANGE) pattern.range[1] = typeAnnotation.end;
+            }
+            if (PARENT) parent = previousParent;
+        }
+        pattern
+    "
+)]
 pub struct CatchParameterConverter<'a, 'b>(pub &'b CatchParameter<'a>);
 
 impl ESTree for CatchParameterConverter<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        self.0.pattern.serialize(serializer);
+        BindingPatternKindAndTsFields {
+            kind: &self.0.pattern,
+            decorators: Some(&[]),
+            optional: false,
+            type_annotation: self.0.type_annotation.as_deref(),
+            override_span: None,
+        }
+        .serialize(serializer);
     }
 }
 
@@ -120,8 +171,9 @@ impl ESTree for CatchParameterConverter<'_, '_> {
     ts_type = "ParamPattern[]",
     raw_deser = "
         const params = DESER[Vec<FormalParameter>](POS_OFFSET.items);
-        if (uint32[(POS_OFFSET.rest) >> 2] !== 0 && uint32[(POS_OFFSET.rest + 4) >> 2] !== 0) {
-            pos = uint32[(POS_OFFSET.rest) >> 2];
+        const restFieldPos32 = POS_OFFSET.rest >> 2;
+        if (int32[restFieldPos32] !== 0 && int32[restFieldPos32 + 1] !== 0) {
+            pos = int32[restFieldPos32];
 
             let start, end;
             const previousParent = parent;
@@ -130,20 +182,25 @@ impl ESTree for CatchParameterConverter<'_, '_> {
                 ...(IS_TS && { decorators: [] }),
                 argument: null,
                 ...(IS_TS && {
-                    optional: DESER[bool]( POS_OFFSET<BindingRestElement>.argument.optional ),
+                    optional: false,
                     typeAnnotation: null,
                     value: null,
                 }),
-                start: start = DESER[u32]( POS_OFFSET<BindingRestElement>.span.start ),
-                end: end = DESER[u32]( POS_OFFSET<BindingRestElement>.span.end ),
+                start: start = DESER[i32]( POS_OFFSET<FormalParameterRest>.rest.span.start ),
+                end: end = DESER[i32]( POS_OFFSET<FormalParameterRest>.rest.span.end ),
                 ...(RANGE && { range: [start, end] }),
-                ...(PARENT && { parent }),
+                ...(PARENT && { parent: previousParent }),
             };
-            rest.argument = DESER[BindingPatternKind]( POS_OFFSET<BindingRestElement>.argument.kind );
+            rest.argument = DESER[BindingPattern]( POS_OFFSET<FormalParameterRest>.rest.argument );
             if (IS_TS) {
                 rest.typeAnnotation = DESER[Option<Box<TSTypeAnnotation>>](
-                    POS_OFFSET<BindingRestElement>.argument.type_annotation
+                    POS_OFFSET<FormalParameterRest>.type_annotation
                 );
+                if (rest.typeAnnotation !== null) {
+                    end = rest.typeAnnotation.end;
+                    rest.end = end;
+                    if (RANGE) rest.range[1] = end;
+                }
             }
             params.push(rest);
             if (PARENT) parent = previousParent;
@@ -165,24 +222,26 @@ impl ConcatElement for FormalParameters<'_> {
     fn push_to_sequence<S: SequenceSerializer>(&self, seq: &mut S) {
         self.items.push_to_sequence(seq);
         if let Some(rest) = &self.rest {
-            seq.serialize_element(&FormalParametersRest(rest));
+            seq.serialize_element(rest.as_ref());
         }
     }
 }
 
-struct FormalParametersRest<'a, 'b>(&'b BindingRestElement<'a>);
-
-impl ESTree for FormalParametersRest<'_, '_> {
+impl ESTree for FormalParameterRest<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        let rest = self.0;
+        let rest = self;
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("RestElement"));
         state.serialize_ts_field("decorators", &EmptyArray(()));
-        state.serialize_field("argument", &rest.argument.kind);
-        state.serialize_ts_field("optional", &rest.argument.optional);
-        state.serialize_ts_field("typeAnnotation", &rest.argument.type_annotation);
+        state.serialize_field("argument", &rest.rest.argument);
+        state.serialize_ts_field("optional", &false);
+        state.serialize_ts_field("typeAnnotation", &rest.type_annotation);
         state.serialize_ts_field("value", &Null(()));
-        state.serialize_span(rest.span);
+        state.serialize_span(
+            rest.type_annotation
+                .as_ref()
+                .map_or(rest.rest.span, |ta| rest.rest.span.merge(ta.span)),
+        );
         state.end();
     }
 }
@@ -196,16 +255,63 @@ impl ESTree for FormalParametersRest<'_, '_> {
     ts_type = "FormalParameter | TSParameterProperty",
     raw_deser = "
         let param;
+        const previousParent = parent;
+        const initializerFieldPos32 = POS_OFFSET.initializer >> 2;
+        const hasInitializer = int32[initializerFieldPos32] !== 0 && int32[initializerFieldPos32 + 1] !== 0;
+
         if (IS_TS) {
             const accessibility = DESER[Option<TSAccessibility>](POS_OFFSET.accessibility),
                 readonly = DESER[bool](POS_OFFSET.readonly),
-                override = DESER[bool](POS_OFFSET.override),
-                previousParent = parent;
+                override = DESER[bool](POS_OFFSET.override);
             if (accessibility === null && !readonly && !override) {
-                param = parent = DESER[BindingPatternKind](POS_OFFSET.pattern.kind);
-                param.decorators = DESER[Vec<Decorator>](POS_OFFSET.decorators);
-                param.optional = DESER[bool](POS_OFFSET.pattern.optional);
-                param.typeAnnotation = DESER[Option<Box<TSTypeAnnotation>>](POS_OFFSET.pattern.type_annotation);
+                const optional = DESER[bool](POS_OFFSET.optional);
+
+                if (hasInitializer) {
+                    let start, end;
+                    param = parent = {
+                        type: 'AssignmentPattern',
+                        decorators: null,
+                        left: null,
+                        right: null,
+                        optional,
+                        typeAnnotation: null,
+                        start: start = DESER[i32]( POS_OFFSET.span.start ),
+                        end: end = DESER[i32]( POS_OFFSET.span.end ),
+                        ...(RANGE && { range: [start, end] }),
+                        ...(PARENT && { parent: previousParent }),
+                    };
+                    param.decorators = DESER[Vec<Decorator>](POS_OFFSET.decorators);
+                    param.left = DESER[BindingPattern](POS_OFFSET.pattern);
+                    param.left.decorators = [];
+                    param.left.optional = false;
+                    if (PARENT) parent = param.left;
+                    const leftTypeAnnotation = DESER[Option<Box<TSTypeAnnotation>>](POS_OFFSET.type_annotation);
+                    param.left.typeAnnotation = leftTypeAnnotation;
+                    if (leftTypeAnnotation !== null) {
+                        param.left.end = leftTypeAnnotation.end;
+                        if (RANGE) param.left.range[1] = leftTypeAnnotation.end;
+                    }
+                    if (PARENT) parent = param;
+                    param.right = DESER[Option<Box<Expression>>](POS_OFFSET.initializer);
+                } else {
+                    param = DESER[BindingPattern](POS_OFFSET.pattern);
+                    if (PARENT) {
+                        param.parent = previousParent;
+                        parent = param;
+                    }
+                    param.decorators = DESER[Vec<Decorator>](POS_OFFSET.decorators);
+                    param.optional = optional;
+                    const typeAnnotation = DESER[Option<Box<TSTypeAnnotation>>](POS_OFFSET.type_annotation);
+                    param.typeAnnotation = typeAnnotation;
+                    if (typeAnnotation !== null) {
+                        param.end = typeAnnotation.end;
+                        if (RANGE) param.range[1] = typeAnnotation.end;
+                    } else if (optional) {
+                        param.end = DESER[i32]( POS_OFFSET.span.end );
+                        if (RANGE) param.range[1] = DESER[i32]( POS_OFFSET.span.end );
+                    }
+                    if (PARENT) parent = previousParent;
+                }
             } else {
                 let start, end;
                 param = parent = {
@@ -216,18 +322,82 @@ impl ESTree for FormalParametersRest<'_, '_> {
                     parameter: null,
                     readonly,
                     static: false,
-                    start: start = DESER[u32]( POS_OFFSET.span.start ),
-                    end: end = DESER[u32]( POS_OFFSET.span.end ),
+                    start: start = DESER[i32]( POS_OFFSET.span.start ),
+                    end: end = DESER[i32]( POS_OFFSET.span.end ),
                     ...(RANGE && { range: [start, end] }),
-                    ...(PARENT && { parent }),
+                    ...(PARENT && { parent: previousParent }),
                 };
                 param.decorators = DESER[Vec<Decorator>](POS_OFFSET.decorators);
-                param.parameter = DESER[BindingPattern](POS_OFFSET.pattern);
+                if (hasInitializer) {
+                    const pattern = DESER[BindingPattern](POS_OFFSET.pattern);
+                    const initializer = DESER[Option<Box<Expression>>](POS_OFFSET.initializer);
+                    let assignStart, assignEnd;
+                    const assignParam = parent = {
+                        type: 'AssignmentPattern',
+                        decorators: [],
+                        left: null,
+                        right: null,
+                        optional: false,
+                        typeAnnotation: null,
+                        start: assignStart = pattern.start,
+                        end: assignEnd = initializer.end,
+                        ...(RANGE && { range: [assignStart, assignEnd] }),
+                        ...(PARENT && { parent: param }),
+                    };
+                    assignParam.left = pattern;
+                    if (PARENT) pattern.parent = assignParam;
+                    pattern.decorators = [];
+                    pattern.optional = false;
+                    if (PARENT) parent = pattern;
+                    const patternTypeAnnotation = DESER[Option<Box<TSTypeAnnotation>>](POS_OFFSET.type_annotation);
+                    pattern.typeAnnotation = patternTypeAnnotation;
+                    if (patternTypeAnnotation !== null) {
+                        pattern.end = patternTypeAnnotation.end;
+                        if (RANGE) pattern.range[1] = patternTypeAnnotation.end;
+                    }
+                    if (PARENT) parent = assignParam;
+                    assignParam.right = initializer;
+                    if (PARENT && initializer !== null) initializer.parent = assignParam;
+                    param.parameter = assignParam;
+                } else {
+                    param.parameter = DESER[BindingPattern](POS_OFFSET.pattern);
+                    param.parameter.decorators = [];
+                    const paramOptional = DESER[bool](POS_OFFSET.optional);
+                    param.parameter.optional = paramOptional;
+                    if (PARENT) parent = param.parameter;
+                    const paramTypeAnnotation = DESER[Option<Box<TSTypeAnnotation>>](POS_OFFSET.type_annotation);
+                    param.parameter.typeAnnotation = paramTypeAnnotation;
+                    if (paramTypeAnnotation !== null) {
+                        param.parameter.end = paramTypeAnnotation.end;
+                        if (RANGE) param.parameter.range[1] = paramTypeAnnotation.end;
+                    } else if (paramOptional) {
+                        const paramEnd = DESER[i32]( POS_OFFSET.span.end );
+                        const pattern = param.parameter;
+                        param.parameter.end = paramEnd;
+                        if (RANGE) param.parameter.range[1] = paramEnd;
+                    }
+                    if (PARENT) parent = param;
+                }
             }
-            if (PARENT) parent = previousParent;
         } else {
-            param = DESER[BindingPatternKind](POS_OFFSET.pattern.kind);
+            if (hasInitializer) {
+                let start, end;
+                param = parent = {
+                    type: 'AssignmentPattern',
+                    left: null,
+                    right: null,
+                    start: start = DESER[i32]( POS_OFFSET.span.start ),
+                    end: end = DESER[i32]( POS_OFFSET.span.end ),
+                    ...(RANGE && { range: [start, end] }),
+                    ...(PARENT && { parent: previousParent }),
+                };
+                param.left = DESER[BindingPattern](POS_OFFSET.pattern);
+                param.right = DESER[Option<Box<Expression>>](POS_OFFSET.initializer);
+            } else {
+                param = DESER[BindingPattern](POS_OFFSET.pattern);
+            }
         }
+        if (PARENT) parent = previousParent;
         param
     "
 )]
@@ -237,30 +407,123 @@ impl ESTree for FormalParameterConverter<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let param = self.0;
 
-        if S::INCLUDE_TS_FIELDS {
+        if serializer.include_ts_fields() {
             if param.has_modifier() {
                 let mut state = serializer.serialize_struct();
                 state.serialize_field("type", &JsonSafeString("TSParameterProperty"));
                 state.serialize_field("accessibility", &param.accessibility);
                 state.serialize_field("decorators", &param.decorators);
                 state.serialize_field("override", &param.r#override);
-                state.serialize_field("parameter", &param.pattern);
+
+                if let Some(init) = &param.initializer {
+                    let pattern_span = param.pattern.span();
+                    let left_span_end =
+                        param.type_annotation.as_ref().map_or(pattern_span.end, |ta| ta.span.end);
+                    let assignment_span = Span::new(pattern_span.start, init.span().end);
+
+                    state.serialize_field(
+                        "parameter",
+                        &TSParameterPropertyAssignmentPattern {
+                            param,
+                            init,
+                            left_span: Span::new(pattern_span.start, left_span_end),
+                            assignment_span,
+                        },
+                    );
+                } else {
+                    let override_span = if param.optional {
+                        let pattern_span = param.pattern.span();
+                        let end =
+                            param.type_annotation.as_ref().map_or(param.span.end, |ta| ta.span.end);
+                        Some(Span::new(pattern_span.start, end))
+                    } else {
+                        None
+                    };
+                    state.serialize_field(
+                        "parameter",
+                        &BindingPatternKindAndTsFields {
+                            kind: &param.pattern,
+                            decorators: Some(&[]),
+                            optional: param.optional,
+                            type_annotation: param.type_annotation.as_deref(),
+                            override_span,
+                        },
+                    );
+                }
+
                 state.serialize_field("readonly", &param.readonly);
                 state.serialize_field("static", &false);
                 state.serialize_span(param.span);
                 state.end();
+            } else if let Some(init) = &param.initializer {
+                let mut state = serializer.serialize_struct();
+                state.serialize_field("type", &JsonSafeString("AssignmentPattern"));
+                state.serialize_field("decorators", &param.decorators);
+                state.serialize_field(
+                    "left",
+                    &BindingPatternKindAndTsFields {
+                        kind: &param.pattern,
+                        decorators: Some(&[]),
+                        optional: false,
+                        type_annotation: param.type_annotation.as_deref(),
+                        override_span: None,
+                    },
+                );
+                state.serialize_field("right", init);
+                state.serialize_field("optional", &param.optional);
+                state.serialize_field("typeAnnotation", &Null(()));
+                state.serialize_span(param.span);
+                state.end();
             } else {
                 BindingPatternKindAndTsFields {
-                    kind: &param.pattern.kind,
-                    decorators: &param.decorators,
-                    optional: param.pattern.optional,
-                    type_annotation: param.pattern.type_annotation.as_deref(),
+                    kind: &param.pattern,
+                    decorators: Some(&param.decorators),
+                    optional: param.optional,
+                    type_annotation: param.type_annotation.as_deref(),
+                    override_span: if param.optional { Some(param.span) } else { None },
                 }
                 .serialize(serializer);
             }
+        } else if let Some(init) = &param.initializer {
+            let mut state = serializer.serialize_struct();
+            state.serialize_field("type", &JsonSafeString("AssignmentPattern"));
+            state.serialize_field("left", &param.pattern);
+            state.serialize_field("right", init);
+            state.serialize_span(param.span);
+            state.end();
         } else {
-            param.pattern.kind.serialize(serializer);
+            param.pattern.serialize(serializer);
         }
+    }
+}
+
+struct TSParameterPropertyAssignmentPattern<'a, 'b> {
+    param: &'b FormalParameter<'a>,
+    init: &'b Expression<'a>,
+    left_span: Span,
+    assignment_span: Span,
+}
+
+impl ESTree for TSParameterPropertyAssignmentPattern<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("AssignmentPattern"));
+        state.serialize_field("decorators", &EmptyArray(()));
+        state.serialize_field(
+            "left",
+            &BindingPatternKindAndTsFields {
+                kind: &self.param.pattern,
+                decorators: Some(&[]),
+                optional: false,
+                type_annotation: self.param.type_annotation.as_deref(),
+                override_span: Some(self.left_span),
+            },
+        );
+        state.serialize_field("right", self.init);
+        state.serialize_field("optional", &false);
+        state.serialize_field("typeAnnotation", &Null(()));
+        state.serialize_span(self.assignment_span);
+        state.end();
     }
 }
 
@@ -284,7 +547,7 @@ pub struct FunctionParams<'a, 'b>(pub &'b Function<'a>);
 impl ESTree for FunctionParams<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let func = self.0;
-        if S::INCLUDE_TS_FIELDS {
+        if serializer.include_ts_fields() {
             Concat2(&func.this_param, func.params.as_ref()).serialize(serializer);
         } else {
             func.params.serialize(serializer);
@@ -506,8 +769,8 @@ impl ESTree for AssignmentTargetPropertyIdentifierInit<'_> {
         node = parent = {
             type: 'ParenthesizedExpression',
             expression: null,
-            start: start = DESER[u32]( POS_OFFSET.span.start ),
-            end: end = DESER[u32]( POS_OFFSET.span.end ),
+            start: start = DESER[i32]( POS_OFFSET.span.start ),
+            end: end = DESER[i32]( POS_OFFSET.span.end ),
             ...(RANGE && { range: [start, end] }),
             ...(PARENT && { parent }),
         };

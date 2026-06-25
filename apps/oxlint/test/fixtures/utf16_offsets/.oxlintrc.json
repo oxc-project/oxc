@@ -1,4 +1,7 @@
 {
+  "categories": {
+    "correctness": "off"
+  },
   "jsPlugins": ["./plugin.ts"],
   "rules": {
     "utf16-plugin/no-debugger": "error"

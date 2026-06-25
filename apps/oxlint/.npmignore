@@ -1,0 +1,6 @@
+# Avoid ATTW errors due to nested `node_modules` directories inside `test/fixtures`
+# which contain packages with no `name` field in their `package.json`s.
+#
+# TSDown's `attw.excludeEntrypoints` option doesn't work - possible bug in TSDown?
+# https://github.com/rolldown/tsdown/issues/656
+test/fixtures/**/node_modules

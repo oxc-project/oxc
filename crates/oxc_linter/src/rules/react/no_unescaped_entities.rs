@@ -47,7 +47,10 @@ declare_oxc_lint!(
     /// ```
     NoUnescapedEntities,
     react,
-    pedantic
+    pedantic,
+    pending,
+    version = "0.0.15",
+    short_description = "This rule prevents characters that you may have meant as JSX escape characters from being accidentally injected as a text node in JSX statements.",
 );
 
 impl Rule for NoUnescapedEntities {

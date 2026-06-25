@@ -2,10 +2,10 @@ use crate::{
     AstNode,
     context::{ContextHost, LintContext},
     fixer::{RuleFix, RuleFixer},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::is_jsx_fragment,
 };
-use oxc_allocator::Vec as ArenaVec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::{
     AstKind,
     ast::{
@@ -18,6 +18,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
+use serde::Deserialize;
 
 fn needs_more_children(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Fragments should contain more than one child.").with_label(span)
@@ -27,11 +28,11 @@ fn child_of_html_element(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Passing a fragment to a HTML element is useless.").with_label(span)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct JsxNoUselessFragment {
     /// Allow fragments with a single expression child.
-    pub allow_expressions: bool,
+    allow_expressions: bool,
 }
 
 declare_oxc_lint!(
@@ -64,17 +65,13 @@ declare_oxc_lint!(
     pedantic,
     suggestion,
     config = JsxNoUselessFragment,
+    version = "0.0.14",
+    short_description = "Disallow unnecessary fragments.",
 );
 
 impl Rule for JsxNoUselessFragment {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let value = value.as_array().and_then(|arr| arr.first()).and_then(|val| val.as_object());
-
-        Self {
-            allow_expressions: value
-                .and_then(|val| val.get("allowExpressions").and_then(serde_json::Value::as_bool))
-                .unwrap_or(Self::default().allow_expressions),
-        }
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -243,7 +240,7 @@ fn trim_like_react(text: &str) -> &str {
     &text[start..end]
 }
 
-fn can_fix(node: &AstNode, children: &ArenaVec<JSXChild<'_>>, ctx: &LintContext) -> bool {
+fn can_fix(node: &AstNode, children: &ArenaVec<'_, JSXChild<'_>>, ctx: &LintContext) -> bool {
     let parent = ctx.nodes().parent_kind(node.id());
 
     if !matches!(parent, AstKind::JSXElement(_) | AstKind::JSXFragment(_)) {
@@ -296,10 +293,11 @@ fn jsx_elem_has_key_attr(elem: &JSXElement) -> bool {
     })
 }
 
-fn is_fragment_with_single_expression(children: &oxc_allocator::Vec<'_, JSXChild<'_>>) -> bool {
-    let children = children.iter().filter(|v| is_padding_spaces(v)).collect::<Vec<_>>();
+fn is_fragment_with_single_expression(children: &ArenaVec<'_, JSXChild<'_>>) -> bool {
+    let mut non_padding_children = children.iter().filter(|child| is_padding_spaces(child));
 
-    children.len() == 1 && matches!(children[0], JSXChild::ExpressionContainer(_))
+    matches!(non_padding_children.next(), Some(JSXChild::ExpressionContainer(_)))
+        && non_padding_children.next().is_none()
 }
 
 fn is_padding_spaces(v: &JSXChild<'_>) -> bool {
@@ -328,27 +326,29 @@ fn is_html_element(elem_name: &JSXElementName) -> bool {
     ident.name.starts_with(char::is_lowercase)
 }
 
-fn has_less_than_two_children(children: &oxc_allocator::Vec<'_, JSXChild<'_>>) -> bool {
-    let non_padding_children = children.iter().filter(|v| is_padding_spaces(v)).collect::<Vec<_>>();
+fn has_less_than_two_children(children: &ArenaVec<'_, JSXChild<'_>>) -> bool {
+    let mut non_padding_child_count = 0;
+    let mut has_call_expression_child = false;
 
-    if non_padding_children.len() < 2 {
-        return !non_padding_children.iter().any(|v| {
-            if let JSXChild::ExpressionContainer(v) = v {
-                if let JSXExpression::CallExpression(_) = v.expression {
-                    return true;
-                }
-                return false;
-            }
+    for child in children.iter().filter(|child| is_padding_spaces(child)) {
+        non_padding_child_count += 1;
+        if non_padding_child_count >= 2 {
+            return false;
+        }
 
-            false
-        });
+        has_call_expression_child = matches!(
+            child,
+            JSXChild::ExpressionContainer(expression)
+                if matches!(expression.expression, JSXExpression::CallExpression(_))
+        );
     }
-    false
+
+    !has_call_expression_child
 }
 
 fn is_fragment_with_only_text_and_is_not_child<'a>(
     id: NodeId,
-    node: &oxc_allocator::Vec<'a, JSXChild<'a>>,
+    node: &ArenaVec<'a, JSXChild<'a>>,
     ctx: &LintContext,
 ) -> bool {
     if node.len() != 1 {

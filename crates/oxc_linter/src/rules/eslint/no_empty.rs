@@ -3,8 +3,13 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_empty_diagnostic(stmt_kind: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected empty block statements")
@@ -12,8 +17,8 @@ fn no_empty_diagnostic(stmt_kind: &str, span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoEmpty {
     /// If set to `true`, allows an empty `catch` block without triggering the linter.
     allow_empty_catch: bool,
@@ -22,7 +27,7 @@ pub struct NoEmpty {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallows empty block statements
+    /// Disallows empty block statements.
     ///
     /// ### Why is this bad?
     ///
@@ -49,17 +54,13 @@ declare_oxc_lint!(
     restriction,
     suggestion,
     config = NoEmpty,
+    version = "0.0.3",
+    short_description = "Disallows empty block statements.",
 );
 
 impl Rule for NoEmpty {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let obj = value.get(0);
-        Self {
-            allow_empty_catch: obj
-                .and_then(|v| v.get("allowEmptyCatch"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or_default(),
-        }
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

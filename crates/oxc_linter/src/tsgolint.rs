@@ -1,22 +1,26 @@
 use std::{
+    borrow::Cow,
     collections::BTreeSet,
     ffi::OsStr,
     io::{ErrorKind, Read, Write, stderr},
+    iter, mem,
     path::{Path, PathBuf},
     sync::{Arc, Mutex},
 };
 
+use oxc_allocator::Allocator;
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 
-use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic, Severity};
+use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic, Severity};
 use oxc_span::{SourceType, Span};
 
 use super::{AllowWarnDeny, ConfigStore, DisableDirectives, ResolvedLinterState, read_to_string};
 
-use crate::FixKind;
-#[cfg(feature = "language_server")]
-use crate::fixer::{CompositeFix, Message, PossibleFixes};
+use crate::{
+    CompositeFix, FixKind, Fixer, Message, MessageRule, PossibleFixes, WEBSITE_BASE_RULES_URL,
+    suppression::DiffManager,
+};
 
 /// State required to initialize the `tsgolint` linter.
 #[derive(Debug, Clone)]
@@ -34,6 +38,8 @@ pub struct TsGoLintState {
     fix: bool,
     /// If `true`, request that suggestions be returned from `tsgolint`.
     fix_suggestions: bool,
+    /// If `true`, include TypeScript compiler syntactic and semantic diagnostics.
+    type_check: bool,
 }
 
 impl TsGoLintState {
@@ -48,6 +54,7 @@ impl TsGoLintState {
             silent: false,
             fix: fix_kind.contains(FixKind::Fix),
             fix_suggestions: fix_kind.contains(FixKind::Suggestion),
+            type_check: false,
         }
     }
 
@@ -69,6 +76,7 @@ impl TsGoLintState {
             silent: false,
             fix: fix_kind.contains(FixKind::Fix),
             fix_suggestions: fix_kind.contains(FixKind::Suggestion),
+            type_check: false,
         })
     }
 
@@ -79,6 +87,15 @@ impl TsGoLintState {
     #[must_use]
     pub fn with_silent(mut self, yes: bool) -> Self {
         self.silent = yes;
+        self
+    }
+
+    /// Set to `true` to include TypeScript compiler syntactic and semantic diagnostics.
+    ///
+    /// Default is `false`.
+    #[must_use]
+    pub fn with_type_check(mut self, yes: bool) -> Self {
+        self.type_check = yes;
         self
     }
 
@@ -94,6 +111,8 @@ impl TsGoLintState {
         paths: &[Arc<OsStr>],
         disable_directives_map: Arc<Mutex<FxHashMap<PathBuf, DisableDirectives>>>,
         error_sender: DiagnosticSender,
+        file_system: &(dyn crate::RuntimeFileSystem + Sync + Send),
+        diff_manager: &Arc<DiffManager>,
     ) -> Result<(), String> {
         if paths.is_empty() {
             return Ok(());
@@ -106,190 +125,108 @@ impl TsGoLintState {
             return Ok(());
         }
 
+        let all_paths = {
+            let mut paths_buff = vec![];
+            for path in paths {
+                if SourceType::from_path(Path::new(path)).is_ok() {
+                    let path_buf = PathBuf::from(path);
+                    paths_buff.push(path_buf.clone());
+                }
+            }
+            paths_buff
+        };
+
+        let should_fix = self.fix || self.fix_suggestions;
+        let cwd = self.cwd.clone();
+        let sender_for_fixes = error_sender.clone();
+
+        let diff_manager_clone_to_ts_go = Arc::<DiffManager>::clone(diff_manager);
+
         let handler = std::thread::spawn(move || {
-            let mut cmd = std::process::Command::new(&self.executable_path);
-            cmd.arg("headless")
-                .stdin(std::process::Stdio::piped())
-                .stdout(std::process::Stdio::piped())
-                .stderr(stderr());
+            let mut child = self.spawn_tsgolint(&json_input)?;
 
-            if self.fix {
-                cmd.arg("-fix");
-            }
-
-            if self.fix_suggestions {
-                cmd.arg("-fix-suggestions");
-            }
-
-            if let Ok(trace_file) = std::env::var("OXLINT_TSGOLINT_TRACE") {
-                cmd.arg(format!("-trace={trace_file}"));
-            }
-            if let Ok(cpuprof_file) = std::env::var("OXLINT_TSGOLINT_CPU") {
-                cmd.arg(format!("-cpuprof={cpuprof_file}"));
-            }
-            if let Ok(heap_file) = std::env::var("OXLINT_TSGOLINT_HEAP") {
-                cmd.arg(format!("-heap={heap_file}"));
-            }
-            if let Ok(allocs_file) = std::env::var("OXLINT_TSGOLINT_ALLOCS") {
-                cmd.arg(format!("-allocs={allocs_file}"));
-            }
-
-            let child = cmd.spawn();
-
-            let mut child = match child {
-                Ok(c) => c,
-                Err(e) => {
-                    return Err(format!(
-                        "Failed to spawn tsgolint from path `{}`, with error: {e}",
-                        self.executable_path.display()
-                    ));
-                }
-            };
-
-            let mut stdin = child.stdin.take().expect("Failed to open tsgolint stdin");
-
-            // Write the input synchronously and handle BrokenPipe gracefully in case the child
-            // exits early and closes its stdin.
-            let json = serde_json::to_string(&json_input).expect("Failed to serialize JSON");
-            if let Err(e) = stdin.write_all(json.as_bytes()) {
-                // If the child closed stdin early, avoid crashing on SIGPIPE/BrokenPipe.
-                if e.kind() != ErrorKind::BrokenPipe {
-                    return Err(format!("Failed to write to tsgolint stdin: {e}"));
-                }
-            }
-            // Explicitly drop stdin to send EOF to the child.
-            drop(stdin);
-
-            // Stream diagnostics as they are emitted, rather than waiting for all output
             let stdout = child.stdout.take().expect("Failed to open tsgolint stdout");
 
             // Process stdout stream in a separate thread to send diagnostics as they arrive
-            let cwd_clone = self.cwd.clone();
+            let stdout_handler = std::thread::spawn(
+                move || -> Result<Vec<(PathBuf, String, Vec<Message>)>, String> {
+                    let disable_directives_map = disable_directives_map
+                        .lock()
+                        .expect("disable_directives_map mutex poisoned");
 
-            let stdout_handler = std::thread::spawn(move || -> Result<(), String> {
-                let disable_directives_map =
-                    disable_directives_map.lock().expect("disable_directives_map mutex poisoned");
-                let msg_iter = TsGoLintMessageStream::new(stdout);
+                    let mut diagnostic_handler = DiagnosticHandler::new(
+                        self.cwd.clone(),
+                        self.silent,
+                        should_fix,
+                        error_sender,
+                    );
 
-                let mut source_text_map: FxHashMap<PathBuf, String> = FxHashMap::default();
+                    let msg_iter = TsGoLintMessageStream::new(stdout);
 
-                for msg in msg_iter {
-                    match msg {
-                        Ok(TsGoLintMessage::Error(err)) => {
-                            return Err(err.error);
-                        }
-                        Ok(TsGoLintMessage::Diagnostic(tsgolint_diagnostic)) => {
-                            match tsgolint_diagnostic {
-                                TsGoLintDiagnostic::Rule(tsgolint_diagnostic) => {
-                                    let path = tsgolint_diagnostic.file_path.clone();
+                    for msg in msg_iter {
+                        match msg {
+                            Ok(TsGoLintMessage::Error(err)) => {
+                                return Err(err.error);
+                            }
+                            Ok(TsGoLintMessage::Diagnostic(tsgolint_diagnostic)) => {
+                                match tsgolint_diagnostic {
+                                    TsGoLintDiagnostic::Rule(tsgolint_diagnostic) => {
+                                        let path = &tsgolint_diagnostic.file_path;
 
-                                    let Some(resolved_config) = resolved_configs.get(&path) else {
-                                        // If we don't have a resolved config for this path, skip it. We should always
-                                        // have a resolved config though, since we processed them already above.
-                                        continue;
-                                    };
-
-                                    let severity =
-                                        resolved_config.rules.iter().find_map(|(rule, status)| {
-                                            if rule.name() == tsgolint_diagnostic.rule {
-                                                Some(*status)
-                                            } else {
+                                        let severity = resolved_configs
+                                            .get(path)
+                                            .or_else(|| {
+                                                debug_assert!(false, "resolved_configs should have an entry for every file we linted {tsgolint_diagnostic:?}");
                                                 None
-                                            }
-                                        });
-                                    let Some(severity) = severity else {
-                                        // If the severity is not found, we should not report the diagnostic
-                                        continue;
-                                    };
-
-                                    if should_skip_diagnostic(
-                                        &disable_directives_map,
-                                        &path,
-                                        &tsgolint_diagnostic,
-                                    ) {
-                                        continue;
-                                    }
-
-                                    let oxc_diagnostic: OxcDiagnostic =
-                                        OxcDiagnostic::from(tsgolint_diagnostic);
-
-                                    let oxc_diagnostic = oxc_diagnostic.with_severity(
-                                        if severity == AllowWarnDeny::Deny {
-                                            Severity::Error
-                                        } else {
-                                            Severity::Warning
-                                        },
-                                    );
-
-                                    let source_text: &str = if self.silent {
-                                        // The source text is not needed in silent mode.
-                                        // The source text is only here to wrap the line before and after into a nice `oxc_diagnostic` Error
-                                        ""
-                                    } else if let Some(source_text) = source_text_map.get(&path) {
-                                        source_text.as_str()
-                                    } else {
-                                        let source_text =
-                                            read_to_string(&path).unwrap_or_else(|_| String::new());
-                                        // Insert and get a reference to the inserted string
-                                        let entry = source_text_map
-                                            .entry(path.clone())
-                                            .or_insert(source_text);
-                                        entry.as_str()
-                                    };
-
-                                    let diagnostics = DiagnosticService::wrap_diagnostics(
-                                        cwd_clone.clone(),
-                                        path.clone(),
-                                        source_text,
-                                        vec![oxc_diagnostic],
-                                    );
-
-                                    if error_sender.send(diagnostics).is_err() {
-                                        // Receiver has been dropped, stop processing
-                                        return Ok(());
-                                    }
-                                }
-                                TsGoLintDiagnostic::Internal(e) => {
-                                    let oxc_diagnostic: OxcDiagnostic = e.clone().into();
-
-                                    let diagnostics = if let Some(file_path) = e.file_path {
-                                        let source_text: &str = if self.silent {
-                                            ""
-                                        } else if let Some(source_text) =
-                                            source_text_map.get(&file_path)
-                                        {
-                                            source_text.as_str()
-                                        } else {
-                                            let source_text = read_to_string(&file_path)
-                                                .unwrap_or_else(|_| String::new());
-                                            let entry = source_text_map
-                                                .entry(file_path.clone())
-                                                .or_insert(source_text);
-                                            entry.as_str()
+                                            })
+                                            .and_then(|resolved_config| {
+                                                resolved_config
+                                                    .rules
+                                                    .iter()
+                                                    .find(|(rule, _)| {
+                                                        rule.name() == tsgolint_diagnostic.rule
+                                                    })
+                                                    .map(|(_, status)| *status)
+                                            })
+                                            .or_else(|| {
+                                                debug_assert!(false, "resolved_config should have a matching rule for every diagnostic we received {tsgolint_diagnostic:?}");
+                                                None
+                                            });
+                                        let Some(severity) = severity else {
+                                            // If the severity is not found, we should not report
+                                            // the diagnostic
+                                            continue;
                                         };
 
-                                        DiagnosticService::wrap_diagnostics(
-                                            cwd_clone.clone(),
-                                            file_path,
-                                            source_text,
-                                            vec![oxc_diagnostic],
-                                        )
-                                    } else {
-                                        vec![oxc_diagnostic.into()]
-                                    };
+                                        if should_skip_diagnostic(
+                                            &disable_directives_map,
+                                            path,
+                                            &tsgolint_diagnostic,
+                                        ) {
+                                            continue;
+                                        }
 
-                                    error_sender.send(diagnostics).unwrap();
+                                        diagnostic_handler.handle_rule_diagnostic(
+                                            tsgolint_diagnostic,
+                                            severity,
+                                            diff_manager_clone_to_ts_go.skip(),
+                                        );
+                                    }
+                                    TsGoLintDiagnostic::Internal(e) => {
+                                        diagnostic_handler.handle_internal_diagnostic(e);
+                                    }
                                 }
                             }
-                        }
-                        Err(e) => {
-                            return Err(e);
+                            Err(e) => {
+                                return Err(e);
+                            }
                         }
                     }
-                }
 
-                Ok(())
-            });
+                    Ok(diagnostic_handler
+                        .into_messages_requiring_fixes(&diff_manager_clone_to_ts_go, all_paths))
+                },
+            );
 
             // Wait for process to complete and stdout processing to finish
             let exit_status = child.wait().expect("Failed to wait for tsgolint process");
@@ -306,20 +243,117 @@ impl TsGoLintState {
             }
 
             match stdout_result {
-                Ok(Ok(())) => Ok(()),
+                Ok(Ok(messages)) => Ok(messages),
                 Ok(Err(err)) => Err(format!("exit status: {exit_status}, error: {err}")),
                 Err(_) => Err("Failed to join stdout processing thread".to_string()),
             }
         });
 
         match handler.join() {
-            Ok(Ok(())) => {
-                // Successfully ran tsgolint
+            Ok(Ok(messages_requiring_fixes)) => {
+                for (path, source_text, messages) in messages_requiring_fixes {
+                    let source_type = SourceType::from_path(&path)
+                        .ok()
+                        .map(|st| if st.is_javascript() { st.with_jsx(true) } else { st });
+                    let fix_result = Fixer::new(&source_text, messages, source_type).fix();
+
+                    if fix_result.fixed
+                        && let Err(error) = file_system.write_file(&path, &fix_result.fixed_code)
+                    {
+                        sender_for_fixes
+                            .send(vec![Error::new(OxcDiagnostic::error(format!(
+                                "Failed to write file {} with error \"{error}\"",
+                                path.display()
+                            )))])
+                            .expect("Failed to send diagnostics");
+                    }
+
+                    if fix_result.messages.is_empty() {
+                        diff_manager.collect_empty_file(path.as_path(), &cwd);
+                    } else {
+                        let source_for_diagnostics: &str =
+                            if fix_result.fixed { &fix_result.fixed_code } else { &source_text };
+
+                        let filtered_messages: Vec<OxcDiagnostic> = if diff_manager.skip() {
+                            fix_result.messages.into_iter().map(Into::into).collect()
+                        } else {
+                            diff_manager
+                                .collect_file(
+                                    path.as_path(),
+                                    &cwd,
+                                    fix_result.messages.into_iter().collect(),
+                                )
+                                .into_iter()
+                                .map(Into::into)
+                                .collect()
+                        };
+
+                        let diagnostics = DiagnosticService::wrap_diagnostics(
+                            &cwd,
+                            &path,
+                            source_for_diagnostics,
+                            filtered_messages,
+                        );
+                        sender_for_fixes.send(diagnostics).expect("Failed to send diagnostics");
+                    }
+                }
                 Ok(())
             }
             Ok(Err(err)) => Err(format!("Error running tsgolint: {err:?}")),
             Err(err) => Err(format!("Error running tsgolint: {err:?}")),
         }
+    }
+
+    /// Spawn the tsgolint process with the given input.
+    fn spawn_tsgolint(&self, json_input: &Payload) -> Result<std::process::Child, String> {
+        let mut cmd = std::process::Command::new(&self.executable_path);
+        cmd.arg("headless")
+            .stdin(std::process::Stdio::piped())
+            .stdout(std::process::Stdio::piped())
+            .stderr(stderr());
+
+        if self.fix {
+            cmd.arg("-fix");
+        }
+
+        if self.fix_suggestions {
+            cmd.arg("-fix-suggestions");
+        }
+
+        if let Ok(trace_file) = std::env::var("OXLINT_TSGOLINT_TRACE") {
+            cmd.arg(format!("-trace={trace_file}"));
+        }
+        if let Ok(cpuprof_file) = std::env::var("OXLINT_TSGOLINT_CPU") {
+            cmd.arg(format!("-cpuprof={cpuprof_file}"));
+        }
+        if let Ok(heap_file) = std::env::var("OXLINT_TSGOLINT_HEAP") {
+            cmd.arg(format!("-heap={heap_file}"));
+        }
+        if let Ok(allocs_file) = std::env::var("OXLINT_TSGOLINT_ALLOCS") {
+            cmd.arg(format!("-allocs={allocs_file}"));
+        }
+
+        let mut child = match cmd.spawn() {
+            Ok(c) => c,
+            Err(e) => {
+                return Err(format!(
+                    "Failed to spawn tsgolint from path `{}`, with error: {e}",
+                    self.executable_path.display()
+                ));
+            }
+        };
+
+        let mut stdin = child.stdin.take().expect("Failed to open tsgolint stdin");
+
+        let json = serde_json::to_string(json_input).expect("Failed to serialize JSON");
+        if let Err(e) = stdin.write_all(json.as_bytes())
+            && e.kind() != ErrorKind::BrokenPipe
+        {
+            return Err(format!("Failed to write to tsgolint stdin: {e}"));
+        }
+        drop(stdin);
+
+        Ok(child)
     }
 
     /// # Panics
@@ -329,67 +363,41 @@ impl TsGoLintState {
     ///
     /// # Errors
     /// A human-readable error message indicating why the linting failed.
-    #[cfg(feature = "language_server")]
     pub fn lint_source(
         &self,
-        path: &Arc<OsStr>,
-        source_text: String,
+        paths: &[Arc<OsStr>],
+        file_system: &(dyn crate::RuntimeFileSystem + Sync + Send),
         disable_directives_map: Arc<Mutex<FxHashMap<PathBuf, DisableDirectives>>>,
     ) -> Result<Vec<Message>, String> {
+        if paths.is_empty() {
+            return Ok(vec![]);
+        }
+
         let mut resolved_configs: FxHashMap<PathBuf, ResolvedLinterState> = FxHashMap::default();
-        let mut source_overrides = FxHashMap::default();
-        source_overrides.insert(path.to_string_lossy().to_string(), source_text.clone());
+        let mut source_overrides: FxHashMap<String, String> = FxHashMap::default();
+        let allocator = Allocator::default();
 
-        let json_input = self.json_input(
-            std::slice::from_ref(path),
-            Some(source_overrides),
-            &mut resolved_configs,
-        );
-        let executable_path = self.executable_path.clone();
-
-        let fix = self.fix;
-        let fix_suggestions = self.fix_suggestions;
-        let handler = std::thread::spawn(move || {
-            let mut cmd = std::process::Command::new(&executable_path);
-            cmd.arg("headless")
-                .stdin(std::process::Stdio::piped())
-                .stdout(std::process::Stdio::piped());
-
-            if fix {
-                cmd.arg("-fix");
-            }
-
-            if fix_suggestions {
-                cmd.arg("-fix-suggestions");
-            }
-
-            let child = cmd.spawn();
-
-            let mut child = match child {
-                Ok(c) => c,
-                Err(e) => {
-                    return Err(format!(
-                        "Failed to spawn tsgolint from path `{}`, with error: {e}",
-                        executable_path.display()
-                    ));
-                }
+        // Read all sources into overrides
+        for path in paths {
+            let path_ref = Path::new(path.as_ref());
+            let Ok(source_text) = file_system.read_to_arena_str(path_ref, &allocator) else {
+                return Err(format!(
+                    "Failed to read source text for file: {}",
+                    path.to_string_lossy()
+                ));
             };
+            source_overrides.insert(path.to_string_lossy().to_string(), source_text.to_string());
+        }
 
-            let mut stdin = child.stdin.take().expect("Failed to open tsgolint stdin");
+        let json_input =
+            self.json_input(paths, Some(source_overrides.clone()), &mut resolved_configs);
 
-            // Write the input synchronously and handle BrokenPipe gracefully in case the child
-            // exits early and closes its stdin.
-            let json = serde_json::to_string(&json_input).expect("Failed to serialize JSON");
-            if let Err(e) = stdin.write_all(json.as_bytes()) {
-                // If the child closed stdin early, avoid crashing on SIGPIPE/BrokenPipe.
-                if e.kind() != ErrorKind::BrokenPipe {
-                    return Err(format!("Failed to write to tsgolint stdin: {e}"));
-                }
-            }
-            // Explicitly drop stdin to send EOF to the child.
-            drop(stdin);
+        //  Get the file name of the first path for internal diagnostic filtering
+        let path_file_name =
+            Path::new(paths[0].as_ref()).file_name().unwrap_or_default().to_os_string();
 
-            // Stream diagnostics as they are emitted, rather than waiting for all output
+        let mut child = self.spawn_tsgolint(&json_input)?;
+        let handler = std::thread::spawn(move || {
             let stdout = child.stdout.take().expect("Failed to open tsgolint stdout");
 
             let stdout_handler = std::thread::spawn(move || -> Result<Vec<Message>, String> {
@@ -435,9 +443,18 @@ impl TsGoLintState {
                                         continue;
                                     }
 
+                                    // Use the corresponding source override text
+                                    let Some(source_text_owned) = source_overrides
+                                        .get(&path.to_string_lossy().to_string())
+                                        .cloned()
+                                    else {
+                                        // should never happen, because we populated source_overrides above
+                                        continue;
+                                    };
+
                                     let mut message = Message::from_tsgo_lint_diagnostic(
                                         tsgolint_diagnostic,
-                                        &source_text,
+                                        &source_text_owned,
                                     );
 
                                     message.error.severity = if severity == AllowWarnDeny::Deny {
@@ -449,7 +466,18 @@ impl TsGoLintState {
                                     result.push(message);
                                 }
                                 TsGoLintDiagnostic::Internal(e) => {
-                                    return Err(e.message.description);
+                                    let span = e
+                                        .file_path
+                                        .as_ref()
+                                        .is_some_and(|f| {
+                                            f.file_name().unwrap_or_default() == path_file_name
+                                        })
+                                        .then_some(e.span)
+                                        .flatten()
+                                        .unwrap_or_default();
+                                    let mut diagnostic: OxcDiagnostic = e.into();
+                                    diagnostic = diagnostic.with_label(span);
+                                    result.push(Message::new(diagnostic, PossibleFixes::None));
                                 }
                             }
                         }
@@ -525,7 +553,12 @@ impl TsGoLintState {
                     .iter()
                     .filter_map(|(rule, status)| {
                         if status.is_warn_deny() && rule.is_tsgolint_rule() {
-                            Some(Rule { name: rule.name().to_string() })
+                            let rule_name = rule.name().to_string();
+                            let options = match rule.to_configuration() {
+                                Some(Ok(config)) => Some(config),
+                                Some(Err(_)) | None => None,
+                            };
+                            Some(Rule { name: rule_name, options })
                         } else {
                             None
                         }
@@ -546,6 +579,8 @@ impl TsGoLintState {
                 })
                 .collect(),
             source_overrides,
+            report_syntactic: self.type_check,
+            report_semantic: self.type_check,
         }
     }
 }
@@ -554,6 +589,7 @@ impl TsGoLintState {
 ///
 /// ```json
 /// {
+///   "version": 2,
 ///   "configs": [
 ///     {
 ///       "file_paths": ["/absolute/path/to/file.ts", "/another/file.ts"],
@@ -570,6 +606,8 @@ pub struct Payload {
     pub version: i32,
     pub configs: Vec<Config>,
     pub source_overrides: Option<FxHashMap<String, String>>,
+    pub report_syntactic: bool,
+    pub report_semantic: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -581,9 +619,33 @@ pub struct Config {
     pub rules: Vec<Rule>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Hash, Eq, PartialEq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Serialize, Deserialize, Hash, Eq, PartialEq)]
 pub struct Rule {
     pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub options: Option<serde_json::Value>,
+}
+
+impl PartialOrd for Rule {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Rule {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        // First compare by name
+        match self.name.cmp(&other.name) {
+            std::cmp::Ordering::Equal => {
+                // If names are equal, compare by serialized options
+                // Serialize to canonical JSON string for comparison
+                let self_options = self.options.as_ref().map(|v| serde_json::to_string(v).ok());
+                let other_options = other.options.as_ref().map(|v| serde_json::to_string(v).ok());
+                self_options.cmp(&other_options)
+            }
+            other_ordering => other_ordering,
+        }
+    }
 }
 
 /// Diagnostic kind discriminator
@@ -621,7 +683,7 @@ impl<'de> Deserialize<'de> for DiagnosticKind {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct TsGoLintDiagnosticPayload {
     pub kind: DiagnosticKind,
-    pub range: Range,
+    pub range: Option<Range>,
     pub message: RuleMessage,
     pub file_path: Option<String>,
     // Only for kind="rule"
@@ -631,6 +693,8 @@ struct TsGoLintDiagnosticPayload {
     pub fixes: Vec<Fix>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub suggestions: Vec<Suggestion>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub labeled_ranges: Vec<LabeledRange>,
 }
 
 /// Represents the error payload from `tsgolint`.
@@ -653,17 +717,19 @@ pub enum TsGoLintDiagnostic {
 
 #[derive(Debug, Clone)]
 pub struct TsGoLintRuleDiagnostic {
-    pub range: Range,
+    pub span: Span,
     pub rule: String,
     pub message: RuleMessage,
     pub fixes: Vec<Fix>,
     pub suggestions: Vec<Suggestion>,
+    pub labeled_ranges: Vec<LabeledRange>,
     pub file_path: PathBuf,
 }
 
 #[derive(Debug, Clone)]
 pub struct TsGoLintInternalDiagnostic {
     pub message: RuleMessage,
+    pub span: Option<Span>,
     pub file_path: Option<PathBuf>,
 }
 
@@ -684,90 +750,92 @@ impl From<TsGoLintDiagnostic> for OxcDiagnostic {
 impl From<TsGoLintRuleDiagnostic> for OxcDiagnostic {
     fn from(val: TsGoLintRuleDiagnostic) -> Self {
         let mut d = OxcDiagnostic::warn(val.message.description)
-            .with_label(Span::new(val.range.pos, val.range.end))
-            .with_error_code("typescript-eslint", val.rule);
+            .with_url(format!("{}/{}/{}.html", WEBSITE_BASE_RULES_URL, "typescript", val.rule))
+            .with_error_code("typescript", val.rule);
         if let Some(help) = val.message.help {
             d = d.with_help(help);
+        }
+        if val.labeled_ranges.is_empty() {
+            d = d.with_label(val.span);
+        } else {
+            let labels = val
+                .labeled_ranges
+                .into_iter()
+                .map(|lr| Span::new(lr.range.pos, lr.range.end).label(lr.label));
+            d = d.with_labels(labels);
+            // If the main span is empty, don't add it as a label since it doesn't have any meaning (means tsgolint sent nothing).
+            // Just use the labeled ranges that were passed instead.
+            if !val.span.is_unspanned() {
+                d = d.and_label(val.span.primary());
+            }
         }
         d
     }
 }
 impl From<TsGoLintInternalDiagnostic> for OxcDiagnostic {
     fn from(val: TsGoLintInternalDiagnostic) -> Self {
-        let mut d = OxcDiagnostic::error(val.message.description);
+        let mut d = OxcDiagnostic::error(val.message.description)
+            .with_error_code("typescript", val.message.id);
         if let Some(help) = val.message.help {
             d = d.with_help(help);
         }
-        if val.file_path.is_some() {
-            d = d.with_label(Span::new(0, 0));
+        if val.file_path.is_some()
+            && let Some(span) = val.span
+        {
+            d = d.with_label(span);
         }
         d
     }
 }
 
-#[cfg(feature = "language_server")]
 impl Message {
     /// Converts a `TsGoLintDiagnostic` into a `Message` with possible fixes.
     fn from_tsgo_lint_diagnostic(mut val: TsGoLintRuleDiagnostic, source_text: &str) -> Self {
-        use std::{borrow::Cow, mem};
-
-        let mut fixes =
-            Vec::with_capacity(usize::from(!val.fixes.is_empty()) + val.suggestions.len());
-
-        if !val.fixes.is_empty() {
-            let fix_vec = mem::take(&mut val.fixes);
-            let fix_vec = fix_vec
+        let rule_name = val.rule.clone();
+        let fix = if val.fixes.is_empty() {
+            None
+        } else {
+            let fix_vec = mem::take(&mut val.fixes)
                 .into_iter()
                 .map(|fix| crate::fixer::Fix {
                     content: Cow::Owned(fix.text),
                     span: Span::new(fix.range.pos, fix.range.end),
                     message: None,
+                    kind: FixKind::Fix,
                 })
                 .collect();
 
-            fixes.push(CompositeFix::merge_fixes(fix_vec, source_text));
-        }
+            Some(CompositeFix::merge_fixes(fix_vec, source_text))
+        };
 
-        let suggestions = mem::take(&mut val.suggestions);
-        fixes.extend(suggestions.into_iter().map(|mut suggestion| {
-            let last_fix_index = suggestion.fixes.len().wrapping_sub(1);
+        let suggestions = mem::take(&mut val.suggestions).into_iter().map(|suggestion| {
             let fix_vec = suggestion
                 .fixes
                 .into_iter()
-                .enumerate()
-                .map(|(i, fix)| {
-                    // Don't clone the message description on last turn of loop
-                    let message = if i < last_fix_index {
-                        suggestion.message.description.clone()
-                    } else {
-                        mem::take(&mut suggestion.message.description)
-                    };
-
-                    crate::fixer::Fix {
-                        content: Cow::Owned(fix.text),
-                        span: Span::new(fix.range.pos, fix.range.end),
-                        message: Some(Cow::Owned(message)),
-                    }
+                .map(|fix| crate::fixer::Fix {
+                    content: Cow::Owned(fix.text),
+                    span: Span::new(fix.range.pos, fix.range.end),
+                    message: None,
+                    kind: FixKind::Suggestion,
                 })
                 .collect();
 
             CompositeFix::merge_fixes(fix_vec, source_text)
-        }));
+                .with_message(suggestion.message.description)
+        });
 
-        let possible_fix = if fixes.is_empty() {
-            PossibleFixes::None
-        } else if fixes.len() == 1 {
-            PossibleFixes::Single(fixes.into_iter().next().unwrap())
-        } else {
-            PossibleFixes::Multiple(fixes)
-        };
+        #[expect(clippy::from_iter_instead_of_collect)]
+        let possible_fixes = PossibleFixes::from_iter(iter::chain(fix, suggestions));
 
-        Self::new(val.into(), possible_fix)
+        Self::new(val.into(), possible_fixes).with_rule(MessageRule {
+            plugin_name: Cow::Borrowed("typescript"),
+            rule_name: Cow::Owned(rule_name),
+        })
     }
 }
 
 // TODO: Should this be removed and replaced with a `Span`?
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, Default)]
 pub struct Range {
     pub pos: u32,
     pub end: u32,
@@ -790,6 +858,12 @@ pub struct Fix {
 pub struct Suggestion {
     pub message: RuleMessage,
     pub fixes: Vec<Fix>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct LabeledRange {
+    pub label: String,
+    pub range: Range,
 }
 
 #[derive(Eq, PartialEq, Clone, Debug, Serialize, Deserialize)]
@@ -897,12 +971,208 @@ impl std::fmt::Display for TsGoLintMessageParseError {
     }
 }
 
+/// Cache for source text to avoid reading the same file multiple times.
+#[derive(Default)]
+struct SourceTextCache(FxHashMap<PathBuf, String>);
+
+impl SourceTextCache {
+    fn get_or_insert(&mut self, path: &Path) -> &str {
+        self.0
+            .entry(path.to_path_buf())
+            .or_insert_with(|| read_to_string(path).unwrap_or_default())
+            .as_str()
+    }
+}
+
+/// Handles streaming and collecting diagnostics from tsgolint.
+struct DiagnosticHandler {
+    cwd: PathBuf,
+    silent: bool,
+    should_fix: bool,
+    source_text_cache: SourceTextCache,
+    error_sender: DiagnosticSender,
+    /// Messages requiring fixes, grouped by file path: messages.
+    messages_requiring_fixes: FxHashMap<PathBuf, Vec<Message>>,
+    messages_not_requiring_fixes: FxHashMap<PathBuf, Vec<(TsGoLintRuleDiagnostic, AllowWarnDeny)>>,
+}
+
+impl DiagnosticHandler {
+    fn new(cwd: PathBuf, silent: bool, should_fix: bool, error_sender: DiagnosticSender) -> Self {
+        Self {
+            cwd,
+            silent,
+            should_fix,
+            source_text_cache: SourceTextCache::default(),
+            error_sender,
+            messages_requiring_fixes: FxHashMap::default(),
+            messages_not_requiring_fixes: FxHashMap::default(),
+        }
+    }
+
+    fn get_source_text(&mut self, path: &Path) -> &str {
+        if self.silent && !self.should_fix {
+            // The source text is not needed in silent mode, the diagnostic isn't printed.
+            ""
+        } else {
+            self.source_text_cache.get_or_insert(path)
+        }
+    }
+
+    fn handle_rule_diagnostic(
+        &mut self,
+        diagnostic: TsGoLintRuleDiagnostic,
+        severity: AllowWarnDeny,
+        ignore_suppression: bool,
+    ) {
+        let path = diagnostic.file_path.clone();
+        let has_fixes =
+            self.should_fix && (!diagnostic.fixes.is_empty() || !diagnostic.suggestions.is_empty());
+
+        if has_fixes {
+            // Collect for later fix application
+            let mut message =
+                Message::from_tsgo_lint_diagnostic(diagnostic, self.get_source_text(&path));
+            message.error.severity =
+                if severity == AllowWarnDeny::Deny { Severity::Error } else { Severity::Warning };
+
+            let entry = self.messages_requiring_fixes.entry(path).or_default();
+
+            entry.push(message);
+        } else if !ignore_suppression {
+            let entry = self.messages_not_requiring_fixes.entry(path).or_default();
+
+            entry.push((diagnostic, severity));
+        } else {
+            self.send_diagnostic(&path, diagnostic.into(), severity);
+        }
+    }
+
+    fn handle_internal_diagnostic(&mut self, e: TsGoLintInternalDiagnostic) {
+        let file_path = e.file_path.clone();
+        let oxc_diagnostic: OxcDiagnostic = e.into();
+
+        let diagnostics = if let Some(ref file_path) = file_path {
+            let source_text = self.get_source_text(file_path).to_string();
+            DiagnosticService::wrap_diagnostics(
+                &self.cwd,
+                file_path,
+                &source_text,
+                vec![oxc_diagnostic],
+            )
+        } else {
+            vec![oxc_diagnostic.into()]
+        };
+
+        self.error_sender.send(diagnostics).expect("Failed to send diagnostics");
+    }
+
+    fn send_diagnostic(
+        &mut self,
+        path: &Path,
+        oxc_diagnostic: OxcDiagnostic,
+        severity: AllowWarnDeny,
+    ) {
+        let source_text = self.get_source_text(path).to_string();
+        let oxc_diagnostic = oxc_diagnostic.with_severity(if severity == AllowWarnDeny::Deny {
+            Severity::Error
+        } else {
+            Severity::Warning
+        });
+        let diagnostics = DiagnosticService::wrap_diagnostics(
+            &self.cwd,
+            path,
+            &source_text,
+            vec![oxc_diagnostic],
+        );
+        self.error_sender.send(diagnostics).expect("Failed to send diagnostics");
+    }
+
+    /// Consume the handler and return collected messages requiring fixes.
+    fn into_messages_requiring_fixes(
+        self,
+        diff_manager: &Arc<DiffManager>,
+        paths: Vec<PathBuf>,
+    ) -> Vec<(PathBuf, String, Vec<Message>)> {
+        let Self { messages_requiring_fixes, mut source_text_cache, should_fix, silent, .. } = self;
+
+        if !diff_manager.skip() {
+            for path in paths {
+                if let Some(messages) = self.messages_not_requiring_fixes.get(&path) {
+                    let source_text = source_text_cache.0.remove(&path).unwrap_or_else(|| {
+                        if !silent || should_fix {
+                            read_to_string(&path).unwrap_or_default()
+                        } else {
+                            String::new()
+                        }
+                    });
+
+                    let filtered_messages: Vec<OxcDiagnostic> = diff_manager
+                        .collect_file(
+                            path.as_path(),
+                            self.cwd.as_path(),
+                            messages
+                                .iter()
+                                .cloned()
+                                .map(|(diagnostic, severity)| {
+                                    let mut message = Message::from_tsgo_lint_diagnostic(
+                                        diagnostic,
+                                        source_text.as_str(),
+                                    );
+                                    message.error.severity = if severity == AllowWarnDeny::Deny {
+                                        Severity::Error
+                                    } else {
+                                        Severity::Warning
+                                    };
+                                    message
+                                })
+                                .collect(),
+                        )
+                        .into_iter()
+                        .map(Into::into)
+                        .collect();
+
+                    let diagnostics = DiagnosticService::wrap_diagnostics(
+                        &self.cwd,
+                        &path,
+                        source_text.as_str(),
+                        filtered_messages,
+                    );
+                    self.error_sender.send(diagnostics).expect("Failed to send diagnostics");
+                } else if !messages_requiring_fixes.contains_key(&path) {
+                    diff_manager.collect_empty_file(path.as_path(), self.cwd.as_path());
+                }
+            }
+        }
+
+        messages_requiring_fixes
+            .into_iter()
+            .map(|(path, messages)| {
+                let source_text = source_text_cache.0.remove(&path).unwrap_or_else(|| {
+                    if !silent || should_fix {
+                        read_to_string(&path).unwrap_or_default()
+                    } else {
+                        String::new()
+                    }
+                });
+                (path, source_text, messages)
+            })
+            .collect()
+    }
+}
+
 fn should_skip_diagnostic(
     disable_directives_map: &FxHashMap<PathBuf, DisableDirectives>,
     path: &Path,
     tsgolint_diagnostic: &TsGoLintRuleDiagnostic,
 ) -> bool {
-    let span = Span::new(tsgolint_diagnostic.range.pos, tsgolint_diagnostic.range.end);
+    let span = if tsgolint_diagnostic.span.is_unspanned() {
+        tsgolint_diagnostic
+            .labeled_ranges
+            .first()
+            .map_or(tsgolint_diagnostic.span, |range| Span::new(range.range.pos, range.range.end))
+    } else {
+        tsgolint_diagnostic.span
+    };
 
     if let Some(directives) = disable_directives_map.get(path) {
         directives.contains(&tsgolint_diagnostic.rule, span)
@@ -912,7 +1182,8 @@ fn should_skip_diagnostic(
     } else {
         debug_assert!(
             false,
-            "disable_directives_map should have an entry for every file we linted"
+            "missing disable_directives_map entry for {}; expected directives to be collected for every linted file",
+            path.display()
         );
         false
     }
@@ -961,10 +1232,17 @@ fn parse_single_message(
                     rule: diagnostic_payload
                         .rule
                         .expect("Rule name must be present for rule diagnostics"),
-                    range: diagnostic_payload.range,
+                    span: diagnostic_payload.range.map_or_else(
+                        || {
+                            debug_assert!(false, "Range must be present for rule diagnostics");
+                            Span::default()
+                        },
+                        |range| Span::new(range.pos, range.end),
+                    ),
                     message: diagnostic_payload.message,
                     fixes: diagnostic_payload.fixes,
                     suggestions: diagnostic_payload.suggestions,
+                    labeled_ranges: diagnostic_payload.labeled_ranges,
                     file_path: PathBuf::from(
                         diagnostic_payload
                             .file_path
@@ -974,6 +1252,7 @@ fn parse_single_message(
                 DiagnosticKind::Internal => {
                     TsGoLintDiagnostic::Internal(TsGoLintInternalDiagnostic {
                         message: diagnostic_payload.message,
+                        span: diagnostic_payload.range.map(|range| Span::new(range.pos, range.end)),
                         file_path: diagnostic_payload.file_path.map(PathBuf::from),
                     })
                 }
@@ -1049,24 +1328,23 @@ pub fn try_find_tsgolint_executable(cwd: &Path) -> Result<PathBuf, String> {
         }
     }
 
-    Err("Failed to find tsgolint executable".to_string())
+    Err("Failed to find tsgolint executable. You may need to add the `oxlint-tsgolint` package to your project?".to_string())
 }
 
 #[cfg(test)]
-#[cfg(feature = "language_server")]
 mod test {
     use oxc_diagnostics::{LabeledSpan, OxcCode, Severity};
     use oxc_span::Span;
 
     use crate::{
-        fixer::{Message, PossibleFixes},
-        tsgolint::{Fix, Range, RuleMessage, Suggestion, TsGoLintRuleDiagnostic},
+        fixer::{FixKind, Message, PossibleFixes},
+        tsgolint::{Fix, LabeledRange, Range, RuleMessage, Suggestion, TsGoLintRuleDiagnostic},
     };
 
     #[test]
     fn test_message_from_tsgo_lint_diagnostic_basic() {
         let diagnostic = TsGoLintRuleDiagnostic {
-            range: Range { pos: 0, end: 10 },
+            span: Span::new(0, 10),
             rule: "some_rule".into(),
             message: RuleMessage {
                 id: "some_id".into(),
@@ -1075,6 +1353,7 @@ mod test {
             },
             fixes: vec![],
             suggestions: vec![],
+            labeled_ranges: vec![],
             file_path: "some/file/path".into(),
         };
 
@@ -1085,11 +1364,11 @@ mod test {
         assert_eq!(message.span, Span::new(0, 10));
         assert_eq!(
             message.error.code,
-            OxcCode { scope: Some("typescript-eslint".into()), number: Some("some_rule".into()) }
+            OxcCode { scope: Some("typescript".into()), number: Some("some_rule".into()) }
         );
-        assert!(message.error.labels.as_ref().is_some());
-        assert_eq!(message.error.labels.as_ref().unwrap().len(), 1);
-        assert_eq!(message.error.labels.as_ref().unwrap()[0], LabeledSpan::new(None, 0, 10));
+        assert!(!message.error.labels.is_empty());
+        assert_eq!(message.error.labels.len(), 1);
+        assert_eq!(message.error.labels[0], LabeledSpan::new(None, 0, 10));
         assert_eq!(message.error.help, Some("Some help".into()));
         assert!(message.fixes.is_empty());
     }
@@ -1097,7 +1376,7 @@ mod test {
     #[test]
     fn test_message_from_tsgo_lint_diagnostic_with_fixes() {
         let diagnostic = TsGoLintRuleDiagnostic {
-            range: Range { pos: 0, end: 10 },
+            span: Span::new(0, 10),
             rule: "some_rule".into(),
             message: RuleMessage {
                 id: "some_id".into(),
@@ -1109,6 +1388,7 @@ mod test {
                 Fix { text: "hello".into(), range: Range { pos: 5, end: 10 } },
             ],
             suggestions: vec![],
+            labeled_ranges: vec![],
             file_path: "some/file/path".into(),
         };
 
@@ -1121,6 +1401,7 @@ mod test {
                 content: "fixedhello".into(),
                 span: Span::new(0, 10),
                 message: None,
+                kind: FixKind::Fix
             })
         );
     }
@@ -1128,7 +1409,7 @@ mod test {
     #[test]
     fn test_message_from_tsgo_lint_diagnostic_with_multiple_suggestions() {
         let diagnostic = TsGoLintRuleDiagnostic {
-            range: Range { pos: 0, end: 10 },
+            span: Span::new(0, 10),
             rule: "some_rule".into(),
             message: RuleMessage {
                 id: "some_id".into(),
@@ -1157,6 +1438,7 @@ mod test {
                     ],
                 },
             ],
+            labeled_ranges: vec![],
             file_path: "some/file/path".into(),
         };
 
@@ -1169,11 +1451,13 @@ mod test {
                     content: "hello".into(),
                     span: Span::new(0, 5),
                     message: Some("Suggestion 1".into()),
+                    kind: FixKind::Suggestion
                 },
                 crate::fixer::Fix {
                     content: "helloworld".into(),
                     span: Span::new(0, 10),
                     message: Some("Suggestion 2".into()),
+                    kind: FixKind::Suggestion
                 },
             ])
         );
@@ -1182,7 +1466,7 @@ mod test {
     #[test]
     fn test_message_from_tsgo_lint_diagnostic_with_fix_and_suggestions() {
         let diagnostic = TsGoLintRuleDiagnostic {
-            range: Range { pos: 0, end: 10 },
+            span: Span::new(0, 10),
             rule: "some_rule".into(),
             message: RuleMessage {
                 id: "some_id".into(),
@@ -1198,6 +1482,7 @@ mod test {
                 },
                 fixes: vec![Fix { text: "Suggestion 1".into(), range: Range { pos: 0, end: 5 } }],
             }],
+            labeled_ranges: vec![],
             file_path: "some/file/path".into(),
         };
 
@@ -1207,14 +1492,48 @@ mod test {
         assert_eq!(
             message.fixes,
             PossibleFixes::Multiple(vec![
-                crate::fixer::Fix { content: "fixed".into(), span: Span::new(0, 5), message: None },
+                crate::fixer::Fix {
+                    content: "fixed".into(),
+                    span: Span::new(0, 5),
+                    message: None,
+                    kind: FixKind::Fix
+                },
                 crate::fixer::Fix {
                     content: "Suggestion 1".into(),
                     span: Span::new(0, 5),
                     message: Some("Suggestion 1".into()),
+                    kind: FixKind::Suggestion,
                 },
             ])
         );
+    }
+
+    #[test]
+    fn test_message_from_tsgo_lint_diagnostic_with_labeled_ranges() {
+        let diagnostic = TsGoLintRuleDiagnostic {
+            span: Span::new(0, 10),
+            rule: "some_rule".into(),
+            message: RuleMessage {
+                id: "some_id".into(),
+                description: "Some description".into(),
+                help: None,
+            },
+            fixes: vec![],
+            suggestions: vec![],
+            labeled_ranges: vec![
+                LabeledRange { label: "Label 1".into(), range: Range { pos: 0, end: 5 } },
+                LabeledRange { label: "Label 2".into(), range: Range { pos: 5, end: 10 } },
+            ],
+            file_path: "some/file/path".into(),
+        };
+
+        let message = Message::from_tsgo_lint_diagnostic(diagnostic, "Some text over 10 bytes.");
+
+        assert!(!message.error.labels.is_empty());
+        let labels = &message.error.labels;
+        assert_eq!(labels.len(), 3);
+        assert_eq!(labels[0], LabeledSpan::new(Some("Label 1".into()), 0, 5));
+        assert_eq!(labels[1], LabeledSpan::new(Some("Label 2".into()), 5, 5));
     }
 
     #[test]
@@ -1289,5 +1608,97 @@ mod test {
         let payload: TsGoLintDiagnosticPayload = serde_json::from_str(json_with_fixes).unwrap();
         assert_eq!(payload.fixes.len(), 1);
         assert_eq!(payload.suggestions.len(), 0);
+    }
+
+    #[test]
+    fn test_diagnostic_payload_deserialize_with_labeled_ranges() {
+        use super::TsGoLintDiagnosticPayload;
+
+        let json = r#"{
+            "kind": 0,
+            "range": {"pos": 0, "end": 10},
+            "rule": "some_rule",
+            "message": {
+                "id": "some_id",
+                "description": "Some description",
+                "help": null
+            },
+            "labeled_ranges": [
+                {
+                    "label": "Label 1",
+                    "range": {"pos": 0, "end": 5}
+                },
+                {
+                    "label": "Label 2",
+                    "range": {"pos": 5, "end": 10}
+                }
+            ],
+            "file_path": "test.ts"
+        }"#;
+
+        let payload: TsGoLintDiagnosticPayload = serde_json::from_str(json).unwrap();
+        assert_eq!(payload.labeled_ranges.len(), 2);
+        assert_eq!(payload.labeled_ranges[0].label, "Label 1");
+        assert_eq!(payload.labeled_ranges[0].range.pos, 0);
+        assert_eq!(payload.labeled_ranges[0].range.end, 5);
+        assert_eq!(payload.labeled_ranges[1].label, "Label 2");
+        assert_eq!(payload.labeled_ranges[1].range.pos, 5);
+        assert_eq!(payload.labeled_ranges[1].range.end, 10);
+    }
+
+    #[test]
+    fn test_btreeset_preserves_rules_with_different_options() {
+        use super::Rule;
+        use std::collections::BTreeSet;
+
+        // Create two rules with the same name but different options
+        let rule1 = Rule {
+            name: "no-floating-promises".to_string(),
+            options: Some(serde_json::json!({"ignoreVoid": true})),
+        };
+
+        let rule2 = Rule {
+            name: "no-floating-promises".to_string(),
+            options: Some(serde_json::json!({"ignoreVoid": false})),
+        };
+
+        let rule3 = Rule { name: "no-floating-promises".to_string(), options: None };
+
+        // Insert into BTreeSet
+        let mut rules = BTreeSet::new();
+        rules.insert(rule1.clone());
+        rules.insert(rule2.clone());
+        rules.insert(rule3.clone());
+
+        // All three distinct rules should be preserved
+        assert_eq!(rules.len(), 3, "BTreeSet should preserve all rules with different options");
+
+        // Verify all rules are present
+        assert!(rules.contains(&rule1), "Rule with ignoreVoid: true should be present");
+        assert!(rules.contains(&rule2), "Rule with ignoreVoid: false should be present");
+        assert!(rules.contains(&rule3), "Rule with no options should be present");
+    }
+
+    #[test]
+    fn test_btreeset_deduplicates_identical_rules() {
+        use super::Rule;
+        use std::collections::BTreeSet;
+
+        let rule1 = Rule {
+            name: "no-floating-promises".to_string(),
+            options: Some(serde_json::json!({"ignoreVoid": true})),
+        };
+
+        let rule2 = Rule {
+            name: "no-floating-promises".to_string(),
+            options: Some(serde_json::json!({"ignoreVoid": true})),
+        };
+
+        let mut rules = BTreeSet::new();
+        rules.insert(rule1);
+        rules.insert(rule2);
+
+        // Identical rules should be deduplicated
+        assert_eq!(rules.len(), 1, "BTreeSet should deduplicate identical rules");
     }
 }

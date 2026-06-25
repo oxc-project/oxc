@@ -5,12 +5,14 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     AstNode,
     context::{ContextHost, LintContext},
     frameworks::FrameworkOptions,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 fn has_arg_diagnostic(span: Span) -> OxcDiagnostic {
@@ -30,22 +32,34 @@ fn has_type_call_diagnostic(span: Span) -> OxcDiagnostic {
     .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
 enum DeclarationStyle {
+    /// Enforces the use of a named TypeScript type or interface as the
+    /// argument to `defineEmits`, e.g. `defineEmits<MyEmits>()`.
     #[default]
     TypeBased,
+    /// Enforces the use of an inline type literal as the argument to
+    /// `defineEmits`, e.g. `defineEmits<{ (event: string): void }>()`.
     TypeLiteral,
+    /// Enforces the use of runtime declaration, where emits are declared
+    /// using an array or object, e.g. `defineEmits(['event1', 'event2'])`.
     Runtime,
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct DefineEmitsDeclaration(DeclarationStyle);
 
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule enforces `defineEmits` typing style which you should use `type-based`, strict `type-literal` (introduced in Vue 3.3), or `runtime` declaration.
-    /// This rule only works in setup script and `lang="ts"`.
+    /// Enforce consistent declaration style for `defineEmits` in Vue.
+    /// This rule only works in `<script setup>` with `lang="ts"`.
+    ///
+    /// ### Why is this bad?
+    ///
+    /// Inconsistent code style can be confusing and make code harder to read
+    /// through.
     ///
     /// ### Examples
     ///
@@ -111,31 +125,20 @@ declare_oxc_lint!(
     /// });
     /// </script>
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// ```
-    /// "vue/define-emits-declaration": ["error", "type-based" | "type-literal" | "runtime"]
-    /// ```
-    ///
-    /// - `type-based` (default): Enforce type-based declaration
-    /// - `type-literal`: Enforce type-literal declaration
-    /// - `runtime`: Enforce runtime declaration
     DefineEmitsDeclaration,
     vue,
     style,
-    pending  // TODO: transform it to the other declaration (if possible)
+    pending, // TODO: transform it to the other declaration (if possible)
+    config = DeclarationStyle,
+    version = "1.15.0",
+    short_description = "Enforce consistent declaration style for `defineEmits` in Vue.",
 );
 
 impl Rule for DefineEmitsDeclaration {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let val = value.get(0).and_then(|v| v.as_str());
-        Self(match val {
-            Some("type-literal") => DeclarationStyle::TypeLiteral,
-            Some("runtime") => DeclarationStyle::Runtime,
-            _ => DeclarationStyle::TypeBased,
-        })
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else { return };
 
@@ -200,101 +203,101 @@ fn test() {
     let pass = vec![
         (
             "
-			        <script setup>
-			          const emit = defineEmits(['change', 'update'])
-			        </script>
-			       ",
+                    <script setup>
+                      const emit = defineEmits(['change', 'update'])
+                    </script>
+                   ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             r#"
-			        <script setup lang="ts">
-			        const emit = defineEmits<{
-			          (e: 'change', id: number): void
-			          (e: 'update', value: string): void
-			        }>()
-			        </script>
-			       "#,
+                    <script setup lang="ts">
+                    const emit = defineEmits<{
+                      (e: 'change', id: number): void
+                      (e: 'update', value: string): void
+                    }>()
+                    </script>
+                   "#,
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
         (
             r#"
-			        <script setup lang="ts">
-			        const emit = defineEmits<{
-			          (e: 'change', id: number): void
-			          (e: 'update', value: string): void
-			        }>()
-			        </script>
-			       "#,
+                    <script setup lang="ts">
+                    const emit = defineEmits<{
+                      (e: 'change', id: number): void
+                      (e: 'update', value: string): void
+                    }>()
+                    </script>
+                   "#,
             Some(serde_json::json!(["type-based"])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
         (
             r#"
-			       <script setup lang="ts">
-			       const emit = defineEmits(['change', 'update'])
-			       </script>
-			       "#,
+                   <script setup lang="ts">
+                   const emit = defineEmits(['change', 'update'])
+                   </script>
+                   "#,
             Some(serde_json::json!(["runtime"])),
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             r#"
-			        <script setup lang="ts">
-			        const emit = defineEmits<{
-			          change: [id: number]
-			          update: [value: string]
-			        }>()
-			        </script>
-			       "#,
+                    <script setup lang="ts">
+                    const emit = defineEmits<{
+                      change: [id: number]
+                      update: [value: string]
+                    }>()
+                    </script>
+                   "#,
             Some(serde_json::json!(["type-based"])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
         (
             r#"
-			        <script setup lang="ts">
-			        const emit = defineEmits<{
-			          change: [id: number]
-			          update: [value: string]
-			        }>()
-			        </script>
-			       "#,
+                    <script setup lang="ts">
+                    const emit = defineEmits<{
+                      change: [id: number]
+                      update: [value: string]
+                    }>()
+                    </script>
+                   "#,
             Some(serde_json::json!(["type-literal"])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
         (
             r#"
-			        <script setup lang="ts">
-			        const props = defineProps({
-			          kind: { type: String },
-			        })
-			        </script>
-			       "#,
+                    <script setup lang="ts">
+                    const props = defineProps({
+                      kind: { type: String },
+                    })
+                    </script>
+                   "#,
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
         (
             r#"
-			         <script lang="ts">
-			         import { PropType } from 'vue'
+                     <script lang="ts">
+                     import { PropType } from 'vue'
 
-			         export default {
-			           props: {
-			             kind: { type: String as PropType<'primary' | 'secondary'> },
-			           },
-			           emits: ['check']
-			         }
-			         </script>
-			       "#,
+                     export default {
+                       props: {
+                         kind: { type: String as PropType<'primary' | 'secondary'> },
+                       },
+                       emits: ['check']
+                     }
+                     </script>
+                   "#,
             None,
             None,
             Some(PathBuf::from("test.vue")),
@@ -304,79 +307,79 @@ fn test() {
     let fail = vec![
         (
             r#"
-			       <script setup lang="ts">
-			       const emit = defineEmits(['change', 'update'])
-			       </script>
-			       "#,
+                   <script setup lang="ts">
+                   const emit = defineEmits(['change', 'update'])
+                   </script>
+                   "#,
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             r#"
-			       <script setup lang="ts">
-			       const emit = defineEmits(['change', 'update'])
-			       </script>
-			       "#,
+                   <script setup lang="ts">
+                   const emit = defineEmits(['change', 'update'])
+                   </script>
+                   "#,
             Some(serde_json::json!(["type-based"])),
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             r#"
-			       <script setup lang="ts">
-			       const emit = defineEmits(['change', 'update'])
-			       </script>
-			       "#,
+                   <script setup lang="ts">
+                   const emit = defineEmits(['change', 'update'])
+                   </script>
+                   "#,
             Some(serde_json::json!(["type-literal"])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
         (
             r#"
-			        <script setup lang="ts">
-			        const emit = defineEmits<{
-			          (e: 'change', id: number): void
-			          (e: 'update', value: string): void
-			        }>()
-			        </script>
-			       "#,
+                    <script setup lang="ts">
+                    const emit = defineEmits<{
+                      (e: 'change', id: number): void
+                      (e: 'update', value: string): void
+                    }>()
+                    </script>
+                   "#,
             Some(serde_json::json!(["runtime"])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
         (
             r#"
-			        <script setup lang="ts">
-			        const emit = defineEmits<{
-			          (e: 'change', id: number): void
-			          (e: 'update', value: string): void
-			        }>()
-			        </script>
-			       "#,
+                    <script setup lang="ts">
+                    const emit = defineEmits<{
+                      (e: 'change', id: number): void
+                      (e: 'update', value: string): void
+                    }>()
+                    </script>
+                   "#,
             Some(serde_json::json!(["type-literal"])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
         (
             r#"
-			        <script setup lang="ts">
-			        const emit = defineEmits<{
-			          'change': [id: number]
-			          (e: 'update', value: string): void
-			        }>()
-			        </script>
-			       "#,
+                    <script setup lang="ts">
+                    const emit = defineEmits<{
+                      'change': [id: number]
+                      (e: 'update', value: string): void
+                    }>()
+                    </script>
+                   "#,
             Some(serde_json::json!(["type-literal"])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
         (
             r#"
-			        <script setup lang="ts">
-			        const emit = defineEmits<(e: 'change', id: number) => void>()
-			        </script>
-			        "#,
+                    <script setup lang="ts">
+                    const emit = defineEmits<(e: 'change', id: number) => void>()
+                    </script>
+                    "#,
             Some(serde_json::json!(["type-literal"])),
             None,
             Some(PathBuf::from("test.vue")),

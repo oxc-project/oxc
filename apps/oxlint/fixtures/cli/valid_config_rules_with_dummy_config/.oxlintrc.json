@@ -1,0 +1,16 @@
+{
+  "plugins": ["jest", "react"],
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    // These rules have `config = Value` in their declare_oxc_lint! macro
+    // to indicate they accept configuration options, even though they use
+    // manual from_configuration implementations.
+    "eslint/no-empty-function": ["error", { "allow": ["functions"] }],
+    "eslint/no-restricted-imports": ["error", { "paths": ["lodash"] }],
+    "eslint/no-warning-comments": ["error", { "terms": ["todo", "fixme"] }],
+    "jest/valid-title": ["error", { "ignoreSpaces": true }],
+    "react/forbid-dom-props": ["error", { "forbid": ["id"] }]
+  }
+}

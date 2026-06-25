@@ -1,0 +1,8 @@
+{
+  "jsPlugins": ["./plugin.ts"],
+  "categories": { "correctness": "off" },
+  "rules": {
+    "cfg-plugin/cfg": "error",
+    "cfg-plugin/noop": "error"
+  }
+}

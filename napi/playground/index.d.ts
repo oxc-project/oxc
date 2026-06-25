@@ -8,7 +8,7 @@ export interface Comment {
 }
 
 export interface ErrorLabel {
-  message?: string
+  message: string | null
   start: number
   end: number
 }
@@ -17,8 +17,8 @@ export interface OxcError {
   severity: Severity
   message: string
   labels: Array<ErrorLabel>
-  helpMessage?: string
-  codeframe?: string
+  helpMessage: string | null
+  codeframe: string | null
 }
 
 export declare const enum Severity {
@@ -63,6 +63,17 @@ export interface OxcControlFlowOptions {
   verbose?: boolean
 }
 
+export interface OxcCustomGroupDefinition {
+  /** The identifier used in groups representing this custom group */
+  groupName?: string
+  /** List of glob patterns to match import sources */
+  elementNamePattern?: Array<string>
+  /** Import selector filter (e.g. "type", "external", "builtin") */
+  selector?: string
+  /** Import modifier filters - all must match */
+  modifiers?: Array<string>
+}
+
 export interface OxcDefineOptions {
   /** Map of variable name to value for replacement */
   define: Record<string, string>
@@ -81,7 +92,7 @@ export interface OxcFormatterOptions {
   singleQuote?: boolean
   /** Use single quotes in JSX (default: false) */
   jsxSingleQuote?: boolean
-  /** When to add quotes around object properties: "as-needed" | "preserve" (default: "as-needed") */
+  /** When to add quotes around object properties: "as-needed" | "consistent" | "preserve" (default: "as-needed") */
   quoteProps?: string
   /** Print trailing commas: "all" | "es5" | "none" (default: "all") */
   trailingComma?: string
@@ -97,10 +108,8 @@ export interface OxcFormatterOptions {
   objectWrap?: string
   /** Put each attribute on its own line (default: false) */
   singleAttributePerLine?: boolean
-  /** Operator position: "start" | "end" (default: "end") */
-  experimentalOperatorPosition?: string
-  /** Sort imports configuration */
-  experimentalSortImports?: OxcSortImportsOptions
+  /** Sort imports configuration (default: None) */
+  sortImports?: OxcSortImportsOptions
 }
 
 export interface OxcInjectOptions {
@@ -119,6 +128,10 @@ export interface OxcLinterOptions {
 export interface OxcMangleOptions {
   topLevel: boolean
   keepNames: boolean
+}
+
+export interface OxcNewlinesBetweenMarker {
+  newlinesBetween?: boolean
 }
 
 export interface OxcOptions {
@@ -168,6 +181,18 @@ export interface OxcSortImportsOptions {
   order?: string
   /** Ignore case when sorting (default: true) */
   ignoreCase?: boolean
+  /** Add newlines between import groups (default: true) */
+  newlinesBetween?: boolean
+  /** Pattern prefixes for internal imports */
+  internalPattern?: Array<string>
+  /**
+   * Groups configuration matching oxfmtrc format.
+   * Each element can be a single group name string, an array of group names,
+   * or a `{ newlinesBetween: bool }` marker object.
+   */
+  groups?: Array<string | string[] | { newlinesBetween: boolean }> | undefined
+  /** User-defined custom group definitions */
+  customGroups?: Array<OxcCustomGroupDefinition>
 }
 
 export interface OxcTransformerOptions {
@@ -175,4 +200,6 @@ export interface OxcTransformerOptions {
   useDefineForClassFields: boolean
   experimentalDecorators: boolean
   emitDecoratorMetadata: boolean
+  optimizeEnums: boolean
+  optimizeConstEnums: boolean
 }

@@ -7,6 +7,7 @@
   | text: "let foo, bar;\n\n// x\n// y\n"
   | getText(): "let foo, bar;\n\n// x\n// y\n"
   | lines: ["let foo, bar;","","// x","// y",""]
+  | lineStartIndices: [0,14,15,20,25]
   | locs:
   |   0 => { line: 1, column: 0 }("l")
   |   1 => { line: 1, column: 1 }("e")
@@ -36,6 +37,7 @@
   |   25 => { line: 5, column: 0 }("<EOF>")
   | ast: "foo"
   | visitorKeys: left, right
+  | isESTree: true
    ,-[files/1.js:1:1]
  1 | let foo, bar;
    : ^
@@ -54,6 +56,7 @@
   | text: "let foo, bar;\n\n// x\n// y\n"
   | getText(): "let foo, bar;\n\n// x\n// y\n"
   | lines: ["let foo, bar;","","// x","// y",""]
+  | lineStartIndices: [0,14,15,20,25]
   | locs:
   |   0 => { line: 1, column: 0 }("l")
   |   1 => { line: 1, column: 1 }("e")
@@ -83,6 +86,7 @@
   |   25 => { line: 5, column: 0 }("<EOF>")
   | ast: "foo"
   | visitorKeys: left, right
+  | isESTree: true
    ,-[files/1.js:1:1]
  1 | let foo, bar;
    : ^
@@ -110,6 +114,8 @@
   | source with before: "t foo"
   | source with after: "foo,"
   | source with both: "t foo,"
+  | range: [4,7]
+  | loc: {"start":{"line":1,"column":4},"end":{"line":1,"column":7}}
   | start loc: {"line":1,"column":4}
   | end loc: {"line":1,"column":7}
    ,-[files/1.js:1:5]
@@ -136,6 +142,8 @@
   | source with before: ", bar"
   | source with after: "bar;"
   | source with both: ", bar;"
+  | range: [9,12]
+  | loc: {"start":{"line":1,"column":9},"end":{"line":1,"column":12}}
   | start loc: {"line":1,"column":9}
   | end loc: {"line":1,"column":12}
    ,-[files/1.js:1:10]
@@ -161,6 +169,7 @@
   | text: "let qux;\n"
   | getText(): "let qux;\n"
   | lines: ["let qux;",""]
+  | lineStartIndices: [0,9]
   | locs:
   |   0 => { line: 1, column: 0 }("l")
   |   1 => { line: 1, column: 1 }("e")
@@ -174,6 +183,7 @@
   |   9 => { line: 2, column: 0 }("<EOF>")
   | ast: "qux"
   | visitorKeys: left, right
+  | isESTree: true
    ,-[files/2.js:1:1]
  1 | let qux;
    : ^
@@ -190,6 +200,7 @@
   | text: "let qux;\n"
   | getText(): "let qux;\n"
   | lines: ["let qux;",""]
+  | lineStartIndices: [0,9]
   | locs:
   |   0 => { line: 1, column: 0 }("l")
   |   1 => { line: 1, column: 1 }("e")
@@ -203,6 +214,7 @@
   |   9 => { line: 2, column: 0 }("<EOF>")
   | ast: "qux"
   | visitorKeys: left, right
+  | isESTree: true
    ,-[files/2.js:1:1]
  1 | let qux;
    : ^
@@ -227,6 +239,8 @@
   | source with before: "t qux"
   | source with after: "qux;"
   | source with both: "t qux;"
+  | range: [4,7]
+  | loc: {"start":{"line":1,"column":4},"end":{"line":1,"column":7}}
   | start loc: {"line":1,"column":4}
   | end loc: {"line":1,"column":7}
    ,-[files/2.js:1:5]
@@ -247,11 +261,9 @@
    `----
 
 Found 0 warnings and 16 errors.
-Finished in Xms on 2 files using X threads.
+Finished in Xms on 2 files with 2 rules using X threads.
 ```
 
 # stderr
 ```
-WARNING: JS plugins are experimental and not subject to semver.
-Breaking changes are possible while JS plugins support is under development.
 ```

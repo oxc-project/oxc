@@ -1,4 +1,3 @@
-use convert_case::{Case, Casing};
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::Ident;
@@ -6,7 +5,7 @@ use syn::Ident;
 use crate::{
     codegen::DeriveId,
     schema::{File, Schema},
-    utils::create_ident,
+    utils::{create_ident, snake_case},
 };
 
 use super::{Derives, FileId, TypeId, extensions};
@@ -51,7 +50,7 @@ pub trait Def {
 
     /// Get type name in snake case.
     fn snake_name(&self) -> String {
-        self.name().to_case(Case::Snake)
+        snake_case(self.name())
     }
 
     /// Get type name as an [`Ident`].

@@ -3,22 +3,26 @@ use std::borrow::Cow;
 use oxc_ast::{
     AstKind,
     ast::{
-        AssignmentTarget, AssignmentTargetProperty, BindingPatternKind, Expression, Function,
+        AssignmentTarget, AssignmentTargetProperty, BindingPattern, Expression, Function,
         FunctionType, ObjectAssignmentTarget, PropertyKind,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
-use oxc_span::{Atom, GetSpan, Span};
-use oxc_syntax::identifier::is_identifier_name;
+use oxc_span::{GetSpan, Span};
+use oxc_str::Ident;
+use oxc_syntax::{identifier::is_identifier_name, keyword::is_reserved_keyword_or_global_object};
+
+use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     AstNode,
     ast_util::get_function_name_with_kind,
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
-    rule::Rule,
+    rule::{Rule, TupleRuleConfig},
 };
 
 fn named_diagnostic(function_name: &str, span: Span) -> OxcDiagnostic {
@@ -33,32 +37,43 @@ fn unnamed_diagnostic(inferred_name_or_description: &str, span: Span) -> OxcDiag
         .with_help("Consider giving this function expression a name.")
 }
 
-#[derive(Debug, Clone, Default)]
-struct FuncNamesConfig {
-    functions: FuncNamesConfigType,
-    generators: FuncNamesConfigType,
-}
-
-#[derive(Debug, Default, Clone)]
-pub struct FuncNames {
-    config: FuncNamesConfig,
-}
-
-#[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, JsonSchema, Deserialize)]
+#[serde(rename_all = "kebab-case")]
 enum FuncNamesConfigType {
+    /// Requires all function expressions to have a name.
     #[default]
     Always,
+    /// Requires a name only if one is not automatically inferred.
     AsNeeded,
+    /// Disallows names for function expressions.
     Never,
 }
 
-impl From<&serde_json::Value> for FuncNamesConfigType {
-    fn from(raw: &serde_json::Value) -> Self {
-        match raw.as_str() {
-            Some("as-needed") => Self::AsNeeded,
-            Some("never") => Self::Never,
-            _ => Self::Always,
-        }
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(default)]
+pub struct FuncNames(FuncNamesConfigType, FuncNamesGeneratorsConfig);
+
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+pub struct FuncNamesGeneratorsConfig {
+    /// Configuration for generator function expressions. If not specified, uses the
+    /// primary configuration.
+    ///
+    /// Accepts `always`, `as-needed`, or `never`.
+    ///
+    /// Generator functions are those defined using the `function*` syntax.
+    /// ```js
+    /// function* foobar(i) {
+    ///   yield i;
+    ///   yield i + 10;
+    /// }
+    /// ```
+    generators: Option<FuncNamesConfigType>,
+}
+
+impl FuncNames {
+    fn generators_config(&self) -> FuncNamesConfigType {
+        self.1.generators.unwrap_or(self.0)
     }
 }
 
@@ -73,24 +88,6 @@ declare_oxc_lint!(
     /// stack traces of errors thrown in it or any function called within it.
     /// This makes it more difficult to find where an error is thrown.
     /// Providing an explicit name also improves readability and consistency.
-    ///
-    /// ### Options
-    ///
-    /// First option:
-    /// - Type: `string`
-    /// - Default: `"always"`
-    /// - Possible values:
-    ///   - `"always"` - requires all function expressions to have a name.
-    ///   - `"as-needed"` - requires a name only if one is not automatically inferred.
-    ///   - `"never"` - disallows names for function expressions.
-    ///
-    /// Second option:
-    /// - Type: `object`
-    /// - Properties:
-    ///   - `generators`: `("always" | "as-needed" | "never")` (default: falls back to first option)
-    ///     - `"always"` - require named generator function expressions.
-    ///     - `"as-needed"` - require a name only when not inferred.
-    ///     - `"never"` - disallow names for generator function expressions.
     ///
     /// Example configuration:
     /// ```json
@@ -221,35 +218,26 @@ declare_oxc_lint!(
     FuncNames,
     eslint,
     style,
-    conditional_fix_suggestion
+    conditional_fix_suggestion,
+    config = FuncNames,
+    version = "0.7.0",
+    short_description = "Require or disallow named function expressions.",
 );
 
 impl Rule for FuncNames {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let Some(functions_config) = value.get(0) else {
-            return Self::default();
-        };
-        let generators_config =
-            value.get(1).and_then(|v| v.get("generators")).unwrap_or(functions_config);
-
-        Self {
-            config: FuncNamesConfig {
-                functions: FuncNamesConfigType::from(functions_config),
-                generators: FuncNamesConfigType::from(generators_config),
-            },
-        }
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<TupleRuleConfig<Self>>(value).map(TupleRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::Function(func) = node.kind() {
             let parent_node = ctx.nodes().parent_node(node.id());
-            let config =
-                if func.generator { self.config.generators } else { self.config.functions };
+            let config = if func.generator { self.generators_config() } else { self.0 };
 
             if is_invalid_function(config, func, parent_node) {
                 // For named functions, check if they're recursive (need their name for recursion)
                 if let Some(func_name) = func.name()
-                    && is_recursive_function(func, func_name.as_str(), ctx)
+                    && is_recursive_function(func, func_name, ctx)
                 {
                     return;
                 }
@@ -259,7 +247,7 @@ impl Rule for FuncNames {
     }
 }
 
-fn is_recursive_function(func: &Function, func_name: &str, ctx: &LintContext) -> bool {
+fn is_recursive_function(func: &Function, func_name: Ident<'_>, ctx: &LintContext) -> bool {
     let Some(func_scope_id) = func.scope_id.get() else {
         return false;
     };
@@ -267,25 +255,27 @@ fn is_recursive_function(func: &Function, func_name: &str, ctx: &LintContext) ->
     if let Some(binding) = ctx.scoping().find_binding(func_scope_id, func_name) {
         return ctx.semantic().symbol_references(binding).any(|reference| {
             let parent = ctx.nodes().parent_node(reference.node_id());
-            if matches!(parent.kind(), AstKind::CallExpression(_)) {
-                ctx.nodes().ancestors(reference.node_id()).any(|ancestor| {
-                    if let AstKind::Function(f) = ancestor.kind() {
-                        f.scope_id.get() == Some(func_scope_id)
-                    } else {
-                        false
-                    }
-                })
-            } else {
-                false
+            // Check if this reference is the callee of a call expression (direct recursive call)
+            if let AstKind::CallExpression(call_expr) = parent.kind() {
+                // Only consider it recursive if the reference is the callee, not an argument
+                if call_expr.callee.span()
+                    == ctx.nodes().get_node(reference.node_id()).kind().span()
+                {
+                    return ctx.nodes().ancestors(reference.node_id()).any(|ancestor| {
+                        if let AstKind::Function(f) = ancestor.kind() {
+                            f.scope_id.get() == Some(func_scope_id)
+                        } else {
+                            false
+                        }
+                    });
+                }
             }
+            false
         });
     }
 
     false
 }
-
-const INVALID_IDENTIFIER_NAMES: [&str; 9] =
-    ["arguments", "async", "await", "constructor", "default", "eval", "null", "undefined", "yield"];
 
 fn diagnostic_invalid_function(
     func: &Function,
@@ -311,8 +301,9 @@ fn diagnostic_invalid_function(
 
     let function_name = guess_function_name(ctx, node.id()).map(Cow::into_owned);
 
-    let is_safe_fix =
-        function_name.as_ref().is_some_and(|name| can_safely_apply_fix(func, name, ctx));
+    let is_safe_fix = function_name
+        .as_ref()
+        .is_some_and(|name| can_safely_apply_fix(func, name.as_str().into(), ctx));
 
     let msg = unnamed_diagnostic(&func_name_complete, report_span);
 
@@ -322,7 +313,12 @@ fn diagnostic_invalid_function(
 }
 
 fn is_valid_identifier_name(name: &str) -> bool {
-    !INVALID_IDENTIFIER_NAMES.contains(&name) && is_identifier_name(name)
+    // Reserved keywords and global objects (e.g., `undefined`, `NaN`) cannot be used as function names.
+    // Additionally, `arguments`, `eval`, and `constructor` have special semantics in strict mode
+    // or class contexts and should be avoided.
+    !is_reserved_keyword_or_global_object(name)
+        && !matches!(name, "arguments" | "eval" | "constructor" | "async")
+        && is_identifier_name(name)
 }
 
 /// Determines whether the current FunctionExpression node is a get, set, or
@@ -360,7 +356,7 @@ fn has_inferred_name<'a>(function: &Function<'a>, parent_node: &AstNode<'a>) -> 
 
     match parent_node.kind() {
         AstKind::VariableDeclarator(declarator) => {
-            matches!(declarator.id.kind, BindingPatternKind::BindingIdentifier(_))
+            matches!(declarator.id, BindingPattern::BindingIdentifier(_))
                 && declarator.init.as_ref().is_some_and(|init| is_same_function(init, function))
         }
         AstKind::ObjectProperty(property) => is_same_function(&property.value, function),
@@ -375,9 +371,9 @@ fn has_inferred_name<'a>(function: &Function<'a>, parent_node: &AstNode<'a>) -> 
             matches!(target.binding, AssignmentTarget::AssignmentTargetIdentifier(_))
                 && is_same_function(&target.init, function)
         }
-        AstKind::AssignmentPattern(pattern) => {
-            matches!(pattern.left.kind, BindingPatternKind::BindingIdentifier(_))
-                && is_same_function(&pattern.right, function)
+        AstKind::FormalParameter(pattern) => {
+            matches!(pattern.pattern, BindingPattern::BindingIdentifier(_))
+                && pattern.initializer.as_ref().is_some_and(|init| init.span() == function.span)
         }
         AstKind::AssignmentTargetPropertyIdentifier(ident) => {
             ident.init.as_ref().is_some_and(|expr| is_same_function(expr, function))
@@ -423,7 +419,7 @@ fn is_invalid_function(
 }
 
 /// Returns whether it's safe to insert a function name without breaking shadowing rules
-fn can_safely_apply_fix(func: &Function, name: &str, ctx: &LintContext) -> bool {
+fn can_safely_apply_fix(func: &Function, name: Ident<'_>, ctx: &LintContext) -> bool {
     !ctx.scoping().find_binding(func.scope_id(), name).is_some_and(|shadowed_var| {
         ctx.semantic().symbol_references(shadowed_var).any(|reference| {
             func.span.contains_inclusive(ctx.nodes().get_node(reference.node_id()).kind().span())
@@ -445,21 +441,37 @@ fn apply_rule_fix(
 }
 
 fn guess_function_name<'a>(ctx: &LintContext<'a>, node_id: NodeId) -> Option<Cow<'a, str>> {
-    ctx.nodes().ancestor_kinds(node_id).find_map(|parent_kind| match parent_kind {
-        AstKind::AssignmentExpression(assign) => {
-            assign.left.get_identifier_name().map(Cow::Borrowed)
+    for parent_kind in ctx.nodes().ancestor_kinds(node_id) {
+        match parent_kind {
+            AstKind::AssignmentExpression(assign) => {
+                // Stop here - we found the direct assignment context
+                return assign
+                    .left
+                    .get_identifier_name()
+                    .filter(|name| is_valid_identifier_name(name))
+                    .map(Cow::Borrowed);
+            }
+            AstKind::VariableDeclarator(decl) => {
+                // Stop here - we found the direct declarator context
+                return decl
+                    .id
+                    .get_identifier_name()
+                    .map(|n| n.as_str())
+                    .filter(|name| is_valid_identifier_name(name))
+                    .map(Cow::Borrowed);
+            }
+            AstKind::ObjectProperty(prop) => {
+                // Stop here - we found the direct property context
+                return prop.key.static_name().filter(|name| is_valid_identifier_name(name));
+            }
+            AstKind::PropertyDefinition(prop_def) => {
+                // Stop here - we found the direct class property context
+                return prop_def.key.static_name().filter(|name| is_valid_identifier_name(name));
+            }
+            _ => {}
         }
-        AstKind::VariableDeclarator(decl) => {
-            decl.id.get_identifier_name().as_ref().map(Atom::as_str).map(Cow::Borrowed)
-        }
-        AstKind::ObjectProperty(prop) => {
-            prop.key.static_name().filter(|name| is_valid_identifier_name(name))
-        }
-        AstKind::PropertyDefinition(prop_def) => {
-            prop_def.key.static_name().filter(|name| is_valid_identifier_name(name))
-        }
-        _ => None,
-    })
+    }
+    None
 }
 
 #[test]
@@ -755,6 +767,23 @@ fn test() {
              Component.prototype.setState = function (update, callback) {
 	             return setState.call(this, update, callback);
             };",
+            always.clone(),
+        ),
+        // Should not suggest reserved words as function names
+        (
+            "exports['default'] = function() {}",
+            "exports['default'] = function() {}",
+            always.clone(),
+        ),
+        ("obj.default = function() {}", "obj.default = function() {}", always.clone()),
+        (
+            "const { default: foo = function() {} } = {}",
+            "const { default: foo = function() {} } = {}",
+            always.clone(),
+        ),
+        (
+            "const x = { delete: async function () {} }",
+            "const x = { delete: async function () {} }",
             always,
         ),
     ];

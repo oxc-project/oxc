@@ -1,0 +1,10 @@
+{
+  "categories": {
+    "correctness": "warn" // explicitly enable this so we can ensure import rules are enabled.
+  },
+  "jsPlugins": ["./plugin.ts"],
+  "plugins": ["import"],
+  "rules": {
+    "basic-custom-plugin/no-debugger": "error"
+  }
+}

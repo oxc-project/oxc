@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(prefer-numeric-literals): Use binary literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:1]
  1 │ parseInt("111110111", 2) === 503;

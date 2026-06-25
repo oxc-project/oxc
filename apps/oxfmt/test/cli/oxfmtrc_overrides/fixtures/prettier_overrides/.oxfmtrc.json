@@ -1,0 +1,18 @@
+{
+  "experimentalSortPackageJson": false,
+  "vueIndentScriptAndStyle": false,
+  "overrides": [
+    {
+      "files": ["sorted/package.json"],
+      "options": {
+        "experimentalSortPackageJson": true
+      }
+    },
+    {
+      "files": ["indented.vue"],
+      "options": {
+        "vueIndentScriptAndStyle": true
+      }
+    }
+  ]
+}

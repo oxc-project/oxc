@@ -5,7 +5,9 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::Scoping;
 use oxc_span::{GetSpan, Span};
+use oxc_str::Ident;
 use oxc_syntax::{scope::ScopeId, symbol::SymbolId};
 
 fn redeclaration_diagnostic(decl_span: Span, redeclare_span: Span, name: &str) -> OxcDiagnostic {
@@ -39,10 +41,6 @@ declare_oxc_lint!(
     /// JavaScript’s `var` declarations are hoisted to the top of their enclosing function, which can cause variables declared in a block (e.g., inside an `if` or `for`) to be accessible outside of it.
     /// This can lead to hard-to-find bugs.
     /// By enforcing block scoping, this rule helps avoid hoisting issues and aligns more closely with how other languages treat block variables.
-    ///
-    /// ### Options
-    ///
-    /// No options available for this rule.
     ///
     /// ### Examples
     ///
@@ -125,6 +123,8 @@ declare_oxc_lint!(
     BlockScopedVar,
     eslint,
     suspicious,
+    version = "0.16.9",
+    short_description = "Enforce the use of variables within the scope they are defined.",
 );
 
 impl Rule for BlockScopedVar {
@@ -135,46 +135,51 @@ impl Rule for BlockScopedVar {
         if decl.kind != VariableDeclarationKind::Var {
             return;
         }
-        let scope_id = node.scope_id();
-        if !ctx.scoping().scope_flags(scope_id).is_strict_mode() {
+        let node_scope_id = node.scope_id();
+
+        // Exit early for top-level `var` declarations.
+        //
+        // Top-level `var` bindings are not block-scoped, so this rule intentionally
+        // does not perform "used outside its declaration block" checks for them.
+        // This is a deliberate semantic choice (not just a performance optimization):
+        // only non–top-level `var` declarations are subject to block-scope validation.
+        if ctx.scoping().scope_flags(node_scope_id).is_top() {
             return;
         }
-        // `scope_ids` contains all the scopes that are children of the current scope
-        // we should eliminate all of them
-        let scope_ids = ctx.scoping().iter_all_scope_child_ids(node.scope_id()).collect::<Vec<_>>();
 
         for item in &decl.declarations {
-            run_for_declaration(&item.id, &scope_ids, node, ctx);
+            run_for_declaration(&item.id, node_scope_id, ctx);
         }
     }
 }
 
 fn run_for_all_references(
-    (pattern, name, symbol): (&BindingPattern, &str, &SymbolId),
-    scope_ids: &[ScopeId],
-    node: &AstNode,
+    (pattern, name, symbol): (&BindingPattern, Ident<'_>, &SymbolId),
+    declare_scope_id: ScopeId,
     ctx: &LintContext,
 ) {
     ctx.scoping()
         .get_resolved_references(*symbol)
         .filter(|reference| {
-            let reference_scope_id = ctx.nodes().get_node(reference.node_id()).scope_id();
-
-            reference_scope_id != node.scope_id() && !scope_ids.contains(&reference_scope_id)
+            let reference_scope_id = reference.scope_id();
+            check_if_has_reference_outside_scope(
+                declare_scope_id,
+                reference_scope_id,
+                ctx.scoping(),
+            )
         })
         .for_each(|reference| {
             ctx.diagnostic(use_outside_scope_diagnostic(
                 pattern.span(),
                 ctx.reference_span(reference),
-                name,
+                &name,
             ));
         });
 }
 
 fn run_for_all_redeclarations(
-    (pattern, name, symbol): (&BindingPattern, &str, &SymbolId),
-    scope_ids: &[ScopeId],
-    node: &AstNode,
+    (pattern, name, symbol): (&BindingPattern, Ident<'_>, &SymbolId),
+    declare_scope_id: ScopeId,
     ctx: &LintContext,
 ) {
     ctx.scoping()
@@ -182,24 +187,22 @@ fn run_for_all_redeclarations(
         .iter()
         .filter(|redeclaration| {
             let redeclare_scope_id = ctx.nodes().get_node(redeclaration.declaration).scope_id();
-
-            redeclare_scope_id != node.scope_id() && !scope_ids.contains(&redeclare_scope_id)
+            check_if_has_reference_outside_scope(
+                declare_scope_id,
+                redeclare_scope_id,
+                ctx.scoping(),
+            )
         })
         .for_each(|redeclaration| {
-            ctx.diagnostic(redeclaration_diagnostic(pattern.span(), redeclaration.span, name));
+            ctx.diagnostic(redeclaration_diagnostic(pattern.span(), redeclaration.span, &name));
         });
 }
 
-fn run_for_declaration(
-    pattern: &BindingPattern,
-    scope_ids: &[ScopeId],
-    node: &AstNode,
-    ctx: &LintContext,
-) {
+fn run_for_declaration(pattern: &BindingPattern, node_scope_id: ScopeId, ctx: &LintContext) {
     // e.g. "var [a, b] = [1, 2]"
     for ident in pattern.get_binding_identifiers() {
-        let name = ident.name.as_str();
-        let Some(symbol) = ctx.scoping().find_binding(node.scope_id(), name) else {
+        let name = ident.name;
+        let Some(symbol) = ctx.scoping().find_binding(node_scope_id, name) else {
             continue;
         };
 
@@ -208,11 +211,21 @@ fn run_for_declaration(
         // e.g. "if (true) { var a = 4; } else { var a = 4; }"
         // in this case we can't find the reference of 'a' by call `get_resolved_references`
         // so I use `symbol_redeclarations` to find all the redeclarations
-        run_for_all_redeclarations(binding, scope_ids, node, ctx);
+        run_for_all_redeclarations(binding, node_scope_id, ctx);
 
         // e.g. "var a = 4; console.log(a);"
-        run_for_all_references(binding, scope_ids, node, ctx);
+        run_for_all_references(binding, node_scope_id, ctx);
     }
+}
+
+/// Returns true if the reference is outside the declaration scope
+fn check_if_has_reference_outside_scope(
+    declare_scope_id: ScopeId,
+    reference_scope_id: ScopeId,
+    scoping: &Scoping,
+) -> bool {
+    reference_scope_id != declare_scope_id
+        && !scoping.scope_is_descendant_of(reference_scope_id, declare_scope_id)
 }
 
 #[test]
@@ -229,7 +242,6 @@ fn test() {
         "function f() { } f(); var exports = { f: f };",
         "var f = () => {}; f(); var exports = { f: f };",
         "!function f(){ f; }",
-        "function f() { } f(); var exports = { f: f };",
         "function f() { var a, b; { a = true; } b = a; }",
         "var a; function f() { var b = a; }",
         "function f(a) { }",
@@ -267,7 +279,6 @@ fn test() {
         "class C { static { if (bar) { foo; } var foo; } }",
         "class C { static { foo; var foo; } }",
         "class C { static { var foo; foo; } }",
-        "(function () { foo(); })(); function foo() {}",
         "(function () { foo(); })(); function foo() {}",
         "foo: while (true) { bar: for (var i = 0; i < 13; ++i) {if (i === 7) break foo; } }",
         "foo: while (true) { bar: for (var i = 0; i < 13; ++i) {if (i === 7) continue foo; } }",
@@ -425,5 +436,7 @@ fn test() {
         ",
     ];
 
-    Tester::new(BlockScopedVar::NAME, BlockScopedVar::PLUGIN, pass, fail).test_and_snapshot();
+    Tester::new(BlockScopedVar::NAME, BlockScopedVar::PLUGIN, pass, fail)
+        .change_rule_path_extension("mjs")
+        .test_and_snapshot();
 }

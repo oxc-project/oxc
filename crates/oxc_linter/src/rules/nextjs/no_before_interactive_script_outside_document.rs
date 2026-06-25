@@ -85,7 +85,9 @@ declare_oxc_lint!(
     /// ```
     NoBeforeInteractiveScriptOutsideDocument,
     nextjs,
-    correctness
+    correctness,
+    version = "0.2.7",
+    short_description = "Prevent the usage of `next/script`'s `beforeInteractive` strategy outside of `pages/_document.js`.",
 );
 
 impl Rule for NoBeforeInteractiveScriptOutsideDocument {

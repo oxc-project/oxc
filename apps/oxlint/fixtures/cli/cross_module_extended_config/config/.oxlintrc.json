@@ -1,0 +1,11 @@
+{
+  "categories": {
+    "correctness": "off"
+  },
+  "plugins": [
+    "import"
+  ],
+  "rules": {
+    "import/no-cycle": "error"
+  }
+}

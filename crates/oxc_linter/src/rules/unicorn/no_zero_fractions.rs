@@ -2,6 +2,7 @@ use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use oxc_syntax::identifier::is_identifier_part;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -48,7 +49,9 @@ declare_oxc_lint!(
     NoZeroFractions,
     unicorn,
     style,
-    fix
+    fix,
+    version = "0.0.18",
+    short_description = "Prevents the use of zero fractions.",
 );
 
 impl Rule for NoZeroFractions {
@@ -86,15 +89,11 @@ impl Rule for NoZeroFractions {
                     // https://github.com/sindresorhus/eslint-plugin-unicorn/blob/77f32e5a6b2df542cf50dfbd371054f2cd8ce2d6/rules/no-zero-fractions.js#L56
                 }
 
-                // Handle special cases where a space is needed after certain keywords
-                // to prevent the number from being interpreted as a property access
-                let end = number_literal.span.start;
-                let token = ctx.source_range(oxc_span::Span::new(0, end));
-                if token.ends_with("return")
-                    || token.ends_with("throw")
-                    || token.ends_with("typeof")
-                    || token.ends_with("void")
-                {
+                // Insert a leading space when the fixed number would directly abut a preceding
+                // identifier or keyword, e.g. `case.0` -> `case 0` (without it `case0` is a single
+                // token) or `return.0.x` -> `return (0).x`.
+                let before = ctx.source_range(Span::new(0, number_literal.span.start));
+                if before.chars().next_back().is_some_and(is_identifier_part) {
                     fixed = format!(" {fixed}");
                 }
 
@@ -136,42 +135,50 @@ fn test() {
     let pass = vec![
         r#"const foo = "123.1000""#,
         r#"foo("123.1000")"#,
-        r"const foo = 1",
-        r"const foo = 1 + 2",
-        r"const foo = -1",
-        r"const foo = 123123123",
-        r"const foo = 1.1",
-        r"const foo = -1.1",
-        r"const foo = 123123123.4",
-        r"const foo = 1e3",
-        r"1 .toString()",
+        "const foo = 1",
+        "const foo = 1 + 2",
+        "const foo = -1",
+        "const foo = 123123123",
+        "const foo = 1.1",
+        "const foo = -1.1",
+        "const foo = 123123123.4",
+        "const foo = 1e3",
+        "1 .toString()",
     ];
 
     let fail = vec![
-        r"const foo = 1.0",
-        r"const foo = 1.0 + 1",
-        r"foo(1.0 + 1)",
-        r"const foo = 1.00",
-        r"const foo = 1.00000",
-        r"const foo = -1.0",
-        r"const foo = 123123123.0",
-        r"const foo = 123.11100000000",
-        r"const foo = 1.",
-        r"const foo = +1.",
-        r"const foo = -1.",
-        r"const foo = 1.e10",
-        r"const foo = +1.e-10",
-        r"const foo = -1.e+10",
-        r"const foo = (1.).toString()",
-        r"1.00.toFixed(2)",
-        r"1.00 .toFixed(2)",
-        r"(1.00).toFixed(2)",
-        r"1.00?.toFixed(2)",
-        r"a = .0;",
-        r"a = .0.toString()",
-        r"function foo(){return.0}",
-        r"function foo(){return.0.toString()}",
-        r"function foo(){return.0+.1}",
+        "const foo = 1.0",
+        "const foo = 1.0 + 1",
+        "foo(1.0 + 1)",
+        "const foo = 1.00",
+        "const foo = 1.00000",
+        "const foo = -1.0",
+        "const foo = 123123123.0",
+        "const foo = 123.11100000000",
+        "const foo = 1.",
+        "const foo = +1.",
+        "const foo = -1.",
+        "const foo = 1.e10",
+        "const foo = +1.e-10",
+        "const foo = -1.e+10",
+        "const foo = (1.).toString()",
+        "1.00.toFixed(2)",
+        "1.00 .toFixed(2)",
+        "(1.00).toFixed(2)",
+        "1.00?.toFixed(2)",
+        "console.log()
+            1..toString()",
+        "console.log()
+            a[1.].toString()",
+        "console.log()
+            1.00e10.toString()",
+        "console.log()
+            a[1.00e10].toString()",
+        "a = .0;",
+        "a = .0.toString()",
+        "function foo(){return.0}",
+        "function foo(){return.0.toString()}",
+        "function foo(){return.0+.1}",
         "ôTest(0.)",
     ];
 
@@ -205,12 +212,19 @@ fn test() {
         (r"function foo(){typeof.0.toString()}", r"function foo(){typeof (0).toString()}"),
         (r"typeof.0+.1", r"typeof 0+.1"),
         (r"function foo(){throw.0;}", r"function foo(){throw 0;}"),
-        (r"function foo(){typeof.0.toString()}", r"function foo(){typeof (0).toString()}"),
         (r"function foo(){throw.0+.1;}", r"function foo(){throw 0+.1;}"),
         (r"void.0", r"void 0"),
         (r"function foo(){void.0.toString()}", r"function foo(){void (0).toString()}"),
         (r"function foo(){void.0+.1;}", r"function foo(){void 0+.1;}"),
         ("ôTest(0.)", "ôTest(0)"),
+        (r"switch (x) { case.0: break; }", r"switch (x) { case 0: break; }"),
+        (r"function foo(){do.0;while(x)}", r"function foo(){do 0;while(x)}"),
+        (r"for (const x of.0);", r"for (const x of 0);"),
+        (r"if (x in.0) {}", r"if (x in 0) {}"),
+        (r"x instanceof.0", r"x instanceof 0"),
+        (r"async function foo(){await.0}", r"async function foo(){await 0}"),
+        (r"function* foo(){yield.0}", r"function* foo(){yield 0}"),
+        (r"delete.0", r"delete 0"),
     ];
 
     Tester::new(NoZeroFractions::NAME, NoZeroFractions::PLUGIN, pass, fail)

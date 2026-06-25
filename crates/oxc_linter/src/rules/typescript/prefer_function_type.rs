@@ -1,5 +1,5 @@
 use oxc_ast::{
-    AstKind, CommentKind,
+    AstKind,
     ast::{ExportDefaultDeclarationKind, Expression, TSInterfaceDeclaration, TSSignature, TSType},
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -85,7 +85,9 @@ declare_oxc_lint!(
     PreferFunctionType,
     typescript,
     style,
-    conditional_fix
+    conditional_fix,
+    version = "0.2.11",
+    short_description = "Enforce using function types instead of interfaces with call signatures.",
 );
 
 fn has_one_super_type(decl: &TSInterfaceDeclaration) -> bool {
@@ -157,32 +159,14 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                         node_end = export_name_decl.span.end;
                     }
 
-                    let has_comments = ctx.has_comments_between(interface_decl.span);
+                    let mut comments = ctx.comments_range(node_start..node_end).peekable();
+                    if comments.peek().is_some() {
+                        let mut comments_text = String::new();
 
-                    if has_comments {
-                        let comments = ctx
-                            .comments_range(node_start..node_end)
-                            .map(|comment| (*comment, comment.content_span()));
-
-                        let comments_text = {
-                            let mut comments_vec: Vec<String> = vec![];
-                            comments.for_each(|(comment_interface, span)| {
-                                let comment = span.source_text(source_code);
-
-                                match comment_interface.kind {
-                                    CommentKind::Line => {
-                                        let single_line_comment: String = format!("//{comment}\n");
-                                        comments_vec.push(single_line_comment);
-                                    }
-                                    CommentKind::Block => {
-                                        let multi_line_comment: String = format!("/*{comment}*/\n");
-                                        comments_vec.push(multi_line_comment);
-                                    }
-                                }
-                            });
-
-                            comments_vec.join("")
-                        };
+                        for comment in comments {
+                            comments_text.push_str(comment.span.source_text(source_code));
+                            comments_text.push('\n');
+                        }
 
                         return Fix::new(
                             format!(
@@ -306,7 +290,7 @@ impl Rule for PreferFunctionType {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::TSInterfaceDeclaration(decl) => {
-                let body: &oxc_allocator::Vec<'_, TSSignature<'_>> = &decl.body.body;
+                let body = &decl.body.body;
 
                 if !has_one_super_type(decl) && body.len() == 1 {
                     check_member(&body[0], node, ctx);
@@ -502,7 +486,7 @@ fn test() {
     ];
 
     let fix = vec![
-        ("interface Foo { (): string; }", "type Foo = () => string;", None),
+        ("interface Foo { (): string; }", "type Foo = () => string;"),
         (
             r"
 interface Foo {
@@ -514,7 +498,6 @@ interface Foo {
 // comment
 type Foo = () => string;
                         ",
-            None,
         ),
         (
             r"
@@ -527,7 +510,6 @@ interface Foo {
 /* comment */
 type Foo = () => string;
                       ",
-            None,
         ),
         (
             r"
@@ -538,7 +520,6 @@ export interface Foo {
             r"
 /** comment */
 export type Foo = () => string;",
-            None,
         ),
         (
             r"
@@ -551,7 +532,6 @@ export interface Foo {
 // comment
 export type Foo = () => string;
 ",
-            None,
         ),
         (
             r"
@@ -564,7 +544,6 @@ function foo(bar: ((s: string) => number) | undefined): number {
   return bar('hello');
 }
 ",
-            None,
         ),
         (
             r"
@@ -575,7 +554,6 @@ interface Foo extends Function {
             r"
 type Foo = () => void;
                         ",
-            None,
         ),
         (
             r"
@@ -586,7 +564,6 @@ interface Foo<T> {
             r"
 type Foo<T> = (bar: T) => string;
                         ",
-            None,
         ),
         (
             r"
@@ -597,7 +574,6 @@ type Foo = {
             r"
 type Foo = () => string;
                       ",
-            None,
         ),
         (
             r"
@@ -610,7 +586,6 @@ function foo(bar: (s: string) => number): number {
   return bar('hello');
 }
                       ",
-            None,
         ),
         (
             r"
@@ -623,7 +598,6 @@ function foo(bar: ((s: string) => number) | undefined): number {
   return bar('hello');
 }
                       ",
-            None,
         ),
         (
             r"
@@ -634,7 +608,6 @@ interface Foo extends Function {
             r"
 type Foo = () => void;
                       ",
-            None,
         ),
         (
             r"
@@ -645,7 +618,6 @@ interface Foo<T> {
             r"
 type Foo<T> = (bar: T) => string;
                       ",
-            None,
         ),
         (
             r"
@@ -656,7 +628,6 @@ interface Foo<T> {
             r"
 type Foo<T> = (this: T) => void;
                       ",
-            None,
         ),
         (
             r"
@@ -665,7 +636,6 @@ type Foo<T> = { (this: string): T };
             r"
 type Foo<T> = (this: string) => T;
                       ",
-            None,
         ),
         (
             r"
@@ -692,7 +662,6 @@ type Foo = () => {
     };
   };
                       ",
-            None,
         ),
         (
             r"
@@ -701,7 +670,6 @@ type X = {} | { (): void; }
             r"
 type X = {} | (() => void)
                       ",
-            None,
         ),
         (
             r"
@@ -710,14 +678,12 @@ type X = {} & { (): void; };
             r"
 type X = {} & (() => void);
                       ",
-            None,
         ),
         (
             "export interface AnyFn { (...args: any[]): any }",
             "export type AnyFn = (...args: any[]) => any;",
-            None,
         ),
-        ("type K = { new(): T };", "type K = new() => T;", None),
+        ("type K = { new(): T };", "type K = new() => T;"),
     ];
 
     Tester::new(PreferFunctionType::NAME, PreferFunctionType::PLUGIN, pass, fail)

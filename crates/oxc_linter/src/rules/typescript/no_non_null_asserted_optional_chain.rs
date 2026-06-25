@@ -57,7 +57,9 @@ declare_oxc_lint!(
     NoNonNullAssertedOptionalChain,
     typescript,
     correctness,
-    suggestion
+    suggestion,
+    version = "0.0.6",
+    short_description = "Disallow non-null assertions after an optional chain expression.",
 );
 
 impl Rule for NoNonNullAssertedOptionalChain {

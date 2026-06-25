@@ -1,3 +1,9 @@
+use crate::{
+    AstNode,
+    context::{ContextHost, LintContext},
+    rule::{DefaultRuleConfig, Rule},
+    utils::{get_prop_value, has_jsx_prop_ignore_case, is_create_element_call},
+};
 use oxc_ast::{
     AstKind,
     ast::{
@@ -9,13 +15,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
-
-use crate::{
-    AstNode,
-    context::{ContextHost, LintContext},
-    rule::Rule,
-    utils::{get_prop_value, has_jsx_prop_ignore_case, is_create_element_call},
-};
+use serde::Deserialize;
 
 fn missing_type_prop(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("`button` elements must have an explicit `type` attribute.")
@@ -31,8 +31,8 @@ fn invalid_type_prop(span: Span, allowed_types: &str) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct ButtonHasType {
     /// If true, allow `type="button"`.
     button: bool,
@@ -51,7 +51,7 @@ impl Default for ButtonHasType {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforces explicit `type` attribute for all the `button` HTML elements.
+    /// Enforces an explicit `type` attribute for all HTML `button` elements.
     ///
     /// ### Why is this bad?
     ///
@@ -76,9 +76,15 @@ declare_oxc_lint!(
     react,
     restriction,
     config = ButtonHasType,
+    version = "0.1.1",
+    short_description = "Enforces an explicit `type` attribute for all HTML `button` elements.",
 );
 
 impl Rule for ButtonHasType {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::JSXOpeningElement(jsx_el) => {
@@ -106,66 +112,47 @@ impl Rule for ButtonHasType {
                     },
                 );
             }
-            AstKind::CallExpression(call_expr) => {
-                if is_create_element_call(call_expr) {
-                    let Some(Argument::StringLiteral(str)) = call_expr.arguments.first() else {
-                        return;
-                    };
+            AstKind::CallExpression(call_expr) if is_create_element_call(call_expr) => {
+                let Some(Argument::StringLiteral(str)) = call_expr.arguments.first() else {
+                    return;
+                };
 
-                    if str.value.as_str() != "button" {
-                        return;
-                    }
+                if str.value.as_str() != "button" {
+                    return;
+                }
 
-                    if let Some(Argument::ObjectExpression(obj_expr)) = call_expr.arguments.get(1) {
-                        obj_expr
-                            .properties
-                            .iter()
-                            .find_map(|prop| {
-                                if let ObjectPropertyKind::ObjectProperty(prop) = prop
-                                    && prop.key.is_specific_static_name("type")
-                                {
-                                    return Some(prop);
+                if let Some(Argument::ObjectExpression(obj_expr)) = call_expr.arguments.get(1) {
+                    obj_expr
+                        .properties
+                        .iter()
+                        .find_map(|prop| {
+                            if let ObjectPropertyKind::ObjectProperty(prop) = prop
+                                && prop.key.is_specific_static_name("type")
+                            {
+                                return Some(prop);
+                            }
+
+                            None
+                        })
+                        .map_or_else(
+                            || {
+                                ctx.diagnostic(missing_type_prop(obj_expr.span));
+                            },
+                            |type_prop| {
+                                if !self.is_valid_button_type_prop_expression(&type_prop.value) {
+                                    let allowed_types = self.allowed_types_message();
+                                    ctx.diagnostic(invalid_type_prop(
+                                        type_prop.span,
+                                        &allowed_types,
+                                    ));
                                 }
-
-                                None
-                            })
-                            .map_or_else(
-                                || {
-                                    ctx.diagnostic(missing_type_prop(obj_expr.span));
-                                },
-                                |type_prop| {
-                                    if !self.is_valid_button_type_prop_expression(&type_prop.value)
-                                    {
-                                        let allowed_types = self.allowed_types_message();
-                                        ctx.diagnostic(invalid_type_prop(
-                                            type_prop.span,
-                                            &allowed_types,
-                                        ));
-                                    }
-                                },
-                            );
-                    } else {
-                        ctx.diagnostic(missing_type_prop(call_expr.span));
-                    }
+                            },
+                        );
+                } else {
+                    ctx.diagnostic(missing_type_prop(call_expr.span));
                 }
             }
             _ => {}
-        }
-    }
-
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let value = value.as_array().and_then(|arr| arr.first()).and_then(|val| val.as_object());
-
-        Self {
-            button: value
-                .and_then(|val| val.get("button").and_then(serde_json::Value::as_bool))
-                .unwrap_or(true),
-            submit: value
-                .and_then(|val| val.get("submit").and_then(serde_json::Value::as_bool))
-                .unwrap_or(true),
-            reset: value
-                .and_then(|val| val.get("reset").and_then(serde_json::Value::as_bool))
-                .unwrap_or(true),
         }
     }
 
@@ -305,6 +292,9 @@ fn test() {
 			      "#,
             None,
         ),
+        // Issue #20938: document.createElement('button') / document["createElement"]("button") should not raise an error because it object callee is from document
+        (r#"document.createElement("button");"#, None),
+        (r#"document["createElement"]("button");"#, None),
     ];
 
     let fail = vec![

@@ -13,6 +13,7 @@ const USIZE_BITS: usize = usize::BITS as usize;
 /// A bitset allocated in an arena.
 pub struct BitSet<'alloc> {
     entries: Box<'alloc, [usize]>,
+    max_bit_count: usize,
 }
 
 impl<'alloc> BitSet<'alloc> {
@@ -35,17 +36,73 @@ impl<'alloc> BitSet<'alloc> {
         // Lifetime of returned `BitSet` matches the `Allocator` the data was allocated in.
         let entries = unsafe { Box::from_non_null(NonNull::from(slice)) };
 
-        Self { entries }
+        Self { entries, max_bit_count }
+    }
+
+    /// Returns the maximum number of bits this set can hold.
+    #[inline]
+    pub fn capacity(&self) -> usize {
+        self.max_bit_count
+    }
+
+    /// Returns `true` if no bits are set.
+    ///
+    /// Scans the underlying word array; short-circuits at the first non-zero word.
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        self.entries.iter().all(|word| *word == 0)
+    }
+
+    /// Bounds-safe membership test: returns `true` if `bit` is within
+    /// capacity AND set. Positions at or beyond [`Self::capacity`] return
+    /// `false`, whereas [`Self::has_bit`] may panic or read unspecified
+    /// trailing-bit state for such positions.
+    #[inline]
+    pub fn contains(&self, bit: usize) -> bool {
+        bit < self.max_bit_count && self.has_bit(bit)
     }
 
     /// Returns `true` if the bit at the given position is set.
+    #[inline]
     pub fn has_bit(&self, bit: usize) -> bool {
         (self.entries[bit / USIZE_BITS] & (1 << (bit % USIZE_BITS))) != 0
     }
 
     /// Set the bit at the given position.
+    #[inline]
     pub fn set_bit(&mut self, bit: usize) {
         self.entries[bit / USIZE_BITS] |= 1 << (bit % USIZE_BITS);
+    }
+
+    /// Remove the bit at the given position.
+    #[inline]
+    pub fn unset_bit(&mut self, bit: usize) {
+        self.entries[bit / USIZE_BITS] &= !(1 << (bit % USIZE_BITS));
+    }
+
+    /// Performs a bitwise OR of two bitsets.
+    ///
+    /// # Note on differing lengths
+    /// If the two sets have different lengths, this method only unions the prefix common to both.
+    /// It iterates up to the length of the shorter set.
+    pub fn union(&mut self, other: &Self) {
+        for (self_word, other_word) in self.entries.iter_mut().zip(other.entries.iter()) {
+            *self_word |= *other_word;
+        }
+    }
+
+    /// Clear all bits in the bitset, setting them to 0.
+    #[inline]
+    pub fn clear(&mut self) {
+        self.entries.fill(0);
+    }
+
+    /// Iterates over all enabled bits.
+    ///
+    /// Iterator element is the index of the `1` bit, type `usize`.
+    #[inline]
+    pub fn ones(&self) -> Ones<'_, '_> {
+        Ones { bitset: self, idx: 0 }
     }
 }
 
@@ -86,10 +143,10 @@ impl Display for BitSet<'_> {
         }
 
         let highest_byte = bytes.next().unwrap();
-        f.write_str(&format!("{highest_byte:08b}"))?;
+        write!(f, "{highest_byte:08b}")?;
 
         for byte in bytes {
-            f.write_str(&format!("_{byte:08b}"))?;
+            write!(f, "_{byte:08b}")?;
         }
 
         // Print remaining `usize`s without skipping any bytes
@@ -101,7 +158,7 @@ impl Display for BitSet<'_> {
             let bytes = bytes.iter();
 
             for byte in bytes {
-                f.write_str(&format!("_{byte:08b}"))?;
+                write!(f, "_{byte:08b}")?;
             }
         }
 
@@ -135,7 +192,37 @@ impl<'new_alloc> CloneIn<'new_alloc> for BitSet<'_> {
         // Lifetime of returned `BitSet` matches the `Allocator` the data was allocated in.
         let entries = unsafe { Box::from_non_null(NonNull::from(new_slice)) };
 
-        BitSet { entries }
+        BitSet { entries, max_bit_count: self.max_bit_count }
+    }
+}
+
+/// This struct is created by the [`BitSet::ones`] method.
+#[derive(Clone)]
+pub struct Ones<'a, 'b> {
+    bitset: &'b BitSet<'a>,
+    idx: usize,
+}
+
+impl Iterator for Ones<'_, '_> {
+    type Item = usize;
+
+    #[inline]
+    fn next(&mut self) -> Option<usize> {
+        while self.idx < self.bitset.max_bit_count {
+            if self.bitset.has_bit(self.idx) {
+                let ret = self.idx;
+                self.idx += 1;
+                return Some(ret);
+            }
+            self.idx += 1;
+        }
+        None
+    }
+
+    #[inline]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let remaining = self.bitset.max_bit_count - self.idx;
+        (0, Some(remaining))
     }
 }
 
@@ -183,7 +270,7 @@ mod tests {
     }
 
     #[test]
-    fn union() {
+    fn clone_in() {
         let allocator = Allocator::default();
         let mut bs = BitSet::new_in(16, &allocator);
         assert_eq!(bs.to_string(), "00000000");
@@ -197,5 +284,102 @@ mod tests {
         let mut bs2 = bs.clone_in(&allocator);
         bs2.set_bit(15);
         assert_eq!(bs2.to_string(), "10000001_10000011");
+    }
+
+    #[test]
+    fn unset_bit() {
+        let allocator = Allocator::default();
+        let mut bs = BitSet::new_in(16, &allocator);
+        bs.set_bit(0);
+        bs.set_bit(1);
+        bs.set_bit(7);
+        bs.set_bit(8);
+        assert_eq!(bs.to_string(), "00000001_10000011");
+        bs.unset_bit(1);
+        assert_eq!(bs.to_string(), "00000001_10000001");
+        bs.unset_bit(8);
+        assert_eq!(bs.to_string(), "10000001");
+        bs.unset_bit(0);
+        assert_eq!(bs.to_string(), "10000000");
+        bs.unset_bit(7);
+        assert_eq!(bs.to_string(), "00000000");
+    }
+
+    #[test]
+    fn union() {
+        let allocator = Allocator::default();
+        let mut bs1 = BitSet::new_in(16, &allocator);
+        bs1.set_bit(0);
+        bs1.set_bit(3);
+        bs1.set_bit(8);
+        assert_eq!(bs1.to_string(), "00000001_00001001");
+
+        let mut bs2 = BitSet::new_in(16, &allocator);
+        bs2.set_bit(1);
+        bs2.set_bit(3);
+        bs2.set_bit(9);
+        assert_eq!(bs2.to_string(), "00000010_00001010");
+
+        bs1.union(&bs2);
+        assert_eq!(bs1.to_string(), "00000011_00001011");
+    }
+
+    #[test]
+    fn clear() {
+        let allocator = Allocator::default();
+        let mut bs = BitSet::new_in(128, &allocator);
+        bs.set_bit(0);
+        bs.set_bit(7);
+        bs.set_bit(64);
+        bs.set_bit(127);
+        assert!(bs.has_bit(0));
+        assert!(bs.has_bit(7));
+        assert!(bs.has_bit(64));
+        assert!(bs.has_bit(127));
+
+        bs.clear();
+        assert_eq!(bs.to_string(), "00000000");
+        assert!(!bs.has_bit(0));
+        assert!(!bs.has_bit(7));
+        assert!(!bs.has_bit(64));
+        assert!(!bs.has_bit(127));
+
+        // Can set bits again after clear
+        bs.set_bit(42);
+        assert!(bs.has_bit(42));
+    }
+
+    #[test]
+    fn ones() {
+        let allocator = Allocator::default();
+        let mut bs = BitSet::new_in(3, &allocator);
+        bs.set_bit(0);
+        bs.set_bit(2);
+        assert_eq!(bs.ones().collect::<Vec<_>>(), [0, 2]);
+    }
+
+    #[test]
+    fn capacity_and_is_empty() {
+        let allocator = Allocator::default();
+        let mut bs = BitSet::new_in(128, &allocator);
+        assert_eq!(bs.capacity(), 128);
+        assert!(bs.is_empty());
+        bs.set_bit(100);
+        assert!(!bs.is_empty());
+        bs.unset_bit(100);
+        assert!(bs.is_empty());
+
+        // Zero-capacity bitset is always empty.
+        let bs0 = BitSet::new_in(0, &allocator);
+        assert_eq!(bs0.capacity(), 0);
+        assert!(bs0.is_empty());
+        assert!(!bs0.contains(0));
+
+        // `contains` is bounds-safe: out-of-range is `false`, not a panic.
+        bs.set_bit(100);
+        assert!(bs.contains(100));
+        assert!(!bs.contains(99));
+        assert!(!bs.contains(128));
+        assert!(!bs.contains(usize::MAX));
     }
 }

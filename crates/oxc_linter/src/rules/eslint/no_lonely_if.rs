@@ -18,7 +18,7 @@ pub struct NoLonelyIf;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow `if` statements as the only statement in `else` blocks
+    /// Disallow `if` statements as the only statement in `else` blocks.
     ///
     /// ### Why is this bad?
     ///
@@ -82,7 +82,9 @@ declare_oxc_lint!(
     NoLonelyIf,
     eslint,
     pedantic,
-    pending
+    pending,
+    version = "0.16.0",
+    short_description = "Disallow `if` statements as the only statement in `else` blocks.",
 );
 
 impl Rule for NoLonelyIf {

@@ -63,20 +63,18 @@ use std::{
 use rustc_hash::FxHasher;
 use serde::Deserialize;
 
-use oxc_allocator::{TakeIn, Vec as ArenaVec};
+use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::{AstBuilder, NONE, ast::*};
 use oxc_data_structures::{inline_string::InlineString, slice_iter::SliceIter};
 use oxc_semantic::SymbolId;
 use oxc_span::SPAN;
 use oxc_traverse::{Ancestor, Traverse};
 
-use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
-};
+use crate::{context::TraverseCtx, state::TransformState};
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(default, rename_all = "camelCase", deny_unknown_fields)]
+/// Configuration for the styled-components transform.
 pub struct StyledComponentsOptions {
     /// Enhances the attached CSS class name on each component with richer output to help
     /// identify your components in the DOM without React DevTools. It also allows you to
@@ -112,13 +110,17 @@ pub struct StyledComponentsOptions {
     pub ssr: bool,
 
     /// Transpiles styled-components tagged template literals to a smaller representation
-    /// than what Babel normally creates, helping to reduce bundle size.
+    /// than what Babel normally creates.
     ///
-    /// Converts `` styled.div`width: 100%;` `` to `styled.div(['width: 100%;'])`, which is
-    /// more compact than the standard Babel template literal transformation.
+    /// Converts `` styled.div`width: 100%;` `` to `styled.div(['width: 100%;'])`.
     ///
-    /// Default: `true`
-    #[serde(default = "default_as_true")]
+    /// This is only beneficial when template literals are down-levelled to ES5 (as Babel
+    /// does), where the array form is more compact than the transpiled tagged template.
+    /// Oxc does not down-level template literals, so this transform only makes the output
+    /// larger than leaving the template literal as-is. It is therefore disabled by default.
+    ///
+    /// Default: `false`
+    #[serde(default)]
     pub transpile_template_literals: bool,
 
     /// Minifies CSS content by removing all whitespace and comments from your CSS,
@@ -211,13 +213,15 @@ impl Default for StyledComponentsOptions {
     /// are set but not yet implemented.
     ///
     /// The `pure` option is disabled by default to avoid potential issues with
-    /// tree-shaking in some bundlers.
+    /// tree-shaking in some bundlers. `transpileTemplateLiterals` is disabled by default
+    /// because Oxc does not down-level template literals, so transpiling them to the array
+    /// form only increases output size.
     fn default() -> Self {
         Self {
             display_name: true,
             file_name: true,
             ssr: true,
-            transpile_template_literals: true,
+            transpile_template_literals: false,
             pure: false,
             minify: true,
             namespace: None,
@@ -234,7 +238,9 @@ impl Default for StyledComponentsOptions {
 struct StyledComponentsBinding {
     /// `import * as styled from 'styled-components'`
     namespace: Option<SymbolId>,
-    /// `import styled from 'styled-components'` or `import { default as styled } from 'styled-components'`
+    /// `import styled from 'styled-components';`
+    /// `import { default as styled } from 'styled-components';`
+    /// `import { styled } from 'styled-components';`
     styled: Option<SymbolId>,
     /// Named imports like `import { createGlobalStyle, css, keyframes } from 'styled-components'`
     helpers: [Option<SymbolId>; 6],
@@ -283,9 +289,8 @@ impl StyledComponentsHelper {
     }
 }
 
-pub struct StyledComponents<'a, 'ctx> {
+pub struct StyledComponents<'a> {
     pub options: StyledComponentsOptions,
-    pub ctx: &'ctx TransformCtx<'a>,
 
     // State
     /// Tracks which variables are bound to styled-components imports
@@ -295,14 +300,13 @@ pub struct StyledComponents<'a, 'ctx> {
     /// Hash of the current file for component ID generation
     component_id_prefix: Option<String>,
     /// Filename or directory name is used for `displayName`
-    block_name: Option<Atom<'a>>,
+    block_name: Option<Str<'a>>,
 }
 
-impl<'a, 'ctx> StyledComponents<'a, 'ctx> {
-    pub fn new(options: StyledComponentsOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
+impl StyledComponents<'_> {
+    pub fn new(options: StyledComponentsOptions) -> Self {
         Self {
             options,
-            ctx,
             styled_bindings: StyledComponentsBinding::default(),
             component_id_prefix: None,
             component_count: 0,
@@ -311,7 +315,7 @@ impl<'a, 'ctx> StyledComponents<'a, 'ctx> {
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for StyledComponents<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for StyledComponents<'a> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.collect_styled_bindings(program, ctx);
     }
@@ -345,7 +349,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for StyledComponents<'a, '_> {
     }
 }
 
-impl<'a> StyledComponents<'a, '_> {
+impl<'a> StyledComponents<'a> {
     fn transform_tagged_template_expression(
         &mut self,
         expr: &mut Expression<'a>,
@@ -404,9 +408,10 @@ impl<'a> StyledComponents<'a, '_> {
         let TaggedTemplateExpression {
             span,
             tag,
-            quasi: TemplateLiteral { span: quasi_span, quasis, expressions },
+            quasi: TemplateLiteral { span: quasi_span, quasis, expressions, .. },
             type_arguments,
-        } = expr.take_in(ctx.ast);
+            ..
+        } = expr.take_in(ctx);
 
         let quasis_elements = ctx.ast.vec_from_iter(quasis.into_iter().map(|quasi| {
             ArrayExpressionElement::from(ctx.ast.expression_string_literal(
@@ -450,7 +455,7 @@ impl<'a> StyledComponents<'a, '_> {
             self.add_properties(&mut properties, ctx);
             let object = ctx.ast.alloc_object_expression(SPAN, properties);
             let arguments = ctx.ast.vec1(Argument::ObjectExpression(object));
-            let object = expr.take_in(ctx.ast);
+            let object = expr.take_in(ctx);
             let property = ctx.ast.identifier_name(SPAN, "withConfig");
             let callee =
                 Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false));
@@ -478,7 +483,8 @@ impl<'a> StyledComponents<'a, '_> {
                         let symbol_id = specifier.local.symbol_id();
                         let imported_name = specifier.imported.name();
                         match imported_name.as_str() {
-                            "default" => {
+                            // Handle `import { default as styled }` and `import { styled }`
+                            "default" | "styled" => {
                                 self.styled_bindings.styled = Some(symbol_id);
                             }
                             name => {
@@ -537,7 +543,7 @@ impl<'a> StyledComponents<'a, '_> {
 
     // Infers the component name from the parent variable declarator, assignment expression,
     // or object property.
-    fn get_component_name(ctx: &TraverseCtx<'a>) -> Option<Atom<'a>> {
+    fn get_component_name(ctx: &TraverseCtx<'a>) -> Option<Str<'a>> {
         let mut assignment_name = None;
 
         for ancestor in ctx.ancestors() {
@@ -551,19 +557,19 @@ impl<'a> StyledComponents<'a, '_> {
                         // want to pick the outer name because react-refresh will add HMR variables
                         // like this: X = _a = styled. We could also consider only doing this if the
                         // name starts with an underscore.
-                        AssignmentTarget::AssignmentTargetIdentifier(ident) => Some(ident.name),
+                        AssignmentTarget::AssignmentTargetIdentifier(ident) => {
+                            Some(ident.name.into())
+                        }
                         AssignmentTarget::StaticMemberExpression(member) => {
-                            Some(member.property.name)
+                            Some(member.property.name.into())
                         }
                         _ => return None,
                     };
                 }
                 // `const X = styled`
                 Ancestor::VariableDeclaratorInit(declarator) => {
-                    return if let BindingPatternKind::BindingIdentifier(ident) =
-                        &declarator.id().kind
-                    {
-                        Some(ident.name)
+                    return if let BindingPattern::BindingIdentifier(ident) = &declarator.id() {
+                        Some(ident.name.into())
                     } else {
                         None
                     };
@@ -571,7 +577,7 @@ impl<'a> StyledComponents<'a, '_> {
                 // `const X = { Y: styled }`
                 Ancestor::ObjectPropertyValue(property) => {
                     return if let PropertyKey::StaticIdentifier(ident) = property.key() {
-                        Some(ident.name)
+                        Some(ident.name.into())
                     } else {
                         None
                     };
@@ -579,7 +585,7 @@ impl<'a> StyledComponents<'a, '_> {
                 // `class Y { (static) X = styled }`
                 Ancestor::PropertyDefinitionValue(property) => {
                     return if let PropertyKey::StaticIdentifier(ident) = property.key() {
-                        Some(ident.name)
+                        Some(ident.name.into())
                     } else {
                         None
                     };
@@ -597,7 +603,7 @@ impl<'a> StyledComponents<'a, '_> {
     }
 
     /// `<namespace__>sc-<file_hash>-<component_count>`
-    fn get_component_id(&mut self, ctx: &TraverseCtx<'a>) -> Atom<'a> {
+    fn get_component_id(&mut self, ctx: &TraverseCtx<'a>) -> Str<'a> {
         // Cache `<namespace__>sc-<file_hash>-` part as it's the same each time
         let prefix = if let Some(prefix) = self.component_id_prefix.as_deref() {
             prefix
@@ -614,7 +620,7 @@ impl<'a> StyledComponents<'a, '_> {
                 String::with_capacity(PREFIX_LEN)
             };
 
-            prefix.extend(["sc-", self.get_file_hash().as_str(), "-"]);
+            prefix.extend(["sc-", Self::get_file_hash(&ctx.state).as_str(), "-"]);
 
             self.component_id_prefix = Some(prefix);
             self.component_id_prefix.as_deref().unwrap()
@@ -624,11 +630,11 @@ impl<'a> StyledComponents<'a, '_> {
         let mut buffer = itoa::Buffer::new();
         let count = buffer.format(self.component_count);
         self.component_count += 1;
-        ctx.ast.atom_from_strs_array([prefix, count])
+        ctx.ast.str_from_strs_array([prefix, count])
     }
 
     /// Generates a unique file hash based on the source path or source code.
-    fn get_file_hash(&self) -> InlineString<7, u8> {
+    fn get_file_hash(state: &TransformState<'a>) -> InlineString<7, u8> {
         #[inline]
         fn base36_encode(mut num: u64) -> InlineString<7, u8> {
             const BASE36_BYTES: &[u8; 36] = b"abcdefghijklmnopqrstuvwxyz0123456789";
@@ -647,29 +653,29 @@ impl<'a> StyledComponents<'a, '_> {
         }
 
         let mut hasher = FxHasher::default();
-        if self.ctx.source_path.is_absolute() {
-            self.ctx.source_path.hash(&mut hasher);
+        if state.source_path.is_absolute() {
+            state.source_path.hash(&mut hasher);
         } else {
-            self.ctx.source_text.hash(&mut hasher);
+            state.source_text.hash(&mut hasher);
         }
 
         base36_encode(hasher.finish())
     }
 
     /// Returns the block name based on the file stem or parent directory name.
-    fn get_block_name(&mut self, ctx: &TraverseCtx<'a>) -> Option<Atom<'a>> {
+    fn get_block_name(&mut self, ctx: &TraverseCtx<'a>) -> Option<Str<'a>> {
         if !self.options.file_name {
             return None;
         }
 
-        let file_stem = self.ctx.source_path.file_stem().and_then(|stem| stem.to_str())?;
+        let file_stem = ctx.state.source_path.file_stem().and_then(|stem| stem.to_str())?;
 
         Some(*self.block_name.get_or_insert_with(|| {
             // Should be a name, but if the file stem is in the meaningless file names list,
             // we will use the parent directory name instead.
             let block_name =
                 if self.options.meaningless_file_names.iter().any(|name| name == file_stem) {
-                    self.ctx
+                    ctx.state
                         .source_path
                         .parent()
                         .and_then(|parent| parent.file_name())
@@ -679,23 +685,23 @@ impl<'a> StyledComponents<'a, '_> {
                     file_stem
                 };
 
-            ctx.ast.atom(block_name)
+            ctx.ast.str(block_name)
         }))
     }
 
     /// Returns the display name which infers the component name or gets from the file name.
-    fn get_display_name(&mut self, ctx: &TraverseCtx<'a>) -> Atom<'a> {
+    fn get_display_name(&mut self, ctx: &TraverseCtx<'a>) -> Str<'a> {
         let component_name = Self::get_component_name(ctx);
 
         let Some(block_name) = self.get_block_name(ctx) else {
-            return component_name.unwrap_or(Atom::from(""));
+            return component_name.unwrap_or(Str::from(""));
         };
 
         if let Some(component_name) = component_name {
             if block_name == component_name {
                 component_name
             } else {
-                ctx.ast.atom_from_strs_array([&block_name, "__", &component_name])
+                ctx.ast.str_from_strs_array([&block_name, "__", &component_name])
             }
         } else {
             block_name
@@ -793,7 +799,7 @@ impl<'a> StyledComponents<'a, '_> {
     //     ^^^^^^^^^^
     fn create_object_property(
         key: &'static str,
-        value: Atom<'a>,
+        value: Str<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> ObjectPropertyKind<'a> {
         let key = ctx.ast.property_key_static_identifier(SPAN, key);
@@ -949,7 +955,7 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                 // Set `raw` for previous quasi to `output`
                 // SAFETY: Output is all picked from the original `raw` values and is guaranteed to be valid UTF-8.
                 let output_str = unsafe { std::str::from_utf8_unchecked(&output) };
-                quasis[quasi_index - 1].value.raw = ast.atom(output_str);
+                quasis[quasi_index - 1].value.raw = ast.str(output_str);
                 output.clear();
                 is_first_output = false;
             }
@@ -1072,10 +1078,8 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                 // are significant in CSS. ` :hover` (descendant pseudo-selector) is different
                 // from `:hover` (direct pseudo-selector). Example: `.parent :hover` selects any
                 // hovered descendant, while `.parent:hover` selects the parent when hovered.
-                b'{' | b'}' | b',' | b';' => {
-                    if output.last() == Some(&b' ') {
-                        output.pop();
-                    }
+                b'{' | b'}' | b',' | b';' if output.last() == Some(&b' ') => {
+                    output.pop();
                 }
                 _ => {}
             }
@@ -1093,7 +1097,7 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
     // Update last quasi.
     // SAFETY: Output is all picked from the original `raw` values and is guaranteed to be valid UTF-8.
     let output_str = unsafe { std::str::from_utf8_unchecked(&output) };
-    quasis.last_mut().unwrap().value.raw = ast.atom(output_str);
+    quasis.last_mut().unwrap().value.raw = ast.str(output_str);
 
     // Remove quasis that are marked for removal, and the expressions following them.
     // TODO: Remove scopes, symbols, and references for removed `Expression`s.
@@ -1152,7 +1156,7 @@ mod tests {
             SPAN,
             ast.vec1(ast.template_element(
                 SPAN,
-                TemplateElementValue { raw: ast.atom(input), cooked: Some(ast.atom(input)) },
+                TemplateElementValue { raw: ast.str(input), cooked: Some(ast.str(input)) },
                 true,
             )),
             ast.vec(),

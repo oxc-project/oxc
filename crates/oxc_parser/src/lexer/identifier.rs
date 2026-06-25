@@ -1,12 +1,12 @@
 use std::cmp::max;
 
-use oxc_allocator::StringBuilder;
+use oxc_allocator::ArenaStringBuilder;
 use oxc_span::Span;
 use oxc_syntax::identifier::{
     is_identifier_part, is_identifier_part_unicode, is_identifier_start_unicode,
 };
 
-use crate::diagnostics;
+use crate::{config::LexerConfig as Config, diagnostics};
 
 use super::{
     Kind, Lexer, SourcePosition, cold_branch,
@@ -26,7 +26,7 @@ fn is_identifier_start_ascii_byte(byte: u8) -> bool {
     ASCII_ID_START_TABLE.matches(byte)
 }
 
-impl<'a> Lexer<'a> {
+impl<'a, C: Config> Lexer<'a, C> {
     /// Handle identifier with ASCII start character.
     /// Returns text of the identifier, minus its first char.
     ///
@@ -136,7 +136,7 @@ impl<'a> Lexer<'a> {
     pub fn identifier_backslash_handler(&mut self) -> Kind {
         // Create arena string to hold unescaped identifier.
         // We don't know how long identifier will end up being, so guess.
-        let str = StringBuilder::with_capacity_in(MIN_ESCAPED_STR_LEN, self.allocator);
+        let str = ArenaStringBuilder::with_capacity_in(MIN_ESCAPED_STR_LEN, self.allocator);
 
         // Process escape and get rest of identifier
         let id = self.identifier_on_backslash(str, true);
@@ -153,7 +153,7 @@ impl<'a> Lexer<'a> {
         // will be double what we've seen so far, or `MIN_ESCAPED_STR_LEN` minimum.
         let so_far = self.source.str_from_pos_to_current(start_pos);
         let capacity = max(so_far.len() * 2, MIN_ESCAPED_STR_LEN);
-        let mut str = StringBuilder::with_capacity_in(capacity, self.allocator);
+        let mut str = ArenaStringBuilder::with_capacity_in(capacity, self.allocator);
 
         // Push identifier up this point into `str`
         str.push_str(so_far);
@@ -169,7 +169,7 @@ impl<'a> Lexer<'a> {
     /// `is_start` should be `true` if this is first char in the identifier, `false` otherwise.
     fn identifier_on_backslash(
         &mut self,
-        mut str: StringBuilder<'a>,
+        mut str: ArenaStringBuilder<'a>,
         mut is_start: bool,
     ) -> &'a str {
         'outer: loop {

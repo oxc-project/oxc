@@ -3,7 +3,7 @@ use oxc_ast::ast::*;
 use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, IsInt32OrUint32};
 use oxc_span::GetSpan;
 
-use crate::ctx::Ctx;
+use crate::TraverseCtx;
 
 use super::PeepholeOptimizations;
 
@@ -13,7 +13,7 @@ impl<'a> PeepholeOptimizations {
     /// `SimplifyBooleanExpr`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L2059>
     pub fn minimize_expression_in_boolean_context(
         expr: &mut Expression<'a>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         match expr {
             // "!!a" => "a"
@@ -21,19 +21,18 @@ impl<'a> PeepholeOptimizations {
                 if let Expression::UnaryExpression(u2) = &mut u1.argument
                     && u2.operator.is_not()
                 {
-                    let mut e = u2.argument.take_in(ctx.ast);
+                    let mut e = u2.argument.take_in(ctx);
                     Self::minimize_expression_in_boolean_context(&mut e, ctx);
-                    *expr = e;
-                    ctx.state.changed = true;
+                    ctx.replace_expression(expr, e);
                 }
             }
             Expression::BinaryExpression(e)
                 if e.operator.is_equality()
-                    && matches!(&e.right, Expression::NumericLiteral(lit) if lit.value == 0.0)
+                    && e.right.is_number_0()
                     && e.left.is_int32_or_uint32(ctx) =>
             {
-                let argument = e.left.take_in(ctx.ast);
-                *expr = if matches!(
+                let argument = e.left.take_in(ctx);
+                let new_expr = if matches!(
                     e.operator,
                     BinaryOperator::StrictInequality | BinaryOperator::Inequality
                 ) {
@@ -43,7 +42,7 @@ impl<'a> PeepholeOptimizations {
                     // `if ((a | b) === 0);", "if (!(a | b));")`
                     ctx.ast.expression_unary(e.span, UnaryOperator::LogicalNot, argument)
                 };
-                ctx.state.changed = true;
+                ctx.replace_expression(expr, new_expr);
             }
             // "if (!!a && !!b)" => "if (a && b)"
             Expression::LogicalExpression(e) if e.operator.is_and() => {
@@ -51,8 +50,8 @@ impl<'a> PeepholeOptimizations {
                 Self::minimize_expression_in_boolean_context(&mut e.right, ctx);
                 // "if (anything && truthyNoSideEffects)" => "if (anything)"
                 if e.right.get_side_free_boolean_value(ctx) == Some(true) {
-                    *expr = e.left.take_in(ctx.ast);
-                    ctx.state.changed = true;
+                    let new_expr = e.left.take_in(ctx);
+                    ctx.replace_expression(expr, new_expr);
                 }
             }
             // "if (!!a ||!!b)" => "if (a || b)"
@@ -61,8 +60,8 @@ impl<'a> PeepholeOptimizations {
                 Self::minimize_expression_in_boolean_context(&mut e.right, ctx);
                 // "if (anything || falsyNoSideEffects)" => "if (anything)"
                 if e.right.get_side_free_boolean_value(ctx) == Some(false) {
-                    *expr = e.left.take_in(ctx.ast);
-                    ctx.state.changed = true;
+                    let new_expr = e.left.take_in(ctx);
+                    ctx.replace_expression(expr, new_expr);
                 }
             }
             Expression::ConditionalExpression(e) => {
@@ -70,8 +69,8 @@ impl<'a> PeepholeOptimizations {
                 Self::minimize_expression_in_boolean_context(&mut e.consequent, ctx);
                 Self::minimize_expression_in_boolean_context(&mut e.alternate, ctx);
                 if let Some(boolean) = e.consequent.get_side_free_boolean_value(ctx) {
-                    let right = e.alternate.take_in(ctx.ast);
-                    let left = e.test.take_in(ctx.ast);
+                    let right = e.alternate.take_in(ctx);
+                    let left = e.test.take_in(ctx);
                     let span = e.span;
                     let (op, left) = if boolean {
                         // "if (anything1 ? truthyNoSideEffects : anything2)" => "if (anything1 || anything2)"
@@ -80,13 +79,13 @@ impl<'a> PeepholeOptimizations {
                         // "if (anything1 ? falsyNoSideEffects : anything2)" => "if (!anything1 && anything2)"
                         (LogicalOperator::And, Self::minimize_not(left.span(), left, ctx))
                     };
-                    *expr = Self::join_with_left_associative_op(span, op, left, right, ctx);
-                    ctx.state.changed = true;
+                    let new_expr = Self::join_with_left_associative_op(span, op, left, right, ctx);
+                    ctx.replace_expression(expr, new_expr);
                     return;
                 }
                 if let Some(boolean) = e.alternate.get_side_free_boolean_value(ctx) {
-                    let left = e.test.take_in(ctx.ast);
-                    let right = e.consequent.take_in(ctx.ast);
+                    let left = e.test.take_in(ctx);
+                    let right = e.consequent.take_in(ctx);
                     let span = e.span;
                     let (op, left) = if boolean {
                         // "if (anything1 ? anything2 : truthyNoSideEffects)" => "if (!anything1 || anything2)"
@@ -95,8 +94,8 @@ impl<'a> PeepholeOptimizations {
                         // "if (anything1 ? anything2 : falsyNoSideEffects)" => "if (anything1 && anything2)"
                         (LogicalOperator::And, left)
                     };
-                    *expr = Self::join_with_left_associative_op(span, op, left, right, ctx);
-                    ctx.state.changed = true;
+                    let new_expr = Self::join_with_left_associative_op(span, op, left, right, ctx);
+                    ctx.replace_expression(expr, new_expr);
                 }
             }
             Expression::SequenceExpression(seq_expr) => {
@@ -104,36 +103,26 @@ impl<'a> PeepholeOptimizations {
                     Self::minimize_expression_in_boolean_context(last, ctx);
                 }
             }
+            // A binding that is provably falsy in boolean context (a write-once
+            // falsy `var` whose constant was withheld from value-context folding,
+            // e.g. a bundled `var hydrating = false` flag) folds to `false` here,
+            // where `undefined`-before-init is indistinguishable from the falsy
+            // init. The existing `if (false)` dead-code pass removes the branch.
+            Expression::Identifier(ident) => {
+                let reference_id = ident.reference_id();
+                let span = ident.span;
+                if let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id()
+                    && ctx
+                        .state
+                        .symbol_values
+                        .get_symbol_value(symbol_id)
+                        .is_some_and(|sv| sv.boolean_falsy)
+                {
+                    let new_expr = ctx.ast.expression_boolean_literal(span, false);
+                    ctx.replace_expression(expr, new_expr);
+                }
+            }
             _ => {}
         }
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use crate::tester::test;
-
-    #[test]
-    fn test_try_fold_in_boolean_context() {
-        test("if (!!a);", "a");
-        test("while (!!a);", "for (;a;);");
-        test("do; while (!!a);", "do; while (a);");
-        test("for (;!!a;);", "for (;a;);");
-        test("!!a ? b : c", "a ? b : c");
-        test("if (!!!a);", "a");
-        test("Boolean(!!a)", "a");
-        test("if ((a | +b) !== 0);", "a | +b");
-        test("if ((a | +b) === 0);", "a | +b");
-        test("if (!!a && !!b);", "a && b");
-        test("if (!!a || !!b);", "a || b");
-        test("if (anything || (0, false));", "anything");
-        test("if (a ? !!b : !!c);", "a ? b : c");
-        test("if (anything1 ? (0, true) : anything2);", "anything1 || anything2");
-        test("if (anything1 ? (0, false) : anything2);", "!anything1 && anything2");
-        test("if (anything1 ? anything2 : (0, true));", "!anything1 || anything2");
-        test("if (anything1 ? anything2 : (0, false));", "anything1 && anything2");
-        test("if(!![]);", "");
-        test("if (+a === 0) { b } else { c }", "+a == 0 ? b : c"); // should not be folded to `a ? b : c` (`+a` might be NaN)
-        test("if (foo, !!bar) { let baz }", "if (foo, bar) { let baz }");
     }
 }

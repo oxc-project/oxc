@@ -7,10 +7,20 @@ const defaultColorDecoratorsEnablement = accessor
   .getValue<'auto' | 'always' | 'never'>('longlonglonglonglonglonglonglonglong');
 
 ==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
 const defaultColorDecoratorsEnablement = accessor
   .get(IConfigurationService)
-  .getValue<
-    "auto" | "always" | "never"
-  >("longlonglonglonglonglonglonglonglong");
+  .getValue<"auto" | "always" | "never">(
+    "longlonglonglonglonglonglonglonglong",
+  );
+
+-------------------
+{ printWidth: 100 }
+-------------------
+const defaultColorDecoratorsEnablement = accessor
+  .get(IConfigurationService)
+  .getValue<"auto" | "always" | "never">("longlonglonglonglonglonglonglonglong");
 
 ===================== End =====================

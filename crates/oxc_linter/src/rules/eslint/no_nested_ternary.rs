@@ -7,7 +7,11 @@ use oxc_span::Span;
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_nested_ternary_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Do not nest ternary expressions.").with_label(span)
+    OxcDiagnostic::warn("Do not nest ternary expressions.")
+        .with_help(
+            "Refactor nested ternary expressions into if-else statements for better readability.",
+        )
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -16,11 +20,12 @@ pub struct NoNestedTernary;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallows nested ternary expressions to improve code readability and maintainability.
+    /// Disallow nested ternary expressions.
     ///
     /// ### Why is this bad?
     ///
-    /// Nested ternary expressions make code harder to read and understand. They can lead to complex, difficult-to-debug logic.
+    /// Nested ternary expressions make code harder to read and understand. Nesting of these expressions can lead
+    /// to complex logic that is difficult to understand.
     ///
     /// ### Examples
     ///
@@ -41,6 +46,8 @@ declare_oxc_lint!(
     NoNestedTernary,
     eslint,
     style,
+    version = "0.15.4",
+    short_description = "Disallow nested ternary expressions.",
 );
 
 impl Rule for NoNestedTernary {

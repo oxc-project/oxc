@@ -1,5 +1,6 @@
 use oxc_ast::{AstKind, ast::*};
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 
 use super::Symbol;
 use crate::fixer::{Fix, RuleFix, RuleFixer};
@@ -53,6 +54,25 @@ impl<'s, 'a> Symbol<'s, 'a> {
     }
 
     pub(super) fn rename(&self, new_name: &CompactStr) -> RuleFix {
+        let Some(fixes) = self.rename_fixes(new_name) else { return Fix::empty().into() };
+        Self::finish_rename_fix(RuleFix::from(fixes), self.name(), new_name)
+    }
+
+    pub(super) fn rename_with_fixer(
+        &self,
+        fixer: RuleFixer<'_, 'a>,
+        new_name: &CompactStr,
+    ) -> RuleFix {
+        let Some(fixes) = self.rename_fixes(new_name) else { return fixer.noop() };
+        let mut fix = fixer.for_multifix().new_fix_with_capacity(fixes.len());
+        for replacement in fixes {
+            fix.push(replacement);
+        }
+
+        Self::finish_rename_fix(fix, self.name(), new_name)
+    }
+
+    fn rename_fixes(&self, new_name: &CompactStr) -> Option<Vec<Fix>> {
         let mut fixes: Vec<Fix> = vec![];
         let decl_span = self.span();
         fixes.push(Fix::new(new_name.clone(), decl_span));
@@ -67,19 +87,23 @@ impl<'s, 'a> Symbol<'s, 'a> {
                 }
                 // we found a reference to an unknown node and we don't know how
                 // to replace it, so we abort the whole process
-                _ => return Fix::empty().into(),
+                _ => return None,
             }
         }
 
-        RuleFix::from(fixes).with_message(format!("Rename '{}' to '{new_name}'", self.name()))
+        Some(fixes)
+    }
+
+    fn finish_rename_fix(fix: RuleFix, name: &str, new_name: &CompactStr) -> RuleFix {
+        fix.with_message(format!("Rename '{name}' to '{new_name}'"))
     }
 
     /// - `true` if `pattern` is a destructuring pattern and only contains one symbol
     /// - `false` if `pattern` is a destructuring pattern and contains more than one symbol
     /// - `not applicable` if `pattern` is not a destructuring pattern
-    pub(super) fn get_binding_info(&self, pattern: &BindingPatternKind<'a>) -> BindingInfo {
+    pub(super) fn get_binding_info(&self, pattern: &BindingPattern<'a>) -> BindingInfo {
         match pattern {
-            BindingPatternKind::ArrayPattern(arr) => match arr.elements.len() {
+            BindingPattern::ArrayPattern(arr) => match arr.elements.len() {
                 0 => {
                     debug_assert!(arr.rest.is_some());
 
@@ -118,7 +142,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
                     )
                 }
             },
-            BindingPatternKind::ObjectPattern(obj) => match obj.properties.len() {
+            BindingPattern::ObjectPattern(obj) => match obj.properties.len() {
                 0 => {
                     debug_assert!(obj.rest.is_some());
                     BindingInfo::multi_or_single(obj.rest.as_ref().map(|r| (r.span, true)), true)
@@ -146,11 +170,11 @@ impl<'s, 'a> Symbol<'s, 'a> {
                     BindingInfo::multi_or_missing(own_span, true)
                 }
             },
-            BindingPatternKind::AssignmentPattern(assignment) => {
-                self.get_binding_info(&assignment.left.kind)
+            BindingPattern::AssignmentPattern(assignment) => {
+                self.get_binding_info(&assignment.left)
             }
             // not in a destructure
-            BindingPatternKind::BindingIdentifier(_) => BindingInfo::NotDestructure,
+            BindingPattern::BindingIdentifier(_) => BindingInfo::NotDestructure,
         }
     }
 }

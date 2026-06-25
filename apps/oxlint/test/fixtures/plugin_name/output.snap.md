@@ -1,0 +1,118 @@
+# Exit code
+1
+
+# stdout
+```
+  x @scope(rule): id: @scope/rule
+   ,-[files/index.js:4:1]
+ 3 |  */
+ 4 | function f(foo, bar) {}
+   : ^^^^^^^^^^^^^^^^^^^^^^^
+   `----
+
+  x @scope2(rule): id: @scope2/rule
+   ,-[files/index.js:4:1]
+ 3 |  */
+ 4 | function f(foo, bar) {}
+   : ^^^^^^^^^^^^^^^^^^^^^^^
+   `----
+
+  x @scope3/subplugin(rule): id: @scope3/subplugin/rule
+   ,-[files/index.js:4:1]
+ 3 |  */
+ 4 | function f(foo, bar) {}
+   : ^^^^^^^^^^^^^^^^^^^^^^^
+   `----
+
+  x @scope4/subplugin(rule): id: @scope4/subplugin/rule
+   ,-[files/index.js:4:1]
+ 3 |  */
+ 4 | function f(foo, bar) {}
+   : ^^^^^^^^^^^^^^^^^^^^^^^
+   `----
+
+  x js-jsdoc(rule): id: js-jsdoc/rule
+   ,-[files/index.js:4:1]
+ 3 |  */
+ 4 | function f(foo, bar) {}
+   : ^^^^^^^^^^^^^^^^^^^^^^^
+   `----
+
+  x js-jsdoc2(rule): id: js-jsdoc2/rule
+   ,-[files/index.js:4:1]
+ 3 |  */
+ 4 | function f(foo, bar) {}
+   : ^^^^^^^^^^^^^^^^^^^^^^^
+   `----
+
+  x no-name-alias(rule): id: no-name-alias/rule
+   ,-[files/index.js:4:1]
+ 3 |  */
+ 4 | function f(foo, bar) {}
+   : ^^^^^^^^^^^^^^^^^^^^^^^
+   `----
+
+  x no-name-alias2(rule): id: no-name-alias2/rule
+   ,-[files/index.js:4:1]
+ 3 |  */
+ 4 | function f(foo, bar) {}
+   : ^^^^^^^^^^^^^^^^^^^^^^^
+   `----
+
+  x plugin1-name-from-rule(rule): id: plugin1-name-from-rule/rule
+   ,-[files/index.js:4:1]
+ 3 |  */
+ 4 | function f(foo, bar) {}
+   : ^^^^^^^^^^^^^^^^^^^^^^^
+   `----
+
+  x plugin2-name-from-package(rule): id: plugin2-name-from-package/rule
+   ,-[files/index.js:4:1]
+ 3 |  */
+ 4 | function f(foo, bar) {}
+   : ^^^^^^^^^^^^^^^^^^^^^^^
+   `----
+
+  x plugin3-name-from-package(rule): id: plugin3-name-from-package/rule
+   ,-[files/index.js:4:1]
+ 3 |  */
+ 4 | function f(foo, bar) {}
+   : ^^^^^^^^^^^^^^^^^^^^^^^
+   `----
+
+  x plugin4-name-from-rule(rule): id: plugin4-name-from-rule/rule
+   ,-[files/index.js:4:1]
+ 3 |  */
+ 4 | function f(foo, bar) {}
+   : ^^^^^^^^^^^^^^^^^^^^^^^
+   `----
+
+  x plugin5-name-from-package(rule): id: plugin5-name-from-package/rule
+   ,-[files/index.js:4:1]
+ 3 |  */
+ 4 | function f(foo, bar) {}
+   : ^^^^^^^^^^^^^^^^^^^^^^^
+   `----
+
+  x plugin6-name-from-rule(rule): id: plugin6-name-from-rule/rule
+   ,-[files/index.js:4:1]
+ 3 |  */
+ 4 | function f(foo, bar) {}
+   : ^^^^^^^^^^^^^^^^^^^^^^^
+   `----
+
+  x jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ,-[files/index.js:4:17]
+ 3 |  */
+ 4 | function f(foo, bar) {}
+   :                 ^^^
+   `----
+  help: Add `@param` tag with name.
+
+Found 0 warnings and 15 errors.
+Finished in Xms on 1 file with 15 rules using X threads.
+```
+
+# stderr
+```
+```

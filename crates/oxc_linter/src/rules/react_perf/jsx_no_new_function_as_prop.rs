@@ -1,3 +1,5 @@
+use serde::Deserialize;
+
 use oxc_ast::{
     AstKind,
     ast::{Expression, MemberExpression},
@@ -6,22 +8,30 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
 use oxc_span::{GetSpan, Span};
 
-use crate::utils::{ReactPerfRule, is_constructor_matching_name};
+use crate::utils::{NativeAllowList, ReactPerfConfig, ReactPerfRule, is_constructor_matching_name};
 
-#[derive(Debug, Default, Clone)]
-pub struct JsxNoNewFunctionAsProp;
+#[derive(Debug, Default, Clone, Deserialize)]
+pub struct JsxNoNewFunctionAsProp(Box<ReactPerfConfig>);
+
+impl std::ops::Deref for JsxNoNewFunctionAsProp {
+    type Target = ReactPerfConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Prevent Functions that are local to the current method from being used
+    /// Prevent functions that are local to the current method from being used
     /// as values of JSX props.
     ///
     /// ### Why is this bad?
     ///
-    /// Using locally defined Functions as values for props can lead to unintentional
+    /// Using locally defined functions as values for props can lead to unintentional
     /// re-renders and performance issues. Every time the parent component renders,
-    /// a new instance of the Function is created, causing unnecessary re-renders
+    /// a new instance of the function is created, causing unnecessary re-renders
     /// of child components. This also leads to harder-to-maintain code as the
     /// component's props are not passed consistently.
     ///
@@ -39,12 +49,19 @@ declare_oxc_lint!(
     /// ```
     JsxNoNewFunctionAsProp,
     react_perf,
-    perf
+    perf,
+    config = ReactPerfConfig,
+    version = "0.2.3",
+    short_description = "Prevent functions that are local to the current method from being used as values of JSX props.",
 );
 
 impl ReactPerfRule for JsxNoNewFunctionAsProp {
     const MESSAGE: &'static str =
         "JSX attribute values should not contain functions created in the same scope.";
+
+    fn native_allow_list(&self) -> &NativeAllowList {
+        self.0.native_allow_list()
+    }
 
     fn check_for_violation_on_expr(&self, expr: &Expression<'_>) -> Option<Span> {
         check_expression(expr)
@@ -102,32 +119,47 @@ fn check_expression(expr: &Expression) -> Option<Span> {
 
 #[test]
 fn test() {
+    use serde_json::json;
+
     use crate::tester::Tester;
 
     let pass = vec![
-        r"const Foo = () => <Item callback={this.props.callback} />",
-        r"const Foo = () => (<Item promise={new Promise()} />)",
-        r"const Foo = () => (<Item onClick={bind(foo)} />)",
-        r"const Foo = () => (<Item prop={0} />)",
-        r"const Foo = () => { var a; return <Item prop={a} /> }",
-        r"const Foo = () => { var a;a = 1; return <Item prop={a} /> }",
-        r"const Foo = () => { var a;<Item prop={a} /> }",
-        r"function foo ({prop1 = function(){}, prop2}) {
+        (r"const Foo = () => <Item callback={this.props.callback} />", None),
+        (r"const Foo = () => (<Item promise={new Promise()} />)", None),
+        (r"const Foo = () => (<Item onClick={bind(foo)} />)", None),
+        (r"const Foo = () => (<Item prop={0} />)", None),
+        (r"const Foo = () => { var a; return <Item prop={a} /> }", None),
+        (r"const Foo = () => { var a;a = 1; return <Item prop={a} /> }", None),
+        (r"const Foo = () => { var a;<Item prop={a} /> }", None),
+        (
+            r"function foo ({prop1 = function(){}, prop2}) {
             return <Comp prop={prop2} />
           }",
-        r"function foo ({prop1, prop2 = function(){}}) {
+            None,
+        ),
+        (
+            r"function foo ({prop1, prop2 = function(){}}) {
             return <Comp prop={prop1} />
           }",
-        r"<Item prop={function(){return true}} />",
-        r"<Item prop={() => true} />",
-        r"<Item prop={new Function('a', 'alert(a)')}/>",
-        r"<Item prop={Function()}/>",
-        r"<Item onClick={this.clickHandler.bind(this)} />",
-        r"<Item callback={this.props.callback || function() {}} />",
-        r"<Item callback={this.props.callback ? this.props.callback : function() {}} />",
-        r"<Item prop={this.props.callback || this.props.callback ? this.props.callback : function(){}} />",
-        r"<Item prop={this.props.callback || (this.props.cb ? this.props.cb : function(){})} />",
-        r"
+            None,
+        ),
+        (r"<Item prop={function(){return true}} />", None),
+        (r"<Item prop={() => true} />", None),
+        (r"<Item prop={new Function('a', 'alert(a)')}/>", None),
+        (r"<Item prop={Function()}/>", None),
+        (r"<Item onClick={this.clickHandler.bind(this)} />", None),
+        (r"<Item callback={this.props.callback || function() {}} />", None),
+        (r"<Item callback={this.props.callback ? this.props.callback : function() {}} />", None),
+        (
+            r"<Item prop={this.props.callback || this.props.callback ? this.props.callback : function(){}} />",
+            None,
+        ),
+        (
+            r"<Item prop={this.props.callback || (this.props.cb ? this.props.cb : function(){})} />",
+            None,
+        ),
+        (
+            r"
         import { FC, useCallback } from 'react';
         export const Foo: FC = props => {
             const onClick = useCallback(
@@ -136,7 +168,10 @@ fn test() {
             );
             return <button onClick={onClick} />
         }",
-        r"
+            None,
+        ),
+        (
+            r"
         import React from 'react'
         function onClick(e: React.MouseEvent) {
             window.location.navigate(e.target.href)
@@ -145,24 +180,47 @@ fn test() {
             return <a onClick={onClick} />
         }
         ",
+            None,
+        ),
+        (
+            r"const Foo = () => <button onClick={() => true} />",
+            Some(json!([{ "nativeAllowList": "all" }])),
+        ),
+        (
+            r"const Foo = () => <button onClick={() => true} />",
+            Some(json!([{ "nativeAllowList": ["onClick"] }])),
+        ),
     ];
 
     let fail = vec![
-        r"const Foo = () => (<Item prop={function(){return true}} />)",
-        r"const Foo = () => (<Item prop={() => true} />)",
-        r"const Foo = () => (<Item prop={new Function('a', 'alert(a)')}/>)",
-        r"const Foo = () => (<Item prop={Function()}/>)",
-        r"const Foo = () => (<Item onClick={this.clickHandler.bind(this)} />)",
-        r"const Foo = () => (<Item callback={this.props.callback || function() {}} />)",
-        r"const Foo = () => (<Item callback={this.props.callback ? this.props.callback : function() {}} />)",
-        r"const Foo = () => (<Item prop={this.props.callback || this.props.callback ? this.props.callback : function(){}} />)",
-        r"const Foo = () => (<Item prop={this.props.callback || (this.props.cb ? this.props.cb : function(){})} />)",
-        r"
+        (r"const Foo = () => (<Item prop={function(){return true}} />)", None),
+        (r"const Foo = () => (<Item prop={() => true} />)", None),
+        (r"const Foo = () => (<Item prop={new Function('a', 'alert(a)')}/>)", None),
+        (r"const Foo = () => (<Item prop={Function()}/>)", None),
+        (r"const Foo = () => (<Item onClick={this.clickHandler.bind(this)} />)", None),
+        (r"const Foo = () => (<Item callback={this.props.callback || function() {}} />)", None),
+        (
+            r"const Foo = () => (<Item callback={this.props.callback ? this.props.callback : function() {}} />)",
+            None,
+        ),
+        (
+            r"const Foo = () => (<Item prop={this.props.callback || this.props.callback ? this.props.callback : function(){}} />)",
+            None,
+        ),
+        (
+            r"const Foo = () => (<Item prop={this.props.callback || (this.props.cb ? this.props.cb : function(){})} />)",
+            None,
+        ),
+        (
+            r"
         const Foo = ({ onClick }) => {
             const _onClick = onClick.bind(this)
             return <button onClick={_onClick} />
         }",
-        r"
+            None,
+        ),
+        (
+            r"
         const Foo = () => {
             function onClick(e) {
                 window.location.navigate(e.target.href)
@@ -170,7 +228,10 @@ fn test() {
             return <a onClick={onClick} />
         }
         ",
-        r"
+            None,
+        ),
+        (
+            r"
         const Foo = () => {
             const onClick = (e) => {
                 window.location.navigate(e.target.href)
@@ -178,7 +239,10 @@ fn test() {
             return <a onClick={onClick} />
         }
         ",
-        r"
+            None,
+        ),
+        (
+            r"
         const Foo = () => {
             const onClick = function (e) {
                 window.location.navigate(e.target.href)
@@ -186,9 +250,19 @@ fn test() {
             return <a onClick={onClick} />
         }
         ",
+            None,
+        ),
+        (
+            r"const Foo = () => <button onClick={() => true} />",
+            Some(json!([{ "nativeAllowList": ["onChange"] }])),
+        ),
+        // components are never exempt, even with `"all"`
+        (
+            r"const Foo = () => <Item onClick={() => true} />",
+            Some(json!([{ "nativeAllowList": "all" }])),
+        ),
     ];
 
     Tester::new(JsxNoNewFunctionAsProp::NAME, JsxNoNewFunctionAsProp::PLUGIN, pass, fail)
-        .with_react_perf_plugin(true)
         .test_and_snapshot();
 }

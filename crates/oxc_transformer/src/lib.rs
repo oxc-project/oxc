@@ -7,12 +7,16 @@
 
 use std::path::Path;
 
-use oxc_allocator::{Allocator, TakeIn, Vec as ArenaVec};
+use oxc_allocator::{Allocator, ArenaVec, TakeIn};
 use oxc_ast::{AstBuilder, ast::*};
-use oxc_diagnostics::OxcDiagnostic;
+use oxc_diagnostics::Diagnostics;
+#[cfg(feature = "react_compiler")]
+use oxc_react_compiler::{PluginOptions, transform as react_compiler_transform};
 use oxc_semantic::Scoping;
-use oxc_span::SPAN;
-use oxc_traverse::{Traverse, traverse_mut};
+#[cfg(feature = "react_compiler")]
+use oxc_semantic::SemanticBuilder;
+use oxc_span::{GetSpan, SPAN};
+use oxc_traverse::{ReusableTraverseCtx, Traverse, traverse_mut_with_ctx};
 
 // Core
 mod common;
@@ -41,7 +45,7 @@ mod decorator;
 mod plugins;
 
 use common::Common;
-use context::{TransformCtx, TraverseCtx};
+use context::TraverseCtx;
 use decorator::Decorator;
 use es2015::ES2015;
 use es2016::ES2016;
@@ -62,6 +66,7 @@ use crate::plugins::Plugins;
 pub use crate::{
     common::helper_loader::{Helper, HelperLoaderMode, HelperLoaderOptions},
     compiler_assumptions::CompilerAssumptions,
+    context::TransformCtx,
     decorator::DecoratorOptions,
     es2015::{ArrowFunctionsOptions, ES2015Options},
     es2016::ES2016Options,
@@ -74,7 +79,7 @@ pub use crate::{
     es2026::ES2026Options,
     jsx::{JsxOptions, JsxRuntime, ReactRefreshOptions},
     options::{
-        ESTarget, Engine, EngineTargets, EnvOptions, Module, TransformOptions,
+        ESFeature, ESTarget, Engine, EngineTargets, EnvOptions, Module, TransformOptions,
         babel::{BabelEnvOptions, BabelOptions},
     },
     plugins::{PluginsOptions, StyledComponentsOptions},
@@ -82,19 +87,28 @@ pub use crate::{
     typescript::{RewriteExtensionsMode, TypeScriptOptions},
 };
 
+/// Result of running [`Transformer::build_with_scoping`].
 #[non_exhaustive]
 pub struct TransformerReturn {
-    pub errors: std::vec::Vec<OxcDiagnostic>,
+    /// Diagnostics produced during transformation.
+    pub diagnostics: Diagnostics,
+    /// Updated semantic scoping after all transforms have run.
     pub scoping: Scoping,
     /// Helpers used by this transform.
     #[deprecated = "Internal usage only"]
     pub helpers_used: FxHashMap<Helper, String>,
 }
 
+/// JavaScript/TypeScript transformer pipeline.
+///
+/// Create with [`Transformer::new`] and run with [`Transformer::build_with_scoping`].
 pub struct Transformer<'a> {
-    ctx: TransformCtx<'a>,
+    state: TransformState<'a>,
     allocator: &'a Allocator,
 
+    // Options, in evaluation order.
+    #[cfg(feature = "react_compiler")]
+    react_compiler: Option<PluginOptions>,
     typescript: TypeScriptOptions,
     decorator: DecoratorOptions,
     plugins: PluginsOptions,
@@ -105,11 +119,14 @@ pub struct Transformer<'a> {
 }
 
 impl<'a> Transformer<'a> {
+    /// Create a transformer with source path and transform options.
     pub fn new(allocator: &'a Allocator, source_path: &Path, options: &TransformOptions) -> Self {
-        let ctx = TransformCtx::new(source_path, options);
+        let state = TransformState::new(source_path, options);
         Self {
-            ctx,
+            state,
             allocator,
+            #[cfg(feature = "react_compiler")]
+            react_compiler: options.react_compiler.clone(),
             typescript: options.typescript.clone(),
             decorator: options.decorator,
             plugins: options.plugins.clone(),
@@ -119,81 +136,131 @@ impl<'a> Transformer<'a> {
         }
     }
 
+    /// Run all configured transforms on `program` and return diagnostics and updated scoping.
     pub fn build_with_scoping(
         mut self,
         scoping: Scoping,
         program: &mut Program<'a>,
     ) -> TransformerReturn {
         let allocator = self.allocator;
+
+        #[cfg(feature = "react_compiler")]
+        let (scoping, react_compiler_diagnostics) = self.run_react_compiler(scoping, program);
+        #[cfg(not(feature = "react_compiler"))]
+        let react_compiler_diagnostics = Diagnostics::new();
+
+        // A React Compiler error is fatal: stop before the rest of the transform runs.
+        if react_compiler_diagnostics.has_errors() {
+            #[expect(deprecated)]
+            return TransformerReturn {
+                diagnostics: react_compiler_diagnostics,
+                scoping,
+                helpers_used: FxHashMap::default(),
+            };
+        }
+
         let ast_builder = AstBuilder::new(allocator);
 
-        self.ctx.source_type = program.source_type;
-        self.ctx.source_text = program.source_text;
+        self.state.source_type = program.source_type;
+        self.state.source_text = program.source_text;
 
-        if program.source_type.is_jsx() {
+        if program.source_type.is_jsx()
+            && let Some(first_statement) = program.body.first()
+        {
+            // Only scan comments before the first statement for pragmas,
+            // since pragmas are file-level directives (aligned with TypeScript and SWC).
+            let leading_comments_end =
+                program.comments.partition_point(|c| c.span.start < first_statement.span().start);
             jsx::update_options_with_comments(
-                &program.comments,
+                &program.comments[..leading_comments_end],
                 &mut self.typescript,
                 &mut self.jsx,
-                &self.ctx,
+                &self.state,
             );
         }
 
         let mut transformer = TransformerImpl {
-            common: Common::new(&self.env, &self.ctx),
-            decorator: Decorator::new(self.decorator, &self.ctx),
-            plugins: Plugins::new(self.plugins, &self.ctx),
+            common: Common::new(&self.env),
+            decorator: Decorator::new(self.decorator),
+            plugins: Plugins::new(self.plugins),
             x0_typescript: program
                 .source_type
                 .is_typescript()
-                .then(|| TypeScript::new(&self.typescript, &self.ctx)),
-            x1_jsx: Jsx::new(self.jsx, self.env.es2018.object_rest_spread, ast_builder, &self.ctx),
-            x2_es2026: ES2026::new(self.env.es2026, &self.ctx),
+                .then(|| TypeScript::new(&self.typescript, &self.state)),
+            x1_jsx: Jsx::new(
+                self.jsx,
+                self.env.es2018.object_rest_spread,
+                ast_builder,
+                program.source_type,
+            ),
+            x2_es2026: ES2026::new(self.env.es2026),
             x2_es2022: ES2022::new(
                 self.env.es2022,
                 !self.typescript.allow_declare_fields
                     || self.typescript.remove_class_fields_without_initializer,
-                &self.ctx,
             ),
-            x2_es2021: ES2021::new(self.env.es2021, &self.ctx),
-            x2_es2020: ES2020::new(self.env.es2020, &self.ctx),
+            x2_es2021: ES2021::new(self.env.es2021),
+            x2_es2020: ES2020::new(self.env.es2020),
             x2_es2019: ES2019::new(self.env.es2019),
-            x2_es2018: ES2018::new(self.env.es2018, &self.ctx),
-            x2_es2016: ES2016::new(self.env.es2016, &self.ctx),
-            x2_es2017: ES2017::new(self.env.es2017, &self.ctx),
-            x3_es2015: ES2015::new(self.env.es2015, &self.ctx),
-            x4_regexp: RegExp::new(self.env.regexp, &self.ctx),
+            x2_es2018: ES2018::new(self.env.es2018, &mut self.state),
+            x2_es2016: ES2016::new(self.env.es2016),
+            x2_es2017: ES2017::new(self.env.es2017),
+            x3_es2015: ES2015::new(self.env.es2015),
+            x4_regexp: RegExp::new(self.env.regexp),
         };
 
-        let state = TransformState::default();
-        let scoping = traverse_mut(&mut transformer, allocator, program, scoping, state);
-        let helpers_used = self.ctx.helper_loader.used_helpers.borrow_mut().drain().collect();
+        let mut reusable_ctx = ReusableTraverseCtx::new(self.state, scoping, allocator);
+        traverse_mut_with_ctx(&mut transformer, program, &mut reusable_ctx);
+        let (mut state, scoping) = reusable_ctx.into_state_and_scoping();
+        let helpers_used = state.helper_loader.used_helpers.drain().collect();
+        let mut diagnostics = react_compiler_diagnostics;
+        diagnostics.extend(state.take_errors());
         #[expect(deprecated)]
-        TransformerReturn { errors: self.ctx.take_errors(), scoping, helpers_used }
+        TransformerReturn { diagnostics, scoping, helpers_used }
+    }
+
+    #[cfg(feature = "react_compiler")]
+    fn run_react_compiler(
+        &mut self,
+        scoping: Scoping,
+        program: &mut Program<'a>,
+    ) -> (Scoping, Diagnostics) {
+        let Some(options) = self.react_compiler.take() else {
+            return (scoping, Diagnostics::new());
+        };
+        let result = react_compiler_transform(program, self.allocator, options);
+        let Some(compiled) = result.program else {
+            return (scoping, result.diagnostics);
+        };
+        *program = compiled;
+        let scoping =
+            SemanticBuilder::new().with_enum_eval(true).build(program).semantic.into_scoping();
+        (scoping, result.diagnostics)
     }
 }
 
-struct TransformerImpl<'a, 'ctx> {
+struct TransformerImpl<'a> {
     // NOTE: all callbacks must run in order.
-    x0_typescript: Option<TypeScript<'a, 'ctx>>,
-    decorator: Decorator<'a, 'ctx>,
-    plugins: Plugins<'a, 'ctx>,
-    x1_jsx: Jsx<'a, 'ctx>,
-    x2_es2026: ES2026<'a, 'ctx>,
-    x2_es2022: ES2022<'a, 'ctx>,
-    x2_es2021: ES2021<'a, 'ctx>,
-    x2_es2020: ES2020<'a, 'ctx>,
+    // Keep `TransformOptions` field order and docs in sync with this order.
+    x0_typescript: Option<TypeScript<'a>>,
+    decorator: Decorator<'a>,
+    plugins: Plugins<'a>,
+    x1_jsx: Jsx<'a>,
+    x2_es2026: ES2026<'a>,
+    x2_es2022: ES2022<'a>,
+    x2_es2021: ES2021,
+    x2_es2020: ES2020<'a>,
     x2_es2019: ES2019,
-    x2_es2018: ES2018<'a, 'ctx>,
-    x2_es2017: ES2017<'a, 'ctx>,
-    x2_es2016: ES2016<'a, 'ctx>,
+    x2_es2018: ES2018<'a>,
+    x2_es2017: ES2017<'a>,
+    x2_es2016: ES2016<'a>,
     #[expect(unused)]
-    x3_es2015: ES2015<'a, 'ctx>,
-    x4_regexp: RegExp<'a, 'ctx>,
-    common: Common<'a, 'ctx>,
+    x3_es2015: ES2015<'a>,
+    x4_regexp: RegExp,
+    common: Common<'a>,
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_program(program, ctx);
@@ -578,7 +645,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a, '_> {
                 let Statement::ExpressionStatement(expr_stmt) = stmt else {
                     continue;
                 };
-                let expression = Some(expr_stmt.expression.take_in(ctx.ast));
+                let expression = Some(expr_stmt.expression.take_in(ctx));
                 *stmt = ctx.ast.statement_return(SPAN, expression);
                 return;
             }
@@ -693,6 +760,16 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a, '_> {
         }
     }
 
+    fn enter_import_expression(
+        &mut self,
+        node: &mut ImportExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if let Some(typescript) = self.x0_typescript.as_mut() {
+            typescript.enter_import_expression(node, ctx);
+        }
+    }
+
     fn enter_export_all_declaration(
         &mut self,
         node: &mut ExportAllDeclaration<'a>,
@@ -730,5 +807,21 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         self.decorator.enter_decorator(node, ctx);
+    }
+
+    fn enter_formal_parameter_rest(
+        &mut self,
+        node: &mut FormalParameterRest<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if let Some(typescript) = self.x0_typescript.as_mut() {
+            typescript.enter_formal_parameter_rest(node, ctx);
+        }
+    }
+
+    fn enter_catch_parameter(&mut self, node: &mut CatchParameter<'a>, ctx: &mut TraverseCtx<'a>) {
+        if let Some(typescript) = self.x0_typescript.as_mut() {
+            typescript.enter_catch_parameter(node, ctx);
+        }
     }
 }

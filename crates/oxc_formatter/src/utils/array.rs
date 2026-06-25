@@ -1,22 +1,14 @@
-use oxc_allocator::Vec;
-use oxc_ast::ast::*;
 use oxc_span::{GetSpan, SPAN, Span};
 
-use crate::{
-    ast_nodes::AstNode,
-    formatter::{FormatResult, Formatter, prelude::*},
-    options::FormatTrailingCommas,
-    write,
-};
+use crate::{formatter::prelude::*, options::FormatTrailingCommas, write};
 
 /// Utility function to print array-like nodes (array expressions, array bindings and assignment patterns)
 pub fn write_array_node<'a, 'b, N>(
     len: usize,
     array: impl IntoIterator<Item = Option<&'a N>> + 'b,
-    f: &mut Formatter<'_, 'a>,
-) -> FormatResult<()>
-where
-    N: Format<'a> + GetSpan + std::fmt::Debug + 'a,
+    f: &mut JsFormatter<'_, 'a>,
+) where
+    N: Format<'a, JsFormatContext<'a>> + GetSpan + std::fmt::Debug + 'a,
 {
     // Specifically do not use format_separated as arrays need separators
     // inserted after holes regardless of the formatting since this makes a
@@ -59,42 +51,36 @@ where
 
                         // comma span
                         #[expect(clippy::cast_possible_truncation)]
-                        comma_position.map_or(SPAN, |pos| {
-                            Span::new(
-                                next_span.start - pos as u32,
-                                next_span.start - pos as u32 + 1,
-                            )
-                        })
+                        comma_position
+                            .map_or(SPAN, |pos| Span::sized(next_span.start - pos as u32, 1))
                     },
                     GetSpan::span,
                 )
             },
             &format_once(|f| {
                 if let Some(element) = element {
-                    write!(f, group(&element))?;
+                    write!(f, group(&element));
 
                     if is_disallow {
-                        Ok(())
                     } else if is_force || index != last_index {
-                        ",".fmt(f)
+                        ",".fmt(f);
                     } else {
-                        write!(f, FormatTrailingCommas::ES5)
+                        write!(f, FormatTrailingCommas::ES5);
                     }
                 } else {
                     has_seen_elision = true;
-                    write!(f, ",")
+                    write!(f, ",");
                 }
             }),
         );
     }
-
-    join.finish()
 }
 
 /// Determines if a trailing separator should be inserted after an array element
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum TrailingSeparatorMode {
     /// Trailing separators are not allowed after this element (eg. rest elements)
+    #[expect(unused)]
     Disallow,
     /// Trailing separators are inserted after this element except if its the
     /// last element and the group is not breaking

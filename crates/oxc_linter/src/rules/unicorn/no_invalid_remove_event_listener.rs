@@ -44,7 +44,9 @@ declare_oxc_lint!(
     /// ```
     NoInvalidRemoveEventListener,
     unicorn,
-    correctness
+    correctness,
+    version = "0.0.16",
+    short_description = "It warns when you use a non-function value as the second argument of `removeEventListener`.",
 );
 
 impl Rule for NoInvalidRemoveEventListener {
@@ -70,10 +72,6 @@ impl Rule for NoInvalidRemoveEventListener {
             }
             _ => return,
         };
-
-        if member_expr.optional() {
-            return;
-        }
 
         if matches!(call_expr.arguments.first(), Some(Argument::SpreadElement(_))) {
             return;
@@ -132,13 +130,12 @@ fn test() {
 
     let pass = vec![
         r#"new el.removeEventListener("click", () => {})"#,
-        r#"el?.removeEventListener("click", () => {})"#,
         r#"el.removeEventListener?.("click", () => {})"#,
         r#"el.notRemoveEventListener("click", () => {})"#,
         r#"el[removeEventListener]("click", () => {})"#,
         r#"el.removeEventListener("click")"#,
-        r"el.removeEventListener()",
-        r"el.removeEventListener(() => {})",
+        "el.removeEventListener()",
+        "el.removeEventListener(() => {})",
         r#"el.removeEventListener(...["click", () => {}], () => {})"#,
         r#"el.removeEventListener(() => {}, "click")"#,
         r#"window.removeEventListener("click", bind())"#,
@@ -146,7 +143,7 @@ fn test() {
         r#"window.removeEventListener("click", handler[bind]())"#,
         r#"window.removeEventListener("click", handler.bind?.())"#,
         r#"window.removeEventListener("click", handler?.bind())"#,
-        r"window.removeEventListener(handler)",
+        "window.removeEventListener(handler)",
         r#"this.removeEventListener("click", getListener())"#,
         r#"el.removeEventListener("scroll", handler)"#,
         r#"el.removeEventListener("keydown", obj.listener)"#,
@@ -163,10 +160,12 @@ fn test() {
         r#"window.removeEventListener("keydown", function () {})"#,
         r#"el.removeEventListener("click", (e) => { e.preventDefault(); })"#,
         r#"el.removeEventListener("mouseover", fn.bind(abc))"#,
+        r#"el?.removeEventListener("mouseover", fn.bind(abc))"#,
         r#"el.removeEventListener("mouseout", function (e) {})"#,
+        r#"el?.removeEventListener("mouseout", function (e) {})"#,
         r#"el.removeEventListener("mouseout", function (e) {}, true)"#,
         r#"el.removeEventListener("click", function (e) {}, ...moreArguments)"#,
-        r"el.removeEventListener(() => {}, () => {}, () => {})",
+        "el.removeEventListener(() => {}, () => {}, () => {})",
         "document.removeEventListener('keydown', () => foo())",
         "document.removeEventListener('keydown', function () {})",
         // make sure that if the listener is a big one, we shorten the span.

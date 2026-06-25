@@ -17,7 +17,7 @@ pub struct NoTernary;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow ternary operators
+    /// Disallow ternary operators.
     ///
     /// ### Why is this bad?
     ///
@@ -60,7 +60,9 @@ declare_oxc_lint!(
     /// ```
     NoTernary,
     eslint,
-    style
+    style,
+    version = "0.2.14",
+    short_description = "Disallow ternary operators.",
 );
 
 impl Rule for NoTernary {

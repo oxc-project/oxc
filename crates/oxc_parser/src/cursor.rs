@@ -1,14 +1,14 @@
 //! Code related to navigating `Token`s from the lexer
 
-use oxc_allocator::Vec;
+use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::ast::{BindingRestElement, RegExpFlags};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    Context, ParserImpl, diagnostics,
+    Context, ParserConfig as Config, ParserImpl, diagnostics,
     error_handler::FatalError,
-    lexer::{Kind, LexerCheckpoint, LexerContext, Token},
+    lexer::{Kind, LexerCheckpoint, Token, cold_branch},
 };
 
 #[derive(Clone)]
@@ -20,7 +20,7 @@ pub struct ParserCheckpoint<'a> {
     fatal_error: Option<FatalError>,
 }
 
-impl<'a> ParserImpl<'a> {
+impl<'a, C: Config> ParserImpl<'a, C> {
     #[inline]
     pub(crate) fn start_span(&self) -> u32 {
         self.token.start()
@@ -96,7 +96,7 @@ impl<'a> ParserImpl<'a> {
     /// Move to the next token
     /// Checks if the current token is escaped if it is a keyword
     #[inline]
-    fn advance(&mut self, kind: Kind) {
+    pub(crate) fn advance(&mut self, kind: Kind) {
         // Manually inlined escaped keyword check - escaped identifiers are extremely rare
         if self.token.escaped() && kind.is_any_keyword() {
             self.report_escaped_keyword(self.token.span());
@@ -137,21 +137,20 @@ impl<'a> ParserImpl<'a> {
         self.advance(self.cur_kind());
     }
 
-    /// Advance and change token type, useful for changing keyword to ident
-    #[inline]
-    pub(crate) fn bump_remap(&mut self, kind: Kind) {
-        self.advance(kind);
-    }
-
     /// [Automatic Semicolon Insertion](https://tc39.es/ecma262/#sec-automatic-semicolon-insertion)
     /// # Errors
     pub(crate) fn asi(&mut self) {
         if self.eat(Kind::Semicolon) || self.can_insert_semicolon() {
             /* no op */
         } else {
-            let span = Span::empty(self.prev_token_end);
-            let error = diagnostics::auto_semicolon_insertion(span);
-            self.set_fatal_error(error);
+            // ASI failure is a syntax error (cold). Build the diagnostic out of line so the
+            // ~232-byte `OxcDiagnostic` buffer does not inflate `asi`'s stack frame on the
+            // common (valid) path.
+            cold_branch(|| {
+                let span = Span::empty(self.prev_token_end);
+                let error = diagnostics::auto_semicolon_insertion(span);
+                self.set_fatal_error(error);
+            });
         }
     }
 
@@ -190,6 +189,21 @@ impl<'a> ParserImpl<'a> {
     }
 
     #[inline]
+    pub(crate) fn expect_closing(&mut self, kind: Kind, opening_span: Span) {
+        if !self.at(kind) {
+            let range = self.cur_token().span();
+            let error = diagnostics::expect_closing(
+                kind.to_str(),
+                self.cur_kind().to_str(),
+                range,
+                opening_span,
+            );
+            self.set_fatal_error(error);
+        }
+        self.advance(kind);
+    }
+
+    #[inline]
     pub(crate) fn expect_conditional_alternative(&mut self, question_span: Span) {
         if !self.at(Kind::Colon) {
             let range = self.cur_token().span();
@@ -210,12 +224,10 @@ impl<'a> ParserImpl<'a> {
         self.advance_for_jsx_child();
     }
 
-    /// Expect the next next token to be a `JsxString` or any other token
-    /// # Errors
-    pub(crate) fn expect_jsx_attribute_value(&mut self, kind: Kind) {
-        self.lexer.set_context(LexerContext::JsxAttributeValue);
-        self.expect(kind);
-        self.lexer.set_context(LexerContext::Regular);
+    /// Move to the next token, lexing it as a JSX attribute value.
+    pub(crate) fn advance_for_jsx_attribute_value(&mut self) {
+        self.prev_token_end = self.token.end();
+        self.token = self.lexer.next_jsx_attribute_value();
     }
 
     /// Tell lexer to read a regex
@@ -232,10 +244,15 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    /// Tell lexer to continue reading jsx identifier if the lexer character position is at `-` for `<component-name>`
-    pub(crate) fn continue_lex_jsx_identifier(&mut self) {
-        if let Some(token) = self.lexer.continue_lex_jsx_identifier() {
+    /// Tell lexer to continue reading jsx identifier if the lexer character position is at `-` for `<component-name>`.
+    ///
+    /// Returns `true` if was continued.
+    pub(crate) fn continue_lex_jsx_identifier(&mut self) -> bool {
+        if let Some(token) = self.lexer.continue_lex_jsx_identifier(self.token.start()) {
             self.token = token;
+            true
+        } else {
+            false
         }
     }
 
@@ -316,23 +333,7 @@ impl<'a> ParserImpl<'a> {
         self.fatal_error = fatal_error;
     }
 
-    pub(crate) fn try_parse<T>(
-        &mut self,
-        func: impl FnOnce(&mut ParserImpl<'a>) -> T,
-    ) -> Option<T> {
-        let checkpoint = self.checkpoint_with_error_recovery();
-        let ctx = self.ctx;
-        let node = func(self);
-        if self.fatal_error.is_none() {
-            Some(node)
-        } else {
-            self.ctx = ctx;
-            self.rewind(checkpoint);
-            None
-        }
-    }
-
-    pub(crate) fn lookahead<U>(&mut self, predicate: impl Fn(&mut ParserImpl<'a>) -> U) -> U {
+    pub(crate) fn lookahead<U>(&mut self, predicate: impl Fn(&mut ParserImpl<'a, C>) -> U) -> U {
         let checkpoint = self.checkpoint();
         let answer = predicate(self);
         self.rewind(checkpoint);
@@ -378,12 +379,18 @@ impl<'a> ParserImpl<'a> {
         result
     }
 
-    pub(crate) fn parse_normal_list<F, T>(&mut self, open: Kind, close: Kind, f: F) -> Vec<'a, T>
+    pub(crate) fn parse_normal_list<F, T>(
+        &mut self,
+        open: Kind,
+        close: Kind,
+        mut f: F,
+    ) -> ArenaVec<'a, T>
     where
-        F: Fn(&mut Self) -> T,
+        F: FnMut(&mut Self) -> T,
     {
+        let opening_span = self.cur_token().span();
         self.expect(open);
-        let mut list = self.ast.vec();
+        let mut list = ArenaVec::new_in(self);
         loop {
             let kind = self.cur_kind();
             if kind == close
@@ -394,7 +401,7 @@ impl<'a> ParserImpl<'a> {
             }
             list.push(f(self));
         }
-        self.expect(close);
+        self.expect_closing(close, opening_span);
         list
     }
 
@@ -403,12 +410,13 @@ impl<'a> ParserImpl<'a> {
         open: Kind,
         close: Kind,
         f: F,
-    ) -> Vec<'a, T>
+    ) -> ArenaVec<'a, T>
     where
         F: Fn(&mut Self) -> Option<T>,
     {
+        let opening_span = self.cur_token().span();
         self.expect(open);
-        let mut list = self.ast.vec();
+        let mut list = ArenaVec::new_in(self);
         loop {
             if self.at(close) || self.has_fatal_error() {
                 break;
@@ -419,7 +427,7 @@ impl<'a> ParserImpl<'a> {
                 break;
             }
         }
-        self.expect(close);
+        self.expect_closing(close, opening_span);
         list
     }
 
@@ -428,12 +436,12 @@ impl<'a> ParserImpl<'a> {
         close: Kind,
         separator: Kind,
         opening_span: Span,
-        f: F,
-    ) -> (Vec<'a, T>, Option<u32>)
+        mut f: F,
+    ) -> (ArenaVec<'a, T>, Option<u32>)
     where
-        F: Fn(&mut Self) -> T,
+        F: FnMut(&mut Self) -> T,
     {
-        let mut list = self.ast.vec();
+        let mut list = ArenaVec::new_in(self);
         // Cache cur_kind() to avoid redundant calls in compound checks
         let kind = self.cur_kind();
         if kind == close
@@ -451,7 +459,7 @@ impl<'a> ParserImpl<'a> {
             {
                 return (list, None);
             }
-            if !self.at(separator) {
+            if kind != separator {
                 self.set_fatal_error(diagnostics::expect_closing_or_separator(
                     close.to_str(),
                     separator.to_str(),
@@ -470,18 +478,68 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    pub(crate) fn parse_delimited_list_with_rest<E, A, D>(
+    pub(crate) fn parse_delimited_list_into<F, T>(
+        &mut self,
+        list: &mut ArenaVec<'a, T>,
+        close: Kind,
+        separator: Kind,
+        opening_span: Span,
+        mut f: F,
+    ) -> Option<u32>
+    where
+        F: FnMut(&mut Self) -> T,
+    {
+        // Cache cur_kind() to avoid redundant calls in compound checks
+        let kind = self.cur_kind();
+        if kind == close
+            || matches!(kind, Kind::Eof | Kind::Undetermined)
+            || self.fatal_error.is_some()
+        {
+            return None;
+        }
+        list.push(f(self));
+        loop {
+            let kind = self.cur_kind();
+            if kind == close
+                || matches!(kind, Kind::Eof | Kind::Undetermined)
+                || self.fatal_error.is_some()
+            {
+                return None;
+            }
+            if kind != separator {
+                self.set_fatal_error(diagnostics::expect_closing_or_separator(
+                    close.to_str(),
+                    separator.to_str(),
+                    kind.to_str(),
+                    self.cur_token().span(),
+                    opening_span,
+                ));
+                return None;
+            }
+            self.advance(separator);
+            if self.cur_kind() == close {
+                let trailing_separator = self.prev_token_end - 1;
+                return Some(trailing_separator);
+            }
+            list.push(f(self));
+        }
+    }
+
+    pub(crate) fn parse_delimited_list_with_rest<E, A, R, D>(
         &mut self,
         close: Kind,
+        opening_span: Span,
         parse_element: E,
+        parse_rest: R,
         rest_last_diagnostic: D,
-    ) -> (Vec<'a, A>, Option<BindingRestElement<'a>>)
+    ) -> (ArenaVec<'a, A>, Option<ArenaBox<'a, BindingRestElement<'a>>>)
     where
         E: Fn(&mut Self) -> A,
+        R: Fn(&mut Self) -> ArenaBox<'a, BindingRestElement<'a>>,
         D: Fn(Span) -> OxcDiagnostic,
     {
-        let mut list = self.ast.vec();
-        let mut rest: Option<BindingRestElement<'a>> = None;
+        let mut list = ArenaVec::new_in(self);
+        let mut rest: Option<ArenaBox<'a, BindingRestElement<'a>>> = None;
         let mut first = true;
         loop {
             let kind = self.cur_kind();
@@ -497,8 +555,13 @@ impl<'a> ParserImpl<'a> {
             } else {
                 let comma_span = self.cur_token().span();
                 if kind != Kind::Comma {
-                    let error =
-                        diagnostics::expect_token(Kind::Comma.to_str(), kind.to_str(), comma_span);
+                    let error = diagnostics::expect_closing_or_separator(
+                        close.to_str(),
+                        Kind::Comma.to_str(),
+                        kind.to_str(),
+                        comma_span,
+                        opening_span,
+                    );
                     self.set_fatal_error(error);
                     break;
                 }
@@ -520,7 +583,7 @@ impl<'a> ParserImpl<'a> {
             // Re-capture kind to get the current token (may have changed after else branch)
             let kind = self.cur_kind();
             if kind == Kind::Dot3 {
-                rest.replace(self.parse_rest_element());
+                rest.replace(parse_rest(self));
             } else {
                 list.push(parse_element(self));
             }

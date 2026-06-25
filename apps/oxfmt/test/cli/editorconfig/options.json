@@ -1,0 +1,14 @@
+[
+  { "cwd": "basic", "args": ["test.js"] },
+  { "cwd": "with_oxfmtrc", "args": ["test.js"] },
+  {
+    "cwd": "per_file_override",
+    "args": ["test.js", "test.ts", "nested/deep/test.js", "nested/deep/test.json"]
+  },
+  { "cwd": "no_root_section", "args": ["test.js", "test.ts"] },
+  { "cwd": "partial_override", "args": ["test.js"] },
+  { "cwd": "tab_width_fallback", "args": ["test.js"] },
+  { "cwd": "quote_type", "args": ["test.js"] },
+  { "cwd": "empty", "args": ["test.js"] },
+  { "cwd": "nested_cwd/sub", "args": ["--check", "."] }
+]

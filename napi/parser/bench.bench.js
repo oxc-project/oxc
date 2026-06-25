@@ -1,25 +1,25 @@
-import { writeFile } from 'node:fs/promises';
-import { join as pathJoin } from 'node:path';
-import { bench, describe } from 'vitest';
-import { parseSyncRaw } from './src-js/bindings.js';
-import { parseAsync, parseSync } from './src-js/index.js';
+import { writeFile } from "node:fs/promises";
+import { join as pathJoin } from "node:path";
+import { bench, describe } from "vitest";
+import { parseRawSync } from "./src-js/bindings.js";
+import { parse as parseAsync, parseSync } from "./src-js/index.js";
 
 // Internals
-import { DATA_POINTER_POS_32, PROGRAM_OFFSET } from './generated/constants.js';
-import { deserialize as deserializeJS } from './generated/deserialize/js.js';
-import { deserialize as deserializeTS } from './generated/deserialize/ts.js';
-import { walkProgram } from './generated/lazy/walk.js';
-import { isJsAst, prepareRaw, returnBufferToCache } from './src-js/raw-transfer/common.js';
-import { TOKEN } from './src-js/raw-transfer/lazy-common.js';
-import { getVisitorsArr, Visitor } from './src-js/raw-transfer/visitor.js';
+import { DATA_POINTER_POS_32, PROGRAM_OFFSET } from "./src-js/generated/constants.js";
+import { deserialize as deserializeJS } from "./src-js/generated/deserialize/js.js";
+import { deserialize as deserializeTS } from "./src-js/generated/deserialize/ts.js";
+import { walkProgram } from "./src-js/generated/lazy/walk.js";
+import { isJsAst, prepareRaw, returnBufferToCache } from "./src-js/raw-transfer/common.js";
+import { TOKEN } from "./src-js/raw-transfer/lazy-common.js";
+import { getVisitorsArr, Visitor } from "./src-js/raw-transfer/visitor.js";
 
 // Same fixtures as used in Rust parser benchmarks
 let fixtureUrls = [
-  'https://cdn.jsdelivr.net/gh/microsoft/TypeScript@v5.3.3/src/compiler/checker.ts',
-  'https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@main/cal.com.tsx',
-  'https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@main/RadixUIAdoptionSection.jsx',
-  'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.269/build/pdf.mjs',
-  'https://cdn.jsdelivr.net/npm/antd@4.16.1/dist/antd.js',
+  "https://cdn.jsdelivr.net/gh/microsoft/TypeScript@v5.3.3/src/compiler/checker.ts",
+  "https://cdn.jsdelivr.net/gh/excalidraw/excalidraw@f6d85bc80fe328e8f472636eb0d541f7bb891aa0/packages/excalidraw/components/App.tsx",
+  "https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@main/RadixUIAdoptionSection.jsx",
+  "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.269/build/pdf.mjs",
+  "https://cdn.jsdelivr.net/npm/antd@4.16.1/dist/antd.js",
 ];
 
 // For sharding in CI - specify single fixture to run benchmarks on
@@ -39,17 +39,17 @@ if (shard) {
 
 // Same directory as Rust benchmarks use for downloaded files
 // to avoid re-downloading if Rust benchmarks already downloaded
-const cacheDirPath = pathJoin(import.meta.dirname, '../../target');
+const cacheDirPath = pathJoin(import.meta.dirname, "../../target");
 
 // Load fixtures
 const fixtures = await Promise.all(
   fixtureUrls.map(async (url) => {
-    const filename = url.split('/').at(-1),
+    const filename = url.split("/").at(-1),
       path = pathJoin(cacheDirPath, filename);
 
     let code;
     try {
-      code = await readFile(path, 'utf8');
+      code = await readFile(path, "utf8");
     } catch {
       const res = await fetch(url);
       code = await res.text();
@@ -64,46 +64,46 @@ const fixtures = await Promise.all(
 for (const { filename, code } of fixtures) {
   // oxlint-disable-next-line jest/valid-title
   describe(filename, () => {
-    benchStandard('parser_napi', () => {
+    benchStandard("parser_napi", () => {
       const ret = parseSync(filename, code);
       // Read returned object's properties to execute getters which deserialize
       // oxlint-disable-next-line no-unused-vars
       const { program, comments, module, errors } = ret;
     });
 
-    benchRaw('parser_napi_raw', () => {
+    benchRaw("parser_napi_raw", () => {
       const ret = parseSync(filename, code, { experimentalRawTransfer: true });
       // Read returned object's properties to execute getters
       // oxlint-disable-next-line no-unused-vars
       const { program, comments, module, errors } = ret;
     });
 
-    benchStandard('parser_napi_async', async () => {
+    benchStandard("parser_napi_async", async () => {
       const ret = await parseAsync(filename, code);
       // Read returned object's properties to execute getters which deserialize
       // oxlint-disable-next-line no-unused-vars
       const { program, comments, module, errors } = ret;
     });
 
-    benchRaw('parser_napi_async_raw', async () => {
+    benchRaw("parser_napi_async_raw", async () => {
       const ret = await parseAsync(filename, code, { experimentalRawTransfer: true });
       // Read returned object's properties to execute getters
       // oxlint-disable-next-line no-unused-vars
       const { program, comments, module, errors } = ret;
     });
 
-    benchRaw('parser_napi_raw_no_deser', () => {
+    benchRaw("parser_napi_raw_no_deser", () => {
       const { buffer, sourceByteLen } = prepareRaw(code);
-      parseSyncRaw(filename, buffer, sourceByteLen, {});
+      parseRawSync(filename, buffer, sourceByteLen, {});
       returnBufferToCache(buffer);
     });
 
     // Prepare buffer but don't deserialize
     const { buffer, sourceByteLen } = prepareRaw(code);
-    parseSyncRaw(filename, buffer, sourceByteLen, {});
+    parseRawSync(filename, buffer, sourceByteLen, {});
     const deserialize = isJsAst(buffer) ? deserializeJS : deserializeTS;
 
-    benchRaw('parser_napi_raw_deser_only', () => {
+    benchRaw("parser_napi_raw_deser_only", () => {
       deserialize(buffer, code, sourceByteLen, true);
     });
 
@@ -189,15 +189,15 @@ for (const { filename, code } of fixtures) {
       token: TOKEN,
     };
 
-    const programPos = buffer.uint32[DATA_POINTER_POS_32] + PROGRAM_OFFSET;
+    const programPos = buffer.int32[DATA_POINTER_POS_32] + PROGRAM_OFFSET;
 
-    benchRaw('parser_napi_raw_lazy_visit_only(debugger)', () => {
+    benchRaw("parser_napi_raw_lazy_visit_only(debugger)", () => {
       ast.nodes = new Map();
       debuggerCount = 0;
       walkProgram(programPos, ast, debuggerVisitorsArr);
     });
 
-    benchRaw('parser_napi_raw_lazy_visit_only(ident)', () => {
+    benchRaw("parser_napi_raw_lazy_visit_only(ident)", () => {
       ast.nodes = new Map();
       identCount = 0;
       walkProgram(programPos, ast, identVisitorsArr);

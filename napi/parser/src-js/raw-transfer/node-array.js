@@ -1,4 +1,4 @@
-import { constructorError, TOKEN } from './lazy-common.js';
+import { constructorError, TOKEN } from "./lazy-common.js";
 
 // Internal symbol to get `NodeArray` from a proxy wrapping a `NodeArray`.
 //
@@ -109,11 +109,17 @@ export class NodeArray extends Array {
     }
 
     const { stride } = internal;
-    return new NodeArray(internal.pos + start * stride, sliceLength, stride, internal.construct, internal.ast);
+    return new NodeArray(
+      internal.pos + start * stride,
+      sliceLength,
+      stride,
+      internal.construct,
+      internal.ast,
+    );
   }
 
   // Make `console.log` deserialize all elements.
-  [Symbol.for('nodejs.util.inspect.custom')]() {
+  [Symbol.for("nodejs.util.inspect.custom")]() {
     const values = [...this.values()];
     Object.setPrototypeOf(values, DebugNodeArray.prototype);
     return values;
@@ -139,7 +145,7 @@ export class NodeArray extends Array {
      *
      * @param {NodeArray} arr - `NodeArray` object
      * @param {number} index - Index of element to get
-     * @returns {*|undefined} - Element at index `index`, or `undefined` if out of bounds
+     * @returns {*} - Element at index `index`, or `undefined` if out of bounds
      */
     getElement = (arr, index) => {
       const internal = arr.#internal;
@@ -265,7 +271,7 @@ const PROXY_HANDLERS = {
     // Methods of `NodeArray` are called with `this` being the proxy, rather than the `NodeArray` itself.
     // They can "unwrap" the proxy by getting `this[ARRAY]`.
     if (key === ARRAY) return arr;
-    if (key === 'length') return getLength(arr);
+    if (key === "length") return getLength(arr);
     const index = toIndex(key);
     if (index !== null) return getElement(arr, index);
 
@@ -274,7 +280,7 @@ const PROXY_HANDLERS = {
 
   // Get descriptors for elements and length.
   getOwnPropertyDescriptor(arr, key) {
-    if (key === 'length') {
+    if (key === "length") {
       // Cannot return `writable: false` unfortunately
       return { value: getLength(arr), writable: true, enumerable: false, configurable: false };
     }
@@ -298,7 +304,7 @@ const PROXY_HANDLERS = {
   // * `Object.defineProperty(arr, 'length', {value: 0})`.
   // * Other operations which mutate entries e.g. `arr.push(123)`.
   defineProperty(arr, key, descriptor) {
-    if (key === 'length' || toIndex(key) !== null) return false;
+    if (key === "length" || toIndex(key) !== null) return false;
     return Reflect.defineProperty(arr, key, descriptor);
   },
 
@@ -314,7 +320,7 @@ const PROXY_HANDLERS = {
     const keys = [],
       length = getLength(arr);
     for (let i = 0; i < length; i++) {
-      keys.push(i + '');
+      keys.push(i + "");
     }
     keys.push(...Reflect.ownKeys(arr));
     return keys;
@@ -332,8 +338,8 @@ const PROXY_HANDLERS = {
  * @returns {number|null} - `key` converted to integer, if it's a valid array index, otherwise `null`.
  */
 function toIndex(key) {
-  if (typeof key === 'string') {
-    if (key === '0') return 0;
+  if (typeof key === "string") {
+    if (key === "0") return 0;
     if (INDEX_REGEX.test(key)) {
       const index = +key;
       if (index < 4294967295) return index;

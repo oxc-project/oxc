@@ -2,27 +2,34 @@ use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
+use oxc_str::static_ident;
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_process_env_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unexpected use of `process.env`")
-        .with_help("Remove usage of `process.env`")
+    OxcDiagnostic::warn("Disallowed usage of `process.env`.")
+        .with_help("Remove usage of `process.env`.")
         .with_label(span)
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
-#[schemars(rename_all = "camelCase")]
-struct ConfigElement0 {
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+struct NoProcessEnvConfig {
+    /// Variable names which are allowed to be accessed on `process.env`.
     allowed_variables: FxHashSet<CompactStr>,
 }
 
-#[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
-pub struct NoProcessEnv(Box<ConfigElement0>);
+#[derive(Debug, Default, Clone, Deserialize, Serialize)]
+pub struct NoProcessEnv(Box<NoProcessEnvConfig>);
 
 declare_oxc_lint!(
     /// ### What it does
@@ -54,32 +61,21 @@ declare_oxc_lint!(
     NoProcessEnv,
     node,
     restriction,
-    config = NoProcessEnv,
+    config = NoProcessEnvConfig,
+    version = "1.23.0",
+    short_description = "Disallows use of `process.env`.",
 );
 
 fn is_process_global_object(object_expr: &oxc_ast::ast::Expression, ctx: &LintContext) -> bool {
     let Some(obj_id) = object_expr.get_identifier_reference() else {
         return false;
     };
-    obj_id.is_global_reference_name("process", ctx.scoping())
+    obj_id.is_global_reference_name(static_ident!("process"), ctx.scoping())
 }
 
 impl Rule for NoProcessEnv {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let allowed_variables: FxHashSet<CompactStr> = value
-            .as_array()
-            .and_then(|arr| arr.first())
-            .and_then(|v| v.get("allowedVariables"))
-            .and_then(|v| v.as_array())
-            .map(|arr| {
-                arr.iter()
-                    .filter_map(|v| v.as_str())
-                    .map(CompactStr::from)
-                    .collect::<FxHashSet<CompactStr>>()
-            })
-            .unwrap_or_default();
-
-        Self(Box::new(ConfigElement0 { allowed_variables }))
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -162,6 +158,8 @@ fn test() {
         ("process['env']", None),
         ("process.env.ENV", None),
         ("f(process.env)", None),
+        ("process.env.ENV", Some(serde_json::json!([{ "allowedVariables": [] }]))),
+        ("f(process.env.NODE_ENV)", None),
         (
             "process.env['OTHER_VARIABLE']",
             Some(serde_json::json!([{ "allowedVariables": ["NODE_ENV"] }])),

@@ -14,10 +14,11 @@ use crate::{context::LintContext, rule::Rule};
 fn no_mutable_exports_diagnostic(span: Span, kind: VariableDeclarationKind) -> OxcDiagnostic {
     let kind_str = if kind == VariableDeclarationKind::Var { "var" } else { "let" };
     OxcDiagnostic::warn(format!("Exporting mutable '{kind_str}' binding, use 'const' instead."))
+        .with_help(format!("Replace '{kind_str}' with 'const' to export an immutable binding."))
         .with_label(span)
 }
 
-/// <https://github.com/import-js/eslint-plugin-import/blob/v2.31.0/docs/rules/no-mutable-exports.md>
+// <https://github.com/import-js/eslint-plugin-import/blob/v2.31.0/docs/rules/no-mutable-exports.md>
 #[derive(Debug, Default, Clone)]
 pub struct NoMutableExports;
 
@@ -54,6 +55,8 @@ declare_oxc_lint!(
     NoMutableExports,
     import,
     style,
+    version = "0.15.13",
+    short_description = "Forbids the use of mutable exports with var or let.",
 );
 
 impl Rule for NoMutableExports {

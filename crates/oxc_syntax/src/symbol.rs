@@ -1,4 +1,3 @@
-#![expect(missing_docs)] // fixme
 use bitflags::bitflags;
 use oxc_allocator::{Allocator, CloneIn};
 use oxc_index::define_nonmax_u32_index_type;
@@ -73,6 +72,16 @@ bitflags! {
         // access it in the Transformer.
         // https://github.com/microsoft/TypeScript/blob/15392346d05045742e653eab5c87538ff2a3c863/src/compiler/types.ts#L819-L820
         const Ambient                 = 1 << 16;
+
+        // The following are not part of TypeScript's `SymbolFlags`. They record the syntactic kind
+        // of a function binding so the semantic builder's redeclaration checks can consult them
+        // (on `symbol_flags`, and per-declaration via `Redeclaration::flags`) instead of reading the
+        // declaration's AST node. The transformer keeps them in sync when it rewrites functions.
+
+        /// A named function expression, e.g. `n` in `(function n() {})`.
+        const FunctionExpression       = 1 << 17;
+        /// An `async` and/or generator function.
+        const AsyncOrGeneratorFunction = 1 << 18;
 
         const Enum = Self::ConstEnum.bits() | Self::RegularEnum.bits();
         const Variable = Self::FunctionScopedVariable.bits() | Self::BlockScopedVariable.bits();
@@ -224,5 +233,14 @@ impl SymbolFlags {
     #[inline]
     pub fn can_be_referenced_by_value_as_type(self) -> bool {
         self.intersects(Self::Value | Self::Import | Self::Function | Self::TypeImport)
+    }
+
+    /// If true, then the symbol can be referenced as a namespace.
+    ///
+    /// Used for the left side of qualified names (e.g., `NS` in `NS.Type`).
+    /// Modules, namespaces, enums, and namespace imports can have member access.
+    #[inline]
+    pub fn can_be_referenced_as_namespace(self) -> bool {
+        self.intersects(Self::Namespace | Self::Import | Self::TypeImport)
     }
 }

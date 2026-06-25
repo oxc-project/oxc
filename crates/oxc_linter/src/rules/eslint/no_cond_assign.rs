@@ -5,8 +5,14 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_cond_assign_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Expected a conditional expression and instead saw an assignment")
@@ -14,22 +20,24 @@ fn no_cond_assign_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
-pub struct NoCondAssign {
-    config: NoCondAssignConfig,
-}
+#[derive(Debug, Default, Clone, Deserialize)]
+pub struct NoCondAssign(NoCondAssignConfig);
 
-#[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Deserialize, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
 enum NoCondAssignConfig {
+    /// Allow assignments in conditional expressions only if they are
+    /// enclosed in parentheses.
     #[default]
     ExceptParens,
+    /// Disallow all assignments in conditional expressions.
     Always,
 }
 
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow assignment operators in conditional expressions
+    /// Disallow assignment operators in conditional expressions.
     ///
     /// ### Why is this bad?
     ///
@@ -59,19 +67,15 @@ declare_oxc_lint!(
     /// ```
     NoCondAssign,
     eslint,
-    correctness
+    correctness,
+    config = NoCondAssignConfig,
+    version = "0.0.5",
+    short_description = "Disallow assignment operators in conditional expressions.",
 );
 
 impl Rule for NoCondAssign {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let config = value.get(0).and_then(serde_json::Value::as_str).map_or_else(
-            NoCondAssignConfig::default,
-            |value| match value {
-                "always" => NoCondAssignConfig::Always,
-                _ => NoCondAssignConfig::ExceptParens,
-            },
-        );
-        Self { config }
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -87,39 +91,32 @@ impl Rule for NoCondAssign {
             AstKind::ConditionalExpression(expr) => {
                 self.check_expression(ctx, expr.test.get_inner_expression());
             }
-            AstKind::AssignmentExpression(expr) if self.config == NoCondAssignConfig::Always => {
-                let mut spans = vec![];
+            AstKind::AssignmentExpression(expr) if self.0 == NoCondAssignConfig::Always => {
+                let assignment_span = node.span();
                 for ancestor in ctx.nodes().ancestors(node.id()) {
-                    match ancestor.kind() {
-                        AstKind::IfStatement(if_stmt) => {
-                            spans.push(if_stmt.test.span());
-                        }
-                        AstKind::WhileStatement(while_stmt) => {
-                            spans.push(while_stmt.test.span());
-                        }
-                        AstKind::DoWhileStatement(do_while_stmt) => {
-                            spans.push(do_while_stmt.test.span());
-                        }
+                    let Some(conditional_span) = (match ancestor.kind() {
+                        AstKind::IfStatement(if_stmt) => Some(if_stmt.test.span()),
+                        AstKind::WhileStatement(while_stmt) => Some(while_stmt.test.span()),
+                        AstKind::DoWhileStatement(do_while_stmt) => Some(do_while_stmt.test.span()),
                         AstKind::ForStatement(for_stmt) => {
-                            if let Some(test) = &for_stmt.test {
-                                spans.push(test.span());
-                            }
+                            for_stmt.test.as_ref().map(GetSpan::span)
                         }
-                        AstKind::ConditionalExpression(cond_expr) => {
-                            spans.push(cond_expr.span());
-                        }
+                        AstKind::ConditionalExpression(cond_expr) => Some(cond_expr.test.span()),
                         AstKind::Function(_)
                         | AstKind::ArrowFunctionExpression(_)
                         | AstKind::Program(_)
                         | AstKind::BlockStatement(_) => break,
-                        _ => {}
-                    }
-                }
+                        _ => None,
+                    }) else {
+                        continue;
+                    };
 
-                // Only report the diagnostic if the assignment is in a span where it should not be.
-                // For example, report `if (a = b) { ... }`, not `if (...) { a = b }`
-                if spans.iter().any(|span| span.contains_inclusive(node.span())) {
-                    Self::emit_diagnostic(ctx, expr);
+                    // Only report the diagnostic if the assignment is in a span where it should
+                    // not be. For example, report `if (a = b) { ... }`, not `if (...) { a = b }`.
+                    if conditional_span.contains_inclusive(assignment_span) {
+                        Self::emit_diagnostic(ctx, expr);
+                        return;
+                    }
                 }
             }
             _ => {}
@@ -142,7 +139,7 @@ impl NoCondAssign {
 
     fn check_expression(&self, ctx: &LintContext<'_>, expr: &Expression<'_>) {
         let mut expr = expr;
-        if self.config == NoCondAssignConfig::Always {
+        if self.0 == NoCondAssignConfig::Always {
             expr = expr.get_inner_expression();
         }
         if let Expression::AssignmentExpression(expr) = expr {
@@ -227,6 +224,7 @@ fn test() {
             "for (let i = 0; i < nums.length; i += 1) { dosomething();}",
             Some(serde_json::json!(["always"])),
         ),
+        ("let a = 1; a = a ? (a += 5) : 1;", Some(serde_json::json!(["always"]))),
     ];
 
     let fail = vec![

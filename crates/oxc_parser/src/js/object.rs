@@ -1,22 +1,22 @@
-use oxc_allocator::Box;
+use oxc_allocator::ArenaBox;
 use oxc_ast::ast::*;
 use oxc_syntax::operator::AssignmentOperator;
 
 use crate::{
-    Context, ParserImpl, diagnostics,
+    Context, ParserConfig as Config, ParserImpl, diagnostics,
     lexer::Kind,
-    modifiers::{ModifierFlags, Modifiers},
+    modifiers::{ModifierKind, ModifierKinds, Modifiers},
 };
 
 use super::FunctionKind;
 
-impl<'a> ParserImpl<'a> {
+impl<'a, C: Config> ParserImpl<'a, C> {
     /// [Object Expression](https://tc39.es/ecma262/#sec-object-initializer)
     /// `ObjectLiteral`[Yield, Await] :
     ///     { }
     ///     { `PropertyDefinitionList`[?Yield, ?Await] }
     ///     { `PropertyDefinitionList`[?Yield, ?Await] , }
-    pub(crate) fn parse_object_expression(&mut self) -> Box<'a, ObjectExpression<'a>> {
+    pub(crate) fn parse_object_expression(&mut self) -> ArenaBox<'a, ObjectExpression<'a>> {
         let span = self.start_span();
         let opening_span = self.cur_token().span();
         self.expect(Kind::LCurly);
@@ -32,7 +32,7 @@ impl<'a> ParserImpl<'a> {
             self.state.trailing_commas.insert(span, self.end_span(comma_span));
         }
         self.expect(Kind::RCurly);
-        self.ast.alloc_object_expression(self.end_span(span), object_expression_properties)
+        ObjectExpression::boxed(self.end_span(span), object_expression_properties, self)
     }
 
     fn parse_object_expression_property(&mut self) -> ObjectPropertyKind<'a> {
@@ -43,7 +43,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// `PropertyDefinition`[Yield, Await]
-    fn parse_object_literal_element(&mut self) -> Box<'a, ObjectProperty<'a>> {
+    fn parse_object_literal_element(&mut self) -> ArenaBox<'a, ObjectProperty<'a>> {
         let span = self.start_span();
 
         let modifiers = self.parse_modifiers(
@@ -67,7 +67,8 @@ impl<'a> ParserImpl<'a> {
         if asterisk_token || matches!(self.cur_kind(), Kind::LParen | Kind::LAngle) {
             self.verify_modifiers(
                 &modifiers,
-                ModifierFlags::ASYNC,
+                ModifierKinds::new([ModifierKind::Async]),
+                true,
                 diagnostics::modifier_cannot_be_used_here,
             );
             let method = self.parse_method(
@@ -75,7 +76,7 @@ impl<'a> ParserImpl<'a> {
                 asterisk_token,
                 FunctionKind::ObjectMethod,
             );
-            return self.ast.alloc_object_property(
+            return ObjectProperty::boxed(
                 self.end_span(span),
                 PropertyKind::Init,
                 key,
@@ -83,12 +84,14 @@ impl<'a> ParserImpl<'a> {
                 /* method */ true,
                 /* shorthand */ false,
                 computed,
+                self,
             );
         }
 
         self.verify_modifiers(
             &modifiers,
-            ModifierFlags::empty(),
+            ModifierKinds::none(),
+            true,
             diagnostics::modifier_cannot_be_used_here,
         );
 
@@ -96,24 +99,26 @@ impl<'a> ParserImpl<'a> {
 
         if is_shorthand_property_assignment {
             if let PropertyKey::StaticIdentifier(identifier_name) = key {
-                let identifier_reference =
-                    self.ast.identifier_reference(identifier_name.span, identifier_name.name);
-                let value = Expression::Identifier(self.alloc(identifier_reference.clone()));
                 // CoverInitializedName ({ foo = bar })
                 if self.eat(Kind::Eq) {
                     let right = self.parse_assignment_expression_or_higher();
-                    let left = AssignmentTarget::AssignmentTargetIdentifier(
-                        self.alloc(identifier_reference),
+                    let left = AssignmentTarget::new_assignment_target_identifier(
+                        identifier_name.span,
+                        identifier_name.name,
+                        self,
                     );
-                    let expr = self.ast.assignment_expression(
+                    let expr = AssignmentExpression::new(
                         self.end_span(span),
                         AssignmentOperator::Assign,
                         left,
                         right,
+                        self,
                     );
                     self.state.cover_initialized_name.insert(span, expr);
                 }
-                self.ast.alloc_object_property(
+                let value =
+                    Expression::new_identifier(identifier_name.span, identifier_name.name, self);
+                ObjectProperty::boxed(
                     self.end_span(span),
                     PropertyKind::Init,
                     PropertyKey::StaticIdentifier(identifier_name),
@@ -121,6 +126,7 @@ impl<'a> ParserImpl<'a> {
                     /* method */ false,
                     /* shorthand */ true,
                     computed,
+                    self,
                 )
             } else {
                 self.unexpected()
@@ -132,11 +138,11 @@ impl<'a> ParserImpl<'a> {
 
     /// `PropertyDefinition`[Yield, Await] :
     ///   ... `AssignmentExpression`[+In, ?Yield, ?Await]
-    pub(crate) fn parse_spread_element(&mut self) -> Box<'a, SpreadElement<'a>> {
+    pub(crate) fn parse_spread_element(&mut self) -> ArenaBox<'a, SpreadElement<'a>> {
         let span = self.start_span();
         self.bump_any(); // advance `...`
         let argument = self.parse_assignment_expression_or_higher();
-        self.ast.alloc_spread_element(self.end_span(span), argument)
+        SpreadElement::boxed(self.end_span(span), argument, self)
     }
 
     /// `PropertyDefinition`[Yield, Await] :
@@ -146,10 +152,10 @@ impl<'a> ParserImpl<'a> {
         span: u32,
         key: PropertyKey<'a>,
         computed: bool,
-    ) -> Box<'a, ObjectProperty<'a>> {
+    ) -> ArenaBox<'a, ObjectProperty<'a>> {
         self.expect(Kind::Colon);
         let value = self.parse_assignment_expression_or_higher();
-        self.ast.alloc_object_property(
+        ObjectProperty::boxed(
             self.end_span(span),
             PropertyKind::Init,
             key,
@@ -157,6 +163,7 @@ impl<'a> ParserImpl<'a> {
             /* method */ false,
             /* shorthand */ false,
             /* computed */ computed,
+            self,
         )
     }
 
@@ -172,6 +179,14 @@ impl<'a> ParserImpl<'a> {
             Kind::LBrack => {
                 computed = true;
                 PropertyKey::from(self.parse_computed_property_name())
+            }
+            Kind::PrivateIdentifier => {
+                let private_ident = self.parse_private_identifier();
+                self.error(diagnostics::private_identifier_in_property_name(
+                    &private_ident.name,
+                    private_ident.span,
+                ));
+                PropertyKey::PrivateIdentifier(self.alloc(private_ident))
             }
             _ => {
                 let ident = self.parse_identifier_name();
@@ -198,8 +213,8 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         span: u32,
         kind: PropertyKind,
-        modifiers: &Modifiers<'a>,
-    ) -> Box<'a, ObjectProperty<'a>> {
+        modifiers: &Modifiers,
+    ) -> ArenaBox<'a, ObjectProperty<'a>> {
         let (key, computed) = self.parse_property_name();
         let function = self.parse_method(false, false, FunctionKind::ObjectMethod);
         match kind {
@@ -209,10 +224,11 @@ impl<'a> ParserImpl<'a> {
         }
         self.verify_modifiers(
             modifiers,
-            ModifierFlags::empty(),
+            ModifierKinds::none(),
+            true,
             diagnostics::modifier_cannot_be_used_here,
         );
-        self.ast.alloc_object_property(
+        ObjectProperty::boxed(
             self.end_span(span),
             kind,
             key,
@@ -220,6 +236,7 @@ impl<'a> ParserImpl<'a> {
             /* method */ false,
             /* shorthand */ false,
             /* computed */ computed,
+            self,
         )
     }
 }

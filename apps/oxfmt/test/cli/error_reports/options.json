@@ -1,0 +1,8 @@
+[
+  {
+    "args": ["--check", "invalid.js"]
+  },
+  {
+    "args": ["--check", "invalid.yaml"]
+  }
+]

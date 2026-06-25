@@ -5,7 +5,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_iterator_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Reserved name '__iterator__'")
+    OxcDiagnostic::warn("Reserved name `__iterator__`")
         .with_help("Consider using [Symbol.iterator] instead")
         .with_label(span)
 }
@@ -16,7 +16,7 @@ pub struct NoIterator;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow the use of the `__iterator__` property
+    /// Disallow the use of the `__iterator__` property.
     ///
     /// ### Why is this bad?
     ///
@@ -55,8 +55,10 @@ declare_oxc_lint!(
     /// ```
     NoIterator,
     eslint,
-    restriction,
-    suggestion
+    correctness,
+    suggestion,
+    version = "0.2.15",
+    short_description = "Disallow the use of the `__iterator__` property.",
 );
 
 impl Rule for NoIterator {

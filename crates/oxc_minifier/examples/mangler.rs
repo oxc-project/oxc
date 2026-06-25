@@ -43,7 +43,7 @@ fn main() -> std::io::Result<()> {
     let source_type = SourceType::from_path(path).unwrap();
 
     let options = MangleOptions {
-        top_level: source_type.is_module(),
+        top_level: None,
         keep_names: MangleOptionsKeepNames { function: keep_names, class: keep_names },
         debug,
     };
@@ -62,6 +62,7 @@ fn main() -> std::io::Result<()> {
 fn mangler(source_text: &str, source_type: SourceType, options: MangleOptions) -> String {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
+    assert!(ret.diagnostics.is_empty());
     let mangler_return = Mangler::new().with_options(options).build(&ret.program);
     Codegen::new()
         .with_scoping(Some(mangler_return.scoping))

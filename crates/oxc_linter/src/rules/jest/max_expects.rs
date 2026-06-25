@@ -1,124 +1,31 @@
-use oxc_ast::{AstKind, ast::Expression};
-use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
-use rustc_hash::FxHashMap;
-use schemars::JsonSchema;
 
 use crate::{
     context::LintContext,
-    rule::Rule,
-    utils::{PossibleJestNode, collect_possible_jest_call_node},
+    rule::{DefaultRuleConfig, Rule},
+    rules::shared::max_expects::{DOCUMENTATION, MaxExpectsConfig},
 };
 
-fn exceeded_max_assertion(count: usize, max: usize, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Enforces a maximum number assertion calls in a test body.")
-        .with_help(format!("Too many assertion calls ({count}) - maximum allowed is {max}"))
-        .with_label(span)
-}
-
-#[derive(Debug, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
-pub struct MaxExpects {
-    /// Maximum number of `expect()` assertion calls allowed within a single test.
-    pub max: usize,
-}
-
-impl Default for MaxExpects {
-    fn default() -> Self {
-        Self { max: 5 }
-    }
-}
+#[derive(Debug, Default, Clone)]
+pub struct MaxExpects(Box<MaxExpectsConfig>);
 
 declare_oxc_lint!(
-    /// ### What it does
-    ///
-    /// As more assertions are made, there is a possible tendency for the test to be
-    /// more likely to mix multiple objectives. To avoid this, this rule reports when
-    /// the maximum number of assertions is exceeded.
-    ///
-    /// ### Why is this bad?
-    ///
-    /// This rule enforces a maximum number of `expect()` calls.
-    /// The following patterns are considered warnings (with the default max of 5):
-    ///
-    /// ### Examples
-    ///
-    /// Examples of **incorrect** code for this rule:
-    /// ```javascript
-    /// test('should not pass', () => {
-    ///     expect(true).toBeDefined();
-    ///     expect(true).toBeDefined();
-    ///     expect(true).toBeDefined();
-    ///     expect(true).toBeDefined();
-    ///     expect(true).toBeDefined();
-    ///     expect(true).toBeDefined();
-    /// });
-    ///
-    /// it('should not pass', () => {
-    ///     expect(true).toBeDefined();
-    ///     expect(true).toBeDefined();
-    ///     expect(true).toBeDefined();
-    ///     expect(true).toBeDefined();
-    ///     expect(true).toBeDefined();
-    ///     expect(true).toBeDefined();
-    /// });
-    /// ```
     MaxExpects,
     jest,
     style,
-    config = MaxExpects,
+    config = MaxExpectsConfig,
+    docs = DOCUMENTATION,
+    version = "0.0.18",
 );
 
 impl Rule for MaxExpects {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let max = value
-            .get(0)
-            .and_then(|config| config.get("max"))
-            .and_then(serde_json::Value::as_number)
-            .and_then(serde_json::Number::as_u64)
-            .map_or(5, |v| usize::try_from(v).unwrap_or(5));
-
-        Self { max }
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        let config = serde_json::from_value::<DefaultRuleConfig<MaxExpectsConfig>>(value)?;
+        Ok(Self(Box::new(config.into_inner())))
     }
 
     fn run_once(&self, ctx: &LintContext) {
-        let mut count_map: FxHashMap<usize, usize> = FxHashMap::default();
-
-        for possible_jest_node in &collect_possible_jest_call_node(ctx) {
-            self.run(possible_jest_node, &mut count_map, ctx);
-        }
-    }
-}
-
-impl MaxExpects {
-    fn run<'a>(
-        &self,
-        jest_node: &PossibleJestNode<'a, '_>,
-        count_map: &mut FxHashMap<usize, usize>,
-        ctx: &LintContext<'a>,
-    ) {
-        let node = jest_node.node;
-        let AstKind::CallExpression(call_expr) = node.kind() else {
-            return;
-        };
-        let Expression::Identifier(ident) = &call_expr.callee else {
-            return;
-        };
-
-        if ident.name == "expect" {
-            let position = node.scope_id().index();
-
-            if let Some(count) = count_map.get(&position) {
-                if count > &self.max {
-                    ctx.diagnostic(exceeded_max_assertion(*count, self.max, ident.span));
-                } else {
-                    count_map.insert(position, count + 1);
-                }
-            } else {
-                count_map.insert(position, 2);
-            }
-        }
+        self.0.run_once(ctx);
     }
 }
 
@@ -126,7 +33,7 @@ impl MaxExpects {
 fn test() {
     use crate::tester::Tester;
 
-    let mut pass = vec![
+    let pass = vec![
         ("test('should pass')", None),
         ("test('should pass', () => {})", None),
         ("test.skip('should pass', () => {})", None),
@@ -363,7 +270,7 @@ fn test() {
         ),
     ];
 
-    let mut fail = vec![
+    let fail = vec![
         (
             "
                 test('should not pass', function () {
@@ -475,88 +382,6 @@ fn test() {
             Some(serde_json::json!([{ "max": 1 }])),
         ),
     ];
-
-    let pass_vitest = vec![
-        ("test('should pass')", None),
-        ("test('should pass', () => {})", None),
-        ("test.skip('should pass', () => {})", None),
-        (
-            "test('should pass', () => {
-			      expect(true).toBeDefined();
-			      expect(true).toBeDefined();
-			      expect(true).toBeDefined();
-			      expect(true).toBeDefined();
-			      expect(true).toBeDefined();
-			    });",
-            None,
-        ),
-        (
-            "test('should pass', () => {
-			     expect(true).toBeDefined();
-			     expect(true).toBeDefined();
-			     expect(true).toBeDefined();
-			     expect(true).toBeDefined();
-			     expect(true).toBeDefined();
-			      });",
-            None,
-        ),
-        (
-            " test('should pass', async () => {
-			     expect.hasAssertions();
-
-			     expect(true).toBeDefined();
-			     expect(true).toBeDefined();
-			     expect(true).toBeDefined();
-			     expect(true).toBeDefined();
-			     expect(true).toEqual(expect.any(Boolean));
-			      });",
-            None,
-        ),
-    ];
-
-    let fail_vitest = vec![
-        (
-            "test('should not pass', function () {
-			       expect(true).toBeDefined();
-			       expect(true).toBeDefined();
-			       expect(true).toBeDefined();
-			       expect(true).toBeDefined();
-			       expect(true).toBeDefined();
-			       expect(true).toBeDefined();
-			     });
-			      ",
-            None,
-        ),
-        (
-            "test('should not pass', () => {
-			      expect(true).toBeDefined();
-			      expect(true).toBeDefined();
-			      expect(true).toBeDefined();
-			      expect(true).toBeDefined();
-			      expect(true).toBeDefined();
-			      expect(true).toBeDefined();
-			    });
-			    test('should not pass', () => {
-			      expect(true).toBeDefined();
-			      expect(true).toBeDefined();
-			      expect(true).toBeDefined();
-			      expect(true).toBeDefined();
-			      expect(true).toBeDefined();
-			      expect(true).toBeDefined();
-			    });",
-            None,
-        ),
-        (
-            "test('should not pass', () => {
-			      expect(true).toBeDefined();
-			      expect(true).toBeDefined();
-			       });",
-            Some(serde_json::json!([{ "max": 1 }])),
-        ),
-    ];
-
-    pass.extend(pass_vitest);
-    fail.extend(fail_vitest);
 
     Tester::new(MaxExpects::NAME, MaxExpects::PLUGIN, pass, fail)
         .with_jest_plugin(true)

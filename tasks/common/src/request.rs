@@ -20,7 +20,7 @@ fn detect_proxy() -> Option<Proxy> {
 pub fn agent() -> Agent {
     let config = Agent::config_builder()
         .proxy(detect_proxy())
-        .timeout_global(Some(Duration::from_secs(5)))
+        .timeout_global(Some(Duration::from_secs(10)))
         .build();
     Agent::new_with_config(config)
 }

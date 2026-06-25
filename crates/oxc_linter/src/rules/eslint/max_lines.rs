@@ -2,24 +2,29 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use schemars::JsonSchema;
+use serde::Deserialize;
 use serde_json::Value;
 
-use crate::{context::LintContext, rule::Rule, utils::count_comment_lines};
+use crate::{
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+    utils::count_comment_lines,
+};
 
-fn max_lines_diagnostic(count: usize, max: usize, span: Span) -> OxcDiagnostic {
+fn max_lines_diagnostic(count: u32, max: u32, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("File has too many lines ({count})."))
         .with_help(format!("Maximum allowed is {max}."))
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct MaxLines(Box<MaxLinesConfig>);
 
-#[derive(Debug, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct MaxLinesConfig {
     /// Maximum number of lines allowed per file.
-    max: usize,
+    max: u32,
     /// Whether to ignore blank lines when counting.
     skip_blank_lines: bool,
     /// Whether to ignore comments when counting.
@@ -40,6 +45,14 @@ impl Default for MaxLinesConfig {
     }
 }
 
+#[derive(Debug, JsonSchema, Deserialize)]
+#[serde(untagged)]
+#[expect(unused)]
+enum MaxLinesConfigEnum {
+    Number(u32),
+    Object(MaxLinesConfig),
+}
+
 declare_oxc_lint!(
     /// ### What it does
     ///
@@ -55,34 +68,27 @@ declare_oxc_lint!(
     MaxLines,
     eslint,
     pedantic,
-    config = MaxLinesConfig,
+    config = MaxLinesConfigEnum,
+    version = "0.2.14",
+    short_description = "Enforce a maximum number of lines per file.",
 );
 
 impl Rule for MaxLines {
-    fn from_configuration(value: Value) -> Self {
-        let config = value.get(0);
-        if let Some(max) = config
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
+        if let Some(max) = value
+            .get(0)
             .and_then(Value::as_number)
             .and_then(serde_json::Number::as_u64)
-            .and_then(|v| usize::try_from(v).ok())
+            .and_then(|v| u32::try_from(v).ok())
         {
-            Self(Box::new(MaxLinesConfig { max, skip_comments: false, skip_blank_lines: false }))
+            Ok(Self(Box::new(MaxLinesConfig {
+                max,
+                skip_comments: false,
+                skip_blank_lines: false,
+            })))
         } else {
-            let max = config
-                .and_then(|config| config.get("max"))
-                .and_then(Value::as_number)
-                .and_then(serde_json::Number::as_u64)
-                .map_or(300, |v| usize::try_from(v).unwrap_or(300));
-            let skip_comments = config
-                .and_then(|config| config.get("skipComments"))
-                .and_then(Value::as_bool)
-                .unwrap_or(false);
-            let skip_blank_lines = config
-                .and_then(|config| config.get("skipBlankLines"))
-                .and_then(Value::as_bool)
-                .unwrap_or(false);
-
-            Self(Box::new(MaxLinesConfig { max, skip_blank_lines, skip_comments }))
+            serde_json::from_value::<DefaultRuleConfig<Self>>(value)
+                .map(DefaultRuleConfig::into_inner)
         }
     }
 
@@ -106,7 +112,7 @@ impl Rule for MaxLines {
             if ctx.source_text().ends_with('\n') { newlines } else { newlines + 1 }
         };
 
-        let final_lines = lines_in_file.max(1).saturating_sub(comment_lines);
+        let final_lines = lines_in_file.max(1).saturating_sub(comment_lines) as u32;
         if final_lines > self.max {
             // Point to end of the file for `eslint-disable max-lines` to work.
             let end = ctx.source_text().len().saturating_sub(1) as u32;

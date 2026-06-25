@@ -2,14 +2,9 @@ use std::cell::Cell;
 
 use oxc_ast::{
     AstKind,
-    ast::{
-        BindingIdentifier, IdentifierReference, Program, TSEnumMemberName, TSModuleDeclarationName,
-    },
+    ast::{BindingIdentifier, IdentifierReference, Program, TSEnumMemberName},
 };
-use oxc_ast_visit::{
-    Visit,
-    walk::{walk_ts_enum_member_name, walk_ts_module_declaration_name},
-};
+use oxc_ast_visit::{Visit, walk::walk_ts_enum_member_name};
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
 /// Macro to assert that `left >= right`
@@ -70,9 +65,13 @@ macro_rules! assert_ge {
 /// [`Semantic::stats`]: super::Semantic::stats
 #[derive(Clone, Copy, Default, Debug)]
 pub struct Stats {
+    /// Number of AST nodes.
     pub nodes: u32,
+    /// Number of lexical scopes.
     pub scopes: u32,
+    /// Number of semantic symbols.
     pub symbols: u32,
+    /// Number of identifier references.
     pub references: u32,
 }
 
@@ -105,6 +104,10 @@ impl Stats {
     /// e.g. to over-allocate by 20%, pass `0.2` as `excess`.
     #[must_use]
     pub fn increase_by(mut self, excess: f64) -> Self {
+        if excess == 0.0 {
+            return self;
+        }
+
         let factor = excess + 1.0;
         #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss, clippy::cast_lossless)]
         let increase = |n: u32| (n as f64 * factor) as u32;
@@ -167,11 +170,5 @@ impl<'a> Visit<'a> for Counter {
     fn visit_ts_enum_member_name(&mut self, it: &TSEnumMemberName<'a>) {
         self.stats.symbols += 1;
         walk_ts_enum_member_name(self, it);
-    }
-
-    #[inline]
-    fn visit_ts_module_declaration_name(&mut self, it: &TSModuleDeclarationName<'a>) {
-        self.stats.symbols += 1;
-        walk_ts_module_declaration_name(self, it);
     }
 }

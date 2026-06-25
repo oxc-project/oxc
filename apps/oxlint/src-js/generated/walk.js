@@ -5,508 +5,518 @@ export { walkProgram };
 
 export const ancestors = [];
 
-const { isArray } = Array;
+/**
+ * Check that `ancestors` array is kept in sync with traversal.
+ * This function is only included in debug build. Minifier will remove it in release build.
+ */
+function debugCheckAncestorsOnExit(lenBefore, node) {
+  if (!DEBUG) return;
+  if (ancestors.length !== lenBefore)
+    throw Error(
+      `\`ancestors\` is out of sync with traversal. Its length has changed from ${lenBefore} to ${ancestors.length} while visiting children of \`${node.type}\`.`,
+    );
+}
 
 function walkNode(node, visitors) {
   if (node == null) return;
-  if (isArray(node)) {
+  if (Array.isArray(node)) {
     let len = node.length;
     for (let i = 0; i < len; i++) walkNode(node[i], visitors);
   } else
     switch (node.type) {
-      case 'DebuggerStatement':
+      case "DebuggerStatement":
         walkDebuggerStatement(node, visitors);
         break;
-      case 'EmptyStatement':
+      case "EmptyStatement":
         walkEmptyStatement(node, visitors);
         break;
-      case 'Literal':
+      case "Literal":
         walkLiteral(node, visitors);
         break;
-      case 'PrivateIdentifier':
+      case "PrivateIdentifier":
         walkPrivateIdentifier(node, visitors);
         break;
-      case 'Super':
+      case "Super":
         walkSuper(node, visitors);
         break;
-      case 'TemplateElement':
+      case "TemplateElement":
         walkTemplateElement(node, visitors);
         break;
-      case 'ThisExpression':
+      case "ThisExpression":
         walkThisExpression(node, visitors);
         break;
-      case 'JSXClosingFragment':
+      case "JSXClosingFragment":
         walkJSXClosingFragment(node, visitors);
         break;
-      case 'JSXEmptyExpression':
+      case "JSXEmptyExpression":
         walkJSXEmptyExpression(node, visitors);
         break;
-      case 'JSXIdentifier':
+      case "JSXIdentifier":
         walkJSXIdentifier(node, visitors);
         break;
-      case 'JSXOpeningFragment':
+      case "JSXOpeningFragment":
         walkJSXOpeningFragment(node, visitors);
         break;
-      case 'JSXText':
+      case "JSXText":
         walkJSXText(node, visitors);
         break;
-      case 'TSAnyKeyword':
+      case "TSAnyKeyword":
         walkTSAnyKeyword(node, visitors);
         break;
-      case 'TSBigIntKeyword':
+      case "TSBigIntKeyword":
         walkTSBigIntKeyword(node, visitors);
         break;
-      case 'TSBooleanKeyword':
+      case "TSBooleanKeyword":
         walkTSBooleanKeyword(node, visitors);
         break;
-      case 'TSIntrinsicKeyword':
+      case "TSIntrinsicKeyword":
         walkTSIntrinsicKeyword(node, visitors);
         break;
-      case 'TSJSDocUnknownType':
+      case "TSJSDocUnknownType":
         walkTSJSDocUnknownType(node, visitors);
         break;
-      case 'TSNeverKeyword':
+      case "TSNeverKeyword":
         walkTSNeverKeyword(node, visitors);
         break;
-      case 'TSNullKeyword':
+      case "TSNullKeyword":
         walkTSNullKeyword(node, visitors);
         break;
-      case 'TSNumberKeyword':
+      case "TSNumberKeyword":
         walkTSNumberKeyword(node, visitors);
         break;
-      case 'TSObjectKeyword':
+      case "TSObjectKeyword":
         walkTSObjectKeyword(node, visitors);
         break;
-      case 'TSStringKeyword':
+      case "TSStringKeyword":
         walkTSStringKeyword(node, visitors);
         break;
-      case 'TSSymbolKeyword':
+      case "TSSymbolKeyword":
         walkTSSymbolKeyword(node, visitors);
         break;
-      case 'TSThisType':
+      case "TSThisType":
         walkTSThisType(node, visitors);
         break;
-      case 'TSUndefinedKeyword':
+      case "TSUndefinedKeyword":
         walkTSUndefinedKeyword(node, visitors);
         break;
-      case 'TSUnknownKeyword':
+      case "TSUnknownKeyword":
         walkTSUnknownKeyword(node, visitors);
         break;
-      case 'TSVoidKeyword':
+      case "TSVoidKeyword":
         walkTSVoidKeyword(node, visitors);
         break;
-      case 'AccessorProperty':
+      case "AccessorProperty":
         walkAccessorProperty(node, visitors);
         break;
-      case 'ArrayExpression':
+      case "ArrayExpression":
         walkArrayExpression(node, visitors);
         break;
-      case 'ArrayPattern':
+      case "ArrayPattern":
         walkArrayPattern(node, visitors);
         break;
-      case 'ArrowFunctionExpression':
+      case "ArrowFunctionExpression":
         walkArrowFunctionExpression(node, visitors);
         break;
-      case 'AssignmentExpression':
+      case "AssignmentExpression":
         walkAssignmentExpression(node, visitors);
         break;
-      case 'AssignmentPattern':
+      case "AssignmentPattern":
         walkAssignmentPattern(node, visitors);
         break;
-      case 'AwaitExpression':
+      case "AwaitExpression":
         walkAwaitExpression(node, visitors);
         break;
-      case 'BinaryExpression':
+      case "BinaryExpression":
         walkBinaryExpression(node, visitors);
         break;
-      case 'BlockStatement':
+      case "BlockStatement":
         walkBlockStatement(node, visitors);
         break;
-      case 'BreakStatement':
+      case "BreakStatement":
         walkBreakStatement(node, visitors);
         break;
-      case 'CallExpression':
+      case "CallExpression":
         walkCallExpression(node, visitors);
         break;
-      case 'CatchClause':
+      case "CatchClause":
         walkCatchClause(node, visitors);
         break;
-      case 'ChainExpression':
+      case "ChainExpression":
         walkChainExpression(node, visitors);
         break;
-      case 'ClassBody':
+      case "ClassBody":
         walkClassBody(node, visitors);
         break;
-      case 'ClassDeclaration':
+      case "ClassDeclaration":
         walkClassDeclaration(node, visitors);
         break;
-      case 'ClassExpression':
+      case "ClassExpression":
         walkClassExpression(node, visitors);
         break;
-      case 'ConditionalExpression':
+      case "ConditionalExpression":
         walkConditionalExpression(node, visitors);
         break;
-      case 'ContinueStatement':
+      case "ContinueStatement":
         walkContinueStatement(node, visitors);
         break;
-      case 'Decorator':
+      case "Decorator":
         walkDecorator(node, visitors);
         break;
-      case 'DoWhileStatement':
+      case "DoWhileStatement":
         walkDoWhileStatement(node, visitors);
         break;
-      case 'ExportAllDeclaration':
+      case "ExportAllDeclaration":
         walkExportAllDeclaration(node, visitors);
         break;
-      case 'ExportDefaultDeclaration':
+      case "ExportDefaultDeclaration":
         walkExportDefaultDeclaration(node, visitors);
         break;
-      case 'ExportNamedDeclaration':
+      case "ExportNamedDeclaration":
         walkExportNamedDeclaration(node, visitors);
         break;
-      case 'ExportSpecifier':
+      case "ExportSpecifier":
         walkExportSpecifier(node, visitors);
         break;
-      case 'ExpressionStatement':
+      case "ExpressionStatement":
         walkExpressionStatement(node, visitors);
         break;
-      case 'ForInStatement':
+      case "ForInStatement":
         walkForInStatement(node, visitors);
         break;
-      case 'ForOfStatement':
+      case "ForOfStatement":
         walkForOfStatement(node, visitors);
         break;
-      case 'ForStatement':
+      case "ForStatement":
         walkForStatement(node, visitors);
         break;
-      case 'FunctionDeclaration':
+      case "FunctionDeclaration":
         walkFunctionDeclaration(node, visitors);
         break;
-      case 'FunctionExpression':
+      case "FunctionExpression":
         walkFunctionExpression(node, visitors);
         break;
-      case 'Identifier':
+      case "Identifier":
         walkIdentifier(node, visitors);
         break;
-      case 'IfStatement':
+      case "IfStatement":
         walkIfStatement(node, visitors);
         break;
-      case 'ImportAttribute':
+      case "ImportAttribute":
         walkImportAttribute(node, visitors);
         break;
-      case 'ImportDeclaration':
+      case "ImportDeclaration":
         walkImportDeclaration(node, visitors);
         break;
-      case 'ImportDefaultSpecifier':
+      case "ImportDefaultSpecifier":
         walkImportDefaultSpecifier(node, visitors);
         break;
-      case 'ImportExpression':
+      case "ImportExpression":
         walkImportExpression(node, visitors);
         break;
-      case 'ImportNamespaceSpecifier':
+      case "ImportNamespaceSpecifier":
         walkImportNamespaceSpecifier(node, visitors);
         break;
-      case 'ImportSpecifier':
+      case "ImportSpecifier":
         walkImportSpecifier(node, visitors);
         break;
-      case 'LabeledStatement':
+      case "LabeledStatement":
         walkLabeledStatement(node, visitors);
         break;
-      case 'LogicalExpression':
+      case "LogicalExpression":
         walkLogicalExpression(node, visitors);
         break;
-      case 'MemberExpression':
+      case "MemberExpression":
         walkMemberExpression(node, visitors);
         break;
-      case 'MetaProperty':
+      case "MetaProperty":
         walkMetaProperty(node, visitors);
         break;
-      case 'MethodDefinition':
+      case "MethodDefinition":
         walkMethodDefinition(node, visitors);
         break;
-      case 'NewExpression':
+      case "NewExpression":
         walkNewExpression(node, visitors);
         break;
-      case 'ObjectExpression':
+      case "ObjectExpression":
         walkObjectExpression(node, visitors);
         break;
-      case 'ObjectPattern':
+      case "ObjectPattern":
         walkObjectPattern(node, visitors);
         break;
-      case 'ParenthesizedExpression':
+      case "ParenthesizedExpression":
         walkParenthesizedExpression(node, visitors);
         break;
-      case 'Program':
+      case "Program":
         walkProgram(node, visitors);
         break;
-      case 'Property':
+      case "Property":
         walkProperty(node, visitors);
         break;
-      case 'PropertyDefinition':
+      case "PropertyDefinition":
         walkPropertyDefinition(node, visitors);
         break;
-      case 'RestElement':
+      case "RestElement":
         walkRestElement(node, visitors);
         break;
-      case 'ReturnStatement':
+      case "ReturnStatement":
         walkReturnStatement(node, visitors);
         break;
-      case 'SequenceExpression':
+      case "SequenceExpression":
         walkSequenceExpression(node, visitors);
         break;
-      case 'SpreadElement':
+      case "SpreadElement":
         walkSpreadElement(node, visitors);
         break;
-      case 'StaticBlock':
+      case "StaticBlock":
         walkStaticBlock(node, visitors);
         break;
-      case 'SwitchCase':
+      case "SwitchCase":
         walkSwitchCase(node, visitors);
         break;
-      case 'SwitchStatement':
+      case "SwitchStatement":
         walkSwitchStatement(node, visitors);
         break;
-      case 'TaggedTemplateExpression':
+      case "TaggedTemplateExpression":
         walkTaggedTemplateExpression(node, visitors);
         break;
-      case 'TemplateLiteral':
+      case "TemplateLiteral":
         walkTemplateLiteral(node, visitors);
         break;
-      case 'ThrowStatement':
+      case "ThrowStatement":
         walkThrowStatement(node, visitors);
         break;
-      case 'TryStatement':
+      case "TryStatement":
         walkTryStatement(node, visitors);
         break;
-      case 'UnaryExpression':
+      case "UnaryExpression":
         walkUnaryExpression(node, visitors);
         break;
-      case 'UpdateExpression':
+      case "UpdateExpression":
         walkUpdateExpression(node, visitors);
         break;
-      case 'V8IntrinsicExpression':
+      case "V8IntrinsicExpression":
         walkV8IntrinsicExpression(node, visitors);
         break;
-      case 'VariableDeclaration':
+      case "VariableDeclaration":
         walkVariableDeclaration(node, visitors);
         break;
-      case 'VariableDeclarator':
+      case "VariableDeclarator":
         walkVariableDeclarator(node, visitors);
         break;
-      case 'WhileStatement':
+      case "WhileStatement":
         walkWhileStatement(node, visitors);
         break;
-      case 'WithStatement':
+      case "WithStatement":
         walkWithStatement(node, visitors);
         break;
-      case 'YieldExpression':
+      case "YieldExpression":
         walkYieldExpression(node, visitors);
         break;
-      case 'JSXAttribute':
+      case "JSXAttribute":
         walkJSXAttribute(node, visitors);
         break;
-      case 'JSXClosingElement':
+      case "JSXClosingElement":
         walkJSXClosingElement(node, visitors);
         break;
-      case 'JSXElement':
+      case "JSXElement":
         walkJSXElement(node, visitors);
         break;
-      case 'JSXExpressionContainer':
+      case "JSXExpressionContainer":
         walkJSXExpressionContainer(node, visitors);
         break;
-      case 'JSXFragment':
+      case "JSXFragment":
         walkJSXFragment(node, visitors);
         break;
-      case 'JSXMemberExpression':
+      case "JSXMemberExpression":
         walkJSXMemberExpression(node, visitors);
         break;
-      case 'JSXNamespacedName':
+      case "JSXNamespacedName":
         walkJSXNamespacedName(node, visitors);
         break;
-      case 'JSXOpeningElement':
+      case "JSXOpeningElement":
         walkJSXOpeningElement(node, visitors);
         break;
-      case 'JSXSpreadAttribute':
+      case "JSXSpreadAttribute":
         walkJSXSpreadAttribute(node, visitors);
         break;
-      case 'JSXSpreadChild':
+      case "JSXSpreadChild":
         walkJSXSpreadChild(node, visitors);
         break;
-      case 'TSAbstractAccessorProperty':
+      case "TSAbstractAccessorProperty":
         walkTSAbstractAccessorProperty(node, visitors);
         break;
-      case 'TSAbstractMethodDefinition':
+      case "TSAbstractMethodDefinition":
         walkTSAbstractMethodDefinition(node, visitors);
         break;
-      case 'TSAbstractPropertyDefinition':
+      case "TSAbstractPropertyDefinition":
         walkTSAbstractPropertyDefinition(node, visitors);
         break;
-      case 'TSArrayType':
+      case "TSArrayType":
         walkTSArrayType(node, visitors);
         break;
-      case 'TSAsExpression':
+      case "TSAsExpression":
         walkTSAsExpression(node, visitors);
         break;
-      case 'TSCallSignatureDeclaration':
+      case "TSCallSignatureDeclaration":
         walkTSCallSignatureDeclaration(node, visitors);
         break;
-      case 'TSClassImplements':
+      case "TSClassImplements":
         walkTSClassImplements(node, visitors);
         break;
-      case 'TSConditionalType':
+      case "TSConditionalType":
         walkTSConditionalType(node, visitors);
         break;
-      case 'TSConstructSignatureDeclaration':
+      case "TSConstructSignatureDeclaration":
         walkTSConstructSignatureDeclaration(node, visitors);
         break;
-      case 'TSConstructorType':
+      case "TSConstructorType":
         walkTSConstructorType(node, visitors);
         break;
-      case 'TSDeclareFunction':
+      case "TSDeclareFunction":
         walkTSDeclareFunction(node, visitors);
         break;
-      case 'TSEmptyBodyFunctionExpression':
+      case "TSEmptyBodyFunctionExpression":
         walkTSEmptyBodyFunctionExpression(node, visitors);
         break;
-      case 'TSEnumBody':
+      case "TSEnumBody":
         walkTSEnumBody(node, visitors);
         break;
-      case 'TSEnumDeclaration':
+      case "TSEnumDeclaration":
         walkTSEnumDeclaration(node, visitors);
         break;
-      case 'TSEnumMember':
+      case "TSEnumMember":
         walkTSEnumMember(node, visitors);
         break;
-      case 'TSExportAssignment':
+      case "TSExportAssignment":
         walkTSExportAssignment(node, visitors);
         break;
-      case 'TSExternalModuleReference':
+      case "TSExternalModuleReference":
         walkTSExternalModuleReference(node, visitors);
         break;
-      case 'TSFunctionType':
+      case "TSFunctionType":
         walkTSFunctionType(node, visitors);
         break;
-      case 'TSImportEqualsDeclaration':
+      case "TSImportEqualsDeclaration":
         walkTSImportEqualsDeclaration(node, visitors);
         break;
-      case 'TSImportType':
+      case "TSImportType":
         walkTSImportType(node, visitors);
         break;
-      case 'TSIndexSignature':
+      case "TSIndexSignature":
         walkTSIndexSignature(node, visitors);
         break;
-      case 'TSIndexedAccessType':
+      case "TSIndexedAccessType":
         walkTSIndexedAccessType(node, visitors);
         break;
-      case 'TSInferType':
+      case "TSInferType":
         walkTSInferType(node, visitors);
         break;
-      case 'TSInstantiationExpression':
+      case "TSInstantiationExpression":
         walkTSInstantiationExpression(node, visitors);
         break;
-      case 'TSInterfaceBody':
+      case "TSInterfaceBody":
         walkTSInterfaceBody(node, visitors);
         break;
-      case 'TSInterfaceDeclaration':
+      case "TSInterfaceDeclaration":
         walkTSInterfaceDeclaration(node, visitors);
         break;
-      case 'TSInterfaceHeritage':
+      case "TSInterfaceHeritage":
         walkTSInterfaceHeritage(node, visitors);
         break;
-      case 'TSIntersectionType':
+      case "TSIntersectionType":
         walkTSIntersectionType(node, visitors);
         break;
-      case 'TSJSDocNonNullableType':
+      case "TSJSDocNonNullableType":
         walkTSJSDocNonNullableType(node, visitors);
         break;
-      case 'TSJSDocNullableType':
+      case "TSJSDocNullableType":
         walkTSJSDocNullableType(node, visitors);
         break;
-      case 'TSLiteralType':
+      case "TSLiteralType":
         walkTSLiteralType(node, visitors);
         break;
-      case 'TSMappedType':
+      case "TSMappedType":
         walkTSMappedType(node, visitors);
         break;
-      case 'TSMethodSignature':
+      case "TSMethodSignature":
         walkTSMethodSignature(node, visitors);
         break;
-      case 'TSModuleBlock':
+      case "TSModuleBlock":
         walkTSModuleBlock(node, visitors);
         break;
-      case 'TSModuleDeclaration':
+      case "TSModuleDeclaration":
         walkTSModuleDeclaration(node, visitors);
         break;
-      case 'TSNamedTupleMember':
+      case "TSNamedTupleMember":
         walkTSNamedTupleMember(node, visitors);
         break;
-      case 'TSNamespaceExportDeclaration':
+      case "TSNamespaceExportDeclaration":
         walkTSNamespaceExportDeclaration(node, visitors);
         break;
-      case 'TSNonNullExpression':
+      case "TSNonNullExpression":
         walkTSNonNullExpression(node, visitors);
         break;
-      case 'TSOptionalType':
+      case "TSOptionalType":
         walkTSOptionalType(node, visitors);
         break;
-      case 'TSParameterProperty':
+      case "TSParameterProperty":
         walkTSParameterProperty(node, visitors);
         break;
-      case 'TSParenthesizedType':
+      case "TSParenthesizedType":
         walkTSParenthesizedType(node, visitors);
         break;
-      case 'TSPropertySignature':
+      case "TSPropertySignature":
         walkTSPropertySignature(node, visitors);
         break;
-      case 'TSQualifiedName':
+      case "TSQualifiedName":
         walkTSQualifiedName(node, visitors);
         break;
-      case 'TSRestType':
+      case "TSRestType":
         walkTSRestType(node, visitors);
         break;
-      case 'TSSatisfiesExpression':
+      case "TSSatisfiesExpression":
         walkTSSatisfiesExpression(node, visitors);
         break;
-      case 'TSTemplateLiteralType':
+      case "TSTemplateLiteralType":
         walkTSTemplateLiteralType(node, visitors);
         break;
-      case 'TSTupleType':
+      case "TSTupleType":
         walkTSTupleType(node, visitors);
         break;
-      case 'TSTypeAliasDeclaration':
+      case "TSTypeAliasDeclaration":
         walkTSTypeAliasDeclaration(node, visitors);
         break;
-      case 'TSTypeAnnotation':
+      case "TSTypeAnnotation":
         walkTSTypeAnnotation(node, visitors);
         break;
-      case 'TSTypeAssertion':
+      case "TSTypeAssertion":
         walkTSTypeAssertion(node, visitors);
         break;
-      case 'TSTypeLiteral':
+      case "TSTypeLiteral":
         walkTSTypeLiteral(node, visitors);
         break;
-      case 'TSTypeOperator':
+      case "TSTypeOperator":
         walkTSTypeOperator(node, visitors);
         break;
-      case 'TSTypeParameter':
+      case "TSTypeParameter":
         walkTSTypeParameter(node, visitors);
         break;
-      case 'TSTypeParameterDeclaration':
+      case "TSTypeParameterDeclaration":
         walkTSTypeParameterDeclaration(node, visitors);
         break;
-      case 'TSTypeParameterInstantiation':
+      case "TSTypeParameterInstantiation":
         walkTSTypeParameterInstantiation(node, visitors);
         break;
-      case 'TSTypePredicate':
+      case "TSTypePredicate":
         walkTSTypePredicate(node, visitors);
         break;
-      case 'TSTypeQuery':
+      case "TSTypeQuery":
         walkTSTypeQuery(node, visitors);
         break;
-      case 'TSTypeReference':
+      case "TSTypeReference":
         walkTSTypeReference(node, visitors);
         break;
-      case 'TSUnionType':
+      case "TSUnionType":
         walkTSUnionType(node, visitors);
         break;
     }
@@ -649,225 +659,254 @@ function walkTSVoidKeyword(node, visitors) {
 
 function walkAccessorProperty(node, visitors) {
   let enterExit = visitors[27],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.decorators, visitors);
   walkNode(node.key, visitors);
   walkNode(node.typeAnnotation, visitors);
   walkNode(node.value, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkArrayExpression(node, visitors) {
   let enterExit = visitors[28],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.elements, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkArrayPattern(node, visitors) {
   let enterExit = visitors[29],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.decorators, visitors);
   walkNode(node.elements, visitors);
   walkNode(node.typeAnnotation, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkArrowFunctionExpression(node, visitors) {
   let enterExit = visitors[30],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.typeParameters, visitors);
   walkNode(node.params, visitors);
   walkNode(node.returnType, visitors);
   walkNode(node.body, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkAssignmentExpression(node, visitors) {
   let enterExit = visitors[31],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.left, visitors);
   walkNode(node.right, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkAssignmentPattern(node, visitors) {
   let enterExit = visitors[32],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.decorators, visitors);
   walkNode(node.left, visitors);
   walkNode(node.right, visitors);
   walkNode(node.typeAnnotation, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkAwaitExpression(node, visitors) {
   let enterExit = visitors[33],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.argument, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkBinaryExpression(node, visitors) {
   let enterExit = visitors[34],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.left, visitors);
   walkNode(node.right, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkBlockStatement(node, visitors) {
   let enterExit = visitors[35],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.body, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkBreakStatement(node, visitors) {
   let enterExit = visitors[36],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.label, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkCallExpression(node, visitors) {
   let enterExit = visitors[37],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.callee, visitors);
   walkNode(node.typeArguments, visitors);
   walkNode(node.arguments, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkCatchClause(node, visitors) {
   let enterExit = visitors[38],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.param, visitors);
   walkNode(node.body, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkChainExpression(node, visitors) {
   let enterExit = visitors[39],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.expression, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkClassBody(node, visitors) {
   let enterExit = visitors[40],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.body, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkClassDeclaration(node, visitors) {
   let enterExit = visitors[41],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.decorators, visitors);
   walkNode(node.id, visitors);
   walkNode(node.typeParameters, visitors);
@@ -875,19 +914,21 @@ function walkClassDeclaration(node, visitors) {
   walkNode(node.superTypeArguments, visitors);
   walkNode(node.implements, visitors);
   walkNode(node.body, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkClassExpression(node, visitors) {
   let enterExit = visitors[42],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.decorators, visitors);
   walkNode(node.id, visitors);
   walkNode(node.typeParameters, visitors);
@@ -895,1841 +936,2086 @@ function walkClassExpression(node, visitors) {
   walkNode(node.superTypeArguments, visitors);
   walkNode(node.implements, visitors);
   walkNode(node.body, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkConditionalExpression(node, visitors) {
   let enterExit = visitors[43],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.test, visitors);
   walkNode(node.consequent, visitors);
   walkNode(node.alternate, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkContinueStatement(node, visitors) {
   let enterExit = visitors[44],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.label, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkDecorator(node, visitors) {
   let enterExit = visitors[45],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.expression, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkDoWhileStatement(node, visitors) {
   let enterExit = visitors[46],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.body, visitors);
   walkNode(node.test, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkExportAllDeclaration(node, visitors) {
   let enterExit = visitors[47],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.exported, visitors);
   walkNode(node.source, visitors);
   walkNode(node.attributes, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkExportDefaultDeclaration(node, visitors) {
   let enterExit = visitors[48],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.declaration, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkExportNamedDeclaration(node, visitors) {
   let enterExit = visitors[49],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.declaration, visitors);
   walkNode(node.specifiers, visitors);
   walkNode(node.source, visitors);
   walkNode(node.attributes, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkExportSpecifier(node, visitors) {
   let enterExit = visitors[50],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.local, visitors);
   walkNode(node.exported, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkExpressionStatement(node, visitors) {
   let enterExit = visitors[51],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.expression, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkForInStatement(node, visitors) {
   let enterExit = visitors[52],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.left, visitors);
   walkNode(node.right, visitors);
   walkNode(node.body, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkForOfStatement(node, visitors) {
   let enterExit = visitors[53],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.left, visitors);
   walkNode(node.right, visitors);
   walkNode(node.body, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkForStatement(node, visitors) {
   let enterExit = visitors[54],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.init, visitors);
   walkNode(node.test, visitors);
   walkNode(node.update, visitors);
   walkNode(node.body, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkFunctionDeclaration(node, visitors) {
   let enterExit = visitors[55],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.id, visitors);
   walkNode(node.typeParameters, visitors);
   walkNode(node.params, visitors);
   walkNode(node.returnType, visitors);
   walkNode(node.body, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkFunctionExpression(node, visitors) {
   let enterExit = visitors[56],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.id, visitors);
   walkNode(node.typeParameters, visitors);
   walkNode(node.params, visitors);
   walkNode(node.returnType, visitors);
   walkNode(node.body, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkIdentifier(node, visitors) {
   let enterExit = visitors[57],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.decorators, visitors);
   walkNode(node.typeAnnotation, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkIfStatement(node, visitors) {
   let enterExit = visitors[58],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.test, visitors);
   walkNode(node.consequent, visitors);
   walkNode(node.alternate, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkImportAttribute(node, visitors) {
   let enterExit = visitors[59],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.key, visitors);
   walkNode(node.value, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkImportDeclaration(node, visitors) {
   let enterExit = visitors[60],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.specifiers, visitors);
   walkNode(node.source, visitors);
   walkNode(node.attributes, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkImportDefaultSpecifier(node, visitors) {
   let enterExit = visitors[61],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.local, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkImportExpression(node, visitors) {
   let enterExit = visitors[62],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.source, visitors);
   walkNode(node.options, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkImportNamespaceSpecifier(node, visitors) {
   let enterExit = visitors[63],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.local, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkImportSpecifier(node, visitors) {
   let enterExit = visitors[64],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.imported, visitors);
   walkNode(node.local, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkLabeledStatement(node, visitors) {
   let enterExit = visitors[65],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.label, visitors);
   walkNode(node.body, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkLogicalExpression(node, visitors) {
   let enterExit = visitors[66],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.left, visitors);
   walkNode(node.right, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkMemberExpression(node, visitors) {
   let enterExit = visitors[67],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.object, visitors);
   walkNode(node.property, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkMetaProperty(node, visitors) {
   let enterExit = visitors[68],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.meta, visitors);
   walkNode(node.property, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkMethodDefinition(node, visitors) {
   let enterExit = visitors[69],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.decorators, visitors);
   walkNode(node.key, visitors);
   walkNode(node.value, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkNewExpression(node, visitors) {
   let enterExit = visitors[70],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.callee, visitors);
   walkNode(node.typeArguments, visitors);
   walkNode(node.arguments, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkObjectExpression(node, visitors) {
   let enterExit = visitors[71],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.properties, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkObjectPattern(node, visitors) {
   let enterExit = visitors[72],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.decorators, visitors);
   walkNode(node.properties, visitors);
   walkNode(node.typeAnnotation, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkParenthesizedExpression(node, visitors) {
   let enterExit = visitors[73],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.expression, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkProgram(node, visitors) {
   let enterExit = visitors[74],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.body, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkProperty(node, visitors) {
   let enterExit = visitors[75],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.key, visitors);
   walkNode(node.value, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkPropertyDefinition(node, visitors) {
   let enterExit = visitors[76],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.decorators, visitors);
   walkNode(node.key, visitors);
   walkNode(node.typeAnnotation, visitors);
   walkNode(node.value, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkRestElement(node, visitors) {
   let enterExit = visitors[77],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.decorators, visitors);
   walkNode(node.argument, visitors);
   walkNode(node.typeAnnotation, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkReturnStatement(node, visitors) {
   let enterExit = visitors[78],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.argument, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkSequenceExpression(node, visitors) {
   let enterExit = visitors[79],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.expressions, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkSpreadElement(node, visitors) {
   let enterExit = visitors[80],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.argument, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkStaticBlock(node, visitors) {
   let enterExit = visitors[81],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.body, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkSwitchCase(node, visitors) {
   let enterExit = visitors[82],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.test, visitors);
   walkNode(node.consequent, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkSwitchStatement(node, visitors) {
   let enterExit = visitors[83],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.discriminant, visitors);
   walkNode(node.cases, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTaggedTemplateExpression(node, visitors) {
   let enterExit = visitors[84],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.tag, visitors);
   walkNode(node.typeArguments, visitors);
   walkNode(node.quasi, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTemplateLiteral(node, visitors) {
   let enterExit = visitors[85],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.quasis, visitors);
   walkNode(node.expressions, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkThrowStatement(node, visitors) {
   let enterExit = visitors[86],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.argument, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTryStatement(node, visitors) {
   let enterExit = visitors[87],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.block, visitors);
   walkNode(node.handler, visitors);
   walkNode(node.finalizer, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkUnaryExpression(node, visitors) {
   let enterExit = visitors[88],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.argument, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkUpdateExpression(node, visitors) {
   let enterExit = visitors[89],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.argument, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkV8IntrinsicExpression(node, visitors) {
   let enterExit = visitors[90],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.name, visitors);
   walkNode(node.arguments, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkVariableDeclaration(node, visitors) {
   let enterExit = visitors[91],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.declarations, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkVariableDeclarator(node, visitors) {
   let enterExit = visitors[92],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.id, visitors);
   walkNode(node.init, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkWhileStatement(node, visitors) {
   let enterExit = visitors[93],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.test, visitors);
   walkNode(node.body, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkWithStatement(node, visitors) {
   let enterExit = visitors[94],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.object, visitors);
   walkNode(node.body, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkYieldExpression(node, visitors) {
   let enterExit = visitors[95],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.argument, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkJSXAttribute(node, visitors) {
   let enterExit = visitors[96],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.name, visitors);
   walkNode(node.value, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkJSXClosingElement(node, visitors) {
   let enterExit = visitors[97],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.name, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkJSXElement(node, visitors) {
   let enterExit = visitors[98],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.openingElement, visitors);
   walkNode(node.children, visitors);
   walkNode(node.closingElement, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkJSXExpressionContainer(node, visitors) {
   let enterExit = visitors[99],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.expression, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkJSXFragment(node, visitors) {
   let enterExit = visitors[100],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.openingFragment, visitors);
   walkNode(node.children, visitors);
   walkNode(node.closingFragment, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkJSXMemberExpression(node, visitors) {
   let enterExit = visitors[101],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.object, visitors);
   walkNode(node.property, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkJSXNamespacedName(node, visitors) {
   let enterExit = visitors[102],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.namespace, visitors);
   walkNode(node.name, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkJSXOpeningElement(node, visitors) {
   let enterExit = visitors[103],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.name, visitors);
   walkNode(node.typeArguments, visitors);
   walkNode(node.attributes, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkJSXSpreadAttribute(node, visitors) {
   let enterExit = visitors[104],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.argument, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkJSXSpreadChild(node, visitors) {
   let enterExit = visitors[105],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.expression, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSAbstractAccessorProperty(node, visitors) {
   let enterExit = visitors[106],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.decorators, visitors);
   walkNode(node.key, visitors);
   walkNode(node.typeAnnotation, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSAbstractMethodDefinition(node, visitors) {
   let enterExit = visitors[107],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.key, visitors);
   walkNode(node.value, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSAbstractPropertyDefinition(node, visitors) {
   let enterExit = visitors[108],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.decorators, visitors);
   walkNode(node.key, visitors);
   walkNode(node.typeAnnotation, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSArrayType(node, visitors) {
   let enterExit = visitors[109],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.elementType, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSAsExpression(node, visitors) {
   let enterExit = visitors[110],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.expression, visitors);
   walkNode(node.typeAnnotation, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSCallSignatureDeclaration(node, visitors) {
   let enterExit = visitors[111],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.typeParameters, visitors);
   walkNode(node.params, visitors);
   walkNode(node.returnType, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSClassImplements(node, visitors) {
   let enterExit = visitors[112],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.expression, visitors);
   walkNode(node.typeArguments, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSConditionalType(node, visitors) {
   let enterExit = visitors[113],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.checkType, visitors);
   walkNode(node.extendsType, visitors);
   walkNode(node.trueType, visitors);
   walkNode(node.falseType, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSConstructSignatureDeclaration(node, visitors) {
   let enterExit = visitors[114],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.typeParameters, visitors);
   walkNode(node.params, visitors);
   walkNode(node.returnType, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSConstructorType(node, visitors) {
   let enterExit = visitors[115],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.typeParameters, visitors);
   walkNode(node.params, visitors);
   walkNode(node.returnType, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSDeclareFunction(node, visitors) {
   let enterExit = visitors[116],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.id, visitors);
   walkNode(node.typeParameters, visitors);
   walkNode(node.params, visitors);
   walkNode(node.returnType, visitors);
   walkNode(node.body, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSEmptyBodyFunctionExpression(node, visitors) {
   let enterExit = visitors[117],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.id, visitors);
   walkNode(node.typeParameters, visitors);
   walkNode(node.params, visitors);
   walkNode(node.returnType, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSEnumBody(node, visitors) {
   let enterExit = visitors[118],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.members, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSEnumDeclaration(node, visitors) {
   let enterExit = visitors[119],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.id, visitors);
   walkNode(node.body, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSEnumMember(node, visitors) {
   let enterExit = visitors[120],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.id, visitors);
   walkNode(node.initializer, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSExportAssignment(node, visitors) {
   let enterExit = visitors[121],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.expression, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSExternalModuleReference(node, visitors) {
   let enterExit = visitors[122],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.expression, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSFunctionType(node, visitors) {
   let enterExit = visitors[123],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.typeParameters, visitors);
   walkNode(node.params, visitors);
   walkNode(node.returnType, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSImportEqualsDeclaration(node, visitors) {
   let enterExit = visitors[124],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.id, visitors);
   walkNode(node.moduleReference, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSImportType(node, visitors) {
   let enterExit = visitors[125],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
-  walkNode(node.argument, visitors);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
+  walkNode(node.source, visitors);
   walkNode(node.options, visitors);
   walkNode(node.qualifier, visitors);
   walkNode(node.typeArguments, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSIndexSignature(node, visitors) {
   let enterExit = visitors[126],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.parameters, visitors);
   walkNode(node.typeAnnotation, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSIndexedAccessType(node, visitors) {
   let enterExit = visitors[127],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.objectType, visitors);
   walkNode(node.indexType, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSInferType(node, visitors) {
   let enterExit = visitors[128],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.typeParameter, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSInstantiationExpression(node, visitors) {
   let enterExit = visitors[129],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.expression, visitors);
   walkNode(node.typeArguments, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSInterfaceBody(node, visitors) {
   let enterExit = visitors[130],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.body, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSInterfaceDeclaration(node, visitors) {
   let enterExit = visitors[131],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.id, visitors);
   walkNode(node.typeParameters, visitors);
   walkNode(node.extends, visitors);
   walkNode(node.body, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSInterfaceHeritage(node, visitors) {
   let enterExit = visitors[132],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.expression, visitors);
   walkNode(node.typeArguments, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSIntersectionType(node, visitors) {
   let enterExit = visitors[133],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.types, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSJSDocNonNullableType(node, visitors) {
   let enterExit = visitors[134],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.typeAnnotation, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSJSDocNullableType(node, visitors) {
   let enterExit = visitors[135],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.typeAnnotation, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSLiteralType(node, visitors) {
   let enterExit = visitors[136],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.literal, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSMappedType(node, visitors) {
   let enterExit = visitors[137],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.key, visitors);
   walkNode(node.constraint, visitors);
   walkNode(node.nameType, visitors);
   walkNode(node.typeAnnotation, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSMethodSignature(node, visitors) {
   let enterExit = visitors[138],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.key, visitors);
   walkNode(node.typeParameters, visitors);
   walkNode(node.params, visitors);
   walkNode(node.returnType, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSModuleBlock(node, visitors) {
   let enterExit = visitors[139],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.body, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSModuleDeclaration(node, visitors) {
   let enterExit = visitors[140],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.id, visitors);
   walkNode(node.body, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSNamedTupleMember(node, visitors) {
   let enterExit = visitors[141],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.label, visitors);
   walkNode(node.elementType, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSNamespaceExportDeclaration(node, visitors) {
   let enterExit = visitors[142],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.id, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSNonNullExpression(node, visitors) {
   let enterExit = visitors[143],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.expression, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSOptionalType(node, visitors) {
   let enterExit = visitors[144],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.typeAnnotation, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSParameterProperty(node, visitors) {
   let enterExit = visitors[145],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.decorators, visitors);
   walkNode(node.parameter, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSParenthesizedType(node, visitors) {
   let enterExit = visitors[146],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.typeAnnotation, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSPropertySignature(node, visitors) {
   let enterExit = visitors[147],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.key, visitors);
   walkNode(node.typeAnnotation, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSQualifiedName(node, visitors) {
   let enterExit = visitors[148],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.left, visitors);
   walkNode(node.right, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSRestType(node, visitors) {
   let enterExit = visitors[149],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.typeAnnotation, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSSatisfiesExpression(node, visitors) {
   let enterExit = visitors[150],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.expression, visitors);
   walkNode(node.typeAnnotation, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSTemplateLiteralType(node, visitors) {
   let enterExit = visitors[151],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.quasis, visitors);
   walkNode(node.types, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSTupleType(node, visitors) {
   let enterExit = visitors[152],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.elementTypes, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSTypeAliasDeclaration(node, visitors) {
   let enterExit = visitors[153],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.id, visitors);
   walkNode(node.typeParameters, visitors);
   walkNode(node.typeAnnotation, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSTypeAnnotation(node, visitors) {
   let enterExit = visitors[154],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.typeAnnotation, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSTypeAssertion(node, visitors) {
   let enterExit = visitors[155],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.typeAnnotation, visitors);
   walkNode(node.expression, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSTypeLiteral(node, visitors) {
   let enterExit = visitors[156],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.members, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSTypeOperator(node, visitors) {
   let enterExit = visitors[157],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.typeAnnotation, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSTypeParameter(node, visitors) {
   let enterExit = visitors[158],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.name, visitors);
   walkNode(node.constraint, visitors);
   walkNode(node.default, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSTypeParameterDeclaration(node, visitors) {
   let enterExit = visitors[159],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.params, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSTypeParameterInstantiation(node, visitors) {
   let enterExit = visitors[160],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.params, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSTypePredicate(node, visitors) {
   let enterExit = visitors[161],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.parameterName, visitors);
   walkNode(node.typeAnnotation, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSTypeQuery(node, visitors) {
   let enterExit = visitors[162],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.exprName, visitors);
   walkNode(node.typeArguments, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSTypeReference(node, visitors) {
   let enterExit = visitors[163],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.typeName, visitors);
   walkNode(node.typeArguments, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }
 
 function walkTSUnionType(node, visitors) {
   let enterExit = visitors[164],
-    exit = null;
+    exit = null,
+    enter;
   if (enterExit !== null) {
-    let enter;
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
+  let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.types, visitors);
+  debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();
   exit !== null && exit(node);
 }

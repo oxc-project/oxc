@@ -66,6 +66,10 @@ impl<'a> VuePartialLoader<'a> {
         let is_setup = content.contains("setup"); // check if "setup" is present, does not check if its inside an attribute
 
         let Ok(mut source_type) = SourceType::from_extension(lang) else { return None };
+        // Vue script blocks are ESM modules - upgrade unambiguous to module
+        if source_type.is_unambiguous() {
+            source_type = source_type.with_module(true);
+        }
         if !lang.contains('x') {
             source_type = source_type.with_standard(true);
         }
@@ -130,8 +134,6 @@ impl<'a> VuePartialLoader<'a> {
 
 #[cfg(test)]
 mod test {
-    use oxc_span::SourceType;
-
     use super::{JavaScriptSource, VuePartialLoader};
 
     fn parse_vue(source_text: &str) -> JavaScriptSource<'_> {
@@ -161,7 +163,8 @@ mod test {
         "#;
 
         let result = parse_vue(source_text);
-        assert_eq!(result.source_type, SourceType::ts());
+        assert!(result.source_type.is_typescript());
+        assert!(!result.source_type.is_jsx());
         assert_eq!(result.source_text.trim(), "1/1");
     }
 
@@ -174,7 +177,8 @@ mod test {
         ";
 
         let result = parse_vue(source_text);
-        assert_eq!(result.source_type, SourceType::ts());
+        assert!(result.source_type.is_typescript());
+        assert!(!result.source_type.is_jsx());
         assert_eq!(result.source_text.trim(), "1/1");
     }
 
@@ -312,25 +316,32 @@ mod test {
     }
 
     #[test]
+    #[expect(clippy::type_complexity)]
     fn lang() {
-        let cases = [
-            ("<script>debugger</script>", Some(SourceType::mjs())),
-            ("<script lang = 'tsx' >debugger</script>", Some(SourceType::tsx())),
-            (r#"<script lang = "cjs" >debugger</script>"#, Some(SourceType::cjs())),
-            ("<script lang=tsx>debugger</script>", Some(SourceType::tsx())),
+        // Test cases: (source_text, expected_is_typescript, expected_is_jsx, expected_is_module)
+        // None means parsing should fail (invalid extension)
+        // Unambiguous source types are upgraded to module for Vue scripts
+        let cases: [(&str, Option<(bool, bool, bool)>); 8] = [
+            ("<script>debugger</script>", Some((false, false, true))), // mjs -> module
+            ("<script lang = 'tsx' >debugger</script>", Some((true, true, true))), // tsx -> unambiguous -> module
+            (r#"<script lang = "cjs" >debugger</script>"#, Some((false, false, false))), // cjs -> script (not upgraded)
+            ("<script lang=tsx>debugger</script>", Some((true, true, true))), // tsx -> unambiguous -> module
             ("<script lang = 'xxx'>debugger</script>", None),
             (r#"<script lang = "xxx">debugger</script>"#, None),
             ("<script lang='xxx'>debugger</script>", None),
             (r#"<script lang="xxx">debugger</script>"#, None),
         ];
 
-        for (source_text, source_type) in cases {
+        for (source_text, expected) in cases {
             let sources = VuePartialLoader::new(source_text).parse();
-            if let Some(expected) = source_type {
-                assert_eq!(sources.len(), 1);
-                assert_eq!(sources[0].source_type, expected);
+            if let Some((is_ts, is_jsx, is_module)) = expected {
+                assert_eq!(sources.len(), 1, "Expected 1 source for: {source_text}");
+                let st = sources[0].source_type;
+                assert_eq!(st.is_typescript(), is_ts, "is_typescript mismatch for: {source_text}");
+                assert_eq!(st.is_jsx(), is_jsx, "is_jsx mismatch for: {source_text}");
+                assert_eq!(st.is_module(), is_module, "is_module mismatch for: {source_text}");
             } else {
-                assert_eq!(sources.len(), 0);
+                assert_eq!(sources.len(), 0, "Expected 0 sources for: {source_text}");
             }
         }
     }

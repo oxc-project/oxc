@@ -6,6 +6,15 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
   .pick();
 
 ==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+(activeService as unknown as QuickInputController) /* TS fail */
+  .pick();
+
+-------------------
+{ printWidth: 100 }
+-------------------
 (activeService as unknown as QuickInputController) /* TS fail */
   .pick();
 

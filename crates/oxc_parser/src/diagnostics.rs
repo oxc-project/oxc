@@ -4,7 +4,25 @@ use oxc_ast::ast::REGEXP_FLAGS_LIST;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 
-use crate::modifiers::{Modifier, ModifierKind};
+use crate::modifiers::{Modifier, ModifierKind, ModifierKinds};
+
+trait DiagnosticExt {
+    fn with_allowed_modifier_help(self, allowed: Option<ModifierKinds>) -> Self;
+}
+
+impl DiagnosticExt for OxcDiagnostic {
+    fn with_allowed_modifier_help(self, allowed: Option<ModifierKinds>) -> Self {
+        if let Some(allowed) = allowed {
+            match allowed.count() {
+                0 => self.with_help("No modifiers are allowed here."),
+                1 => self.with_help(format!("Only '{allowed}' modifier is allowed here.")),
+                _ => self.with_help(format!("Allowed modifiers are: {allowed}")),
+            }
+        } else {
+            self
+        }
+    }
+}
 
 #[inline]
 fn ts_error<C, M>(code: C, message: M) -> OxcDiagnostic
@@ -29,6 +47,11 @@ pub fn overlong_source() -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn file_appears_to_be_binary() -> OxcDiagnostic {
+    ts_error("1490", "File appears to be binary.")
+}
+
+#[cold]
 pub fn flow(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Flow is not supported").with_label(span)
 }
@@ -39,9 +62,84 @@ pub fn unexpected_token(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn private_identifier_in_property_name(name: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("Private identifier '#{name}' is not allowed in property names"))
+        .with_label(span)
+}
+
+#[cold]
+pub fn html_comment_in_module(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("HTML comments are not allowed in modules").with_label(span)
+}
+
+#[cold]
+pub fn merge_conflict_marker(
+    start_span: Span,
+    middle_span: Option<Span>,
+    end_span: Option<Span>,
+) -> OxcDiagnostic {
+    let mut diagnostic = OxcDiagnostic::error("Encountered diff marker")
+        .and_label(
+            start_span.primary_label(
+                "between this marker and `=======` is the code that we're merging into",
+            ),
+        )
+        .with_help(
+            "Conflict markers indicate that a merge was started but could not be completed due to \
+         merge conflicts.\n\
+         To resolve a conflict, keep only the code you want and then delete the lines containing \
+         conflict markers.\n\
+         If you're having merge conflicts after pulling new code, the top section is the code you \
+         already had and the bottom section is the remote code.\n\
+         If you're in the middle of a rebase, the top section is the code being rebased onto and \
+         the bottom section is the code coming from the current commit being rebased.\n\
+         If you have nested conflicts, resolve the outermost conflict first.",
+        );
+
+    if let Some(middle) = middle_span {
+        diagnostic = diagnostic
+            .and_label(middle.label("between this marker and `>>>>>>>` is the incoming code"));
+    } else {
+        // Incomplete conflict - missing middle or end markers
+        diagnostic = diagnostic.with_help(
+            "This conflict marker appears to be incomplete (missing `=======` or `>>>>>>>`).\n\
+         Check if the conflict markers were accidentally modified or partially deleted.",
+        );
+    }
+
+    if let Some(end) = end_span {
+        diagnostic = diagnostic.and_label(end.label("this marker concludes the conflict region"));
+    }
+
+    diagnostic
+}
+
+#[cold]
+pub fn jsx_in_non_jsx(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Unexpected JSX expression")
+        .with_label(span)
+        .with_help("JSX syntax is disabled and should be enabled via the parser options")
+}
+
+#[cold]
 pub fn expect_token(x0: &str, x1: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("Expected `{x0}` but found `{x1}`"))
         .with_label(span.label(format!("`{x0}` expected")))
+}
+
+#[cold]
+pub fn expect_closing(
+    expected_closing: &str,
+    actual: &str,
+    span: Span,
+    opening_span: Span,
+) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("Expected `{expected_closing}` but found `{actual}`")).with_labels(
+        [
+            span.primary_label(format!("`{expected_closing}` expected")),
+            opening_span.label("Opened here"),
+        ],
+    )
 }
 
 #[cold]
@@ -184,6 +282,60 @@ pub fn lexical_declaration_single_statement(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn export_assignment_in_namespace(span: Span) -> OxcDiagnostic {
+    ts_error("1063", "An export assignment cannot be used in a namespace.").with_label(span)
+}
+
+#[cold]
+pub fn import_in_namespace(span: Span) -> OxcDiagnostic {
+    ts_error("1147", "Import declarations in a namespace cannot reference a module.")
+        .with_label(span)
+}
+
+#[cold]
+pub fn export_in_namespace(span: Span) -> OxcDiagnostic {
+    ts_error("1194", "Export declarations are not permitted in a namespace.").with_label(span)
+}
+
+#[cold]
+pub fn default_export_in_namespace(span: Span) -> OxcDiagnostic {
+    ts_error("1319", "A default export can only be used in an ECMAScript-style module.")
+        .with_label(span)
+}
+
+#[cold]
+pub fn global_export_in_namespace(span: Span) -> OxcDiagnostic {
+    ts_error("1316", "Global module exports may only appear at top level.").with_label(span)
+}
+
+#[cold]
+pub fn statement_in_ambient_context(span: Span) -> OxcDiagnostic {
+    ts_error("1036", "Statements are not allowed in ambient contexts.").with_label(span)
+}
+
+#[cold]
+pub fn declare_in_ambient_context(span: Span) -> OxcDiagnostic {
+    ts_error("1038", "A 'declare' modifier cannot be used in an already ambient context.")
+        .with_label(span)
+}
+
+#[cold]
+pub fn declaration_single_statement(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Declaration cannot appear in a single-statement context")
+        .with_help("Wrap this declaration in a block statement")
+        .with_label(span)
+}
+
+#[cold]
+pub fn const_type_parameter(span: Span) -> OxcDiagnostic {
+    ts_error(
+        "1277",
+        "'const' modifier can only appear on a type parameter of a function, method or class",
+    )
+    .with_label(span)
+}
+
+#[cold]
 pub fn async_function_declaration(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Async functions can only be declared at the top level or inside a block")
         .with_label(span)
@@ -218,14 +370,6 @@ pub fn class_declaration(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-/// A class member cannot have the 'const' keyword. ts(1248)
-#[cold]
-pub fn const_class_member(span: Span) -> OxcDiagnostic {
-    ts_error("1248", "A class member cannot have the 'const' keyword.")
-        .with_help("Did you mean `readonly`?")
-        .with_label(span)
-}
-
 // 'extends' clause already seen. ts(1172)
 #[cold]
 pub fn extends_clause_already_seen(span: Span) -> OxcDiagnostic {
@@ -243,12 +387,69 @@ pub fn extends_clause_must_precede_implements(span: Span, implements_span: Span)
         .with_help("Move the 'extends' clause before the 'implements' clause")
 }
 
+// Classes can only extend a single class. ts(1174)
+#[cold]
+pub fn classes_can_only_extend_single_class(span: Span) -> OxcDiagnostic {
+    ts_error("1174", "Classes can only extend a single class.")
+        .with_label(span)
+        .with_help("Remove the extra base class or use interfaces for multiple inheritance")
+}
+
 // 'implements' clause already seen. ts(1175)
 #[cold]
 pub fn implements_clause_already_seen(span: Span, seen_span: Span) -> OxcDiagnostic {
     ts_error("1175", "'implements' clause already seen")
         .with_labels([seen_span, span])
         .with_help("Merge the two 'implements' clauses into one by a ','")
+}
+
+/// A class member cannot have the 'const' keyword. ts(1248)
+#[cold]
+pub fn const_class_member(span: Span) -> OxcDiagnostic {
+    ts_error("1248", "A class member cannot have the 'const' keyword.")
+        .with_help("Did you mean `readonly`?")
+        .with_label(span)
+}
+
+// A required element cannot follow an optional element. ts(1257)
+#[cold]
+pub fn required_element_cannot_follow_optional_element(
+    span: Span,
+    optional_span: Span,
+) -> OxcDiagnostic {
+    ts_error("1257", "A required element cannot follow an optional element.").with_labels([
+        span.label("Required element here"),
+        optional_span.label("Optional element seen here"),
+    ])
+}
+
+/// A rest element cannot follow another rest element. ts(1265)
+#[cold]
+pub fn rest_element_cannot_follow_another_rest_element(
+    seen_span: Span,
+    span: Span,
+) -> OxcDiagnostic {
+    ts_error("1265", "A rest element cannot follow another rest element.")
+        .with_labels([span.label("Second rest element here"), seen_span.label("First seen here")])
+}
+
+/// An optional element cannot follow a rest element. ts(1266)
+#[cold]
+pub fn optional_element_cannot_follow_rest_element(span: Span, rest_span: Span) -> OxcDiagnostic {
+    ts_error("1266", "An optional element cannot follow a rest element.").with_labels([
+        span.label("Optional element here"),
+        rest_span.label("Rest element seen here"),
+    ])
+}
+
+// A type-only import can specify a default import or named bindings, but not both. ts(1363)
+#[cold]
+pub fn type_only_import_default_and_named(specifier_span: Span) -> OxcDiagnostic {
+    ts_error(
+        "1363",
+        "A type-only import can specify a default import or named bindings, but not both.",
+    )
+    .with_label(specifier_span)
 }
 
 #[cold]
@@ -273,14 +474,14 @@ pub fn rest_element_trailing_comma(span: Span) -> OxcDiagnostic {
 
 #[cold]
 pub fn invalid_binding_rest_element(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Invalid rest element")
-        .with_help("Expected identifier in rest element")
+    OxcDiagnostic::error("Invalid rest element target in destructuring pattern")
+        .with_help("Expected an identifier, like `...rest`.")
         .with_label(span)
 }
 
 #[cold]
 pub fn a_rest_parameter_cannot_be_optional(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("A rest parameter cannot be optional")
+    ts_error("1047", "A rest parameter cannot be optional")
         .with_label(span)
         .with_help("Remove this `?`. The default value is an empty array")
 }
@@ -288,6 +489,11 @@ pub fn a_rest_parameter_cannot_be_optional(span: Span) -> OxcDiagnostic {
 #[cold]
 pub fn invalid_assignment(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Cannot assign to this expression").with_label(span)
+}
+
+#[cold]
+pub fn assignment_is_not_simple(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Invalid left-hand side in assignment").with_label(span)
 }
 
 #[cold]
@@ -336,7 +542,14 @@ pub fn for_await(span: Span) -> OxcDiagnostic {
 
 #[cold]
 pub fn new_dynamic_import(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Cannot use new with dynamic import").with_label(span)
+    OxcDiagnostic::error("Cannot use new with dynamic import")
+        .with_label(span)
+        .with_help("Wrap this with parenthesis")
+}
+
+#[cold]
+pub fn new_super(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("'new super()' is not allowed").with_label(span)
 }
 
 #[cold]
@@ -381,15 +594,29 @@ pub fn optional_definite_property(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn definite_assignment_assertion_not_permitted(span: Span) -> OxcDiagnostic {
+    ts_error("1255", "A definite assignment assertion '!' is not permitted in this context.")
+        .with_label(span)
+}
+
+#[cold]
 pub fn identifier_async(x0: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("Cannot use `{x0}` as an identifier in an async context"))
         .with_label(span1)
 }
 
 #[cold]
-pub fn identifier_generator(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("Cannot use `{x0}` as an identifier in a generator context"))
-        .with_label(span1)
+pub fn identifier_generator(x0: &str, span1: Span, looks_like_expression: bool) -> OxcDiagnostic {
+    let diagnostic =
+        OxcDiagnostic::error(format!("Cannot use `{x0}` as an identifier in a generator context"))
+            .with_label(span1);
+    if looks_like_expression {
+        diagnostic.with_help(format!(
+            "Wrap this in parentheses if you want to use a `{x0}` expression here"
+        ))
+    } else {
+        diagnostic
+    }
 }
 
 #[cold]
@@ -408,6 +635,17 @@ pub fn identifier_reserved_word(span: Span, reserved: &str) -> OxcDiagnostic {
 #[cold]
 pub fn constructor_generator(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Constructor can't be a generator").with_label(span)
+}
+
+#[cold]
+pub fn declare_constructor(span: Span) -> OxcDiagnostic {
+    ts_error("1031", "'declare' modifier cannot appear on a constructor declaration.")
+        .with_label(span)
+}
+
+#[cold]
+pub fn constructor_return_type(span: Span) -> OxcDiagnostic {
+    ts_error("1093", "Type annotation cannot appear on a constructor declaration.").with_label(span)
 }
 
 #[cold]
@@ -465,12 +703,16 @@ pub fn ts_constructor_this_parameter(span: Span) -> OxcDiagnostic {
 
 #[cold]
 pub fn ts_constructor_type_parameter(span: Span) -> OxcDiagnostic {
-    ts_error("1092", "Type parameters cannot appear on a constructor declaration").with_label(span)
+    ts_error("1092", "Type parameters cannot appear on a constructor declaration")
+        .with_label(span)
+        .with_help("Instead, add type parameters to the class itself")
 }
 
 #[cold]
 pub fn ts_arrow_function_this_parameter(span: Span) -> OxcDiagnostic {
-    ts_error("2730", "An arrow function cannot have a `this` parameter.").with_label(span)
+    ts_error("2730", "An arrow function cannot have a `this` parameter.")
+        .with_label(span)
+        .with_help("Arrow function does not bind `this` and inherits `this` from the outer scope")
 }
 
 #[cold]
@@ -484,10 +726,28 @@ pub fn ts_empty_type_argument_list(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn ts_instantiation_expression_cannot_be_followed_by_property_access(
+    span: Span,
+) -> OxcDiagnostic {
+    ts_error("1477", "An instantiation expression cannot be followed by a property access.")
+        .with_label(span)
+}
+
+#[cold]
+pub fn ts_string_literal_expected(span: Span) -> OxcDiagnostic {
+    ts_error("1141", "String literal expected.").with_label(span)
+}
+
+#[cold]
 pub fn unexpected_super(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("'super' can only be used with function calls or in property accesses")
-        .with_help("replace with `super()` or `super.prop` or `super[prop]`")
+        .with_help("Replace with `super()` or `super.prop` or `super[prop]`")
         .with_label(span)
+}
+
+#[cold]
+pub fn super_private(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Private fields cannot be accessed on super").with_label(span)
 }
 
 #[cold]
@@ -513,6 +773,11 @@ pub fn v8_intrinsic_spread_elem(span: Span) -> OxcDiagnostic {
 #[cold]
 pub fn a_set_accessor_cannot_have_a_return_type_annotation(span: Span) -> OxcDiagnostic {
     ts_error("1095", "A 'set' accessor cannot have a return type annotation.").with_label(span)
+}
+
+#[cold]
+pub fn accessor_cannot_have_type_parameters(span: Span) -> OxcDiagnostic {
+    ts_error("1094", "An accessor cannot have type parameters.").with_label(span)
 }
 
 #[cold]
@@ -559,9 +824,45 @@ pub fn using_declaration_cannot_be_exported(identifier: &str, span: Span) -> Oxc
 }
 
 #[cold]
+pub fn using_declaration_not_allowed_in_switch_bare_case(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Using declaration cannot appear in the bare case statement.")
+        .with_label(span)
+        .with_help("Wrap this declaration in a block statement")
+}
+
+#[cold]
+pub fn using_declarations_not_allowed_in_ambient_contexts(span: Span) -> OxcDiagnostic {
+    ts_error("1545", "'using' declarations are not allowed in ambient contexts.").with_label(span)
+}
+
+#[cold]
+pub fn await_using_declarations_not_allowed_in_ambient_contexts(span: Span) -> OxcDiagnostic {
+    ts_error("1546", "'await using' declarations are not allowed in ambient contexts.")
+        .with_label(span)
+}
+
+#[cold]
 pub fn jsx_element_no_match(span: Span, span1: Span, name: &str) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("Expected corresponding JSX closing tag for '{name}'."))
-        .with_labels([span, span1])
+        .with_labels([
+            span1.primary_label(format!("Expected `</{name}>`")),
+            span.label("Opened here"),
+        ])
+}
+
+#[cold]
+pub fn jsx_fragment_no_match(opening_span: Span, closing_span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Expected corresponding closing tag for JSX fragment.").with_labels([
+        closing_span.primary_label("Expected `</>`"),
+        opening_span.label("Opened here"),
+    ])
+}
+
+#[cold]
+pub fn adjacent_jsx_elements(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Adjacent JSX elements must be wrapped in an enclosing tag.")
+        .with_help("Did you want a JSX fragment `<>...</>`?")
+        .with_label(span)
 }
 
 #[cold]
@@ -580,8 +881,16 @@ pub fn duplicate_export(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn import_meta(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("The only valid meta property for import is import.meta").with_label(span)
+pub fn duplicate_default_export(spans: impl IntoIterator<Item = Span>) -> OxcDiagnostic {
+    ts_error("2528", "A module cannot have multiple default exports.").with_labels(spans)
+}
+
+#[cold]
+pub fn invalid_import_property(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(
+        "The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`",
+    )
+    .with_label(span)
 }
 
 #[cold]
@@ -590,8 +899,38 @@ pub fn new_target(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn new_target_outside_function(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Unexpected new.target expression")
+        .with_help(
+            "new.target is only allowed in constructors, functions, and class field initializers",
+        )
+        .with_label(span)
+}
+
+#[cold]
+pub fn switch_multiple_default_clause(first_default: Span, other_default: Span) -> OxcDiagnostic {
+    ts_error("1113", "A 'default' clause cannot appear more than once in a 'switch' statement.")
+        .with_labels(vec![
+            first_default.label("First 'default' clause is here."),
+            other_default.label("Another 'default' clause cannot appear here."),
+        ])
+}
+
+#[cold]
+pub fn import_meta(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Unexpected import.meta expression")
+        .with_help("import.meta is only allowed in module code")
+        .with_label(span)
+}
+
+#[cold]
 pub fn private_in_private(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Unexpected right-hand side of private-in expression").with_label(span)
+}
+
+#[cold]
+pub fn unexpected_private_identifier(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Unexpected private identifier").with_label(span)
 }
 
 #[cold]
@@ -610,19 +949,29 @@ pub fn a_rest_element_cannot_have_an_initializer(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn a_rest_parameter_cannot_have_an_initializer(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("A rest parameter cannot have an initializer.").with_label(span)
+}
+
+#[cold]
 pub fn import_requires_a_specifier(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("import() requires a specifier.").with_label(span)
 }
 
 #[cold]
-pub fn modifier_cannot_be_used_here(modifier: &Modifier) -> OxcDiagnostic {
+pub fn modifier_cannot_be_used_here(
+    modifier: &Modifier,
+    allowed: Option<ModifierKinds>,
+) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("'{}' modifier cannot be used here.", modifier.kind))
-        .with_label(modifier.span)
+        .with_label(modifier.span())
+        .with_allowed_modifier_help(allowed)
 }
 
 #[cold]
 pub fn modifier_only_on_property_declaration_or_index_signature(
     modifier: &Modifier,
+    allowed: Option<ModifierKinds>,
 ) -> OxcDiagnostic {
     ts_error(
         "1024",
@@ -631,13 +980,14 @@ pub fn modifier_only_on_property_declaration_or_index_signature(
             modifier.kind
         ),
     )
-    .with_label(modifier.span)
+    .with_label(modifier.span())
+    .with_allowed_modifier_help(allowed)
 }
 
 #[cold]
 pub fn accessibility_modifier_already_seen(modifier: &Modifier) -> OxcDiagnostic {
     ts_error("1028", "Accessibility modifier already seen.")
-        .with_label(modifier.span)
+        .with_label(modifier.span())
         .with_help("Remove the duplicate modifier.")
 }
 
@@ -650,51 +1000,119 @@ pub fn modifier_must_precede_other_modifier(
         "1029",
         format!("'{}' modifier must precede '{}' modifier.", modifier.kind, other_modifier),
     )
-    .with_label(modifier.span)
+    .with_label(modifier.span())
+}
+
+#[cold]
+pub fn modifier_cannot_be_used_with_other_modifier(
+    span: Span,
+    modifier: ModifierKind,
+    other_modifier: ModifierKind,
+) -> OxcDiagnostic {
+    ts_error(
+        "1243",
+        format!("'{modifier}' modifier cannot be used with '{other_modifier}' modifier."),
+    )
+    .with_label(span)
+}
+
+#[cold]
+pub fn modifier_cannot_be_used_in_ambient_context(
+    span: Span,
+    modifier: ModifierKind,
+) -> OxcDiagnostic {
+    ts_error("1040", format!("'{modifier}' modifier cannot be used in an ambient context."))
+        .with_label(span)
 }
 
 #[cold]
 pub fn modifier_already_seen(modifier: &Modifier) -> OxcDiagnostic {
     ts_error("1030", format!("'{}' modifier already seen.", modifier.kind))
-        .with_label(modifier.span)
+        .with_label(modifier.span())
         .with_help("Remove the duplicate modifier.")
 }
 
-pub fn cannot_appear_on_class_elements(modifier: &Modifier) -> OxcDiagnostic {
+pub fn cannot_appear_on_class_elements(
+    modifier: &Modifier,
+    allowed: Option<ModifierKinds>,
+) -> OxcDiagnostic {
     ts_error(
         "1031",
         format!("'{}' modifier cannot appear on class elements of this kind.", modifier.kind),
     )
-    .with_label(modifier.span)
+    .with_label(modifier.span())
+    .with_allowed_modifier_help(allowed)
 }
 
-pub fn cannot_appear_on_a_type_member(modifier: &Modifier) -> OxcDiagnostic {
+pub fn cannot_appear_on_a_type_member(
+    modifier: &Modifier,
+    allowed: Option<ModifierKinds>,
+) -> OxcDiagnostic {
     ts_error("1070", format!("'{}' modifier cannot appear on a type member.", modifier.kind))
-        .with_label(modifier.span)
+        .with_label(modifier.span())
+        .with_allowed_modifier_help(allowed)
 }
 
 #[cold]
-pub fn cannot_appear_on_a_type_parameter(modifier: &Modifier) -> OxcDiagnostic {
+pub fn cannot_appear_on_a_type_parameter(
+    modifier: &Modifier,
+    allowed: Option<ModifierKinds>,
+) -> OxcDiagnostic {
     ts_error("1273", format!("'{}' modifier cannot be used on a type parameter.", modifier.kind))
-        .with_label(modifier.span)
+        .with_label(modifier.span())
+        .with_allowed_modifier_help(allowed)
 }
 
-pub fn cannot_appear_on_a_parameter(modifier: &Modifier) -> OxcDiagnostic {
+#[cold]
+pub fn a_parameter_cannot_have_question_mark_and_initializer(span: Span) -> OxcDiagnostic {
+    ts_error("1015", "A parameter cannot have a question mark and an initializer.").with_label(span)
+}
+
+#[cold]
+pub fn can_only_appear_on_a_type_parameter_of_a_class_interface_or_type_alias(
+    modifier: ModifierKind,
+    span: Span,
+) -> OxcDiagnostic {
+    ts_error("1274", format!("'{modifier}' modifier can only appear on a type parameter of a class, interface or type alias."))
+        .with_label(span)
+}
+
+pub fn cannot_appear_on_a_parameter(
+    modifier: &Modifier,
+    allowed: Option<ModifierKinds>,
+) -> OxcDiagnostic {
     ts_error("1090", format!("'{}' modifier cannot appear on a parameter.", modifier.kind))
-        .with_label(modifier.span)
+        .with_label(modifier.span())
+        .with_allowed_modifier_help(allowed)
 }
 
-pub fn cannot_appear_on_an_index_signature(modifier: &Modifier) -> OxcDiagnostic {
+#[cold]
+pub fn parameter_property_cannot_be_binding_pattern(span: Span) -> OxcDiagnostic {
+    ts_error("1187", "A parameter property may not be declared using a binding pattern.")
+        .with_label(span)
+}
+
+#[cold]
+pub fn constructor_cannot_be_parameter_property_name(span: Span) -> OxcDiagnostic {
+    ts_error("2398", "'constructor' cannot be used as a parameter property name.").with_label(span)
+}
+
+pub fn cannot_appear_on_an_index_signature(
+    modifier: &Modifier,
+    allowed: Option<ModifierKinds>,
+) -> OxcDiagnostic {
     ts_error("1071", format!("'{}' modifier cannot appear on an index signature.", modifier.kind))
-        .with_label(modifier.span)
+        .with_label(modifier.span())
+        .with_allowed_modifier_help(allowed)
 }
 
-pub fn accessor_modifier(modifier: &Modifier) -> OxcDiagnostic {
+pub fn accessor_modifier(modifier: &Modifier, allowed: Option<ModifierKinds>) -> OxcDiagnostic {
     ts_error(
         "1243",
         format!("'accessor' modifier cannot be used with '{}' modifier.", modifier.kind),
     )
-    .with_label(modifier.span)
+    .with_label(modifier.span())
+    .with_allowed_modifier_help(allowed.map(|a| a.without(ModifierKind::Accessor)))
 }
 
 #[cold]
@@ -704,9 +1122,13 @@ pub fn readonly_in_array_or_tuple_type(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn accessibility_modifier_on_private_property(modifier: &Modifier) -> OxcDiagnostic {
+pub fn accessibility_modifier_on_private_property(
+    modifier: &Modifier,
+    _allowed: Option<ModifierKinds>,
+) -> OxcDiagnostic {
     ts_error("18010", "An accessibility modifier cannot be used with a private identifier.")
-        .with_label(modifier.span)
+        .with_label(modifier.span())
+        .with_help("Private identifiers are enforced at runtime, while accessibility modifiers only affect type checking, so using both is redundant.")
 }
 
 #[cold]
@@ -739,6 +1161,26 @@ pub fn index_signature_one_parameter(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn index_signature_parameter_type(span: Span) -> OxcDiagnostic {
+    ts_error(
+        "1268",
+        "An index signature parameter type must be 'string', 'number', 'symbol', or a template \
+         literal type.",
+    )
+    .with_label(span)
+}
+
+#[cold]
+pub fn index_signature_parameter_literal_type(span: Span) -> OxcDiagnostic {
+    ts_error(
+        "1337",
+        "An index signature parameter type cannot be a literal type or generic type. Consider \
+         using a mapped object type instead.",
+    )
+    .with_label(span)
+}
+
+#[cold]
 pub fn mixed_coalesce(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Logical expressions and coalesce expressions cannot be mixed")
         .with_help("Wrap either expression by parentheses")
@@ -754,7 +1196,9 @@ pub fn unexpected_exponential(x0: &str, span1: Span) -> OxcDiagnostic {
 
 #[cold]
 pub fn import_equals_can_only_be_used_in_typescript_files(span: Span) -> OxcDiagnostic {
-    ts_error("8002", "'import ... =' can only be used in TypeScript files.").with_label(span)
+    ts_error("8002", "'import ... =' can only be used in TypeScript files.")
+        .with_label(span)
+        .with_help("TypeScript transforms 'import ... =' to 'const ... ='")
 }
 
 #[cold]
@@ -783,6 +1227,37 @@ pub fn abstract_property_cannot_have_initializer(name: &str, span: Span) -> OxcD
         format!("Property '{name}' cannot have an initializer because it is marked abstract."),
     )
     .with_label(span)
+}
+
+#[cold]
+pub fn abstract_with_private_identifier(span: Span) -> OxcDiagnostic {
+    ts_error("18019", "'abstract' modifier cannot be used with a private identifier.")
+        .with_label(span)
+}
+
+#[cold]
+pub fn jsx_expressions_may_not_use_the_comma_operator(span: Span) -> OxcDiagnostic {
+    ts_error("18007", "JSX expressions may not use the comma operator")
+        .with_help("Did you mean to write an array?")
+        .with_label(span)
+}
+
+#[cold]
+pub fn import_alias_cannot_use_import_type(span: Span) -> OxcDiagnostic {
+    ts_error("1392", "An import alias cannot use 'import type'").with_label(span)
+}
+
+#[cold]
+pub fn reserved_type_name(span: Span, reserved_name: &str, syntax_name: &str) -> OxcDiagnostic {
+    let code = match syntax_name {
+        "Type parameter" => "2368",
+        "Interface" => "2427",
+        "Enum" => "2431",
+        "Type alias" => "2457",
+        // "Class" and any other declaration form
+        _ => "2414",
+    };
+    ts_error(code, format!("{syntax_name} name cannot be '{reserved_name}'")).with_label(span)
 }
 
 #[cold]
@@ -818,13 +1293,13 @@ pub fn decorator_on_overload(span: Span) -> OxcDiagnostic {
 
 #[cold]
 pub fn as_in_ts(span: Span) -> OxcDiagnostic {
-    ts_error("8037", "Type assertion expressions can only be used in TypeScript files.")
+    ts_error("8016", "Type assertion expressions can only be used in TypeScript files.")
         .with_label(span)
 }
 
 #[cold]
 pub fn satisfies_in_ts(span: Span) -> OxcDiagnostic {
-    ts_error("8016", "Type satisfaction expressions can only be used in TypeScript files.")
+    ts_error("8037", "Type satisfaction expressions can only be used in TypeScript files.")
         .with_label(span)
 }
 
@@ -844,14 +1319,38 @@ pub fn rest_after_tuple_member_name(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn parameter_modifiers_in_ts(modifier: &Modifier) -> OxcDiagnostic {
+pub fn parameter_modifiers_in_ts(
+    modifier: &Modifier,
+    allowed: Option<ModifierKinds>,
+) -> OxcDiagnostic {
     ts_error("8012", "Parameter modifiers can only be used in TypeScript files.")
-        .with_label(modifier.span)
+        .with_label(modifier.span())
+        .with_allowed_modifier_help(allowed)
+}
+
+#[cold]
+pub fn implements_clause_in_ts(span: Span) -> OxcDiagnostic {
+    ts_error("8005", "'implements' clauses can only be used in TypeScript files.").with_label(span)
 }
 
 #[cold]
 pub fn implementation_in_ambient(span: Span) -> OxcDiagnostic {
     ts_error("1183", "An implementation cannot be declared in ambient contexts.").with_label(span)
+}
+
+#[cold]
+pub fn generator_in_ambient_context(span: Span) -> OxcDiagnostic {
+    ts_error("1221", "Generators are not allowed in an ambient context.").with_label(span)
+}
+
+#[cold]
+pub fn overload_signature_generator(span: Span) -> OxcDiagnostic {
+    ts_error("1222", "An overload signature cannot be declared as a generator.").with_label(span)
+}
+
+#[cold]
+pub fn initializers_not_allowed_in_ambient_contexts(span: Span) -> OxcDiagnostic {
+    ts_error("1039", "Initializers are not allowed in ambient contexts.").with_label(span)
 }
 
 #[cold]
@@ -870,16 +1369,14 @@ pub fn interface_extend(span: Span) -> OxcDiagnostic {
 
 #[cold]
 pub fn reg_exp_flag_u_and_v(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(
-        "The 'u' and 'v' regular expression flags cannot be enabled at the same time",
-    )
-    .with_label(span)
-    .with_help("v flag enables additional syntax over u flag")
+    ts_error("1502", "The 'u' and 'v' regular expression flags cannot be enabled at the same time")
+        .with_label(span)
+        .with_help("v flag enables additional syntax over u flag")
 }
 
 #[cold]
 pub fn setter_with_parameters(span: Span, parameters_count: usize) -> OxcDiagnostic {
-    OxcDiagnostic::error("A 'set' accessor must have exactly one parameter.")
+    ts_error("1049", "A 'set' accessor must have exactly one parameter.")
         .with_label(span)
         .with_help(if parameters_count == 0 {
             "Add a parameter here"
@@ -893,7 +1390,7 @@ pub fn setter_with_rest_parameter(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("A 'set' accessor cannot have rest parameter.").with_label(span)
 }
 #[cold]
-pub fn setter_with_assignment_pattern(span: Span) -> OxcDiagnostic {
+pub fn setter_with_initializer(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("A 'set' accessor cannot have an initializer.").with_label(span)
 }
 
@@ -902,6 +1399,16 @@ pub fn getter_parameters(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("A 'get' accessor must not have any formal parameters.")
         .with_label(span)
         .with_help("Remove these parameters here")
+}
+
+#[cold]
+pub fn setter_with_optional_parameter(span: Span) -> OxcDiagnostic {
+    ts_error("1051", "A 'set' accessor cannot have an optional parameter.").with_label(span)
+}
+
+#[cold]
+pub fn accessor_cannot_have_this_parameter(span: Span) -> OxcDiagnostic {
+    ts_error("2784", "'get' and 'set' accessors cannot declare 'this' parameters.").with_label(span)
 }
 
 #[cold]
@@ -931,10 +1438,117 @@ pub fn invalid_assignment_target_default_value_operator(span: Span) -> OxcDiagno
 
 #[cold]
 pub fn invalid_rest_assignment_target(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Invalid rest operator's argument.").with_label(span)
+    OxcDiagnostic::error("Invalid rest element target in destructuring assignment")
+        .with_help("Expected an identifier or member expression, like `...rest` or `...obj.prop`.")
+        .with_label(span)
 }
 
 #[cold]
-pub fn modifiers_cannot_appear_here(span: Span) -> OxcDiagnostic {
-    ts_error("1184", "Modifiers cannot appear here.").with_label(span)
+pub fn modifiers_cannot_appear_here(
+    modifier: &Modifier,
+    _: Option<ModifierKinds>,
+) -> OxcDiagnostic {
+    ts_error("1184", "Modifiers cannot appear here.").with_label(modifier.span())
+}
+
+#[cold]
+pub fn expect_function_body(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Expected function body")
+        .with_label(span)
+        .with_help("Add a function body (`{}`).")
+}
+
+#[cold]
+pub fn expect_switch_clause(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Expected switch clause")
+        .with_label(span.label("`case` or `default` clause expected here"))
+        .with_help("If this is intended to be the condition for the switch statement, add `case` before it.")
+}
+
+#[cold]
+pub fn unexpected_optional_declaration(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Optional declaration is not allowed here")
+        .with_label(span)
+        .with_help("Remove the `?`")
+}
+
+#[cold]
+pub fn identifier_expected_after_question_dot(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Identifier expected after '?.'")
+        .with_label(span)
+        .with_help("Add an identifier after '?.'")
+}
+
+#[cold]
+pub fn identifier_expected_jsx_no_hyphen(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Identifiers in JSX cannot contain hyphens")
+        .with_label(span)
+        .with_help("Remove the hyphen from the identifier")
+}
+
+#[cold]
+pub fn jsx_attribute_value_empty_expression(span: Span) -> OxcDiagnostic {
+    ts_error("17000", "JSX attributes must only be assigned a non-empty 'expression'.")
+        .with_label(span)
+}
+
+#[cold]
+pub fn import_attribute_value_must_be_string_literal(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Only string literals are allowed as module attribute values.")
+        .with_label(span)
+        .with_help("Wrap this with quotes")
+}
+
+// TS18058
+#[cold]
+pub fn default_import_not_allowed_in_defer(span: Span) -> OxcDiagnostic {
+    ts_error("18058", "Default imports are not allowed in a deferred import.").with_label(span)
+}
+
+// TS18059
+#[cold]
+pub fn named_import_not_allowed_in_defer(span: Span) -> OxcDiagnostic {
+    ts_error("18059", "Named imports are not allowed in a deferred import.").with_label(span)
+}
+
+#[cold]
+pub fn only_default_import_allowed_in_source_phase(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Only a single default import is allowed in a source phase import.")
+        .with_label(span)
+}
+
+#[cold]
+pub fn ts_import_type_options_expected_with(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Expected 'with' in import type options").with_label(span)
+}
+
+#[cold]
+pub fn ts_import_type_options_invalid_key(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Import attributes keys must be identifier or string literal.")
+        .with_label(span)
+}
+
+#[cold]
+pub fn ts_import_type_options_no_spread(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Spread elements are not allowed in import type options.").with_label(span)
+}
+
+// This syntax is reserved in files with the .mts or .cts extension. Use an `as` expression instead. ts(7059)
+#[cold]
+pub fn jsx_type_assertion_in_mts_cts(span: Span) -> OxcDiagnostic {
+    ts_error(
+        "7059",
+        "This syntax is reserved in files with the .mts or .cts extension. Use an `as` expression instead.",
+    )
+    .with_label(span)
+}
+
+// This syntax is reserved in files with the .mts or .cts extension. Add a trailing comma or explicit constraint. ts(7060)
+#[cold]
+pub fn jsx_type_parameter_in_mts_cts(span: Span) -> OxcDiagnostic {
+    ts_error(
+        "7060",
+        "This syntax is reserved in files with the .mts or .cts extension. Add a trailing comma or explicit constraint.",
+    )
+    .with_label(span)
 }

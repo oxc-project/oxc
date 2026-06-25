@@ -14,16 +14,18 @@ use serde_json::Value;
 use crate::{AstNode, context::LintContext, rule::Rule, utils::get_element_type};
 
 fn media_has_caption_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Missing <track> element with captions inside <audio> or <video> element")
-        .with_help("Media elements such as <audio> and <video> must have a <track> for captions.")
-        .with_label(span)
+    OxcDiagnostic::warn(
+        "Missing `<track>` element with captions inside `<audio>` or `<video>` element",
+    )
+    .with_help("Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.")
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
 pub struct MediaHasCaption(Box<MediaHasCaptionConfig>);
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct MediaHasCaptionConfig {
     /// Element names to treat as `<audio>` elements
     audio: Vec<Cow<'static, str>>,
@@ -71,10 +73,12 @@ declare_oxc_lint!(
     jsx_a11y,
     correctness,
     config = MediaHasCaptionConfig,
+    version = "0.1.1",
+    short_description = "Checks if `<audio>` and `<video>` elements have a `<track>` element for captions.",
 );
 
 impl Rule for MediaHasCaption {
-    fn from_configuration(value: Value) -> Self {
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
         let mut config = MediaHasCaptionConfig::default();
 
         if let Some(arr) = value.as_array() {
@@ -102,7 +106,7 @@ impl Rule for MediaHasCaption {
             }
         }
 
-        Self(Box::new(config))
+        Ok(Self(Box::new(config)))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -149,35 +153,27 @@ impl Rule for MediaHasCaption {
             return;
         };
 
-        let has_caption = if parent.children.is_empty() {
-            ctx.diagnostic(media_has_caption_diagnostic(parent.opening_element.span));
-            false
-        } else {
-            parent.children.iter().any(|child| match child {
-                JSXChild::Element(child_el) => {
-                    let child_name = get_element_type(ctx, &child_el.opening_element);
+        let has_caption = parent.children.iter().any(|child| match child {
+            JSXChild::Element(child_el) => {
+                let child_name = get_element_type(ctx, &child_el.opening_element);
 
-                    self.0.track.contains(&child_name)
-                        && child_el.opening_element.attributes.iter().any(|attr| {
-                            let JSXAttributeItem::Attribute(attr) = attr else { return false };
-                            let JSXAttributeName::Identifier(iden) = &attr.name else {
-                                return false;
-                            };
-                            if let Some(JSXAttributeValue::StringLiteral(s)) = &attr.value {
-                                return iden.name == "kind"
-                                    && s.value.eq_ignore_ascii_case("captions");
-                            }
-                            false
-                        })
-                }
-                _ => false,
-            })
-        };
-
-        let span = parent.span;
+                self.0.track.contains(&child_name)
+                    && child_el.opening_element.attributes.iter().any(|attr| {
+                        let JSXAttributeItem::Attribute(attr) = attr else { return false };
+                        let JSXAttributeName::Identifier(iden) = &attr.name else {
+                            return false;
+                        };
+                        if let Some(JSXAttributeValue::StringLiteral(s)) = &attr.value {
+                            return iden.name == "kind" && s.value.eq_ignore_ascii_case("captions");
+                        }
+                        false
+                    })
+            }
+            _ => false,
+        });
 
         if !has_caption {
-            ctx.diagnostic(media_has_caption_diagnostic(span));
+            ctx.diagnostic(media_has_caption_diagnostic(parent.span));
         }
     }
 }
@@ -266,6 +262,8 @@ fn test() {
         (r"<Audio><Track kind='subtitles' /></Audio>", None, Some(settings())),
         (r"<Video><Track kind='subtitles' /></Video>", None, Some(settings())),
         (r"<Box as='audio'><Track kind='subtitles' /></Box>", None, Some(settings())),
+        (r#"<audio src="talk.mp3" controls />"#, None, None),
+        (r#"<video src="movie.mp4" controls />"#, None, None),
     ];
 
     Tester::new(MediaHasCaption::NAME, MediaHasCaption::PLUGIN, pass, fail).test_and_snapshot();

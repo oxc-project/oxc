@@ -1,0 +1,3 @@
+# `oxfmt` looks for the nearest `.editorconfig` from the `cwd`.
+# Therefore, during test execution, it may inadvertently refer to the `.editorconfig` at the repository root.
+# To prevent this, we place an empty `.editorconfig` here.

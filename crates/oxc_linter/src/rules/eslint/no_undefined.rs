@@ -15,12 +15,12 @@ fn no_undefined_diagnostic(span: Span) -> OxcDiagnostic {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow the use of `undefined` as an identifier
+    /// Disallow the use of `undefined` as an identifier.
     ///
     /// ### Why is this bad?
     ///
-    /// Using undefined directly can lead to bugs, since it can be shadowed or overwritten in JavaScript.
-    /// It's safer and more intentional to use null or rely on implicit undefined (e.g., missing return) to avoid accidental issues.
+    /// Using `undefined` directly can lead to bugs, since it can be shadowed or overwritten in JavaScript.
+    /// It's safer and more intentional to use `null` or rely on implicit `undefined` (e.g., missing return) to avoid accidental issues.
     ///
     /// ### Examples
     ///
@@ -58,6 +58,8 @@ declare_oxc_lint!(
     NoUndefined,
     eslint,
     restriction,
+    version = "0.5.3",
+    short_description = "Disallow the use of `undefined` as an identifier.",
 );
 
 fn diagnostic_undefined_keyword(name: &str, span: Span, ctx: &LintContext) {
@@ -91,6 +93,7 @@ fn test() {
         "void+0",
         "null",
         "undefine",
+        "ndefined",
         "a.undefined",
         "this.undefined",
         "global['undefined']",

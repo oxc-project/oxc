@@ -6,12 +6,13 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     AstNode,
     context::LintContext,
     globals::{HTML_TAG, VALID_ARIA_ROLES},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{get_element_type, get_prop_value, has_jsx_prop},
 };
 
@@ -23,11 +24,11 @@ fn aria_role_diagnostic(span: Span, help_suffix: &str) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct AriaRole(Box<AriaRoleConfig>);
 
-#[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct AriaRoleConfig {
     /// Determines if developer-created components are checked.
     #[serde(rename = "ignoreNonDOM")]
@@ -97,34 +98,14 @@ declare_oxc_lint!(
     AriaRole,
     jsx_a11y,
     correctness,
-    config = AriaRoleConfig
+    config = AriaRoleConfig,
+    version = "0.1.1",
+    short_description = "Enforce that elements with ARIA roles use a valid, non-abstract ARIA role.",
 );
 
 impl Rule for AriaRole {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let Some(value) = value.as_array() else {
-            return Self::default();
-        };
-        let mut ignore_non_dom = false;
-        let mut allowed_invalid_roles: Vec<String> = vec![];
-
-        let _ = value.iter().find(|v| {
-            if let serde_json::Value::Object(obj) = v {
-                if let Some(serde_json::Value::Bool(val)) = obj.get("ignoreNonDOM") {
-                    ignore_non_dom = *val;
-                }
-
-                if let Some(serde_json::Value::Array(val)) = obj.get("allowedInvalidRoles") {
-                    allowed_invalid_roles =
-                        val.iter().map(|v| v.as_str().unwrap().to_string()).collect();
-                }
-
-                return true;
-            }
-            false
-        });
-
-        Self(Box::new(AriaRoleConfig { ignore_non_dom, allowed_invalid_roles }))
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -149,13 +130,12 @@ impl Rule for AriaRole {
                     }
                 }
                 Some(JSXAttributeValue::StringLiteral(str)) => {
-                    let words_str = String::from(str.value.as_str());
-                    let words = words_str.split_whitespace();
-                    if words_str.trim().is_empty() {
+                    let value = str.value.as_str();
+                    if value.trim().is_empty() {
                         ctx.diagnostic(aria_role_diagnostic(str.span, ""));
-                    } else if let Some(error_prop) = words.into_iter().find(|word| {
+                    } else if let Some(error_prop) = value.split_whitespace().find(|word| {
                         !VALID_ARIA_ROLES.contains(word)
-                            && !self.allowed_invalid_roles.contains(&(*word).to_string())
+                            && !self.allowed_invalid_roles.iter().any(|s| s == word)
                     }) {
                         ctx.diagnostic(aria_role_diagnostic(
                             str.span,
@@ -176,13 +156,13 @@ fn test() {
     use crate::tester::Tester;
 
     fn ignore_non_dom_schema() -> serde_json::Value {
-        serde_json::json!([2,{
+        serde_json::json!([{
             "ignoreNonDOM": true
         }])
     }
 
     fn allowed_invalid_roles() -> serde_json::Value {
-        serde_json::json!([2,{
+        serde_json::json!([{
             "allowedInvalidRoles": ["invalid-role", "other-invalid-role"],
         }])
     }

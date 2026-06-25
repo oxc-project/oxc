@@ -11,7 +11,7 @@
 //! The parser has a minimal API with three inputs (a [memory arena](oxc_allocator::Allocator), a
 //! source string, and a [`SourceType`]) and one return struct (a [ParserReturn]).
 //!
-//! ```rust
+//! ```rust,ignore
 //! let parser_return = Parser::new(&allocator, &source_text, source_type).parse();
 //! ```
 //!
@@ -22,7 +22,7 @@
 //! # Performance
 //!
 //! The following optimization techniques are used:
-//! * AST is allocated in a memory arena ([bumpalo](https://docs.rs/bumpalo)) for fast AST drop
+//! * AST is allocated in a memory arena ([oxc_allocator](https://docs.rs/oxc_allocator)) for fast AST drop
 //! * [`oxc_span::Span`] offsets uses `u32` instead of `usize`
 //! * Scope binding, symbol resolution and complicated syntax errors are not done in the parser,
 //! they are delegated to the [semantic analyzer](https://docs.rs/oxc_semantic)
@@ -36,12 +36,12 @@
 //!
 //! <https://github.com/oxc-project/oxc/blob/main/crates/oxc_parser/examples/parser.rs>
 //!
-//! ```rust
+//! ```rust,ignore
 #![doc = include_str!("../examples/parser.rs")]
 //! ```
 //!
 //! ### Parsing TSX
-//! ```rust
+//! ```rust,ignore
 #![doc = include_str!("../examples/parser_tsx.rs")]
 //! ```
 //!
@@ -54,7 +54,7 @@
 //! For ad-hoc tasks, the semantic analyzer can be used to get a parent pointing tree with untyped nodes,
 //! the nodes can be iterated through a sequential loop.
 //!
-//! ```rust
+//! ```rust,ignore
 //! for node in semantic.nodes().iter() {
 //!     match node.kind() {
 //!         // check node
@@ -64,8 +64,9 @@
 //!
 //! See [full linter example](https://github.com/Boshen/oxc/blob/ab2ef4f89ba3ca50c68abb2ca43e36b7793f3673/crates/oxc_linter/examples/linter.rs#L38-L39)
 
-#![warn(missing_docs)]
+use std::any::Any;
 
+pub mod config;
 mod context;
 mod cursor;
 mod error_handler;
@@ -86,19 +87,23 @@ mod lexer;
 #[doc(hidden)]
 pub mod lexer;
 
-use oxc_allocator::{Allocator, Box as ArenaBox, Dummy};
+use oxc_allocator::{Allocator, ArenaBox, ArenaVec, Dummy, GetAllocator};
 use oxc_ast::{
-    AstBuilder,
-    ast::{Expression, Program},
+    ast::{Expression, Program, Statement},
+    builder::{AstBuilder, GetAstBuilder},
 };
-use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{ModuleKind, SourceType, Span};
+use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
+use oxc_span::{SourceType, Span};
 use oxc_syntax::module_record::ModuleRecord;
 
+pub use crate::lexer::{Kind, Token};
 use crate::{
+    config::{
+        LexerConfig, NoTokensParserConfig, ParserConfig, RuntimeParserConfig, TokensParserConfig,
+    },
     context::{Context, StatementContext},
     error_handler::FatalError,
-    lexer::{Lexer, Token},
+    lexer::Lexer,
     module_record::ModuleRecordBuilder,
     state::ParserState,
 };
@@ -109,7 +114,7 @@ use crate::{
 // 1. `Span`'s `start` and `end` are `u32`s, which limits length to `u32::MAX` bytes.
 // 2. Rust's allocator APIs limit allocations to `isize::MAX`.
 // https://doc.rust-lang.org/std/alloc/struct.Layout.html#method.from_size_align
-pub(crate) const MAX_LEN: usize = if std::mem::size_of::<usize>() >= 8 {
+pub(crate) const MAX_LEN: usize = if size_of::<usize>() >= 8 {
     // 64-bit systems
     u32::MAX as usize
 } else {
@@ -123,14 +128,14 @@ pub(crate) const MAX_LEN: usize = if std::mem::size_of::<usize>() >= 8 {
 ///
 /// [`program`] will always contain a structurally valid AST, even if there are syntax errors.
 /// However, the AST may be semantically invalid. To ensure a valid AST,
-/// 1. Check that [`errors`] is empty
+/// 1. Check that [`diagnostics`] is empty
 /// 2. Run semantic analysis with [syntax error checking
 ///    enabled](https://docs.rs/oxc_semantic/latest/oxc_semantic/struct.SemanticBuilder.html#method.with_check_syntax_error)
 ///
 /// ## Errors
 /// Oxc's [`Parser`] is able to recover from some syntax errors and continue parsing. When this
 /// happens,
-/// 1. [`errors`] will be non-empty
+/// 1. [`diagnostics`] will be non-empty
 /// 2. [`program`] will contain a full AST
 /// 3. [`panicked`] will be false
 ///
@@ -138,7 +143,7 @@ pub(crate) const MAX_LEN: usize = if std::mem::size_of::<usize>() >= 8 {
 /// be empty and [`panicked`] will be `true`.
 ///
 /// [`program`]: ParserReturn::program
-/// [`errors`]: ParserReturn::errors
+/// [`diagnostics`]: ParserReturn::diagnostics
 /// [`panicked`]: ParserReturn::panicked
 #[non_exhaustive]
 pub struct ParserReturn<'a> {
@@ -151,7 +156,7 @@ pub struct ParserReturn<'a> {
     /// 1. The [`Parser`] encounters a recoverable syntax error
     /// 2. The logic for checking the violation is in the semantic analyzer
     ///
-    /// To ensure a valid AST, check that [`errors`](ParserReturn::errors) is empty. Then, run
+    /// To ensure a valid AST, check that [`diagnostics`](ParserReturn::diagnostics) is empty. Then, run
     /// semantic analysis with syntax error checking enabled.
     pub program: Program<'a>,
 
@@ -163,19 +168,24 @@ pub struct ParserReturn<'a> {
     /// This list is not comprehensive. Oxc offloads more-expensive checks to [semantic
     /// analysis](https://docs.rs/oxc_semantic), which can be enabled using
     /// [`SemanticBuilder::with_check_syntax_error`](https://docs.rs/oxc_semantic/latest/oxc_semantic/struct.SemanticBuilder.html#method.with_check_syntax_error).
-    pub errors: Vec<OxcDiagnostic>,
+    pub diagnostics: Diagnostics,
 
     /// Irregular whitespaces for `Oxlint`
     pub irregular_whitespaces: Box<[Span]>,
 
+    /// Lexed tokens in source order.
+    ///
+    /// Tokens are only collected when tokens are enabled in [`ParserConfig`].
+    pub tokens: ArenaVec<'a, Token>,
+
     /// Whether the parser panicked and terminated early.
     ///
     /// This will be `false` if parsing was successful, or if parsing was able to recover from a
-    /// syntax error. When `true`, [`program`] will be empty and [`errors`] will contain at least
+    /// syntax error. When `true`, [`program`] will be empty and [`diagnostics`] will contain at least
     /// one error.
     ///
     /// [`program`]: ParserReturn::program
-    /// [`errors`]: ParserReturn::errors
+    /// [`diagnostics`]: ParserReturn::diagnostics
     pub panicked: bool,
 
     /// Whether the file is [flow](https://flow.org).
@@ -238,11 +248,12 @@ impl Default for ParseOptions {
 /// Recursive Descent Parser for ECMAScript and TypeScript
 ///
 /// See [`Parser::parse`] for entry function.
-pub struct Parser<'a> {
+pub struct Parser<'a, C: ParserConfig = NoTokensParserConfig> {
     allocator: &'a Allocator,
     source_text: &'a str,
     source_type: SourceType,
     options: ParseOptions,
+    config: C,
 }
 
 impl<'a> Parser<'a> {
@@ -254,14 +265,30 @@ impl<'a> Parser<'a> {
     /// - `source_type`: Source type (e.g. JavaScript, TypeScript, JSX, ESM Module, Script)
     pub fn new(allocator: &'a Allocator, source_text: &'a str, source_type: SourceType) -> Self {
         let options = ParseOptions::default();
-        Self { allocator, source_text, source_type, options }
+        Self { allocator, source_text, source_type, options, config: NoTokensParserConfig }
     }
+}
 
+impl<'a, C: ParserConfig> Parser<'a, C> {
     /// Set parse options
     #[must_use]
     pub fn with_options(mut self, options: ParseOptions) -> Self {
         self.options = options;
         self
+    }
+
+    /// Set parser config.
+    ///
+    /// See [`ParserConfig`] for more details.
+    #[must_use]
+    pub fn with_config<Config: ParserConfig>(self, config: Config) -> Parser<'a, Config> {
+        Parser {
+            allocator: self.allocator,
+            source_text: self.source_text,
+            source_type: self.source_type,
+            options: self.options,
+            config,
+        }
     }
 }
 
@@ -299,23 +326,60 @@ mod parser_parse {
         }
     }
 
-    impl<'a> Parser<'a> {
+    impl<'a, C: ParserConfig> Parser<'a, C> {
         /// Main entry point
         ///
         /// Returns an empty `Program` on unrecoverable error,
         /// Recoverable errors are stored inside `errors`.
         ///
         /// See the [module-level documentation](crate) for examples and more information.
+        //
+        // # Implementation note
+        //
+        // Dispatches via `Any` to a non-generic helper for each known `ParserConfig`.
+        // The dispatch keeps the parser body emitted exactly once in `oxc_parser`'s rlib,
+        // so consuming crates don't each get a private copy. The `Any::is` / `downcast_ref`
+        // calls const-fold when `C` is concrete (the trait object is built from a known
+        // concrete type at every monomorphization site, so LLVM devirtualises the vtable
+        // call to `Any::type_id` and folds the comparison), leaving each monomorphization
+        // as a single call into the matching helper.
         pub fn parse(self) -> ParserReturn<'a> {
-            let unique = UniquePromise::new();
-            let parser = ParserImpl::new(
-                self.allocator,
-                self.source_text,
-                self.source_type,
-                self.options,
-                unique,
-            );
-            parser.parse()
+            let config: &dyn Any = &self.config;
+            if config.is::<NoTokensParserConfig>() {
+                parse_with_no_tokens_config(
+                    self.allocator,
+                    self.source_text,
+                    self.source_type,
+                    self.options,
+                )
+            } else if config.is::<TokensParserConfig>() {
+                parse_with_tokens_config(
+                    self.allocator,
+                    self.source_text,
+                    self.source_type,
+                    self.options,
+                )
+            } else if let Some(&config) = config.downcast_ref::<RuntimeParserConfig>() {
+                parse_with_runtime_config(
+                    self.allocator,
+                    self.source_text,
+                    self.source_type,
+                    self.options,
+                    config,
+                )
+            } else {
+                // User-defined `ParserConfig`. Generic codegen here, monomorphized per consuming crate.
+                // Users using custom configs would need to perform the monomorphization themselves.
+                ParserImpl::<C>::new(
+                    self.allocator,
+                    self.source_text,
+                    self.source_type,
+                    self.options,
+                    self.config,
+                    UniquePromise::new(),
+                )
+                .parse()
+            }
         }
 
         /// Parse a single [`Expression`].
@@ -337,27 +401,193 @@ mod parser_parse {
         ///
         /// # Errors
         /// If the source code being parsed has syntax errors.
-        pub fn parse_expression(self) -> Result<Expression<'a>, Vec<OxcDiagnostic>> {
-            let unique = UniquePromise::new();
-            let parser = ParserImpl::new(
-                self.allocator,
-                self.source_text,
-                self.source_type,
-                self.options,
-                unique,
-            );
-            parser.parse_expression()
+        //
+        // # Implementation note
+        // Dispatches via `Any`, same as `parse` does.
+        pub fn parse_expression(self) -> Result<Expression<'a>, Diagnostics> {
+            let config: &dyn Any = &self.config;
+            if config.is::<NoTokensParserConfig>() {
+                parse_expression_with_no_tokens_config(
+                    self.allocator,
+                    self.source_text,
+                    self.source_type,
+                    self.options,
+                )
+            } else if config.is::<TokensParserConfig>() {
+                parse_expression_with_tokens_config(
+                    self.allocator,
+                    self.source_text,
+                    self.source_type,
+                    self.options,
+                )
+            } else if let Some(&config) = config.downcast_ref::<RuntimeParserConfig>() {
+                parse_expression_with_runtime_config(
+                    self.allocator,
+                    self.source_text,
+                    self.source_type,
+                    self.options,
+                    config,
+                )
+            } else {
+                ParserImpl::<C>::new(
+                    self.allocator,
+                    self.source_text,
+                    self.source_type,
+                    self.options,
+                    self.config,
+                    UniquePromise::new(),
+                )
+                .parse_expression()
+            }
         }
+    }
+
+    // ===========================================================================
+    // Non-generic parse helpers, one per known `ParserConfig`.
+    //
+    // The parser is generic over `C: ParserConfig`. By default Rust monomorphizes
+    // generic functions per consuming crate (the legacy mangled name encodes the
+    // instantiating crate's disambiguator, and `share-generics` is off at
+    // `opt-level >= 2`). For a parser that's pulled in by ~15 crates in a real
+    // workspace, that means ~15 private copies of every parser method in the
+    // final cdylib — none of which can be deduped by COMDAT (different names)
+    // or fat LTO (slightly different inlining contexts).
+    //
+    // To avoid that, `Parser<C>::parse` and `Parser<C>::parse_expression` dispatch
+    // via `Any` to one of the helpers below for the three known configs.
+    // Each helper is non-generic, so it's emitted exactly once in `oxc_parser`'s
+    // rlib and shared by all consumers. The `Any::is` / `downcast_ref` checks fold
+    // at compile time when `C` is concrete, so each monomorphization of the dispatch
+    // shrinks to a single call into the matching helper.
+    //
+    // The helpers are `#[inline(never)]` to prevent fat LTO from re-inlining the
+    // parser body across the rlib boundary, which would defeat the purpose.
+    //
+    // For user-defined `ParserConfig` impls (rare), the dispatch falls through
+    // to a generic body that monomorphizes per consuming crate. That's the same
+    // cost the parser had without this pattern; we just keep that cost contained
+    // to the rare custom-config case.
+    // ===========================================================================
+
+    #[inline(never)]
+    fn parse_with_no_tokens_config<'a>(
+        allocator: &'a Allocator,
+        source_text: &'a str,
+        source_type: SourceType,
+        options: ParseOptions,
+    ) -> ParserReturn<'a> {
+        ParserImpl::<NoTokensParserConfig>::new(
+            allocator,
+            source_text,
+            source_type,
+            options,
+            NoTokensParserConfig,
+            UniquePromise::new(),
+        )
+        .parse()
+    }
+
+    #[inline(never)]
+    fn parse_with_tokens_config<'a>(
+        allocator: &'a Allocator,
+        source_text: &'a str,
+        source_type: SourceType,
+        options: ParseOptions,
+    ) -> ParserReturn<'a> {
+        ParserImpl::<TokensParserConfig>::new(
+            allocator,
+            source_text,
+            source_type,
+            options,
+            TokensParserConfig,
+            UniquePromise::new(),
+        )
+        .parse()
+    }
+
+    #[inline(never)]
+    fn parse_with_runtime_config<'a>(
+        allocator: &'a Allocator,
+        source_text: &'a str,
+        source_type: SourceType,
+        options: ParseOptions,
+        config: RuntimeParserConfig,
+    ) -> ParserReturn<'a> {
+        ParserImpl::<RuntimeParserConfig>::new(
+            allocator,
+            source_text,
+            source_type,
+            options,
+            config,
+            UniquePromise::new(),
+        )
+        .parse()
+    }
+
+    #[inline(never)]
+    fn parse_expression_with_no_tokens_config<'a>(
+        allocator: &'a Allocator,
+        source_text: &'a str,
+        source_type: SourceType,
+        options: ParseOptions,
+    ) -> Result<Expression<'a>, Diagnostics> {
+        ParserImpl::<NoTokensParserConfig>::new(
+            allocator,
+            source_text,
+            source_type,
+            options,
+            NoTokensParserConfig,
+            UniquePromise::new(),
+        )
+        .parse_expression()
+    }
+
+    #[inline(never)]
+    fn parse_expression_with_tokens_config<'a>(
+        allocator: &'a Allocator,
+        source_text: &'a str,
+        source_type: SourceType,
+        options: ParseOptions,
+    ) -> Result<Expression<'a>, Diagnostics> {
+        ParserImpl::<TokensParserConfig>::new(
+            allocator,
+            source_text,
+            source_type,
+            options,
+            TokensParserConfig,
+            UniquePromise::new(),
+        )
+        .parse_expression()
+    }
+
+    #[inline(never)]
+    fn parse_expression_with_runtime_config<'a>(
+        allocator: &'a Allocator,
+        source_text: &'a str,
+        source_type: SourceType,
+        options: ParseOptions,
+        config: RuntimeParserConfig,
+    ) -> Result<Expression<'a>, Diagnostics> {
+        ParserImpl::<RuntimeParserConfig>::new(
+            allocator,
+            source_text,
+            source_type,
+            options,
+            config,
+            UniquePromise::new(),
+        )
+        .parse_expression()
     }
 }
 use parser_parse::UniquePromise;
 
 /// Implementation of parser.
 /// `Parser` is just a public wrapper, the guts of the implementation is in this type.
-struct ParserImpl<'a> {
+struct ParserImpl<'a, C: ParserConfig> {
+    /// Options
     options: ParseOptions,
 
-    pub(crate) lexer: Lexer<'a>,
+    pub(crate) lexer: Lexer<'a, C::LexerConfig>,
 
     /// SourceType: JavaScript or TypeScript, Script or Module, jsx support?
     source_type: SourceType,
@@ -368,6 +598,13 @@ struct ParserImpl<'a> {
     /// All syntax errors from parser and lexer
     /// Note: favor adding to `Diagnostics` instead of raising Err
     errors: Vec<OxcDiagnostic>,
+
+    /// Errors that are only valid if the file is determined to be a Script (not a Module).
+    /// For `ModuleKind::Unambiguous`, we defer ESM-only errors (like top-level await)
+    /// until we know whether the file is ESM or Script.
+    /// If resolved to Module → discard these errors.
+    /// If resolved to Script → emit these errors.
+    deferred_script_errors: Vec<OxcDiagnostic>,
 
     fatal_error: Option<FatalError>,
 
@@ -393,32 +630,35 @@ struct ParserImpl<'a> {
     is_ts: bool,
 }
 
-impl<'a> ParserImpl<'a> {
+impl<'a, C: ParserConfig> ParserImpl<'a, C> {
     /// Create a new `ParserImpl`.
     ///
     /// Requiring a `UniquePromise` to be provided guarantees only 1 `ParserImpl` can exist
     /// on a single thread at one time.
     #[inline]
+    #[expect(clippy::needless_pass_by_value)]
     pub fn new(
         allocator: &'a Allocator,
         source_text: &'a str,
         source_type: SourceType,
         options: ParseOptions,
+        config: C,
         unique: UniquePromise,
     ) -> Self {
         Self {
             options,
-            lexer: Lexer::new(allocator, source_text, source_type, unique),
+            lexer: Lexer::new(allocator, source_text, source_type, config.lexer_config(), unique),
             source_type,
             source_text,
             errors: vec![],
+            deferred_script_errors: vec![],
             fatal_error: None,
             token: Token::default(),
             prev_token_end: 0,
             state: ParserState::new(),
             ctx: Self::default_context(source_type, options),
             ast: AstBuilder::new(allocator),
-            module_record_builder: ModuleRecordBuilder::new(allocator),
+            module_record_builder: ModuleRecordBuilder::new(allocator, source_type),
             is_ts: source_type.is_typescript(),
         }
     }
@@ -456,7 +696,7 @@ impl<'a> ParserImpl<'a> {
         }
 
         let mut is_flow_language = false;
-        let mut errors = vec![];
+        let mut errors = Diagnostics::new();
         // only check for `@flow` if the file failed to parse.
         if (!self.lexer.errors.is_empty() || !self.errors.is_empty())
             && let Some(error) = self.flow_error()
@@ -464,47 +704,57 @@ impl<'a> ParserImpl<'a> {
             is_flow_language = true;
             errors.push(error);
         }
-        let (module_record, module_record_errors) = self.module_record_builder.build();
+        let (module_record, mut module_record_errors) = self.module_record_builder.build();
         if errors.len() != 1 {
-            errors.reserve(self.lexer.errors.len() + self.errors.len());
-            errors.extend(self.lexer.errors);
-            errors.extend(self.errors);
-            // Skip checking for exports in TypeScript {
-            if !self.source_type.is_typescript() {
-                errors.extend(module_record_errors);
-            }
+            errors
+                .reserve(self.lexer.errors.len() + self.errors.len() + module_record_errors.len());
+            errors.append(&mut self.lexer.errors);
+            errors.append(&mut self.errors);
+            errors.append(&mut module_record_errors);
         }
         let irregular_whitespaces =
-            self.lexer.trivia_builder.irregular_whitespaces.into_boxed_slice();
+            std::mem::take(&mut self.lexer.trivia_builder.irregular_whitespaces).into_boxed_slice();
 
         let source_type = program.source_type;
         if source_type.is_unambiguous() {
-            program.source_type = if module_record.has_module_syntax {
-                source_type.with_module(true)
+            if module_record.has_module_syntax {
+                // Resolved to Module - discard deferred script errors (TLA is valid in ESM)
+                // but emit deferred module errors (HTML comments are invalid in ESM)
+                program.source_type = source_type.with_module(true);
+                errors.append(&mut self.lexer.deferred_module_errors);
             } else {
-                source_type.with_script(true)
-            };
+                // Resolved to Script - emit deferred script errors
+                // discard deferred module errors (HTML comments are valid in scripts)
+                program.source_type = source_type.with_script(true);
+                errors.extend(self.deferred_script_errors);
+            }
         }
+
+        let tokens =
+            if panicked { ArenaVec::new_in(&self.ast) } else { self.lexer.finalize_tokens() };
+
+        program.comments = self.lexer.trivia_builder.comments;
 
         ParserReturn {
             program,
             module_record,
-            errors,
+            diagnostics: errors,
             irregular_whitespaces,
+            tokens,
             panicked,
             is_flow_language,
         }
     }
 
-    pub fn parse_expression(mut self) -> Result<Expression<'a>, Vec<OxcDiagnostic>> {
+    pub fn parse_expression(mut self) -> Result<Expression<'a>, Diagnostics> {
         // initialize cur_token and prev_token by moving onto the first token
         self.bump_any();
         let expr = self.parse_expr();
         if let Some(FatalError { error, .. }) = self.fatal_error.take() {
-            return Err(vec![error]);
+            return Err(error.into());
         }
         self.check_unfinished_errors();
-        let errors = self.lexer.errors.into_iter().chain(self.errors).collect::<Vec<_>>();
+        let errors = self.lexer.errors.into_iter().chain(self.errors).collect::<Diagnostics>();
         if !errors.is_empty() {
             return Err(errors);
         }
@@ -518,12 +768,25 @@ impl<'a> ParserImpl<'a> {
         self.token = self.lexer.first_token();
 
         let hashbang = self.parse_hashbang();
-        let (directives, statements) =
-            self.parse_directives_and_statements(/* is_top_level */ true);
+        self.ctx |= Context::TopLevel;
+        let (directives, mut statements) =
+            self.parse_directives_and_statements(/* in_ts_namespace_body */ false);
+
+        // In unambiguous mode, if ESM syntax was detected (import/export/import.meta),
+        // we need to reparse statements that were originally parsed with `await` as identifier.
+        // TypeScript's behavior: initially parse `await /x/` as division, then reparse as
+        // await expression with regex when ESM is detected.
+        if self.source_type.is_unambiguous()
+            && self.module_record_builder.has_module_syntax()
+            && !self.state.potential_await_reparse.is_empty()
+        {
+            self.reparse_potential_top_level_awaits(&mut statements);
+        }
 
         let span = Span::new(0, self.source_text.len() as u32);
-        let comments = self.ast.vec_from_iter(self.lexer.trivia_builder.comments.iter().copied());
-        self.ast.program(
+        // Populated at the end of `parse` after `flow_error` has read from `trivia_builder.comments`.
+        let comments = ArenaVec::new_in(self);
+        Program::new(
             span,
             self.source_type,
             self.source_text,
@@ -531,17 +794,55 @@ impl<'a> ParserImpl<'a> {
             hashbang,
             directives,
             statements,
+            self,
         )
+    }
+
+    /// Reparse statements that may contain top-level await expressions.
+    ///
+    /// In unambiguous mode, statements like `await /x/u` are initially parsed as
+    /// `await / x / u` (identifier with divisions). If ESM syntax is detected,
+    /// we need to reparse them with the await context enabled.
+    fn reparse_potential_top_level_awaits(&mut self, statements: &mut ArenaVec<'a, Statement<'a>>) {
+        // Token stream is already complete from the first parse.
+        // Reparsing here is only to patch AST nodes, so keep the original token stream.
+        let original_tokens =
+            if self.lexer.config.tokens() { Some(self.lexer.take_tokens()) } else { None };
+
+        let checkpoints = std::mem::take(&mut self.state.potential_await_reparse);
+        for (stmt_index, checkpoint) in checkpoints {
+            // Rewind to the checkpoint
+            self.rewind(checkpoint);
+
+            // Parse the statement with await context enabled (TopLevel context is already set)
+            let stmt = self.context_add(Context::Await, |p| {
+                p.parse_statement_list_item(StatementContext::StatementList)
+            });
+
+            // Replace the statement if the index is valid
+            if stmt_index < statements.len() {
+                statements[stmt_index] = stmt;
+            }
+        }
+
+        if let Some(original_tokens) = original_tokens {
+            self.lexer.set_tokens(original_tokens);
+        }
     }
 
     fn default_context(source_type: SourceType, options: ParseOptions) -> Context {
         let mut ctx = Context::default().and_ambient(source_type.is_typescript_definition());
-        if source_type.module_kind() == ModuleKind::Module {
+        if source_type.is_module() {
             // for [top-level-await](https://tc39.es/proposal-top-level-await/)
             ctx = ctx.and_await(true);
         }
-        if options.allow_return_outside_function {
+        // CommonJS files are wrapped in a function, so return and `new.target`
+        // are allowed at top-level
+        if options.allow_return_outside_function || source_type.is_commonjs() {
             ctx = ctx.and_return(true);
+        }
+        if source_type.is_commonjs() {
+            ctx = ctx.and_new_target(true);
         }
         ctx
     }
@@ -582,7 +883,23 @@ impl<'a> ParserImpl<'a> {
 
     #[inline]
     fn alloc<T>(&self, value: T) -> ArenaBox<'a, T> {
-        self.ast.alloc(value)
+        ArenaBox::new_in(value, self)
+    }
+}
+
+impl<'a, C: ParserConfig> GetAllocator<'a> for ParserImpl<'a, C> {
+    #[inline]
+    fn allocator(&self) -> &'a Allocator {
+        self.ast.allocator()
+    }
+}
+
+impl<'a, C: ParserConfig> GetAstBuilder<'a> for ParserImpl<'a, C> {
+    type Builder = AstBuilder<'a>;
+
+    #[inline]
+    fn builder(&self) -> &AstBuilder<'a> {
+        &self.ast
     }
 }
 
@@ -602,7 +919,7 @@ mod test {
         let source = "";
         let ret = Parser::new(&allocator, source, source_type).parse();
         assert!(ret.program.is_empty());
-        assert!(ret.errors.is_empty());
+        assert!(ret.diagnostics.is_empty());
         assert!(!ret.is_flow_language);
     }
 
@@ -632,8 +949,8 @@ mod test {
         for source in sources {
             let ret = Parser::new(&allocator, source, source_type).parse();
             assert!(ret.is_flow_language);
-            assert_eq!(ret.errors.len(), 1);
-            assert_eq!(ret.errors.first().unwrap().to_string(), "Flow is not supported");
+            assert_eq!(ret.diagnostics.len(), 1);
+            assert_eq!(ret.diagnostics.first().unwrap().to_string(), "Flow is not supported");
         }
     }
 
@@ -643,7 +960,7 @@ mod test {
         let source_type = SourceType::from_path(Path::new("module.ts")).unwrap();
         let source = "declare module 'test'\n";
         let ret = Parser::new(&allocator, source, source_type).parse();
-        assert_eq!(ret.errors.len(), 0);
+        assert_eq!(ret.diagnostics.len(), 0);
     }
 
     #[test]
@@ -670,7 +987,7 @@ mod test {
             let source = "%DebugPrint('Raging against the Dying Light')";
             let opts = ParseOptions { allow_v8_intrinsics: true, ..ParseOptions::default() };
             let ret = Parser::new(&allocator, source, source_type).with_options(opts).parse();
-            assert!(ret.errors.is_empty());
+            assert!(ret.diagnostics.is_empty());
 
             if let Some(Statement::ExpressionStatement(expr_stmt)) = ret.program.body.first() {
                 if let Expression::V8IntrinsicExpression(expr) = &expr_stmt.expression {
@@ -686,17 +1003,17 @@ mod test {
             let source = "%DebugPrint(...illegalSpread)";
             let opts = ParseOptions { allow_v8_intrinsics: true, ..ParseOptions::default() };
             let ret = Parser::new(&allocator, source, source_type).with_options(opts).parse();
-            assert_eq!(ret.errors.len(), 1);
+            assert_eq!(ret.diagnostics.len(), 1);
             assert_eq!(
-                ret.errors[0].to_string(),
+                ret.diagnostics[0].to_string(),
                 "V8 runtime calls cannot have spread elements as arguments"
             );
         }
         {
             let source = "%DebugPrint('~~')";
             let ret = Parser::new(&allocator, source, source_type).parse();
-            assert_eq!(ret.errors.len(), 1);
-            assert_eq!(ret.errors[0].to_string(), "Unexpected token");
+            assert_eq!(ret.diagnostics.len(), 1);
+            assert_eq!(ret.diagnostics[0].to_string(), "Unexpected token");
         }
         {
             // https://github.com/oxc-project/oxc/issues/12121
@@ -705,9 +1022,9 @@ mod test {
             // Should not panic whether `allow_v8_intrinsics` is set or not.
             let opts = ParseOptions { allow_v8_intrinsics: true, ..ParseOptions::default() };
             let ret = Parser::new(&allocator, source, source_type).with_options(opts).parse();
-            assert_eq!(ret.errors.len(), 1);
+            assert_eq!(ret.diagnostics.len(), 1);
             let ret = Parser::new(&allocator, source, source_type).parse();
-            assert_eq!(ret.errors.len(), 1);
+            assert_eq!(ret.diagnostics.len(), 1);
         }
     }
 
@@ -717,10 +1034,10 @@ mod test {
         let source_type = SourceType::default().with_typescript(true);
         let sources = [
             ("// line comment", CommentKind::Line),
-            ("/* line comment */", CommentKind::Block),
+            ("/* line comment */", CommentKind::SingleLineBlock),
             (
                 "type Foo = ( /* Require properties which are not generated automatically. */ 'bar')",
-                CommentKind::Block,
+                CommentKind::SingleLineBlock,
             ),
         ];
         for (source, kind) in sources {
@@ -759,6 +1076,23 @@ mod test {
     }
 
     #[test]
+    fn binary_file() {
+        let allocator = Allocator::default();
+        let source_type = SourceType::default();
+
+        // U+FFFD as a standalone token — file appears to be binary
+        let ret = Parser::new(&allocator, "\u{FFFD}", source_type).parse();
+        assert!(ret.program.is_empty());
+        assert_eq!(ret.diagnostics.len(), 1);
+        assert_eq!(ret.diagnostics[0].to_string(), "File appears to be binary.");
+
+        // U+FFFD inside string literals — should parse fine
+        let ret = Parser::new(&allocator, "\"oops \u{FFFD} oops\";", source_type).parse();
+        assert!(!ret.program.is_empty());
+        assert!(ret.diagnostics.is_empty());
+    }
+
+    #[test]
     fn memory_leak() {
         let allocator = Allocator::default();
         let source_type = SourceType::default();
@@ -776,27 +1110,70 @@ mod test {
     #[cfg(not(miri))]
     #[test]
     fn overlong_source() {
-        // Build string in 16 KiB chunks for speed
-        let mut source = String::with_capacity(MAX_LEN + 1);
-        let line = "var x = 123456;\n";
-        let chunk = line.repeat(1024);
-        while source.len() < MAX_LEN + 1 - chunk.len() {
-            source.push_str(&chunk);
-        }
-        while source.len() < MAX_LEN + 1 - line.len() {
-            source.push_str(line);
-        }
-        while source.len() < MAX_LEN + 1 {
-            source.push('\n');
-        }
-        assert_eq!(source.len(), MAX_LEN + 1);
+        use std::{
+            alloc::{self, Layout},
+            ptr::NonNull,
+            slice, str,
+        };
 
+        /// A string that has a length of `MAX_LEN + 1`, and is entirely zeros.
+        ///
+        /// We need to create a `&str` with `MAX_LEN + 1` length, but don't want to write 4 GiB of data,
+        /// as it's too slow. This type uses `alloc_zeroed` which on most platforms will just create zeroed pages
+        /// without actually writing any data, and so is much faster.
+        struct ZeroedString {
+            ptr: NonNull<u8>,
+        }
+
+        impl ZeroedString {
+            const LEN: usize = MAX_LEN + 1;
+            const PAGE_SIZE: usize = 4096;
+            const LAYOUT: Layout = match Layout::from_size_align(Self::LEN, Self::PAGE_SIZE) {
+                Ok(layout) => layout,
+                Err(_) => panic!("Failed to create layout"),
+            };
+
+            fn new() -> Self {
+                // SAFETY: `LAYOUT` is valid and non-zero size.
+                let ptr = unsafe { alloc::alloc_zeroed(Self::LAYOUT) };
+                let Some(ptr) = NonNull::new(ptr) else {
+                    panic!("Failed to allocate {} bytes", Self::LEN);
+                };
+                Self { ptr }
+            }
+
+            fn as_str(&self) -> &str {
+                // SAFETY: `self.ptr` is pointer to start of `LEN` initialized and zeroed bytes.
+                // A slice consisting entirely of zeros is valid UTF-8.
+                unsafe {
+                    str::from_utf8_unchecked(slice::from_raw_parts(self.ptr.as_ptr(), Self::LEN))
+                }
+            }
+        }
+
+        impl Drop for ZeroedString {
+            fn drop(&mut self) {
+                // SAFETY: `self.ptr` is address of an allocation made with `LAYOUT`
+                unsafe { alloc::dealloc(self.ptr.as_ptr(), Self::LAYOUT) };
+            }
+        }
+
+        // Create long source text (MAX_LEN + 1 bytes)
+        let zeroed_string = ZeroedString::new();
+        let source_text = zeroed_string.as_str();
+
+        // Attempt to parse the source text
         let allocator = Allocator::default();
-        let ret = Parser::new(&allocator, &source, SourceType::default()).parse();
+        let ret = Parser::new(&allocator, source_text, SourceType::default()).parse();
+
+        // Parsing should fail
         assert!(ret.program.is_empty());
         assert!(ret.panicked);
-        assert_eq!(ret.errors.len(), 1);
-        assert_eq!(ret.errors.first().unwrap().to_string(), "Source length exceeds 4 GiB limit");
+        assert_eq!(ret.diagnostics.len(), 1);
+        assert_eq!(
+            ret.diagnostics.first().unwrap().to_string(),
+            "Source length exceeds 4 GiB limit"
+        );
     }
 
     // Source with length MAX_LEN parses OK.
@@ -818,7 +1195,7 @@ mod test {
         let allocator = Allocator::default();
         let ret = Parser::new(&allocator, &source, SourceType::default()).parse();
         assert!(!ret.panicked);
-        assert!(ret.errors.is_empty());
+        assert!(ret.diagnostics.is_empty());
         assert_eq!(ret.program.body.len(), 2);
     }
 }

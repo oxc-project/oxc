@@ -11,7 +11,6 @@ This crate provides essential utilities for managing source positions and spans 
 - **Precise positions**: Accurate byte-level source positions
 - **Span utilities**: Source ranges with start and end positions
 - **Source type detection**: Automatic language and module detection
-- **Atom interning**: Efficient string storage for identifiers
 - **Content comparison**: Semantic equality for AST nodes
 
 ## Architecture
@@ -31,14 +30,6 @@ The source type encodes important metadata:
 - **Module system**: ESM vs Script
 - **JSX support**: JSX vs plain syntax
 - **Variant**: Standard vs definition files (.d.ts)
-
-### Atom Interning
-
-Atoms provide memory-efficient string storage:
-
-- **Deduplication**: Identical strings share memory
-- **Fast comparison**: Pointer equality for identical content
-- **Compact representation**: Reduced memory usage for identifiers
 
 ### Integration Points
 

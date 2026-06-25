@@ -27,7 +27,8 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/import/type-inl
             "flags": "ReferenceFlags(Type)",
             "id": 0,
             "name": "T",
-            "node_id": 9
+            "node_id": 9,
+            "scope_id": 1
           }
         ]
       },

@@ -110,7 +110,7 @@ mod test {
             let s1 = reader.offset();
             assert!(reader.eat('^'));
             let e1 = reader.offset();
-            assert_eq!(&reader.atom(s1, e1), "^");
+            assert_eq!(&reader.str(s1, e1), "^");
 
             while reader.peek() != Some('@' as u32) {
                 reader.advance();
@@ -119,7 +119,7 @@ mod test {
             assert!(reader.eat('@'));
             assert!(reader.eat('@'));
             let e2 = reader.offset();
-            assert_eq!(&reader.atom(s2, e2), "@@");
+            assert_eq!(&reader.str(s2, e2), "@@");
 
             while reader.peek() != Some('$' as u32) {
                 reader.advance();
@@ -128,7 +128,7 @@ mod test {
             assert!(reader.eat('$'));
             let e3 = reader.offset();
 
-            assert_eq!(&reader.atom(s3, e3), "$");
+            assert_eq!(&reader.str(s3, e3), "$");
         }
     }
 
@@ -160,5 +160,30 @@ mod test {
                 }
             }
         }
+    }
+
+    #[test]
+    fn escape_kind_tracking() {
+        use crate::parser::reader::EscapeKind;
+
+        // For regexp literal, escape kind should be None (escapes are handled by pattern parser)
+        let mut reader1 = Reader::initialize(r"A\u0301", true, false).unwrap();
+        assert_eq!(reader1.peek_escape_kind(), EscapeKind::None); // 'A'
+        reader1.advance();
+        assert_eq!(reader1.peek_escape_kind(), EscapeKind::None); // '\' - literal in regexp
+        reader1.advance();
+        assert_eq!(reader1.peek_escape_kind(), EscapeKind::None); // 'u'
+
+        // For string literal, unicode escapes should be tracked
+        let mut reader2 = Reader::initialize(r#""A\u0301""#, true, true).unwrap();
+        assert_eq!(reader2.peek_escape_kind(), EscapeKind::None); // 'A'
+        reader2.advance();
+        assert_eq!(reader2.peek_escape_kind(), EscapeKind::Unicode); // \u0301 resolved to U+0301
+
+        // For string literal with hex escape
+        let mut reader3 = Reader::initialize(r#""A\x41""#, true, true).unwrap();
+        assert_eq!(reader3.peek_escape_kind(), EscapeKind::None); // 'A'
+        reader3.advance();
+        assert_eq!(reader3.peek_escape_kind(), EscapeKind::Hexadecimal); // \x41 resolved to 'A'
     }
 }

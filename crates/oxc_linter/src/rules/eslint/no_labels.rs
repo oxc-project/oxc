@@ -7,15 +7,22 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::Span;
 use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_labels_diagnostic(message: &'static str, label_span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(message).with_label(label_span)
+    OxcDiagnostic::warn(message)
+        .with_help("Consider refactoring the code to eliminate the need for labels.")
+        .with_label(label_span)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoLabels {
     /// If set to `true`, this rule ignores labels which are sticking to loop statements.
     /// Examples of **correct** code with this option set to `true`:
@@ -111,23 +118,13 @@ declare_oxc_lint!(
     eslint,
     style,
     config = NoLabels,
+    version = "0.15.4",
+    short_description = "Disallow labeled statements.",
 );
 
 impl Rule for NoLabels {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let allow_loop = value
-            .get(0)
-            .and_then(|config| config.get("allowLoop"))
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or(false);
-
-        let allow_switch = value
-            .get(0)
-            .and_then(|config| config.get("allowSwitch"))
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or(false);
-
-        Self { allow_loop, allow_switch }
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

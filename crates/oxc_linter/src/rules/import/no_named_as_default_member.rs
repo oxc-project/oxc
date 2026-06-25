@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{BindingPatternKind, Expression, IdentifierReference},
+    ast::{BindingPattern, Expression, IdentifierReference},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -21,7 +21,7 @@ fn no_named_as_default_member_diagnostic(
         .with_label(span)
 }
 
-/// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-named-as-default-member.md>
+// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-named-as-default-member.md>
 #[derive(Debug, Default, Clone)]
 pub struct NoNamedAsDefaultMember;
 
@@ -62,7 +62,9 @@ declare_oxc_lint!(
     /// ```
     NoNamedAsDefaultMember,
     import,
-    suspicious
+    suspicious,
+    version = "0.2.1",
+    short_description = "Forbid using an exported name as a property on a default export.",
 );
 
 fn get_symbol_id_from_ident(
@@ -91,7 +93,8 @@ impl Rule for NoNamedAsDefaultMember {
                 continue;
             }
 
-            let Some(symbol_id) = ctx.scoping().get_root_binding(import_entry.local_name.name())
+            let Some(symbol_id) =
+                ctx.scoping().get_root_binding(import_entry.local_name.name().into())
             else {
                 return;
             };
@@ -145,7 +148,7 @@ impl Rule for NoNamedAsDefaultMember {
                     let Some(Expression::Identifier(ident)) = &decl.init else {
                         continue;
                     };
-                    let BindingPatternKind::ObjectPattern(object_pattern) = &decl.id.kind else {
+                    let BindingPattern::ObjectPattern(object_pattern) = &decl.id else {
                         continue;
                     };
 

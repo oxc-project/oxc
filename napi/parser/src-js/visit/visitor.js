@@ -72,9 +72,11 @@
 // for objects created by user code in visitors. If ephemeral user-created objects all fit in new space,
 // it will avoid full GC runs, which should greatly improve performance.
 
-import { LEAF_NODE_TYPES_COUNT, NODE_TYPE_IDS_MAP, NODE_TYPES_COUNT } from '../../generated/visit/type_ids.js';
-
-const { isArray } = Array;
+import {
+  LEAF_NODE_TYPES_COUNT,
+  NODE_TYPE_IDS_MAP,
+  NODE_TYPES_COUNT,
+} from "../generated/visit/type_ids.js";
 
 // Compiled visitor used for visiting each file.
 // Same array is reused for each file.
@@ -190,7 +192,9 @@ export function initCompiledVisitor() {
  * @param visitor - Visitor object
  */
 export function addVisitorToCompiled(visitor) {
-  if (visitor === null || typeof visitor !== 'object') throw new TypeError('Visitor must be an object');
+  if (visitor === null || typeof visitor !== "object") {
+    throw new TypeError("Visitor must be an object");
+  }
 
   // Exit if is empty visitor
   const keys = Object.keys(visitor),
@@ -204,11 +208,11 @@ export function addVisitorToCompiled(visitor) {
     let name = keys[i];
 
     const visitFn = visitor[name];
-    if (typeof visitFn !== 'function') {
+    if (typeof visitFn !== "function") {
       throw new TypeError(`'${name}' property of visitor object is not a function`);
     }
 
-    const isExit = name.endsWith(':exit');
+    const isExit = name.endsWith(":exit");
     if (isExit) name = name.slice(0, -5);
 
     const typeId = NODE_TYPE_IDS_MAP.get(name);
@@ -219,7 +223,7 @@ export function addVisitorToCompiled(visitor) {
       // Leaf node - store just 1 function, not enter+exit pair
       if (existing === null) {
         compiledVisitor[typeId] = visitFn;
-      } else if (isArray(existing)) {
+      } else if (Array.isArray(existing)) {
         if (isExit) {
           existing.push(visitFn);
         } else {
@@ -250,7 +254,7 @@ export function addVisitorToCompiled(visitor) {
         const { exit } = existing;
         if (exit === null) {
           existing.exit = visitFn;
-        } else if (isArray(exit)) {
+        } else if (Array.isArray(exit)) {
           exit.push(visitFn);
         } else {
           existing.exit = createVisitFnArray(exit, visitFn);
@@ -260,7 +264,7 @@ export function addVisitorToCompiled(visitor) {
         const { enter } = existing;
         if (enter === null) {
           existing.enter = visitFn;
-        } else if (isArray(enter)) {
+        } else if (Array.isArray(enter)) {
           enter.push(visitFn);
         } else {
           existing.enter = createVisitFnArray(enter, visitFn);
@@ -361,12 +365,12 @@ function mergeVisitFns(visitFns) {
  */
 function createMerger(fnCount) {
   const args = [];
-  let body = 'return node=>{';
+  let body = "return node=>{";
   for (let i = 1; i <= fnCount; i++) {
     args.push(`visit${i}`);
     body += `visit${i}(node);`;
   }
-  body += '}';
+  body += "}";
   args.push(body);
   // oxlint-disable-next-line typescript/no-implied-eval
   return new Function(...args);

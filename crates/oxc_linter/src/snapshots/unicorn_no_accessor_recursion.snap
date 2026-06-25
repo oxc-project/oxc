@@ -1,7 +1,8 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint-plugin-unicorn(no-accessor-recursion): Disallow recursive access to `this` within getters.
+
+  ⚠ unicorn(no-accessor-recursion): Disallow recursive access to `this` within getters.
    ╭─[no_accessor_recursion.tsx:4:21]
  3 │                 get bar() {
  4 │                     this.bar
@@ -10,7 +11,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove this property access, or remove `get` from the method
 
-  ⚠ eslint-plugin-unicorn(no-accessor-recursion): Disallow recursive access to `this` within getters.
+  ⚠ unicorn(no-accessor-recursion): Disallow recursive access to `this` within getters.
    ╭─[no_accessor_recursion.tsx:4:27]
  3 │                 get bar() {
  4 │                     const { bar } = this;
@@ -19,8 +20,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove this property access, or remove `get` from the method
 
-  ⚠ eslint-plugin-unicorn(no-accessor-recursion): Disallow recursive access to `this` within getters.
-   ╭─[no_accessor_recursion.tsx:4:19]
+  ⚠ unicorn(no-accessor-recursion): Disallow recursive access to `this` within getters.
+   ╭─[no_accessor_recursion.tsx:4:28]
  3 │                 get bar() {
  4 │                     return this.bar;
    ·                            ────────
@@ -28,8 +29,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove this property access, or remove `get` from the method
 
-  ⚠ eslint-plugin-unicorn(no-accessor-recursion): Disallow recursive access to `this` within getters.
-   ╭─[no_accessor_recursion.tsx:4:19]
+  ⚠ unicorn(no-accessor-recursion): Disallow recursive access to `this` within getters.
+   ╭─[no_accessor_recursion.tsx:4:28]
  3 │                 get bar() {
  4 │                     return this.bar.baz;
    ·                            ────────
@@ -37,7 +38,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove this property access, or remove `get` from the method
 
-  ⚠ eslint-plugin-unicorn(no-accessor-recursion): Disallow recursive access to `this` within setters.
+  ⚠ unicorn(no-accessor-recursion): Disallow recursive access to `this` within setters.
    ╭─[no_accessor_recursion.tsx:4:33]
  3 │                 set bar(value) {
  4 │                     ({property: this.bar} = object)
@@ -46,7 +47,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove this property access, or remove `set` from the method
 
-  ⚠ eslint-plugin-unicorn(no-accessor-recursion): Disallow recursive access to `this` within setters.
+  ⚠ unicorn(no-accessor-recursion): Disallow recursive access to `this` within setters.
    ╭─[no_accessor_recursion.tsx:4:21]
  3 │                 set bar(value) {
  4 │                     this.bar = value;
@@ -55,7 +56,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove this property access, or remove `set` from the method
 
-  ⚠ eslint-plugin-unicorn(no-accessor-recursion): Disallow recursive access to `this` within setters.
+  ⚠ unicorn(no-accessor-recursion): Disallow recursive access to `this` within setters.
    ╭─[no_accessor_recursion.tsx:4:21]
  3 │                 set bar(value) {
  4 │                     this.bar = value;
@@ -64,7 +65,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove this property access, or remove `set` from the method
 
-  ⚠ eslint-plugin-unicorn(no-accessor-recursion): Disallow recursive access to `this` within getters.
+  ⚠ unicorn(no-accessor-recursion): Disallow recursive access to `this` within getters.
    ╭─[no_accessor_recursion.tsx:5:32]
  4 │                     if (true) {
  5 │                         return this.bar;
@@ -73,7 +74,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove this property access, or remove `get` from the method
 
-  ⚠ eslint-plugin-unicorn(no-accessor-recursion): Disallow recursive access to `this` within getters.
+  ⚠ unicorn(no-accessor-recursion): Disallow recursive access to `this` within getters.
    ╭─[no_accessor_recursion.tsx:5:32]
  4 │                     const baz = () => {
  5 │                         return this.bar;
@@ -82,7 +83,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove this property access, or remove `get` from the method
 
-  ⚠ eslint-plugin-unicorn(no-accessor-recursion): Disallow recursive access to `this` within getters.
+  ⚠ unicorn(no-accessor-recursion): Disallow recursive access to `this` within getters.
    ╭─[no_accessor_recursion.tsx:6:36]
  5 │                         return () => {
  6 │                             return this.bar;
@@ -91,7 +92,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove this property access, or remove `get` from the method
 
-  ⚠ eslint-plugin-unicorn(no-accessor-recursion): Disallow recursive access to `this` within getters.
+  ⚠ unicorn(no-accessor-recursion): Disallow recursive access to `this` within getters.
    ╭─[no_accessor_recursion.tsx:4:25]
  3 │                 get bar() {
  4 │                     a = this.bar;
@@ -100,7 +101,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove this property access, or remove `get` from the method
 
-  ⚠ eslint-plugin-unicorn(no-accessor-recursion): Disallow recursive access to `this` within getters.
+  ⚠ unicorn(no-accessor-recursion): Disallow recursive access to `this` within getters.
    ╭─[no_accessor_recursion.tsx:8:28]
  7 │                 get #bar() {
  8 │                     return this.#bar
@@ -109,7 +110,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove this property access, or remove `get` from the method
 
-  ⚠ eslint-plugin-unicorn(no-accessor-recursion): Disallow recursive access to `this` within getters.
+  ⚠ unicorn(no-accessor-recursion): Disallow recursive access to `this` within getters.
    ╭─[no_accessor_recursion.tsx:4:28]
  3 │                 static get bar() {
  4 │                     return this.bar;
@@ -118,7 +119,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove this property access, or remove `get` from the method
 
-  ⚠ eslint-plugin-unicorn(no-accessor-recursion): Disallow recursive access to `this` within getters.
+  ⚠ unicorn(no-accessor-recursion): Disallow recursive access to `this` within getters.
    ╭─[no_accessor_recursion.tsx:4:27]
  3 │                 get bar() {
  4 │                     const {bar} = this;
@@ -127,7 +128,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove this property access, or remove `get` from the method
 
-  ⚠ eslint-plugin-unicorn(no-accessor-recursion): Disallow recursive access to `this` within getters.
+  ⚠ unicorn(no-accessor-recursion): Disallow recursive access to `this` within getters.
    ╭─[no_accessor_recursion.tsx:7:27]
  6 │                 get baz() {
  7 │                     const {baz: baz1} = this;
@@ -136,7 +137,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove this property access, or remove `get` from the method
 
-  ⚠ eslint-plugin-unicorn(no-accessor-recursion): Disallow recursive access to `this` within setters.
+  ⚠ unicorn(no-accessor-recursion): Disallow recursive access to `this` within setters.
    ╭─[no_accessor_recursion.tsx:4:23]
  3 │                 set bar(v) {
  4 │                     ++this.bar;
@@ -145,7 +146,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove this property access, or remove `set` from the method
 
-  ⚠ eslint-plugin-unicorn(no-accessor-recursion): Disallow recursive access to `this` within setters.
+  ⚠ unicorn(no-accessor-recursion): Disallow recursive access to `this` within setters.
    ╭─[no_accessor_recursion.tsx:4:21]
  3 │                 set bar(v) {
  4 │                     this.bar--;
@@ -154,7 +155,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove this property access, or remove `set` from the method
 
-  ⚠ eslint-plugin-unicorn(no-accessor-recursion): Disallow recursive access to `this` within setters.
+  ⚠ unicorn(no-accessor-recursion): Disallow recursive access to `this` within setters.
    ╭─[no_accessor_recursion.tsx:4:22]
  3 │                 set bar(v) {
  4 │                     [this.bar] = array;
@@ -163,7 +164,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove this property access, or remove `set` from the method
 
-  ⚠ eslint-plugin-unicorn(no-accessor-recursion): Disallow recursive access to `this` within setters.
+  ⚠ unicorn(no-accessor-recursion): Disallow recursive access to `this` within setters.
    ╭─[no_accessor_recursion.tsx:4:22]
  3 │                 set bar(v) {
  4 │                     [this.bar = defaultValue] = array;
@@ -172,7 +173,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove this property access, or remove `set` from the method
 
-  ⚠ eslint-plugin-unicorn(no-accessor-recursion): Disallow recursive access to `this` within setters.
+  ⚠ unicorn(no-accessor-recursion): Disallow recursive access to `this` within setters.
    ╭─[no_accessor_recursion.tsx:4:33]
  3 │                 set bar(v) {
  4 │                     ({property: this.bar} = object);
@@ -181,7 +182,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove this property access, or remove `set` from the method
 
-  ⚠ eslint-plugin-unicorn(no-accessor-recursion): Disallow recursive access to `this` within setters.
+  ⚠ unicorn(no-accessor-recursion): Disallow recursive access to `this` within setters.
    ╭─[no_accessor_recursion.tsx:4:33]
  3 │                 set bar(v) {
  4 │                     ({property: this.bar = defaultValue} = object);

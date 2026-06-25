@@ -1,6 +1,6 @@
 use std::cmp::max;
 
-use oxc_allocator::Box;
+use oxc_allocator::ArenaBox;
 use oxc_ast::AstKind;
 use oxc_ast::ast::{Expression, ObjectExpression, ObjectPropertyKind, PropertyKind};
 use oxc_diagnostics::OxcDiagnostic;
@@ -26,7 +26,7 @@ pub struct PreferObjectSpread;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+    /// Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead.
     ///
     /// ### Why is this bad?
     ///
@@ -70,7 +70,9 @@ declare_oxc_lint!(
     PreferObjectSpread,
     eslint,
     style,
-    fix
+    fix,
+    version = "0.15.9",
+    short_description = "Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead.",
 );
 
 impl Rule for PreferObjectSpread {
@@ -91,16 +93,14 @@ impl Rule for PreferObjectSpread {
 
         match callee.object().get_inner_expression() {
             Expression::Identifier(ident) => {
-                if ident.name != "Object"
-                    || !unresolved_references.contains_key(ident.name.as_str())
-                {
+                if ident.name != "Object" || !unresolved_references.contains_key(&ident.name) {
                     return;
                 }
             }
             Expression::StaticMemberExpression(member_expr) => {
                 if let Expression::Identifier(ident) = member_expr.object.get_inner_expression() {
                     if ident.name != "globalThis"
-                        || !unresolved_references.contains_key(ident.name.as_str())
+                        || !unresolved_references.contains_key(&ident.name)
                     {
                         return;
                     }
@@ -143,12 +143,13 @@ impl Rule for PreferObjectSpread {
                 let fixer = fixer.for_multifix();
                 let mut rule_fixes = fixer.new_fix_with_capacity(2 + call_expr.arguments.len() * 5);
 
+                let parent_kind = ctx.nodes().parent_kind(node.id());
                 let needs_paren = !matches!(
-                    ctx.nodes().parent_kind(node.id()),
+                    parent_kind,
                     AstKind::VariableDeclarator(_)
                         | AstKind::ArrayExpression(_)
                         | AstKind::ReturnStatement(_)
-                        | AstKind::Argument(_)
+                        | AstKind::CallExpression(_)
                         | AstKind::ObjectProperty(_)
                         | AstKind::AssignmentExpression(_)
                 );
@@ -324,7 +325,10 @@ fn get_char_span_after(expr: &Expression, ctx: &LintContext) -> Option<Span> {
     None
 }
 
-fn get_delete_span_of_left(obj_expr: &Box<'_, ObjectExpression<'_>>, ctx: &LintContext) -> Span {
+fn get_delete_span_of_left(
+    obj_expr: &ArenaBox<'_, ObjectExpression<'_>>,
+    ctx: &LintContext,
+) -> Span {
     let mut span_end = obj_expr.span.start;
     for (i, c) in ctx.source_range(obj_expr.span).char_indices() {
         if i != 0 && !c.is_whitespace() {
@@ -339,7 +343,7 @@ fn get_delete_span_of_left(obj_expr: &Box<'_, ObjectExpression<'_>>, ctx: &LintC
 }
 
 fn get_delete_span_start_of_right(
-    obj_expr: &Box<'_, ObjectExpression<'_>>,
+    obj_expr: &ArenaBox<'_, ObjectExpression<'_>>,
     ctx: &LintContext,
 ) -> u32 {
     let obj_expr_last_char_span = Span::new(obj_expr.span.end - 1, obj_expr.span.end);

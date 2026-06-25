@@ -4,15 +4,24 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
 use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_undef_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("'{name}' is not defined.")).with_label(span)
+    OxcDiagnostic::warn(format!("'{name}' is not defined."))
+        .with_help(format!(
+            "Either define '{name}' or remove the reference to it. If '{name}' is a global variable, add it to the 'globals' configuration."
+        ))
+        .with_label(span)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(default)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(default, deny_unknown_fields)]
 pub struct NoUndef {
     /// When set to `true`, warns on undefined variables used in a `typeof` expression.
     #[serde(rename = "typeof")]
@@ -25,9 +34,13 @@ declare_oxc_lint!(
     ///
     /// Disallow the use of undeclared variables.
     ///
+    /// This rule can be disabled for TypeScript code, as the TypeScript compiler
+    /// enforces this check.
+    ///
     /// ### Why is this bad?
     ///
-    /// It is most likely a potential ReferenceError caused by a misspelling of a variable or parameter name.
+    /// It is most likely a potential ReferenceError caused by a misspelling
+    /// of a variable or parameter name.
     ///
     /// ### Examples
     ///
@@ -40,16 +53,13 @@ declare_oxc_lint!(
     eslint,
     nursery,
     config = NoUndef,
+    version = "0.0.8",
+    short_description = "Disallow the use of undeclared variables.",
 );
 
 impl Rule for NoUndef {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let type_of = value
-            .get(0)
-            .and_then(|config| config.get("typeof"))
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or_default();
-        Self { type_of }
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext) {
@@ -65,11 +75,7 @@ impl Rule for NoUndef {
 
                 let name = ctx.semantic().reference_name(reference);
 
-                if ctx.env_contains_var(name) {
-                    continue;
-                }
-
-                if ctx.globals().is_enabled(name) {
+                if ctx.is_global_defined(name) {
                     continue;
                 }
 
@@ -77,7 +83,7 @@ impl Rule for NoUndef {
                 if name == "arguments"
                     && ctx
                         .scoping()
-                        .scope_ancestors(ctx.nodes().get_node(reference.node_id()).scope_id())
+                        .scope_ancestors(reference.scope_id())
                         .map(|id| ctx.scoping().scope_flags(id))
                         .any(|scope_flags| scope_flags.is_function() && !scope_flags.is_arrow())
                 {
@@ -144,6 +150,13 @@ fn test() {
         ("var a; ({b: a} = {});", None, None),
         ("var obj; [obj.a, obj.b] = [0, 1];", None, None),
         ("URLSearchParams;", None, Some(serde_json::json!({"env": { "browser": true }}))),
+        (
+            "URLSearchParams;",
+            None,
+            Some(
+                serde_json::json!({"env": { "browser": false }, "globals": { "URLSearchParams": "readonly" }}),
+            ),
+        ),
         ("Intl;", None, Some(serde_json::json!({"env": { "browser": true }}))),
         ("IntersectionObserver;", None, Some(serde_json::json!({"env": { "browser": true }}))),
         ("Credential;", None, Some(serde_json::json!({"env": { "browser": true }}))),

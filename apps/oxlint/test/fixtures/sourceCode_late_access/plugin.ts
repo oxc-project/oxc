@@ -1,6 +1,6 @@
-import assert from 'node:assert';
+import assert from "node:assert";
 
-import type { ESTree, Node, Plugin, Rule } from '../../../dist/index.js';
+import type { ESTree, Node, Plugin, Rule } from "#oxlint/plugins";
 
 type Program = ESTree.Program;
 
@@ -31,7 +31,8 @@ const createRule: Rule = {
         assert(ast === node);
 
         context.report({
-          message: 'program:\n' +
+          message:
+            "program:\n" +
             `text: ${JSON.stringify(context.sourceCode.text)}\n` +
             `getText(): ${JSON.stringify(context.sourceCode.getText())}`,
           node: SPAN,
@@ -49,7 +50,8 @@ const createRule: Rule = {
         assert(context.sourceCode.ast === ast);
 
         context.report({
-          message: `ident "${node.name}":\n` +
+          message:
+            `ident "${node.name}":\n` +
             `source: "${context.sourceCode.getText(node)}"\n` +
             `source with before: "${context.sourceCode.getText(node, 2)}"\n` +
             `source with after: "${context.sourceCode.getText(node, null, 1)}"\n` +
@@ -71,7 +73,8 @@ const createOnceRule: Rule = {
         assert(ast === node);
 
         context.report({
-          message: 'program:\n' +
+          message:
+            "program:\n" +
             `text: ${JSON.stringify(context.sourceCode.text)}\n` +
             `getText(): ${JSON.stringify(context.sourceCode.getText())}`,
           node: SPAN,
@@ -89,7 +92,8 @@ const createOnceRule: Rule = {
         assert(context.sourceCode.ast === ast);
 
         context.report({
-          message: `ident "${node.name}":\n` +
+          message:
+            `ident "${node.name}":\n` +
             `source: "${context.sourceCode.getText(node)}"\n` +
             `source with before: "${context.sourceCode.getText(node, 2)}"\n` +
             `source with after: "${context.sourceCode.getText(node, null, 1)}"\n` +
@@ -102,8 +106,7 @@ const createOnceRule: Rule = {
         ast = null;
 
         context.report({
-          message: 'after:\n' +
-            `source: ${JSON.stringify(context.sourceCode.text)}`,
+          message: "after:\n" + `source: ${JSON.stringify(context.sourceCode.text)}`,
           node: SPAN,
         });
       },
@@ -113,11 +116,11 @@ const createOnceRule: Rule = {
 
 const plugin: Plugin = {
   meta: {
-    name: 'source-code-plugin',
+    name: "source-code-plugin",
   },
   rules: {
     create: createRule,
-    'create-once': createOnceRule,
+    "create-once": createOnceRule,
   },
 };
 

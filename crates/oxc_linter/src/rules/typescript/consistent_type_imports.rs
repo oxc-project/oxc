@@ -1,6 +1,9 @@
 use std::{borrow::Cow, error::Error, fmt::Write, ops::Deref};
 
 use itertools::Itertools;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
 use oxc_ast::{
     AstKind,
     ast::{
@@ -17,18 +20,24 @@ use crate::{
     AstNode,
     context::{ContextHost, LintContext},
     fixer::{RuleFix, RuleFixer},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 fn no_import_type_annotations_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("`import()` type annotations are forbidden.").with_label(span)
+    OxcDiagnostic::warn("`import()` type annotations are forbidden.")
+        .with_help("Replace `import()` type annotations with a regular type import. For example, change `type T = import('module').Type` to `import type { Type } from 'module'; type T = Type`.")
+        .with_label(span)
 }
 
 fn avoid_import_type_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Use an `import` instead of an `import type`.").with_label(span)
+    OxcDiagnostic::warn("Use an `import` instead of an `import type`.")
+        .with_help("Replace the `import type` declaration with a regular `import` declaration. For example, `import type { Type } from 'module'` would become `import { Type } from 'module'`.")
+        .with_label(span)
 }
 fn type_over_value_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("All imports in the declaration are only used as types. Use `import type`.")
+        .with_help("Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.")
+        .with_note("Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.")
         .with_label(span)
 }
 
@@ -36,7 +45,7 @@ fn some_imports_are_only_types_diagnostic(span: Span, type_imports: &str) -> Oxc
     OxcDiagnostic::warn(format!("Imports {type_imports} are only used as type.")).with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct ConsistentTypeImports(Box<ConsistentTypeImportsConfig>);
 
 impl Deref for ConsistentTypeImports {
@@ -47,55 +56,45 @@ impl Deref for ConsistentTypeImports {
     }
 }
 
-/// <https://github.com/typescript-eslint/typescript-eslint/blob/v8.9.0/packages/eslint-plugin/docs/rules/consistent-type-imports.mdx>
-#[derive(Default, Debug, Clone)]
+// <https://github.com/typescript-eslint/typescript-eslint/blob/v8.9.0/packages/eslint-plugin/docs/rules/consistent-type-imports.mdx>
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct ConsistentTypeImportsConfig {
-    disallow_type_annotations: DisallowTypeAnnotations,
+    /// Disallow using `import()` in type annotations, like `type T = import('foo')`
+    disallow_type_annotations: bool,
+    /// Control how type imports are added when auto-fixing.
     fix_style: FixStyle,
+    /// Control whether to enforce type imports or value imports.
     prefer: Prefer,
 }
 
-// The default of `disallowTypeAnnotations` is `true`.
-#[derive(Debug, Clone, Copy)]
-struct DisallowTypeAnnotations(bool);
-
-impl DisallowTypeAnnotations {
-    fn new(value: bool) -> Self {
-        Self(value)
-    }
-}
-
-impl Default for DisallowTypeAnnotations {
+impl Default for ConsistentTypeImportsConfig {
     fn default() -> Self {
-        Self(true)
-    }
-}
-impl From<bool> for DisallowTypeAnnotations {
-    #[inline]
-    fn from(value: bool) -> Self {
-        Self(value)
-    }
-}
-
-impl Deref for DisallowTypeAnnotations {
-    type Target = bool;
-    #[inline]
-    fn deref(&self) -> &Self::Target {
-        &self.0
+        Self {
+            disallow_type_annotations: true,
+            fix_style: FixStyle::SeparateTypeImports,
+            prefer: Prefer::TypeImports,
+        }
     }
 }
 
-#[derive(Default, Debug, Clone, Copy)]
+#[derive(Default, Debug, Clone, Copy, JsonSchema, Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case")]
 enum FixStyle {
+    /// Will add the type keyword after the import keyword `import type { A } from '...'`
     #[default]
     SeparateTypeImports,
+    /// Will inline the type keyword `import { type A } from '...'` (only available in TypeScript 4.5+)
     InlineTypeImports,
 }
 
-#[derive(Default, Debug, Clone)]
+#[derive(Default, Debug, Clone, JsonSchema, Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case")]
 enum Prefer {
+    /// Enforces that you always use `import type Foo from '...'`, except when referenced by decorator metadata.
     #[default]
     TypeImports,
+    /// Will enforce that you always use `import Foo from '...'`
     NoTypeImports,
 }
 
@@ -104,9 +103,14 @@ declare_oxc_lint!(
     ///
     /// Enforce consistent usage of type imports.
     ///
+    /// #### Ignored Files
+    /// This rule ignores `.astro`, `.svelte` and `.vue` files entirely. Since Oxlint does
+    /// not support parsing template syntax, this rule cannot tell if a variable
+    /// is used or unused in a Vue / Svelte / Astro file.
+    ///
     /// ### Why is this bad?
     ///
-    /// inconsistent usage of type imports can make the code harder to read and understand.
+    /// Inconsistent usage of type imports can make the code harder to read and understand.
     ///
     /// ### Examples
     ///
@@ -122,33 +126,6 @@ declare_oxc_lint!(
     /// ```ts
     /// import type { Foo } from 'Foo';
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// ```json
-    /// {
-    ///     "typescript/consistent-type-imports": [
-    ///         "error",
-    ///         {
-    ///             "prefer": "type-imports",
-    ///             "fixStyle": "separate-type-imports",
-    ///             "disallowTypeAnnotations": true
-    ///         }
-    ///     ]
-    /// }
-    /// ```
-    ///
-    /// - `prefer`: Control whether to enforce type imports or value imports
-    ///   - `"type-imports"` (default): Will enforce that you always use `import type Foo from '...'` except referenced by metadata of decorators
-    ///   - `"no-type-imports"`: Will enforce that you always use `import Foo from '...'`
-    ///
-    /// - `fixStyle`: Determines how type imports are added when auto-fixing
-    ///   - `"separate-type-imports"` (default): Will add the type keyword after the import keyword `import type { A } from '...'`
-    ///   - `"inline-type-imports"`: Will inline the type keyword `import { type A } from '...'` (only available in TypeScript 4.5+)
-    ///
-    /// - `disallowTypeAnnotations`: Disallow using `import()` in type annotations
-    ///   - `true` (default): Disallows using `import()` in type annotations like `type T = import('foo')`
-    ///   - `false`: Allows `import()` type annotations
     ///
     /// #### Examples with `"prefer": "type-imports"` (default)
     ///
@@ -202,182 +179,154 @@ declare_oxc_lint!(
     ConsistentTypeImports,
     typescript,
     style,
-    conditional_fix
+    conditional_fix,
+    config = ConsistentTypeImportsConfig,
+    version = "0.5.2",
+    short_description = "Enforce consistent usage of type imports.",
 );
 
 impl Rule for ConsistentTypeImports {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let config = value.get(0).and_then(serde_json::Value::as_object).map_or(
-            ConsistentTypeImportsConfig::default(),
-            |config| {
-                let disallow_type_annotations = config
-                    .get("disallowTypeAnnotations")
-                    .and_then(serde_json::Value::as_bool)
-                    .map(DisallowTypeAnnotations::new)
-                    .unwrap_or_default();
-                let fix_style = config.get("fixStyle").and_then(serde_json::Value::as_str).map_or(
-                    FixStyle::SeparateTypeImports,
-                    |fix_style| match fix_style {
-                        "inline-type-imports" => FixStyle::InlineTypeImports,
-                        _ => FixStyle::SeparateTypeImports,
-                    },
-                );
-                let prefer = config.get("prefer").and_then(serde_json::Value::as_str).map_or(
-                    Prefer::TypeImports,
-                    |prefer| match prefer {
-                        "no-type-imports" => Prefer::NoTypeImports,
-                        _ => Prefer::TypeImports,
-                    },
-                );
-
-                ConsistentTypeImportsConfig { disallow_type_annotations, fix_style, prefer }
-            },
-        );
-        Self(Box::new(config))
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if *self.disallow_type_annotations {
-            //  `import()` type annotations are forbidden.
+        match node.kind() {
+            // `import()` type annotations are forbidden.
             // `type Foo = import('foo')`
-            if let AstKind::TSImportType(import_type) = node.kind() {
+            AstKind::TSImportType(import_type) if self.disallow_type_annotations => {
                 ctx.diagnostic(no_import_type_annotations_diagnostic(import_type.span));
-                return;
             }
-        }
-
-        if matches!(self.prefer, Prefer::NoTypeImports) {
-            match node.kind() {
-                // `import type { Foo } from 'foo'`
-                AstKind::ImportDeclaration(import_decl) => {
-                    if import_decl.import_kind.is_type() {
-                        ctx.diagnostic_with_fix(
-                            avoid_import_type_diagnostic(import_decl.span),
-                            |fixer| {
-                                fix_remove_type_specifier_from_import_declaration(
-                                    fixer,
-                                    import_decl.span,
-                                    ctx,
-                                )
-                            },
-                        );
-                    }
-                }
-                // import { type Foo } from 'foo'
-                AstKind::ImportSpecifier(import_specifier) => {
-                    if import_specifier.import_kind.is_type() {
-                        ctx.diagnostic_with_fix(
-                            avoid_import_type_diagnostic(import_specifier.span),
-                            |fixer| {
-                                fix_remove_type_specifier_from_import_specifier(
-                                    fixer,
-                                    import_specifier.span,
-                                    ctx,
-                                )
-                            },
-                        );
-                    }
-                }
-                _ => {}
+            // `import type { Foo } from 'foo'`
+            AstKind::ImportDeclaration(import_decl)
+                if matches!(self.prefer, Prefer::NoTypeImports)
+                    && import_decl.import_kind.is_type() =>
+            {
+                ctx.diagnostic_with_fix(avoid_import_type_diagnostic(import_decl.span), |fixer| {
+                    fix_remove_type_specifier_from_import_declaration(fixer, import_decl.span, ctx)
+                });
             }
-            return;
-        }
+            // import { type Foo } from 'foo'
+            AstKind::ImportSpecifier(import_specifier)
+                if matches!(self.prefer, Prefer::NoTypeImports)
+                    && import_specifier.import_kind.is_type() =>
+            {
+                ctx.diagnostic_with_fix(
+                    avoid_import_type_diagnostic(import_specifier.span),
+                    |fixer| {
+                        fix_remove_type_specifier_from_import_specifier(
+                            fixer,
+                            import_specifier.span,
+                            ctx,
+                        )
+                    },
+                );
+            }
+            AstKind::ImportDeclaration(import_decl)
+                if matches!(self.prefer, Prefer::TypeImports) =>
+            {
+                // Store references that only used as type and without type qualifier.
+                // For example:
+                // ```typescript
+                // import { A, B, type C } from 'foo';
+                // const a: A;
+                // const b: B;
+                // const c: C;
+                // ```
+                // `A` and `B` are only used as type references.
+                let mut type_references_without_type_qualifier = vec![];
+                // If all specifiers are only used as type references.
+                let mut is_only_type_references = false;
 
-        let AstKind::ImportDeclaration(import_decl) = node.kind() else {
-            return;
-        };
+                if let Some(specifiers) = &import_decl.specifiers {
+                    for specifier in specifiers {
+                        let symbol_id = specifier.local().symbol_id();
+                        let no_type_qualifier = match specifier {
+                            ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
+                                specifier.import_kind.is_value()
+                            }
+                            // TODO: consume tsconfig and see if React is needed based on "jsx" field
+                            ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => {
+                                if specifier.local.name == "React" {
+                                    continue;
+                                }
+                                true
+                            }
+                            ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => {
+                                if specifier.local.name == "React" {
+                                    continue;
+                                }
+                                true
+                            }
+                        };
 
-        // Store references that only used as type and without type qualifier.
-        // For example:
-        // ```typescript
-        // import { A, B, type C } from 'foo';
-        // const a: A;
-        // const b: B;
-        // const c: C;
-        // ```
-        // `A` and `B` are only used as type references.
-        let mut type_references_without_type_qualifier = vec![];
-        // If all specifiers are only used as type references.
-        let mut is_only_type_references = false;
-
-        if let Some(specifiers) = &import_decl.specifiers {
-            for specifier in specifiers {
-                let symbol_id = specifier.local().symbol_id();
-                let no_type_qualifier = match specifier {
-                    ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
-                        specifier.import_kind.is_value()
-                    }
-                    // TODO: consume tsconfig and see if React is needed based on "jsx" field
-                    ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => {
-                        if specifier.local.name == "React" {
-                            continue;
+                        if no_type_qualifier && is_only_has_type_references(symbol_id, ctx) {
+                            type_references_without_type_qualifier.push(specifier);
                         }
-                        true
                     }
-                    ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => {
-                        if specifier.local.name == "React" {
-                            continue;
+
+                    is_only_type_references =
+                        type_references_without_type_qualifier.len() == specifiers.len();
+                }
+
+                if import_decl.import_kind.is_value()
+                    && !type_references_without_type_qualifier.is_empty()
+                {
+                    let type_names = type_references_without_type_qualifier
+                        .iter()
+                        .map(|specifier| specifier.name())
+                        .collect::<Vec<_>>();
+
+                    // ['foo', 'bar', 'baz' ] => "foo, bar, and baz".
+                    let type_imports = format_word_list(&type_names);
+                    let type_names =
+                        type_names.iter().map(std::convert::AsRef::as_ref).collect::<Vec<_>>();
+
+                    let fixer_fn = |fixer: RuleFixer<'_, 'a>| {
+                        let fix_options = FixOptions {
+                            fixer,
+                            import_decl,
+                            type_names: &type_names,
+                            fix_style: self.fix_style,
+                            ctx,
+                        };
+
+                        match fix_to_type_import_declaration(&fix_options) {
+                            Ok(fixes) => fixes,
+                            Err(err) => {
+                                debug_assert!(false, "Failed to fix: {err}");
+                                fixer.noop()
+                            }
                         }
-                        true
-                    }
-                };
+                    };
 
-                if no_type_qualifier && is_only_has_type_references(symbol_id, ctx) {
-                    type_references_without_type_qualifier.push(specifier);
+                    if is_only_type_references && import_decl.import_kind.is_value() {
+                        // `import type {} from 'foo' assert { type: 'json' }` is invalid
+                        // Import assertions cannot be used with type-only imports or exports.
+                        if import_decl.with_clause.is_none() {
+                            ctx.diagnostic_with_fix(
+                                type_over_value_diagnostic(import_decl.span),
+                                fixer_fn,
+                            );
+                        }
+                        return;
+                    }
+
+                    ctx.diagnostic_with_fix(
+                        some_imports_are_only_types_diagnostic(import_decl.span, &type_imports),
+                        fixer_fn,
+                    );
                 }
             }
-
-            is_only_type_references =
-                type_references_without_type_qualifier.len() == specifiers.len();
-        }
-
-        if import_decl.import_kind.is_value() && !type_references_without_type_qualifier.is_empty()
-        {
-            let type_names = type_references_without_type_qualifier
-                .iter()
-                .map(|specifier| specifier.name())
-                .collect::<Vec<_>>();
-
-            // ['foo', 'bar', 'baz' ] => "foo, bar, and baz".
-            let type_imports = format_word_list(&type_names);
-            let type_names = type_names.iter().map(std::convert::AsRef::as_ref).collect::<Vec<_>>();
-
-            let fixer_fn = |fixer: RuleFixer<'_, 'a>| {
-                let fix_options = FixOptions {
-                    fixer,
-                    import_decl,
-                    type_names: &type_names,
-                    fix_style: self.fix_style,
-                    ctx,
-                };
-
-                match fix_to_type_import_declaration(&fix_options) {
-                    Ok(fixes) => fixes,
-                    Err(err) => {
-                        debug_assert!(false, "Failed to fix: {err}");
-                        fixer.noop()
-                    }
-                }
-            };
-
-            if is_only_type_references && import_decl.import_kind.is_value() {
-                // `import type {} from 'foo' assert { type: 'json' }` is invalid
-                // Import assertions cannot be used with type-only imports or exports.
-                if import_decl.with_clause.is_none() {
-                    ctx.diagnostic_with_fix(type_over_value_diagnostic(import_decl.span), fixer_fn);
-                }
-                return;
-            }
-
-            ctx.diagnostic_with_fix(
-                some_imports_are_only_types_diagnostic(import_decl.span, &type_imports),
-                fixer_fn,
-            );
+            _ => {}
         }
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_typescript()
+            && !ctx
+                .file_extension()
+                .is_some_and(|ext| ext == "vue" || ext == "svelte" || ext == "astro")
     }
 }
 
@@ -3479,4 +3428,56 @@ export class Foo extends Bar {}
     Tester::new(ConsistentTypeImports::NAME, ConsistentTypeImports::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
+}
+
+#[test]
+fn test_should_run() {
+    use std::path::PathBuf;
+
+    use crate::tester::Tester;
+
+    let pass = vec![
+        (
+            r#"<script setup lang="ts">
+                import { obj } from './utils';
+                type _TypeofObj = typeof obj;
+            </script>"#,
+            None,
+            None,
+            Some(PathBuf::from("src/foo/bar.vue")),
+        ),
+        (
+            r#"<script setup lang="ts">
+                import ChildComponent from './ChildComponent.vue';
+                const childComponentRef = ref<InstanceType<typeof ChildComponent>>();
+            </script>"#,
+            None,
+            None,
+            Some(PathBuf::from("src/foo/bar.vue")),
+        ),
+        (
+            r"---
+import Welcome from '../components/Welcome.astro';
+type _TypeofWelcome = typeof Welcome;
+---
+<Welcome />",
+            None,
+            None,
+            Some(PathBuf::from("src/foo/bar.astro")),
+        ),
+        (
+            r#"<script lang="ts">
+                import Nested from './Nested.svelte';
+                type _TypeofNested = typeof Nested;
+            </script>
+            <Nested answer={42} />"#,
+            None,
+            None,
+            Some(PathBuf::from("src/foo/bar.svelte")),
+        ),
+    ];
+
+    Tester::new(ConsistentTypeImports::NAME, ConsistentTypeImports::PLUGIN, pass, vec![])
+        .intentionally_allow_no_fix_tests()
+        .test();
 }

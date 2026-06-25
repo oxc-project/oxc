@@ -85,7 +85,8 @@ declare_oxc_lint!(
     RequireLocalTestContextForConcurrentSnapshots,
     vitest,
     correctness,
-    pending
+    version = "0.8.0",
+    short_description = "The rule is intended to ensure that concurrent snapshot tests are executed within a properly configured local test context.",
 );
 
 impl Rule for RequireLocalTestContextForConcurrentSnapshots {
@@ -156,15 +157,15 @@ fn test() {
         r#"describe.concurrent("failing", () => { it("should fail", () => { expect(true).toMatchInlineSnapshot("true") }) })"#,
         r#"it.concurrent("something", (context) => { expect(true).toMatchSnapshot() })"#,
         r#"it.concurrent("something", () => {
-			                 expect(true).toMatchSnapshot();
-			
-			                 expect(true).toMatchSnapshot();
-			            })"#,
+                        expect(true).toMatchSnapshot();
+
+                         expect(true).toMatchSnapshot();
+                    })"#,
         r#"it.concurrent("something", () => {
-			                 expect(true).toBe(true);
-			
-			                 expect(true).toMatchSnapshot();
-			            })"#,
+                         expect(true).toBe(true);
+
+                         expect(true).toMatchSnapshot();
+                    })"#,
         r#"it.concurrent("should fail", () => { expect(true).toMatchFileSnapshot("./test/basic.output.html") })"#,
         r#"it.concurrent("should fail", () => { expect(foo()).toThrowErrorMatchingSnapshot() })"#,
         r#"it.concurrent("should fail", () => { expect(foo()).toThrowErrorMatchingInlineSnapshot("bar") })"#,

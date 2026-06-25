@@ -1,20 +1,27 @@
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
 use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{config::GlobalValue, context::LintContext, rule::Rule};
+use crate::{
+    config::GlobalValue,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_global_assign_diagnostic(global_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Read-only global '{global_name}' should not be modified."))
+        .with_help(format!("Use a local variable instead of modifying the global '{global_name}'."))
         .with_label(span.label(format!("Read-only global '{global_name}' should not be modified.")))
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct NoGlobalAssign(Box<NoGlobalAssignConfig>);
 
-#[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoGlobalAssignConfig {
     /// List of global variable names to exclude from this rule.
     /// Globals listed here can be assigned to without triggering warnings.
@@ -47,24 +54,14 @@ declare_oxc_lint!(
     NoGlobalAssign,
     eslint,
     correctness,
-    config = NoGlobalAssignConfig
+    config = NoGlobalAssignConfig,
+    version = "0.0.7",
+    short_description = "Disallow modifications to read-only global variables.",
 );
 
 impl Rule for NoGlobalAssign {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let obj = value.get(0);
-
-        Self(Box::new(NoGlobalAssignConfig {
-            exceptions: obj
-                .and_then(|v| v.get("exceptions"))
-                .and_then(serde_json::Value::as_array)
-                .unwrap_or(&vec![])
-                .iter()
-                .map(serde_json::Value::as_str)
-                .filter(Option::is_some)
-                .map(|x| x.unwrap().into())
-                .collect::<Vec<CompactStr>>(),
-        }))
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext) {

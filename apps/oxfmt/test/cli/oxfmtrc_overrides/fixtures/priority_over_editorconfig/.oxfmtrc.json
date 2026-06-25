@@ -1,0 +1,11 @@
+{
+  "ignorePatterns": [".oxfmtrc.json"],
+  "overrides": [
+    {
+      "files": ["*.js"],
+      "options": {
+        "tabWidth": 4
+      }
+    }
+  ]
+}

@@ -20,6 +20,9 @@ class A {
 }
 
 ==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
 class A {
   m1(element: Element, key: string, undefined: undefined) /* block comment */ {
     // method body
@@ -29,6 +32,26 @@ class A {
     key: string,
     undefined: undefined,
   ): void /* block comment */ {
+    // method body
+  }
+  m3(tagName: string, rect: number[]): void {
+    // line comment
+    // method body
+  }
+  m4(tagName: string, rect: number[]) {
+    // line comment
+    // method body
+  }
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+class A {
+  m1(element: Element, key: string, undefined: undefined) /* block comment */ {
+    // method body
+  }
+  m2(element: Element, key: string, undefined: undefined): void /* block comment */ {
     // method body
   }
   m3(tagName: string, rect: number[]): void {

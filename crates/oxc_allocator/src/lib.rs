@@ -17,14 +17,14 @@
 //!
 //! * `serialize` - Enables serialization support for [`Box`] and [`Vec`] with `serde` and `oxc_estree`.
 //!
-//! * `pool` - Enables [`AllocatorPool`].
+//! * `pool` - Enables `AllocatorPool`.
 //!
-//! * `bitset` - Enables [`BitSet`].
+//! * `bitset` - Enables `BitSet`.
 //!
-//! * `from_raw_parts` - Adds [`Allocator::from_raw_parts`] method.
+//! * `from_raw_parts` - Adds `Allocator::from_raw_parts` method.
 //!   Usage of this feature is not advisable, and it will be removed as soon as we're able to.
 //!
-//! * `fixed_size` - Makes [`AllocatorPool`] create large fixed-size allocators, instead of
+//! * `fixed_size` - Makes `AllocatorPool` create large fixed-size allocators, instead of
 //!   flexibly-sized ones.
 //!   Only supported on 64-bit little-endian platforms at present.
 //!   Usage of this feature is not advisable, and it will be removed as soon as we're able to.
@@ -36,8 +36,6 @@
 //! * `disable_track_allocations` - Disables `track_allocations` feature.
 //!   Purpose is to prevent `--all-features` enabling allocation tracking.
 
-#![warn(missing_docs)]
-
 mod accessor;
 mod address;
 mod alloc;
@@ -48,10 +46,13 @@ mod bitset;
 mod boxed;
 mod clone_in;
 mod convert;
+#[cfg(all(feature = "fixed_size", target_pointer_width = "64", target_endian = "little"))]
+mod fixed_size;
 #[cfg(feature = "from_raw_parts")]
 mod from_raw_parts;
 pub mod hash_map;
 pub mod hash_set;
+pub mod ident_hasher;
 #[cfg(feature = "pool")]
 mod pool;
 mod string_builder;
@@ -61,21 +62,28 @@ mod tracking;
 mod vec;
 mod vec2;
 
-pub use accessor::AllocatorAccessor;
-pub use address::{Address, GetAddress};
+// Only expose `arena` module for doc tests
+#[cfg(not(feature = "testing"))]
+mod arena;
+#[cfg(feature = "testing")]
+pub mod arena;
+
+pub use accessor::GetAllocator;
+pub use address::{Address, GetAddress, UnstableAddress};
 pub use allocator::Allocator;
 #[cfg(feature = "bitset")]
 pub use bitset::BitSet;
-pub use boxed::Box;
+pub use boxed::{Box, Box as ArenaBox};
 pub use clone_in::CloneIn;
 pub use convert::{FromIn, IntoIn};
-pub use hash_map::HashMap;
-pub use hash_set::HashSet;
+pub use hash_map::{HashMap, HashMap as ArenaHashMap};
+pub use hash_set::{HashSet, HashSet as ArenaHashSet};
+pub use ident_hasher::{IdentBuildHasher, ident_hash, pack_len_hash};
 #[cfg(feature = "pool")]
 pub use pool::*;
-pub use string_builder::StringBuilder;
+pub use string_builder::{StringBuilder, StringBuilder as ArenaStringBuilder};
 pub use take_in::{Dummy, TakeIn};
-pub use vec::Vec;
+pub use vec::{Vec, Vec as ArenaVec};
 
 // Fixed size allocators are only supported on 64-bit little-endian platforms at present.
 //

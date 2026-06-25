@@ -1,22 +1,23 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ typescript-eslint(no-require-imports): Expected "import" statement instead of "require" call
+
+  ⚠ typescript(no-require-imports): Expected "import" statement instead of "require" call
    ╭─[no_require_imports.ts:1:11]
  1 │ var lib = require('lib');
    ·           ──────────────
    ╰────
   help: Do not use CommonJS `require` calls
 
-  ⚠ typescript-eslint(no-require-imports): Expected "import" statement instead of "require" call
+  ⚠ typescript(no-require-imports): Expected "import" statement instead of "require" call
    ╭─[no_require_imports.ts:1:12]
  1 │ let lib2 = require('lib2');
    ·            ───────────────
    ╰────
   help: Do not use CommonJS `require` calls
 
-  ⚠ typescript-eslint(no-require-imports): Expected "import" statement instead of "require" call
-   ╭─[no_require_imports.ts:2:15]
+  ⚠ typescript(no-require-imports): Expected "import" statement instead of "require" call
+   ╭─[no_require_imports.ts:2:24]
  1 │ 
  2 │             var lib5 = require('lib5'),
    ·                        ───────────────
@@ -24,8 +25,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Do not use CommonJS `require` calls
 
-  ⚠ typescript-eslint(no-require-imports): Expected "import" statement instead of "require" call
-   ╭─[no_require_imports.ts:3:13]
+  ⚠ typescript(no-require-imports): Expected "import" statement instead of "require" call
+   ╭─[no_require_imports.ts:3:22]
  2 │             var lib5 = require('lib5'),
  3 │               lib6 = require('lib6');
    ·                      ───────────────
@@ -33,29 +34,29 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Do not use CommonJS `require` calls
 
-  ⚠ typescript-eslint(no-require-imports): Expected "import" statement instead of "require" call
+  ⚠ typescript(no-require-imports): Expected "import" statement instead of "require" call
    ╭─[no_require_imports.ts:1:1]
  1 │ import lib8 = require('lib8');
    · ──────────────────────────────
    ╰────
   help: Do not use CommonJS `require` calls
 
-  ⚠ typescript-eslint(no-require-imports): Expected "import" statement instead of "require" call
+  ⚠ typescript(no-require-imports): Expected "import" statement instead of "require" call
    ╭─[no_require_imports.ts:1:11]
  1 │ var lib = require?.('lib');
    ·           ────────────────
    ╰────
   help: Do not use CommonJS `require` calls
 
-  ⚠ typescript-eslint(no-require-imports): Expected "import" statement instead of "require" call
+  ⚠ typescript(no-require-imports): Expected "import" statement instead of "require" call
    ╭─[no_require_imports.ts:1:12]
  1 │ let lib2 = require?.('lib2');
    ·            ─────────────────
    ╰────
   help: Do not use CommonJS `require` calls
 
-  ⚠ typescript-eslint(no-require-imports): Expected "import" statement instead of "require" call
-   ╭─[no_require_imports.ts:2:15]
+  ⚠ typescript(no-require-imports): Expected "import" statement instead of "require" call
+   ╭─[no_require_imports.ts:2:24]
  1 │ 
  2 │             var lib5 = require?.('lib5'),
    ·                        ─────────────────
@@ -63,8 +64,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Do not use CommonJS `require` calls
 
-  ⚠ typescript-eslint(no-require-imports): Expected "import" statement instead of "require" call
-   ╭─[no_require_imports.ts:3:13]
+  ⚠ typescript(no-require-imports): Expected "import" statement instead of "require" call
+   ╭─[no_require_imports.ts:3:22]
  2 │             var lib5 = require?.('lib5'),
  3 │               lib6 = require?.('lib6');
    ·                      ─────────────────
@@ -72,120 +73,92 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Do not use CommonJS `require` calls
 
-  ⚠ typescript-eslint(no-require-imports): Expected "import" statement instead of "require" call
+  ⚠ typescript(no-require-imports): Expected "import" statement instead of "require" call
    ╭─[no_require_imports.ts:1:13]
  1 │ const pkg = require('./package.json');
    ·             ─────────────────────────
    ╰────
   help: Do not use CommonJS `require` calls
 
-  ⚠ typescript-eslint(no-require-imports): Expected "import" statement instead of "require" call
-   ╭─[no_require_imports.ts:1:21]
- 1 │ const pkg = require('./package.jsonc');
-   ·                     ─────────────────
-   ╰────
-  help: Do not use CommonJS `require` calls
-
-  ⚠ typescript-eslint(no-require-imports): Expected "import" statement instead of "require" call
+  ⚠ typescript(no-require-imports): Expected "import" statement instead of "require" call
    ╭─[no_require_imports.ts:1:13]
  1 │ const pkg = require('./package.jsonc');
    ·             ──────────────────────────
    ╰────
   help: Do not use CommonJS `require` calls
 
-  ⚠ typescript-eslint(no-require-imports): Expected "import" statement instead of "require" call
-   ╭─[no_require_imports.ts:1:22]
- 1 │ const pkg = require(`./package.jsonc`);
-   ·                      ───────────────
-   ╰────
-  help: Do not use CommonJS `require` calls
-
-  ⚠ typescript-eslint(no-require-imports): Expected "import" statement instead of "require" call
+  ⚠ typescript(no-require-imports): Expected "import" statement instead of "require" call
    ╭─[no_require_imports.ts:1:13]
  1 │ const pkg = require(`./package.jsonc`);
    ·             ──────────────────────────
    ╰────
   help: Do not use CommonJS `require` calls
 
-  ⚠ typescript-eslint(no-require-imports): Expected "import" statement instead of "require" call
+  ⚠ typescript(no-require-imports): Expected "import" statement instead of "require" call
    ╭─[no_require_imports.ts:1:1]
  1 │ import pkg = require('./package.json');
    · ───────────────────────────────────────
    ╰────
   help: Do not use CommonJS `require` calls
 
-  ⚠ typescript-eslint(no-require-imports): Expected "import" statement instead of "require" call
-   ╭─[no_require_imports.ts:1:14]
- 1 │ import pkg = require('./package.jsonc');
-   ·              ──────────────────────────
-   ╰────
-  help: Do not use CommonJS `require` calls
-
-  ⚠ typescript-eslint(no-require-imports): Expected "import" statement instead of "require" call
+  ⚠ typescript(no-require-imports): Expected "import" statement instead of "require" call
    ╭─[no_require_imports.ts:1:1]
  1 │ import pkg = require('./package.jsonc');
    · ────────────────────────────────────────
    ╰────
   help: Do not use CommonJS `require` calls
 
-  ⚠ typescript-eslint(no-require-imports): Expected "import" statement instead of "require" call
-   ╭─[no_require_imports.ts:1:14]
- 1 │ import pkg = require('./package.json');
-   ·              ─────────────────────────
-   ╰────
-  help: Do not use CommonJS `require` calls
-
-  ⚠ typescript-eslint(no-require-imports): Expected "import" statement instead of "require" call
+  ⚠ typescript(no-require-imports): Expected "import" statement instead of "require" call
    ╭─[no_require_imports.ts:1:1]
  1 │ import pkg = require('./package.json');
    · ───────────────────────────────────────
    ╰────
   help: Do not use CommonJS `require` calls
 
-  ⚠ typescript-eslint(no-require-imports): Expected "import" statement instead of "require" call
+  ⚠ typescript(no-require-imports): Expected "import" statement instead of "require" call
    ╭─[no_require_imports.ts:1:11]
  1 │ var foo = require?.('foo');
    ·           ────────────────
    ╰────
   help: Do not use CommonJS `require` calls
 
-  ⚠ typescript-eslint(no-require-imports): Expected "import" statement instead of "require" call
+  ⚠ typescript(no-require-imports): Expected "import" statement instead of "require" call
    ╭─[no_require_imports.ts:1:17]
  1 │ let foo = trick(require?.('foo'));
    ·                 ────────────────
    ╰────
   help: Do not use CommonJS `require` calls
 
-  ⚠ typescript-eslint(no-require-imports): Expected "import" statement instead of "require" call
+  ⚠ typescript(no-require-imports): Expected "import" statement instead of "require" call
    ╭─[no_require_imports.ts:1:7]
  1 │ trick(require('foo'));
    ·       ──────────────
    ╰────
   help: Do not use CommonJS `require` calls
 
-  ⚠ typescript-eslint(no-require-imports): Expected "import" statement instead of "require" call
+  ⚠ typescript(no-require-imports): Expected "import" statement instead of "require" call
    ╭─[no_require_imports.ts:1:13]
  1 │ const foo = require('./foo.json') as Foo;
    ·             ─────────────────────
    ╰────
   help: Do not use CommonJS `require` calls
 
-  ⚠ typescript-eslint(no-require-imports): Expected "import" statement instead of "require" call
+  ⚠ typescript(no-require-imports): Expected "import" statement instead of "require" call
    ╭─[no_require_imports.ts:1:18]
  1 │ const foo: Foo = require('./foo.json').default;
    ·                  ─────────────────────
    ╰────
   help: Do not use CommonJS `require` calls
 
-  ⚠ typescript-eslint(no-require-imports): Expected "import" statement instead of "require" call
+  ⚠ typescript(no-require-imports): Expected "import" statement instead of "require" call
    ╭─[no_require_imports.ts:1:18]
  1 │ const foo = <Foo>require('./foo.json');
    ·                  ─────────────────────
    ╰────
   help: Do not use CommonJS `require` calls
 
-  ⚠ typescript-eslint(no-require-imports): Expected "import" statement instead of "require" call
-   ╭─[no_require_imports.ts:2:42]
+  ⚠ typescript(no-require-imports): Expected "import" statement instead of "require" call
+   ╭─[no_require_imports.ts:2:51]
  1 │ 
  2 │             const configValidator = new Validator(require('./a.json'));
    ·                                                   ───────────────────
@@ -193,8 +166,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Do not use CommonJS `require` calls
 
-  ⚠ typescript-eslint(no-require-imports): Expected "import" statement instead of "require" call
-   ╭─[no_require_imports.ts:3:30]
+  ⚠ typescript(no-require-imports): Expected "import" statement instead of "require" call
+   ╭─[no_require_imports.ts:3:39]
  2 │             const configValidator = new Validator(require('./a.json'));
  3 │             configValidator.addSchema(require('./a.json'));
    ·                                       ───────────────────
@@ -202,25 +175,57 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Do not use CommonJS `require` calls
 
-  ⚠ typescript-eslint(no-require-imports): Expected "import" statement instead of "require" call
+  ⚠ typescript(no-require-imports): Expected "import" statement instead of "require" call
    ╭─[no_require_imports.ts:1:1]
  1 │ require('foo');
    · ──────────────
    ╰────
   help: Do not use CommonJS `require` calls
 
-  ⚠ typescript-eslint(no-require-imports): Expected "import" statement instead of "require" call
+  ⚠ typescript(no-require-imports): Expected "import" statement instead of "require" call
    ╭─[no_require_imports.ts:1:1]
  1 │ require?.('foo');
    · ────────────────
    ╰────
   help: Do not use CommonJS `require` calls
 
-  ⚠ typescript-eslint(no-require-imports): Expected "import" statement instead of "require" call
+  ⚠ typescript(no-require-imports): Expected "import" statement instead of "require" call
    ╭─[no_require_imports.ts:2:13]
  1 │ function foo() {
  2 │             require('foo')
    ·             ──────────────
  3 │             }
+   ╰────
+  help: Do not use CommonJS `require` calls
+
+  ⚠ typescript(no-require-imports): Expected "import" statement instead of "require" call
+   ╭─[no_require_imports.ts:1:11]
+ 1 │ const m = require(someVariable);
+   ·           ─────────────────────
+   ╰────
+  help: Do not use CommonJS `require` calls
+
+  ⚠ typescript(no-require-imports): Expected "import" statement instead of "require" call
+   ╭─[no_require_imports.ts:1:11]
+ 1 │ const m = require(path.join(dir, file));
+   ·           ─────────────────────────────
+   ╰────
+  help: Do not use CommonJS `require` calls
+
+  ⚠ typescript(no-require-imports): Expected "import" statement instead of "require" call
+   ╭─[no_require_imports.ts:3:24]
+ 2 │             require(module: string) {
+ 3 │                 return require(module);
+   ·                        ───────────────
+ 4 │             }
+   ╰────
+  help: Do not use CommonJS `require` calls
+
+  ⚠ typescript(no-require-imports): Expected "import" statement instead of "require" call
+   ╭─[no_require_imports.ts:3:24]
+ 2 │             require(module: string) {
+ 3 │                 return require('foo');
+   ·                        ──────────────
+ 4 │             }
    ╰────
   help: Do not use CommonJS `require` calls

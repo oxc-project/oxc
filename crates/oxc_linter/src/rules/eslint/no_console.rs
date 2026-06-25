@@ -1,7 +1,8 @@
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -9,7 +10,7 @@ use crate::{
     AstNode,
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 fn no_console_diagnostic(span: Span, allow: &[CompactStr]) -> OxcDiagnostic {
@@ -22,11 +23,11 @@ fn no_console_diagnostic(span: Span, allow: &[CompactStr]) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected console statement.").with_label(span).with_help(only_msg)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct NoConsole(Box<NoConsoleConfig>);
 
 #[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoConsoleConfig {
     /// The `allow` option permits the given list of console methods to be used as exceptions to
     /// this rule.
@@ -86,20 +87,13 @@ declare_oxc_lint!(
     restriction,
     conditional_suggestion,
     config = NoConsoleConfig,
+    version = "0.0.13",
+    short_description = "Disallow the use of console.",
 );
 
 impl Rule for NoConsole {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        Self(Box::new(NoConsoleConfig {
-            allow: value
-                .get(0)
-                .and_then(|v| v.get("allow"))
-                .and_then(serde_json::Value::as_array)
-                .map(|v| {
-                    v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect()
-                })
-                .unwrap_or_default(),
-        }))
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -200,12 +194,12 @@ fn test() {
         (
             "console.info(foo)",
             Some(serde_json::json!([{ "allow": ["info"] }])),
-            Some(serde_json::json!({ "env": { "browser": true}})),
+            Some(serde_json::json!({ "env": { "browser": true }})),
         ),
         (
             "console.info(foo)",
             Some(serde_json::json!([{ "allow": ["info"] }])),
-            Some(serde_json::json!({ "globals": { "console": "readonly"}})),
+            Some(serde_json::json!({ "globals": { "console": "readonly" }})),
         ),
         ("console.warn(foo)", Some(serde_json::json!([{ "allow": ["warn"] }])), None),
         ("console.error(foo)", Some(serde_json::json!([{ "allow": ["error"] }])), None),
@@ -225,12 +219,26 @@ fn test() {
         ("console.error(foo)", None, None),
         ("console.info(foo)", None, None),
         ("console.warn(foo)", None, None),
+        (
+            "console
+               .warn(foo)",
+            None,
+            None,
+        ),
+        (
+            "console
+               /* comment */
+               .warn(foo);",
+            None,
+            None,
+        ),
+        ("console.warn(foo)", Some(serde_json::json!([{ "allow": [] }])), None),
         ("console['log'](foo)", None, None),
         ("console[`log`](foo)", None, None),
         ("console['lo\\x67'](foo)", Some(serde_json::json!([{ "allow": ["lo\\x67"] }])), None),
         ("console[`lo\\x67`](foo)", Some(serde_json::json!([{ "allow": ["lo\\x67"] }])), None),
-        ("console.log()", None, Some(serde_json::json!({ "env": { "browser": true}}))),
-        ("console.log()", None, Some(serde_json::json!({ "globals": { "console": "off"}}))),
+        ("console.log()", None, Some(serde_json::json!({ "env": { "browser": true }}))),
+        ("console.log()", None, Some(serde_json::json!({ "globals": { "console": "off" }}))),
         ("console.log(foo)", Some(serde_json::json!([{ "allow": ["error"] }])), None),
         ("console.error(foo)", Some(serde_json::json!([{ "allow": ["warn"] }])), None),
         ("console.info(foo)", Some(serde_json::json!([{ "allow": ["log"] }])), None),

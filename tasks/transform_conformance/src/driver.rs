@@ -4,7 +4,7 @@ use oxc::{
     CompilerInterface,
     ast::ast::Program,
     codegen::{CodegenOptions, CodegenReturn, CommentOptions, IndentChar},
-    diagnostics::OxcDiagnostic,
+    diagnostics::{Diagnostics, OxcDiagnostic},
     parser::ParseOptions,
     span::SourceType,
     transformer::{TransformOptions, TransformerReturn},
@@ -17,7 +17,7 @@ pub struct Driver {
     print_annotation_comments: bool,
     options: TransformOptions,
     printed: String,
-    errors: Vec<OxcDiagnostic>,
+    errors: Diagnostics,
 }
 
 impl CompilerInterface for Driver {
@@ -48,15 +48,11 @@ impl CompilerInterface for Driver {
         false
     }
 
-    fn semantic_child_scope_ids(&self) -> bool {
-        true
-    }
-
-    fn handle_errors(&mut self, errors: Vec<OxcDiagnostic>) {
+    fn handle_errors(&mut self, errors: Diagnostics) {
         self.errors.extend(errors);
     }
 
-    fn after_codegen(&mut self, ret: CodegenReturn) {
+    fn after_codegen(&mut self, ret: CodegenReturn<'_>) {
         self.printed = ret.code;
     }
 
@@ -90,7 +86,7 @@ impl Driver {
             print_annotation_comments,
             options,
             printed: String::new(),
-            errors: vec![],
+            errors: Diagnostics::new(),
         }
     }
 

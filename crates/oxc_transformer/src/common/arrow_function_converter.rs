@@ -91,12 +91,13 @@ use compact_str::CompactString;
 use indexmap::IndexMap;
 use rustc_hash::{FxBuildHasher, FxHashSet};
 
-use oxc_allocator::{Box as ArenaBox, TakeIn, Vec as ArenaVec};
+use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
 use oxc_ast::{NONE, ast::*};
 use oxc_ast_visit::{VisitMut, walk_mut::walk_expression};
 use oxc_data_structures::stack::{NonEmptyStack, SparseStack};
 use oxc_semantic::{ReferenceFlags, SymbolId};
 use oxc_span::{GetSpan, SPAN};
+use oxc_str::{Ident, static_ident};
 use oxc_syntax::{
     scope::{ScopeFlags, ScopeId},
     symbol::SymbolFlags,
@@ -401,12 +402,12 @@ impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctionConverter<'a> {
             match_member_expression!(Expression) => {
                 self.transform_member_expression_for_super(expr, None, ctx)
             }
-            Expression::ArrowFunctionExpression(arrow) => {
+            Expression::ArrowFunctionExpression(arrow)
                 // TODO: If the async arrow function without `this` or `super` usage, we can skip this step.
                 if self.is_async_only()
                     && arrow.r#async
                     && Self::in_class_property_definition_value(ctx)
-                {
+                => {
                     // Inside class property definition value, since async arrow function will be
                     // converted to a generator function by `AsyncToGenerator` plugin, ensure
                     // `_this = this` and `super` methods are inserted correctly. We need to
@@ -421,11 +422,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctionConverter<'a> {
                     //   prop = (() => { return async () => {} })();
                     // }
                     // ```
-                    Some(wrap_expression_in_arrow_function_iife(expr.take_in(ctx.ast), ctx))
-                } else {
-                    return;
+                    Some(wrap_expression_in_arrow_function_iife(expr.take_in(ctx), ctx))
                 }
-            }
             _ => return,
         };
 
@@ -446,8 +444,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctionConverter<'a> {
                 return;
             }
 
-            let Expression::ArrowFunctionExpression(arrow_function_expr) = expr.take_in(ctx.ast)
-            else {
+            let Expression::ArrowFunctionExpression(arrow_function_expr) = expr.take_in(ctx) else {
                 unreachable!()
             };
 
@@ -747,8 +744,8 @@ impl<'a> ArrowFunctionConverter<'a> {
 
                 // The property will as a parameter to pass to the new arrow function.
                 // `super[property]` to `_superprop_get(property)`
-                argument = Some(computed_member.expression.take_in(ctx.ast));
-                computed_member.object.take_in(ctx.ast)
+                argument = Some(computed_member.expression.take_in(ctx));
+                computed_member.object.take_in(ctx)
             }
             MemberExpression::StaticMemberExpression(static_member) => {
                 if !static_member.object.is_super() {
@@ -757,7 +754,7 @@ impl<'a> ArrowFunctionConverter<'a> {
 
                 // Used to generate the name of the arrow function.
                 property = static_member.property.name.as_str();
-                expr.take_in(ctx.ast)
+                expr.take_in(ctx)
             }
             MemberExpression::PrivateFieldExpression(_) => {
                 // Private fields can't be accessed by `super`.
@@ -784,9 +781,9 @@ impl<'a> ArrowFunctionConverter<'a> {
         }
         // _value
         if let Some(assign_value) = assign_value {
-            arguments.push(Argument::from(assign_value.take_in(ctx.ast)));
+            arguments.push(Argument::from(assign_value.take_in(ctx)));
         }
-        let call = ctx.ast.expression_call(SPAN, callee, NONE, arguments, false);
+        let call = ctx.ast.expression_call(expr.span(), callee, NONE, arguments, false);
         Some(call)
     }
 
@@ -821,12 +818,12 @@ impl<'a> ArrowFunctionConverter<'a> {
         // Add `this` as the first argument and original arguments as the rest.
         let mut arguments = ctx.ast.vec_with_capacity(call.arguments.len() + 1);
         arguments.push(Argument::from(ctx.ast.expression_this(SPAN)));
-        arguments.extend(call.arguments.take_in(ctx.ast));
+        arguments.extend(call.arguments.take_in(ctx));
 
         let property = ctx.ast.identifier_name(SPAN, "call");
         let callee = ctx.ast.member_expression_static(SPAN, object, property, false);
         let callee = Expression::from(callee);
-        Some(ctx.ast.expression_call(SPAN, callee, NONE, arguments, false))
+        Some(ctx.ast.expression_call(call.span, callee, NONE, arguments, false))
     }
 
     /// Transform an `AssignmentExpression` whose assignment target is a `super` member expression.
@@ -858,7 +855,7 @@ impl<'a> ArrowFunctionConverter<'a> {
             return None;
         }
 
-        let assignment_target = assignment.left.take_in(ctx.ast);
+        let assignment_target = assignment.left.take_in(ctx);
         let mut assignment_expr = Expression::from(assignment_target.into_member_expression());
         self.transform_member_expression_for_super(
             &mut assignment_expr,
@@ -878,8 +875,11 @@ impl<'a> ArrowFunctionConverter<'a> {
     ) {
         let original_scope_id = ctx.scoping().symbol_scope_id(binding.symbol_id);
         if target_scope_id != original_scope_id {
-            ctx.scoping_mut().set_symbol_scope_id(binding.symbol_id, target_scope_id);
-            ctx.scoping_mut().move_binding(original_scope_id, target_scope_id, &binding.name);
+            ctx.scoping_mut().move_binding_by_symbol_id(
+                original_scope_id,
+                target_scope_id,
+                binding.symbol_id,
+            );
         }
     }
 
@@ -909,6 +909,9 @@ impl<'a> ArrowFunctionConverter<'a> {
                 SPAN,
                 ctx.ast.vec(),
                 param_binding.create_binding_pattern(ctx),
+                NONE,
+                NONE,
+                false,
                 None,
                 false,
                 false,
@@ -934,6 +937,9 @@ impl<'a> ArrowFunctionConverter<'a> {
                 SPAN,
                 ctx.ast.vec(),
                 param_binding.create_binding_pattern(ctx),
+                NONE,
+                NONE,
+                false,
                 None,
                 false,
                 false,
@@ -962,6 +968,7 @@ impl<'a> ArrowFunctionConverter<'a> {
             SPAN,
             VariableDeclarationKind::Var,
             binding.create_binding_pattern(ctx),
+            NONE,
             Some(init),
             false,
         )
@@ -1014,9 +1021,9 @@ impl<'a> ArrowFunctionConverter<'a> {
     }
 
     /// Rename the `arguments` symbol to a new name.
-    fn rename_arguments_symbol(symbol_id: SymbolId, name: Atom<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn rename_arguments_symbol(symbol_id: SymbolId, name: Ident<'a>, ctx: &mut TraverseCtx<'a>) {
         let scope_id = ctx.scoping().symbol_scope_id(symbol_id);
-        ctx.scoping_mut().rename_symbol(symbol_id, scope_id, name.as_str());
+        ctx.scoping_mut().rename_symbol(symbol_id, scope_id, name);
     }
 
     /// Transform the identifier reference for `arguments` if it's affected after transformation.
@@ -1055,7 +1062,7 @@ impl<'a> ArrowFunctionConverter<'a> {
         if symbol_id.is_none() {
             let reference = ctx.scoping_mut().get_reference_mut(reference_id);
             reference.set_symbol_id(binding.symbol_id);
-            ctx.scoping_mut().delete_root_unresolved_reference(&ident.name, reference_id);
+            ctx.scoping_mut().delete_root_unresolved_reference(ident.name, reference_id);
             ctx.scoping_mut().add_resolved_reference(binding.symbol_id, reference_id);
         }
 
@@ -1083,7 +1090,7 @@ impl<'a> ArrowFunctionConverter<'a> {
             Self::rename_arguments_symbol(symbol_id, arguments_name, ctx);
             // Record the symbol ID as a renamed `arguments` variable.
             self.renamed_arguments_symbol_ids.insert(symbol_id);
-            BoundIdentifier::new(ident.name, symbol_id)
+            BoundIdentifier::new(arguments_name, symbol_id)
         });
     }
 
@@ -1104,13 +1111,16 @@ impl<'a> ArrowFunctionConverter<'a> {
         Self::adjust_binding_scope(target_scope_id, &arguments_var, ctx);
 
         let mut init =
-            ctx.create_unbound_ident_expr(SPAN, Atom::from("arguments"), ReferenceFlags::Read);
+            ctx.create_unbound_ident_expr(SPAN, static_ident!("arguments"), ReferenceFlags::Read);
 
         // Top level may not have `arguments`, so we need to check it.
         // `typeof arguments === "undefined" ? void 0 : arguments;`
         if ctx.scoping().root_scope_id() == target_scope_id {
-            let argument =
-                ctx.create_unbound_ident_expr(SPAN, Atom::from("arguments"), ReferenceFlags::Read);
+            let argument = ctx.create_unbound_ident_expr(
+                SPAN,
+                static_ident!("arguments"),
+                ReferenceFlags::Read,
+            );
             let typeof_arguments = ctx.ast.expression_unary(SPAN, UnaryOperator::Typeof, argument);
             let undefined_literal = ctx.ast.expression_string_literal(SPAN, "undefined", None);
             let test = ctx.ast.expression_binary(
@@ -1126,6 +1136,7 @@ impl<'a> ArrowFunctionConverter<'a> {
             SPAN,
             VariableDeclarationKind::Var,
             arguments_var.create_binding_pattern(ctx),
+            NONE,
             Some(init),
             false,
         ))
@@ -1185,6 +1196,7 @@ impl<'a> ArrowFunctionConverter<'a> {
                 SPAN,
                 VariableDeclarationKind::Var,
                 this_var.create_binding_pattern(ctx),
+                NONE,
                 init,
                 false,
             );
@@ -1316,7 +1328,7 @@ impl<'a> ConstructorBodyThisAfterSuperInserter<'a, '_> {
     fn transform_super_call_expression(&mut self, expr: &mut Expression<'a>) {
         let assignment = self.create_assignment_to_this_temp_var();
         let span = expr.span();
-        let exprs = self.ctx.ast.vec_from_array([expr.take_in(self.ctx.ast), assignment]);
+        let exprs = self.ctx.ast.vec_from_array([expr.take_in(self.ctx), assignment]);
         *expr = self.ctx.ast.expression_sequence(span, exprs);
     }
 

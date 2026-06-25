@@ -7,6 +7,7 @@ use humansize::{DECIMAL, format_size};
 use mimalloc_safe::MiMalloc;
 
 use oxc_allocator::Allocator;
+use oxc_formatter::{JsFormatOptions, format_program, parse_for_format};
 use oxc_minifier::{CompressOptions, MangleOptions, Minifier, MinifierOptions};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_semantic::SemanticBuilder;
@@ -103,9 +104,9 @@ struct AllocatorStats {
     sys_allocs: usize,
     /// Number of reallocations made by system allocator
     sys_reallocs: usize,
-    /// Number of allocations made by arena/bump allocator
+    /// Number of allocations made by arena allocator
     arena_allocs: usize,
-    /// Number of reallocations made by arena/bump allocator
+    /// Number of reallocations made by arena allocator
     arena_reallocs: usize,
 }
 
@@ -128,7 +129,10 @@ pub fn run() -> Result<(), io::Error> {
     let table_header = format_table_header(fixture_width, width);
 
     let mut parser_out = table_header.clone();
-    let mut minifier_out = table_header;
+    let mut semantic_out = table_header.clone();
+    let mut transformer_out = table_header.clone();
+    let mut minifier_out = table_header.clone();
+    let mut formatter_out = table_header;
 
     let mut allocator = Allocator::default();
 
@@ -139,21 +143,37 @@ pub fn run() -> Result<(), io::Error> {
     };
 
     // Warm-up by parsing each file first, and then measuring the actual allocations. This reduces variance
-    // in the number of allocations, because we ensure that the bump allocator has already requested all
+    // in the number of allocations, because we ensure that the arena allocator has already requested all
     // of the space it will need from the system allocator to parse the largest file in the set.
     for file in files.files() {
         let mut parsed = Parser::new(&allocator, &file.source_text, file.source_type)
             .with_options(parse_options)
             .parse();
+        assert!(parsed.diagnostics.is_empty());
 
         // Transform TypeScript to ESNext before minifying (minifier only works on esnext)
-        let scoping = SemanticBuilder::new().build(&parsed.program).semantic.into_scoping();
+        let scoping = SemanticBuilder::new()
+            .with_excess_capacity(2.0)
+            .with_enum_eval(true)
+            .build(&parsed.program)
+            .semantic
+            .into_scoping();
         let transform_options = TransformOptions::from_target("esnext").unwrap();
         let _ =
             Transformer::new(&allocator, std::path::Path::new(&file.file_name), &transform_options)
                 .build_with_scoping(scoping, &mut parsed.program);
 
         Minifier::new(minifier_options.clone()).minify(&allocator, &mut parsed.program);
+
+        // Formatter runs on a freshly-parsed AST (not after transformer/minifier),
+        // so re-parse with the formatter's parse options before formatting
+        allocator.reset();
+        let parsed = parse_for_format(&allocator, &file.source_text, file.source_type);
+        assert!(parsed.diagnostics.is_empty());
+        let _ = format_program(&allocator, &parsed.program, JsFormatOptions::default(), None)
+            .print()
+            .unwrap()
+            .into_code();
     }
 
     for file in files.files() {
@@ -162,11 +182,13 @@ pub fn run() -> Result<(), io::Error> {
         allocator.reset();
         reset_global_allocs();
 
-        let mut parsed = Parser::new(&allocator, &file.source_text, file.source_type)
-            .with_options(parse_options)
-            .parse();
-
-        let parser_stats = record_stats(&allocator);
+        let (mut parsed, parser_stats) = record_stats_in(&allocator, || {
+            let parsed = Parser::new(&allocator, &file.source_text, file.source_type)
+                .with_options(parse_options)
+                .parse();
+            assert!(parsed.diagnostics.is_empty());
+            parsed
+        });
 
         parser_out.push_str(&format_table_row(
             file.file_name.as_str(),
@@ -176,18 +198,49 @@ pub fn run() -> Result<(), io::Error> {
             width,
         ));
 
+        let ((), semantic_stats) = record_stats_in(&allocator, || {
+            let _ = SemanticBuilder::new().with_enum_eval(true).build(&parsed.program);
+        });
+
+        semantic_out.push_str(&format_table_row(
+            file.file_name.as_str(),
+            file.source_text.len(),
+            &semantic_stats,
+            fixture_width,
+            width,
+        ));
+
+        // Match the production compiler path for transforms: transformers add scopes, symbols, and
+        // references, so semantic analysis reserves excess capacity up front.
+        let scoping = SemanticBuilder::new()
+            .with_excess_capacity(2.0)
+            .with_enum_eval(true)
+            .build(&parsed.program)
+            .semantic
+            .into_scoping();
+
         // Transform TypeScript to ESNext before minifying (minifier only works on esnext)
-        let scoping = SemanticBuilder::new().build(&parsed.program).semantic.into_scoping();
         let transform_options = TransformOptions::from_target("esnext").unwrap();
-        let _ =
-            Transformer::new(&allocator, std::path::Path::new(&file.file_name), &transform_options)
-                .build_with_scoping(scoping, &mut parsed.program);
+        let ((), transformer_stats) = record_stats_in(&allocator, || {
+            let _ = Transformer::new(
+                &allocator,
+                std::path::Path::new(&file.file_name),
+                &transform_options,
+            )
+            .build_with_scoping(scoping, &mut parsed.program);
+        });
 
-        let before_minify_stats = record_stats(&allocator);
+        transformer_out.push_str(&format_table_row(
+            file.file_name.as_str(),
+            file.source_text.len(),
+            &transformer_stats,
+            fixture_width,
+            width,
+        ));
 
-        Minifier::new(minifier_options).minify(&allocator, &mut parsed.program);
-
-        let minifier_stats = record_stats_diff(&allocator, &before_minify_stats);
+        let ((), minifier_stats) = record_stats_in(&allocator, || {
+            Minifier::new(minifier_options).minify(&allocator, &mut parsed.program);
+        });
 
         minifier_out.push_str(&format_table_row(
             file.file_name.as_str(),
@@ -196,10 +249,36 @@ pub fn run() -> Result<(), io::Error> {
             fixture_width,
             width,
         ));
+
+        // Formatter runs on a freshly-parsed AST (not after transformer/minifier),
+        // so re-parse with the formatter's parse options before measuring the formatter
+        allocator.reset();
+        reset_global_allocs();
+
+        let parsed = parse_for_format(&allocator, &file.source_text, file.source_type);
+        assert!(parsed.diagnostics.is_empty());
+
+        let (_, formatter_stats) = record_stats_in(&allocator, || {
+            format_program(&allocator, &parsed.program, JsFormatOptions::default(), None)
+                .print()
+                .unwrap()
+                .into_code()
+        });
+
+        formatter_out.push_str(&format_table_row(
+            file.file_name.as_str(),
+            file.source_text.len(),
+            &formatter_stats,
+            fixture_width,
+            width,
+        ));
     }
 
     write_snapshot("tasks/track_memory_allocations/allocs_parser.snap", &parser_out)?;
+    write_snapshot("tasks/track_memory_allocations/allocs_semantic.snap", &semantic_out)?;
+    write_snapshot("tasks/track_memory_allocations/allocs_transformer.snap", &transformer_out)?;
     write_snapshot("tasks/track_memory_allocations/allocs_minifier.snap", &minifier_out)?;
+    write_snapshot("tasks/track_memory_allocations/allocs_formatter.snap", &formatter_out)?;
 
     Ok(())
 }
@@ -229,6 +308,18 @@ fn record_stats_diff(allocator: &Allocator, prev: &AllocatorStats) -> AllocatorS
     }
 }
 
+/// Records the allocations stats before and after the given closure is executed.
+fn record_stats_in<F, R>(allocator: &Allocator, f: F) -> (R, AllocatorStats)
+where
+    F: FnOnce() -> R,
+{
+    let before_stats = record_stats(allocator);
+    let result = f();
+    let diff_stats = record_stats_diff(allocator, &before_stats);
+
+    (result, diff_stats)
+}
+
 /// Formats a single row of the allocator stats table
 fn format_table_row(
     file_name: &str,
@@ -252,18 +343,17 @@ fn format_table_row(
 
 fn format_table_header(fixture_width: usize, width: usize) -> String {
     let mut out = format!(
-        "{:fixture_width$} | {:width$} || {:width$} | {:width$} || {:width$} | {:width$} | {:width$} \n",
+        "{:fixture_width$} | {:width$} || {:width$} | {:width$} || {:width$} | {:width$} \n",
         "File",
         "File size",
         "Sys allocs",
         "Sys reallocs",
         "Arena allocs",
         "Arena reallocs",
-        "Arena bytes",
         fixture_width = fixture_width,
         width = width
     );
-    out.push_str(&str::repeat("-", width * 7 + fixture_width + 15));
+    out.push_str(&str::repeat("-", width * 6 + fixture_width + 13));
     out.push('\n');
     out
 }

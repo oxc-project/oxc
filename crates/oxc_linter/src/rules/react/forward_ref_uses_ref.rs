@@ -38,7 +38,7 @@ declare_oxc_lint!(
     /// var React = require('react');
     ///
     /// var Component = React.forwardRef((props) => (
-    ///     <div />
+    ///   <div />
     /// ));
     /// ```
     ///
@@ -47,21 +47,23 @@ declare_oxc_lint!(
     /// var React = require('react');
     ///
     /// var Component = React.forwardRef((props, ref) => (
-    ///    <div ref={ref} />
+    ///   <div ref={ref} />
     /// ));
     ///
     /// var Component = React.forwardRef((props, ref) => (
-    ///    <div />
+    ///   <div />
     /// ));
     ///
     /// function Component(props) {
-    ///    return <div />;
+    ///   return <div />;
     /// };
     /// ```
     ForwardRefUsesRef,
     react,
     correctness,
-    suggestion
+    suggestion,
+    version = "0.16.9",
+    short_description = "Require all `forwardRef` components include a `ref` parameter.",
 );
 
 impl Rule for ForwardRefUsesRef {

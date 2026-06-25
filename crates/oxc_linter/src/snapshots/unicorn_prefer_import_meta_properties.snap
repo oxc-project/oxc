@@ -1,0 +1,181 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(prefer-import-meta-properties): Do not construct dirname.
+   ╭─[prefer_import_meta_properties.tsx:3:29]
+ 2 │             import { fileURLToPath } from "url";
+ 3 │             const dirname = path.dirname(fileURLToPath(import.meta.url));
+   ·                             ────────────────────────────────────────────
+   ╰────
+  help: Replace this expression with `import.meta.dirname`.
+
+  ⚠ unicorn(prefer-import-meta-properties): Do not construct dirname.
+   ╭─[prefer_import_meta_properties.tsx:2:29]
+ 1 │ import path from "path";
+ 2 │             const dirname = path.dirname(import.meta.filename);
+   ·                             ──────────────────────────────────
+   ╰────
+  help: Replace this expression with `import.meta.dirname`.
+
+  ⚠ unicorn(prefer-import-meta-properties): Do not construct dirname.
+   ╭─[prefer_import_meta_properties.tsx:2:29]
+ 1 │ import { fileURLToPath } from "url";
+ 2 │             const dirname = fileURLToPath(new URL(".", import.meta.url));
+   ·                             ────────────────────────────────────────────
+   ╰────
+  help: Replace this expression with `import.meta.dirname`.
+
+  ⚠ unicorn(prefer-import-meta-properties): Do not construct dirname.
+   ╭─[prefer_import_meta_properties.tsx:2:29]
+ 1 │ import { fileURLToPath } from "url";
+ 2 │             const dirname = fileURLToPath(new URL("./", import.meta.url));
+   ·                             ─────────────────────────────────────────────
+   ╰────
+  help: Replace this expression with `import.meta.dirname`.
+
+  ⚠ unicorn(prefer-import-meta-properties): Do not construct filename using `fileURLToPath()`.
+   ╭─[prefer_import_meta_properties.tsx:2:30]
+ 1 │ import { fileURLToPath } from "url";
+ 2 │             const filename = fileURLToPath(import.meta.url);
+   ·                              ──────────────────────────────
+   ╰────
+  help: Replace this expression with `import.meta.filename`.
+
+  ⚠ unicorn(prefer-import-meta-properties): Do not construct filename using `fileURLToPath()`.
+   ╭─[prefer_import_meta_properties.tsx:2:30]
+ 1 │ import { fileURLToPath } from "url";
+ 2 │             const filename = fileURLToPath(new URL(import.meta.url));
+   ·                              ───────────────────────────────────────
+   ╰────
+  help: Replace this expression with `import.meta.filename`.
+
+  ⚠ unicorn(prefer-import-meta-properties): Do not construct dirname.
+   ╭─[prefer_import_meta_properties.tsx:3:29]
+ 2 │             import { fileURLToPath } from "node:url";
+ 3 │             const dirname = path.dirname(fileURLToPath(import.meta.url));
+   ·                             ────────────────────────────────────────────
+   ╰────
+  help: Replace this expression with `import.meta.dirname`.
+
+  ⚠ unicorn(prefer-import-meta-properties): Do not construct filename using `fileURLToPath()`.
+   ╭─[prefer_import_meta_properties.tsx:2:30]
+ 1 │ import { fileURLToPath } from "node:url";
+ 2 │             const filename = fileURLToPath(import.meta.url);
+   ·                              ──────────────────────────────
+   ╰────
+  help: Replace this expression with `import.meta.filename`.
+
+  ⚠ unicorn(prefer-import-meta-properties): Do not construct dirname.
+   ╭─[prefer_import_meta_properties.tsx:3:29]
+ 2 │             import url from "node:url";
+ 3 │             const dirname = path.dirname(url.fileURLToPath(import.meta.url));
+   ·                             ────────────────────────────────────────────────
+   ╰────
+  help: Replace this expression with `import.meta.dirname`.
+
+  ⚠ unicorn(prefer-import-meta-properties): Do not construct filename using `fileURLToPath()`.
+   ╭─[prefer_import_meta_properties.tsx:2:30]
+ 1 │ import url from "node:url";
+ 2 │             const filename = url.fileURLToPath(import.meta.url);
+   ·                              ──────────────────────────────────
+   ╰────
+  help: Replace this expression with `import.meta.filename`.
+
+  ⚠ unicorn(prefer-import-meta-properties): Do not construct filename using `fileURLToPath()`.
+   ╭─[prefer_import_meta_properties.tsx:3:32]
+ 2 │             import { fileURLToPath } from "node:url";
+ 3 │             const __filename = fileURLToPath(import.meta.url);
+   ·                                ──────────────────────────────
+ 4 │             const __dirname = path.dirname(__filename);
+   ╰────
+  help: Replace this expression with `import.meta.filename`.
+
+  ⚠ unicorn(prefer-import-meta-properties): Do not construct dirname.
+   ╭─[prefer_import_meta_properties.tsx:4:31]
+ 3 │             const __filename = fileURLToPath(import.meta.url);
+ 4 │             const __dirname = path.dirname(__filename);
+   ·                               ────────────────────────
+   ╰────
+  help: Replace this expression with `import.meta.dirname`.
+
+  ⚠ unicorn(prefer-import-meta-properties): Do not construct dirname.
+   ╭─[prefer_import_meta_properties.tsx:3:31]
+ 2 │             const __filename = import.meta.filename;
+ 3 │             const __dirname = path.dirname(__filename);
+   ·                               ────────────────────────
+   ╰────
+  help: Replace this expression with `import.meta.dirname`.
+
+  ⚠ unicorn(prefer-import-meta-properties): Do not construct filename using `fileURLToPath()`.
+   ╭─[prefer_import_meta_properties.tsx:3:30]
+ 2 │             const { fileURLToPath } = process.getBuiltinModule("node:url");
+ 3 │             const filename = fileURLToPath(import.meta.url);
+   ·                              ──────────────────────────────
+ 4 │             const dirname = path.dirname(filename);
+   ╰────
+  help: Replace this expression with `import.meta.filename`.
+
+  ⚠ unicorn(prefer-import-meta-properties): Do not construct dirname.
+   ╭─[prefer_import_meta_properties.tsx:4:29]
+ 3 │             const filename = fileURLToPath(import.meta.url);
+ 4 │             const dirname = path.dirname(filename);
+   ·                             ──────────────────────
+   ╰────
+  help: Replace this expression with `import.meta.dirname`.
+
+  ⚠ unicorn(prefer-import-meta-properties): Do not construct filename using `fileURLToPath()`.
+   ╭─[prefer_import_meta_properties.tsx:2:30]
+ 1 │ const { fileURLToPath: renamed } = process.getBuiltinModule("node:url");
+ 2 │             const filename = renamed(import.meta.url);
+   ·                              ────────────────────────
+   ╰────
+  help: Replace this expression with `import.meta.filename`.
+
+  ⚠ unicorn(prefer-import-meta-properties): Do not construct filename using `fileURLToPath()`.
+   ╭─[prefer_import_meta_properties.tsx:2:30]
+ 1 │ import { fileURLToPath as renamed } from "node:url";
+ 2 │             const filename = renamed(import.meta.url);
+   ·                              ────────────────────────
+   ╰────
+  help: Replace this expression with `import.meta.filename`.
+
+  ⚠ unicorn(prefer-import-meta-properties): Do not construct filename using `fileURLToPath()`.
+   ╭─[prefer_import_meta_properties.tsx:3:30]
+ 2 │             const { fileURLToPath } = process.getBuiltinModule("url");
+ 3 │             const filename = fileURLToPath(import.meta.url);
+   ·                              ──────────────────────────────
+ 4 │             const dirname = path.dirname(filename);
+   ╰────
+  help: Replace this expression with `import.meta.filename`.
+
+  ⚠ unicorn(prefer-import-meta-properties): Do not construct dirname.
+   ╭─[prefer_import_meta_properties.tsx:4:29]
+ 3 │             const filename = fileURLToPath(import.meta.url);
+ 4 │             const dirname = path.dirname(filename);
+   ·                             ──────────────────────
+   ╰────
+  help: Replace this expression with `import.meta.dirname`.
+
+  ⚠ unicorn(prefer-import-meta-properties): Do not construct filename using `fileURLToPath()`.
+   ╭─[prefer_import_meta_properties.tsx:1:18]
+ 1 │ const filename = process.getBuiltinModule("node:url").fileURLToPath(import.meta.url);
+   ·                  ───────────────────────────────────────────────────────────────────
+ 2 │             const dirname = process.getBuiltinModule("node:path").dirname(filename);
+   ╰────
+  help: Replace this expression with `import.meta.filename`.
+
+  ⚠ unicorn(prefer-import-meta-properties): Do not construct dirname.
+   ╭─[prefer_import_meta_properties.tsx:2:29]
+ 1 │ const filename = process.getBuiltinModule("node:url").fileURLToPath(import.meta.url);
+ 2 │             const dirname = process.getBuiltinModule("node:path").dirname(filename);
+   ·                             ───────────────────────────────────────────────────────
+   ╰────
+  help: Replace this expression with `import.meta.dirname`.
+
+  ⚠ unicorn(prefer-import-meta-properties): Do not construct filename using `fileURLToPath()`.
+   ╭─[prefer_import_meta_properties.tsx:1:18]
+ 1 │ const filename = process.getBuiltinModule("node:url").fileURLToPath(import.meta.url);
+   ·                  ───────────────────────────────────────────────────────────────────
+   ╰────
+  help: Replace this expression with `import.meta.filename`.

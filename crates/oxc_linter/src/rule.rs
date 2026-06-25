@@ -2,7 +2,10 @@
 use std::borrow::Cow;
 use std::{fmt, hash::Hash};
 
-use schemars::{JsonSchema, SchemaGenerator, schema::Schema};
+use schemars::{
+    JsonSchema, SchemaGenerator,
+    schema::{InstanceType, Schema, SchemaObject},
+};
 use serde::{Deserialize, Serialize};
 
 use oxc_semantic::AstTypesBitset;
@@ -15,8 +18,19 @@ use crate::{
 
 pub trait Rule: Sized + Default + fmt::Debug {
     /// Initialize from eslint json configuration
-    fn from_configuration(_value: serde_json::Value) -> Self {
-        Self::default()
+    fn from_configuration(_value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        Ok(Self::default())
+    }
+
+    /// Serialize rule configuration to JSON. Only used for sending rule configurations
+    /// to another linter. This allows oxlint to handle the parsing and error handling.
+    /// Type-aware rules implemented in tsgolint will need to override this method.
+    ///
+    /// - Returns `None` if no configuration should be serialized (default)
+    /// - Returns `Some(Err(_))` if serialization fails
+    /// - Returns `Some(Ok(_))` if serialization succeeds
+    fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {
+        None
     }
 
     #[expect(unused_variables)]
@@ -58,6 +72,275 @@ pub trait Rule: Sized + Default + fmt::Debug {
     #[inline]
     fn should_run(&self, ctx: &ContextHost) -> bool {
         true
+    }
+}
+
+/// Pretty-print a JSON value and collapse all whitespace runs to single spaces,
+/// for embedding a "received config" snippet in a rule-config deserialization error.
+///
+/// Kept non-generic (and out of the generic `Deserialize` impls below) so the heavy
+/// `serde_json::to_string_pretty` machinery is compiled once instead of being
+/// monomorphized into every rule-config `deserialize` instantiation. Returns `None`
+/// when serialization fails, so callers fall back to the bare error.
+fn compact_json_for_error(value: &serde_json::Value) -> Option<String> {
+    serde_json::to_string_pretty(value)
+        .ok()
+        .map(|value_str| value_str.split_whitespace().collect::<Vec<_>>().join(" "))
+}
+
+/// A wrapper type for deserializing ESLint-style rule configurations.
+///
+/// ESLint configurations are typically arrays where the first element contains
+/// the actual rule configuration. This type automatically extracts and deserializes
+/// that first element. If the array is empty, it uses the default value.
+///
+/// If the configuration is invalid (e.g. does not match the expected type, has a
+/// field that does not exist), it will return a deserialization error that is
+/// handled by the linter and reported to the user.
+///
+/// # Examples
+///
+/// ```ignore
+/// impl Rule for MyRule {
+///     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+///         serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+///     }
+/// }
+/// ```
+///
+/// For rules that take a tuple configuration object, e.g. `["foobar", { "param": true, "other_param": false }]`,
+/// use [`TupleRuleConfig`] instead.
+#[derive(Debug, Clone)]
+pub struct DefaultRuleConfig<T>(T);
+
+impl<T> DefaultRuleConfig<T> {
+    /// Unwraps the inner configuration value.
+    pub fn into_inner(self) -> T {
+        self.0
+    }
+}
+
+impl<T: Default> Default for DefaultRuleConfig<T> {
+    fn default() -> Self {
+        Self(T::default())
+    }
+}
+
+impl<'de, T> serde::Deserialize<'de> for DefaultRuleConfig<T>
+where
+    T: serde::de::DeserializeOwned + Default,
+{
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::de::Error;
+
+        let value = serde_json::Value::deserialize(deserializer)?;
+
+        if let serde_json::Value::Array(arr) = value {
+            let config = match arr.into_iter().next() {
+                Some(v) => T::deserialize(&v).map_err(|e| match compact_json_for_error(&v) {
+                    Some(compact) => {
+                        D::Error::custom(format!("{e}\n  received config: `{compact}`"))
+                    }
+                    None => D::Error::custom(e),
+                })?,
+                None => T::default(),
+            };
+
+            Ok(DefaultRuleConfig(config))
+        } else if value == serde_json::Value::Null {
+            // Missing configuration (null) is treated as default (no rule options provided)
+            Ok(DefaultRuleConfig(T::default()))
+        } else {
+            Err(D::Error::custom("Expected array for rule configuration"))
+        }
+    }
+}
+
+/// A wrapper type for deserializing ESLint-style tuple rule configurations.
+///
+/// Some ESLint rules take configurations in tuple form, e.g. `["foo", { "bar": "baz" }]`
+/// where different array elements correspond to different config fields. This type
+/// deserializes the entire array as `T`, which should be a tuple struct with
+/// `#[serde(default)]` to handle partial configurations.
+///
+/// If the configuration is invalid, it will return a deserialization error that is
+/// handled by the linter and reported to the user.
+///
+/// # Examples
+///
+/// ```ignore
+/// #[derive(Debug, Default, Clone, Deserialize)]
+/// #[serde(default)]
+/// pub struct MyTupleRule(EnumOption, ObjectConfig);
+///
+/// impl Rule for MyTupleRule {
+///     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+///         serde_json::from_value::<TupleRuleConfig<Self>>(value).map(TupleRuleConfig::into_inner)
+///     }
+/// }
+/// ```
+#[derive(Debug, Clone)]
+pub struct TupleRuleConfig<T>(T);
+
+impl<T> TupleRuleConfig<T> {
+    /// Unwraps the inner configuration value.
+    pub fn into_inner(self) -> T {
+        self.0
+    }
+}
+
+impl<T: Default> Default for TupleRuleConfig<T> {
+    fn default() -> Self {
+        Self(T::default())
+    }
+}
+
+impl<'de, T> serde::Deserialize<'de> for TupleRuleConfig<T>
+where
+    T: serde::de::DeserializeOwned + Default,
+{
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::de::Error;
+
+        let value = serde_json::Value::deserialize(deserializer)?;
+
+        if let serde_json::Value::Array(arr) = value {
+            let config = if arr.is_empty() {
+                T::default()
+            } else {
+                // Parse the entire array as the tuple configuration.
+                let arr_value = serde_json::Value::Array(arr);
+                T::deserialize(&arr_value).map_err(|e| {
+                    match compact_json_for_error(&arr_value) {
+                        Some(compact) => D::Error::custom(format!("{e}, received `{compact}`")),
+                        None => D::Error::custom(e),
+                    }
+                })?
+            };
+
+            Ok(TupleRuleConfig(config))
+        } else if value == serde_json::Value::Null {
+            // Missing configuration (null) is treated as default (no rule options provided)
+            Ok(TupleRuleConfig(T::default()))
+        } else {
+            Err(D::Error::custom("Expected array for rule configuration"))
+        }
+    }
+}
+
+/// A wrapper type for deserializing ESLint-style mixed tuple rule configurations, where the first configuration object can be skipped.
+///
+/// Some ESLint rules take configurations in tuple form, e.g. `["foo", "qux", { "bar": "baz" }]`
+/// where the first argument is optional and the second argument is the actual configuration object.
+/// This type deserializes the array as a tuple `(Option<T1>, Option<T2>) | (Option<T2>)`.
+#[derive(Debug, Clone)]
+pub struct MixedTupleRuleConfig<T1, T2>(pub T1, pub T2);
+
+impl<T1: Default, T2: Default> Default for MixedTupleRuleConfig<T1, T2> {
+    fn default() -> Self {
+        Self(T1::default(), T2::default())
+    }
+}
+
+impl<'de, T1, T2> serde::Deserialize<'de> for MixedTupleRuleConfig<T1, T2>
+where
+    T1: serde::de::DeserializeOwned + Default,
+    T2: serde::de::DeserializeOwned + Default,
+{
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::de::Error;
+        let value = serde_json::Value::deserialize(deserializer)?;
+
+        if let serde_json::Value::Array(arr) = value {
+            let config = match arr.len() {
+                0 => Self(T1::default(), T2::default()),
+                1 => {
+                    // If there's only one element, we need to determine whether it's T1 or T2.
+                    // We can try deserializing it as T2 first, and if that fails, try T1.
+                    let first_value = &arr[0];
+                    if let Ok(t2) = T2::deserialize(first_value) {
+                        Self(T1::default(), t2)
+                    } else if let Ok(t1) = T1::deserialize(first_value) {
+                        Self(t1, T2::default())
+                    } else {
+                        return Err(D::Error::custom(
+                            "Expected configuration to match either the first or second tuple type",
+                        ));
+                    }
+                }
+                2 => {
+                    let t1 = T1::deserialize(&arr[0]).map_err(|e| {
+                        D::Error::custom(format!("Error deserializing first tuple element: {e}"))
+                    })?;
+                    let t2 = T2::deserialize(&arr[1]).map_err(|e| {
+                        D::Error::custom(format!("Error deserializing second tuple element: {e}"))
+                    })?;
+                    Self(t1, t2)
+                }
+                _ => {
+                    return Err(D::Error::custom(
+                        "Expected at most 2 elements in the configuration array",
+                    ));
+                }
+            };
+
+            Ok(config)
+        } else if value == serde_json::Value::Null {
+            // Missing configuration (null) is treated as default (no rule options provided)
+            Ok(Self(T1::default(), T2::default()))
+        } else {
+            Err(D::Error::custom("Expected array for rule configuration"))
+        }
+    }
+}
+
+impl<T1, T2> JsonSchema for MixedTupleRuleConfig<T1, T2>
+where
+    T1: JsonSchema,
+    T2: JsonSchema,
+{
+    fn schema_name() -> String {
+        "MixedTupleRuleConfig".to_string()
+    }
+
+    fn is_referenceable() -> bool {
+        false
+    }
+
+    fn json_schema(r#gen: &mut SchemaGenerator) -> Schema {
+        Schema::Object(SchemaObject {
+            subschemas: Some(Box::new(schemars::schema::SubschemaValidation {
+                any_of: Some(vec![
+                    SchemaObject {
+                        instance_type: Some(InstanceType::Array.into()),
+                        array: Some(Box::new(schemars::schema::ArrayValidation {
+                            items: Some(schemars::schema::SingleOrVec::Vec(vec![
+                                r#gen.subschema_for::<T1>(),
+                                r#gen.subschema_for::<T2>(),
+                            ])),
+                            min_items: Some(2),
+                            max_items: Some(2),
+                            ..Default::default()
+                        })),
+                        ..Default::default()
+                    }
+                    .into(),
+                    r#gen.subschema_for::<T1>(),
+                    r#gen.subschema_for::<T2>(),
+                ]),
+                ..Default::default()
+            })),
+            ..Default::default()
+        })
     }
 }
 
@@ -127,6 +410,29 @@ pub trait RuleMeta {
     fn config_schema(generator: &mut SchemaGenerator) -> Option<Schema> {
         None
     }
+
+    /// Whether this rule declares a configuration struct in `declare_oxc_lint!`.
+    ///
+    /// Defaults to `false`. Rules that accept configuration options will have
+    /// this set to `true` by the macro-generated impl.
+    const HAS_CONFIG: bool = false;
+
+    /// The version of oxlint in which this rule was first available.
+    ///
+    /// Set via `version = "x.y.z"` or `version = "next"` in `declare_oxc_lint!`.
+    const VERSION: &'static str;
+
+    /// Additional information about the rule.
+    ///
+    /// Set via `short_description = "..."` in `declare_oxc_lint!`.
+    const INFO: RuleInfo = RuleInfo { short_description: "" };
+}
+
+/// Additional information describing a lint rule.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct RuleInfo {
+    /// A short, one-line summary of what the rule does.
+    pub short_description: &'static str,
 }
 
 /// Rule categories defined by rust-clippy
@@ -270,7 +576,9 @@ impl RuleFixMeta {
     pub fn description(self) -> Cow<'static, str> {
         match self {
             Self::None => Cow::Borrowed("No auto-fix is available for this rule."),
-            Self::FixPending => Cow::Borrowed("An auto-fix is still under development."),
+            Self::FixPending => Cow::Borrowed(
+                "An auto-fix is planned for this rule, but not implemented at this time.",
+            ),
             Self::Fixable(kind) | Self::Conditional(kind) => {
                 // e.g. an auto-fix is available for this rule
                 // e.g. a suggestion is available for this rule
@@ -312,6 +620,17 @@ impl RuleFixMeta {
     }
 }
 
+impl fmt::Display for RuleFixMeta {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::None => write!(f, "none"),
+            Self::FixPending => write!(f, "pending"),
+            Self::Conditional(kind) => write!(f, "conditional_{}", kind.to_string()),
+            Self::Fixable(kind) => write!(f, "fixable_{}", kind.to_string()),
+        }
+    }
+}
+
 impl From<RuleFixMeta> for FixKind {
     fn from(value: RuleFixMeta) -> Self {
         value.fix_kind()
@@ -320,9 +639,13 @@ impl From<RuleFixMeta> for FixKind {
 
 #[cfg(test)]
 mod test {
-    use crate::{RuleMeta, RuleRunner};
+    use crate::{
+        RuleMeta, RuleRunner,
+        rule::{DefaultRuleConfig, TupleRuleConfig},
+    };
 
     use super::RuleCategory;
+    use rustc_hash::FxHashMap;
 
     #[test]
     #[cfg(feature = "ruledocs")]
@@ -386,7 +709,7 @@ mod test {
         );
         assert_rule_runs_on_node_types(
             &eslint::max_params::MaxParams::default(),
-            &[Function, ArrowFunctionExpression],
+            &[Function, ArrowFunctionExpression, TSFunctionType],
         );
         assert_rule_runs_on_node_types(
             &import::no_dynamic_require::NoDynamicRequire::default(),
@@ -417,6 +740,177 @@ mod test {
             &unicorn::consistent_assert::ConsistentAssert,
             &[ImportDeclaration],
         );
+    }
+
+    #[test]
+    fn test_deserialize_default_rule_config_single() {
+        // single element present
+        assert_default_rule_config("[123]", &123u32);
+        assert_default_rule_config("[true]", &true);
+        assert_default_rule_config("[false]", &false);
+
+        // empty array should use defaults
+        assert_default_rule_config("[]", &String::default());
+    }
+
+    #[derive(serde::Deserialize, Debug, PartialEq, Eq)]
+    #[serde(default)]
+    struct Obj {
+        foo: String,
+    }
+
+    impl Default for Obj {
+        fn default() -> Self {
+            Self { foo: "defaultval".to_string() }
+        }
+    }
+
+    #[derive(serde::Deserialize, Debug, PartialEq, Eq)]
+    #[serde(default)]
+    struct Pair(u32, Obj);
+
+    impl Default for Pair {
+        fn default() -> Self {
+            Self(123u32, Obj::default())
+        }
+    }
+
+    #[test]
+    fn test_deserialize_tuple_rule_config() {
+        // both elements present
+        assert_tuple_rule_config(
+            r#"[42, { "foo": "abc" }]"#,
+            &Pair(42u32, Obj { foo: "abc".to_string() }),
+        );
+
+        // only first element present -> Since Pair has #[serde(default)],
+        // serde will use the default value for the missing second field.
+        assert_tuple_rule_config("[10]", &Pair(10u32, Obj { foo: "defaultval".to_string() }));
+
+        // Should also be able to handle both elements if they are both passed
+        assert_tuple_rule_config(
+            r#"[10, { "foo": "bar" }]"#,
+            &Pair(10u32, Obj { foo: "bar".to_string() }),
+        );
+
+        // empty array -> both default
+        assert_tuple_rule_config("[]", &Pair(123u32, Obj { foo: "defaultval".to_string() }));
+    }
+
+    #[test]
+    fn test_deserialize_default_rule_config_object_in_array() {
+        // Single-element array containing an object should parse into the object
+        // configuration (fallback behavior, not the "entire-array as T" path).
+        assert_default_rule_config(r#"[{ "foo": "xyz" }]"#, &Obj { foo: "xyz".to_string() });
+
+        // Empty array -> default
+        assert_default_rule_config("[]", &Obj { foo: "defaultval".to_string() });
+    }
+
+    #[derive(serde::Deserialize, Debug, PartialEq, Eq, Default)]
+    #[serde(default)]
+    struct ComplexConfig {
+        foo: FxHashMap<String, String>,
+    }
+
+    #[test]
+    fn test_deserialize_default_rule_config_with_complex_shape() {
+        // A complex object shape for the rule config, like
+        // `[ { "foo": { "obj": "value" } } ]`.
+        assert_default_rule_config(
+            r#"[ { "foo": { "obj": "value" } } ]"#,
+            &ComplexConfig {
+                foo: std::iter::once(("obj".to_string(), "value".to_string())).collect(),
+            },
+        );
+    }
+
+    #[derive(serde::Deserialize, Debug, PartialEq, Eq, Default)]
+    #[serde(rename_all = "camelCase")]
+    enum EnumOptions {
+        #[default]
+        OptionA,
+        OptionB,
+    }
+
+    #[test]
+    fn test_deserialize_default_rule_config_with_enum_config() {
+        // A basic enum config option.
+        assert_default_rule_config(r#"["optionA"]"#, &EnumOptions::OptionA);
+
+        // Works with non-default value as well.
+        assert_default_rule_config(r#"["optionB"]"#, &EnumOptions::OptionB);
+
+        // Works with an empty array.
+        assert_default_rule_config(r"[]", &EnumOptions::OptionA);
+    }
+
+    #[derive(serde::Deserialize, Default, Debug, PartialEq, Eq)]
+    #[serde(default)]
+    struct TupleWithEnumAndObjectConfig(EnumOptions, Obj);
+
+    #[test]
+    fn test_deserialize_tuple_rule_config_with_enum_and_object() {
+        // A basic enum config option with an object.
+        assert_tuple_rule_config(
+            r#"["optionA", { "foo": "bar" }]"#,
+            &TupleWithEnumAndObjectConfig(EnumOptions::OptionA, Obj { foo: "bar".to_string() }),
+        );
+
+        // Ensure that we can pass just one value and it'll provide the default for the second.
+        assert_tuple_rule_config(
+            r#"["optionB"]"#,
+            &TupleWithEnumAndObjectConfig(
+                EnumOptions::OptionB,
+                Obj { foo: "defaultval".to_string() },
+            ),
+        );
+    }
+
+    #[derive(serde::Deserialize, Debug, PartialEq, Eq)]
+    #[serde(default)]
+    struct ExampleObjConfig {
+        baz: String,
+        qux: bool,
+    }
+
+    impl Default for ExampleObjConfig {
+        fn default() -> Self {
+            Self { baz: "defaultbaz".to_string(), qux: false }
+        }
+    }
+
+    #[test]
+    fn test_deserialize_default_rule_with_object_with_multiple_fields() {
+        // Test a rule config that is a simple object with multiple fields.
+        assert_default_rule_config(
+            r#"[{ "baz": "fooval", "qux": true }]"#,
+            &ExampleObjConfig { baz: "fooval".to_string(), qux: true },
+        );
+
+        // Ensure that missing fields get their default values.
+        assert_default_rule_config(
+            r#"[{ "qux": true }]"#,
+            &ExampleObjConfig { baz: "defaultbaz".to_string(), qux: true },
+        );
+    }
+
+    // Ensure that the provided JSON deserializes into the expected value with DefaultRuleConfig.
+    fn assert_default_rule_config<T>(json: &str, expected: &T)
+    where
+        T: serde::de::DeserializeOwned + Default + PartialEq + std::fmt::Debug,
+    {
+        let de: DefaultRuleConfig<T> = serde_json::from_str(json).unwrap();
+        assert_eq!(de.into_inner(), *expected);
+    }
+
+    // Ensure that the provided JSON deserializes into the expected value with TupleRuleConfig.
+    fn assert_tuple_rule_config<T>(json: &str, expected: &T)
+    where
+        T: serde::de::DeserializeOwned + Default + PartialEq + std::fmt::Debug,
+    {
+        let de: TupleRuleConfig<T> = serde_json::from_str(json).unwrap();
+        assert_eq!(de.into_inner(), *expected);
     }
 
     fn assert_rule_runs_on_node_types<R: RuleMeta + RuleRunner>(

@@ -14,16 +14,15 @@ use std::{
     slice::SliceIndex,
 };
 
-use bumpalo::Bump;
-#[cfg(any(feature = "serialize", test))]
+#[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer as SerdeSerializer};
 
-#[cfg(any(feature = "serialize", test))]
+#[cfg(feature = "serialize")]
 use oxc_estree::{ConcatElement, ESTree, SequenceSerializer, Serializer as ESTreeSerializer};
 
-use crate::{Allocator, Box, vec2::Vec as InnerVecGeneric};
+use crate::{Box, GetAllocator, arena::Arena, vec2::Vec as InnerVecGeneric};
 
-type InnerVec<'a, T> = InnerVecGeneric<'a, T, Bump>;
+type InnerVec<'a, T> = InnerVecGeneric<'a, T, Arena>;
 
 /// A `Vec` without [`Drop`], which stores its data in the arena allocator.
 ///
@@ -37,22 +36,22 @@ type InnerVec<'a, T> = InnerVecGeneric<'a, T, Bump>;
 ///
 /// Static checks make this impossible to do. [`Vec::new_in`] and all other methods which create
 /// a [`Vec`] will refuse to compile if called with a [`Drop`] type.
-#[derive(PartialEq, Eq)]
+#[derive(Eq)]
 #[repr(transparent)]
 pub struct Vec<'alloc, T>(InnerVec<'alloc, T>);
 
-/// SAFETY: Even though `Bump` is not `Sync`, we can make `Vec<T>` `Sync` if `T` is `Sync` because:
+/// SAFETY: Even though `Arena` is not `Sync`, we can make `Vec<T>` `Sync` if `T` is `Sync` because:
 ///
-/// 1. No public methods allow access to the `&Bump` that `Vec` contains (in `RawVec`),
-///    so user cannot illegally obtain 2 `&Bump`s on different threads via `Vec`.
+/// 1. No public methods allow access to the `&Arena` that `Vec` contains (in `RawVec`),
+///    so user cannot illegally obtain 2 `&Arena`s on different threads via `Vec`.
 ///
-/// 2. All internal methods which access the `&Bump` take a `&mut self`.
+/// 2. All internal methods which access the `&Arena` take a `&mut self`.
 ///    `&mut Vec` cannot be transferred across threads, and nor can an owned `Vec` (`Vec` is not `Send`).
 ///    Therefore these methods taking `&mut self` can be sure they're not operating on a `Vec`
 ///    which has been moved across threads.
 ///
 /// Note: `Vec` CANNOT be `Send`, even if `T` is `Send`, because that would allow 2 `Vec`s on different
-/// threads to both allocate into same arena simultaneously. `Bump` is not thread-safe, and this would
+/// threads to both allocate into same arena simultaneously. `Arena` is not thread-safe, and this would
 /// be undefined behavior.
 unsafe impl<T: Sync> Sync for Vec<'_, T> {}
 
@@ -70,16 +69,17 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// ```
     /// use oxc_allocator::{Allocator, Vec};
     ///
-    /// let arena = Allocator::default();
+    /// let allocator = Allocator::default();
+    /// let allocator = &allocator;
     ///
-    /// let mut vec: Vec<i32> = Vec::new_in(&arena);
+    /// let mut vec: Vec<i32> = Vec::new_in(&allocator);
     /// assert!(vec.is_empty());
     /// ```
     #[inline(always)]
-    pub fn new_in(allocator: &'alloc Allocator) -> Self {
+    pub fn new_in<A: GetAllocator<'alloc>>(allocator: &A) -> Self {
         const { Self::ASSERT_T_IS_NOT_DROP };
 
-        Self(InnerVec::new_in(allocator.bump()))
+        Self(InnerVec::new_in(allocator.allocator().arena()))
     }
 
     /// Constructs a new, empty `Vec<T>` with at least the specified capacity
@@ -103,9 +103,10 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// ```
     /// use oxc_allocator::{Allocator, Vec};
     ///
-    /// let arena = Allocator::default();
+    /// let allocator = Allocator::default();
+    /// let allocator = &allocator;
     ///
-    /// let mut vec = Vec::with_capacity_in(10, &arena);
+    /// let mut vec = Vec::with_capacity_in(10, &allocator);
     ///
     /// // The vector contains no items, even though it has capacity for more
     /// assert_eq!(vec.len(), 0);
@@ -125,14 +126,14 @@ impl<'alloc, T> Vec<'alloc, T> {
     ///
     /// // A vector of a zero-sized type will always over-allocate, since no
     /// // allocation is necessary
-    /// let vec_units = Vec::<()>::with_capacity_in(10, &arena);
+    /// let vec_units = Vec::<()>::with_capacity_in(10, &allocator);
     /// assert_eq!(vec_units.capacity(), usize::MAX);
     /// ```
     #[inline(always)]
-    pub fn with_capacity_in(capacity: usize, allocator: &'alloc Allocator) -> Self {
+    pub fn with_capacity_in<A: GetAllocator<'alloc>>(capacity: usize, allocator: &A) -> Self {
         const { Self::ASSERT_T_IS_NOT_DROP };
 
-        Self(InnerVec::with_capacity_in(capacity, allocator.bump()))
+        Self(InnerVec::with_capacity_in(capacity, allocator.allocator().arena()))
     }
 
     /// Create a new [`Vec`] whose elements are taken from an iterator and
@@ -140,15 +141,40 @@ impl<'alloc, T> Vec<'alloc, T> {
     ///
     /// This is behaviorially identical to [`FromIterator::from_iter`].
     #[inline]
-    pub fn from_iter_in<I: IntoIterator<Item = T>>(iter: I, allocator: &'alloc Allocator) -> Self {
+    pub fn from_iter_in<I: IntoIterator<Item = T>, A: GetAllocator<'alloc>>(
+        iter: I,
+        allocator: &A,
+    ) -> Self {
         const { Self::ASSERT_T_IS_NOT_DROP };
 
         let iter = iter.into_iter();
         let hint = iter.size_hint();
         let capacity = hint.1.unwrap_or(hint.0);
-        let mut vec = InnerVec::with_capacity_in(capacity, allocator.bump());
+        let mut vec = InnerVec::with_capacity_in(capacity, allocator.allocator().arena());
         vec.extend(iter);
         Self(vec)
+    }
+
+    /// Create a new [`Vec`] containing only a single value, allocated in the given `allocator`.
+    ///
+    /// # Examples
+    /// ```
+    /// use oxc_allocator::{Allocator, Vec};
+    ///
+    /// let allocator = Allocator::default();
+    /// let allocator = &allocator;
+    ///
+    /// let value = 123u32;
+    /// let vec = Vec::from_value_in(value, &allocator);
+    /// assert_eq!(vec, [123]);
+    /// ```
+    #[inline]
+    pub fn from_value_in<A: GetAllocator<'alloc>>(value: T, allocator: &A) -> Self {
+        const { Self::ASSERT_T_IS_NOT_DROP };
+
+        let allocator = allocator.allocator();
+        let boxed = Box::new_in(value, &allocator);
+        Self::from_box_in(boxed, &allocator)
     }
 
     /// Create a new [`Vec`] from a fixed-size array, allocated in the given `allocator`.
@@ -162,21 +188,91 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// use oxc_allocator::{Allocator, Vec};
     ///
     /// let allocator = Allocator::default();
+    /// let allocator = &allocator;
     ///
     /// let array: [u32; 4] = [1, 2, 3, 4];
     /// let vec = Vec::from_array_in(array, &allocator);
     /// ```
     #[inline]
-    pub fn from_array_in<const N: usize>(array: [T; N], allocator: &'alloc Allocator) -> Self {
+    pub fn from_array_in<const N: usize, A: GetAllocator<'alloc>>(
+        array: [T; N],
+        allocator: &A,
+    ) -> Self {
         const { Self::ASSERT_T_IS_NOT_DROP };
 
-        let boxed = Box::new_in(array, allocator);
+        let allocator = allocator.allocator();
+        let boxed = Box::new_in(array, &allocator);
         let ptr = Box::into_non_null(boxed).as_ptr().cast::<T>();
         // SAFETY: `ptr` has correct alignment - it was just allocated as `[T; N]`.
         // `ptr` was allocated with correct size for `[T; N]`.
         // `len` and `capacity` are both `N`.
         // Allocated size cannot be larger than `isize::MAX`, or `Box::new_in` would have failed.
-        let vec = unsafe { InnerVec::from_raw_parts_in(ptr, N, N, allocator.bump()) };
+        let vec = unsafe { InnerVec::from_raw_parts_in(ptr, N, N, allocator.arena()) };
+        Self(vec)
+    }
+
+    /// Convert a [`Box<T>`] into a [`Vec<T>`] containing the single `T`.
+    ///
+    /// `allocator` should usually be the original allocator the `Box` was allocated in.
+    /// The lifetime of the returned `Vec` is the intersection of the lifetimes of the allocator
+    /// that the `Box` was originally allocated in, and the provided `allocator`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use oxc_allocator::{Allocator, Box, Vec};
+    ///
+    /// let allocator = Allocator::default();
+    /// let allocator = &allocator;
+    /// let boxed = Box::new_in(123u32, &allocator);
+    /// let vec = Vec::from_box_in(boxed, &allocator);
+    /// assert_eq!(vec, [123]);
+    /// ```
+    ///
+    /// The returned `Vec` cannot outlive either allocator.
+    /// If the allocator the `Box` was allocated in does not live long enough, it fails to compile:
+    ///
+    /// ```compile_fail
+    /// use oxc_allocator::{Allocator, Box, Vec};
+    ///
+    /// let vec_allocator = Allocator::default();
+    /// let vec_allocator = &vec_allocator;
+    /// let vec = {
+    ///     let box_allocator = Allocator::default();
+    ///     let box_allocator = &box_allocator;
+    ///     let boxed = Box::new_in(123u32, &box_allocator);
+    ///     Vec::from_box_in(boxed, &vec_allocator)
+    /// };
+    /// assert_eq!(vec, [123]);
+    /// ```
+    ///
+    /// Likewise if the allocator passed to `from_box_in` does not live long enough:
+    ///
+    /// ```compile_fail
+    /// use oxc_allocator::{Allocator, Box, Vec};
+    ///
+    /// let box_allocator = Allocator::default();
+    /// let box_allocator = &box_allocator;
+    /// let boxed = Box::new_in(123u32, &box_allocator);
+    /// let vec = {
+    ///     let vec_allocator = Allocator::default();
+    ///     let vec_allocator = &vec_allocator;
+    ///     Vec::from_box_in(boxed, &vec_allocator)
+    /// };
+    /// assert_eq!(vec, [123]);
+    /// ```
+    #[inline]
+    pub fn from_box_in<A: GetAllocator<'alloc>>(boxed: Box<'alloc, T>, allocator: &A) -> Self {
+        let ptr = Box::into_non_null(boxed).as_ptr();
+        // SAFETY: `boxed` owns its backing memory which comprises 1 valid initialized `T`.
+        // A `Vec` with length 1, capacity 1 owns the same memory.
+        // `allocator` is not necessarily the same `Allocator` the box was allocated in, but the signature
+        // ties both `boxed` and `allocator` to the lifetime `'alloc` of the returned `Vec`.
+        // So both the original allocator and `allocator` outlive the returned `Vec`.
+        // The single element stays valid (it lives in the original allocator) for the lifetime of the returned `Vec`.
+        // If the `Vec` is grown later, it reallocates in `allocator`. Both outlive the `Vec`, so either way the memory
+        // is valid for the whole life of the returned `Vec`.
+        let vec = unsafe { InnerVec::from_raw_parts_in(ptr, 1, 1, allocator.allocator().arena()) };
         Self(vec)
     }
 
@@ -187,13 +283,52 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// [`Box<[T]>`]: Box
     #[inline]
     pub fn into_boxed_slice(self) -> Box<'alloc, [T]> {
-        let slice = self.0.into_bump_slice_mut();
+        let slice = self.0.into_arena_slice_mut();
         let ptr = NonNull::from(slice);
         // SAFETY: `ptr` points to a valid `[T]`.
         // Contents of the `Vec` are in an arena.
         // The returned `Box` has same lifetime as the `Vec`.
         // `Vec` is not `Drop`, so we don't need to free any unused capacity in the `Vec`.
         unsafe { Box::from_non_null(ptr) }
+    }
+
+    /// Converts [`Vec<T>`] into [`&'alloc [T]`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use oxc_allocator::{Allocator, Vec};
+    ///
+    /// let allocator = Allocator::default();
+    /// let allocator = &allocator;
+    ///
+    /// let mut vec = Vec::from_iter_in([1, 2, 3], &allocator);
+    /// let slice = vec.into_arena_slice();
+    /// assert_eq!(slice, [1, 2, 3]);
+    /// ```
+    #[inline]
+    pub fn into_arena_slice(self) -> &'alloc [T] {
+        self.0.into_arena_slice()
+    }
+
+    /// Converts [`Vec<T>`] into [`&'alloc mut [T]`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use oxc_allocator::{Allocator, Vec};
+    ///
+    /// let allocator = Allocator::default();
+    /// let allocator = &allocator;
+    ///
+    /// let vec = Vec::from_iter_in([1, 2, 3], &allocator);
+    /// let slice = vec.into_arena_slice_mut();
+    /// slice[0] = 4;
+    /// assert_eq!(slice, [4, 2, 3]);
+    /// ```
+    #[inline]
+    pub fn into_arena_slice_mut(self) -> &'alloc mut [T] {
+        self.0.into_arena_slice_mut()
     }
 }
 
@@ -212,6 +347,67 @@ impl<'alloc, T> ops::DerefMut for Vec<'alloc, T> {
         &mut self.0
     }
 }
+
+// Forward all `PartialEq` comparisons to the inner `Vec`, mirroring the set of impls it provides
+// (against another `Vec`, slices, and arrays). These are implemented on the wrapper directly because
+// trait resolution does not look through `Deref`.
+//
+// The `Vec`-vs-`Vec` impl takes the place of `#[derive(PartialEq)]`. The derive would only allow
+// comparing two `Vec`s with the same element type `T`, whereas this allows comparing `Vec`s with
+// different (but comparable) element types, matching the inner `Vec` and `std::vec::Vec`.
+impl<T: PartialEq<U>, U> PartialEq<Vec<'_, U>> for Vec<'_, T> {
+    #[inline]
+    fn eq(&self, other: &Vec<'_, U>) -> bool {
+        self.0 == other.0
+    }
+}
+
+macro_rules! impl_slice_partial_eq {
+    ($rhs:ty) => {
+        impl<T: PartialEq<U>, U> PartialEq<$rhs> for Vec<'_, T> {
+            #[inline]
+            fn eq(&self, other: &$rhs) -> bool {
+                self.0 == *other
+            }
+        }
+    };
+}
+
+impl_slice_partial_eq!([U]);
+impl_slice_partial_eq!(&[U]);
+impl_slice_partial_eq!(&mut [U]);
+
+macro_rules! impl_array_partial_eq {
+    ($rhs:ty) => {
+        impl<T: PartialEq<U>, U, const N: usize> PartialEq<$rhs> for Vec<'_, T> {
+            #[inline]
+            fn eq(&self, other: &$rhs) -> bool {
+                self.0 == *other
+            }
+        }
+    };
+}
+
+impl_array_partial_eq!([U; N]);
+impl_array_partial_eq!(&[U; N]);
+impl_array_partial_eq!(&mut [U; N]);
+
+// Reverse direction: slice on the left, `Vec` on the right (e.g. `&[T] == vec`), forwarding to the
+// inner `Vec`'s reverse impls. `std::vec::Vec` provides these, so mirror them here.
+macro_rules! impl_slice_partial_eq_reverse {
+    ($lhs:ty) => {
+        impl<T: PartialEq<U>, U> PartialEq<Vec<'_, U>> for $lhs {
+            #[inline]
+            fn eq(&self, other: &Vec<'_, U>) -> bool {
+                *self == other.0
+            }
+        }
+    };
+}
+
+impl_slice_partial_eq_reverse!([T]);
+impl_slice_partial_eq_reverse!(&[T]);
+impl_slice_partial_eq_reverse!(&mut [T]);
 
 impl<'alloc, T> IntoIterator for Vec<'alloc, T> {
     type IntoIter = <InnerVec<'alloc, T> as IntoIterator>::IntoIter;
@@ -272,14 +468,14 @@ impl<'a, T: 'a> From<Vec<'a, T>> for Box<'a, [T]> {
     }
 }
 
-#[cfg(any(feature = "serialize", test))]
+#[cfg(feature = "serialize")]
 impl<T: Serialize> Serialize for Vec<'_, T> {
     fn serialize<S: SerdeSerializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         self.as_slice().serialize(serializer)
     }
 }
 
-#[cfg(any(feature = "serialize", test))]
+#[cfg(feature = "serialize")]
 impl<T: ESTree> ESTree for Vec<'_, T> {
     fn serialize<S: ESTreeSerializer>(&self, serializer: S) {
         self.as_slice().serialize(serializer);
@@ -311,11 +507,12 @@ impl<T: Debug> Debug for Vec<'_, T> {
 #[cfg(test)]
 mod test {
     use super::Vec;
-    use crate::Allocator;
+    use crate::{Allocator, Box};
 
     #[test]
     fn vec_with_capacity() {
         let allocator = Allocator::default();
+        let allocator = &allocator;
         let v: Vec<i32> = Vec::with_capacity_in(10, &allocator);
         assert!(v.is_empty());
     }
@@ -323,6 +520,7 @@ mod test {
     #[test]
     fn vec_debug() {
         let allocator = Allocator::default();
+        let allocator = &allocator;
         let mut v = Vec::new_in(&allocator);
         v.push("x");
         let v = format!("{v:?}");
@@ -332,6 +530,7 @@ mod test {
     #[test]
     fn vec_into_boxed_slice() {
         let allocator = Allocator::default();
+        let allocator = &allocator;
         let mut v = Vec::with_capacity_in(4, &allocator);
         v.push("x");
         v.push("y");
@@ -339,27 +538,145 @@ mod test {
         assert_eq!(boxed_slice.as_ref(), &["x", "y"]);
     }
 
+    #[cfg(feature = "serialize")]
     #[test]
     fn vec_serialize() {
         let allocator = Allocator::default();
+        let allocator = &allocator;
         let mut v = Vec::new_in(&allocator);
         v.push("x");
         let s = serde_json::to_string(&v).unwrap();
         assert_eq!(s, r#"["x"]"#);
     }
 
+    #[cfg(feature = "serialize")]
     #[test]
     fn vec_serialize_estree() {
-        use oxc_estree::{CompactTSSerializer, ESTree};
+        use oxc_estree::{CompactSerializer, ESTree};
 
         let allocator = Allocator::default();
+        let allocator = &allocator;
         let mut v = Vec::new_in(&allocator);
         v.push("x");
 
-        let mut serializer = CompactTSSerializer::default();
+        let mut serializer = CompactSerializer::default();
         v.serialize(&mut serializer);
         let s = serializer.into_string();
         assert_eq!(s, r#"["x"]"#);
+    }
+
+    #[test]
+    #[expect(clippy::op_ref)]
+    fn vec_partial_eq() {
+        let allocator = Allocator::default();
+        let allocator = &allocator;
+
+        let v = Vec::from_array_in([1, 2, 3], &allocator);
+        let same = Vec::from_array_in([1, 2, 3], &allocator);
+
+        // `Vec` vs `Vec` (same element type), by value and by reference.
+        assert!(v == same);
+        assert_eq!(v, same);
+        assert!(&v == &same);
+
+        // `Vec` vs owned array `[U; N]`, and references to it.
+        assert!(v == [1, 2, 3]);
+        assert_eq!(v, [1, 2, 3]);
+        assert!(v == &[1, 2, 3]);
+        assert!(v == &mut [1, 2, 3]);
+
+        // `Vec` vs slice `&[U]` / `&mut [U]`.
+        let slice: &[i32] = &[1, 2, 3];
+        assert!(v == slice);
+        let mut_slice: &mut [i32] = &mut [1, 2, 3];
+        assert!(v == mut_slice);
+
+        // `Vec` vs unsized slice `[U]` (reached by dereferencing a slice reference).
+        assert!(v == *slice);
+
+        // Reverse direction: slice on the left, `Vec` on the right (std parity).
+        // Note: arrays on the left (`[1, 2, 3] == v`) are not supported - `std` doesn't provide
+        // `[T; N]: PartialEq<Vec>` either, only the slice forms below.
+        assert!(&[1, 2, 3][..] == v);
+        assert!(slice == v);
+        assert!(mut_slice == v);
+        assert!(*slice == v);
+
+        // Method-call form (no auto-ref). `v.eq(slice)` resolves through the unsized `[U]` impl.
+        assert!(v.eq(slice));
+        assert!(v.eq(&same));
+        assert!(v.eq(&[1, 2, 3]));
+        assert!(slice.eq(&v));
+
+        // Inequality still works.
+        assert!(v != [1, 2, 4]);
+        assert!(v != Vec::from_array_in([1, 2], &allocator));
+
+        // Cross element type: `T: PartialEq<U>` where `T != U`.
+        #[expect(clippy::items_after_statements)]
+        #[derive(Clone, Copy)]
+        struct Foo(u8);
+
+        #[derive(Clone, Copy)]
+        struct Bar(u8);
+
+        impl PartialEq<Bar> for Foo {
+            fn eq(&self, other: &Bar) -> bool {
+                self.0 == other.0
+            }
+        }
+
+        let foos = Vec::from_array_in([Foo(1), Foo(2)], &allocator);
+        let bars = Vec::from_array_in([Bar(1), Bar(2)], &allocator);
+        assert!(foos == bars);
+        assert!(foos == [Bar(1), Bar(2)]);
+        let bars_slice: &[Bar] = &[Bar(1), Bar(2)];
+        assert!(foos == bars_slice);
+    }
+
+    #[test]
+    fn vec_from_value_in() {
+        let allocator = Allocator::default();
+        let allocator = &allocator;
+        let mut v = Vec::from_value_in(123u32, &allocator);
+        assert_eq!(v, [123]);
+        assert_eq!(v.len(), 1);
+        assert_eq!(v.capacity(), 1);
+
+        // Growing the `Vec` reallocates into the allocator, preserving the original value
+        v.push(456);
+        assert_eq!(v, [123, 456]);
+    }
+
+    #[test]
+    fn vec_from_box_in() {
+        let allocator = Allocator::default();
+        let allocator = &allocator;
+        let boxed = Box::new_in(123u32, &allocator);
+        let mut v = Vec::from_box_in(boxed, &allocator);
+        assert_eq!(v, [123]);
+        assert_eq!(v.len(), 1);
+        assert_eq!(v.capacity(), 1);
+
+        // Growing the `Vec` reallocates into the allocator, preserving the original element
+        v.push(456);
+        assert_eq!(v, [123, 456]);
+    }
+
+    // The `Box` and the `Vec` it's converted into can be allocated in different allocators
+    #[test]
+    fn vec_from_box_in_different_allocator() {
+        let vec_allocator = Allocator::default();
+        let vec_allocator = &vec_allocator;
+        let box_allocator = Allocator::default();
+        let box_allocator = &box_allocator;
+        let boxed = Box::new_in(123u32, &box_allocator);
+        let mut v = Vec::from_box_in(boxed, &vec_allocator);
+        assert_eq!(v, [123]);
+
+        // Growing reallocates into `vec_allocator`, copying the element out of `box_allocator`
+        v.push(456);
+        assert_eq!(v, [123, 456]);
     }
 
     #[test]

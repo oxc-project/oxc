@@ -1,83 +1,84 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint-plugin-jest(prefer-spy-on): Suggest using `jest.spyOn()`.
+
+  ⚠ jest(prefer-spy-on): Suggest using `jest.spyOn()` or `vi.spyOn()`.
    ╭─[prefer_spy_on.tsx:1:9]
  1 │ obj.a = jest.fn(); const test = 10;
    ·         ───────
    ╰────
-  help: Use jest.spyOn() instead
+  help: Replace `obj.a = jest.fn()` with `jest.spyOn(obj, 'a').mockImplementation()`.
 
-  ⚠ eslint-plugin-jest(prefer-spy-on): Suggest using `jest.spyOn()`.
+  ⚠ jest(prefer-spy-on): Suggest using `jest.spyOn()` or `vi.spyOn()`.
    ╭─[prefer_spy_on.tsx:1:15]
  1 │ Date['now'] = jest['fn']()
    ·               ─────────
    ╰────
-  help: Use jest.spyOn() instead
+  help: Replace `Date['now'] = jest['fn']()` with `jest.spyOn(Date, 'now').mockImplementation()`.
 
-  ⚠ eslint-plugin-jest(prefer-spy-on): Suggest using `jest.spyOn()`.
+  ⚠ jest(prefer-spy-on): Suggest using `jest.spyOn()` or `vi.spyOn()`.
    ╭─[prefer_spy_on.tsx:1:21]
  1 │ window[`${name}`] = jest[`fn`]()
    ·                     ─────────
    ╰────
-  help: Use jest.spyOn() instead
+  help: Replace `window[`${name}`] = jest[`fn`]()` with `jest.spyOn(window, `${name}`).mockImplementation()`.
 
-  ⚠ eslint-plugin-jest(prefer-spy-on): Suggest using `jest.spyOn()`.
+  ⚠ jest(prefer-spy-on): Suggest using `jest.spyOn()` or `vi.spyOn()`.
    ╭─[prefer_spy_on.tsx:1:19]
  1 │ obj['prop' + 1] = jest['fn']()
    ·                   ─────────
    ╰────
-  help: Use jest.spyOn() instead
+  help: Replace `obj['prop' + 1] = jest['fn']()` with `jest.spyOn(obj, 'prop' + 1).mockImplementation()`.
 
-  ⚠ eslint-plugin-jest(prefer-spy-on): Suggest using `jest.spyOn()`.
+  ⚠ jest(prefer-spy-on): Suggest using `jest.spyOn()` or `vi.spyOn()`.
    ╭─[prefer_spy_on.tsx:1:15]
  1 │ obj.one.two = jest.fn(); const test = 10;
    ·               ───────
    ╰────
-  help: Use jest.spyOn() instead
+  help: Replace `obj.one.two = jest.fn()` with `jest.spyOn(obj.one, 'two').mockImplementation()`.
 
-  ⚠ eslint-plugin-jest(prefer-spy-on): Suggest using `jest.spyOn()`.
+  ⚠ jest(prefer-spy-on): Suggest using `jest.spyOn()` or `vi.spyOn()`.
    ╭─[prefer_spy_on.tsx:1:9]
  1 │ obj.a = jest.fn(() => 10,)
    ·         ───────
    ╰────
-  help: Use jest.spyOn() instead
+  help: Replace `obj.a = jest.fn(() => 10,)` with `jest.spyOn(obj, 'a').mockImplementation(() => 10)`.
 
-  ⚠ eslint-plugin-jest(prefer-spy-on): Suggest using `jest.spyOn()`.
+  ⚠ jest(prefer-spy-on): Suggest using `jest.spyOn()` or `vi.spyOn()`.
    ╭─[prefer_spy_on.tsx:1:11]
  1 │ obj.a.b = jest.fn(() => ({})).mockReturnValue('default').mockReturnValueOnce('first call'); test();
    ·           ───────
    ╰────
-  help: Use jest.spyOn() instead
+  help: Replace `obj.a.b = jest.fn(() => ({}))` with `jest.spyOn(obj.a, 'b').mockImplementation(() => ({}))`.
 
-  ⚠ eslint-plugin-jest(prefer-spy-on): Suggest using `jest.spyOn()`.
+  ⚠ jest(prefer-spy-on): Suggest using `jest.spyOn()` or `vi.spyOn()`.
    ╭─[prefer_spy_on.tsx:1:16]
  1 │ window.fetch = jest.fn(() => ({})).one.two().three().four
    ·                ───────
    ╰────
-  help: Use jest.spyOn() instead
+  help: Replace `window.fetch = jest.fn(() => ({}))` with `jest.spyOn(window, 'fetch').mockImplementation(() => ({}))`.
 
-  ⚠ eslint-plugin-jest(prefer-spy-on): Suggest using `jest.spyOn()`.
+  ⚠ jest(prefer-spy-on): Suggest using `jest.spyOn()` or `vi.spyOn()`.
    ╭─[prefer_spy_on.tsx:1:12]
  1 │ foo[bar] = jest.fn().mockReturnValue(undefined)
    ·            ───────
    ╰────
-  help: Use jest.spyOn() instead
+  help: Replace `foo[bar] = jest.fn()` with `jest.spyOn(foo, bar).mockImplementation()`.
 
-  ⚠ eslint-plugin-jest(prefer-spy-on): Suggest using `jest.spyOn()`.
+  ⚠ jest(prefer-spy-on): Suggest using `jest.spyOn()` or `vi.spyOn()`.
    ╭─[prefer_spy_on.tsx:2:27]
  1 │ 
  2 │                 foo.bar = jest.fn().mockImplementation(baz => baz)
    ·                           ───────
  3 │                 foo.bar = jest.fn(a => b).mockImplementation(baz => baz)
    ╰────
-  help: Use jest.spyOn() instead
+  help: Replace `foo.bar = jest.fn()` with `jest.spyOn(foo, 'bar')`.
 
-  ⚠ eslint-plugin-jest(prefer-spy-on): Suggest using `jest.spyOn()`.
+  ⚠ jest(prefer-spy-on): Suggest using `jest.spyOn()` or `vi.spyOn()`.
    ╭─[prefer_spy_on.tsx:3:27]
  2 │                 foo.bar = jest.fn().mockImplementation(baz => baz)
  3 │                 foo.bar = jest.fn(a => b).mockImplementation(baz => baz)
    ·                           ───────
  4 │             
    ╰────
-  help: Use jest.spyOn() instead
+  help: Replace `foo.bar = jest.fn(a => b)` with `jest.spyOn(foo, 'bar')`.

@@ -1,18 +1,10 @@
-// Napi value need to be passed as value
-#![expect(clippy::needless_pass_by_value)]
-
-#[cfg(all(
-    feature = "allocator",
-    not(any(target_arch = "arm", target_os = "freebsd", target_family = "wasm"))
-))]
-#[global_allocator]
-static ALLOC: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
-
 use std::mem;
 
 use napi::{Task, bindgen_prelude::AsyncTask};
 use napi_derive::napi;
 
+#[cfg(feature = "tokens")]
+use oxc::parser::config::RuntimeParserConfig;
 use oxc::{
     allocator::Allocator,
     parser::{ParseOptions, Parser, ParserReturn},
@@ -23,7 +15,20 @@ use oxc_napi::{Comment, OxcError, convert_utf8_to_utf16, get_source_type};
 
 mod convert;
 mod types;
-pub use types::{EcmaScriptModule, ParseResult, ParserOptions};
+pub use types::*;
+
+#[cfg(all(
+    feature = "allocator",
+    not(any(
+        target_arch = "arm",
+        target_os = "android",
+        target_os = "freebsd",
+        target_os = "windows",
+        target_family = "wasm"
+    ))
+))]
+#[global_allocator]
+static ALLOC: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
 
 // Raw transfer is only supported on 64-bit little-endian systems.
 // Don't include raw transfer code on other platforms (notably WASM32).
@@ -33,16 +38,12 @@ pub use types::{EcmaScriptModule, ParseResult, ParserOptions};
 mod raw_transfer;
 mod raw_transfer_types;
 #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
-pub use raw_transfer::{
-    get_buffer_offset, parse_async_raw, parse_sync_raw, raw_transfer_supported,
-};
+pub use raw_transfer::{get_buffer_offset, parse_raw, parse_raw_sync};
 
-// Fallback for 32-bit or big-endian platforms.
 /// Returns `true` if raw transfer is supported on this platform.
-#[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
 #[napi]
 pub fn raw_transfer_supported() -> bool {
-    false
+    cfg!(all(target_pointer_width = "64", target_endian = "little"))
 }
 
 mod generated {
@@ -75,82 +76,91 @@ fn get_ast_type(source_type: SourceType, options: &ParserOptions) -> AstType {
     }
 }
 
-fn parse<'a>(
+fn parse_impl<'a>(
     allocator: &'a Allocator,
     source_type: SourceType,
     source_text: &'a str,
     options: &ParserOptions,
 ) -> ParserReturn<'a> {
-    Parser::new(allocator, source_text, source_type)
-        .with_options(ParseOptions {
-            preserve_parens: options.preserve_parens.unwrap_or(true),
-            ..ParseOptions::default()
-        })
-        .parse()
+    let parser = Parser::new(allocator, source_text, source_type).with_options(ParseOptions {
+        preserve_parens: options.preserve_parens.unwrap_or(true),
+        ..ParseOptions::default()
+    });
+
+    // When `tokens` feature is disabled, parser uses the default `NoTokensParserConfig`,
+    // which avoids the runtime branch on whether to collect tokens, and so is faster.
+    // The `experimentalTokens` option in `ParserOptions` is silently ignored in that case.
+    #[cfg(feature = "tokens")]
+    let parser = parser.with_config(RuntimeParserConfig::new(options.tokens.unwrap_or(false)));
+
+    parser.parse()
 }
 
-fn parse_with_return(filename: &str, source_text: String, options: &ParserOptions) -> ParseResult {
+fn parse_with_return(filename: &str, source_text: &str, options: &ParserOptions) -> ParseResult {
     let allocator = Allocator::default();
     let source_type =
         get_source_type(filename, options.lang.as_deref(), options.source_type.as_deref());
     let ast_type = get_ast_type(source_type, options);
     let ranges = options.range.unwrap_or(false);
-    let ret = parse(&allocator, source_type, &source_text, options);
+    let ret = parse_impl(&allocator, source_type, source_text, options);
 
     let mut program = ret.program;
     let mut module_record = ret.module_record;
-    let mut diagnostics = ret.errors;
+    let mut diagnostics = ret.diagnostics;
 
     if options.show_semantic_errors == Some(true) {
-        let semantic_ret = SemanticBuilder::new().with_check_syntax_error(true).build(&program);
-        diagnostics.extend(semantic_ret.errors);
+        let semantic_ret = SemanticBuilder::new_compiler().build(&program);
+        diagnostics.extend(semantic_ret.diagnostics);
     }
 
-    let mut errors = OxcError::from_diagnostics(filename, &source_text, diagnostics);
+    let mut errors = OxcError::from_diagnostics(filename, source_text, diagnostics);
 
     let mut comments =
-        convert_utf8_to_utf16(&source_text, &mut program, &mut module_record, &mut errors);
+        convert_utf8_to_utf16(source_text, &mut program, &mut module_record, &mut errors);
 
-    let program_and_fixes = match ast_type {
-        AstType::JavaScript => {
-            // Add hashbang to start of comments
-            if let Some(hashbang) = &program.hashbang {
-                comments.insert(
-                    0,
-                    Comment {
-                        r#type: "Line".to_string(),
-                        value: hashbang.value.to_string(),
-                        start: hashbang.span.start,
-                        end: hashbang.span.end,
-                    },
-                );
-            }
+    if ast_type == AstType::JavaScript {
+        // Add hashbang to start of comments.
+        // Note: `@typescript-eslint/parser` ignores hashbangs, despite appearances to the contrary in AST explorers.
+        // So we ignore them too for TS.
+        // See: https://github.com/typescript-eslint/typescript-eslint/issues/6500
+        if let Some(hashbang) = &program.hashbang {
+            comments.insert(
+                0,
+                Comment {
+                    r#type: "Line".to_string(),
+                    value: hashbang.value.to_string(),
+                    start: hashbang.span.start,
+                    end: hashbang.span.end,
+                },
+            );
+        }
+    }
 
-            program.to_estree_js_json_with_fixes(ranges)
-        }
-        AstType::TypeScript => {
-            // Note: `@typescript-eslint/parser` ignores hashbangs,
-            // despite appearances to the contrary in AST explorers.
-            // So we ignore them too.
-            // See: https://github.com/typescript-eslint/typescript-eslint/issues/6500
-            program.to_estree_ts_json_with_fixes(ranges)
-        }
-    };
+    let include_ts_fields = ast_type == AstType::TypeScript;
+    let program_and_fixes = program.to_estree_json_with_fixes(include_ts_fields, ranges);
 
     let module = EcmaScriptModule::from(&module_record);
 
     ParseResult { program_and_fixes, module, comments, errors }
 }
 
-/// Parse synchronously.
+/// Parse JS/TS source synchronously on current thread.
+///
+/// This is generally preferable over `parse` (async) as it does not have the overhead
+/// of spawning a thread, and the majority of the workload cannot be parallelized anyway
+/// (see `parse` documentation for details).
+///
+/// If you need to parallelize parsing multiple files, it is recommended to use worker threads
+/// with `parseSync` rather than using `parse`.
 #[napi]
+#[allow(clippy::needless_pass_by_value, clippy::allow_attributes)]
 pub fn parse_sync(
     filename: String,
     source_text: String,
     options: Option<ParserOptions>,
 ) -> ParseResult {
     let options = options.unwrap_or_default();
-    parse_with_return(&filename, source_text, &options)
+    parse_with_return(&filename, &source_text, &options)
 }
 
 pub struct ResolveTask {
@@ -166,7 +176,7 @@ impl Task for ResolveTask {
 
     fn compute(&mut self) -> napi::Result<Self::Output> {
         let source_text = mem::take(&mut self.source_text);
-        Ok(parse_with_return(&self.filename, source_text, &self.options))
+        Ok(parse_with_return(&self.filename, &source_text, &self.options))
     }
 
     fn resolve(&mut self, _: napi::Env, result: Self::Output) -> napi::Result<Self::JsValue> {
@@ -174,11 +184,19 @@ impl Task for ResolveTask {
     }
 }
 
-/// Parse asynchronously.
+/// Parse JS/TS source asynchronously on a separate thread.
 ///
-/// Note: This function can be slower than `parseSync` due to the overhead of spawning a thread.
+/// Note that not all of the workload can happen on a separate thread.
+/// Parsing on Rust side does happen in a separate thread, but deserialization of the AST to JS objects
+/// has to happen on current thread. This synchronous deserialization work typically outweighs
+/// the asynchronous parsing by a factor of between 3 and 20.
+///
+/// i.e. the majority of the workload cannot be parallelized by using this method.
+///
+/// Generally `parseSync` is preferable to use as it does not have the overhead of spawning a thread.
+/// If you need to parallelize parsing multiple files, it is recommended to use worker threads.
 #[napi]
-pub fn parse_async(
+pub fn parse(
     filename: String,
     source_text: String,
     options: Option<ParserOptions>,

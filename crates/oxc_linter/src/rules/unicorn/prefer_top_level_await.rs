@@ -59,7 +59,10 @@ declare_oxc_lint!(
     /// ```
     PreferTopLevelAwait,
     unicorn,
-    pedantic
+    pedantic,
+    pending,
+    version = "1.20.0",
+    short_description = "Prefer top-level await over top-level promises and async function calls.",
 );
 
 impl Rule for PreferTopLevelAwait {
@@ -82,11 +85,7 @@ impl Rule for PreferTopLevelAwait {
         }
 
         let parent = ctx.nodes().parent_node(node.id());
-        // TODO: remove this block once removing `AstKind::Argument` is complete
-        let grand_parent = {
-            let p = ctx.nodes().parent_node(parent.id());
-            if let AstKind::Argument(_) = p.kind() { ctx.nodes().parent_node(p.id()) } else { p }
-        };
+        let grand_parent = ctx.nodes().parent_node(parent.id());
 
         if let AstKind::StaticMemberExpression(member_expr) = parent.kind()
             && member_expr.object.span() == call_expr.span
@@ -195,10 +194,10 @@ fn test() {
         ("(async function *() {})()", None, None, None),
         (
             "function foo() {
-				if (foo) {
-					(async () => {})()
-				}
-			}",
+                if (foo) {
+                    (async () => {})()
+                }
+            }",
             None,
             None,
             None,
@@ -212,36 +211,36 @@ fn test() {
         ("await foo.then(bar)?.catch?.(bar)", None, None, None),
         (
             "class Example {
-				property = promise.then(bar)
-			}",
+                property = promise.then(bar)
+            }",
             None,
             None,
             None,
         ),
         (
             "const Example = class Example {
-				property = promise.then(bar)
-			}",
+                property = promise.then(bar)
+            }",
             None,
             None,
             None,
         ),
         (
             "class Example {
-				static {
-					promise.then(bar)
-				}
-			}",
+                static {
+                    promise.then(bar)
+                }
+            }",
             None,
             None,
             None,
         ),
         (
             "const Example = class Example {
-				static {
-					promise.then(bar)
-				}
-			}",
+                static {
+                    promise.then(bar)
+                }
+            }",
             None,
             None,
             None,
@@ -251,81 +250,81 @@ fn test() {
         ("foo.bar()", None, None, None),
         (
             "function foo() {
-				return async () => {};
-			}
-			foo()();",
+                return async () => {};
+            }
+            foo()();",
             None,
             None,
             None,
         ),
         (
             "const [foo] = [async () => {}];
-			foo();",
+            foo();",
             None,
             None,
             None,
         ),
         (
             "function foo() {}
-			foo();",
+            foo();",
             None,
             None,
             None,
         ),
         (
             "async function * foo() {}
-			foo();",
+            foo();",
             None,
             None,
             None,
         ),
         (
             "var foo = async () => {};
-			foo();",
+            foo();",
             None,
             None,
             None,
         ),
         (
             "let foo = async () => {};
-			foo();",
+            foo();",
             None,
             None,
             None,
         ),
         (
             "const foo = 1, bar = async () => {};
-			foo();",
+            foo();",
             None,
             None,
             None,
         ),
         (
             "async function foo() {}
-			const bar = foo;
-			bar();",
+            const bar = foo;
+            bar();",
             None,
             None,
             None,
         ),
         (
             "const program = {async run () {}};
-			program.run()",
+            program.run()",
             None,
             None,
             None,
         ),
         (
             "const program = {async run () {}};
-			const {run} = program;
-			run()",
+            const {run} = program;
+            run()",
             None,
             None,
             None,
         ),
         (
             "const foo = async () => {};
-			await foo();",
+            await foo();",
             None,
             None,
             None,
@@ -333,29 +332,50 @@ fn test() {
         ("for (const statement of statements) { statement() };", None, None, None),
         (
             "const foo = async () => {};
-			await Promise.all([
-				(async () => {})(),
-				/* hole */,
-				foo(),
-				foo.then(bar),
-				foo.catch(bar),
-			]);
-			await Promise.allSettled([foo()]);
-			await Promise?.any([foo()]);
-			await Promise.race?.([foo()]);",
+            await Promise.all([
+                (async () => {})(),
+                /* hole */,
+                foo(),
+                foo?.(),
+                foo.then(bar),
+                foo.catch(bar),
+            ]);
+            await Promise.allSettled([foo()]);
+            await Promise?.any([foo()]);
+            await Promise.race?.([foo()]);",
+            None,
+            None,
+            None,
+        ),
+        (
+            "async function getStat() {}
+            const [core, pure, bundle] = await Promise.all([
+                getStat('core-js'),
+                ALL && getStat('core-js-pure'),
+                ALL && getStat('core-js-bundle'),
+            ]);",
+            None,
+            None,
+            None,
+        ),
+        (
+            "async function getStat() {}
+            const [core] = await Promise.all([
+                ALL ? getStat('core-js') : getStat('core-js-pure'),
+            ]);",
             None,
             None,
             None,
         ),
         (
             "const foo = async () => {};
-			const promise = Promise.all([
-				(async () => {})(),
-				foo(),
-				foo.then(bar),
-				foo.catch(bar),
-			]);
-			await promise;",
+            const promise = Promise.all([
+                (async () => {})(),
+                foo(),
+                foo.then(bar),
+                foo.catch(bar),
+            ]);
+            await promise;",
             None,
             None,
             None,
@@ -364,10 +384,10 @@ fn test() {
         ("await foo()", None, None, None),
         (
             "try {
-				await run()
-			} catch {
-				process.exit(1)
-			}",
+                await run()
+            } catch {
+                process.exit(1)
+            }",
             None,
             None,
             None,
@@ -384,8 +404,8 @@ fn test() {
         ("if (foo) (async () => {})()", None, None, None),
         (
             "{
-				(async () => {})();
-			}",
+                (async () => {})();
+            }",
             None,
             None,
             None,
@@ -413,46 +433,46 @@ fn test() {
         ("foo.then(bar).catch(bar).finally(bar)", None, None, None),
         (
             "const foo = async () => {};
-			foo();",
+            foo();",
             None,
             None,
             None,
         ),
         (
             "const foo = async () => {};
-			foo?.();",
+            foo?.();",
             None,
             None,
             None,
         ),
         (
             "const foo = async () => {};
-			foo().then(foo);",
+            foo().then(foo);",
             None,
             None,
             None,
         ),
         (
             "const foo = async function () {}, bar = 1;
-			foo(bar);",
+            foo(bar);",
             None,
             None,
             None,
         ),
         (
             "foo();
-			async function foo() {}",
+            async function foo() {}",
             None,
             None,
             None,
         ),
         (
             "const foo = async () => {};
-			if (true) {
-				alert();
-			} else {
-				foo();
-			}",
+            if (true) {
+                alert();
+            } else {
+                foo();
+            }",
             None,
             None,
             None,
@@ -460,5 +480,6 @@ fn test() {
     ];
 
     Tester::new(PreferTopLevelAwait::NAME, PreferTopLevelAwait::PLUGIN, pass, fail)
+        .change_rule_path_extension("mjs")
         .test_and_snapshot();
 }

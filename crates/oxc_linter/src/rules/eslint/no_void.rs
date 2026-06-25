@@ -4,8 +4,14 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::UnaryOperator;
 use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, ast_util::outermost_paren_parent, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    ast_util::outermost_paren_parent,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_void_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected `void` operator")
@@ -13,8 +19,8 @@ fn no_void_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoVoid {
     /// If set to `true`, using `void` as a standalone statement is allowed.
     pub allow_as_statement: bool,
@@ -49,17 +55,13 @@ declare_oxc_lint!(
     restriction,
     suggestion,
     config = NoVoid,
+    version = "0.2.5",
+    short_description = "Disallows the use of the `void` operator.",
 );
 
 impl Rule for NoVoid {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let allow_as_statement = value
-            .get(0)
-            .and_then(|config| config.get("allowAsStatement"))
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or(false);
-
-        Self { allow_as_statement }
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

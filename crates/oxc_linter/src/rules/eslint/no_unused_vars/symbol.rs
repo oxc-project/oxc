@@ -12,7 +12,7 @@ use oxc_semantic::{
 };
 use oxc_span::{GetSpan, Span};
 
-use crate::ModuleRecord;
+use crate::{ModuleRecord, module_record::ExportLocalName};
 
 #[derive(Clone)]
 pub(super) struct Symbol<'s, 'a> {
@@ -118,15 +118,21 @@ impl<'s, 'a> Symbol<'s, 'a> {
     pub fn iter_relevant_parent_and_grandparent_kinds(
         &self,
         node_id: NodeId,
-    ) -> impl Iterator<Item = (/* parent */ AstKind<'a>, /* grandparent */ AstKind<'a>)> + Clone + '_
-    {
-        let parents_iter = iter::once(self.nodes().kind(node_id)).chain(
-            self.nodes().ancestor_kinds(node_id).filter(|kind| Self::is_relevant_kind(*kind)),
-        );
+    ) -> impl Iterator<Item = (/* parent */ AstKind<'a>, /* grandparent */ AstKind<'a>)> + '_ {
+        let mut parent = Some(self.nodes().kind(node_id));
+        let mut ancestors =
+            self.nodes().ancestor_kinds(node_id).filter(|kind| Self::is_relevant_kind(*kind));
 
-        let grandparents_iter = parents_iter.clone().skip(1);
-
-        parents_iter.zip(grandparents_iter)
+        iter::from_fn(move || {
+            let current = parent?;
+            if let Some(grandparent) = ancestors.next() {
+                parent = Some(grandparent);
+                Some((current, grandparent))
+            } else {
+                parent = None;
+                None
+            }
+        })
     }
 
     #[inline]
@@ -158,11 +164,10 @@ impl<'s, 'a> Symbol<'s, 'a> {
 
     /// <https://github.com/oxc-project/oxc/issues/4739>
     fn clean_binding_id(&self, binding: &BindingPattern) -> Span {
-        if binding.kind.is_destructuring_pattern() {
+        if binding.is_destructuring_pattern() {
             return self.scoping().symbol_span(self.id);
         }
-        let own = binding.kind.span();
-        binding.type_annotation.as_ref().map_or(own, |ann| Span::new(own.start, ann.span.start))
+        binding.span()
     }
 }
 
@@ -172,9 +177,16 @@ impl<'a> Symbol<'_, 'a> {
     /// NOTE: does not support CJS right now.
     pub fn is_exported(&self) -> bool {
         let is_in_exportable_scope = self.is_root() || self.is_in_ts_namespace();
-        is_in_exportable_scope
-            && (self.module_record.exported_bindings.contains_key(self.name())
-                || self.in_export_node())
+        is_in_exportable_scope && (self.is_local_exported_binding() || self.in_export_node())
+    }
+
+    fn is_local_exported_binding(&self) -> bool {
+        self.module_record.local_export_entries.iter().any(|entry| match &entry.local_name {
+            ExportLocalName::Name(name) | ExportLocalName::Default(name) => {
+                name.name() == self.name()
+            }
+            ExportLocalName::Null => false,
+        })
     }
 
     #[inline]

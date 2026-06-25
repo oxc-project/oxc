@@ -15,11 +15,10 @@ use super::{Expect, SemanticTester};
 /// [`SemanticTester`]'s factories, such as [`SemanticTester::has_root_symbol`].
 ///
 /// # Example
-/// ```
+/// ```ignore
 /// use oxc_semantic::{SymbolFlags, Semantic};
 /// use super::SemanticTester;
 ///
-/// #[test]
 /// fn my_test() {
 ///   SemanticTester::js("let x = 0; let foo = (0, x++)")
 ///     .has_some_symbol("x")                  // find a symbol named "x" at any scope
@@ -46,7 +45,8 @@ impl<'a> SymbolTester<'a> {
         semantic: Semantic<'a>,
         target: &str,
     ) -> Self {
-        let decl = semantic.scoping().get_binding(semantic.scoping().root_scope_id(), target);
+        let decl =
+            semantic.scoping().get_binding(semantic.scoping().root_scope_id(), target.into());
         let data = decl.map_or_else(
             || Err(OxcDiagnostic::error(format!("Could not find declaration for {target}"))),
             Ok,

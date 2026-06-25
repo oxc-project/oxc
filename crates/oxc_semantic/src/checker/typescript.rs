@@ -4,36 +4,11 @@ use itertools::Itertools;
 use rustc_hash::FxHashMap;
 
 use oxc_ast::{AstKind, ast::*};
-use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::BoundNames;
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::Str;
 
-use crate::{builder::SemanticBuilder, diagnostics::redeclaration};
-
-fn ts_error<M: Into<Cow<'static, str>>>(code: &'static str, message: M) -> OxcDiagnostic {
-    OxcDiagnostic::error(message).with_error_code("TS", code)
-}
-
-pub fn check_ts_type_parameter<'a>(param: &TSTypeParameter<'a>, ctx: &SemanticBuilder<'a>) {
-    check_type_name_is_reserved(&param.name, ctx, "Type parameter");
-}
-
-/// '?' at the end of a type is not valid TypeScript syntax. Did you mean to write 'number | null | undefined'?(17019)
-fn jsdoc_type_in_annotation(
-    modifier: char,
-    is_start: bool,
-    span: Span,
-    suggested_type: &str,
-) -> OxcDiagnostic {
-    let (code, start_or_end) = if is_start { ("17020", "start") } else { ("17019", "end") };
-
-    ts_error(
-        code,
-        format!("'{modifier}' at the {start_or_end} of a type is not valid TypeScript syntax.",),
-    )
-    .with_label(span)
-    .with_help(format!("Did you mean to write '{suggested_type}'?"))
-}
+use crate::{builder::SemanticBuilder, diagnostics};
 
 pub fn check_ts_type_annotation(annotation: &TSTypeAnnotation<'_>, ctx: &SemanticBuilder<'_>) {
     let (modifier, is_start, span_with_illegal_modifier) = match &annotation.type_annotation {
@@ -57,7 +32,7 @@ pub fn check_ts_type_annotation(annotation: &TSTypeAnnotation<'_>, ctx: &Semanti
         Cow::Borrowed(suggestion)
     };
 
-    ctx.error(jsdoc_type_in_annotation(
+    ctx.error(diagnostics::jsdoc_type_in_annotation(
         modifier,
         is_start,
         span_with_illegal_modifier,
@@ -65,16 +40,47 @@ pub fn check_ts_type_annotation(annotation: &TSTypeAnnotation<'_>, ctx: &Semanti
     ));
 }
 
-pub fn check_ts_type_alias_declaration<'a>(
-    decl: &TSTypeAliasDeclaration<'a>,
-    ctx: &SemanticBuilder<'a>,
-) {
-    check_type_name_is_reserved(&decl.id, ctx, "Type alias");
+pub fn check_ts_type_predicate(predicate: &TSTypePredicate<'_>, ctx: &SemanticBuilder<'_>) {
+    if !is_allowed_type_predicate_position(ctx) {
+        ctx.error(diagnostics::type_predicate_only_in_return_type(predicate.span));
+    }
 }
 
-fn required_parameter_after_optional_parameter(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("A required parameter cannot follow an optional parameter.")
-        .with_label(span)
+fn is_allowed_type_predicate_position(ctx: &SemanticBuilder<'_>) -> bool {
+    let mut ancestors = ctx.ancestry().ancestor_kinds();
+
+    let Some(AstKind::TSTypeAnnotation(_)) = ancestors.next() else {
+        return false;
+    };
+
+    match ancestors.next() {
+        Some(AstKind::Function(_)) => match ancestors.next() {
+            Some(AstKind::MethodDefinition(method)) => method.kind.is_method(),
+            Some(AstKind::ObjectProperty(property)) => !property.kind.is_accessor(),
+            _ => true,
+        },
+        Some(
+            AstKind::ArrowFunctionExpression(_)
+            | AstKind::TSFunctionType(_)
+            | AstKind::TSCallSignatureDeclaration(_),
+        ) => true,
+        Some(AstKind::TSMethodSignature(signature)) => {
+            signature.kind == TSMethodSignatureKind::Method
+        }
+        _ => false,
+    }
+}
+
+pub fn check_ts_infer_type<'a>(infer_type: &TSInferType<'a>, ctx: &SemanticBuilder<'a>) {
+    let is_in_conditional_extends_clause = ctx.ancestry().ancestor_kinds().any(|kind| {
+        kind.as_ts_conditional_type().is_some_and(|conditional| {
+            conditional.extends_type.span().contains_inclusive(infer_type.span)
+        })
+    });
+
+    if !is_in_conditional_extends_clause {
+        ctx.error(diagnostics::infer_declaration_only_permitted_in_extends_clause(infer_type.span));
+    }
 }
 
 pub fn check_formal_parameters(params: &FormalParameters, ctx: &SemanticBuilder<'_>) {
@@ -86,63 +92,56 @@ pub fn check_formal_parameters(params: &FormalParameters, ctx: &SemanticBuilder<
 
     for param in &params.items {
         // function a(optional?: number, required: number) { }
-        if param.pattern.optional {
+        if param.optional {
             has_optional = true;
-        } else if has_optional && !param.pattern.kind.is_assignment_pattern() {
-            ctx.error(required_parameter_after_optional_parameter(param.span));
+        } else if has_optional && param.initializer.is_none() {
+            ctx.error(diagnostics::required_parameter_after_optional_parameter(param.span));
         }
     }
 }
 
 fn check_duplicate_bound_names<'a, T: BoundNames<'a>>(bound_names: &T, ctx: &SemanticBuilder<'_>) {
-    let mut idents: FxHashMap<Atom<'a>, Span> = FxHashMap::default();
+    let mut idents: FxHashMap<Str<'a>, Span> = FxHashMap::default();
     bound_names.bound_names(&mut |ident| {
-        if let Some(old_span) = idents.insert(ident.name, ident.span) {
-            ctx.error(redeclaration(&ident.name, old_span, ident.span));
+        if let Some(old_span) = idents.insert(ident.name.into(), ident.span) {
+            ctx.error(diagnostics::redeclaration(&ident.name, old_span, ident.span));
         }
     });
 }
 
-fn unexpected_type_annotation(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Unexpected type annotation").with_label(span)
+pub fn check_ts_module_declaration<'a>(decl: &TSModuleDeclaration<'a>, ctx: &SemanticBuilder<'a>) {
+    check_ts_module_or_global_declaration(decl.span, ctx);
+    check_ts_export_assignment_in_module_decl(decl, ctx);
 }
 
-pub fn check_array_pattern<'a>(pattern: &ArrayPattern<'a>, ctx: &SemanticBuilder<'a>) {
-    for element in &pattern.elements {
-        if let Some(element) = element.as_ref()
-            && let Some(type_annotation) = &element.type_annotation
-        {
-            ctx.error(unexpected_type_annotation(type_annotation.span));
-        }
+pub fn check_ts_global_declaration<'a>(decl: &TSGlobalDeclaration<'a>, ctx: &SemanticBuilder<'a>) {
+    check_ts_module_or_global_declaration(decl.span, ctx);
+
+    if !decl.declare && !ctx.in_declare_scope() {
+        ctx.error(diagnostics::global_scope_augmentation_should_have_declare_modifier(
+            decl.global_span,
+        ));
     }
 }
 
-fn not_allowed_namespace_declaration(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(
-        "A namespace declaration is only allowed at the top level of a namespace or module.",
-    )
-    .with_label(span)
-}
-
-pub fn check_ts_module_declaration<'a>(decl: &TSModuleDeclaration<'a>, ctx: &SemanticBuilder<'a>) {
+fn check_ts_module_or_global_declaration(span: Span, ctx: &SemanticBuilder<'_>) {
     // skip current node
-    for node in ctx.nodes.ancestors(ctx.current_node_id) {
-        match node.kind() {
-            AstKind::Program(_) | AstKind::TSModuleBlock(_) | AstKind::TSModuleDeclaration(_) => {
+    for kind in ctx.ancestry().ancestor_kinds() {
+        match kind {
+            AstKind::Program(_)
+            | AstKind::TSModuleBlock(_)
+            | AstKind::TSModuleDeclaration(_)
+            | AstKind::TSGlobalDeclaration(_) => {
                 break;
             }
             m if m.is_module_declaration() => {
                 // We need to check the parent of the parent
             }
             _ => {
-                ctx.error(not_allowed_namespace_declaration(decl.span));
+                ctx.error(diagnostics::not_allowed_namespace_declaration(span));
             }
         }
     }
-}
-
-fn enum_member_must_have_initializer(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Enum member must have initializer.").with_label(span)
 }
 
 pub fn check_ts_enum_declaration<'a>(decl: &TSEnumDeclaration<'a>, ctx: &SemanticBuilder<'a>) {
@@ -165,46 +164,9 @@ pub fn check_ts_enum_declaration<'a>(decl: &TSEnumDeclaration<'a>, ctx: &Semanti
                     | Expression::UnaryExpression(_)
             );
         } else if need_initializer {
-            ctx.error(enum_member_must_have_initializer(member.span));
+            ctx.error(diagnostics::enum_member_must_have_initializer(member.span));
         }
     });
-
-    check_type_name_is_reserved(&decl.id, ctx, "Enum");
-}
-
-/// TS(1392)
-fn import_alias_cannot_use_import_type(span: Span) -> OxcDiagnostic {
-    ts_error("1392", "An import alias cannot use 'import type'").with_label(span)
-}
-
-pub fn check_ts_import_equals_declaration<'a>(
-    decl: &TSImportEqualsDeclaration<'a>,
-    ctx: &SemanticBuilder<'a>,
-) {
-    // `import type Foo = require('./foo')` is allowed
-    // `import { Foo } from './foo'; import type Bar = Foo.Bar` is not allowed
-    if decl.import_kind.is_type() && !decl.module_reference.is_external() {
-        ctx.error(import_alias_cannot_use_import_type(decl.span));
-    }
-}
-
-/// - Abstract properties can only appear within an abstract class. (1253)
-/// - Abstract methods can only appear within an abstract class. (1244)
-fn abstract_elem_in_concrete_class(is_property: bool, span: Span) -> OxcDiagnostic {
-    let (code, elem_kind) = if is_property { ("1253", "properties") } else { ("1244", "methods") };
-    ts_error(code, format!("Abstract {elem_kind} can only appear within an abstract class."))
-        .with_label(span)
-}
-
-fn constructor_implementation_missing(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Constructor implementation is missing.").with_label(span)
-}
-
-fn function_implementation_missing(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(
-        "Function implementation is missing or not immediately following the declaration.",
-    )
-    .with_label(span)
 }
 
 pub fn check_class<'a>(class: &Class<'a>, ctx: &SemanticBuilder<'a>) {
@@ -212,124 +174,60 @@ pub fn check_class<'a>(class: &Class<'a>, ctx: &SemanticBuilder<'a>) {
         for elem in &class.body.body {
             if elem.is_abstract() {
                 let span = elem.property_key().map_or_else(|| elem.span(), GetSpan::span);
-                ctx.error(abstract_elem_in_concrete_class(elem.is_property(), span));
+                ctx.error(diagnostics::abstract_elem_in_concrete_class(elem.is_property(), span));
             }
         }
     }
 
     if !class.r#declare && !ctx.in_declare_scope() {
+        let mut is_in_overload_group = false;
         for (a, b) in class.body.body.iter().map(Some).chain(vec![None]).tuple_windows() {
             if let Some(ClassElement::MethodDefinition(a)) = a
                 && !a.r#type.is_abstract()
                 && !a.optional
                 && a.value.r#type == FunctionType::TSEmptyBodyFunctionExpression
-                && b.is_none_or(|b| match b {
-                    ClassElement::StaticBlock(_)
-                    | ClassElement::PropertyDefinition(_)
-                    | ClassElement::AccessorProperty(_)
-                    | ClassElement::TSIndexSignature(_) => true,
-                    ClassElement::MethodDefinition(b) => b.key.static_name() != a.key.static_name(),
-                })
             {
-                if a.kind.is_constructor() {
-                    ctx.error(constructor_implementation_missing(a.key.span()));
+                let next_is_same = b.is_some_and(|b| {
+                    matches!(b,
+                        ClassElement::MethodDefinition(b)
+                            if b.key.static_name() == a.key.static_name()
+                    )
+                });
+                if next_is_same {
+                    is_in_overload_group = true;
+                } else if a.key.static_name().is_some() || is_in_overload_group {
+                    // Report error for:
+                    // 1. Methods with static names that are not followed by an implementation
+                    // 2. The last overload in a computed-name overload group (e.g. [Symbol.iterator])
+                    if a.kind.is_constructor() {
+                        ctx.error(diagnostics::constructor_implementation_missing(a.key.span()));
+                    } else {
+                        ctx.error(diagnostics::function_implementation_missing(a.key.span()));
+                    }
+                    is_in_overload_group = false;
                 } else {
-                    ctx.error(function_implementation_missing(a.key.span()));
+                    is_in_overload_group = false;
                 }
+            } else {
+                is_in_overload_group = false;
             }
         }
     }
-    if let Some(id) = &class.id {
-        check_type_name_is_reserved(id, ctx, "Class");
-    }
-}
-
-pub fn check_ts_interface_declaration<'a>(
-    decl: &TSInterfaceDeclaration<'a>,
-    ctx: &SemanticBuilder<'a>,
-) {
-    check_type_name_is_reserved(&decl.id, ctx, "Interface");
-}
-
-/// ```ts
-/// function checkTypeNameIsReserved(name: Identifier, message: DiagnosticMessage): void {
-///     // TS 1.0 spec (April 2014): 3.6.1
-///     // The predefined type keywords are reserved and cannot be used as names of user defined types.
-///     switch (name.escapedText) {
-///         case "any":
-///         case "unknown":
-///         case "never":
-///         case "number":
-///         case "bigint":
-///         case "boolean":
-///         case "string":
-///         case "symbol":
-///         case "void":
-///         case "object":
-///         case "undefined":
-///             error(name, message, name.escapedText as string);
-///     }
-/// }
-/// ```
-fn check_type_name_is_reserved<'a>(
-    id: &BindingIdentifier<'a>,
-    ctx: &SemanticBuilder<'a>,
-    syntax_name: &str,
-) {
-    match id.name.as_str() {
-        "any" | "unknown" | "never" | "number" | "bigint" | "boolean" | "string" | "symbol"
-        | "void" | "object" | "undefined" => {
-            ctx.error(reserved_type_name(id.span, id.name.as_str(), syntax_name));
-        }
-        _ => {}
-    }
-}
-
-fn reserved_type_name(span: Span, reserved_name: &str, syntax_name: &str) -> OxcDiagnostic {
-    ts_error("2414", format!("{syntax_name} name cannot be '{reserved_name}'")).with_label(span)
-}
-
-/// 'abstract' modifier can only appear on a class, method, or property declaration. (1242)
-fn illegal_abstract_modifier(span: Span) -> OxcDiagnostic {
-    ts_error(
-        "1242",
-        "'abstract' modifier can only appear on a class, method, or property declaration.",
-    )
-    .with_label(span)
-}
-
-/// A parameter property is only allowed in a constructor implementation.ts(2369)
-fn parameter_property_only_in_constructor_impl(span: Span) -> OxcDiagnostic {
-    ts_error("2369", "A parameter property is only allowed in a constructor implementation.")
-        .with_label(span)
-}
-
-/// Getter or setter without a body. There is no corresponding TS error code,
-/// since in TSC this is a parse error.
-fn accessor_without_body(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Getters and setters must have an implementation.").with_label(span)
 }
 
 pub fn check_method_definition<'a>(method: &MethodDefinition<'a>, ctx: &SemanticBuilder<'a>) {
     let is_abstract = method.r#type.is_abstract();
-    let is_declare = ctx.class_table_builder.current_class_id.map_or(
-        ctx.source_type.is_typescript_definition(),
-        |id| {
-            let node_id = ctx.class_table_builder.classes.declarations[id];
-            let AstKind::Class(class) = ctx.nodes.get_node(node_id).kind() else {
-                #[cfg(debug_assertions)]
-                panic!("current_class_id is set, but does not point to a Class node.");
-                #[cfg(not(debug_assertions))]
-                return ctx.source_type.is_typescript_definition();
-            };
-            class.declare || ctx.source_type.is_typescript_definition()
-        },
-    );
 
     if is_abstract {
         // constructors cannot be abstract, no matter what
         if method.kind.is_constructor() {
-            ctx.error(illegal_abstract_modifier(method.key.span()));
+            ctx.error(diagnostics::illegal_abstract_modifier(method.key.span()));
+        }
+        // abstract cannot be used with private identifiers
+        if method.key.is_private_identifier() {
+            ctx.error(diagnostics::abstract_cannot_be_used_with_private_identifier(
+                method.key.span(),
+            ));
         }
     }
 
@@ -338,35 +236,30 @@ pub fn check_method_definition<'a>(method: &MethodDefinition<'a>, ctx: &Semantic
     if method.kind.is_constructor() && is_empty_body {
         for param in &method.value.params.items {
             if param.has_modifier() {
-                ctx.error(parameter_property_only_in_constructor_impl(param.span));
+                ctx.error(diagnostics::parameter_property_only_in_constructor_impl(param.span));
             }
         }
     }
 
     // Illegal to have `get foo();` or `set foo(a)`
-    if method.kind.is_accessor() && is_empty_body && !is_abstract && !is_declare {
-        ctx.error(accessor_without_body(method.key.span()));
+    if method.kind.is_accessor() && is_empty_body && !is_abstract {
+        let is_declare = ctx.class_table_builder.current_class_id.map_or(
+            ctx.source_type.is_typescript_definition(),
+            |id| {
+                let node_id = ctx.class_table_builder.classes.declarations[id];
+                let AstKind::Class(class) = ctx.ancestry().find_kind_by_node_id(node_id) else {
+                    #[cfg(debug_assertions)]
+                    panic!("current_class_id is set, but does not point to a Class node.");
+                    #[cfg(not(debug_assertions))]
+                    return ctx.source_type.is_typescript_definition();
+                };
+                class.declare || ctx.source_type.is_typescript_definition()
+            },
+        );
+        if !is_declare {
+            ctx.error(diagnostics::accessor_without_body(method.key.span()));
+        }
     }
-}
-
-pub fn check_object_property(prop: &ObjectProperty, ctx: &SemanticBuilder<'_>) {
-    if let Expression::FunctionExpression(func) = &prop.value
-        && prop.kind.is_accessor()
-        && matches!(func.r#type, FunctionType::TSEmptyBodyFunctionExpression)
-    {
-        ctx.error(accessor_without_body(prop.key.span()));
-    }
-}
-
-/// The left-hand side of a 'for...of' statement cannot use a type annotation. (2483)
-fn type_annotation_in_for_left(span: Span, is_for_in: bool) -> OxcDiagnostic {
-    let for_of_or_in = if is_for_in { "for...in" } else { "for...of" };
-    ts_error(
-        "2483",
-        format!(
-            "The left-hand side of a '{for_of_or_in}' statement cannot use a type annotation.",
-        ),
-    ).with_label(span).with_help("This iterator's type will be inferred from the iterable. You can safely remove the type annotation.")
 }
 
 pub fn check_for_statement_left(left: &ForStatementLeft, is_for_in: bool, ctx: &SemanticBuilder) {
@@ -375,35 +268,66 @@ pub fn check_for_statement_left(left: &ForStatementLeft, is_for_in: bool, ctx: &
     };
 
     for decl in &decls.declarations {
-        if decl.id.type_annotation.is_some() {
+        if decl.type_annotation.is_some() {
             let span = decl.id.span();
-            ctx.error(type_annotation_in_for_left(span, is_for_in));
+            ctx.error(diagnostics::type_annotation_in_for_left(span, is_for_in));
         }
     }
 }
 
-fn invalid_jsx_attribute_value(span: Span) -> OxcDiagnostic {
-    ts_error("17000", "JSX attributes must only be assigned a non-empty 'expression'.")
-        .with_label(span)
+pub fn check_ts_export_assignment_in_program<'a>(program: &Program<'a>, ctx: &SemanticBuilder<'a>) {
+    if !ctx.source_type.is_typescript() {
+        return;
+    }
+    check_ts_export_assignment_in_statements(&program.body, ctx);
 }
 
-fn jsx_expressions_may_not_use_the_comma_operator(span: Span) -> OxcDiagnostic {
-    ts_error("18007", "JSX expressions may not use the comma operator")
-        .with_help("Did you mean to write an array?")
-        .with_label(span)
-}
-
-pub fn check_jsx_expression_container(
-    container: &JSXExpressionContainer,
-    ctx: &SemanticBuilder<'_>,
+fn check_ts_export_assignment_in_module_decl<'a>(
+    module_decl: &TSModuleDeclaration<'a>,
+    ctx: &SemanticBuilder<'a>,
 ) {
-    if matches!(container.expression, JSXExpression::EmptyExpression(_))
-        && matches!(ctx.nodes.parent_kind(ctx.current_node_id), AstKind::JSXAttribute(_))
-    {
-        ctx.error(invalid_jsx_attribute_value(container.span()));
+    let Some(body) = &module_decl.body else {
+        return;
+    };
+    match body {
+        TSModuleDeclarationBody::TSModuleDeclaration(nested) => {
+            check_ts_export_assignment_in_module_decl(nested, ctx);
+        }
+        TSModuleDeclarationBody::TSModuleBlock(block) => {
+            check_ts_export_assignment_in_statements(&block.body, ctx);
+        }
+    }
+}
+
+fn check_ts_export_assignment_in_statements<'a>(
+    statements: &[Statement<'a>],
+    ctx: &SemanticBuilder<'a>,
+) {
+    let mut export_assignment_spans = vec![];
+    let mut has_other_exports = false;
+
+    for stmt in statements {
+        match stmt {
+            Statement::TSExportAssignment(export_assignment) => {
+                export_assignment_spans.push(export_assignment.span);
+            }
+            Statement::ExportNamedDeclaration(export_decl) => {
+                // ignore `export {}`
+                if export_decl.declaration.is_none() && export_decl.specifiers.is_empty() {
+                    continue;
+                }
+                has_other_exports = true;
+            }
+            Statement::ExportDefaultDeclaration(_) | Statement::ExportAllDeclaration(_) => {
+                has_other_exports = true;
+            }
+            _ => {}
+        }
     }
 
-    if matches!(container.expression, JSXExpression::SequenceExpression(_)) {
-        ctx.error(jsx_expressions_may_not_use_the_comma_operator(container.expression.span()));
+    if has_other_exports {
+        for span in export_assignment_spans {
+            ctx.error(diagnostics::ts_export_assignment_cannot_be_used_with_other_exports(span));
+        }
     }
 }

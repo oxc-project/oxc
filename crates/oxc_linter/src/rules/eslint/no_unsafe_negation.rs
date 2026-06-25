@@ -4,8 +4,14 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
 use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, fixer::RuleFixer, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    fixer::RuleFixer,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_unsafe_negation_diagnostic(operator: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
@@ -17,8 +23,8 @@ fn no_unsafe_negation_diagnostic(operator: &str, span: Span) -> OxcDiagnostic {
     .with_label(span)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoUnsafeNegation {
     /// The `enforceForOrderingRelations` option determines whether negation is allowed
     /// on the left-hand side of ordering relational operators (<, >, <=, >=).
@@ -34,6 +40,9 @@ declare_oxc_lint!(
     /// Disallows negating the left operand of relational operators to prevent logical errors
     /// caused by misunderstanding operator precedence or accidental use of negation.
     ///
+    /// This rule can be disabled for TypeScript code, as the TypeScript compiler
+    /// enforces this check.
+    ///
     /// ### Why is this bad?
     ///
     /// Negating the left operand of relational operators can result in unexpected behavior due to
@@ -43,6 +52,7 @@ declare_oxc_lint!(
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
+    /// <!-- prettier-ignore-start -->
     /// ```javascript
     /// if (!key in object) {}
     ///
@@ -55,21 +65,19 @@ declare_oxc_lint!(
     ///
     /// if (!(obj instanceof Ctor)) {}
     /// ```
+    /// <!-- prettier-ignore-end -->
     NoUnsafeNegation,
     eslint,
     correctness,
     fix,
     config = NoUnsafeNegation,
+    version = "0.0.3",
+    short_description = "Disallow negating the left side of relational operators.",
 );
 
 impl Rule for NoUnsafeNegation {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let enforce_for_ordering_relations = value
-            .get(0)
-            .and_then(|config| config.get("enforceForOrderingRelations"))
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or_default();
-        Self { enforce_for_ordering_relations }
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

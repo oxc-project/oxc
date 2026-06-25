@@ -4,6 +4,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use rustc_hash::FxHashSet;
+use schemars::JsonSchema;
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -36,19 +37,38 @@ fn no_warning_comments_diagnostic(term: &str, comment: &str, span: Span) -> OxcD
 }
 
 #[derive(Debug, Clone)]
-struct Config {
+struct NoWarningCommentsConfig {
     terms: Vec<String>,
     patterns: Vec<Regex>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, JsonSchema)]
+#[serde(deny_unknown_fields)]
+#[expect(unused)] // only for schema generation
+struct NoWarningCommentsConfigJson {
+    terms: Option<Vec<String>>,
+    location: Option<Location>,
+    decoration: Option<Vec<String>>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "lowercase")]
 enum Location {
     Start,
     Anywhere,
 }
 
 #[derive(Debug, Clone)]
-pub struct NoWarningComments(Box<Config>);
+pub struct NoWarningComments(Box<NoWarningCommentsConfig>);
+
+impl Default for NoWarningComments {
+    fn default() -> Self {
+        let terms = vec!["todo".to_string(), "fixme".to_string(), "xxx".to_string()];
+        let location = Location::Start;
+        let decoration = FxHashSet::default();
+        Self::new(&terms, &location, &decoration)
+    }
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -113,20 +133,14 @@ declare_oxc_lint!(
     /// Useful for ignoring common comment decorations like `*` in JSDoc-style comments.
     NoWarningComments,
     eslint,
-    pedantic
+    pedantic,
+    config = NoWarningCommentsConfigJson,
+    version = "1.24.0",
+    short_description = "Disallows warning comments such as TODO, FIXME, XXX in code.",
 );
 
-impl Default for NoWarningComments {
-    fn default() -> Self {
-        let terms = vec!["todo".to_string(), "fixme".to_string(), "xxx".to_string()];
-        let location = Location::Start;
-        let decoration = FxHashSet::default();
-        Self::new(&terms, &location, &decoration)
-    }
-}
-
 impl Rule for NoWarningComments {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let config = value.get(0);
 
         let terms = config.and_then(|v| v.get("terms")).and_then(|v| v.as_array()).map_or_else(
@@ -158,7 +172,7 @@ impl Rule for NoWarningComments {
             })
             .unwrap_or_default();
 
-        Self::new(&terms, &location, &decoration)
+        Ok(Self::new(&terms, &location, &decoration))
     }
 
     fn run_once(&self, ctx: &LintContext) {
@@ -183,7 +197,7 @@ impl Rule for NoWarningComments {
 impl NoWarningComments {
     fn new(terms: &[String], location: &Location, decoration: &FxHashSet<String>) -> Self {
         let patterns = Self::build_patterns(terms, location, decoration);
-        Self(Box::new(Config { terms: terms.to_vec(), patterns }))
+        Self(Box::new(NoWarningCommentsConfig { terms: terms.to_vec(), patterns }))
     }
 
     fn build_patterns(
@@ -195,7 +209,7 @@ impl NoWarningComments {
 
         terms
             .iter()
-            .filter_map(|term| {
+            .map(|term| {
                 let ends_with_word =
                     term.chars().last().is_some_and(|c| c.is_alphanumeric() || c == '_');
                 let suffix = if ends_with_word { r"\b" } else { "" };
@@ -214,7 +228,9 @@ impl NoWarningComments {
                     }
                 };
 
-                Regex::new(&pattern).ok()
+                Regex::new(&pattern).expect(
+                    "generated no-warning-comments regex should compile because user input is escaped",
+                )
             })
             .collect()
     }

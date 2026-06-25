@@ -2,18 +2,17 @@ use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
 use oxc_compat::ESFeature;
 use oxc_semantic::ReferenceFlags;
-use oxc_span::{ContentEq, GetSpan};
+use oxc_span::{ContentEq, GetSpan, SPAN};
 
-use crate::ctx::Ctx;
+use crate::TraverseCtx;
 
 use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
-    pub fn minimize_logical_expression(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn minimize_logical_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::LogicalExpression(e) = expr else { return };
         if let Some(changed) = Self::try_compress_is_null_or_undefined(e, ctx) {
-            *expr = changed;
-            ctx.state.changed = true;
+            ctx.replace_expression(expr, changed);
         }
         Self::try_compress_logical_expression_to_assignment_expression(expr, ctx);
     }
@@ -32,7 +31,7 @@ impl<'a> PeepholeOptimizations {
     /// - `document.all == null` is `true`
     fn try_compress_is_null_or_undefined(
         expr: &mut LogicalExpression<'a>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         let op = expr.operator;
         let target_ops = match op {
@@ -55,7 +54,7 @@ impl<'a> PeepholeOptimizations {
         if left.operator != op {
             return None;
         }
-        let new_span = Span::new(left.right.span().start, expr.span.end);
+        let new_span = left.right.span().merge_within(expr.right.span(), expr.span).unwrap_or(SPAN);
         Self::try_compress_is_null_or_undefined_for_left_and_right(
             &mut left.right,
             &mut expr.right,
@@ -64,12 +63,7 @@ impl<'a> PeepholeOptimizations {
             ctx,
         )
         .map(|new_expr| {
-            ctx.ast.expression_logical(
-                expr.span,
-                left.left.take_in(ctx.ast),
-                expr.operator,
-                new_expr,
-            )
+            ctx.ast.expression_logical(expr.span, left.left.take_in(ctx), expr.operator, new_expr)
         })
     }
 
@@ -78,7 +72,7 @@ impl<'a> PeepholeOptimizations {
         right: &mut Expression<'a>,
         span: Span,
         (find_op, replace_op): (BinaryOperator, BinaryOperator),
-        ctx: &Ctx<'a, '_>,
+        ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         enum LeftPairValueResult {
             Null(Span),
@@ -143,7 +137,7 @@ impl<'a> PeepholeOptimizations {
         };
         Some(ctx.ast.expression_binary(
             span,
-            left_non_value_expr.take_in(ctx.ast),
+            left_non_value_expr.take_in(ctx),
             replace_op,
             ctx.ast.expression_null_literal(null_expr_span),
         ))
@@ -163,7 +157,7 @@ impl<'a> PeepholeOptimizations {
     pub fn has_no_side_effect_for_evaluation_same_target(
         assignment_target: &AssignmentTarget<'a>,
         expr: &Expression,
-        ctx: &Ctx<'a, '_>,
+        ctx: &TraverseCtx<'a>,
     ) -> bool {
         if let (
             AssignmentTarget::AssignmentTargetIdentifier(write_id_ref),
@@ -207,7 +201,7 @@ impl<'a> PeepholeOptimizations {
     /// Also `a || (foo, bar, a = b)` to `a ||= (foo, bar, b)`
     fn try_compress_logical_expression_to_assignment_expression(
         expr: &mut Expression<'a>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         if !ctx.supports_feature(ESFeature::ES2021LogicalAssignmentOperators) {
             return;
@@ -230,6 +224,13 @@ impl<'a> PeepholeOptimizations {
                 return;
             }
 
+            // Don't transform `x.y || (x = {}, x.y = 3)` to `x.y ||= (x = {}, 3)` because
+            // `||=` evaluates `x.y` (capturing `x`) before the RHS reassigns `x`.
+            // https://github.com/oxc-project/oxc/issues/16647
+            if Self::member_object_may_be_mutated(&assignment_expr.left, ctx) {
+                return;
+            }
+
             let Expression::SequenceExpression(sequence_expr) = &mut e.right else { return };
             let Some(Expression::AssignmentExpression(mut assignment_expr)) =
                 sequence_expr.expressions.pop()
@@ -239,15 +240,15 @@ impl<'a> PeepholeOptimizations {
 
             Self::mark_assignment_target_as_read(&assignment_expr.left, ctx);
 
-            let assign_value = assignment_expr.right.take_in(ctx.ast);
+            let assign_value = assignment_expr.right.take_in(ctx);
             sequence_expr.expressions.push(assign_value);
-            *expr = ctx.ast.expression_assignment(
+            let new_expr = ctx.ast.expression_assignment(
                 e.span,
                 e.operator.to_assignment_operator(),
-                assignment_expr.left.take_in(ctx.ast),
-                e.right.take_in(ctx.ast),
+                assignment_expr.left.take_in(ctx),
+                e.right.take_in(ctx),
             );
-            ctx.state.changed = true;
+            ctx.replace_expression(expr, new_expr);
             return;
         }
 
@@ -271,15 +272,18 @@ impl<'a> PeepholeOptimizations {
         };
         assignment_expr.span = span;
         assignment_expr.operator = new_op;
-        *expr = e.right.take_in(ctx.ast);
-        ctx.state.changed = true;
+        let new_expr = e.right.take_in(ctx);
+        ctx.replace_expression(expr, new_expr);
     }
 
     /// Marks the AssignmentTargetIdentifier of assignment expressions as ReferenceFlags::Read
     ///
     /// When creating AssignmentTargetIdentifier from normal expressions, the identifier only has ReferenceFlags::Write.
     /// But assignment expressions changes the value, so we should add ReferenceFlags::Read.
-    pub fn mark_assignment_target_as_read(assign_target: &AssignmentTarget, ctx: &mut Ctx<'a, '_>) {
+    pub fn mark_assignment_target_as_read(
+        assign_target: &AssignmentTarget,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         if let AssignmentTarget::AssignmentTargetIdentifier(id) = assign_target {
             let reference = ctx.scoping_mut().get_reference_mut(id.reference_id());
             reference.flags_mut().insert(ReferenceFlags::Read);

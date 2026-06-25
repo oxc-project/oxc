@@ -2,7 +2,7 @@ use rustc_hash::FxHashSet;
 
 use oxc_ast::{
     AstKind,
-    ast::{BindingPattern, BindingPatternKind, Expression, FormalParameters},
+    ast::{BindingPattern, Expression, FormalParameters},
 };
 use oxc_semantic::{JSDoc, JSDocTag, Semantic};
 use oxc_span::Span;
@@ -16,14 +16,23 @@ pub fn should_ignore_as_custom_skip(jsdoc: &JSDoc) -> bool {
     jsdoc.tags().iter().any(|tag| CUSTOM_SKIP_TAG_NAMES.contains(&tag.kind.parsed()))
 }
 
-pub fn is_missing_special_tag(jsdoc_tags: &[&JSDocTag], resolved_tag_name: &str) -> bool {
-    jsdoc_tags.iter().all(|tag| tag.kind.parsed() != resolved_tag_name)
+pub fn is_missing_special_tag<'a, 'b>(
+    jsdoc_tags: impl IntoIterator<Item = &'b JSDocTag<'a>>,
+    resolved_tag_name: &str,
+) -> bool
+where
+    'a: 'b,
+{
+    jsdoc_tags.into_iter().all(|tag| tag.kind.parsed() != resolved_tag_name)
 }
 
-pub fn is_duplicated_special_tag(
-    jsdoc_tags: &Vec<&JSDocTag>,
+pub fn is_duplicated_special_tag<'a, 'b>(
+    jsdoc_tags: impl IntoIterator<Item = &'b JSDocTag<'a>>,
     resolved_returns_tag_name: &str,
-) -> Option<Span> {
+) -> Option<Span>
+where
+    'a: 'b,
+{
     let mut returns_found = false;
     for tag in jsdoc_tags {
         if tag.kind.parsed() == resolved_returns_tag_name {
@@ -60,11 +69,23 @@ pub fn get_function_nearest_jsdoc_node<'a, 'b>(
     semantic: &'b Semantic<'a>,
 ) -> Option<&'b AstNode<'a>> {
     let mut current_node = node;
+    let source_function_id = node.id();
     // Whether the node has attached JSDoc or not is determined by `JSDocBuilder`
     while semantic.jsdoc().get_all_by_node(semantic.nodes(), current_node).is_none() {
         // Tie-breaker, otherwise every loop will end at `Program` node!
         // Maybe more checks should be added
         match current_node.kind() {
+            // Do not leak an outer function's JSDoc into nested function expressions.
+            // Keep walking only for the source function node itself, because function
+            // JSDoc can be attached on wrapper nodes like `VariableDeclaration`.
+            AstKind::Function(_) | AstKind::ArrowFunctionExpression(_)
+                if current_node.id() != source_function_id =>
+            {
+                return None;
+            }
+            // Do not apply object-level docs to functions nested in object literals.
+            // e.g. `const x = /** ... */ { method(arg) {} }`
+            AstKind::ObjectExpression(_) |
             AstKind::Program(_) => return None,
             AstKind::VariableDeclaration(_)
             | AstKind::MethodDefinition(_)
@@ -172,11 +193,11 @@ pub fn collect_params(params: &FormalParameters) -> Vec<ParamKind> {
     //           ^^^^   ^
     // Tests are not covering these cases...
     fn get_param_name(pattern: &BindingPattern, is_rest: bool) -> ParamKind {
-        match &pattern.kind {
-            BindingPatternKind::BindingIdentifier(ident) => {
+        match &pattern {
+            BindingPattern::BindingIdentifier(ident) => {
                 ParamKind::Single(Param { span: ident.span, name: ident.name.to_string(), is_rest })
             }
-            BindingPatternKind::ObjectPattern(obj_pat) => {
+            BindingPattern::ObjectPattern(obj_pat) => {
                 let mut collected = vec![];
 
                 for prop in &obj_pat.properties {
@@ -212,7 +233,7 @@ pub fn collect_params(params: &FormalParameters) -> Vec<ParamKind> {
 
                 ParamKind::Nested(collected)
             }
-            BindingPatternKind::ArrayPattern(arr_pat) => {
+            BindingPattern::ArrayPattern(arr_pat) => {
                 let mut collected = vec![];
 
                 for (idx, elm) in arr_pat.elements.iter().enumerate() {
@@ -235,7 +256,7 @@ pub fn collect_params(params: &FormalParameters) -> Vec<ParamKind> {
 
                 ParamKind::Nested(collected)
             }
-            BindingPatternKind::AssignmentPattern(assign_pat) => match &assign_pat.right {
+            BindingPattern::AssignmentPattern(assign_pat) => match &assign_pat.right {
                 Expression::Identifier(_) => get_param_name(&assign_pat.left, false),
                 _ => {
                     // TODO: If `config.useDefaultObjectProperties` = true,
@@ -253,7 +274,7 @@ pub fn collect_params(params: &FormalParameters) -> Vec<ParamKind> {
         params.items.iter().map(|param| get_param_name(&param.pattern, false)).collect::<Vec<_>>();
 
     if let Some(rest) = &params.rest {
-        match get_param_name(&rest.argument, true) {
+        match get_param_name(&rest.rest.argument, true) {
             ParamKind::Single(param) => collected.push(ParamKind::Single(param)),
             ParamKind::Nested(params) => collected.push(ParamKind::Nested(params)),
         }

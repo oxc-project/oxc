@@ -1,5 +1,8 @@
+use std::cell::Cell;
+
 use oxc_ast_macros::ast_meta;
 use oxc_estree::{Concat2, ESTree, JsonSafeString, Serializer, StructSerializer};
+use oxc_syntax::node::NodeId;
 
 use crate::ast::*;
 
@@ -12,7 +15,7 @@ use super::Null;
 // TODO: Not ideal to have to include the enum discriminant's value here explicitly.
 // Need a "macro" e.g. `ENUM_MATCHES(id, ComputedString | ComputedTemplateString)`.
 #[ast_meta]
-#[estree(ts_type = "boolean", raw_deser = "DESER[u8](POS_OFFSET.id) > 1")]
+#[estree(ts_type = "boolean", raw_deser = "DESER[u8](POS_OFFSET.id) > 1", raw_deser_inline)]
 pub struct TSEnumMemberComputed<'a, 'b>(pub &'b TSEnumMember<'a>);
 
 impl ESTree for TSEnumMemberComputed<'_, '_> {
@@ -29,7 +32,7 @@ impl ESTree for TSEnumMemberComputed<'_, '_> {
 ///
 /// This field is always `null`, and only appears in the TS-ESTree AST, not JS ESTree.
 #[ast_meta]
-#[estree(ts_type = "string | null", raw_deser = "null")]
+#[estree(ts_type = "string | null", raw_deser = "null", raw_deser_inline)]
 #[ts]
 pub struct ExpressionStatementDirective<'a, 'b>(
     #[expect(dead_code)] pub &'b ExpressionStatement<'a>,
@@ -49,9 +52,8 @@ impl ESTree for ExpressionStatementDirective<'_, '_> {
 #[ast_meta]
 #[estree(raw_deser = "
     const kind = DESER[TSModuleDeclarationKind](POS_OFFSET.kind),
-        global = kind === 'global',
-        start = DESER[u32](POS_OFFSET.span.start),
-        end = DESER[u32](POS_OFFSET.span.end),
+        start = DESER[i32](POS_OFFSET.span.start),
+        end = DESER[i32](POS_OFFSET.span.end),
         declare = DESER[bool](POS_OFFSET.declare);
 
     let node;
@@ -65,7 +67,7 @@ impl ESTree for ExpressionStatementDirective<'_, '_> {
             // No `body` field
             kind,
             declare,
-            global,
+            global: false,
             start,
             end,
             ...(RANGE && { range: [start, end] }),
@@ -79,7 +81,7 @@ impl ESTree for ExpressionStatementDirective<'_, '_> {
             body,
             kind,
             declare,
-            global,
+            global: false,
             start,
             end,
             ...(RANGE && { range: [start, end] }),
@@ -211,7 +213,7 @@ impl ESTree for TSModuleDeclarationConverter<'_, '_> {
 
         state.serialize_field("kind", &module.kind);
         state.serialize_field("declare", &module.declare);
-        state.serialize_field("global", &TSModuleDeclarationGlobal(module));
+        state.serialize_field("global", &false);
 
         state.serialize_span(module.span);
 
@@ -248,16 +250,40 @@ impl ESTree for TSModuleDeclarationIdParts<'_, '_> {
     }
 }
 
-/// Serializer for `global` field of `TSModuleDeclaration`.
+/// Serializer for `id` field of `TSGlobalDeclaration`.
 ///
-/// `true` if `kind` is `TSModuleDeclarationKind::Global`.
+/// Contains an identifier `global`, with the span from `global_span` field.
 #[ast_meta]
-#[estree(ts_type = "boolean", raw_deser = "THIS.kind === 'global'")]
-pub struct TSModuleDeclarationGlobal<'a, 'b>(pub &'b TSModuleDeclaration<'a>);
+#[estree(
+    ts_type = "IdentifierName",
+    raw_deser = "
+        let keywordStart, keywordEnd;
+        const ident = {
+            type: 'Identifier',
+            ...(IS_TS && { decorators: [] }),
+            name: 'global',
+            ...(IS_TS && {
+                optional: false,
+                typeAnnotation: null,
+            }),
+            start: keywordStart = DESER[i32](POS_OFFSET.global_span.start),
+            end: keywordEnd = DESER[i32](POS_OFFSET.global_span.end),
+            ...(RANGE && { range: [keywordStart, keywordEnd] }),
+            ...(PARENT && { parent }),
+        };
+        ident
+    "
+)]
+pub struct TSGlobalDeclarationId<'a, 'b>(pub &'b TSGlobalDeclaration<'a>);
 
-impl ESTree for TSModuleDeclarationGlobal<'_, '_> {
+impl ESTree for TSGlobalDeclarationId<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        self.0.kind.is_global().serialize(serializer);
+        let ident = IdentifierName {
+            span: self.0.global_span,
+            node_id: Cell::new(NodeId::DUMMY),
+            name: Str::from("global").into(),
+        };
+        ident.serialize(serializer);
     }
 }
 
@@ -282,46 +308,6 @@ impl ESTree for TSMappedTypeOptional<'_, '_> {
         } else {
             false.serialize(serializer);
         }
-    }
-}
-
-/// Serializer for `key` field of `TSMappedType`.
-#[ast_meta]
-#[estree(
-    ts_type = "TSTypeParameter['name']",
-    raw_deser = "
-        const typeParameter = DESER[Box<TSTypeParameter>](POS_OFFSET.type_parameter),
-            key = typeParameter.name;
-        if (PARENT) key.parent = parent;
-        key
-    "
-)]
-pub struct TSMappedTypeKey<'a, 'b>(pub &'b TSMappedType<'a>);
-
-impl ESTree for TSMappedTypeKey<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
-        self.0.type_parameter.name.serialize(serializer);
-    }
-}
-
-/// Serializer for `constraint` field of `TSMappedType`.
-///
-/// NOTE: Variable `typeParameter` in `raw_deser` is shared between `key` and `constraint` serializers.
-/// They will be concatenated in the generated code.
-#[ast_meta]
-#[estree(
-    ts_type = "TSTypeParameter['constraint']",
-    raw_deser = "
-        const { constraint } = typeParameter;
-        if (PARENT && constraint !== null) constraint.parent = parent;
-        constraint
-    "
-)]
-pub struct TSMappedTypeConstraint<'a, 'b>(pub &'b TSMappedType<'a>);
-
-impl ESTree for TSMappedTypeConstraint<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
-        self.0.type_parameter.constraint.serialize(serializer);
     }
 }
 
@@ -502,8 +488,8 @@ impl ESTree for TSFunctionTypeParams<'_, '_> {
         node = parent = {
             type: 'TSParenthesizedType',
             typeAnnotation: null,
-            start: start = DESER[u32]( POS_OFFSET.span.start ),
-            end: end = DESER[u32]( POS_OFFSET.span.end ),
+            start: start = DESER[i32]( POS_OFFSET.span.start ),
+            end: end = DESER[i32]( POS_OFFSET.span.end ),
             ...(RANGE && { range: [start, end] }),
             ...(PARENT && { parent }),
         };

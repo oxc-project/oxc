@@ -17,7 +17,7 @@ pub struct NoContinue;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow `continue` statements
+    /// Disallow `continue` statements.
     ///
     /// ### Why is this bad?
     ///
@@ -50,7 +50,9 @@ declare_oxc_lint!(
     /// ```
     NoContinue,
     eslint,
-    style
+    style,
+    version = "0.2.14",
+    short_description = "Disallow `continue` statements.",
 );
 
 impl Rule for NoContinue {

@@ -11,7 +11,7 @@ use serde::Deserialize;
 use crate::{
     AstNode,
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{
         get_function_nearest_jsdoc_node, is_duplicated_special_tag, is_missing_special_tag,
         should_ignore_as_avoid, should_ignore_as_custom_skip, should_ignore_as_internal,
@@ -37,7 +37,7 @@ fn missing_yields_with_generator(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct RequireYields(Box<RequireYieldsConfig>);
 
 impl Deref for RequireYields {
@@ -45,6 +45,27 @@ impl Deref for RequireYields {
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+pub struct RequireYieldsConfig {
+    /// Functions with these tags will be exempted from the lint rule.
+    exempted_by: Vec<String>,
+    /// When `true`, all generator functions must have a `@yields` tag, even if they don't yield a value or have an empty body.
+    force_require_yields: bool,
+    /// When `true`, require `@yields` when a `@generator` tag is present.
+    with_generator_tag: bool,
+}
+
+impl Default for RequireYieldsConfig {
+    fn default() -> Self {
+        Self {
+            exempted_by: vec!["inheritdoc".to_string()],
+            force_require_yields: false,
+            with_generator_tag: false,
+        }
     }
 }
 
@@ -80,41 +101,13 @@ declare_oxc_lint!(
     jsdoc,
     correctness,
     config = RequireYieldsConfig,
+    version = "0.3.2",
+    short_description = "Requires that yields are documented with `@yields`.",
 );
 
-#[derive(Debug, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
-pub struct RequireYieldsConfig {
-    /// Functions with these tags will be exempted from the lint rule.
-    #[serde(default = "default_exempted_by")]
-    exempted_by: Vec<String>,
-    /// When `true`, all generator functions must have a `@yields` tag, even if they don't yield a value or have an empty body.
-    force_require_yields: bool,
-    /// When `true`, require `@yields` when a `@generator` tag is present.
-    with_generator_tag: bool,
-}
-
-impl Default for RequireYieldsConfig {
-    fn default() -> Self {
-        Self {
-            exempted_by: default_exempted_by(),
-            force_require_yields: false,
-            with_generator_tag: false,
-        }
-    }
-}
-
-fn default_exempted_by() -> Vec<String> {
-    vec!["inheritdoc".to_string()]
-}
-
 impl Rule for RequireYields {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        value
-            .as_array()
-            .and_then(|arr| arr.first())
-            .and_then(|value| serde_json::from_value(value.clone()).ok())
-            .map_or_else(Self::default, |value| Self(Box::new(value)))
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -162,7 +155,7 @@ impl Rule for RequireYields {
                 // Without this option, need to check `yield` value.
                 // Check will be performed in `YieldExpression` branch.
                 if self.force_require_yields
-                    && is_missing_special_tag(&jsdoc_tags, resolved_yields_tag_name)
+                    && is_missing_special_tag(jsdoc_tags.iter().copied(), resolved_yields_tag_name)
                 {
                     ctx.diagnostic(missing_yields(func.span));
                     return;
@@ -170,7 +163,8 @@ impl Rule for RequireYields {
 
                 // Other checks are always performed
 
-                if let Some(span) = is_duplicated_special_tag(&jsdoc_tags, resolved_yields_tag_name)
+                if let Some(span) =
+                    is_duplicated_special_tag(jsdoc_tags.iter().copied(), resolved_yields_tag_name)
                 {
                     ctx.diagnostic(duplicate_yields(span));
                     return;
@@ -251,7 +245,7 @@ impl Rule for RequireYields {
                 let jsdoc_tags = jsdocs.iter().flat_map(JSDoc::tags).collect::<Vec<_>>();
                 let resolved_yields_tag_name = settings.resolve_tag_name("yields");
 
-                if is_missing_special_tag(&jsdoc_tags, resolved_yields_tag_name) {
+                if is_missing_special_tag(jsdoc_tags.iter().copied(), resolved_yields_tag_name) {
                     ctx.diagnostic(missing_yields(generator_func.span));
                 }
             }
@@ -291,183 +285,183 @@ fn test() {
     let pass = vec![
         (
             "
-        			          /**
-        			           * @yields Foo.
-        			           */
-        			          function * quux () {
+                              /**
+                               * @yields Foo.
+                               */
+                              function * quux () {
 
-        			            yield foo;
-        			          }
-        			      ",
+                                yield foo;
+                              }
+                          ",
             None,
             None,
         ),
         (
             "
-        			          /**
-        			           * pass(without yield, no config)
-        			           */
-        			          function * quux () {
-        			          }
-        			      ",
+                              /**
+                               * pass(without yield, no config)
+                               */
+                              function * quux () {
+                              }
+                          ",
             None,
             None,
         ),
         (
             "
-        			          /**
-        			           *
-        			           */
-        			          function * quux () {
-        			            yield;
-        			          }
-        			      ",
+                              /**
+                               *
+                               */
+                              function * quux () {
+                                yield;
+                              }
+                          ",
             None,
             None,
         ),
         (
             "
-        			          /**
-        			           *
-        			           */
-        			          function quux (bar) {
-        			            bar.doSomething(function * (baz) {
-        			              yield baz.corge();
-        			            })
-        			          }
-        			      ",
+                              /**
+                               *
+                               */
+                              function quux (bar) {
+                                bar.doSomething(function * (baz) {
+                                  yield baz.corge();
+                                })
+                              }
+                          ",
             None,
             None,
         ),
         (
             "
-        			          /**
-        			           * @yields {Array}
-        			           */
-        			          function * quux (bar) {
-        			            yield bar.doSomething(function * (baz) {
-        			              yield baz.corge();
-        			            })
-        			          }
-        			      ",
+                              /**
+                               * @yields {Array}
+                               */
+                              function * quux (bar) {
+                                yield bar.doSomething(function * (baz) {
+                                  yield baz.corge();
+                                })
+                              }
+                          ",
             None,
             None,
         ),
         (
             "
-        			          /**
-        			           * @inheritdoc
-        			           */
-        			          function * quux (foo) {
-        			            yield 'inherit!';
-        			          }
-        			      ",
+                              /**
+                               * @inheritdoc
+                               */
+                              function * quux (foo) {
+                                yield 'inherit!';
+                              }
+                          ",
             None,
             None,
         ),
         (
             "
-        			          /**
-        			           * @override
-        			           */
-        			          function * quux (foo) {
-        			          }
-        			      ",
+                              /**
+                               * @override
+                               */
+                              function * quux (foo) {
+                              }
+                          ",
             None,
             None,
         ),
         (
             "
-        			          /**
-        			           * @constructor
-        			           */
-        			          function * quux (foo) {
-        			          }
-        			      ",
+                              /**
+                               * @constructor
+                               */
+                              function * quux (foo) {
+                              }
+                          ",
             None,
             None,
         ),
         (
             "
-        			          /**
-        			           * @implements
-        			           */
-        			          function * quux (foo) {
-        			            yield;
-        			          }
-        			      ",
+                              /**
+                               * @implements
+                               */
+                              function * quux (foo) {
+                                yield;
+                              }
+                          ",
             None,
             None,
         ),
         (
             "
-        			          /**
-        			           * pass(`@override` found, settings should be default true)
-        			           * @override
-        			           */
-        			          function * quux (foo) {
+                              /**
+                               * pass(`@override` found, settings should be default true)
+                               * @override
+                               */
+                              function * quux (foo) {
 
-        			            yield foo;
-        			          }
-        			      ",
+                                yield foo;
+                              }
+                          ",
             None,
             None,
         ),
         (
             "
-        			          /**
-        			           * @class
-        			           */
-        			          function * quux (foo) {
-        			            yield foo;
-        			          }
-        			      ",
+                              /**
+                               * @class
+                               */
+                              function * quux (foo) {
+                                yield foo;
+                              }
+                          ",
             None,
             None,
         ),
         (
             "
-        			          /**
-        			           * @yields {object}
-        			           */
-        			          function * quux () {
+                              /**
+                               * @yields {object}
+                               */
+                              function * quux () {
 
-        			            yield {a: foo};
-        			          }
-        			      ",
+                                yield {a: foo};
+                              }
+                          ",
             None,
             None,
         ),
         (
             "
-        			          /**
-        			           * @yields {void}
-        			           */
-        			          function * quux () {
-        			          }
-        			      ",
+                              /**
+                               * @yields {void}
+                               */
+                              function * quux () {
+                              }
+                          ",
             None,
             None,
         ),
         (
             "
-        			          /**
-        			           * @yields {undefined}
-        			           */
-        			          function * quux () {
-        			          }
-        			      ",
+                              /**
+                               * @yields {undefined}
+                               */
+                              function * quux () {
+                              }
+                          ",
             None,
             None,
         ),
         (
             "
-        			          /**
-        			           * @yields {void}
-        			           */
-        			          function quux () {
-        			          }
-        			      ",
+                              /**
+                               * @yields {void}
+                               */
+                              function quux () {
+                              }
+                          ",
             Some(serde_json::json!([
               {
                 "forceRequireYields": true,
@@ -477,25 +471,25 @@ fn test() {
         ),
         (
             "
-        			          /**
-        			           * @yields {void}
-        			           */
-        			          function * quux () {
-        			            yield undefined;
-        			          }
-        			      ",
+                              /**
+                               * @yields {void}
+                               */
+                              function * quux () {
+                                yield undefined;
+                              }
+                          ",
             None,
             None,
         ),
         (
             "
-        			          /**
-        			           * @yields {void}
-        			           */
-        			          function * quux () {
-        			            yield undefined;
-        			          }
-        			      ",
+                              /**
+                               * @yields {void}
+                               */
+                              function * quux () {
+                                yield undefined;
+                              }
+                          ",
             Some(serde_json::json!([
               {
                 "forceRequireYields": true,
@@ -505,24 +499,24 @@ fn test() {
         ),
         (
             "
-        			          /**
-        			           * @yields {void}
-        			           */
-        			          function * quux () {
-        			            yield;
-        			          }
-        			      ",
+                              /**
+                               * @yields {void}
+                               */
+                              function * quux () {
+                                yield;
+                              }
+                          ",
             None,
             None,
         ),
         (
             "
-        			          /**
-        			           * @yields {void}
-        			           */
-        			          function * quux () {
-        			          }
-        			      ",
+                              /**
+                               * @yields {void}
+                               */
+                              function * quux () {
+                              }
+                          ",
             Some(serde_json::json!([
               {
                 "forceRequireYields": true,
@@ -532,13 +526,13 @@ fn test() {
         ),
         (
             "
-        			          /**
-        			           * @yields {void}
-        			           */
-        			          function * quux () {
-        			            yield;
-        			          }
-        			      ",
+                              /**
+                               * @yields {void}
+                               */
+                              function * quux () {
+                                yield;
+                              }
+                          ",
             Some(serde_json::json!([
               {
                 "forceRequireYields": true,
@@ -548,22 +542,22 @@ fn test() {
         ),
         (
             "
-        			          /** @type {SpecialIterator} */
-        			          function * quux () {
-        			            yield 5;
-        			          }
-        			      ",
+                              /** @type {SpecialIterator} */
+                              function * quux () {
+                                yield 5;
+                              }
+                          ",
             None,
             None,
         ),
         (
             "
-        			          /**
-        			           * @yields {Something}
-        			           */
-        			          async function * quux () {
-        			          }
-        			      ",
+                              /**
+                               * @yields {Something}
+                               */
+                              async function * quux () {
+                              }
+                          ",
             Some(serde_json::json!([
               {
                 "forceRequireYields": true,
@@ -573,33 +567,33 @@ fn test() {
         ),
         (
             "
-        			          /**
-        			           *
-        			           */
-        			          async function * quux () {}
-        			      ",
+                              /**
+                               *
+                               */
+                              async function * quux () {}
+                          ",
             None,
             None,
         ),
         (
             "
-        			          /**
-        			           *
-        			           */
-        			          const quux = async function * () {}
-        			      ",
+                              /**
+                               *
+                               */
+                              const quux = async function * () {}
+                          ",
             None,
             None,
         ),
         (
             "
-        			          /**
-        			           * @mytype {MyCallback}
-        			           */
-        			          function * quux () {
-        			            yield 2;
-        			          }
-        			      ",
+                              /**
+                               * @mytype {MyCallback}
+                               */
+                              function * quux () {
+                                yield 2;
+                              }
+                          ",
             Some(serde_json::json!([
               {
                 "exemptedBy": ["mytype"],
@@ -609,22 +603,22 @@ fn test() {
         ),
         (
             "
-        			      /**
-        			       * @param {array} a
-        			       */
-        			      async function * foo (a) {
-        			        yield;
-        			      }
-        			      ",
+                          /**
+                           * @param {array} a
+                           */
+                          async function * foo (a) {
+                            yield;
+                          }
+                          ",
             None,
             None,
         ),
         (
             "
-        			          /**
-        			           * @function
-        			           */
-        			      ",
+                              /**
+                               * @function
+                               */
+                          ",
             Some(serde_json::json!([
               {
                 "forceRequireYields": true,
@@ -634,10 +628,10 @@ fn test() {
         ),
         (
             "
-        			          /**
-        			           * @callback
-        			           */
-        			      ",
+                              /**
+                               * @callback
+                               */
+                          ",
             Some(serde_json::json!([
               {
                 "forceRequireYields": true,
@@ -647,10 +641,10 @@ fn test() {
         ),
         (
             "
-        			          /**
-        			           * @generator
-        			           */
-        			      ",
+                              /**
+                               * @generator
+                               */
+                          ",
             Some(serde_json::json!([
               {
                 "withGeneratorTag": true,
@@ -660,13 +654,13 @@ fn test() {
         ),
         (
             "
-        			          /**
-        			           * pass(`@generator`+`@yields`, with config)
-        			           * @generator
-        			           * @yields
-        			           */
+                              /**
+                               * pass(`@generator`+`@yields`, with config)
+                               * @generator
+                               * @yields
+                               */
                         function*d() {yield 1;}
-        			      ",
+                          ",
             Some(serde_json::json!([
               {
                 "withGeneratorTag": true,
@@ -676,28 +670,28 @@ fn test() {
         ),
         (
             "
-        			          /**
-        			           * @yields
-        			           */
-        			          function * quux (foo) {
+                              /**
+                               * @yields
+                               */
+                              function * quux (foo) {
 
-        			            const a = yield foo;
-        			          }
-        			      ",
+                                const a = yield foo;
+                              }
+                          ",
             None,
             None,
         ),
         (
             "
-        			          /**
-        			           *
-        			           */
-        			          function * quux (foo) {
-        			            const a = function * bar () {
-        			              yield foo;
-        			            }
-        			          }
-        			      ",
+                              /**
+                               *
+                               */
+                              function * quux (foo) {
+                                const a = function * bar () {
+                                  yield foo;
+                                }
+                              }
+                          ",
             None,
             None,
         ),
@@ -706,50 +700,50 @@ fn test() {
     let fail = vec![
         (
             "
-      			          /**
-      			           * fail(`yield` with value but no `@yields`)
-      			           */
-      			          function * quux (foo) { yield foo; }
-      			      ",
+                            /**
+                             * fail(`yield` with value but no `@yields`)
+                             */
+                            function * quux (foo) { yield foo; }
+                        ",
             None,
             None,
         ),
         (
             "
-      			          /**
-      			           *
-      			           */
-      			          function * quux (foo) {
-      			            someLabel: {
-      			              yield foo;
-      			            }
-      			          }
-      			      ",
+                            /**
+                             *
+                             */
+                            function * quux (foo) {
+                              someLabel: {
+                                yield foo;
+                              }
+                            }
+                        ",
             None,
             None,
         ),
         (
             "
-      			          /**
-      			           *
-      			           */
-      			          function * quux (foo) {
+                            /**
+                             *
+                             */
+                            function * quux (foo) {
 
-      			            const a = yield foo;
-      			          }
-      			      ",
+                              const a = yield foo;
+                            }
+                        ",
             None,
             None,
         ),
         (
             "
-      			          /**
-      			           *
-      			           */
-      			          function * quux (foo) {
-      			            yield foo;
-      			          }
-      			      ",
+                            /**
+                             *
+                             */
+                            function * quux (foo) {
+                              yield foo;
+                            }
+                        ",
             None,
             Some(serde_json::json!({ "settings": {
         "jsdoc": {
@@ -761,13 +755,13 @@ fn test() {
         ),
         (
             "
-      			          /**
-      			           *
-      			           */
-      			          function * quux() {
-      			            yield 5;
-      			          }
-      			      ",
+                            /**
+                             *
+                             */
+                            function * quux() {
+                              yield 5;
+                            }
+                        ",
             Some(serde_json::json!([
               {
                 "forceRequireYields": true,
@@ -777,13 +771,13 @@ fn test() {
         ),
         (
             "
-      			          /**
-      			           *
-      			           */
-      			          function * quux() {
-      			            yield;
-      			          }
-      			      ",
+                            /**
+                             *
+                             */
+                            function * quux() {
+                              yield;
+                            }
+                        ",
             Some(serde_json::json!([
               {
                 "forceRequireYields": true,
@@ -793,13 +787,13 @@ fn test() {
         ),
         (
             "
-      			          /**
-      			           *
-      			           */
-      			          const quux = async function * () {
-      			            yield;
-      			          }
-      			      ",
+                            /**
+                             *
+                             */
+                            const quux = async function * () {
+                              yield;
+                            }
+                        ",
             Some(serde_json::json!([
               {
                 "forceRequireYields": true,
@@ -809,13 +803,13 @@ fn test() {
         ),
         (
             "
-      			           /**
-      			            *
-      			            */
-      			           async function * quux () {
-      			             yield;
-      			           }
-      			      ",
+                             /**
+                              *
+                              */
+                             async function * quux () {
+                               yield;
+                             }
+                        ",
             Some(serde_json::json!([
               {
                 "forceRequireYields": true,
@@ -825,13 +819,13 @@ fn test() {
         ),
         (
             "
-      			          /**
-      			           *
-      			           */
-      			          function * quux () {
-      			            yield;
-      			          }
-      			      ",
+                            /**
+                             *
+                             */
+                            function * quux () {
+                              yield;
+                            }
+                        ",
             Some(serde_json::json!([
               {
                 "forceRequireYields": true,
@@ -841,12 +835,12 @@ fn test() {
         ),
         (
             "
-      			          /**
-      			           * @function
-      			           * @generator
-      			           */
+                            /**
+                             * @function
+                             * @generator
+                             */
                         function*d() {}
-      			      ",
+                        ",
             Some(serde_json::json!([
               {
                 "forceRequireYields": true,
@@ -856,27 +850,27 @@ fn test() {
         ),
         (
             "
-      			          /**
-      			           * @yields {undefined}
-      			           * @yields {void}
-      			           */
-      			          function * quux (foo) {
+                            /**
+                             * @yields {undefined}
+                             * @yields {void}
+                             */
+                            function * quux (foo) {
 
-      			            return foo;
-      			          }
-      			      ",
+                              return foo;
+                            }
+                        ",
             None,
             None,
         ),
         (
             "
-      			          /**
-      			           * @param foo
-      			           */
-      			          function * quux (foo) {
-      			            yield 'bar';
-      			          }
-      			      ",
+                            /**
+                             * @param foo
+                             */
+                            function * quux (foo) {
+                              yield 'bar';
+                            }
+                        ",
             Some(serde_json::json!([
               {
                 "exemptedBy": [
@@ -888,13 +882,13 @@ fn test() {
         ),
         (
             "
-      			      /**
-      			       * @param {array} a
-      			       */
-      			      async function * foo(a) {
-      			        return;
-      			      }
-      			      ",
+                        /**
+                         * @param {array} a
+                         */
+                        async function * foo(a) {
+                          return;
+                        }
+                        ",
             Some(serde_json::json!([
               {
                 "forceRequireYields": true,
@@ -904,13 +898,13 @@ fn test() {
         ),
         (
             "
-      			      /**
-      			       * @param {array} a
-      			       */
-      			      async function * foo(a) {
-      			        yield Promise.all(a);
-      			      }
-      			      ",
+                        /**
+                         * @param {array} a
+                         */
+                        async function * foo(a) {
+                          yield Promise.all(a);
+                        }
+                        ",
             Some(serde_json::json!([
               {
                 "forceRequireYields": true,
@@ -920,15 +914,15 @@ fn test() {
         ),
         (
             "
-      			      class quux {
-      			        /**
-      			         *
-      			         */
-      			        * quux () {
-      			          yield;
-      			        }
-      			      }
-      			      ",
+                        class quux {
+                          /**
+                           *
+                           */
+                          * quux () {
+                            yield;
+                          }
+                        }
+                        ",
             Some(serde_json::json!([
               {
                 "forceRequireYields": true,
@@ -938,508 +932,508 @@ fn test() {
         ),
         (
             "
-      			      /**
-      			       * @param {array} a
-      			       */
-      			      async function * foo(a) {
-      			        yield Promise.all(a);
-      			      }
-      			      ",
+                        /**
+                         * @param {array} a
+                         */
+                        async function * foo(a) {
+                          yield Promise.all(a);
+                        }
+                        ",
             None,
             None,
         ),
         (
             "
-      			          /**
-      			           *
-      			           */
-      			          function * quux () {
-      			            if (true) {
-      			              yield;
-      			            }
-      			            yield true;
-      			          }
-      			      ",
+                            /**
+                             *
+                             */
+                            function * quux () {
+                              if (true) {
+                                yield;
+                              }
+                              yield true;
+                            }
+                        ",
             None,
             None,
         ),
         (
             "
-      			          /**
-      			           *
-      			           */
-      			          function * quux () {
-      			            if (yield false) {
+                            /**
+                             *
+                             */
+                            function * quux () {
+                              if (yield false) {
 
-      			            }
-      			          }
-      			      ",
+                              }
+                            }
+                        ",
             None,
             None,
         ),
         (
             "
-      			          /**
-      			           *
-      			           */
-      			          function * quux () {
-      			            b ? yield false : true
-      			          }
-      			      ",
+                            /**
+                             *
+                             */
+                            function * quux () {
+                              b ? yield false : true
+                            }
+                        ",
             None,
             None,
         ),
         (
             "
-      			          /**
-      			           *
-      			           */
-      			          function * quux () {
-      			            try {
-      			              yield true;
-      			            } catch (err) {
-      			            }
-      			            yield;
-      			          }
-      			      ",
+                            /**
+                             *
+                             */
+                            function * quux () {
+                              try {
+                                yield true;
+                              } catch (err) {
+                              }
+                              yield;
+                            }
+                        ",
             None,
             None,
         ),
         (
             "
-      			          /**
-      			           *
-      			           */
-      			          function * quux () {
-      			            try {
-      			            } finally {
-      			              yield true;
-      			            }
-      			            yield;
-      			          }
-      			      ",
+                            /**
+                             *
+                             */
+                            function * quux () {
+                              try {
+                              } finally {
+                                yield true;
+                              }
+                              yield;
+                            }
+                        ",
             None,
             None,
         ),
         (
             "
-      			          /**
-      			           *
-      			           */
-      			          function * quux () {
-      			            try {
-      			              yield;
-      			            } catch (err) {
-      			            }
-      			            yield true;
-      			          }
-      			      ",
+                            /**
+                             *
+                             */
+                            function * quux () {
+                              try {
+                                yield;
+                              } catch (err) {
+                              }
+                              yield true;
+                            }
+                        ",
             None,
             None,
         ),
         (
             "
-      			          /**
-      			           *
-      			           */
-      			          function * quux () {
-      			            try {
-      			              something();
-      			            } catch (err) {
-      			              yield true;
-      			            }
-      			            yield;
-      			          }
-      			      ",
+                            /**
+                             *
+                             */
+                            function * quux () {
+                              try {
+                                something();
+                              } catch (err) {
+                                yield true;
+                              }
+                              yield;
+                            }
+                        ",
             None,
             None,
         ),
         (
             "
-      			          /**
-      			           *
-      			           */
-      			          function * quux () {
-      			            switch (true) {
-      			            case 'abc':
-      			              yield true;
-      			            }
-      			            yield;
-      			          }
-      			      ",
+                            /**
+                             *
+                             */
+                            function * quux () {
+                              switch (true) {
+                              case 'abc':
+                                yield true;
+                              }
+                              yield;
+                            }
+                        ",
             None,
             None,
         ),
         (
             "
-      			          /**
-      			           *
-      			           */
-      			          function * quux () {
-      			            switch (true) {
-      			            case 'abc':
-      			              yield;
-      			            }
-      			            yield true;
-      			          }
-      			      ",
+                            /**
+                             *
+                             */
+                            function * quux () {
+                              switch (true) {
+                              case 'abc':
+                                yield;
+                              }
+                              yield true;
+                            }
+                        ",
             None,
             None,
         ),
         (
             "
-      			          /**
-      			           *
-      			           */
-      			          function * quux () {
-      			            for (const i of abc) {
-      			              yield true;
-      			            }
-      			            yield;
-      			          }
-      			      ",
+                            /**
+                             *
+                             */
+                            function * quux () {
+                              for (const i of abc) {
+                                yield true;
+                              }
+                              yield;
+                            }
+                        ",
             None,
             None,
         ),
         (
             "
-      			          /**
-      			           *
-      			           */
-      			          function * quux () {
-      			            for (const a in b) {
-      			              yield true;
-      			            }
-      			          }
-      			      ",
+                            /**
+                             *
+                             */
+                            function * quux () {
+                              for (const a in b) {
+                                yield true;
+                              }
+                            }
+                        ",
             None,
             None,
         ),
         (
             "
-      			          /**
-      			           *
-      			           */
-      			          function * quux () {
-      			            for (let i=0; i<n; i+=1) {
-      			              yield true;
-      			            }
-      			          }
-      			      ",
+                            /**
+                             *
+                             */
+                            function * quux () {
+                              for (let i=0; i<n; i+=1) {
+                                yield true;
+                              }
+                            }
+                        ",
             None,
             None,
         ),
         (
             "
-      			          /**
-      			           *
-      			           */
-      			          function * quux () {
-      			            while(true) {
-      			              yield true
-      			            }
-      			          }
-      			      ",
+                            /**
+                             *
+                             */
+                            function * quux () {
+                              while(true) {
+                                yield true
+                              }
+                            }
+                        ",
             None,
             None,
         ),
         (
             "
-      			          /**
-      			           *
-      			           */
-      			          function * quux () {
-      			            do {
-      			              yield true
-      			            }
-      			            while(true)
-      			          }
-      			      ",
+                            /**
+                             *
+                             */
+                            function * quux () {
+                              do {
+                                yield true
+                              }
+                              while(true)
+                            }
+                        ",
             None,
             None,
         ),
         (
             "
-      			          /**
-      			           *
-      			           */
-      			          function * quux () {
-      			            if (true) {
-      			              yield true;
-      			            }
-      			          }
-      			      ",
+                            /**
+                             *
+                             */
+                            function * quux () {
+                              if (true) {
+                                yield true;
+                              }
+                            }
+                        ",
             None,
             None,
         ),
         (
             "
-      			          /**
-      			           *
-      			           */
-      			          function * quux () {
-      			            var a = {};
-      			            with (a) {
-      			              yield true;
-      			            }
-      			          }
-      			      ",
+                            /**
+                             *
+                             */
+                            function * quux () {
+                              var a = {};
+                              with (a) {
+                                yield true;
+                              }
+                            }
+                        ",
             None,
             None,
         ),
         (
             "
-      			          /**
-      			           *
-      			           */
-      			          function * quux () {
-      			            if (true) {
-      			              yield;
-      			            } else {
-      			              yield true;
-      			            }
-      			            yield;
-      			          }
-      			      ",
+                            /**
+                             *
+                             */
+                            function * quux () {
+                              if (true) {
+                                yield;
+                              } else {
+                                yield true;
+                              }
+                              yield;
+                            }
+                        ",
             None,
             None,
         ),
         (
             "
-      			          /**
-      			           *
-      			           */
-      			          function * quux () {
-      			            if (false) {
-      			              return;
-      			            }
-      			            return yield true;
-      			          }
-      			      ",
+                            /**
+                             *
+                             */
+                            function * quux () {
+                              if (false) {
+                                return;
+                              }
+                              return yield true;
+                            }
+                        ",
             None,
             None,
         ),
         (
             "
-      			          /**
-      			           *
-      			           */
-      			          function * quux () {
-      			            [yield true];
-      			          }
-      			      ",
+                            /**
+                             *
+                             */
+                            function * quux () {
+                              [yield true];
+                            }
+                        ",
             None,
             None,
         ),
         (
             "
-      			          /**
-      			           *
-      			           */
-      			          function * quux () {
-      			            const [a = yield true] = [];
-      			          }
-      			      ",
+                            /**
+                             *
+                             */
+                            function * quux () {
+                              const [a = yield true] = [];
+                            }
+                        ",
             None,
             None,
         ),
         (
             "
-      			          /**
-      			           *
-      			           */
-      			          function * quux () {
-      			            a || (yield true);
-      			          }
-      			      ",
+                            /**
+                             *
+                             */
+                            function * quux () {
+                              a || (yield true);
+                            }
+                        ",
             None,
             None,
         ),
         (
             "
-      			          /**
-      			           *
-      			           */
-      			          function * quux () {
-      			            (r = yield true);
-      			          }
-      			      ",
+                            /**
+                             *
+                             */
+                            function * quux () {
+                              (r = yield true);
+                            }
+                        ",
             None,
             None,
         ),
         (
             "
-      			          /**
-      			           *
-      			           */
-      			          function * quux () {
-      			            a + (yield true);
-      			          }
-      			      ",
+                            /**
+                             *
+                             */
+                            function * quux () {
+                              a + (yield true);
+                            }
+                        ",
             None,
             None,
         ),
         (
             "
-      			          /**
-      			           *
-      			           */
-      			          function * quux () {
-      			            a, yield true;
-      			          }
-      			      ",
+                            /**
+                             *
+                             */
+                            function * quux () {
+                              a, yield true;
+                            }
+                        ",
             None,
             None,
         ),
         (
             "
-      			          /**
-      			           *
-      			           */
-      			          function * quux () {
-      			            +(yield);
-      			            [...yield];
-      			            [...+(yield true)];
-      			          }
-      			      ",
+                            /**
+                             *
+                             */
+                            function * quux () {
+                              +(yield);
+                              [...yield];
+                              [...+(yield true)];
+                            }
+                        ",
             None,
             None,
         ),
         (
             "
-      			          /**
-      			           *
-      			           */
-      			          function * quux () {
-      			            someLabel: {
-      			              yield true;
-      			            }
-      			          }
-      			      ",
+                            /**
+                             *
+                             */
+                            function * quux () {
+                              someLabel: {
+                                yield true;
+                              }
+                            }
+                        ",
             None,
             None,
         ),
         (
             "
-      			          /**
-      			           *
-      			           */
-      			          function * quux () {
-      			            var obj = {
-      			              [someKey]: 'val',
-      			              anotherKey: yield true
-      			            }
-      			          }
-      			      ",
+                            /**
+                             *
+                             */
+                            function * quux () {
+                              var obj = {
+                                [someKey]: 'val',
+                                anotherKey: yield true
+                              }
+                            }
+                        ",
             None,
             None,
         ),
         (
             "
-      			          /**
-      			           *
-      			           */
-      			          function * quux () {
-      			            var obj = {
-      			              [yield true]: 'val',
-      			            }
-      			          }
-      			      ",
+                            /**
+                             *
+                             */
+                            function * quux () {
+                              var obj = {
+                                [yield true]: 'val',
+                              }
+                            }
+                        ",
             None,
             None,
         ),
         (
             "
-      			          /**
-      			           *
-      			           */
-      			          function * quux () {
-      			            `abc${yield true}`;
-      			          }
-      			      ",
+                            /**
+                             *
+                             */
+                            function * quux () {
+                              `abc${yield true}`;
+                            }
+                        ",
             None,
             None,
         ),
         (
             "
-      			          /**
-      			           *
-      			           */
-      			          function * quux () {
-      			            tagTemp`abc${yield true}`;
-      			          }
-      			      ",
+                            /**
+                             *
+                             */
+                            function * quux () {
+                              tagTemp`abc${yield true}`;
+                            }
+                        ",
             None,
             None,
         ),
         (
             "
-      			          /**
-      			           *
-      			           */
-      			          function * quux () {
-      			            a.b[yield true].c;
-      			          }
-      			      ",
+                            /**
+                             *
+                             */
+                            function * quux () {
+                              a.b[yield true].c;
+                            }
+                        ",
             None,
             None,
         ),
         (
             "
-      			          /**
-      			           *
-      			           */
-      			          function * quux () {
-      			            abc?.[yield true].d?.e(yield true);
-      			          }
-      			      ",
+                            /**
+                             *
+                             */
+                            function * quux () {
+                              abc?.[yield true].d?.e(yield true);
+                            }
+                        ",
             None,
             None,
         ),
         (
             "
-      			          /**
-      			           *
-      			           */
-      			          function * quux () {
-      			            const [a = yield true] = arr;
-      			          }
-      			      ",
+                            /**
+                             *
+                             */
+                            function * quux () {
+                              const [a = yield true] = arr;
+                            }
+                        ",
             None,
             None,
         ),
         (
             "
-      			          /**
-      			           *
-      			           */
-      			          function * quux () {
-      			            const {a = yield true} = obj;
-      			          }
-      			      ",
+                            /**
+                             *
+                             */
+                            function * quux () {
+                              const {a = yield true} = obj;
+                            }
+                        ",
             None,
             None,
         ),
         (
             "
-      			          /**
-      			           *
-      			           */
-      			          function * quux () {
-      			            import(yield true);
-      			          }
-      			      ",
+                            /**
+                             *
+                             */
+                            function * quux () {
+                              import(yield true);
+                            }
+                        ",
             None,
             None,
         ),
         (
             "
-        			          /**
-        			           * fail(`@generator`+missing `@yields`, with config)
-        			           * @generator
-        			           */
+                              /**
+                               * fail(`@generator`+missing `@yields`, with config)
+                               * @generator
+                               */
                         function*d() {}
-        			      ",
+                          ",
             Some(serde_json::json!([{ "withGeneratorTag": true, }])),
             None,
         ),

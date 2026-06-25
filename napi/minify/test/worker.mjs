@@ -1,2 +1,2 @@
-import { minify } from '../index.js';
-minify('test.js', '');
+import { minifySync } from "../index.js";
+minifySync("test.js", "");

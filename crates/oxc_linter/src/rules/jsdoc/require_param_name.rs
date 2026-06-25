@@ -44,6 +44,8 @@ declare_oxc_lint!(
     RequireParamName,
     jsdoc,
     pedantic,
+    version = "0.4.3",
+    short_description = "Requires that all `@param` tags have names.",
 );
 
 impl Rule for RequireParamName {

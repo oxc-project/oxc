@@ -5,7 +5,7 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::Ident;
 
-use crate::utils::{create_ident, pluralize};
+use crate::utils::{create_ident, pluralize, snake_case};
 
 use super::{
     Containers, Def, Derives, File, FileId, Schema, TypeDef, TypeId, Visibility,
@@ -15,7 +15,6 @@ use super::{
         content_eq::ContentEqType,
         dummy::DummyEnum,
         estree::{ESTreeEnum, ESTreeEnumVariant},
-        kind::Kind,
         layout::{GetLayout, Layout},
         visit::{VisitEnum, VisitFieldOrVariant},
     },
@@ -44,7 +43,6 @@ pub struct EnumDef {
     pub inherits: Vec<TypeId>,
     pub builder: AstBuilderType,
     pub visit: VisitEnum,
-    pub kind: Kind,
     pub layout: Layout,
     pub clone_in: CloneInType,
     pub dummy: DummyEnum,
@@ -82,7 +80,6 @@ impl EnumDef {
             inherits,
             builder: AstBuilderType::default(),
             visit: VisitEnum::default(),
-            kind: Kind::default(),
             layout: Layout::default(),
             clone_in: CloneInType::default(),
             dummy: DummyEnum::default(),
@@ -204,7 +201,7 @@ impl VariantDef {
 
     /// Get variant name in snake case.
     pub fn snake_name(&self) -> String {
-        self.name().to_case(Case::Snake)
+        snake_case(self.name())
     }
 
     /// Get variant name in camel case.

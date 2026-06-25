@@ -4,24 +4,27 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::class::ClassId;
 use schemars::JsonSchema;
-use serde_json::Value;
+use serde::Deserialize;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
-fn max_classes_per_file_diagnostic(total: usize, max: usize, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("File has too many classes ({total}). Maximum allowed is {max}",))
+fn max_classes_per_file_diagnostic(total: u32, max: u32, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("File has too many classes ({total}). Maximum allowed is {max}"))
         .with_help("Reduce the number of classes in this file")
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct MaxClassesPerFile(Box<MaxClassesPerFileConfig>);
 
-#[derive(Debug, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct MaxClassesPerFileConfig {
     /// The maximum number of classes allowed per file.
-    pub max: usize,
+    pub max: u32,
     /// Whether to ignore class expressions when counting classes.
     pub ignore_expressions: bool,
 }
@@ -40,10 +43,18 @@ impl Default for MaxClassesPerFileConfig {
     }
 }
 
+#[derive(Debug, JsonSchema, Deserialize)]
+#[serde(untagged)]
+#[expect(unused)]
+enum MaxClassesPerFileConfigEnum {
+    Number(u32),
+    Object(MaxClassesPerFileConfig),
+}
+
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce a maximum number of classes per file
+    /// Enforce a maximum number of classes per file.
     ///
     /// ### Why is this bad?
     ///
@@ -69,44 +80,37 @@ declare_oxc_lint!(
     MaxClassesPerFile,
     eslint,
     pedantic,
-    config = MaxClassesPerFileConfig,
+    config = MaxClassesPerFileConfigEnum,
+    version = "0.3.4",
+    short_description = "Enforce a maximum number of classes per file.",
 );
 
 impl Rule for MaxClassesPerFile {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let config = value.get(0);
-        if let Some(max) = config
-            .and_then(Value::as_number)
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        // if it's a number, treat it as the max value
+        if let Some(max) = value
+            .get(0)
+            .and_then(serde_json::Value::as_number)
             .and_then(serde_json::Number::as_u64)
-            .and_then(|v| usize::try_from(v).ok())
+            .and_then(|v| u32::try_from(v).ok())
         {
-            Self(Box::new(MaxClassesPerFileConfig { max, ignore_expressions: false }))
+            Ok(Self(Box::new(MaxClassesPerFileConfig { max, ignore_expressions: false })))
         } else {
-            let max = value
-                .get(0)
-                .and_then(|config| config.get("max"))
-                .and_then(serde_json::Value::as_number)
-                .and_then(serde_json::Number::as_u64)
-                .map_or(1, |v| usize::try_from(v).unwrap_or(1));
-
-            let ignore_expressions = value
-                .get(0)
-                .and_then(|config| config.get("ignoreExpressions"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(false);
-            Self(Box::new(MaxClassesPerFileConfig { max, ignore_expressions }))
+            serde_json::from_value::<DefaultRuleConfig<Self>>(value)
+                .map(DefaultRuleConfig::into_inner)
         }
     }
 
+    #[expect(clippy::cast_possible_truncation)] // the count of classes can't be over u32::MAX, because the source code is already limited by u32::MAX.
     fn run_once(&self, ctx: &LintContext<'_>) {
-        let mut class_count = ctx.classes().declarations.len();
+        let mut class_count = ctx.classes().declarations.len() as u32;
 
         if self.ignore_expressions {
             let class_expressions = ctx
                 .classes()
                 .iter_enumerated()
                 .filter(|(_class_id, node_id)| !ctx.nodes().kind(**node_id).is_declaration())
-                .count();
+                .count() as u32;
             class_count -= class_expressions;
         }
 
@@ -114,7 +118,7 @@ impl Rule for MaxClassesPerFile {
             return;
         }
 
-        let node_id = ctx.classes().get_node_id(ClassId::from(self.max));
+        let node_id = ctx.classes().get_node_id(ClassId::new(self.max as usize));
         let span = if let AstKind::Class(class) = ctx.nodes().kind(node_id) {
             class.span
         } else {
@@ -125,7 +129,13 @@ impl Rule for MaxClassesPerFile {
     }
 
     fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
-        ctx.semantic().classes().len() > 0
+        let classes = ctx.semantic().classes();
+        let max = usize::try_from(self.max).unwrap_or(usize::MAX);
+        if self.ignore_expressions {
+            return classes.declarations.len() > max;
+        }
+
+        classes.len() > max
     }
 }
 
@@ -140,28 +150,26 @@ fn test() {
         ("class Foo {}", Some(serde_json::json!([1]))),
         (
             "class Foo {}
-			class Bar {}",
+            class Bar {}",
             Some(serde_json::json!([2])),
         ),
         ("class Foo {}", Some(serde_json::json!([{ "max": 1 }]))),
         (
             "class Foo {}
-			class Bar {}",
+            class Bar {}",
             Some(serde_json::json!([{ "max": 2 }])),
         ),
         (
             "
-			                class Foo {}
-			                const myExpression = class {}
-			            ",
+                class Foo {}
+                const myExpression = class {}",
             Some(serde_json::json!([{ "ignoreExpressions": true, "max": 1 }])),
         ),
         (
             "
-			                class Foo {}
-			                class Bar {}
-			                const myExpression = class {}
-			            ",
+                class Foo {}
+                class Bar {}
+                const myExpression = class {}",
             Some(serde_json::json!([{ "ignoreExpressions": true, "max": 2 }])),
         ),
     ];
@@ -169,41 +177,39 @@ fn test() {
     let fail = vec![
         (
             "class Foo {}
-			class Bar {}",
+            class Bar {}",
             None,
         ),
         (
             "class Foo {}
-			const myExpression = class {}",
+            const myExpression = class {}",
             None,
         ),
         (
             "var x = class {};
-			var y = class {};",
+            var y = class {};",
             None,
         ),
         (
             "class Foo {}
-			var x = class {};",
+            var x = class {};",
             None,
         ),
         ("class Foo {} class Bar {}", Some(serde_json::json!([1]))),
         ("class Foo {} class Bar {} class Baz {}", Some(serde_json::json!([2]))),
         (
             "
-			                class Foo {}
-			                class Bar {}
-			                const myExpression = class {}
-			            ",
+                class Foo {}
+                class Bar {}
+                const myExpression = class {}",
             Some(serde_json::json!([{ "ignoreExpressions": true, "max": 1 }])),
         ),
         (
             "
-			                class Foo {}
-			                class Bar {}
-			                class Baz {}
-			                const myExpression = class {}
-			            ",
+                class Foo {}
+                class Bar {}
+                class Baz {}
+                const myExpression = class {}",
             Some(serde_json::json!([{ "ignoreExpressions": true, "max": 2 }])),
         ),
     ];

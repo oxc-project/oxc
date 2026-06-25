@@ -1,13 +1,21 @@
 use lazy_regex::Regex;
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{
     AstKind,
-    ast::{BindingPatternKind, Expression, FormalParameter, FormalParameters},
+    ast::{BindingPattern, Expression, FormalParameter, FormalParameters},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+    utils::deserialize_regex_option,
+};
 
 fn param_names_diagnostic(span: Span, pattern: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
@@ -19,9 +27,16 @@ fn param_names_diagnostic(span: Span, pattern: &str) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct ParamNames(Box<ParamNamesConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields, rename_all = "camelCase", default)]
 pub struct ParamNamesConfig {
+    /// Regex pattern used to validate the `resolve` parameter name. If provided, this pattern
+    /// is used instead of the default `^_?resolve$` check.
+    #[serde(default, deserialize_with = "deserialize_regex_option")]
     resolve_pattern: Option<Regex>,
+    /// Regex pattern used to validate the `reject` parameter name. If provided, this pattern
+    /// is used instead of the default `^_?reject$` check.
+    #[serde(default, deserialize_with = "deserialize_regex_option")]
     reject_pattern: Option<Regex>,
 }
 
@@ -65,22 +80,16 @@ declare_oxc_lint!(
     ParamNames,
     promise,
     style,
+    config = ParamNamesConfig,
+    version = "0.6.1",
+    short_description = "Enforce standard parameter names for Promise constructors.",
 );
 
 impl Rule for ParamNames {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let mut cfg = ParamNamesConfig::default();
-
-        if let Some(config) = value.get(0) {
-            if let Some(val) = config.get("resolvePattern").and_then(serde_json::Value::as_str) {
-                cfg.resolve_pattern = Regex::new(val).ok();
-            }
-            if let Some(val) = config.get("rejectPattern").and_then(serde_json::Value::as_str) {
-                cfg.reject_pattern = Regex::new(val).ok();
-            }
-        }
-
-        Self(Box::new(cfg))
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<ParamNamesConfig>>(value)
+            .map(DefaultRuleConfig::into_inner)
+            .map(|config| Self(Box::new(config)))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -123,7 +132,7 @@ impl ParamNames {
     }
 
     fn check_parameter(&self, param: &FormalParameter, param_type: &ParamType, ctx: &LintContext) {
-        let BindingPatternKind::BindingIdentifier(param_ident) = &param.pattern.kind else {
+        let BindingPattern::BindingIdentifier(param_ident) = &param.pattern else {
             return;
         };
 

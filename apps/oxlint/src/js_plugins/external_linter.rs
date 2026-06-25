@@ -1,4 +1,7 @@
-use std::sync::{atomic::Ordering, mpsc::channel};
+use std::{
+    sync::{Arc, atomic::Ordering, mpsc::channel},
+    time::Duration,
+};
 
 use napi::{
     Status,
@@ -9,24 +12,47 @@ use serde::Deserialize;
 
 use oxc_allocator::{Allocator, free_fixed_size_allocator};
 use oxc_linter::{
-    ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, LintFileResult,
-    PluginLoadResult,
+    ExternalLinter, ExternalLinterCreateWorkspaceCb, ExternalLinterDestroyWorkspaceCb,
+    ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, ExternalLinterSetupRuleConfigsCb,
+    LintFileResult, LoadPluginResult,
 };
 
 use crate::{
     generated::raw_transfer_constants::{BLOCK_ALIGN, BUFFER_SIZE},
-    run::{JsLintFileCb, JsLoadPluginCb},
+    run::{
+        JsCreateWorkspaceCb, JsDestroyWorkspaceCb, JsLintFileCb, JsLoadPluginCb,
+        JsSetupRuleConfigsCb,
+    },
 };
 
 /// Wrap JS callbacks as normal Rust functions, and create [`ExternalLinter`].
 pub fn create_external_linter(
     load_plugin: JsLoadPluginCb,
+    setup_rule_configs: JsSetupRuleConfigsCb,
     lint_file: JsLintFileCb,
+    create_workspace: JsCreateWorkspaceCb,
+    destroy_workspace: JsDestroyWorkspaceCb,
 ) -> ExternalLinter {
     let rust_load_plugin = wrap_load_plugin(load_plugin);
+    let rust_setup_rule_configs = wrap_setup_rule_configs(setup_rule_configs);
     let rust_lint_file = wrap_lint_file(lint_file);
+    let rust_create_workspace = wrap_create_workspace(create_workspace);
+    let rust_destroy_workspace = wrap_destroy_workspace(destroy_workspace);
 
-    ExternalLinter::new(rust_load_plugin, rust_lint_file)
+    ExternalLinter::new(
+        rust_load_plugin,
+        rust_setup_rule_configs,
+        rust_lint_file,
+        rust_create_workspace,
+        rust_destroy_workspace,
+    )
+}
+
+/// Result returned by `loadPlugin` JS callback.
+#[derive(Clone, Debug, Deserialize)]
+pub enum LoadPluginReturnValue {
+    Success(LoadPluginResult),
+    Failure(String),
 }
 
 /// Wrap `loadPlugin` JS callback as a normal Rust function.
@@ -36,20 +62,80 @@ pub fn create_external_linter(
 ///
 /// The returned function will panic if called outside of a Tokio runtime.
 fn wrap_load_plugin(cb: JsLoadPluginCb) -> ExternalLinterLoadPluginCb {
-    Box::new(move |plugin_path, package_name| {
+    Arc::new(Box::new(move |plugin_url, plugin_name, plugin_name_is_alias, workspace_uri| {
         let cb = &cb;
-        tokio::task::block_in_place(|| {
+        let res = tokio::task::block_in_place(|| {
             tokio::runtime::Handle::current().block_on(async move {
-                let result = cb
-                    .call_async(FnArgs::from((plugin_path, package_name)))
-                    .await?
-                    .into_future()
-                    .await?;
-                let plugin_load_result: PluginLoadResult = serde_json::from_str(&result)?;
-                Ok(plugin_load_result)
+                cb.call_async(FnArgs::from((
+                    plugin_url,
+                    plugin_name,
+                    plugin_name_is_alias,
+                    workspace_uri,
+                )))
+                .await?
+                .into_future()
+                .await
             })
-        })
-    })
+        });
+
+        match res {
+            // `loadPlugin` returns JSON string if plugin loaded successfully, or an error occurred
+            Ok(json) => match serde_json::from_str(&json) {
+                // Plugin loaded successfully
+                Ok(LoadPluginReturnValue::Success(result)) => Ok(result),
+                // Error occurred on JS side
+                Ok(LoadPluginReturnValue::Failure(err)) => Err(err),
+                // Invalid JSON - should be impossible, because we control serialization on JS side
+                Err(err) => {
+                    Err(format!("Failed to deserialize JSON returned by `loadPlugin`: {err}"))
+                }
+            },
+            // `loadPlugin` threw an error - should be impossible because `loadPlugin` is wrapped in try-catch
+            Err(err) => Err(format!("`loadPlugin` threw an error: {err}")),
+        }
+    }))
+}
+
+/// Wrap `setupRuleConfigs` JS callback as a normal Rust function.
+///
+/// The JS-side `setupRuleConfigs` function is synchronous, but it's wrapped in a `ThreadsafeFunction`,
+/// so cannot be called synchronously. Use an `mpsc::channel` to wait for the result from JS side,
+/// and block current thread until `setupRuleConfigs` completes execution.
+fn wrap_setup_rule_configs(cb: JsSetupRuleConfigsCb) -> ExternalLinterSetupRuleConfigsCb {
+    Arc::new(Box::new(move |options_json: String| {
+        let (tx, rx) = channel();
+
+        // Send data to JS
+        let status = cb.call_with_return_value(
+            options_json,
+            ThreadsafeFunctionCallMode::NonBlocking,
+            move |result, _env| {
+                // This call cannot fail, because `rx.recv()` below blocks until it receives a message.
+                // This closure is a `FnOnce`, so it can't be called more than once, so only 1 message can be sent.
+                // Therefore, `rx` cannot be dropped before this call.
+                let res = tx.send(result);
+                debug_assert!(res.is_ok(), "Failed to send result of `setupRuleConfigs`");
+                Ok(())
+            },
+        );
+
+        if status == Status::Ok {
+            match rx.recv() {
+                // Setup succeeded
+                Ok(Ok(None)) => Ok(()),
+                // Setup failed
+                Ok(Ok(Some(err))) => Err(err),
+                // `setupRuleConfigs` threw an error - should be impossible because it should be infallible
+                Ok(Err(err)) => Err(format!("`setupRuleConfigs` threw an error: {err}")),
+                // Sender "hung up" - should be impossible because closure passed to `call_with_return_value`
+                // takes ownership of the sender `tx`. Unless NAPI-RS drops the closure without calling it,
+                // `tx.send()` always happens before `tx` is dropped.
+                Err(err) => Err(format!("`setupRuleConfigs` did not respond: {err}")),
+            }
+        } else {
+            Err(format!("Failed to schedule `setupRuleConfigs` callback: {status:?}"))
+        }
+    }))
 }
 
 /// Result returned by `lintFile` JS callback.
@@ -69,10 +155,13 @@ pub enum LintFileReturnValue {
 /// Use an `mpsc::channel` to wait for the result from JS side, and block current thread until `lintFile`
 /// completes execution.
 fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
-    Box::new(
+    Arc::new(Box::new(
         move |file_path: String,
               rule_ids: Vec<u32>,
+              options_ids: Vec<u32>,
               settings_json: String,
+              globals_json: String,
+              workspace_uri: Option<String>,
               allocator: &Allocator| {
             let (tx, rx) = channel();
 
@@ -81,41 +170,62 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
             // `AllocatorPool::new_fixed_size`, so all `Allocator`s are created via `FixedSizeAllocator`.
             // This is somewhat sketchy, as we don't have a type-level guarantee of this invariant,
             // but it does hold at present.
-            // When we replace `bumpalo` with a custom allocator, we can close this soundness hole.
-            // TODO: Do that.
+            // TODO: Close this soundness hole with type-level guarantees.
             let (buffer_id, buffer) = unsafe { get_buffer(allocator) };
 
             // Send data to JS
             let status = cb.call_with_return_value(
-                FnArgs::from((file_path, buffer_id, buffer, rule_ids, settings_json)),
+                FnArgs::from((
+                    file_path,
+                    buffer_id,
+                    buffer,
+                    rule_ids,
+                    options_ids,
+                    settings_json,
+                    globals_json,
+                    workspace_uri,
+                )),
                 ThreadsafeFunctionCallMode::NonBlocking,
                 move |result, _env| {
-                    let _ = match &result {
-                        Ok(r) => match serde_json::from_str::<LintFileReturnValue>(r) {
-                            Ok(v) => tx.send(Ok(v)),
-                            Err(_e) => {
-                                tx.send(Err("Failed to deserialize lint result".to_string()))
-                            }
-                        },
-                        Err(e) => tx.send(Err(e.to_string())),
-                    };
-
-                    result.map(|_| ())
+                    // This call cannot fail, because `rx.recv()` below blocks until it receives a message.
+                    // This closure is a `FnOnce`, so it can't be called more than once, so only 1 message can be sent.
+                    // Therefore, `rx` cannot be dropped before this call.
+                    let res = tx.send(result);
+                    debug_assert!(res.is_ok(), "Failed to send result of `lintFile`");
+                    Ok(())
                 },
             );
 
-            assert!(status == Status::Ok, "Failed to schedule callback: {status:?}");
-
-            match rx.recv() {
-                Ok(Ok(x)) => match x {
-                    LintFileReturnValue::Success(diagnostics) => Ok(diagnostics),
-                    LintFileReturnValue::Failure(err) => Err(err),
-                },
-                Ok(Err(err)) => panic!("Callback reported error: {err}"),
-                Err(err) => panic!("Callback did not respond: {err}"),
+            if status == Status::Ok {
+                match rx.recv() {
+                    // `lintFile` returns `null` if no diagnostics reported, and no error occurred
+                    Ok(Ok(None)) => Ok(Vec::new()),
+                    // `lintFile` returns JSON string if diagnostics reported, or an error occurred
+                    Ok(Ok(Some(json))) => {
+                        match serde_json::from_str(&json) {
+                            // Diagnostics reported
+                            Ok(LintFileReturnValue::Success(diagnostics)) => Ok(diagnostics),
+                            // Error occurred on JS side
+                            Ok(LintFileReturnValue::Failure(err)) => Err(err),
+                            // JSON deserialization failure.
+                            // Possible if rule produces fixes/suggestions with out of range offsets.
+                            Err(err) => Err(format!(
+                                "Failed to deserialize JSON returned by `lintFile`: {err}"
+                            )),
+                        }
+                    }
+                    // `lintFile` threw an error - should be impossible because `lintFile` is wrapped in try-catch
+                    Ok(Err(err)) => Err(format!("`lintFile` threw an error: {err}")),
+                    // Sender "hung up" - should be impossible because closure passed to `call_with_return_value`
+                    // takes ownership of the sender `tx`. Unless NAPI-RS drops the closure without calling it,
+                    // `tx.send()` always happens before `tx` is dropped.
+                    Err(err) => Err(format!("`lintFile` did not respond: {err}")),
+                }
+            } else {
+                Err(format!("Failed to schedule `lintFile` callback: {status:?}"))
             }
         },
-    )
+    ))
 }
 
 /// Get buffer ID of the `Allocator` and, if it hasn't already been sent to JS,
@@ -143,7 +253,7 @@ unsafe fn get_buffer(
     // We only create an immutable ref from this pointer.
     let metadata_ptr = unsafe { allocator.fixed_size_metadata_ptr() };
     // SAFETY: Fixed-size allocators always have a valid `FixedSizeAllocatorMetadata`
-    // stored at the pointer returned by `Allocator::fixed_size_metadata_ptr`.
+    // stored at the pointer returned by `Allocator::fixed_size_metadata_ptr`
     let metadata = unsafe { metadata_ptr.as_ref() };
 
     let buffer_id = metadata.id;
@@ -160,15 +270,12 @@ unsafe fn get_buffer(
     // Buffer has not already been sent to JS. Send it.
 
     // Get pointer to start of allocator chunk.
-    // Note: `Allocator::data_ptr` would not provide the right pointer, because source text
-    // gets written to start of the allocator chunk, and `data_ptr` gets moved to after it.
-    // SAFETY: Fixed-size allocators have their chunk aligned on `BLOCK_ALIGN`,
-    // and size less than `BLOCK_ALIGN`. So we can get pointer to start of `Allocator` chunk
-    // by rounding down to next multiple of `BLOCK_ALIGN`. That can't go out of bounds of
-    // the backing allocation.
+    // SAFETY: Fixed-size allocators have their chunk aligned on `BLOCK_ALIGN`, and size less than `BLOCK_ALIGN`.
+    // So we can get pointer to start of `Allocator` chunk by rounding down to next multiple of `BLOCK_ALIGN`.
+    // That can't go out of bounds of the backing allocation.
     let chunk_ptr = unsafe {
         let ptr = metadata_ptr.cast::<u8>();
-        let offset = ptr.as_ptr() as usize % BLOCK_ALIGN;
+        let offset = ptr.addr().get() % BLOCK_ALIGN;
         ptr.sub(offset)
     };
 
@@ -178,15 +285,17 @@ unsafe fn get_buffer(
     //
     // We can't prove that no mutable references to data in the buffer exist,
     // but there shouldn't be any, because linter doesn't mutate the AST.
-    // Anyway, I (@overlookmotel) am not sure if the aliasing rules apply to code in another
-    // language. Probably not, as JS code is outside the domain of the "Rust abstract machine".
+    // Anyway, I (@overlookmotel) am not sure if the aliasing rules apply to code in another language.
+    // Probably not, as JS code is outside the domain of the "Rust abstract machine".
     // As long as we don't mutate data in the buffer on JS side, it should be fine.
     //
-    // On the other side, while many immutable references to data in the buffer exist
-    // (`AstKind`s for every AST node), JS side does not mutate the data in the buffer,
-    // so that shouldn't break the guarantees of `&` references.
+    // On the other side, while many immutable references to data in the buffer exist (`AstKind`s for every AST node),
+    // JS side does not mutate the data in the buffer, so that shouldn't break the guarantees of `&` references.
     //
     // This is all a bit wavy, but such is the way with sharing memory outside of Rust.
+    //
+    // The `Uint8Array` shared with JS covers the allocatable region plus `RawTransferMetadata`.
+    // It does not include `FixedSizeAllocatorMetadata` or `ChunkFooter`, which sit at the end of the block.
     let buffer = unsafe {
         Uint8Array::with_external_data(chunk_ptr.as_ptr(), BUFFER_SIZE, move |_ptr, _len| {
             free_fixed_size_allocator(metadata_ptr);
@@ -194,4 +303,66 @@ unsafe fn get_buffer(
     };
 
     (buffer_id, Some(buffer))
+}
+
+/// Wrap `createWorkspace` JS callback as a normal Rust function.
+///
+/// The JS-side function is async. The returned Rust function blocks the current thread
+/// until the `Promise` returned by the JS function resolves.
+///
+/// The returned function will panic if called outside of a Tokio runtime.
+fn wrap_create_workspace(cb: JsCreateWorkspaceCb) -> ExternalLinterCreateWorkspaceCb {
+    Arc::new(Box::new(move |workspace_uri| {
+        let cb = &cb;
+        let res = tokio::task::block_in_place(|| {
+            tokio::runtime::Handle::current()
+                .block_on(async move { cb.call_async(workspace_uri).await?.into_future().await })
+        });
+
+        match res {
+            // `createWorkspace` completed successfully
+            Ok(()) => Ok(()),
+            // `createWorkspace` threw an error
+            Err(err) => Err(format!("`createWorkspace` threw an error: {err}")),
+        }
+    }))
+}
+
+/// Wrap `destroyWorkspace` JS callback as a normal Rust function.
+///
+/// The JS-side `destroyWorkspace` function is synchronous, but it's wrapped in a `ThreadsafeFunction`,
+/// so cannot be called synchronously. Use an `mpsc::channel` to wait for the result from JS side.
+///
+/// Uses a timeout to prevent indefinite blocking during shutdown, which can cause issues
+/// in multi-root workspace scenarios where multiple workspaces are being destroyed concurrently.
+fn wrap_destroy_workspace(cb: JsDestroyWorkspaceCb) -> ExternalLinterDestroyWorkspaceCb {
+    Arc::new(Box::new(move |workspace_uri| {
+        let (tx, rx) = channel();
+
+        // Send data to JS
+        let status = cb.call_with_return_value(
+            workspace_uri,
+            ThreadsafeFunctionCallMode::NonBlocking,
+            move |result, _env| {
+                // Ignore send errors - the receiver may have timed out
+                let _ = tx.send(result);
+                Ok(())
+            },
+        );
+
+        if status == Status::Ok {
+            // Use a timeout to prevent blocking indefinitely during shutdown.
+            // If JS side doesn't respond within the timeout, we proceed with shutdown anyway.
+            match rx.recv_timeout(Duration::from_secs(5)) {
+                // Destroying workspace succeeded
+                Ok(Ok(()))
+                // Timeout or sender dropped - proceed with shutdown
+                | Err(_) => Ok(()),
+                // `destroyWorkspace` threw an error
+                Ok(Err(err)) => Err(format!("`destroyWorkspace` threw an error: {err}")),
+            }
+        } else {
+            Err(format!("Failed to schedule `destroyWorkspace` callback: {status:?}"))
+        }
+    }))
 }

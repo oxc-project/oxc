@@ -12,6 +12,8 @@ use super::PluginPresetEntries;
 pub struct SyntaxTypeScriptOptions {
     #[serde(default)]
     pub dts: bool,
+    #[serde(default, rename = "disallowAmbiguousJSXLike")]
+    pub disallow_ambiguous_jsx_like: bool,
 }
 
 #[derive(Debug, Default, Clone, Deserialize)]
@@ -77,6 +79,7 @@ pub struct BabelPlugins {
     pub legacy_decorator: Option<DecoratorOptions>,
     // Built-in plugins
     pub styled_components: Option<StyledComponentsOptions>,
+    pub tagged_template_escape: bool,
 }
 
 impl TryFrom<PluginPresetEntries> for BabelPlugins {
@@ -106,7 +109,7 @@ impl TryFrom<PluginPresetEntries> for BabelPlugins {
                         pure: bool,
                     }
 
-                    let pure = entry.clone().value::<Pure>().map(|p| p.pure).unwrap_or(false);
+                    let pure = entry.clone().value::<Pure>().is_ok_and(|p| p.pure);
                     p.react_jsx = entry
                         .value::<JsxOptions>()
                         .map_err(|err| p.errors.push(err))
@@ -171,6 +174,9 @@ impl TryFrom<PluginPresetEntries> for BabelPlugins {
                         .value::<StyledComponentsOptions>()
                         .map_err(|err| p.errors.push(err))
                         .ok();
+                }
+                "tagged-template-transform" => {
+                    p.tagged_template_escape = true;
                 }
                 s => p.unsupported.push(s.to_string()),
             }

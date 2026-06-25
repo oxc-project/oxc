@@ -1,2 +1,0 @@
-desc("Jake build task")
-task("default", function() {})

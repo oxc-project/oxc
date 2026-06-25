@@ -7,7 +7,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/try-catch/parameters.js
     "children": [
       {
         "children": [],
-        "flags": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(0x0)",
         "id": 1,
         "node": "BlockStatement",
         "symbols": []
@@ -16,7 +16,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/try-catch/parameters.js
         "children": [
           {
             "children": [],
-            "flags": "ScopeFlags(StrictMode)",
+            "flags": "ScopeFlags(0x0)",
             "id": 3,
             "node": "BlockStatement",
             "symbols": [
@@ -30,7 +30,8 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/try-catch/parameters.js
                     "flags": "ReferenceFlags(Read)",
                     "id": 1,
                     "name": "a",
-                    "node_id": 22
+                    "node_id": 22,
+                    "scope_id": 2
                   }
                 ]
               },
@@ -51,13 +52,13 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/try-catch/parameters.js
             ]
           }
         ],
-        "flags": "ScopeFlags(StrictMode | CatchClause)",
+        "flags": "ScopeFlags(CatchClause)",
         "id": 2,
         "node": "CatchClause",
         "symbols": []
       }
     ],
-    "flags": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
@@ -78,7 +79,8 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/try-catch/parameters.js
             "flags": "ReferenceFlags(Read)",
             "id": 0,
             "name": "A",
-            "node_id": 17
+            "node_id": 17,
+            "scope_id": 2
           }
         ]
       }

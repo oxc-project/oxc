@@ -2,19 +2,19 @@ use std::borrow::Cow;
 
 use crate::{LintContext, ast_util::is_new_expression, rule::Rule};
 use cow_utils::CowUtils;
-use oxc_allocator::Box;
+use oxc_allocator::ArenaBox;
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, BindingPattern, Expression, FormalParameter, ObjectExpression,
-        ObjectPropertyKind, PropertyKey, TSLiteral, TSLiteralType, TSType, TSTypeAnnotation,
-        TemplateLiteral,
+        Argument, Expression, FormalParameter, ObjectExpression, ObjectPropertyKind, PropertyKey,
+        TSLiteral, TSLiteralType, TSType, TSTypeAnnotation, TemplateLiteral,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
 
 fn no_invalid_fetch_options_diagnostic(span: Span, method: &str) -> OxcDiagnostic {
     let message = format!(r#""body" is not allowed when method is "{method}""#);
@@ -41,20 +41,22 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// const response = await fetch('/', {method: 'GET', body: 'foo=bar'});
+    /// const response = await fetch('/', { method: 'GET', body: 'foo=bar' });
     ///
-    /// const request = new Request('/', {method: 'GET', body: 'foo=bar'});
+    /// const request = new Request('/', { method: 'GET', body: 'foo=bar' });
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```javascript
-    /// const response = await fetch('/', {method: 'POST', body: 'foo=bar'});
+    /// const response = await fetch('/', { method: 'POST', body: 'foo=bar' });
     ///
-    /// const request = new Request('/', {method: 'POST', body: 'foo=bar'});
+    /// const request = new Request('/', { method: 'POST', body: 'foo=bar' });
     /// ```
     NoInvalidFetchOptions,
     unicorn,
     correctness,
+    version = "0.15.12",
+    short_description = "Disallow invalid options in `fetch()` and `new Request()`.",
 );
 
 impl Rule for NoInvalidFetchOptions {
@@ -91,7 +93,7 @@ impl Rule for NoInvalidFetchOptions {
 const UNKNOWN_METHOD_NAME: Cow<'static, str> = Cow::Borrowed("UNKNOWN");
 
 fn is_invalid_fetch_options<'a>(
-    obj_expr: &'a Box<'_, ObjectExpression<'_>>,
+    obj_expr: &'a ArenaBox<'_, ObjectExpression<'_>>,
     ctx: &'a LintContext<'_>,
 ) -> Option<(Cow<'a, str>, Span)> {
     // fetch and Request method defaults to "GET"
@@ -123,6 +125,7 @@ fn is_invalid_fetch_options<'a>(
                 Expression::StaticMemberExpression(s) => {
                     let symbols = ctx.scoping();
                     let Expression::Identifier(ident_ref) = &s.object else {
+                        method_name = UNKNOWN_METHOD_NAME;
                         continue;
                     };
                     let reference_id = ident_ref.reference_id();
@@ -154,6 +157,8 @@ fn is_invalid_fetch_options<'a>(
                         if let Some(value_ident) = enum_member_res {
                             method_name = value_ident.into();
                         }
+                    } else {
+                        method_name = UNKNOWN_METHOD_NAME;
                     }
                 }
                 Expression::StringLiteral(value_ident) => {
@@ -187,7 +192,7 @@ fn is_invalid_fetch_options<'a>(
                             }
                         },
                         AstKind::FormalParameter(FormalParameter {
-                            pattern: BindingPattern { type_annotation: Some(annotation), .. },
+                            type_annotation: Some(annotation),
                             ..
                         }) => {
                             let TSTypeAnnotation { type_annotation, .. } = &**annotation;
@@ -222,7 +227,9 @@ fn is_invalid_fetch_options<'a>(
                         _ => {}
                     }
                 }
-                _ => {}
+                _ => {
+                    method_name = UNKNOWN_METHOD_NAME;
+                }
             }
         }
     }
@@ -253,24 +260,24 @@ fn test() {
     let pass = vec![
         r#"fetch(url, {method: "POST", body})"#,
         r#"new Request(url, {method: "POST", body})"#,
-        r"fetch(url, {})",
-        r"new Request(url, {})",
-        r"fetch(url)",
-        r"new Request(url)",
+        "fetch(url, {})",
+        "new Request(url, {})",
+        "fetch(url)",
+        "new Request(url)",
         r#"fetch(url, {method: "UNKNOWN", body})"#,
         r#"new Request(url, {method: "UNKNOWN", body})"#,
-        r"fetch(url, {body: undefined})",
-        r"new Request(url, {body: undefined})",
-        r"fetch(url, {body: null})",
-        r"new Request(url, {body: null})",
-        r"fetch(url, {...options, body})",
-        r"new Request(url, {...options, body})",
-        r"new fetch(url, {body})",
-        r"Request(url, {body})",
-        r"not_fetch(url, {body})",
-        r"new not_Request(url, {body})",
-        r"fetch({body}, url)",
-        r"new Request({body}, url)",
+        "fetch(url, {body: undefined})",
+        "new Request(url, {body: undefined})",
+        "fetch(url, {body: null})",
+        "new Request(url, {body: null})",
+        "fetch(url, {...options, body})",
+        "new Request(url, {...options, body})",
+        "new fetch(url, {body})",
+        "Request(url, {body})",
+        "not_fetch(url, {body})",
+        "new not_Request(url, {body})",
+        "fetch({body}, url)",
+        "new Request({body}, url)",
         r#"fetch(url, {[body]: "foo=bar"})"#,
         r#"new Request(url, {[body]: "foo=bar"})"#,
         r#"fetch(url, {body: "foo=bar", body: undefined});"#,
@@ -296,11 +303,22 @@ fn test() {
          body: "",
         });"#,
         ("const response = await fetch('', { method, headers, body, });"),
+        (r#"fetch("/url", { method: logic ? "PATCH" : "POST", body: "some body" });"#),
+        (r#"new Request("/url", { method: logic ? "PATCH" : "POST", body: "some body" });"#),
+        (r#"fetch("/url", { method: getMethod(), body: "some body" });"#),
+        (r"const method = 'POST' as const; await fetch('some-url', { method, body: '' });"),
+        (r"const options = { method: 'POST' } as const; await fetch('some-url', { method: options.method, body: '' });"),
+        (r"const options = { method: 'POST' }; await fetch('some-url', { method: options.method, body: '' });"),
+        (r"const options = { method: 'POST' } as const; new Request('some-url', { method: options.method, body: '' });"),
+        (r#"fetch("/url", { method: getOptions().method, body: "some body" });"#),
+        (r#"new Request("/url", { method: getOptions().method, body: "some body" });"#),
+        (r#"fetch("/url", { method: (options).method, body: "some body" });"#),
+        (r#"new Request("/url", { method: (options).method, body: "some body" });"#),
     ];
 
     let fail = vec![
-        r"fetch(url, {body})",
-        r"new Request(url, {body})",
+        "fetch(url, {body})",
+        "new Request(url, {body})",
         r#"fetch(url, {method: "GET", body})"#,
         r#"new Request(url, {method: "GET", body})"#,
         r#"fetch(url, {method: "HEAD", body})"#,
@@ -311,8 +329,8 @@ fn test() {
         r#"const method = "head"; new Request(url, {method, body: "foo=bar"})"#,
         r#"const method = "head"; fetch(url, {method, body: "foo=bar"})"#,
         r#"const method = `head`; fetch(url, {method, body: "foo=bar"})"#,
-        r"fetch(url, {body}, extraArgument)",
-        r"new Request(url, {body}, extraArgument)",
+        "fetch(url, {body}, extraArgument)",
+        "new Request(url, {body}, extraArgument)",
         r#"fetch(url, {body: undefined, body: "foo=bar"});"#,
         r#"new Request(url, {body: undefined, body: "foo=bar"});"#,
         r#"fetch(url, {method: "post", body: "foo=bar", method: "HEAD"});"#,
@@ -338,5 +356,6 @@ fn test() {
     ];
 
     Tester::new(NoInvalidFetchOptions::NAME, NoInvalidFetchOptions::PLUGIN, pass, fail)
+        .change_rule_path_extension("mts")
         .test_and_snapshot();
 }

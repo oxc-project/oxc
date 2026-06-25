@@ -19,17 +19,21 @@ use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn always_return_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Each then() should return a value or throw").with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct AlwaysReturn(Box<AlwaysReturnConfig>);
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct AlwaysReturnConfig {
     /// You can pass an `{ ignoreLastCallback: true }` as an option to this rule so that
     /// the last `then()` callback in a promise chain does not warn if it does not have
@@ -81,7 +85,7 @@ pub struct AlwaysReturnConfig {
     /// `["globalThis"]`.
     ///
     /// ```javascript
-    /// /* eslint promise/always-return: ["error", { ignoreAssignmentVariable: ["globalThis"] }] */
+    /// /* promise/always-return: ["error", { ignoreAssignmentVariable: ["globalThis"] }] */
     ///
     /// // OK
     /// promise.then((x) => {
@@ -180,34 +184,28 @@ declare_oxc_lint!(
     promise,
     suspicious,
     config = AlwaysReturnConfig,
+    version = "1.13.0",
+    short_description = "Require returning inside each `then()` to create readable and reusable Promise chains.",
 );
 
 const PROCESS_METHODS: [&str; 2] = ["exit", "abort"];
 
 impl Rule for AlwaysReturn {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        Self(Box::new(
-            value
-                .as_array()
-                .and_then(|arr| arr.first())
-                .and_then(|value| serde_json::from_value(value.clone()).ok())
-                .unwrap_or_default(),
-        ))
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if !is_inline_then_function_expression(node, ctx) {
             return;
         }
-        // want Argument
-        let parent1 = ctx.nodes().parent_node(node.id());
-        // want CallExpression
-        let parent2 = ctx.nodes().parent_node(parent1.id());
-        if self.ignore_last_callback && is_last_callback(parent2, ctx) {
+
+        let parent = ctx.nodes().parent_node(node.id());
+        if self.ignore_last_callback && is_last_callback(parent, ctx) {
             return;
         }
         if !self.ignore_assignment_variable.is_empty()
-            && is_last_callback(parent2, ctx)
+            && is_last_callback(parent, ctx)
             && has_ignored_assignment(node, &self.ignore_assignment_variable)
         {
             return;
@@ -240,14 +238,12 @@ fn is_first_argument(node: &AstNode, call_node: &AstNode) -> bool {
 }
 
 fn is_inline_then_function_expression(node: &AstNode, ctx: &LintContext) -> bool {
-    // want Argument
-    let parent1 = ctx.nodes().parent_node(node.id());
-    // want CallExpression
-    let parent2 = ctx.nodes().parent_node(parent1.id());
+    // in order to be a thenable, the parent must be a CallExpression
+    let parent = ctx.nodes().parent_node(node.id());
 
     is_function_with_block_statement(node)
-        && is_member_call(parent2, "then")
-        && is_first_argument(node, parent2)
+        && is_member_call(parent, "then")
+        && is_first_argument(node, parent)
 }
 
 fn is_last_callback(node: &AstNode, ctx: &LintContext) -> bool {
@@ -326,8 +322,7 @@ fn has_no_return_code_path(node: &AstNode, ctx: &LintContext) -> bool {
         match event {
             // We only need to check paths that are normal or jump.
             DfsEvent::TreeEdge(a, b) => {
-                let edges = graph.edges_connecting(a, b).collect::<Vec<_>>();
-                if edges.iter().any(|e| {
+                if graph.edges_connecting(a, b).any(|e| {
                     matches!(
                         e.weight(),
                         EdgeType::Normal

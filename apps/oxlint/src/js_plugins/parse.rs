@@ -1,0 +1,311 @@
+use std::{
+    alloc::Layout,
+    mem::ManuallyDrop,
+    ptr::{self, NonNull},
+};
+
+use napi::bindgen_prelude::Uint8Array;
+use napi_derive::napi;
+
+use oxc_allocator::Allocator;
+use oxc_ast::ast::{Comment, CommentContent, CommentKind};
+use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
+use oxc_estree_tokens::{ESTreeTokenOptionsJS, update_tokens};
+use oxc_linter::RawTransferMetadata2 as RawTransferMetadata;
+use oxc_napi::get_source_type;
+use oxc_parser::{ParseOptions, Parser, ParserReturn, config::RuntimeParserConfig};
+use oxc_semantic::SemanticBuilder;
+
+use crate::generated::raw_transfer_constants::{
+    ACTIVE_SIZE, BLOCK_ALIGN, BLOCK_SIZE, CURSOR_MIN_ALIGN,
+};
+
+/// Layout describing the JS-owned buffer (`BLOCK_SIZE` bytes, aligned on `BLOCK_ALIGN`).
+const BLOCK_LAYOUT: Layout = match Layout::from_size_align(BLOCK_SIZE, BLOCK_ALIGN) {
+    Ok(layout) => layout,
+    Err(_) => unreachable!(),
+};
+
+/// Sentinel value for program offset to indicate parsing failed.
+///
+/// 0 cannot be a valid offset as it's the start of the buffer, which contains the source text.
+/// Allocator bumps downwards, so if source text was empty, the program would be somewhere at end of the buffer.
+const PARSE_FAIL_SENTINEL: u32 = 0;
+
+// Parser options
+#[napi(object)]
+#[derive(Default)]
+pub struct ParserOptions {
+    /// Treat the source text as `js`, `jsx`, `ts`, `tsx` or `dts`.
+    #[napi(ts_type = "'js' | 'jsx' | 'ts' | 'tsx' | 'dts'")]
+    pub lang: Option<String>,
+
+    /// Treat the source text as `script` or `module` code.
+    #[napi(ts_type = "'script' | 'module' | 'commonjs' | 'unambiguous' | undefined")]
+    pub source_type: Option<String>,
+
+    /// Ignore non-fatal parsing errors
+    pub ignore_non_fatal_errors: Option<bool>,
+}
+
+/// Get offset within a `Uint8Array` which is aligned on `BLOCK_ALIGN`.
+///
+/// Does not check that the offset is within bounds of `buffer`.
+/// To ensure it always is, provide a `Uint8Array` of at least `BLOCK_SIZE + BLOCK_ALIGN` bytes.
+#[napi]
+#[allow(clippy::needless_pass_by_value, clippy::allow_attributes)]
+pub fn get_buffer_offset(buffer: Uint8Array) -> u32 {
+    let buffer = &*buffer;
+    // The final `% BLOCK_ALIGN` is to handle where `buffer` is already aligned on `BLOCK_ALIGN`.
+    // In that case, `buffer.as_ptr().addr() % BLOCK_ALIGN == 0`, so without the final `% BLOCK_ALIGN`,
+    // `offset` would be `BLOCK_ALIGN`. The final `% BLOCK_ALIGN` reduces it to `0`.
+    let offset = (BLOCK_ALIGN - (buffer.as_ptr().addr() % BLOCK_ALIGN)) % BLOCK_ALIGN;
+    #[expect(clippy::cast_possible_truncation)]
+    return offset as u32;
+}
+
+/// Parse AST into provided `Uint8Array` buffer, synchronously.
+///
+/// Source text must be written into somewhere towards end of the buffer.
+/// - `source_start` is position of first byte of source text in buffer
+/// - `source_len` is length of source text (in UTF-8 bytes)
+///
+/// This function will parse the source, and write the AST into the buffer, starting at the end (before the source text).
+///
+/// It also writes to the very end of the buffer the offset of `Program` within the buffer.
+///
+/// Caller can deserialize data from the buffer on JS side.
+///
+/// # SAFETY
+///
+/// Caller must ensure:
+/// * Source text is written into the buffer.
+/// * Start of source text is at `source_start` bytes from the start of the buffer.
+/// * Source text's UTF-8 byte length is `source_len`.
+/// * This section of bytes in the buffer comprises a valid UTF-8 string.
+///
+/// If source text is originally a JS string on JS side, and converted to a buffer with
+/// `Buffer.from(str)` or `new TextEncoder().encode(str)`, this guarantees it's valid UTF-8.
+///
+/// # Panics
+///
+/// Panics if source text is too long, or AST takes more memory than is available in the buffer.
+#[napi]
+#[allow(clippy::needless_pass_by_value, clippy::allow_attributes)]
+pub unsafe fn parse_raw_sync(
+    filename: String,
+    mut buffer: Uint8Array,
+    source_start: u32,
+    source_len: u32,
+    options: Option<ParserOptions>,
+) {
+    // SAFETY: This function is called synchronously, so buffer cannot be mutated outside this function
+    // during the time this `&mut [u8]` exists
+    let buffer = unsafe { buffer.as_mut() };
+
+    // SAFETY: `parse_raw_impl` has same safety requirements as this function
+    unsafe { parse_raw_impl(&filename, buffer, source_start, source_len, options) };
+}
+
+/// Parse AST into buffer.
+///
+/// # SAFETY
+///
+/// Caller must ensure:
+/// * Source text is written into the buffer.
+/// * Start of source text is at `source_start` bytes from the start of the buffer.
+/// * End of source text is not after `ACTIVE_SIZE` bytes from the start of the buffer.
+/// * Source text's UTF-8 byte length is `source_len`.
+/// * This section of bytes in the buffer comprises a valid UTF-8 string.
+///
+/// If source text is originally a JS string on JS side, and converted to a buffer with
+/// `Buffer.from(str)` or `new TextEncoder().encode(str)`, this guarantees it's valid UTF-8.
+#[allow(clippy::items_after_statements, clippy::allow_attributes)]
+unsafe fn parse_raw_impl(
+    filename: &str,
+    buffer: &mut [u8],
+    source_start: u32,
+    source_len: u32,
+    options: Option<ParserOptions>,
+) {
+    // Check buffer has expected size and alignment
+    assert_eq!(buffer.len(), BLOCK_SIZE);
+    let buffer_ptr = NonNull::from_mut(buffer).cast::<u8>();
+    assert!(buffer_ptr.addr().get().is_multiple_of(BLOCK_ALIGN));
+
+    const _: () = {
+        assert!(BLOCK_SIZE.is_multiple_of(Allocator::RAW_MIN_ALIGN));
+        assert!(BLOCK_SIZE >= Allocator::RAW_MIN_SIZE);
+        assert!(BLOCK_ALIGN.is_multiple_of(Allocator::RAW_MIN_ALIGN));
+    };
+
+    // Create `Allocator`.
+    //
+    // Wrap in `ManuallyDrop` so the allocation doesn't get freed at end of function, or if panic.
+    // The buffer is owned by JS, so Rust must not free it - hence `ManuallyDrop`.
+    // The `backing_alloc_ptr` and `layout` we pass to `from_raw_parts` aren't used (the `Allocator` is never dropped),
+    // but the safety contract requires the chunk region to lie within them, so we describe the buffer itself.
+    //
+    // SAFETY: `buffer_ptr` and `BLOCK_SIZE` outline the entirety of `buffer`.
+    // `buffer_ptr` and `BLOCK_SIZE` are multiples of `ARENA_ALIGN`.
+    // `BLOCK_SIZE` is `>= Allocator::RAW_MIN_SIZE`.
+    // `buffer_ptr` is derived from a `&mut [u8]` slice, so has permission for writes.
+    let allocator =
+        unsafe { Allocator::from_raw_parts(buffer_ptr, BLOCK_SIZE, buffer_ptr, BLOCK_LAYOUT) };
+    let allocator = ManuallyDrop::new(allocator);
+
+    // Check source text is in bounds of active data region of buffer.
+    // Caller guarantees it is, but as this is critical to avoid reading/writing out of bounds,
+    // we add this defensive runtime check.
+    let source_start = source_start as usize;
+    let source_end = source_start + (source_len as usize);
+    assert!(source_end <= ACTIVE_SIZE);
+
+    // Set cursor to before start of source text. AST will be written into the buffer before the source text.
+    // Round down the pointer, so it's aligned on `CURSOR_MIN_ALIGN`.
+    // SAFETY: Caller guarantees that source text starts at `source_start` bytes from start of buffer.
+    unsafe {
+        let cursor_pos = source_start & !(CURSOR_MIN_ALIGN - 1);
+        debug_assert!(cursor_pos <= ACTIVE_SIZE);
+        let cursor_ptr = buffer_ptr.add(cursor_pos);
+        allocator.set_cursor_ptr(cursor_ptr);
+    }
+
+    // Get source type
+    let options = options.unwrap_or_default();
+    let source_type =
+        get_source_type(filename, options.lang.as_deref(), options.source_type.as_deref());
+    let ignore_non_fatal_errors = options.ignore_non_fatal_errors.unwrap_or(false);
+
+    // Parse source.
+    // Enclose parsing logic in a scope to make 100% sure no references to within `Allocator` exist after this.
+    let (program_offset, has_bom, tokens_offset, tokens_len) = {
+        // Get source text from buffer.
+        // Use zero-cost unchecked conversion to `&str` in release builds, full UTF-8 validation in debug builds.
+        let source_text = if cfg!(debug_assertions) {
+            let source_bytes = &buffer[source_start..source_end];
+            str::from_utf8(source_bytes).expect("Source text is not valid UTF-8")
+        } else {
+            // SAFETY: Caller guarantees source occupies this region of the buffer and is valid UTF-8
+            unsafe {
+                let source_bytes = buffer.get_unchecked(source_start..source_end);
+                str::from_utf8_unchecked(source_bytes)
+            }
+        };
+
+        // Parse with same options as linter.
+        // We use `RuntimeParserConfig` even though we always pass `true` here, to avoid compiling the parser twice.
+        // The linter itself uses `RuntimeParserConfig`.
+        let parser_ret = Parser::new(&allocator, source_text, source_type)
+            .with_options(ParseOptions {
+                parse_regular_expression: true,
+                allow_return_outside_function: true,
+                ..ParseOptions::default()
+            })
+            .with_config(RuntimeParserConfig::new(true))
+            .parse();
+        let ParserReturn { program: parsed_program, diagnostics, mut tokens, panicked, .. } =
+            parser_ret;
+        let program = allocator.alloc(parsed_program);
+
+        let mut parsing_failed = panicked || (!diagnostics.is_empty() && !ignore_non_fatal_errors);
+
+        // Check for semantic errors.
+        // If `ignore_non_fatal_errors` is `true`, skip running semantic, as any errors will be ignored anyway.
+        if !parsing_failed && !ignore_non_fatal_errors {
+            let semantic_ret = SemanticBuilder::new_compiler().build(program);
+            parsing_failed = !semantic_ret.diagnostics.is_empty();
+        }
+
+        if parsing_failed {
+            // Use sentinel value for program offset to indicate that parsing failed
+            (PARSE_FAIL_SENTINEL, false, 0, 0)
+        } else {
+            // If has BOM, remove it
+            const BOM: &str = "\u{feff}";
+            const BOM_LEN: usize = BOM.len();
+
+            let original_source_text = program.source_text;
+            let mut source_text = original_source_text;
+            let has_bom = source_text.starts_with(BOM);
+            if has_bom {
+                source_text = &source_text[BOM_LEN..];
+                program.source_text = source_text;
+            }
+
+            // If file has a hashbang, add it to comments.
+            // It will be converted to a `Shebang` comment on JS side.
+            if let Some(hashbang) = &program.hashbang {
+                program.comments.insert(
+                    0,
+                    Comment::new(hashbang.span.start, hashbang.span.end, CommentKind::Line),
+                );
+            }
+
+            // Create span converter.
+            // If source starts with BOM, create converter which ignores the BOM.
+            let span_converter = if has_bom {
+                #[expect(clippy::cast_possible_truncation)]
+                Utf8ToUtf16::new_with_offset(source_text, BOM_LEN as u32)
+            } else {
+                Utf8ToUtf16::new(source_text)
+            };
+
+            // Convert token spans to UTF-16 and update token kinds
+            update_tokens(&mut tokens, program, &span_converter, ESTreeTokenOptionsJS);
+
+            // Convert AST spans to UTF-16
+            span_converter.convert_program(program);
+
+            // Convert comment spans to UTF-16.
+            // Also set the `content` field (byte 15) of each comment to `None` (0).
+            // JS side uses this byte as a "deserialized" flag for tracking lazy deserialization.
+            if let Some(mut converter) = span_converter.converter() {
+                for comment in &mut program.comments {
+                    converter.convert_span(&mut comment.span);
+                    comment.content = CommentContent::None;
+                }
+            } else {
+                for comment in &mut program.comments {
+                    comment.content = CommentContent::None;
+                }
+            }
+
+            let tokens_offset = tokens.as_ptr() as u32;
+            #[expect(clippy::cast_possible_truncation)]
+            let tokens_len = tokens.len() as u32;
+
+            // Return offset of `Program` within buffer (bottom 32 bits of pointer)
+            let program_offset = ptr::from_ref(program) as u32;
+
+            (program_offset, has_bom, tokens_offset, tokens_len)
+        }
+    };
+
+    // Write metadata into end of buffer.
+    //
+    // `RawTransferMetadata` is written at offset `ACTIVE_SIZE` (the end of the allocatable region).
+    // After it sits a slot reserved for `FixedSizeAllocatorMetadata` (left unused in `napi/parser`-style code),
+    // and finally `ChunkFooter` in the last `CHUNK_FOOTER_SIZE` bytes of the buffer.
+    const RAW_METADATA_OFFSET: usize = ACTIVE_SIZE;
+    const _: () = {
+        assert!(RAW_METADATA_OFFSET + size_of::<RawTransferMetadata>() < BLOCK_SIZE);
+        assert!(RAW_METADATA_OFFSET.is_multiple_of(align_of::<RawTransferMetadata>()));
+    };
+
+    #[allow(clippy::cast_possible_truncation)]
+    let metadata = RawTransferMetadata::new(
+        program_offset,
+        source_type.is_typescript(),
+        source_type.is_jsx(),
+        has_bom,
+        tokens_offset,
+        tokens_len,
+    );
+
+    // SAFETY: `RAW_METADATA_OFFSET + size_of::<RawTransferMetadata>()` is less than length of `buffer`.
+    // `buffer_ptr + RAW_METADATA_OFFSET` is aligned for `RawTransferMetadata`.
+    unsafe {
+        buffer_ptr.add(RAW_METADATA_OFFSET).cast::<RawTransferMetadata>().write(metadata);
+    }
+}

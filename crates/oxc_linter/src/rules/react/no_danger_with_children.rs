@@ -1,3 +1,4 @@
+use oxc_allocator::ArenaVec;
 use oxc_ast::{
     AstKind,
     ast::{Argument, Expression, JSXAttributeItem, JSXAttributeName, JSXChild, ObjectPropertyKind},
@@ -5,13 +6,14 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use oxc_str::Ident;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_danger_with_children_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Only set one of `children` or `props.dangerouslySetInnerHTML`")
-			.with_help("`dangerouslySetInnerHTML` is not compatible with also passing children and React will throw a warning at runtime.")
-			.with_label(span)
+            .with_help("`dangerouslySetInnerHTML` is not compatible with also passing children and React will throw a warning at runtime.")
+            .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -20,7 +22,7 @@ pub struct NoDangerWithChildren;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallows when a DOM element is using both `children` and `dangerouslySetInnerHTML` properties.
+    /// Disallows DOM elements from using both `children` and `dangerouslySetInnerHTML` properties.
     ///
     /// ### Why is this bad?
     ///
@@ -45,7 +47,9 @@ declare_oxc_lint!(
     /// ```
     NoDangerWithChildren,
     react,
-    correctness
+    correctness,
+    version = "0.9.6",
+    short_description = "Disallows DOM elements from using both `children` and `dangerouslySetInnerHTML` properties.",
 );
 
 impl Rule for NoDangerWithChildren {
@@ -91,7 +95,7 @@ impl Rule for NoDangerWithChildren {
                             is_object_with_prop_name(&obj_expr.properties, "children")
                         }
                         Expression::Identifier(ident) => {
-                            does_object_var_have_prop_name(ctx, node, &ident.name, "children")
+                            does_object_var_have_prop_name(ctx, node, ident.name, "children")
                         }
                         _ => false,
                     }
@@ -110,7 +114,7 @@ impl Rule for NoDangerWithChildren {
                     Expression::Identifier(ident) => does_object_var_have_prop_name(
                         ctx,
                         node,
-                        &ident.name,
+                        ident.name,
                         "dangerouslySetInnerHTML",
                     ),
                     _ => false,
@@ -270,7 +274,7 @@ fn has_jsx_prop(ctx: &LintContext, node: &AstNode, prop_name: &'static str) -> b
             let Some(ident) = attr.argument.get_identifier_reference() else {
                 return false;
             };
-            does_object_var_have_prop_name(ctx, node, ident.name.as_str(), prop_name)
+            does_object_var_have_prop_name(ctx, node, ident.name, prop_name)
         }
     })
 }
@@ -280,7 +284,7 @@ fn has_jsx_prop(ctx: &LintContext, node: &AstNode, prop_name: &'static str) -> b
 fn does_object_var_have_prop_name(
     ctx: &LintContext,
     node: &AstNode,
-    name: &str,
+    name: Ident<'_>,
     prop_name: &str,
 ) -> bool {
     let Some(symbol) = &find_var_in_scope(ctx, node, name) else {
@@ -309,13 +313,13 @@ fn does_object_var_have_prop_name(
             };
             // If the next symbol is the same as the current symbol, then there is a cycle,
             // for example: `const props = {...props}`, so we will stop searching.
-            if let Some(next_symbol) = find_var_in_scope(ctx, node, ident.name.as_str())
+            if let Some(next_symbol) = find_var_in_scope(ctx, node, ident.name)
                 && next_symbol.id() == symbol.id()
             {
                 return false;
             }
 
-            does_object_var_have_prop_name(ctx, symbol, ident.name.as_str(), prop_name)
+            does_object_var_have_prop_name(ctx, symbol, ident.name, prop_name)
         }
     })
 }
@@ -324,7 +328,7 @@ fn does_object_var_have_prop_name(
 fn find_var_in_scope<'c>(
     ctx: &'c LintContext,
     node: &AstNode,
-    name: &str,
+    name: Ident<'_>,
 ) -> Option<&'c AstNode<'c>> {
     ctx.scoping()
         .find_binding(node.scope_id(), name)
@@ -333,7 +337,7 @@ fn find_var_in_scope<'c>(
 
 /// Returns whether a given object has a property with the given name.
 fn is_object_with_prop_name(
-    obj_props: &oxc_allocator::Vec<'_, ObjectPropertyKind<'_>>,
+    obj_props: &ArenaVec<'_, ObjectPropertyKind<'_>>,
     prop_name: &str,
 ) -> bool {
     obj_props.iter().any(|prop| {

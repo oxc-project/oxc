@@ -6,20 +6,28 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 use schemars::JsonSchema;
-use serde_json::Value;
+use serde::Deserialize;
 
 use crate::{
     AstNode,
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{get_element_type, has_jsx_prop_ignore_case},
 };
 
-fn missing_href_attribute(span: Span) -> OxcDiagnostic {
+fn missing_href_attribute<S: AsRef<str>>(span: Span, valid_attrs: &[S]) -> OxcDiagnostic {
+    let help = if valid_attrs.len() == 1 {
+        format!("Provide the `{}` attribute for the `a` element.", valid_attrs[0].as_ref())
+    } else {
+        let list =
+            valid_attrs.iter().map(|a| format!("`{}`", a.as_ref())).collect::<Vec<_>>().join(", ");
+        format!("Provide one of these attributes for the `a` element: {list}")
+    };
     OxcDiagnostic::warn("Missing `href` attribute for the `a` element.")
-        .with_help("Provide an `href` for the `a` element.")
+        .with_help(help)
         .with_label(span)
 }
 
@@ -35,14 +43,33 @@ fn cant_be_anchor(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct AnchorIsValid(Box<AnchorIsValidConfig>);
 
-#[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct AnchorIsValidConfig {
-    /// List of strings that are valid href values.
-    valid_hrefs: Vec<CompactStr>,
+    /// Custom components to treat as anchor elements.
+    components: Vec<CompactStr>,
+    /// Custom prop names to treat as link destinations.
+    special_link: Vec<CompactStr>,
+    /// Sub-rule aspects to run.
+    aspects: Option<Vec<AnchorIsValidAspect>>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase")]
+enum AnchorIsValidAspect {
+    NoHref,
+    InvalidHref,
+    PreferButton,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum HrefValueKind {
+    Nullish,
+    Invalid,
+    Valid,
 }
 
 impl Deref for AnchorIsValid {
@@ -122,111 +149,140 @@ declare_oxc_lint!(
     AnchorIsValid,
     jsx_a11y,
     correctness,
-    config = AnchorIsValidConfig
+    config = AnchorIsValidConfig,
+    version = "0.0.19",
+    short_description = "Enforce that anchors have a valid `href` and are not used in place of buttons for attaching click logic.",
 );
 
 impl Rule for AnchorIsValid {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let Some(valid_hrefs) = value.get("validHrefs").and_then(Value::as_array) else {
-            return Self::default();
-        };
-        Self(Box::new(valid_hrefs.iter().collect()))
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXElement(jsx_el) = node.kind() {
             let name = get_element_type(ctx, &jsx_el.opening_element);
 
-            if name != "a" {
+            if name != "a" && !self.components.iter().any(|component| component == name.as_ref()) {
                 return;
             }
             // Don't eagerly get `span` here, to avoid that work unless rule fails
             let get_span = || jsx_el.opening_element.name.span();
-            if let Some(href_attr) = has_jsx_prop_ignore_case(&jsx_el.opening_element, "href") {
-                let JSXAttributeItem::Attribute(attr) = href_attr else {
-                    return;
-                };
 
-                // Check if the 'a' element has a correct href attribute
-                let Some(value) = attr.value.as_ref() else {
-                    ctx.diagnostic(incorrect_href(get_span()));
-                    return;
-                };
+            let href_names = self.href_names(ctx);
+            let mut has_href = false;
+            let mut has_invalid_href = false;
+            let mut has_spread_attr = false;
 
-                let is_empty = self.check_value_is_empty_or_invalid(value);
-                if is_empty {
-                    if has_jsx_prop_ignore_case(&jsx_el.opening_element, "onclick").is_some() {
-                        ctx.diagnostic(cant_be_anchor(get_span()));
-                        return;
+            for attr in &jsx_el.opening_element.attributes {
+                match attr {
+                    JSXAttributeItem::SpreadAttribute(_) => has_spread_attr = true,
+                    JSXAttributeItem::Attribute(attr) => {
+                        if href_names
+                            .iter()
+                            .any(|href_name| attr.is_identifier_ignore_case(href_name))
+                        {
+                            match attr
+                                .value
+                                .as_ref()
+                                .map_or(HrefValueKind::Nullish, Self::check_value)
+                            {
+                                HrefValueKind::Nullish => {}
+                                HrefValueKind::Invalid => {
+                                    has_href = true;
+                                    has_invalid_href = true;
+                                }
+                                HrefValueKind::Valid => has_href = true,
+                            }
+                        }
                     }
-                    ctx.diagnostic(incorrect_href(get_span()));
-                    return;
+                }
+            }
+
+            let has_on_click =
+                has_jsx_prop_ignore_case(&jsx_el.opening_element, "onclick").is_some();
+
+            if !has_href {
+                if !has_spread_attr
+                    && self.has_aspect(AnchorIsValidAspect::NoHref)
+                    && (!has_on_click || !self.has_aspect(AnchorIsValidAspect::PreferButton))
+                {
+                    ctx.diagnostic(missing_href_attribute(get_span(), &href_names));
+                }
+                if !has_spread_attr
+                    && has_on_click
+                    && self.has_aspect(AnchorIsValidAspect::PreferButton)
+                {
+                    ctx.diagnostic(cant_be_anchor(get_span()));
                 }
                 return;
             }
-            // Exclude '<a {...props} />' case
-            let has_spread_attr = jsx_el.opening_element.attributes.iter().any(|attr| match attr {
-                JSXAttributeItem::SpreadAttribute(_) => true,
-                JSXAttributeItem::Attribute(_) => false,
-            });
-            if has_spread_attr {
-                return;
+
+            if has_invalid_href {
+                if has_on_click && self.has_aspect(AnchorIsValidAspect::PreferButton) {
+                    ctx.diagnostic(cant_be_anchor(get_span()));
+                } else if self.has_aspect(AnchorIsValidAspect::InvalidHref) {
+                    ctx.diagnostic(incorrect_href(get_span()));
+                }
             }
-            ctx.diagnostic(missing_href_attribute(get_span()));
         }
     }
 }
 
 impl AnchorIsValid {
-    fn check_value_is_empty_or_invalid(&self, value: &JSXAttributeValue) -> bool {
+    fn href_names(&self, ctx: &LintContext<'_>) -> Vec<CompactStr> {
+        let mut href_names: Vec<CompactStr> = ctx
+            .settings()
+            .jsx_a11y
+            .attributes
+            .get("href")
+            .map_or_else(|| vec![CompactStr::new("href")], Clone::clone);
+        href_names.extend(self.special_link.iter().cloned());
+        href_names
+    }
+
+    fn has_aspect(&self, aspect: AnchorIsValidAspect) -> bool {
+        self.aspects.as_ref().is_none_or(|aspects| aspects.contains(&aspect))
+    }
+
+    fn check_value(value: &JSXAttributeValue) -> HrefValueKind {
         match value {
-            JSXAttributeValue::Element(_) => false,
-            JSXAttributeValue::StringLiteral(str_lit) => self.is_invalid_href(&str_lit.value),
+            JSXAttributeValue::Element(_) => HrefValueKind::Valid,
+            JSXAttributeValue::StringLiteral(str_lit) => {
+                Self::href_value_kind_from_string(&str_lit.value)
+            }
             JSXAttributeValue::ExpressionContainer(exp) => match &exp.expression {
-                JSXExpression::Identifier(ident) => ident.name == "undefined",
-                JSXExpression::NullLiteral(_) => true,
-                JSXExpression::StringLiteral(str_lit) => self.is_invalid_href(&str_lit.value),
+                JSXExpression::Identifier(ident) if ident.name == "undefined" => {
+                    HrefValueKind::Nullish
+                }
+                JSXExpression::NullLiteral(_) => HrefValueKind::Nullish,
+                JSXExpression::StringLiteral(str_lit) => {
+                    Self::href_value_kind_from_string(&str_lit.value)
+                }
                 JSXExpression::TemplateLiteral(temp_lit) => {
                     if !temp_lit.expressions.is_empty() {
-                        return false;
+                        return HrefValueKind::Valid;
                     }
 
                     let Some(quasi) = temp_lit.single_quasi() else {
-                        return false;
+                        return HrefValueKind::Valid;
                     };
-                    self.is_invalid_href(&quasi)
+                    Self::href_value_kind_from_string(&quasi)
                 }
-                _ => false,
+                _ => HrefValueKind::Valid,
             },
-            JSXAttributeValue::Fragment(_) => true,
+            JSXAttributeValue::Fragment(_) => HrefValueKind::Nullish,
         }
     }
-}
 
-impl AnchorIsValidConfig {
-    fn new(mut valid_hrefs: Vec<CompactStr>) -> Self {
-        valid_hrefs.sort_unstable();
-        valid_hrefs.dedup();
-        Self { valid_hrefs }
+    fn href_value_kind_from_string(href: &str) -> HrefValueKind {
+        if Self::is_invalid_href(href) { HrefValueKind::Invalid } else { HrefValueKind::Valid }
     }
 
-    fn is_invalid_href(&self, href: &str) -> bool {
-        if self.contains(href) {
-            return false;
-        }
-
-        href.is_empty() || href == "#" || href == "javascript:void(0)"
-    }
-
-    fn contains(&self, href: &str) -> bool {
-        self.valid_hrefs.binary_search_by(|valid_href| valid_href.as_str().cmp(href)).is_ok()
-    }
-}
-
-impl<'v> FromIterator<&'v Value> for AnchorIsValidConfig {
-    fn from_iter<T: IntoIterator<Item = &'v Value>>(iter: T) -> Self {
-        let hrefs = iter.into_iter().filter_map(Value::as_str).map(CompactStr::from).collect();
-        Self::new(hrefs)
+    fn is_invalid_href(href: &str) -> bool {
+        let href_without_leading_non_word =
+            href.trim_start_matches(|c: char| !c.is_ascii_alphanumeric() && c != '_');
+        href.is_empty() || href == "#" || href_without_leading_non_word.starts_with("javascript:")
     }
 }
 
@@ -234,335 +290,293 @@ impl<'v> FromIterator<&'v Value> for AnchorIsValidConfig {
 fn test() {
     use crate::tester::Tester;
 
-    // let components = vec![1];
-    // let specialLink = vec![1];
-    // let componentsAndSpecialLink = vec![1];
-    // let invalidHrefAspect = vec![1];
-    // let preferButtonAspect = vec![1];
-    // let preferButtonInvalidHrefAspect = vec![1];
-    // let noHrefAspect = vec![1];
-    // let noHrefPreferButtonAspect = vec![1];
-    // let componentsAndSpecialLinkAndInvalidHrefAspect = vec![1];
-    // let noHrefInvalidHrefAspect = vec![1];
-    // let componentsAndSpecialLinkAndNoHrefAspect = vec![1];
+    fn components() -> serde_json::Value {
+        serde_json::json!([{ "components": ["Anchor", "Link"] }])
+    }
+
+    fn special_link() -> serde_json::Value {
+        serde_json::json!([{ "specialLink": ["hrefLeft", "hrefRight"] }])
+    }
+
+    fn no_href_aspect() -> serde_json::Value {
+        serde_json::json!([{ "aspects": ["noHref"] }])
+    }
+
+    fn invalid_href_aspect() -> serde_json::Value {
+        serde_json::json!([{ "aspects": ["invalidHref"] }])
+    }
+
+    fn prefer_button_aspect() -> serde_json::Value {
+        serde_json::json!([{ "aspects": ["preferButton"] }])
+    }
+
+    fn no_href_invalid_href_aspect() -> serde_json::Value {
+        serde_json::json!([{ "aspects": ["noHref", "invalidHref"] }])
+    }
+
+    fn no_href_prefer_button_aspect() -> serde_json::Value {
+        serde_json::json!([{ "aspects": ["noHref", "preferButton"] }])
+    }
+
+    fn prefer_button_invalid_href_aspect() -> serde_json::Value {
+        serde_json::json!([{ "aspects": ["preferButton", "invalidHref"] }])
+    }
+
+    fn components_and_special_link() -> serde_json::Value {
+        serde_json::json!([{ "components": ["Anchor"], "specialLink": ["hrefLeft"] }])
+    }
+
+    fn components_and_special_link_and_invalid_href_aspect() -> serde_json::Value {
+        serde_json::json!([{
+            "components": ["Anchor"],
+            "specialLink": ["hrefLeft"],
+            "aspects": ["invalidHref"]
+        }])
+    }
+
+    fn components_and_special_link_and_no_href_aspect() -> serde_json::Value {
+        serde_json::json!([{
+            "components": ["Anchor"],
+            "specialLink": ["hrefLeft"],
+            "aspects": ["noHref"]
+        }])
+    }
+
+    fn components_settings() -> serde_json::Value {
+        serde_json::json!({
+            "settings": {
+                "jsx-a11y": {
+                    "components": {
+                        "Anchor": "a",
+                        "Link": "a"
+                    }
+                }
+            }
+        })
+    }
+
+    fn attributes_settings() -> serde_json::Value {
+        serde_json::json!({
+            "settings": {
+                "jsx-a11y": {
+                    "components": { "Link": "a" },
+                    "attributes": { "href": ["href", "to"] }
+                }
+            }
+        })
+    }
 
     // https://raw.githubusercontent.com/jsx-eslint/eslint-plugin-jsx-a11y/main/__tests__/src/rules/anchor-is-valid-test.js
     let pass = vec![
         (r"<Anchor />", None, None),
         (r"<a {...props} />", None, None),
-        (r"<a href='foo' />", Some(serde_json::json!({ "validHrefs": ["foo"] })), None),
+        (r"<a href='foo' />", None, None),
         (r"<a href={foo} />", None, None),
-        (r"<a href='/foo' />", Some(serde_json::json!({ "validHrefs": ["/foo"] })), None),
-        (
-            r"<a href='https://foo.bar.com' />",
-            Some(serde_json::json!({ "validHrefs": ["https://foo.bar.com"] })),
-            None,
-        ),
+        (r"<a href='/foo' />", None, None),
+        (r"<a href='https://foo.bar.com' />", None, None),
         (r"<div href='foo' />", None, None),
-        (
-            r"<a href='javascript' />",
-            Some(serde_json::json!({ "validHrefs": ["javascript"] })),
-            None,
-        ),
-        (
-            r"<a href='javascriptFoo' />",
-            Some(serde_json::json!({ "validHrefs": ["javascriptFoo"] })),
-            None,
-        ),
+        (r"<a href='javascript' />", None, None),
+        (r"<a href='javascriptFoo' />", None, None),
         (r"<a href={`#foo`}/>", None, None),
-        (r"<a href={'foo'}/>", Some(serde_json::json!({ "validHrefs": ["foo"] })), None),
-        (
-            r"<a href={'javascript'}/>",
-            Some(serde_json::json!({ "validHrefs": ["javascript"] })),
-            None,
-        ),
+        (r"<a href={'foo'}/>", None, None),
+        (r"<a href={'javascript'}/>", None, None),
         (r"<a href={`#javascript`}/>", None, None),
-        (r"<a href='#foo' />", Some(serde_json::json!({ "validHrefs": ["#foo"] })), None),
-        (
-            r"<a href='#javascript' />",
-            Some(serde_json::json!({ "validHrefs": ["#javascript"] })),
-            None,
-        ),
-        (
-            r"<a href='#javascriptFoo' />",
-            Some(serde_json::json!({ "validHrefs": ["#javascriptFoo"] })),
-            None,
-        ),
+        (r"<a href='#foo' />", None, None),
+        (r"<a href='#javascript' />", None, None),
+        (r"<a href='#javascriptFoo' />", None, None),
         (r"<UX.Layout>test</UX.Layout>", None, None),
         (r"<a href={this} />", None, None),
-        // (r#"<Anchor {...props} />"#, Some(serde_json::json!(components))),
-        // (r#"<Anchor href='foo' />"#, Some(serde_json::json!(components))),
-        // (r#"<Anchor href={foo} />"#, Some(serde_json::json!(components))),
-        // (r#"<Anchor href='/foo' />"#, Some(serde_json::json!(components))),
-        // (r#"<Anchor href='https://foo.bar.com' />"#, Some(serde_json::json!(components))),
-        // (r#"<div href='foo' />"#, Some(serde_json::json!(components))),
-        // (r#"<Anchor href={`#foo`}/>"#, Some(serde_json::json!(components))),
-        // (r#"<Anchor href={'foo'}/>"#, Some(serde_json::json!(components))),
-        // (r#"<Anchor href='#foo' />"#, Some(serde_json::json!(components))),
-        // (r#"<Link {...props} />"#, Some(serde_json::json!(components))),
-        // (r#"<Link href='foo' />"#, Some(serde_json::json!(components))),
-        // (r#"<Link href={foo} />"#, Some(serde_json::json!(components))),
-        // (r#"<Link href='/foo' />"#, Some(serde_json::json!(components))),
-        // (r#"<Link href='https://foo.bar.com' />"#, Some(serde_json::json!(components))),
-        // (r#"<div href='foo' />"#, Some(serde_json::json!(components))),
-        // (r#"<Link href={`#foo`}/>"#, Some(serde_json::json!(components))),
-        // (r#"<Link href={'foo'}/>"#, Some(serde_json::json!(components))),
-        // (r#"<Link href='#foo' />"#, Some(serde_json::json!(components))),
-        (
-            r"<Link href='#foo' />",
-            Some(serde_json::json!({ "validHrefs": ["#foo"] })),
-            Some(
-                serde_json::json!({ "settings": { "jsx-a11y": { "components": { "Anchor": "a", "Link": "a" } } } }),
-            ),
-        ),
-        // (r#"<a {...props} />"#, Some(serde_json::json!(specialLink))),
-        // (r#"<a hrefLeft='foo' />"#, Some(serde_json::json!(specialLink))),
-        // (r#"<a hrefLeft={foo} />"#, Some(serde_json::json!(specialLink))),
-        // (r#"<a hrefLeft='/foo' />"#, Some(serde_json::json!(specialLink))),
-        // (r#"<a hrefLeft='https://foo.bar.com' />"#, Some(serde_json::json!(specialLink))),
-        // (r#"<div hrefLeft='foo' />"#, Some(serde_json::json!(specialLink))),
-        // (r#"<a hrefLeft={`#foo`}/>"#, Some(serde_json::json!(specialLink))),
-        // (r#"<a hrefLeft={'foo'}/>"#, Some(serde_json::json!(specialLink))),
-        // (r#"<a hrefLeft='#foo' />"#, Some(serde_json::json!(specialLink))),
-        // (r#"<UX.Layout>test</UX.Layout>"#, Some(serde_json::json!(specialLink))),
-        // (r#"<a hrefRight={this} />"#, Some(serde_json::json!(specialLink))),
-        // (r#"<a {...props} />"#, Some(serde_json::json!(specialLink))),
-        // (r#"<a hrefRight='foo' />"#, Some(serde_json::json!(specialLink))),
-        // (r#"<a hrefRight={foo} />"#, Some(serde_json::json!(specialLink))),
-        // (r#"<a hrefRight='/foo' />"#, Some(serde_json::json!(specialLink))),
-        // (r#"<a hrefRight='https://foo.bar.com' />"#, Some(serde_json::json!(specialLink))),
-        // (r#"<div hrefRight='foo' />"#, Some(serde_json::json!(specialLink))),
-        // (r#"<a hrefRight={`#foo`}/>"#, Some(serde_json::json!(specialLink))),
-        // (r#"<a hrefRight={'foo'}/>"#, Some(serde_json::json!(specialLink))),
-        // (r#"<a hrefRight='#foo' />"#, Some(serde_json::json!(specialLink))),
-        // (r#"<UX.Layout>test</UX.Layout>"#, Some(serde_json::json!(specialLink))),
-        // (r#"<a hrefRight={this} />"#, Some(serde_json::json!(specialLink))),
-        // (r#"<Anchor {...props} />"#, Some(serde_json::json!(componentsAndSpecialLink))),
-        // (r#"<Anchor hrefLeft='foo' />"#, Some(serde_json::json!(componentsAndSpecialLink))),
-        // (r#"<Anchor hrefLeft={foo} />"#, Some(serde_json::json!(componentsAndSpecialLink))),
-        // (r#"<Anchor hrefLeft='/foo' />"#, Some(serde_json::json!(componentsAndSpecialLink))),
-        // (
-        // r#"<Anchor hrefLeft='https://foo.bar.com' />"#,
-        // Some(serde_json::json!(componentsAndSpecialLink)),
-        // ),
-        // (r#"<div hrefLeft='foo' />"#, Some(serde_json::json!(componentsAndSpecialLink))),
-        // (r#"<Anchor hrefLeft={`#foo`}/>"#, Some(serde_json::json!(componentsAndSpecialLink))),
-        // (r#"<Anchor hrefLeft={'foo'}/>"#, Some(serde_json::json!(componentsAndSpecialLink))),
-        // (r#"<Anchor hrefLeft='#foo' />"#, Some(serde_json::json!(componentsAndSpecialLink))),
-        // (r#"<UX.Layout>test</UX.Layout>"#, Some(serde_json::json!(componentsAndSpecialLink))),
+        (r"<Anchor {...props} />", Some(components()), None),
+        (r"<Anchor href='foo' />", Some(components()), None),
+        (r"<Anchor href={foo} />", Some(components()), None),
+        (r"<Anchor href='/foo' />", Some(components()), None),
+        (r"<Anchor href='https://foo.bar.com' />", Some(components()), None),
+        (r"<div href='foo' />", Some(components()), None),
+        (r"<Anchor href={`#foo`}/>", Some(components()), None),
+        (r"<Anchor href={'foo'}/>", Some(components()), None),
+        (r"<Anchor href='#foo' />", Some(components()), None),
+        (r"<Link {...props} />", Some(components()), None),
+        (r"<Link href='foo' />", Some(components()), None),
+        (r"<Link href={foo} />", Some(components()), None),
+        (r"<Link href='/foo' />", Some(components()), None),
+        (r"<Link href='https://foo.bar.com' />", Some(components()), None),
+        (r"<div href='foo' />", Some(components()), None),
+        (r"<Link href={`#foo`}/>", Some(components()), None),
+        (r"<Link href={'foo'}/>", Some(components()), None),
+        (r"<Link href='#foo' />", Some(components()), None),
+        (r"<Link href='#foo' />", None, Some(components_settings())),
+        (r"<Link to='https://example.com' />", None, Some(attributes_settings())),
+        (r"<Link to={dest} />", None, Some(attributes_settings())),
+        (r"<a {...props} />", Some(special_link()), None),
+        (r"<a hrefLeft='foo' />", Some(special_link()), None),
+        (r"<a hrefLeft={foo} />", Some(special_link()), None),
+        (r"<a hrefLeft='/foo' />", Some(special_link()), None),
+        (r"<a hrefLeft='https://foo.bar.com' />", Some(special_link()), None),
+        (r"<div hrefLeft='foo' />", Some(special_link()), None),
+        (r"<a hrefLeft={`#foo`}/>", Some(special_link()), None),
+        (r"<a hrefLeft={'foo'}/>", Some(special_link()), None),
+        (r"<a hrefLeft='#foo' />", Some(special_link()), None),
+        (r"<UX.Layout>test</UX.Layout>", Some(special_link()), None),
+        (r"<a hrefRight={this} />", Some(special_link()), None),
+        (r"<a {...props} />", Some(special_link()), None),
+        (r"<a hrefRight='foo' />", Some(special_link()), None),
+        (r"<a hrefRight={foo} />", Some(special_link()), None),
+        (r"<a hrefRight='/foo' />", Some(special_link()), None),
+        (r"<a hrefRight='https://foo.bar.com' />", Some(special_link()), None),
+        (r"<div hrefRight='foo' />", Some(special_link()), None),
+        (r"<a hrefRight={`#foo`}/>", Some(special_link()), None),
+        (r"<a hrefRight={'foo'}/>", Some(special_link()), None),
+        (r"<a hrefRight='#foo' />", Some(special_link()), None),
+        (r"<UX.Layout>test</UX.Layout>", Some(special_link()), None),
+        (r"<a hrefRight={this} />", Some(special_link()), None),
+        (r"<Anchor {...props} />", Some(components_and_special_link()), None),
+        (r"<Anchor hrefLeft='foo' />", Some(components_and_special_link()), None),
+        (r"<Anchor hrefLeft={foo} />", Some(components_and_special_link()), None),
+        (r"<Anchor hrefLeft='/foo' />", Some(components_and_special_link()), None),
+        (r"<Anchor hrefLeft='https://foo.bar.com' />", Some(components_and_special_link()), None),
+        (r"<div hrefLeft='foo' />", Some(components_and_special_link()), None),
+        (r"<Anchor hrefLeft={`#foo`}/>", Some(components_and_special_link()), None),
+        (r"<Anchor hrefLeft={'foo'}/>", Some(components_and_special_link()), None),
+        (r"<Anchor hrefLeft='#foo' />", Some(components_and_special_link()), None),
+        (r"<UX.Layout>test</UX.Layout>", Some(components_and_special_link()), None),
         (r"<a {...props} onClick={() => void 0} />", None, None),
-        (
-            r"<a href='foo' onClick={() => void 0} />",
-            Some(serde_json::json!({ "validHrefs": ["foo"] })),
-            None,
-        ),
+        (r"<a href='foo' onClick={() => void 0} />", None, None),
         (r"<a href={foo} onClick={() => void 0} />", None, None),
-        (
-            r"<a href='/foo' onClick={() => void 0} />",
-            Some(serde_json::json!({ "validHrefs": ["/foo"] })),
-            None,
-        ),
-        (
-            r"<a href='https://foo.bar.com' onClick={() => void 0} />",
-            Some(serde_json::json!({ "validHrefs": ["https://foo.bar.com"] })),
-            None,
-        ),
+        (r"<a href='/foo' onClick={() => void 0} />", None, None),
+        (r"<a href='https://foo.bar.com' onClick={() => void 0} />", None, None),
         (r"<div href='foo' onClick={() => void 0} />", None, None),
         (r"<a href={`#foo`} onClick={() => void 0} />", None, None),
-        (
-            r"<a href={'foo'} onClick={() => void 0} />",
-            Some(serde_json::json!({ "validHrefs": ["foo"] })),
-            None,
-        ),
-        (
-            r"<a href='#foo' onClick={() => void 0} />",
-            Some(serde_json::json!({ "validHrefs": ["#foo"] })),
-            None,
-        ),
+        (r"<a href={'foo'} onClick={() => void 0} />", None, None),
+        (r"<a href='#foo' onClick={() => void 0} />", None, None),
         (r"<a href={this} onClick={() => void 0} />", None, None),
-        (r"<a href='/some/valid/uri'>valid</a>", None, None),
-        (r"<a href={'/some/valid/uri'}>valid</a>", None, None),
-        (r"<a href={`/some/valid/uri`}>valid</a>", None, None),
-        (r"<a href='#top'>Navigate to internal page location</a>", None, None),
-        (r"<a href={'#top'}>Navigate to internal page location</a>", None, None),
-        (r"<a href={`#top`}>Navigate to internal page location</a>", None, None),
-        (r"<a href='https://github.com'>github</a>", None, None),
-        (r"<a href={'https://github.com'}>github</a>", None, None),
-        (r"<a href={`https://github.com`}>github</a>", None, None),
-        (r"<a href='#section'>section</a>", None, None),
-        (r"<a href={'#section'}>section</a>", None, None),
-        (r"<a href={`#section`}>section</a>", None, None),
-        (r"<a href={`${foo}`}>valid</a>", None, None),
-        (r"<a href={`#${foo}`}>valid</a>", None, None),
-        (r"<a href={`#${foo}/bar`}>valid</a>", None, None),
-        (r"<a href={foo + bar}>valid</a>", None, None),
-        // (r#"<Anchor {...props} onClick={() => void 0} />"#, Some(serde_json::json!(components))),
-        // (r#"<Anchor href='foo' onClick={() => void 0} />"#, Some(serde_json::json!(components))),
-        // (r#"<Anchor href={foo} onClick={() => void 0} />"#, Some(serde_json::json!(components))),
-        // (r#"<Anchor href='/foo' onClick={() => void 0} />"#, Some(serde_json::json!(components))),
-        // (
-        // r#"<Anchor href='https://foo.bar.com' onClick={() => void 0} />"#,
-        // Some(serde_json::json!(components)),
-        // ),
-        // (r#"<Anchor href={`#foo`} onClick={() => void 0} />"#, Some(serde_json::json!(components))),
-        // (
-        // r#"<Anchor href={'foo'} onClick={() => void 0} />"#,
-        // Some(serde_json::json!(components)),
-        // ),
-        // (r#"<Anchor href='#foo' onClick={() => void 0} />"#, Some(serde_json::json!(components))),
-        // (r#"<Link {...props} onClick={() => void 0} />"#, Some(serde_json::json!(components))),
-        // (r#"<Link href='foo' onClick={() => void 0} />"#, Some(serde_json::json!(components))),
-        // (r#"<Link href={foo} onClick={() => void 0} />"#, Some(serde_json::json!(components))),
-        // (r#"<Link href='/foo' onClick={() => void 0} />"#, Some(serde_json::json!(components))),
-        // (
-        // r#"<Link href='https://foo.bar.com' onClick={() => void 0} />"#,
-        // Some(serde_json::json!(components)),
-        // ),
-        // (r#"<div href='foo' onClick={() => void 0} />"#, Some(serde_json::json!(components))),
-        // (r#"<Link href={`#foo`} onClick={() => void 0} />"#, Some(serde_json::json!(components))),
-        // (r#"<Link href={'foo'} onClick={() => void 0} />"#, Some(serde_json::json!(components))),
-        // (r#"<Link href='#foo' onClick={() => void 0} />"#, Some(serde_json::json!(components))),
-        // (r#"<a {...props} onClick={() => void 0} />"#, Some(serde_json::json!(specialLink))),
-        // (r#"<a hrefLeft='foo' onClick={() => void 0} />"#, Some(serde_json::json!(specialLink))),
-        // (r#"<a hrefLeft={foo} onClick={() => void 0} />"#, Some(serde_json::json!(specialLink))),
-        // (r#"<a hrefLeft='/foo' onClick={() => void 0} />"#, Some(serde_json::json!(specialLink))),
-        // (
-        // r#"<a hrefLeft href='https://foo.bar.com' onClick={() => void 0} />"#,
-        // Some(serde_json::json!(specialLink)),
-        // ),
-        // (
-        // r#"<div hrefLeft='foo' onClick={() => void 0} />"#,
-        // Some(serde_json::json!(specialLink)),
-        // ),
-        // (r#"<a hrefLeft={`#foo`} onClick={() => void 0} />"#, Some(serde_json::json!(specialLink))),
-        // (
-        // r#"<a hrefLeft={'foo'} onClick={() => void 0} />"#,
-        // Some(serde_json::json!(specialLink)),
-        // ),
-        // (r#"<a hrefLeft='#foo' onClick={() => void 0} />"#, Some(serde_json::json!(specialLink))),
-        // (r#"<a hrefRight={this} onClick={() => void 0} />"#, Some(serde_json::json!(specialLink))),
-        // (r#"<a {...props} onClick={() => void 0} />"#, Some(serde_json::json!(specialLink))),
-        // (r#"<a hrefRight='foo' onClick={() => void 0} />"#, Some(serde_json::json!(specialLink))),
-        // (r#"<a hrefRight={foo} onClick={() => void 0} />"#, Some(serde_json::json!(specialLink))),
-        // (
-        // r#"<a hrefRight='/foo' onClick={() => void 0} />"#,
-        // Some(serde_json::json!(specialLink)),
-        // ),
-        // (
-        // r#"<a hrefRight href='https://foo.bar.com' onClick={() => void 0} />"#,
-        // Some(serde_json::json!(specialLink)),
-        // ),
-        // (
-        // r#"<div hrefRight='foo' onClick={() => void 0} />"#,
-        // Some(serde_json::json!(specialLink)),
-        // ),
-        // (
-        // r#"<a hrefRight={`#foo`} onClick={() => void 0} />"#,
-        // Some(serde_json::json!(specialLink)),
-        // ),
-        // (
-        // r#"<a hrefRight={'foo'} onClick={() => void 0} />"#,
-        // Some(serde_json::json!(specialLink)),
-        // ),
-        // (r#"<a hrefRight='#foo' onClick={() => void 0} />"#, Some(serde_json::json!(specialLink))),
-        // (r#"<a hrefRight={this} onClick={() => void 0} />"#, Some(serde_json::json!(specialLink))),
-        // (
-        // r#"<Anchor {...props} onClick={() => void 0} />"#,
-        // Some(serde_json::json!(componentsAndSpecialLink)),
-        // ),
-        // (
-        // r#"<Anchor hrefLeft='foo' onClick={() => void 0} />"#,
-        // Some(serde_json::json!(componentsAndSpecialLink)),
-        // ),
-        // (
-        // r#"<Anchor hrefLeft={foo} onClick={() => void 0} />"#,
-        // Some(serde_json::json!(componentsAndSpecialLink)),
-        // ),
-        // (
-        // r#"<Anchor hrefLeft='/foo' onClick={() => void 0} />"#,
-        // Some(serde_json::json!(componentsAndSpecialLink)),
-        // ),
-        // (
-        // r#"<Anchor hrefLeft href='https://foo.bar.com' onClick={() => void 0} />"#,
-        // Some(serde_json::json!(componentsAndSpecialLink)),
-        // ),
-        // (
-        // r#"<Anchor hrefLeft={`#foo`} onClick={() => void 0} />"#,
-        // Some(serde_json::json!(componentsAndSpecialLink)),
-        // ),
-        // (
-        // r#"<Anchor hrefLeft={'foo'} onClick={() => void 0} />"#,
-        // Some(serde_json::json!(componentsAndSpecialLink)),
-        // ),
-        // (
-        // r#"<Anchor hrefLeft='#foo'` onClick={() => void 0} />"#,
-        // Some(serde_json::json!(componentsAndSpecialLink)),
-        // ),
-        // (r#"<a />"#, Some(serde_json::json!(invalidHrefAspect))),
-        // (r#"<a href={undefined} />"#, Some(serde_json::json!(invalidHrefAspect))),
-        // (r#"<a href={null} />"#, Some(serde_json::json!(invalidHrefAspect))),
-        // (r#"<a />"#, Some(serde_json::json!(preferButtonAspect))),
-        // (r#"<a href={undefined} />"#, Some(serde_json::json!(preferButtonAspect))),
-        // (r#"<a href={null} />"#, Some(serde_json::json!(preferButtonAspect))),
-        // (r#"<a />"#, Some(serde_json::json!(preferButtonInvalidHrefAspect))),
-        // (r#"<a href={undefined} />"#, Some(serde_json::json!(preferButtonInvalidHrefAspect))),
-        // (r#"<a href={null} />"#, Some(serde_json::json!(preferButtonInvalidHrefAspect))),
-        // (r#"<a href=' />;"#, Some(serde_json::json!(preferButtonAspect))),
-        // (r#"<a href='#' />"#, Some(serde_json::json!(preferButtonAspect))),
-        // (r#"<a href={'#'} />"#, Some(serde_json::json!(preferButtonAspect))),
-        // (r#"<a href='javascript:void(0)' />"#, Some(serde_json::json!(preferButtonAspect))),
-        // (r#"<a href={'javascript:void(0)'} />"#, Some(serde_json::json!(preferButtonAspect))),
-        // (r#"<a href=' />;"#, Some(serde_json::json!(noHrefAspect))),
-        // (r#"<a href='#' />"#, Some(serde_json::json!(noHrefAspect))),
-        // (r#"<a href={'#'} />"#, Some(serde_json::json!(noHrefAspect))),
-        // (r#"<a href='javascript:void(0)' />"#, Some(serde_json::json!(noHrefAspect))),
-        // (r#"<a href={'javascript:void(0)'} />"#, Some(serde_json::json!(noHrefAspect))),
-        // (r#"<a href=' />;"#, Some(serde_json::json!(noHrefPreferButtonAspect))),
-        // (r#"<a href='#' />"#, Some(serde_json::json!(noHrefPreferButtonAspect))),
-        // (r#"<a href={'#'} />"#, Some(serde_json::json!(noHrefPreferButtonAspect))),
-        // (r#"<a href='javascript:void(0)' />"#, Some(serde_json::json!(noHrefPreferButtonAspect))),
-        // (
-        // r#"<a href={'javascript:void(0)'} />"#,
-        // Some(serde_json::json!(noHrefPreferButtonAspect)),
-        // ),
-        // (r#"<a onClick={() => void 0} />"#, Some(serde_json::json!(invalidHrefAspect))),
-        // (r#"<a href='#' onClick={() => void 0} />"#, Some(serde_json::json!(noHrefAspect))),
-        // (
-        // r#"<a href='javascript:void(0)' onClick={() => void 0} />"#,
-        // Some(serde_json::json!(noHrefAspect)),
-        // ),
-        // (
-        // r#"<a href={'javascript:void(0)'} onClick={() => void 0} />"#,
-        // Some(serde_json::json!(noHrefAspect)),
-        // ),
-        // (
-        // r#"<Anchor hrefLeft={undefined} />"#,
-        // Some(serde_json::json!(componentsAndSpecialLinkAndInvalidHrefAspect)),
-        // ),
-        // (
-        // r#"<Anchor hrefLeft={null} />"#,
-        // Some(serde_json::json!(componentsAndSpecialLinkAndInvalidHrefAspect)),
-        // ),
-        // (
-        // r#"<Anchor hrefLeft={undefined} />"#,
-        // Some(serde_json::json!(componentsAndSpecialLinkAndInvalidHrefAspect)),
-        // ),
-        // (
-        // r#"<Anchor hrefLeft={null} />"#,
-        // Some(serde_json::json!(componentsAndSpecialLinkAndInvalidHrefAspect)),
-        // ),
-        // (
-        // r#"<Anchor hrefLeft={undefined} />"#,
-        // Some(serde_json::json!(componentsAndSpecialLinkAndInvalidHrefAspect)),
-        // ),
-        // (
-        // r#"<Anchor hrefLeft={null} />"#,
-        // Some(serde_json::json!(componentsAndSpecialLinkAndInvalidHrefAspect)),
-        // ),
+        (r"<Anchor {...props} onClick={() => void 0} />", Some(components()), None),
+        (r"<Anchor href='foo' onClick={() => void 0} />", Some(components()), None),
+        (r"<Anchor href={foo} onClick={() => void 0} />", Some(components()), None),
+        (r"<Anchor href='/foo' onClick={() => void 0} />", Some(components()), None),
+        (r"<Anchor href='https://foo.bar.com' onClick={() => void 0} />", Some(components()), None),
+        (r"<Anchor href={`#foo`} onClick={() => void 0} />", Some(components()), None),
+        (r"<Anchor href={'foo'} onClick={() => void 0} />", Some(components()), None),
+        (r"<Anchor href='#foo' onClick={() => void 0} />", Some(components()), None),
+        (r"<Link {...props} onClick={() => void 0} />", Some(components()), None),
+        (r"<Link href='foo' onClick={() => void 0} />", Some(components()), None),
+        (r"<Link href={foo} onClick={() => void 0} />", Some(components()), None),
+        (r"<Link href='/foo' onClick={() => void 0} />", Some(components()), None),
+        (r"<Link href='https://foo.bar.com' onClick={() => void 0} />", Some(components()), None),
+        (r"<div href='foo' onClick={() => void 0} />", Some(components()), None),
+        (r"<Link href={`#foo`} onClick={() => void 0} />", Some(components()), None),
+        (r"<Link href={'foo'} onClick={() => void 0} />", Some(components()), None),
+        (r"<Link href='#foo' onClick={() => void 0} />", Some(components()), None),
+        (r"<a {...props} onClick={() => void 0} />", Some(special_link()), None),
+        (r"<a hrefLeft='foo' onClick={() => void 0} />", Some(special_link()), None),
+        (r"<a hrefLeft={foo} onClick={() => void 0} />", Some(special_link()), None),
+        (r"<a hrefLeft='/foo' onClick={() => void 0} />", Some(special_link()), None),
+        (
+            r"<a hrefLeft href='https://foo.bar.com' onClick={() => void 0} />",
+            Some(special_link()),
+            None,
+        ),
+        (r"<div hrefLeft='foo' onClick={() => void 0} />", Some(special_link()), None),
+        (r"<a hrefLeft={`#foo`} onClick={() => void 0} />", Some(special_link()), None),
+        (r"<a hrefLeft={'foo'} onClick={() => void 0} />", Some(special_link()), None),
+        (r"<a hrefLeft='#foo' onClick={() => void 0} />", Some(special_link()), None),
+        (r"<a hrefRight={this} onClick={() => void 0} />", Some(special_link()), None),
+        (r"<a {...props} onClick={() => void 0} />", Some(special_link()), None),
+        (r"<a hrefRight='foo' onClick={() => void 0} />", Some(special_link()), None),
+        (r"<a hrefRight={foo} onClick={() => void 0} />", Some(special_link()), None),
+        (r"<a hrefRight='/foo' onClick={() => void 0} />", Some(special_link()), None),
+        (
+            r"<a hrefRight href='https://foo.bar.com' onClick={() => void 0} />",
+            Some(special_link()),
+            None,
+        ),
+        (r"<div hrefRight='foo' onClick={() => void 0} />", Some(special_link()), None),
+        (r"<a hrefRight={`#foo`} onClick={() => void 0} />", Some(special_link()), None),
+        (r"<a hrefRight={'foo'} onClick={() => void 0} />", Some(special_link()), None),
+        (r"<a hrefRight='#foo' onClick={() => void 0} />", Some(special_link()), None),
+        (r"<a hrefRight={this} onClick={() => void 0} />", Some(special_link()), None),
+        (
+            r"<Anchor {...props} onClick={() => void 0} />",
+            Some(components_and_special_link()),
+            None,
+        ),
+        (
+            r"<Anchor hrefLeft='foo' onClick={() => void 0} />",
+            Some(components_and_special_link()),
+            None,
+        ),
+        (
+            r"<Anchor hrefLeft={foo} onClick={() => void 0} />",
+            Some(components_and_special_link()),
+            None,
+        ),
+        (
+            r"<Anchor hrefLeft='/foo' onClick={() => void 0} />",
+            Some(components_and_special_link()),
+            None,
+        ),
+        (
+            r"<Anchor hrefLeft href='https://foo.bar.com' onClick={() => void 0} />",
+            Some(components_and_special_link()),
+            None,
+        ),
+        (
+            r"<Anchor hrefLeft={`#foo`} onClick={() => void 0} />",
+            Some(components_and_special_link()),
+            None,
+        ),
+        (
+            r"<Anchor hrefLeft={'foo'} onClick={() => void 0} />",
+            Some(components_and_special_link()),
+            None,
+        ),
+        (
+            r"<Anchor hrefLeft='#foo' onClick={() => void 0} />",
+            Some(components_and_special_link()),
+            None,
+        ),
+        (r"<a />", Some(invalid_href_aspect()), None),
+        (r"<a href={undefined} />", Some(invalid_href_aspect()), None),
+        (r"<a href={null} />", Some(invalid_href_aspect()), None),
+        (r"<a />", Some(prefer_button_aspect()), None),
+        (r"<a href={undefined} />", Some(prefer_button_aspect()), None),
+        (r"<a href={null} />", Some(prefer_button_aspect()), None),
+        (r"<a />", Some(prefer_button_invalid_href_aspect()), None),
+        (r"<a href={undefined} />", Some(prefer_button_invalid_href_aspect()), None),
+        (r"<a href={null} />", Some(prefer_button_invalid_href_aspect()), None),
+        (r#"<a href="" />;"#, Some(prefer_button_aspect()), None),
+        (r"<a href='#' />", Some(prefer_button_aspect()), None),
+        (r"<a href={'#'} />", Some(prefer_button_aspect()), None),
+        (r"<a href='javascript:void(0)' />", Some(prefer_button_aspect()), None),
+        (r"<a href={'javascript:void(0)'} />", Some(prefer_button_aspect()), None),
+        (r#"<a href="" />;"#, Some(no_href_aspect()), None),
+        (r"<a href='#' />", Some(no_href_aspect()), None),
+        (r"<a href={'#'} />", Some(no_href_aspect()), None),
+        (r"<a href='javascript:void(0)' />", Some(no_href_aspect()), None),
+        (r"<a href={'javascript:void(0)'} />", Some(no_href_aspect()), None),
+        (r#"<a href="" />;"#, Some(no_href_prefer_button_aspect()), None),
+        (r"<a href='#' />", Some(no_href_prefer_button_aspect()), None),
+        (r"<a href={'#'} />", Some(no_href_prefer_button_aspect()), None),
+        (r"<a href='javascript:void(0)' />", Some(no_href_prefer_button_aspect()), None),
+        (r"<a href={'javascript:void(0)'} />", Some(no_href_prefer_button_aspect()), None),
+        (r"<a onClick={() => void 0} />", Some(invalid_href_aspect()), None),
+        (r"<a href='#' onClick={() => void 0} />", Some(no_href_aspect()), None),
+        (r"<a href='javascript:void(0)' onClick={() => void 0} />", Some(no_href_aspect()), None),
+        (r"<a href={'javascript:void(0)'} onClick={() => void 0} />", Some(no_href_aspect()), None),
+        (
+            r"<Anchor hrefLeft={undefined} />",
+            Some(components_and_special_link_and_invalid_href_aspect()),
+            None,
+        ),
+        (
+            r"<Anchor hrefLeft={null} />",
+            Some(components_and_special_link_and_invalid_href_aspect()),
+            None,
+        ),
     ];
 
     let fail = vec![
         (r"<a />", None, None),
+        (r"<a href />", None, None),
         (r"<a href={undefined} />", None, None),
         (r"<a href={null} />", None, None),
         (r"<a href='' />;", None, None),
@@ -575,203 +589,165 @@ fn test() {
         (r"<a href='#' onClick={() => void 0} />", None, None),
         (r"<a href='javascript:void(0)' onClick={() => void 0} />", None, None),
         (r"<a href={'javascript:void(0)'} onClick={() => void 0} />", None, None),
-        // (r#"<Link />"#, Some(serde_json::json!(components))),
-        // (r#"<Link href={undefined} />"#, Some(serde_json::json!(components))),
-        // (r#"<Link href={null} />"#, Some(serde_json::json!(components))),
-        // (r#"<Link href=' />"#, Some(serde_json::json!(components))),
-        // (r#"<Link href='#' />"#, Some(serde_json::json!(components))),
-        // (r#"<Link href={'#'} />"#, Some(serde_json::json!(components))),
-        // (r#"<Link href='javascript:void(0)' />"#, Some(serde_json::json!(components))),
-        // (r#"<Link href={'javascript:void(0)'} />"#, Some(serde_json::json!(components))),
-        // (r#"<Anchor href=' />"#, Some(serde_json::json!(components))),
-        // (r#"<Anchor href='#' />"#, Some(serde_json::json!(components))),
-        // (r#"<Anchor href={'#'} />"#, Some(serde_json::json!(components))),
-        // (r#"<Anchor href='javascript:void(0)' />"#, Some(serde_json::json!(components))),
-        // (r#"<Anchor href={'javascript:void(0)'} />"#, Some(serde_json::json!(components))),
-        // (r#"<Link onClick={() => void 0} />"#, Some(serde_json::json!(components))),
-        // (r#"<Link href='#' onClick={() => void 0} />"#, Some(serde_json::json!(components))),
-        // (
-        // r#"<Link href='javascript:void(0)' onClick={() => void 0} />"#,
-        // Some(serde_json::json!(components)),
-        // ),
-        // (
-        // r#"<Link href={'javascript:void(0)'} onClick={() => void 0} />"#,
-        // Some(serde_json::json!(components)),
-        // ),
-        // (r#"<Anchor onClick={() => void 0} />"#, Some(serde_json::json!(components))),
-        // (r#"<Anchor href='#' onClick={() => void 0} />"#, Some(serde_json::json!(components))),
-        // (
-        // r#"<Anchor href='javascript:void(0)' onClick={() => void 0} />"#,
-        // Some(serde_json::json!(components)),
-        // ),
-        // (
-        // r#"<Anchor href={'javascript:void(0)'} onClick={() => void 0} />"#,
-        // Some(serde_json::json!(components)),
-        // ),
+        (r"<Link />", Some(components()), None),
+        (r"<Link href={undefined} />", Some(components()), None),
+        (r"<Link href={null} />", Some(components()), None),
+        (r#"<Link href="" />"#, Some(components()), None),
+        (r"<Link href='#' />", Some(components()), None),
+        (r"<Link href={'#'} />", Some(components()), None),
+        (r"<Link href='javascript:void(0)' />", Some(components()), None),
+        (r"<Link href={'javascript:void(0)'} />", Some(components()), None),
+        (r#"<Anchor href="" />"#, Some(components()), None),
+        (r"<Anchor href='#' />", Some(components()), None),
+        (r"<Anchor href={'#'} />", Some(components()), None),
+        (r"<Anchor href='javascript:void(0)' />", Some(components()), None),
+        (r"<Anchor href={'javascript:void(0)'} />", Some(components()), None),
+        (r"<Link onClick={() => void 0} />", Some(components()), None),
+        (r"<Link href='#' onClick={() => void 0} />", Some(components()), None),
+        (r"<Link href='javascript:void(0)' onClick={() => void 0} />", Some(components()), None),
+        (r"<Link href={'javascript:void(0)'} onClick={() => void 0} />", Some(components()), None),
+        (r"<Anchor onClick={() => void 0} />", Some(components()), None),
+        (r"<Anchor href='#' onClick={() => void 0} />", Some(components()), None),
+        (r"<Anchor href='javascript:void(0)' onClick={() => void 0} />", Some(components()), None),
         (
-            r"<Link href='#' onClick={() => void 0} />",
+            r"<Anchor href={'javascript:void(0)'} onClick={() => void 0} />",
+            Some(components()),
             None,
-            Some(
-                serde_json::json!({ "settings": { "jsx-a11y": { "components": { "Anchor": "a", "Link": "a" } } } }),
-            ),
         ),
-        // (r#"<a hrefLeft={undefined} />"#, Some(serde_json::json!(specialLink))),
-        // (r#"<a hrefLeft={null} />"#, Some(serde_json::json!(specialLink))),
-        // (r#"<a hrefLeft=' />;"#, Some(serde_json::json!(specialLink))),
-        // (r#"<a hrefLeft='#' />"#, Some(serde_json::json!(specialLink))),
-        // (r#"<a hrefLeft={'#'} />"#, Some(serde_json::json!(specialLink))),
-        // (r#"<a hrefLeft='javascript:void(0)' />"#, Some(serde_json::json!(specialLink))),
-        // (r#"<a hrefLeft={'javascript:void(0)'} />"#, Some(serde_json::json!(specialLink))),
-        // (r#"<a hrefLeft='#' onClick={() => void 0} />"#, Some(serde_json::json!(specialLink))),
-        // (
-        // r#"<a hrefLeft='javascript:void(0)' onClick={() => void 0} />"#,
-        // Some(serde_json::json!(specialLink)),
-        // ),
-        // (
-        // r#"<a hrefLeft={'javascript:void(0)'} onClick={() => void 0} />"#,
-        // Some(serde_json::json!(specialLink)),
-        // ),
-        // (r#"<Anchor Anchor={undefined} />"#, Some(serde_json::json!(componentsAndSpecialLink))),
-        // (r#"<Anchor hrefLeft={null} />"#, Some(serde_json::json!(componentsAndSpecialLink))),
-        // (r#"<Anchor hrefLeft=' />;"#, Some(serde_json::json!(componentsAndSpecialLink))),
-        // (r#"<Anchor hrefLeft='#' />"#, Some(serde_json::json!(componentsAndSpecialLink))),
-        // (r#"<Anchor hrefLeft={'#'} />"#, Some(serde_json::json!(componentsAndSpecialLink))),
-        // (
-        // r#"<Anchor hrefLeft='javascript:void(0)' />"#,
-        // Some(serde_json::json!(componentsAndSpecialLink)),
-        // ),
-        // (
-        // r#"<Anchor hrefLeft={'javascript:void(0)'} />"#,
-        // Some(serde_json::json!(componentsAndSpecialLink)),
-        // ),
-        // (
-        // r#"<Anchor hrefLeft='#' onClick={() => void 0} />"#,
-        // Some(serde_json::json!(componentsAndSpecialLink)),
-        // ),
-        // (
-        // r#"<Anchor hrefLeft='javascript:void(0)' onClick={() => void 0} />"#,
-        // Some(serde_json::json!(componentsAndSpecialLink)),
-        // ),
-        // (
-        // r#"<Anchor hrefLeft={'javascript:void(0)'} onClick={() => void 0} />"#,
-        // Some(serde_json::json!(componentsAndSpecialLink)),
-        // ),
-        // (r#"<a />"#, Some(serde_json::json!(noHrefAspect))),
-        // (r#"<a />"#, Some(serde_json::json!(noHrefPreferButtonAspect))),
-        // (r#"<a />"#, Some(serde_json::json!(noHrefInvalidHrefAspect))),
-        // (r#"<a href={undefined} />"#, Some(serde_json::json!(noHrefAspect))),
-        // (r#"<a href={undefined} />"#, Some(serde_json::json!(noHrefPreferButtonAspect))),
-        // (r#"<a href={undefined} />"#, Some(serde_json::json!(noHrefInvalidHrefAspect))),
-        // (r#"<a href={null} />"#, Some(serde_json::json!(noHrefAspect))),
-        // (r#"<a href={null} />"#, Some(serde_json::json!(noHrefPreferButtonAspect))),
-        // (r#"<a href={null} />"#, Some(serde_json::json!(noHrefInvalidHrefAspect))),
-        // (r#"<a href=' />;"#, Some(serde_json::json!(invalidHrefAspect))),
-        // (r#"<a href=' />;"#, Some(serde_json::json!(noHrefInvalidHrefAspect))),
-        // (r#"<a href=' />;"#, Some(serde_json::json!(preferButtonInvalidHrefAspect))),
-        // (r#"<a href='#' />;"#, Some(serde_json::json!(invalidHrefAspect))),
-        // (r#"<a href='#' />;"#, Some(serde_json::json!(noHrefInvalidHrefAspect))),
-        // (r#"<a href='#' />;"#, Some(serde_json::json!(preferButtonInvalidHrefAspect))),
-        // (r#"<a href={'#'} />;"#, Some(serde_json::json!(invalidHrefAspect))),
-        // (r#"<a href={'#'} />;"#, Some(serde_json::json!(noHrefInvalidHrefAspect))),
-        // (r#"<a href={'#'} />;"#, Some(serde_json::json!(preferButtonInvalidHrefAspect))),
-        // (r#"<a href='javascript:void(0)' />;"#, Some(serde_json::json!(invalidHrefAspect))),
-        // (r#"<a href='javascript:void(0)' />;"#, Some(serde_json::json!(noHrefInvalidHrefAspect))),
-        // (
-        // r#"<a href='javascript:void(0)' />;"#,
-        // Some(serde_json::json!(preferButtonInvalidHrefAspect)),
-        // ),
-        // (r#"<a href={'javascript:void(0)'} />;"#, Some(serde_json::json!(invalidHrefAspect))),
-        // (
-        // r#"<a href={'javascript:void(0)'} />;"#,
-        // Some(serde_json::json!(noHrefInvalidHrefAspect)),
-        // ),
-        // (
-        // r#"<a href={'javascript:void(0)'} />;"#,
-        // Some(serde_json::json!(preferButtonInvalidHrefAspect)),
-        // ),
-        // (r#"<a onClick={() => void 0} />"#, Some(serde_json::json!(preferButtonAspect))),
-        // (r#"<a onClick={() => void 0} />"#, Some(serde_json::json!(preferButtonInvalidHrefAspect))),
-        // (r#"<a onClick={() => void 0} />"#, Some(serde_json::json!(noHrefPreferButtonAspect))),
-        // (r#"<a onClick={() => void 0} />"#, Some(serde_json::json!(noHrefAspect))),
-        // (r#"<a onClick={() => void 0} />"#, Some(serde_json::json!(noHrefInvalidHrefAspect))),
-        // (r#"<a href='#' onClick={() => void 0} />"#, Some(serde_json::json!(preferButtonAspect))),
-        // (
-        // r#"<a href='#' onClick={() => void 0} />"#,
-        // Some(serde_json::json!(noHrefPreferButtonAspect)),
-        // ),
-        // (
-        // r#"<a href='#' onClick={() => void 0} />"#,
-        // Some(serde_json::json!(preferButtonInvalidHrefAspect)),
-        // ),
-        // (r#"<a href='#' onClick={() => void 0} />"#, Some(serde_json::json!(invalidHrefAspect))),
-        // (
-        // r#"<a href='#' onClick={() => void 0} />"#,
-        // Some(serde_json::json!(noHrefInvalidHrefAspect)),
-        // ),
-        // (
-        // r#"<a href='javascript:void(0)' onClick={() => void 0} />"#,
-        // Some(serde_json::json!(preferButtonAspect)),
-        // ),
-        // (
-        // r#"<a href='javascript:void(0)' onClick={() => void 0} />"#,
-        // Some(serde_json::json!(noHrefPreferButtonAspect)),
-        // ),
-        // (
-        // r#"<a href='javascript:void(0)' onClick={() => void 0} />"#,
-        // Some(serde_json::json!(preferButtonInvalidHrefAspect)),
-        // ),
-        // (
-        // r#"<a href='javascript:void(0)' onClick={() => void 0} />"#,
-        // Some(serde_json::json!(invalidHrefAspect)),
-        // ),
-        // (
-        // r#"<a href='javascript:void(0)' onClick={() => void 0} />"#,
-        // Some(serde_json::json!(noHrefInvalidHrefAspect)),
-        // ),
-        // (
-        // r#"<a href={'javascript:void(0)'} onClick={() => void 0} />"#,
-        // Some(serde_json::json!(preferButtonAspect)),
-        // ),
-        // (
-        // r#"<a href={'javascript:void(0)'} onClick={() => void 0} />"#,
-        // Some(serde_json::json!(noHrefPreferButtonAspect)),
-        // ),
-        // (
-        // r#"<a href={'javascript:void(0)'} onClick={() => void 0} />"#,
-        // Some(serde_json::json!(preferButtonInvalidHrefAspect)),
-        // ),
-        // (
-        // r#"<a href={'javascript:void(0)'} onClick={() => void 0} />"#,
-        // Some(serde_json::json!(invalidHrefAspect)),
-        // ),
-        // (
-        // r#"<a href={'javascript:void(0)'} onClick={() => void 0} />"#,
-        // Some(serde_json::json!(noHrefInvalidHrefAspect)),
-        // ),
-        // (
-        // r#"<Anchor hrefLeft={undefined} />"#,
-        // Some(serde_json::json!(componentsAndSpecialLinkAndNoHrefAspect)),
-        // ),
-        // (
-        // r#"<Anchor hrefLeft={null} />"#,
-        // Some(serde_json::json!(componentsAndSpecialLinkAndNoHrefAspect)),
-        // ),
-        // (
-        // r#"<Anchor hrefLeft={undefined} />"#,
-        // Some(serde_json::json!(componentsAndSpecialLinkAndNoHrefAspect)),
-        // ),
-        // (
-        // r#"<Anchor hrefLeft={null} />"#,
-        // Some(serde_json::json!(componentsAndSpecialLinkAndNoHrefAspect)),
-        // ),
-        // (
-        // r#"<Anchor hrefLeft={undefined} />"#,
-        // Some(serde_json::json!(componentsAndSpecialLinkAndNoHrefAspect)),
-        // ),
-        // (
-        // r#"<Anchor hrefLeft={null} />"#,
-        // Some(serde_json::json!(componentsAndSpecialLinkAndNoHrefAspect)),
-        // ),
+        (r"<Link href='#' onClick={() => void 0} />", None, Some(components_settings())),
+        (r"<Link />", None, Some(attributes_settings())),
+        (r"<Link to='#' />", None, Some(attributes_settings())),
+        (r"<a hrefLeft={undefined} />", Some(special_link()), None),
+        (r"<a hrefLeft />", Some(special_link()), None),
+        (r"<a hrefLeft={null} />", Some(special_link()), None),
+        (r#"<a hrefLeft="" />;"#, Some(special_link()), None),
+        (r"<a hrefLeft='#' />", Some(special_link()), None),
+        (r"<a hrefLeft={'#'} />", Some(special_link()), None),
+        (r"<a hrefLeft='javascript:void(0)' />", Some(special_link()), None),
+        (r"<a hrefLeft={'javascript:void(0)'} />", Some(special_link()), None),
+        (r"<a hrefLeft='#' onClick={() => void 0} />", Some(special_link()), None),
+        (r"<a hrefLeft='javascript:void(0)' onClick={() => void 0} />", Some(special_link()), None),
+        (
+            r"<a hrefLeft={'javascript:void(0)'} onClick={() => void 0} />",
+            Some(special_link()),
+            None,
+        ),
+        (r"<Anchor Anchor={undefined} />", Some(components_and_special_link()), None),
+        (r"<Anchor hrefLeft={null} />", Some(components_and_special_link()), None),
+        (r#"<Anchor hrefLeft="" />;"#, Some(components_and_special_link()), None),
+        (r"<Anchor hrefLeft='#' />", Some(components_and_special_link()), None),
+        (r"<Anchor hrefLeft={'#'} />", Some(components_and_special_link()), None),
+        (r"<Anchor hrefLeft='javascript:void(0)' />", Some(components_and_special_link()), None),
+        (r"<Anchor hrefLeft={'javascript:void(0)'} />", Some(components_and_special_link()), None),
+        (
+            r"<Anchor hrefLeft='#' onClick={() => void 0} />",
+            Some(components_and_special_link()),
+            None,
+        ),
+        (
+            r"<Anchor hrefLeft='javascript:void(0)' onClick={() => void 0} />",
+            Some(components_and_special_link()),
+            None,
+        ),
+        (
+            r"<Anchor hrefLeft={'javascript:void(0)'} onClick={() => void 0} />",
+            Some(components_and_special_link()),
+            None,
+        ),
+        (r"<a />", Some(no_href_aspect()), None),
+        (r"<a />", Some(no_href_prefer_button_aspect()), None),
+        (r"<a />", Some(no_href_invalid_href_aspect()), None),
+        (r"<a href={undefined} />", Some(no_href_aspect()), None),
+        (r"<a href={undefined} />", Some(no_href_prefer_button_aspect()), None),
+        (r"<a href={undefined} />", Some(no_href_invalid_href_aspect()), None),
+        (r"<a href={null} />", Some(no_href_aspect()), None),
+        (r"<a href={null} />", Some(no_href_prefer_button_aspect()), None),
+        (r"<a href={null} />", Some(no_href_invalid_href_aspect()), None),
+        (r#"<a href="" />;"#, Some(invalid_href_aspect()), None),
+        (r#"<a href="" />;"#, Some(no_href_invalid_href_aspect()), None),
+        (r#"<a href="" />;"#, Some(prefer_button_invalid_href_aspect()), None),
+        (r"<a href='#' />;", Some(invalid_href_aspect()), None),
+        (r"<a href='#' />;", Some(no_href_invalid_href_aspect()), None),
+        (r"<a href='#' />;", Some(prefer_button_invalid_href_aspect()), None),
+        (r"<a href={'#'} />;", Some(invalid_href_aspect()), None),
+        (r"<a href={'#'} />;", Some(no_href_invalid_href_aspect()), None),
+        (r"<a href={'#'} />;", Some(prefer_button_invalid_href_aspect()), None),
+        (r"<a href='javascript:void(0)' />;", Some(invalid_href_aspect()), None),
+        (r"<a href='javascript:void(0)' />;", Some(no_href_invalid_href_aspect()), None),
+        (r"<a href='javascript:void(0)' />;", Some(prefer_button_invalid_href_aspect()), None),
+        (r"<a href={'javascript:void(0)'} />;", Some(invalid_href_aspect()), None),
+        (r"<a href={'javascript:void(0)'} />;", Some(no_href_invalid_href_aspect()), None),
+        (r"<a href={'javascript:void(0)'} />;", Some(prefer_button_invalid_href_aspect()), None),
+        (r"<a onClick={() => void 0} />", Some(prefer_button_aspect()), None),
+        (r"<a onClick={() => void 0} />", Some(prefer_button_invalid_href_aspect()), None),
+        (r"<a onClick={() => void 0} />", Some(no_href_prefer_button_aspect()), None),
+        (r"<a onClick={() => void 0} />", Some(no_href_aspect()), None),
+        (r"<a onClick={() => void 0} />", Some(no_href_invalid_href_aspect()), None),
+        (r"<a href='#' onClick={() => void 0} />", Some(prefer_button_aspect()), None),
+        (r"<a href='#' onClick={() => void 0} />", Some(no_href_prefer_button_aspect()), None),
+        (r"<a href='#' onClick={() => void 0} />", Some(prefer_button_invalid_href_aspect()), None),
+        (r"<a href='#' onClick={() => void 0} />", Some(invalid_href_aspect()), None),
+        (r"<a href='#' onClick={() => void 0} />", Some(no_href_invalid_href_aspect()), None),
+        (
+            r"<a href='javascript:void(0)' onClick={() => void 0} />",
+            Some(prefer_button_aspect()),
+            None,
+        ),
+        (
+            r"<a href='javascript:void(0)' onClick={() => void 0} />",
+            Some(no_href_prefer_button_aspect()),
+            None,
+        ),
+        (
+            r"<a href='javascript:void(0)' onClick={() => void 0} />",
+            Some(prefer_button_invalid_href_aspect()),
+            None,
+        ),
+        (
+            r"<a href='javascript:void(0)' onClick={() => void 0} />",
+            Some(invalid_href_aspect()),
+            None,
+        ),
+        (
+            r"<a href='javascript:void(0)' onClick={() => void 0} />",
+            Some(no_href_invalid_href_aspect()),
+            None,
+        ),
+        (
+            r"<a href={'javascript:void(0)'} onClick={() => void 0} />",
+            Some(prefer_button_aspect()),
+            None,
+        ),
+        (
+            r"<a href={'javascript:void(0)'} onClick={() => void 0} />",
+            Some(no_href_prefer_button_aspect()),
+            None,
+        ),
+        (
+            r"<a href={'javascript:void(0)'} onClick={() => void 0} />",
+            Some(prefer_button_invalid_href_aspect()),
+            None,
+        ),
+        (
+            r"<a href={'javascript:void(0)'} onClick={() => void 0} />",
+            Some(invalid_href_aspect()),
+            None,
+        ),
+        (
+            r"<a href={'javascript:void(0)'} onClick={() => void 0} />",
+            Some(no_href_invalid_href_aspect()),
+            None,
+        ),
+        (
+            r"<Anchor hrefLeft={undefined} />",
+            Some(components_and_special_link_and_no_href_aspect()),
+            None,
+        ),
+        (
+            r"<Anchor hrefLeft={null} />",
+            Some(components_and_special_link_and_no_href_aspect()),
+            None,
+        ),
     ];
 
     Tester::new(AnchorIsValid::NAME, AnchorIsValid::PLUGIN, pass, fail).test_and_snapshot();

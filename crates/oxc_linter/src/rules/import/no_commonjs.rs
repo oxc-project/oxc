@@ -5,9 +5,15 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::static_ident;
 use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_commonjs_diagnostic(span: Span, name: &str, actual: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Expected {name} instead of {actual}"))
@@ -15,8 +21,8 @@ fn no_commonjs_diagnostic(span: Span, name: &str, actual: &str) -> OxcDiagnostic
         .with_label(span)
 }
 
-#[derive(Debug, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoCommonjs {
     /// If `allowPrimitiveModules` option is set to true, the following is valid:
     ///
@@ -99,6 +105,8 @@ declare_oxc_lint!(
     import,
     restriction,
     config = NoCommonjs,
+    version = "0.11.0",
+    short_description = "Forbid the use of CommonJS `require` calls and `module.exports` or `exports.*`.",
 );
 
 fn is_conditional(parent_node: &AstNode, ctx: &LintContext) -> bool {
@@ -121,24 +129,11 @@ fn is_conditional(parent_node: &AstNode, ctx: &LintContext) -> bool {
         }
     }
 }
+
 /// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-commonjs.md>
 impl Rule for NoCommonjs {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let obj = value.get(0);
-        Self {
-            allow_primitive_modules: obj
-                .and_then(|v| v.get("allowPrimitiveModules"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(false),
-            allow_require: obj
-                .and_then(|v| v.get("allowRequire"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(false),
-            allow_conditional_require: obj
-                .and_then(|v| v.get("allowConditionalRequire"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(true),
-        }
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -241,7 +236,11 @@ impl Rule for NoCommonjs {
                     return;
                 }
 
-                if ctx.scoping().find_binding(ctx.scoping().root_scope_id(), "require").is_some() {
+                if ctx
+                    .scoping()
+                    .find_binding(ctx.scoping().root_scope_id(), static_ident!("require"))
+                    .is_some()
+                {
                     return;
                 }
 
@@ -335,6 +334,11 @@ fn test() {
             const require = createRequire();
             require('remark-preset-prettier');
             ",
+            None,
+        ),
+        (
+            // Ensure allow_conditional_require defaults to true.
+            r#"if (typeof window !== "undefined") require("x")"#,
             None,
         ),
     ];

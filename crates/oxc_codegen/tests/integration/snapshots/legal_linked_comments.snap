@@ -46,7 +46,7 @@ bar;
 
 /*! For license information please see test.js */
 ########## 5
-function () {
+function test() {
     /*
     * @license
     * Copyright notice 2
@@ -54,17 +54,17 @@ function () {
     bar;
 }
 ----------
-function() {
+function test() {
 	bar;
 }
 
 /*! For license information please see test.js */
 ########## 6
-function bar() { var foo; /*! #__NO_SIDE_EFFECTS__ */ function () { } }
+function bar() { var foo; /*! #__NO_SIDE_EFFECTS__ */ function baz() { } }
 ----------
 function bar() {
 	var foo;
-	function() {}
+	function baz() {}
 }
 
 /*! For license information please see test.js */

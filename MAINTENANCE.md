@@ -1,22 +1,29 @@
-## Oxlint
+## Goals
 
-### Release Oxlint
+In no specific order:
 
-- Run [Prepare Release Oxlint](https://github.com/oxc-project/oxc/actions/workflows/prepare_release_oxlint.yml)
+- Better performance
+- Lower memory usage
+- More test coverage
+- Better conformance with existing tools and specifications
+
+## Oxlint & Oxfmt
+
+### Release Oxlint & Oxfmt
+
+- Run [Prepare Release Apps](https://github.com/oxc-project/oxc/actions/workflows/prepare_release_apps.yml)
+  - Releases both oxlint and oxfmt together as a single GitHub release (with different versions)
+  - Runs automatically every Monday at 9am UTC / 5pm Shanghai time
 
 ### E2E Testing
 
-- Run [Oxlint Ecosystem CI](https://github.com/oxc-project/oxlint-ecosystem-ci/actions/workflows/ecosystem-ci.yml)
-
-## Oxfmt
-
-### Release Oxfmt
-
-- Run [Prepare Release Oxfmt](https://github.com/oxc-project/oxc/actions/workflows/prepare_release_oxfmt.yml)
+- Run [Oxlint Ecosystem CI](https://github.com/oxc-project/oxc-ecosystem-ci/actions/workflows/ci.yml)
+- Run [Oxfmt Ecosystem CI](https://github.com/oxc-project/oxc-ecosystem-ci/actions/workflows/oxfmt-ci.yml)
 
 ## Publish Crates
 
 - Run [Prepare Release Crates](https://github.com/oxc-project/oxc/actions/workflows/prepare_release_crates.yml)
+  - Runs automatically every Monday at 9am UTC / 5pm Shanghai time
 
 Note: [crates.io trusted publishing](https://crates.io/docs/trusted-publishing) is configured,
 a short lived token is used instead of a long-live token stored in github secrets.

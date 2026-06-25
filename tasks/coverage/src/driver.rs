@@ -11,7 +11,7 @@ use oxc::{
     },
     ast_visit::{Visit, walk},
     codegen::{CodegenOptions, CodegenReturn},
-    diagnostics::OxcDiagnostic,
+    diagnostics::{Diagnostics, OxcDiagnostic},
     minifier::CompressOptions,
     parser::{ParseOptions, ParserReturn},
     regular_expression::{LiteralParser, Options},
@@ -21,7 +21,7 @@ use oxc::{
 };
 use oxc_tasks_transform_checker::{check_semantic_after_transform, check_semantic_ids};
 
-use crate::suite::TestResult;
+use crate::TestResult;
 
 #[expect(clippy::struct_excessive_bools)]
 #[derive(Default)]
@@ -36,8 +36,9 @@ pub struct Driver {
     pub allow_return_outside_function: bool,
     // results
     pub panicked: bool,
-    pub errors: Vec<OxcDiagnostic>,
+    pub errors: Diagnostics,
     pub printed: String,
+    pub source_type: Option<SourceType>,
 }
 
 impl CompilerInterface for Driver {
@@ -49,12 +50,13 @@ impl CompilerInterface for Driver {
         }
     }
 
-    fn semantic_child_scope_ids(&self) -> bool {
-        true
-    }
-
     fn transform_options(&self) -> Option<&TransformOptions> {
         self.transform.as_ref()
+    }
+
+    fn build_semantic_nodes(&self) -> bool {
+        // The coverage checks read `Semantic::nodes()` (e.g. `nodes().program()`).
+        true
     }
 
     fn compress_options(&self) -> Option<CompressOptions> {
@@ -71,22 +73,23 @@ impl CompilerInterface for Driver {
         })
     }
 
-    fn handle_errors(&mut self, errors: Vec<OxcDiagnostic>) {
+    fn handle_errors(&mut self, errors: Diagnostics) {
         self.errors.extend(errors);
     }
 
     fn after_parse(&mut self, parser_return: &mut ParserReturn) -> ControlFlow<()> {
-        let ParserReturn { program, panicked, errors, .. } = parser_return;
+        let ParserReturn { program, panicked, diagnostics, .. } = parser_return;
         self.panicked = *panicked;
+        self.source_type = Some(program.source_type);
         self.check_ast_nodes(program);
         if self.check_comments(&program.comments) {
             return ControlFlow::Break(());
         }
-        if (errors.is_empty() || !*panicked) && program.source_type.is_unambiguous() {
+        if (diagnostics.is_empty() || !*panicked) && program.source_type.is_unambiguous() {
             self.errors.push(OxcDiagnostic::error("SourceType must not be unambiguous."));
         }
         // Make sure serialization doesn't crash; also for code coverage.
-        program.to_estree_ts_json_with_fixes(false);
+        program.to_estree_json_with_fixes(true, false);
         ControlFlow::Continue(())
     }
 
@@ -116,7 +119,7 @@ impl CompilerInterface for Driver {
         ControlFlow::Continue(())
     }
 
-    fn after_codegen(&mut self, ret: CodegenReturn) {
+    fn after_codegen(&mut self, ret: CodegenReturn<'_>) {
         self.printed = ret.code;
     }
 }
@@ -133,13 +136,14 @@ impl Driver {
         source_type: SourceType,
     ) -> TestResult {
         self.run(source_text, source_type);
-        let printed1 = self.printed.clone();
+        let printed1 = std::mem::take(&mut self.printed);
+        // Use the resolved source type from the first parse for the second parse
+        let source_type = self.source_type.unwrap_or(source_type);
         self.run(&printed1, source_type);
-        let printed2 = self.printed.clone();
-        if printed1 == printed2 {
+        if printed1 == self.printed {
             TestResult::Passed
         } else {
-            TestResult::Mismatch(case, printed1, printed2)
+            TestResult::Mismatch(case, printed1, std::mem::take(&mut self.printed))
         }
     }
 

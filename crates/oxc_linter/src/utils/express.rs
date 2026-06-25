@@ -1,10 +1,7 @@
-use oxc_ast::{
-    AstKind,
-    ast::{Argument, Expression, FormalParameter},
-};
-use oxc_span::Atom;
+use oxc_ast::ast::{Argument, CallExpression, Expression, FormalParameter};
+use oxc_str::Str;
 
-/// Check if the given node is registering an endpoint handler or middleware to
+/// Check if the given call is registering an endpoint handler or middleware to
 /// a route or Express application object. If it is, it
 /// returns:
 /// - the endpoint path being handled, if found and statically analyzable
@@ -18,9 +15,8 @@ use oxc_span::Atom;
 ///
 /// ```
 pub fn as_endpoint_registration<'a, 'n>(
-    node: &'n AstKind<'a>,
-) -> Option<(Option<Atom<'a>>, &'n [Argument<'a>])> {
-    let call = node.as_call_expression()?;
+    call: &'n CallExpression<'a>,
+) -> Option<(Option<Str<'a>>, &'n [Argument<'a>])> {
     let callee = call.callee.as_member_expression()?;
     let method_name = callee.static_property_name()?;
     if ROUTER_HANDLER_METHOD_NAMES.binary_search(&method_name).is_err() {
@@ -100,4 +96,9 @@ fn is_next_param(param: &FormalParameter) -> bool {
 const COMMON_ERROR_NAMES: [&str; 4] = ["e", "err", "error", "exception"];
 fn is_error_param(param: &FormalParameter) -> bool {
     param.pattern.get_identifier_name().is_some_and(|id| COMMON_ERROR_NAMES.contains(&id.as_str()))
+}
+
+#[test]
+fn test_array_is_sorted() {
+    assert!(ROUTER_HANDLER_METHOD_NAMES.is_sorted());
 }

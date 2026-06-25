@@ -4,6 +4,110 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.136.0] - 2026-06-15
+
+### 💥 BREAKING CHANGES
+
+- 7a24911 codegen: [**BREAKING**] Borrow sourcemaps from codegen (#23422) (Boshen)
+- bb0ed44 transformer: [**BREAKING**] Disable styled-components transpileTemplateLiterals by default (#23171) (Boshen)
+
+### 🚀 Features
+
+- ec266bb transformer: Run React Compiler as a feature-gated transform pass (#23201) (Boshen)
+
+## [0.135.0] - 2026-06-08
+
+### 🚀 Features
+
+- b846ab2 react_compiler: Integrate the Rust port of the React Compiler (#22942) (Boshen)
+
+## [0.133.0] - 2026-05-26
+
+### 🚀 Features
+
+- ee659b6 transformer/legacy-decorator: Add `strictNullChecks` option for nullable-union design:type (#22266) (Kyle Cannon)
+
+## [0.128.0] - 2026-04-27
+
+### 📚 Documentation
+
+- e4cea25 transform: Use the `node:` namespace in the example (#19998) (루밀LuMir)
+
+### 🛡️ Security
+
+- d8076c9 deps: Update rolldown (#21639) (renovate)
+
+## [0.126.0] - 2026-04-15
+
+### 🚀 Features
+
+- f5deb55 napi/transform: Expose `optimizeConstEnums` and `optimizeEnums` options (#21388) (Dunqing)
+
+## [0.125.0] - 2026-04-13
+
+### 🚀 Features
+
+- e7e1aea transformer/typescript: Add `optimize_enums` option for regular enum inlining (#20539) (Dunqing)
+
+## [0.117.0] - 2026-03-09
+
+### 🐛 Bug Fixes
+
+- ee0491e apps,napi: Explicitly specify libs in tsconfigs (#20071) (camc314)
+
+### ⚡ Performance
+
+- 2baa5fb napi: Unify build-test profile to coverage for cache sharing (#20090) (Boshen)
+
+## [0.113.0] - 2026-02-10
+
+### 🐛 Bug Fixes
+
+- 487601b napi: Disable mimalloc on Windows to fix worker_threads crash (#18923) (Boshen)
+
+## [0.112.0] - 2026-02-02
+
+### 📚 Documentation
+
+- 3d01fa1 transformer: Update links to use Oxc docs (#18722) (sapphi-red)
+
+## [0.111.0] - 2026-01-26
+
+### 📚 Documentation
+
+- 8ccd853 npm: Update package homepage URLs and add keywords (#18509) (Boshen)
+
+## [0.109.0] - 2026-01-19
+
+### 🚀 Features
+
+- 6e8fa80 napi/parser, napi/transform: Accept `sourceType: "commonjs"` (#18197) (overlookmotel)
+- 66b8c02 parser: Implement unambiguous module parsing for JS/TS files (#18124) (Boshen)
+
+## [0.102.0] - 2025-12-08
+
+### 💥 BREAKING CHANGES
+
+- 083fea9 napi/parser: [**BREAKING**] Represent empty optional fields on JS side as `null` (#16411) (overlookmotel)
+
+## [0.100.0] - 2025-12-01
+
+### 💥 BREAKING CHANGES
+
+- 934d873 napi: [**BREAKING**] Drop `armv7-unknown-linux-musleabihf` support (#16105) (Boshen)
+
+## [0.98.0] - 2025-11-17
+
+### 💥 BREAKING CHANGES
+
+- ea51b0b napi: [**BREAKING**] Standardize function naming with sync suffixes (#15661) (Boshen)
+
+## [0.97.0] - 2025-11-11
+
+### 📚 Documentation
+
+- 4b904b1 transformer: Clarify `jsx.pure` option would affect JSX elements (#15376) (sapphi-red)
+
 
 
 ## [0.94.0] - 2025-10-06

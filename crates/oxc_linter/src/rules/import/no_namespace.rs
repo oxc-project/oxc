@@ -2,10 +2,16 @@ use fast_glob::glob_match;
 
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
 use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{context::LintContext, module_record::ImportImportName, rule::Rule};
+use crate::{
+    context::LintContext,
+    module_record::ImportImportName,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_namespace_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Usage of namespaced aka wildcard \"*\" imports prohibited")
@@ -13,11 +19,11 @@ fn no_namespace_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct NoNamespace(Box<NoNamespaceConfig>);
 
-#[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoNamespaceConfig {
     /// An array of glob strings for modules that should be ignored by the rule.
     /// For example, `["*.json"]` will ignore all JSON imports.
@@ -72,23 +78,16 @@ declare_oxc_lint!(
     NoNamespace,
     import,
     style,
-    pending,  // TODO: fixer
+    pending, // TODO: fixer
     config = NoNamespaceConfig,
+    version = "0.12.0",
+    short_description = "Forbid namespace (also known as wildcard `*`) imports.",
 );
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-namespace.md>
 impl Rule for NoNamespace {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let obj = value.get(0);
-        Self(Box::new(NoNamespaceConfig {
-            ignore: obj
-                .and_then(|v| v.get("ignore"))
-                .and_then(serde_json::Value::as_array)
-                .map(|v| {
-                    v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect()
-                })
-                .unwrap_or_default(),
-        }))
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {
@@ -104,7 +103,12 @@ impl Rule for NoNamespace {
 
                 if self.ignore.is_empty()
                     || self.ignore.iter().all(|pattern| {
-                        !glob_match(pattern.as_str(), source.trim_start_matches("./"))
+                        let target = if pattern.contains('/') {
+                            source
+                        } else {
+                            source.rsplit('/').next().unwrap_or(source)
+                        };
+                        !glob_match(pattern.as_str(), target)
                     })
                 {
                     ctx.diagnostic(no_namespace_diagnostic(entry.local_name.span));
@@ -133,6 +137,19 @@ fn test() {
               import * as baz from './other-module.ts'",
             Some(serde_json::json!([{ "ignore": ["*.js", "*.ts"] }])),
         ),
+        // https://github.com/oxc-project/oxc/issues/21011
+        (
+            r"import * as schema from 'src/db/schema'",
+            Some(serde_json::json!([{ "ignore": ["*schema"] }])),
+        ),
+        (
+            r"import * as schema from '../db/schema'",
+            Some(serde_json::json!([{ "ignore": ["*schema"] }])),
+        ),
+        (
+            r"import * as schema from './src/db/schema'",
+            Some(serde_json::json!([{ "ignore": ["./src/db/*"] }])),
+        ),
     ];
 
     let fail = vec![
@@ -145,6 +162,10 @@ fn test() {
             import * as DrizzleKit from 'drizzle-kit/api'
             ",
             Some(serde_json::json!([{ "ignore": ["zod"] }])),
+        ),
+        (
+            r"import * as schema from './src/db/schema'",
+            Some(serde_json::json!([{ "ignore": ["src/db/*"] }])),
         ),
     ];
 

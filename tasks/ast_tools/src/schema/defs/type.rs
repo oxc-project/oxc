@@ -2,7 +2,7 @@ use proc_macro2::TokenStream;
 
 use super::{
     BoxDef, CellDef, Def, Derives, EnumDef, OptionDef, PointerDef, PrimitiveDef, Schema, StructDef,
-    TypeId, VecDef,
+    StructOrEnum, TypeId, VecDef,
 };
 
 /// Type definition for a type.
@@ -145,6 +145,14 @@ impl TypeDef {
     pub fn as_enum_mut(&mut self) -> Option<&mut EnumDef> {
         match self {
             Self::Enum(def) => Some(def),
+            _ => None,
+        }
+    }
+
+    pub fn as_struct_or_enum(&self) -> Option<StructOrEnum<'_>> {
+        match self {
+            Self::Struct(def) => Some(StructOrEnum::Struct(def)),
+            Self::Enum(def) => Some(StructOrEnum::Enum(def)),
             _ => None,
         }
     }

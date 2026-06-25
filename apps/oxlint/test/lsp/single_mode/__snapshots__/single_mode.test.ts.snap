@@ -1,0 +1,23 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`LSP single file mode linting > basic linting > should handle { path: 'basic/test.ts', languageId: 'typescript' } 1`] = `
+"--- FILE -----------
+basic/test.ts
+--- Diagnostics ---------
+> 1 | debugger;
+    | ^^^^^^^^^ Warning: \`debugger\` statement is not allowed
+help: Remove the debugger statement
+  2 |
+--------------------"
+`;
+
+exports[`LSP single file mode linting > basic linting > should handle { path: 'with-config-same-level/test.ts', languageId: 'typescript' } 1`] = `
+"--- FILE -----------
+with-config-same-level/test.ts
+--- Diagnostics ---------
+> 1 | debugger;
+    | ^^^^^^^^^ Error: \`debugger\` statement is not allowed
+help: Remove the debugger statement
+  2 |
+--------------------"
+`;

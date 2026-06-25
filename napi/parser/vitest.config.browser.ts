@@ -1,32 +1,32 @@
-import { playwright } from '@vitest/browser-playwright';
-import path from 'node:path';
-import { defineConfig } from 'vitest/config';
+import { playwright } from "@vitest/browser-playwright";
+import path from "node:path";
+import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   define: {
-    'process.env.NODE_DEBUG_NATIVE': '"wasi"',
+    "process.env.NODE_DEBUG_NATIVE": '"wasi"',
   },
   test: {
-    dir: 'test-browser',
+    dir: "test-browser",
     browser: {
       enabled: true,
       provider: playwright(),
       instances: [
         {
-          browser: 'chromium',
+          browser: "chromium",
         },
       ],
     },
   },
   resolve: {
     alias: {
-      '@oxc-parser/binding-wasm32-wasi': path.resolve('npm-dir/wasm32-wasi'),
+      "@oxc-parser/binding-wasm32-wasi": path.resolve("npm-dir/wasm32-wasi"),
     },
   },
   server: {
     headers: {
-      'Cross-Origin-Embedder-Policy': 'require-corp',
-      'Cross-Origin-Opener-Policy': 'same-origin',
+      "Cross-Origin-Embedder-Policy": "require-corp",
+      "Cross-Origin-Opener-Policy": "same-origin",
     },
   },
 });

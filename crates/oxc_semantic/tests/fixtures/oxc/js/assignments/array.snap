@@ -5,7 +5,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/assignments/array.js
 [
   {
     "children": [],
-    "flags": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
@@ -19,13 +19,15 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/assignments/array.js
             "flags": "ReferenceFlags(Read)",
             "id": 1,
             "name": "read",
-            "node_id": 13
+            "node_id": 13,
+            "scope_id": 0
           },
           {
             "flags": "ReferenceFlags(Read)",
             "id": 3,
             "name": "read",
-            "node_id": 17
+            "node_id": 17,
+            "scope_id": 0
           }
         ]
       },
@@ -39,13 +41,15 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/assignments/array.js
             "flags": "ReferenceFlags(Write)",
             "id": 0,
             "name": "write",
-            "node_id": 12
+            "node_id": 12,
+            "scope_id": 0
           },
           {
             "flags": "ReferenceFlags(Write)",
             "id": 2,
             "name": "write",
-            "node_id": 16
+            "node_id": 16,
+            "scope_id": 0
           }
         ]
       }

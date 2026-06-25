@@ -20,7 +20,7 @@ cargo run -p oxc_transform_conformance
 or watch for changes
 
 ```bash
-just watch 'run -p oxc_transform_conformance'
+just watch 'cargo run -p oxc_transform_conformance'
 ```
 
 ## Options
@@ -37,12 +37,19 @@ cargo run -p oxc_transform_conformance -- --filter react/arrow-functions
 
 The Babel test suite contains many `exec.js` files, which need to be executed by a runtime.
 
-`bun` is the preferred way to execute these tests, which you may install them via [https://bun.sh/docs/installation](https://bun.sh/docs/installation).
-
-Once `bun` is installed, apply the `--exec` flag:
+These tests are executed with Node.js and Vitest. Apply the `--exec` flag:
 
 ```bash
 cargo run -p oxc_transform_conformance -- --exec
 ```
 
-The failing test cases are listed in [babel_exec.snap.md](./snapshots/babel_exec.snap.md).
+This is also available as:
+
+```bash
+just test-transform
+```
+
+The failing test cases are listed in:
+
+- [babel_exec.snap.md](./snapshots/babel_exec.snap.md)
+- [oxc_exec.snap.md](./snapshots/oxc_exec.snap.md)

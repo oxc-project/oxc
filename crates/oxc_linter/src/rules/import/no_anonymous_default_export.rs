@@ -6,17 +6,23 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use schemars::JsonSchema;
+use serde::Deserialize;
 use serde_json::Value;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_anonymous_default_export_diagnostic(span: Span, msg: &'static str) -> OxcDiagnostic {
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
-    OxcDiagnostic::warn(msg).with_label(span)
+    OxcDiagnostic::warn(msg)
+        .with_note("Named default exports improve grepability and enable consistent auto-imports across the codebase.")
+        .with_label(span)
 }
 
-#[derive(Debug, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoAnonymousDefaultExport {
     /// Allow anonymous array as default export.
     allow_array: bool,
@@ -89,21 +95,21 @@ declare_oxc_lint!(
     /// export default class MyClass {};
     /// export default function foo() {};
     /// export default foo(bar);
-    /// /* eslint import/no-anonymous-default-export: ['error', {"allowLiteral": true}] */
+    /// /* import/no-anonymous-default-export: ["error", { "allowLiteral": true }] */
     /// export default 123;
-    /// /* eslint import/no-anonymous-default-export: ['error, {"allowArray": true}] */
+    /// /* import/no-anonymous-default-export: ["error", { "allowArray": true }] */
     /// export default []
-    /// /* eslint import/no-anonymous-default-export: ['error, {"allowArrowFunction": true}] */
+    /// /* import/no-anonymous-default-export: ["error", { "allowArrowFunction": true }] */
     /// export default () => {};
-    /// /* eslint import/no-anonymous-default-export: ['error, {"allowAnonymousClass": true}] */
+    /// /* import/no-anonymous-default-export: ["error", { "allowAnonymousClass": true }] */
     /// export default class {};
-    /// /* eslint import/no-anonymous-default-export: ['error, {"allowAnonymousFunction": true}] */
+    /// /* import/no-anonymous-default-export: ["error", { "allowAnonymousFunction": true }] */
     /// export default function() {};
-    /// /* eslint import/no-anonymous-default-export: ['error, {"allowObject": true}] */
+    /// /* import/no-anonymous-default-export: ["error", { "allowObject": true }] */
     /// export default {};
-    /// /* eslint import/no-anonymous-default-export: ['error, {"allowNew": true}] */
+    /// /* import/no-anonymous-default-export: ["error", { "allowNew": true }] */
     /// export default new Foo();
-    /// /* eslint import/no-anonymous-default-export: ['error, {"allowCallExpression": true}] */
+    /// /* import/no-anonymous-default-export: ["error", { "allowCallExpression": true }] */
     /// export default foo(bar);
     /// ```
     ///
@@ -113,46 +119,15 @@ declare_oxc_lint!(
     import,
     style,
     config = NoAnonymousDefaultExport,
+    version = "0.15.14",
+    short_description = "Disallow anonymous default exports in modules.",
 );
 
 impl Rule for NoAnonymousDefaultExport {
-    fn from_configuration(value: Value) -> Self {
-        let obj = value.get(0);
-        Self {
-            allow_array: obj
-                .and_then(|v| v.get("allowArray"))
-                .and_then(Value::as_bool)
-                .unwrap_or(false),
-            allow_arrow_function: obj
-                .and_then(|v| v.get("allowArrowFunction"))
-                .and_then(Value::as_bool)
-                .unwrap_or(false),
-            allow_anonymous_class: obj
-                .and_then(|v| v.get("allowAnonymousClass"))
-                .and_then(Value::as_bool)
-                .unwrap_or(false),
-            allow_anonymous_function: obj
-                .and_then(|v| v.get("allowAnonymousFunction"))
-                .and_then(Value::as_bool)
-                .unwrap_or(false),
-            allow_call_expression: obj
-                .and_then(|v| v.get("allowCallExpression"))
-                .and_then(Value::as_bool)
-                .unwrap_or(true),
-            allow_new: obj
-                .and_then(|v| v.get("allowNew"))
-                .and_then(Value::as_bool)
-                .unwrap_or(false),
-            allow_literal: obj
-                .and_then(|v| v.get("allowLiteral"))
-                .and_then(Value::as_bool)
-                .unwrap_or(false),
-            allow_object: obj
-                .and_then(|v| v.get("allowObject"))
-                .and_then(Value::as_bool)
-                .unwrap_or(false),
-        }
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::ExportDefaultDeclaration(export_decl) = node.kind() else {
             return;

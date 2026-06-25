@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
    ╭─[preserve_caught_error.tsx:4:16]
  3 │                     } catch (err) {

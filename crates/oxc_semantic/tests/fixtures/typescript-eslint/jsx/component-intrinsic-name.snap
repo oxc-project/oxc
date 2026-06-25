@@ -7,13 +7,13 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/jsx/component-i
     "children": [
       {
         "children": [],
-        "flags": "ScopeFlags(StrictMode | Function)",
+        "flags": "ScopeFlags(Function)",
         "id": 1,
         "node": "Function(div)",
         "symbols": []
       }
     ],
-    "flags": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(Top)",
     "id": 0,
     "node": "Program",
     "symbols": [

@@ -3,15 +3,20 @@
 
 use std::mem;
 
-use oxc_allocator::{Box as ArenaBox, TakeIn};
+use oxc_allocator::{ArenaBox, TakeIn};
 use oxc_ast::{NONE, ast::*};
 use oxc_span::SPAN;
+use oxc_str::static_ident;
 use oxc_syntax::{reference::ReferenceId, symbol::SymbolId};
 use oxc_traverse::{Ancestor, BoundIdentifier, ast_operations::get_var_name_from_node};
 
 use crate::{
-    common::helper_loader::Helper,
-    context::{TransformCtx, TraverseCtx},
+    common::{
+        duplicate::{duplicate_expression, duplicate_expression_twice},
+        helper_loader::{Helper, helper_call_expr, helper_load},
+        var_declarations::VarDeclarationsStore,
+    },
+    context::TraverseCtx,
     utils::ast_builder::{
         create_assignment, create_bind_call, create_call_call, create_member_callee,
     },
@@ -25,7 +30,7 @@ use super::{
     },
 };
 
-impl<'a> ClassProperties<'a, '_> {
+impl<'a> ClassProperties<'a> {
     /// Transform private field expression.
     ///
     /// Not loose:
@@ -58,9 +63,9 @@ impl<'a> ClassProperties<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let span = field_expr.span;
-        let object = field_expr.object.take_in(ctx.ast);
+        let object = field_expr.object.take_in(ctx);
         let resolved = if is_assignment {
-            match self.classes_stack.find_writeable_private_prop(&field_expr.field) {
+            match self.classes_stack.find_writable_private_prop(&field_expr.field) {
                 Some(prop) => prop,
                 _ => {
                     // Early return for read-only error
@@ -103,7 +108,6 @@ impl<'a> ClassProperties<'a, '_> {
                 object,
                 prop_binding,
                 span,
-                self.ctx,
                 ctx,
             ));
         }
@@ -186,7 +190,7 @@ impl<'a> ClassProperties<'a, '_> {
             self.create_to_setter_for_private_field_set(prop_ident, object, span, ctx)
         } else {
             // `_classPrivateFieldGet2(_prop, object)`
-            self.create_private_field_get(prop_ident, object, span, ctx)
+            self.create_private_field_get(prop_ident, object, ctx)
         }
     }
 
@@ -263,12 +267,11 @@ impl<'a> ClassProperties<'a, '_> {
             // `object.#prop(arg)` -> `_classPrivateFieldLooseBase(object, _prop)[_prop](arg)`
             let prop_binding = self.classes_stack.find_private_prop(&field_expr.field).prop_binding;
 
-            let object = field_expr.object.take_in(ctx.ast);
+            let object = field_expr.object.take_in(ctx);
             call_expr.callee = Expression::from(Self::create_private_field_member_expr_loose(
                 object,
                 prop_binding,
                 field_expr.span,
-                self.ctx,
                 ctx,
             ));
             return;
@@ -295,7 +298,7 @@ impl<'a> ClassProperties<'a, '_> {
         call_expr.callee = Expression::from(ctx.ast.member_expression_static(
             SPAN,
             callee,
-            ctx.ast.identifier_name(SPAN, Atom::from("call")),
+            ctx.ast.identifier_name(SPAN, "call"),
             // Make sure the `callee` can access `call` safely. i.e `callee?.()` -> `callee?.call()`
             mem::replace(&mut call_expr.optional, false),
         ));
@@ -330,7 +333,7 @@ impl<'a> ClassProperties<'a, '_> {
         let span = field_expr.span;
         // `(object.#method)()`
         //  ^^^^^^^^^^^^^^^^ is a parenthesized expression
-        let object = field_expr.object.get_inner_expression_mut().take_in(ctx.ast);
+        let object = field_expr.object.get_inner_expression_mut().take_in(ctx);
 
         let Some(ResolvedPrivateProp {
             prop_binding,
@@ -441,7 +444,7 @@ impl<'a> ClassProperties<'a, '_> {
             let (object1, object2) = self.duplicate_object(object, ctx);
 
             // `_classPrivateFieldGet2(_prop, object)`
-            (self.create_private_field_get(prop_ident, object1, span, ctx), object2)
+            (self.create_private_field_get(prop_ident, object1, ctx), object2)
         }
     }
 
@@ -492,13 +495,12 @@ impl<'a> ClassProperties<'a, '_> {
         if self.private_fields_as_properties {
             // `object.#prop = value` -> `_classPrivateFieldLooseBase(object, _prop)[_prop] = value`
             // Same for all other assignment operators e.g. `+=`, `&&=`, `??=`.
-            let object = field_expr.object.take_in(ctx.ast);
+            let object = field_expr.object.take_in(ctx);
             let replacement = Self::create_private_field_member_expr_loose(
                 object,
                 // At least one of `get_binding` or `set_binding` is always present
                 get_binding.unwrap_or_else(|| set_binding.as_ref().unwrap()),
                 field_expr.span,
-                self.ctx,
                 ctx,
             );
             assign_expr.left = AssignmentTarget::from(replacement);
@@ -629,7 +631,7 @@ impl<'a> ClassProperties<'a, '_> {
 
                 if let Some(operator) = operator.to_binary_operator() {
                     // `Class.#prop += value` -> `_prop._ = _prop._ + value`
-                    let value = assign_expr.right.take_in(ctx.ast);
+                    let value = assign_expr.right.take_in(ctx);
                     assign_expr.operator = AssignmentOperator::Assign;
                     assign_expr.right = ctx.ast.expression_binary(SPAN, prop_obj, operator, value);
                 } else if let Some(operator) = operator.to_logical_operator() {
@@ -637,7 +639,7 @@ impl<'a> ClassProperties<'a, '_> {
                     let span = assign_expr.span;
                     assign_expr.span = SPAN;
                     assign_expr.operator = AssignmentOperator::Assign;
-                    let right = expr.take_in(ctx.ast);
+                    let right = expr.take_in(ctx);
                     *expr = ctx.ast.expression_logical(span, prop_obj, operator, right);
                 } else {
                     // The above covers all types of `AssignmentOperator`
@@ -659,7 +661,7 @@ impl<'a> ClassProperties<'a, '_> {
             let object = field_expr.object.into_inner_expression();
 
             let class_ident = class_binding.create_read_expression(ctx);
-            let value = assign_expr.right.take_in(ctx.ast);
+            let value = assign_expr.right.take_in(ctx);
 
             if operator == AssignmentOperator::Assign {
                 // Replace right side of assignment with `_assertClassBrand(Class, object, _prop)`
@@ -668,9 +670,6 @@ impl<'a> ClassProperties<'a, '_> {
                 assign_expr.right =
                     self.create_assert_class_brand(class_ident, object, value, SPAN, ctx);
             } else {
-                let class_ident = class_binding.create_read_expression(ctx);
-                let value = assign_expr.right.take_in(ctx.ast);
-
                 // Make 2 copies of `object`
                 let (object1, object2) = self.duplicate_object(object, ctx);
 
@@ -719,7 +718,7 @@ impl<'a> ClassProperties<'a, '_> {
                     assign_expr.operator = AssignmentOperator::Assign;
                     assign_expr.right =
                         self.create_assert_class_brand(class_ident2, object2, value, SPAN, ctx);
-                    let right = expr.take_in(ctx.ast);
+                    let right = expr.take_in(ctx);
                     // `_assertClassBrand(Class, object, _prop)._ && (_prop._ = _assertClassBrand(Class, object, value))`
                     *expr = ctx.ast.expression_logical(span, left, operator, right);
                 } else {
@@ -751,11 +750,11 @@ impl<'a> ClassProperties<'a, '_> {
         class_binding: Option<&BoundIdentifier<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let assign_expr = match expr.take_in(ctx.ast) {
+        let assign_expr = match expr.take_in(ctx) {
             Expression::AssignmentExpression(assign_expr) => assign_expr.unbox(),
             _ => unreachable!(),
         };
-        let AssignmentExpression { span, operator, right: value, left } = assign_expr;
+        let AssignmentExpression { span, operator, right: value, left, .. } = assign_expr;
         let AssignmentTarget::PrivateFieldExpression(field_expr) = left else { unreachable!() };
         let PrivateFieldExpression { field, object, .. } = field_expr.unbox();
 
@@ -923,12 +922,11 @@ impl<'a> ClassProperties<'a, '_> {
         if self.private_fields_as_properties {
             let prop_binding = self.classes_stack.find_private_prop(&field_expr.field).prop_binding;
             // `object.#prop++` -> `_classPrivateFieldLooseBase(object, _prop)[_prop]++`
-            let object = field_expr.object.take_in(ctx.ast);
+            let object = field_expr.object.take_in(ctx);
             let replacement = Self::create_private_field_member_expr_loose(
                 object,
                 prop_binding,
                 field_expr.span,
-                self.ctx,
                 ctx,
             );
             update_expr.argument = SimpleAssignmentTarget::from(replacement);
@@ -949,7 +947,7 @@ impl<'a> ClassProperties<'a, '_> {
 
         // TODO(improve-on-babel): Could avoid `move_expression` here and replace `update_expr.argument` instead.
         // Only doing this first to match the order Babel creates temp vars.
-        let object = field_expr.object.get_inner_expression_mut().take_in(ctx.ast);
+        let object = field_expr.object.get_inner_expression_mut().take_in(ctx);
 
         if is_static && !is_method {
             // Unwrap is safe because `is_method` is false, then private prop is always have a `get_binding`
@@ -1014,14 +1012,14 @@ impl<'a> ClassProperties<'a, '_> {
             };
 
             // `_object$prop = _assertClassBrand(Class, object, _prop)._`
-            let temp_binding = self.ctx.var_declarations.create_uid_var(&temp_var_name_base, ctx);
-            let assignment = create_assignment(&temp_binding, get_expr, ctx);
+            let temp_binding = VarDeclarationsStore::create_uid_var(&temp_var_name_base, ctx);
+            let assignment = create_assignment(&temp_binding, get_expr, SPAN, ctx);
 
             // `++_object$prop` / `_object$prop++` (reusing existing `UpdateExpression`)
             let UpdateExpression { span, prefix, .. } = **update_expr;
             update_expr.span = SPAN;
             update_expr.argument = temp_binding.create_read_write_simple_target(ctx);
-            let update_expr = expr.take_in(ctx.ast);
+            let update_expr = expr.take_in(ctx);
 
             if prefix {
                 // Source = `++object.#prop` (prefix `++`)
@@ -1047,9 +1045,8 @@ impl<'a> ClassProperties<'a, '_> {
                 // Source = `object.#prop++` (postfix `++`)
 
                 // `_object$prop2 = _object$prop++`
-                let temp_binding2 =
-                    self.ctx.var_declarations.create_uid_var(&temp_var_name_base, ctx);
-                let assignment2 = create_assignment(&temp_binding2, update_expr, ctx);
+                let temp_binding2 = VarDeclarationsStore::create_uid_var(&temp_var_name_base, ctx);
+                let assignment2 = create_assignment(&temp_binding2, update_expr, SPAN, ctx);
 
                 // `(_object$prop = _assertClassBrand(Class, object, _prop)._, _object$prop2 = _object$prop++, _object$prop)`
                 let mut value = ctx.ast.expression_sequence(
@@ -1111,14 +1108,14 @@ impl<'a> ClassProperties<'a, '_> {
             );
 
             // `_object$prop = _classPrivateFieldGet(_prop, object)`
-            let temp_binding = self.ctx.var_declarations.create_uid_var(&temp_var_name_base, ctx);
-            let assignment = create_assignment(&temp_binding, get_call, ctx);
+            let temp_binding = VarDeclarationsStore::create_uid_var(&temp_var_name_base, ctx);
+            let assignment = create_assignment(&temp_binding, get_call, SPAN, ctx);
 
             // `++_object$prop` / `_object$prop++` (reusing existing `UpdateExpression`)
             let UpdateExpression { span, prefix, .. } = **update_expr;
             update_expr.span = SPAN;
             update_expr.argument = temp_binding.create_read_write_simple_target(ctx);
-            let update_expr = expr.take_in(ctx.ast);
+            let update_expr = expr.take_in(ctx);
 
             if prefix {
                 // Source = `++object.#prop` (prefix `++`)
@@ -1139,9 +1136,8 @@ impl<'a> ClassProperties<'a, '_> {
             } else {
                 // Source = `object.#prop++` (postfix `++`)
                 // `_object$prop2 = _object$prop++`
-                let temp_binding2 =
-                    self.ctx.var_declarations.create_uid_var(&temp_var_name_base, ctx);
-                let assignment2 = create_assignment(&temp_binding2, update_expr, ctx);
+                let temp_binding2 = VarDeclarationsStore::create_uid_var(&temp_var_name_base, ctx);
+                let assignment2 = create_assignment(&temp_binding2, update_expr, SPAN, ctx);
 
                 // `(_object$prop = _classPrivateFieldGet(_prop, object), _object$prop2 = _object$prop++, _object$prop)`
                 let value = ctx.ast.expression_sequence(
@@ -1257,7 +1253,7 @@ impl<'a> ClassProperties<'a, '_> {
             _ => {
                 debug_assert_expr_is_not_parenthesis_or_typescript_syntax(
                     expr,
-                    &self.ctx.source_path,
+                    &ctx.state.source_path,
                 );
                 None
             }
@@ -1372,7 +1368,7 @@ impl<'a> ClassProperties<'a, '_> {
             // `o?.Foo.#self.self?.self.unicorn;` -> `(result ? void 0 : object)?.self.unicorn`
             //  ^^^^^^^^^^^^^^^^^ the object has transformed, if the current member is optional,
             //                    then we need to wrap it to a conditional expression
-            let owned_object = object.take_in(ctx.ast);
+            let owned_object = object.take_in(ctx);
             *object = Self::wrap_conditional_check(result, owned_object, ctx);
             None
         } else {
@@ -1394,7 +1390,7 @@ impl<'a> ClassProperties<'a, '_> {
             // `Foo.bar.#m?.();` -> `_assertClassBrand(Foo, _Foo$bar = Foo.bar, _m)._?.call(_Foo$bar);`
             //          ^^^^ only the private field is optional
             // Move out parenthesis and typescript syntax
-            call_expr.callee = callee.take_in(ctx.ast);
+            call_expr.callee = callee.take_in(ctx);
             self.transform_call_expression_impl(call_expr, ctx);
             return result;
         }
@@ -1412,9 +1408,9 @@ impl<'a> ClassProperties<'a, '_> {
         // TODO(improve-on-babel): Consider remove this logic, because it seems no runtime behavior change.
         let result = result?;
         let object = callee.to_member_expression_mut().object_mut();
-        let (assignment, context) = self.duplicate_object(object.take_in(ctx.ast), ctx);
+        let (assignment, context) = self.duplicate_object(object.take_in(ctx), ctx);
         *object = assignment;
-        let callee = call_expr.callee.take_in(ctx.ast);
+        let callee = call_expr.callee.take_in(ctx);
         let callee = Self::wrap_conditional_check(result, callee, ctx);
         Self::substitute_callee_and_insert_context(call_expr, callee, context, ctx);
 
@@ -1435,7 +1431,7 @@ impl<'a> ClassProperties<'a, '_> {
         object: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let mut owned_object = object.get_inner_expression_mut().take_in(ctx.ast);
+        let mut owned_object = object.get_inner_expression_mut().take_in(ctx);
 
         let owned_object = if let Some(result) =
             self.transform_chain_element_recursively(&mut owned_object, ctx)
@@ -1465,7 +1461,7 @@ impl<'a> ClassProperties<'a, '_> {
         expr: &mut Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let Expression::ChainExpression(chain_expr) = expr.take_in(ctx.ast) else { unreachable!() };
+        let Expression::ChainExpression(chain_expr) = expr.take_in(ctx) else { unreachable!() };
         match chain_expr.unbox().expression {
             element @ match_member_expression!(ChainElement) => {
                 Expression::from(element.into_member_expression())
@@ -1567,8 +1563,8 @@ impl<'a> ClassProperties<'a, '_> {
             if is_optional_callee {
                 // `o?.Foo.#self?.getSelf?.().#x;` -> `(_ref$getSelf = (_ref2 = _ref = o === null || o === void 0 ?
                 //              ^^ is optional         void 0 : babelHelpers.assertClassBrand(Foo, o.Foo, _self)._)`
-                *object = Self::wrap_conditional_check(result, object.take_in(ctx.ast), ctx);
-                let (assignment, context) = self.duplicate_object(object.take_in(ctx.ast), ctx);
+                *object = Self::wrap_conditional_check(result, object.take_in(ctx), ctx);
+                let (assignment, context) = self.duplicate_object(object.take_in(ctx), ctx);
                 *object = assignment;
                 context
             } else {
@@ -1577,9 +1573,9 @@ impl<'a> ClassProperties<'a, '_> {
                 // ^^^^^^^^^^^^^^^^^^^^^^ to make sure get `getSelf` call has a proper context, we need to assign
                 //                        the parent of callee (i.e `o?.Foo.#self`) to a temp variable,
                 //                        and then use it as a first argument of `_ref.call`.
-                let (assignment, context) = self.duplicate_object(object.take_in(ctx.ast), ctx);
+                let (assignment, context) = self.duplicate_object(object.take_in(ctx), ctx);
                 *object = assignment;
-                *callee = Self::wrap_conditional_check(result, callee.take_in(ctx.ast), ctx);
+                *callee = Self::wrap_conditional_check(result, callee.take_in(ctx), ctx);
                 context
             }
         } else {
@@ -1587,21 +1583,22 @@ impl<'a> ClassProperties<'a, '_> {
             // ^^^^^^^^^^^^^^^^ this is a optional function call, to make sure it has a proper context,
             //                  we also need to assign `Foo?.bar()` to a temp variable, and then use
             //                  it as a first argument of `_Foo$bar$zoo`.
-            let (assignment, context) = self.duplicate_object(object.take_in(ctx.ast), ctx);
+            let (assignment, context) = self.duplicate_object(object.take_in(ctx), ctx);
             *object = assignment;
             context
         };
 
         // After the below transformation, the `callee` will be a temp variable.
         let result = self.transform_expression_to_wrap_nullish_check(callee, ctx);
-        let owned_callee = callee.take_in(ctx.ast);
+        let owned_callee = callee.take_in(ctx);
         Self::substitute_callee_and_insert_context(call, owned_callee, context, ctx);
         result
     }
 
     /// Returns `left === null`
+    #[expect(clippy::unused_self)]
     fn wrap_null_check(&self, left: Expression<'a>, ctx: &TraverseCtx<'a>) -> Expression<'a> {
-        let operator = if self.ctx.assumptions.no_document_all {
+        let operator = if ctx.state.assumptions.no_document_all {
             BinaryOperator::Equality
         } else {
             BinaryOperator::StrictEquality
@@ -1623,7 +1620,7 @@ impl<'a> ClassProperties<'a, '_> {
         ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
         let null_check = self.wrap_null_check(left1, ctx);
-        if self.ctx.assumptions.no_document_all {
+        if ctx.state.assumptions.no_document_all {
             null_check
         } else {
             let void0_check = Self::wrap_void0_check(left2, ctx);
@@ -1691,7 +1688,7 @@ impl<'a> ClassProperties<'a, '_> {
                 {
                     // We still need this unary expr, but it needs to be used as the alternative of the conditional
                     unary_expr.argument = chain_expr;
-                    expr.take_in(ctx.ast)
+                    expr.take_in(ctx)
                 },
             );
         }
@@ -1751,12 +1748,11 @@ impl<'a> ClassProperties<'a, '_> {
             // But this is not needed, so we omit it.
             let prop_binding = self.classes_stack.find_private_prop(&field_expr.field).prop_binding;
 
-            let object = field_expr.object.take_in(ctx.ast);
+            let object = field_expr.object.take_in(ctx);
             let replacement = Self::create_private_field_member_expr_loose(
                 object,
                 prop_binding,
                 field_expr.span,
-                self.ctx,
                 ctx,
             );
             Expression::from(replacement)
@@ -1776,7 +1772,7 @@ impl<'a> ClassProperties<'a, '_> {
         let callee = Expression::from(ctx.ast.member_expression_static(
             SPAN,
             callee,
-            ctx.ast.identifier_name(SPAN, Atom::from("bind")),
+            ctx.ast.identifier_name(SPAN, "bind"),
             false,
         ));
         let arguments = ctx.ast.vec1(Argument::from(context));
@@ -1841,7 +1837,7 @@ impl<'a> ClassProperties<'a, '_> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::PrivateInExpression(private_in) = expr.take_in(ctx.ast) else {
+        let Expression::PrivateInExpression(private_in) = expr.take_in(ctx) else {
             unreachable!();
         };
 
@@ -1853,7 +1849,7 @@ impl<'a> ClassProperties<'a, '_> {
         private_field: ArenaBox<'a, PrivateInExpression<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let PrivateInExpression { left, right, span } = private_field.unbox();
+        let PrivateInExpression { left, right, span, .. } = private_field.unbox();
 
         let ResolvedPrivateProp { class_bindings, prop_binding, is_method, is_static, .. } =
             self.classes_stack.find_private_prop(&left);
@@ -1861,7 +1857,7 @@ impl<'a> ClassProperties<'a, '_> {
         if is_static {
             let class_binding = class_bindings.get_or_init_static_binding(ctx);
             let class_ident = class_binding.create_read_expression(ctx);
-            let left = self.create_check_in_rhs(right, SPAN, ctx);
+            let left = self.create_check_in_rhs(right, ctx);
             return ctx.ast.expression_binary(
                 span,
                 left,
@@ -1875,8 +1871,8 @@ impl<'a> ClassProperties<'a, '_> {
         } else {
             prop_binding.create_read_expression(ctx)
         };
-        let callee = create_member_callee(callee, "has", ctx);
-        let argument = self.create_check_in_rhs(right, SPAN, ctx);
+        let callee = create_member_callee(callee, static_ident!("has"), span, ctx);
+        let argument = self.create_check_in_rhs(right, ctx);
         ctx.ast.expression_call(span, callee, NONE, ctx.ast.vec1(Argument::from(argument)), false)
     }
 
@@ -1890,13 +1886,14 @@ impl<'a> ClassProperties<'a, '_> {
     /// * Anything else `foo()` -> `_foo = foo()`, `_foo`
     ///
     /// Returns 2 `Expression`s. The first must be inserted into output first.
+    #[expect(clippy::unused_self)]
     pub(super) fn duplicate_object(
         &self,
         object: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> (Expression<'a>, Expression<'a>) {
-        debug_assert_expr_is_not_parenthesis_or_typescript_syntax(&object, &self.ctx.source_path);
-        self.ctx.duplicate_expression(object, false, ctx)
+        debug_assert_expr_is_not_parenthesis_or_typescript_syntax(&object, &ctx.state.source_path);
+        duplicate_expression(object, false, ctx)
     }
 
     /// Duplicate object to be used in triple.
@@ -1909,29 +1906,28 @@ impl<'a> ClassProperties<'a, '_> {
     /// * Anything else `foo()` -> `_foo = foo()`, `_foo`, `_foo`
     ///
     /// Returns 3 `Expression`s. The first must be inserted into output first.
+    #[expect(clippy::unused_self)]
     fn duplicate_object_twice(
         &self,
         object: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> (Expression<'a>, Expression<'a>, Expression<'a>) {
-        debug_assert_expr_is_not_parenthesis_or_typescript_syntax(&object, &self.ctx.source_path);
-        self.ctx.duplicate_expression_twice(object, false, ctx)
+        debug_assert_expr_is_not_parenthesis_or_typescript_syntax(&object, &ctx.state.source_path);
+        duplicate_expression_twice(object, false, ctx)
     }
 
     /// `_classPrivateFieldLooseBase(object, _prop)[_prop]`.
     ///
-    /// Takes `&TransformCtx` instead of `&self` to allow passing a `&BoundIdentifier<'a>` returned by
-    /// `self.private_props_stack.find()`, which takes a partial mut borrow of `self`.
+    /// This is a static method instead of taking `&self` to allow passing a `&BoundIdentifier<'a>`
+    /// returned by `self.private_props_stack.find()`, which takes a partial mut borrow of `self`.
     fn create_private_field_member_expr_loose(
         object: Expression<'a>,
         prop_binding: &BoundIdentifier<'a>,
         span: Span,
-        transform_ctx: &TransformCtx<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> MemberExpression<'a> {
-        let call_expr = transform_ctx.helper_call_expr(
+        let call_expr = helper_call_expr(
             Helper::ClassPrivateFieldLooseBase,
-            SPAN,
             ctx.ast.vec_from_array([
                 Argument::from(object),
                 Argument::from(prop_binding.create_read_expression(ctx)),
@@ -1947,33 +1943,31 @@ impl<'a> ClassProperties<'a, '_> {
     }
 
     /// `_classPrivateFieldGet2(_prop, object)`
+    #[expect(clippy::unused_self)]
     fn create_private_field_get(
         &self,
         prop_ident: Expression<'a>,
         object: Expression<'a>,
-        span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        self.ctx.helper_call_expr(
+        helper_call_expr(
             Helper::ClassPrivateFieldGet2,
-            span,
             ctx.ast.vec_from_array([Argument::from(prop_ident), Argument::from(object)]),
             ctx,
         )
     }
 
     /// `_classPrivateFieldSet2(_prop, object, value)`
+    #[expect(clippy::unused_self)]
     fn create_private_field_set(
         &self,
         prop_ident: Expression<'a>,
         object: Expression<'a>,
         value: Expression<'a>,
-        span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        self.ctx.helper_call_expr(
+        helper_call_expr(
             Helper::ClassPrivateFieldSet2,
-            span,
             ctx.ast.vec_from_array([
                 Argument::from(prop_ident),
                 Argument::from(object),
@@ -1984,6 +1978,7 @@ impl<'a> ClassProperties<'a, '_> {
     }
 
     /// `_toSetter(_classPrivateFieldSet2, [_prop, object])._`
+    #[expect(clippy::unused_self)]
     fn create_to_setter_for_private_field_set(
         &self,
         prop_ident: Expression<'a>,
@@ -1999,14 +1994,15 @@ impl<'a> ClassProperties<'a, '_> {
             ]),
         );
         let arguments = ctx.ast.vec_from_array([
-            Argument::from(self.ctx.helper_load(Helper::ClassPrivateFieldSet2, ctx)),
+            Argument::from(helper_load(Helper::ClassPrivateFieldSet2, ctx)),
             Argument::from(arguments),
         ]);
-        let call = self.ctx.helper_call_expr(Helper::ToSetter, span, arguments, ctx);
+        let call = helper_call_expr(Helper::ToSetter, arguments, ctx);
         Self::create_underscore_member_expression(call, span, ctx)
     }
 
     /// `_toSetter(_prop.bind(object))._`
+    #[expect(clippy::unused_self)]
     fn create_to_setter_for_bind_call(
         &self,
         prop_ident: Expression<'a>,
@@ -2016,22 +2012,22 @@ impl<'a> ClassProperties<'a, '_> {
     ) -> Expression<'a> {
         let prop_call = create_bind_call(prop_ident, object, span, ctx);
         let arguments = ctx.ast.vec_from_array([Argument::from(prop_call)]);
-        let call = self.ctx.helper_call_expr(Helper::ToSetter, span, arguments, ctx);
+        let call = helper_call_expr(Helper::ToSetter, arguments, ctx);
         Self::create_underscore_member_expression(call, span, ctx)
     }
 
     /// `_assertClassBrand(Class, object, value)` or `_assertClassBrand(Class, object, _prop)`
+    #[expect(clippy::unused_self)]
     fn create_assert_class_brand(
         &self,
         class_ident: Expression<'a>,
         object: Expression<'a>,
         value_or_prop_ident: Expression<'a>,
-        span: Span,
+        _span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        self.ctx.helper_call_expr(
+        helper_call_expr(
             Helper::AssertClassBrand,
-            span,
             ctx.ast.vec_from_array([
                 Argument::from(class_ident),
                 Argument::from(object),
@@ -2042,6 +2038,7 @@ impl<'a> ClassProperties<'a, '_> {
     }
 
     /// `_assertClassBrand(Class, object)`
+    #[expect(clippy::unused_self)]
     fn create_assert_class_brand_without_value(
         &self,
         class_ident: Expression<'a>,
@@ -2050,7 +2047,7 @@ impl<'a> ClassProperties<'a, '_> {
     ) -> Expression<'a> {
         let arguments =
             ctx.ast.vec_from_array([Argument::from(class_ident), Argument::from(object)]);
-        self.ctx.helper_call_expr(Helper::AssertClassBrand, SPAN, arguments, ctx)
+        helper_call_expr(Helper::AssertClassBrand, arguments, ctx)
     }
 
     /// `_assertClassBrand(Class, object, _prop)._`
@@ -2117,7 +2114,7 @@ impl<'a> ClassProperties<'a, '_> {
             create_call_call(prop_ident, object, span, ctx)
         } else {
             // `_privateFieldGet(_prop, object)`
-            self.create_private_field_get(prop_ident, object, span, ctx)
+            self.create_private_field_get(prop_ident, object, ctx)
         }
     }
 
@@ -2149,26 +2146,27 @@ impl<'a> ClassProperties<'a, '_> {
             let class_ident = class_binding.create_read_expression(ctx);
             let object = self.create_assert_class_brand_without_value(class_ident, object, ctx);
             let arguments = ctx.ast.vec_from_array([Argument::from(object), Argument::from(value)]);
-            let callee = create_member_callee(prop_ident, "call", ctx);
+            let callee = create_member_callee(prop_ident, static_ident!("call"), span, ctx);
             // `_prop.call(_assertClassBrand(Class, object), value)`
             ctx.ast.expression_call(span, callee, NONE, arguments, false)
         } else {
             // `_privateFieldSet(_prop, object, value)`
-            self.create_private_field_set(prop_ident, object, value, span, ctx)
+            self.create_private_field_set(prop_ident, object, value, ctx)
         }
     }
 
     /// * [`Helper::ReadOnlyError`][]: `_readOnlyError("#method")`
     /// * [`Helper::WriteOnlyError`][]: `_writeOnlyError("#method")`
+    #[expect(clippy::unused_self)]
     fn create_throw_error(
         &self,
         helper: Helper,
         private_name: &str,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let message = ctx.ast.atom_from_strs_array(["#", private_name]);
+        let message = ctx.ast.str_from_strs_array(["#", private_name]);
         let message = ctx.ast.expression_string_literal(SPAN, message, None);
-        self.ctx.helper_call_expr(helper, SPAN, ctx.ast.vec1(Argument::from(message)), ctx)
+        helper_call_expr(helper, ctx.ast.vec1(Argument::from(message)), ctx)
     }
 
     /// `object, value, _readOnlyError("#method")`
@@ -2209,17 +2207,12 @@ impl<'a> ClassProperties<'a, '_> {
     }
 
     /// _checkInRHS(object)
+    #[expect(clippy::unused_self)]
     fn create_check_in_rhs(
         &self,
         object: Expression<'a>,
-        span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        self.ctx.helper_call_expr(
-            Helper::CheckInRHS,
-            span,
-            ctx.ast.vec1(Argument::from(object)),
-            ctx,
-        )
+        helper_call_expr(Helper::CheckInRHS, ctx.ast.vec1(Argument::from(object)), ctx)
     }
 }

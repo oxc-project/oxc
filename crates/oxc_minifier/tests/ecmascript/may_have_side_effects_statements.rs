@@ -1,4 +1,4 @@
-use javascript_globals::GLOBALS;
+use javascript_globals::GLOBALS_BUILTIN;
 use oxc_allocator::Allocator;
 use oxc_ast::ast::{Expression, IdentifierReference, Statement};
 use oxc_ecmascript::{
@@ -17,7 +17,7 @@ struct Ctx {
 impl Default for Ctx {
     fn default() -> Self {
         Self {
-            global_variable_names: GLOBALS["builtin"]
+            global_variable_names: GLOBALS_BUILTIN
                 .keys()
                 .copied()
                 .chain(["arguments", "URL"])
@@ -55,7 +55,7 @@ fn test(source_text: &str, expected: bool) {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
     assert!(!ret.panicked, "{source_text}");
-    assert!(ret.errors.is_empty(), "{source_text}");
+    assert!(ret.diagnostics.is_empty(), "{source_text}");
 
     let stmt = ret.program.body.first().unwrap();
     assert_eq!(stmt.may_have_side_effects(&Ctx::default()), expected, "{source_text}");
@@ -66,7 +66,7 @@ fn test_in_function(source_text: &str, expected: bool) {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
     assert!(!ret.panicked, "{source_text}");
-    assert!(ret.errors.is_empty(), "{source_text}");
+    assert!(ret.diagnostics.is_empty(), "{source_text}");
 
     let Some(Statement::FunctionDeclaration(stmt)) = &ret.program.body.first() else {
         panic!("should have a function declaration: {source_text}");

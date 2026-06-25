@@ -4,6 +4,270 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.137.0] - 2026-06-18
+
+### 💥 BREAKING CHANGES
+
+- 7a76cd3 estree: [**BREAKING**] Make whether to include TS fields a runtime option (#23574) (overlookmotel)
+
+### 🚀 Features
+
+- 53509a8 minifier: Treeshake pure typed arrays and Set/Map array literals (#23469) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- ae02b4e ci/parser: Use `minimal` for vitest reporter (#23457) (camc314)
+
+## [0.136.0] - 2026-06-15
+
+### ⚡ Performance
+
+- da1a6c6 diagnostics: Migrate to allocation-optimized oxc-miette (#23094) (Boshen)
+
+## [0.130.0] - 2026-05-11
+
+### 📚 Documentation
+
+- a4a6892 napi/parser: Correct code comment (#22278) (overlookmotel)
+
+## [0.129.0] - 2026-05-05
+
+### 🐛 Bug Fixes
+
+- 429deac napi/parser: Export `visitorKeys` from `wasm` entrypoint (#21996) (NullVoxPopuli)
+
+## [0.128.0] - 2026-04-27
+
+### 💥 BREAKING CHANGES
+
+- 502e804 ast: [**BREAKING**] Reduce size of `TSTypePredicateName` (#21711) (overlookmotel)
+- 5651539 ast: [**BREAKING**] Reduce size of `JSXExpression` (#21710) (overlookmotel)
+- c44e280 ast: [**BREAKING**] Reduce size of `ArrayExpressionElement` (#21709) (overlookmotel)
+
+### ⚡ Performance
+
+- 9fa362e napi/parser: Do not generate tokens except in tests (#21811) (overlookmotel)
+
+### 🛡️ Security
+
+- d8076c9 deps: Update rolldown (#21639) (renovate)
+
+## [0.127.0] - 2026-04-20
+
+### 🐛 Bug Fixes
+
+- 00fc136 codegen: Preserve coverage comments before object properties (#21312) (bab)
+
+## [0.125.0] - 2026-04-13
+
+### 💥 BREAKING CHANGES
+
+- 382958a span: [**BREAKING**] Remove re-exports of string types from `oxc_span` crate (#21246) (overlookmotel)
+
+### ⚡ Performance
+
+- addcd02 napi/parser, linter/plugins: Raw transfer deserializer for `Vec`s use shift instead of multiply where possible (#21142) (overlookmotel)
+- 3068ded napi/parser, linter/plugins: Shift before add when calculating positions in raw transfer deserializer (#21141) (overlookmotel)
+- eb400b8 napi/parser, linter/plugins: Remove `uint32` buffer view (#21140) (overlookmotel)
+- 2675085 napi/parser: Lazy deserialization use only `Int32Array` (#21139) (overlookmotel)
+- 5b35a53 napi/parser: Deserializing tokens use only `int32` array (#21138) (overlookmotel)
+- f163d10 parser: Tokens raw deserialization use `Int32Array` (#21137) (overlookmotel)
+- 7a86613 linter/plugins: Use `Int32Array`s for tokens and comments buffers (#21136) (overlookmotel)
+- 8c51121 napi/parser, linter/plugins: Raw transfer deserialize `Span` fields as `i32`s (#21135) (overlookmotel)
+- bc1bcdd napi/parser, linter/plugins: Inline trivial raw transfer field deserializers into node object definitions (#21134) (overlookmotel)
+- c0278ab napi/parser, linter/plugins: Use `Int32Array` in raw transfer deserializer (#21132) (overlookmotel)
+- 43482c7 linter/plugins: Use `>>` not `>>>` in binary search loops (#21129) (overlookmotel)
+
+## [0.124.0] - 2026-04-06
+
+### ⚡ Performance
+
+- fb52383 napi/parser, linter/plugins: Clear buffers and source texts earlier (#21025) (overlookmotel)
+- 3b7dec4 napi/parser, linter/plugins: Use `utf8Slice` for decoding UTF-8 strings (#21022) (overlookmotel)
+- 012c924 napi/parser, linter/plugins: Speed up decoding strings in raw transfer (#21021) (overlookmotel)
+- 55e1e9b napi/parser, linter/plugins: Initialize vars as 0 (#21020) (overlookmotel)
+- c25ef02 napi/parser, linter/plugins: Simplify branch condition in `deserializeStr` (#21019) (overlookmotel)
+- 9f494c3 napi/parser, linter/plugins: Raw transfer use `String.fromCharCode` in string decoding (#21018) (overlookmotel)
+- 0503a78 napi/parser, linter/plugins: Faster deserialization of `raw` fields (#20923) (overlookmotel)
+- a24f75e napi/parser: Optimize string deserialization for non-ASCII sources (#20834) (Joshua Tuddenham)
+
+## [0.122.0] - 2026-03-23
+
+### ⚡ Performance
+
+- 9a622c7 linter/plugins: Lazy deserialize tokens and comments (#20474) (overlookmotel)
+- c6ea0a0 ast: Place `NodeId` field after `Span` in structs (#20584) (overlookmotel)
+- d176ecc napi/parser, oxlint/plugins: Shorten deserializer for `WithClause` (#20575) (overlookmotel)
+
+## [0.120.0] - 2026-03-16
+
+### ⚡ Performance
+
+- 9cd612f linter/plugins: Recycle comment objects (#20362) (overlookmotel)
+
+## [0.119.0] - 2026-03-14
+
+### 📚 Documentation
+
+- e4aa5b5 parser/napi, linter/plugins: Add JSDoc comments to raw transfer constants (#20286) (overlookmotel)
+
+## [0.117.0] - 2026-03-09
+
+### 🐛 Bug Fixes
+
+- 92cfb14 linter/plugins: Fix types for `walkProgram` and `walkProgramWithCfg` (#20081) (overlookmotel)
+- ee0491e apps,napi: Explicitly specify libs in tsconfigs (#20071) (camc314)
+
+## [0.116.0] - 2026-03-02
+
+### ⚡ Performance
+
+- 05ccf9f linter/plugins: Transfer tokens via raw transfer (#19893) (overlookmotel)
+- 6a6513c linter/plugins: Use Oxc tokens in plugins (#19498) (camc314)
+
+### 📚 Documentation
+
+- 2fa936f README.md: Map npm package links to npmx.dev (#19666) (Boshen)
+
+## [0.114.0] - 2026-02-16
+
+### 🚀 Features
+
+- ebb80b3 ast: Add `node_id` field to all AST struct nodes (#18138) (Boshen)
+
+## [0.113.0] - 2026-02-10
+
+### 🐛 Bug Fixes
+
+- 57917ee parser: Parse decorators on rest parameters (#18938) (Boshen)
+- 487601b napi: Disable mimalloc on Windows to fix worker_threads crash (#18923) (Boshen)
+
+## [0.111.0] - 2026-01-26
+
+### 🚀 Features
+
+- 8db0e78 linter/plugins: Handle BOMs (#18376) (overlookmotel)
+- 6ac09e2 linter/plugins: Support source text not being at start of buffer (#18375) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- c205b0d ast: Remove `ThisExpression` from `TSModuleReference` (#18489) (Boshen)
+
+### 📚 Documentation
+
+- 8ccd853 npm: Update package homepage URLs and add keywords (#18509) (Boshen)
+- 9b3165f napi/parser: Clarify when to use `parseAsync` vs `parseSync` (#18486) (Boshen)
+- 1b59f63 napi/parser: Correct typo in README (#18251) (overlookmotel)
+
+## [0.109.0] - 2026-01-19
+
+### 💥 BREAKING CHANGES
+
+- 9135b0b ast: [**BREAKING**] Move scope from `TSEnumDeclaration` to `TSEnumBody` (#18058) (Boshen)
+
+### 🚀 Features
+
+- 6e8fa80 napi/parser, napi/transform: Accept `sourceType: "commonjs"` (#18197) (overlookmotel)
+- 66b8c02 parser: Implement unambiguous module parsing for JS/TS files (#18124) (Boshen)
+- 08dad63 span: Add `sourceType: 'commonjs'` support (#18089) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 7a0ca99 linter/plugins: Use correct ScriptKind for tokens (#17185) (Peter Wagenet)
+
+## [0.105.0] - 2025-12-22
+
+### ⚡ Performance
+
+- 5aefb84 linter/plugins: Reduce size of walker code (#17176) (overlookmotel)
+
+## [0.104.0] - 2025-12-19
+
+### 🚀 Features
+
+- 291b57b ast_tools: Generate TS declaration files for deserializer and walk files (#16912) (camc314)
+
+### 🐛 Bug Fixes
+
+- e59132b parser/napi: Fix lazy deser (#17069) (overlookmotel)
+- a92faf0 ast_tools: Support `u128` in `assert_layouts` generator (#17050) (overlookmotel)
+
+## [0.103.0] - 2025-12-15
+
+### 🚀 Features
+
+- 30a9076 ast, parser, codegen: Add `CommentKind::MultilineBlock` (#16479) (Dunqing)
+
+## [0.102.0] - 2025-12-08
+
+### 💥 BREAKING CHANGES
+
+- 083fea9 napi/parser: [**BREAKING**] Represent empty optional fields on JS side as `null` (#16411) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 699406a napi/parser: Move `ExportEntry::module_request` field to first (#16412) (overlookmotel)
+- 12bd794 napi/parser: Move `ExportEntry::module_request` field to last (#16403) (overlookmotel)
+
+### ⚡ Performance
+
+- 790beeb napi/parser: Do not remove extraneous options on JS side (#16447) (overlookmotel)
+
+## [0.100.0] - 2025-12-01
+
+### 💥 BREAKING CHANGES
+
+- 74cf572 ast: [**BREAKING**] Make `source` field of `TSImportType` a `StringLiteral` (#16114) (copilot-swe-agent)
+- 934d873 napi: [**BREAKING**] Drop `armv7-unknown-linux-musleabihf` support (#16105) (Boshen)
+
+### 🚀 Features
+
+- bab4bc8 napi/parser: Add type annotations to parse-raw-worker test (#15998) (camc314)
+
+### 🐛 Bug Fixes
+
+- 9149a26 linter/plugins, napi/parser: Deep freeze visitor keys (#16293) (overlookmotel)
+- 9cc20a1 minifier: Avoid merging side effectful expressions to next assignment statement if the side effect may change the left hand side reference (#16165) (sapphi-red)
+- 91eb3f2 ast/estree: Convert `TSImportType` `argument` field to `Literal` (#16109) (overlookmotel)
+
+### ⚡ Performance
+
+- 02bdf90 linter/plugins, napi/parser: Reuse arrays in visitor keys (#16294) (overlookmotel)
+
+## [0.99.0] - 2025-11-24
+
+### 💥 BREAKING CHANGES
+
+- cbb27fd ast: [**BREAKING**] Add `TSGlobalDeclaration` type (#15712) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 2bd3cb6 apps, editors, napi: Fix `oxlint-disable` comments (#16014) (overlookmotel)
+
+## [0.98.0] - 2025-11-17
+
+### 💥 BREAKING CHANGES
+
+- ea51b0b napi: [**BREAKING**] Standardize function naming with sync suffixes (#15661) (Boshen)
+
+### 🚀 Features
+
+- f5ce55a napi: Export all options using wildcard exports (Boshen)
+
+## [0.97.0] - 2025-11-11
+
+### 🚀 Features
+
+- 682dca2 parser: Add more helps to parser errors (#15186) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 7f079ab ast/estree: Fix raw transfer deserializer for `AssignmentTargetPropertyIdentifier` (#15304) (overlookmotel)
+
+### ⚡ Performance
+
+- c82fab0 ast/estree: Remove pointless assignments from raw transfer deserializers (#15305) (overlookmotel)
+
 ## [0.96.0] - 2025-10-30
 
 ### 🚀 Features

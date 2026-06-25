@@ -1,8 +1,10 @@
+use std::ops::Deref;
+
 use oxc_span::{GetSpan, Span};
 
 use crate::{
     formatter::{
-        Format, FormatResult, Formatter,
+        Format, JsFormatContext, JsFormatter,
         prelude::{group, if_group_breaks},
     },
     options::TrailingSeparator,
@@ -21,29 +23,39 @@ pub struct FormatSeparatedElement<E: GetSpan> {
     options: FormatSeparatedOptions,
 }
 
+impl<T: GetSpan> Deref for FormatSeparatedElement<T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.element
+    }
+}
+
 impl<T: GetSpan> GetSpan for FormatSeparatedElement<T> {
     fn span(&self) -> Span {
         self.element.span()
     }
 }
 
-impl<'a, E: Format<'a> + GetSpan> Format<'a> for FormatSeparatedElement<E> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+impl<'a, E: Format<'a, JsFormatContext<'a>> + GetSpan> Format<'a, JsFormatContext<'a>>
+    for FormatSeparatedElement<E>
+{
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         if self.options.nodes_grouped {
-            group(&self.element).fmt(f)?;
+            group(&self.element).fmt(f);
         } else {
-            self.element.fmt(f)?;
+            self.element.fmt(f);
         }
         if self.is_last {
             match self.options.trailing_separator {
                 TrailingSeparator::Allowed => {
-                    if_group_breaks(&self.separator).with_group_id(self.options.group_id).fmt(f)
+                    if_group_breaks(&self.separator).with_group_id(self.options.group_id).fmt(f);
                 }
                 TrailingSeparator::Mandatory => self.separator.fmt(f),
-                TrailingSeparator::Disallowed | TrailingSeparator::Omit => Ok(()),
+                TrailingSeparator::Disallowed | TrailingSeparator::Omit => (),
             }
         } else {
-            self.separator.fmt(f)
+            self.separator.fmt(f);
         }
     }
 }
@@ -66,16 +78,20 @@ where
     }
 
     /// Wraps every node inside of a group
+    #[must_use]
+    #[expect(unused)]
     pub fn nodes_grouped(mut self) -> Self {
         self.options.nodes_grouped = true;
         self
     }
 
+    #[must_use]
     pub fn with_trailing_separator(mut self, separator: TrailingSeparator) -> Self {
         self.options.trailing_separator = separator;
         self
     }
 
+    #[must_use]
     pub fn with_group_id(mut self, group_id: Option<GroupId>) -> Self {
         self.options.group_id = group_id;
         self

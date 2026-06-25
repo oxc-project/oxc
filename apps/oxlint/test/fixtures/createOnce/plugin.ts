@@ -1,6 +1,4 @@
-import { sep } from 'node:path';
-
-import type { Node, Plugin, Rule } from '../../../dist/index.js';
+import type { Node, Plugin, Rule } from "#oxlint/plugins";
 
 const SPAN: Node = {
   start: 0,
@@ -22,26 +20,77 @@ const alwaysRunRule: Rule = {
     // oxlint-disable-next-line typescript-eslint/no-this-alias
     const topLevelThis = this;
 
+    // Available but `null`
+    const { id, options } = context;
+
     // Check that these APIs throw here
-    const idError = tryCatch(() => context.id);
+    const cwdError = tryCatch(() => context.cwd);
+    const getCwdError = tryCatch(() => context.getCwd());
     const filenameError = tryCatch(() => context.filename);
+    const getFilenameError = tryCatch(() => context.getFilename());
     const physicalFilenameError = tryCatch(() => context.physicalFilename);
-    const optionsError = tryCatch(() => context.options);
+    const getPhysicalFilenameError = tryCatch(() => context.getPhysicalFilename());
     const sourceCodeError = tryCatch(() => context.sourceCode);
+    const getSourceCodeError = tryCatch(() => context.getSourceCode());
     const settingsError = tryCatch(() => context.settings);
-    const reportError = tryCatch(() => context.report({ message: 'oh no', node: SPAN }));
+    const parserOptionsError = tryCatch(() => context.parserOptions);
+    const parserPathError = tryCatch(() => context.parserPath);
+    const reportError = tryCatch(() => context.report({ message: "oh no", node: SPAN }));
 
     return {
       before() {
+        context.report({ message: `createOnce: id: ${id}`, node: SPAN });
+        context.report({ message: `createOnce: options: ${JSON.stringify(options)}`, node: SPAN });
         context.report({ message: `createOnce: call count: ${createOnceCallCount}`, node: SPAN });
-        context.report({ message: `createOnce: this === rule: ${topLevelThis === alwaysRunRule}`, node: SPAN });
-        context.report({ message: `createOnce: id: ${idError?.message}`, node: SPAN });
-        context.report({ message: `createOnce: filename: ${filenameError?.message}`, node: SPAN });
-        context.report({ message: `createOnce: physicalFilename: ${physicalFilenameError?.message}`, node: SPAN });
-        context.report({ message: `createOnce: options: ${optionsError?.message}`, node: SPAN });
-        context.report({ message: `createOnce: sourceCode: ${sourceCodeError?.message}`, node: SPAN });
-        context.report({ message: `createOnce: settings: ${settingsError?.message}`, node: SPAN });
-        context.report({ message: `createOnce: report: ${reportError?.message}`, node: SPAN });
+        context.report({
+          message: `createOnce: this === rule: ${topLevelThis === alwaysRunRule}`,
+          node: SPAN,
+        });
+        context.report({ message: `createOnce: cwd error: ${cwdError?.message}`, node: SPAN });
+        context.report({
+          message: `createOnce: getCwd() error: ${getCwdError?.message}`,
+          node: SPAN,
+        });
+        context.report({
+          message: `createOnce: filename error: ${filenameError?.message}`,
+          node: SPAN,
+        });
+        context.report({
+          message: `createOnce: getFilename() error: ${getFilenameError?.message}`,
+          node: SPAN,
+        });
+        context.report({
+          message: `createOnce: physicalFilename error: ${physicalFilenameError?.message}`,
+          node: SPAN,
+        });
+        context.report({
+          message: `createOnce: getPhysicalFilename() error: ${getPhysicalFilenameError?.message}`,
+          node: SPAN,
+        });
+        context.report({
+          message: `createOnce: sourceCode error: ${sourceCodeError?.message}`,
+          node: SPAN,
+        });
+        context.report({
+          message: `createOnce: getSourceCode() error: ${getSourceCodeError?.message}`,
+          node: SPAN,
+        });
+        context.report({
+          message: `createOnce: settings error: ${settingsError?.message}`,
+          node: SPAN,
+        });
+        context.report({
+          message: `createOnce: parserOptions error: ${parserOptionsError?.message}`,
+          node: SPAN,
+        });
+        context.report({
+          message: `createOnce: parserPath error: ${parserPathError?.message}`,
+          node: SPAN,
+        });
+        context.report({
+          message: `createOnce: report error: ${reportError?.message}`,
+          node: SPAN,
+        });
 
         context.report({ message: `before hook: id: ${context.id}`, node: SPAN });
         context.report({ message: `before hook: filename: ${context.filename}`, node: SPAN });
@@ -73,7 +122,7 @@ const skipRunRule: Rule = {
         context.report({ message: `ident visit fn "${node.name}": should not be output`, node });
       },
       after() {
-        context.report({ message: 'after hook: should not be output', node: SPAN });
+        context.report({ message: "after hook: should not be output", node: SPAN });
       },
     };
   },
@@ -118,10 +167,10 @@ const hooksOnlyRule: Rule = {
     return {
       // Neither hook should be called, because no AST node visitor functions
       before() {
-        context.report({ message: 'before hook: should not be output', node: SPAN });
+        context.report({ message: "before hook: should not be output", node: SPAN });
       },
       after() {
-        context.report({ message: 'after hook: should not be output', node: SPAN });
+        context.report({ message: "after hook: should not be output", node: SPAN });
       },
     };
   },
@@ -142,25 +191,25 @@ const noHooksRule: Rule = {
 
 const plugin: Plugin = {
   meta: {
-    name: 'create-once-plugin',
+    name: "create-once-plugin",
   },
   rules: {
-    'always-run': alwaysRunRule,
-    'skip-run': skipRunRule,
-    'before-only': beforeOnlyRule,
-    'after-only': afterOnlyRule,
-    'only-hooks': hooksOnlyRule,
-    'no-hooks': noHooksRule,
+    "always-run": alwaysRunRule,
+    "skip-run": skipRunRule,
+    "before-only": beforeOnlyRule,
+    "after-only": afterOnlyRule,
+    "only-hooks": hooksOnlyRule,
+    "no-hooks": noHooksRule,
   },
 };
 
 export default plugin;
 
-function tryCatch(fn: () => unknown) {
+function tryCatch(fn: () => unknown): Error {
   try {
     fn();
   } catch (err) {
-    return err;
+    return err as Error;
   }
-  throw new Error('Expected function to throw');
+  throw new Error("Expected function to throw");
 }

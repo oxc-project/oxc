@@ -1,10 +1,9 @@
-use std::path::Path;
+use std::{borrow::Cow, path::Path};
 
 use oxc_index::{IndexVec, define_nonmax_u32_index_type};
 use oxc_span::Span;
-use oxc_syntax::identifier::{LS, PS};
-
-use crate::str::{LS_LAST_2_BYTES, LS_OR_PS_FIRST_BYTE, PS_LAST_2_BYTES};
+use oxc_syntax::line_terminator::{LS, LS_LAST_2_BYTES, LS_OR_PS_FIRST_BYTE, PS, PS_LAST_2_BYTES};
+use rustc_hash::FxHashMap;
 
 /// Number of lines to check with linear search when translating byte position to line index
 const LINE_SEARCH_LINEAR_ITERATIONS: usize = 16;
@@ -47,14 +46,15 @@ pub struct ColumnOffsets {
     columns: Box<[u32]>,
 }
 
-#[expect(clippy::struct_field_names)]
 pub struct SourcemapBuilder<'a> {
-    source_id: u32,
+    source_name: String,
     original_source: &'a str,
+    names: Vec<&'a str>,
+    names_map: FxHashMap<&'a str, u32>,
+    tokens: Vec<oxc_sourcemap::Token>,
     last_generated_update: usize,
     last_position: Option<u32>,
     line_offset_tables: LineOffsetTables,
-    sourcemap_builder: oxc_sourcemap::SourceMapBuilder,
     generated_line: u32,
     generated_column: u32,
     /// Tracks the last accessed line index to optimize sequential lookups in `search_original_line_and_column`.
@@ -65,25 +65,37 @@ pub struct SourcemapBuilder<'a> {
 
 impl<'a> SourcemapBuilder<'a> {
     pub fn new(path: &Path, source_text: &'a str) -> Self {
-        let mut sourcemap_builder = oxc_sourcemap::SourceMapBuilder::default();
         let line_offset_tables = Self::generate_line_offset_tables(source_text);
-        let source_id =
-            sourcemap_builder.set_source_and_content(path.to_string_lossy().as_ref(), source_text);
         Self {
-            source_id,
+            source_name: path.to_string_lossy().into_owned(),
             original_source: source_text,
+            names: Vec::new(),
+            names_map: FxHashMap::default(),
+            tokens: Vec::new(),
             last_generated_update: 0,
             last_position: None,
             line_offset_tables,
-            sourcemap_builder,
             generated_line: 0,
             generated_column: 0,
             last_line_lookup: 0,
         }
     }
 
-    pub fn into_sourcemap(self) -> oxc_sourcemap::SourceMap {
-        self.sourcemap_builder.into_sourcemap()
+    pub fn into_sourcemap(mut self) -> oxc_sourcemap::SourceMap<'a> {
+        self.names.shrink_to_fit();
+        self.tokens.shrink_to_fit();
+
+        oxc_sourcemap::SourceMap::from_parts(oxc_sourcemap::SourceMapParts {
+            file: None,
+            names: self.names.into_iter().map(Cow::Borrowed).collect(),
+            source_root: None,
+            sources: vec![Cow::Owned(self.source_name)],
+            source_contents: vec![Some(Cow::Borrowed(self.original_source))],
+            tokens: self.tokens.into_boxed_slice(),
+            token_chunks: None,
+            x_google_ignore_list: None,
+            debug_id: None,
+        })
     }
 
     pub fn add_source_mapping_for_name(&mut self, output: &[u8], span: Span, name: &str) {
@@ -101,22 +113,32 @@ impl<'a> SourcemapBuilder<'a> {
         self.add_source_mapping(output, span.start, token_name);
     }
 
-    pub fn add_source_mapping(&mut self, output: &[u8], position: u32, name: Option<&str>) {
+    pub fn add_source_mapping(&mut self, output: &[u8], position: u32, name: Option<&'a str>) {
         if self.last_position == Some(position) {
             return;
         }
         let (original_line, original_column) = self.search_original_line_and_column(position);
         self.update_generated_line_and_column(output);
-        let name_id = name.map(|s| self.sourcemap_builder.add_name(s));
-        self.sourcemap_builder.add_token(
+        let name_id = name.map(|s| self.add_name(s));
+        self.tokens.push(oxc_sourcemap::Token::new(
             self.generated_line,
             self.generated_column,
             original_line,
             original_column,
-            Some(self.source_id),
+            Some(0),
             name_id,
-        );
+        ));
         self.last_position = Some(position);
+    }
+
+    fn add_name(&mut self, name: &'a str) -> u32 {
+        if let Some(&id) = self.names_map.get(name) {
+            return id;
+        }
+        let id = u32::try_from(self.names.len()).expect("sourcemap names length should fit in u32");
+        self.names_map.insert(name, id);
+        self.names.push(name);
+        id
     }
 
     #[expect(clippy::cast_possible_truncation)]
@@ -256,18 +278,30 @@ impl<'a> SourcemapBuilder<'a> {
                         continue;
                     }
                     LS_OR_PS_FIRST_BYTE => {
-                        let next_byte = output[idx + 1];
-                        let next_next_byte = output[idx + 2];
-                        if !matches!([next_byte, next_next_byte], LS_LAST_2_BYTES | PS_LAST_2_BYTES)
+                        let next_two_bytes = output.get(idx + 1..idx + 3);
+                        if next_two_bytes != Some(&LS_LAST_2_BYTES[..])
+                            && next_two_bytes != Some(&PS_LAST_2_BYTES[..])
                         {
                             last_line_is_ascii = false;
+                            // 3-byte Unicode char that isn't a line break.
+                            // We know it's 3 bytes, so we could do `idx += 3`, but that's more instruction bytes
+                            // than `idx += 1` (`inc` instruction). This branch is extremely rarely taken, and this
+                            // is in a hot loop, so it's better to optimize for the common case.
+                            // The remaining 2 bytes will hit the "Unicode char" branch below on next turns of the loop,
+                            // and they'll be skipped too.
                             idx += 1;
                             continue;
                         }
+                        // 3-byte line break. Add 2 to `idx` here, as 1 more is added below.
+                        idx += 2;
                     }
                     _ => {
                         // Unicode char
                         last_line_is_ascii = false;
+                        // Note: Only increment `idx` by 1. We don't know how many bytes the char is, and non-ASCII
+                        // chars are rare, so it's not worthwhile adding more instructions to this hot loop to find out.
+                        // The remaining bytes of the char will hit this branch again on next turns of the loop,
+                        // and they'll be skipped too.
                         idx += 1;
                         continue;
                     }
@@ -545,6 +579,12 @@ mod test {
         create_mappings("\r\nabc", 1, 3);
         create_mappings("abc\r\n", 1, 0);
         create_mappings("ÖÖ\nÖ\nÖÖÖ", 2, 3);
+        create_mappings("\u{2028}", 1, 0);
+        create_mappings("\u{2029}", 1, 0);
+        create_mappings("a\u{2028}b", 1, 1);
+        create_mappings("a\u{2029}b", 1, 1);
+        create_mappings("`\u{2028}`", 1, 1);
+        create_mappings("`\u{2029}`", 1, 1);
     }
 
     #[test]
@@ -556,13 +596,17 @@ mod test {
         let sm = builder.into_sourcemap();
         // The name `a` not change.
         assert_eq!(
-            sm.get_source_view_token(0_u32).as_ref().and_then(|token| token.get_name()),
+            sm.get_source_view_token(0_u32)
+                .as_ref()
+                .and_then(oxc_sourcemap::SourceViewToken::get_name),
             None
         );
         // The name `b` -> `c`, save `b` to token.
         assert_eq!(
-            sm.get_source_view_token(1_u32).as_ref().and_then(|token| token.get_name()),
-            Some(&"b".into())
+            sm.get_source_view_token(1_u32)
+                .as_ref()
+                .and_then(oxc_sourcemap::SourceViewToken::get_name),
+            Some("b")
         );
     }
 

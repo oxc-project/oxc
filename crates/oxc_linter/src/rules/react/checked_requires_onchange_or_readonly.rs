@@ -6,11 +6,12 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     AstNode,
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{get_element_type, get_jsx_attribute_name, is_create_element_call},
 };
 
@@ -26,8 +27,8 @@ fn exclusive_checked_attribute(checked_span: Span, default_checked_span: Span) -
         .with_labels([checked_span, default_checked_span])
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct CheckedRequiresOnchangeOrReadonly {
     /// Ignore the requirement to provide either `onChange` or `readOnly` when the `checked` prop is present.
     ignore_missing_properties: bool,
@@ -38,8 +39,15 @@ pub struct CheckedRequiresOnchangeOrReadonly {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule enforces onChange or readonly attribute for checked property of input elements.
-    /// It also warns when checked and defaultChecked properties are used together.
+    /// This rule enforces `onChange` or `readOnly` attribute for checked property of input elements.
+    /// It also warns when `checked` and `defaultChecked` properties are used together.
+    ///
+    /// ### Why is this bad?
+    ///
+    /// `checked` should generally always be used with one of `onChange` or `readOnly`.
+    ///
+    /// And using `checked` and `defaultChecked` together is likely an error as they are mutually
+    /// exclusive ways to control the checked state of an input element.
     ///
     /// ### Examples
     ///
@@ -70,6 +78,8 @@ declare_oxc_lint!(
     react,
     pedantic,
     config = CheckedRequiresOnchangeOrReadonly,
+    version = "0.2.15",
+    short_description = "Enforce using `onChange` or `readOnly` attributes when `checked` is used on an `<input>` field.",
 );
 
 impl Rule for CheckedRequiresOnchangeOrReadonly {
@@ -191,21 +201,8 @@ impl Rule for CheckedRequiresOnchangeOrReadonly {
         }
     }
 
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let value = value.as_array().and_then(|arr| arr.first()).and_then(|val| val.as_object());
-
-        Self {
-            ignore_missing_properties: value
-                .and_then(|val| {
-                    val.get("ignoreMissingProperties").and_then(serde_json::Value::as_bool)
-                })
-                .unwrap_or(false),
-            ignore_exclusive_checked_attribute: value
-                .and_then(|val| {
-                    val.get("ignoreExclusiveCheckedAttribute").and_then(serde_json::Value::as_bool)
-                })
-                .unwrap_or(false),
-        }
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 }
 

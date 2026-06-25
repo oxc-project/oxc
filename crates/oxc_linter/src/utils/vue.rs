@@ -1,12 +1,68 @@
+use phf::{Set, phf_set};
+
 use oxc_ast::{
     AstKind,
     ast::{
         CallExpression, ExportDefaultDeclarationKind, Expression, IdentifierReference,
-        ObjectPropertyKind,
+        ObjectExpression, ObjectProperty, ObjectPropertyKind, TSSignature, TSType, TSTypeName,
     },
 };
+use oxc_span::{GetSpan, Span};
 
-use crate::{ContextSubHost, LintContext};
+use crate::{
+    AstNode, ContextSubHost, LintContext, ast_util::get_declaration_from_reference_id,
+    frameworks::FrameworkOptions, module_record::ImportImportName,
+};
+
+// These sets mirror eslint-plugin-vue's `vue/no-reserved-component-names`.
+// `globals::HTML_TAG` has a broader DOM/ARIA scope and different message
+// grouping, so it is not a drop-in replacement for this Vue rule.
+pub const VUE_RESERVED_HTML_ELEMENTS: Set<&'static str> = phf_set! {
+    "a", "abbr", "address", "area", "article", "aside", "audio", "b", "base", "bdi", "bdo",
+    "blockquote", "body", "br", "button", "canvas", "caption", "cite", "code", "col", "colgroup",
+    "data", "datalist", "dd", "del", "details", "dfn", "dialog", "div", "dl", "dt", "em", "embed",
+    "fencedframe", "fieldset", "figcaption", "figure", "footer", "form", "geolocation", "h1",
+    "h2", "h3", "h4", "h5", "h6", "head", "header", "hgroup", "hr", "html", "i", "iframe",
+    "img", "input", "ins", "kbd", "label", "legend", "li", "link", "main", "map", "mark",
+    "menu", "meta", "meter", "nav", "noscript", "object", "ol", "optgroup", "option", "output",
+    "p", "picture", "pre", "progress", "q", "rp", "rt", "ruby", "s", "samp", "script", "search",
+    "section", "select", "selectedcontent", "slot", "small", "source", "span", "strong", "style",
+    "sub", "summary", "sup", "table", "tbody", "td", "template", "textarea", "tfoot", "th",
+    "thead", "time", "title", "tr", "track", "u", "ul", "var", "video", "wbr",
+};
+
+pub const VUE_RESERVED_DEPRECATED_HTML_ELEMENTS: Set<&'static str> = phf_set! {
+    "acronym", "applet", "basefont", "bgsound", "big", "blink", "center", "dir", "font", "frame",
+    "frameset", "isindex", "keygen", "listing", "marquee", "menuitem", "multicol", "nextid",
+    "nobr", "noembed", "noframes", "param", "plaintext", "rb", "rtc", "spacer", "strike", "tt",
+    "xmp",
+};
+
+pub const VUE_RESERVED_SVG_ELEMENTS: Set<&'static str> = phf_set! {
+    "a", "animate", "animateMotion", "animateTransform", "circle", "clipPath", "defs", "desc",
+    "ellipse", "feBlend", "feColorMatrix", "feComponentTransfer", "feComposite",
+    "feConvolveMatrix", "feDiffuseLighting", "feDisplacementMap", "feDistantLight", "feDropShadow",
+    "feFlood", "feFuncA", "feFuncB", "feFuncG", "feFuncR", "feGaussianBlur", "feImage", "feMerge",
+    "feMergeNode", "feMorphology", "feOffset", "fePointLight", "feSpecularLighting", "feSpotLight",
+    "feTile", "feTurbulence", "filter", "foreignObject", "g", "image", "line", "linearGradient",
+    "marker", "mask", "metadata", "mpath", "path", "pattern", "polygon", "polyline",
+    "radialGradient", "rect", "script", "set", "stop", "style", "svg", "switch", "symbol", "text",
+    "textPath", "title", "tspan", "use", "view",
+};
+
+pub const VUE_RESERVED_KEBAB_CASE_ELEMENTS: Set<&'static str> = phf_set! {
+    "annotation-xml", "color-profile", "font-face", "font-face-src", "font-face-uri",
+    "font-face-format", "font-face-name", "missing-glyph",
+};
+
+pub const VUE2_BUILTIN_COMPONENT_NAMES: Set<&'static str> = phf_set! {
+    "template", "slot", "component", "Component", "transition", "Transition", "transition-group",
+    "TransitionGroup", "keep-alive", "KeepAlive",
+};
+
+pub const VUE3_BUILTIN_COMPONENT_NAMES_EXTRA: Set<&'static str> = phf_set! {
+    "teleport", "Teleport", "suspense", "Suspense",
+};
 
 /// Check if any of the other contexts has a default export with the `name` property.
 ///
@@ -104,7 +160,7 @@ pub fn check_define_macro_call_expression(
 }
 
 fn is_non_local_reference(identifier: &IdentifierReference, ctx: &LintContext<'_>) -> bool {
-    if let Some(symbol_id) = ctx.semantic().scoping().get_root_binding(&identifier.name) {
+    if let Some(symbol_id) = ctx.semantic().scoping().get_root_binding(identifier.name) {
         return matches!(
             ctx.semantic().symbol_declaration(symbol_id).kind(),
             AstKind::ImportSpecifier(_)
@@ -114,4 +170,384 @@ fn is_non_local_reference(identifier: &IdentifierReference, ctx: &LintContext<'_
     // variables outside the current `<script>` block are valid.
     // This is the same for unresolved variables.
     true
+}
+
+/// Check if the given node is inside a Vue component instance method.
+///
+/// Vue component instance methods are `function` properties directly on a
+/// component options object (e.g. `mounted() {}`) or under `methods` /
+/// `computed` / `watch`.
+pub fn is_in_vue_component_instance_method(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
+    let Some(function_node) = ctx
+        .nodes()
+        .ancestors(node.id())
+        .find(|ancestor| matches!(ancestor.kind(), AstKind::Function(_)))
+    else {
+        return false;
+    };
+
+    let property_node = ctx.nodes().parent_node(function_node.id());
+    let AstKind::ObjectProperty(_) = property_node.kind() else {
+        return false;
+    };
+
+    let object_node = ctx.nodes().parent_node(property_node.id());
+    if is_vue_component_options_object(object_node, ctx) {
+        return true;
+    }
+
+    let container_property_node = ctx.nodes().parent_node(object_node.id());
+    if !matches!(container_property_node.kind(), AstKind::ObjectProperty(_)) {
+        return false;
+    }
+
+    let Some(container_name) = container_property_node
+        .kind()
+        .as_object_property()
+        .and_then(|prop| if prop.computed { None } else { prop.key.static_name() })
+    else {
+        return false;
+    };
+
+    matches!(container_name.as_ref(), "computed" | "methods" | "watch")
+        && is_vue_component_options_object(
+            ctx.nodes().parent_node(container_property_node.id()),
+            ctx,
+        )
+}
+
+/// What kind of Vue component options object an `ObjectExpression` is.
+///
+/// Mirrors upstream `getVueObjectType` return values.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum VueComponentObjectKind {
+    /// `export default {...}` in a `.vue` file (outside `<script setup>`).
+    Export,
+    /// `createApp / defineComponent / Vue.component / app.mixin / ...` argument.
+    Definition,
+    /// `new Vue({...})` — a runtime instance, not a reusable component.
+    Instance,
+}
+
+/// Classify the given `ObjectExpression` node as a Vue component options
+/// object. Returns `None` if the node is not a Vue options object.
+///
+/// Recognized forms (see [`VueComponentObjectKind`] for the corresponding kind):
+/// - `export default {...}` (`.vue` files only, skipped inside `<script setup>`)
+/// - `createApp({...})` / `defineComponent({...})` / `defineNuxtComponent({...})`
+/// - `Vue.component(name, {...})` / `Vue.mixin({...})` / `Vue.extend({...})` (Vue 2)
+/// - `app.component(name, {...})` / `app.mixin({...})` (Vue 3 app instance)
+/// - `component('x', {...})` (destructured)
+/// - `new Vue({...})`
+pub fn vue_component_options_kind(
+    object_node: &AstNode<'_>,
+    ctx: &LintContext<'_>,
+) -> Option<VueComponentObjectKind> {
+    let AstKind::ObjectExpression(object_expr) = object_node.kind() else {
+        return None;
+    };
+
+    ctx.nodes().ancestors(object_node.id()).find_map(|ancestor| match ancestor.kind() {
+        AstKind::ExportDefaultDeclaration(export_default_decl) => {
+            if ctx.file_extension().is_none_or(|ext| ext != "vue") {
+                return None;
+            }
+            if ctx.frameworks_options() == FrameworkOptions::VueSetup {
+                return None;
+            }
+            (export_default_decl.declaration.span() == object_expr.span)
+                .then_some(VueComponentObjectKind::Export)
+        }
+        AstKind::CallExpression(call_expr) => (is_last_argument_span(call_expr, object_expr.span)
+            && is_vue_component_options_call(call_expr))
+        .then_some(VueComponentObjectKind::Definition),
+        AstKind::NewExpression(new_expr) => (new_expr
+            .arguments
+            .first()
+            .and_then(|arg| arg.as_expression())
+            .is_some_and(|expr| expr.span() == object_expr.span)
+            && new_expr.callee.get_identifier_reference().is_some_and(|ident| ident.name == "Vue"))
+        .then_some(VueComponentObjectKind::Instance),
+        _ => None,
+    })
+}
+
+/// Whether the given `ObjectExpression` is *any* Vue options object — the
+/// counterpart of upstream `executeOnVue` / `defineVueVisitor`.
+///
+/// See [`vue_component_options_kind`] for the recognized forms.
+pub fn is_vue_component_options_object(object_node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
+    vue_component_options_kind(object_node, ctx).is_some()
+}
+
+/// Whether the given `ObjectExpression` is a Vue *component* options object,
+/// **excluding** `new Vue({...})` instances — the counterpart of upstream
+/// `executeOnVueComponent`.
+pub fn is_vue_component_options_object_excluding_instance(
+    object_node: &AstNode<'_>,
+    ctx: &LintContext<'_>,
+) -> bool {
+    matches!(
+        vue_component_options_kind(object_node, ctx),
+        Some(VueComponentObjectKind::Export | VueComponentObjectKind::Definition)
+    )
+}
+
+fn is_last_argument_span(call_expr: &CallExpression<'_>, span: oxc_span::Span) -> bool {
+    call_expr
+        .arguments
+        .last()
+        .and_then(|arg| arg.as_expression())
+        .is_some_and(|expr| expr.span() == span)
+}
+
+/// Check if the call expression is a Vue component / instance definition call.
+///
+/// Recognized forms:
+/// - `createApp(...)` / `defineComponent(...)` / `defineNuxtComponent(...)` / `component(...)`
+/// - `Vue.component(...)` / `Vue.mixin(...)` / `Vue.extend(...)` (Vue 2)
+/// - `app.component(...)` / `app.mixin(...)` (Vue 3 app instance)
+pub fn is_vue_component_options_call(call_expr: &CallExpression<'_>) -> bool {
+    if let Some(ident) = call_expr.callee.get_identifier_reference() {
+        return matches!(
+            ident.name.as_str(),
+            "createApp" | "defineComponent" | "defineNuxtComponent" | "component"
+        );
+    }
+
+    let Some(member_expr) = call_expr.callee.get_member_expr() else {
+        return false;
+    };
+    let Some(prop_name) = member_expr.static_property_name() else {
+        return false;
+    };
+
+    if let Expression::Identifier(obj) = member_expr.object().get_inner_expression()
+        && obj.name == "Vue"
+    {
+        return matches!(prop_name, "component" | "mixin" | "extend");
+    }
+
+    matches!(prop_name, "component" | "mixin")
+}
+
+/// Check whether the identifier is imported as `nextTick` or aliased from `'vue'`.
+pub fn is_vue_next_tick_import(ident: &IdentifierReference, ctx: &LintContext<'_>) -> bool {
+    let scoping = ctx.scoping();
+    let Some(symbol_id) = scoping.get_reference(ident.reference_id()).symbol_id() else {
+        return false;
+    };
+    for entry in &ctx.module_record().import_entries {
+        if entry.module_request.name() != "vue" {
+            continue;
+        }
+        let ImportImportName::Name(name_span) = &entry.import_name else {
+            continue;
+        };
+        if name_span.name() != "nextTick" {
+            continue;
+        }
+        if scoping.get_root_binding(entry.local_name.name().into()) == Some(symbol_id) {
+            return true;
+        }
+    }
+    false
+}
+
+/// Finds the first `ObjectProperty` whose static key matches `name` in the given object.
+/// `SpreadElement` entries are skipped.
+pub fn find_property<'a, 'b>(
+    obj: &'b ObjectExpression<'a>,
+    name: &str,
+) -> Option<&'b ObjectProperty<'a>> {
+    obj.properties.iter().find_map(|prop| {
+        let ObjectPropertyKind::ObjectProperty(obj_prop) = prop else { return None };
+        obj_prop.key.is_specific_static_name(name).then_some(obj_prop.as_ref())
+    })
+}
+
+/// Walks a `defineProps<T>()` type argument and invokes `f` for every member
+/// signature it contains, mirroring eslint-plugin-vue's `flattenTypeNodes`:
+/// unions, intersections and `interface`/`type` references are resolved
+/// recursively down to their signatures. `f` receives every `TSSignature`
+/// member (including non-property kinds), leaving the caller to pick out what
+/// it needs.
+pub fn for_each_define_props_type_signature<'a>(
+    ts_type: &TSType<'a>,
+    ctx: &LintContext<'a>,
+    f: &mut dyn FnMut(&TSSignature<'a>),
+) {
+    match ts_type {
+        TSType::TSTypeLiteral(literal) => {
+            for signature in &literal.members {
+                f(signature);
+            }
+        }
+        TSType::TSUnionType(union) => {
+            for member in &union.types {
+                for_each_define_props_type_signature(member, ctx, f);
+            }
+        }
+        TSType::TSIntersectionType(intersection) => {
+            for member in &intersection.types {
+                for_each_define_props_type_signature(member, ctx, f);
+            }
+        }
+        TSType::TSTypeReference(type_ref) => {
+            let TSTypeName::IdentifierReference(ident) = &type_ref.type_name else { return };
+            if !ctx.scoping().get_reference(ident.reference_id()).is_type() {
+                return;
+            }
+            let Some(declaration) =
+                get_declaration_from_reference_id(ident.reference_id(), ctx.semantic())
+            else {
+                return;
+            };
+            match declaration.kind() {
+                AstKind::TSInterfaceDeclaration(interface) => {
+                    for signature in &interface.body.body {
+                        f(signature);
+                    }
+                }
+                AstKind::TSTypeAliasDeclaration(alias) => {
+                    for_each_define_props_type_signature(&alias.type_annotation, ctx, f);
+                }
+                _ => {}
+            }
+        }
+        _ => {}
+    }
+}
+
+/// Describe where a computed getter lives — shared by Vue rules that need to detect
+/// expressions inside `computed` getters (`no-side-effects-in-computed-properties`,
+/// `no-async-in-computed-properties`).
+pub enum ComputedContext {
+    /// Options API: `computed: { foo() {...} }` / `computed: { foo: { get() {...} } }`.
+    /// Carries the property key name (None if it can't be resolved statically).
+    OptionsApi(Option<String>),
+    /// Composition API: `computed(fn)` / `computed({ get: fn })`. Carries the span of
+    /// the getter function so callers can distinguish setup-scope vs getter-local
+    /// variables.
+    CompositionApi(Span),
+}
+
+/// Walk up from `node` to the nearest enclosing function, then return the computed
+/// getter context for that function (None if it isn't a computed getter, or if the
+/// walk reaches `Program` first).
+pub fn find_computed_context(node: &AstNode<'_>, ctx: &LintContext<'_>) -> Option<ComputedContext> {
+    let nodes = ctx.nodes();
+    let mut current = nodes.parent_node(node.id());
+    loop {
+        match current.kind() {
+            AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
+                return get_computed_getter_context(current, ctx);
+            }
+            AstKind::Program(_) => return None,
+            _ => {
+                current = nodes.parent_node(current.id());
+            }
+        }
+    }
+}
+
+/// Classify a function node: return `Some(ComputedContext)` if it is a Vue computed
+/// getter. Mirrors upstream `getComputedProperties` shape resolution.
+///
+/// Recognized shapes:
+/// - Options API Case A: `computed: { key() {...} }` / `computed: { key: function() {...} }`
+///   (FunctionExpression only — arrow functions are excluded to match upstream)
+/// - Options API Case B: `computed: { key: { get() {...} } }`
+///   (FunctionExpression only — same reasoning as Case A)
+/// - Composition API Case C: `computed(fn)` / `computed({ get: fn })` (both Function and Arrow)
+pub fn get_computed_getter_context(
+    fn_node: &AstNode<'_>,
+    ctx: &LintContext<'_>,
+) -> Option<ComputedContext> {
+    let nodes = ctx.nodes();
+    let fn_span = fn_node.span();
+    let parent = nodes.parent_node(fn_node.id());
+
+    match parent.kind() {
+        // Case C variant: `computed(fn)` / `computed(() => ...)` directly
+        AstKind::CallExpression(call) if is_vue_computed_call(call, ctx) => {
+            return Some(ComputedContext::CompositionApi(fn_span));
+        }
+
+        AstKind::ObjectProperty(prop) => {
+            let grandparent = nodes.parent_node(parent.id());
+            let AstKind::ObjectExpression(_) = grandparent.kind() else { return None };
+            let great = nodes.parent_node(grandparent.id());
+
+            match great.kind() {
+                // Case A: `computed: { key() {} }` or `computed: { key: function() {} }`
+                AstKind::ObjectProperty(outer)
+                    if outer.key.is_specific_static_name("computed")
+                        && matches!(fn_node.kind(), AstKind::Function(_)) =>
+                {
+                    let vue_options = nodes.parent_node(great.id());
+                    if is_vue_component_options_object(vue_options, ctx) {
+                        let key = prop.key.static_name().map(|s| s.to_string());
+                        return Some(ComputedContext::OptionsApi(key));
+                    }
+                }
+
+                // Case B: `computed: { key: { get() {} } }`
+                AstKind::ObjectProperty(key_prop)
+                    if prop.key.is_specific_static_name("get")
+                        && matches!(fn_node.kind(), AstKind::Function(_)) =>
+                {
+                    let key_obj_expr = nodes.parent_node(great.id());
+                    let AstKind::ObjectExpression(_) = key_obj_expr.kind() else { return None };
+                    let computed_prop_node = nodes.parent_node(key_obj_expr.id());
+                    if let AstKind::ObjectProperty(cp) = computed_prop_node.kind()
+                        && cp.key.is_specific_static_name("computed")
+                    {
+                        let vue_options = nodes.parent_node(computed_prop_node.id());
+                        if is_vue_component_options_object(vue_options, ctx) {
+                            let key = key_prop.key.static_name().map(|s| s.to_string());
+                            return Some(ComputedContext::OptionsApi(key));
+                        }
+                    }
+                }
+
+                // Case C variant: `computed({ get() {}, set() {} })`
+                AstKind::CallExpression(call)
+                    if prop.key.is_specific_static_name("get")
+                        && is_vue_computed_call(call, ctx) =>
+                {
+                    return Some(ComputedContext::CompositionApi(fn_span));
+                }
+
+                _ => {}
+            }
+        }
+
+        _ => {}
+    }
+
+    None
+}
+
+/// Whether `call` is a `computed(...)` call that imports from `'vue'`,
+/// `'@vue/composition-api'`, or `'#imports'` (Nuxt). Matches by symbol id so
+/// aliases (`import { computed as c } from 'vue'`) are also recognized.
+pub fn is_vue_computed_call(call: &CallExpression<'_>, ctx: &LintContext<'_>) -> bool {
+    let Expression::Identifier(ident) = call.callee.get_inner_expression() else {
+        return false;
+    };
+    let scoping = ctx.scoping();
+    let Some(symbol_id) = scoping.get_reference(ident.reference_id()).symbol_id() else {
+        return false;
+    };
+    ctx.module_record().import_entries.iter().any(|entry| {
+        if !matches!(entry.module_request.name(), "vue" | "@vue/composition-api" | "#imports") {
+            return false;
+        }
+        let ImportImportName::Name(name_span) = &entry.import_name else { return false };
+        if name_span.name() != "computed" {
+            return false;
+        }
+        scoping.get_root_binding(entry.local_name.name().into()) == Some(symbol_id)
+    })
 }

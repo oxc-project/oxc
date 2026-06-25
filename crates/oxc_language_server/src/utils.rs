@@ -1,41 +1,47 @@
-use std::path::{Component, Path, PathBuf};
+use cow_utils::CowUtils;
 
-/// Normalize a path by removing `.` and resolving `..` components,
-/// without touching the filesystem.
-pub fn normalize_path<P: AsRef<Path>>(path: P) -> PathBuf {
-    let mut result = PathBuf::new();
+/// Normalize the user config path to a watch pattern that can be used to watch for changes.
+///
+/// Watch pattern like `./oxlintrc.json` is not supported by some editors (VS Code), so we need to normalize it to `oxlintrc.json`.
+pub fn normalize_user_config_path_to_watch_pattern(config_path: &str) -> String {
+    let path = config_path.cow_replace('\\', "/");
+    let path = path.cow_replace("/./", "/");
+    let path = path.strip_prefix("./").unwrap_or(&path);
 
-    for component in path.as_ref().components() {
-        match component {
-            Component::ParentDir => {
-                result.pop();
+    let mut out = String::with_capacity(path.len());
+    for ch in path.chars() {
+        match ch {
+            // escape path characters that have special meaning in glob patterns
+            '*' | '?' | '[' | ']' | '{' | '}' | ',' | '!' => {
+                out.push('\\');
+                out.push(ch);
             }
-            Component::CurDir => {
-                // Skip current directory component
-            }
-            Component::Normal(c) => {
-                result.push(c);
-            }
-            Component::RootDir | Component::Prefix(_) => {
-                result.push(component.as_os_str());
-            }
+            _ => out.push(ch),
         }
     }
 
-    result
+    out
 }
 
 #[cfg(test)]
-mod test {
-    use std::path::Path;
-
-    use crate::utils::normalize_path;
+mod tests {
+    use super::*;
 
     #[test]
-    fn test_normalize_path() {
+    fn test_normalize_user_config_path_to_watch_pattern() {
+        assert_eq!(normalize_user_config_path_to_watch_pattern("./oxlintrc.json"), "oxlintrc.json");
         assert_eq!(
-            normalize_path(Path::new("/root/directory/./.oxlintrc.json")),
-            Path::new("/root/directory/.oxlintrc.json")
+            normalize_user_config_path_to_watch_pattern(".\\oxlintrc.json"),
+            "oxlintrc.json"
+        );
+        assert_eq!(normalize_user_config_path_to_watch_pattern("oxlintrc.json"), "oxlintrc.json");
+        assert_eq!(
+            normalize_user_config_path_to_watch_pattern("/home/oxlintrc.json"),
+            "/home/oxlintrc.json"
+        );
+        assert_eq!(
+            normalize_user_config_path_to_watch_pattern("C:\\home\\oxlintrc.json"),
+            "C:/home/oxlintrc.json"
         );
     }
 }

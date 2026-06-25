@@ -1,26 +1,31 @@
-use std::{borrow::Cow, hash::Hash};
+use std::{borrow::Cow, fmt::Write, hash::Hash};
 
 use itertools::Itertools;
 use lazy_regex::Regex;
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use oxc_ast::{
     AstKind, AstType,
     ast::{
-        Argument, ArrayExpressionElement, ArrowFunctionExpression, BindingPattern,
-        BindingPatternKind, CallExpression, ChainElement, Expression, FormalParameters, Function,
-        FunctionBody, IdentifierReference, StaticMemberExpression, TSTypeAnnotation,
-        TSTypeParameterInstantiation, TSTypeReference, VariableDeclarationKind, VariableDeclarator,
+        Argument, ArrayExpressionElement, ArrowFunctionExpression, BindingPattern, CallExpression,
+        ChainElement, Expression, FormalParameters, Function, FunctionBody, IdentifierReference,
+        StaticMemberExpression, TSTypeAnnotation, TSTypeParameterInstantiation, TSTypeQuery,
+        TSTypeReference, VariableDeclarationKind, VariableDeclarator,
     },
     match_expression,
 };
-use oxc_ast_visit::{Visit, walk::walk_function_body};
+use oxc_ast_visit::{
+    Visit,
+    walk::{walk_arrow_function_expression, walk_function, walk_function_body},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ReferenceId, ScopeId, Semantic, SymbolId};
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::Str;
+use oxc_syntax::scope::ScopeFlags;
 
 use crate::{
     AstNode,
@@ -28,10 +33,11 @@ use crate::{
         get_declaration_from_reference_id, get_declaration_of_variable, get_enclosing_function,
     },
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
+    utils::deserialize_regex_option,
 };
 
-const SCOPE: &str = "eslint-plugin-react-hooks";
+const SCOPE: &str = "react-hooks";
 
 fn missing_callback_diagnostic(hook_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("React hook {hook_name} requires an effect callback."))
@@ -65,7 +71,12 @@ fn async_effect_diagnostic(span: Span) -> OxcDiagnostic {
         .with_error_code_scope(SCOPE)
 }
 
-fn missing_dependency_diagnostic(hook_name: &str, deps: &[Name<'_>], span: Span) -> OxcDiagnostic {
+fn missing_dependency_diagnostic(
+    hook_name: &str,
+    deps: &[Name<'_>],
+    span: Span,
+    mutable_ref_dependency: Option<&str>,
+) -> OxcDiagnostic {
     let single = deps.len() == 1;
     let deps_pretty = if single {
         format!("'{}'", deps[0])
@@ -74,7 +85,7 @@ fn missing_dependency_diagnostic(hook_name: &str, deps: &[Name<'_>], span: Span)
         let all_but_last = iter
             .by_ref()
             .take(deps.len() - 1)
-            .map(|s| format!("'{s}'",))
+            .map(|s| format!("'{s}'"))
             .collect::<Vec<_>>()
             .join(", ");
         let last = iter.next().unwrap();
@@ -94,14 +105,23 @@ fn missing_dependency_diagnostic(hook_name: &str, deps: &[Name<'_>], span: Span)
         })
         .chain(std::iter::once(span.primary()));
 
-    OxcDiagnostic::warn(if single {
+    let mut message = if single {
         format!("React Hook {hook_name} has a missing dependency: {deps_pretty}")
     } else {
         format!("React Hook {hook_name} has missing dependencies: {deps_pretty}")
-    })
-    .with_labels(labels)
-    .with_help("Either include it or remove the dependency array.")
-    .with_error_code_scope(SCOPE)
+    };
+
+    if let Some(dep) = mutable_ref_dependency {
+        let _ = write!(
+            message,
+            ". Mutable values like '{dep}' aren't valid dependencies because mutating them doesn't re-render the component."
+        );
+    }
+
+    OxcDiagnostic::warn(message)
+        .with_labels(labels)
+        .with_help("Either include it or remove the dependency array.")
+        .with_error_code_scope(SCOPE)
 }
 
 fn unnecessary_dependency_diagnostic(hook_name: &str, dep_name: &str, span: Span) -> OxcDiagnostic {
@@ -200,19 +220,23 @@ fn functions_returned_from_use_effect_event_must_not_be_included_in_dependency_a
     .with_error_code_scope(SCOPE)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct ExhaustiveDeps(Box<ExhaustiveDepsConfig>);
 
-#[derive(Debug, Clone, Default)]
-pub struct ExhaustiveDepsConfig {
+#[derive(Debug, Clone, Default, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+struct ExhaustiveDepsConfig {
+    /// Optionally provide a regex of additional hooks to check.
+    #[serde(default, deserialize_with = "deserialize_additional_hooks")]
     additional_hooks: Option<Regex>,
 }
 
-#[derive(Debug, Default, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
-struct ExhaustiveDepsConfigJson {
-    /// Optionally provide a regex of additional hooks to check.
-    additional_hooks: Option<String>,
+fn deserialize_additional_hooks<'de, D>(deserializer: D) -> Result<Option<Regex>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    deserialize_regex_option(deserializer)
+        .map(|regex| regex.filter(|regex| !regex.as_str().is_empty()))
 }
 
 declare_oxc_lint!(
@@ -250,28 +274,16 @@ declare_oxc_lint!(
     react,
     correctness,
     safe_fixes_and_dangerous_suggestions,
-    config = ExhaustiveDepsConfigJson,
+    config = ExhaustiveDepsConfig,
+    version = "0.12.0",
+    short_description = "Verifies the list of dependencies for Hooks like `useEffect` and similar.",
 );
 
 const HOOKS_USELESS_WITHOUT_DEPENDENCIES: [&str; 2] = ["useCallback", "useMemo"];
 
 impl Rule for ExhaustiveDeps {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let config = value
-            .as_array()
-            .and_then(|arr| arr.first())
-            .and_then(|first| {
-                serde_json::from_value::<ExhaustiveDepsConfigJson>(first.clone()).ok()
-            })
-            .map(|config_json| ExhaustiveDepsConfig {
-                additional_hooks: config_json
-                    .additional_hooks
-                    .filter(|pattern| !pattern.is_empty())
-                    .and_then(|pattern| Regex::new(&pattern).ok()),
-            })
-            .unwrap_or_default();
-
-        Self(Box::new(config))
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -298,16 +310,16 @@ impl Rule for ExhaustiveDeps {
         let dependencies_node = call_expr.arguments.get(callback_index + 1);
 
         let Some(callback_node) = callback_node else {
-            ctx.diagnostic(missing_callback_diagnostic(hook_name.as_str(), call_expr.span()));
+            ctx.diagnostic(missing_callback_diagnostic(hook_name, call_expr.span()));
             return;
         };
 
-        let is_effect = hook_name.as_str().contains("Effect");
+        let is_effect = hook_name.contains("Effect");
 
         if dependencies_node.is_none() && !is_effect {
-            if HOOKS_USELESS_WITHOUT_DEPENDENCIES.contains(&hook_name.as_str()) {
+            if HOOKS_USELESS_WITHOUT_DEPENDENCIES.contains(&hook_name) {
                 ctx.diagnostic_with_fix(
-                    dependency_array_required_diagnostic(hook_name.as_str(), call_expr.span()),
+                    dependency_array_required_diagnostic(hook_name, call_expr.span()),
                     |fixer| fixer.insert_text_after(callback_node, ", []"),
                 );
             }
@@ -316,10 +328,7 @@ impl Rule for ExhaustiveDeps {
 
         let callback_node = match callback_node {
             Argument::SpreadElement(_) => {
-                ctx.diagnostic(unknown_dependencies_diagnostic(
-                    hook_name.as_str(),
-                    call_expr.callee.span(),
-                ));
+                ctx.diagnostic(unknown_dependencies_diagnostic(hook_name, call_expr.callee.span()));
                 None
             }
             match_expression!(Argument) => {
@@ -358,6 +367,14 @@ impl Rule for ExhaustiveDeps {
 
                             // Try to find the var in the current scope
                             if let Some(decl) = get_declaration_of_variable(ident, ctx.semantic()) {
+                                if ctx
+                                    .semantic()
+                                    .scoping()
+                                    .scope_is_descendant_of(component_scope_id, decl.scope_id())
+                                {
+                                    return;
+                                }
+
                                 match decl.kind() {
                                     AstKind::VariableDeclarator(var_decl) => {
                                         if let Some(init) = &var_decl.init {
@@ -373,6 +390,7 @@ impl Rule for ExhaustiveDeps {
                                                         hook_name,
                                                         &[Name::from(ident.as_ref())],
                                                         dependencies_node.span(),
+                                                        None,
                                                     ));
                                                     None
                                                 }
@@ -389,6 +407,7 @@ impl Rule for ExhaustiveDeps {
                                             hook_name,
                                             &[Name::from(ident.as_ref())],
                                             dependencies_node.span(),
+                                            None,
                                         ));
                                         None
                                     }
@@ -403,7 +422,7 @@ impl Rule for ExhaustiveDeps {
                     }
                     _ => {
                         ctx.diagnostic(unknown_dependencies_diagnostic(
-                            hook_name.as_str(),
+                            hook_name,
                             call_expr.callee.span(),
                         ));
                         None
@@ -424,7 +443,7 @@ impl Rule for ExhaustiveDeps {
         let dependencies_node = dependencies_node.and_then(|node| match node {
             Argument::SpreadElement(_) => {
                 ctx.diagnostic(dependency_array_not_array_literal_diagnostic(
-                    hook_name.as_str(),
+                    hook_name,
                     node.span(),
                 ));
                 None
@@ -441,7 +460,7 @@ impl Rule for ExhaustiveDeps {
                     }
                     _ => {
                         ctx.diagnostic(dependency_array_not_array_literal_diagnostic(
-                            hook_name.as_str(),
+                            hook_name,
                             node.span(),
                         ));
                         None
@@ -503,7 +522,7 @@ impl Rule for ExhaustiveDeps {
 
                 if contains_set_state_call {
                     ctx.diagnostic(infinite_rerender_call_to_set_state_diagnostic(
-                        hook_name.as_str(),
+                        hook_name,
                         call_expr.callee.span(),
                     ));
                 }
@@ -517,7 +536,7 @@ impl Rule for ExhaustiveDeps {
                 ArrayExpressionElement::Elision(_) => None,
                 ArrayExpressionElement::SpreadElement(_) => {
                     ctx.diagnostic(complex_expression_in_dependency_array_diagnostic(
-                        hook_name.as_str(),
+                        hook_name,
                         elem.span(),
                     ));
                     None
@@ -532,7 +551,7 @@ impl Rule for ExhaustiveDeps {
                         None
                     } else {
                         ctx.diagnostic(complex_expression_in_dependency_array_diagnostic(
-                            hook_name.as_str(),
+                            hook_name,
                             elem.span(),
                         ));
                         None
@@ -555,13 +574,20 @@ impl Rule for ExhaustiveDeps {
         for dependency in &declared_dependencies {
             if let Some(symbol_id) = dependency.symbol_id {
                 let dependency_scope_id = ctx.scoping().symbol_scope_id(symbol_id);
+                let is_ref_current_non_dependency = dependency.chain.len() == 1
+                    && dependency.chain[0] == "current"
+                    && !is_identifier_a_dependency(
+                        dependency.name,
+                        dependency.reference_id,
+                        dependency.span,
+                        ctx,
+                        component_scope_id,
+                    );
                 if !(ctx
                     .semantic()
                     .scoping()
-                    .scope_ancestors(component_scope_id)
-                    .skip(1)
-                    .contains(&dependency_scope_id)
-                    || dependency.chain.len() == 1 && dependency.chain[0] == "current")
+                    .scope_is_descendant_of(component_scope_id, dependency_scope_id)
+                    || is_ref_current_non_dependency)
                 {
                     continue;
                 }
@@ -577,27 +603,72 @@ impl Rule for ExhaustiveDeps {
             );
         }
 
-        let undeclared_deps = found_dependencies.difference(&declared_dependencies).filter(|dep| {
-            if declared_dependencies.iter().any(|decl_dep| dep.contains(decl_dep)) {
-                return false;
-            }
+        let undeclared_deps = found_dependencies
+            .difference(&declared_dependencies)
+            .filter(|dep| {
+                // `foo.current` reads should be attributed to `foo` when `foo` is also tracked.
+                // This matches react-hooks behavior for ref-like values passed as props.
+                if dep.chain.last().is_some_and(|part| part == "current") {
+                    let mut base_chain = dep.chain.clone();
+                    base_chain.pop();
+                    let base_dependency = Dependency {
+                        span: dep.span,
+                        name: dep.name,
+                        reference_id: dep.reference_id,
+                        symbol_id: dep.symbol_id,
+                        chain: base_chain,
+                    };
+                    if found_dependencies.contains(&base_dependency) {
+                        return false;
+                    }
+                }
 
-            if !is_identifier_a_dependency(
-                dep.name,
-                dep.reference_id,
-                dep.span,
-                ctx,
-                component_scope_id,
-            ) {
-                return false;
-            }
-            true
-        });
+                if declared_dependencies.iter().any(|decl_dep| dep.contains(decl_dep)) {
+                    return false;
+                }
 
-        if undeclared_deps.clone().count() > 0 {
-            let undeclared = undeclared_deps.map(Name::from).collect::<Vec<_>>();
+                if !is_identifier_a_dependency(
+                    dep.name,
+                    dep.reference_id,
+                    dep.span,
+                    ctx,
+                    component_scope_id,
+                ) {
+                    return false;
+                }
+                true
+            })
+            .collect::<Vec<_>>();
+
+        if !undeclared_deps.is_empty() {
+            let undeclared = undeclared_deps.iter().copied().map(Name::from).collect::<Vec<_>>();
+            let mutable_ref_dependency = declared_dependencies.iter().find_map(|declared_dep| {
+                if !declared_dep.chain.last().is_some_and(|part| part == "current") {
+                    return None;
+                }
+
+                let mut base_chain = declared_dep.chain.clone();
+                base_chain.pop();
+                let base_dependency = Dependency {
+                    span: declared_dep.span,
+                    name: declared_dep.name,
+                    reference_id: declared_dep.reference_id,
+                    symbol_id: declared_dep.symbol_id,
+                    chain: base_chain,
+                };
+                undeclared_deps
+                    .iter()
+                    .copied()
+                    .any(|dep| dep == &base_dependency)
+                    .then(|| declared_dep.to_string())
+            });
             ctx.diagnostic_with_dangerous_suggestion(
-                missing_dependency_diagnostic(hook_name, &undeclared, dependencies_node.span()),
+                missing_dependency_diagnostic(
+                    hook_name,
+                    &undeclared,
+                    dependencies_node.span(),
+                    mutable_ref_dependency.as_deref(),
+                ),
                 |fixer| fix::append_dependencies(fixer, &undeclared, dependencies_node.as_ref()),
             );
         }
@@ -619,7 +690,7 @@ impl Rule for ExhaustiveDeps {
             // lastly, we need co compare for any unnecessary deps
             // for example if `props.foo`, AND `props.foo.bar.baz` was declared in the deps array
             // `props.foo.bar.baz` is unnecessary (already covered by `props.foo`)
-            declared_dependencies.iter().tuple_combinations().for_each(|(a, b)| {
+            declared_dependencies.iter().array_combinations().for_each(|[a, b]| {
                 if a.contains(b) {
                     ctx.diagnostic(unnecessary_dependency_diagnostic(
                         hook_name,
@@ -671,7 +742,7 @@ fn is_symbol_declaration_referentially_unique(symbol_id: SymbolId, ctx: &LintCon
     match decl.kind() {
         AstKind::Class(_) | AstKind::Function(_) => true,
         AstKind::VariableDeclarator(decl) => {
-            if decl.id.kind.is_destructuring_pattern() {
+            if decl.id.is_destructuring_pattern() {
                 return false;
             }
 
@@ -770,15 +841,19 @@ impl ExhaustiveDeps {
     }
 }
 
-fn get_node_name_without_react_namespace<'a, 'b>(expr: &'b Expression<'a>) -> Option<&'b Atom<'a>> {
+fn get_node_name_without_react_namespace<'a>(expr: &Expression<'a>) -> Option<&'a str> {
     match expr {
         Expression::StaticMemberExpression(member) => {
-            if let Expression::Identifier(_ident) = &member.object {
-                return Some(&member.property.name);
+            if member
+                .object
+                .get_identifier_reference()
+                .is_some_and(|reference| reference.name == "React")
+            {
+                return Some(member.property.name.as_str());
             }
             None
         }
-        Expression::Identifier(ident) => Some(&ident.name),
+        Expression::Identifier(ident) => Some(ident.name.as_str()),
         _ => None,
     }
 }
@@ -813,11 +888,11 @@ impl<'a> From<&IdentifierReference<'a>> for Name<'a> {
 #[derive(Debug)]
 struct Dependency<'a> {
     span: Span,
-    name: Atom<'a>,
+    name: Str<'a>,
     reference_id: ReferenceId,
     // the symbol id that this dependency is referring to
     symbol_id: Option<SymbolId>,
-    chain: Vec<Atom<'a>>,
+    chain: Vec<Str<'a>>,
 }
 
 impl Hash for Dependency<'_> {
@@ -839,7 +914,7 @@ impl Eq for Dependency<'_> {}
 impl Dependency<'_> {
     #[expect(clippy::inherent_to_string)]
     fn to_string(&self) -> String {
-        std::iter::once(&self.name).chain(self.chain.iter()).map(oxc_span::Atom::as_str).join(".")
+        std::iter::once(&self.name).chain(self.chain.iter()).map(Str::as_str).join(".")
     }
 
     fn contains(&self, other: &Self) -> bool {
@@ -847,7 +922,7 @@ impl Dependency<'_> {
     }
 }
 
-fn chain_contains(a: &[Atom<'_>], b: &[Atom<'_>]) -> bool {
+fn chain_contains(a: &[Str<'_>], b: &[Str<'_>]) -> bool {
     for (index, part) in b.iter().enumerate() {
         let Some(other) = a.get(index) else { return false };
         if other != part {
@@ -865,7 +940,7 @@ fn analyze_property_chain<'a, 'b>(
     match expr.get_inner_expression() {
         Expression::Identifier(ident) => Ok(Some(Dependency {
             span: ident.span(),
-            name: ident.name,
+            name: ident.name.into(),
             reference_id: ident.reference_id(),
             chain: vec![],
             symbol_id: semantic.scoping().get_reference(ident.reference_id()).symbol_id(),
@@ -889,7 +964,7 @@ fn concat_members<'a, 'b>(
         return Ok(None);
     };
 
-    let new_chain = Vec::from([member_expr.property.name]);
+    let new_chain = Vec::from([Str::from(member_expr.property.name)]);
 
     Ok(Some(Dependency {
         span: member_expr.span,
@@ -901,7 +976,7 @@ fn concat_members<'a, 'b>(
 }
 
 fn is_identifier_a_dependency<'a>(
-    ident_name: Atom<'a>,
+    ident_name: Str<'a>,
     ident_reference_id: ReferenceId,
     ident_span: Span,
     ctx: &'_ LintContext<'a>,
@@ -918,58 +993,46 @@ fn is_identifier_a_dependency<'a>(
     )
 }
 fn is_identifier_a_dependency_impl<'a>(
-    ident_name: Atom<'a>,
+    ident_name: Str<'a>,
     ident_reference_id: ReferenceId,
     ident_span: Span,
     ctx: &'_ LintContext<'a>,
     component_scope_id: ScopeId,
     visited: &mut FxHashSet<SymbolId>,
 ) -> bool {
-    // if it is a global e.g. `console` or `window`, then it's not a dependency
-    if ctx.scoping().root_unresolved_references().contains_key(ident_name.as_str()) {
-        return false;
-    }
-
     let Some(declaration) = get_declaration_from_reference_id(ident_reference_id, ctx) else {
+        // No declaration means it's a global variable, e.g. `console` or `window`,
+        // which are not dependencies
         return false;
     };
 
-    let semantic = ctx.semantic();
-    let scopes = semantic.scoping();
-
-    // if the variable was declared in the root scope, then it's not a dependency
-    if declaration.scope_id() == scopes.root_scope_id() {
+    // As long as the variable is not declared inside the component, it is not a dependency.
+    if declaration.scope_id() != component_scope_id {
+        // 1. Variable was declared outside the component scope
+        // ```tsx
+        // const id = crypto.randomUUID();
+        // function MyComponent() {
+        //   useEffect(() => {
+        //     console.log(id);
+        //   }, []);
+        //   return <div />;
+        // }
+        // ```
+        //
+        // 2. Variable was declared inside a child scope
+        // ```tsx
+        // function MyComponent() {
+        //   useEffect(() => {
+        //     const id = crypto.randomUUID();
+        //     console.log(id);
+        //   }, []);
+        //  return <div />;
+        // }
+        // ```
         return false;
     }
 
-    // Variable was declared outside the component scope
-    // ```tsx
-    // const id = crypto.randomUUID();
-    // function MyComponent() {
-    //   useEffect(() => {
-    //     console.log(id);
-    //   }, []);
-    //   return <div />;
-    // }
-    // ```
-    if scopes
-        .scope_ancestors(component_scope_id)
-        .skip(1)
-        .any(|parent| parent == declaration.scope_id())
-    {
-        return false;
-    }
-
-    // Variable was declared inside a child scope
-    // ```tsx
-    // function MyComponent() {
-    //   useEffect(() => {
-    //     const id = crypto.randomUUID();
-    //     console.log(id);
-    //   }, []);
-    //  return <div />;
-    // }
-    if scopes.iter_all_scope_child_ids(component_scope_id).any(|id| id == declaration.scope_id()) {
+    if declaration.span().contains_inclusive(ident_span) {
         return false;
     }
 
@@ -984,24 +1047,13 @@ fn is_identifier_a_dependency_impl<'a>(
         return false;
     }
 
-    // Using a declaration recursively is ok
-    // ```tsx
-    // function MyComponent() {
-    //     const recursive = useCallback((n: number): number => (n <= 0 ? 0 : n + recursive(n - 1)), []);
-    //     return recursive
-    // }
-    // ```
-    if declaration.span().contains_inclusive(ident_span) {
-        return false;
-    }
-
     true
 }
 
 // https://github.com/facebook/react/blob/fee786a057774ab687aff765345dd86fce534ab2/packages/eslint-plugin-react-hooks/src/ExhaustiveDeps.js#L164
 fn is_stable_value<'a, 'b>(
     node: &'b AstNode<'a>,
-    ident_name: Atom<'a>,
+    ident_name: Str<'a>,
     ident_reference_id: ReferenceId,
     ctx: &'b LintContext<'a>,
     component_scope_id: ScopeId,
@@ -1051,7 +1103,7 @@ fn is_stable_value<'a, 'b>(
             // if the variables is a constant, and the initializer is a literal, then it's a stable value. (excluding regex literals)
             if declaration.kind == VariableDeclarationKind::Const
                 && (matches!(
-                    init,
+                    init.get_inner_expression(),
                     Expression::BooleanLiteral(_)
                         | Expression::NullLiteral(_)
                         | Expression::NumericLiteral(_)
@@ -1074,7 +1126,7 @@ fn is_stable_value<'a, 'b>(
                 return true;
             }
 
-            let BindingPatternKind::ArrayPattern(array_pat) = &declaration.id.kind else {
+            let BindingPattern::ArrayPattern(array_pat) = &declaration.id else {
                 return false;
             };
 
@@ -1082,7 +1134,7 @@ fn is_stable_value<'a, 'b>(
                 return false;
             };
 
-            let BindingPatternKind::BindingIdentifier(binding_ident) = &second_arg.kind else {
+            let BindingPattern::BindingIdentifier(binding_ident) = &second_arg else {
                 return false;
             };
 
@@ -1155,9 +1207,7 @@ fn is_function_stable<'a, 'b>(
 }
 
 // https://github.com/facebook/react/blob/fee786a057774ab687aff765345dd86fce534ab2/packages/eslint-plugin-react-hooks/src/ExhaustiveDeps.js#L1742
-fn func_call_without_react_namespace<'a>(
-    call_expr: &'a CallExpression<'a>,
-) -> Option<&'a Atom<'a>> {
+fn func_call_without_react_namespace<'a>(call_expr: &'a CallExpression<'a>) -> Option<&'a str> {
     let inner_exp = call_expr.callee.get_inner_expression();
 
     if let Expression::Identifier(ident) = inner_exp {
@@ -1188,6 +1238,7 @@ struct ExhaustiveDepsVisitor<'a, 'b> {
     decl_stack: Vec<&'a VariableDeclarator<'a>>,
     skip_reporting_dependency: bool,
     set_state_call: bool,
+    is_callee_of_call_expr: bool,
     found_dependencies: FxHashSet<Dependency<'a>>,
     refs_inside_cleanups: Vec<&'a StaticMemberExpression<'a>>,
 }
@@ -1200,6 +1251,7 @@ impl<'a, 'b> ExhaustiveDepsVisitor<'a, 'b> {
             decl_stack: vec![],
             skip_reporting_dependency: false,
             set_state_call: false,
+            is_callee_of_call_expr: false,
             found_dependencies: FxHashSet::default(),
             refs_inside_cleanups: vec![],
         }
@@ -1216,13 +1268,21 @@ impl<'a, 'b> ExhaustiveDepsVisitor<'a, 'b> {
         // check for object destructuring
         // `const { foo } = props;`
         // allow `props.foo` to be a dependency
-        let Some(VariableDeclarator {
-            id: BindingPattern { kind: BindingPatternKind::ObjectPattern(obj), .. },
-            ..
-        }) = self.decl_stack.last()
+        let Some(VariableDeclarator { id: BindingPattern::ObjectPattern(obj), .. }) =
+            self.decl_stack.last()
         else {
             return None;
         };
+
+        // Only apply destructuring logic when the identifier is directly the RHS of
+        // the destructuring assignment, not when it's nested inside another expression
+        // like a function call.
+        // For example:
+        // - `const { headers } = props` -> props.headers is the dependency
+        // - `const { headers } = fn(booleanValue)` -> booleanValue is the dependency, not booleanValue.headers
+        if self.stack.contains(&AstType::CallExpression) {
+            return None;
+        }
 
         if obj.rest.is_some() {
             return Some(true);
@@ -1234,11 +1294,11 @@ impl<'a, 'b> ExhaustiveDepsVisitor<'a, 'b> {
                 needs_full_identifier = true;
                 continue;
             }
-            match &prop.value.kind {
-                BindingPatternKind::BindingIdentifier(id) => {
+            match &prop.value {
+                BindingPattern::BindingIdentifier(id) => {
                     cb(id.name.into());
                 }
-                BindingPatternKind::AssignmentPattern(pat) => {
+                BindingPattern::AssignmentPattern(pat) => {
                     if let Some(id) = pat.left.get_binding_identifier() {
                         cb(id.name.into());
                     } else {
@@ -1247,7 +1307,7 @@ impl<'a, 'b> ExhaustiveDepsVisitor<'a, 'b> {
                         needs_full_identifier = true;
                     }
                 }
-                BindingPatternKind::ArrayPattern(_) | BindingPatternKind::ObjectPattern(_) => {
+                BindingPattern::ArrayPattern(_) | BindingPattern::ObjectPattern(_) => {
                     // `const { foo: [bar] } = props;`
                     // `const { foo: { bar } } = props;`
                     // foo.bar is sufficient as a dependency
@@ -1281,6 +1341,10 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
         // noop
     }
 
+    fn visit_ts_type_query(&mut self, _it: &TSTypeQuery<'a>) {
+        // noop
+    }
+
     fn visit_ts_type_parameter_instantiation(&mut self, _it: &TSTypeParameterInstantiation<'a>) {
         // noop
     }
@@ -1308,6 +1372,40 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
         self.stack.pop();
     }
 
+    fn visit_call_expression(&mut self, it: &CallExpression<'a>) {
+        self.stack.push(AstType::CallExpression);
+
+        // Mark that we're visiting a callee
+        self.is_callee_of_call_expr = true;
+        self.visit_expression(&it.callee);
+        self.is_callee_of_call_expr = false;
+
+        // Visit arguments normally
+        for arg in &it.arguments {
+            self.visit_argument(arg);
+        }
+
+        self.stack.pop();
+    }
+
+    fn visit_arrow_function_expression(&mut self, it: &ArrowFunctionExpression<'a>) {
+        // Reset is_callee_of_call_expr when entering a nested function boundary.
+        // Without this, IIFEs like `(() => { obj.a })()` would incorrectly
+        // treat property reads inside the arrow body as method call callees,
+        // collecting `obj` instead of `obj.a`.
+        let was_callee = self.is_callee_of_call_expr;
+        self.is_callee_of_call_expr = false;
+        walk_arrow_function_expression(self, it);
+        self.is_callee_of_call_expr = was_callee;
+    }
+
+    fn visit_function(&mut self, it: &Function<'a>, flags: ScopeFlags) {
+        let was_callee = self.is_callee_of_call_expr;
+        self.is_callee_of_call_expr = false;
+        walk_function(self, it, flags);
+        self.is_callee_of_call_expr = was_callee;
+    }
+
     fn visit_static_member_expression(&mut self, it: &StaticMemberExpression<'a>) {
         if it.property.name == "current" && is_inside_effect_cleanup(&self.stack) {
             // Safety: this is safe
@@ -1328,69 +1426,78 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
             return;
         }
 
-        let is_parent_call_expr =
-            self.stack.last().is_some_and(|&ty| ty == AstType::CallExpression);
+        let is_parent_call_expr = self.is_callee_of_call_expr;
 
-        match analyze_property_chain(&it.object, self.semantic) {
-            Ok(source) => {
-                if let Some(source) = source {
-                    if is_parent_call_expr {
-                        self.found_dependencies.insert(source);
-                    } else {
-                        let new_chain = Vec::from([it.property.name]);
+        if let Ok(source) = analyze_property_chain(&it.object, self.semantic) {
+            if let Some(source) = source {
+                if is_parent_call_expr {
+                    self.found_dependencies.insert(source);
+                } else {
+                    let new_chain = Vec::from([Str::from(it.property.name)]);
 
-                        let mut destructured_props: Vec<Atom<'a>> = vec![];
-                        let mut did_see_ref = false;
-                        let needs_full_chain = self
-                            .iter_destructure_bindings(|id| {
-                                if let Cow::Borrowed(id) = id {
-                                    if id == "current" {
-                                        did_see_ref = true;
-                                    } else {
-                                        destructured_props.push(id.into());
-                                    }
+                    let mut destructured_props: Vec<Str<'a>> = vec![];
+                    let mut did_see_ref = false;
+                    let needs_full_chain = self
+                        .iter_destructure_bindings(|id| {
+                            if let Cow::Borrowed(id) = id {
+                                if id == "current" {
+                                    did_see_ref = true;
                                 } else {
-                                    // todo
+                                    destructured_props.push(id.into());
                                 }
-                            })
-                            .unwrap_or(true);
+                            } else {
+                                // todo
+                            }
+                        })
+                        .unwrap_or(true);
 
-                        let symbol_id =
-                            self.semantic.scoping().get_reference(source.reference_id).symbol_id();
-                        if needs_full_chain || (destructured_props.is_empty() && !did_see_ref) {
+                    let symbol_id =
+                        self.semantic.scoping().get_reference(source.reference_id).symbol_id();
+                    if needs_full_chain || (destructured_props.is_empty() && !did_see_ref) {
+                        if it.property.name == "current" {
+                            // Track base object (`ref`) alongside `.current` reads so missing dep
+                            // diagnostics can prefer the reactive identity over the mutable field.
                             self.found_dependencies.insert(Dependency {
                                 name: source.name,
                                 reference_id: source.reference_id,
                                 span: source.span,
-                                chain: [source.chain.clone(), new_chain].concat(),
+                                chain: source.chain.clone(),
                                 symbol_id,
                             });
-                        } else {
-                            for prop in destructured_props {
-                                self.found_dependencies.insert(Dependency {
-                                    name: source.name,
-                                    reference_id: source.reference_id,
-                                    span: source.span,
-                                    chain: [source.chain.clone(), new_chain.clone(), vec![prop]]
-                                        .concat(),
-                                    symbol_id,
-                                });
-                            }
+                        }
+                        self.found_dependencies.insert(Dependency {
+                            name: source.name,
+                            reference_id: source.reference_id,
+                            span: source.span,
+                            chain: [source.chain.clone(), new_chain].concat(),
+                            symbol_id,
+                        });
+                    } else {
+                        for prop in destructured_props {
+                            self.found_dependencies.insert(Dependency {
+                                name: source.name,
+                                reference_id: source.reference_id,
+                                span: source.span,
+                                chain: [source.chain.clone(), new_chain.clone(), vec![prop]]
+                                    .concat(),
+                                symbol_id,
+                            });
                         }
                     }
                 }
-
-                let cur_skip_reporting_dependency = self.skip_reporting_dependency;
-                self.skip_reporting_dependency = true;
-                self.visit_expression(&it.object);
-                self.skip_reporting_dependency = cur_skip_reporting_dependency;
             }
+
+            let cur_skip_reporting_dependency = self.skip_reporting_dependency;
+            self.skip_reporting_dependency = true;
+            self.is_callee_of_call_expr = false;
+            self.visit_expression(&it.object);
+            self.skip_reporting_dependency = cur_skip_reporting_dependency;
+        } else {
             // this means that some part of the chain could not be analyzed
             // for example `foo.bar.baz().abc`. `baz()` cannot be statically analyzed
             // instead, continue to go down, looking at the object to gather dependencies
-            Err(()) => {
-                self.visit_expression(&it.object);
-            }
+            self.is_callee_of_call_expr = false;
+            self.visit_expression(&it.object);
         }
     }
 
@@ -1401,7 +1508,7 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
         let reference_id = ident.reference_id();
         let symbol_id = self.semantic.scoping().get_reference(reference_id).symbol_id();
 
-        let mut destructured_props: Vec<Atom<'a>> = vec![];
+        let mut destructured_props: Vec<Str<'a>> = vec![];
         let mut did_see_ref = false;
         let needs_full_identifier = self
             .iter_destructure_bindings(|id| {
@@ -1418,7 +1525,7 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
             .unwrap_or(true);
         if needs_full_identifier || (destructured_props.is_empty() && !did_see_ref) {
             self.found_dependencies.insert(Dependency {
-                name: ident.name,
+                name: ident.name.into(),
                 reference_id,
                 span: ident.span,
                 chain: vec![],
@@ -1427,7 +1534,7 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
         } else {
             for prop in destructured_props {
                 self.found_dependencies.insert(Dependency {
-                    name: ident.name,
+                    name: ident.name.into(),
                     reference_id,
                     span: ident.span,
                     chain: vec![prop],
@@ -1451,7 +1558,7 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
                         return;
                     }
 
-                    let BindingPatternKind::ArrayPattern(array_pat) = &var_decl.id.kind else {
+                    let BindingPattern::ArrayPattern(array_pat) = &var_decl.id else {
                         return;
                     };
 
@@ -1459,8 +1566,7 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
                         return;
                     };
 
-                    let BindingPatternKind::BindingIdentifier(binding_ident) = &second_arg.kind
-                    else {
+                    let BindingPattern::BindingIdentifier(binding_ident) = &second_arg else {
                         return;
                     };
 
@@ -1497,12 +1603,13 @@ fn is_inside_effect_cleanup(stack: &[AstType]) -> bool {
 
 mod fix {
     use super::Name;
-    use oxc_allocator::{Allocator, CloneIn};
+    use oxc_allocator::{Allocator, ArenaVec, CloneIn};
     use oxc_ast::{
         AstBuilder,
         ast::{ArrayExpression, Expression},
     };
-    use oxc_span::{Atom, GetSpan, SPAN};
+    use oxc_span::{GetSpan, SPAN};
+    use oxc_str::Str;
 
     use crate::{
         fixer::{RuleFix, RuleFixer},
@@ -1524,7 +1631,7 @@ mod fix {
         for name in names {
             vec.push(
                 ast_builder
-                    .expression_identifier(SPAN, Atom::from_cow_in(&name.name, &alloc))
+                    .expression_identifier(SPAN, Str::from_cow_in(&name.name, &alloc))
                     .into(),
             );
         }
@@ -1549,12 +1656,30 @@ mod fix {
             .filter(|el| (*el).span() != dependency.span)
             .map(|el| el.clone_in(&alloc));
 
-        codegen.print_expression(&Expression::ArrayExpression(ast_builder.alloc_array_expression(
-            deps.span,
-            oxc_allocator::Vec::from_iter_in(new_deps, &alloc),
-        )));
+        codegen.print_expression(&Expression::ArrayExpression(
+            ast_builder
+                .alloc_array_expression(deps.span, ArenaVec::from_iter_in(new_deps, &ast_builder)),
+        ));
         fixer.replace(deps.span, codegen.into_source_text())
     }
+}
+
+#[test]
+fn invalid_configs_error_in_from_configuration() {
+    let invalid_regex = serde_json::json!([{ "additionalHooks": "[" }]);
+    assert!(ExhaustiveDeps::from_configuration(invalid_regex).is_err());
+
+    let unknown_field = serde_json::json!([{ "unknown": true }]);
+    assert!(ExhaustiveDeps::from_configuration(unknown_field).is_err());
+
+    let wrong_type = serde_json::json!([{ "additionalHooks": 1 }]);
+    assert!(ExhaustiveDeps::from_configuration(wrong_type).is_err());
+
+    let empty_regex = serde_json::json!([{ "additionalHooks": "" }]);
+    assert!(ExhaustiveDeps::from_configuration(empty_regex).is_ok());
+
+    let valid_regex = serde_json::json!([{ "additionalHooks": "useSpecialEffect" }]);
+    assert!(ExhaustiveDeps::from_configuration(valid_regex).is_ok());
 }
 
 #[test]
@@ -2639,6 +2764,106 @@ fn test() {
             onStuff();
           }, []);
         }",
+        // Issue #15796 - object property access should work correctly
+        r"export const FileSize = ({ file, showSize = true }) => {
+          const fileSizeInMB = useMemo(
+            () => (showSize ? (file.size / (1024 * 1024)).toFixed(2) : undefined),
+            [showSize, file.size],
+          );
+          return fileSizeInMB;
+        }",
+        // Additional tests for nested property access within expressions
+        r"function MyComponent({ obj }) {
+          useMemo(() => {
+            return (obj.value * 2).toFixed(2);
+          }, [obj.value]);
+        }",
+        r"function MyComponent({ data }) {
+          useCallback(() => {
+            console.log((data.count + 1).toString());
+          }, [data.count]);
+        }",
+        // Module-scoped function references passed as callbacks are stable.
+        r"
+          function getColumns() { return []; }
+          function MyComponent() {
+            const columns = useMemo(getColumns, []);
+            return columns;
+          }
+        ",
+        r"
+          const getFields = () => { return []; };
+          function MyComponent() {
+            const fields = useMemo(getFields, []);
+            return fields;
+          }
+        ",
+        r"
+          function checkIfIsSafari() { return false; }
+          function MyComponent() {
+            const isSafari = useMemo(checkIfIsSafari, []);
+            return isSafari;
+          }
+        ",
+        r"
+          function setup() { console.log('setup'); }
+          function MyComponent() {
+            useEffect(setup, []);
+          }
+        ",
+        "function MyComponent4({ myRef }) { useCallback(() => { console.log(myRef.current); }, [myRef]); }",
+        // IIFE: property reads inside arrow IIFE should be collected as member expressions
+        r"function MyComponent({ obj, flag }) {
+          return useMemo(() => {
+            return (() => {
+              return flag ? obj.a : obj.b;
+            })();
+          }, [obj.a, obj.b, flag]);
+        }",
+        // IIFE: property reads inside function expression IIFE
+        r"function MyComponent({ obj }) {
+          return useMemo(() => {
+            return (function() {
+              return obj.a;
+            })();
+          }, [obj.a]);
+        }",
+        // IIFE: method calls inside IIFE should still collect base object
+        r"function MyComponent({ obj }) {
+          return useMemo(() => {
+            return (() => {
+              obj.method();
+            })();
+          }, [obj]);
+        }",
+        r#"import { useEffect, useState } from "react";
+
+export const useTest = () => {
+    const [state] = useState<Record<"a", string>>({
+        a: "a",
+    });
+
+    useEffect(() => {
+        const a = "a" as keyof typeof state;
+        console.log(a);
+    }, []);
+
+    console.log(state);
+}"#,
+        r"const Component = () => {
+  const DATA = 'test' as const;
+  const data = useMemo(() => DATA, []);
+  return <div>{data}</div>;
+};",
+        "const ReactActual = jest.requireActual('react');
+const Component = ({ filter }) => {
+    const [data, setData] = ReactActual.useState(filter);
+    ReactActual.useEffect(() => {
+        setData(filter);
+    }, [filter]);
+
+    return <div>test</div>;
+};",
     ];
 
     let fail = vec![
@@ -4107,6 +4332,28 @@ fn test() {
             onStuff();
           }, [onStuff]);
         }",
+        r"function MyComponent(props) {
+          if (props.ok) {
+            const callback = () => props.value;
+            useMemo(callback, []);
+          }
+        }",
+        r"function MyComponent({ myRef }) {
+    useCallback(() => { console.log(myRef.current); }, [myRef.current]);
+    // React Hook useCallback has a missing dependency: 'myRef'. Either include it or remove the dependency array. Mutable values like 'myRef.current' aren't valid dependencies because mutating them doesn't re-render the component.
+}",
+        r"function MyComponent2({ myRef }) {
+    useCallback(() => { console.log(myRef.current); }, []);
+    // React Hook useCallback has a missing dependency: 'myRef'. Either include it or remove the dependency array.
+}",
+        // IIFE: missing member expression deps inside arrow IIFE
+        r"function MyComponent({ obj, flag }) {
+          return useMemo(() => {
+            return (() => {
+              return flag ? obj.a : obj.b;
+            })();
+          }, []);
+        }",
     ];
 
     let pass_additional_hooks = vec![(
@@ -4261,6 +4508,12 @@ fn test() {
         (
             "const x = {}; function Comp() { useEffect(() => {}, [x]) }",
             "const x = {}; function Comp() { useEffect(() => {}, []) }",
+        ),
+        // Issue #17159: fixer should suggest `booleanValue`, not `booleanValue.headers`
+        // The destructuring pattern `{ headers }` should not affect the dependency name
+        (
+            "function Comp() { const booleanValue = useMemo(() => true, []); const foo = useMemo(() => { const { headers } = fn(booleanValue); return headers; }, []); }",
+            "function Comp() { const booleanValue = useMemo(() => true, []); const foo = useMemo(() => { const { headers } = fn(booleanValue); return headers; }, [booleanValue]); }",
         ),
     ];
 

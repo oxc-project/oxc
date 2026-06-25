@@ -15,7 +15,7 @@ use super::{
     super_converter::{ClassPropertiesSuperConverter, ClassPropertiesSuperConverterMode},
 };
 
-impl<'a> ClassProperties<'a, '_> {
+impl<'a> ClassProperties<'a> {
     /// Transform static property initializer.
     ///
     /// Replace `this`, and references to class name, with temp var for class. Transform `super`.
@@ -70,7 +70,6 @@ impl<'a> ClassProperties<'a, '_> {
         {
             return self.convert_static_block_with_single_expression_to_expression(
                 &mut stmt.expression,
-                scope_id,
                 make_sloppy_mode,
                 ctx,
             );
@@ -87,13 +86,12 @@ impl<'a> ClassProperties<'a, '_> {
         let outer_scope_id = ctx.current_scope_id();
         ctx.scoping_mut().change_scope_parent_id(scope_id, Some(outer_scope_id));
 
-        wrap_statements_in_arrow_function_iife(stmts.take_in(ctx.ast), scope_id, block.span, ctx)
+        wrap_statements_in_arrow_function_iife(stmts.take_in(ctx), scope_id, block.span, ctx)
     }
 
     fn convert_static_block_with_single_expression_to_expression(
         &mut self,
         expr: &mut Expression<'a>,
-        scope_id: ScopeId,
         make_sloppy_mode: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
@@ -101,10 +99,7 @@ impl<'a> ClassProperties<'a, '_> {
         let mut replacer = StaticVisitor::new(make_sloppy_mode, true, self, ctx);
         replacer.visit_expression(expr);
 
-        // Delete scope for static block
-        ctx.scoping_mut().delete_scope(scope_id);
-
-        expr.take_in(ctx.ast)
+        expr.take_in(ctx)
     }
 
     /// Replace reference to class name with reference to temp var for class.
@@ -192,7 +187,7 @@ impl<'a> ClassProperties<'a, '_> {
 // TODO(improve-on-babel): Updating `ScopeFlags` for strict mode makes semantic correctly for the output,
 // but actually the transform isn't right. Should wrap initializer/block in a strict mode IIFE so that
 // code runs in strict mode, as it was before within class body.
-struct StaticVisitor<'a, 'ctx, 'v> {
+struct StaticVisitor<'a, 'v> {
     /// `true` if class has name, or `ScopeFlags` need updating.
     /// Either of these neccesitates walking the whole tree. If neither applies, we only need to walk
     /// as far as functions and other constructs which define a `this`.
@@ -214,16 +209,16 @@ struct StaticVisitor<'a, 'ctx, 'v> {
     /// so `scope_depth` is ignored.
     scope_depth: u32,
     /// Converter for `super` expressions.
-    super_converter: ClassPropertiesSuperConverter<'a, 'ctx, 'v>,
+    super_converter: ClassPropertiesSuperConverter<'a, 'v>,
     /// `TransCtx` object.
     ctx: &'v mut TraverseCtx<'a>,
 }
 
-impl<'a, 'ctx, 'v> StaticVisitor<'a, 'ctx, 'v> {
+impl<'a, 'v> StaticVisitor<'a, 'v> {
     fn new(
         make_sloppy_mode: bool,
         reparent_scopes: bool,
-        class_properties: &'v mut ClassProperties<'a, 'ctx>,
+        class_properties: &'v mut ClassProperties<'a>,
         ctx: &'v mut TraverseCtx<'a>,
     ) -> Self {
         let walk_deep =
@@ -248,7 +243,7 @@ impl<'a, 'ctx, 'v> StaticVisitor<'a, 'ctx, 'v> {
     }
 }
 
-impl<'a> VisitMut<'a> for StaticVisitor<'a, '_, '_> {
+impl<'a> VisitMut<'a> for StaticVisitor<'a, '_> {
     #[inline]
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
         match expr {
@@ -258,15 +253,24 @@ impl<'a> VisitMut<'a> for StaticVisitor<'a, '_, '_> {
                 self.replace_this_with_temp_var(expr, span);
                 return;
             }
+            // `new.target` is always `undefined` in class static blocks. Replace it before moving
+            // the block body outside the class.
+            Expression::MetaProperty(meta_property)
+                if self.this_depth == 0
+                    && meta_property.meta.name == "new"
+                    && meta_property.property.name == "target" =>
+            {
+                *expr = self.ctx.ast.void_0(meta_property.span);
+                return;
+            }
             // `delete this`
-            Expression::UnaryExpression(unary_expr) => {
+            Expression::UnaryExpression(unary_expr)
                 if unary_expr.operator == UnaryOperator::Delete
-                    && matches!(&unary_expr.argument, Expression::ThisExpression(_))
-                {
-                    let span = unary_expr.span;
-                    self.replace_delete_this_with_true(expr, span);
-                    return;
-                }
+                    && matches!(&unary_expr.argument, Expression::ThisExpression(_)) =>
+            {
+                let span = unary_expr.span;
+                self.replace_delete_this_with_true(expr, span);
+                return;
             }
             // `super.prop`
             Expression::StaticMemberExpression(_) if self.this_depth == 0 => {
@@ -521,7 +525,7 @@ impl<'a> VisitMut<'a> for StaticVisitor<'a, '_, '_> {
     }
 }
 
-impl<'a> StaticVisitor<'a, '_, '_> {
+impl<'a> StaticVisitor<'a, '_> {
     /// Replace `this` with reference to temp var for class.
     fn replace_this_with_temp_var(&mut self, expr: &mut Expression<'a>, span: Span) {
         if self.this_depth == 0 {

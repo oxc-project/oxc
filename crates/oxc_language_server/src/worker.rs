@@ -1,61 +1,61 @@
-use log::debug;
+use std::{path::Path, sync::Arc};
+
+use rustc_hash::{FxHashMap, FxHashSet};
 use serde_json::json;
 use tokio::sync::{Mutex, RwLock};
 use tower_lsp_server::{
-    UriExt,
-    lsp_types::{
-        CodeActionOrCommand, Diagnostic, DidChangeWatchedFilesRegistrationOptions, FileEvent,
-        FileSystemWatcher, GlobPattern, OneOf, Pattern, Range, Registration, RelativePattern,
-        TextEdit, Unregistration, Uri, WatchKind,
+    jsonrpc::ErrorCode,
+    ls_types::{
+        CodeActionContext, CodeActionOrCommand, Diagnostic,
+        DidChangeWatchedFilesRegistrationOptions, FileEvent, FileSystemWatcher, GlobPattern, OneOf,
+        Range, Registration, RelativePattern, TextEdit, Unregistration, Uri, WatchKind,
+        WorkspaceEdit,
     },
 };
+use tracing::debug;
 
 use crate::{
-    code_actions::{apply_all_fix_code_action, apply_fix_code_actions, fix_all_text_edit},
-    formatter::server_formatter::{ServerFormatter, ServerFormatterBuilder},
-    linter::{
-        error_with_position::DiagnosticReport,
-        options::Run,
-        server_linter::{ServerLinter, ServerLinterBuilder},
-    },
-    options::Options,
+    TextDocument, ToolRestartChanges,
+    capabilities::DiagnosticMode,
+    file_system::LSPFileSystem,
+    tool::{DiagnosticResult, Tool, ToolBuilder},
 };
 
-pub struct ToolRestartChanges<T> {
-    /// The tool that was restarted (linter, formatter).
-    /// If None, no tool was restarted.
-    pub tool: Option<T>,
-    /// The diagnostic reports that need to be revalidated after the tool restart
-    pub diagnostic_reports: Option<Vec<(String, Vec<Diagnostic>)>>,
-    /// The patterns that were added during the tool restart
-    /// Old patterns will be automatically unregistered
-    pub watch_patterns: Option<Vec<Pattern>>,
-}
-
-/// A worker that manages the individual tools for a specific workspace
-/// and reports back the results to the [`Backend`](crate::backend::Backend).
+/// A worker that manages the individual tool for a specific workspace
+/// and returns back the results of the running tool.
 ///
-/// Each worker is responsible for a specific root URI and configures the tools `cwd` to that root URI.
-/// The [`Backend`](crate::backend::Backend) is responsible to target the correct worker for a given file URI.
+/// Each worker is responsible for a specific root URI and configures the tool's `cwd` to that root URI.
+/// The [`WorkerManager`](crate::worker_manager::WorkerManager) is responsible to target the correct worker for a given file URI.
 pub struct WorkspaceWorker {
     root_uri: Uri,
-    server_linter: RwLock<Option<ServerLinter>>,
-    server_formatter: RwLock<Option<ServerFormatter>>,
+    tool: RwLock<Option<Box<dyn Tool>>>,
+    builder: Arc<dyn ToolBuilder>,
     // Initialized options from the client
     // If None, the worker has not been initialized yet
-    options: Mutex<Option<serde_json::Value>>,
+    pub(crate) options: Mutex<Option<serde_json::Value>>,
+
+    // Whether the client is in diagnostic pull mode / push mode, or not supporting diagnostics at all
+    diagnostic_mode: DiagnosticMode,
+    // Keep track of published diagnostics to clear them on shutdown (only in push mode)
+    published_diagnostics: Mutex<FxHashSet<Uri>>,
 }
 
 impl WorkspaceWorker {
     /// Create a new workspace worker.
     /// This will not start any programs, use [`start_worker`](Self::start_worker) for that.
-    /// Depending on the client, we need to request the workspace configuration in `initialized.
-    pub fn new(root_uri: Uri) -> Self {
+    /// Depending on the client, we need to request the workspace configuration in `initialized` request.
+    pub fn new(
+        root_uri: Uri,
+        builder: Arc<dyn ToolBuilder>,
+        diagnostic_mode: DiagnosticMode,
+    ) -> Self {
         Self {
             root_uri,
-            server_linter: RwLock::new(None),
-            server_formatter: RwLock::new(None),
+            tool: RwLock::new(None),
+            builder,
             options: Mutex::new(None),
+            diagnostic_mode,
+            published_diagnostics: Mutex::new(FxHashSet::default()),
         }
     }
 
@@ -64,80 +64,27 @@ impl WorkspaceWorker {
         &self.root_uri
     }
 
-    /// Check if the worker is responsible for the given URI
-    /// A worker is responsible for a URI if the URI is a file URI and is located within the root URI of the worker
-    /// e.g. root URI: file:///path/to/root
-    ///      responsible for: file:///path/to/root/file.js
-    ///      not responsible for: file:///path/to/other/file.js
-    ///
-    /// # Panics
-    /// Panics if the root URI cannot be converted to a file path.
-    pub fn is_responsible_for_uri(&self, uri: &Uri) -> bool {
-        if let Some(path) = uri.to_file_path() {
-            return path.starts_with(self.root_uri.to_file_path().unwrap());
-        }
-        false
-    }
-
     /// Start all programs (linter, formatter) for the worker.
     /// This should be called after the client has sent the workspace configuration.
     pub async fn start_worker(&self, options: serde_json::Value) {
-        *self.options.lock().await = Some(options.clone());
-        *self.server_linter.write().await =
-            Some(ServerLinterBuilder::new(self.root_uri.clone(), options.clone()).build());
+        *self.tool.write().await = Some(self.builder.build_boxed(&self.root_uri, options.clone()));
 
-        *self.server_formatter.write().await =
-            Some(ServerFormatterBuilder::new(self.root_uri.clone(), options).build());
+        *self.options.lock().await = Some(options);
     }
 
     /// Initialize file system watchers for the workspace.
     /// These watchers are used to watch for changes in the lint configuration files.
     /// The returned watchers will be registered to the client.
-    pub async fn init_watchers(&self) -> Vec<Registration> {
-        let mut registrations = Vec::new();
-
-        let Some(root_path) = &self.root_uri.to_file_path() else {
-            return registrations;
-        };
-
+    pub async fn init_watchers(&self) -> Option<Registration> {
         // clone the options to avoid locking the mutex
-        let options = {
-            let options = self.options.lock().await;
-            serde_json::from_value::<Options>(options.clone().unwrap_or_default())
-                .unwrap_or_default()
-        };
-        let lint_patterns = self
-            .server_linter
-            .read()
-            .await
-            .as_ref()
-            .map(|linter| linter.get_watch_patterns(&options.lint, root_path));
-        let format_patterns = self
-            .server_formatter
-            .read()
-            .await
-            .as_ref()
-            .map(|formatter| formatter.get_watcher_patterns(&options.format));
+        let options_json = { self.options.lock().await.clone().unwrap_or_default() };
 
-        if let Some(lint_patterns) = lint_patterns {
-            registrations.push(registration_tool_watcher_id(
-                "linter",
-                &self.root_uri,
-                lint_patterns,
-            ));
+        let patterns = self.tool.read().await.as_ref()?.get_watcher_patterns(options_json);
+        if patterns.is_empty() {
+            None
+        } else {
+            Some(registration_watcher_id(&self.root_uri, patterns))
         }
-
-        if options.format.experimental
-            && let Some(format_patterns) = format_patterns
-        {
-            registrations.push(registration_tool_watcher_id(
-                "formatter",
-                &self.root_uri,
-                format_patterns,
-            ));
-        }
-
-        registrations
     }
 
     /// Check if the worker needs to be initialized with options
@@ -145,166 +92,146 @@ impl WorkspaceWorker {
         self.options.lock().await.is_none()
     }
 
-    /// Remove all diagnostics for the given URI
-    pub async fn remove_diagnostics(&self, uri: &Uri) {
-        let server_linter_guard = self.server_linter.read().await;
-        let Some(server_linter) = server_linter_guard.as_ref() else {
-            return;
-        };
-        server_linter.remove_diagnostics(uri);
+    /// Remove all internal cache for the given URI, if any.
+    pub async fn remove_uri_cache(&self, uri: &Uri) {
+        if let Some(tool) = self.tool.read().await.as_ref() {
+            tool.remove_uri_cache(uri);
+        }
     }
 
-    /// Refresh the server linter with the current options
-    /// This will recreate the linter and re-read the config files.
-    /// Call this when the options have changed and the linter needs to be updated.
-    async fn refresh_server_linter(&self, lint_options: serde_json::Value) {
-        let server_linter = ServerLinterBuilder::new(self.root_uri.clone(), lint_options).build();
-
-        *self.server_linter.write().await = Some(server_linter);
-    }
-
-    /// Restart the server formatter with the current options
-    /// This will recreate the formatter and re-read the config files.
-    /// Call this when the options have changed and the formatter needs to be updated.
-    async fn refresh_server_formatter(&self, format_options: serde_json::Value) {
-        let server_formatter =
-            ServerFormatterBuilder::new(self.root_uri.clone(), format_options).build();
-
-        *self.server_formatter.write().await = Some(server_formatter);
-    }
-
-    /// Check if the linter should run for the given run type
-    /// This compares the current run level from the options with the given run type
-    pub async fn should_lint_on_run_type(&self, current_run: Run) -> bool {
-        let options = self.options.lock().await;
-        let run_level = options.as_ref().and_then(|o| {
-            serde_json::from_value::<Options>(o.clone()).ok().map(|opts| opts.lint.run)
-        });
-
-        run_level == Some(current_run)
-    }
-
-    /// Lint a file with the current linter
-    /// - If the file is not lintable or ignored, [`None`] is returned
-    /// - If the file is lintable, but no diagnostics are found, an empty vector is returned
-    pub async fn lint_file(
+    /// Common aggregator for tool-provided diagnostics.
+    async fn collect_diagnostics_with<F>(
         &self,
-        uri: &Uri,
-        content: Option<String>,
-    ) -> Option<Vec<DiagnosticReport>> {
-        let Some(server_linter) = &*self.server_linter.read().await else {
-            return None;
+        document: &TextDocument<'_>,
+        run: F,
+    ) -> Result<Vec<(Uri, Vec<Diagnostic>)>, String>
+    where
+        F: Fn(&Box<dyn Tool>, &TextDocument) -> DiagnosticResult,
+    {
+        let mut aggregated: FxHashMap<Uri, Vec<Diagnostic>> = FxHashMap::default();
+
+        let tool_diagnostics = {
+            let tool_guard = self.tool.read().await;
+            let Some(tool) = tool_guard.as_ref() else {
+                return Ok(Vec::new());
+            };
+
+            run(tool, document)
         };
 
-        server_linter.run_single(uri, content).await
+        match tool_diagnostics {
+            Ok(diags) => {
+                for (entry_uri, mut diags) in diags {
+                    aggregated.entry(entry_uri).or_default().append(&mut diags);
+                }
+            }
+            Err(err) => {
+                return Err(err);
+            }
+        }
+
+        // In push mode, keep track of published diagnostics to clear them on shutdown
+        if self.diagnostic_mode == DiagnosticMode::Push {
+            let new_published_uris: FxHashSet<Uri> = aggregated.keys().cloned().collect();
+            self.published_diagnostics.lock().await.extend(new_published_uris);
+        }
+
+        let mut result = Vec::with_capacity(aggregated.len());
+        for (uri, diags) in aggregated {
+            result.push((uri, diags));
+        }
+        Ok(result)
+    }
+
+    /// Run different tools to collect diagnostics.
+    ///
+    /// # Errors
+    /// When calling `Tool::run_diagnostic` results into an error.
+    pub async fn run_diagnostic(
+        &self,
+        document: &TextDocument<'_>,
+    ) -> Result<Vec<(Uri, Vec<Diagnostic>)>, String> {
+        self.collect_diagnostics_with(document, |tool, document| tool.run_diagnostic(document))
+            .await
+    }
+
+    /// Run different tools to collect diagnostics on change.
+    ///
+    /// # Errors
+    /// When calling `Tool::run_diagnostic_on_change` results into an error.
+    pub async fn run_diagnostic_on_change(
+        &self,
+        document: &TextDocument<'_>,
+    ) -> Result<Vec<(Uri, Vec<Diagnostic>)>, String> {
+        self.collect_diagnostics_with(document, |tool, document| {
+            tool.run_diagnostic_on_change(document)
+        })
+        .await
+    }
+
+    /// Run different tools to collect diagnostics on save.
+    ///
+    /// # Errors
+    /// When calling `Tool::run_diagnostic_on_save` results into an error.
+    pub async fn run_diagnostic_on_save(
+        &self,
+        document: &TextDocument<'_>,
+    ) -> Result<Vec<(Uri, Vec<Diagnostic>)>, String> {
+        self.collect_diagnostics_with(document, |tool, document| {
+            tool.run_diagnostic_on_save(document)
+        })
+        .await
     }
 
     /// Format a file with the current formatter
-    /// - If no file is not formattable or ignored, [`None`] is returned
+    /// - If the file is not formattable or is ignored, an empty vector is returned
     /// - If the file is formattable, but no changes are made, an empty vector is returned
-    pub async fn format_file(&self, uri: &Uri, content: Option<String>) -> Option<Vec<TextEdit>> {
-        let Some(server_formatter) = &*self.server_formatter.read().await else {
-            return None;
-        };
-
-        server_formatter.run_single(uri, content)
-    }
-
-    /// Revalidate diagnostics for the given URIs
-    /// This will re-lint all opened files and return the new diagnostics
-    async fn revalidate_diagnostics(&self, uris: Vec<Uri>) -> Vec<(String, Vec<Diagnostic>)> {
-        let Some(server_linter) = &*self.server_linter.read().await else {
-            return Vec::new();
-        };
-
-        server_linter.revalidate_diagnostics(uris).await
-    }
-
-    /// Get all clear diagnostics for the current workspace
-    /// This should be called when:
-    /// - The linter is disabled (not currently implemented)
-    /// - The workspace is closed
-    /// - The server is shut down
+    /// - If a tool error occurs, an Err is returned
     ///
-    /// This will return a list of URIs that had diagnostics before, each with an empty diagnostics list
-    pub async fn get_clear_diagnostics(&self) -> Vec<(String, Vec<Diagnostic>)> {
-        self.server_linter
-            .read()
-            .await
-            .as_ref()
-            .map(|server_linter| {
-                server_linter
-                    .get_cached_files_of_diagnostics()
-                    .iter()
-                    .map(|uri| (uri.to_string(), vec![]))
-                    .collect::<Vec<_>>()
-            })
-            .unwrap_or_default()
+    /// # Errors
+    /// When calling `Tool::run_format` results into an error.
+    pub async fn format_file(&self, document: &TextDocument<'_>) -> Result<Vec<TextEdit>, String> {
+        let tool_guard = self.tool.read().await;
+        let Some(tool) = tool_guard.as_ref() else {
+            return Ok(Vec::new());
+        };
+
+        tool.run_format(document)
     }
 
-    /// Get code actions or commands for the given range
-    /// It uses the [`ServerLinter`] cached diagnostics if available, otherwise it will lint the file
-    /// If `is_source_fix_all_oxc` is true, it will return a single code action that applies all fixes
+    /// Shutdown the worker and return any necessary changes to be made after shutdown.
+    /// This includes clearing diagnostics and unregistering file watchers.
+    pub async fn shutdown(
+        &self,
+    ) -> (
+        // The URIs that need to have their diagnostics removed after shutdown
+        Vec<Uri>,
+        // Watchers that need to be unregistered
+        Vec<Unregistration>,
+    ) {
+        let uris_to_clear_diagnostics =
+            self.published_diagnostics.lock().await.drain().collect::<Vec<Uri>>();
+        let mut watchers_to_unregister = Vec::new();
+
+        self.builder.shutdown(&self.root_uri);
+        watchers_to_unregister.push(unregistration_watcher_id(&self.root_uri));
+
+        (uris_to_clear_diagnostics, watchers_to_unregister)
+    }
+
+    /// Get code actions or commands for the given range.
+    /// It calls all tools and collects their code actions or commands.
     pub async fn get_code_actions_or_commands(
         &self,
         uri: &Uri,
         range: &Range,
-        is_source_fix_all_oxc: bool,
+        context: &CodeActionContext,
     ) -> Vec<CodeActionOrCommand> {
-        let Some(server_linter) = &*self.server_linter.read().await else {
-            return vec![];
-        };
-
-        let value = if let Some(cached_diagnostics) = server_linter.get_cached_diagnostics(uri) {
-            cached_diagnostics
-        } else {
-            let diagnostics = server_linter.run_single(uri, None).await;
-            diagnostics.unwrap_or_default()
-        };
-
-        if value.is_empty() {
-            return vec![];
+        let mut actions = Vec::new();
+        if let Some(tool) = self.tool.read().await.as_ref() {
+            actions.extend(tool.get_code_actions_or_commands(uri, range, context));
         }
-
-        let reports = value
-            .iter()
-            .filter(|r| r.diagnostic.range == *range || range_overlaps(*range, r.diagnostic.range));
-
-        if is_source_fix_all_oxc {
-            return apply_all_fix_code_action(reports, uri).map_or(vec![], |code_actions| {
-                vec![CodeActionOrCommand::CodeAction(code_actions)]
-            });
-        }
-
-        let mut code_actions_vec: Vec<CodeActionOrCommand> = vec![];
-
-        for report in reports {
-            if let Some(fix_actions) = apply_fix_code_actions(report, uri) {
-                code_actions_vec
-                    .extend(fix_actions.into_iter().map(CodeActionOrCommand::CodeAction));
-            }
-        }
-
-        code_actions_vec
-    }
-
-    /// This function is used for executing the `oxc.fixAll` command
-    pub async fn get_diagnostic_text_edits(&self, uri: &Uri) -> Vec<TextEdit> {
-        let Some(server_linter) = &*self.server_linter.read().await else {
-            return vec![];
-        };
-        let value = if let Some(cached_diagnostics) = server_linter.get_cached_diagnostics(uri) {
-            cached_diagnostics
-        } else {
-            let diagnostics = server_linter.run_single(uri, None).await;
-            diagnostics.unwrap_or_default()
-        };
-
-        if value.is_empty() {
-            return vec![];
-        }
-
-        fix_all_text_edit(value.iter())
+        actions
     }
 
     /// Handle file changes that are watched by the client
@@ -312,22 +239,27 @@ impl WorkspaceWorker {
     /// When a change is detected, the linter is refreshed and all diagnostics are revalidated
     pub async fn did_change_watched_files(
         &self,
-        _file_event: &FileEvent,
-    ) -> Option<Vec<(String, Vec<Diagnostic>)>> {
-        // TODO: the tools should implement a helper function to detect if the changed file is relevant
-        let files = {
-            let server_linter_guard = self.server_linter.read().await;
-            let server_linter = server_linter_guard.as_ref()?;
-            server_linter.get_cached_files_of_diagnostics()
+        file_event: &FileEvent,
+        needs_diagnostic_refresh: &mut bool,
+        file_system: Option<&LSPFileSystem>,
+    ) -> (
+        // Diagnostic reports that need to be revalidated
+        Option<Vec<(Uri, Vec<Diagnostic>)>>,
+        // New watchers that need to be registered
+        Vec<Registration>,
+        // Watchers that need to be unregistered
+        Vec<Unregistration>,
+    ) {
+        // Scope the first lock so it is dropped before the second lock
+        let options = {
+            let options_guard = self.options.lock().await;
+            options_guard.clone().unwrap_or_default()
         };
-        let options = self.options.lock().await.clone().unwrap_or_default();
 
-        tokio::join!(
-            self.refresh_server_formatter(options.clone()),
-            self.refresh_server_linter(options)
-        );
-
-        Some(self.revalidate_diagnostics(files).await)
+        self.handle_tool_changes(file_system, needs_diagnostic_refresh, move |tool, builder| {
+            tool.handle_watched_file_change(builder, &file_event.uri, &self.root_uri, options)
+        })
+        .await
     }
 
     /// Handle server configuration changes from the client
@@ -337,9 +269,11 @@ impl WorkspaceWorker {
     pub async fn did_change_configuration(
         &self,
         changed_options_json: serde_json::Value,
+        needs_diagnostic_refresh: &mut bool,
+        file_system: Option<&LSPFileSystem>,
     ) -> (
         // Diagnostic reports that need to be revalidated
-        Option<Vec<(String, Vec<Diagnostic>)>>,
+        Option<Vec<(Uri, Vec<Diagnostic>)>>,
         // New watchers that need to be registered
         Vec<Registration>,
         // Watchers that need to be unregistered
@@ -358,494 +292,625 @@ impl WorkspaceWorker {
         "
         );
 
+        let result = self
+            .handle_tool_changes(file_system, needs_diagnostic_refresh, |tool, builder| {
+                tool.handle_configuration_change(
+                    builder,
+                    &self.root_uri,
+                    &old_options,
+                    changed_options_json.clone(),
+                )
+            })
+            .await;
+
         {
             let mut options_guard = self.options.lock().await;
-            *options_guard = Some(changed_options_json.clone());
+            *options_guard = Some(changed_options_json);
         }
 
+        result
+    }
+
+    /// Common implementation for handling tool changes that may result in
+    /// diagnostics updates, watcher registrations/unregistrations, and tool replacement
+    async fn handle_tool_changes<F>(
+        &self,
+        file_system: Option<&LSPFileSystem>,
+        needs_diagnostic_refresh: &mut bool,
+        change_handler: F,
+    ) -> (Option<Vec<(Uri, Vec<Diagnostic>)>>, Vec<Registration>, Vec<Unregistration>)
+    where
+        F: FnOnce(&mut Box<dyn Tool>, &dyn ToolBuilder) -> ToolRestartChanges,
+    {
         let mut registrations = vec![];
         let mut unregistrations = vec![];
-        let mut diagnostics = None;
+        let mut diagnostics: Option<Vec<(Uri, Vec<Diagnostic>)>> = None;
 
-        let mut new_formatter = None;
-        if let Some(formatter) = self.server_formatter.read().await.as_ref() {
-            let format_change = formatter.handle_configuration_change(
-                &self.root_uri,
-                &old_options,
-                changed_options_json.clone(),
-            );
+        let mut tools = self.tool.write().await;
+        let Some(tool) = tools.as_mut() else {
+            // No tool to update, return early
+            return (None, registrations, unregistrations);
+        };
+        let change = change_handler(tool, self.builder.as_ref());
 
-            new_formatter = format_change.tool;
-
-            if let Some(patterns) = format_change.watch_patterns {
-                unregistrations.push(unregistration_tool_watcher_id("formatter", &self.root_uri));
-                if !patterns.is_empty() {
-                    registrations.push(registration_tool_watcher_id(
-                        "formatter",
-                        &self.root_uri,
-                        patterns,
-                    ));
-                }
+        if let Some(patterns) = change.watch_patterns {
+            unregistrations.push(unregistration_watcher_id(&self.root_uri));
+            if !patterns.is_empty() {
+                registrations.push(registration_watcher_id(&self.root_uri, patterns));
             }
         }
-        if let Some(new_formatter) = new_formatter {
-            *self.server_formatter.write().await = Some(new_formatter);
-        }
+        if let Some(replaced_tool) = change.tool {
+            *tool = replaced_tool;
+            *needs_diagnostic_refresh = true;
 
-        let mut new_linter = None;
-        if let Some(linter) = self.server_linter.read().await.as_ref() {
-            let lint_change = linter
-                .handle_configuration_change(&self.root_uri, &old_options, changed_options_json)
-                .await;
+            let Some(file_system) = file_system else {
+                return (None, registrations, unregistrations);
+            };
 
-            new_linter = lint_change.tool;
-            diagnostics = lint_change.diagnostic_reports;
-
-            if let Some(patterns) = lint_change.watch_patterns {
-                unregistrations.push(unregistration_tool_watcher_id("linter", &self.root_uri));
-                if !patterns.is_empty() {
-                    registrations.push(registration_tool_watcher_id(
-                        "linter",
-                        &self.root_uri,
-                        patterns,
-                    ));
+            for uri in file_system.keys() {
+                let document = file_system.get_document(&uri);
+                let Ok(mut reports) = tool.run_diagnostic(&document) else {
+                    // If diagnostics could not be run, skip this URI, but continue with others
+                    // TODO: Should we aggregate errors instead? One by one, or all together?
+                    continue;
+                };
+                if !reports.is_empty() {
+                    if let Some(existing_diagnostics) = &mut diagnostics {
+                        existing_diagnostics.append(&mut reports);
+                    } else {
+                        diagnostics = Some(reports);
+                    }
                 }
             }
-        }
-
-        if let Some(new_linter) = new_linter {
-            *self.server_linter.write().await = Some(new_linter);
         }
 
         (diagnostics, registrations, unregistrations)
     }
+
+    /// Execute a command for the workspace.
+    ///
+    /// # Errors
+    /// Returns `ErrorCode` when the command is not found or could not be executed.
+    pub async fn execute_command(
+        &self,
+        command: &str,
+        arguments: Vec<serde_json::Value>,
+    ) -> Result<Option<WorkspaceEdit>, ErrorCode> {
+        let tool_guard = self.tool.read().await;
+        let Some(tool) = tool_guard.as_ref() else {
+            return Ok(None);
+        };
+        tool.execute_command(command, arguments)
+    }
 }
 
-/// Create an unregistration for a file system watcher for the given tool
-fn unregistration_tool_watcher_id(tool: &str, root_uri: &Uri) -> Unregistration {
+/// Create an unregistration for a file system watcher
+fn unregistration_watcher_id(root_uri: &Uri) -> Unregistration {
     Unregistration {
-        id: format!("watcher-{tool}-{}", root_uri.as_str()),
+        id: format!("watcher-{}", root_uri.as_str()),
         method: "workspace/didChangeWatchedFiles".to_string(),
     }
 }
 
-/// Create a registration for a file system watcher for the given tool and patterns
-fn registration_tool_watcher_id(tool: &str, root_uri: &Uri, patterns: Vec<String>) -> Registration {
+/// Create a registration for a file system watcher for the given patterns
+fn registration_watcher_id(root_uri: &Uri, patterns: Vec<String>) -> Registration {
     Registration {
-        id: format!("watcher-{tool}-{}", root_uri.as_str()),
+        id: format!("watcher-{}", root_uri.as_str()),
         method: "workspace/didChangeWatchedFiles".to_string(),
         register_options: Some(json!(DidChangeWatchedFilesRegistrationOptions {
             watchers: patterns
                 .into_iter()
-                .map(|pattern| FileSystemWatcher {
-                    glob_pattern: GlobPattern::Relative(RelativePattern {
-                        base_uri: OneOf::Right(root_uri.clone()),
-                        pattern,
-                    }),
-                    kind: Some(WatchKind::all()), // created, deleted, changed
+                .map(|pattern| {
+                    let glob_pattern = if Path::new(&pattern).is_absolute() {
+                        GlobPattern::String(pattern)
+                    } else {
+                        GlobPattern::Relative(RelativePattern {
+                            base_uri: OneOf::Right(root_uri.clone()),
+                            pattern,
+                        })
+                    };
+                    FileSystemWatcher {
+                        glob_pattern,
+                        kind: Some(WatchKind::all()), // created, deleted, changed
+                    }
                 })
                 .collect::<Vec<_>>(),
         })),
     }
 }
 
-fn range_overlaps(a: Range, b: Range) -> bool {
-    a.start <= b.end && a.end >= b.start
-}
-
 #[cfg(test)]
 mod tests {
     use std::str::FromStr;
 
-    use super::*;
+    use std::sync::Arc;
+    use tower_lsp_server::{
+        jsonrpc::ErrorCode,
+        ls_types::{CodeActionContext, CodeActionOrCommand, FileChangeType, FileEvent, Range, Uri},
+    };
+
+    #[cfg(unix)]
+    use tower_lsp_server::ls_types::{DidChangeWatchedFilesRegistrationOptions, GlobPattern};
+
+    use crate::{
+        LanguageId, TextDocument, ToolBuilder,
+        capabilities::DiagnosticMode,
+        file_system::LSPFileSystem,
+        tests::{FAKE_COMMAND, FakeToolBuilder},
+        worker::WorkspaceWorker,
+    };
+
+    fn create_builder() -> Arc<dyn ToolBuilder> {
+        Arc::new(FakeToolBuilder::default()) as Arc<dyn ToolBuilder>
+    }
 
     #[test]
     fn test_get_root_uri() {
-        let worker = WorkspaceWorker::new(Uri::from_str("file:///root/").unwrap());
+        let worker = WorkspaceWorker::new(
+            Uri::from_str("file:///root/").unwrap(),
+            create_builder(),
+            DiagnosticMode::None,
+        );
 
         assert_eq!(worker.get_root_uri(), &Uri::from_str("file:///root/").unwrap());
     }
 
+    #[tokio::test]
+    async fn test_needs_init_options() {
+        let worker = WorkspaceWorker::new(
+            Uri::from_str("file:///root/").unwrap(),
+            create_builder(),
+            DiagnosticMode::None,
+        );
+        assert!(worker.needs_init_options().await);
+        worker.start_worker(serde_json::Value::Null).await;
+        assert!(!worker.needs_init_options().await);
+    }
+
+    #[tokio::test]
+    async fn test_init_watchers() {
+        // with one watcher
+        let worker = WorkspaceWorker::new(
+            Uri::from_str("file:///root/").unwrap(),
+            create_builder(),
+            DiagnosticMode::None,
+        );
+        worker.start_worker(serde_json::Value::Null).await;
+        let registration = worker.init_watchers().await;
+        assert!(registration.is_some());
+        let registration = registration.unwrap();
+        assert_eq!(registration.id, "watcher-file:///root/");
+
+        // with no watchers
+        let worker_no_watchers = WorkspaceWorker::new(
+            Uri::from_str("file:///root/").unwrap(),
+            create_builder(),
+            DiagnosticMode::None,
+        );
+        worker_no_watchers.start_worker(serde_json::json!({"some_option": true})).await;
+        let registration_no_watchers = worker_no_watchers.init_watchers().await;
+        assert!(registration_no_watchers.is_none());
+    }
+
     #[test]
-    fn test_is_responsible() {
-        let worker = WorkspaceWorker::new(Uri::from_str("file:///path/to/root").unwrap());
+    #[cfg(unix)]
+    fn test_registration_watcher_absolute_pattern() {
+        let root_uri = Uri::from_str("file:///root/").unwrap();
+        let registration =
+            super::registration_watcher_id(&root_uri, vec!["/etc/**/*.json".to_string()]);
 
-        assert!(
-            worker.is_responsible_for_uri(&Uri::from_str("file:///path/to/root/file.js").unwrap())
+        let register_options = registration.register_options.unwrap();
+        let options: DidChangeWatchedFilesRegistrationOptions =
+            serde_json::from_value(register_options).unwrap();
+
+        assert_eq!(options.watchers.len(), 1);
+        match &options.watchers[0].glob_pattern {
+            GlobPattern::String(pattern) => assert_eq!(pattern, "/etc/**/*.json"),
+            GlobPattern::Relative(_) => {
+                panic!("Expected absolute glob to be encoded as GlobPattern::String")
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn test_execute_command() {
+        let worker = WorkspaceWorker::new(
+            Uri::from_str("file:///root/").unwrap(),
+            create_builder(),
+            DiagnosticMode::None,
         );
-        assert!(worker.is_responsible_for_uri(
-            &Uri::from_str("file:///path/to/root/folder/file.js").unwrap()
-        ));
-        assert!(
-            !worker
-                .is_responsible_for_uri(&Uri::from_str("file:///path/to/other/file.js").unwrap())
+        worker.start_worker(serde_json::Value::Null).await;
+
+        // Test command not found
+        let result = worker.execute_command("unknown.command", vec![]).await;
+        assert!(result.is_err());
+        assert_eq!(result.err().unwrap(), ErrorCode::InvalidParams);
+
+        // Test command found but no arguments
+        let result = worker.execute_command(FAKE_COMMAND, vec![]).await;
+        assert!(result.is_ok());
+        assert!(result.ok().unwrap().is_none());
+
+        // Test command found with arguments
+        let result = worker.execute_command(FAKE_COMMAND, vec![serde_json::Value::Null]).await;
+        assert!(result.is_ok());
+        assert!(result.ok().unwrap().is_some());
+    }
+
+    #[tokio::test]
+    async fn test_watched_files_change_notification() {
+        let worker = WorkspaceWorker::new(
+            Uri::from_str("file:///root/").unwrap(),
+            create_builder(),
+            DiagnosticMode::None,
         );
-    }
-}
+        worker.start_worker(serde_json::Value::Null).await;
 
-#[cfg(test)]
-mod test_watchers {
-    use serde_json::json;
-    use tower_lsp_server::{
-        UriExt,
-        lsp_types::{
-            DidChangeWatchedFilesRegistrationOptions, FileSystemWatcher, GlobPattern, OneOf,
-            Registration, RelativePattern, Unregistration, Uri, WatchKind,
-        },
-    };
+        let fs = LSPFileSystem::default();
+        fs.set(
+            Uri::from_str("file:///root/diagnostics.config").unwrap(),
+            "hello world".to_string(),
+        );
+        let mut needs_diagnostic_refresh = false;
 
-    use crate::worker::WorkspaceWorker;
+        let (diagnostics, registrations, unregistrations) = worker
+            .did_change_watched_files(
+                &FileEvent {
+                    uri: Uri::from_str("file:///root/unknown.file").unwrap(),
+                    typ: FileChangeType::CHANGED,
+                },
+                &mut needs_diagnostic_refresh,
+                Some(&fs),
+            )
+            .await;
 
-    struct Tester {
-        pub worker: WorkspaceWorker,
-    }
+        // Since FakeToolBuilder does not know about "unknown.file", no diagnostics or registrations are expected
+        assert!(diagnostics.is_none());
+        assert_eq!(registrations.len(), 0); // No new registrations expected
+        assert_eq!(unregistrations.len(), 0); // No unregistrations expected
+        assert!(!needs_diagnostic_refresh); // No need to refresh diagnostics
 
-    impl Tester {
-        pub fn new(relative_root_dir: &'static str, options: serde_json::Value) -> Self {
-            let absolute_path =
-                std::env::current_dir().expect("could not get current dir").join(relative_root_dir);
-            let uri =
-                Uri::from_file_path(absolute_path).expect("could not convert current dir to uri");
+        let (diagnostics, registrations, unregistrations) = worker
+            .did_change_watched_files(
+                &FileEvent {
+                    uri: Uri::from_str("file:///root/watcher.config").unwrap(),
+                    typ: FileChangeType::CHANGED,
+                },
+                &mut needs_diagnostic_refresh,
+                Some(&fs),
+            )
+            .await;
 
-            let worker = tokio::runtime::Runtime::new()
-                .unwrap()
-                .block_on(async { Self::create_workspace_worker(uri, options).await });
+        // Since FakeToolBuilder knows about "watcher.config", registrations are expected
+        assert!(diagnostics.is_none());
+        assert_eq!(unregistrations.len(), 1); // One unregistration expected
+        assert_eq!(unregistrations[0].id, "watcher-file:///root/");
+        assert_eq!(registrations.len(), 1); // One new registration expected
+        assert_eq!(registrations[0].id, "watcher-file:///root/");
+        assert!(!needs_diagnostic_refresh); // No need to refresh diagnostics
 
-            Self { worker }
-        }
+        let (diagnostics, registrations, unregistrations) = worker
+            .did_change_watched_files(
+                &FileEvent {
+                    uri: Uri::from_str("file:///root/tool.config").unwrap(),
+                    typ: FileChangeType::CHANGED,
+                },
+                &mut needs_diagnostic_refresh,
+                Some(&fs),
+            )
+            .await;
 
-        async fn create_workspace_worker(
-            absolute_path: Uri,
-            options: serde_json::Value,
-        ) -> WorkspaceWorker {
-            let worker = WorkspaceWorker::new(absolute_path);
-            worker.start_worker(options).await;
+        // Because we passed a file system that knows about "diagnostics.config", diagnostics are expected
+        assert!(diagnostics.is_some());
+        assert_eq!(diagnostics.unwrap().len(), 1); // One diagnostic report expected
+        assert_eq!(registrations.len(), 0); // No new registrations expected
+        assert_eq!(unregistrations.len(), 0); // No unregistrations expected
+        assert!(needs_diagnostic_refresh); // Need to refresh diagnostics
 
-            worker
-        }
+        needs_diagnostic_refresh = false;
+        let (diagnostics, registrations, unregistrations) = worker
+            .did_change_watched_files(
+                &FileEvent {
+                    uri: Uri::from_str("file:///root/tool.config").unwrap(),
+                    typ: FileChangeType::CHANGED,
+                },
+                &mut needs_diagnostic_refresh,
+                None,
+            )
+            .await;
 
-        fn init_watchers(&self) -> Vec<Registration> {
-            tokio::runtime::Runtime::new()
-                .unwrap()
-                .block_on(async { self.worker.init_watchers().await })
-        }
-
-        fn did_change_configuration(
-            &self,
-            options: serde_json::Value,
-        ) -> (Vec<Registration>, Vec<Unregistration>) {
-            let (_, registration, unregistration) = tokio::runtime::Runtime::new()
-                .unwrap()
-                .block_on(async { self.worker.did_change_configuration(options).await });
-
-            (registration, unregistration)
-        }
-
-        pub fn assert_eq_registration(
-            &self,
-            registration: &Registration,
-            tool: &str,
-            patterns: &[&str],
-        ) {
-            assert_eq!(
-                *registration,
-                Registration {
-                    id: format!("watcher-{}-{}", tool, self.worker.get_root_uri().as_str()),
-                    method: "workspace/didChangeWatchedFiles".to_string(),
-                    register_options: Some(json!(DidChangeWatchedFilesRegistrationOptions {
-                        watchers: patterns
-                            .iter()
-                            .map(|pattern| {
-                                FileSystemWatcher {
-                                    glob_pattern: GlobPattern::Relative(RelativePattern {
-                                        base_uri: OneOf::Right(self.worker.get_root_uri().clone()),
-                                        pattern: (*pattern).to_string(),
-                                    }),
-                                    kind: Some(WatchKind::all()), // created, deleted, changed
-                                }
-                            })
-                            .collect(),
-                    })),
-                }
-            );
-        }
+        // No file system passed, so no diagnostics expected
+        assert!(diagnostics.is_none());
+        assert_eq!(registrations.len(), 0); // No new registrations expected
+        assert_eq!(unregistrations.len(), 0); // No unregistrations expected
+        assert!(needs_diagnostic_refresh); // Need to refresh diagnostics
     }
 
-    mod init_watchers {
-        use serde_json::json;
+    #[tokio::test]
+    async fn test_did_change_configuration() {
+        let worker = WorkspaceWorker::new(
+            Uri::from_str("file:///root/").unwrap(),
+            create_builder(),
+            DiagnosticMode::None,
+        );
+        worker.start_worker(serde_json::json!({"some_option": true})).await;
 
-        use crate::worker::test_watchers::Tester;
+        let fs = LSPFileSystem::default();
+        fs.set(
+            Uri::from_str("file:///root/diagnostics.config").unwrap(),
+            "hello world".to_string(),
+        );
+        let mut needs_diagnostic_refresh = false;
 
-        #[test]
-        fn test_default_options() {
-            let tester = Tester::new("fixtures/watcher/default", json!({}));
-            let registrations = tester.init_watchers();
+        let (diagnostics, registrations, unregistrations) = worker
+            .did_change_configuration(
+                serde_json::json!({"some_option": false}),
+                &mut needs_diagnostic_refresh,
+                Some(&fs),
+            )
+            .await;
 
-            assert_eq!(registrations.len(), 1);
-            tester.assert_eq_registration(&registrations[0], "linter", &["**/.oxlintrc.json"]);
-        }
+        // Since FakeToolBuilder does not change anything based on configuration, no diagnostics or registrations are expected
+        assert!(diagnostics.is_none());
+        assert_eq!(registrations.len(), 0); // No new registrations expected
+        assert_eq!(unregistrations.len(), 0); // No unregistrations expected
+        assert!(!needs_diagnostic_refresh); // No need to refresh diagnostics
 
-        #[test]
-        fn test_custom_config_path() {
-            let tester = Tester::new(
-                "fixtures/watcher/default",
-                json!({
-                    "configPath": "configs/lint.json"
-                }),
-            );
-            let registrations = tester.init_watchers();
+        let (diagnostics, registrations, unregistrations) = worker
+            .did_change_configuration(
+                serde_json::json!(2),
+                &mut needs_diagnostic_refresh,
+                Some(&fs),
+            )
+            .await;
 
-            assert_eq!(registrations.len(), 1);
-            tester.assert_eq_registration(&registrations[0], "linter", &["configs/lint.json"]);
-        }
+        // Since FakeToolBuilder changes watcher patterns based on configuration, registrations are expected
+        assert!(diagnostics.is_none());
+        assert_eq!(unregistrations.len(), 1); // One unregistration expected
+        assert_eq!(unregistrations[0].id, "watcher-file:///root/");
+        assert_eq!(registrations.len(), 1); // One new registration expected
+        assert_eq!(registrations[0].id, "watcher-file:///root/");
+        assert!(!needs_diagnostic_refresh); // No need to refresh diagnostics
 
-        #[test]
-        fn test_linter_extends_configs() {
-            let tester = Tester::new("fixtures/watcher/linter_extends", json!({}));
-            let registrations = tester.init_watchers();
+        let (diagnostics, registrations, unregistrations) = worker
+            .did_change_configuration(
+                serde_json::json!(3),
+                &mut needs_diagnostic_refresh,
+                Some(&fs),
+            )
+            .await;
 
-            // The `.oxlintrc.json` extends `./lint.json -> 2 watchers
-            assert_eq!(registrations.len(), 1);
-            tester.assert_eq_registration(
-                &registrations[0],
-                "linter",
-                &["**/.oxlintrc.json", "lint.json"],
-            );
-        }
+        // Since FakeToolBuilder changes diagnostics based on configuration, diagnostics are expected
+        assert!(diagnostics.is_some());
+        assert_eq!(diagnostics.unwrap().len(), 1); // One diagnostic report expected
+        assert_eq!(registrations.len(), 0); // No new registrations expected
+        assert_eq!(unregistrations.len(), 0); // No unregistrations expected
+        assert!(needs_diagnostic_refresh); // Need to refresh diagnostics
+    }
 
-        #[test]
-        fn test_linter_extends_custom_config_path() {
-            let tester = Tester::new(
-                "fixtures/watcher/linter_extends",
-                json!({
-                    "configPath": ".oxlintrc.json"
-                }),
-            );
-            let registrations = tester.init_watchers();
+    #[tokio::test]
+    async fn test_code_action_collection() {
+        let worker = WorkspaceWorker::new(
+            Uri::from_str("file:///root/").unwrap(),
+            create_builder(),
+            DiagnosticMode::None,
+        );
+        worker.start_worker(serde_json::Value::Null).await;
 
-            assert_eq!(registrations.len(), 1);
-            tester.assert_eq_registration(
-                &registrations[0],
-                "linter",
-                &[".oxlintrc.json", "lint.json"],
-            );
-        }
+        let actions = worker
+            .get_code_actions_or_commands(
+                &Uri::from_str("file:///root/file.js").unwrap(),
+                &Range::default(),
+                &CodeActionContext::default(),
+            )
+            .await;
 
-        #[test]
-        fn test_formatter_experimental_enabled() {
-            let tester = Tester::new(
-                "fixtures/watcher/default",
-                json!({
-                    "fmt.experimental": true
-                }),
-            );
-            let watchers = tester.init_watchers();
+        assert_eq!(actions.len(), 0);
 
-            assert_eq!(watchers.len(), 2);
-            tester.assert_eq_registration(&watchers[0], "linter", &["**/.oxlintrc.json"]);
-            tester.assert_eq_registration(
-                &watchers[1],
-                "formatter",
-                &[".oxfmtrc.json", ".oxfmtrc.jsonc"],
-            );
-        }
+        let actions = worker
+            .get_code_actions_or_commands(
+                &Uri::from_str("file:///root/code_action.config").unwrap(),
+                &Range::default(),
+                &CodeActionContext::default(),
+            )
+            .await;
 
-        #[test]
-        fn test_formatter_custom_config_path() {
-            let tester = Tester::new(
-                "fixtures/watcher/default",
-                json!({
-                    "fmt.experimental": true,
-                    "fmt.configPath": "configs/formatter.json"
-                }),
-            );
-            let watchers = tester.init_watchers();
-
-            assert_eq!(watchers.len(), 2);
-            tester.assert_eq_registration(&watchers[0], "linter", &["**/.oxlintrc.json"]);
-            tester.assert_eq_registration(&watchers[1], "formatter", &["configs/formatter.json"]);
-        }
-
-        #[test]
-        fn test_linter_and_formatter_custom_config_path() {
-            let tester = Tester::new(
-                "fixtures/watcher/default",
-                json!({
-                    "configPath": "configs/lint.json",
-                    "fmt.experimental": true,
-                    "fmt.configPath": "configs/formatter.json"
-                }),
-            );
-            let watchers = tester.init_watchers();
-
-            assert_eq!(watchers.len(), 2);
-            tester.assert_eq_registration(&watchers[0], "linter", &["configs/lint.json"]);
-            tester.assert_eq_registration(&watchers[1], "formatter", &["configs/formatter.json"]);
+        assert_eq!(actions.len(), 1);
+        if let CodeActionOrCommand::CodeAction(action) = &actions[0] {
+            assert_eq!(action.title, "Code Action title");
+        } else {
+            panic!("Expected CodeAction");
         }
     }
 
-    mod did_change_configuration {
-        use serde_json::json;
-        use tower_lsp_server::lsp_types::Unregistration;
+    #[tokio::test]
+    async fn test_run_diagnostic() {
+        let worker = WorkspaceWorker::new(
+            Uri::from_str("file:///root/").unwrap(),
+            create_builder(),
+            DiagnosticMode::None,
+        );
+        let uri = Uri::from_str("file:///root/diagnostics.config").unwrap();
 
-        use crate::worker::test_watchers::Tester;
+        worker.start_worker(serde_json::Value::Null).await;
 
-        #[test]
-        fn test_no_change() {
-            let tester = Tester::new("fixtures/watcher/default", json!({}));
-            let (registration, unregistrations) = tester.did_change_configuration(json!({}));
-            assert!(registration.is_empty());
-            assert!(unregistrations.is_empty());
-        }
+        let diagnostics_no_content = worker
+            .run_diagnostic(&TextDocument::new(&uri, LanguageId::default(), None))
+            .await
+            .unwrap();
 
-        #[test]
-        fn test_lint_config_path_change() {
-            let tester = Tester::new("fixtures/watcher/default", json!({}));
-            let (registration, unregistrations) = tester.did_change_configuration(json!( {
-                "configPath": "configs/lint.json"
-            }));
+        assert_eq!(diagnostics_no_content.len(), 1);
+        assert_eq!(diagnostics_no_content[0].0, uri);
+        assert_eq!(diagnostics_no_content[0].1.len(), 1);
+        assert_eq!(
+            diagnostics_no_content[0].1[0].message,
+            "Fake diagnostic for content: <no content>"
+        );
 
-            assert_eq!(unregistrations.len(), 1);
-            assert_eq!(registration.len(), 1);
+        let diagnostics_with_content = worker
+            .run_diagnostic(&TextDocument::new(
+                &uri,
+                LanguageId::default(),
+                Some(Arc::from("helloworld")),
+            ))
+            .await
+            .unwrap();
 
-            assert_eq!(
-                unregistrations[0],
-                Unregistration {
-                    id: format!("watcher-linter-{}", tester.worker.get_root_uri().as_str()),
-                    method: "workspace/didChangeWatchedFiles".to_string(),
-                }
-            );
-            tester.assert_eq_registration(&registration[0], "linter", &["configs/lint.json"]);
-        }
+        assert_eq!(diagnostics_with_content.len(), 1);
+        assert_eq!(diagnostics_with_content[0].0, uri);
+        assert_eq!(diagnostics_with_content[0].1.len(), 1);
+        assert_eq!(
+            diagnostics_with_content[0].1[0].message,
+            "Fake diagnostic for content: helloworld"
+        );
 
-        #[test]
-        fn test_lint_other_option_change() {
-            let tester = Tester::new("fixtures/watcher/default", json!({}));
-            let (registration, unregistrations) = tester.did_change_configuration(json!({
-                // run is the only option that does not require a restart
-                "run": "onSave"
-            }));
-            assert!(unregistrations.is_empty());
-            assert!(registration.is_empty());
-        }
+        let no_diagnostics = worker
+            .run_diagnostic(&TextDocument::new(
+                &Uri::from_str("file:///root/unknown.file").unwrap(),
+                LanguageId::default(),
+                None,
+            ))
+            .await
+            .unwrap();
 
-        #[test]
-        fn test_no_changes_with_formatter() {
-            let tester = Tester::new(
-                "fixtures/watcher/default",
-                json!({
-                    "fmt.experimental": true,
-                }),
-            );
-            let (registration, unregistrations) = tester.did_change_configuration(json!({
-                "fmt.experimental": true
-            }));
+        assert!(no_diagnostics.is_empty());
 
-            assert!(registration.is_empty());
-            assert!(unregistrations.is_empty());
-        }
+        let error = worker
+            .run_diagnostic(&TextDocument::new(
+                &Uri::from_str("file:///root/error.config").unwrap(),
+                LanguageId::default(),
+                None,
+            ))
+            .await
+            .unwrap_err();
 
-        #[test]
-        fn test_lint_config_path_change_with_formatter() {
-            let tester = Tester::new(
-                "fixtures/watcher/default",
-                json!({
-                  "fmt.experimental": true
-                }),
-            );
-            let (registration, unregistrations) = tester.did_change_configuration(json!( {
-                "configPath": "configs/lint.json",
-                "fmt.experimental": true
-            }));
+        assert_eq!(error, "Fake diagnostic error");
+    }
 
-            assert_eq!(unregistrations.len(), 1);
-            assert_eq!(
-                unregistrations[0],
-                Unregistration {
-                    id: format!("watcher-linter-{}", tester.worker.get_root_uri().as_str()),
-                    method: "workspace/didChangeWatchedFiles".to_string(),
-                }
-            );
-            tester.assert_eq_registration(&registration[0], "linter", &["configs/lint.json"]);
-        }
+    #[tokio::test]
+    async fn test_run_diagnostic_on_change() {
+        let worker = WorkspaceWorker::new(
+            Uri::from_str("file:///root/").unwrap(),
+            create_builder(),
+            DiagnosticMode::None,
+        );
+        let uri = Uri::from_str("file:///root/diagnostics.config").unwrap();
 
-        #[test]
-        fn test_formatter_experimental_enabled() {
-            let tester = Tester::new("fixtures/watcher/default", json!({}));
-            let (registration, unregistrations) = tester.did_change_configuration(json!({
-                "fmt.experimental": true
-            }));
+        worker.start_worker(serde_json::Value::Null).await;
 
-            // The `WorkspaceWorker` does not know if the formatter was previously enabled or not,
-            // so it will always unregister the old watcher.
-            assert_eq!(unregistrations.len(), 1);
-            assert_eq!(
-                unregistrations[0],
-                Unregistration {
-                    id: format!("watcher-formatter-{}", tester.worker.get_root_uri().as_str()),
-                    method: "workspace/didChangeWatchedFiles".to_string(),
-                }
-            );
+        let diagnostics_no_content = worker
+            .run_diagnostic_on_change(&TextDocument::new(&uri, LanguageId::default(), None))
+            .await
+            .unwrap();
 
-            assert_eq!(registration.len(), 1);
-            tester.assert_eq_registration(
-                &registration[0],
-                "formatter",
-                &[".oxfmtrc.json", ".oxfmtrc.jsonc"],
-            );
-        }
+        assert_eq!(diagnostics_no_content.len(), 1);
+        assert_eq!(diagnostics_no_content[0].0, uri);
+        assert_eq!(diagnostics_no_content[0].1.len(), 1);
+        assert_eq!(
+            diagnostics_no_content[0].1[0].message,
+            "Fake diagnostic for content: <no content>"
+        );
 
-        #[test]
-        fn test_formatter_custom_config_path() {
-            let tester = Tester::new(
-                "fixtures/watcher/default",
-                json!({
-                    "fmt.experimental": true
-                }),
-            );
-            let (registration, unregistrations) = tester.did_change_configuration(json!({
-                "fmt.experimental": true,
-                "fmt.configPath": "configs/formatter.json"
-            }));
+        let diagnostics_with_content = worker
+            .run_diagnostic_on_change(&TextDocument::new(
+                &uri,
+                LanguageId::default(),
+                Some(Arc::from("helloworld")),
+            ))
+            .await
+            .unwrap();
 
-            assert_eq!(unregistrations.len(), 1);
-            assert_eq!(registration.len(), 1);
-            assert_eq!(
-                unregistrations[0],
-                Unregistration {
-                    id: format!("watcher-formatter-{}", tester.worker.get_root_uri().as_str()),
-                    method: "workspace/didChangeWatchedFiles".to_string(),
-                }
-            );
+        assert_eq!(diagnostics_with_content.len(), 1);
+        assert_eq!(diagnostics_with_content[0].0, uri);
+        assert_eq!(diagnostics_with_content[0].1.len(), 1);
+        assert_eq!(
+            diagnostics_with_content[0].1[0].message,
+            "Fake diagnostic for content: helloworld"
+        );
 
-            tester.assert_eq_registration(
-                &registration[0],
-                "formatter",
-                &["configs/formatter.json"],
-            );
-        }
+        let no_diagnostics = worker
+            .run_diagnostic_on_change(&TextDocument::new(
+                &Uri::from_str("file:///root/unknown.file").unwrap(),
+                LanguageId::default(),
+                None,
+            ))
+            .await
+            .unwrap();
 
-        #[test]
-        fn test_formatter_disabling() {
-            let tester = Tester::new(
-                "fixtures/watcher/default",
-                json!({
-                    "fmt.experimental": true
-                }),
-            );
-            let (registration, unregistrations) = tester.did_change_configuration(json!({
-                "fmt.experimental": false
-            }));
+        assert!(no_diagnostics.is_empty());
 
-            assert_eq!(unregistrations.len(), 1);
-            assert_eq!(registration.len(), 0);
-            assert_eq!(
-                unregistrations[0],
-                Unregistration {
-                    id: format!("watcher-formatter-{}", tester.worker.get_root_uri().as_str()),
-                    method: "workspace/didChangeWatchedFiles".to_string(),
-                }
-            );
-        }
+        let error = worker
+            .run_diagnostic_on_change(&TextDocument::new(
+                &Uri::from_str("file:///root/error.config").unwrap(),
+                LanguageId::default(),
+                None,
+            ))
+            .await
+            .unwrap_err();
+
+        assert_eq!(error, "Fake diagnostic error");
+    }
+
+    #[tokio::test]
+    async fn test_run_diagnostic_on_save() {
+        let worker = WorkspaceWorker::new(
+            Uri::from_str("file:///root/").unwrap(),
+            create_builder(),
+            DiagnosticMode::None,
+        );
+        let uri = Uri::from_str("file:///root/diagnostics.config").unwrap();
+        worker.start_worker(serde_json::Value::Null).await;
+
+        let diagnostics_no_content = worker
+            .run_diagnostic_on_save(&TextDocument::new(&uri, LanguageId::default(), None))
+            .await
+            .unwrap();
+
+        assert_eq!(diagnostics_no_content.len(), 1);
+        assert_eq!(diagnostics_no_content[0].0, uri);
+        assert_eq!(diagnostics_no_content[0].1.len(), 1);
+        assert_eq!(
+            diagnostics_no_content[0].1[0].message,
+            "Fake diagnostic for content: <no content>"
+        );
+
+        let diagnostics_with_content = worker
+            .run_diagnostic_on_save(&TextDocument::new(
+                &uri,
+                LanguageId::default(),
+                Some(Arc::from("helloworld")),
+            ))
+            .await
+            .unwrap();
+
+        assert_eq!(diagnostics_with_content.len(), 1);
+        assert_eq!(diagnostics_with_content[0].0, uri);
+        assert_eq!(diagnostics_with_content[0].1.len(), 1);
+        assert_eq!(
+            diagnostics_with_content[0].1[0].message,
+            "Fake diagnostic for content: helloworld"
+        );
+
+        let no_diagnostics = worker
+            .run_diagnostic_on_save(&TextDocument::new(
+                &Uri::from_str("file:///root/unknown.file").unwrap(),
+                LanguageId::default(),
+                None,
+            ))
+            .await
+            .unwrap();
+
+        assert!(no_diagnostics.is_empty());
+
+        let error = worker
+            .run_diagnostic_on_save(&TextDocument::new(
+                &Uri::from_str("file:///root/error.config").unwrap(),
+                LanguageId::default(),
+                None,
+            ))
+            .await
+            .unwrap_err();
+
+        assert_eq!(error, "Fake diagnostic error");
     }
 }

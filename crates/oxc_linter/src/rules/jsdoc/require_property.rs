@@ -40,7 +40,7 @@ declare_oxc_lint!(
     ///  */
     ///
     /// /**
-    ///  * @namespace {Object} SomeNamesoace
+    ///  * @namespace {Object} SomeNamespace
     ///  */
     /// ```
     ///
@@ -58,7 +58,10 @@ declare_oxc_lint!(
     /// ```
     RequireProperty,
     jsdoc,
-    correctness
+    correctness,
+    pending,
+    version = "0.2.18",
+    short_description = "Requires that all `@typedef` and `@namespace` tags have `@property` tags when their type is a plain object.",
 );
 
 impl Rule for RequireProperty {

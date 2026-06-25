@@ -59,7 +59,9 @@ declare_oxc_lint!(
     /// ```
     VoidDomElementsNoChildren,
     react,
-    correctness
+    correctness,
+    version = "0.2.11",
+    short_description = "Disallow void DOM elements (e.g. `<img />`, `<br />`) from receiving children.",
 );
 
 const VOID_DOM_ELEMENTS: [&str; 16] = [

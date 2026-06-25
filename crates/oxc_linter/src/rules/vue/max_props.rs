@@ -1,35 +1,39 @@
-use oxc_allocator::Vec;
 use oxc_ast::{
     AstKind,
-    ast::{
-        ExportDefaultDeclarationKind, Expression, ObjectPropertyKind, TSSignature, TSType,
-        TSTypeName, TSTypeReference,
-    },
+    ast::{ExportDefaultDeclarationKind, Expression, TSSignature, TSType},
 };
+
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
+use serde::Deserialize;
 use serde_json::Value;
 
 use crate::{
-    AstNode, ast_util::get_declaration_from_reference_id, context::LintContext,
-    frameworks::FrameworkOptions, rule::Rule,
+    AstNode,
+    context::LintContext,
+    frameworks::FrameworkOptions,
+    rule::{DefaultRuleConfig, Rule},
+    utils::{find_property, for_each_define_props_type_signature},
 };
 
-fn max_props_diagnostic(span: Span, cur: usize, limit: usize) -> OxcDiagnostic {
-    let msg = format!("Component has too many props ({cur}). Maximum allowed is {limit}.");
+fn max_props_diagnostic(span: Span, cur: u32, limit: u32) -> OxcDiagnostic {
+    let msg = format!("This component has too many props ({cur}). Maximum allowed is {limit}.");
     OxcDiagnostic::warn(msg)
-        .with_help("Consider refactoring the component by reducing the number of props.")
+        .with_help(
+            "Consider refactoring the component to reduce the number of props that are needed.",
+        )
         .with_label(span)
 }
 
-#[derive(Debug, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct MaxProps {
-    /// The maximum number of props allowed in a Vue Single File Component (SFC).
-    max_props: usize,
+    /// The maximum number of props allowed in a Vue SFC.
+    max_props: u32,
 }
 
 impl Default for MaxProps {
@@ -41,16 +45,20 @@ impl Default for MaxProps {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce maximum number of props in Vue component.
+    /// Enforce a maximum number of props defined for a given Vue component.
     ///
     /// ### Why is this bad?
     ///
-    /// This rule enforces a maximum number of props in a Vue SFC,
-    /// in order to aid in maintainability and reduce complexity.
+    /// A large number of props on a component can indicate that it is trying
+    /// to do too much and may be difficult to maintain or understand.
+    ///
+    /// By limiting the number of props, developers are encouraged to avoid
+    /// overly complex components and instead create smaller, more focused
+    /// components that are easier to reason about.
     ///
     /// ### Examples
     ///
-    /// Examples of **incorrect** code for this rule with the default `{ maxProps: 1 }` option:
+    /// Examples of **incorrect** code for this rule with the default `{ "maxProps": 1 }` option:
     /// ```js
     /// <script setup>
     /// defineProps({
@@ -60,7 +68,7 @@ declare_oxc_lint!(
     /// </script>
     /// ```
     ///
-    /// Examples of **correct** code for this rule with the default `{ maxProps: 1 }` option:
+    /// Examples of **correct** code for this rule with the default `{ "maxProps": 1 }` option:
     /// ```js
     /// <script setup>
     /// defineProps({
@@ -72,18 +80,13 @@ declare_oxc_lint!(
     vue,
     restriction,
     config = MaxProps,
+    version = "1.19.0",
+    short_description = "Enforce a maximum number of props defined for a given Vue component.",
 );
 
 impl Rule for MaxProps {
-    #[expect(clippy::cast_possible_truncation)]
-    fn from_configuration(value: Value) -> Self {
-        Self {
-            max_props: value
-                .get(0)
-                .and_then(|v| v.get("maxProps"))
-                .and_then(Value::as_u64)
-                .map_or(1, |n| n as usize),
-        }
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -100,6 +103,7 @@ impl Rule for MaxProps {
 }
 
 impl MaxProps {
+    #[expect(clippy::cast_possible_truncation)] // the length of properties/arrays can't be over u32::MAX, because the source code is already limited by u32::MAX.
     fn run_on_setup<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
@@ -113,20 +117,20 @@ impl MaxProps {
         if let Some(first_arg) = call_expr.arguments.first() {
             match first_arg.as_expression() {
                 Some(Expression::ObjectExpression(obj_expr))
-                    if obj_expr.properties.len() > self.max_props =>
+                    if obj_expr.properties.len() as u32 > self.max_props =>
                 {
                     ctx.diagnostic(max_props_diagnostic(
                         call_expr.span,
-                        obj_expr.properties.len(),
+                        obj_expr.properties.len() as u32,
                         self.max_props,
                     ));
                 }
                 Some(Expression::ArrayExpression(arr_expr))
-                    if arr_expr.elements.len() > self.max_props =>
+                    if arr_expr.elements.len() as u32 > self.max_props =>
                 {
                     ctx.diagnostic(max_props_diagnostic(
                         call_expr.span,
-                        arr_expr.elements.len(),
+                        arr_expr.elements.len() as u32,
                         self.max_props,
                     ));
                 }
@@ -141,13 +145,14 @@ impl MaxProps {
                 return;
             };
 
-            let all_key_len = get_type_argument_keys(ctx, first_type_argument).len();
+            let all_key_len = get_type_argument_keys(ctx, first_type_argument).len() as u32;
             if all_key_len > self.max_props {
                 ctx.diagnostic(max_props_diagnostic(call_expr.span, all_key_len, self.max_props));
             }
         }
     }
 
+    #[expect(clippy::cast_possible_truncation)] // the length of properties can't be over u32::MAX, because the source code is already limited by u32::MAX.
     fn run_on_options<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::ExportDefaultDeclaration(export_default_decl) = node.kind() else {
             return;
@@ -158,94 +163,40 @@ impl MaxProps {
             return;
         };
 
-        let Some(props_obj_expr) = obj_expr.properties.iter().find_map(|item| {
-            if let ObjectPropertyKind::ObjectProperty(obj_prop) = item
-                && let Some(key) = obj_prop.key.static_name()
-                && key == "props"
-                && let Expression::ObjectExpression(props_expr) =
-                    obj_prop.value.get_inner_expression()
-            {
-                Some(props_expr)
-            } else {
-                None
-            }
-        }) else {
+        let Some(props_prop) = find_property(obj_expr, "props") else {
+            return;
+        };
+        let Expression::ObjectExpression(props_obj_expr) = props_prop.value.get_inner_expression()
+        else {
             return;
         };
 
-        if props_obj_expr.properties.len() > self.max_props {
+        if props_obj_expr.properties.len() as u32 > self.max_props {
             ctx.diagnostic(max_props_diagnostic(
                 props_obj_expr.span,
-                props_obj_expr.properties.len(),
+                props_obj_expr.properties.len() as u32,
                 self.max_props,
             ));
         }
     }
 }
 
-fn get_type_argument_keys(ctx: &LintContext, type_argument: &TSType) -> FxHashSet<CompactStr> {
-    match type_argument {
-        // e.g defineProps<A | B>();
-        TSType::TSUnionType(union_type) => {
-            union_type.types.iter().fold(FxHashSet::default(), |mut all_keys, args| {
-                let type_arg_keys = get_type_argument_keys(ctx, args);
-                all_keys.extend(type_arg_keys);
-                all_keys
-            })
-        }
-        // e.g defineProps<A & B>();
-        TSType::TSIntersectionType(intersection_type) => {
-            intersection_type.types.iter().fold(FxHashSet::default(), |mut all_keys, args| {
-                let type_arg_keys = get_type_argument_keys(ctx, args);
-                all_keys.extend(type_arg_keys);
-                all_keys
-            })
-        }
-        // e.g defineProps<A>();
-        TSType::TSTypeReference(type_ref) => collect_key_from_type_reference(ctx, type_ref),
-        // e.g defineProps<{ a: string }>();
-        TSType::TSTypeLiteral(type_literal) => collect_keys_from_signatures(&type_literal.members),
-        _ => FxHashSet::default(),
-    }
-}
-
-fn collect_key_from_type_reference(
-    ctx: &LintContext,
-    type_ref: &TSTypeReference,
+fn get_type_argument_keys<'a>(
+    ctx: &LintContext<'a>,
+    type_argument: &TSType<'a>,
 ) -> FxHashSet<CompactStr> {
-    let TSTypeName::IdentifierReference(ident_ref) = &type_ref.type_name else {
-        return FxHashSet::default();
-    };
-    // we need to find the reference of type_ref
-    let reference = ctx.scoping().get_reference(ident_ref.reference_id());
-    if !reference.is_type() {
-        return FxHashSet::default();
-    }
-    let Some(reference_node) =
-        get_declaration_from_reference_id(ident_ref.reference_id(), ctx.semantic())
-    else {
-        return FxHashSet::default();
-    };
-    let AstKind::TSInterfaceDeclaration(interface_decl) = reference_node.kind() else {
-        return FxHashSet::default();
-    };
-    let interface_body = &interface_decl.body;
-    collect_keys_from_signatures(&interface_body.body)
-}
-
-fn collect_keys_from_signatures(signatures: &Vec<TSSignature<'_>>) -> FxHashSet<CompactStr> {
-    signatures
-        .iter()
-        .filter_map(|member| match member {
-            TSSignature::TSPropertySignature(prop_signature) => {
-                prop_signature.key.static_name().map(CompactStr::from)
-            }
-            TSSignature::TSMethodSignature(method_signature) => {
-                method_signature.key.static_name().map(CompactStr::from)
-            }
-            _ => None,
-        })
-        .collect()
+    let mut keys = FxHashSet::default();
+    for_each_define_props_type_signature(type_argument, ctx, &mut |signature| {
+        let name = match signature {
+            TSSignature::TSPropertySignature(prop) => prop.key.static_name(),
+            TSSignature::TSMethodSignature(method) => method.key.static_name(),
+            _ => return,
+        };
+        if let Some(name) = name {
+            keys.insert(CompactStr::from(name));
+        }
+    });
+    keys
 }
 
 #[test]
@@ -347,7 +298,7 @@ fn test() {
             Some(serde_json::json!([{ "maxProps": 5 }])),
             None,
             Some(PathBuf::from("test.vue")),
-        ), // {        "parser": require("vue-eslint-parser"),        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
+        ), // { "parser": require("vue-eslint-parser"), "parserOptions": { "parser": require.resolve("@typescript-eslint/parser") } },
         (
             r#"
 			      <script setup lang="ts">
@@ -357,7 +308,7 @@ fn test() {
             Some(serde_json::json!([{ "maxProps": 2 }])),
             None,
             Some(PathBuf::from("test.vue")),
-        ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      }
+        ), // { "parserOptions": { "parser": require.resolve("@typescript-eslint/parser") } }
     ];
 
     let fail = vec![
@@ -405,7 +356,7 @@ fn test() {
             Some(serde_json::json!([{ "maxProps": 2 }])),
             None,
             Some(PathBuf::from("test.vue")),
-        ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
+        ), // { "parserOptions": { "parser": require.resolve("@typescript-eslint/parser") } }
         (
             r#"
 			      <script setup lang="ts">
@@ -423,7 +374,18 @@ fn test() {
             Some(serde_json::json!([{ "maxProps": 2 }])),
             None,
             Some(PathBuf::from("test.vue")),
-        ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      }
+        ), // { "parserOptions": { "parser": require.resolve("@typescript-eslint/parser") } }
+        (
+            r#"
+			      <script setup lang="ts">
+			      type Props = { prop1: string, prop2: string, prop3: string };
+			      defineProps<Props>();
+			      </script>
+			      "#,
+            Some(serde_json::json!([{ "maxProps": 2 }])),
+            None,
+            Some(PathBuf::from("test.vue")),
+        ), // { "parserOptions": { "parser": require.resolve("@typescript-eslint/parser") } }
     ];
 
     Tester::new(MaxProps::NAME, MaxProps::PLUGIN, pass, fail).test_and_snapshot();

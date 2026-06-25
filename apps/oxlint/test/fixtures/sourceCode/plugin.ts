@@ -1,6 +1,6 @@
-import assert from 'node:assert';
+import assert from "node:assert";
 
-import type { ESTree, Node, Plugin, Rule } from '../../../dist/index.js';
+import type { ESTree, Node, Plugin, Rule } from "#oxlint/plugins";
 
 type Program = ESTree.Program;
 
@@ -16,25 +16,43 @@ const SPAN: Node = {
 
 const createRule: Rule = {
   create(context) {
-    const { ast, lines, text } = context.sourceCode;
+    const { sourceCode } = context;
 
-    let locs = '';
+    // Get these first to check they work before `sourceText` or `ast` are accessed
+    const { lineStartIndices, lines } = sourceCode;
+    const { ast, text } = sourceCode;
+
+    assert(context.getSourceCode() === sourceCode);
+    assert(sourceCode.getLines() === lines);
+
+    let locs = "";
     for (let offset = 0; offset <= text.length; offset++) {
-      const loc = context.sourceCode.getLocFromIndex(offset);
-      assert(context.sourceCode.getIndexFromLoc(loc) === offset);
-      locs += `\n  ${offset} => { line: ${loc.line}, column: ${loc.column} }` +
-        `(${JSON.stringify(text[offset] || '<EOF>')})`;
+      const loc = sourceCode.getLocFromIndex(offset);
+      assert(sourceCode.getIndexFromLoc(loc) === offset);
+      locs +=
+        `\n  ${offset} => { line: ${loc.line}, column: ${loc.column} }` +
+        `(${JSON.stringify(text[offset] || "<EOF>")})`;
     }
 
+    const stmt = ast.body[0];
+    assert.strictEqual(stmt.type, "VariableDeclaration");
+    const { id } = stmt.declarations[0];
+    assert.strictEqual(id.type, "Identifier");
+
+    // Check AST has no `hashbang` property
+    assert.strictEqual("hashbang" in ast, false);
+
     context.report({
-      message: 'create:\n' +
+      message:
+        "create:\n" +
         `text: ${JSON.stringify(text)}\n` +
-        `getText(): ${JSON.stringify(context.sourceCode.getText())}\n` +
+        `getText(): ${JSON.stringify(sourceCode.getText())}\n` +
         `lines: ${JSON.stringify(lines)}\n` +
+        `lineStartIndices: ${JSON.stringify(lineStartIndices)}\n` +
         `locs:${locs}\n` +
-        // @ts-ignore
-        `ast: "${ast.body[0].declarations[0].id.name}"\n` +
-        `visitorKeys: ${context.sourceCode.visitorKeys.BinaryExpression.join(', ')}`,
+        `ast: "${id.name}"\n` +
+        `visitorKeys: ${sourceCode.visitorKeys.BinaryExpression.join(", ")}\n` +
+        `isESTree: ${sourceCode.isESTree}`,
       node: SPAN,
     });
 
@@ -44,22 +62,34 @@ const createRule: Rule = {
       },
       VariableDeclaration(node) {
         context.report({
-          message: `var decl:\nsource: "${context.sourceCode.getText(node)}"`,
+          message: `var decl:\nsource: "${sourceCode.getText(node)}"`,
           node,
         });
       },
       Identifier(node) {
-        const startLoc = context.sourceCode.getLocFromIndex(node.start);
-        const endLoc = context.sourceCode.getLocFromIndex(node.end);
-        assert(context.sourceCode.getIndexFromLoc(startLoc) === node.start);
-        assert(context.sourceCode.getIndexFromLoc(endLoc) === node.end);
+        const startLoc = sourceCode.getLocFromIndex(node.start);
+        const endLoc = sourceCode.getLocFromIndex(node.end);
+        assert(sourceCode.getIndexFromLoc(startLoc) === node.start);
+        assert(sourceCode.getIndexFromLoc(endLoc) === node.end);
+
+        const { range, loc } = node;
+
+        // Check getting `range` / `loc` properties twice results in same objects
+        assert(range === node.range);
+        assert(loc === node.loc);
+        // Check `getRange` and `getLoc` return the same objects too
+        assert(sourceCode.getRange(node) === range);
+        assert(sourceCode.getLoc(node) === loc);
 
         context.report({
-          message: `ident "${node.name}":\n` +
-            `source: "${context.sourceCode.getText(node)}"\n` +
-            `source with before: "${context.sourceCode.getText(node, 2)}"\n` +
-            `source with after: "${context.sourceCode.getText(node, null, 1)}"\n` +
-            `source with both: "${context.sourceCode.getText(node, 2, 1)}"\n` +
+          message:
+            `ident "${node.name}":\n` +
+            `source: "${sourceCode.getText(node)}"\n` +
+            `source with before: "${sourceCode.getText(node, 2)}"\n` +
+            `source with after: "${sourceCode.getText(node, null, 1)}"\n` +
+            `source with both: "${sourceCode.getText(node, 2, 1)}"\n` +
+            `range: ${JSON.stringify(range)}\n` +
+            `loc: ${JSON.stringify(loc)}\n` +
             `start loc: ${JSON.stringify(startLoc)}\n` +
             `end loc: ${JSON.stringify(endLoc)}`,
           node,
@@ -75,26 +105,38 @@ const createOnceRule: Rule = {
 
     return {
       before() {
-        ast = context.sourceCode.ast;
-        const { lines, text } = context.sourceCode;
+        const { sourceCode } = context;
 
-        let locs = '';
+        // Get these first to check they work before `sourceText` or `ast` are accessed
+        const { lineStartIndices, lines } = sourceCode;
+        ast = sourceCode.ast;
+        const { text } = sourceCode;
+
+        let locs = "";
         for (let offset = 0; offset <= text.length; offset++) {
-          const loc = context.sourceCode.getLocFromIndex(offset);
-          assert(context.sourceCode.getIndexFromLoc(loc) === offset);
-          locs += `\n  ${offset} => { line: ${loc.line}, column: ${loc.column} }` +
-            `(${JSON.stringify(text[offset] || '<EOF>')})`;
+          const loc = sourceCode.getLocFromIndex(offset);
+          assert(sourceCode.getIndexFromLoc(loc) === offset);
+          locs +=
+            `\n  ${offset} => { line: ${loc.line}, column: ${loc.column} }` +
+            `(${JSON.stringify(text[offset] || "<EOF>")})`;
         }
 
+        const stmt = ast.body[0];
+        assert.strictEqual(stmt.type, "VariableDeclaration");
+        const { id } = stmt.declarations[0];
+        assert.strictEqual(id.type, "Identifier");
+
         context.report({
-          message: 'before:\n' +
+          message:
+            "before:\n" +
             `text: ${JSON.stringify(text)}\n` +
-            `getText(): ${JSON.stringify(context.sourceCode.getText())}\n` +
+            `getText(): ${JSON.stringify(sourceCode.getText())}\n` +
             `lines: ${JSON.stringify(lines)}\n` +
+            `lineStartIndices: ${JSON.stringify(lineStartIndices)}\n` +
             `locs:${locs}\n` +
-            // @ts-ignore
-            `ast: "${ast.body[0].declarations[0].id.name}"\n` +
-            `visitorKeys: ${context.sourceCode.visitorKeys.BinaryExpression.join(', ')}`,
+            `ast: "${id.name}"\n` +
+            `visitorKeys: ${sourceCode.visitorKeys.BinaryExpression.join(", ")}\n` +
+            `isESTree: ${sourceCode.isESTree}`,
           node: SPAN,
         });
       },
@@ -108,29 +150,33 @@ const createOnceRule: Rule = {
         });
       },
       Identifier(node) {
-        const startLoc = context.sourceCode.getLocFromIndex(node.start);
-        const endLoc = context.sourceCode.getLocFromIndex(node.end);
-        assert(context.sourceCode.getIndexFromLoc(startLoc) === node.start);
-        assert(context.sourceCode.getIndexFromLoc(endLoc) === node.end);
+        const { sourceCode } = context;
+
+        const startLoc = sourceCode.getLocFromIndex(node.start);
+        const endLoc = sourceCode.getLocFromIndex(node.end);
+        assert(sourceCode.getIndexFromLoc(startLoc) === node.start);
+        assert(sourceCode.getIndexFromLoc(endLoc) === node.end);
 
         context.report({
-          message: `ident "${node.name}":\n` +
-            `source: "${context.sourceCode.getText(node)}"\n` +
-            `source with before: "${context.sourceCode.getText(node, 2)}"\n` +
-            `source with after: "${context.sourceCode.getText(node, null, 1)}"\n` +
-            `source with both: "${context.sourceCode.getText(node, 2, 1)}"\n` +
+          message:
+            `ident "${node.name}":\n` +
+            `source: "${sourceCode.getText(node)}"\n` +
+            `source with before: "${sourceCode.getText(node, 2)}"\n` +
+            `source with after: "${sourceCode.getText(node, null, 1)}"\n` +
+            `source with both: "${sourceCode.getText(node, 2, 1)}"\n` +
             `start loc: ${JSON.stringify(startLoc)}\n` +
             `end loc: ${JSON.stringify(endLoc)}`,
           node,
         });
       },
       after() {
-        assert(context.sourceCode.ast === ast);
+        const { sourceCode } = context;
+
+        assert(sourceCode.ast === ast);
         ast = null;
 
         context.report({
-          message: 'after:\n' +
-            `source: ${JSON.stringify(context.sourceCode.text)}`,
+          message: "after:\n" + `source: ${JSON.stringify(sourceCode.text)}`,
           node: SPAN,
         });
       },
@@ -140,11 +186,11 @@ const createOnceRule: Rule = {
 
 const plugin: Plugin = {
   meta: {
-    name: 'source-code-plugin',
+    name: "source-code-plugin",
   },
   rules: {
     create: createRule,
-    'create-once': createOnceRule,
+    "create-once": createOnceRule,
   },
 };
 

@@ -24,24 +24,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Checkout full repo for git history.
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
 
-      - uses: oxc-project/setup-rust@f03aedf4620c1d3aa169a2510e24787d362bbe0b # v1.0.8
+      - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17
         with:
           cache-key: warm
           save-cache: false
-          tools: just,cargo-insta,typos-cli,cargo-shear,dprint,ast-grep
+          tools: just,cargo-insta,typos-cli,cargo-shear@1.12.4,ast-grep
           components: clippy rust-docs rustfmt rust-analyzer
 
-      - uses: oxc-project/setup-node@fdbf0dfd334c4e6d56ceeb77d91c76339c2a0885 # v1.0.4
-
-      - name: Restore dprint plugin cache
-        id: cache-restore
-        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
-        with:
-          key: dprint-${{ hashFiles('dprint.json') }}
-          path: ~/.cache/dprint
-
-      - run: pnpm run --filter mcp-oxc build
+      - uses: oxc-project/setup-node@4c588e9266bd930b6ddc34307df0659ed511d187 # v1.3.1

@@ -11,7 +11,7 @@ use crate::{
 };
 
 fn no_set_state_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Do not use setState").with_label(span)
+    OxcDiagnostic::warn("Do not use `setState`.").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -52,6 +52,8 @@ declare_oxc_lint!(
     NoSetState,
     react,
     style,
+    version = "0.5.2",
+    short_description = "Disallow the usage of `this.setState` in React components.",
 );
 
 impl Rule for NoSetState {

@@ -39,7 +39,7 @@ if (__nodeFs.existsSync(__wasmDebugFilePath)) {
   __wasmFilePath = __wasmDebugFilePath
 } else if (!__nodeFs.existsSync(__wasmFilePath)) {
   try {
-    __wasmFilePath = __nodePath.resolve('@oxc-parser/binding-wasm32-wasi')
+    __wasmFilePath = require.resolve('@oxc-parser/binding-wasm32-wasi/parser.wasm32-wasi.wasm')
   } catch {
     throw new Error('Cannot find parser.wasm32-wasi.wasm file, and @oxc-parser/binding-wasm32-wasi package is not installed.')
   }
@@ -114,6 +114,6 @@ module.exports.ExportExportNameKind = __napiModule.exports.ExportExportNameKind
 module.exports.ExportImportNameKind = __napiModule.exports.ExportImportNameKind
 module.exports.ExportLocalNameKind = __napiModule.exports.ExportLocalNameKind
 module.exports.ImportNameKind = __napiModule.exports.ImportNameKind
-module.exports.parseAsync = __napiModule.exports.parseAsync
+module.exports.parse = __napiModule.exports.parse
 module.exports.parseSync = __napiModule.exports.parseSync
 module.exports.rawTransferSupported = __napiModule.exports.rawTransferSupported

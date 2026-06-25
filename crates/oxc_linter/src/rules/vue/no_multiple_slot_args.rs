@@ -68,7 +68,9 @@ declare_oxc_lint!(
     NoMultipleSlotArgs,
     vue,
     restriction,
-    pending  // TODO: Remove second argument, Spread argument is possible not supported
+    pending,  // TODO: Remove second argument, Spread argument is possible not supported
+    version = "1.15.0",
+    short_description = "Disallow passing multiple arguments to scoped slots.",
 );
 
 impl Rule for NoMultipleSlotArgs {

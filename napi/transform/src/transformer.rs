@@ -14,13 +14,12 @@ use oxc::{
     CompilerInterface,
     allocator::Allocator,
     codegen::{Codegen, CodegenOptions, CodegenReturn},
-    diagnostics::OxcDiagnostic,
+    diagnostics::{Diagnostics, OxcDiagnostic},
     parser::Parser,
     semantic::{SemanticBuilder, SemanticBuilderReturn},
     span::SourceType,
     transformer::{
-        EnvOptions, HelperLoaderMode, HelperLoaderOptions, JsxRuntime, ProposalOptions,
-        RewriteExtensionsMode,
+        EnvOptions, HelperLoaderMode, HelperLoaderOptions, JsxRuntime, RewriteExtensionsMode,
     },
     transformer_plugins::{
         InjectGlobalVariablesConfig, InjectImport, ModuleRunnerTransform,
@@ -82,6 +81,13 @@ pub struct TransformResult {
 
 /// Options for transforming a JavaScript or TypeScript file.
 ///
+/// Options are listed in evaluation order: the source is parsed (`lang`,
+/// `sourceType`), declarations are emitted (`typescript.declaration`), then
+/// transforms run (`typescript`, `decorator`, `plugins`,
+/// `jsx`, `target`), followed by the `inject` and `define` plugins, and
+/// finally codegen (`sourcemap`). `helpers` configures the runtime helpers
+/// the transforms emit.
+///
 /// @see {@link transform}
 #[napi(object)]
 #[derive(Default)]
@@ -91,29 +97,32 @@ pub struct TransformOptions {
     pub lang: Option<String>,
 
     /// Treat the source text as `script` or `module` code.
-    #[napi(ts_type = "'script' | 'module' | 'unambiguous' | undefined")]
+    #[napi(ts_type = "'script' | 'module' | 'commonjs' | 'unambiguous' | undefined")]
     pub source_type: Option<String>,
 
     /// The current working directory. Used to resolve relative paths in other
     /// options.
     pub cwd: Option<String>,
 
-    /// Enable source map generation.
-    ///
-    /// When `true`, the `sourceMap` field of transform result objects will be populated.
-    ///
-    /// @default false
-    ///
-    /// @see {@link SourceMap}
-    pub sourcemap: Option<bool>,
-
     /// Set assumptions in order to produce smaller output.
     pub assumptions: Option<CompilerAssumptions>,
 
     /// Configure how TypeScript is transformed.
+    ///
+    /// `typescript.declaration` is evaluated before all transforms.
+    ///
+    /// @see {@link https://oxc.rs/docs/guide/usage/transformer/typescript}
     pub typescript: Option<TypeScriptOptions>,
 
+    /// Decorator plugin
+    pub decorator: Option<DecoratorOptions>,
+
+    /// Third-party plugins to use.
+    /// @see {@link https://oxc.rs/docs/guide/usage/transformer/plugins}
+    pub plugins: Option<PluginsOptions>,
+
     /// Configure how TSX and JSX are transformed.
+    /// @see {@link https://oxc.rs/docs/guide/usage/transformer/jsx}
     #[napi(ts_type = "'preserve' | JsxOptions")]
     pub jsx: Option<Either<String, JsxOptions>>,
 
@@ -128,25 +137,36 @@ pub struct TransformOptions {
     ///
     /// @default `esnext` (No transformation)
     ///
-    /// @see [esbuild#target](https://esbuild.github.io/api/#target)
+    /// @see {@link https://oxc.rs/docs/guide/usage/transformer/lowering#target}
     pub target: Option<Either<String, Vec<String>>>,
 
     /// Behaviour for runtime helpers.
     pub helpers: Option<Helpers>,
 
-    /// Define Plugin
-    #[napi(ts_type = "Record<string, string>")]
-    pub define: Option<FxHashMap<String, String>>,
-
     /// Inject Plugin
+    ///
+    /// Runs after all transforms.
+    ///
+    /// @see {@link https://oxc.rs/docs/guide/usage/transformer/global-variable-replacement#inject}
     #[napi(ts_type = "Record<string, string | [string, string]>")]
     pub inject: Option<FxHashMap<String, Either<String, Vec<String>>>>,
 
-    /// Decorator plugin
-    pub decorator: Option<DecoratorOptions>,
+    /// Define Plugin
+    ///
+    /// Runs after the inject plugin.
+    ///
+    /// @see {@link https://oxc.rs/docs/guide/usage/transformer/global-variable-replacement#define}
+    #[napi(ts_type = "Record<string, string>")]
+    pub define: Option<FxHashMap<String, String>>,
 
-    /// Third-party plugins to use.
-    pub plugins: Option<PluginsOptions>,
+    /// Enable source map generation.
+    ///
+    /// When `true`, the `sourceMap` field of transform result objects will be populated.
+    ///
+    /// @default false
+    ///
+    /// @see {@link SourceMap}
+    pub sourcemap: Option<bool>,
 }
 
 impl TryFrom<TransformOptions> for oxc::transformer::TransformOptions {
@@ -169,6 +189,10 @@ impl TryFrom<TransformOptions> for oxc::transformer::TransformOptions {
                 .decorator
                 .map(oxc::transformer::DecoratorOptions::from)
                 .unwrap_or_default(),
+            plugins: options
+                .plugins
+                .map(oxc::transformer::PluginsOptions::from)
+                .unwrap_or_default(),
             jsx: match options.jsx {
                 Some(Either::A(s)) => {
                     if s == "preserve" {
@@ -181,14 +205,15 @@ impl TryFrom<TransformOptions> for oxc::transformer::TransformOptions {
                 None => oxc::transformer::JsxOptions::enable(),
             },
             env,
-            proposals: ProposalOptions::default(),
             helper_loader: options
                 .helpers
                 .map_or_else(HelperLoaderOptions::default, HelperLoaderOptions::from),
-            plugins: options
-                .plugins
-                .map(oxc::transformer::PluginsOptions::from)
-                .unwrap_or_default(),
+            // `..Default` supplies `proposals` (TC39, none implemented) and, when a
+            // workspace build enables it via Cargo feature unification, the gated
+            // `oxc_transformer` `react_compiler` field this binding no longer exposes.
+            // Keeps the literal valid in every feature config (and avoids
+            // `clippy::needless_update`).
+            ..Default::default()
         })
     }
 }
@@ -309,6 +334,20 @@ pub struct TypeScriptOptions {
     ///
     /// Defaults to `false`.
     pub remove_class_fields_without_initializer: Option<bool>,
+    /// When true, optimize const enums by inlining their values at usage sites
+    /// and removing the enum declaration.
+    ///
+    /// @default false
+    pub optimize_const_enums: Option<bool>,
+    /// When true, optimize regular (non-const) enums by inlining their member
+    /// accesses at usage sites when the member value is statically known.
+    ///
+    /// Non-exported enum declarations are also removed when all members are
+    /// evaluable and no references to the enum as a runtime value exist
+    /// (e.g., `console.log(Foo)`, `typeof Foo`, or passing the enum as an argument).
+    ///
+    /// @default false
+    pub optimize_enums: Option<bool>,
     /// Also generate a `.d.ts` declaration file for TypeScript files.
     ///
     /// The source file must be compliant with all
@@ -340,7 +379,8 @@ impl From<TypeScriptOptions> for oxc::transformer::TypeScriptOptions {
                 .unwrap_or(ops.only_remove_type_imports),
             allow_namespaces: options.allow_namespaces.unwrap_or(ops.allow_namespaces),
             allow_declare_fields: options.allow_declare_fields.unwrap_or(ops.allow_declare_fields),
-            optimize_const_enums: false,
+            optimize_const_enums: options.optimize_const_enums.unwrap_or(ops.optimize_const_enums),
+            optimize_enums: options.optimize_enums.unwrap_or(ops.optimize_enums),
             remove_class_fields_without_initializer: options
                 .remove_class_fields_without_initializer
                 .unwrap_or(ops.remove_class_fields_without_initializer),
@@ -384,6 +424,17 @@ pub struct DecoratorOptions {
     /// @see https://www.typescriptlang.org/tsconfig/#emitDecoratorMetadata
     /// @default false
     pub emit_decorator_metadata: Option<bool>,
+
+    /// Aligns nullable-union `design:type` emission with `--strictNullChecks`.
+    ///
+    /// When `true` (default), `T | null` and `T | undefined` emit `Object`, matching tsc strict.
+    /// When `false`, `null` and `undefined` are elided from the union so the underlying
+    /// primitive constructor is emitted, matching tsc with `--strictNullChecks=false`
+    /// and `babel-plugin-transform-typescript-metadata`.
+    ///
+    /// @see https://www.typescriptlang.org/tsconfig/#strictNullChecks
+    /// @default true
+    pub strict_null_checks: Option<bool>,
 }
 
 impl From<DecoratorOptions> for oxc::transformer::DecoratorOptions {
@@ -391,13 +442,14 @@ impl From<DecoratorOptions> for oxc::transformer::DecoratorOptions {
         oxc::transformer::DecoratorOptions {
             legacy: options.legacy.unwrap_or_default(),
             emit_decorator_metadata: options.emit_decorator_metadata.unwrap_or_default(),
+            strict_null_checks: options.strict_null_checks.unwrap_or(true),
         }
     }
 }
 
 /// Configure how styled-components are transformed.
 ///
-/// @see {@link https://styled-components.com/docs/tooling#babel-plugin}
+/// @see {@link https://oxc.rs/docs/guide/usage/transformer/plugins#styled-components}
 #[napi(object)]
 #[derive(Default)]
 pub struct StyledComponentsOptions {
@@ -422,7 +474,10 @@ pub struct StyledComponentsOptions {
     /// Transpiles styled-components tagged template literals to a smaller representation
     /// than what Babel normally creates, helping to reduce bundle size.
     ///
-    /// @default true
+    /// Disabled by default because Oxc does not down-level template literals, so this
+    /// transform only increases output size.
+    ///
+    /// @default false
     pub transpile_template_literals: Option<bool>,
 
     /// Minifies CSS content by removing all whitespace and comments from your CSS,
@@ -467,6 +522,7 @@ pub struct StyledComponentsOptions {
 #[derive(Default)]
 pub struct PluginsOptions {
     pub styled_components: Option<StyledComponentsOptions>,
+    pub tagged_template_escape: Option<bool>,
 }
 
 impl From<PluginsOptions> for oxc::transformer::PluginsOptions {
@@ -475,6 +531,7 @@ impl From<PluginsOptions> for oxc::transformer::PluginsOptions {
             styled_components: options
                 .styled_components
                 .map(oxc::transformer::StyledComponentsOptions::from),
+            tagged_template_transform: options.tagged_template_escape.unwrap_or(false),
         }
     }
 }
@@ -505,7 +562,7 @@ impl From<StyledComponentsOptions> for oxc::transformer::StyledComponentsOptions
 
 /// Configure how TSX and JSX are transformed.
 ///
-/// @see {@link https://babeljs.io/docs/babel-plugin-transform-react-jsx#options}
+/// @see {@link https://oxc.rs/docs/guide/usage/transformer/jsx}
 #[napi(object)]
 pub struct JsxOptions {
     /// Decides which runtime to use.
@@ -520,8 +577,6 @@ pub struct JsxOptions {
     /// Emit development-specific information, such as `__source` and `__self`.
     ///
     /// @default false
-    ///
-    /// @see {@link https://babeljs.io/docs/babel-plugin-transform-react-jsx-development}
     pub development: Option<bool>,
 
     /// Toggles whether or not to throw an error if an XML namespaced tag name
@@ -533,11 +588,7 @@ pub struct JsxOptions {
     /// @default true
     pub throw_if_namespace: Option<bool>,
 
-    /// Enables `@babel/plugin-transform-react-pure-annotations`.
-    ///
-    /// It will mark JSX elements and top-level React method calls as pure for tree shaking.
-    ///
-    /// @see {@link https://babeljs.io/docs/en/babel-plugin-transform-react-pure-annotations}
+    /// Mark JSX elements and top-level React method calls as pure for tree shaking.
     ///
     /// @default true
     pub pure: Option<bool>,
@@ -564,21 +615,6 @@ pub struct JsxOptions {
     /// @default 'React.Fragment'
     pub pragma_frag: Option<String>,
 
-    /// When spreading props, use `Object.assign` directly instead of an extend helper.
-    ///
-    /// Only used for `classic` {@link runtime}.
-    ///
-    /// @default false
-    pub use_built_ins: Option<bool>,
-
-    /// When spreading props, use inline object with spread elements directly
-    /// instead of an extend helper or Object.assign.
-    ///
-    /// Only used for `classic` {@link runtime}.
-    ///
-    /// @default false
-    pub use_spread: Option<bool>,
-
     /// Enable React Fast Refresh .
     ///
     /// Conforms to the implementation in {@link https://github.com/facebook/react/tree/v18.3.1/packages/react-refresh}
@@ -601,8 +637,8 @@ impl From<JsxOptions> for oxc::transformer::JsxOptions {
             import_source: options.import_source,
             pragma: options.pragma,
             pragma_frag: options.pragma_frag,
-            use_built_ins: options.use_built_ins,
-            use_spread: options.use_spread,
+            use_built_ins: None,
+            use_spread: None,
             refresh: options.refresh.and_then(|value| match value {
                 Either::A(b) => b.then(oxc::transformer::ReactRefreshOptions::default),
                 Either::B(options) => Some(oxc::transformer::ReactRefreshOptions::from(options)),
@@ -731,7 +767,7 @@ struct Compiler {
     inject: Option<InjectGlobalVariablesConfig>,
 
     helpers_used: FxHashMap<String, String>,
-    errors: Vec<OxcDiagnostic>,
+    errors: Diagnostics,
 }
 
 impl Compiler {
@@ -798,13 +834,13 @@ impl Compiler {
             define,
             inject,
             helpers_used: FxHashMap::default(),
-            errors: vec![],
+            errors: Diagnostics::new(),
         })
     }
 }
 
 impl CompilerInterface for Compiler {
-    fn handle_errors(&mut self, errors: Vec<OxcDiagnostic>) {
+    fn handle_errors(&mut self, errors: Diagnostics) {
         self.errors.extend(errors);
     }
 
@@ -830,12 +866,12 @@ impl CompilerInterface for Compiler {
         self.inject.clone()
     }
 
-    fn after_codegen(&mut self, ret: CodegenReturn) {
+    fn after_codegen(&mut self, ret: CodegenReturn<'_>) {
         self.printed = ret.code;
         self.printed_sourcemap = ret.map.map(SourceMap::from);
     }
 
-    fn after_isolated_declarations(&mut self, ret: CodegenReturn) {
+    fn after_isolated_declarations(&mut self, ret: CodegenReturn<'_>) {
         self.declaration.replace(ret.code);
         self.declaration_map = ret.map.map(SourceMap::from);
     }
@@ -867,7 +903,7 @@ impl CompilerInterface for Compiler {
 /// errors that occurred during parsing or transformation.
 #[allow(clippy::needless_pass_by_value, clippy::allow_attributes)]
 #[napi]
-pub fn transform(
+pub fn transform_sync(
     filename: String,
     source_text: String,
     options: Option<TransformOptions>,
@@ -962,7 +998,7 @@ impl Task for TransformTask {
 /// @returns a promise that resolves to an object containing the transformed code,
 /// source maps, and any errors that occurred during parsing or transformation.
 #[napi]
-pub fn transform_async(
+pub fn transform(
     filename: String,
     source_text: String,
     options: Option<TransformOptions>,
@@ -1020,15 +1056,12 @@ pub struct ModuleRunnerTransformResult {
 /// @returns an object containing the transformed code, source maps, and any
 /// errors that occurred during parsing or transformation.
 ///
-/// @deprecated Only works for Vite.
-#[allow(clippy::needless_pass_by_value, clippy::allow_attributes)]
-#[napi]
-pub fn module_runner_transform(
-    filename: String,
-    source_text: String,
+fn module_runner_transform_impl(
+    filename: &str,
+    source_text: &str,
     options: Option<ModuleRunnerTransformOptions>,
 ) -> ModuleRunnerTransformResult {
-    let file_path = Path::new(&filename);
+    let file_path = Path::new(filename);
     let source_type = SourceType::from_path(file_path);
     let source_type = match source_type {
         Ok(s) => s,
@@ -1044,12 +1077,12 @@ pub fn module_runner_transform(
     };
 
     let allocator = Allocator::default();
-    let mut parser_ret = Parser::new(&allocator, &source_text, source_type).parse();
+    let mut parser_ret = Parser::new(&allocator, source_text, source_type).parse();
     let mut program = parser_ret.program;
 
-    let SemanticBuilderReturn { semantic, errors } =
-        SemanticBuilder::new().with_check_syntax_error(true).build(&program);
-    parser_ret.errors.extend(errors);
+    let SemanticBuilderReturn { semantic, diagnostics } =
+        SemanticBuilder::new_compiler().build(&program);
+    parser_ret.diagnostics.extend(diagnostics);
 
     let scoping = semantic.into_scoping();
     let (deps, dynamic_deps) =
@@ -1069,6 +1102,59 @@ pub fn module_runner_transform(
         map: map.map(Into::into),
         deps: deps.into_iter().collect::<Vec<String>>(),
         dynamic_deps: dynamic_deps.into_iter().collect::<Vec<String>>(),
-        errors: OxcError::from_diagnostics(&filename, &source_text, parser_ret.errors),
+        errors: OxcError::from_diagnostics(filename, source_text, parser_ret.diagnostics),
     }
+}
+
+/// @deprecated Only works for Vite.
+#[allow(clippy::needless_pass_by_value, clippy::allow_attributes)]
+#[napi]
+pub fn module_runner_transform_sync(
+    filename: String,
+    source_text: String,
+    options: Option<ModuleRunnerTransformOptions>,
+) -> ModuleRunnerTransformResult {
+    module_runner_transform_impl(&filename, &source_text, options)
+}
+
+pub struct ModuleRunnerTransformTask {
+    filename: String,
+    source_text: String,
+    options: Option<ModuleRunnerTransformOptions>,
+}
+
+#[napi]
+impl Task for ModuleRunnerTransformTask {
+    type JsValue = ModuleRunnerTransformResult;
+    type Output = ModuleRunnerTransformResult;
+
+    fn compute(&mut self) -> napi::Result<Self::Output> {
+        Ok(module_runner_transform_impl(&self.filename, &self.source_text, self.options.take()))
+    }
+
+    fn resolve(&mut self, _: napi::Env, result: Self::Output) -> napi::Result<Self::JsValue> {
+        Ok(result)
+    }
+}
+
+/// Transform JavaScript code to a Vite Node runnable module.
+///
+/// @param filename The name of the file being transformed.
+/// @param sourceText the source code itself
+/// @param options The options for the transformation. See {@link
+/// ModuleRunnerTransformOptions} for more information.
+///
+/// @returns an object containing the transformed code, source maps, and any
+/// errors that occurred during parsing or transformation.
+///
+/// Note: This function can be slower than `moduleRunnerTransformSync` due to the overhead of spawning a thread.
+///
+/// @deprecated Only works for Vite.
+#[napi]
+pub fn module_runner_transform(
+    filename: String,
+    source_text: String,
+    options: Option<ModuleRunnerTransformOptions>,
+) -> AsyncTask<ModuleRunnerTransformTask> {
+    AsyncTask::new(ModuleRunnerTransformTask { filename, source_text, options })
 }

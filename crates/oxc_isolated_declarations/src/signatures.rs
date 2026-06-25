@@ -1,6 +1,6 @@
 use rustc_hash::FxHashMap;
 
-use oxc_allocator::{CloneIn, Vec as ArenaVec};
+use oxc_allocator::{ArenaVec, CloneIn};
 use oxc_ast::ast::{TSMethodSignatureKind, TSSignature};
 use oxc_span::GetSpan;
 
@@ -31,8 +31,8 @@ impl<'a> IsolatedDeclarations<'a> {
                         };
 
                         let entry = method_annotations.entry(name.clone()).or_default();
-                        entry.0 |= first_param.pattern.type_annotation.is_none();
-                        entry.1 = Some(&mut first_param.pattern.type_annotation);
+                        entry.0 |= first_param.type_annotation.is_none();
+                        entry.1 = Some(&mut first_param.type_annotation);
                     }
                     TSMethodSignatureKind::Get => {
                         let entry = method_annotations.entry(name.clone()).or_default();

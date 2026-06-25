@@ -1,0 +1,10 @@
+---
+source: crates/oxc_codegen/tests/integration/tester.rs
+---
+########## 0
+/** block1 */ /** block2 */
+function foo() {}
+
+----------
+/** block1 */ /** block2 */
+function foo() {}

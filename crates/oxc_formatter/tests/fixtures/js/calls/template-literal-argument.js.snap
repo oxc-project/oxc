@@ -12,12 +12,25 @@ expect(genCode(createVNodeCall(null, `"div"`, mockProps)))
     `)
 
 ==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
 expect(genCode(createVNodeCall(null, `"div"`, mockProps)))
   .toMatchInlineSnapshot(`
   `);
 
 expect(genCode(createVNodeCall(null, `"div"`, mockProps)))
   .toMatchInlineSnapshot(`
+  `).toMatchInlineSnapshot(`
+    `);
+
+-------------------
+{ printWidth: 100 }
+-------------------
+expect(genCode(createVNodeCall(null, `"div"`, mockProps))).toMatchInlineSnapshot(`
+  `);
+
+expect(genCode(createVNodeCall(null, `"div"`, mockProps))).toMatchInlineSnapshot(`
   `).toMatchInlineSnapshot(`
     `);
 

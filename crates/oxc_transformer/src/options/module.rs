@@ -15,8 +15,11 @@ use crate::options::babel::BabelModule;
 #[non_exhaustive]
 pub enum Module {
     #[default]
+    /// Preserve input module format.
     Preserve,
+    /// Emit ECMAScript module output.
     Esm,
+    /// Emit CommonJS module output.
     CommonJS,
 }
 

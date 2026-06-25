@@ -23,7 +23,7 @@
 //! Code generation can be triggered by running this crate:
 //!
 //! ```sh
-//! cargo run -p oxc_ast_tools
+//! just ast
 //! ```
 //!
 //! The generated code is checked into git.
@@ -38,7 +38,10 @@
 //!
 //! ### Phase 1: Load
 //!
-//! All the source files listed in [`SOURCE_PATHS`] are read, and parsed with [`syn`].
+//! All `.rs` source files in crates which depend on `oxc_ast_macros` crate are read and parsed with [`syn`].
+//! Only crates depending on `oxc_ast_macros` are searched, because that crate provides the `#[ast]` and
+//! `#[ast_meta]` proc macros which this codegen works from. Crates which don't have a dependency
+//! on `oxc_ast_macros` cannot contain these attributes, so there's no point searching for them.
 //!
 //! At this stage, only type names and other basic information about types is obtained.
 //! Each type with an `#[ast]` attribute is assigned a [`TypeId`], and a mapping of type name
@@ -65,7 +68,7 @@
 //! * `Vec`: [`VecDef`]
 //! * `Cell`: [`CellDef`]
 //! * Primitive types: [`PrimitiveDef`] - e.g. `u32`, `&str`
-//! * Special types: [`PrimitiveDef`] - e.g. `Atom`
+//! * Special types: [`PrimitiveDef`] - e.g. `Str`
 //!
 //! The types are linked up to each other, so that all struct fields ([`FieldDef`]s) contain
 //! the [`TypeId`] of the type that field contains. Ditto enum variants ([`VariantDef`]s).
@@ -181,6 +184,9 @@
 //! [`AttrLocation`]: parse::attr::AttrLocation
 //! [`AttrPart`]: parse::attr::AttrPart
 
+// Prevent lint errors when JS generators are disabled
+#![cfg_attr(not(feature = "generate-js"), allow(dead_code, unused_imports, unused_macros))]
+
 use std::fs;
 
 use bpaf::{Bpaf, Parser};
@@ -189,6 +195,7 @@ use rayon::prelude::*;
 
 mod codegen;
 mod derives;
+mod find;
 mod generators;
 mod logger;
 mod output;
@@ -198,42 +205,13 @@ mod utils;
 
 use codegen::{Codegen, Runner, get_runners};
 use derives::Derive;
+use find::find_crates_and_files;
 use generators::Generator;
 use logger::{log, log_failed, log_result, log_success, logln};
 use output::{Output, RawOutput, output_path};
 use parse::parse_files;
 use schema::Schema;
 use utils::create_ident;
-
-/// Paths to source files containing AST types
-static SOURCE_PATHS: &[&str] = &[
-    "crates/oxc_allocator/src/pool/fixed_size.rs",
-    "crates/oxc_ast/src/ast/js.rs",
-    "crates/oxc_ast/src/ast/literal.rs",
-    "crates/oxc_ast/src/ast/jsx.rs",
-    "crates/oxc_ast/src/ast/ts.rs",
-    "crates/oxc_ast/src/ast/comment.rs",
-    "crates/oxc_ast/src/serialize/mod.rs",
-    "crates/oxc_ast/src/serialize/basic.rs",
-    "crates/oxc_ast/src/serialize/literal.rs",
-    "crates/oxc_ast/src/serialize/js.rs",
-    "crates/oxc_ast/src/serialize/jsx.rs",
-    "crates/oxc_ast/src/serialize/ts.rs",
-    "crates/oxc_linter/src/lib.rs",
-    "crates/oxc_syntax/src/lib.rs",
-    "crates/oxc_syntax/src/comment_node.rs",
-    "crates/oxc_syntax/src/module_record.rs",
-    "crates/oxc_syntax/src/number.rs",
-    "crates/oxc_syntax/src/operator.rs",
-    "crates/oxc_syntax/src/scope.rs",
-    "crates/oxc_syntax/src/serialize.rs",
-    "crates/oxc_syntax/src/symbol.rs",
-    "crates/oxc_syntax/src/reference.rs",
-    "crates/oxc_span/src/span.rs",
-    "crates/oxc_span/src/source_type.rs",
-    "crates/oxc_regular_expression/src/ast.rs",
-    "napi/parser/src/raw_transfer_types.rs",
-];
 
 /// Path to `oxc_allocator` crate
 const ALLOCATOR_CRATE_PATH: &str = "crates/oxc_allocator";
@@ -249,6 +227,9 @@ const AST_MACROS_CRATE_PATH: &str = "crates/oxc_ast_macros";
 
 /// Path to `oxc_traverse` crate
 const TRAVERSE_CRATE_PATH: &str = "crates/oxc_traverse";
+
+/// Path to `oxc_minifier` crate
+const MINIFIER_CRATE_PATH: &str = "crates/oxc_minifier";
 
 /// Path to write TS type definitions to
 const TYPESCRIPT_DEFINITIONS_PATH: &str = "npm/oxc-types/types.d.ts";
@@ -268,6 +249,7 @@ const DERIVES: &[&(dyn Derive + Sync)] = &[
     &derives::DeriveDummy,
     &derives::DeriveTakeIn,
     &derives::DeriveGetAddress,
+    &derives::DeriveUnstableAddress,
     &derives::DeriveGetSpan,
     &derives::DeriveGetSpanMut,
     &derives::DeriveContentEq,
@@ -279,16 +261,25 @@ const GENERATORS: &[&(dyn Generator + Sync)] = &[
     &generators::AssertLayouts,
     &generators::AstKindGenerator,
     &generators::AstBuilderGenerator,
+    &generators::BuilderMethodsGenerator,
     &generators::GetIdGenerator,
     &generators::VisitGenerator,
     &generators::ScopesCollectorGenerator,
     &generators::Utf8ToUtf16ConverterGenerator,
+    #[cfg(feature = "generate-js")]
     &generators::ESTreeVisitGenerator,
+    #[cfg(feature = "generate-js")]
+    &generators::OxlintEnvsGenerator,
+    #[cfg(feature = "generate-js")]
     &generators::RawTransferGenerator,
+    #[cfg(feature = "generate-js")]
     &generators::RawTransferLazyGenerator,
+    #[cfg(feature = "generate-js")]
     &generators::TypescriptGenerator,
     &generators::FormatterFormatGenerator,
     &generators::FormatterAstNodesGenerator,
+    &generators::TraverseGenerator,
+    &generators::MinifierTraverseGenerator,
 ];
 
 /// Attributes on structs and enums (not including those defined by derives/generators)
@@ -316,9 +307,12 @@ fn main() {
         logger::quiet();
     }
 
+    // Find crates and source files containing AST types
+    let (crate_paths, source_paths, root_path) = find_crates_and_files();
+
     // Parse inputs and generate `Schema`
-    let codegen = Codegen::new();
-    let mut schema = parse_files(SOURCE_PATHS, &codegen);
+    let codegen = Codegen::new(root_path);
+    let mut schema = parse_files(&source_paths, &codegen);
 
     // Run `prepare` actions
     let runners = get_runners();
@@ -347,13 +341,23 @@ fn main() {
 
     logln!("All Derives and Generators... Done!");
 
-    // Edit `lib.rs` in `oxc_ast_macros` crate
+    // Generate `derived_traits.rs` in `oxc_ast_macros` crate
     outputs.push(generate_proc_macro());
+
+    // Edit `lib.rs` in `oxc_ast_macros` crate.
+    // Skip this step if JS generators are disabled, because those generators may define attributes.
+    #[cfg(feature = "generate-js")]
     outputs.push(generate_updated_proc_macro(&codegen));
 
-    // Add CI filter file to outputs
     outputs.sort_unstable_by(|o1, o2| o1.path.cmp(&o2.path));
-    outputs.push(generate_ci_filter(&outputs));
+
+    // Add CI filter file to outputs.
+    // Skip this step if JS generators are disabled, because not all files are generated.
+    if cfg!(feature = "generate-js") {
+        log!("Generate CI filter... ");
+        outputs.push(Output::yaml_watch_list(&outputs, crate_paths, codegen.root_path()));
+        log_success!();
+    }
 
     // Write outputs to disk
     if !options.dry_run {
@@ -361,24 +365,6 @@ fn main() {
             output.write_to_file(codegen.root_path()).unwrap();
         }
     }
-}
-
-/// Generate CI filter list file.
-///
-/// This is used in `ast_changes` CI job to skip running `oxc_ast_tools`
-/// unless relevant files have changed.
-///
-/// List includes source files, generated files, and all files in `oxc_ast_tools` itself.
-fn generate_ci_filter(outputs: &[RawOutput]) -> RawOutput {
-    log!("Generate CI filter... ");
-
-    let paths =
-        SOURCE_PATHS.iter().copied().chain(outputs.iter().map(|output| output.path.as_str()));
-    let output = Output::yaml_watch_list(AST_CHANGES_WATCH_LIST_PATH, paths);
-
-    log_success!();
-
-    output.into_raw(file!())
 }
 
 /// Generate function for proc macro in `oxc_ast_macros` crate.

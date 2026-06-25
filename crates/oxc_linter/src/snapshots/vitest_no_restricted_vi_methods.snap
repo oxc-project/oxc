@@ -1,0 +1,29 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ vitest(no-restricted-vi-methods): Use of `fn` is not allowed
+   ╭─[no_restricted_vi_methods.tsx:1:4]
+ 1 │ vi.fn()
+   ·    ──
+   ╰────
+
+  ⚠ vitest(no-restricted-vi-methods): Do not use mocks
+   ╭─[no_restricted_vi_methods.tsx:1:4]
+ 1 │ vi.mock()
+   ·    ────
+   ╰────
+
+  ⚠ vitest(no-restricted-vi-methods): Use of `advanceTimersByTime` is not allowed
+   ╭─[no_restricted_vi_methods.tsx:3:12]
+ 2 │                  import { vi } from 'vitest';
+ 3 │                  vi.advanceTimersByTime();
+   ·                     ───────────────────
+ 4 │                 
+   ╰────
+
+  ⚠ vitest(no-restricted-vi-methods): Use of `fn` is not allowed
+   ╭─[no_restricted_vi_methods.tsx:1:4]
+ 1 │ vi["fn"]()
+   ·    ────
+   ╰────

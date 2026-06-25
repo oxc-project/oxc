@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-unused-vars): Identifier 'ClassDecoratorFactory' is imported but never used.
    ╭─[no_unused_vars.ts:1:10]
  1 │ import { ClassDecoratorFactory } from 'decorators'; export class Foo {}
@@ -137,16 +138,6 @@ source: crates/oxc_linter/src/tester.rs
  3 │           PHONE = 'phone',
    ╰────
   help: Consider removing this declaration.
-
-  ⚠ eslint(no-unused-vars): Identifier 'test' is imported but never used.
-   ╭─[no_unused_vars.ts:2:18]
- 1 │ 
- 2 │           import test from 'test';
-   ·                  ──┬─
-   ·                    ╰── 'test' is imported here
- 3 │           import baz from 'baz';
-   ╰────
-  help: Consider removing this import.
 
   ⚠ eslint(no-unused-vars): Identifier 'test' is imported but never used.
    ╭─[no_unused_vars.ts:2:18]

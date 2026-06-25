@@ -1,12 +1,10 @@
-use std::borrow::Cow;
-
 use oxc_ast::{
     AstKind,
     ast::{BinaryExpression, BinaryOperator, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule, utils::is_same_expression};
 
@@ -56,7 +54,9 @@ declare_oxc_lint!(
     PreferMathMinMax,
     unicorn,
     pedantic,
-    fix
+    fix,
+    version = "0.10.1",
+    short_description = "Prefers use of `Math.min()` and `Math.max()` instead of ternary expressions when performing simple comparisons.",
 );
 
 impl Rule for PreferMathMinMax {
@@ -77,44 +77,16 @@ impl Rule for PreferMathMinMax {
         }
 
         ctx.diagnostic_with_fix(prefer_math_min_max_diagnostic(conditional_expr.span), |fixer| {
-            let Some(consequent) = get_expr_value(&conditional_expr.consequent) else {
-                return fixer.noop();
-            };
-            let Some(alternate) = get_expr_value(&conditional_expr.alternate) else {
-                return fixer.noop();
-            };
-
-            match condition_type {
-                TypeOptions::Max => fixer.replace(
-                    conditional_expr.span,
-                    Cow::Owned(format!("Math.max({consequent}, {alternate})")),
-                ),
-                TypeOptions::Min => fixer.replace(
-                    conditional_expr.span,
-                    Cow::Owned(format!("Math.min({consequent}, {alternate})")),
-                ),
+            let consequent = ctx.source_range(conditional_expr.consequent.span());
+            let alternate = ctx.source_range(conditional_expr.alternate.span());
+            let method = match condition_type {
+                TypeOptions::Max => "max",
+                TypeOptions::Min => "min",
                 TypeOptions::Unknown => unreachable!(),
-            }
-        });
-    }
-}
-
-fn get_expr_value(expr: &Expression) -> Option<String> {
-    match expr {
-        Expression::NumericLiteral(lit) => Some(lit.to_string()),
-        Expression::UnaryExpression(lit) => {
-            let mut unary_str: String = String::from(lit.operator.as_str());
-
-            let Some(unary_lit) = get_expr_value(&lit.argument) else {
-                return Some(unary_str.clone());
             };
-
-            unary_str.push_str(unary_lit.as_str());
-
-            Some(unary_str.clone())
-        }
-        Expression::Identifier(identifier) => Some(identifier.name.to_string()),
-        _ => None,
+            fixer
+                .replace(conditional_expr.span, format!("Math.{method}({consequent}, {alternate})"))
+        });
     }
 }
 
@@ -190,66 +162,43 @@ fn test() {
     ];
 
     let fix = vec![
-        (r"const foo = height < 100 ? height : 100;", r"const foo = Math.min(height, 100);", None),
-        (
-            r"const foo = height <= -100 ? height : -100;",
-            r"const foo = Math.min(height, -100);",
-            None,
-        ),
+        (r"const foo = height < 100 ? height : 100;", r"const foo = Math.min(height, 100);"),
+        (r"const foo = height <= -100 ? height : -100;", r"const foo = Math.min(height, -100);"),
         (
             r"const foo = 150.34 < height ? 150.34 : height;",
             r"const foo = Math.min(150.34, height);",
-            None,
         ),
-        (
-            r"const foo = -0.34 <= height ? -0.34 : height;",
-            r"const foo = Math.min(-0.34, height);",
-            None,
-        ),
-        (
-            r"const foo = height > 10e3 ? 10e3 : height;",
-            r"const foo = Math.min(10e3, height);",
-            None,
-        ),
-        (
-            r"const foo = height >= -10e3 ? -10e3 : height;",
-            r"const foo = Math.min(-10e3, height);",
-            None,
-        ),
-        (
-            r"const foo = 10e3 > height ? height : 10e3;",
-            r"const foo = Math.min(height, 10e3);",
-            None,
-        ),
-        (
-            r"const foo = 10e3 >= height ? height : 10e3;",
-            r"const foo = Math.min(height, 10e3);",
-            None,
-        ),
-        ("return height > 100 ? height : 100;", "return Math.max(height, 100);", None),
-        ("return height >= 50 ? height : 50;", "return Math.max(height, 50);", None),
+        (r"const foo = -0.34 <= height ? -0.34 : height;", r"const foo = Math.min(-0.34, height);"),
+        (r"const foo = height > 10e3 ? 10e3 : height;", r"const foo = Math.min(10e3, height);"),
+        (r"const foo = height >= -10e3 ? -10e3 : height;", r"const foo = Math.min(-10e3, height);"),
+        (r"const foo = 10e3 > height ? height : 10e3;", r"const foo = Math.min(height, 10e3);"),
+        (r"const foo = 10e3 >= height ? height : 10e3;", r"const foo = Math.min(height, 10e3);"),
+        ("return height > 100 ? height : 100;", "return Math.max(height, 100);"),
+        ("return height >= 50 ? height : 50;", "return Math.max(height, 50);"),
         (
             "return (10e3 > height ? 10e3 : height) || 200;",
             "return (Math.max(10e3, height)) || 200;",
-            None,
         ),
         (
             "return (-10e3 >= height ? -10e3 : height) || 200;",
             "return (Math.max(-10e3, height)) || 200;",
-            None,
         ),
         (
             "return (height < 2.99 ? 2.99 : height) || 0.99;",
             "return (Math.max(2.99, height)) || 0.99;",
-            None,
         ),
         (
             "return (height <= -0.99 ? -0.99 : height) || -3.99;",
             "return (Math.max(-0.99, height)) || -3.99;",
-            None,
         ),
-        ("return 10e6 < height ? height : 10e6;", "return Math.max(height, 10e6);", None),
-        ("return -10e4 <= height ? height : -10e4;", "return Math.max(height, -10e4);", None),
+        ("return 10e6 < height ? height : 10e6;", "return Math.max(height, 10e6);"),
+        ("return -10e4 <= height ? height : -10e4;", "return Math.max(height, -10e4);"),
+        ("const foo = typeof x < bar ? typeof x : bar;", "const foo = Math.min(typeof x, bar);"),
+        ("const foo = void x < bar ? void x : bar;", "const foo = Math.min(void x, bar);"),
+        (
+            "const foo = delete obj.p < bar ? delete obj.p : bar;",
+            "const foo = Math.min(delete obj.p, bar);",
+        ),
     ];
 
     Tester::new(PreferMathMinMax::NAME, PreferMathMinMax::PLUGIN, pass, fail)

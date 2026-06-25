@@ -1,7 +1,10 @@
-use oxc_ast::{AstKind, ast::TSType};
+use oxc_ast::{
+    AstKind,
+    ast::{TSType, TSTypeParameter, TSTypeParameterDeclaration},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{FileExtension, Span};
 
 use crate::{
     AstNode,
@@ -75,7 +78,10 @@ declare_oxc_lint!(
     /// ```
     NoUnnecessaryTypeConstraint,
     typescript,
-    suspicious
+    suspicious,
+    suggestion,
+    version = "0.0.6",
+    short_description = "Disallow unnecessary constraints on generic types.",
 );
 
 impl Rule for NoUnnecessaryTypeConstraint {
@@ -94,12 +100,23 @@ impl Rule for NoUnnecessaryTypeConstraint {
                 TSType::TSUnknownKeyword(t) => ("unknown", t.span),
                 _ => continue,
             };
-            ctx.diagnostic(no_unnecessary_type_constraint_diagnostic(
-                param.name.name.as_str(),
-                value,
-                param.name.span,
-                ty_span,
-            ));
+
+            ctx.diagnostic_with_suggestion(
+                no_unnecessary_type_constraint_diagnostic(
+                    param.name.name.as_str(),
+                    value,
+                    param.name.span,
+                    ty_span,
+                ),
+                |fixer| {
+                    let replacement =
+                        if should_add_trailing_comma(decl, node, param, ctx) { "," } else { "" };
+
+                    let fix_span = Span::new(param.name.span.end, ty_span.end);
+
+                    fixer.replace(fix_span, replacement)
+                },
+            );
         }
     }
 
@@ -108,9 +125,35 @@ impl Rule for NoUnnecessaryTypeConstraint {
     }
 }
 
+fn should_add_trailing_comma(
+    decl: &TSTypeParameterDeclaration,
+    node: &AstNode,
+    param: &TSTypeParameter,
+    ctx: &LintContext,
+) -> bool {
+    if !matches!(ctx.nodes().parent_kind(node.id()), AstKind::ArrowFunctionExpression(_))
+        || decl.params.len() != 1
+        || param.default.is_some()
+        || !requires_generic_declaration_disambiguation(ctx)
+    {
+        return false;
+    }
+
+    ctx.find_next_token_within(param.span.end, decl.span.end, ",").is_none()
+}
+
+fn requires_generic_declaration_disambiguation(ctx: &LintContext<'_>) -> bool {
+    ctx.source_type().is_jsx()
+        || matches!(
+            ctx.source_type().extension(),
+            Some(FileExtension::Mts | FileExtension::Cts | FileExtension::Tsx)
+        )
+}
+
 #[test]
 fn test() {
-    use crate::tester::Tester;
+    use crate::tester::{ExpectFixTestCase, Tester};
+    use std::path::PathBuf;
 
     let pass = vec![
         "function data() {}",
@@ -150,6 +193,67 @@ fn test() {
         "type Data<T extends unknown> = {};",
     ];
 
+    let fix: Vec<ExpectFixTestCase> = vec![
+        ("function data<T extends any>() {}", "function data<T>() {}").into(),
+        ("function data<T extends any, U>() {}", "function data<T, U>() {}").into(),
+        ("function data<T, U extends any>() {}", "function data<T, U>() {}").into(),
+        ("function data<T extends any, U extends T>() {}", "function data<T, U extends T>() {}")
+            .into(),
+        ("const data = <T extends any>() => {};", "const data = <T,>() => {};").into(),
+        ("const data = <T extends any,>() => {};", "const data = <T,>() => {};").into(),
+        ("const data = <T extends any, >() => {};", "const data = <T, >() => {};").into(),
+        ("const data = <T extends any ,>() => {};", "const data = <T ,>() => {};").into(),
+        ("const data = <T extends any , >() => {};", "const data = <T , >() => {};").into(),
+        ("const data = <T extends any = unknown>() => {};", "const data = <T = unknown>() => {};")
+            .into(),
+        ("const data = <T extends any, U extends any>() => {};", "const data = <T, U>() => {};")
+            .into(),
+        ("function data<T extends unknown>() {}", "function data<T>() {}").into(),
+        (
+            "const data = <T extends any>() => {};",
+            "const data = <T>() => {};",
+            None,
+            Some(PathBuf::from("no_unnecessary_type_constraint.ts")),
+        )
+            .into(),
+        (
+            "const data = <T extends any>() => {};",
+            "const data = <T,>() => {};",
+            None,
+            Some(PathBuf::from("no_unnecessary_type_constraint.mts")),
+        )
+            .into(),
+        (
+            "const data = <T extends any>() => {};",
+            "const data = <T,>() => {};",
+            None,
+            Some(PathBuf::from("no_unnecessary_type_constraint.cts")),
+        )
+            .into(),
+        (
+            "const data = <T extends any /* comment */,>() => {};",
+            "const data = <T /* comment */,>() => {};",
+        )
+            .into(),
+        (
+            "const data = <T extends any /* comment */>() => {};",
+            "const data = <T, /* comment */>() => {};",
+        )
+            .into(),
+        ("const data = <T extends unknown>() => {};", "const data = <T,>() => {};").into(),
+        ("class Data<T extends unknown> {}", "class Data<T> {}").into(),
+        ("const Data = class<T extends unknown> {};", "const Data = class<T> {};").into(),
+        ("class Data { member<T extends unknown>() {} }", "class Data { member<T>() {} }").into(),
+        (
+            "const Data = class { member<T extends unknown>() {} };",
+            "const Data = class { member<T>() {} };",
+        )
+            .into(),
+        ("interface Data<T extends unknown> {}", "interface Data<T> {}").into(),
+        ("type Data<T extends unknown> = {};", "type Data<T> = {};").into(),
+    ];
+
     Tester::new(NoUnnecessaryTypeConstraint::NAME, NoUnnecessaryTypeConstraint::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

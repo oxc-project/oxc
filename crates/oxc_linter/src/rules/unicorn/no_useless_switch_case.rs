@@ -1,3 +1,4 @@
+use oxc_allocator::UnstableAddress;
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -17,37 +18,40 @@ pub struct NoUselessSwitchCase;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallows useless default cases in switch statements.
+    /// Disallows useless `default` cases in `switch` statements.
     ///
     /// ### Why is this bad?
     ///
-    /// An empty case before the last default case is useless.
+    /// An empty case before the last `default` case is useless, as the
+    /// `default` case will catch it regardless.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// switch (foo) {
-    /// 	case 1:
-    /// 	default:
-    /// 		handleDefaultCase();
-    /// 		break;
+    ///   case 1:
+    ///   default:
+    ///     handleDefaultCase();
+    ///     break;
     /// }
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```javascript
     /// switch (foo) {
-    ///	case 1:
-    ///	case 2:
-    ///		handleCase1And2();
-    ///		break;
+    ///   case 1:
+    ///   case 2:
+    ///     handleCase1And2();
+    ///     break;
     /// }
     /// ```
     NoUselessSwitchCase,
     unicorn,
     pedantic,
-    pending
+    pending,
+    version = "0.0.18",
+    short_description = "Disallows useless `default` cases in `switch` statements.",
 );
 
 impl Rule for NoUselessSwitchCase {
@@ -58,35 +62,28 @@ impl Rule for NoUselessSwitchCase {
 
         let cases = &switch_statement.cases;
 
-        let default_cases = cases.iter().filter(|v| v.test.is_none()).collect::<Vec<_>>();
+        let mut default_cases = cases.iter().filter(|case| case.test.is_none());
+        let Some(default_case) = default_cases.next() else {
+            return;
+        };
 
-        if default_cases.len() != 1 {
+        if default_cases.next().is_some() {
             return;
         }
-
-        let default_case = default_cases[0];
 
         // Check if the `default` case is the last case
-        if !std::ptr::eq(default_case, cases.last().unwrap()) {
+        if default_case.unstable_address() != cases.last().unwrap().unstable_address() {
             return;
         }
 
-        let mut useless_cases = vec![];
+        let useless_cases = cases
+            .iter()
+            .rev()
+            .skip(1)
+            .take_while(|case| case.consequent.iter().all(|stmt| is_empty_stmt(stmt)));
 
-        for case in cases.iter().rev().skip(1) {
-            if case.consequent.iter().all(|v| is_empty_stmt(v)) {
-                useless_cases.push(case);
-            } else {
-                break;
-            }
-        }
-
-        if useless_cases.is_empty() {
-            return;
-        }
-
-        for case in useless_cases {
-            ctx.diagnostic(no_useless_switch_case_diagnostic(case.span));
+        for useless_case in useless_cases {
+            ctx.diagnostic(no_useless_switch_case_diagnostic(useless_case.span));
         }
     }
 }
@@ -96,7 +93,7 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        r"
+        "
         switch (foo) {
             case a:
             case b:
@@ -104,7 +101,7 @@ fn test() {
                 break;
         }
         ",
-        r"
+        "
         switch (foo) {
             case a:
                 handleCaseA();
@@ -114,7 +111,7 @@ fn test() {
                 break;
         }
         ",
-        r"
+        "
         switch (foo) {
             case a:
                 handleCaseA();
@@ -123,7 +120,7 @@ fn test() {
                 break;
         }
         ",
-        r"
+        "
         switch (foo) {
             case a:
                 break;
@@ -132,7 +129,7 @@ fn test() {
                 break;
         }
         ",
-        r"
+        "
         switch (foo) {
             case a:
                 handleCaseA();
@@ -142,7 +139,7 @@ fn test() {
                 break;
         }
         ",
-        r"
+        "
         switch (foo) {
             case a:
             default:
@@ -153,7 +150,7 @@ fn test() {
                 break;
         }
         ",
-        r"
+        "
         switch (1) {
                 // This is not useless
                 case 1:
@@ -163,21 +160,10 @@ fn test() {
                         console.log('2')
         }
         ",
-        r"
-        switch (1) {
-            default:
-                handleDefaultCase1();
-                break;
-            case 1:
-            default:
-                handleDefaultCase2();
-                break;
-        }
-        ",
     ];
 
     let fail = vec![
-        r"
+        "
         switch (foo) {
             case a:
             default:
@@ -185,7 +171,7 @@ fn test() {
                 break;
         }
         ",
-        r"
+        "
         switch (foo) {
             case a: {
             }
@@ -194,7 +180,7 @@ fn test() {
                 break;
         }
         ",
-        r"
+        "
         switch (foo) {
             case a: {
                 ;;
@@ -210,7 +196,7 @@ fn test() {
                 break;
         }
         ",
-        r"
+        "
         switch (foo) {
             case a:
             case (( b ))         :
@@ -219,7 +205,7 @@ fn test() {
                 break;
         }
         ",
-        r"
+        "
         switch (foo) {
             case a:
             case b:
@@ -232,7 +218,7 @@ fn test() {
                 break;
         }
         ",
-        r"
+        "
         switch (foo) {
             case a:
             case b:
@@ -241,7 +227,7 @@ fn test() {
                 break;
         }
         ",
-        r"
+        "
         switch (foo) {
             // eslint-disable-next-line
             case a:
@@ -251,7 +237,7 @@ fn test() {
                 break;
         }
         ",
-        r"
+        "
         switch (foo) {
             case a:
             // eslint-disable-next-line

@@ -73,7 +73,9 @@ declare_oxc_lint!(
     /// ```
     GoogleFontDisplay,
     nextjs,
-    correctness
+    correctness,
+    version = "0.2.0",
+    short_description = "Enforce font-display behavior with Google Fonts.",
 );
 
 impl Rule for GoogleFontDisplay {
@@ -234,7 +236,5 @@ fn test() {
 			     "#,
     ];
 
-    Tester::new(GoogleFontDisplay::NAME, GoogleFontDisplay::PLUGIN, pass, fail)
-        .with_nextjs_plugin(true)
-        .test_and_snapshot();
+    Tester::new(GoogleFontDisplay::NAME, GoogleFontDisplay::PLUGIN, pass, fail).test_and_snapshot();
 }

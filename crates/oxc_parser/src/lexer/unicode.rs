@@ -2,13 +2,15 @@ use std::{borrow::Cow, fmt::Write};
 
 use cow_utils::CowUtils;
 
-use oxc_allocator::StringBuilder;
-use oxc_syntax::identifier::{
-    CR, FF, LF, LS, PS, TAB, VT, is_identifier_part, is_identifier_start,
-    is_identifier_start_unicode, is_irregular_line_terminator, is_irregular_whitespace,
+use crate::{config::LexerConfig as Config, diagnostics};
+use oxc_allocator::ArenaStringBuilder;
+use oxc_syntax::{
+    identifier::{
+        FF, TAB, VT, is_identifier_part, is_identifier_start, is_identifier_start_unicode,
+        is_irregular_whitespace,
+    },
+    line_terminator::{CR, LF, LS, PS, is_irregular_line_terminator},
 };
-
-use crate::diagnostics;
 
 use super::{Kind, Lexer, Span};
 
@@ -27,10 +29,14 @@ enum UnicodeEscape {
     LoneSurrogate(u32),
 }
 
-impl<'a> Lexer<'a> {
+impl<'a, C: Config> Lexer<'a, C> {
     pub(super) fn unicode_char_handler(&mut self) -> Kind {
         let c = self.peek_char().unwrap();
         match c {
+            // U+FFFD (replacement character) appears when a binary file is decoded as UTF-8.
+            // This is likely a binary file that cannot be parsed.
+            // <https://github.com/microsoft/TypeScript/blob/main/src/compiler/scanner.ts>
+            '\u{FFFD}' => self.handle_binary_file(),
             c if is_identifier_start_unicode(c) => {
                 let start_pos = self.source.position();
                 self.consume_char();
@@ -41,6 +47,13 @@ impl<'a> Lexer<'a> {
             c if is_irregular_line_terminator(c) => self.handle_irregular_line_terminator(c),
             _ => self.handle_invalid_unicode_char(c),
         }
+    }
+
+    #[cold]
+    fn handle_binary_file(&mut self) -> Kind {
+        self.error(diagnostics::file_appears_to_be_binary());
+        self.source.advance_to_end();
+        Kind::Eof
     }
 
     #[cold]
@@ -70,7 +83,7 @@ impl<'a> Lexer<'a> {
     ///   \u{ `CodePoint` }
     pub(super) fn identifier_unicode_escape_sequence(
         &mut self,
-        str: &mut StringBuilder<'a>,
+        str: &mut ArenaStringBuilder<'a>,
         check_identifier_start: bool,
     ) {
         let start = self.offset();
@@ -124,7 +137,7 @@ impl<'a> Lexer<'a> {
     ///   \u{ `CodePoint` }
     fn string_unicode_escape_sequence(
         &mut self,
-        text: &mut StringBuilder<'a>,
+        text: &mut ArenaStringBuilder<'a>,
         is_valid_escape_sequence: &mut bool,
     ) {
         let value = match self.peek_byte() {
@@ -162,7 +175,7 @@ impl<'a> Lexer<'a> {
     }
 
     /// Lone surrogate found in string.
-    fn string_lone_surrogate(&mut self, code_point: u32, text: &mut StringBuilder<'a>) {
+    fn string_lone_surrogate(&mut self, code_point: u32, text: &mut ArenaStringBuilder<'a>) {
         debug_assert!(code_point <= 0xFFFF);
 
         if !self.token.lone_surrogates() {
@@ -176,7 +189,7 @@ impl<'a> Lexer<'a> {
             // But strings containing both lone surrogates and lossy replacement characters
             // should be vanishingly rare, so don't bother.
             if let Cow::Owned(replaced) = text.cow_replace("\u{FFFD}", "\u{FFFD}fffd") {
-                *text = StringBuilder::from_str_in(&replaced, self.allocator);
+                *text = ArenaStringBuilder::from_str_in(&replaced, self.allocator);
             }
         }
 
@@ -316,7 +329,7 @@ impl<'a> Lexer<'a> {
     // EscapeSequence ::
     pub(super) fn read_string_escape_sequence(
         &mut self,
-        text: &mut StringBuilder<'a>,
+        text: &mut ArenaStringBuilder<'a>,
         in_template: bool,
         is_valid_escape_sequence: &mut bool,
     ) {

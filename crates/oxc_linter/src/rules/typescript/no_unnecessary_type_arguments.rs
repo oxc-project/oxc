@@ -65,7 +65,9 @@ declare_oxc_lint!(
     NoUnnecessaryTypeArguments(tsgolint),
     typescript,
     suspicious,
-    pending,
+    fix,
+    version = "1.12.0",
+    short_description = "This rule disallows type arguments that are identical to the default type parameter.",
 );
 
 impl Rule for NoUnnecessaryTypeArguments {}

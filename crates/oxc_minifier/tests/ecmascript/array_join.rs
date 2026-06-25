@@ -9,29 +9,27 @@ fn test() {
     let ast = AstBuilder::new(&allocator);
     let mut elements = ast.vec();
     elements.push(ast.array_expression_element_elision(SPAN));
-    elements.push(ArrayExpressionElement::NullLiteral(ast.alloc(ast.null_literal(SPAN))));
-    elements.push(ArrayExpressionElement::NumericLiteral(ast.alloc(ast.numeric_literal(
+    elements.push(ArrayExpressionElement::NullLiteral(ast.alloc_null_literal(SPAN)));
+    elements.push(ArrayExpressionElement::NumericLiteral(ast.alloc_numeric_literal(
         SPAN,
         42f64,
         None,
         NumberBase::Decimal,
-    ))));
-    elements.push(ArrayExpressionElement::StringLiteral(
-        ast.alloc(ast.string_literal(SPAN, "foo", None)),
-    ));
+    )));
     elements
-        .push(ArrayExpressionElement::BooleanLiteral(ast.alloc(ast.boolean_literal(SPAN, true))));
-    elements.push(ArrayExpressionElement::BigIntLiteral(ast.alloc(ast.big_int_literal(
+        .push(ArrayExpressionElement::StringLiteral(ast.alloc_string_literal(SPAN, "foo", None)));
+    elements.push(ArrayExpressionElement::BooleanLiteral(ast.alloc_boolean_literal(SPAN, true)));
+    elements.push(ArrayExpressionElement::BigIntLiteral(ast.alloc_big_int_literal(
         SPAN,
         "42",
-        Some(Atom::from("42n")),
+        Some(Str::from("42n")),
         BigintBase::Decimal,
-    ))));
-    let array = ast.array_expression(SPAN, elements.clone_in(&allocator));
+    )));
+    let array = ast.array_expression(SPAN, elements);
     let mut array2 = array.clone_in(&allocator);
     array2.elements.push(ArrayExpressionElement::ArrayExpression(ast.alloc(array)));
     array2.elements.push(ArrayExpressionElement::ObjectExpression(
-        ast.alloc(ast.object_expression(SPAN, ast.vec())),
+        ast.alloc_object_expression(SPAN, ast.vec()),
     ));
     let joined = array2.array_join(&WithoutGlobalReferenceInformation {}, Some("_"));
     assert_eq!(joined, Some("__42_foo_true_42_,,42,foo,true,42_[object Object]".to_string()));

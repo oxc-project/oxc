@@ -1,0 +1,28 @@
+---
+source: crates/oxc_formatter_json/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// this file is only a comment
+
+==================== Output ====================
+------------------------------------
+{ printWidth: 80, variant: "jsonc" }
+------------------------------------
+// this file is only a comment
+
+-------------------------------------
+{ printWidth: 100, variant: "jsonc" }
+-------------------------------------
+// this file is only a comment
+
+-----------------------------------------------------------
+{ printWidth: 80, trailingComma: "none", variant: "jsonc" }
+-----------------------------------------------------------
+// this file is only a comment
+
+------------------------------------------------------------
+{ printWidth: 100, trailingComma: "none", variant: "jsonc" }
+------------------------------------------------------------
+// this file is only a comment
+
+===================== End =====================

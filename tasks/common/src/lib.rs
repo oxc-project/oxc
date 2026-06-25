@@ -6,7 +6,7 @@ mod request;
 mod snapshot;
 mod test_file;
 
-pub use diff::print_diff_in_terminal;
+pub use diff::{print_diff_in_terminal, print_text_diff};
 
 pub use crate::{request::agent, snapshot::Snapshot, test_file::*};
 

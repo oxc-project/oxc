@@ -4,6 +4,367 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.137.0] - 2026-06-18
+
+### 🚀 Features
+
+- 53509a8 minifier: Treeshake pure typed arrays and Set/Map array literals (#23469) (Dunqing)
+- 09762d9 minifier: Inline const value for read-only vars (#22593) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 31bfd9b minifier: Keep Object introspection calls on a possible Proxy (#23483) (Dunqing)
+- e409fe0 minifier: Keep `new Map`/`WeakSet`/`WeakMap` with a string argument (#23470) (Dunqing)
+
+### ⚡ Performance
+
+- 970e09a minifier: Compute template-literal inline checks in a single pass (#23467) (Yunfei He)
+- 3170c0e semantic,mangler,minifier: Fix `Semantic::stats` node count and reuse stats in mangler builds (#23352) (Boshen)
+- d1fa6e0 minifier: Evaluate ternary branches once in minimize_conditional_expression (#23479) (Yunfei He)
+- bcb3894 minifier: Incremental scoping refresh, delete LiveUsageCollector (#23197) (Dunqing)
+
+## [0.136.0] - 2026-06-15
+
+### 💥 BREAKING CHANGES
+
+- 7a24911 codegen: [**BREAKING**] Borrow sourcemaps from codegen (#23422) (Boshen)
+
+## [0.135.0] - 2026-06-08
+
+### 💥 BREAKING CHANGES
+
+- 4c35362 ast: [**BREAKING**] Add `AstBuilder::template_element_escape_raw` and `template_element_escape_raw_with_lone_surrogates` methods (#23047) (overlookmotel)
+
+### 🚀 Features
+
+- 85efabf semantic: Make building the class table optional, off by default (#22862) (Boshen)
+
+## [0.133.0] - 2026-05-26
+
+### 🐛 Bug Fixes
+
+- 4ac0fca minifier: Preserve `0 && (module.exports = { ... })` cjs-module-lexer hint (#22729) (Dunqing)
+- 40ff611 minifier: Mark peephole loop changed when dropping dead-after-throw statement (#22722) (Dunqing)
+- 9ea4d64 minifier: Re-evaluate pure/no-side-effects flags after peephole inlining (#22595) (Dunqing)
+- 07afbb6 minifier: Drop empty-body IIFE wrapper when called with arguments (#22589) (Dunqing)
+- 702b14e minifier: Preserve IIFE structure in DCE-only mode (#22547) (Dunqing)
+
+### ⚡ Performance
+
+- 04d3065 minifier: Drop per-call buffers in try_fold_concat (#22596) (Dunqing)
+
+## [0.132.0] - 2026-05-18
+
+### 🐛 Bug Fixes
+
+- 0f26de6 ecmascript: Resolve identifier value type via tracked constants (#22234) (Alexander Lichter)
+- c27a8cf minifier: Normalize `{ x: x }` shorthand so adjacent-if merge is idempotent (#22401) (Dunqing)
+- e9ec7c6 minifier: Fold optional chains by base nullishness (#22236) (Alexander Lichter)
+
+### ⚡ Performance
+
+- 217d7d8 minifier: Index `SymbolValues` by `SymbolId` (#22441) (Dunqing)
+- d782b78 minifier: Use BitSet for LiveUsageCollector live references (#22425) (Boshen)
+
+## [0.131.0] - 2026-05-15
+
+### 🐛 Bug Fixes
+
+- 5ac7e79 minifier: Drop unused-var-init pure IIFEs and preserve annotation for downstream (#22349) (Dunqing)
+
+## [0.130.0] - 2026-05-11
+
+### 🚀 Features
+
+- ffe6475 minifier: Fold `Array` constructor with safe spreads (#22215) (camc314)
+
+### 🐛 Bug Fixes
+
+- bc54fd4 minifier: Keep function / class names if direct eval is present in the scope (#22241) (sapphi-red)
+- 7a810c0 minifier: Refresh direct eval flags after DCE (#21787) (Dunqing)
+- 73b4f40 minifier: Preserve catch binding with direct eval (#22221) (camc314)
+- 0e13d17 minifier: Preserve optional chain base side effects (#22219) (camc314)
+- 5753774 minifier: Cap if-return ternary collapse for firefox (#21841) (Gurupungav Narayanan)
+- 3b385e2 minifier: Bail optimizing `Array` with unknown arg count (#22188) (camc314)
+
+## [0.129.0] - 2026-05-05
+
+### 🐛 Bug Fixes
+
+- e852911 codegen: Preserve legal comments orphaned by upstream passes (#21575) (Dunqing)
+
+## [0.128.0] - 2026-04-27
+
+### 💥 BREAKING CHANGES
+
+- 502e804 ast: [**BREAKING**] Reduce size of `TSTypePredicateName` (#21711) (overlookmotel)
+- 5651539 ast: [**BREAKING**] Reduce size of `JSXExpression` (#21710) (overlookmotel)
+- c44e280 ast: [**BREAKING**] Reduce size of `ArrayExpressionElement` (#21709) (overlookmotel)
+
+### 🚀 Features
+
+- f091d77 minifier: Inline constant spread elements into arrays (#21095) (Armano)
+
+### 🐛 Bug Fixes
+
+- 0d608c2 minifier: Preserve raw CR in template literals (#21645) (Dunqing)
+- a889ea9 minifier: Track pure functions in DCE mode (#21722) (Dunqing)
+
+## [0.127.0] - 2026-04-20
+
+### 🐛 Bug Fixes
+
+- 50e9d26 mangler: Assign correct slot to shadowed function-expression names (#21535) (Dunqing)
+- d676e0c minifier: Mark LHS of `??=` as read when converting from `== null &&` (#21546) (Gunnlaugur Thor Briem)
+
+## [0.126.0] - 2026-04-15
+
+### 🐛 Bug Fixes
+
+- d7a359a ecmascript: Treat update expressions as unconditionally side-effectful (#21456) (Dunqing)
+- b3ed467 minifier: Avoid illegal `var;` when folding unused arguments copy loop (#21421) (fazba)
+- b0e8f13 minifier: Preserve `var` inside `catch` with same-named parameter (#21366) (Dunqing)
+
+## [0.125.0] - 2026-04-13
+
+### 💥 BREAKING CHANGES
+
+- 382958a span: [**BREAKING**] Remove re-exports of string types from `oxc_span` crate (#21246) (overlookmotel)
+
+### 🚀 Features
+
+- f134e24 minifier: Support `property_write_side_effects` option to drop unused property assignments (#20773) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 2338e28 ecmascript: Treat `this` as potentially having side effects (#21297) (sapphi-red)
+
+### ⚡ Performance
+
+- 61adedd minifier: Fix O(n²) perf on very many var decls (#21062) (Gunnlaugur Thor Briem)
+
+## [0.123.0] - 2026-03-30
+
+### 🚀 Features
+
+- 2917bb2 minifier: Minify `x ? 1 : 0` to `+x` or `+!!x` (#20594) (John Costa)
+
+### 🐛 Bug Fixes
+
+- 1a370a6 minifier: Inline single-use vars past non-computed object keys (#20810) (Ulrich Stark)
+- 9a5ff73 semantic: Hoist Annex B block-scoped function declarations to var scope (#20728) (Dunqing)
+
+## [0.121.0] - 2026-03-19
+
+### 🐛 Bug Fixes
+
+- 4ae3f3f ecmascript: Apply coercion-is-pure assumption to constructor side-effect detection (#20420) (Dunqing)
+- efeba28 ecmascript: Add argument validation for NewExpression side-effect detection (#20395) (Dunqing)
+
+## [0.120.0] - 2026-03-16
+
+### 🐛 Bug Fixes
+
+- edb8677 ecmascript: Treat collection constructor with variable arg as side-effectful (#20383) (Dunqing)
+- e62524d minifier: Treat object spread of getters as having side effects (#20380) (Boshen)
+
+### ⚡ Performance
+
+- 30a2b0f minifier: Use atom_from_strs_array for template literal concat (#20386) (Boshen)
+- 690ce17 minifier: Use Vec::with_capacity for inline template expressions (#20389) (Boshen)
+
+## [0.119.0] - 2026-03-14
+
+### 🚀 Features
+
+- e7163b6 ecmascript: Add known-globals to side-effect-free property reads (#20212) (Dunqing)
+- 139ab68 ecmascript: Add `property_write_side_effects` to `MayHaveSideEffectsContext` (#20217) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 5c97b14 minifier: Recognize object spread of object literals as side-effect-free (#20299) (Boshen)
+- ade14d4 ecmascript: Enhance side-effect detection for classes, TypedArrays, computed members, and spread (#20213) (Dunqing)
+
+## [0.116.0] - 2026-03-02
+
+### 🐛 Bug Fixes
+
+- a35063e minifier: Preserve side effects for meta property url reads (#19668) (Boshen)
+
+### 📚 Documentation
+
+- 1b392de minifier: Add `Function.prototype.toString` assumption (#19758) (sapphi-red)
+
+## [0.114.0] - 2026-02-16
+
+### 🚀 Features
+
+- ebb80b3 ast: Add `node_id` field to all AST struct nodes (#18138) (Boshen)
+
+### ⚡ Performance
+
+- c169c77 syntax: Optimize `is_identifier_name_patched` (#19386) (sapphi-red)
+
+## [0.113.0] - 2026-02-10
+
+### 💥 BREAKING CHANGES
+
+- 2bf7293 mangler: [**BREAKING**] Enable `top_level` by default for modules and commonjs (#18278) (sapphi-red)
+
+### 🚀 Features
+
+- 500d071 minifier: Local traverse ctx and generated minifier traverse (#19106) (Boshen)
+- 742ad3f minifier: Default `invalid_import_side_effects` to `false` (#18916) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 110c300 oxc_ecmascript: `+[false]` and `+[true]` should evaluate to `NaN` (#19174) (copilot-swe-agent)
+
+## [0.112.0] - 2026-02-02
+
+### 🐛 Bug Fixes
+
+- 2e34461 minifier: Prevent expression inlining into block-scoped for-in declarations (#18651) (copilot-swe-agent)
+
+## [0.111.0] - 2026-01-26
+
+### 💥 BREAKING CHANGES
+
+- 777fc40 ast: [**BREAKING**] Add `Ident` type (#18354) (Boshen)
+- af0ca46 span: [**BREAKING**] Use `ModuleKind::CommonJS` for `SourceType::cjs()` (#18276) (sapphi-red)
+
+### 🚀 Features
+
+- 2ef5647 ast: Add escape_raw parameter to template_element builders (#18121) (Boshen)
+
+### 📚 Documentation
+
+- 00ff75f mangler: Fix `top_level` option in example (#18233) (overlookmotel)
+
+## [0.110.0] - 2026-01-19
+
+### 🐛 Bug Fixes
+
+- ee9f6a4 mangler: Use `retain` instead of `truncate` to remove empty frequency slots (#18225) (Dunqing)
+
+## [0.109.0] - 2026-01-19
+
+### 🚀 Features
+
+- d1016b9 minifier: Do not flip if/else when it would produce longer result (#17556) (Armano)
+- 9c6e344 minifier: Prune empty `case` before trailing `default` (#17994) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 38e4b53 minifier: Validate RegExp patterns before marking as pure (#18125) (Boshen)
+- 01d7b13 oxc_minifier: Enable sourcemap feature in dev mode (#18131) (Armano)
+- f69b6da mangler: Reserve names from eval-containing scopes (#18037) (camc314)
+- c8f847e minifier: Preserve return value of `@__PURE__` IIFE in return statements (#18036) (camc314)
+- ee353e6 minifier: Skip inlining constant in scopes with eval (#17926) (camc314)
+
+### ⚡ Performance
+
+- 91c143f mangler: Remove `frequencies` items if they are unused (#18183) (Dunqing)
+
+## [0.108.0] - 2026-01-12
+
+### ⚡ Performance
+
+- d5979dc minifier: Do not allocate when checking to convert `const` to `let` (#17730) (camchenry)
+
+### 📚 Documentation
+
+- 120a27c minifier: Add prettier-ignore for js-in-md part (#17687) (leaysgur)
+
+## [0.107.0] - 2026-01-05
+
+### 🚀 Features
+
+- 23680a3 mangler: Skip mangling only in scopes affected by direct eval (#17612) (camc314)
+
+### 🐛 Bug Fixes
+
+- 1044116 ecmascript: Mark `new Symbol` as non side-effect free (#17568) (camc314)
+- 68b2e54 minifier: Prevent incorrect ??= transformation when member base is mutated (#17472) (copilot-swe-agent)
+
+## [0.106.0] - 2025-12-29
+
+### 🚀 Features
+
+- e031056 codegen: Add `sourcemap` feature flag (#17305) (Boshen)
+- 8e4409a minifier: Add `invalid_import_side_effects` option (#17300) (sapphi-red)
+
+## [0.105.0] - 2025-12-22
+
+### 🚀 Features
+
+- cdb6345 minifier: Remove unused import source/defer statements (#17085) (camc314)
+
+### 🐛 Bug Fixes
+
+- ab43454 minifier: Preserve sideeffects of destructuring `arguments` in non-strict mode (#17249) (sapphi-red)
+- 5595642 minifier: Avoid `arguments` copy loop transformation in arrow functions (#17248) (sapphi-red)
+- f0ad6b7 minifier: Preserve sideeffectful destructing delcaration for array and object destruction (#17074) (Armano)
+- 76b1dc7 minifier: Avoid incorrect logical assignment transformation when base object may be mutated (#16802) (camc314)
+
+## [0.104.0] - 2025-12-19
+
+### 🚀 Features
+
+- 3d2b492 minifier: Fold iife arrow functions in call expressions (#16477) (Armano)
+- 74eae13 minifier: Remove unused import specifiers (#16797) (camc314)
+
+### 🐛 Bug Fixes
+
+- 47b4c2f minifier/docs: Correct hyperlink path in OPTIMIZATIONS.md  (#16986) (GRK)
+
+## [0.103.0] - 2025-12-15
+
+### 🚀 Features
+
+- aafcf3e minifier: Remove empty `[]` and `{}` declaration (#16855) (Armano)
+
+### 🐛 Bug Fixes
+
+- d2f9461 minifier: Preserve classes with decorators (#16878) (Copilot)
+
+## [0.102.0] - 2025-12-08
+
+### 🚀 Features
+
+- d6d2bcd minifier: Remove unused function calls that are marked by `manual_pure_functions` (#16534) (sapphi-red)
+- c90f053 minfier: Support `.` separated values for `compress.treeshake.manualPureFunctions` (#16529) (sapphi-red)
+
+## [0.100.0] - 2025-12-01
+
+### 🐛 Bug Fixes
+
+- 6b54dab minifier: Incorrect non-null object condition simplification with `&&` and `||` (#16161) (sapphi-red)
+- 9cc20a1 minifier: Avoid merging side effectful expressions to next assignment statement if the side effect may change the left hand side reference (#16165) (sapphi-red)
+
+## [0.99.0] - 2025-11-24
+
+### 🐛 Bug Fixes
+
+- f386efc minifier: Avoid generating invalid spans (#15778) (sapphi-red)
+
+## [0.98.0] - 2025-11-17
+
+### 🚀 Features
+
+- 56e7e44 minifier: Disable removal of unnecessary `use strict` directives for DCE (#15691) (sapphi-red)
+- 68703b9 minifier: Rotate binary expressions to remove parentheses (#15473) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 440a977 ast: Include rest properties when using `get_binding_identifiers` (#15710) (camc314)
+
+## [0.97.0] - 2025-11-11
+
+### 🐛 Bug Fixes
+
+- 8b14ec9 minifier: Handle `{ __proto__: null } instanceof Object` correctly (#15217) (sapphi-red)
+
 ## [0.96.0] - 2025-10-30
 
 ### 🚀 Features

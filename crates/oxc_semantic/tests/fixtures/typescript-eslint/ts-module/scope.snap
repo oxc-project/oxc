@@ -7,7 +7,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/ts-module/scope
     "children": [
       {
         "children": [],
-        "flags": "ScopeFlags(StrictMode | TsModuleBlock)",
+        "flags": "ScopeFlags(TsModuleBlock)",
         "id": 1,
         "node": "TSModuleDeclaration(Foo)",
         "symbols": [
@@ -21,7 +21,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/ts-module/scope
         ]
       }
     ],
-    "flags": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(Top)",
     "id": 0,
     "node": "Program",
     "symbols": [

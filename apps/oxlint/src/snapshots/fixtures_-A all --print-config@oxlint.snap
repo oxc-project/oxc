@@ -24,7 +24,9 @@ working directory: fixtures
     },
     "react": {
       "formComponents": [],
-      "linkComponents": []
+      "linkComponents": [],
+      "version": null,
+      "componentWrapperFunctions": []
     },
     "jsdoc": {
       "ignorePrivate": false,
@@ -38,6 +40,9 @@ working directory: fixtures
     },
     "vitest": {
       "typecheck": false
+    },
+    "jest": {
+      "version": null
     }
   },
   "env": {

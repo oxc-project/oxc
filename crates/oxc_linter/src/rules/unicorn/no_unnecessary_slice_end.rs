@@ -25,13 +25,14 @@ pub struct NoUnnecessarySliceEnd;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Omitting the end argument defaults it to the object's .length.
-    /// Passing it explicitly or using Infinity is unnecessary
+    /// Disallows unnecessarily passing a second argument to `slice(...)`, for
+    /// cases where it would not change the result.
     ///
     /// ### Why is this bad?
     ///
-    /// In JavaScript, omitting the end index already causes .slice() to run to the end of the target,
-    /// so explicitly passing its length or Infinity is redundant.
+    /// When using `.slice(...)` without a second argument, the second argument
+    /// defaults to the object's length. As such, passing the length explicitly
+    /// - or using `Infinity` - is unnecessary.
     ///
     /// ### Examples
     ///
@@ -50,6 +51,8 @@ declare_oxc_lint!(
     unicorn,
     pedantic,
     fix,
+    version = "0.16.10",
+    short_description = "Disallows unnecessarily passing a second argument to `slice(...)`, for cases where it would not change the result.",
 );
 
 impl Rule for NoUnnecessarySliceEnd {
@@ -157,7 +160,6 @@ fn test() {
         ("foo.slice?.(1, foo.length)"),
         ("foo.slice()"),
         ("foo.slice(1)"),
-        ("foo.slice()"),
         ("foo.slice(1, foo.length - 1)"),
         ("foo.slice(1, foo.length, extraArgument)"),
         ("foo.slice(...[1], foo.length)"),

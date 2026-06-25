@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-unneeded-ternary): Unnecessary use of boolean literals in conditional expression
    ╭─[no_unneeded_ternary.tsx:1:9]
  1 │ var a = x === 2 ? true : false;

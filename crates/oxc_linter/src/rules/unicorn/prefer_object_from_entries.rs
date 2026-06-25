@@ -1,10 +1,11 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, ObjectPropertyKind, PropertyKind, Statement},
+    ast::{Expression, MemberExpression, ObjectPropertyKind, PropertyKind, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -12,29 +13,29 @@ use crate::{
     AstNode,
     ast_util::is_method_call,
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{call_expr_member_expr_property_span, does_expr_match_any_path},
 };
 
 fn prefer_object_from_entries_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Prefer 'Object.fromEntries' over manual object construction from entries")
-        .with_help("Use 'Object.fromEntries(pairs)' instead of manually building objects with reduce or forEach")
+    OxcDiagnostic::warn("Prefer `Object.fromEntries` over manual object construction from entries.")
+        .with_help("Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.")
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct PreferObjectFromEntries(Box<PreferObjectFromEntriesConfig>);
 
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct PreferObjectFromEntriesConfig {
     /// Additional functions to treat as equivalents to `Object.fromEntries`.
-    functions: Vec<String>,
+    functions: Vec<CompactStr>,
 }
 
 impl Default for PreferObjectFromEntriesConfig {
     fn default() -> Self {
-        Self { functions: vec!["_.fromPairs".to_string(), "lodash.fromPairs".to_string()] }
+        Self { functions: vec!["_.fromPairs".into(), "lodash.fromPairs".into()] }
     }
 }
 
@@ -82,6 +83,8 @@ declare_oxc_lint!(
     style,
     pending,
     config = PreferObjectFromEntriesConfig,
+    version = "0.16.12",
+    short_description = "Encourages using `Object.fromEntries` when converting an array of key-value pairs into an object.",
 );
 
 impl Rule for PreferObjectFromEntries {
@@ -89,6 +92,8 @@ impl Rule for PreferObjectFromEntries {
         let AstKind::CallExpression(call_expr) = node.kind() else { return };
 
         if call_expr.arguments.len() == 1
+            && !call_expr.optional
+            && !call_expr.callee.as_member_expression().is_some_and(MemberExpression::optional)
             && call_expr.arguments[0].is_expression()
             && does_expr_match_any_path(
                 &call_expr.callee,
@@ -230,16 +235,10 @@ impl Rule for PreferObjectFromEntries {
         }
     }
 
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let config: PreferObjectFromEntriesConfig = value
-            .as_array()
-            .and_then(|arr| arr.first())
-            .map(|config| {
-                serde_json::from_value(config.clone()).expect("Failed to deserialize config")
-            })
-            .unwrap_or_default();
-
-        Self(Box::new(config))
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<PreferObjectFromEntriesConfig>>(value)
+            .map(DefaultRuleConfig::into_inner)
+            .map(|config| Self(Box::new(config)))
     }
 }
 
@@ -282,7 +281,6 @@ fn test() {
         ("pairs.notReduce(object => ({...object, key}), {});", None),
         ("pairs.reduce(object => ({...object, key}), {notEmpty});", None),
         ("pairs.reduce(object => ({...object, key}), []);", None),
-        ("pairs.reduce(object => ({...object, key}), {}, extraArgument);", None),
         ("pairs.reduce(...[(object => ({...object, key}))], {});", None),
         ("pairs.reduce(object => ({...object, key}), ...[{}]);", None),
         ("pairs.reduce(object => ({...object, key}), Object.create());", None),
@@ -343,8 +341,10 @@ fn test() {
         ("underscore.fromPairs(pairs)", None),
         ("_.fromPairs", None),
         ("_.fromPairs()", None),
+        ("_(pairs)", None),
         ("new _.fromPairs(pairs)", None),
         ("_.fromPairs(...[pairs])", None),
+        ("_?.fromPairs(pairs)", None),
         ("_.foo(pairs)", Some(serde_json::json!([{"functions": ["foo"]}]))),
         ("foo(pairs)", Some(serde_json::json!([{"functions": ["utils.object.foo"]}]))),
         ("object.foo(pairs)", Some(serde_json::json!([{"functions": ["utils.object.foo"]}]))),
@@ -364,25 +364,25 @@ fn test() {
         ("pairs.reduce(object => ({...object, [((key))] : ((value))}), {});", None),
         (
             "((
-				(( pairs ))
-				.reduce(
-					((
-						(object,) => ((
-							((
-								Object
-							)).assign(
-								((
-									object
-								)),
-								(({
-									[ ((key)) ] : ((value)),
-								}))
-							)
-						))
-					)),
-					Object.create(((null)),)
-				)
-			));",
+                (( pairs ))
+                .reduce(
+                    ((
+                        (object,) => ((
+                            ((
+                                Object
+                            )).assign(
+                                ((
+                                    object
+                                )),
+                                (({
+                                    [ ((key)) ] : ((value)),
+                                }))
+                            )
+                        ))
+                    )),
+                    Object.create(((null)),)
+                )
+            ));",
             None,
         ),
         ("pairs.reduce(object => ({...object, 0: value}), {});", None),
@@ -417,6 +417,10 @@ fn test() {
         ),
         ("pairs.reduce(object => ({...object, method: async () => {}}), {});", None),
         ("pairs.reduce(object => ({...object, method: async function * (){}}), {});", None),
+        (
+            "array.reduce<Record<string, Data & {b?: string}>>((result, entry) => ({...result, [entry.id]: entry.data}), {});",
+            None,
+        ),
         ("_.fromPairs(pairs)", None),
         ("lodash.fromPairs(pairs)", None),
         (

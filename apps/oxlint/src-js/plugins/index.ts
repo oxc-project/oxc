@@ -1,4 +1,6 @@
-import { lintFile } from './lint.js';
-import { loadPlugin } from './load.js';
+// Patch `WeakMap` before any plugins are loaded
+import "./weak_map.ts";
 
-export { lintFile, loadPlugin };
+export { lintFile } from "./lint.ts";
+export { loadPlugin } from "./load.ts";
+export { setupRuleConfigs } from "./config.ts";

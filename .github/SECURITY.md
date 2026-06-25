@@ -1,7 +1,8 @@
 # Security Policy
 
-## Supported Versions
+Please refer to https://oxc.rs/docs/contribute/security.html for our established security practices.
 
-## Reporting a Vulnerability
+## Security contact information
 
-If you find any potential vulnerability, join our [discord channel](https://discord.gg/9uXCAwqQZW) and contact Boshen.
+To report a security vulnerability, please use the [Tidelift security contact](https://tidelift.com/security).
+Tidelift will coordinate the fix and disclosure.

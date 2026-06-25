@@ -1,4 +1,10 @@
-use std::{alloc::Layout, cell::Cell, hash::Hash, ptr::NonNull, slice};
+use std::{
+    alloc::Layout,
+    cell::Cell,
+    hash::{BuildHasher, Hash},
+    ptr::NonNull,
+    slice,
+};
 
 use crate::{Allocator, Box, HashMap, Vec};
 
@@ -62,11 +68,11 @@ where
     type Cloned = Box<'new_alloc, C>;
 
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        Box::new_in(self.as_ref().clone_in(allocator), allocator)
+        Box::new_in(self.as_ref().clone_in(allocator), &allocator)
     }
 
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        Box::new_in(self.as_ref().clone_in_with_semantic_ids(allocator), allocator)
+        Box::new_in(self.as_ref().clone_in_with_semantic_ids(allocator), &allocator)
     }
 }
 
@@ -167,7 +173,7 @@ where
 
         let slice = self.as_slice();
 
-        let mut vec = Vec::<C>::with_capacity_in(slice.len(), allocator);
+        let mut vec = Vec::<C>::with_capacity_in(slice.len(), &allocator);
 
         // SAFETY: We allocated capacity for `slice.len()` elements in `vec`.
         // Therefore, writing `slice.len()` elements to that memory region is safe.
@@ -188,7 +194,7 @@ where
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         let slice = self.as_slice();
 
-        let mut vec = Vec::<C>::with_capacity_in(slice.len(), allocator);
+        let mut vec = Vec::<C>::with_capacity_in(slice.len(), &allocator);
 
         // SAFETY: We allocated capacity for `slice.len()` elements in `vec`.
         // Therefore, writing `slice.len()` elements to that memory region is safe.
@@ -207,13 +213,14 @@ where
     }
 }
 
-impl<'new_alloc, K, V, CK, CV> CloneIn<'new_alloc> for HashMap<'_, K, V>
+impl<'new_alloc, K, V, CK, CV, S> CloneIn<'new_alloc> for HashMap<'_, K, V, S>
 where
     K: CloneIn<'new_alloc, Cloned = CK>,
     V: CloneIn<'new_alloc, Cloned = CV>,
     CK: Hash + Eq,
+    S: Default + BuildHasher,
 {
-    type Cloned = HashMap<'new_alloc, CK, CV>;
+    type Cloned = HashMap<'new_alloc, CK, CV, S>;
 
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         // Keys in original hash map are guaranteed to be unique.
@@ -286,11 +293,12 @@ mod test {
     #[test]
     fn clone_in_boxed_slice() {
         let allocator = Allocator::default();
+        let allocator = &allocator;
 
         let mut original = Vec::from_iter_in([1, 2, 3], &allocator).into_boxed_slice();
 
-        let cloned = original.clone_in(&allocator);
-        let cloned2 = original.clone_in_with_semantic_ids(&allocator);
+        let cloned = original.clone_in(allocator);
+        let cloned2 = original.clone_in_with_semantic_ids(allocator);
         original[1] = 4;
 
         assert_eq!(original.as_ref(), &[1, 4, 3]);
@@ -301,12 +309,13 @@ mod test {
     #[test]
     fn clone_in_vec() {
         let allocator = Allocator::default();
+        let allocator = &allocator;
 
         let mut original = Vec::with_capacity_in(8, &allocator);
         original.extend_from_slice(&[1, 2, 3]);
 
-        let cloned = original.clone_in(&allocator);
-        let cloned2 = original.clone_in_with_semantic_ids(&allocator);
+        let cloned = original.clone_in(allocator);
+        let cloned2 = original.clone_in_with_semantic_ids(allocator);
         original[1] = 4;
 
         assert_eq!(original.as_slice(), &[1, 4, 3]);
@@ -320,7 +329,7 @@ mod test {
     fn clone_in_hash_map() {
         let allocator = Allocator::default();
 
-        let mut original = HashMap::with_capacity_in(8, &allocator);
+        let mut original: HashMap<'_, &str, &str> = HashMap::with_capacity_in(8, &allocator);
         original.extend(&[("x", "xx"), ("y", "yy"), ("z", "zz")]);
 
         let cloned = original.clone_in(&allocator);

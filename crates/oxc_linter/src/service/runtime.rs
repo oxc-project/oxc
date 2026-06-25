@@ -10,27 +10,30 @@ use std::{
 
 use indexmap::IndexSet;
 use rayon::iter::ParallelDrainRange;
-use rayon::{Scope, iter::IntoParallelRefIterator, prelude::ParallelIterator};
+use rayon::{
+    Scope,
+    iter::IntoParallelRefIterator,
+    prelude::{ParallelIterator, ParallelSliceMut},
+};
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet, FxHasher};
 use self_cell::self_cell;
 use smallvec::SmallVec;
 
-use oxc_allocator::{Allocator, AllocatorGuard, AllocatorPool};
+use oxc_allocator::{Allocator, AllocatorGuard, AllocatorPool, ArenaBox};
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic};
-use oxc_parser::{ParseOptions, Parser};
+use oxc_parser::{ParseOptions, Parser, Token, config::RuntimeParserConfig};
 use oxc_resolver::Resolver;
 use oxc_semantic::{Semantic, SemanticBuilder};
-use oxc_span::{CompactStr, SourceType, VALID_EXTENSIONS};
-
-#[cfg(any(test, feature = "language_server"))]
-use crate::{Message, fixer::PossibleFixes};
+use oxc_span::{SourceType, VALID_EXTENSIONS};
+use oxc_str::CompactStr;
 
 use crate::{
-    Fixer, Linter,
-    context::ContextSubHost,
+    Fixer, Linter, Message, PossibleFixes, RuleTimingStore,
+    context::{ContextSubHost, ContextSubHostOptions},
     disable_directives::DisableDirectives,
     loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXTENSIONS, PartialLoader},
     module_record::ModuleRecord,
+    suppression::DiffManager,
     utils::read_to_arena_str,
 };
 
@@ -41,14 +44,17 @@ type ModulesByPath =
 
 pub struct Runtime {
     cwd: Box<Path>,
-    /// All paths to lint
-    paths: IndexSet<Arc<OsStr>, FxBuildHasher>,
     pub(super) linter: Linter,
     resolver: Option<Resolver>,
 
-    pub(super) file_system: Box<dyn RuntimeFileSystem + Sync + Send>,
-
+    /// Pool of allocators for parsing and linting.
     allocator_pool: AllocatorPool,
+
+    /// Separate pool of fixed-size allocators for copying AST before JS transfer.
+    /// Only created when using the copy-to-fixed-allocator approach
+    /// (both import plugin and JS plugins enabled).
+    #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+    js_allocator_pool: Option<AllocatorPool>,
 
     /// The module graph keyed by module paths. It is looked up when populating `loaded_modules`.
     /// The values are module records of sections (check the docs of `ProcessedModule.section_module_records`)
@@ -123,6 +129,9 @@ struct SectionContent<'a> {
     /// None if section parsing failed. The corresponding item with the same index in
     /// `ProcessedModule.section_module_records` would be `Err(Vec<OxcDiagnostic>)`.
     semantic: Option<Semantic<'a>>,
+    /// Parser tokens for the section.
+    /// Empty if section parsing failed, or if token collection was not requested (no JS plugins).
+    parser_tokens: ArenaBox<'a, [Token]>,
 }
 
 /// A module with its source text and semantic, ready to be linted.
@@ -160,7 +169,7 @@ pub trait RuntimeFileSystem {
     /// # Errors
     /// When no valid path is provided or the content is not valid UTF-8 Stream
     fn read_to_arena_str<'a>(
-        &'a self,
+        &self,
         path: &Path,
         allocator: &'a Allocator,
     ) -> Result<&'a str, std::io::Error>;
@@ -172,7 +181,7 @@ pub trait RuntimeFileSystem {
     fn write_file(&self, path: &Path, content: &str) -> Result<(), std::io::Error>;
 }
 
-struct OsFileSystem;
+pub struct OsFileSystem;
 
 impl RuntimeFileSystem for OsFileSystem {
     fn read_to_arena_str<'a>(
@@ -212,25 +221,43 @@ impl Runtime {
 
         let thread_count = rayon::current_num_threads();
 
-        // If an external linter is used (JS plugins), we must use fixed-size allocators,
-        // for compatibility with raw transfer
-        let allocator_pool = if linter.has_external_linter() {
-            AllocatorPool::new_fixed_size(thread_count)
+        // Create allocator pools.
+        //
+        // * If both JS plugins and import plugin enabled, use copy-to-fixed-allocator approach.
+        //   This approach is to use standard allocators for parsing/linting (lower memory usage),
+        //   and copy ASTs to a fixed-size allocator only when passing to JS plugins.
+        //
+        // * If JS plugins, but no import plugin, use fixed-size allocators for everything.
+        //   Without import plugin, there's no danger of memory exhaustion, as no more than <thread count>
+        //   ASTs are live at any given time.
+        //
+        // * If no JS plugins, use standard allocators for parsing/linting.
+        #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+        let (allocator_pool, js_allocator_pool) = if linter.has_external_linter() {
+            if options.cross_module {
+                (
+                    AllocatorPool::new(thread_count),
+                    Some(AllocatorPool::new_fixed_size(thread_count)),
+                )
+            } else {
+                (AllocatorPool::new_fixed_size(thread_count), None)
+            }
         } else {
-            AllocatorPool::new(thread_count)
+            (AllocatorPool::new(thread_count), None)
         };
 
-        let resolver = options.cross_module.then(|| {
-            Self::get_resolver(options.tsconfig.or_else(|| Some(options.cwd.join("tsconfig.json"))))
-        });
+        #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
+        let allocator_pool = AllocatorPool::new(thread_count);
+
+        let resolver = options.cross_module.then(|| Self::get_resolver(options.tsconfig));
 
         Self {
             allocator_pool,
+            #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+            js_allocator_pool,
             cwd: options.cwd,
-            paths: IndexSet::with_capacity_and_hasher(0, FxBuildHasher),
             linter,
             resolver,
-            file_system: Box::new(OsFileSystem),
             modules_by_path: papaya::HashMap::builder()
                 .hasher(BuildHasherDefault::default())
                 .resize_mode(papaya::ResizeMode::Blocking)
@@ -239,18 +266,15 @@ impl Runtime {
         }
     }
 
-    pub fn with_file_system(
-        &mut self,
-        file_system: Box<dyn RuntimeFileSystem + Sync + Send>,
-    ) -> &mut Self {
-        self.file_system = file_system;
-        self
-    }
+    /// Get [`AllocatorPool`] for copying ASTs to fixed-size allocators, if one is required.
+    fn js_allocator_pool(&self) -> Option<&AllocatorPool> {
+        #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+        let pool = self.js_allocator_pool.as_ref();
 
-    pub fn with_paths(&mut self, paths: Vec<Arc<OsStr>>) -> &mut Self {
-        self.modules_by_path.pin().reserve(paths.len());
-        self.paths = paths.into_iter().collect();
-        self
+        #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
+        let pool = None;
+
+        pool
     }
 
     pub fn set_disable_directives_map(
@@ -264,12 +288,14 @@ impl Runtime {
         use oxc_resolver::{
             ResolveOptions, TsconfigDiscovery, TsconfigOptions, TsconfigReferences,
         };
-        let tsconfig = tsconfig_path.and_then(|path| {
-            path.is_file().then_some(TsconfigDiscovery::Manual(TsconfigOptions {
+        let tsconfig = match tsconfig_path {
+            Some(path) if path.is_file() => Some(TsconfigDiscovery::Manual(TsconfigOptions {
                 config_file: path,
                 references: TsconfigReferences::Auto,
-            }))
-        });
+            })),
+            Some(_) => None, // Path provided but file doesn't exist
+            None => Some(TsconfigDiscovery::Auto),
+        };
         let extension_alias = tsconfig.as_ref().map_or_else(Vec::new, |_| {
             vec![
                 (".js".into(), vec![".js".into(), ".ts".into()]),
@@ -288,7 +314,7 @@ impl Runtime {
     }
 
     fn get_source_type_and_text<'a>(
-        &'a self,
+        file_system: &(dyn RuntimeFileSystem + Sync + Send),
         path: &Path,
         ext: &str,
         allocator: &'a Allocator,
@@ -306,7 +332,7 @@ impl Runtime {
             source_type = source_type.with_jsx(true);
         }
 
-        let file_result = self.file_system.read_to_arena_str(path, allocator).map_err(|e| {
+        let file_result = file_system.read_to_arena_str(path, allocator).map_err(|e| {
             Error::new(OxcDiagnostic::error(format!(
                 "Failed to open file {} with error \"{e}\"",
                 path.display()
@@ -320,18 +346,21 @@ impl Runtime {
 
     /// Prepare entry modules for linting.
     ///
-    /// `on_module_to_lint` is called for each entry modules in `self.paths` when it's ready for linting,
+    /// `on_module_to_lint` is called for each entry modules in `paths` when it's ready for linting,
     /// which means all its dependencies are resolved if import plugin is enabled.
     fn resolve_modules<'a>(
-        &'a mut self,
+        &'a self,
+        file_system: &'a (dyn RuntimeFileSystem + Sync + Send),
+        paths: &'a IndexSet<Arc<OsStr>, FxBuildHasher>,
         scope: &Scope<'a>,
         check_syntax_errors: bool,
         tx_error: Option<&'a DiagnosticSender>,
         on_module_to_lint: impl Fn(&'a Self, ModuleToLint) + Send + Sync + Clone + 'a,
     ) {
         if self.resolver.is_none() {
-            self.paths.par_iter().for_each(|path| {
-                let output = self.process_path(path, check_syntax_errors, tx_error);
+            paths.par_iter().for_each(|path| {
+                let output =
+                    self.process_path(file_system, paths, path, check_syntax_errors, tx_error);
                 let Some(entry) =
                     ModuleToLint::from_processed_module(output.path, output.processed_module)
                 else {
@@ -341,7 +370,7 @@ impl Runtime {
             });
             return;
         }
-        // The goal of code below is to construct the module graph bootstrapped by the entry modules (`self.paths`),
+        // The goal of code below is to construct the module graph bootstrapped by the entry modules (`paths`),
         // and call `on_entry` when all dependencies of that entry is resolved. We want to call `on_entry` for each
         // entry as soon as possible, so that the memory for source texts and semantics can be released early.
 
@@ -354,7 +383,7 @@ impl Runtime {
         // ..... (thousands of sources)
         // - src/very/deep/path/baz.js
         //
-        // All paths above are in `self.paths`. `src/index.js`, the entrypoint of the application, references
+        // All paths above are in `paths`. `src/index.js`, the entrypoint of the application, references
         // almost all the other paths as its direct or indirect dependencies.
         //
         // If we construct the module graph starting from `src/index.js`, contents (sources and semantics) of
@@ -367,10 +396,15 @@ impl Runtime {
         // deeper paths are more likely to be leaf modules  (src/very/deep/path/baz.js is likely to have
         // fewer dependencies than src/index.js).
         // This heuristic is not always true, but it works well enough for real world codebases.
-        self.paths.par_sort_unstable_by(|a, b| Path::new(b).cmp(Path::new(a)));
 
-        // The general idea is processing `self.paths` and their dependencies in groups. We start from a group of modules
-        // in `self.paths` that is small enough to hold in memory but big enough to make use of the rayon thread pool.
+        // Create a sorted copy of paths for processing
+        let mut sorted_paths: Vec<_> = paths.iter().cloned().collect();
+        // Sort by path length descending - longer paths tend to be deeper in the directory tree.
+        // This achieves the "deeper paths first" heuristic described above in O(1) per comparison.
+        sorted_paths.par_sort_unstable_by(|a, b| b.len().cmp(&a.len()));
+
+        // The general idea is processing `sorted_paths` and their dependencies in groups. We start from a group of modules
+        // in `sorted_paths` that is small enough to hold in memory but big enough to make use of the rayon thread pool.
         // We build the module graph from one group, run lint on them, drop sources and semantics but keep the module
         // graph, and then move on to the next group.
         // This size is empirical based on AFFiNE@97cc814a.
@@ -386,7 +420,7 @@ impl Runtime {
         // `encountered_paths` prevents duplicated processing.
         // It is a superset of keys of `modules_by_path` as it also contains paths that are queued to process.
         let mut encountered_paths =
-            FxHashSet::<Arc<OsStr>>::with_capacity_and_hasher(me.paths.len(), FxBuildHasher);
+            FxHashSet::<Arc<OsStr>>::with_capacity_and_hasher(sorted_paths.len(), FxBuildHasher);
 
         // Resolved module requests from modules in current group.
         // This is used to populate `loaded_modules` at the end of each group.
@@ -401,17 +435,17 @@ impl Runtime {
         // This channel is for posting `ModuleProcessOutput` from module threads to the graph thread.
         let (tx_process_output, rx_process_output) = mpsc::channel::<ModuleProcessOutput>();
 
-        // The cursor of `self.paths` that points to the start path of the next group.
+        // The cursor of `sorted_paths` that points to the start path of the next group.
         let mut group_start = 0usize;
 
         // The group loop. Each iteration of this loop processes a group of modules.
-        while group_start < me.paths.len() {
+        while group_start < sorted_paths.len() {
             // How many modules are queued but not processed in this group.
             let mut pending_module_count = 0;
 
             // Bootstrap the group by processing modules to be linted.
-            while pending_module_count < group_size && group_start < me.paths.len() {
-                let path = &me.paths[group_start];
+            while pending_module_count < group_size && group_start < sorted_paths.len() {
+                let path = &sorted_paths[group_start];
                 group_start += 1;
 
                 // Check if this module to be linted is already processed as a dependency in former groups
@@ -421,7 +455,13 @@ impl Runtime {
                     let tx_process_output = tx_process_output.clone();
                     scope.spawn(move |_| {
                         tx_process_output
-                            .send(me.process_path(&path, check_syntax_errors, tx_error))
+                            .send(me.process_path(
+                                file_system,
+                                paths,
+                                &path,
+                                check_syntax_errors,
+                                tx_error,
+                            ))
                             .unwrap();
                     });
                 }
@@ -456,6 +496,8 @@ impl Runtime {
                                 move |_| {
                                     tx_process_output
                                         .send(me.process_path(
+                                            file_system,
+                                            paths,
                                             &dep_path,
                                             check_syntax_errors,
                                             tx_error,
@@ -517,7 +559,7 @@ impl Runtime {
                     "This is an internal logic error. Please file an issue at https://github.com/oxc-project/oxc/issues",
                 );
                 for (record, requested_module_paths) in
-                    records.iter().zip(requested_module_paths.into_iter())
+                    records.iter().zip(requested_module_paths)
                 {
                     let mut loaded_modules = record.write_loaded_modules();
                     for request in requested_module_paths {
@@ -541,142 +583,353 @@ impl Runtime {
         }
     }
 
-    pub(super) fn run(&mut self, tx_error: &DiagnosticSender) {
+    pub(super) fn run<const TIMINGS: bool>(
+        &self,
+        file_system: &(dyn RuntimeFileSystem + Sync + Send),
+        paths: Vec<Arc<OsStr>>,
+        tx_error: &DiagnosticSender,
+        diff_manager: &Arc<DiffManager>,
+        rule_timing_store: Option<&RuleTimingStore>,
+    ) {
+        self.run_impl::<TIMINGS>(file_system, paths, tx_error, diff_manager, rule_timing_store);
+    }
+
+    fn run_impl<const TIMINGS: bool>(
+        &self,
+        file_system: &(dyn RuntimeFileSystem + Sync + Send),
+        paths: Vec<Arc<OsStr>>,
+        tx_error: &DiagnosticSender,
+        diff_manager: &Arc<DiffManager>,
+        rule_timing_store: Option<&RuleTimingStore>,
+    ) {
+        self.modules_by_path.pin().reserve(paths.len());
+        let paths_set: IndexSet<Arc<OsStr>, FxBuildHasher> = paths.into_iter().collect();
+
         rayon::scope(|scope| {
-            self.resolve_modules(scope, true, Some(tx_error), |me, mut module_to_lint| {
-                module_to_lint.content.with_dependent_mut(|allocator_guard, dep| {
-                    // If there are fixes, we will accumulate all of them and write to the file at the end.
-                    // This means we do not write multiple times to the same file if there are multiple sources
-                    // in the same file (for example, multiple scripts in an `.astro` file).
-                    let mut new_source_text = Cow::from(dep.source_text);
+            self.resolve_modules(
+                file_system,
+                &paths_set,
+                scope,
+                true,
+                Some(tx_error),
+                move |me, mut module_to_lint| {
+                    module_to_lint.content.with_dependent_mut(|allocator_guard, dep| {
+                        // If there are fixes, we will accumulate all of them and write to the file at the end.
+                        // This means we do not write multiple times to the same file if there are multiple sources
+                        // in the same file (for example, multiple scripts in an `.astro` file).
+                        let mut new_source_text = Cow::from(dep.source_text);
 
-                    let path = Path::new(&module_to_lint.path);
+                        let path = Path::new(&module_to_lint.path);
 
-                    assert_eq!(
-                        module_to_lint.section_module_records.len(),
-                        dep.section_contents.len()
-                    );
-
-                    let context_sub_hosts: Vec<ContextSubHost<'_>> = module_to_lint
-                        .section_module_records
-                        .into_iter()
-                        .zip(dep.section_contents.drain(..))
-                        .filter_map(|(record_result, section)| match record_result {
-                            Ok(module_record) => Some(ContextSubHost::new_with_framework_options(
-                                section.semantic.unwrap(),
-                                Arc::clone(&module_record),
-                                section.source.start,
-                                section.source.framework_options,
-                            )),
-                            Err(messages) => {
-                                if !messages.is_empty() {
-                                    let diagnostics = DiagnosticService::wrap_diagnostics(
-                                        &me.cwd,
-                                        path,
-                                        dep.source_text,
-                                        messages,
-                                    );
-                                    tx_error.send(diagnostics).unwrap();
-                                }
-                                None
-                            }
-                        })
-                        .collect();
-
-                    if context_sub_hosts.is_empty() {
-                        return;
-                    }
-
-                    let (mut messages, disable_directives) = me.linter.run_with_disable_directives(
-                        path,
-                        context_sub_hosts,
-                        allocator_guard,
-                    );
-
-                    // Store the disable directives for this file
-                    if let Some(disable_directives) = disable_directives {
-                        me.disable_directives_map
-                            .lock()
-                            .expect("disable_directives_map mutex poisoned")
-                            .insert(path.to_path_buf(), disable_directives);
-                    }
-
-                    if me.linter.options().fix.is_some() {
-                        let fix_result = Fixer::new(
-                            dep.source_text,
-                            messages,
-                            SourceType::from_path(path)
-                                .ok()
-                                .map(|st| if st.is_javascript() { st.with_jsx(true) } else { st }),
-                        )
-                        .fix();
-                        if fix_result.fixed {
-                            // write to file, replacing only the changed part
-                            let start = 0;
-                            let end = start + dep.source_text.len();
-                            new_source_text
-                                .to_mut()
-                                .replace_range(start..end, &fix_result.fixed_code);
-                        }
-                        messages = fix_result.messages;
-                    }
-
-                    if !messages.is_empty() {
-                        let errors = messages.into_iter().map(Into::into).collect();
-                        let diagnostics = DiagnosticService::wrap_diagnostics(
-                            &me.cwd,
-                            path,
-                            dep.source_text,
-                            errors,
+                        assert_eq!(
+                            module_to_lint.section_module_records.len(),
+                            dep.section_contents.len()
                         );
-                        tx_error.send(diagnostics).unwrap();
-                    }
 
-                    // If the new source text is owned, that means it was modified,
-                    // so we write the new source text to the file.
-                    if let Cow::Owned(new_source_text) = &new_source_text {
-                        me.file_system.write_file(path, new_source_text).unwrap();
-                    }
-                });
-            });
+                        let respect_eslint_disable_directives =
+                            me.linter.respect_eslint_disable_directives();
+                        let context_sub_hosts: Vec<ContextSubHost<'_>> = module_to_lint
+                            .section_module_records
+                            .into_iter()
+                            .zip(dep.section_contents.drain(..))
+                            .filter_map(|(record_result, section)| match record_result {
+                                Ok(module_record) => Some(ContextSubHost::new(
+                                    section.semantic.unwrap(),
+                                    Arc::clone(&module_record),
+                                    section.source.start,
+                                    ContextSubHostOptions {
+                                        framework_options: section.source.framework_options,
+                                        parser_tokens: section.parser_tokens,
+                                        respect_eslint_disable_directives,
+                                        ..Default::default()
+                                    },
+                                )),
+                                Err(messages) => {
+                                    if !messages.is_empty() {
+                                        let diagnostics = DiagnosticService::wrap_diagnostics(
+                                            &me.cwd,
+                                            path,
+                                            dep.source_text,
+                                            messages,
+                                        );
+                                        tx_error.send(diagnostics).unwrap();
+                                    }
+                                    None
+                                }
+                            })
+                            .collect();
+
+                        if context_sub_hosts.is_empty() {
+                            return;
+                        }
+
+                        let (mut messages, disable_directives) =
+                            me.linter.run_with_disable_directives::<TIMINGS>(
+                                path,
+                                context_sub_hosts,
+                                allocator_guard,
+                                me.js_allocator_pool(),
+                                rule_timing_store,
+                            );
+
+                        // Store the disable directives for this file
+                        if let Some(disable_directives) = disable_directives {
+                            me.disable_directives_map
+                                .lock()
+                                .expect("disable_directives_map mutex poisoned")
+                                .insert(path.to_path_buf(), disable_directives);
+                        }
+
+                        if me.linter.options().fix.is_some() {
+                            let fix_result = Fixer::new(
+                                dep.source_text,
+                                messages,
+                                SourceType::from_path(path).ok().map(|st| {
+                                    if st.is_javascript() { st.with_jsx(true) } else { st }
+                                }),
+                            )
+                            .fix();
+                            if fix_result.fixed {
+                                // write to file, replacing only the changed part
+                                let start = 0;
+                                let end = start + dep.source_text.len();
+                                new_source_text
+                                    .to_mut()
+                                    .replace_range(start..end, &fix_result.fixed_code);
+                            }
+
+                            messages = fix_result.messages;
+                        }
+
+                        if !diff_manager.skip() {
+                            messages = diff_manager.collect_file(path, &self.cwd, messages);
+                        }
+
+                        if !messages.is_empty() {
+                            let errors = messages.into_iter().map(Into::into).collect();
+                            let diagnostics = DiagnosticService::wrap_diagnostics(
+                                &me.cwd,
+                                path,
+                                dep.source_text,
+                                errors,
+                            );
+                            tx_error.send(diagnostics).unwrap();
+                        }
+
+                        // If the new source text is owned, that means it was modified,
+                        // so we write the new source text to the file.
+                        if let Cow::Owned(new_source_text) = &new_source_text
+                            && let Err(error) = file_system.write_file(path, new_source_text)
+                        {
+                            tx_error
+                                .send(vec![Error::new(OxcDiagnostic::error(format!(
+                                    "Failed to write file {} with error \"{error}\"",
+                                    path.display()
+                                )))])
+                                .unwrap();
+                        }
+                    });
+                },
+            );
         });
     }
 
     // language_server: the language server needs line and character position
     // the struct not using `oxc_diagnostic::Error, because we are just collecting information
     // and returning it to the client to let him display it.
-    #[cfg(feature = "language_server")]
-    pub(super) fn run_source(&mut self) -> Vec<Message> {
+    pub(super) fn run_source(
+        &self,
+        file_system: &(dyn RuntimeFileSystem + Sync + Send),
+        paths: Vec<Arc<OsStr>>,
+    ) -> Vec<Message> {
         use std::sync::Mutex;
+
+        self.modules_by_path.pin().reserve(paths.len());
+        let paths_set: IndexSet<Arc<OsStr>, FxBuildHasher> = paths.into_iter().collect();
 
         let messages = Mutex::new(Vec::<Message>::new());
         rayon::scope(|scope| {
-            self.resolve_modules(scope, true, None, |me, mut module_to_lint| {
-                module_to_lint.content.with_dependent_mut(
-                    |allocator_guard, ModuleContentDependent { source_text: _, section_contents }| {
-                        assert_eq!(
-                            module_to_lint.section_module_records.len(),
-                            section_contents.len()
-                        );
+            self.resolve_modules(
+                file_system,
+                &paths_set,
+                scope,
+                true,
+                None,
+                |me, mut module_to_lint| {
+                    module_to_lint.content.with_dependent_mut(
+                        |allocator_guard,
+                         ModuleContentDependent { source_text: _, section_contents }| {
+                            assert_eq!(
+                                module_to_lint.section_module_records.len(),
+                                section_contents.len()
+                            );
 
-                        let context_sub_hosts: Vec<ContextSubHost<'_>> = module_to_lint
+                            let respect_eslint_disable_directives =
+                                me.linter.respect_eslint_disable_directives();
+                            let context_sub_hosts: Vec<ContextSubHost<'_>> = module_to_lint
+                                .section_module_records
+                                .into_iter()
+                                .zip(section_contents.drain(..))
+                                .filter_map(|(record_result, section)| match record_result {
+                                    Ok(module_record) => Some(ContextSubHost::new(
+                                        section.semantic.unwrap(),
+                                        Arc::clone(&module_record),
+                                        section.source.start,
+                                        ContextSubHostOptions {
+                                            framework_options: section.source.framework_options,
+                                            parser_tokens: section.parser_tokens,
+                                            respect_eslint_disable_directives,
+                                            ..Default::default()
+                                        },
+                                    )),
+                                    Err(diagnostics) => {
+                                        if !diagnostics.is_empty() {
+                                            messages.lock().unwrap().extend(
+                                                diagnostics.into_iter().map(|diagnostic| {
+                                                    Message::new(diagnostic, PossibleFixes::None)
+                                                }),
+                                            );
+                                        }
+                                        None
+                                    }
+                                })
+                                .collect();
+
+                            if context_sub_hosts.is_empty() {
+                                return;
+                            }
+
+                            let path = Path::new(&module_to_lint.path);
+
+                            let (section_messages, disable_directives) =
+                                me.linter.run_with_disable_directives::<false>(
+                                    path,
+                                    context_sub_hosts,
+                                    allocator_guard,
+                                    me.js_allocator_pool(),
+                                    None,
+                                );
+
+                            if let Some(disable_directives) = disable_directives {
+                                me.disable_directives_map
+                                    .lock()
+                                    .expect("disable_directives_map mutex poisoned")
+                                    .insert(path.to_path_buf(), disable_directives);
+                            }
+
+                            messages.lock().unwrap().extend(section_messages);
+                        },
+                    );
+                },
+            );
+        });
+
+        messages.into_inner().unwrap()
+    }
+
+    pub(super) fn collect_parse_diagnostics(
+        &self,
+        file_system: &(dyn RuntimeFileSystem + Sync + Send),
+        paths: Vec<Arc<OsStr>>,
+        tx_error: &DiagnosticSender,
+    ) {
+        self.modules_by_path.pin().reserve(paths.len());
+        let paths_set: IndexSet<Arc<OsStr>, FxBuildHasher> = paths.into_iter().collect();
+
+        rayon::scope(|scope| {
+            self.resolve_modules(
+                file_system,
+                &paths_set,
+                scope,
+                true,
+                Some(tx_error),
+                |me, mut module_to_lint| {
+                    module_to_lint.content.with_dependent_mut(
+                        |_allocator_guard,
+                         ModuleContentDependent { source_text, section_contents }| {
+                            assert_eq!(
+                                module_to_lint.section_module_records.len(),
+                                section_contents.len()
+                            );
+
+                            for (record_result, _section) in module_to_lint
+                                .section_module_records
+                                .into_iter()
+                                .zip(section_contents.drain(..))
+                            {
+                                match record_result {
+                                    Ok(_) => {}
+                                    Err(diagnostics) => {
+                                        if !diagnostics.is_empty() {
+                                            let wrapped = DiagnosticService::wrap_diagnostics(
+                                                &me.cwd,
+                                                Path::new(&module_to_lint.path),
+                                                source_text,
+                                                diagnostics,
+                                            );
+                                            tx_error.send(wrapped).unwrap();
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                    );
+                },
+            );
+        });
+    }
+
+    #[cfg(test)]
+    pub(super) fn run_test_source(
+        &self,
+        file_system: &(dyn RuntimeFileSystem + Sync + Send),
+        paths: Vec<Arc<OsStr>>,
+        check_syntax_errors: bool,
+        tx_error: &DiagnosticSender,
+    ) -> Vec<Message> {
+        use std::sync::Mutex;
+
+        self.modules_by_path.pin().reserve(paths.len());
+        let paths_set: IndexSet<Arc<OsStr>, FxBuildHasher> = paths.into_iter().collect();
+
+        let messages = Mutex::new(Vec::<Message>::new());
+        rayon::scope(|scope| {
+            self.resolve_modules(
+                file_system,
+                &paths_set,
+                scope,
+                check_syntax_errors,
+                Some(tx_error),
+                |me, mut module| {
+                    module.content.with_dependent_mut(|allocator_guard, ModuleContentDependent {
+                        source_text: _,
+                        section_contents,
+                    }| {
+                        assert_eq!(module.section_module_records.len(), section_contents.len());
+
+                        let respect_eslint_disable_directives =
+                            me.linter.respect_eslint_disable_directives();
+                        let context_sub_hosts: Vec<ContextSubHost<'_>> = module
                             .section_module_records
                             .into_iter()
                             .zip(section_contents.drain(..))
                             .filter_map(|(record_result, section)| match record_result {
-                                Ok(module_record) => {
-                                    Some(ContextSubHost::new_with_framework_options(
-                                        section.semantic.unwrap(),
-                                        Arc::clone(&module_record),
-                                        section.source.start,
-                                        section.source.framework_options,
-                                    ))
-                                }
-                                Err(diagnostics) => {
-                                    if !diagnostics.is_empty() {
+                                Ok(module_record) => Some(ContextSubHost::new(
+                                    section.semantic.unwrap(),
+                                    Arc::clone(&module_record),
+                                    section.source.start,
+                                    ContextSubHostOptions {
+                                        framework_options: section.source.framework_options,
+                                        parser_tokens: section.parser_tokens,
+                                        respect_eslint_disable_directives,
+                                        ..Default::default()
+                                    },
+                                )),
+                                Err(errors) => {
+                                    if !errors.is_empty() {
                                         messages.lock().unwrap().extend(
-                                            diagnostics.into_iter().map(|diagnostic| {
-                                                Message::new(diagnostic, PossibleFixes::None)
+                                            errors.into_iter().map(|err| {
+                                                Message::new(err, PossibleFixes::None)
                                             }),
                                         );
                                     }
@@ -689,106 +942,38 @@ impl Runtime {
                             return;
                         }
 
-                        let path = Path::new(&module_to_lint.path);
-                        let (section_messages, disable_directives) = me
-                            .linter
-                            .run_with_disable_directives(path, context_sub_hosts, allocator_guard);
-
-                        if let Some(disable_directives) = disable_directives {
-                            me.disable_directives_map
-                                .lock()
-                                .expect("disable_directives_map mutex poisoned")
-                                .insert(path.to_path_buf(), disable_directives);
-                        }
-
                         messages.lock().unwrap().extend(
-                            section_messages
+                            me.linter.run(Path::new(&module.path), context_sub_hosts, allocator_guard),
                         );
-                    },
-                );
-            });
-        });
-
-        messages.into_inner().unwrap()
-    }
-
-    #[cfg(test)]
-    pub(super) fn run_test_source(
-        &mut self,
-        check_syntax_errors: bool,
-        tx_error: &DiagnosticSender,
-    ) -> Vec<Message> {
-        use std::sync::Mutex;
-
-        let messages = Mutex::new(Vec::<Message>::new());
-        rayon::scope(|scope| {
-            self.resolve_modules(scope, check_syntax_errors, Some(tx_error), |me, mut module| {
-                module.content.with_dependent_mut(
-                    |allocator_guard, ModuleContentDependent { source_text: _, section_contents }| {
-                        assert_eq!(module.section_module_records.len(), section_contents.len());
-
-                        let context_sub_hosts: Vec<ContextSubHost<'_>> = module
-                            .section_module_records
-                            .into_iter()
-                            .zip(section_contents.drain(..))
-                            .filter_map(|(record_result, section)| match record_result {
-                                Ok(module_record) => Some(ContextSubHost::new_with_framework_options(
-                                    section.semantic.unwrap(),
-                                    Arc::clone(&module_record),
-                                    section.source.start,
-                                    section.source.framework_options
-                                )),
-                                Err(errors) => {
-                                    if !errors.is_empty() {
-                                        messages
-                                            .lock()
-                                            .unwrap()
-                                            .extend(errors
-                                        .into_iter()
-                                        .map(|err| Message::new(err, PossibleFixes::None))
-                                    );
-                                    }
-                                    None
-                                }
-                            })
-                            .collect();
-
-                        if context_sub_hosts.is_empty() {
-                            return;
-                        }
-
-                        messages.lock().unwrap().extend(
-                            me.linter.run(
-                                Path::new(&module.path),
-                                context_sub_hosts,
-                                allocator_guard
-                            )
-                            ,
-                        );
-                    },
-                );
-            });
+                    });
+                },
+            );
         });
         messages.into_inner().unwrap()
     }
 
-    fn process_path(
-        &self,
+    fn process_path<'a>(
+        &'a self,
+        file_system: &(dyn RuntimeFileSystem + Sync + Send),
+        paths: &IndexSet<Arc<OsStr>, FxBuildHasher>,
         path: &Arc<OsStr>,
         check_syntax_errors: bool,
         tx_error: Option<&DiagnosticSender>,
-    ) -> ModuleProcessOutput<'_> {
-        let processed_module =
-            self.process_path_to_module(path, check_syntax_errors, tx_error).unwrap_or_default();
+    ) -> ModuleProcessOutput<'a> {
+        let processed_module = self
+            .process_path_to_module(file_system, paths, path, check_syntax_errors, tx_error)
+            .unwrap_or_default();
         ModuleProcessOutput { path: Arc::clone(path), processed_module }
     }
 
-    fn process_path_to_module(
-        &self,
+    fn process_path_to_module<'a>(
+        &'a self,
+        file_system: &(dyn RuntimeFileSystem + Sync + Send),
+        paths: &IndexSet<Arc<OsStr>, FxBuildHasher>,
         path: &Arc<OsStr>,
         check_syntax_errors: bool,
         tx_error: Option<&DiagnosticSender>,
-    ) -> Option<ProcessedModule<'_>> {
+    ) -> Option<ProcessedModule<'a>> {
         let ext = Path::new(path).extension().and_then(OsStr::to_str)?;
 
         if SourceType::from_path(Path::new(path))
@@ -800,14 +985,15 @@ impl Runtime {
 
         let allocator_guard = self.allocator_pool.get();
 
-        if self.paths.contains(path) {
+        if paths.contains(path) {
             let mut records =
                 SmallVec::<[Result<ResolvedModuleRecord, Vec<OxcDiagnostic>>; 1]>::new();
 
             let module_content = ModuleContent::try_new(allocator_guard, |allocator_guard| {
                 let allocator = &**allocator_guard;
 
-                let Some(stt) = self.get_source_type_and_text(Path::new(path), ext, allocator)
+                let Some(stt) =
+                    Self::get_source_type_and_text(file_system, Path::new(path), ext, allocator)
                 else {
                     return Err(());
                 };
@@ -841,7 +1027,7 @@ impl Runtime {
         } else {
             let allocator = &*allocator_guard;
 
-            let stt = self.get_source_type_and_text(Path::new(path), ext, allocator)?;
+            let stt = Self::get_source_type_and_text(file_system, Path::new(path), ext, allocator)?;
 
             let (source_type, source_text) = match stt {
                 Ok(v) => v,
@@ -892,12 +1078,13 @@ impl Runtime {
                 section_source.source_type,
                 check_syntax_errors,
             ) {
-                Ok((record, semantic)) => {
+                Ok((record, semantic, parser_tokens)) => {
                     section_module_records.push(Ok(record));
                     if let Some(sections) = &mut out_sections {
                         sections.push(SectionContent {
                             source: section_source,
                             semantic: Some(semantic),
+                            parser_tokens,
                         });
                     }
                 }
@@ -905,12 +1092,8 @@ impl Runtime {
                     let err: Vec<OxcDiagnostic> = err
                         .into_iter()
                         .map(|mut diagnostic| {
-                            if let Some(labels) = &mut diagnostic.labels {
-                                for label in labels.iter_mut() {
-                                    label.set_span_offset(
-                                        label.offset() + section_source.start as usize,
-                                    );
-                                }
+                            for label in &mut diagnostic.labels {
+                                label.set_span_offset(label.offset() + section_source.start);
                             }
                             diagnostic
                         })
@@ -918,7 +1101,11 @@ impl Runtime {
 
                     section_module_records.push(Err(err));
                     if let Some(sections) = &mut out_sections {
-                        sections.push(SectionContent { source: section_source, semantic: None });
+                        sections.push(SectionContent {
+                            source: section_source,
+                            semantic: None,
+                            parser_tokens: ArenaBox::new_empty_boxed_slice(),
+                        });
                     }
                 }
             }
@@ -926,6 +1113,7 @@ impl Runtime {
         section_module_records
     }
 
+    #[expect(clippy::type_complexity)]
     fn process_source_section<'a>(
         &self,
         path: &Path,
@@ -933,27 +1121,28 @@ impl Runtime {
         source_text: &'a str,
         source_type: SourceType,
         check_syntax_errors: bool,
-    ) -> Result<(ResolvedModuleRecord, Semantic<'a>), Vec<OxcDiagnostic>> {
+    ) -> Result<(ResolvedModuleRecord, Semantic<'a>, ArenaBox<'a, [Token]>), Vec<OxcDiagnostic>>
+    {
+        let collect_tokens = self.linter.has_external_linter();
         let ret = Parser::new(allocator, source_text, source_type)
             .with_options(ParseOptions {
                 parse_regular_expression: true,
                 allow_return_outside_function: true,
                 ..ParseOptions::default()
             })
+            .with_config(RuntimeParserConfig::new(collect_tokens))
             .parse();
 
-        if !ret.errors.is_empty() {
-            return Err(if ret.is_flow_language { vec![] } else { ret.errors });
+        if !ret.diagnostics.is_empty() {
+            return Err(if ret.is_flow_language { vec![] } else { ret.diagnostics.into() });
         }
 
-        let semantic_ret = SemanticBuilder::new()
-            .with_cfg(true)
-            .with_scope_tree_child_ids(true)
+        let semantic_ret = SemanticBuilder::new_linter()
             .with_check_syntax_error(check_syntax_errors)
             .build(allocator.alloc(ret.program));
 
-        if !semantic_ret.errors.is_empty() {
-            return Err(semantic_ret.errors);
+        if !semantic_ret.diagnostics.is_empty() {
+            return Err(semantic_ret.diagnostics.into());
         }
 
         let mut semantic = semantic_ret.semantic;
@@ -961,17 +1150,18 @@ impl Runtime {
 
         let module_record = Arc::new(ModuleRecord::new(path, &ret.module_record, &semantic));
 
+        let tokens = ret.tokens.into_boxed_slice();
+
         let mut resolved_module_requests: Vec<ResolvedModuleRequest> = vec![];
 
         // If import plugin is enabled.
         if let Some(resolver) = &self.resolver {
             // Retrieve all dependent modules from this module.
-            let dir = path.parent().unwrap();
             resolved_module_requests = module_record
                 .requested_modules
                 .keys()
                 .filter_map(|specifier| {
-                    let resolution = resolver.resolve(dir, specifier).ok()?;
+                    let resolution = resolver.resolve_file(path, specifier).ok()?;
                     Some(ResolvedModuleRequest {
                         specifier: specifier.clone(),
                         resolved_requested_path: Arc::<OsStr>::from(resolution.path().as_os_str()),
@@ -979,6 +1169,6 @@ impl Runtime {
                 })
                 .collect();
         }
-        Ok((ResolvedModuleRecord { module_record, resolved_module_requests }, semantic))
+        Ok((ResolvedModuleRecord { module_record, resolved_module_requests }, semantic, tokens))
     }
 }

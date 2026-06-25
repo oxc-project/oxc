@@ -15,7 +15,7 @@ use crate::{
 
 fn iframe_has_title_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing `title` attribute for the `iframe` element.")
-        .with_help("Provide title property for iframe element.")
+        .with_help("Provide `title` property for `iframe` element.")
         .with_label(span)
 }
 
@@ -56,7 +56,9 @@ declare_oxc_lint!(
     /// ```
     IframeHasTitle,
     jsx_a11y,
-    correctness
+    correctness,
+    version = "0.0.19",
+    short_description = "Enforce iframe elements have a title attribute.",
 );
 
 impl Rule for IframeHasTitle {
@@ -76,32 +78,35 @@ impl Rule for IframeHasTitle {
         };
 
         match get_prop_value(alt_prop) {
-            Some(JSXAttributeValue::StringLiteral(str)) => {
-                if !str.value.as_str().is_empty() {
-                    return;
-                }
+            Some(JSXAttributeValue::StringLiteral(str)) if !str.value.as_str().is_empty() => {
+                return;
             }
             Some(JSXAttributeValue::ExpressionContainer(container)) => {
                 match &container.expression {
-                    JSXExpression::StringLiteral(str) => {
-                        if !str.value.is_empty() {
-                            return;
-                        }
+                    JSXExpression::StringLiteral(str) if !str.value.is_empty() => {
+                        return;
                     }
-                    JSXExpression::TemplateLiteral(tmpl) => {
-                        if !tmpl.quasis.is_empty()
-                            & !tmpl.expressions.is_empty()
-                            & tmpl.quasis.iter().any(|q| !q.value.raw.as_str().is_empty())
-                        {
-                            return;
-                        }
+                    JSXExpression::TemplateLiteral(tmpl)
+                        if (!tmpl.quasis.is_empty()
+                            && tmpl.quasis.iter().any(|q| !q.value.raw.as_str().is_empty()))
+                            || !tmpl.expressions.is_empty() =>
+                    {
+                        return;
                     }
-                    JSXExpression::CallExpression(_) => return,
-                    expr @ JSXExpression::Identifier(_) => {
-                        if !expr.is_undefined() {
-                            return;
-                        }
+                    expr @ JSXExpression::Identifier(_) if !expr.is_undefined() => {
+                        return;
                     }
+                    // These expressions are considered valid
+                    // (e.g., titleGenerator('hello'), file.name, obj.prop, obj['key'],
+                    //  a ? b : c, i18n`title`, new Title())
+                    JSXExpression::CallExpression(_)
+                    | JSXExpression::StaticMemberExpression(_)
+                    | JSXExpression::ComputedMemberExpression(_)
+                    | JSXExpression::PrivateFieldExpression(_)
+                    | JSXExpression::LogicalExpression(_)
+                    | JSXExpression::ConditionalExpression(_)
+                    | JSXExpression::TaggedTemplateExpression(_)
+                    | JSXExpression::NewExpression(_) => return,
                     _ => {}
                 }
             }
@@ -121,8 +126,20 @@ fn test() {
         (r"<div />;", None, None),
         (r"<iframe title='Unique title' />", None, None),
         (r"<iframe title={foo} />", None, None),
+        (r"<iframe title={`Title`} />", None, None),
+        (r"<iframe title={`${title}`} />", None, None),
         (r"<FooComponent />", None, None),
         (r"<iframe title={titleGenerator('hello')} />", None, None),
+        // Member expression tests
+        (r"<iframe title={file.name} />", None, None),
+        (r"<iframe title={obj.prop.name} />", None, None),
+        (r"<iframe title={obj['prop']} />", None, None),
+        // Other expression tests
+        (r"<iframe title={a ?? b} />", None, None),
+        (r"<iframe title={a && b} />", None, None),
+        (r"<iframe title={a ? b : c} />", None, None),
+        (r"<iframe title={i18n`title`} />", None, None),
+        (r"<iframe title={new Title()} />", None, None),
         // CUSTOM ELEMENT TESTS FOR COMPONENTS SETTINGS
         (
             r"<FooComponent title='Unique title' />",
@@ -162,7 +179,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(IframeHasTitle::NAME, IframeHasTitle::PLUGIN, pass, fail)
-        .with_jsx_a11y_plugin(true)
-        .test_and_snapshot();
+    Tester::new(IframeHasTitle::NAME, IframeHasTitle::PLUGIN, pass, fail).test_and_snapshot();
 }

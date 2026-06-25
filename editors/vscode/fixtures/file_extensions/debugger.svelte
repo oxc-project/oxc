@@ -1,3 +1,0 @@
-<script>
-debugger;
-</script>

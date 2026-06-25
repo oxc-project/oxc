@@ -9,8 +9,8 @@ use crate::{
 };
 
 fn require_property_description_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Missing description in @property tag.")
-        .with_help("Add a description to this @property tag.")
+    OxcDiagnostic::warn("Missing description in `@property` tag.")
+        .with_help("Add a description to this `@property` tag.")
         .with_label(span)
 }
 
@@ -45,7 +45,9 @@ declare_oxc_lint!(
     /// ```
     RequirePropertyDescription,
     jsdoc,
-    correctness
+    correctness,
+    version = "0.2.18",
+    short_description = "Requires that all `@property` tags have descriptions.",
 );
 
 impl Rule for RequirePropertyDescription {

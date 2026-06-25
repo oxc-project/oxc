@@ -1,6 +1,6 @@
 //! [Reporters](DiagnosticReporter) for rendering and writing diagnostics.
 
-use miette::SourceSpan;
+use miette::{SourceSpan, SpanContents};
 
 use crate::{Error, Severity};
 
@@ -11,7 +11,7 @@ use crate::{Error, Severity};
 /// receive diagnostics.
 ///
 /// ## Example
-/// ```
+/// ```rust,ignore
 /// use oxc_diagnostics::{DiagnosticReporter, Error, Severity};
 ///
 /// #[derive(Default)]
@@ -46,6 +46,15 @@ pub trait DiagnosticReporter {
     /// While this method _should_ only ever be called a single time, this is not a guarantee
     /// upheld in Oxc's API. Do not rely on this behavior.
     fn finish(&mut self, result: &DiagnosticResult) -> Option<String>;
+
+    /// Whether [`DiagnosticService`](crate::service::DiagnosticService) should replace very long
+    /// rendered lines with the synthetic "minified file" warning.
+    ///
+    /// Human-readable reporters generally want this behavior to avoid dumping unreadable output.
+    /// Machine-readable or intentionally single-line reporters should disable it.
+    fn supports_minified_file_fallback(&self) -> bool {
+        true
+    }
 
     /// Render a diagnostic into this reporter's desired format. For example, a JSONLinesReporter
     /// might return a stringified JSON object on a single line. Returns [`None`] to skip reporting
@@ -116,9 +125,8 @@ impl Info {
         let mut severity = Severity::Warning;
         let rule_id = diagnostic.code().map(|code| code.to_string());
 
-        if let Some(mut labels) = diagnostic.labels()
-            && let Some(source) = diagnostic.source_code()
-            && let Some(label) = labels.next()
+        if let Some(source) = diagnostic.source_code()
+            && let Some(label) = diagnostic.labels().first()
             && let Ok(span_content) = source.read_span(label.inner(), 0, 0)
         {
             start.line = span_content.line() + 1;
@@ -139,15 +147,6 @@ impl Info {
             }
 
             message = diagnostic.to_string();
-            // Our messages usually are in format `eslint(rule): message`.
-            // Trim off before the colon.
-            if let Some((_, msg)) = message.split_once(':') {
-                // Equivalent to `message = msg.trim().to_string()`, but operates in place
-                let msg = msg.trim();
-                let start = msg.as_ptr() as usize - message.as_str().as_ptr() as usize;
-                message.truncate(start + msg.len());
-                message.replace_range(..start, "");
-            }
         }
 
         Self { start, end, filename, message, severity, rule_id }

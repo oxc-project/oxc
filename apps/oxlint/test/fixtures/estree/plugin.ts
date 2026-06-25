@@ -1,10 +1,12 @@
-import assert from 'node:assert';
+// oxlint-disable typescript/restrict-template-expressions
 
-import type { Plugin } from '../../../dist/index.js';
+import assert from "node:assert";
+
+import type { Plugin } from "#oxlint/plugins";
 
 const plugin: Plugin = {
   meta: {
-    name: 'estree-check',
+    name: "estree-check",
   },
   rules: {
     check: {
@@ -16,7 +18,8 @@ const plugin: Plugin = {
         return {
           Program(program) {
             context.report({
-              message: 'program:\n' +
+              message:
+                "program:\n" +
                 `start/end: [${program.start},${program.end}]\n` +
                 `range: [${program.range}]\n` +
                 `loc: [${JSON.stringify(program.loc)}]`,
@@ -27,12 +30,12 @@ const plugin: Plugin = {
           VariableDeclaration(decl) {
             visits.push(`${decl.type}: ${decl.kind}`);
           },
-          'VariableDeclaration:exit'(decl) {
+          "VariableDeclaration:exit"(decl) {
             visits.push(`${decl.type}:exit: ${decl.kind}`);
           },
           VariableDeclarator(decl) {
             // `init` should not be `ParenthesizedExpression`
-            visits.push(`${decl.type}: (init: ${decl.init.type})`);
+            visits.push(`${decl.type}: (init: ${decl.init?.type})`);
           },
           Identifier(ident) {
             // Check `loc` property returns same object each time it's accessed
@@ -40,8 +43,13 @@ const plugin: Plugin = {
             const loc2 = ident.loc;
             assert(loc2 === loc);
 
+            // Check node can be converted to a string without an error
+            // oxlint-disable-next-line typescript/no-base-to-string
+            assert.equal(`${ident}`, "[object Object]");
+
             context.report({
-              message: `ident "${ident.name}":\n` +
+              message:
+                `ident "${ident.name}":\n` +
                 `start/end: [${ident.start},${ident.end}]\n` +
                 `range: [${ident.range}]\n` +
                 `loc: [${JSON.stringify(loc)}]`,
@@ -67,7 +75,7 @@ const plugin: Plugin = {
             // `typeAnnotation` should not be `TSParenthesizedType`
             visits.push(`${decl.type}: (typeAnnotation: ${decl.typeAnnotation.type})`);
           },
-          'TSTypeAliasDeclaration:exit'(decl) {
+          "TSTypeAliasDeclaration:exit"(decl) {
             // `typeAnnotation` should not be `TSParenthesizedType`
             visits.push(`${decl.type}:exit: (typeAnnotation: ${decl.typeAnnotation.type})`);
           },
@@ -80,19 +88,21 @@ const plugin: Plugin = {
           },
           TSUnionType(union) {
             // `types` should not be `TSParenthesizedType`
-            visits.push(`${union.type}: (types: ${union.types.map(t => t.type).join(', ')})`);
+            visits.push(`${union.type}: (types: ${union.types.map((t) => t.type).join(", ")})`);
           },
-          'TSUnionType:exit'(union) {
+          "TSUnionType:exit"(union) {
             // `types` should not be `TSParenthesizedType`
-            visits.push(`${union.type}:exit: (types: ${union.types.map(t => t.type).join(', ')})`);
+            visits.push(
+              `${union.type}:exit: (types: ${union.types.map((t) => t.type).join(", ")})`,
+            );
           },
           TSNumberKeyword(keyword) {
             visits.push(keyword.type);
           },
-          'Program:exit'(program) {
+          "Program:exit"(program) {
             visits.push(`${program.type}:exit`);
             context.report({
-              message: `Visited nodes:\n* ${visits.join('\n* ')}`,
+              message: `Visited nodes:\n* ${visits.join("\n* ")}`,
               node: program,
             });
           },

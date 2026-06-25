@@ -1,12 +1,14 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, ops::Deref};
 
-use oxc_span::{SourceType, Span};
-use oxc_syntax::identifier::is_identifier_name;
 use unicode_width::UnicodeWidthStr;
 
+use oxc_formatter_core::{arena_cow_str, spec::normalize_string};
+use oxc_span::SourceType;
+use oxc_syntax::identifier::is_identifier_name_patched;
+
 use crate::{
-    FormatOptions, QuoteProperties, QuoteStyle,
-    formatter::{Format, FormatResult, Formatter, prelude::*},
+    QuoteProperties, QuoteStyle,
+    formatter::{Format, JsFormatter, prelude::*},
 };
 
 #[derive(Eq, PartialEq, Debug, Clone, Copy)]
@@ -23,12 +25,10 @@ pub enum StringLiteralParentKind {
 }
 
 /// Data structure of convenience to format string literals
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct FormatLiteralStringToken<'a> {
     /// The current string
     string: &'a str,
-
-    span: Span,
 
     jsx: bool,
 
@@ -37,40 +37,42 @@ pub struct FormatLiteralStringToken<'a> {
 }
 
 impl<'a> FormatLiteralStringToken<'a> {
-    pub fn new(
-        string: &'a str,
-        span: Span,
-        jsx: bool,
-        parent_kind: StringLiteralParentKind,
-    ) -> Self {
-        Self { string, span, jsx, parent_kind }
+    pub fn new(string: &'a str, jsx: bool, parent_kind: StringLiteralParentKind) -> Self {
+        Self { string, jsx, parent_kind }
     }
 
-    pub fn clean_text(
-        &self,
-        source_type: SourceType,
-        options: &FormatOptions,
-    ) -> CleanedStringLiteralText<'a> {
+    pub fn clean_text(&self, f: &JsFormatter<'_, 'a>) -> CleanedStringLiteralText<'a> {
+        let options = f.options();
+        let source_type = f.context().source_type();
+
         let chosen_quote_style =
             if self.jsx { options.jsx_quote_style } else { options.quote_style };
-        let chosen_quote_properties = options.quote_properties;
 
-        let mut string_cleaner =
-            LiteralStringNormalizer::new(*self, chosen_quote_style, chosen_quote_properties);
+        let is_quote_needed = match options.quote_properties {
+            QuoteProperties::AsNeeded => false,
+            QuoteProperties::Preserve => true,
+            QuoteProperties::Consistent => f.context().is_quote_needed(),
+        };
+
+        let string_cleaner =
+            LiteralStringNormalizer::new(*self, chosen_quote_style, is_quote_needed);
 
         let content = string_cleaner.normalize_text(source_type);
 
-        CleanedStringLiteralText { string: self.string, text: content }
-    }
-
-    fn raw_content(&self) -> &'a str {
-        &self.string[1..self.string.len() - 1]
+        CleanedStringLiteralText { text: content }
     }
 }
 
 pub struct CleanedStringLiteralText<'a> {
-    string: &'a str,
     text: Cow<'a, str>,
+}
+
+impl Deref for CleanedStringLiteralText<'_> {
+    type Target = str;
+
+    fn deref(&self) -> &Self::Target {
+        &self.text
+    }
 }
 
 impl CleanedStringLiteralText<'_> {
@@ -79,9 +81,12 @@ impl CleanedStringLiteralText<'_> {
     }
 }
 
-impl<'a> Format<'a> for CleanedStringLiteralText<'a> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        text(f.context().allocator().alloc_str(&self.text)).fmt(f)
+impl<'a> Format<'a, JsFormatContext<'a>> for CleanedStringLiteralText<'a> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        // In the common case the literal needs no normalization, so `text` borrows a slice of the
+        // source (`Cow::Borrowed`) which already outlives the buffer; pass it straight through and
+        // only copy into the arena for the owned (normalized) case.
+        text(arena_cow_str(&self.text, f)).fmt(f);
     }
 }
 
@@ -182,20 +187,25 @@ struct LiteralStringNormalizer<'a> {
     token: FormatLiteralStringToken<'a>,
     /// The quote that was set inside the configuration
     chosen_quote_style: QuoteStyle,
-    /// When properties in objects are quoted that was set inside the configuration
-    chosen_quote_properties: QuoteProperties,
+    /// State whether we need to print the quotes or not.
+    is_quote_needed: bool,
 }
 
 impl<'a> LiteralStringNormalizer<'a> {
     pub fn new(
         token: FormatLiteralStringToken<'a>,
         chosen_quote_style: QuoteStyle,
-        chosen_quote_properties: QuoteProperties,
+        is_quote_needed: bool,
     ) -> Self {
-        Self { token, chosen_quote_style, chosen_quote_properties }
+        Self { token, chosen_quote_style, is_quote_needed }
     }
 
-    fn normalize_text(&mut self, source_type: SourceType) -> Cow<'a, str> {
+    fn normalize_text(&self, source_type: SourceType) -> Cow<'a, str> {
+        // Handle JSX attribute strings specially - they use HTML entity escaping
+        if self.token.jsx && self.token.parent_kind == StringLiteralParentKind::Expression {
+            return self.normalize_jsx_attribute();
+        }
+
         let str_info = self.token.compute_string_information(self.chosen_quote_style);
         match self.token.parent_kind {
             StringLiteralParentKind::Expression => self.normalize_string_literal(str_info),
@@ -205,22 +215,46 @@ impl<'a> LiteralStringNormalizer<'a> {
         }
     }
 
-    fn normalize_import_attribute(
-        &mut self,
-        string_information: StringInformation,
-    ) -> Cow<'a, str> {
+    /// Normalizes a JSX attribute string value using HTML entity escaping.
+    fn normalize_jsx_attribute(&self) -> Cow<'a, str> {
+        let raw_content = self.raw_content();
+        let current_quote =
+            self.token.string.bytes().next().and_then(QuoteStyle::from_byte).unwrap_or_default();
+
+        let (normalized, chosen_quote) = normalize_jsx_string(raw_content, self.chosen_quote_style);
+
+        let quote_char = chosen_quote.as_char();
+
+        match normalized {
+            Cow::Borrowed(s) if s == raw_content && current_quote == chosen_quote => {
+                // No changes needed, return original
+                normalize_newlines(self.token.string, ['\r'])
+            }
+            Cow::Borrowed(s) => {
+                // Content unchanged but quotes need swapping
+                let normalized_newlines = normalize_newlines(s, ['\r']);
+                Cow::Owned(std::format!("{quote_char}{normalized_newlines}{quote_char}"))
+            }
+            Cow::Owned(s) => {
+                // Content changed
+                let normalized_newlines = normalize_newlines(&s, ['\r']);
+                Cow::Owned(std::format!("{quote_char}{normalized_newlines}{quote_char}"))
+            }
+        }
+    }
+
+    fn normalize_import_attribute(&self, string_information: StringInformation) -> Cow<'a, str> {
         let quoteless = self.raw_content();
-        let can_remove_quotes =
-            !self.is_preserve_quote_properties() && is_identifier_name(quoteless);
+        let can_remove_quotes = !self.is_quote_needed && is_identifier_name_patched(quoteless);
         if can_remove_quotes {
-            Cow::Owned(quoteless.to_string())
+            Cow::Borrowed(quoteless)
         } else {
             self.normalize_string_literal(string_information)
         }
     }
 
-    fn normalize_directive(&mut self, string_information: StringInformation) -> Cow<'a, str> {
-        // In diretcives, unnecessary escapes should be preserved.
+    fn normalize_directive(&self, string_information: StringInformation) -> Cow<'a, str> {
+        // In directives, unnecessary escapes should be preserved.
         // See https://github.com/prettier/prettier/issues/1555
         // Thus we don't normalize the string.
         //
@@ -229,15 +263,28 @@ impl<'a> LiteralStringNormalizer<'a> {
         //
         // Note that we could change the quotes if the preferred quote is escaped.
         // However, Prettier doesn't go that far.
-        if string_information.raw_content_has_quotes {
-            Cow::Borrowed(self.token.string)
-        } else {
-            self.swap_quotes(self.raw_content(), string_information)
+        let normalized = normalize_newlines(self.raw_content(), ['\r']);
+        match normalized {
+            Cow::Borrowed(string) => {
+                if string_information.raw_content_has_quotes {
+                    Cow::Borrowed(self.token.string)
+                } else {
+                    self.swap_quotes(string, string_information)
+                }
+            }
+            Cow::Owned(string) => {
+                let mut s = String::with_capacity(string.len() + 2);
+                let quote = if string_information.raw_content_has_quotes {
+                    string_information.current_quote.as_char()
+                } else {
+                    string_information.preferred_quote.as_char()
+                };
+                s.push(quote);
+                s.push_str(&string);
+                s.push(quote);
+                Cow::Owned(s)
+            }
         }
-    }
-
-    fn is_preserve_quote_properties(&self) -> bool {
-        self.chosen_quote_properties == QuoteProperties::Preserve
     }
 
     fn can_remove_number_quotes_by_file_type(&self, source_type: SourceType) -> bool {
@@ -261,16 +308,16 @@ impl<'a> LiteralStringNormalizer<'a> {
     }
 
     fn normalize_type_member(
-        &mut self,
+        &self,
         string_information: StringInformation,
         source_type: SourceType,
     ) -> Cow<'a, str> {
         let quoteless = self.raw_content();
-        let can_remove_quotes = !self.is_preserve_quote_properties()
+        let can_remove_quotes = !self.is_quote_needed
             && (self.can_remove_number_quotes_by_file_type(source_type)
-                || is_identifier_name(quoteless));
+                || is_identifier_name_patched(quoteless));
         if can_remove_quotes {
-            Cow::Owned(quoteless.to_string())
+            Cow::Borrowed(quoteless)
         } else {
             self.normalize_string_literal(string_information)
         }
@@ -280,7 +327,7 @@ impl<'a> LiteralStringNormalizer<'a> {
         let preferred_quote = string_information.preferred_quote;
         let polished_raw_content = normalize_string(
             self.raw_content(),
-            string_information.preferred_quote,
+            string_information.preferred_quote.as_byte(),
             string_information.current_quote != string_information.preferred_quote,
         );
 
@@ -309,89 +356,138 @@ impl<'a> LiteralStringNormalizer<'a> {
         if original.starts_with(preferred_quote) {
             Cow::Borrowed(original)
         } else {
-            Cow::Owned(std::format!("{preferred_quote}{content_to_use}{preferred_quote}",))
+            Cow::Owned(std::format!("{preferred_quote}{content_to_use}{preferred_quote}"))
         }
     }
 }
 
-impl<'a> Format<'a> for FormatLiteralStringToken<'a> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.clean_text(f.context().source_type(), f.options()).fmt(f)
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatLiteralStringToken<'a> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        self.clean_text(f).fmt(f);
     }
 }
 
-/// This function is responsible of:
+/// Counts actual single and double quotes in JSX attribute content,
+/// accounting for HTML entities `&apos;` and `&quot;`.
+fn count_jsx_quotes(raw_content: &str) -> (u32, u32) {
+    let mut single_count = 0u32;
+    let mut double_count = 0u32;
+    let mut i = 0;
+    let bytes = raw_content.as_bytes();
+
+    while i < bytes.len() {
+        if bytes[i] == b'\'' {
+            single_count += 1;
+            i += 1;
+        } else if bytes[i] == b'"' {
+            double_count += 1;
+            i += 1;
+        } else if bytes[i] == b'&' {
+            // Check for HTML entities
+            if raw_content[i..].starts_with("&apos;") {
+                single_count += 1;
+                i += 6; // len of "&apos;"
+            } else if raw_content[i..].starts_with("&quot;") {
+                double_count += 1;
+                i += 6; // len of "&quot;"
+            } else {
+                i += 1;
+            }
+        } else {
+            i += 1;
+        }
+    }
+
+    (single_count, double_count)
+}
+
+/// Normalizes a JSX attribute string value using HTML entity escaping.
 ///
-/// - escaping `preferred_quote`
-/// - unescape alternate quotes of `preferred_quote` if `quotes_will_change`
-/// - normalize the new lines by replacing `\r\n` with `\n`.
+/// Algorithm (matching Prettier):
+/// 1. Unescape `&apos;` → `'` and `&quot;` → `"`
+/// 2. Count quotes to pick the style that minimizes escaping
+/// 3. Escape only the chosen quote type using HTML entities
 ///
-/// The function allocates a new string only if at least one change is performed.
-///
-/// In the following example `"` is escaped and the newline is normalized.
-///
-/// ```
-/// use biome_formatter::token::string::{normalize_string, Quote};
-/// assert_eq!(
-///     normalize_string(" \"He\\llo\\tworld\" \\' \\' \r\n ", Quote::Double, true),
-///     " \\\"He\\llo\\tworld\\\" ' ' \n ",
-/// );
-/// ```
-pub fn normalize_string(
+/// Returns the normalized content (without quotes) and the chosen quote style.
+fn normalize_jsx_string(
     raw_content: &str,
     preferred_quote: QuoteStyle,
-    quotes_will_change: bool,
-) -> Cow<'_, str> {
-    let alternate_quote = preferred_quote.other().as_byte();
-    let preferred_quote = preferred_quote.as_byte();
-    let mut reduced_string = String::new();
-    let mut copy_start = 0;
-    let mut bytes = raw_content.bytes().enumerate();
-    while let Some((byte_index, byte)) = bytes.next() {
-        match byte {
-            // If the next character is escaped
-            b'\\' => {
-                if let Some((escaped_index, escaped)) = bytes.next() {
-                    if escaped == b'\r' {
-                        // If we encounter the sequence "\r\n", then skip '\r'
-                        if let Some((next_byte_index, b'\n')) = bytes.next() {
-                            reduced_string.push_str(&raw_content[copy_start..escaped_index]);
-                            copy_start = next_byte_index;
-                        }
-                    } else if quotes_will_change && escaped == alternate_quote {
-                        // Unescape alternate quotes if quotes are changing
-                        reduced_string.push_str(&raw_content[copy_start..byte_index]);
-                        copy_start = escaped_index;
-                    }
+) -> (Cow<'_, str>, QuoteStyle) {
+    // Count quotes (accounting for HTML entities)
+    let (single_count, double_count) = count_jsx_quotes(raw_content);
+
+    // Choose quote that minimizes escaping, preferring the configured quote when counts are equal
+    let chosen_quote = if preferred_quote == QuoteStyle::Double {
+        if double_count > single_count { QuoteStyle::Single } else { QuoteStyle::Double }
+    } else if single_count > double_count {
+        QuoteStyle::Double
+    } else {
+        QuoteStyle::Single
+    };
+
+    // Fast path: check if any HTML entities or quotes that need escaping exist
+    let has_apos_entity = raw_content.contains("&apos;");
+    let has_quot_entity = raw_content.contains("&quot;");
+    let has_raw_single = raw_content.as_bytes().contains(&b'\'');
+    let has_raw_double = raw_content.as_bytes().contains(&b'"');
+
+    let needs_unescape = has_apos_entity || has_quot_entity;
+    let needs_escape = match chosen_quote {
+        QuoteStyle::Double => has_raw_double,
+        QuoteStyle::Single => has_raw_single,
+    };
+
+    // Fast path: no changes needed
+    if !needs_unescape && !needs_escape {
+        return (Cow::Borrowed(raw_content), chosen_quote);
+    }
+
+    // Slow path: allocate and transform
+    // First unescape HTML entities, then escape the chosen quote type
+    let mut result = String::with_capacity(raw_content.len());
+    let mut chars = raw_content.char_indices();
+
+    while let Some((i, ch)) = chars.next() {
+        if ch == '&' {
+            if raw_content[i..].starts_with("&apos;") {
+                // Unescape &apos; to '
+                if chosen_quote == QuoteStyle::Single {
+                    // Need to keep it escaped
+                    result.push_str("&apos;");
+                } else {
+                    result.push('\'');
                 }
-            }
-            // If we encounter the sequence "\r\n", then skip '\r'
-            b'\r' => {
-                if let Some((next_byte_index, b'\n')) = bytes.next() {
-                    reduced_string.push_str(&raw_content[copy_start..byte_index]);
-                    copy_start = next_byte_index;
+                // Skip the remaining 5 chars of "&apos;" (we already consumed '&')
+                for _ in 0..5 {
+                    chars.next();
                 }
-            }
-            _ => {
-                // If we encounter a preferred quote and it's not escaped, we have to replace it with
-                // an escaped version.
-                // This is done because of how the enclosed strings can change.
-                // Check `computed_preferred_quote` for more details.
-                if byte == preferred_quote {
-                    reduced_string.push_str(&raw_content[copy_start..byte_index]);
-                    reduced_string.push('\\');
-                    copy_start = byte_index;
+            } else if raw_content[i..].starts_with("&quot;") {
+                // Unescape &quot; to "
+                if chosen_quote == QuoteStyle::Double {
+                    // Need to keep it escaped
+                    result.push_str("&quot;");
+                } else {
+                    result.push('"');
                 }
+                // Skip the remaining 5 chars of "&quot;" (we already consumed '&')
+                for _ in 0..5 {
+                    chars.next();
+                }
+            } else {
+                result.push('&');
             }
+        } else if ch == '\'' && chosen_quote == QuoteStyle::Single {
+            // Escape raw single quote
+            result.push_str("&apos;");
+        } else if ch == '"' && chosen_quote == QuoteStyle::Double {
+            // Escape raw double quote
+            result.push_str("&quot;");
+        } else {
+            result.push(ch);
         }
     }
-    if copy_start == 0 && reduced_string.is_empty() {
-        Cow::Borrowed(raw_content)
-    } else {
-        // Copy the remaining characters
-        reduced_string.push_str(&raw_content[copy_start..]);
-        Cow::Owned(reduced_string)
-    }
+
+    (Cow::Owned(result), chosen_quote)
 }
 
 #[cfg(test)]
@@ -400,32 +496,149 @@ mod tests {
 
     #[test]
     fn normalize_newline() {
-        assert_eq!(normalize_string("a\nb", QuoteStyle::Double, true), "a\nb");
-        assert_eq!(normalize_string("a\r\nb", QuoteStyle::Double, true), "a\nb");
-        assert_eq!(normalize_string("a\\\r\nb", QuoteStyle::Double, true), "a\\\nb");
+        // \n unchanged
+        assert_eq!(normalize_string("a\nb", b'"', true), "a\nb");
+        // \r\n -> \n
+        assert_eq!(normalize_string("a\r\nb", b'"', true), "a\nb");
+        // \r -> \n (single CR)
+        assert_eq!(normalize_string("a\rb", b'"', true), "a\nb");
+        assert_eq!(normalize_string("a\r", b'"', true), "a\n");
+        assert_eq!(normalize_string("\rb", b'"', true), "\nb");
+        // escaped \r\n -> escaped \n
+        assert_eq!(normalize_string("a\\\r\nb", b'"', true), "a\\\nb");
+        // escaped \r -> escaped \n (single CR)
+        assert_eq!(normalize_string("a\\\rb", b'"', true), "a\\\nb");
     }
 
     #[test]
     fn normalize_escapes() {
-        assert_eq!(normalize_string("\\", QuoteStyle::Double, true), "\\");
-        assert_eq!(normalize_string("\\t", QuoteStyle::Double, true), "\\t");
-        assert_eq!(normalize_string("\\\u{2028}", QuoteStyle::Double, true), "\\\u{2028}");
-        assert_eq!(normalize_string("\\\u{2029}", QuoteStyle::Double, true), "\\\u{2029}");
+        assert_eq!(normalize_string("\\", b'"', true), "\\");
+        assert_eq!(normalize_string("\\t", b'"', true), "\\t");
+        assert_eq!(normalize_string("\\\u{2028}", b'"', true), "\\\u{2028}");
+        assert_eq!(normalize_string("\\\u{2029}", b'"', true), "\\\u{2029}");
 
-        assert_eq!(normalize_string(r"a\a", QuoteStyle::Double, true), r"a\a");
-        assert_eq!(normalize_string(r"👍\👍", QuoteStyle::Single, true), r"👍\👍");
-        assert_eq!(normalize_string("\\\u{2027}", QuoteStyle::Double, true), "\\\u{2027}");
-        assert_eq!(normalize_string("\\\u{2030}", QuoteStyle::Double, true), "\\\u{2030}");
+        assert_eq!(normalize_string(r"a\a", b'"', true), r"a\a");
+        assert_eq!(normalize_string(r"👍\👍", b'\'', true), r"👍\👍");
+        assert_eq!(normalize_string("\\\u{2027}", b'"', true), "\\\u{2027}");
+        assert_eq!(normalize_string("\\\u{2030}", b'"', true), "\\\u{2030}");
     }
 
     #[test]
     fn normalize_quotes() {
-        assert_eq!(normalize_string("\"", QuoteStyle::Double, true), "\\\"");
-        assert_eq!(normalize_string(r"\'", QuoteStyle::Double, true), r"'");
+        assert_eq!(normalize_string("\"", b'"', true), "\\\"");
+        assert_eq!(normalize_string(r"\'", b'"', true), r"'");
 
-        assert_eq!(normalize_string(r"\'", QuoteStyle::Double, false), r"\'");
-        assert_eq!(normalize_string("\"", QuoteStyle::Single, false), "\"");
-        assert_eq!(normalize_string("\\'", QuoteStyle::Single, false), "\\'");
-        assert_eq!(normalize_string("\\\"", QuoteStyle::Single, false), "\\\"");
+        assert_eq!(normalize_string(r"\'", b'"', false), r"\'");
+        assert_eq!(normalize_string("\"", b'\'', false), "\"");
+        assert_eq!(normalize_string("\\'", b'\'', false), "\\'");
+        assert_eq!(normalize_string("\\\"", b'\'', false), "\\\"");
+    }
+
+    #[test]
+    fn jsx_count_quotes() {
+        // Raw quotes
+        assert_eq!(count_jsx_quotes("'"), (1, 0));
+        assert_eq!(count_jsx_quotes("\""), (0, 1));
+        assert_eq!(count_jsx_quotes("' \""), (1, 1));
+
+        // HTML entities
+        assert_eq!(count_jsx_quotes("&apos;"), (1, 0));
+        assert_eq!(count_jsx_quotes("&quot;"), (0, 1));
+        assert_eq!(count_jsx_quotes("&apos; &quot;"), (1, 1));
+
+        // Mixed
+        assert_eq!(count_jsx_quotes("' &apos;"), (2, 0));
+        assert_eq!(count_jsx_quotes("\" &quot;"), (0, 2));
+
+        // No quotes
+        assert_eq!(count_jsx_quotes("foo"), (0, 0));
+        assert_eq!(count_jsx_quotes("&amp;"), (0, 0));
+    }
+
+    #[test]
+    fn jsx_normalize_no_changes() {
+        // No quotes, no entities - should return borrowed
+        let (result, quote) = normalize_jsx_string("foo", QuoteStyle::Double);
+        assert!(matches!(result, Cow::Borrowed(_)));
+        assert_eq!(result, "foo");
+        assert_eq!(quote, QuoteStyle::Double);
+    }
+
+    #[test]
+    fn jsx_normalize_unescape_entities() {
+        // &apos; should be unescaped when using double quotes
+        let (result, quote) = normalize_jsx_string("&apos;", QuoteStyle::Double);
+        assert_eq!(result, "'");
+        assert_eq!(quote, QuoteStyle::Double);
+
+        // &quot; should be unescaped when using single quotes
+        let (result, quote) = normalize_jsx_string("&quot;", QuoteStyle::Single);
+        assert_eq!(result, "\"");
+        assert_eq!(quote, QuoteStyle::Single);
+    }
+
+    #[test]
+    fn jsx_normalize_escape_raw_quotes() {
+        // Raw ' with single quote preference -> switches to double quotes to avoid escaping
+        let (result, quote) = normalize_jsx_string("'", QuoteStyle::Single);
+        assert_eq!(result, "'");
+        assert_eq!(quote, QuoteStyle::Double);
+
+        // Raw " with double quote preference -> switches to single quotes to avoid escaping
+        let (result, quote) = normalize_jsx_string("\"", QuoteStyle::Double);
+        assert_eq!(result, "\"");
+        assert_eq!(quote, QuoteStyle::Single);
+
+        // When both quotes are present and counts are equal, use preferred and escape
+        // ' " with single preferred -> use single, escape the '
+        let (result, quote) = normalize_jsx_string("' \"", QuoteStyle::Single);
+        assert_eq!(result, "&apos; \"");
+        assert_eq!(quote, QuoteStyle::Single);
+
+        // ' " with double preferred -> use double, escape the "
+        let (result, quote) = normalize_jsx_string("' \"", QuoteStyle::Double);
+        assert_eq!(result, "' &quot;");
+        assert_eq!(quote, QuoteStyle::Double);
+    }
+
+    #[test]
+    fn jsx_normalize_prefer_less_escaping() {
+        // When preferred is double but double quotes are more common, switch to single
+        // Input: ' " " -> 1 single, 2 double
+        let (result, quote) = normalize_jsx_string("' \" \"", QuoteStyle::Double);
+        assert_eq!(quote, QuoteStyle::Single);
+        assert_eq!(result, "&apos; \" \"");
+
+        // When preferred is single but single quotes are more common, switch to double
+        // Input: ' ' " -> 2 single, 1 double
+        let (result, quote) = normalize_jsx_string("' ' \"", QuoteStyle::Single);
+        assert_eq!(quote, QuoteStyle::Double);
+        assert_eq!(result, "' ' &quot;");
+    }
+
+    #[test]
+    fn jsx_normalize_with_entities_and_raw() {
+        // &apos; " -> 1 single, 1 double - prefer double quotes
+        let (result, quote) = normalize_jsx_string("&apos; \"", QuoteStyle::Double);
+        assert_eq!(quote, QuoteStyle::Double);
+        assert_eq!(result, "' &quot;");
+
+        // ' &quot; -> 1 single, 1 double - prefer single quotes
+        let (result, quote) = normalize_jsx_string("' &quot;", QuoteStyle::Single);
+        assert_eq!(quote, QuoteStyle::Single);
+        assert_eq!(result, "&apos; \"");
+    }
+
+    #[test]
+    fn jsx_normalize_other_entities_preserved() {
+        // &amp; and other entities should be preserved
+        let (result, quote) = normalize_jsx_string("&amp;", QuoteStyle::Double);
+        assert_eq!(result, "&amp;");
+        assert_eq!(quote, QuoteStyle::Double);
+
+        // Mixed entities
+        let (result, quote) = normalize_jsx_string("&apos;&amp;&quot;", QuoteStyle::Double);
+        assert_eq!(quote, QuoteStyle::Double);
+        assert_eq!(result, "'&amp;&quot;");
     }
 }

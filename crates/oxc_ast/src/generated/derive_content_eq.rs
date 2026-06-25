@@ -689,6 +689,7 @@ impl ContentEq for Statement<'_> {
             (Self::TSInterfaceDeclaration(a), Self::TSInterfaceDeclaration(b)) => a.content_eq(b),
             (Self::TSEnumDeclaration(a), Self::TSEnumDeclaration(b)) => a.content_eq(b),
             (Self::TSModuleDeclaration(a), Self::TSModuleDeclaration(b)) => a.content_eq(b),
+            (Self::TSGlobalDeclaration(a), Self::TSGlobalDeclaration(b)) => a.content_eq(b),
             (Self::TSImportEqualsDeclaration(a), Self::TSImportEqualsDeclaration(b)) => {
                 a.content_eq(b)
             }
@@ -736,6 +737,7 @@ impl ContentEq for Declaration<'_> {
             (Self::TSInterfaceDeclaration(a), Self::TSInterfaceDeclaration(b)) => a.content_eq(b),
             (Self::TSEnumDeclaration(a), Self::TSEnumDeclaration(b)) => a.content_eq(b),
             (Self::TSModuleDeclaration(a), Self::TSModuleDeclaration(b)) => a.content_eq(b),
+            (Self::TSGlobalDeclaration(a), Self::TSGlobalDeclaration(b)) => a.content_eq(b),
             (Self::TSImportEqualsDeclaration(a), Self::TSImportEqualsDeclaration(b)) => {
                 a.content_eq(b)
             }
@@ -762,6 +764,7 @@ impl ContentEq for VariableDeclarator<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.kind, &other.kind)
             && ContentEq::content_eq(&self.id, &other.id)
+            && ContentEq::content_eq(&self.type_annotation, &other.type_annotation)
             && ContentEq::content_eq(&self.init, &other.init)
             && ContentEq::content_eq(&self.definite, &other.definite)
     }
@@ -978,6 +981,7 @@ impl ContentEq for CatchClause<'_> {
 impl ContentEq for CatchParameter<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.pattern, &other.pattern)
+            && ContentEq::content_eq(&self.type_annotation, &other.type_annotation)
     }
 }
 
@@ -988,14 +992,6 @@ impl ContentEq for DebuggerStatement {
 }
 
 impl ContentEq for BindingPattern<'_> {
-    fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.kind, &other.kind)
-            && ContentEq::content_eq(&self.type_annotation, &other.type_annotation)
-            && ContentEq::content_eq(&self.optional, &other.optional)
-    }
-}
-
-impl ContentEq for BindingPatternKind<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         match (self, other) {
             (Self::BindingIdentifier(a), Self::BindingIdentifier(b)) => a.content_eq(b),
@@ -1078,6 +1074,9 @@ impl ContentEq for FormalParameter<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.decorators, &other.decorators)
             && ContentEq::content_eq(&self.pattern, &other.pattern)
+            && ContentEq::content_eq(&self.type_annotation, &other.type_annotation)
+            && ContentEq::content_eq(&self.initializer, &other.initializer)
+            && ContentEq::content_eq(&self.optional, &other.optional)
             && ContentEq::content_eq(&self.accessibility, &other.accessibility)
             && ContentEq::content_eq(&self.readonly, &other.readonly)
             && ContentEq::content_eq(&self.r#override, &other.r#override)
@@ -1087,6 +1086,14 @@ impl ContentEq for FormalParameter<'_> {
 impl ContentEq for FormalParameterKind {
     fn content_eq(&self, other: &Self) -> bool {
         self == other
+    }
+}
+
+impl ContentEq for FormalParameterRest<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.decorators, &other.decorators)
+            && ContentEq::content_eq(&self.rest, &other.rest)
+            && ContentEq::content_eq(&self.type_annotation, &other.type_annotation)
     }
 }
 
@@ -2280,6 +2287,13 @@ impl ContentEq for TSModuleDeclarationBody<'_> {
     }
 }
 
+impl ContentEq for TSGlobalDeclaration<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.body, &other.body)
+            && ContentEq::content_eq(&self.declare, &other.declare)
+    }
+}
+
 impl ContentEq for TSModuleBlock<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.directives, &other.directives)
@@ -2320,7 +2334,7 @@ impl ContentEq for TSTypeQueryExprName<'_> {
 
 impl ContentEq for TSImportType<'_> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.argument, &other.argument)
+        ContentEq::content_eq(&self.source, &other.source)
             && ContentEq::content_eq(&self.options, &other.options)
             && ContentEq::content_eq(&self.qualifier, &other.qualifier)
             && ContentEq::content_eq(&self.type_arguments, &other.type_arguments)
@@ -2364,7 +2378,8 @@ impl ContentEq for TSConstructorType<'_> {
 
 impl ContentEq for TSMappedType<'_> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.type_parameter, &other.type_parameter)
+        ContentEq::content_eq(&self.key, &other.key)
+            && ContentEq::content_eq(&self.constraint, &other.constraint)
             && ContentEq::content_eq(&self.name_type, &other.name_type)
             && ContentEq::content_eq(&self.type_annotation, &other.type_annotation)
             && ContentEq::content_eq(&self.optional, &other.optional)
@@ -2420,7 +2435,6 @@ impl ContentEq for TSModuleReference<'_> {
             (Self::ExternalModuleReference(a), Self::ExternalModuleReference(b)) => a.content_eq(b),
             (Self::IdentifierReference(a), Self::IdentifierReference(b)) => a.content_eq(b),
             (Self::QualifiedName(a), Self::QualifiedName(b)) => a.content_eq(b),
-            (Self::ThisExpression(a), Self::ThisExpression(b)) => a.content_eq(b),
             _ => false,
         }
     }

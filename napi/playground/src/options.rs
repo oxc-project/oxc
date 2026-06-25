@@ -2,6 +2,10 @@ use napi::Either;
 use napi_derive::napi;
 use rustc_hash::FxHashMap;
 
+/// A single group item in the sort imports `groups` configuration.
+/// Matches oxfmtrc format: `string | string[] | { newlinesBetween: boolean }`
+pub type SortGroupItem = Either<String, Either<Vec<String>, OxcNewlinesBetweenMarker>>;
+
 #[napi(object)]
 #[derive(Default)]
 pub struct OxcOptions {
@@ -57,6 +61,8 @@ pub struct OxcTransformerOptions {
     pub use_define_for_class_fields: bool,
     pub experimental_decorators: bool,
     pub emit_decorator_metadata: bool,
+    pub optimize_enums: bool,
+    pub optimize_const_enums: bool,
 }
 
 #[napi(object)]
@@ -128,7 +134,7 @@ pub struct OxcFormatterOptions {
     pub single_quote: Option<bool>,
     /// Use single quotes in JSX (default: false)
     pub jsx_single_quote: Option<bool>,
-    /// When to add quotes around object properties: "as-needed" | "preserve" (default: "as-needed")
+    /// When to add quotes around object properties: "as-needed" | "consistent" | "preserve" (default: "as-needed")
     pub quote_props: Option<String>,
     /// Print trailing commas: "all" | "es5" | "none" (default: "all")
     pub trailing_comma: Option<String>,
@@ -144,10 +150,8 @@ pub struct OxcFormatterOptions {
     pub object_wrap: Option<String>,
     /// Put each attribute on its own line (default: false)
     pub single_attribute_per_line: Option<bool>,
-    /// Operator position: "start" | "end" (default: "end")
-    pub experimental_operator_position: Option<String>,
-    /// Sort imports configuration
-    pub experimental_sort_imports: Option<OxcSortImportsOptions>,
+    /// Sort imports configuration (default: None)
+    pub sort_imports: Option<OxcSortImportsOptions>,
 }
 
 #[napi(object)]
@@ -165,4 +169,32 @@ pub struct OxcSortImportsOptions {
     pub ignore_case: Option<bool>,
     /// Add newlines between import groups (default: true)
     pub newlines_between: Option<bool>,
+    /// Pattern prefixes for internal imports
+    pub internal_pattern: Option<Vec<String>>,
+    /// Groups configuration matching oxfmtrc format.
+    /// Each element can be a single group name string, an array of group names,
+    /// or a `{ newlinesBetween: bool }` marker object.
+    #[napi(ts_type = "Array<string | string[] | { newlinesBetween: boolean }> | undefined")]
+    pub groups: Option<Vec<SortGroupItem>>,
+    /// User-defined custom group definitions
+    pub custom_groups: Option<Vec<OxcCustomGroupDefinition>>,
+}
+
+#[napi(object)]
+#[derive(Default, Clone)]
+pub struct OxcNewlinesBetweenMarker {
+    pub newlines_between: Option<bool>,
+}
+
+#[napi(object)]
+#[derive(Default, Clone)]
+pub struct OxcCustomGroupDefinition {
+    /// The identifier used in groups representing this custom group
+    pub group_name: Option<String>,
+    /// List of glob patterns to match import sources
+    pub element_name_pattern: Option<Vec<String>>,
+    /// Import selector filter (e.g. "type", "external", "builtin")
+    pub selector: Option<String>,
+    /// Import modifier filters - all must match
+    pub modifiers: Option<Vec<String>>,
 }

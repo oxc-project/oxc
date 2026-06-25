@@ -1,58 +1,16 @@
-use oxc_ast::{
-    AstKind,
-    ast::{Argument, CallExpression, Expression},
-};
-use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
 
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{
-        KnownMemberExpressionParentKind, PossibleJestNode, is_equality_matcher,
-        parse_expect_jest_fn_call,
-    },
+    rules::shared::prefer_to_contain::{DOCUMENTATION, run},
+    utils::PossibleJestNode,
 };
-
-fn use_to_contain(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Suggest using `toContain()`.").with_label(span)
-}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferToContain;
 
-declare_oxc_lint!(
-    /// ### What it does
-    ///
-    /// In order to have a better failure message, `toContain()` should be used upon
-    /// asserting expectations on an array containing an object.
-    ///
-    /// ### Why is this bad?
-    ///
-    /// TThis rule triggers a warning if `toBe()`, `toEqual()` or `toStrictEqual()` is
-    /// used to assert object inclusion in an array
-    ///
-    /// ### Examples
-    ///
-    /// Examples of **incorrect** code for this rule:
-    /// ```javascript
-    /// expect(a.includes(b)).toBe(true);
-    /// expect(a.includes(b)).not.toBe(true);
-    /// expect(a.includes(b)).toBe(false);
-    /// expect(a.includes(b)).toEqual(true);
-    /// expect(a.includes(b)).toStrictEqual(true);
-    /// ```
-    ///
-    /// Examples of **correct** code for this rule:
-    /// ```javascript
-    /// expect(a).toContain(b);
-    /// expect(a).not.toContain(b);
-    /// ```
-    PreferToContain,
-    jest,
-    style,
-);
+declare_oxc_lint!(PreferToContain, jest, style, fix, docs = DOCUMENTATION, version = "0.2.14",);
 
 impl Rule for PreferToContain {
     fn run_on_jest_node<'a, 'c>(
@@ -60,83 +18,7 @@ impl Rule for PreferToContain {
         jest_node: &PossibleJestNode<'a, 'c>,
         ctx: &'c LintContext<'a>,
     ) {
-        Self::run(jest_node, ctx);
-    }
-}
-
-impl PreferToContain {
-    fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
-        let node = possible_jest_node.node;
-        let AstKind::CallExpression(call_expr) = node.kind() else {
-            return;
-        };
-        let Some(jest_expect_fn_call) =
-            parse_expect_jest_fn_call(call_expr, possible_jest_node, ctx)
-        else {
-            return;
-        };
-        let Some(parent) = jest_expect_fn_call.head.parent else {
-            return;
-        };
-        let Some(matcher) = jest_expect_fn_call.matcher() else {
-            return;
-        };
-
-        if !matches!(
-            jest_expect_fn_call.head.parent_kind.unwrap(),
-            KnownMemberExpressionParentKind::Call
-        ) || jest_expect_fn_call.args.is_empty()
-        {
-            return;
-        }
-
-        let Some(jest_expect_first_arg) =
-            jest_expect_fn_call.args.first().and_then(Argument::as_expression)
-        else {
-            return;
-        };
-        let Expression::CallExpression(expect_call_expr) = parent else {
-            return;
-        };
-
-        // handle "expect()"
-        if expect_call_expr.arguments.is_empty()
-            || !matches!(
-                jest_expect_first_arg.get_inner_expression(),
-                Expression::BooleanLiteral(_)
-            )
-        {
-            return;
-        }
-
-        let Some(first_argument) = expect_call_expr.arguments.first() else {
-            return;
-        };
-        let Argument::CallExpression(includes_call_expr) = first_argument else {
-            return;
-        };
-
-        if !is_equality_matcher(matcher)
-            || !Self::is_fixable_includes_call_expression(includes_call_expr)
-        {
-            return;
-        }
-
-        ctx.diagnostic(use_to_contain(matcher.span));
-    }
-
-    fn is_fixable_includes_call_expression(call_expr: &CallExpression) -> bool {
-        let Some(mem_expr) = call_expr.callee.as_member_expression() else {
-            return false;
-        };
-
-        mem_expr.static_property_name() == Some("includes")
-            // handle "expect(a.includes())"
-            && !call_expr.arguments.is_empty()
-            // handle "expect(a.includes(b,c))"
-            && call_expr.arguments.len() == 1
-            // handle "expect(a.includes(...[]))"
-            && call_expr.arguments[0].is_expression()
+        run(jest_node, ctx);
     }
 }
 
@@ -223,7 +105,100 @@ fn tests() {
         ("expect(a.includes(b)).toEqual(false as boolean);", None),
     ];
 
+    #[expect(clippy::literal_string_with_formatting_args)]
+    let fix = vec![
+        ("expect(a.includes(b)).toEqual(true);", "expect(a).toContain(b);", None),
+        ("expect(a.includes(b,),).toEqual(true,)", "expect(a).toContain(b)", None),
+        ("expect(a['includes'](b)).toEqual(true);", "expect(a).toContain(b);", None),
+        ("expect(a['includes'](b))['toEqual'](true);", "expect(a).toContain(b);", None),
+        ("expect(a['includes'](b)).toEqual(false);", "expect(a).not.toContain(b);", None),
+        ("expect(a['includes'](b)).not.toEqual(false);", "expect(a).toContain(b);", None),
+        ("expect(a['includes'](b))['not'].toEqual(false);", "expect(a).toContain(b);", None),
+        ("expect(a['includes'](b))['not']['toEqual'](false);", "expect(a).toContain(b);", None),
+        ("expect(a.includes(b)).toEqual(false);", "expect(a).not.toContain(b);", None),
+        ("expect(a.includes(b)).not.toEqual(false);", "expect(a).toContain(b);", None),
+        ("expect(a.includes(b)).not.toEqual(true);", "expect(a).not.toContain(b);", None),
+        ("expect(a.includes(b)).toBe(true);", "expect(a).toContain(b);", None),
+        ("expect(a.includes(b)).toBe(false);", "expect(a).not.toContain(b);", None),
+        ("expect(a.includes(b)).not.toBe(false);", "expect(a).toContain(b);", None),
+        ("expect(a.includes(b)).not.toBe(true);", "expect(a).not.toContain(b);", None),
+        ("expect(a.includes(b)).toStrictEqual(true);", "expect(a).toContain(b);", None),
+        ("expect(a.includes(b)).toStrictEqual(false);", "expect(a).not.toContain(b);", None),
+        ("expect(a.includes(b)).not.toStrictEqual(false);", "expect(a).toContain(b);", None),
+        ("expect(a.includes(b)).not.toStrictEqual(true);", "expect(a).not.toContain(b);", None),
+        (
+            "expect(a.test(t).includes(b.test(p))).toEqual(true);",
+            "expect(a.test(t)).toContain(b.test(p));",
+            None,
+        ),
+        (
+            "expect(a.test(t).includes(b.test(p))).toEqual(false);",
+            "expect(a.test(t)).not.toContain(b.test(p));",
+            None,
+        ),
+        (
+            "expect(a.test(t).includes(b.test(p))).not.toEqual(true);",
+            "expect(a.test(t)).not.toContain(b.test(p));",
+            None,
+        ),
+        (
+            "expect(a.test(t).includes(b.test(p))).not.toEqual(false);",
+            "expect(a.test(t)).toContain(b.test(p));",
+            None,
+        ),
+        // Diff with eslint: The default print_expression add a space between key and value, and before and after curly braces, values
+        (
+            "expect([{a:1}].includes({a:1})).toBe(true);",
+            "expect([{ a: 1 }]).toContain({ a: 1 });",
+            None,
+        ),
+        (
+            "expect([{a:1}].includes({a:1})).toBe(false);",
+            "expect([{ a: 1 }]).not.toContain({ a: 1 });",
+            None,
+        ),
+        (
+            "expect([{a:1}].includes({a:1})).not.toBe(true);",
+            "expect([{ a: 1 }]).not.toContain({ a: 1 });",
+            None,
+        ),
+        (
+            "expect([{a:1}].includes({a:1})).not.toBe(false);",
+            "expect([{ a: 1 }]).toContain({ a: 1 });",
+            None,
+        ),
+        (
+            "expect([{a:1}].includes({a:1})).toStrictEqual(true);",
+            "expect([{ a: 1 }]).toContain({ a: 1 });",
+            None,
+        ),
+        (
+            "expect([{a:1}].includes({a:1})).toStrictEqual(false);",
+            "expect([{ a: 1 }]).not.toContain({ a: 1 });",
+            None,
+        ),
+        (
+            "expect([{a:1}].includes({a:1})).not.toStrictEqual(true);",
+            "expect([{ a: 1 }]).not.toContain({ a: 1 });",
+            None,
+        ),
+        (
+            "expect([{a:1}].includes({a:1})).not.toStrictEqual(false);",
+            "expect([{ a: 1 }]).toContain({ a: 1 });",
+            None,
+        ),
+        (
+            "import { expect as pleaseExpect } from '@jest/globals';
+			pleaseExpect([{a:1}].includes({a:1})).not.toStrictEqual(false);",
+            "import { expect as pleaseExpect } from '@jest/globals';
+			pleaseExpect([{ a: 1 }]).toContain({ a: 1 });",
+            None,
+        ),
+        ("expect(a.includes(b)).toEqual(false as boolean);", "expect(a).not.toContain(b);", None),
+    ];
+
     Tester::new(PreferToContain::NAME, PreferToContain::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .with_jest_plugin(true)
         .test_and_snapshot();
 }

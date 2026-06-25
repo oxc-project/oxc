@@ -1,0 +1,15 @@
+[
+  { "args": ["--check", "src/*.js"] },
+  { "args": ["--check", "**/*.js", "!util.js"] },
+  { "args": ["--check", "src/{a,b}.js"] },
+  { "args": ["--check", "src/{a}.js"] },
+  { "args": ["--check", "src/c.ts", "src/*.js"] },
+  { "args": ["--check", "src/a.js", "src/*.js"] },
+  { "args": ["--check", "src/{d}.js"] },
+  {
+    "args": ["--check", "**/*.js"],
+    "gitignore": {
+      ".gitignore": "lib/\n"
+    }
+  }
+]

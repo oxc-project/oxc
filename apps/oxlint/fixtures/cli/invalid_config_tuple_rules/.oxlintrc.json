@@ -1,0 +1,13 @@
+{
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    // Invalid config, "asc" and "desc" are the only valid values for the first config option.
+    "eslint/sort-keys": ["error", "foo", { "allowLineSeparatedGroups": true }],
+    // Invalid config, exceptRange should be a boolean.
+    "eslint/yoda": ["error", "never", { "exceptRange": 123 }],
+    // Invalid config, second option should be an object.
+    "eslint/eqeqeq": ["error", "always", "foo"]
+  }
+}

@@ -13,14 +13,20 @@ use oxc_syntax::operator::AssignmentOperator;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_self_assign_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("this expression is assigned to itself").with_label(span)
+    OxcDiagnostic::warn("this expression is assigned to itself")
+        .with_help("Remove the self-assignment or assign to a different variable.")
+        .with_label(span)
 }
 
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoSelfAssign {
     /// The `props` option when set to `false`, disables the checking of properties.
     ///
@@ -95,18 +101,14 @@ declare_oxc_lint!(
     NoSelfAssign,
     eslint,
     correctness,
-    config = NoSelfAssign
+    config = NoSelfAssign,
+    version = "0.0.5",
+    short_description = "Disallow assignments where both sides are exactly the same.",
 );
 
 impl Rule for NoSelfAssign {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        Self {
-            props: value
-                .get(0)
-                .and_then(|v| v.get("props"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(true),
-        }
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -419,8 +421,7 @@ fn test() {
         ("a['b'] = a['b']", Some(serde_json::json!([{ "props": true }]))),
         ("a[\n    'b'\n] = a[\n    'b'\n]", Some(serde_json::json!([{ "props": true }]))),
         ("this.x = this.x", Some(serde_json::json!([{ "props": true }]))),
-        // TODO: <https://github.com/eslint/eslint/blob/eb3d7946e1e9f70254008744dba2397aaa730114/lib/rules/utils/ast-utils.js#L362>
-        // ("a['/(?<zero>0)/'] = a[/(?<zero>0)/]", Some(serde_json::json!([{ "props": true }]))),
+        ("a['/(?<zero>0)/'] = a[/(?<zero>0)/]", Some(serde_json::json!([{ "props": true }]))),
         ("(a?.b).c = (a?.b).c", None),
         ("a.b = a?.b", None),
         ("class C { #field; foo() { this.#field = this.#field; } }", None),

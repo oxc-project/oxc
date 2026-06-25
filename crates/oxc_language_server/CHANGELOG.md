@@ -4,6 +4,93 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.40.0] - 2026-01-19
+
+### 🐛 Bug Fixes
+
+- 2a397f8 oxlint/lsp: Don't send `workspace/diagnostic/refresh` notification on watched file changes (#17885) (Sysix)
+
+## [1.39.0] - 2026-01-12
+
+### 🐛 Bug Fixes
+
+- 49cf66e lsp: Fix workspace worker selection for nested and similar-named workspaces (#17853) (Copilot)
+
+## [1.36.0] - 2025-12-29
+
+### 🚀 Features
+
+- 220e8e8 oxlint/lsp: Support `textDocument/diagnostic` (#17209) (Sysix)
+
+### 🐛 Bug Fixes
+
+- 786a505 lsp: Fmt.configPath empty string handling (#17425) (copilot-swe-agent)
+- 97aef58 language_server: Treat empty string config path as None in language server (#17415) (copilot-swe-agent)
+- b7e8bca lsp: Do not sent de-registrations for watched files on shutdown request (#17318) (Sysix)
+- c6690d1 rust: Remove unsupported tokio io-std feature for WASM compatibility (#17311) (Boshen)
+
+## [1.33.0] - 2025-12-15
+
+### ⚡ Performance
+
+- 5eb8b14 lsp: Avoid one clone in code actions request (#16543) (Sysix)
+
+## [1.32.0] - 2025-12-08
+
+### 🐛 Bug Fixes
+
+- 0c14531 oxlint/lsp: Revalidate all known files after internal restart (#16407) (Sysix)
+- 5fd3096 lsp: Skip (un)registering file watcher when not dynamic watchers are supported (#16406) (Sysix)
+- 804144f lsp: Respect `null` as invalid settings for `workspace/didChangeConfiguration` (#16361) (Sysix)
+- 114665d lsp: Watch for files when workspace folder is added & `workspace/configuration` is not supported (#16307) (Sysix)
+
+### ⚡ Performance
+
+- 67cfa58 lsp: Avoid some clones (#16519) (Sysix)
+- 2a09665 oxlint/lsp: Store only `LinterCodeAction` instead of the complete `DiagnosticReport` (#16516) (Sysix)
+- 0ca9754 lsp: Avoid `Uri` to `String` and back to `Uri` conversion (#16470) (Sysix)
+- 2736636 lsp: Avoid cloning when revalidating diagnostics (#16469) (Sysix)
+
+### 📚 Documentation
+
+- c0766df linter: Add config option docs for `unicorn/filename-case` rule. (#16280) (connorshea)
+
+## [1.31.0] - 2025-12-01
+
+### 🐛 Bug Fixes
+
+- 653fa6c oxlint/oxfmt/lsp: Tell client the real tool name & version (#16212) (Sysix)
+- 135cee6 oxlint/lsp: Run diagnostics after delayed worker initialization (#16244) (Sysix)
+
+## [1.30.0] - 2025-11-24
+
+### 🐛 Bug Fixes
+
+- e4ba07f language_server: Always write to memory file system (#15975) (Sysix)
+- 619a226 oxlint/lsp: Don't register `textDocument/formatting` capability (#15882) (Sysix)
+
+## [1.29.0] - 2025-11-17
+
+### 🚀 Features
+
+- ac5c2ab lsp/fmt: Support ignore files & patterns (#15647) (Sysix)
+- 4c62ffa language_server: Add `run_server` helper for CLI tools (#15609) (Sysix)
+
+### ⚡ Performance
+
+- 7528db4 language_server: Pass file content as a referenced `String` (#15568) (Sysix)
+- ccfd935 language_server: Avoid `Mutex` in `ServerLinter` (#15516) (Sysix)
+
+## [1.27.0] - 2025-11-10
+
+### 🐛 Bug Fixes
+
+- ecf2f7b language_server: Fail gracefully when tsgolint executable not found (#15436) (camc314)
+
+### ⚡ Performance
+
+- 25d577e language_server: Start tools in parallel (#15500) (Sysix)
+
 ## [1.26.0] - 2025-11-05
 
 ### 🚀 Features

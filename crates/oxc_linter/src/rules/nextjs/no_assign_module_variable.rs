@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::BindingPatternKind};
+use oxc_ast::{AstKind, ast::BindingPattern};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -57,7 +57,9 @@ declare_oxc_lint!(
     /// ```
     NoAssignModuleVariable,
     nextjs,
-    correctness
+    correctness,
+    version = "0.2.0",
+    short_description = "Prevents the assignment or declaration of variables named `module` in Next.js applications.",
 );
 
 impl Rule for NoAssignModuleVariable {
@@ -67,7 +69,7 @@ impl Rule for NoAssignModuleVariable {
         };
 
         for decl in &variable_decl.declarations {
-            let BindingPatternKind::BindingIdentifier(binding_ident) = &decl.id.kind else {
+            let BindingPattern::BindingIdentifier(binding_ident) = &decl.id else {
                 continue;
             };
 
@@ -85,7 +87,7 @@ fn test() {
     let pass = vec![
         r"
 			      let myModule = {};
-			
+
 			      export default function MyComponent() {
 			        return <></>
 			      }
@@ -95,7 +97,7 @@ fn test() {
     let fail = vec![
         r"
 			      let module = {};
-			
+
 			      export default function MyComponent() {
 			        return <></>
 			      }
@@ -103,6 +105,5 @@ fn test() {
     ];
 
     Tester::new(NoAssignModuleVariable::NAME, NoAssignModuleVariable::PLUGIN, pass, fail)
-        .with_nextjs_plugin(true)
         .test_and_snapshot();
 }

@@ -1,0 +1,10 @@
+{
+  "overrides": [
+    {
+      "files": ["*"],
+      "options": {
+        "printWidth": 500
+      }
+    }
+  ]
+}

@@ -3,8 +3,13 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_multi_assign_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not use chained assignment")
@@ -12,8 +17,8 @@ fn no_multi_assign_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoMultiAssign {
     /// When set to `true`, the rule allows chains that don't include initializing a variable in a declaration or initializing a class field.
     ///
@@ -100,17 +105,13 @@ declare_oxc_lint!(
     eslint,
     style,
     config = NoMultiAssign,
+    version = "0.15.4",
+    short_description = "Disallow use of chained assignment expressions.",
 );
 
 impl Rule for NoMultiAssign {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let ignore_non_declaration = value
-            .get(0)
-            .and_then(|config| config.get("ignoreNonDeclaration"))
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or(false);
-
-        Self { ignore_non_declaration }
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -151,20 +152,20 @@ fn test() {
     let pass = vec![
         (
             "var a, b, c,
-			d = 0;",
+            d = 0;",
             None,
         ),
         (
             "var a = 1; var b = 2; var c = 3;
-			var d = 0;",
+            var d = 0;",
             None,
         ),
         ("var a = 1 + (b === 10 ? 5 : 4);", None),
         ("const a = 1, b = 2, c = 3;", None), // { "ecmaVersion": 6 },
         (
             "const a = 1;
-			const b = 2;
-			 const c = 3;",
+            const b = 2;
+             const c = 3;",
             None,
         ), // { "ecmaVersion": 6 },
         ("for(var a = 0, b = 0;;){}", None),
@@ -173,7 +174,7 @@ fn test() {
         ("export let a, b;", None),          // { "ecmaVersion": 6, "sourceType": "module" },
         (
             "export let a,
-			 b = 0;",
+             b = 0;",
             None,
         ), // { "ecmaVersion": 6, "sourceType": "module" },
         (
@@ -192,8 +193,8 @@ fn test() {
         ("a=b=c", None),
         (
             "a
-			=b
-			=c",
+            =b
+            =c",
             None,
         ),
         ("var a = (b) = (((c)))", None),
@@ -201,15 +202,15 @@ fn test() {
         ("var a = b = ( (c * 12) + 2)", None),
         (
             "var a =
-			((b))
-			 = (c)",
+            ((b))
+             = (c)",
             None,
         ),
         ("a = b = '=' + c + 'foo';", None),
         ("a = b = 7 * 12 + 5;", None),
         (
             "const x = {};
-			const y = x.one = 1;",
+            const y = x.one = 1;",
             Some(serde_json::json!([{ "ignoreNonDeclaration": true }])),
         ), // { "ecmaVersion": 6 },
         ("let a, b;a = b = 1", Some(serde_json::json!([{}]))), // { "ecmaVersion": 6 },

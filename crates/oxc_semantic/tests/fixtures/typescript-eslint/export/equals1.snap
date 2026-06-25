@@ -19,7 +19,8 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/export/equals1.
             "flags": "ReferenceFlags(Read)",
             "id": 0,
             "name": "x",
-            "node_id": 6
+            "node_id": 6,
+            "scope_id": 0
           }
         ]
       }

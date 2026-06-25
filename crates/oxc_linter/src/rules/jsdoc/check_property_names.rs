@@ -10,8 +10,8 @@ use crate::{
 };
 
 fn no_root(span: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn("No root defined for @property path.")
-        .with_help(format!("@property path declaration `{x1}` appears before any real property."))
+    OxcDiagnostic::warn("No root defined for `@property` path.")
+        .with_help(format!("`@property` path declaration `{x1}` appears before any real property."))
         .with_label(span)
 }
 
@@ -58,7 +58,10 @@ declare_oxc_lint!(
     /// ```
     CheckPropertyNames,
     jsdoc,
-    correctness
+    correctness,
+    pending,
+    version = "0.2.18",
+    short_description = "Ensures that property names in JSDoc are not duplicated on the same block and that nested properties have defined roots.",
 );
 
 impl Rule for CheckPropertyNames {
@@ -84,13 +87,9 @@ impl Rule for CheckPropertyNames {
                 let type_name = name_part.parsed();
 
                 // Check property path has a root
-                if type_name.contains('.') {
-                    let mut parts = type_name.split('.').collect::<Vec<_>>();
-                    // `foo[].bar` -> `foo[]`
-                    parts.pop();
-                    let parent_name = parts.join(".");
-                    // `foo[]` -> `foo`
-                    let parent_name = parent_name.trim_end_matches("[]");
+                if let Some(dot_idx) = type_name.rfind('.') {
+                    // `foo[].bar` -> `foo[]` -> `foo`
+                    let parent_name = type_name[..dot_idx].trim_end_matches("[]");
 
                     if !seen.contains_key(&parent_name) {
                         ctx.diagnostic(no_root(name_part.span, type_name));
@@ -104,12 +103,7 @@ impl Rule for CheckPropertyNames {
             for (type_name, spans) in seen.iter().filter(|(_, spans)| 1 < spans.len()) {
                 let labels = spans
                     .iter()
-                    .map(|span| {
-                        LabeledSpan::at(
-                            (span.start as usize)..(span.end as usize),
-                            "Duplicated property",
-                        )
-                    })
+                    .map(|span| LabeledSpan::at(span.start..span.end, "Duplicated property"))
                     .collect::<Vec<_>>();
                 ctx.diagnostic(
                     OxcDiagnostic::warn("Duplicate @property found.")

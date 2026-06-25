@@ -1,8 +1,9 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:6]
+
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:13]
  1 │ if(0)return;else r
    ·      ───┬─────┬──
    ·         │     ╰── Making this `else` block unnecessary.
@@ -10,8 +11,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:31]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:42]
  1 │ function foo1() { if (true) { return x; } else { return y; } }
    ·                               ────┬────  ───┬──
    ·                                   │         ╰── Making this `else` block unnecessary.
@@ -19,8 +20,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:44]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:55]
  1 │ function foo2() { if (true) { var x = bar; return x; } else { var y = baz; return y; } }
    ·                                            ────┬────  ───┬──
    ·                                                │         ╰── Making this `else` block unnecessary.
@@ -28,8 +29,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:29]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:38]
  1 │ function foo3() { if (true) return x; else return y; }
    ·                             ────┬───────┬──
    ·                                 │       ╰── Making this `else` block unnecessary.
@@ -37,17 +38,17 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:42]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:68]
  1 │ function foo4() { if (true) { if (false) return x; else return y; } else { return z; } }
-   ·                                          ────┬────                 ───┬──
-   ·                                              │                        ╰── Making this `else` block unnecessary.
-   ·                                              ╰── This consequent block always returns,
+   ·                               ─────────────────┬─────────────────  ───┬──
+   ·                                                │                      ╰── Making this `else` block unnecessary.
+   ·                                                ╰── This consequent block always returns,
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:42]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:51]
  1 │ function foo4() { if (true) { if (false) return x; else return y; } else { return z; } }
    ·                                          ────┬───────┬──
    ·                                              │       ╰── Making this `else` block unnecessary.
@@ -55,8 +56,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:54]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:63]
  1 │ function foo5() { if (true) { if (false) { if (true) return x; else { w = y; } } else { w = x; } } else { return z; } }
    ·                                                      ────┬───────┬──
    ·                                                          │       ╰── Making this `else` block unnecessary.
@@ -64,8 +65,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:54]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:63]
  1 │ function foo6() { if (true) { if (false) { if (true) return x; else return y; } } else { return z; } }
    ·                                                      ────┬───────┬──
    ·                                                          │       ╰── Making this `else` block unnecessary.
@@ -73,8 +74,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:81]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:92]
  1 │ function foo7() { if (true) { if (false) { if (true) return x; else return y; } return w; } else { return z; } }
    ·                                                                                 ────┬────  ───┬──
    ·                                                                                     │         ╰── Making this `else` block unnecessary.
@@ -82,8 +83,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:54]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:63]
  1 │ function foo7() { if (true) { if (false) { if (true) return x; else return y; } return w; } else { return z; } }
    ·                                                      ────┬───────┬──
    ·                                                          │       ╰── Making this `else` block unnecessary.
@@ -91,17 +92,17 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:54]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:80]
  1 │ function foo8() { if (true) { if (false) { if (true) return x; else return y; } else { w = x; } } else { return z; } }
-   ·                                                      ────┬────                 ───┬──
-   ·                                                          │                        ╰── Making this `else` block unnecessary.
-   ·                                                          ╰── This consequent block always returns,
+   ·                                            ─────────────────┬────────────────  ───┬──
+   ·                                                             │                     ╰── Making this `else` block unnecessary.
+   ·                                                             ╰── This consequent block always returns,
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:54]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:63]
  1 │ function foo8() { if (true) { if (false) { if (true) return x; else return y; } else { w = x; } } else { return z; } }
    ·                                                      ────┬───────┬──
    ·                                                          │       ╰── Making this `else` block unnecessary.
@@ -109,8 +110,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:56]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:70]
  1 │ function foo9() {if (x) { return true; } else if (y) { return true; } else { notAReturn(); } }
    ·                                                        ──────┬─────  ───┬──
    ·                                                              │          ╰── Making this `else` block unnecessary.
@@ -118,8 +119,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:28]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:42]
  1 │ function foo9a() {if (x) { return true; } else if (y) { return true; } else { notAReturn(); } }
    ·                            ──────┬─────  ───┬──
    ·                                  │          ╰── Making this `else` block unnecessary.
@@ -127,8 +128,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:52]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:66]
  1 │ function foo9b() {if (x) { return true; } if (y) { return true; } else { notAReturn(); } }
    ·                                                    ──────┬─────  ───┬──
    ·                                                          │          ╰── Making this `else` block unnecessary.
@@ -136,8 +137,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:29]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:40]
  1 │ function foo10() { if (foo) return bar; else (foo).bar(); }
    ·                             ─────┬────────┬──
    ·                                  │        ╰── Making this `else` block unnecessary.
@@ -145,8 +146,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:29]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:39]
  1 │ ╭─▶ function foo11() { if (foo) return bar
    · │                               ─────┬────
    · │                                    ╰── This consequent block always returns,
@@ -155,8 +156,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:29]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:39]
  1 │ ╭─▶ function foo12() { if (foo) return bar
    · │                               ─────┬────
    · │                                    ╰── This consequent block always returns,
@@ -166,8 +167,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:29]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:40]
  1 │ ╭─▶ function foo13() { if (foo) return bar;
    · │                               ─────┬─────
    · │                                    ╰── This consequent block always returns,
@@ -176,8 +177,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:29]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:39]
  1 │ ╭─▶ function foo14() { if (foo) return bar
    · │                               ─────┬────
    · │                                    ╰── This consequent block always returns,
@@ -187,8 +188,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:29]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:40]
  1 │ function foo15() { if (foo) return bar; else { baz() } qaz() }
    ·                             ─────┬────────┬──
    ·                                  │        ╰── Making this `else` block unnecessary.
@@ -196,8 +197,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:29]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:39]
  1 │ ╭─▶ function foo16() { if (foo) return bar
    · │                               ─────┬────
    · │                                    ╰── This consequent block always returns,
@@ -206,8 +207,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:29]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:39]
  1 │ ╭─▶ function foo17() { if (foo) return bar
    · │                               ─────┬────
    · │                                    ╰── This consequent block always returns,
@@ -217,8 +218,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:29]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:49]
  1 │ ╭─▶ function foo18() { if (foo) return function() {}
    · │                               ──────────┬─────────
    · │                                         ╰── This consequent block always returns,
@@ -227,8 +228,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:32]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:43]
  1 │ function foo19() { if (true) { return x; } else if (false) { return y; } }
    ·                                ────┬────  ───┬──
    ·                                    │         ╰── Making this `else` block unnecessary.
@@ -236,8 +237,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:28]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:42]
  1 │ function foo20() {if (x) { return true; } else if (y) { notAReturn() } else { notAReturn(); } }
    ·                            ──────┬─────  ───┬──
    ·                                  │          ╰── Making this `else` block unnecessary.
@@ -245,8 +246,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:43]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:54]
  1 │ function foo21() { var x = true; if (x) { return x; } else if (x === false) { return false; } }
    ·                                           ────┬────  ───┬──
    ·                                               │         ╰── Making this `else` block unnecessary.
@@ -254,8 +255,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:36]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:50]
  1 │ function foo() { var a; if (bar) { return true; } else { var a; } }
    ·                                    ──────┬─────  ───┬──
    ·                                          │          ╰── Making this `else` block unnecessary.
@@ -263,8 +264,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:47]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:61]
  1 │ function foo() { if (bar) { var a; if (baz) { return true; } else { var a; } } }
    ·                                               ──────┬─────  ───┬──
    ·                                                     │          ╰── Making this `else` block unnecessary.
@@ -272,26 +273,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:36]
- 1 │ function foo() { var a; if (bar) { return true; } else { var a; } }
-   ·                                    ──────┬─────  ───┬──
-   ·                                          │          ╰── Making this `else` block unnecessary.
-   ·                                          ╰── This consequent block always returns,
-   ╰────
-  help: Remove the `else` block, moving its contents outside of the `if` statement.
-
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:47]
- 1 │ function foo() { if (bar) { var a; if (baz) { return true; } else { var a; } } }
-   ·                                               ──────┬─────  ───┬──
-   ·                                                     │          ╰── Making this `else` block unnecessary.
-   ·                                                     ╰── This consequent block always returns,
-   ╰────
-  help: Remove the `else` block, moving its contents outside of the `if` statement.
-
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:36]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:50]
  1 │ function foo() { let a; if (bar) { return true; } else { let a; } }
    ·                                    ──────┬─────  ───┬──
    ·                                          │          ╰── Making this `else` block unnecessary.
@@ -299,8 +282,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:39]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:53]
  1 │ class foo { bar() { let a; if (baz) { return true; } else { let a; } } }
    ·                                       ──────┬─────  ───┬──
    ·                                             │          ╰── Making this `else` block unnecessary.
@@ -308,8 +291,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:47]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:61]
  1 │ function foo() { if (bar) { let a; if (baz) { return true; } else { let a; } } }
    ·                                               ──────┬─────  ───┬──
    ·                                                     │          ╰── Making this `else` block unnecessary.
@@ -317,8 +300,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:46]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:60]
  1 │ function foo() {let a; if (bar) { if (baz) { return true; } else { let a; } } }
    ·                                              ──────┬─────  ───┬──
    ·                                                    │          ╰── Making this `else` block unnecessary.
@@ -326,8 +309,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:42]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:56]
  1 │ function foo() { const a = 1; if (bar) { return true; } else { let a; } }
    ·                                          ──────┬─────  ───┬──
    ·                                                │          ╰── Making this `else` block unnecessary.
@@ -335,8 +318,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:53]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:67]
  1 │ function foo() { if (bar) { const a = 1; if (baz) { return true; } else { let a; } } }
    ·                                                     ──────┬─────  ───┬──
    ·                                                           │          ╰── Making this `else` block unnecessary.
@@ -344,8 +327,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:36]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:50]
  1 │ function foo() { let a; if (bar) { return true; } else { const a = 1 } }
    ·                                    ──────┬─────  ───┬──
    ·                                          │          ╰── Making this `else` block unnecessary.
@@ -353,8 +336,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:47]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:61]
  1 │ function foo() { if (bar) { let a; if (baz) { return true; } else { const a = 1; } } }
    ·                                               ──────┬─────  ───┬──
    ·                                                     │          ╰── Making this `else` block unnecessary.
@@ -362,8 +345,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:41]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:55]
  1 │ function foo() { class a {}; if (bar) { return true; } else { const a = 1; } }
    ·                                         ──────┬─────  ───┬──
    ·                                               │          ╰── Making this `else` block unnecessary.
@@ -371,8 +354,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:52]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:66]
  1 │ function foo() { if (bar) { class a {}; if (baz) { return true; } else { const a = 1; } } }
    ·                                                    ──────┬─────  ───┬──
    ·                                                          │          ╰── Making this `else` block unnecessary.
@@ -380,8 +363,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:42]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:56]
  1 │ function foo() { const a = 1; if (bar) { return true; } else { class a {} } }
    ·                                          ──────┬─────  ───┬──
    ·                                                │          ╰── Making this `else` block unnecessary.
@@ -389,8 +372,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:53]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:67]
  1 │ function foo() { if (bar) { const a = 1; if (baz) { return true; } else { class a {} } } }
    ·                                                     ──────┬─────  ───┬──
    ·                                                           │          ╰── Making this `else` block unnecessary.
@@ -398,8 +381,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:36]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:50]
  1 │ function foo() { var a; if (bar) { return true; } else { let a; } }
    ·                                    ──────┬─────  ───┬──
    ·                                          │          ╰── Making this `else` block unnecessary.
@@ -407,8 +390,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:36]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:50]
  1 │ function foo() { if (bar) { var a; return true; } else { let a; } }
    ·                                    ──────┬─────  ───┬──
    ·                                          │          ╰── Making this `else` block unnecessary.
@@ -416,8 +399,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:29]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:43]
  1 │ function foo() { if (bar) { return true; } else { let a; }  while (baz) { var a; } }
    ·                             ──────┬─────  ───┬──
    ·                                   │          ╰── Making this `else` block unnecessary.
@@ -425,8 +408,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:30]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:44]
  1 │ function foo(a) { if (bar) { return true; } else { let a; } }
    ·                              ──────┬─────  ───┬──
    ·                                    │          ╰── Making this `else` block unnecessary.
@@ -434,8 +417,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:34]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:48]
  1 │ function foo(a = 1) { if (bar) { return true; } else { let a; } }
    ·                                  ──────┬─────  ───┬──
    ·                                        │          ╰── Making this `else` block unnecessary.
@@ -443,8 +426,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:37]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:51]
  1 │ function foo(a, b = a) { if (bar) { return true; } else { let a; }  if (bar) { return true; } else { let b; }}
    ·                                     ──────┬─────  ───┬──
    ·                                           │          ╰── Making this `else` block unnecessary.
@@ -452,8 +435,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:80]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:94]
  1 │ function foo(a, b = a) { if (bar) { return true; } else { let a; }  if (bar) { return true; } else { let b; }}
    ·                                                                                ──────┬─────  ───┬──
    ·                                                                                      │          ╰── Making this `else` block unnecessary.
@@ -461,8 +444,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:36]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:50]
  1 │ function foo(...args) { if (bar) { return true; } else { let args; } }
    ·                                    ──────┬─────  ───┬──
    ·                                          │          ╰── Making this `else` block unnecessary.
@@ -470,8 +453,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:48]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:62]
  1 │ function foo() { try {} catch (a) { if (bar) { return true; } else { let a; } } }
    ·                                                ──────┬─────  ───┬──
    ·                                                      │          ╰── Making this `else` block unnecessary.
@@ -479,8 +462,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:59]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:73]
  1 │ function foo() { try {} catch (a) { if (bar) { if (baz) { return true; } else { let a; } } } }
    ·                                                           ──────┬─────  ───┬──
    ·                                                                 │          ╰── Making this `else` block unnecessary.
@@ -488,8 +471,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:59]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:73]
  1 │ function foo() { try {} catch ({bar, a = 1}) { if (baz) { return true; } else { let a; } } }
    ·                                                           ──────┬─────  ───┬──
    ·                                                                 │          ╰── Making this `else` block unnecessary.
@@ -497,8 +480,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:29]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:43]
  1 │ function foo() { if (bar) { return true; } else { let arguments; } }
    ·                             ──────┬─────  ───┬──
    ·                                   │          ╰── Making this `else` block unnecessary.
@@ -506,8 +489,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:29]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:43]
  1 │ function foo() { if (bar) { return true; } else { let arguments; } return arguments[0]; }
    ·                             ──────┬─────  ───┬──
    ·                                   │          ╰── Making this `else` block unnecessary.
@@ -515,8 +498,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:29]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:43]
  1 │ function foo() { if (bar) { return true; } else { let arguments; } if (baz) { return arguments[0]; } }
    ·                             ──────┬─────  ───┬──
    ·                                   │          ╰── Making this `else` block unnecessary.
@@ -524,8 +507,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:40]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:54]
  1 │ function foo() { if (bar) { if (baz) { return true; } else { let arguments; } } }
    ·                                        ──────┬─────  ───┬──
    ·                                              │          ╰── Making this `else` block unnecessary.
@@ -533,8 +516,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:29]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:43]
  1 │ function foo() { if (bar) { return true; } else { let a; } a; }
    ·                             ──────┬─────  ───┬──
    ·                                   │          ╰── Making this `else` block unnecessary.
@@ -542,8 +525,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:29]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:43]
  1 │ function foo() { if (bar) { return true; } else { let a; } if (baz) { a; } }
    ·                             ──────┬─────  ───┬──
    ·                                   │          ╰── Making this `else` block unnecessary.
@@ -551,8 +534,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:40]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:54]
  1 │ function foo() { if (bar) { if (baz) { return true; } else { let a; } } a; }
    ·                                        ──────┬─────  ───┬──
    ·                                              │          ╰── Making this `else` block unnecessary.
@@ -560,8 +543,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:40]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:54]
  1 │ function foo() { if (bar) { if (baz) { return true; } else { let a; } a; } }
    ·                                        ──────┬─────  ───┬──
    ·                                              │          ╰── Making this `else` block unnecessary.
@@ -569,8 +552,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:40]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:54]
  1 │ function foo() { if (bar) { if (baz) { return true; } else { let a; } if (quux) { a; } } }
    ·                                        ──────┬─────  ───┬──
    ·                                              │          ╰── Making this `else` block unnecessary.
@@ -578,8 +561,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:27]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:41]
  1 │ function a() { if (foo) { return true; } else { let a; } a(); }
    ·                           ──────┬─────  ───┬──
    ·                                 │          ╰── Making this `else` block unnecessary.
@@ -587,8 +570,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:25]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:39]
  1 │ function a() { if (a) { return true; } else { let a; } }
    ·                         ──────┬─────  ───┬──
    ·                               │          ╰── Making this `else` block unnecessary.
@@ -596,8 +579,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:27]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:38]
  1 │ function a() { if (foo) { return a; } else { let a; } }
    ·                           ────┬────  ───┬──
    ·                               │         ╰── Making this `else` block unnecessary.
@@ -605,8 +588,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:29]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:43]
  1 │ function foo() { if (bar) { return true; } else { let a; } function baz() { a; } }
    ·                             ──────┬─────  ───┬──
    ·                                   │          ╰── Making this `else` block unnecessary.
@@ -614,8 +597,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:40]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:54]
  1 │ function foo() { if (bar) { if (baz) { return true; } else { let a; } (() => a) } }
    ·                                        ──────┬─────  ───┬──
    ·                                              │          ╰── Making this `else` block unnecessary.
@@ -623,8 +606,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:29]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:43]
  1 │ function foo() { if (bar) { return true; } else { let a; } var a; }
    ·                             ──────┬─────  ───┬──
    ·                                   │          ╰── Making this `else` block unnecessary.
@@ -632,8 +615,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:40]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:54]
  1 │ function foo() { if (bar) { if (baz) { return true; } else { let a; } var a; } }
    ·                                        ──────┬─────  ───┬──
    ·                                              │          ╰── Making this `else` block unnecessary.
@@ -641,8 +624,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:40]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:54]
  1 │ function foo() { if (bar) { if (baz) { return true; } else { let a; } var { a } = {}; } }
    ·                                        ──────┬─────  ───┬──
    ·                                              │          ╰── Making this `else` block unnecessary.
@@ -650,8 +633,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:40]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:54]
  1 │ function foo() { if (bar) { if (baz) { return true; } else { let a; } if (quux) { var a; } } }
    ·                                        ──────┬─────  ───┬──
    ·                                              │          ╰── Making this `else` block unnecessary.
@@ -659,8 +642,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:40]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:54]
  1 │ function foo() { if (bar) { if (baz) { return true; } else { let a; } } if (quux) { var a; } }
    ·                                        ──────┬─────  ───┬──
    ·                                              │          ╰── Making this `else` block unnecessary.
@@ -668,8 +651,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:61]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:75]
  1 │ function foo() { if (quux) { var a; } if (bar) { if (baz) { return true; } else { let a; } } }
    ·                                                             ──────┬─────  ───┬──
    ·                                                                   │          ╰── Making this `else` block unnecessary.
@@ -677,8 +660,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:29]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:43]
  1 │ function foo() { if (bar) { return true; } else { let a; } function a(){} }
    ·                             ──────┬─────  ───┬──
    ·                                   │          ╰── Making this `else` block unnecessary.
@@ -686,8 +669,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:40]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:54]
  1 │ function foo() { if (baz) { if (bar) { return true; } else { let a; } function a(){} } }
    ·                                        ──────┬─────  ───┬──
    ·                                              │          ╰── Making this `else` block unnecessary.
@@ -695,8 +678,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:40]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:54]
  1 │ function foo() { if (bar) { if (baz) { return true; } else { let a; } } if (quux) { function a(){}  } }
    ·                                        ──────┬─────  ───┬──
    ·                                              │          ╰── Making this `else` block unnecessary.
@@ -704,8 +687,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:40]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:54]
  1 │ function foo() { if (bar) { if (baz) { return true; } else { let a; } } function a(){} }
    ·                                        ──────┬─────  ───┬──
    ·                                              │          ╰── Making this `else` block unnecessary.
@@ -713,8 +696,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:36]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:50]
  1 │ function foo() { let a; if (bar) { return true; } else { function a(){} } }
    ·                                    ──────┬─────  ───┬──
    ·                                          │          ╰── Making this `else` block unnecessary.
@@ -722,8 +705,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:36]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:50]
  1 │ function foo() { var a; if (bar) { return true; } else { function a(){} } }
    ·                                    ──────┬─────  ───┬──
    ·                                          │          ╰── Making this `else` block unnecessary.
@@ -731,8 +714,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:29]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:43]
  1 │ function foo() { if (bar) { return true; } else function baz() {} };
    ·                             ──────┬─────  ───┬──
    ·                                   │          ╰── Making this `else` block unnecessary.
@@ -740,8 +723,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:12]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:26]
  1 │ if (foo) { return true; } else { let a; }
    ·            ──────┬─────  ───┬──
    ·                  │          ╰── Making this `else` block unnecessary.
@@ -749,11 +732,40 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
-  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
-   ╭─[no_else_return.tsx:1:19]
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:33]
  1 │ let a; if (foo) { return true; } else { let a; }
    ·                   ──────┬─────  ───┬──
    ·                         │          ╰── Making this `else` block unnecessary.
    ·                         ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+    ╭─[no_else_return.tsx:10:26]
+  4 │                             if (value) {
+  5 │ ╭─▶                             if (meta.has(item)) {
+  6 │ │                                   return builder.computed(item);
+  7 │ │                               } else {
+  8 │ │                                   return builder.constant(item);
+  9 │ ├─▶                             }
+    · ╰──── This consequent block always returns,
+ 10 │                             } else {
+    ·                              ───┬──
+    ·                                 ╰── Making this `else` block unnecessary.
+ 11 │                                 return builder.spec(item);
+    ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:7:30]
+ 5 │                             if (meta.has(item)) {
+ 6 │                                 return builder.computed(item);
+   ·                                 ───────────────┬──────────────
+   ·                                                ╰── This consequent block always returns,
+ 7 │                             } else {
+   ·                              ───┬──
+   ·                                 ╰── Making this `else` block unnecessary.
+ 8 │                                 return builder.constant(item);
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.

@@ -1,8 +1,8 @@
 use std::{cmp::max, str};
 
-use oxc_allocator::StringBuilder;
+use oxc_allocator::ArenaStringBuilder;
 
-use crate::diagnostics;
+use crate::{config::LexerConfig as Config, diagnostics};
 
 use super::{
     Kind, Lexer, SourcePosition, Token, cold_branch,
@@ -33,7 +33,7 @@ static TEMPLATE_LITERAL_ESCAPED_MATCH_TABLE: SafeByteMatchTable = safe_byte_matc
 );
 
 /// 12.8.6 Template Literal Lexical Components
-impl<'a> Lexer<'a> {
+impl<'a, C: Config> Lexer<'a, C> {
     /// Read template literal component.
     ///
     /// This function handles the common case where template contains no escapes or `\r` characters
@@ -195,14 +195,17 @@ impl<'a> Lexer<'a> {
     ///
     /// # SAFETY
     /// `pos` must not be before `self.source.position()`
-    unsafe fn template_literal_create_string(&self, pos: SourcePosition<'a>) -> StringBuilder<'a> {
+    unsafe fn template_literal_create_string(
+        &self,
+        pos: SourcePosition<'a>,
+    ) -> ArenaStringBuilder<'a> {
         // Create arena string to hold modified template literal.
         // We don't know how long template literal will end up being. Take a guess that total length
         // will be double what we've seen so far, or `MIN_ESCAPED_TEMPLATE_LIT_LEN` minimum.
         // SAFETY: Caller guarantees `pos` is not before `self.source.position()`.
         let so_far = unsafe { self.source.str_from_current_to_pos_unchecked(pos) };
         let capacity = max(so_far.len() * 2, MIN_ESCAPED_TEMPLATE_LIT_LEN);
-        let mut str = StringBuilder::with_capacity_in(capacity, self.allocator);
+        let mut str = ArenaStringBuilder::with_capacity_in(capacity, self.allocator);
         str.push_str(so_far);
         str
     }
@@ -213,7 +216,7 @@ impl<'a> Lexer<'a> {
     /// `chunk_start` must not be after `pos`.
     unsafe fn template_literal_escaped(
         &mut self,
-        mut str: StringBuilder<'a>,
+        mut str: ArenaStringBuilder<'a>,
         pos: SourcePosition<'a>,
         mut chunk_start: SourcePosition<'a>,
         mut is_valid_escape_sequence: bool,
@@ -390,7 +393,7 @@ impl<'a> Lexer<'a> {
     pub(crate) fn next_template_substitution_tail(&mut self) -> Token {
         self.token.set_start(self.offset() - 1);
         let kind = self.read_template_literal(Kind::TemplateMiddle, Kind::TemplateTail);
-        self.finish_next(kind)
+        self.finish_next_retokenized(kind)
     }
 
     /// Save escaped template string
@@ -408,6 +411,8 @@ impl<'a> Lexer<'a> {
 mod test {
     use oxc_allocator::Allocator;
     use oxc_span::SourceType;
+
+    use crate::config::NoTokensLexerConfig;
 
     use super::super::{Kind, Lexer, UniquePromise};
 
@@ -442,7 +447,13 @@ mod test {
         fn run_test(source_text: String, expected_escaped: String, is_only_part: bool) {
             let allocator = Allocator::default();
             let unique = UniquePromise::new_for_tests_and_benchmarks();
-            let mut lexer = Lexer::new(&allocator, &source_text, SourceType::default(), unique);
+            let mut lexer = Lexer::new(
+                &allocator,
+                &source_text,
+                SourceType::default(),
+                NoTokensLexerConfig,
+                unique,
+            );
             let token = lexer.next_token();
             assert_eq!(
                 token.kind(),

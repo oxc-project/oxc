@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(prefer-destructuring): Use Array destructuring.
    ╭─[prefer_destructuring.tsx:1:11]
  1 │ var foo = array[0];
@@ -205,7 +206,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use object destructuring rather than direct member access.
 
   ⚠ eslint(prefer-destructuring): Use Object destructuring.
-   ╭─[prefer_destructuring.tsx:2:7]
+   ╭─[prefer_destructuring.tsx:2:16]
  1 │ var foo // comment
  2 │              = object.foo;
    ·                ──────────
@@ -220,7 +221,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use object destructuring rather than direct member access.
 
   ⚠ eslint(prefer-destructuring): Use Object destructuring.
-   ╭─[prefer_destructuring.tsx:2:5]
+   ╭─[prefer_destructuring.tsx:2:14]
  1 │ var foo = // comment
  2 │              object.foo;
    ·              ──────────
@@ -263,7 +264,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use object destructuring rather than direct member access.
 
   ⚠ eslint(prefer-destructuring): Use Object destructuring.
-   ╭─[prefer_destructuring.tsx:2:7]
+   ╭─[prefer_destructuring.tsx:2:16]
  1 │ var foo // comment
  2 │              = bar(/* comment */).foo;
    ·                ──────────────────────

@@ -1,115 +1,80 @@
-use rustc_hash::FxHashMap;
-
-use oxc_data_structures::assert_unchecked;
-use oxc_span::Atom;
+use oxc_str::Ident;
 use oxc_syntax::reference::ReferenceId;
 
-/// Unlike `ScopeTree`'s `UnresolvedReferences`, this type uses `Atom` as the key,
-/// and uses a heap-allocated hashmap (not arena-allocated)
-type TempUnresolvedReferences<'a> = FxHashMap<Atom<'a>, Vec<ReferenceId>>;
-
-// Stack used to accumulate unresolved refs while traversing scopes.
-// Indexed by scope depth. We recycle `UnresolvedReferences` instances during traversal
-// to reduce allocations, so the stack grows to maximum scope depth, but never shrinks.
-// See: <https://github.com/oxc-project/oxc/issues/4169>
-// This stack abstraction uses the invariant that stack only grows to avoid bounds checks.
-pub struct UnresolvedReferencesStack<'a> {
-    stack: Vec<TempUnresolvedReferences<'a>>,
-    /// Current scope depth.
-    /// 0 is global scope. 1 is `Program`.
-    /// Incremented on entering a scope, and decremented on exit.
-    current_scope_depth: usize,
+/// Flat list of unresolved references collected during AST traversal.
+///
+/// Instead of maintaining per-scope hashmaps and merging them on scope exit (bubble-up),
+/// references are collected flat and resolved in a single pass after traversal (walk-up).
+/// This eliminates all hashmap drain+insert operations during scope exit.
+pub struct UnresolvedReferences<'a> {
+    /// Flat list of (name, reference_id) pairs collected during traversal.
+    references: Vec<(Ident<'a>, ReferenceId)>,
 }
 
-impl<'a> UnresolvedReferencesStack<'a> {
-    /// Initial scope depth.
-    /// Start on 1 (`Program` scope depth).
-    /// SAFETY: Must be >= 1 to ensure soundness of `current_and_parent_mut`.
-    const INITIAL_DEPTH: usize = 1;
-
-    /// Most programs will have at least 1 place where scope depth reaches 16,
-    /// so initialize `stack` with this length, to reduce reallocations as it grows.
-    /// This is just an estimate of a good initial size, but certainly better than
-    /// `Vec`'s default initial capacity of 4.
-    /// SAFETY: Must be >= 2 to ensure soundness of `current_and_parent_mut`.
-    const INITIAL_SIZE: usize = 16;
-
-    /// Assert invariants
-    const ASSERT_INVARIANTS: () = {
-        assert!(Self::INITIAL_DEPTH >= 1);
-        assert!(Self::INITIAL_SIZE >= 2);
-        assert!(Self::INITIAL_SIZE > Self::INITIAL_DEPTH);
-    };
-
+impl<'a> UnresolvedReferences<'a> {
     pub(crate) fn new() -> Self {
-        // Invoke `ASSERT_INVARIANTS` assertions. Without this line, the assertions are ignored.
-        const { Self::ASSERT_INVARIANTS };
-
-        let mut stack = vec![];
-        stack.resize_with(Self::INITIAL_SIZE, TempUnresolvedReferences::default);
-        Self { stack, current_scope_depth: Self::INITIAL_DEPTH }
+        Self { references: Vec::new() }
     }
 
-    pub(crate) fn increment_scope_depth(&mut self) {
-        self.current_scope_depth += 1;
-
-        // Grow stack if required to ensure `self.stack[self.current_scope_depth]` is in bounds
-        if self.stack.len() <= self.current_scope_depth {
-            self.stack.push(TempUnresolvedReferences::default());
-        }
-    }
-
-    pub(crate) fn decrement_scope_depth(&mut self) {
-        self.current_scope_depth -= 1;
-        // This assertion is required to ensure depth does not go below 1.
-        // If it did, would cause UB in `current_and_parent_mut`, which relies on
-        // `current_scope_depth - 1` always being a valid index into `self.stack`.
-        assert!(self.current_scope_depth > 0);
-    }
-
+    /// Reserve exactly `additional` more slots in the underlying `Vec`.
+    /// Avoids growth reallocations when the expected count is known up-front
+    /// (typically from [`crate::Stats::count`]).
     #[inline]
-    pub(crate) fn scope_depth(&self) -> usize {
-        self.current_scope_depth
+    pub(crate) fn reserve_exact(&mut self, additional: usize) {
+        self.references.reserve_exact(additional);
     }
 
-    /// Get unresolved references hash map for current scope
+    /// Push an unresolved reference to the flat list.
     #[inline]
-    pub(crate) fn current_mut(&mut self) -> &mut TempUnresolvedReferences<'a> {
-        // SAFETY: `stack.len() > current_scope_depth` initially.
-        // Thereafter, `stack` never shrinks, only grows.
-        // `current_scope_depth` is only increased in `increment_scope_depth`,
-        // and it grows `stack` to ensure `stack.len()` always exceeds `current_scope_depth`.
-        // So this read is always guaranteed to be in bounds.
-        unsafe { self.stack.get_unchecked_mut(self.current_scope_depth) }
+    pub(crate) fn push(&mut self, name: Ident<'a>, reference_id: ReferenceId) {
+        self.references.push((name, reference_id));
     }
 
-    /// Get unresolved references hash maps for current scope, and parent scope
+    /// Get the current length, used as a checkpoint for early resolution.
     #[inline]
-    pub(crate) fn current_and_parent_mut(
-        &mut self,
-    ) -> (&mut TempUnresolvedReferences<'a>, &mut TempUnresolvedReferences<'a>) {
-        // Assert invariants to remove bounds checks in code below.
-        // https://godbolt.org/z/vv5Wo5csv
-        // SAFETY: `current_scope_depth` starts at 1, and is only decremented
-        // in `decrement_scope_depth` which checks it doesn't go below 1.
-        unsafe { assert_unchecked!(self.current_scope_depth > 0) };
-        // SAFETY: `stack.len() > current_scope_depth` initially.
-        // Thereafter, `stack` never shrinks, only grows.
-        // `current_scope_depth` is only increased in `increment_scope_depth`,
-        // and it grows `stack` to ensure `stack.len()` always exceeds `current_scope_depth`.
-        unsafe { assert_unchecked!(self.stack.len() > self.current_scope_depth) };
-
-        let mut iter = self.stack.iter_mut();
-        let parent = iter.nth(self.current_scope_depth - 1).unwrap();
-        let current = iter.next().unwrap();
-        (current, parent)
+    pub(crate) fn checkpoint(&self) -> usize {
+        self.references.len()
     }
 
+    /// Take all collected references, leaving the list empty. O(1) pointer swap.
     #[inline]
-    pub(crate) fn into_root(self) -> TempUnresolvedReferences<'a> {
-        // SAFETY: Stack starts with a non-zero size and never shrinks.
-        // This assertion removes bounds check in `.next()`.
-        unsafe { assert_unchecked!(!self.stack.is_empty()) };
-        self.stack.into_iter().next().unwrap()
+    pub(crate) fn take(&mut self) -> Vec<(Ident<'a>, ReferenceId)> {
+        std::mem::take(&mut self.references)
+    }
+
+    /// Current number of unresolved references.
+    #[inline]
+    pub(crate) fn len(&self) -> usize {
+        self.references.len()
+    }
+
+    /// Read a reference by index, by value.
+    ///
+    /// Used by [`crate::SemanticBuilder::resolve_references_for_current_scope`]
+    /// to process the list in-place without allocating a temporary `Vec`. Both
+    /// `Ident<'a>` and `ReferenceId` are `Copy`, so this hands the caller an
+    /// owned pair that's detached from the underlying borrow.
+    ///
+    /// # Panics
+    /// Panics if `idx >= self.len()`.
+    #[inline]
+    pub(crate) fn get(&self, idx: usize) -> (Ident<'a>, ReferenceId) {
+        self.references[idx]
+    }
+
+    /// Overwrite the reference at `idx` (write-cursor support for in-place
+    /// processing).
+    ///
+    /// # Panics
+    /// Panics if `idx >= self.len()`.
+    #[inline]
+    pub(crate) fn set(&mut self, idx: usize, name: Ident<'a>, reference_id: ReferenceId) {
+        self.references[idx] = (name, reference_id);
+    }
+
+    /// Truncate the list to `len`, removing references at the end.
+    #[inline]
+    pub(crate) fn truncate(&mut self, len: usize) {
+        self.references.truncate(len);
     }
 }

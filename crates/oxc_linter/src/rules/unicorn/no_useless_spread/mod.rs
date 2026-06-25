@@ -1,8 +1,6 @@
-mod const_eval;
-
-use const_eval::{ConstEval, is_array_from, is_new_typed_array};
+use oxc_allocator::{Allocator, CloneIn};
 use oxc_ast::{
-    AstKind,
+    AstBuilder, AstKind,
     ast::{
         ArrayExpression, ArrayExpressionElement, CallExpression, Expression, NewExpression,
         ObjectExpression, ObjectPropertyKind, SpreadElement,
@@ -10,7 +8,11 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{GetSpan, SPAN, Span};
+
+mod const_eval;
+
+use const_eval::{ConstEval, is_array_from, is_new_typed_array};
 
 use crate::{
     AstNode,
@@ -140,7 +142,9 @@ declare_oxc_lint!(
     NoUselessSpread,
     unicorn,
     correctness,
-    fix_dangerous
+    fix_dangerous,
+    version = "0.0.19",
+    short_description = "Disallow unnecessary spread.",
 );
 
 impl Rule for NoUselessSpread {
@@ -193,11 +197,11 @@ fn check_useless_spread_in_list<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -
     let span = Span::sized(spread_elem.span.start, 3);
 
     match node.kind() {
-        AstKind::ObjectExpression(_) => {
+        AstKind::ObjectExpression(inner_obj) => {
             // { ...{ } }
-            if matches!(parent_parent.kind(), AstKind::ObjectExpression(_)) {
+            if let AstKind::ObjectExpression(outer_obj) = parent_parent.kind() {
                 ctx.diagnostic_with_fix(spread_in_list(span, "object"), |fixer| {
-                    fix_by_removing_object_spread(fixer, spread_elem)
+                    fix_by_removing_object_spread(fixer, spread_elem, inner_obj, outer_obj)
                 });
                 true
             } else {
@@ -212,22 +216,31 @@ fn check_useless_spread_in_list<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -
                 true
             }
             // foo(...[ ])
-            AstKind::Argument(_) => {
-                ctx.diagnostic_with_fix(spread_in_arguments(span), |fixer| {
+            AstKind::NewExpression(NewExpression { arguments, .. })
+            | AstKind::CallExpression(CallExpression { arguments, .. }) => {
+                if let Some(call_expr_args_span) = arguments.first().map(|first| {
+                    let last = arguments.last().unwrap();
+                    Span::new(first.span().start, last.span().end)
+                }) && call_expr_args_span.contains_inclusive(array_expr.span)
+                {
+                    // compute replacer before the closure so we don't capture `ctx` by reference inside the fixer closure
                     let replacer = if let Some(first) = array_expr.elements.first() {
-                        let mut span = first.span();
+                        let mut snippet_span = first.span();
                         if array_expr.elements.len() != 1 {
                             let last = array_expr.elements.last().unwrap();
-                            span = Span::new(first.span().start, last.span().end);
+                            snippet_span = Span::new(first.span().start, last.span().end);
                         }
-                        ctx.source_range(span)
+                        ctx.source_range(snippet_span).to_string()
                     } else {
-                        ""
+                        String::new()
                     };
 
-                    fixer.replace(spread_elem.span(), replacer.to_owned())
-                });
-                true
+                    ctx.diagnostic_with_fix(spread_in_arguments(span), move |fixer| {
+                        fixer.replace(spread_elem.span(), replacer)
+                    });
+                    return true;
+                }
+                false
             }
             _ => false,
         },
@@ -270,10 +283,8 @@ fn diagnose_array_in_array_spread<'a>(
             ctx.diagnostic_with_fix(diagnostic, |fixer| {
                 let mut codegen = fixer.codegen();
                 codegen.print_ascii_byte(b'[');
-                let elements =
-                    spreads.iter().flat_map(|arr| arr.elements.iter()).collect::<Vec<_>>();
-                let n = elements.len();
-                for (i, el) in elements.into_iter().enumerate() {
+                let n = spreads.iter().map(|arr| arr.elements.len()).sum::<usize>();
+                for (i, el) in spreads.iter().flat_map(|arr| arr.elements.iter()).enumerate() {
                     match el {
                         ArrayExpressionElement::Elision(_) => {
                             if i == n - 1 {
@@ -308,16 +319,7 @@ fn check_useless_iterable_to_array<'a>(
         return false;
     };
 
-    let span = Span::new(spread_elem.span.start, spread_elem.span.start + 3);
-
-    let parent = if let AstKind::Argument(_) = parent.kind() {
-        let Some(parent) = outermost_paren_parent(parent, ctx) else {
-            return false;
-        };
-        parent
-    } else {
-        parent
-    };
+    let span = Span::sized(spread_elem.span.start, 3);
 
     match parent.kind() {
         AstKind::ForOfStatement(for_of_stmt) => {
@@ -393,7 +395,7 @@ fn check_useless_clone<'a>(
     spread_elem: &SpreadElement<'a>,
     ctx: &LintContext<'a>,
 ) {
-    let span = Span::new(spread_elem.span.start, spread_elem.span.start + 3);
+    let span = Span::sized(spread_elem.span.start, 3);
     let target = spread_elem.argument.get_inner_expression();
 
     // already diagnosed by first check
@@ -462,29 +464,32 @@ fn fix_by_removing_array_spread<'a, S: GetSpan>(
 ///
 /// ## Examples
 /// - `{...{ a, b, }}` -> `{ a, b }`
-#[expect(clippy::cast_possible_truncation)]
+/// - `{ a, ...{}, b }` -> `{ a, b }`
 fn fix_by_removing_object_spread<'a>(
     fixer: RuleFixer<'_, 'a>,
     spread: &SpreadElement<'a>,
+    inner_obj: &ObjectExpression<'a>,
+    outer_obj: &ObjectExpression<'a>,
 ) -> RuleFix {
-    // get contents inside object brackets
-    // e.g. `...{ a, b, }` -> ` a, b, `
-    let replacement_span = &spread.argument.span().shrink(1);
-
-    // remove trailing commas to avoid syntax errors if this spread is followed
-    // by another property
-    // e.g. ` a, b, ` -> `a, b`
-    let mut end_shrink_amount: u32 = 0;
-    for c in fixer.source_range(*replacement_span).chars().rev() {
-        if c.is_whitespace() || c == ',' {
-            end_shrink_amount += c.len_utf8() as u32;
-        } else {
-            break;
+    let alloc = Allocator::default();
+    let ast = AstBuilder::new(&alloc);
+    let mut new_properties = ast.vec();
+    for prop in &outer_obj.properties {
+        match prop {
+            ObjectPropertyKind::SpreadProperty(s) if s.span == spread.span => {
+                for inner_prop in &inner_obj.properties {
+                    new_properties.push(inner_prop.clone_in(&alloc));
+                }
+            }
+            _ => {
+                new_properties.push(prop.clone_in(&alloc));
+            }
         }
     }
-    let replacement_span = replacement_span.shrink_right(end_shrink_amount);
-
-    fixer.replace_with(&spread.span, &replacement_span)
+    let new_obj = ast.expression_object(SPAN, new_properties);
+    let mut codegen = fixer.codegen();
+    codegen.print_expression(&new_obj);
+    fixer.replace(outer_obj.span, codegen.into_source_text())
 }
 
 /// Checks if `node` is `[...(expr)]`
@@ -742,11 +747,10 @@ fn test() {
         ("[...[...[1,2,3]]]", "[...[1,2,3]]"),
         ("const array = [...[a, , b,]]", "const array = [a, , b,]"),
         // object literals
-        ("const obj = { a, ...{ b, c } }", "const obj = { a,  b, c }"),
-        ("const obj = { a, ...{ b, c, } }", "const obj = { a,  b, c }"),
-        ("const obj = {a, ...{b,c}}", "const obj = {a, b,c}"),
-        ("const obj = {a, ...{b,c,}}", "const obj = {a, b,c}"),
-        ("const obj = { a, ...{ b, c }, ...{ d } }", "const obj = { a,  b, c,  d }"),
+        ("const obj = { a, ...{ b, c } }", "const obj = ({\n\ta,\n\tb,\n\tc\n})"),
+        ("const obj = { a, ...{ b, c, } }", "const obj = ({\n\ta,\n\tb,\n\tc\n})"),
+        ("const obj = {a, ...{b,c}}", "const obj = ({\n\ta,\n\tb,\n\tc\n})"),
+        ("const obj = {a, ...{b,c,}}", "const obj = ({\n\ta,\n\tb,\n\tc\n})"),
         // iterable spread
         (r"const promise = Promise.any([...iterable])", r"const promise = Promise.any(iterable)"),
         (r"new Map([...iterable])", r"new Map(iterable)"),
@@ -762,15 +766,23 @@ fn test() {
         (r"[...Array.from(iterable)]", r"Array.from(iterable)"),
         ("[...((0, []))]", "((0, []))"),
         ("[...arr.reduce((a, b) => a.push(b), [])]", "arr.reduce((a, b) => a.push(b), [])"),
-        ("[...arr.reduce((a, b) => a.push(b), [])]", "arr.reduce((a, b) => a.push(b), [])"),
         // Issue: <https://github.com/oxc-project/oxc/issues/8115>
         ("setupServer(...[...importHandlers])", "setupServer(...importHandlers)"),
         ("setupServer(...[1, 2, 3])", "setupServer(1, 2, 3)"),
         ("[...[1,2,,,],...[3,4,,,]]", "[1, 2, , , 3, 4, , ,]"),
         ("[...[...foo], ...[...bar]]", "[...foo, ...bar]"),
-        ("S={...{ }}", "S={}"),
+        ("S={...{ }}", "S=({})"),
+        (
+            "jsxEl({
+      className,
+      ...{},
+      onClick: () => console.log('click'),
+    });",
+            "jsxEl(({\n\tclassName,\n\tonClick: () => console.log('click')\n}));",
+        ),
     ];
     Tester::new(NoUselessSpread::NAME, NoUselessSpread::PLUGIN, pass, fail)
+        .change_rule_path_extension("mjs")
         .expect_fix(fix)
         .test_and_snapshot();
 }

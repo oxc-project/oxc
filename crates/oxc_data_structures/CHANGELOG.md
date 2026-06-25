@@ -4,6 +4,70 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.137.0] - 2026-06-18
+
+### 🚀 Features
+
+- 556cc6d data_structures: Add `CodeBuffer::as_str` method (#23571) (overlookmotel)
+
+### 📚 Documentation
+
+- f68641e data_structures: Improve docs on safety contract (#23575) (overlookmotel)
+
+## [0.128.0] - 2026-04-27
+
+### 📚 Documentation
+
+- ce65070 data_structures: Document why `as_ref` and `as_mut` on `NonNullConst` and `NonNullMut` take `self` (#21800) (overlookmotel)
+
+## [0.126.0] - 2026-04-15
+
+### 🚀 Features
+
+- 24b03de data_structures: Introduce `NonNullConst` and `NonNullMut` pointer types (#21425) (overlookmotel)
+
+## [0.124.0] - 2026-04-06
+
+### 📚 Documentation
+
+- b1da750 allocator, data_structures: Correct comments (#20966) (overlookmotel)
+
+## [0.116.0] - 2026-03-02
+
+### 🚀 Features
+
+- b3dceae data_structures: Add `fieldless_enum!` macro (#19876) (overlookmotel)
+- 4699498 data_structures: Add `CodeBuffer::print_strs_array` (#19760) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 93bb861 formatter: Trim trailing whitespace before breaking line (#19740) (leaysgur)
+
+## [0.115.0] - 2026-02-23
+
+### 🚀 Features
+
+- e814049 oxc_data_structure/rope: Add `get_offset_from_line_and_column` (#18133) (Sysix)
+
+## [0.114.0] - 2026-02-16
+
+### 📚 Documentation
+
+- 569aa61 rust: Add missing rustdocs and remove missing_docs lint attrs (#19306) (Boshen)
+
+## [0.105.0] - 2025-12-22
+
+### 🚀 Features
+
+- 36e08ef data_structures: Implement conversion traits for stack types (#17141) (overlookmotel)
+- 0e177f4 data_structures: Implement `Send` and `Sync` for stack types (#17135) (overlookmotel)
+
+## [0.99.0] - 2025-11-24
+
+### 📚 Documentation
+
+- c81a331 data_structures: Doc comments on fields of `Stack` (#15793) (overlookmotel)
+
 
 
 

@@ -1,19 +1,32 @@
-#![expect(clippy::self_named_module_files)] // for rules.rs
+#![expect(clippy::self_named_module_files)]
+// for rules.rs
+// RuleEnum contains rule configs with interior mutability (e.g. Regex),
+// but Hash/Eq/Ord are based only on the rule id, so it's safe as a map key.
+#![expect(clippy::mutable_key_type)]
+// Rule::from_configuration returns Result but documenting errors is not useful here.
+#![expect(clippy::missing_errors_doc)]
 
 use std::{
-    mem,
+    borrow::Cow,
+    iter, mem,
     path::Path,
     ptr::{self, NonNull},
     rc::Rc,
+    string::ToString,
 };
 
-use oxc_allocator::Allocator;
-use oxc_ast::{ast::Program, ast_kind::AST_TYPE_MAX};
+use oxc_allocator::{Allocator, AllocatorPool, ArenaVec, CloneIn, TakeIn};
+use oxc_ast::{
+    ast::{Comment, CommentContent, CommentKind, Program},
+    ast_kind::AST_TYPE_MAX,
+};
 use oxc_ast_macros::ast;
 use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
 use oxc_data_structures::box_macros::boxed_array;
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_semantic::AstNode;
+use oxc_estree_tokens::{ESTreeTokenOptionsJS, update_tokens};
+use oxc_parser::Token;
+use oxc_semantic::{AstNode, Semantic};
 use oxc_span::Span;
 
 mod ast_util;
@@ -30,6 +43,8 @@ mod module_record;
 mod options;
 mod rule;
 mod service;
+mod suppression;
+pub(crate) mod timing;
 mod tsgolint;
 mod utils;
 
@@ -41,6 +56,7 @@ mod generated {
     #[cfg(debug_assertions)]
     mod assert_layouts;
     mod rule_runner_impls;
+    pub mod rules_enum;
 }
 
 #[cfg(test)]
@@ -50,7 +66,7 @@ mod lint_runner;
 
 pub use crate::config::plugins::normalize_plugin_name;
 pub use crate::disable_directives::{
-    DisableDirectives, DisableRuleComment, RuleCommentRule, RuleCommentType,
+    DirectivePrefix, DisableDirectives, DisableRuleComment, RuleCommentRule, RuleCommentType,
     create_unused_directives_diagnostics,
 };
 pub use crate::{
@@ -58,13 +74,14 @@ pub use crate::{
         Config, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ESLintRule, LintIgnoreMatcher,
         LintPlugins, Oxlintrc, ResolvedLinterState,
     },
-    context::{ContextSubHost, LintContext},
+    context::{ContextSubHost, ContextSubHostOptions, LintContext},
     external_linter::{
-        ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, JsFix,
-        LintFileResult, PluginLoadResult,
+        ExternalLinter, ExternalLinterCreateWorkspaceCb, ExternalLinterDestroyWorkspaceCb,
+        ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, ExternalLinterSetupRuleConfigsCb,
+        JsFix, LintFileResult, LoadPluginResult, convert_and_merge_js_fixes,
     },
-    external_plugin_store::{ExternalPluginStore, ExternalRuleId},
-    fixer::{Fix, FixKind, Message, PossibleFixes},
+    external_plugin_store::{ExternalOptionsId, ExternalPluginStore, ExternalRuleId},
+    fixer::{Fix, FixKind, Fixer, Message, MessageRule, PossibleFixes},
     frameworks::FrameworkFlags,
     lint_runner::{DirectivesStore, LintRunner, LintRunnerBuilder},
     loader::LINTABLE_EXTENSIONS,
@@ -72,16 +89,20 @@ pub use crate::{
     options::LintOptions,
     options::{AllowWarnDeny, InvalidFilterKind, LintFilter, LintFilterKind},
     rule::{RuleCategory, RuleFixMeta, RuleMeta, RuleRunFunctionsImplemented, RuleRunner},
-    service::{LintService, LintServiceOptions, RuntimeFileSystem},
+    service::{LintService, LintServiceOptions, OsFileSystem, RuntimeFileSystem},
+    suppression::{OxlintSuppressionFileAction, SuppressionManager},
+    timing::{RuleTimingRecord, RuleTimingSource, RuleTimingStore},
     tsgolint::TsGoLintState,
     utils::{read_to_arena_str, read_to_string},
 };
 use crate::{
     config::{LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings},
     context::ContextHost,
-    fixer::{CompositeFix, Fixer},
+    external_linter::GlobalsAndEnvs,
+    fixer::CompositeFix,
     loader::LINT_PARTIAL_LOADER_EXTENSIONS,
     rules::RuleEnum,
+    timing::{RuleTimingRecorder, RuleTimingStat},
     utils::iter_possible_jest_call_node,
 };
 
@@ -94,12 +115,177 @@ fn size_asserts() {
     assert_eq!(size_of::<RuleEnum>(), 16);
 }
 
+#[inline]
+fn get_timing_stat<const TIMINGS: bool>(
+    timing_stats: &mut Option<Vec<RuleTimingStat>>,
+    rule_index: usize,
+) -> Option<&mut RuleTimingStat> {
+    if TIMINGS {
+        Some(&mut timing_stats.as_mut().expect("missing rule timing stats")[rule_index])
+    } else {
+        None
+    }
+}
+
+#[cfg(debug_assertions)]
+fn cmp_diagnostics_for_runtime_optimization_assertion(
+    left: &Message,
+    right: &Message,
+) -> std::cmp::Ordering {
+    left.error
+        .labels
+        .iter()
+        .map(|label| (label.offset(), label.len(), label.primary()))
+        .cmp(right.error.labels.iter().map(|label| (label.offset(), label.len(), label.primary())))
+        .then_with(|| left.error.message.cmp(&right.error.message))
+        .then_with(|| left.error.help.cmp(&right.error.help))
+        .then_with(|| left.error.note.cmp(&right.error.note))
+        .then_with(|| left.error.severity.cmp(&right.error.severity))
+        .then_with(|| left.error.code.cmp(&right.error.code))
+        .then_with(|| left.error.url.cmp(&right.error.url))
+        .then_with(|| left.span.cmp(&right.span))
+        .then_with(|| left.fixes.cmp_fix_sequence(&right.fixes))
+        .then_with(|| left.section_offset.cmp(&right.section_offset))
+        .then_with(|| {
+            left.rule.as_ref().map(|rule| (rule.plugin_name.as_ref(), rule.rule_name.as_ref())).cmp(
+                &right
+                    .rule
+                    .as_ref()
+                    .map(|rule| (rule.plugin_name.as_ref(), rule.rule_name.as_ref())),
+            )
+        })
+}
+
+/// Per-thread scratch buffers for dispatching rules to AST nodes by node type.
+///
+/// Reused across files, so the single traversal in [`execute_rules`] — which visits each node once
+/// and dispatches it only to the rules registered for its type — incurs no per-file allocation.
+/// (Per-file allocation is what previously made bucketing worthwhile only for very large files.)
+struct RuleBuckets {
+    /// `by_type[ast_type]` = indices, into the per-file `rules` slice, of rules that run on that AST
+    /// node type. A boxed fixed-size array so indexing by an `AstType` elides bounds checks.
+    by_type: Box<[Vec<usize>; AST_TYPE_MAX as usize + 1]>,
+    /// Indices of rules that run on every node (rules without `types_info`).
+    any_type: Vec<usize>,
+}
+
+impl RuleBuckets {
+    fn clear(&mut self) {
+        for bucket in self.by_type.iter_mut() {
+            bucket.clear();
+        }
+        self.any_type.clear();
+    }
+}
+
+thread_local! {
+    static RULE_BUCKETS: std::cell::RefCell<RuleBuckets> = std::cell::RefCell::new(RuleBuckets {
+        by_type: boxed_array![Vec::new(); AST_TYPE_MAX as usize + 1],
+        any_type: Vec::new(),
+    });
+}
+
+fn execute_rules<'a, const TIMINGS: bool>(
+    rules: &[(&RuleEnum, LintContext<'a>)],
+    semantic: &Semantic<'a>,
+    should_run_on_jest_node: bool,
+    with_runtime_optimization: bool,
+    mut timing_recorder: Option<&mut RuleTimingRecorder>,
+) {
+    let mut timing_stats = TIMINGS.then(|| vec![RuleTimingStat::default(); rules.len()]);
+
+    if with_runtime_optimization {
+        // Bucket rules by the AST node types they care about into a reused per-thread buffer, then
+        // make a single pass over the AST, dispatching each node only to the rules registered for
+        // its type. This replaces "every rule tests every node" (which dominated dispatch cost in
+        // profiles), and because the buffer is reused there is no per-file allocation — so this is
+        // a win for files of all sizes, not just large ones.
+        RULE_BUCKETS.with_borrow_mut(|buckets| {
+            buckets.clear();
+
+            for (rule_index, (rule, ctx)) in rules.iter().enumerate() {
+                let run_info = rule.run_info();
+                if let Some(ast_types) = rule.types_info()
+                    && run_info.is_run_implemented()
+                {
+                    for ty in ast_types {
+                        buckets.by_type[ty as usize].push(rule_index);
+                    }
+                } else if run_info.is_run_implemented() {
+                    buckets.any_type.push(rule_index);
+                }
+
+                if run_info.is_run_once_implemented() {
+                    let timing_stat = get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);
+                    rule.run_once::<TIMINGS>(ctx, timing_stat);
+                }
+            }
+
+            for node in semantic.nodes() {
+                for &rule_index in &buckets.by_type[node.kind().ty() as usize] {
+                    let (rule, ctx) = &rules[rule_index];
+                    let timing_stat = get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);
+                    rule.run::<TIMINGS>(node, ctx, timing_stat);
+                }
+                for &rule_index in &buckets.any_type {
+                    let (rule, ctx) = &rules[rule_index];
+                    let timing_stat = get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);
+                    rule.run::<TIMINGS>(node, ctx, timing_stat);
+                }
+            }
+
+            if should_run_on_jest_node {
+                for jest_node in iter_possible_jest_call_node(semantic) {
+                    for (rule_index, (rule, ctx)) in rules.iter().enumerate() {
+                        if rule.run_info().is_run_on_jest_node_implemented() {
+                            let timing_stat =
+                                get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);
+                            rule.run_on_jest_node::<TIMINGS>(&jest_node, ctx, timing_stat);
+                        }
+                    }
+                }
+            }
+        });
+    } else {
+        // Unoptimized reference path: every rule runs on every node, with no type filtering. Used
+        // only in debug builds, to assert the optimized path produces identical diagnostics.
+        for (rule_index, (rule, ctx)) in rules.iter().enumerate() {
+            let timing_stat = get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);
+            rule.run_once::<TIMINGS>(ctx, timing_stat);
+
+            for node in semantic.nodes() {
+                let timing_stat = get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);
+                rule.run::<TIMINGS>(node, ctx, timing_stat);
+            }
+
+            if should_run_on_jest_node {
+                for jest_node in iter_possible_jest_call_node(semantic) {
+                    let timing_stat = get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);
+                    rule.run_on_jest_node::<TIMINGS>(&jest_node, ctx, timing_stat);
+                }
+            }
+        }
+    }
+
+    if TIMINGS {
+        let timing_recorder = timing_recorder.as_mut().expect("missing rule timing recorder");
+        for ((rule, _), stat) in rules.iter().zip(timing_stats.expect("missing rule timing stats"))
+        {
+            timing_recorder.record_native(rule.plugin_name(), rule.name(), stat);
+        }
+    }
+}
+
+/// Base URL for the documentation, used to generate rule documentation URLs when a diagnostic is reported.
+const WEBSITE_BASE_RULES_URL: &str = "https://oxc.rs/docs/guide/usage/linter/rules";
+
 #[derive(Debug)]
 #[expect(clippy::struct_field_names)]
 pub struct Linter {
     options: LintOptions,
     config: ConfigStore,
     external_linter: Option<ExternalLinter>,
+    workspace_uri: Option<Box<str>>,
 }
 
 impl Linter {
@@ -108,7 +294,13 @@ impl Linter {
         config: ConfigStore,
         external_linter: Option<ExternalLinter>,
     ) -> Self {
-        Self { options, config, external_linter }
+        Self { options, config, external_linter, workspace_uri: None }
+    }
+
+    #[must_use]
+    pub fn with_workspace_uri(mut self, workspace_uri: Option<&str>) -> Self {
+        self.workspace_uri = workspace_uri.map(Box::from);
+        self
     }
 
     /// Set the kind of auto fixes to apply.
@@ -126,6 +318,10 @@ impl Linter {
 
     pub(crate) fn options(&self) -> &LintOptions {
         &self.options
+    }
+
+    pub(crate) fn respect_eslint_disable_directives(&self) -> bool {
+        self.config.respect_eslint_disable_directives()
     }
 
     /// Returns the number of rules that will are being used, unless there
@@ -148,20 +344,28 @@ impl Linter {
         context_sub_hosts: Vec<ContextSubHost<'a>>,
         allocator: &'a Allocator,
     ) -> Vec<Message> {
-        self.run_with_disable_directives(path, context_sub_hosts, allocator).0
+        self.run_with_disable_directives::<false>(path, context_sub_hosts, allocator, None, None).0
     }
 
     /// Same as `run` but also returns the disable directives for the file
     ///
+    /// # Parameters
+    /// - `js_allocator_pool`: Optional pool of fixed-size allocators for copying AST before JS transfer.
+    ///   When `Some`, the AST will be copied into a fixed-size allocator before passing to JS plugins,
+    ///   allowing the main allocator to be a standard (non-fixed-size) allocator.
+    ///
     /// # Panics
     /// Panics in debug mode if running with and without optimizations produces different diagnostic counts.
-    pub fn run_with_disable_directives<'a>(
+    pub fn run_with_disable_directives<'a, const TIMINGS: bool>(
         &self,
         path: &Path,
         context_sub_hosts: Vec<ContextSubHost<'a>>,
         allocator: &'a Allocator,
+        js_allocator_pool: Option<&AllocatorPool>,
+        rule_timing_store: Option<&RuleTimingStore>,
     ) -> (Vec<Message>, Option<DisableDirectives>) {
         let ResolvedLinterState { rules, config, external_rules } = self.config.resolve(path);
+        let mut timing_recorder = TIMINGS.then(|| RuleTimingRecorder::with_capacity(rules.len()));
 
         let mut ctx_host = Rc::new(ContextHost::new(path, context_sub_hosts, self.options, config));
 
@@ -198,121 +402,18 @@ impl Linter {
             let should_run_on_jest_node =
                 ctx_host.plugins().has_test() && ctx_host.frameworks().is_test();
 
-            let execute_rules = |with_runtime_optimization: bool| {
-                // IMPORTANT: We have two branches here for performance reasons:
-                //
-                // 1) Branch where we iterate over each node, then each rule
-                // 2) Branch where we iterate over each rule, then each node
-                //
-                // When the number of nodes is relatively small, most of them can fit
-                // in the cache and we can save iterating over the rules multiple times.
-                // But for large files, the number of nodes can be so large that it
-                // starts to not fit into the cache and pushes out other data, like the rules.
-                // So we end up thrashing the cache with each rule iteration. In this case,
-                // it's better to put rules in the inner loop, as the rules data is smaller
-                // and is more likely to fit in the cache.
-                //
-                // The threshold here is chosen to balance between performance improvement
-                // from not iterating over rules multiple times, but also ensuring that we
-                // don't thrash the cache too much. Feel free to tweak based on benchmarking.
-                //
-                // See https://github.com/oxc-project/oxc/pull/6600 for more context.
-                if semantic.nodes().len() > 200_000 {
-                    // TODO: It seems like there is probably a more intelligent way to preallocate space here. This will
-                    // likely incur quite a few unnecessary reallocs currently. We theoretically could compute this at
-                    // compile-time since we know all of the rules and their AST node type information ahead of time.
-                    //
-                    // Use boxed array to help compiler see that indexing into it with an `AstType`
-                    // cannot go out of bounds, and remove bounds checks.
-                    let mut rules_by_ast_type = boxed_array![Vec::new(); AST_TYPE_MAX as usize + 1];
-                    // TODO: Compute needed capacity. This is a slight overestimate as not 100% of rules will need to run on all
-                    // node types, but it at least guarantees we won't need to realloc.
-                    let mut rules_any_ast_type = Vec::with_capacity(rules.len());
-
-                    for (rule, ctx) in &rules {
-                        let rule = *rule;
-                        let run_info = rule.run_info();
-                        // Collect node type information for rules. In large files, benchmarking showed it was worth
-                        // collecting rules into buckets by AST node type to avoid iterating over all rules for each node.
-                        if with_runtime_optimization
-                            && let Some(ast_types) = rule.types_info()
-                            && run_info.is_run_implemented()
-                        {
-                            for ty in ast_types {
-                                rules_by_ast_type[ty as usize].push((rule, ctx));
-                            }
-                        } else {
-                            rules_any_ast_type.push((rule, ctx));
-                        }
-
-                        if !with_runtime_optimization || run_info.is_run_once_implemented() {
-                            rule.run_once(ctx);
-                        }
-                    }
-
-                    // Run rules on nodes
-                    for node in semantic.nodes() {
-                        for (rule, ctx) in &rules_by_ast_type[node.kind().ty() as usize] {
-                            rule.run(node, ctx);
-                        }
-                        for (rule, ctx) in &rules_any_ast_type {
-                            rule.run(node, ctx);
-                        }
-                    }
-
-                    if should_run_on_jest_node {
-                        for jest_node in iter_possible_jest_call_node(semantic) {
-                            for (rule, ctx) in &rules {
-                                if !with_runtime_optimization
-                                    || rule.run_info().is_run_on_jest_node_implemented()
-                                {
-                                    rule.run_on_jest_node(&jest_node, ctx);
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    for (rule, ctx) in &rules {
-                        let run_info = rule.run_info();
-                        if !with_runtime_optimization || run_info.is_run_once_implemented() {
-                            rule.run_once(ctx);
-                        }
-
-                        if !with_runtime_optimization || run_info.is_run_implemented() {
-                            // For smaller files, benchmarking showed it was faster to iterate over all rules and just check the
-                            // node types as we go, rather than pre-bucketing rules by AST node type and doing extra allocations.
-                            if with_runtime_optimization && let Some(ast_types) = rule.types_info()
-                            {
-                                for node in semantic.nodes() {
-                                    if ast_types.has(node.kind().ty()) {
-                                        rule.run(node, ctx);
-                                    }
-                                }
-                            } else {
-                                for node in semantic.nodes() {
-                                    rule.run(node, ctx);
-                                }
-                            }
-                        }
-
-                        if should_run_on_jest_node
-                            && (!with_runtime_optimization
-                                || run_info.is_run_on_jest_node_implemented())
-                        {
-                            for jest_node in iter_possible_jest_call_node(semantic) {
-                                rule.run_on_jest_node(&jest_node, ctx);
-                            }
-                        }
-                    }
-                }
-            };
-
-            execute_rules(true);
+            execute_rules::<TIMINGS>(
+                &rules,
+                semantic,
+                should_run_on_jest_node,
+                true,
+                timing_recorder.as_mut(),
+            );
 
             #[cfg(debug_assertions)]
             {
                 let diagnostics_after_optimized = ctx_host.diagnostic_count();
-                execute_rules(false);
+                execute_rules::<false>(&rules, semantic, should_run_on_jest_node, false, None);
                 let diagnostics_after_unoptimized = ctx_host.diagnostic_count();
                 ctx_host.get_diagnostics(|diagnostics| {
                     let optimized_diagnostics = &diagnostics[current_diagnostic_index..diagnostics_after_optimized];
@@ -322,22 +423,29 @@ impl Linter {
                     assert_eq!(
                         optimized_diagnostics.len(),
                         unoptimized_diagnostics.len(),
-                        "Running with and without optimizations produced different diagnostic counts: {} vs {}",
+                        "Running with and without optimizations produced different diagnostic counts: {} vs {}.\nThis can be caused by a mismatch between the rule definition and generated RuleRunner impl. Try `cargo run -p oxc_linter_codegen` to regenerate.",
                         optimized_diagnostics.len(),
                         unoptimized_diagnostics.len()
                     );
 
+                    let mut sorted_optimized = optimized_diagnostics.iter().collect::<Vec<_>>();
+                    let mut sorted_unoptimized = unoptimized_diagnostics.iter().collect::<Vec<_>>();
 
-                    let mut sorted_optimized = optimized_diagnostics.to_vec();
-                    let mut sorted_unoptimized = unoptimized_diagnostics.to_vec();
-                    let sort = |m: &Message| { (m.error.labels.as_ref().and_then(|l| l.first()).map(|l| (l.offset(), l.len())), m.error.code.clone()) };
-                    sorted_optimized.sort_unstable_by_key(sort);
-                    sorted_unoptimized.sort_unstable_by_key(sort);
+                    sorted_optimized
+                        .sort_unstable_by(|left, right| {
+                            cmp_diagnostics_for_runtime_optimization_assertion(left, right)
+                        });
+                    sorted_unoptimized
+                        .sort_unstable_by(|left, right| {
+                            cmp_diagnostics_for_runtime_optimization_assertion(left, right)
+                        });
 
-                    for (opt_diag, unopt_diag) in sorted_optimized.iter().zip(sorted_unoptimized.iter()){
+                    for (opt_diag, unopt_diag) in
+                        sorted_optimized.iter().zip(sorted_unoptimized.iter())
+                    {
                         assert_eq!(
-                            opt_diag,
-                            unopt_diag,
+                            *opt_diag,
+                            *unopt_diag,
                             "Diagnostic differs between optimized and unoptimized runs",
                         );
                     }
@@ -350,7 +458,13 @@ impl Linter {
             // can mutably access `ctx_host` via `Rc::get_mut` without panicking due to multiple references.
             drop(rules);
 
-            self.run_external_rules(&external_rules, path, &mut ctx_host, allocator);
+            self.run_external_rules(
+                &external_rules,
+                path,
+                &mut ctx_host,
+                allocator,
+                js_allocator_pool,
+            );
 
             // Report unused directives is now handled differently with type-aware linting
 
@@ -379,79 +493,295 @@ impl Linter {
             Rc::try_unwrap(ctx_host).unwrap().into_disable_directives()
         };
 
-        (diagnostics, disable_directives)
+        let result = (diagnostics, disable_directives);
+        if TIMINGS {
+            rule_timing_store
+                .expect("missing rule timing store")
+                .merge(timing_recorder.expect("missing rule timing recorder"));
+        }
+        result
     }
 
+    #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
     fn run_external_rules<'a>(
         &self,
-        external_rules: &[(ExternalRuleId, AllowWarnDeny)],
+        external_rules: &[(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)],
         path: &Path,
         ctx_host: &mut Rc<ContextHost<'a>>,
         allocator: &'a Allocator,
+        js_allocator_pool: Option<&AllocatorPool>,
     ) {
         if external_rules.is_empty() {
             return;
         }
 
-        // `external_linter` always exists when `external_rules` is not empty
-        let external_linter = self.external_linter.as_ref().unwrap();
+        // Extract `Semantic` from `ContextHost`, and get a mutable reference to `Program`.
+        //
+        // It's not possible to obtain a `&mut Program` while `Semantic` exists, because `Semantic`
+        // contains `AstNodes`, which contains `AstKind`s for every AST nodes, each of which contains
+        // an immutable `&` ref to an AST node.
+        // Obtaining a `&mut Program` while `Semantic` exists would be illegal aliasing.
+        //
+        // So instead we get a pointer to `Program`.
+        // The pointer is obtained initially from `&Program` in `Semantic`, but that pointer
+        // has no provenance for mutation, so can't be converted to `&mut Program`.
+        // So create a new pointer to `Program` which inherits `cursor_ptr`'s provenance, which does allow mutation.
+        //
+        // We then drop `Semantic`, after which no references to any AST nodes remain.
+        // We can then safely convert the pointer to `&mut Program`.
+        //
+        // `Program` was created in `allocator`, and `Program` is the last thing to be allocated, so is in current chunk.
+        // So `cursor_ptr` and `Program` are within the same allocation.
+        // All callers of `Linter::run` obtain `allocator` and `Semantic` from `ModuleContent`,
+        // which ensure they are in same allocation.
+        // However, we have no static guarantee of this, so strictly speaking it's unsound.
+        // TODO: It would be better to avoid the need for a `&mut Program` here, and so avoid this
+        // sketchy behavior.
+        let ctx_host = Rc::get_mut(ctx_host).unwrap();
+        let semantic = mem::take(ctx_host.semantic_mut());
+        let program_addr = NonNull::from(semantic.nodes().program()).addr();
+        // Check `Program` is in `Allocator`'s current chunk
+        debug_assert!(program_addr >= allocator.cursor_ptr().addr());
+        debug_assert!(program_addr < allocator.data_end_ptr().addr());
+        let mut program_ptr = allocator.cursor_ptr().cast::<Program<'a>>().with_addr(program_addr);
+        drop(semantic);
+        // SAFETY: Now that we've dropped `Semantic`, no references to any AST nodes remain,
+        // so can get a mutable reference to `Program` without aliasing violations
+        let program = unsafe { program_ptr.as_mut() };
 
-        let (program_offset, source_text, span_converter) = {
-            // Extract `Semantic` from `ContextHost`, and get a mutable reference to `Program`.
-            //
-            // It's not possible to obtain a `&mut Program` while `Semantic` exists, because `Semantic`
-            // contains `AstNodes`, which contains `AstKind`s for every AST nodes, each of which contains
-            // an immutable `&` ref to an AST node.
-            // Obtaining a `&mut Program` while `Semantic` exists would be illegal aliasing.
-            //
-            // So instead we get a pointer to `Program`.
-            // The pointer is obtained initially from `&Program` in `Semantic`, but that pointer
-            // has no provenance for mutation, so can't be converted to `&mut Program`.
-            // So create a new pointer to `Program` which inherits `data_end_ptr`'s provenance,
-            // which does allow mutation.
-            //
-            // We then drop `Semantic`, after which no references to any AST nodes remain.
-            // We can then safety convert the pointer to `&mut Program`.
-            //
-            // `Program` was created in `allocator`, and that allocator is a `FixedSizeAllocator`,
-            // so only has 1 chunk. So `data_end_ptr` and `Program` are within the same allocation.
-            // All callers of `Linter::run` obtain `allocator` and `Semantic` from `ModuleContent`,
-            // which ensure they are in same allocation.
-            // However, we have no static guarantee of this, so strictly speaking it's unsound.
-            // TODO: It would be better to avoid the need for a `&mut Program` here, and so avoid this
-            // sketchy behavior.
-            let ctx_host = Rc::get_mut(ctx_host).unwrap();
-            let semantic = mem::take(ctx_host.semantic_mut());
-            let program_addr = NonNull::from(semantic.nodes().program()).addr();
-            let mut program_ptr =
-                allocator.data_end_ptr().cast::<Program<'a>>().with_addr(program_addr);
-            drop(semantic);
-            // SAFETY: Now that we've dropped `Semantic`, no references to any AST nodes remain,
-            // so can get a mutable reference to `Program` without aliasing violations.
-            let program = unsafe { program_ptr.as_mut() };
+        // If `js_allocator_pool` is provided, use clone-into-fixed-allocator approach
+        if let Some(js_allocator_pool) = js_allocator_pool {
+            self.clone_into_fixed_size_allocator_and_run_external_rules(
+                external_rules,
+                path,
+                ctx_host,
+                program,
+                js_allocator_pool,
+            );
+            return;
+        }
 
-            // Convert spans to UTF-16
-            let span_converter = Utf8ToUtf16::new(program.source_text);
-            span_converter.convert_program(program);
-            span_converter.convert_comments(&mut program.comments);
+        // `allocator` is a fixed-size allocator, so no need to clone AST into a new one
+        let tokens = ctx_host.parser_tokens_mut().take_in(&allocator).into_arena_slice_mut();
 
-            // Get offset of `Program` within buffer (bottom 32 bits of pointer)
-            let program_offset = ptr::from_ref(program) as u32;
+        // If file has a hashbang, add it to comments.
+        // It will be converted to a `Shebang` comment on JS side.
+        if let Some(hashbang) = &program.hashbang {
+            program
+                .comments
+                .insert(0, Comment::new(hashbang.span.start, hashbang.span.end, CommentKind::Line));
+        }
 
-            (program_offset, program.source_text, span_converter)
+        self.convert_and_call_external_linter(
+            external_rules,
+            path,
+            ctx_host,
+            program,
+            tokens,
+            allocator,
+        );
+    }
+
+    #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
+    fn run_external_rules<'a>(
+        &self,
+        _external_rules: &[(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)],
+        _path: &Path,
+        _ctx_host: &mut Rc<ContextHost<'a>>,
+        _allocator: &'a Allocator,
+        _js_allocator_pool: Option<&AllocatorPool>,
+    ) {
+        // External rules (JS plugins) are not supported on non-64-bit or big-endian platforms
+    }
+
+    /// Clone AST into a fixed-size allocator and run external rules.
+    ///
+    /// This copies the AST and source text from the standard allocator into a fixed-size
+    /// allocator before passing to JS plugins. This allows using standard allocators for
+    /// parsing/linting while still supporting JS plugin raw transfer.
+    #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+    fn clone_into_fixed_size_allocator_and_run_external_rules(
+        &self,
+        external_rules: &[(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)],
+        path: &Path,
+        ctx_host: &ContextHost<'_>,
+        original_program: &mut Program<'_>,
+        js_allocator_pool: &AllocatorPool,
+    ) {
+        let js_allocator_guard = js_allocator_pool.get();
+        let js_allocator = &*js_allocator_guard;
+
+        // Get the original source text from the `Program`, and replace it with an empty string.
+        // This avoids cloning the original source text, which can be large.
+        let original_source_text = original_program.source_text;
+        original_program.source_text = "";
+
+        // Copy source text to the fixed-size allocator.
+        // We have to allocate source text first, because the JS deserializer expects source text
+        // to be later in the buffer than all other strings in the AST, and the allocator bumps downwards.
+        let new_source_text = js_allocator.alloc_str(original_source_text);
+
+        // If file has a hashbang, add it to comments.
+        // It will be converted to a `Shebang` comment on JS side.
+        // Clear the original `Vec<Comment>` to avoid cloning it again below.
+        let comments = if let Some(hashbang) = &original_program.hashbang {
+            let mut comments_with_hashbang =
+                ArenaVec::with_capacity_in(original_program.comments.len() + 1, &js_allocator);
+            comments_with_hashbang.push(Comment::new(
+                hashbang.span.start,
+                hashbang.span.end,
+                CommentKind::Line,
+            ));
+            comments_with_hashbang.extend(original_program.comments.iter().copied());
+
+            original_program.comments.clear();
+
+            Some(comments_with_hashbang)
+        } else {
+            None
         };
 
+        // Clone `Program` into fixed-size allocator.
+        // We need to allocate the `Program` struct ITSELF in the allocator, not just its contents.
+        // `clone_in` returns a value on the stack, but we need it in the allocator for raw transfer.
+        let program = {
+            let mut program = original_program.clone_in(js_allocator);
+            program.source_text = new_source_text;
+            js_allocator.alloc(program)
+        };
+
+        // If added hashbang comment, set comments to the new `Vec<Comment>` including hashbang comment
+        if let Some(comments) = comments {
+            program.comments = comments;
+        }
+
+        // Clone tokens into fixed-size allocator
+        let tokens = js_allocator.alloc_slice_copy(ctx_host.parser_tokens());
+
+        self.convert_and_call_external_linter(
+            external_rules,
+            path,
+            ctx_host,
+            program,
+            tokens,
+            js_allocator,
+        );
+
+        // The `AllocatorGuard` (`js_allocator_guard`) is dropped here, returning the allocator to the pool.
+        // This ensures that we never have too many allocators in play at once, avoiding OOM.
+    }
+
+    /// Convert spans to UTF-16, write metadata, call external linter, and process diagnostics.
+    ///
+    /// This is the common code path shared by both `run_external_rules` and
+    /// `clone_into_fixed_size_allocator_and_run_external_rules`.
+    #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+    fn convert_and_call_external_linter(
+        &self,
+        external_rules: &[(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)],
+        path: &Path,
+        ctx_host: &ContextHost<'_>,
+        program: &mut Program<'_>,
+        tokens: &mut [Token],
+        allocator: &Allocator,
+    ) {
+        // If has BOM, remove it
+        const BOM: &str = "\u{feff}";
+        const BOM_LEN: usize = BOM.len();
+
+        let original_source_text = program.source_text;
+        let mut source_text = original_source_text;
+        let has_bom = source_text.starts_with(BOM);
+        if has_bom {
+            source_text = &source_text[BOM_LEN..];
+            program.source_text = source_text;
+        }
+
+        // If partial source (Vue/Astro/Svelte), trim the leading newline after `<script>`
+        let is_partial = !has_bom && ctx_host.current_sub_host().source_text_offset() > 0;
+        let trim_leading = match source_text.as_bytes() {
+            [b'\r', b'\n', ..] if is_partial => 2u32,
+            [b'\n', ..] if is_partial => 1,
+            _ => 0,
+        };
+        if trim_leading > 0 {
+            source_text = &source_text[trim_leading as usize..];
+            program.source_text = source_text;
+        }
+
+        // Create span converter.
+        // If source starts with BOM, create converter which ignores the BOM.
+        let span_converter = if has_bom {
+            #[expect(clippy::cast_possible_truncation)]
+            Utf8ToUtf16::new_with_offset(source_text, BOM_LEN as u32)
+        } else if trim_leading > 0 {
+            Utf8ToUtf16::new_with_offset(source_text, trim_leading)
+        } else {
+            Utf8ToUtf16::new(source_text)
+        };
+
+        // Convert token spans to UTF-16 and update token kinds
+        #[expect(clippy::if_not_else, clippy::cast_possible_truncation)]
+        let (tokens_offset, tokens_len) = if !tokens.is_empty() {
+            update_tokens(tokens, program, &span_converter, ESTreeTokenOptionsJS);
+            (tokens.as_ptr() as u32, tokens.len() as u32)
+        } else {
+            (0, 0)
+        };
+
+        // Convert AST spans to UTF-16
+        span_converter.convert_program(program);
+
+        // Convert comment spans to UTF-16.
+        // Also set the `content` field (byte 15) of each comment to `None` (0).
+        // JS side uses this byte as a "deserialized" flag for tracking lazy deserialization.
+        if let Some(mut converter) = span_converter.converter() {
+            for comment in &mut program.comments {
+                converter.convert_span(&mut comment.span);
+                comment.content = CommentContent::None;
+            }
+        } else {
+            for comment in &mut program.comments {
+                comment.content = CommentContent::None;
+            }
+        }
+
+        // Get offset of `Program` within buffer (bottom 32 bits of pointer)
+        let program_offset = ptr::from_ref(program) as u32;
+
         // Write offset of `Program` in metadata at end of buffer
-        let metadata = RawTransferMetadata::new(program_offset);
-        let metadata_ptr = allocator.end_ptr().cast::<RawTransferMetadata>();
-        // SAFETY: `Allocator` was created by `FixedSizeAllocator` which reserved space after `end_ptr`
-        // for a `RawTransferMetadata`. `end_ptr` is aligned for `RawTransferMetadata`.
-        unsafe { metadata_ptr.write(metadata) };
+        let is_ts = program.source_type.is_typescript();
+        let is_jsx = program.source_type.is_jsx();
+        let metadata = RawTransferMetadata::new(
+            program_offset,
+            is_ts,
+            is_jsx,
+            has_bom,
+            tokens_offset,
+            tokens_len,
+        );
+        // `RawTransferMetadata` sits immediately before `FixedSizeAllocatorMetadata` in the chunk.
+        // SAFETY: `Allocator` was created by `FixedSizeAllocator`, so the chunk has a valid
+        // `FixedSizeAllocatorMetadata` and a `RawTransferMetadata`-sized region right before it.
+        // The position is aligned for `RawTransferMetadata`.
+        unsafe {
+            let metadata_ptr = allocator
+                .fixed_size_metadata_ptr()
+                .cast::<u8>()
+                .sub(size_of::<RawTransferMetadata>())
+                .cast::<RawTransferMetadata>();
+            debug_assert!(
+                metadata_ptr.addr().get().is_multiple_of(align_of::<RawTransferMetadata>())
+            );
+            metadata_ptr.write(metadata);
+        }
+
+        let path_string = path.to_string_lossy();
+        let path_string = path_string.as_ref();
 
         let settings_json = match &ctx_host.settings().json {
             Some(json) => serde_json::to_string(&json).unwrap_or_else(|e| {
-                let path = path.to_string_lossy();
-                let message = format!("Error serializing settings.\nFile path: {path}\n{e}");
+                let message = format!("Error serializing settings.\nFile path: {path_string}\n{e}");
                 ctx_host.push_diagnostic(Message::new(
                     OxcDiagnostic::error(message),
                     PossibleFixes::None,
@@ -461,10 +791,25 @@ impl Linter {
             None => "{}".to_string(),
         };
 
+        let globals_and_envs = GlobalsAndEnvs::new(ctx_host);
+        let globals_json = serde_json::to_string(&globals_and_envs).unwrap_or_else(|e| {
+            let message = format!("Error serializing globals.\nFile path: {path_string}\n{e}");
+            ctx_host
+                .push_diagnostic(Message::new(OxcDiagnostic::error(message), PossibleFixes::None));
+            "{}".to_string()
+        });
+
+        // `external_linter` always exists when `external_rules` is not empty
+        let external_linter = self.external_linter.as_ref().unwrap();
+
+        // Pass AST and rule IDs + options IDs to JS
         let result = (external_linter.lint_file)(
-            path.to_str().unwrap().to_string(),
-            external_rules.iter().map(|(rule_id, _)| rule_id.raw()).collect(),
+            path_string.to_owned(),
+            external_rules.iter().map(|(rule_id, _, _)| rule_id.raw()).collect(),
+            external_rules.iter().map(|(_, options_id, _)| options_id.raw()).collect(),
             settings_json,
+            globals_json,
+            self.workspace_uri.as_ref().map(ToString::to_string),
             allocator,
         );
         match result {
@@ -477,7 +822,7 @@ impl Linter {
                     let mut span = Span::new(diagnostic.start, diagnostic.end);
                     span_converter.convert_span_back(&mut span);
 
-                    let (external_rule_id, severity) =
+                    let (external_rule_id, _options_id, severity) =
                         external_rules[diagnostic.rule_index as usize];
                     let (plugin_name, rule_name) =
                         self.config.resolve_plugin_rule_names(external_rule_id);
@@ -489,56 +834,71 @@ impl Linter {
                         continue;
                     }
 
-                    // Convert `JSFix`s fixes to `PossibleFixes`, including converting spans back to UTF-8
-                    let fix = if let Some(fixes) = diagnostic.fixes {
-                        debug_assert!(!fixes.is_empty()); // JS should send `None` instead of `Some([])`
-
-                        let is_single = fixes.len() == 1;
-
-                        let fixes = fixes.into_iter().map(|fix| {
-                            // TODO: Validate span offsets are within bounds and `start <= end`.
-                            // Also make sure offsets do not fall in middle of a multi-byte UTF-8 character.
-                            // That's possible if UTF-16 offset points to middle of a surrogate pair.
-                            let mut span = Span::new(fix.range[0], fix.range[1]);
-                            span_converter.convert_span_back(&mut span);
-                            Fix::new(fix.text, span)
-                        });
-
-                        if is_single {
-                            PossibleFixes::Single(fixes.into_iter().next().unwrap())
-                        } else {
-                            let fixes = fixes.collect::<Vec<_>>();
-                            match CompositeFix::merge_fixes_fallible(fixes, source_text) {
-                                Ok(fix) => PossibleFixes::Single(fix),
-                                Err(err) => {
-                                    let path = path.to_string_lossy();
-                                    let message = format!(
-                                        "Plugin `{plugin_name}/{rule_name}` returned invalid fixes.\nFile path: {path}\n{err}"
-                                    );
-                                    ctx_host.push_diagnostic(Message::new(
-                                        OxcDiagnostic::error(message),
-                                        PossibleFixes::None,
-                                    ));
-                                    PossibleFixes::None
-                                }
-                            }
+                    // Convert a `Vec<JsFix>` to a `Fix`, including converting spans back to UTF-8
+                    let create_fix = |fixes, fix_kind| match convert_and_merge_js_fixes(
+                        fixes,
+                        original_source_text,
+                        &span_converter,
+                        has_bom,
+                    ) {
+                        Ok(fix) => Some(fix.with_kind(fix_kind)),
+                        Err(err) => {
+                            let fixes_type = if fix_kind.contains(FixKind::Suggestion) {
+                                "suggestions"
+                            } else {
+                                "fixes"
+                            };
+                            let message = format!(
+                                "Plugin `{plugin_name}/{rule_name}` returned invalid {fixes_type}.\nFile path: {path_string}\n{err}"
+                            );
+                            ctx_host.push_diagnostic(Message::new(
+                                OxcDiagnostic::error(message),
+                                PossibleFixes::None,
+                            ));
+                            None
                         }
-                    } else {
-                        PossibleFixes::None
                     };
 
-                    ctx_host.push_diagnostic(Message::new(
-                        OxcDiagnostic::error(diagnostic.message)
-                            .with_label(span)
-                            .with_error_code(plugin_name.to_string(), rule_name.to_string())
-                            .with_severity(severity.into()),
-                        fix,
-                    ));
+                    // Convert fix
+                    let fix = diagnostic.fixes.and_then(|fixes| create_fix(fixes, FixKind::Fix));
+
+                    // Convert suggestions (only if fix kind allows suggestions), and combine with fix
+                    let possible_fixes = if let Some(suggestions) = diagnostic.suggestions
+                        && ctx_host.fix.can_apply(FixKind::Suggestion)
+                    {
+                        debug_assert!(
+                            !suggestions.is_empty(),
+                            "`diagnostic.suggestions` should be `None` if there are no suggestions"
+                        );
+
+                        let suggestions = suggestions.into_iter().filter_map(|suggestion| {
+                            create_fix(suggestion.fixes, FixKind::Suggestion)
+                                .map(|fix| fix.with_message(suggestion.message))
+                        });
+
+                        #[expect(clippy::from_iter_instead_of_collect)]
+                        PossibleFixes::from_iter(iter::chain(fix, suggestions))
+                    } else {
+                        PossibleFixes::from(fix)
+                    };
+
+                    ctx_host.push_diagnostic(
+                        Message::new(
+                            OxcDiagnostic::error(diagnostic.message)
+                                .with_label(span)
+                                .with_error_code(plugin_name.to_string(), rule_name.to_string())
+                                .with_severity(severity.into()),
+                            possible_fixes,
+                        )
+                        .with_rule(MessageRule {
+                            plugin_name: Cow::Owned(plugin_name.to_string()),
+                            rule_name: Cow::Owned(rule_name.to_string()),
+                        }),
+                    );
                 }
             }
             Err(err) => {
-                let path = path.to_string_lossy();
-                let message = format!("Error running JS plugin.\nFile path: {path}\n{err}");
+                let message = format!("Error running JS plugin.\nFile path: {path_string}\n{err}");
                 ctx_host.push_diagnostic(Message::new(
                     OxcDiagnostic::error(message),
                     PossibleFixes::None,
@@ -554,47 +914,35 @@ impl Linter {
 /// Any changes made here also need to be made there.
 /// `oxc_ast_tools` checks that the 2 copies are identical.
 #[ast]
-struct RawTransferMetadata2 {
+pub struct RawTransferMetadata2 {
     /// Offset of `Program` within buffer.
     /// Note: In `RawTransferMetadata` (in `napi/parser`), this field is offset of `RawTransferData`,
     /// but here it's offset of `Program`.
     pub data_offset: u32,
     /// `true` if AST is TypeScript.
     pub is_ts: bool,
-    /// Padding to pad struct to size 16.
-    pub(crate) _padding: u64,
+    /// `true` if AST is JSX.
+    pub is_jsx: bool,
+    /// `true` if source text has a BOM.
+    pub has_bom: bool,
+    /// Offset of lexer `Token`s within buffer.
+    pub tokens_offset: u32,
+    /// Number of lexer `Token`s.
+    pub tokens_len: u32,
 }
 
 use RawTransferMetadata2 as RawTransferMetadata;
 
 impl RawTransferMetadata {
-    pub fn new(data_offset: u32) -> Self {
-        Self { data_offset, is_ts: false, _padding: 0 }
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use std::fs;
-
-    use project_root::get_project_root;
-
-    use super::Oxlintrc;
-
-    #[test]
-    fn test_schema_json() {
-        let path = get_project_root().unwrap().join("npm/oxlint/configuration_schema.json");
-        let mut schema = schemars::schema_for!(Oxlintrc);
-        // setting `allowComments` to true to allow comments in JSON schema files
-        // https://github.com/microsoft/vscode-json-languageservice/blob/356d5dd980d49c6ac09ec8446614a6f94016dcea/src/jsonLanguageTypes.ts#L127-L131
-        schema.schema.extensions.insert("allowComments".to_string(), serde_json::Value::Bool(true));
-        let json = serde_json::to_string_pretty(&schema).unwrap();
-        let existing_json = fs::read_to_string(&path).unwrap_or_default();
-        if existing_json.trim() != json.trim() {
-            std::fs::write(&path, &json).unwrap();
-        }
-        insta::with_settings!({ prepend_module_to_snapshot => false }, {
-            insta::assert_snapshot!(json);
-        });
+    pub fn new(
+        data_offset: u32,
+        is_ts: bool,
+        is_jsx: bool,
+        has_bom: bool,
+        tokens_offset: u32,
+        tokens_len: u32,
+    ) -> Self {
+        #[expect(clippy::inconsistent_struct_constructor)] // `#[ast]` macro reorders fields
+        Self { data_offset, is_ts, is_jsx, has_bom, tokens_offset, tokens_len }
     }
 }

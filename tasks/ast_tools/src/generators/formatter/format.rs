@@ -8,7 +8,7 @@ use crate::{
     Codegen, Generator,
     generators::{define_generator, formatter::ast_nodes::get_node_type},
     output::Output,
-    schema::{Def, EnumDef, Schema, StructDef, TypeDef, TypeId},
+    schema::{Def, EnumDef, Schema, StructDef, StructOrEnum, TypeDef, TypeId},
 };
 
 use super::ast_nodes::formatter_output_path;
@@ -31,6 +31,8 @@ const AST_NODE_WITHOUT_PRINTING_COMMENTS_LIST: &[&str] = &[
     "TemplateElement",
 ];
 
+const AST_NODE_WITHOUT_PRINTING_LEADING_COMMENTS_LIST: &[&str] = &["TSUnionType"];
+
 const AST_NODE_NEEDS_PARENTHESES: &[&str] = &[
     "TSTypeAssertion",
     "TSInferType",
@@ -40,6 +42,7 @@ const AST_NODE_NEEDS_PARENTHESES: &[&str] = &[
     "TSConstructorType",
     "TSTypeQuery",
     "TSFunctionType",
+    "TSTypeOperator",
 ];
 
 const NEEDS_IMPLEMENTING_FMT_WITH_OPTIONS: phf::Map<&'static str, &'static str> = phf::phf_map! {
@@ -56,15 +59,14 @@ impl Generator for FormatterFormatGenerator {
         let parenthesis_type_ids = get_needs_parentheses_type_ids(schema);
 
         let impls = schema
-            .types
-            .iter()
+            .structs_and_enums()
             .filter_map(|type_def| match type_def {
-                TypeDef::Struct(struct_def)
+                StructOrEnum::Struct(struct_def)
                     if struct_def.visit.has_visitor() && !struct_def.builder.skip =>
                 {
                     Some(generate_struct_implementation(struct_def, &parenthesis_type_ids, schema))
                 }
-                TypeDef::Enum(enum_def) if enum_def.visit.has_visitor() => {
+                StructOrEnum::Enum(enum_def) if enum_def.visit.has_visitor() => {
                     Some(generate_enum_implementation(enum_def, schema))
                 }
                 _ => None,
@@ -83,17 +85,12 @@ impl Generator for FormatterFormatGenerator {
 
             ///@@line_break
             use crate::{
-                formatter::{
-                    Buffer, Format, FormatResult, Formatter,
-                    trivia::FormatTrailingComments,
-                },
+                formatter::{Format, JsFormatContext, JsFormatter, JsFormatterExt as _, trivia::{format_leading_comments, format_trailing_comments}},
                 parentheses::NeedsParentheses,
-                ast_nodes::{AstNode, AstNodes},
+                ast_nodes::AstNode,
                 utils::{suppressed::FormatSuppressedNode, typecast::format_type_cast_comment_node},
-                write::{FormatWrite #(#options)*},
+                print::{FormatWrite #(#options)*},
             };
-
-            use super::ast_nodes::transmute_self;
 
             #impls
         };
@@ -114,22 +111,19 @@ fn generate_struct_implementation(
 
     let struct_name = struct_def.name();
     let do_not_print_comment = AST_NODE_WITHOUT_PRINTING_COMMENTS_LIST.contains(&struct_name);
+    let do_not_print_leading_comment = do_not_print_comment
+        || AST_NODE_WITHOUT_PRINTING_LEADING_COMMENTS_LIST.contains(&struct_name);
 
-    let leading_comments = if do_not_print_comment {
-        quote! {}
-    } else {
+    let leading_comments = (!do_not_print_leading_comment).then(|| {
         quote! {
-            self.format_leading_comments(f)?;
+            self.format_leading_comments(f);
         }
-    };
-
-    let trailing_comments = if do_not_print_comment {
-        quote! {}
-    } else {
+    });
+    let trailing_comments = (!do_not_print_comment).then(|| {
         quote! {
-            self.format_trailing_comments(f)?;
+            self.format_trailing_comments(f);
         }
-    };
+    });
 
     let needs_parentheses = parenthesis_type_ids.contains(&struct_def.id);
 
@@ -137,7 +131,7 @@ fn generate_struct_implementation(
         quote! {
             let needs_parentheses = self.needs_parentheses(f);
             if needs_parentheses {
-                "(".fmt(f)?;
+                "(".fmt(f);
             }
         }
     } else {
@@ -147,7 +141,7 @@ fn generate_struct_implementation(
     let needs_parentheses_after = if needs_parentheses {
         quote! {
             if needs_parentheses {
-                ")".fmt(f)?;
+                ")".fmt(f);
             }
         }
     } else {
@@ -157,11 +151,11 @@ fn generate_struct_implementation(
     let generate_fmt_implementation = |has_options: bool| {
         let write_call = if has_options {
             quote! {
-                self.write_with_options(options, f)
+                self.write_with_options(options, f);
             }
         } else {
             quote! {
-                self.write(f)
+                self.write(f);
             }
         };
 
@@ -176,12 +170,12 @@ fn generate_struct_implementation(
 
         let write_implementation = if suppressed_check.is_none() {
             write_call
-        } else if trailing_comments.is_empty() {
+        } else if trailing_comments.is_none() {
             quote! {
                 if is_suppressed {
-                     self.format_leading_comments(f)?;
-                    FormatSuppressedNode(self.span()).fmt(f)?;
-                     self.format_trailing_comments(f)
+                     self.format_leading_comments(f);
+                    FormatSuppressedNode(self.span()).fmt(f);
+                     self.format_trailing_comments(f);
                 } else {
                     #write_call
                 }
@@ -189,7 +183,7 @@ fn generate_struct_implementation(
         } else {
             quote! {
                 if is_suppressed {
-                    FormatSuppressedNode(self.span()).fmt(f)
+                    FormatSuppressedNode(self.span()).fmt(f);
                 } else {
                     #write_call
                 }
@@ -213,13 +207,13 @@ fn generate_struct_implementation(
             });
 
             quote! {
-                if #suppressed_check_for_typecast format_type_cast_comment_node(self, #is_object_or_array_argument, f)? {
-                    return Ok(());
+                if #suppressed_check_for_typecast format_type_cast_comment_node(self, #is_object_or_array_argument, f) {
+                    return;
                 }
             }
         });
 
-        if needs_parentheses_before.is_empty() && trailing_comments.is_empty() {
+        if needs_parentheses_before.is_empty() && trailing_comments.is_none() {
             quote! {
                 #suppressed_check
                 #type_cast_comment_formatting
@@ -231,10 +225,9 @@ fn generate_struct_implementation(
                 #type_cast_comment_formatting
                 #leading_comments
                 #needs_parentheses_before
-                let result = #write_implementation;
+                #write_implementation
                 #needs_parentheses_after
                 #trailing_comments
-                result
             }
         }
     };
@@ -242,29 +235,29 @@ fn generate_struct_implementation(
     let fmt_implementation = generate_fmt_implementation(false);
     let fmt_options =
         NEEDS_IMPLEMENTING_FMT_WITH_OPTIONS.get(struct_name).map(|str| format_ident!("{}", str));
-    let fmt_with_options_implementation = if let Some(ref fmt_options) = fmt_options {
+    let fmt_with_options_inherent = if let Some(ref fmt_options) = fmt_options {
         let implementation = generate_fmt_implementation(true);
         quote! {
             ///@@line_break
-            fn fmt_with_options(&self, options: #fmt_options, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-                #implementation
+            impl<'a> #type_ty {
+                pub fn fmt_with_options(&self, options: #fmt_options, f: &mut JsFormatter<'_, 'a>) {
+                    #implementation
+                }
             }
         }
     } else {
         quote! {}
     };
 
-    let option_type = fmt_options.map_or_else(|| quote! {}, |ident| quote! {, #ident});
-
     quote! {
         ///@@line_break
-        impl<'a> Format<'a #option_type> for #type_ty {
-            fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        impl<'a> Format<'a, JsFormatContext<'a>> for #type_ty {
+            fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
                 #fmt_implementation
             }
-
-            #fmt_with_options_implementation
         }
+
+        #fmt_with_options_inherent
     }
 }
 
@@ -284,8 +277,8 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
                     inner,
                     parent,
                     allocator,
-                    following_span: self.following_span,
-                }).fmt(f)
+                    following_span_start: self.following_span_start,
+                }).fmt(f);
             },
         })
     });
@@ -307,30 +300,54 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
                     inner,
                     parent,
                     allocator,
-                    following_span: self.following_span,
-                }).fmt(f)
+                    following_span_start: self.following_span_start,
+                }).fmt(f);
             },
         };
 
         match_arm
     });
 
-    let parent = if enum_def.kind.has_kind {
-        quote! {
-            let parent = allocator.alloc(AstNodes::#enum_ident(transmute_self(self)))
-        }
-    } else {
-        quote! { let parent = self.parent }
-    };
     let node_type = get_node_type(&enum_ty);
+
+    let inline_trailing_suppression = match enum_def.name() {
+        "Statement" => {
+            // Expression statements need specialized ASI-safe suppression handling in
+            // `AstNode<ExpressionStatement>::write`.
+            quote! {
+                if !matches!(self.inner, Statement::ExpressionStatement(_))
+                    && f.comments().has_trailing_suppression_comment(self.span().end)
+                {
+                    format_leading_comments(self.span()).fmt(f);
+                    FormatSuppressedNode(self.span()).fmt(f);
+                    format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
+                        .fmt(f);
+                    return;
+                }
+            }
+        }
+        "Expression" => {
+            quote! {
+                if f.comments().has_trailing_suppression_comment(self.span().end) {
+                    format_leading_comments(self.span()).fmt(f);
+                    FormatSuppressedNode(self.span()).fmt(f);
+                    format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
+                        .fmt(f);
+                    return;
+                }
+            }
+        }
+        _ => quote! {},
+    };
 
     quote! {
         ///@@line_break
-        impl<'a> Format<'a> for #node_type {
+        impl<'a> Format<'a, JsFormatContext<'a>> for #node_type {
             #[inline]
-            fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+            fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+                #inline_trailing_suppression
                 let allocator = self.allocator;
-                #parent;
+                let parent = self.parent;
                 match self.inner {
                     #(#variant_match_arms)*
                     #(#inherits_match_arms)*

@@ -1,0 +1,39 @@
+---
+source: crates/oxc_formatter_json/tests/fixtures/mod.rs
+---
+==================== Input ====================
+{
+  "a": 1, // trailing line
+  "b": 2, /* trailing block */
+  "c": 3 /* before-comma block */,
+  "d": 4, // line then own-line
+  // own-line leading
+  "e": 5
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+{
+  "a": 1, // trailing line
+  "b": 2 /* trailing block */,
+  "c": 3 /* before-comma block */,
+  "d": 4, // line then own-line
+  // own-line leading
+  "e": 5
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+{
+  "a": 1, // trailing line
+  "b": 2 /* trailing block */,
+  "c": 3 /* before-comma block */,
+  "d": 4, // line then own-line
+  // own-line leading
+  "e": 5
+}
+
+===================== End =====================

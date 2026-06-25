@@ -4,7 +4,10 @@ use oxc_span::Span;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use crate::{context::LintContext, rule::Rule, utils::should_ignore_as_private};
+use crate::{
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn empty_tags_diagnostic(span: Span, tag_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Expects the void tags to be empty of any content.")
@@ -12,7 +15,7 @@ fn empty_tags_diagnostic(span: Span, tag_name: &str) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct EmptyTags(Box<EmptyTagsConfig>);
 
 declare_oxc_lint!(
@@ -60,7 +63,10 @@ declare_oxc_lint!(
     EmptyTags,
     jsdoc,
     restriction,
+    pending,
     config = EmptyTagsConfig,
+    version = "0.2.16",
+    short_description = "Expects various JSDoc tags to be empty of content.",
 );
 
 const EMPTY_TAGS: [&str; 18] = [
@@ -85,23 +91,19 @@ const EMPTY_TAGS: [&str; 18] = [
 ];
 
 #[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct EmptyTagsConfig {
     /// Additional tags to check for their descriptions.
     tags: Vec<String>,
 }
 
 impl Rule for EmptyTags {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        value
-            .as_array()
-            .and_then(|arr| arr.first())
-            .and_then(|value| serde_json::from_value(value.clone()).ok())
-            .map_or_else(Self::default, |value| Self(Box::new(value)))
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext) {
-        let settings = &ctx.settings().jsdoc;
+        // NOTE: `ignorePrivate` setting does not apply to this rule.
 
         let is_empty_tag_kind = |tag_name: &str| {
             if EMPTY_TAGS.contains(&tag_name) {
@@ -113,9 +115,9 @@ impl Rule for EmptyTags {
             false
         };
 
-        for jsdoc in
-            ctx.jsdoc().iter_all().filter(|jsdoc| !should_ignore_as_private(jsdoc, settings))
-        {
+        // `ignorePrivate` setting does not apply to `empty-tags` rule,
+        // so iterate over all JSDoc comments unfiltered.
+        for jsdoc in ctx.jsdoc().iter_all() {
             for tag in jsdoc.tags() {
                 let tag_name = tag.kind.parsed();
 
@@ -356,9 +358,11 @@ fn test() {
 			      ",
             None,
             Some(serde_json::json!({
-              "jsdoc": {
-                "ignorePrivate": true,
-              },
+                "settings": {
+                    "jsdoc": {
+                        "ignorePrivate": true,
+                    },
+                }
             })),
         ),
     ];

@@ -4,6 +4,30 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.137.0] - 2026-06-18
+
+### 💥 BREAKING CHANGES
+
+- 7a76cd3 estree: [**BREAKING**] Make whether to include TS fields a runtime option (#23574) (overlookmotel)
+- e7b6b68 estree: [**BREAKING**] `ESTree` config use methods not consts (#23573) (overlookmotel)
+
+### ⚡ Performance
+
+- 053b0c1 estree: Remove pointless `mem::take` (#23572) (overlookmotel)
+
+## [0.116.0] - 2026-03-02
+
+### 🚀 Features
+
+- b25228a estree: Add `IS_COMPACT` const to `Formatter` trait (#19787) (overlookmotel)
+- e2a1b79 estree: Expose buffer and formatter of serializers (#19773) (overlookmotel)
+- 233f947 estree: `oxc_estree` crate export config and formatter types (#19724) (overlookmotel)
+
+### ⚡ Performance
+
+- dc9c2e3 estree: Use `CodeBuffer::print_strs_array` to reduce bounds checks (#19766) (overlookmotel)
+- 845da35 estree: Use `CodeBuffer::print_indent` (#19727) (overlookmotel)
+
 
 
 

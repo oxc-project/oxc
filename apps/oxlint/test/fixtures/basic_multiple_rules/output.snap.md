@@ -1,0 +1,41 @@
+# Exit code
+1
+
+# stdout
+```
+  x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
+   ,-[files/index.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+ 2 | 
+   `----
+
+  x basic-custom-plugin(no-debugger-2): Unexpected Debugger Statement
+   ,-[files/index.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+ 2 | 
+   `----
+
+  ! eslint(no-debugger): `debugger` statement is not allowed
+   ,-[files/index.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+ 2 | 
+   `----
+  help: Remove the debugger statement
+
+  x basic-custom-plugin(no-identifiers-named-foo): Unexpected Identifier named foo
+   ,-[files/index.js:3:1]
+ 2 | 
+ 3 | foo;
+   : ^^^
+   `----
+
+Found 1 warning and 3 errors.
+Finished in Xms on 1 file with 4 rules using X threads.
+```
+
+# stderr
+```
+```

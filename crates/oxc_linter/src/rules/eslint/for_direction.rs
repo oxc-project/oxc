@@ -18,7 +18,7 @@ use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn for_direction_diagnostic(test_span: Span, update_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("The update clause in this loop moves the variable in the wrong direction")
-        .with_help("Use while loop for intended infinite loop")
+        .with_help("Use `while` loop for intended infinite loop")
         .with_labels([
             test_span.label("This test moves in the wrong direction"),
             update_span.label("with this update"),
@@ -40,16 +40,12 @@ declare_oxc_lint!(
     /// infinitely. While infinite loops can be intentional, they are usually written
     /// as `while` loops. More often, an infinite `for` loop is a bug.
     ///
-    /// ### Options
-    ///
-    /// No options available for this rule.
-    ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     ///
     /// ```js
-    /// /* eslint for-direction: "error" */
+    /// /* for-direction: "error" */
     ///
     /// for (var i = 0; i < 10; i--) {
     /// }
@@ -71,7 +67,7 @@ declare_oxc_lint!(
     /// Examples of **correct** code for this rule:
     ///
     /// ```js
-    /// /* eslint for-direction: "error" */
+    /// /* for-direction: "error" */
     ///
     /// for (var i = 0; i < 10; i++) {
     /// }
@@ -88,7 +84,9 @@ declare_oxc_lint!(
     ForDirection,
     eslint,
     correctness,
-    fix_dangerous
+    fix_dangerous,
+    version = "0.0.3",
+    short_description = "Disallow `for` loops where the update clause moves the counter in the wrong direction, preventing the loop from reaching its stop condition.",
 );
 
 #[derive(Debug, Eq, PartialEq)]
@@ -272,90 +270,105 @@ fn test() {
 
     let pass = vec![
         // test if '++', '--'
-        ("for(var i = 0; i < 10; i++){}", None),
-        ("for(var i = 0; i <= 10; i++){}", None),
-        ("for(var i = 10; i > 0; i--){}", None),
-        ("for(var i = 10; i >= 0; i--){}", None),
+        "for(var i = 0; i < 10; i++){}",
+        "for(var i = 0; i <= 10; i++){}",
+        "for(var i = 10; i > 0; i--){}",
+        "for(var i = 10; i >= 0; i--){}",
         // test if '++', '--' with counter 'i' on the right side of test condition
-        ("for(var i = 0; 10 > i; i++){}", None),
-        ("for(var i = 0; 10 >= i; i++){}", None),
-        ("for(var i = 10; 0 < i; i--){}", None),
-        ("for(var i = 10; 0 <= i; i--){}", None),
+        "for(var i = 0; 10 > i; i++){}",
+        "for(var i = 0; 10 >= i; i++){}",
+        "for(var i = 10; 0 < i; i--){}",
+        "for(var i = 10; 0 <= i; i--){}",
         // test if '+=', '-=',
-        ("for(var i = 0; i < 10; i+=1){}", None),
-        ("for(var i = 0; i <= 10; i+=1){}", None),
-        ("for(var i = 0; i < 10; i-=-1){}", None),
-        ("for(var i = 0; i <= 10; i-=-1){}", None),
-        ("for(var i = 10; i > 0; i-=1){}", None),
-        ("for(var i = 10; i >= 0; i-=1){}", None),
-        ("for(var i = 10; i > 0; i+=-1){}", None),
-        ("for(var i = 10; i >= 0; i+=-1){}", None),
+        "for(var i = 0; i < 10; i+=1){}",
+        "for(var i = 0; i <= 10; i+=1){}",
+        "for(var i = 0; i < 10; i-=-1){}",
+        "for(var i = 0; i <= 10; i-=-1){}",
+        "for(var i = 10; i > 0; i-=1){}",
+        "for(var i = 10; i >= 0; i-=1){}",
+        "for(var i = 10; i > 0; i+=-1){}",
+        "for(var i = 10; i >= 0; i+=-1){}",
         // test if '+=', '-=' with counter 'i' on the right side of test condition
-        ("for(var i = 0; 10 > i; i+=1){}", None),
+        "for(var i = 0n; i > l; i-=1n){}",
+        "for(var i = 0n; i < l; i-=-1n){}",
+        "for(var i = MIN; i <= MAX; i+=true){}",
+        "for(var i = 0; i < 10; i+=+5e-7){}",
+        // "for(var i = 0; i < MAX; i -= ~2);",
+        // "for(var i = 0, n = -1; i < MAX; i += -n);",
+        "for(var i = 0; 10 > i; i+=1){}",
         // test if no update.
-        ("for(var i = 10; i > 0;){}", None),
-        ("for(var i = 10; i >= 0;){}", None),
-        ("for(var i = 10; i < 0;){}", None),
-        ("for(var i = 10; i <= 0;){}", None),
-        ("for(var i = 0; i < 10; i+=0){}", None),
-        ("for(var i = 0; i < 10; i-=0){}", None),
-        ("for(var i = 10; i > 0; i+=0){}", None),
-        ("for(var i = 10; i > 0; i-=0){}", None),
-        ("for(var i = 10; i <= 0; j++){}", None),
-        ("for(var i = 10; i <= 0; j--){}", None),
-        ("for(var i = 10; i >= 0; j++){}", None),
-        ("for(var i = 10; i >= 0; j--){}", None),
-        ("for(var i = 10; i >= 0; j += 2){}", None),
-        ("for(var i = 10; i >= 0; j -= 2){}", None),
-        ("for(var i = 10; i >= 0; i |= 2){}", None),
-        ("for(var i = 10; i >= 0; i %= 2){}", None),
-        ("for(var i = 0; i < MAX; i += STEP_SIZE);", None),
-        ("for(var i = 0; i < MAX; i -= STEP_SIZE);", None),
-        ("for(var i = 10; i > 0; i += STEP_SIZE);", None),
+        "for(var i = 10; i > 0;){}",
+        "for(var i = 10; i >= 0;){}",
+        "for(var i = 10; i < 0;){}",
+        "for(var i = 10; i <= 0;){}",
+        "for(var i = 10; i <= 0; j++){}",
+        "for(var i = 10; i <= 0; j--){}",
+        "for(var i = 10; i >= 0; j++){}",
+        "for(var i = 10; i >= 0; j--){}",
+        "for(var i = 10; i >= 0; j += 2){}",
+        "for(var i = 10; i >= 0; j -= 2){}",
+        "for(var i = 10; i >= 0; i |= 2){}",
+        "for(var i = 10; i >= 0; i %= 2){}",
+        "for(var i = 0; i < MAX; i += STEP_SIZE);",
+        "for(var i = 0; i < MAX; i -= STEP_SIZE);",
+        "for(var i = 10; i > 0; i += STEP_SIZE);",
         // other cond-expressions.
-        ("for(var i = 0; i !== 10; i+=1){}", None),
-        ("for(var i = 0; i === 10; i+=1){}", None),
-        ("for(var i = 0; i == 10; i+=1){}", None),
-        ("for(var i = 0; i != 10; i+=1){}", None),
+        "for(var i = 10; i >= 0; i += 0);",
+        "for(var i = 10n; i >= 0n; i += 0n);",
+        "for(var i = 10; i >= 0; i += this.step);",
+        "for(var i = 10; i >= 0; i += 'foo');",
+        // "for(var i = 10; i > 0; i += !foo);",
+        "for(var i = MIN; i <= MAX; i -= false);",
+        "for(var i = MIN; i <= MAX; i -= 0/0);",
+        "for(var i = 0; i !== 10; i+=1){}",
+        "for(var i = 0; i === 10; i+=1){}",
+        "for(var i = 0; i == 10; i+=1){}",
+        "for(var i = 0; i != 10; i+=1){}",
     ];
 
     let fail = vec![
         // test if '++', '--'
-        ("for (var i = 0; i < 10; i--){}", None),
-        ("for (var i = 0; i <= 10; i--){}", None),
-        ("for(var i = 10; i > 10; i++){}", None),
-        ("for(var i = 10; i >= 0; i++){}", None),
+        "for(var i = 0; i < 10; i--){}",
+        "for(var i = 0; i <= 10; i--){}",
+        "for(var i = 10; i > 10; i++){}",
+        "for(var i = 10; i >= 0; i++){}",
         // test if '++', '--' with counter 'i' on the right side of test condition
-        ("for(var i = 0; 10 > i; i--){}", None),
-        ("for(var i = 0; 10 >= i; i--){}", None),
-        ("for(var i = 10; 10 < i; i++){}", None),
-        ("for(var i = 10; 0 <= i; i++){}", None),
+        "for(var i = 0; 10 > i; i--){}",
+        "for(var i = 0; 10 >= i; i--){}",
+        "for(var i = 10; 10 < i; i++){}",
+        "for(var i = 10; 0 <= i; i++){}",
         // test if '+=', '-='
-        ("for(var i = 0; i < 10; i-=1){}", None),
-        ("for(var i = 0; i <= 10; i-=1){}", None),
-        ("for(var i = 10; i > 10; i+=1){}", None),
-        ("for(var i = 10; i >= 0; i+=1){}", None),
-        ("for(var i = 0; i < 10; i+=-1){}", None),
-        ("for(var i = 0; i <= 10; i+=-1){}", None),
-        ("for(var i = 10; i > 10; i-=-1){}", None),
-        ("for(var i = 10; i >= 0; i-=-1){}", None),
+        "for(var i = 0; i < 10; i-=1){}",
+        "for(var i = 0; i <= 10; i-=1){}",
+        "for(var i = 10; i > 10; i+=1){}",
+        "for(var i = 10; i >= 0; i+=1){}",
+        "for(var i = 0; i < 10; i+=-1){}",
+        "for(var i = 0; i <= 10; i+=-1){}",
+        "for(var i = 10; i > 10; i-=-1){}",
+        "for(var i = 10; i >= 0; i-=-1){}",
         // test if '+=', '-=' with counter 'i' on the right side of test condition
-        ("for(var i = 0; 10 > i; i-=1){}", None),
+        // "for(var i = 0n; i > l; i+=1n){}",
+        "for(var i = 0n; i < l; i+=-1n){}",
+        // "for(var i = MIN; i <= MAX; i-=true){}",
+        "for(var i = 0; i < 10; i-=+5e-7){}",
+        // "for(var i = 0; i < MAX; i += (2 - 3));",
+        // "var n = -2; for(var i = 0; i < 10; i += n);",
+        "for(var i = 0; 10 > i; i-=1){}",
     ];
 
     let fix = vec![
-        ("for(var i = 0; i < 10; i--){}", "for(var i = 0; i < 10; i++){}", None),
-        ("for(var i = 10; i > 0; i++){}", "for(var i = 10; i > 0; i--){}", None),
-        ("for(var i = 0; i < 10; i-=1){}", "for(var i = 0; i < 10; i+=1){}", None),
-        ("for(var i = 10; i > 0; i+=1){}", "for(var i = 10; i > 0; i-=1){}", None),
-        ("for(var i = 0; i < 10; i+=-1){}", "for(var i = 0; i < 10; i-=-1){}", None),
-        ("for(var i = 10; i > 0; i-=-1){}", "for(var i = 10; i > 0; i+=-1){}", None),
-        ("for(var i = 0; i < 10; --i){}", "for(var i = 0; i < 10; ++i){}", None),
-        ("for(var i = 0; i < 10; -- i){}", "for(var i = 0; i < 10; ++i){}", None),
-        ("for(var i = 0; i < 10; i -= 1){}", "for(var i = 0; i < 10; i+=1){}", None),
+        ("for(var i = 0; i < 10; i--){}", "for(var i = 0; i < 10; i++){}"),
+        ("for(var i = 10; i > 0; i++){}", "for(var i = 10; i > 0; i--){}"),
+        ("for(var i = 0; i < 10; i-=1){}", "for(var i = 0; i < 10; i+=1){}"),
+        ("for(var i = 10; i > 0; i+=1){}", "for(var i = 10; i > 0; i-=1){}"),
+        ("for(var i = 0; i < 10; i+=-1){}", "for(var i = 0; i < 10; i-=-1){}"),
+        ("for(var i = 10; i > 0; i-=-1){}", "for(var i = 10; i > 0; i+=-1){}"),
+        ("for(var i = 0; i < 10; --i){}", "for(var i = 0; i < 10; ++i){}"),
+        ("for(var i = 0; i < 10; -- i){}", "for(var i = 0; i < 10; ++i){}"),
+        ("for(var i = 0; i < 10; i -= 1){}", "for(var i = 0; i < 10; i+=1){}"),
         // variables of different lengths
-        ("for(var ii = 0; ii < 10; ii--){}", "for(var ii = 0; ii < 10; ii++){}", None),
-        ("for(var ii = 10; ii > 0; ii+=1){}", "for(var ii = 10; ii > 0; ii-=1){}", None),
+        ("for(var ii = 0; ii < 10; ii--){}", "for(var ii = 0; ii < 10; ii++){}"),
+        ("for(var ii = 10; ii > 0; ii+=1){}", "for(var ii = 10; ii > 0; ii-=1){}"),
     ];
 
     Tester::new(ForDirection::NAME, ForDirection::PLUGIN, pass, fail)
