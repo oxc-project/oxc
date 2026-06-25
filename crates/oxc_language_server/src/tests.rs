@@ -2292,5 +2292,47 @@ mod test_suite {
                 delay * 5
             );
         }
+
+        #[tokio::test]
+        async fn test_diagnostic_returns_server_cancelled_when_document_version_changes() {
+            let delay = 100;
+            let mut server = TestServer::new_initialized(
+                |client| {
+                    Backend::new(
+                        client,
+                        server_info(),
+                        create_dynamic_workspace_manager(
+                            FakeToolBuilder::new(DiagnosticMode::Pull)
+                                .with_delays(FakeToolDelays { run_diagnostic: delay }),
+                        ),
+                    )
+                },
+                initialize_request(InitializeRequestOptions {
+                    pull_mode: true,
+                    ..Default::default()
+                }),
+            )
+            .await;
+
+            let file = format!("{WORKSPACE}/diagnostics.config");
+            server.send_request(did_open(&file, "old content")).await;
+
+            server.send_request(diagnostic(3, &file)).await;
+            server.send_request(did_change(&file, "new content")).await;
+
+            let diagnostic_response = server.recv_response().await;
+            assert_eq!(diagnostic_response.id(), &Id::Number(3));
+            let error = diagnostic_response.error().unwrap();
+            assert_eq!(
+                error.code,
+                ErrorCode::ServerError(tower_lsp_server::ls_types::error_codes::SERVER_CANCELLED)
+            );
+            assert_eq!(
+                error.data.as_ref().unwrap()["retriggerRequest"],
+                serde_json::Value::Bool(false)
+            );
+
+            server.shutdown(4).await;
+        }
     }
 }
