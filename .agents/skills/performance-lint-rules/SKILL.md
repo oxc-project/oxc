@@ -1,13 +1,15 @@
 ---
 name: performance-lint-rules
-description: Tips for writing performant Oxc linter rules. Use only when editing Rust rule implementations under crates/oxc_linter/src/rules/.
+description: Performance review guidance for Oxc linter rule implementations. Use only when reviewing Rust rule code under crates/oxc_linter/src/rules/ or when explicitly auditing those rules for performance improvements.
 ---
 
-This skill gives performance guidance for Oxc linter rule implementations.
+This skill gives performance guidance for reviewing Oxc linter rule implementations and auditing them for performance improvements.
 
 ## Scope
 
-Use this skill **only** for Rust code under `crates/oxc_linter/src/rules/`.
+Use this skill **only** for Rust code under `crates/oxc_linter/src/rules/` when the task is a code review, a performance audit, or a targeted search for performance improvements.
+
+Do not use this skill merely because code under `crates/oxc_linter/src/rules/` is being edited. Routine feature work, bug fixes, refactors, rule additions, and test updates should not trigger this skill unless the user asks for performance review or audit work.
 
 Do not use this skill for linter infrastructure, parser code, semantic analysis, formatter code, tests outside the rules directory, or unrelated crates.
 
