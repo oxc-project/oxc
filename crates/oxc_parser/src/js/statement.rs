@@ -20,7 +20,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.bump_any();
             let span = self.end_span(span);
             let src = &self.source_text[span.start as usize + 2..span.end as usize];
-            Some(self.ast.hashbang(span, Str::from(src)))
+            Some(Hashbang::new(span, Str::from(src), self))
         } else {
             None
         }
@@ -34,8 +34,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         in_ts_namespace_body: bool,
     ) -> (ArenaVec<'a, Directive<'a>>, ArenaVec<'a, Statement<'a>>) {
-        let mut directives = self.ast.vec();
-        let mut statements = self.ast.vec();
+        let mut directives = ArenaVec::new_in(self);
+        let mut statements = ArenaVec::new_in(self);
 
         let is_top_level = self.ctx.has_top_level();
         let stmt_ctx = StatementContext::StatementList;
@@ -92,7 +92,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         let src = &self.source_text
                             [string.span.start as usize + 1..string.span.end as usize - 1];
                         let directive =
-                            self.ast.directive(expr.span, (*string).clone(), Str::from(src));
+                            Directive::new(expr.span, (*string).clone(), Str::from(src), self);
                         directives.push(directive);
                         continue;
                     }
@@ -147,9 +147,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.start_span(),
                 stmt_ctx,
                 &Modifiers::empty(),
-                self.ast.vec(),
+                ArenaVec::new_in(self),
             ),
-            Kind::Export => self.parse_export_declaration(self.start_span(), self.ast.vec()),
+            Kind::Export => {
+                self.parse_export_declaration(self.start_span(), ArenaVec::new_in(self))
+            }
             // [+Return] ReturnStatement[?Yield, ?Await]
             Kind::Return => self.parse_return_statement(),
             Kind::Var => {
@@ -247,9 +249,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             // Section 14.13 Labelled Statement
             // Avoids lookahead for a labeled statement, which is on a hot path
             if self.eat(Kind::Colon) {
-                let label = self.ast.label_identifier(ident.span, ident.name);
+                let label = LabelIdentifier::new(ident.span, ident.name, self);
                 let body = self.parse_statement_list_item(StatementContext::Label);
-                return self.ast.statement_labeled(self.end_span(span), label, body);
+                return Statement::new_labeled_statement(self.end_span(span), label, body, self);
             }
         }
         self.parse_expression_statement(span, expr)
@@ -261,7 +263,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let body = self.parse_normal_list(Kind::LCurly, Kind::RCurly, |p| {
             p.parse_statement_list_item(StatementContext::StatementList)
         });
-        self.ast.alloc_block_statement(self.end_span(span), body)
+        BlockStatement::boxed(self.end_span(span), body, self)
     }
 
     pub(crate) fn parse_block_statement(&mut self) -> Statement<'a> {
@@ -294,7 +296,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_empty_statement(&mut self) -> Statement<'a> {
         let span = self.start_span();
         self.bump_any(); // bump `;`
-        self.ast.statement_empty(self.end_span(span))
+        Statement::new_empty_statement(self.end_span(span), self)
     }
 
     /// Section 14.5 Expression Statement
@@ -304,7 +306,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         expression: Expression<'a>,
     ) -> Statement<'a> {
         self.asi();
-        self.ast.statement_expression(self.end_span(span), expression)
+        Statement::new_expression_statement(self.end_span(span), expression, self)
     }
 
     /// Section 14.6 If Statement
@@ -315,7 +317,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let consequent = self.parse_statement_list_item(StatementContext::If);
         let alternate =
             self.eat(Kind::Else).then(|| self.parse_statement_list_item(StatementContext::If));
-        self.ast.statement_if(self.end_span(span), test, consequent, alternate)
+        Statement::new_if_statement(self.end_span(span), test, consequent, alternate, self)
     }
 
     /// Section 14.7.2 Do-While Statement
@@ -326,7 +328,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.expect(Kind::While);
         let test = self.parse_paren_expression();
         self.bump(Kind::Semicolon);
-        self.ast.statement_do_while(self.end_span(span), body, test)
+        Statement::new_do_while_statement(self.end_span(span), body, test, self)
     }
 
     /// Section 14.7.3 While Statement
@@ -335,7 +337,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.bump_any(); // bump `while`
         let test = self.parse_paren_expression();
         let body = self.parse_statement_list_item(StatementContext::While);
-        self.ast.statement_while(self.end_span(span), test, body)
+        Statement::new_while_statement(self.end_span(span), test, body, self)
     }
 
     /// Section 14.7.4 For Statement
@@ -596,7 +598,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.error(diagnostics::for_await(self.end_span(span)));
         }
         let body = self.parse_statement_list_item(StatementContext::For);
-        self.ast.statement_for(self.end_span(span), init, test, update, body)
+        Statement::new_for_statement(self.end_span(span), init, test, update, body, self)
     }
 
     fn parse_for_in_loop(
@@ -616,7 +618,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         let body = self.parse_statement_list_item(StatementContext::For);
         let span = self.end_span(span);
-        self.ast.statement_for_in(span, left, right, body)
+        Statement::new_for_in_statement(span, left, right, body, self)
     }
 
     fn parse_for_of_loop(
@@ -632,7 +634,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         let body = self.parse_statement_list_item(StatementContext::For);
         let span = self.end_span(span);
-        self.ast.statement_for_of(span, r#await, left, right, body)
+        Statement::new_for_of_statement(span, r#await, left, right, body, self)
     }
 
     /// Section 14.8 Continue Statement
@@ -642,7 +644,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let label =
             if self.can_insert_semicolon() { None } else { Some(self.parse_label_identifier()) };
         self.asi();
-        self.ast.statement_continue(self.end_span(span), label)
+        Statement::new_continue_statement(self.end_span(span), label, self)
     }
 
     /// Section 14.9 Break Statement
@@ -652,7 +654,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let label =
             if self.can_insert_semicolon() { None } else { Some(self.parse_label_identifier()) };
         self.asi();
-        self.ast.statement_break(self.end_span(span), label)
+        Statement::new_break_statement(self.end_span(span), label, self)
     }
 
     /// Section 14.10 Return Statement
@@ -672,7 +674,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if !self.ctx.has_return() {
             self.error(diagnostics::return_statement_only_in_function_body(Span::sized(span, 6)));
         }
-        self.ast.statement_return(self.end_span(span), argument)
+        Statement::new_return_statement(self.end_span(span), argument, self)
     }
 
     /// Section 14.11 With Statement
@@ -682,7 +684,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let object = self.parse_paren_expression();
         let body = self.parse_statement_list_item(StatementContext::With);
         let span = self.end_span(span);
-        self.ast.statement_with(span, object, body)
+        Statement::new_with_statement(span, object, body, self)
     }
 
     /// Section 14.12 Switch Statement
@@ -708,7 +710,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
             case
         });
-        self.ast.statement_switch(self.end_span(span), discriminant, cases)
+        Statement::new_switch_statement(self.end_span(span), discriminant, cases, self)
     }
 
     pub(crate) fn parse_switch_case(&mut self) -> SwitchCase<'a> {
@@ -729,7 +731,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
         };
         self.expect(Kind::Colon);
-        let mut consequent = self.ast.vec();
+        let mut consequent = ArenaVec::new_in(self);
         loop {
             let kind = self.cur_kind();
             if matches!(
@@ -751,7 +753,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
             consequent.push(stmt);
         }
-        self.ast.switch_case(self.end_span(span), test, consequent)
+        SwitchCase::new(self.end_span(span), test, consequent, self)
     }
 
     /// Section 14.14 Throw Statement
@@ -767,7 +769,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
         let argument = self.parse_expr();
         self.asi();
-        self.ast.statement_throw(self.end_span(span), argument)
+        Statement::new_throw_statement(self.end_span(span), argument, self)
     }
 
     /// Section 14.15 Try Statement
@@ -786,7 +788,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.error(diagnostics::expect_catch_finally(range));
         }
 
-        self.ast.statement_try(self.end_span(span), block, handler, finalizer)
+        Statement::new_try_statement(self.end_span(span), block, handler, finalizer, self)
     }
 
     fn parse_catch_clause(&mut self) -> ArenaBox<'a, CatchClause<'a>> {
@@ -801,16 +803,17 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         };
         let body = self.parse_block();
         let param = pattern.map(|(pattern, type_annotation)| {
-            self.ast.catch_parameter(
+            CatchParameter::new(
                 Span::new(
                     pattern.span().start,
                     type_annotation.as_ref().map_or(pattern.span().end, |ta| ta.span.end),
                 ),
                 pattern,
                 type_annotation,
+                self,
             )
         });
-        self.ast.alloc_catch_clause(self.end_span(span), param, body)
+        CatchClause::boxed(self.end_span(span), param, body, self)
     }
 
     /// Section 14.16 Debugger Statement
@@ -818,7 +821,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let span = self.start_span();
         self.bump_any();
         self.asi();
-        self.ast.statement_debugger(self.end_span(span))
+        Statement::new_debugger_statement(self.end_span(span), self)
     }
 
     /// Parse const declaration or `const enum`.
