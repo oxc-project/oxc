@@ -235,15 +235,18 @@ impl<'o> PropertyCollector<'o> {
 
     /// An unquoted occurrence: mangle it if eligible, otherwise it is reserved program-wide.
     fn candidate(&mut self, name: &str) {
-        let set = if eligible(self.opts, name) {
-            &mut self.state.candidates
+        // A property name repeats many times in a real bundle. Once it has been classified into
+        // either set the decision is fixed, so short-circuit before re-running `eligible` (which
+        // evaluates the mangle/reserve REGEXES) and before re-allocating a `CompactStr`. This
+        // turns per-occurrence regex work into per-distinct-name work. `CompactStr: Borrow<str>`,
+        // so the lookups take the `&str` directly with no allocation.
+        if self.state.candidates.contains(name) || self.state.reserved.contains(name) {
+            return;
+        }
+        if eligible(self.opts, name) {
+            self.state.candidates.insert(CompactStr::from(name));
         } else {
-            &mut self.state.reserved
-        };
-        // A property name repeats many times in a real bundle; only allocate a `CompactStr`
-        // the first time we see it (`CompactStr: Borrow<str>`, so `contains` needs no alloc).
-        if !set.contains(name) {
-            set.insert(CompactStr::from(name));
+            self.state.reserved.insert(CompactStr::from(name));
         }
     }
 
