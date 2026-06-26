@@ -1,4 +1,4 @@
-use oxc_ast::{AstBuilder, ast::*};
+use oxc_ast::ast::*;
 use oxc_compat::ESFeature;
 use oxc_ecmascript::{
     GlobalContext,
@@ -148,25 +148,7 @@ impl<'a> MayHaveSideEffectsContext<'a> for &mut TraverseCtx<'a, MinifierState<'a
     }
 }
 
-impl<'a> ConstantEvaluationCtx<'a> for TraverseCtx<'a, MinifierState<'a>> {
-    // `oxc_ecmascript` still uses the old `AstBuilder`.
-    // Bridge to it from the allocator behind the new builder held in `self.ast`.
-    fn ast(&self) -> AstBuilder<'a> {
-        AstBuilder::new(self.ast.allocator)
-    }
-}
-
-impl<'a> ConstantEvaluationCtx<'a> for &TraverseCtx<'a, MinifierState<'a>> {
-    fn ast(&self) -> AstBuilder<'a> {
-        (*self).ast()
-    }
-}
-
-impl<'a> ConstantEvaluationCtx<'a> for &mut TraverseCtx<'a, MinifierState<'a>> {
-    fn ast(&self) -> AstBuilder<'a> {
-        (**self).ast()
-    }
-}
+impl<'a> ConstantEvaluationCtx<'a> for TraverseCtx<'a, MinifierState<'a>> {}
 
 impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     pub fn options(&self) -> &CompressOptions {
