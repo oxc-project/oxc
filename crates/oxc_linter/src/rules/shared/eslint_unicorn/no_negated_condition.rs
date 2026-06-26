@@ -95,7 +95,11 @@ fn is_negated_expression(expr: &Expression) -> bool {
     }
 }
 
-fn invert_test_text(test: &Expression<'_>, ctx: &LintContext<'_>, for_if_statement: bool) -> String {
+fn invert_test_text(
+    test: &Expression<'_>,
+    ctx: &LintContext<'_>,
+    for_if_statement: bool,
+) -> String {
     match test {
         Expression::UnaryExpression(unary) if unary.operator == UnaryOperator::LogicalNot => {
             // For `if` statements, drop parentheses around the argument so
@@ -161,8 +165,7 @@ fn fix_if_statement<'a>(
     negated_test: &Expression<'a>,
     ctx: &LintContext<'a>,
 ) -> RuleFix {
-    let inverted_test =
-        invert_test_preserving_outer_parens(&if_stmt.test, negated_test, ctx, true);
+    let inverted_test = invert_test_preserving_outer_parens(&if_stmt.test, negated_test, ctx, true);
     let consequent_text = statement_text_for_swap(&if_stmt.consequent, ctx);
     let alternate_text = statement_text_for_swap(alternate, ctx);
 
