@@ -111,7 +111,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         None
                     } else if Self::is_non_const_array_literal(expr) {
                         self.error(array_inferred(expr.span()));
-                        Some(self.ast.ts_type_unknown_keyword(expr.span()))
+                        Some(TSType::new_ts_unknown_keyword(expr.span(), self))
                     } else {
                         self.transform_expression_to_ts_type(expr)
                     }
@@ -119,7 +119,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     self.infer_type_from_expression(expr)
                 };
 
-                type_annotation = ts_type.map(|t| self.ast.alloc_ts_type_annotation(SPAN, t));
+                type_annotation = ts_type.map(|t| TSTypeAnnotation::boxed(SPAN, t, self));
             }
 
             if type_annotation.is_none() && value.is_none() {
@@ -127,10 +127,10 @@ impl<'a> IsolatedDeclarations<'a> {
             }
         }
 
-        self.ast.class_element_property_definition(
+        ClassElement::new_property_definition(
             property.span,
             property.r#type,
-            self.ast.vec(),
+            ArenaVec::new_in(self),
             property.key.clone_in(self.ast.allocator),
             type_annotation,
             value,
@@ -142,6 +142,7 @@ impl<'a> IsolatedDeclarations<'a> {
             false,
             property.readonly,
             Self::transform_accessibility(property.accessibility),
+            self,
         )
     }
 
@@ -188,7 +189,7 @@ impl<'a> IsolatedDeclarations<'a> {
     ) -> ClassElement<'a> {
         let function = &definition.value;
 
-        let value = self.ast.alloc_function(
+        let value = Function::boxed(
             function.span,
             FunctionType::TSEmptyBodyFunctionExpression,
             function.id.clone_in(self.ast.allocator),
@@ -200,12 +201,13 @@ impl<'a> IsolatedDeclarations<'a> {
             params,
             return_type,
             NONE,
+            self,
         );
 
-        self.ast.class_element_method_definition(
+        ClassElement::new_method_definition(
             definition.span,
             definition.r#type,
-            self.ast.vec(),
+            ArenaVec::new_in(self),
             definition.key.clone_in(self.ast.allocator),
             value,
             definition.kind,
@@ -214,6 +216,7 @@ impl<'a> IsolatedDeclarations<'a> {
             definition.r#override,
             definition.optional,
             Self::transform_accessibility(definition.accessibility),
+            self,
         )
     }
 
@@ -226,10 +229,10 @@ impl<'a> IsolatedDeclarations<'a> {
         r#override: bool,
         accessibility: Option<TSAccessibility>,
     ) -> ClassElement<'a> {
-        self.ast.class_element_property_definition(
+        ClassElement::new_property_definition(
             span,
             r#type,
-            self.ast.vec(),
+            ArenaVec::new_in(self),
             key,
             NONE,
             None,
@@ -241,6 +244,7 @@ impl<'a> IsolatedDeclarations<'a> {
             false,
             false,
             accessibility,
+            self,
         )
     }
 
@@ -253,11 +257,11 @@ impl<'a> IsolatedDeclarations<'a> {
             // A parameter property may not be declared using a binding pattern.(1187)
             return None;
         };
-        let key = self.ast.property_key_static_identifier(SPAN, ident_name);
-        Some(self.ast.class_element_property_definition(
+        let key = PropertyKey::new_static_identifier(SPAN, ident_name, self);
+        Some(ClassElement::new_property_definition(
             param.span,
             PropertyDefinitionType::PropertyDefinition,
-            self.ast.vec(),
+            ArenaVec::new_in(self),
             key,
             type_annotation,
             None,
@@ -269,6 +273,7 @@ impl<'a> IsolatedDeclarations<'a> {
             false,
             param.readonly,
             Self::transform_accessibility(param.accessibility),
+            self,
         ))
     }
 
@@ -293,18 +298,19 @@ impl<'a> IsolatedDeclarations<'a> {
                 )
             }
             MethodDefinitionKind::Get | MethodDefinitionKind::Constructor => {
-                let params = self.ast.alloc_formal_parameters(
+                let params = FormalParameters::boxed(
                     SPAN,
                     FormalParameterKind::Signature,
-                    self.ast.vec(),
+                    ArenaVec::new_in(self),
                     NONE,
+                    self,
                 );
                 self.transform_class_method_definition(method, params, None)
             }
             MethodDefinitionKind::Set => {
-                let params = self.create_formal_parameters(
-                    self.ast.binding_pattern_binding_identifier(SPAN, "value"),
-                );
+                let params = self.create_formal_parameters(BindingPattern::new_binding_identifier(
+                    SPAN, "value", self,
+                ));
                 self.transform_class_method_definition(method, params, None)
             }
         }
@@ -324,7 +330,7 @@ impl<'a> IsolatedDeclarations<'a> {
         function: &Function<'a>,
         typed_params: &FormalParameters<'a>,
     ) -> ArenaVec<'a, ClassElement<'a>> {
-        self.ast.vec_from_iter(
+        ArenaVec::from_iter_in(
             function
                 .params
                 .items
@@ -347,6 +353,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         };
                     self.transform_formal_parameter_to_class_property(param, type_annotation)
                 }),
+            self,
         )
     }
 
@@ -451,7 +458,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
         let accessor_annotations = self.collect_accessor_annotations(decl);
         let mut has_private_key = false;
-        let mut elements = self.ast.vec();
+        let mut elements = ArenaVec::new_in(self);
         let mut is_function_overloads = false;
         for element in &decl.body.body {
             match element {
@@ -491,7 +498,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             let params = &method.value.params;
                             if params.items.is_empty() {
                                 self.create_formal_parameters(
-                                    self.ast.binding_pattern_binding_identifier(SPAN, "value"),
+                                    BindingPattern::new_binding_identifier(SPAN, "value", self),
                                 )
                             } else {
                                 let mut params = params.clone_in(self.ast.allocator);
@@ -619,10 +626,10 @@ impl<'a> IsolatedDeclarations<'a> {
                     };
 
                     // FIXME: missing many fields
-                    let new_element = self.ast.class_element_accessor_property(
+                    let new_element = ClassElement::new_accessor_property(
                         property.span,
                         property.r#type,
-                        self.ast.vec(),
+                        ArenaVec::new_in(self),
                         property.key.clone_in(self.ast.allocator),
                         type_annotation,
                         None,
@@ -631,6 +638,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         property.r#override,
                         false,
                         Self::transform_accessibility(property.accessibility),
+                        self,
                     );
                     elements.push(new_element);
                 }
@@ -648,23 +656,23 @@ impl<'a> IsolatedDeclarations<'a> {
             // <https://github.com/microsoft/TypeScript/blob/64d2eeea7b9c7f1a79edf42cb99f302535136a2e/src/compiler/transformers/declarations.ts#L1699-L1709>
             // When the class has at least one private identifier, create a unique constant identifier to retain the nominal typing behavior
             // Prevents other classes with the same public members from being used in place of the current class
-            let ident = self.ast.property_key_private_identifier(SPAN, "private");
+            let ident = PropertyKey::new_private_identifier(SPAN, "private", self);
             let r#type = PropertyDefinitionType::PropertyDefinition;
-            let decorators = self.ast.vec();
-            let element = self.ast.class_element_property_definition(
+            let decorators = ArenaVec::new_in(self);
+            let element = ClassElement::new_property_definition(
                 SPAN, r#type, decorators, ident, NONE, None, false, false, false, false, false,
-                false, false, None,
+                false, false, None, self,
             );
 
             elements.insert(0, element);
         }
 
-        let body = self.ast.class_body(decl.body.span, elements);
+        let body = ClassBody::new(decl.body.span, elements, self);
 
-        self.ast.alloc_class(
+        Class::boxed(
             decl.span,
             decl.r#type,
-            self.ast.vec(),
+            ArenaVec::new_in(self),
             decl.id.clone_in(self.ast.allocator),
             decl.type_parameters.clone_in(self.ast.allocator),
             decl.super_class.clone_in(self.ast.allocator),
@@ -673,6 +681,7 @@ impl<'a> IsolatedDeclarations<'a> {
             body,
             decl.r#abstract,
             declare.unwrap_or_else(|| self.is_declare()),
+            self,
         )
     }
 
@@ -680,9 +689,9 @@ impl<'a> IsolatedDeclarations<'a> {
         &self,
         kind: BindingPattern<'a>,
     ) -> ArenaBox<'a, FormalParameters<'a>> {
-        let parameter = self.ast.formal_parameter(
+        let parameter = FormalParameter::new(
             SPAN,
-            self.ast.vec(),
+            ArenaVec::new_in(self),
             kind,
             NONE,
             NONE,
@@ -690,8 +699,9 @@ impl<'a> IsolatedDeclarations<'a> {
             None,
             false,
             false,
+            self,
         );
-        let items = self.ast.vec1(parameter);
-        self.ast.alloc_formal_parameters(SPAN, FormalParameterKind::Signature, items, NONE)
+        let items = ArenaVec::from_value_in(parameter, self);
+        FormalParameters::boxed(SPAN, FormalParameterKind::Signature, items, NONE, self)
     }
 }

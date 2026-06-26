@@ -1,10 +1,11 @@
-use oxc_allocator::CloneIn;
+use oxc_allocator::{ArenaVec, CloneIn};
 use oxc_ast::{
     NONE,
     ast::{
         ArrayExpression, ArrayExpressionElement, ArrowFunctionExpression, Expression, Function,
         ObjectExpression, ObjectPropertyKind, PropertyKey, PropertyKind, TSLiteral,
-        TSMethodSignatureKind, TSTupleElement, TSType, TSTypeOperatorOperator,
+        TSMethodSignatureKind, TSSignature, TSTupleElement, TSType, TSTypeAnnotation,
+        TSTypeOperatorOperator,
     },
 };
 use oxc_span::{ContentEq, GetSpan, SPAN, Span};
@@ -30,12 +31,13 @@ impl<'a> IsolatedDeclarations<'a> {
         let params = self.transform_formal_parameters(&func.params, false);
 
         return_type.map(|return_type| {
-            self.ast.ts_type_function_type(
+            TSType::new_ts_function_type(
                 func.span,
                 func.type_parameters.clone_in(self.ast.allocator),
                 func.this_param.clone_in(self.ast.allocator),
                 params,
                 return_type,
+                self,
             )
         })
     }
@@ -56,12 +58,13 @@ impl<'a> IsolatedDeclarations<'a> {
         let params = self.transform_formal_parameters(&func.params, false);
 
         return_type.map(|return_type| {
-            self.ast.ts_type_function_type(
+            TSType::new_ts_function_type(
                 func.span,
                 func.type_parameters.clone_in(self.ast.allocator),
                 NONE,
                 params,
                 return_type,
+                self,
             )
         })
     }
@@ -71,13 +74,13 @@ impl<'a> IsolatedDeclarations<'a> {
         match key {
             // ["string"] -> string
             PropertyKey::StringLiteral(literal) if is_identifier_name(&literal.value) => {
-                self.ast.property_key_static_identifier(literal.span, literal.value.as_str())
+                PropertyKey::new_static_identifier(literal.span, literal.value.as_str(), self)
             }
             // [`string`] -> string
             PropertyKey::TemplateLiteral(literal)
                 if is_identifier_name(&literal.quasis[0].value.raw) =>
             {
-                self.ast.property_key_static_identifier(literal.span, literal.quasis[0].value.raw)
+                PropertyKey::new_static_identifier(literal.span, literal.quasis[0].value.raw, self)
             }
             // [100] -> 100
             // number literal will be cloned as-is
@@ -109,8 +112,8 @@ impl<'a> IsolatedDeclarations<'a> {
         // `Hash` trait, fortunately, the number of accessors is small.
         let mut accessor_inferred: Vec<&PropertyKey<'a>> = Vec::new();
 
-        let members =
-            self.ast.vec_from_iter(expr.properties.iter().filter_map(|property| match property {
+        let members = ArenaVec::from_iter_in(
+            expr.properties.iter().filter_map(|property| match property {
                 ObjectPropertyKind::ObjectProperty(object) => {
                     if object.computed && self.report_property_key(&object.key) {
                         return None;
@@ -139,7 +142,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             .as_expression()
                             .is_some_and(|k| !k.is_string_literal() && !k.is_number_literal());
 
-                        return Some(self.ast.ts_signature_method_signature(
+                        return Some(TSSignature::new_ts_method_signature(
                             object.span,
                             key,
                             computed,
@@ -149,6 +152,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             function.this_param.clone_in(self.ast.allocator),
                             params,
                             return_type,
+                            self,
                         ));
                     }
 
@@ -207,13 +211,13 @@ impl<'a> IsolatedDeclarations<'a> {
                             }
 
                             type_annotation.map(|type_annotation| {
-                                self.ast.alloc_ts_type_annotation(SPAN, type_annotation)
+                                TSTypeAnnotation::boxed(SPAN, type_annotation, self)
                             })
                         }
                     };
 
                     let key = self.transform_property_key(key);
-                    let property_signature = self.ast.ts_signature_property_signature(
+                    let property_signature = TSSignature::new_ts_property_signature(
                         object.span,
                         key.as_expression()
                             .is_some_and(|k| !k.is_string_literal() && !k.is_number_literal()),
@@ -221,6 +225,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         is_const,
                         key,
                         type_annotation,
+                        self,
                     );
                     Some(property_signature)
                 }
@@ -228,7 +233,9 @@ impl<'a> IsolatedDeclarations<'a> {
                     self.error(object_with_spread_assignments(spread.span));
                     None
                 }
-            }));
+            }),
+            self,
+        );
 
         // Report an error if the type of neither the setter nor the getter is inferred.
         for (key, span) in accessor_spans {
@@ -237,7 +244,7 @@ impl<'a> IsolatedDeclarations<'a> {
             }
         }
 
-        self.ast.ts_type_type_literal(SPAN, members)
+        TSType::new_ts_type_literal(SPAN, members, self)
     }
 
     pub(crate) fn transform_array_expression_to_ts_type(
@@ -245,14 +252,14 @@ impl<'a> IsolatedDeclarations<'a> {
         expr: &ArrayExpression<'a>,
         is_const: bool,
     ) -> TSType<'a> {
-        let element_types = self.ast.vec_from_iter(expr.elements.iter().filter_map(|element| {
-            match element {
+        let element_types = ArenaVec::from_iter_in(
+            expr.elements.iter().filter_map(|element| match element {
                 ArrayExpressionElement::SpreadElement(spread) => {
                     self.error(arrays_with_spread_elements(spread.span));
                     None
                 }
                 ArrayExpressionElement::Elision(elision) => {
-                    Some(TSTupleElement::from(self.ast.ts_type_undefined_keyword(elision.span)))
+                    Some(TSTupleElement::new_ts_undefined_keyword(elision.span, self))
                 }
                 _ => self
                     .transform_expression_to_ts_type_with_const_context(
@@ -264,12 +271,13 @@ impl<'a> IsolatedDeclarations<'a> {
                         self.error(inferred_type_of_expression(element.span()));
                         None
                     }),
-            }
-        }));
+            }),
+            self,
+        );
 
-        let ts_type = self.ast.ts_type_tuple_type(SPAN, element_types);
+        let ts_type = TSType::new_ts_tuple_type(SPAN, element_types, self);
         if is_const {
-            self.ast.ts_type_type_operator_type(SPAN, TSTypeOperatorOperator::Readonly, ts_type)
+            TSType::new_ts_type_operator_type(SPAN, TSTypeOperatorOperator::Readonly, ts_type, self)
         } else {
             ts_type
         }
@@ -296,37 +304,42 @@ impl<'a> IsolatedDeclarations<'a> {
         is_const: bool,
     ) -> Option<TSType<'a>> {
         match expr {
-            Expression::BooleanLiteral(lit) => Some(self.ast.ts_type_literal_type(
+            Expression::BooleanLiteral(lit) => Some(TSType::new_ts_literal_type(
                 SPAN,
                 TSLiteral::BooleanLiteral(lit.clone_in(self.ast.allocator)),
+                self,
             )),
-            Expression::NumericLiteral(lit) => Some(self.ast.ts_type_literal_type(
+            Expression::NumericLiteral(lit) => Some(TSType::new_ts_literal_type(
                 SPAN,
                 TSLiteral::NumericLiteral(lit.clone_in(self.ast.allocator)),
+                self,
             )),
-            Expression::BigIntLiteral(lit) => Some(self.ast.ts_type_literal_type(
+            Expression::BigIntLiteral(lit) => Some(TSType::new_ts_literal_type(
                 SPAN,
                 TSLiteral::BigIntLiteral(lit.clone_in(self.ast.allocator)),
+                self,
             )),
-            Expression::StringLiteral(lit) => Some(self.ast.ts_type_literal_type(
+            Expression::StringLiteral(lit) => Some(TSType::new_ts_literal_type(
                 SPAN,
                 TSLiteral::StringLiteral(lit.clone_in(self.ast.allocator)),
+                self,
             )),
-            Expression::NullLiteral(lit) => Some(self.ast.ts_type_null_keyword(lit.span)),
+            Expression::NullLiteral(lit) => Some(TSType::new_ts_null_keyword(lit.span, self)),
             Expression::Identifier(ident) => match ident.name.as_str() {
-                "undefined" => Some(self.ast.ts_type_undefined_keyword(ident.span)),
+                "undefined" => Some(TSType::new_ts_undefined_keyword(ident.span, self)),
                 _ => None,
             },
             Expression::TemplateLiteral(lit) => {
                 self.transform_template_to_string(lit).map(|string| {
-                    self.ast.ts_type_literal_type(lit.span, TSLiteral::StringLiteral(string))
+                    TSType::new_ts_literal_type(lit.span, TSLiteral::StringLiteral(string), self)
                 })
             }
             Expression::UnaryExpression(expr) => {
                 if Self::can_infer_unary_expression(expr) {
-                    Some(self.ast.ts_type_literal_type(
+                    Some(TSType::new_ts_literal_type(
                         SPAN,
                         TSLiteral::UnaryExpression(expr.clone_in(self.ast.allocator)),
+                        self,
                     ))
                 } else {
                     None
