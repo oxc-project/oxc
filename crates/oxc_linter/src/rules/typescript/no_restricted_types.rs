@@ -4,7 +4,10 @@ use rustc_hash::FxHashMap;
 use schemars::{JsonSchema, SchemaGenerator, schema::Schema};
 use serde::{Deserialize, Serialize};
 
-use oxc_ast::AstKind;
+use oxc_ast::{
+    AstKind,
+    ast::{TSTypeName, TSTypeReference},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -32,14 +35,95 @@ fn no_restricted_types_diagnostic(
     }
 }
 
+/// Built from config once: O(1) lookups by normalized name + keyword fast flags.
+#[derive(Debug, Clone, Default)]
+struct RestrictedTypesIndex {
+    /// Key = type name with all whitespace removed (matches TS-ESLint `removeSpaces`).
+    /// Value = (display name for diagnostics, ban config).
+    by_name: FxHashMap<Box<str>, (Box<str>, BanConfigValue)>,
+    /// True if any banned name needs a full source span (e.g. `Banned<any>`, not `[]`/`{}`).
+    has_generic_or_complex_keys: bool,
+    ban_string: bool,
+    ban_number: bool,
+    ban_boolean: bool,
+    ban_null: bool,
+    ban_undefined: bool,
+    ban_symbol: bool,
+    ban_bigint: bool,
+    ban_object: bool,
+    ban_void: bool,
+    ban_never: bool,
+    ban_unknown: bool,
+    ban_any: bool,
+    ban_empty_tuple: bool,
+    ban_empty_object: bool,
+}
+
+impl RestrictedTypesIndex {
+    fn from_types_map(types: &FxHashMap<String, BanConfigValue>) -> Self {
+        let mut index = Self::default();
+        for (key, value) in types {
+            let normalized = remove_spaces(key);
+            let display = key.trim();
+            match normalized.as_ref() {
+                "string" => index.ban_string = true,
+                "number" => index.ban_number = true,
+                "boolean" => index.ban_boolean = true,
+                "null" => index.ban_null = true,
+                "undefined" => index.ban_undefined = true,
+                "symbol" => index.ban_symbol = true,
+                "bigint" => index.ban_bigint = true,
+                "object" => index.ban_object = true,
+                "void" => index.ban_void = true,
+                "never" => index.ban_never = true,
+                "unknown" => index.ban_unknown = true,
+                "any" => index.ban_any = true,
+                "[]" => index.ban_empty_tuple = true,
+                "{}" => index.ban_empty_object = true,
+                other
+                    if other.contains('<') || other.contains('{') || other.contains('[') =>
+                {
+                    index.has_generic_or_complex_keys = true;
+                }
+                _ => {}
+            }
+            index.by_name.insert(
+                normalized.into_owned().into_boxed_str(),
+                (display.to_string().into_boxed_str(), value.clone()),
+            );
+        }
+        index
+    }
+
+    #[inline]
+    fn lookup(&self, normalized_name: &str) -> Option<(&str, &BanConfigValue)> {
+        self.by_name.get(normalized_name).map(|(display, config)| (&**display, config))
+    }
+
+    /// Lookup a source snippet (may contain whitespace); normalizes only when needed.
+    #[inline]
+    fn lookup_source(&self, source_text: &str) -> Option<(&str, &BanConfigValue)> {
+        if source_text.contains(char::is_whitespace) {
+            let normalized = remove_spaces(source_text);
+            self.lookup(&normalized)
+        } else {
+            self.lookup(source_text)
+        }
+    }
+}
+
 #[derive(Debug, Default, Clone, Deserialize)]
 pub struct NoRestrictedTypes(Box<NoRestrictedTypesConfig>);
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, Default)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct NoRestrictedTypesConfig {
     /// A mapping of type names to ban configurations.
     types: FxHashMap<String, BanConfigValue>,
+    /// Built at config load; not serialized.
+    #[serde(skip)]
+    #[schemars(skip)]
+    index: RestrictedTypesIndex,
 }
 
 /// Represents the different ways a ban config can be specified in JSON.
@@ -168,97 +252,68 @@ declare_oxc_lint!(
 
 impl Rule for NoRestrictedTypes {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        let mut config = serde_json::from_value::<DefaultRuleConfig<Self>>(value)
+            .map(DefaultRuleConfig::into_inner)?;
+        config.0.index = RestrictedTypesIndex::from_types_map(&config.0.types);
+        Ok(config)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
-            // Handle type references like `let x: Foo` or `let x: NS.Foo`
-            AstKind::TSTypeReference(type_ref) => {
-                // Check the type name (e.g., `Banned` in `Banned<any>`)
-                self.check_banned_types(type_ref.type_name.span(), ctx);
+        let index = &self.0.index;
 
-                // If there are type arguments, also check the full type (e.g., `Banned<any>`)
-                if type_ref.type_arguments.is_some() {
-                    self.check_banned_types(type_ref.span, ctx);
-                }
+        match node.kind() {
+            AstKind::TSTypeReference(type_ref) => {
+                self.check_type_reference(type_ref, ctx);
             }
-            // Handle primitive keyword types like `let x: string`, `let x: null`, etc.
-            AstKind::TSStringKeyword(kw) => {
-                if let Some((matched_key, config)) = self.find_matching_type("string") {
-                    report(ctx, kw.span, matched_key, config);
-                }
+            AstKind::TSStringKeyword(kw) if index.ban_string => {
+                report_keyword(ctx, index, "string", kw.span);
             }
-            AstKind::TSNumberKeyword(kw) => {
-                if let Some((matched_key, config)) = self.find_matching_type("number") {
-                    report(ctx, kw.span, matched_key, config);
-                }
+            AstKind::TSNumberKeyword(kw) if index.ban_number => {
+                report_keyword(ctx, index, "number", kw.span);
             }
-            AstKind::TSBooleanKeyword(kw) => {
-                if let Some((matched_key, config)) = self.find_matching_type("boolean") {
-                    report(ctx, kw.span, matched_key, config);
-                }
+            AstKind::TSBooleanKeyword(kw) if index.ban_boolean => {
+                report_keyword(ctx, index, "boolean", kw.span);
             }
-            AstKind::TSNullKeyword(kw) => {
-                if let Some((matched_key, config)) = self.find_matching_type("null") {
-                    report(ctx, kw.span, matched_key, config);
-                }
+            AstKind::TSNullKeyword(kw) if index.ban_null => {
+                report_keyword(ctx, index, "null", kw.span);
             }
-            AstKind::TSUndefinedKeyword(kw) => {
-                if let Some((matched_key, config)) = self.find_matching_type("undefined") {
-                    report(ctx, kw.span, matched_key, config);
-                }
+            AstKind::TSUndefinedKeyword(kw) if index.ban_undefined => {
+                report_keyword(ctx, index, "undefined", kw.span);
             }
-            AstKind::TSSymbolKeyword(kw) => {
-                if let Some((matched_key, config)) = self.find_matching_type("symbol") {
-                    report(ctx, kw.span, matched_key, config);
-                }
+            AstKind::TSSymbolKeyword(kw) if index.ban_symbol => {
+                report_keyword(ctx, index, "symbol", kw.span);
             }
-            AstKind::TSBigIntKeyword(kw) => {
-                if let Some((matched_key, config)) = self.find_matching_type("bigint") {
-                    report(ctx, kw.span, matched_key, config);
-                }
+            AstKind::TSBigIntKeyword(kw) if index.ban_bigint => {
+                report_keyword(ctx, index, "bigint", kw.span);
             }
-            AstKind::TSObjectKeyword(kw) => {
-                if let Some((matched_key, config)) = self.find_matching_type("object") {
-                    report(ctx, kw.span, matched_key, config);
-                }
+            AstKind::TSObjectKeyword(kw) if index.ban_object => {
+                report_keyword(ctx, index, "object", kw.span);
             }
-            AstKind::TSVoidKeyword(kw) => {
-                if let Some((matched_key, config)) = self.find_matching_type("void") {
-                    report(ctx, kw.span, matched_key, config);
-                }
+            AstKind::TSVoidKeyword(kw) if index.ban_void => {
+                report_keyword(ctx, index, "void", kw.span);
             }
-            AstKind::TSNeverKeyword(kw) => {
-                if let Some((matched_key, config)) = self.find_matching_type("never") {
-                    report(ctx, kw.span, matched_key, config);
-                }
+            AstKind::TSNeverKeyword(kw) if index.ban_never => {
+                report_keyword(ctx, index, "never", kw.span);
             }
-            AstKind::TSUnknownKeyword(kw) => {
-                if let Some((matched_key, config)) = self.find_matching_type("unknown") {
-                    report(ctx, kw.span, matched_key, config);
-                }
+            AstKind::TSUnknownKeyword(kw) if index.ban_unknown => {
+                report_keyword(ctx, index, "unknown", kw.span);
             }
-            AstKind::TSAnyKeyword(kw) => {
-                if let Some((matched_key, config)) = self.find_matching_type("any") {
-                    report(ctx, kw.span, matched_key, config);
-                }
+            AstKind::TSAnyKeyword(kw) if index.ban_any => {
+                report_keyword(ctx, index, "any", kw.span);
             }
-            // Handle empty tuple type `[]`
-            AstKind::TSTupleType(tuple) if tuple.element_types.is_empty() => {
-                self.check_banned_types(tuple.span, ctx);
+            AstKind::TSTupleType(tuple)
+                if tuple.element_types.is_empty() && index.ban_empty_tuple =>
+            {
+                report_keyword(ctx, index, "[]", tuple.span);
             }
-            // Handle empty object type `{}`
-            AstKind::TSTypeLiteral(lit) if lit.members.is_empty() => {
-                self.check_banned_types(lit.span, ctx);
+            AstKind::TSTypeLiteral(lit) if lit.members.is_empty() && index.ban_empty_object => {
+                report_keyword(ctx, index, "{}", lit.span);
             }
-            // Handle `class X implements Banned`
             AstKind::TSClassImplements(implements) => {
-                self.check_banned_types(implements.span, ctx);
+                self.check_banned_source(implements.span, ctx);
             }
-            // Handle `interface X extends Banned`
             AstKind::TSInterfaceHeritage(heritage) => {
-                self.check_banned_types(heritage.span, ctx);
+                self.check_banned_source(heritage.span, ctx);
             }
             _ => {}
         }
@@ -270,27 +325,74 @@ impl Rule for NoRestrictedTypes {
 }
 
 impl NoRestrictedTypes {
-    /// Find a matching banned type configuration.
-    /// Both the config key and type_name are normalized by removing all whitespace.
-    fn find_matching_type(&self, type_name: &str) -> Option<(&str, &BanConfigValue)> {
-        // Normalize the type name by removing whitespace
-        let normalized_type_name = remove_spaces(type_name);
-        for (key, value) in &self.0.types {
-            // Normalize the key by removing whitespace
-            let normalized_key = remove_spaces(key);
-            if normalized_key == normalized_type_name {
-                // Return the original (trimmed) key for error messages
-                return Some((key.trim(), value));
+    fn check_type_reference(&self, type_ref: &TSTypeReference<'_>, ctx: &LintContext<'_>) {
+        let index = &self.0.index;
+
+        if type_ref.type_arguments.is_none() {
+            if let Some(name) = type_name_to_cow(&type_ref.type_name) {
+                if let Some((display, config)) = index.lookup(name.as_ref()) {
+                    report(ctx, type_ref.type_name.span(), display, config);
+                }
+                return;
             }
+            self.check_banned_source(type_ref.type_name.span(), ctx);
+            return;
         }
-        None
+
+        // With type arguments: check the head name (e.g. `Banned` in `Banned<any>`).
+        if let Some(name) = type_name_to_cow(&type_ref.type_name) {
+            if let Some((display, config)) = index.lookup(name.as_ref()) {
+                report(ctx, type_ref.type_name.span(), display, config);
+            }
+        } else {
+            self.check_banned_source(type_ref.type_name.span(), ctx);
+        }
+
+        // Full `Banned<any>` source only when config has generic/complex keys.
+        if index.has_generic_or_complex_keys {
+            self.check_banned_source(type_ref.span, ctx);
+        }
     }
 
-    fn check_banned_types(&self, span: Span, ctx: &LintContext<'_>) {
+    fn check_banned_source(&self, span: Span, ctx: &LintContext<'_>) {
         let source_text = ctx.source_range(span);
-        if let Some((matched_key, config)) = self.find_matching_type(source_text) {
-            report(ctx, span, matched_key, config);
+        if let Some((display, config)) = self.0.index.lookup_source(source_text) {
+            report(ctx, span, display, config);
         }
+    }
+}
+
+/// Dotted name for simple type references. Borrows for a single identifier.
+fn type_name_to_cow<'a>(type_name: &'a TSTypeName<'a>) -> Option<Cow<'a, str>> {
+    match type_name {
+        TSTypeName::IdentifierReference(ident) => Some(Cow::Borrowed(ident.name.as_str())),
+        TSTypeName::QualifiedName(qual) => {
+            let mut parts = Vec::with_capacity(4);
+            let mut current = qual.as_ref();
+            loop {
+                parts.push(current.right.name.as_str());
+                match &current.left {
+                    TSTypeName::IdentifierReference(ident) => {
+                        parts.push(ident.name.as_str());
+                        break;
+                    }
+                    TSTypeName::QualifiedName(inner) => {
+                        current = inner.as_ref();
+                    }
+                    TSTypeName::ThisExpression(_) => return None,
+                }
+            }
+            parts.reverse();
+            Some(Cow::Owned(parts.join(".")))
+        }
+        TSTypeName::ThisExpression(_) => None,
+    }
+}
+
+#[inline]
+fn report_keyword(ctx: &LintContext<'_>, index: &RestrictedTypesIndex, keyword: &str, span: Span) {
+    if let Some((display, config)) = index.lookup(keyword) {
+        report(ctx, span, display, config);
     }
 }
 
@@ -298,7 +400,6 @@ fn report(ctx: &LintContext<'_>, span: Span, type_name: &str, config: &BanConfig
     let diagnostic = no_restricted_types_diagnostic(type_name, config.message(), span);
 
     if let Some(fix_with) = config.fix_with() {
-        // `fixWith` provides an auto-fix
         let fix_with = fix_with.to_string();
         ctx.diagnostic_with_fix(diagnostic, |fixer| fixer.replace(span, fix_with));
     } else if let Some(suggestions) = config.suggest() {
