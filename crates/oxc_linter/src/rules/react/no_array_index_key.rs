@@ -188,13 +188,14 @@ fn find_index_param_symbol_id<'a>(node: &'a AstNode, ctx: &'a LintContext) -> Op
                 continue;
             };
 
-            if SECOND_INDEX_METHODS.contains(&expr.property.name.as_str()) {
-                return find_index_param_symbol_id_by_position(call_expr, 1);
-            }
-
-            if THIRD_INDEX_METHODS.contains(&expr.property.name.as_str()) {
-                return find_index_param_symbol_id_by_position(call_expr, 2);
-            }
+            // Index is 2nd callback arg for map/forEach/…, 3rd for reduce/reduceRight.
+            let index_pos = match expr.property.name.as_str() {
+                "every" | "filter" | "find" | "findIndex" | "flatMap" | "forEach" | "map"
+                | "some" => 1,
+                "reduce" | "reduceRight" => 2,
+                _ => continue,
+            };
+            return find_index_param_symbol_id_by_position(call_expr, index_pos);
         }
     }
 
@@ -227,17 +228,6 @@ fn find_index_param_symbol_id_by_position(
         _ => None,
     })
 }
-
-// things[`${method_name}`]((thing, index) => (<Hello key={index} />));
-const SECOND_INDEX_METHODS: [&str; 8] =
-    ["every", "filter", "find", "findIndex", "flatMap", "forEach", "map", "some"];
-
-const THIRD_INDEX_METHODS: [&str; 2] = [
-    // things.reduce((collection, thing, index) => (collection.concat(<Hello key={index} />)), []);
-    "reduce",
-    // things.reduceRight((collection, thing, index) => (collection.concat(<Hello key={index} />)), []);
-    "reduceRight",
-];
 
 impl Rule for NoArrayIndexKey {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
