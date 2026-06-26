@@ -1002,6 +1002,173 @@ mod test {
     }
 
     #[test]
+    fn test_add_settings() {
+        let base_config = LintConfig { plugins: LintPlugins::ESLINT, ..Default::default() };
+
+        let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
+            files: GlobSet::new(vec!["*.tsx"]),
+            exclude_files: GlobSet::default(),
+            env: None,
+            plugins: None,
+            globals: None,
+            settings: Some(from_json!({ "react": { "version": "18.2.0" } })),
+            rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
+        }]);
+
+        let store = ConfigStore::new(
+            Config::new(vec![], vec![], OxlintCategories::default(), base_config, overrides),
+            FxHashMap::default(),
+            ExternalPluginStore::default(),
+        );
+        assert!(store.base.base.config.settings.react.version.is_none());
+
+        let app = store.resolve("App.tsx".as_ref()).config;
+        let version = app.settings.react.version.as_ref().unwrap();
+        assert_eq!(version.major(), 18);
+        assert_eq!(version.minor(), 2);
+    }
+
+    #[test]
+    fn test_settings_not_applied_to_non_matching_file() {
+        let base_config = LintConfig {
+            plugins: LintPlugins::ESLINT,
+            settings: from_json!({ "react": { "version": "17.0.0" } }),
+            ..Default::default()
+        };
+
+        let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
+            files: GlobSet::new(vec!["*.tsx"]),
+            exclude_files: GlobSet::default(),
+            env: None,
+            plugins: None,
+            globals: None,
+            settings: Some(from_json!({ "react": { "version": "19.0.0" } })),
+            rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
+        }]);
+
+        let store = ConfigStore::new(
+            Config::new(vec![], vec![], OxlintCategories::default(), base_config, overrides),
+            FxHashMap::default(),
+            ExternalPluginStore::default(),
+        );
+
+        // `*.js` does not match the `*.tsx` override, so no override applies and the
+        // root settings are kept untouched.
+        let app = store.resolve("App.js".as_ref()).config;
+        assert_eq!(app.settings.react.version.as_ref().unwrap().major(), 17);
+    }
+
+    #[test]
+    fn test_deep_merge_settings() {
+        let base_config = LintConfig {
+            plugins: LintPlugins::ESLINT,
+            settings: from_json!({
+                "react": {
+                    "version": "17.0.0",
+                    "componentWrapperFunctions": ["observer"]
+                }
+            }),
+            ..Default::default()
+        };
+
+        let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
+            files: GlobSet::new(vec!["*.tsx"]),
+            exclude_files: GlobSet::default(),
+            env: None,
+            plugins: None,
+            globals: None,
+            settings: Some(from_json!({ "react": { "version": "19.0.0" } })),
+            rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
+        }]);
+
+        let store = ConfigStore::new(
+            Config::new(vec![], vec![], OxlintCategories::default(), base_config, overrides),
+            FxHashMap::default(),
+            ExternalPluginStore::default(),
+        );
+
+        let app = store.resolve("App.tsx".as_ref()).config;
+        // The override wins on the conflicting `version` key.
+        assert_eq!(app.settings.react.version.as_ref().unwrap().major(), 19);
+        // The `react` object is deep-merged, so the root-only `componentWrapperFunctions`
+        // is preserved rather than dropped by a wholesale object replacement.
+        assert!(app.settings.react.is_component_wrapper_function("observer"));
+    }
+
+    #[test]
+    fn test_deep_merge_settings_combines_nested_keys() {
+        let base_config = LintConfig {
+            plugins: LintPlugins::ESLINT,
+            settings: from_json!({ "react": { "version": "17.0.0" } }),
+            ..Default::default()
+        };
+
+        let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
+            files: GlobSet::new(vec!["*.tsx"]),
+            exclude_files: GlobSet::default(),
+            env: None,
+            plugins: None,
+            globals: None,
+            settings: Some(from_json!({ "react": { "componentWrapperFunctions": ["observer"] } })),
+            rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
+        }]);
+
+        let store = ConfigStore::new(
+            Config::new(vec![], vec![], OxlintCategories::default(), base_config, overrides),
+            FxHashMap::default(),
+            ExternalPluginStore::default(),
+        );
+
+        // The `react` objects are combined: the root-only `version` and the override-only
+        // `componentWrapperFunctions` both end up present.
+        let app = store.resolve("App.tsx".as_ref()).config;
+        assert_eq!(app.settings.react.version.as_ref().unwrap().major(), 17);
+        assert!(app.settings.react.is_component_wrapper_function("observer"));
+    }
+
+    #[test]
+    fn test_later_matching_override_settings_win() {
+        let base_config = LintConfig { plugins: LintPlugins::ESLINT, ..Default::default() };
+
+        let overrides = ResolvedOxlintOverrides::new(vec![
+            ResolvedOxlintOverride {
+                files: GlobSet::new(vec!["*.tsx"]),
+                exclude_files: GlobSet::default(),
+                env: None,
+                plugins: None,
+                globals: None,
+                settings: Some(from_json!({ "react": { "version": "18.0.0" } })),
+                rules: ResolvedOxlintOverrideRules {
+                    builtin_rules: vec![],
+                    external_rules: vec![],
+                },
+            },
+            ResolvedOxlintOverride {
+                files: GlobSet::new(vec!["*.tsx"]),
+                exclude_files: GlobSet::default(),
+                env: None,
+                plugins: None,
+                globals: None,
+                settings: Some(from_json!({ "react": { "version": "19.0.0" } })),
+                rules: ResolvedOxlintOverrideRules {
+                    builtin_rules: vec![],
+                    external_rules: vec![],
+                },
+            },
+        ]);
+
+        let store = ConfigStore::new(
+            Config::new(vec![], vec![], OxlintCategories::default(), base_config, overrides),
+            FxHashMap::default(),
+            ExternalPluginStore::default(),
+        );
+
+        // Both overrides match `*.tsx`; the later one wins the conflict.
+        let app = store.resolve("App.tsx".as_ref()).config;
+        assert_eq!(app.settings.react.version.as_ref().unwrap().major(), 19);
+    }
+
+    #[test]
     fn test_override_rule_not_reset_by_later_override_with_different_plugins() {
         // This test reproduces the issue from https://github.com/oxc-project/oxc/issues/12859
         // When multiple overrides apply to a file and they have different plugins,
