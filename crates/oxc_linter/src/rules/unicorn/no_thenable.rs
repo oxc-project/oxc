@@ -82,13 +82,21 @@ impl Rule for NoThenable {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::ObjectExpression(expr) => {
-                expr.properties.iter().for_each(|prop| {
-                    if let ObjectPropertyKind::ObjectProperty(prop) = prop
-                        && let Some(span) = contains_then(&prop.key, ctx)
-                    {
+                for prop in &expr.properties {
+                    let ObjectPropertyKind::ObjectProperty(prop) = prop else {
+                        continue;
+                    };
+                    // Fast path for the common `then` / `then() {}` method key.
+                    if let PropertyKey::StaticIdentifier(ident) = &prop.key {
+                        if ident.name == "then" {
+                            ctx.diagnostic(object(ident.span));
+                        }
+                        continue;
+                    }
+                    if let Some(span) = contains_then(&prop.key, ctx) {
                         ctx.diagnostic(object(span));
                     }
-                });
+                }
             }
             AstKind::PropertyDefinition(def) => {
                 if let Some(span) = contains_then(&def.key, ctx) {

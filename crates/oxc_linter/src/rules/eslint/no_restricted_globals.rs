@@ -182,32 +182,49 @@ impl Rule for NoRestrictedGlobals {
         Ok(Self(Box::new(config)))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
-            AstKind::IdentifierReference(ident) => {
+    fn run_once(&self, ctx: &LintContext) {
+        // Iterate only configured names in unresolved globals (not every identifier in the file).
+        if self.globals.is_empty() {
+            return;
+        }
+        let unresolved = ctx.scoping().root_unresolved_references();
+        for (name, message) in &self.globals {
+            let Some(ref_ids) = unresolved.get(name.as_str()) else {
+                continue;
+            };
+            for &ref_id in ref_ids {
+                let reference = ctx.scoping().get_reference(ref_id);
+                if reference.symbol_id().is_some() || reference.is_type() {
+                    continue;
+                }
+                let node = ctx.nodes().get_node(reference.node_id());
+                let AstKind::IdentifierReference(ident) = node.kind() else {
+                    continue;
+                };
                 if self.check_global_object
                     && is_ident_property(ident, &ctx.nodes().parent_kind(node.id()))
                 {
-                    return;
+                    continue;
                 }
-
-                let Some(message) = self.globals.get(ident.name.as_str()) else {
-                    return;
-                };
-                let reference = ctx.scoping().get_reference(ident.reference_id());
-                if reference.symbol_id().is_some() || reference.is_type() {
-                    return;
-                }
-                ctx.diagnostic(no_restricted_globals(&ident.name, message, ident.span));
+                ctx.diagnostic(no_restricted_globals(name, message, ident.span));
             }
-            AstKind::ComputedMemberExpression(expression) if self.check_global_object => {
+        }
+    }
+
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        // Member access via global objects only when enabled (window.event, etc.).
+        if !self.check_global_object {
+            return;
+        }
+        match node.kind() {
+            AstKind::ComputedMemberExpression(expression) => {
                 let Some(ident) = expression.object.get_identifier_reference() else {
                     return;
                 };
-                if !ctx.scoping().root_unresolved_references().contains_key(&ident.name) {
+                if !ctx.scoping().root_unresolved_references().contains_key(ident.name.as_str()) {
                     return;
                 }
-                if !self.global_objects.contains(&ident.name.into()) {
+                if !self.global_objects.iter().any(|g| g.as_str() == ident.name.as_str()) {
                     return;
                 }
                 let property_name = match &expression.expression {
@@ -231,21 +248,21 @@ impl Rule for NoRestrictedGlobals {
                     expression.expression.span(),
                 ));
             }
-            AstKind::StaticMemberExpression(expression) if self.check_global_object => {
+            AstKind::StaticMemberExpression(expression) => {
                 let Some(ident) = expression.object.get_identifier_reference() else {
                     return;
                 };
-                if !ctx.scoping().root_unresolved_references().contains_key(&ident.name) {
+                if !ctx.scoping().root_unresolved_references().contains_key(ident.name.as_str()) {
                     return;
                 }
-                if !self.global_objects.contains(&ident.name.into()) {
+                if !self.global_objects.iter().any(|g| g.as_str() == ident.name.as_str()) {
                     return;
                 }
                 let Some(message) = self.globals.get(expression.property.name.as_str()) else {
                     return;
                 };
                 ctx.diagnostic(no_restricted_globals(
-                    &expression.property.name,
+                    expression.property.name.as_str(),
                     message,
                     expression.property.span,
                 ));

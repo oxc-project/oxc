@@ -62,6 +62,18 @@ fn check_jsx_element<'a>(
     ctx: &'a LintContext,
     prop_name: &'static str,
 ) {
+    // Most JSX elements have no `key` — avoid ancestor walks.
+    let has_key_attr = jsx.opening_element.attributes.iter().any(|attr| {
+        matches!(
+            attr,
+            JSXAttributeItem::Attribute(a)
+                if matches!(&a.name, JSXAttributeName::Identifier(id) if id.name.as_str() == prop_name)
+        )
+    });
+    if !has_key_attr {
+        return;
+    }
+
     let Some(index_param_symbol_id) = find_index_param_symbol_id(node, ctx) else {
         return;
     };
@@ -193,13 +205,14 @@ fn find_index_param_symbol_id<'a>(node: &'a AstNode, ctx: &'a LintContext) -> Op
                 continue;
             };
 
-            if SECOND_INDEX_METHODS.contains(&expr.property.name.as_str()) {
-                return find_index_param_symbol_id_by_position(call_expr, 1);
-            }
-
-            if THIRD_INDEX_METHODS.contains(&expr.property.name.as_str()) {
-                return find_index_param_symbol_id_by_position(call_expr, 2);
-            }
+            // Index is 2nd callback arg for map/forEach/…, 3rd for reduce/reduceRight.
+            let index_pos = match expr.property.name.as_str() {
+                "every" | "filter" | "find" | "findIndex" | "flatMap" | "forEach" | "map"
+                | "some" => 1,
+                "reduce" | "reduceRight" => 2,
+                _ => continue,
+            };
+            return find_index_param_symbol_id_by_position(call_expr, index_pos);
         }
     }
 
@@ -232,17 +245,6 @@ fn find_index_param_symbol_id_by_position(
         _ => None,
     })
 }
-
-// things[`${method_name}`]((thing, index) => (<Hello key={index} />));
-const SECOND_INDEX_METHODS: [&str; 8] =
-    ["every", "filter", "find", "findIndex", "flatMap", "forEach", "map", "some"];
-
-const THIRD_INDEX_METHODS: [&str; 2] = [
-    // things.reduce((collection, thing, index) => (collection.concat(<Hello key={index} />)), []);
-    "reduce",
-    // things.reduceRight((collection, thing, index) => (collection.concat(<Hello key={index} />)), []);
-    "reduceRight",
-];
 
 impl Rule for NoArrayIndexKey {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

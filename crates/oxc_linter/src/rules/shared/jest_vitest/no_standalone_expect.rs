@@ -64,11 +64,11 @@ impl NoStandaloneExpectConfig {
 
     pub fn run_once(&self, ctx: &LintContext<'_>) {
         let possible_jest_nodes = collect_possible_jest_call_node(ctx);
-        let id_nodes_mapping =
-            possible_jest_nodes.iter().fold(FxHashMap::default(), |mut acc, cur| {
-                acc.entry(cur.node.id()).or_insert(cur);
-                acc
-            });
+        let mut id_nodes_mapping = FxHashMap::default();
+        id_nodes_mapping.reserve(possible_jest_nodes.len());
+        for cur in &possible_jest_nodes {
+            id_nodes_mapping.entry(cur.node.id()).or_insert(cur);
+        }
 
         for possible_jest_node in &possible_jest_nodes {
             self.run(possible_jest_node, &id_nodes_mapping, ctx);

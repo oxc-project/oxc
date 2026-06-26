@@ -107,29 +107,37 @@ impl Rule for InteractiveSupportsFocus {
             return;
         };
 
-        let role_str =
-            has_jsx_prop_ignore_case(jsx_el, "role").and_then(get_string_literal_prop_value);
-        let element_type = get_element_type(ctx, jsx_el);
+        // Cheapest checks first: most elements have neither handlers nor role.
         let has_interactive_handler = EVENT_HANDLERS
             .iter()
             .flat_map(|handlers| handlers.iter())
             .any(|handler| has_jsx_prop(jsx_el, handler).is_some());
-        let has_tab_index = has_jsx_prop_ignore_case(jsx_el, "tabIndex").is_some();
+        if !has_interactive_handler {
+            return;
+        }
 
-        if !has_interactive_handler
-            || is_disabled_element(jsx_el)
+        let Some(role) =
+            has_jsx_prop_ignore_case(jsx_el, "role").and_then(get_string_literal_prop_value)
+        else {
+            return;
+        };
+
+        if is_disabled_element(jsx_el)
             || is_hidden_from_screen_reader(ctx, jsx_el)
             || is_presentation_role(jsx_el)
+            || has_jsx_prop_ignore_case(jsx_el, "tabIndex").is_some()
         {
             return;
         }
 
-        let Some(role) = role_str else { return };
-        if !is_interactive_role(role)
-            || is_interactive_element(&element_type, jsx_el)
-            || is_non_interactive_role(role)
+        if !is_interactive_role(role) || is_non_interactive_role(role) {
+            return;
+        }
+
+        // Element type / interactive element checks are relatively expensive (settings lookups).
+        let element_type = get_element_type(ctx, jsx_el);
+        if is_interactive_element(&element_type, jsx_el)
             || is_non_interactive_element(&element_type, jsx_el)
-            || has_tab_index
         {
             return;
         }
