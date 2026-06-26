@@ -1,4 +1,7 @@
-use oxc_ast::ast::{ConditionalExpression, Expression, IfStatement, Statement};
+use oxc_ast::{
+    AstKind,
+    ast::{ConditionalExpression, Expression, IfStatement, Statement},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::identifier::is_identifier_start;
@@ -102,14 +105,20 @@ fn invert_test_text(
 ) -> String {
     match test {
         Expression::UnaryExpression(unary) if unary.operator == UnaryOperator::LogicalNot => {
-            // For `if` statements, drop parentheses around the argument so
-            // `if (!((a)))` becomes `if (a)` rather than `if (((a)))`.
-            let argument = if for_if_statement {
-                unary.argument.get_inner_expression()
-            } else {
-                &unary.argument
-            };
-            ctx.source_range(argument.span()).to_string()
+            // Prefer keeping trivia (comments/whitespace) between `!` and the operand by
+            // only dropping the `!` operator character — same idea as unicorn's token remove.
+            //
+            // For `if` statements, also drop parentheses around the argument so
+            // `if (!((a)))` becomes `if (a)` rather than `if (((a)))`. Only do that when the
+            // argument itself is parenthesized; otherwise comments after `!` are preserved.
+            if for_if_statement {
+                let inner = unary.argument.get_inner_expression();
+                if inner.span() != unary.argument.span() {
+                    return ctx.source_range(inner.span()).to_string();
+                }
+            }
+            // `!` is always a single-byte punctuator in JS source.
+            ctx.source_range(Span::new(unary.span.start + 1, unary.span.end)).to_string()
         }
         Expression::BinaryExpression(binary) => {
             let op = match binary.operator {
@@ -213,7 +222,18 @@ fn fix_conditional_expression<'a>(
 
     // `return!a` / `throw!a` → insert space after keyword when removing `!`
     let is_unary = matches!(negated_test, Expression::UnaryExpression(_));
-    if is_unary {
+    // When `!` and its operand are not on the same line, `return`/`throw` cannot be
+    // followed by a newline before the expression — parenthesize (unicorn does the same).
+    // Skip when the test is already parenthesized (`return (!…\na) ? b : c`).
+    let needs_return_throw_parens = is_unary
+        && inverted_test.contains('\n')
+        && !matches!(conditional_expr.test, Expression::ParenthesizedExpression(_))
+        && matches!(
+            ctx.nodes().parent_kind(node.id()),
+            AstKind::ReturnStatement(_) | AstKind::ThrowStatement(_)
+        );
+
+    if is_unary && !needs_return_throw_parens {
         let start = expr_span.start as usize;
         if start > 0 {
             let char_before = source[..start].chars().next_back();
@@ -238,8 +258,12 @@ fn fix_conditional_expression<'a>(
         "{before_test}{inverted_test}{between_test_and_cons}{alternate_text}{between_cons_and_alt}{consequent_text}{after_alt}"
     );
 
+    if needs_return_throw_parens {
+        replacement = format!("({replacement})");
+    }
+
     // ASI hazard when removing leading `!` leaves `(`, `[`, etc. at statement start.
-    if is_unary {
+    if is_unary && !needs_return_throw_parens {
         let trimmed = inverted_test.trim_start();
         let first_char = trimmed.chars().next();
         if matches!(first_char, Some('(' | '[' | '`' | '+' | '-' | '/'))

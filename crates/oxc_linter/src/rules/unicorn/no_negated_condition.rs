@@ -41,6 +41,7 @@ impl Rule for NoNegatedCondition {
 fn test() {
     use crate::tester::Tester;
 
+    // Cases from eslint-plugin-unicorn `test/no-negated-condition.js`
     let pass = vec![
         r"if (a) {}",
         r"if (a) {} else {}",
@@ -70,12 +71,55 @@ fn test() {
         r"if((( !a ))) b(); else c();",
         r"function a() {return!a ? b : c}",
         r"function a() {return!(( a )) ? b : c}",
+        "function a() {
+return ! // comment
+a ? b : c;
+}",
+        "function a() {
+return (! // ReturnStatement argument is parenthesized
+a ? b : c);
+}",
+        "function a() {
+return (
+! // UnaryExpression argument is parenthesized
+a) ? b : c;
+}",
+        "function a() {
+throw ! // comment
+a ? b : c;
+}",
         r"!a ? b : c ? d : e",
         r"!a ? b : (( c ? d : e ))",
+        "a
+![] ? b : c",
+        "a
+!+b ? c : d",
+        "a
+!(b) ? c : d",
+        "a
+!b ? c : d",
+        "if (!a)
+b()
+else
+c()",
         r"if(!a) b(); else c()",
+        "function fn() {
+if(!a) b(); else return
+}",
         r"if(!a) {b()} else {c()}",
         r"if(!!a) b(); else c();",
         r"(!!a) ? b() : c();",
+        "function fn() {
+return!a !== b ? c : d
+return((!((a)) != b)) ? c : d
+}",
+        "if (!a) {
+b();
+} else if (!c) {
+d();
+} else {
+e();
+}",
     ];
 
     let fix = vec![
@@ -91,12 +135,50 @@ fn test() {
         (r"if((( !a ))) b(); else c();", r"if((( a ))) {c();} else {b();}"),
         (r"function a() {return!a ? b : c}", r"function a() {return a ? c : b}"),
         (r"function a() {return!(( a )) ? b : c}", r"function a() {return (( a )) ? c : b}"),
+        (
+            "function a() {
+return ! // comment
+a ? b : c;
+}",
+            "function a() {
+return ( // comment
+a ? c : b);
+}",
+        ),
+        (
+            "function a() {
+return (! // ReturnStatement argument is parenthesized
+a ? b : c);
+}",
+            "function a() {
+return ( // ReturnStatement argument is parenthesized
+a ? c : b);
+}",
+        ),
+        (
+            "function a() {
+return (
+! // UnaryExpression argument is parenthesized
+a) ? b : c;
+}",
+            "function a() {
+return (
+ // UnaryExpression argument is parenthesized
+a) ? c : b;
+}",
+        ),
+        (
+            "function a() {
+throw ! // comment
+a ? b : c;
+}",
+            "function a() {
+throw ( // comment
+a ? c : b);
+}",
+        ),
         (r"!a ? b : c ? d : e", r"a ? c ? d : e : b"),
         (r"!a ? b : (( c ? d : e ))", r"a ? (( c ? d : e )) : b"),
-        (r"if(!a) b(); else c()", r"if(a) {c()} else {b();}"),
-        (r"if(!a) {b()} else {c()}", r"if(a) {c()} else {b()}"),
-        (r"if(!!a) b(); else c();", r"if(!a) {c();} else {b();}"),
-        (r"(!!a) ? b() : c();", r"(!a) ? c() : b();"),
         (
             "a
 ![] ? b : c",
@@ -105,9 +187,69 @@ fn test() {
         ),
         (
             "a
+!+b ? c : d",
+            "a
+;+b ? d : c",
+        ),
+        (
+            "a
 !(b) ? c : d",
             "a
 ;(b) ? d : c",
+        ),
+        (
+            "a
+!b ? c : d",
+            "a
+b ? d : c",
+        ),
+        (
+            "if (!a)
+b()
+else
+c()",
+            "if (a)
+{c()}
+else
+{b()}",
+        ),
+        (r"if(!a) b(); else c()", r"if(a) {c()} else {b();}"),
+        (
+            "function fn() {
+if(!a) b(); else return
+}",
+            "function fn() {
+if(a) {return} else {b();}
+}",
+        ),
+        (r"if(!a) {b()} else {c()}", r"if(a) {c()} else {b()}"),
+        (r"if(!!a) b(); else c();", r"if(!a) {c();} else {b();}"),
+        (r"(!!a) ? b() : c();", r"(!a) ? c() : b();"),
+        (
+            "function fn() {
+return!a !== b ? c : d
+return((!((a)) != b)) ? c : d
+}",
+            "function fn() {
+return!a === b ? d : c
+return((!((a)) == b)) ? d : c
+}",
+        ),
+        (
+            "if (!a) {
+b();
+} else if (!c) {
+d();
+} else {
+e();
+}",
+            "if (!a) {
+b();
+} else if (c) {
+e();
+} else {
+d();
+}",
         ),
     ];
 
