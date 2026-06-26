@@ -17,7 +17,7 @@ declare_oxc_lint!(
     NoNegatedCondition,
     eslint,
     pedantic,
-    pending,
+    fix,
     docs = DOCUMENTATION,
     version = "0.0.18",
     short_description = "Disallow negated conditions.",
@@ -66,6 +66,16 @@ fn test() {
         "a !== b ? c : d",
     ];
 
+    let fix = vec![
+        ("if (!a) {;} else {;}", "if (a) {;} else {;}", None),
+        ("if (a != b) {;} else {;}", "if (a == b) {;} else {;}", None),
+        ("if (a !== b) {;} else {;}", "if (a === b) {;} else {;}", None),
+        ("!a ? b : c", "a ? c : b", None),
+        ("a != b ? c : d", "a == b ? d : c", None),
+        ("a !== b ? c : d", "a === b ? d : c", None),
+    ];
+
     Tester::new(NoNegatedCondition::NAME, NoNegatedCondition::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }
