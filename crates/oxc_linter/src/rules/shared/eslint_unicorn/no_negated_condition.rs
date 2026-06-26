@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{ConditionalExpression, Expression, IfStatement, Statement},
+    ast::{BinaryExpression, ConditionalExpression, Expression, IfStatement, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
@@ -98,75 +98,8 @@ fn is_negated_expression(expr: &Expression) -> bool {
     }
 }
 
-fn invert_test_text(
-    test: &Expression<'_>,
-    ctx: &LintContext<'_>,
-    for_if_statement: bool,
-) -> String {
-    match test {
-        Expression::UnaryExpression(unary) if unary.operator == UnaryOperator::LogicalNot => {
-            // Prefer keeping trivia (comments/whitespace) between `!` and the operand by
-            // only dropping the `!` operator character — same idea as unicorn's token remove.
-            //
-            // For `if` statements, also drop parentheses around the argument so
-            // `if (!((a)))` becomes `if (a)` rather than `if (((a)))`. Only do that when the
-            // argument itself is parenthesized; otherwise comments after `!` are preserved.
-            if for_if_statement {
-                let inner = unary.argument.get_inner_expression();
-                if inner.span() != unary.argument.span() {
-                    return ctx.source_range(inner.span()).to_string();
-                }
-            }
-            // `!` is always a single-byte punctuator in JS source.
-            ctx.source_range(Span::new(unary.span.start + 1, unary.span.end)).to_string()
-        }
-        Expression::BinaryExpression(binary) => {
-            let op = match binary.operator {
-                BinaryOperator::Inequality => "==",
-                BinaryOperator::StrictInequality => "===",
-                _ => unreachable!(),
-            };
-            format!(
-                "{} {op} {}",
-                ctx.source_range(binary.left.span()),
-                ctx.source_range(binary.right.span())
-            )
-        }
-        _ => unreachable!(),
-    }
-}
-
-/// Rebuild the test expression text while preserving any outer parentheses that
-/// were around the negated expression (e.g. `(( !a ))` → `(( a ))`).
-fn invert_test_preserving_outer_parens(
-    full_test: &Expression<'_>,
-    negated: &Expression<'_>,
-    ctx: &LintContext<'_>,
-    for_if_statement: bool,
-) -> String {
-    let inverted = invert_test_text(negated, ctx, for_if_statement);
-    let full_span = full_test.span();
-    let neg_span = negated.span();
-    if full_span == neg_span {
-        return inverted;
-    }
-    let source = ctx.source_text();
-    let prefix = &source[full_span.start as usize..neg_span.start as usize];
-    let suffix = &source[neg_span.end as usize..full_span.end as usize];
-    format!("{prefix}{inverted}{suffix}")
-}
-
-fn statement_text_for_swap(stmt: &Statement<'_>, ctx: &LintContext<'_>) -> String {
-    let text = ctx.source_range(stmt.span());
-    if matches!(stmt, Statement::BlockStatement(_)) {
-        text.to_string()
-    } else {
-        // Non-block branches must be wrapped so ASI / dangling `else` stay valid
-        // after the swap, e.g. `if (!a) b(); else c()` → `if (a) {c()} else {b()}`.
-        format!("{{{text}}}")
-    }
-}
-
+/// Span-local edits only: invert the negated test in place, then swap branches.
+/// Avoids rebuilding the whole `if` / ternary (important for large branch bodies).
 fn fix_if_statement<'a>(
     fixer: RuleFixer<'_, 'a>,
     if_stmt: &IfStatement<'a>,
@@ -174,27 +107,16 @@ fn fix_if_statement<'a>(
     negated_test: &Expression<'a>,
     ctx: &LintContext<'a>,
 ) -> RuleFix {
-    let inverted_test = invert_test_preserving_outer_parens(&if_stmt.test, negated_test, ctx, true);
-    let consequent_text = statement_text_for_swap(&if_stmt.consequent, ctx);
-    let alternate_text = statement_text_for_swap(alternate, ctx);
+    let fixer = fixer.for_multifix();
+    // invert test (1–2) + swap branches (2) — capacity 4 is enough
+    let mut fixes = fixer.new_fix_with_capacity(4);
 
-    let source = ctx.source_text();
-    let if_start = if_stmt.span.start as usize;
-    let test_start = if_stmt.test.span().start as usize;
-    let test_end = if_stmt.test.span().end as usize;
-    let cons_start = if_stmt.consequent.span().start as usize;
-    let cons_end = if_stmt.consequent.span().end as usize;
-    let alt_start = alternate.span().start as usize;
+    push_invert_test_fixes(&mut fixes, &fixer, negated_test, /* for_if_statement */ true, ctx);
+    push_swap_statement_branches(&mut fixes, &fixer, &if_stmt.consequent, alternate, ctx);
 
-    let before_test = &source[if_start..test_start];
-    let after_test = &source[test_end..cons_start];
-    let between_consequent_and_else = &source[cons_end..alt_start];
-
-    let replacement = format!(
-        "{before_test}{inverted_test}{after_test}{alternate_text}{between_consequent_and_else}{consequent_text}"
-    );
-
-    fixer.replace(if_stmt.span, replacement)
+    fixes.with_message(
+        "Remove the negation operator and switch the consequent and alternate branches.",
+    )
 }
 
 fn fix_conditional_expression<'a>(
@@ -204,42 +126,33 @@ fn fix_conditional_expression<'a>(
     negated_test: &Expression<'a>,
     ctx: &LintContext<'a>,
 ) -> RuleFix {
-    let mut inverted_test =
-        invert_test_preserving_outer_parens(&conditional_expr.test, negated_test, ctx, false);
-    let consequent_text = ctx.source_range(conditional_expr.consequent.span());
-    let alternate_text = ctx.source_range(conditional_expr.alternate.span());
+    let fixer = fixer.for_multifix();
+    let mut fixes = fixer.new_fix_with_capacity(6);
 
+    let is_unary = matches!(negated_test, Expression::UnaryExpression(_));
     let source = ctx.source_text();
-    let test_span = conditional_expr.test.span();
-    let cons_span = conditional_expr.consequent.span();
-    let alt_span = conditional_expr.alternate.span();
     let expr_span = conditional_expr.span;
 
-    let before_test = &source[expr_span.start as usize..test_span.start as usize];
-    let between_test_and_cons = &source[test_span.end as usize..cons_span.start as usize];
-    let between_cons_and_alt = &source[cons_span.end as usize..alt_span.start as usize];
-    let after_alt = &source[alt_span.end as usize..expr_span.end as usize];
+    // Detect ASI / keyword spacing from what the expression will look like after removing `!`.
+    let (needs_space_before, needs_asi_semi, needs_return_throw_parens) = if is_unary {
+        let Expression::UnaryExpression(unary) = negated_test else { unreachable!() };
+        // Text after deleting the leading `!` (preserves comments between `!` and operand).
+        let after_bang = ctx.source_range(Span::new(unary.span.start + 1, unary.span.end));
+        let first_significant = after_bang.trim_start().chars().next();
+        let has_newline_in_remainder = after_bang.contains('\n');
 
-    // `return!a` / `throw!a` → insert space after keyword when removing `!`
-    let is_unary = matches!(negated_test, Expression::UnaryExpression(_));
-    // When `!` and its operand are not on the same line, `return`/`throw` cannot be
-    // followed by a newline before the expression — parenthesize (unicorn does the same).
-    // Skip when the test is already parenthesized (`return (!…\na) ? b : c`).
-    let needs_return_throw_parens = is_unary
-        && inverted_test.contains('\n')
-        && !matches!(conditional_expr.test, Expression::ParenthesizedExpression(_))
-        && matches!(
-            ctx.nodes().parent_kind(node.id()),
-            AstKind::ReturnStatement(_) | AstKind::ThrowStatement(_)
-        );
+        let needs_return_throw_parens = has_newline_in_remainder
+            && !matches!(conditional_expr.test, Expression::ParenthesizedExpression(_))
+            && matches!(
+                ctx.nodes().parent_kind(node.id()),
+                AstKind::ReturnStatement(_) | AstKind::ThrowStatement(_)
+            );
 
-    if is_unary && !needs_return_throw_parens {
-        let start = expr_span.start as usize;
-        if start > 0 {
-            let char_before = source[..start].chars().next_back();
-            let first_of_inverted = inverted_test.chars().next();
-            if char_before.is_some_and(is_identifier_start)
-                && first_of_inverted.is_some_and(|c| {
+        let needs_space_before = !needs_return_throw_parens && {
+            let start = expr_span.start as usize;
+            start > 0
+                && source[..start].chars().next_back().is_some_and(is_identifier_start)
+                && first_significant.is_some_and(|c| {
                     is_identifier_start(c)
                         || c == '('
                         || c == '['
@@ -248,31 +161,158 @@ fn fix_conditional_expression<'a>(
                         || c == '+'
                         || c == '-'
                 })
-            {
-                inverted_test.insert(0, ' ');
-            }
-        }
-    }
+        };
 
-    let mut replacement = format!(
-        "{before_test}{inverted_test}{between_test_and_cons}{alternate_text}{between_cons_and_alt}{consequent_text}{after_alt}"
-    );
+        let needs_asi_semi = !needs_return_throw_parens
+            && !needs_space_before
+            && matches!(first_significant, Some('(' | '[' | '`' | '+' | '-' | '/'))
+            && could_be_asi_hazard(node, ctx);
+
+        (needs_space_before, needs_asi_semi, needs_return_throw_parens)
+    } else {
+        (false, false, false)
+    };
+
+    if needs_asi_semi {
+        fixes.push(fixer.insert_text_before_range(expr_span, ";"));
+    } else if needs_space_before {
+        fixes.push(fixer.insert_text_before_range(expr_span, " "));
+    }
 
     if needs_return_throw_parens {
-        replacement = format!("({replacement})");
+        fixes.push(fixer.insert_text_before_range(expr_span, "("));
+        fixes.push(fixer.insert_text_after_range(expr_span, ")"));
     }
 
-    // ASI hazard when removing leading `!` leaves `(`, `[`, etc. at statement start.
-    if is_unary && !needs_return_throw_parens {
-        let trimmed = inverted_test.trim_start();
-        let first_char = trimmed.chars().next();
-        if matches!(first_char, Some('(' | '[' | '`' | '+' | '-' | '/'))
-            && could_be_asi_hazard(node, ctx)
-            && !replacement.starts_with([';', ' '])
-        {
-            replacement.insert(0, ';');
+    push_invert_test_fixes(
+        &mut fixes,
+        &fixer,
+        negated_test,
+        /* for_if_statement */ false,
+        ctx,
+    );
+    push_swap_expression_branches(
+        &mut fixes,
+        &fixer,
+        &conditional_expr.consequent,
+        &conditional_expr.alternate,
+        ctx,
+    );
+
+    fixes.with_message(
+        "Remove the negation operator and switch the consequent and alternate branches.",
+    )
+}
+
+fn push_invert_test_fixes<'a>(
+    fixes: &mut RuleFix,
+    fixer: &RuleFixer<'_, 'a>,
+    negated_test: &Expression<'a>,
+    for_if_statement: bool,
+    ctx: &LintContext<'a>,
+) {
+    match negated_test {
+        Expression::UnaryExpression(unary) if unary.operator == UnaryOperator::LogicalNot => {
+            // Delete only the `!` punctuator (1 byte) so comments/whitespace after it stay.
+            fixes.push(fixer.delete_range(Span::new(unary.span.start, unary.span.start + 1)));
+
+            // For `if`, also drop parentheses around the argument (`if (!((a)))` → `if (a)`).
+            if for_if_statement {
+                let inner = unary.argument.get_inner_expression();
+                let arg_span = unary.argument.span();
+                if inner.span() != arg_span {
+                    // Replace the parenthesized argument with the inner expression text only.
+                    let inner_text = ctx.source_range(inner.span());
+                    fixes.push(fixer.replace(arg_span, inner_text.to_string()));
+                }
+            }
         }
+        Expression::BinaryExpression(binary) => {
+            // Replace only the operator token so surrounding spacing is preserved (`a!=b` → `a==b`).
+            if let Some(op_span) = binary_operator_span(binary, ctx) {
+                let replacement = match binary.operator {
+                    BinaryOperator::Inequality => "==",
+                    BinaryOperator::StrictInequality => "===",
+                    _ => unreachable!(),
+                };
+                fixes.push(fixer.replace(op_span, replacement));
+            }
+        }
+        _ => {}
+    }
+}
+
+/// Locate `!=` / `!==` between left and right without copying the operands.
+fn binary_operator_span(binary: &BinaryExpression<'_>, ctx: &LintContext<'_>) -> Option<Span> {
+    let left_end = binary.left.span().end;
+    let right_start = binary.right.span().start;
+    let operator_str = binary.operator.as_str();
+    let between = ctx.source_range(Span::new(left_end, right_start));
+    let op_bytes = operator_str.as_bytes();
+
+    between.as_bytes().windows(op_bytes.len()).enumerate().find_map(|(index, chunk)| {
+        if chunk != op_bytes {
+            return None;
+        }
+        #[expect(clippy::cast_possible_truncation)]
+        let pos_start = left_end + index as u32;
+        let pos_end = pos_start + op_bytes.len() as u32;
+        // Skip matches that sit inside comments between the operands.
+        if ctx.comments().iter().any(|c| c.span.start <= pos_start && pos_end <= c.span.end) {
+            return None;
+        }
+        Some(Span::new(pos_start, pos_end))
+    })
+}
+
+fn push_swap_statement_branches<'a>(
+    fixes: &mut RuleFix,
+    fixer: &RuleFixer<'_, 'a>,
+    consequent: &Statement<'a>,
+    alternate: &Statement<'a>,
+    ctx: &LintContext<'a>,
+) {
+    let cons_span = consequent.span();
+    let alt_span = alternate.span();
+    let cons_src = ctx.source_range(cons_span);
+    let alt_src = ctx.source_range(alt_span);
+
+    // Identical branches: only the test needs changing.
+    if cons_src == alt_src
+        && matches!(consequent, Statement::BlockStatement(_))
+            == matches!(alternate, Statement::BlockStatement(_))
+    {
+        return;
     }
 
-    fixer.replace(expr_span, replacement)
+    let cons_is_block = matches!(consequent, Statement::BlockStatement(_));
+    let alt_is_block = matches!(alternate, Statement::BlockStatement(_));
+
+    // Non-block branches must be wrapped after the swap so ASI / dangling `else` stay valid.
+    let new_cons = if alt_is_block { alt_src.to_string() } else { format!("{{{alt_src}}}") };
+    let new_alt = if cons_is_block { cons_src.to_string() } else { format!("{{{cons_src}}}") };
+
+    fixes.push(fixer.replace(cons_span, new_cons));
+    fixes.push(fixer.replace(alt_span, new_alt));
+}
+
+fn push_swap_expression_branches<'a>(
+    fixes: &mut RuleFix,
+    fixer: &RuleFixer<'_, 'a>,
+    consequent: &Expression<'a>,
+    alternate: &Expression<'a>,
+    ctx: &LintContext<'a>,
+) {
+    let cons_span = consequent.span();
+    let alt_span = alternate.span();
+    let cons_src = ctx.source_range(cons_span);
+    let alt_src = ctx.source_range(alt_span);
+
+    if cons_src == alt_src {
+        return;
+    }
+
+    // Must own the replacement strings because both edits reference the other branch's text.
+    fixes.push(fixer.replace(cons_span, alt_src.to_string()));
+    fixes.push(fixer.replace(alt_span, cons_src.to_string()));
 }
