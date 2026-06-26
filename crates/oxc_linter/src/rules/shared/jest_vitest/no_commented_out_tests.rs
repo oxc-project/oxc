@@ -39,13 +39,21 @@ Examples of **incorrect** code for this rule:
 static RE: Lazy<Regex> =
     lazy_regex!(r#"(?mu)^\s*[xf]?(test|it|describe)(\.\w+|\[['"]\w+['"]\])?\s*\("#);
 
+/// Cheap prefilter: comments without these keywords cannot match the regex.
+#[inline]
+fn might_contain_commented_test(text: &str) -> bool {
+    text.contains("test") || text.contains("it") || text.contains("describe")
+}
+
 pub fn run_once(ctx: &LintContext) {
-    let comments = ctx.comments();
-    let commented_tests = comments.iter().filter_map(|comment| {
+    for comment in ctx.comments() {
         let text = ctx.source_range(comment.content_span());
-        if RE.is_match(text) { Some(comment.content_span()) } else { None }
-    });
-    for span in commented_tests {
-        ctx.diagnostic(no_commented_out_tests_diagnostic(span));
+        // Skip regex for the common case (ordinary comments without test APIs).
+        if !might_contain_commented_test(text) {
+            continue;
+        }
+        if RE.is_match(text) {
+            ctx.diagnostic(no_commented_out_tests_diagnostic(comment.content_span()));
+        }
     }
 }

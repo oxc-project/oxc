@@ -113,6 +113,13 @@ impl Rule for NoThisInExportedFunction {
 fn check_function_for_this(func: &Function, ctx: &LintContext) {
     let Some(body) = &func.body else { return };
 
+    // Fast reject: no `this` substring means no ThisExpression in the body span.
+    // False positives (strings/comments) only cause an unnecessary visit, never missed reports.
+    let body_text = ctx.source_range(body.span);
+    if !body_text.contains("this") {
+        return;
+    }
+
     let mut finder =
         ThisExpressionFinder::new().skip_static_blocks().skip_property_definition_values();
     finder.visit_function_body(body);

@@ -807,17 +807,14 @@ fn is_package_import(module_name: &str) -> bool {
 /// - `"./foo"` → `None`
 /// - `"./foo."` → `None` (empty extension)
 /// - `"./foo.bar/"` → `None` (directory path)
-fn get_file_extension_from_module_name(module_name: &str) -> Option<String> {
+fn get_file_extension_from_module_name(module_name: &str) -> Option<std::borrow::Cow<'_, str>> {
     use cow_utils::CowUtils;
-    if let Some((_, extension)) =
-        module_name.split('?').next().unwrap_or(module_name).rsplit_once('.')
-        && !extension.is_empty()
-        && !extension.starts_with('/')
-    {
-        return Some(extension.cow_to_ascii_lowercase().into_owned());
+    let path = module_name.split_once('?').map_or(module_name, |(path, _)| path);
+    let (_, extension) = path.rsplit_once('.')?;
+    if extension.is_empty() || extension.starts_with('/') {
+        return None;
     }
-
-    None
+    Some(extension.cow_to_ascii_lowercase())
 }
 
 /// Get the actual file extension from the resolved module path.
@@ -832,17 +829,22 @@ fn get_file_extension_from_module_name(module_name: &str) -> Option<String> {
 /// - Resolved `./foo.TS` → `Some("ts")` (normalized to lowercase)
 /// - Package import `lodash` → `None` (not resolved locally)
 /// - Path alias `@/utils/foo.js` → `Some("js")` (if resolved)
-fn get_resolved_extension(
-    module_record: &crate::module_record::ModuleRecord,
+fn get_resolved_extension<'a>(
+    module_record: &'a crate::module_record::ModuleRecord,
     module_name: &str,
-) -> Option<String> {
+) -> Option<std::borrow::Cow<'a, str>> {
     use cow_utils::CowUtils;
+    use std::borrow::Cow;
     module_record.get_loaded_module(module_name).and_then(|loaded_module| {
-        loaded_module
-            .resolved_absolute_path
-            .extension()
-            .and_then(|ext| ext.to_str())
-            .map(|s| s.cow_to_ascii_lowercase().into_owned())
+        loaded_module.resolved_absolute_path.extension().and_then(|ext| {
+            let s = ext.to_str()?;
+            // Most extensions are already lowercase ASCII; avoid allocation.
+            if s.bytes().all(|b| b.is_ascii_lowercase()) {
+                Some(Cow::Borrowed(s))
+            } else {
+                Some(s.cow_to_ascii_lowercase())
+            }
+        })
     })
 }
 

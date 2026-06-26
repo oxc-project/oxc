@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, ChainElement, Expression, MemberExpression},
+    ast::{ChainElement, Expression, MemberExpression},
     match_member_expression,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -73,14 +73,42 @@ impl Rule for NoUselessCall {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else { return };
 
+        // Most calls are not `.call`/`.apply`; reject early before expensive checks.
         let Some(callee) =
             as_member_expression_without_chain_expression(call_expr.callee.without_parentheses())
         else {
             return;
         };
 
-        if !is_call_or_non_variadic_apply(call_expr, callee) {
+        if callee.is_computed() {
             return;
+        }
+
+        let Some(method_name) = callee.static_property_name() else {
+            return;
+        };
+
+        let is_call = method_name == "call";
+        let is_apply = method_name == "apply";
+        if !is_call && !is_apply {
+            return;
+        }
+
+        if is_call {
+            if call_expr.arguments.is_empty() {
+                return;
+            }
+        } else {
+            // apply: exactly two args, second must be an array literal (non-variadic).
+            if call_expr.arguments.len() != 2
+                || !call_expr
+                    .arguments
+                    .get(1)
+                    .and_then(|arg| arg.as_expression())
+                    .is_some_and(|expr| matches!(expr, Expression::ArrayExpression(_)))
+            {
+                return;
+            }
         }
 
         let applied = callee.object().without_parentheses();
@@ -88,10 +116,7 @@ impl Rule for NoUselessCall {
         let Some(this_arg) = first_arg.as_expression() else { return };
 
         if validate_this_argument(this_arg, applied) {
-            ctx.diagnostic(no_useless_call_diagnostic(
-                callee.static_property_name().unwrap(),
-                call_expr.span,
-            ));
+            ctx.diagnostic(no_useless_call_diagnostic(method_name, call_expr.span));
         }
     }
 }
@@ -118,26 +143,6 @@ fn validate_member_expression(this_arg: &Expression, applied_member: &MemberExpr
     }
 
     applied_object.content_eq(this_arg)
-}
-
-fn is_call_function(call_expr: &CallExpression, callee: &MemberExpression) -> bool {
-    callee.static_property_name().is_some_and(|name| name == "call")
-        && !call_expr.arguments.is_empty()
-}
-
-fn is_apply_function(call_expr: &CallExpression, callee: &MemberExpression) -> bool {
-    callee.static_property_name().is_some_and(|name| name == "apply")
-        && call_expr.arguments.len() == 2
-        && call_expr
-            .arguments
-            .get(1)
-            .and_then(|arg| arg.as_expression())
-            .is_some_and(|expr| matches!(expr, Expression::ArrayExpression(_)))
-}
-
-fn is_call_or_non_variadic_apply(call_expr: &CallExpression, callee: &MemberExpression) -> bool {
-    !callee.is_computed()
-        && (is_call_function(call_expr, callee) || is_apply_function(call_expr, callee))
 }
 
 fn as_member_expression_without_chain_expression<'a>(
