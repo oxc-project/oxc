@@ -257,55 +257,80 @@ impl Rule for NoRestrictedTypes {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let index = &self.0.index;
-
+        // Body must be a single `match node.kind()` so `cargo lintgen` can set `NODE_TYPES`.
         match node.kind() {
             AstKind::TSTypeReference(type_ref) => {
                 self.check_type_reference(type_ref, ctx);
             }
-            AstKind::TSStringKeyword(kw) if index.ban_string => {
-                report_keyword(ctx, index, "string", kw.span);
+            AstKind::TSStringKeyword(kw) => {
+                if self.0.index.ban_string {
+                    report_keyword(ctx, &self.0.index, "string", kw.span);
+                }
             }
-            AstKind::TSNumberKeyword(kw) if index.ban_number => {
-                report_keyword(ctx, index, "number", kw.span);
+            AstKind::TSNumberKeyword(kw) => {
+                if self.0.index.ban_number {
+                    report_keyword(ctx, &self.0.index, "number", kw.span);
+                }
             }
-            AstKind::TSBooleanKeyword(kw) if index.ban_boolean => {
-                report_keyword(ctx, index, "boolean", kw.span);
+            AstKind::TSBooleanKeyword(kw) => {
+                if self.0.index.ban_boolean {
+                    report_keyword(ctx, &self.0.index, "boolean", kw.span);
+                }
             }
-            AstKind::TSNullKeyword(kw) if index.ban_null => {
-                report_keyword(ctx, index, "null", kw.span);
+            AstKind::TSNullKeyword(kw) => {
+                if self.0.index.ban_null {
+                    report_keyword(ctx, &self.0.index, "null", kw.span);
+                }
             }
-            AstKind::TSUndefinedKeyword(kw) if index.ban_undefined => {
-                report_keyword(ctx, index, "undefined", kw.span);
+            AstKind::TSUndefinedKeyword(kw) => {
+                if self.0.index.ban_undefined {
+                    report_keyword(ctx, &self.0.index, "undefined", kw.span);
+                }
             }
-            AstKind::TSSymbolKeyword(kw) if index.ban_symbol => {
-                report_keyword(ctx, index, "symbol", kw.span);
+            AstKind::TSSymbolKeyword(kw) => {
+                if self.0.index.ban_symbol {
+                    report_keyword(ctx, &self.0.index, "symbol", kw.span);
+                }
             }
-            AstKind::TSBigIntKeyword(kw) if index.ban_bigint => {
-                report_keyword(ctx, index, "bigint", kw.span);
+            AstKind::TSBigIntKeyword(kw) => {
+                if self.0.index.ban_bigint {
+                    report_keyword(ctx, &self.0.index, "bigint", kw.span);
+                }
             }
-            AstKind::TSObjectKeyword(kw) if index.ban_object => {
-                report_keyword(ctx, index, "object", kw.span);
+            AstKind::TSObjectKeyword(kw) => {
+                if self.0.index.ban_object {
+                    report_keyword(ctx, &self.0.index, "object", kw.span);
+                }
             }
-            AstKind::TSVoidKeyword(kw) if index.ban_void => {
-                report_keyword(ctx, index, "void", kw.span);
+            AstKind::TSVoidKeyword(kw) => {
+                if self.0.index.ban_void {
+                    report_keyword(ctx, &self.0.index, "void", kw.span);
+                }
             }
-            AstKind::TSNeverKeyword(kw) if index.ban_never => {
-                report_keyword(ctx, index, "never", kw.span);
+            AstKind::TSNeverKeyword(kw) => {
+                if self.0.index.ban_never {
+                    report_keyword(ctx, &self.0.index, "never", kw.span);
+                }
             }
-            AstKind::TSUnknownKeyword(kw) if index.ban_unknown => {
-                report_keyword(ctx, index, "unknown", kw.span);
+            AstKind::TSUnknownKeyword(kw) => {
+                if self.0.index.ban_unknown {
+                    report_keyword(ctx, &self.0.index, "unknown", kw.span);
+                }
             }
-            AstKind::TSAnyKeyword(kw) if index.ban_any => {
-                report_keyword(ctx, index, "any", kw.span);
+            AstKind::TSAnyKeyword(kw) => {
+                if self.0.index.ban_any {
+                    report_keyword(ctx, &self.0.index, "any", kw.span);
+                }
             }
-            AstKind::TSTupleType(tuple)
-                if tuple.element_types.is_empty() && index.ban_empty_tuple =>
-            {
-                report_keyword(ctx, index, "[]", tuple.span);
+            AstKind::TSTupleType(tuple) => {
+                if tuple.element_types.is_empty() && self.0.index.ban_empty_tuple {
+                    report_keyword(ctx, &self.0.index, "[]", tuple.span);
+                }
             }
-            AstKind::TSTypeLiteral(lit) if lit.members.is_empty() && index.ban_empty_object => {
-                report_keyword(ctx, index, "{}", lit.span);
+            AstKind::TSTypeLiteral(lit) => {
+                if lit.members.is_empty() && self.0.index.ban_empty_object {
+                    report_keyword(ctx, &self.0.index, "{}", lit.span);
+                }
             }
             AstKind::TSClassImplements(implements) => {
                 self.check_banned_source(implements.span, ctx);
