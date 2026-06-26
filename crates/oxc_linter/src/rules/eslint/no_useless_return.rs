@@ -1,4 +1,4 @@
-use oxc_allocator::Vec as ArenaVec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::AstKind;
 use oxc_cfg::{
     EdgeType, ErrorEdgeKind, InstructionKind,
@@ -68,7 +68,9 @@ declare_oxc_lint!(
     NoUselessReturn,
     eslint,
     pedantic,
-    pending
+    pending,
+    version = "1.32.0",
+    short_description = "Disallows redundant return statements.",
 );
 
 impl Rule for NoUselessReturn {
@@ -266,7 +268,7 @@ impl NoUselessReturn {
     /// Check if a span is contained in the last statement of a statement list
     #[inline]
     fn is_span_in_last_statement(
-        statements: &ArenaVec<oxc_ast::ast::Statement>,
+        statements: &ArenaVec<'_, oxc_ast::ast::Statement<'_>>,
         span: Span,
     ) -> bool {
         statements.last().is_some_and(|last| last.span().contains_inclusive(span))

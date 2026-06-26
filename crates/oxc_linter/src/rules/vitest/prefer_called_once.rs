@@ -28,9 +28,9 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// The *Times method required to read the arguments to know how many times
-    /// is expected a spy to be called. Most of the times you expecting a method is called
-    /// once.
+    /// The `*Times` matchers require reading the argument to know how many
+    /// times a spy is expected to be called. Most of the time, you expect a
+    /// method to be called once.
     ///
     /// ### Examples
     ///
@@ -57,6 +57,8 @@ declare_oxc_lint!(
     vitest,
     style,
     fix,
+    version = "1.39.0",
+    short_description = "Substitute `toBeCalledTimes(1)` and `toHaveBeenCalledTimes(1)` with `toBeCalledOnce()` and `toHaveBeenCalledOnce()` respectively.",
 );
 
 impl Rule for PreferCalledOnce {

@@ -23,8 +23,9 @@ pub struct NoNestedTernary;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule disallows deeply nested ternary expressions.
-    /// Nested ternary expressions that are only one level deep and wrapped in parentheses are allowed.
+    /// Disallow deeply nested ternary expressions.
+    ///
+    /// Nested ternary expressions that are only one level deep and wrapped in parentheses are allowed by this rule.
     ///
     /// ### Why is this bad?
     ///
@@ -46,7 +47,9 @@ declare_oxc_lint!(
     NoNestedTernary,
     unicorn,
     style,
-    conditional_fix
+    conditional_fix,
+    version = "0.0.18",
+    short_description = "Disallow nested ternary expressions.",
 );
 
 impl Rule for NoNestedTernary {

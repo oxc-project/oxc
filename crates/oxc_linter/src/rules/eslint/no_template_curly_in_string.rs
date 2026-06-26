@@ -46,7 +46,9 @@ declare_oxc_lint!(
     /// ```
     NoTemplateCurlyInString,
     eslint,
-    style
+    style,
+    version = "0.2.14",
+    short_description = "Disallow template literal placeholder syntax in regular strings.",
 );
 
 impl Rule for NoTemplateCurlyInString {

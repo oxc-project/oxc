@@ -67,6 +67,20 @@ impl Default for NoUseBeforeDefineConfig {
     }
 }
 
+#[derive(Debug, Deserialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+enum Nofunc {
+    Nofunc,
+}
+
+#[derive(Debug, Deserialize, JsonSchema)]
+#[serde(untagged)]
+#[expect(unused)] // This is used in the rule configuration schema
+enum NoUseBeforeDefineConfigJson {
+    String(Nofunc),
+    Object(NoUseBeforeDefineConfig),
+}
+
 #[derive(Debug, Default, Clone)]
 pub struct NoUseBeforeDefine(NoUseBeforeDefineConfig);
 
@@ -96,11 +110,21 @@ declare_oxc_lint!(
     NoUseBeforeDefine,
     eslint,
     restriction,
-    config = NoUseBeforeDefineConfig,
+    config = NoUseBeforeDefineConfigJson,
+    version = "1.49.0",
+    short_description = "Disallows using variables before they are defined.",
 );
 
 impl Rule for NoUseBeforeDefine {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::Error> {
+        if let Some(serde_json::Value::String(s)) = value.as_array().and_then(|a| a.first())
+            && s == "nofunc"
+        {
+            return Ok(Self(NoUseBeforeDefineConfig {
+                functions: false,
+                ..NoUseBeforeDefineConfig::default()
+            }));
+        }
         serde_json::from_value::<DefaultRuleConfig<NoUseBeforeDefineConfig>>(value)
             .map(DefaultRuleConfig::into_inner)
             .map(Self)
@@ -291,7 +315,7 @@ fn is_defined_before_use(
     let defined_before_reference =
         ctx.scoping().symbol_span(symbol_id).end <= reference_node.kind().span().end;
     defined_before_reference
-        && !(reference.is_value() && is_in_initializer(symbol_id, reference, reference_node, ctx))
+        && !(reference.is_value() && is_in_initializer(symbol_id, reference_node, ctx))
 }
 
 fn unresolved_initializer_reference_declaration_span(
@@ -425,7 +449,6 @@ where
 
 fn is_in_initializer(
     symbol_id: SymbolId,
-    _reference: &Reference,
     reference_node: &AstNode<'_>,
     ctx: &LintContext<'_>,
 ) -> bool {
@@ -2534,6 +2557,17 @@ fn test_typescript_eslint() {
                 ",
             None,
         ),
+        ("a(); function a() { alert(arguments); }", Some(serde_json::json!(["nofunc"]))),
+        (
+            "
+            a();
+            function a() {
+              alert(arguments);
+            }
+                  ",
+            Some(serde_json::json!(["nofunc"])),
+        ),
+        (r#""use strict"; { a(); function a() {} }"#, Some(serde_json::json!(["nofunc"]))),
     ];
 
     let fail = vec![
@@ -3000,6 +3034,15 @@ fn test_typescript_eslint() {
                   ",
             None,
         ),
+        ("a(); var a=function() {};", Some(serde_json::json!(["nofunc"]))),
+        (
+            "
+            a();
+            var a = function () {};
+                  ",
+            Some(serde_json::json!(["nofunc"])),
+        ),
+        ("export { a }; const a = 1;", Some(serde_json::json!(["nofunc"]))),
     ];
 
     Tester::new(NoUseBeforeDefine::NAME, NoUseBeforeDefine::PLUGIN, pass, fail)

@@ -83,7 +83,9 @@ declare_oxc_lint!(
     PreferClassFields,
     unicorn,
     style,
-    conditional_fix_suggestion
+    conditional_fix_suggestion,
+    version = "1.20.0",
+    short_description = "Prefers class field declarations over `this` assignments in constructors for static values.",
 );
 
 impl Rule for PreferClassFields {

@@ -4,6 +4,38 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.137.0] - 2026-06-18
+
+### ⚡ Performance
+
+- bcb3894 minifier: Incremental scoping refresh, delete LiveUsageCollector (#23197) (Dunqing)
+
+## [0.136.0] - 2026-06-15
+
+### 🐛 Bug Fixes
+
+- 52d0c31 transformer: Replace ambient dot defines (#23231) (camc314)
+
+## [0.133.0] - 2026-05-26
+
+### 🐛 Bug Fixes
+
+- 702b14e minifier: Preserve IIFE structure in DCE-only mode (#22547) (Dunqing)
+
+## [0.130.0] - 2026-05-11
+
+### 🐛 Bug Fixes
+
+- a099b03 codegen: Emit call end mapping at `)` position, not past it (#22199) (Dunqing)
+- 2493bdd codegen: Correct sourcemap end mappings for closing delimiters (#22001) (Mark Dalgleish)
+
+## [0.125.0] - 2026-04-13
+
+### 💥 BREAKING CHANGES
+
+- 382958a span: [**BREAKING**] Remove re-exports of string types from `oxc_span` crate (#21246) (overlookmotel)
+- c4aedfa str: [**BREAKING**] Add `static_ident!` macro (#21245) (overlookmotel)
+
 ## [0.117.0] - 2026-03-09
 
 ### 🐛 Bug Fixes

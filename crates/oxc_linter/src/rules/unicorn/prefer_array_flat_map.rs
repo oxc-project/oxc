@@ -40,7 +40,9 @@ declare_oxc_lint!(
     PreferArrayFlatMap,
     unicorn,
     perf,
-    fix
+    fix,
+    version = "0.0.14",
+    short_description = "Prefers the use of `.flatMap()` when `map()` and `flat()` are used together.",
 );
 
 // skip React.Children because we are only looking at `StaticMemberExpression.property` and not its object

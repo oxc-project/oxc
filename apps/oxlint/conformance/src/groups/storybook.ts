@@ -3,6 +3,7 @@ import { createRequire } from "node:module";
 import assert from "node:assert";
 
 import { RuleTester } from "../rule_tester.ts";
+import repos from "../../repos.json" with { type: "json" };
 
 import type { MockFn, TestGroup } from "../index.ts";
 import type { LanguageOptions, TestCase, TestCases } from "../rule_tester.ts";
@@ -49,6 +50,7 @@ fs.readFileSync = function (...args: unknown[]): unknown {
 // Test group definition
 const group: TestGroup = {
   name: "storybook",
+  ...repos.storybook,
 
   submoduleName: "storybook",
   testFilesDirPath: "code/lib/eslint-plugin/src/rules",

@@ -64,7 +64,9 @@ declare_oxc_lint!(
     /// ```
     AriaActivedescendantHasTabindex,
     jsx_a11y,
-    correctness
+    correctness,
+    version = "0.2.1",
+    short_description = "Enforce elements with aria-activedescendant are tabbable.",
 );
 
 impl Rule for AriaActivedescendantHasTabindex {

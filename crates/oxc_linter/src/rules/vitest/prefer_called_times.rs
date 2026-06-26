@@ -57,6 +57,8 @@ declare_oxc_lint!(
     vitest,
     style,
     fix,
+    version = "1.35.0",
+    short_description = "This rule aims to enforce the use of `toBeCalledTimes(1)` or `toHaveBeenCalledTimes(1)` over `toBeCalledOnce()` or `toHaveBeenCalledOnce()`.",
 );
 
 impl Rule for PreferCalledTimes {

@@ -130,6 +130,8 @@ declare_oxc_lint!(
     pedantic,
     fix,
     config = PreferNullishCoalescingConfig,
+    version = "1.33.0",
+    short_description = "Enforce using the nullish coalescing operator (`??`) instead of logical OR (`||`) or conditional expressions when the left operand might be `null` or `undefined`.",
 );
 
 impl Rule for PreferNullishCoalescing {

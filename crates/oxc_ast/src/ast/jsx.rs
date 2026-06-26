@@ -9,7 +9,8 @@ use std::cell::Cell;
 use oxc_allocator::{Box, CloneIn, Dummy, GetAddress, TakeIn, UnstableAddress, Vec};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
-use oxc_span::{ContentEq, GetSpan, GetSpanMut, Span, Str};
+use oxc_span::{ContentEq, GetSpan, GetSpanMut, Span};
+use oxc_str::Str;
 use oxc_syntax::node::NodeId;
 
 use super::{inherit_variants, js::*, literal::*, ts::*};
@@ -297,7 +298,7 @@ pub enum JSXExpression<'a> {
     /// <Foo>{}</Foo>
     /// //   ^^
     /// ```
-    EmptyExpression(JSXEmptyExpression) = 64,
+    EmptyExpression(Box<'a, JSXEmptyExpression>) = 64,
     // `Expression` variants added here by `inherit_variants!` macro
     @inherit Expression
 }

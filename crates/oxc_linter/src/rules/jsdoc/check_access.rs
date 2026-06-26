@@ -57,7 +57,9 @@ declare_oxc_lint!(
     /// ```
     CheckAccess,
     jsdoc,
-    restriction
+    restriction,
+    version = "0.2.16",
+    short_description = "Checks that `@access` tags use one of the allowed values.",
 );
 
 const ACCESS_LEVELS: [&str; 4] = ["package", "private", "protected", "public"];

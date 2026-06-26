@@ -9,7 +9,7 @@ use oxc_ast::ast::{
     ExportAllDeclaration, ExportNamedDeclaration, Expression, ImportDeclaration, ImportExpression,
     StringLiteral, TemplateLiteral,
 };
-use oxc_span::Str;
+use oxc_str::Str;
 use oxc_traverse::Traverse;
 
 use crate::{TypeScriptOptions, context::TraverseCtx, state::TransformState};
@@ -43,7 +43,7 @@ fn rewritten_specifier<'a>(
     Some(if mode.is_remove() {
         Str::from(without_extension)
     } else {
-        ctx.ast.str_from_strs_array([without_extension, replace])
+        Str::from_strs_array_in([without_extension, replace], ctx)
     })
 }
 

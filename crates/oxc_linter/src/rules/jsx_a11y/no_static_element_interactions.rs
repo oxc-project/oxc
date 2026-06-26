@@ -8,7 +8,8 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 
 use crate::{
     AstNode,
@@ -81,6 +82,8 @@ declare_oxc_lint!(
     jsx_a11y,
     correctness,
     config = NoStaticElementInteractionsConfig,
+    version = "1.37.0",
+    short_description = "Enforces that static HTML elements with event handlers must have appropriate ARIA roles.",
 );
 
 impl Rule for NoStaticElementInteractions {
@@ -160,10 +163,8 @@ impl Rule for NoStaticElementInteractions {
                     }
                 }
             }
-            JSXAttributeValue::ExpressionContainer(_) => {
-                if self.allow_expression_values {
-                    return;
-                }
+            JSXAttributeValue::ExpressionContainer(_) if self.allow_expression_values => {
+                return;
             }
             _ => {}
         }

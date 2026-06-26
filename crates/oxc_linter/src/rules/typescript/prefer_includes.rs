@@ -75,6 +75,8 @@ declare_oxc_lint!(
     typescript,
     pedantic,
     fix,
+    version = "1.29.0",
+    short_description = "Enforce using `.includes()` instead of `.indexOf() !== -1` or `/regex/.test()`.",
 );
 
 impl Rule for PreferIncludes {}

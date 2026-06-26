@@ -1,0 +1,170 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ vitest(no-test-prefixes): Use `describe.only` instead.
+   ╭─[no_test_prefixes.tsx:1:1]
+ 1 │ fdescribe('foo', function () {})
+   · ─────────
+   ╰────
+  help: Replace `fdescribe` with `describe.only`.
+
+  ⚠ vitest(no-test-prefixes): Use `describe.skip.each` instead.
+   ╭─[no_test_prefixes.tsx:1:1]
+ 1 │ xdescribe.each([])('foo', function () {})
+   · ──────────────
+   ╰────
+  help: Replace `xdescribe.each` with `describe.skip.each`.
+
+  ⚠ vitest(no-test-prefixes): Use `it.only` instead.
+   ╭─[no_test_prefixes.tsx:1:1]
+ 1 │ fit('foo', function () {})
+   · ───
+   ╰────
+  help: Replace `fit` with `it.only`.
+
+  ⚠ vitest(no-test-prefixes): Use `describe.skip` instead.
+   ╭─[no_test_prefixes.tsx:1:1]
+ 1 │ xdescribe('foo', function () {})
+   · ─────────
+   ╰────
+  help: Replace `xdescribe` with `describe.skip`.
+
+  ⚠ vitest(no-test-prefixes): Use `it.skip` instead.
+   ╭─[no_test_prefixes.tsx:1:1]
+ 1 │ xit('foo', function () {})
+   · ───
+   ╰────
+  help: Replace `xit` with `it.skip`.
+
+  ⚠ vitest(no-test-prefixes): Use `test.skip` instead.
+   ╭─[no_test_prefixes.tsx:1:1]
+ 1 │ xtest('foo', function () {})
+   · ─────
+   ╰────
+  help: Replace `xtest` with `test.skip`.
+
+  ⚠ vitest(no-test-prefixes): Use `it.skip.each` instead.
+   ╭─[no_test_prefixes.tsx:1:1]
+ 1 │ xit.each``('foo', function () {})
+   · ────────
+   ╰────
+  help: Replace `xit.each` with `it.skip.each`.
+
+  ⚠ vitest(no-test-prefixes): Use `test.skip.each` instead.
+   ╭─[no_test_prefixes.tsx:1:1]
+ 1 │ xtest.each``('foo', function () {})
+   · ──────────
+   ╰────
+  help: Replace `xtest.each` with `test.skip.each`.
+
+  ⚠ vitest(no-test-prefixes): Use `it.skip.each` instead.
+   ╭─[no_test_prefixes.tsx:1:1]
+ 1 │ xit.each([])('foo', function () {})
+   · ────────
+   ╰────
+  help: Replace `xit.each` with `it.skip.each`.
+
+  ⚠ vitest(no-test-prefixes): Use `test.skip.each` instead.
+   ╭─[no_test_prefixes.tsx:1:1]
+ 1 │ xtest.each([])('foo', function () {})
+   · ──────────
+   ╰────
+  help: Replace `xtest.each` with `test.skip.each`.
+
+  ⚠ vitest(no-test-prefixes): Use `it.skip` instead.
+   ╭─[no_test_prefixes.tsx:3:17]
+ 2 │                 import { xit } from 'vitest';
+ 3 │                 xit('foo', function () {})
+   ·                 ───
+ 4 │             
+   ╰────
+  help: Replace `xit` with `it.skip`.
+
+  ⚠ vitest(no-test-prefixes): Use `it.skip` instead.
+   ╭─[no_test_prefixes.tsx:3:17]
+ 2 │                 import { xit as skipThis } from 'vitest';
+ 3 │                 skipThis('foo', function () {})
+   ·                 ────────
+ 4 │             
+   ╰────
+  help: Replace `skipThis` with `it.skip`.
+
+  ⚠ vitest(no-test-prefixes): Use `it.only` instead.
+   ╭─[no_test_prefixes.tsx:3:17]
+ 2 │                 import { fit as onlyThis } from 'vitest';
+ 3 │                 onlyThis('foo', function () {})
+   ·                 ────────
+ 4 │             
+   ╰────
+  help: Replace `onlyThis` with `it.only`.
+
+  ⚠ vitest(no-test-prefixes): Use `describe.only` instead.
+   ╭─[no_test_prefixes.tsx:1:1]
+ 1 │ fdescribe("foo", function () {})
+   · ─────────
+   ╰────
+  help: Replace `fdescribe` with `describe.only`.
+
+  ⚠ vitest(no-test-prefixes): Use `describe.skip.each` instead.
+   ╭─[no_test_prefixes.tsx:1:1]
+ 1 │ xdescribe.each([])("foo", function () {})
+   · ──────────────
+   ╰────
+  help: Replace `xdescribe.each` with `describe.skip.each`.
+
+  ⚠ vitest(no-test-prefixes): Use `it.only` instead.
+   ╭─[no_test_prefixes.tsx:1:1]
+ 1 │ fit("foo", function () {})
+   · ───
+   ╰────
+  help: Replace `fit` with `it.only`.
+
+  ⚠ vitest(no-test-prefixes): Use `describe.skip` instead.
+   ╭─[no_test_prefixes.tsx:1:1]
+ 1 │ xdescribe("foo", function () {})
+   · ─────────
+   ╰────
+  help: Replace `xdescribe` with `describe.skip`.
+
+  ⚠ vitest(no-test-prefixes): Use `it.skip` instead.
+   ╭─[no_test_prefixes.tsx:1:1]
+ 1 │ xit("foo", function () {})
+   · ───
+   ╰────
+  help: Replace `xit` with `it.skip`.
+
+  ⚠ vitest(no-test-prefixes): Use `test.skip` instead.
+   ╭─[no_test_prefixes.tsx:1:1]
+ 1 │ xtest("foo", function () {})
+   · ─────
+   ╰────
+  help: Replace `xtest` with `test.skip`.
+
+  ⚠ vitest(no-test-prefixes): Use `it.skip.each` instead.
+   ╭─[no_test_prefixes.tsx:1:1]
+ 1 │ xit.each``("foo", function () {})
+   · ────────
+   ╰────
+  help: Replace `xit.each` with `it.skip.each`.
+
+  ⚠ vitest(no-test-prefixes): Use `test.skip.each` instead.
+   ╭─[no_test_prefixes.tsx:1:1]
+ 1 │ xtest.each``("foo", function () {})
+   · ──────────
+   ╰────
+  help: Replace `xtest.each` with `test.skip.each`.
+
+  ⚠ vitest(no-test-prefixes): Use `it.skip.each` instead.
+   ╭─[no_test_prefixes.tsx:1:1]
+ 1 │ xit.each([])("foo", function () {})
+   · ────────
+   ╰────
+  help: Replace `xit.each` with `it.skip.each`.
+
+  ⚠ vitest(no-test-prefixes): Use `test.skip.each` instead.
+   ╭─[no_test_prefixes.tsx:1:1]
+ 1 │ xtest.each([])("foo", function () {})
+   · ──────────
+   ╰────
+  help: Replace `xtest.each` with `test.skip.each`.

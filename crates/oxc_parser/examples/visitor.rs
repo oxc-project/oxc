@@ -35,7 +35,7 @@ fn main() -> std::io::Result<()> {
     let ret = Parser::new(&allocator, &source_text, source_type).parse();
 
     // Report any parsing errors
-    for error in ret.errors {
+    for error in ret.diagnostics {
         let error = error.with_source_code(source_text.clone());
         println!("{error:?}");
     }

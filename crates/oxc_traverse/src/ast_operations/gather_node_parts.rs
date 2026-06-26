@@ -234,7 +234,8 @@ impl<'a> GatherNodeParts<'a> for ChainElement<'a> {
     fn gather<F: FnMut(&str)>(&self, f: &mut F) {
         match self {
             ChainElement::CallExpression(expr) => expr.gather(f),
-            expr => expr.to_member_expression().gather(f),
+            ChainElement::TSNonNullExpression(expr) => expr.expression.gather(f),
+            expr @ match_member_expression!(Self) => expr.to_member_expression().gather(f),
         }
     }
 }

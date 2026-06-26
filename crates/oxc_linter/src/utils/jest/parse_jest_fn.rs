@@ -1,6 +1,8 @@
 use std::{borrow::Cow, cmp::Ordering};
 
 use cow_utils::CowUtils;
+
+use oxc_allocator::ArenaVec;
 use oxc_ast::{
     AstKind,
     ast::{
@@ -13,8 +15,10 @@ use oxc_span::Span;
 
 use crate::{
     context::LintContext,
-    utils::jest::{JestFnKind, JestGeneralFnKind, PossibleJestNode},
-    utils::valid_vitest_fn::is_valid_vitest_call,
+    utils::{
+        jest::{JestFnKind, JestGeneralFnKind, PossibleJestNode},
+        valid_vitest_fn::{is_extend_fixture, is_valid_vitest_call},
+    },
 };
 
 pub fn parse_jest_fn_call<'a>(
@@ -125,6 +129,14 @@ pub fn parse_jest_fn_call<'a>(
             (false, false) => {}
         }
 
+        if ctx.frameworks().is_vitest() && is_extend_fixture(&call_chains[1..]) {
+            return Some(ParsedJestFnCall::Fixture(ParsedGeneralJestFnCall {
+                kind: JestFnKind::VitestFixture,
+                members,
+                name: Cow::Borrowed(name),
+                local: Cow::Borrowed(resolved.local),
+            }));
+        }
         return Some(ParsedJestFnCall::GeneralJest(ParsedGeneralJestFnCall {
             kind,
             members,
@@ -361,12 +373,13 @@ pub enum ParsedJestFnCall<'a> {
     GeneralJest(ParsedGeneralJestFnCall<'a>),
     Expect(ParsedExpectFnCall<'a>),
     ExpectTypeOf(ParsedExpectFnCall<'a>),
+    Fixture(ParsedGeneralJestFnCall<'a>),
 }
 
 impl ParsedJestFnCall<'_> {
     pub fn kind(&self) -> JestFnKind {
         match self {
-            Self::GeneralJest(call) => call.kind,
+            Self::GeneralJest(call) | Self::Fixture(call) => call.kind,
             Self::Expect(call) | Self::ExpectTypeOf(call) => call.kind,
         }
     }
@@ -385,14 +398,13 @@ pub struct ParsedGeneralJestFnCall<'a> {
 pub struct ParsedExpectFnCall<'a> {
     pub kind: JestFnKind,
     pub members: Vec<KnownMemberExpressionProperty<'a>>,
-    #[expect(unused)]
     pub name: Cow<'a, str>,
     pub local: Cow<'a, str>,
     pub head: KnownMemberExpressionProperty<'a>,
     /// this args changed bases on condition
     /// In `expect(fn).toBeCalledTimes(2)`, it will be `[2]`
     /// In `expect(fn)`, it will be `fn`
-    pub args: &'a oxc_allocator::Vec<'a, Argument<'a>>,
+    pub args: &'a ArenaVec<'a, Argument<'a>>,
     // In `expect(1).not.resolved.toBe()`, "not", "resolved" will be modifier
     // it save a group of modifier index from members
     pub modifier_indices: Vec<usize>,
@@ -403,11 +415,11 @@ pub struct ParsedExpectFnCall<'a> {
 
     /// the arguments passed to the expect function
     /// In `expect(1).toBe(2)`, it will be `[1]`
-    pub expect_arguments: Option<&'a oxc_allocator::Vec<'a, Argument<'a>>>,
+    pub expect_arguments: Option<&'a ArenaVec<'a, Argument<'a>>>,
     /// the arguments passed to the matcher function
     /// In `expect(1).toBe(2)`, it will be `[2]
     /// In `expect(1)`, it will be `None`
-    pub matcher_arguments: Option<&'a oxc_allocator::Vec<'a, Argument<'a>>>,
+    pub matcher_arguments: Option<&'a ArenaVec<'a, Argument<'a>>>,
 }
 
 impl<'a> ParsedExpectFnCall<'a> {

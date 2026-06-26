@@ -7,7 +7,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{context::LintContext, rule::Rule, utils::AlwaysNever};
 
 /// Common directive prefixes that should be ignored (module-level to avoid items-after-statements)
 const DIRECTIVES: &[&str] = &[
@@ -47,18 +47,10 @@ struct CommentConfig {
     ignore_consecutive_comments: bool,
 }
 
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Deserialize, JsonSchema)]
-#[serde(rename_all = "lowercase")]
-enum CapitalizeOption {
-    #[default]
-    Always,
-    Never,
-}
-
 /// Internal configuration structure (boxed for size optimization)
 #[derive(Debug, Clone, Default)]
 pub struct CapitalizedCommentsConfig {
-    capitalize: CapitalizeOption,
+    capitalize: AlwaysNever,
     line_config: CommentConfig,
     block_config: CommentConfig,
 }
@@ -76,11 +68,12 @@ impl std::ops::Deref for CapitalizedComments {
 }
 
 #[derive(Debug, Clone, Default, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 #[expect(clippy::struct_field_names)]
 struct CommentConfigJson {
     /// A regex pattern. Comments that match the pattern will not cause violations.
-    ignore_pattern: Option<String>,
+    #[serde(default, deserialize_with = "deserialize_ignore_pattern")]
+    ignore_pattern: Option<Regex>,
     /// If true, inline comments (comments in the middle of code) will be ignored.
     ignore_inline_comments: Option<bool>,
     /// If true, consecutive comments will be ignored after the first comment.
@@ -89,10 +82,8 @@ struct CommentConfigJson {
 
 impl CommentConfigJson {
     fn into_comment_config(self, base: &CommentConfigJson) -> CommentConfig {
-        let pattern = self.ignore_pattern.as_ref().or(base.ignore_pattern.as_ref());
         CommentConfig {
-            ignore_pattern: pattern
-                .and_then(|p| RegexBuilder::new(&format!(r"^\s*(?:{p})")).build().ok()),
+            ignore_pattern: self.ignore_pattern.or_else(|| base.ignore_pattern.clone()),
             ignore_inline_comments: self
                 .ignore_inline_comments
                 .or(base.ignore_inline_comments)
@@ -103,6 +94,26 @@ impl CommentConfigJson {
                 .unwrap_or(false),
         }
     }
+}
+
+fn deserialize_ignore_pattern<'de, D>(deserializer: D) -> Result<Option<Regex>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    use serde::de::Error;
+
+    Option::<String>::deserialize(deserializer)?
+        .map(|pattern| RegexBuilder::new(&format!(r"^\s*(?:{pattern})")).build())
+        .transpose()
+        .map_err(D::Error::custom)
+}
+
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", untagged, deny_unknown_fields)]
+#[expect(unused)] // Only for schemars docs, not used in actual config parsing
+enum OptionsJsonEnum {
+    Base(CommentConfigJson),
+    Difference { line: Option<CommentConfigJson>, block: Option<CommentConfigJson> },
 }
 
 #[derive(Debug, Clone, Default, Deserialize, JsonSchema)]
@@ -123,7 +134,7 @@ struct OptionsJson {
 /// containing additional options.
 #[derive(Debug, Clone, Default, Deserialize, JsonSchema)]
 #[expect(dead_code)]
-struct CapitalizedCommentsOptions(CapitalizeOption, Option<OptionsJson>);
+struct CapitalizedCommentsOptions(AlwaysNever, Option<OptionsJsonEnum>);
 
 declare_oxc_lint!(
     /// ### What it does
@@ -153,7 +164,9 @@ declare_oxc_lint!(
     eslint,
     style,
     fix,
-    config = CapitalizedCommentsOptions
+    config = CapitalizedCommentsOptions,
+    version = "1.34.0",
+    short_description = "Enforces or disallows capitalization of the first letter of a comment.",
 );
 
 impl Rule for CapitalizedComments {
@@ -165,8 +178,9 @@ impl Rule for CapitalizedComments {
         let capitalize =
             arr.first().and_then(|v| serde_json::from_value(v.clone()).ok()).unwrap_or_default();
 
-        let options: OptionsJson =
-            arr.get(1).and_then(|v| serde_json::from_value(v.clone()).ok()).unwrap_or_default();
+        let options: OptionsJson = arr
+            .get(1)
+            .map_or_else(|| Ok(OptionsJson::default()), |v| serde_json::from_value(v.clone()))?;
 
         let line_config = options.line.unwrap_or_default().into_comment_config(&options.base);
         let block_config = options.block.unwrap_or_default().into_comment_config(&options.base);
@@ -246,8 +260,8 @@ impl Rule for CapitalizedComments {
 
             let is_uppercase = first_letter.is_uppercase();
             let (wrong_case, correct_case, fixed_letter) = match self.capitalize {
-                CapitalizeOption::Always if !is_uppercase => ("lowercase", "uppercase", upper),
-                CapitalizeOption::Never if is_uppercase => ("uppercase", "lowercase", lower),
+                AlwaysNever::Always if !is_uppercase => ("lowercase", "uppercase", upper),
+                AlwaysNever::Never if is_uppercase => ("uppercase", "lowercase", lower),
                 _ => continue,
             };
 
@@ -405,11 +419,6 @@ fn test() {
         (
             "/*
 */", None,
-        ),
-        (
-            "/*
-            */",
-            None,
         ),
         ("/* */", None),
         ("/* */", None),

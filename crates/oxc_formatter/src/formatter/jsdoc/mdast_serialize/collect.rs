@@ -44,9 +44,26 @@ fn collect_inline_impl(node: &Node, out: &mut String, inside_link: bool) {
             out.push_str("**");
         }
         Node::InlineCode(code) => {
-            out.push('`');
-            out.push_str(&code.value);
-            out.push('`');
+            let value = &code.value;
+            let delimiter_len = min_not_present_backtick_run(value);
+            let needs_padding = value.starts_with('`')
+                || value.ends_with('`')
+                || (value.starts_with([' ', '\n'])
+                    && value.ends_with([' ', '\n'])
+                    && value.bytes().any(|b| b != b' ' && b != b'\n'));
+            for _ in 0..delimiter_len {
+                out.push('`');
+            }
+            if needs_padding {
+                out.push(' ');
+            }
+            out.push_str(value);
+            if needs_padding {
+                out.push(' ');
+            }
+            for _ in 0..delimiter_len {
+                out.push('`');
+            }
         }
         Node::Link(link) if inside_link => {
             // Nested link (e.g. GFM autolink inside explicit link text) —
@@ -161,4 +178,30 @@ fn collect_inline_impl(node: &Node, out: &mut String, inside_link: bool) {
             out.push_str(&node.to_string());
         }
     }
+}
+
+/// Returns the smallest `n >= 1` such that a maximal run of exactly `n`
+/// backticks does not appear in `text`. Matches Prettier's
+/// `getMinNotPresentContinuousCount`. Used to pick an inline code span
+/// delimiter that won't collide with backticks in the content.
+fn min_not_present_backtick_run(text: &str) -> usize {
+    let mut present: Vec<bool> = Vec::new();
+    let mut current = 0usize;
+    for byte in text.bytes().chain(std::iter::once(b' ')) {
+        if byte == b'`' {
+            current += 1;
+        } else if current > 0 {
+            if present.len() <= current {
+                present.resize(current + 1, false);
+            }
+            present[current] = true;
+            current = 0;
+        }
+    }
+    for (i, is_present) in present.iter().enumerate().skip(1) {
+        if !is_present {
+            return i;
+        }
+    }
+    present.len().max(1)
 }

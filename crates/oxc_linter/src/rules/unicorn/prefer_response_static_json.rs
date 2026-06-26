@@ -47,7 +47,9 @@ declare_oxc_lint!(
     PreferResponseStaticJson,
     unicorn,
     style,
-    suggestion
+    suggestion,
+    version = "1.29.0",
+    short_description = "Enforces the use of `Response.json()` over `new Response(JSON.stringify())`.",
 );
 
 impl Rule for PreferResponseStaticJson {

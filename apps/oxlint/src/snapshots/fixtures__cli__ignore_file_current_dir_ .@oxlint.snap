@@ -5,18 +5,18 @@ source: apps/oxlint/src/tester.rs
 arguments: 
 working directory: fixtures/cli/ignore_file_current_dir
 ----------
-Found 0 warnings and 0 errors.
+No files found to lint. Please check your paths and ignore patterns.
 Finished in <variable>ms on 0 files with 1 rules using 1 threads.
 ----------
-CLI result: LintSucceeded
+CLI result: LintNoFilesFound
 ----------
 
 ########## 
 arguments: .
 working directory: fixtures/cli/ignore_file_current_dir
 ----------
-Found 0 warnings and 0 errors.
+No files found to lint. Please check your paths and ignore patterns.
 Finished in <variable>ms on 0 files with 1 rules using 1 threads.
 ----------
-CLI result: LintSucceeded
+CLI result: LintNoFilesFound
 ----------

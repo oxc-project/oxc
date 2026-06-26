@@ -10,7 +10,7 @@ use serde::Deserialize;
 
 use crate::{
     AstNode,
-    ast_util::outermost_paren_parent,
+    ast_util::{outermost_paren, outermost_paren_parent},
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::{DefaultRuleConfig, Rule},
@@ -71,6 +71,8 @@ declare_oxc_lint!(
     pedantic,
     fix,
     config = NoUselessPromiseResolveRejectOptions,
+    version = "0.0.18",
+    short_description = "Disallows returning values wrapped in `Promise.resolve` or `Promise.reject` in an async function or a `Promise#then`/`catch`/`finally` callback.",
 );
 
 impl Rule for NoUselessPromiseResolveReject {
@@ -318,9 +320,10 @@ fn generate_fix<'a>(
         }
     }
 
-    let node = get_parenthesized_node(node, ctx);
-
-    let parent = ctx.nodes().parent_node(node.id());
+    let node = outermost_paren(node, ctx);
+    let Some(parent) = outermost_paren_parent(node, ctx) else {
+        return fixer.noop();
+    };
 
     let is_arrow_function_body = match parent.kind() {
         AstKind::ExpressionStatement(_) => match_arrow_function_body(ctx, parent),
@@ -333,13 +336,13 @@ fn generate_fix<'a>(
         let mut text = format!("throw {text}");
 
         if is_yield {
-            replace_range = get_parenthesized_node(parent, ctx).kind().span();
+            replace_range = outermost_paren(parent, ctx).kind().span();
             text
         } else {
             text = format!("{text};");
             // `=> Promise.reject(error)` -> `=> { throw error; }`
             if is_arrow_function_body {
-                replace_range = get_parenthesized_node(parent, ctx).kind().span();
+                replace_range = outermost_paren(parent, ctx).kind().span();
                 text = format!("{{ {text} }}");
             }
             text
@@ -369,22 +372,6 @@ fn generate_fix<'a>(
     };
 
     fixer.replace(replace_range, replacement_text)
-}
-
-fn get_parenthesized_node<'a, 'b>(
-    node: &'a AstNode<'b>,
-    ctx: &'a LintContext<'b>,
-) -> &'a AstNode<'b> {
-    let mut node = node;
-    loop {
-        let parent_node = ctx.nodes().parent_node(node.id());
-        if let AstKind::ParenthesizedExpression(_) = parent_node.kind() {
-            node = parent_node;
-        } else {
-            break;
-        }
-    }
-    node
 }
 
 #[test]

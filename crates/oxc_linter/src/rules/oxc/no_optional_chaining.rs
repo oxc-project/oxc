@@ -69,6 +69,8 @@ declare_oxc_lint!(
     oxc,
     restriction,
     config = NoOptionalChainingConfig,
+    version = "0.5.0",
+    short_description = "Disallow optional chaining.",
 );
 
 impl Rule for NoOptionalChaining {
@@ -96,7 +98,6 @@ fn test() {
         ("foo?.()", None),
         ("var x = ((a?.b)?.c)?.()", None),
         ("var x = a/*?.*/?.b", None),
-        ("var x = '?.'?.['?.']", None),
         ("var x = '?.'?.['?.']", None),
         ("a?.c?.b<c>", None),
         ("foo?.bar!", None),

@@ -44,6 +44,8 @@ declare_oxc_lint!(
     eslint,
     style,
     fix,
+    version = "0.4.0",
+    short_description = "Disallow the use of `Math.pow` in favor of the `**` operator.",
 );
 
 impl Rule for PreferExponentiationOperator {

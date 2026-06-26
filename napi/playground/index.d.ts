@@ -200,4 +200,6 @@ export interface OxcTransformerOptions {
   useDefineForClassFields: boolean
   experimentalDecorators: boolean
   emitDecoratorMetadata: boolean
+  optimizeEnums: boolean
+  optimizeConstEnums: boolean
 }

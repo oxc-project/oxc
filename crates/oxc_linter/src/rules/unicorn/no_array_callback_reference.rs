@@ -54,7 +54,9 @@ declare_oxc_lint!(
     NoArrayCallbackReference,
     unicorn,
     pedantic,
-    pending
+    pending,
+    version = "1.19.0",
+    short_description = "Prevents passing a function reference directly to iterator methods.",
 );
 
 impl Rule for NoArrayCallbackReference {

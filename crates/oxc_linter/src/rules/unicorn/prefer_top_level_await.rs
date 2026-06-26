@@ -60,7 +60,9 @@ declare_oxc_lint!(
     PreferTopLevelAwait,
     unicorn,
     pedantic,
-    pending
+    pending,
+    version = "1.20.0",
+    short_description = "Prefer top-level await over top-level promises and async function calls.",
 );
 
 impl Rule for PreferTopLevelAwait {

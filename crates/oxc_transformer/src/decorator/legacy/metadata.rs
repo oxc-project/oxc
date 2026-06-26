@@ -39,14 +39,16 @@
 ///
 /// ### Compared to TypeScript
 ///
-/// We are lacking a kind of type inference ability that TypeScript has, so we are not able to determine
-/// the exactly type of the type reference. See [`LegacyDecoratorMetadata::serialize_type_reference_node`] does.
+/// We do not have TypeScript's type-checker, so we cannot statically classify a
+/// cross-file reference (`String` / `Number` / `Object`) the way tsc does.
+/// Instead we emit the `typeof X === "undefined" ? Object : X` guard used by
+/// SWC and Babel — matching the established ecosystem default.
 ///
 /// For example:
 ///
 /// Input:
 /// ```ts
-/// type Foo = string;
+/// import { Foo } from "./mod";
 /// class Cls {
 ///   @dec
 ///   p: Foo = ""
@@ -55,52 +57,38 @@
 ///
 /// TypeScript Output:
 /// ```js
-/// class Cls {
-///   constructor() {
-///     this.p = "";
-///   }
-/// }
 /// __decorate([
 ///   dec,
-///   __metadata("design:type", String) // Infer the type of `Foo` is `String`
+///   __metadata("design:type", typeof (_a = typeof Foo !== "undefined" && Foo) === "function" ? _a : Object)
 /// ], Cls.prototype, "p", void 0);
 /// ```
 ///
 /// OXC Output:
 /// ```js
-/// var _ref;
-/// class Cls {
-///     p = "";
-/// }
 /// babelHelpers.decorate([
 ///   dec,
-///   babelHelpers.decorateMetadata("design:type", typeof (_ref = typeof Foo === "undefined" && Foo) === "function" ? _ref : Object)
-/// ],
-/// Cls.prototype, "p", void 0);
+///   babelHelpers.decorateMetadata("design:type", typeof Foo === "undefined" ? Object : Foo)
+/// ], Cls.prototype, "p", void 0);
 /// ```
 ///
-/// ### Compared to SWC
-///
-/// SWC also has the above limitation, considering that SWC has been adopted in [NestJS](https://docs.nestjs.com/recipes/swc#jest--swc),
-/// so the limitation may not be a problem. In addition, SWC provides additional support for inferring enum members, which we currently
-/// do not have. We haven't dived into how NestJS uses it, so we don't know if it matters, thus we may leave it until we receive feedback.
+/// The OXC form returns the actual binding (including enum objects) when
+/// defined — see [#14740](https://github.com/oxc-project/oxc/issues/14740) for
+/// the design rationale.
 ///
 /// ## References
 /// * TypeScript's [emitDecoratorMetadata](https://www.typescriptlang.org/tsconfig#emitDecoratorMetadata)
-use oxc_allocator::{Box as ArenaBox, TakeIn};
+use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::ast::*;
 use oxc_data_structures::stack::SparseStack;
 use oxc_semantic::{Reference, ReferenceFlags, SymbolId};
 use oxc_span::{ContentEq, SPAN};
+use oxc_str::{Ident, static_ident};
 use oxc_traverse::{MaybeBoundIdentifier, Traverse};
 use rustc_hash::FxHashMap;
 
 use crate::{
-    Helper,
-    common::{helper_loader::helper_call_expr, var_declarations::VarDeclarationsStore},
-    context::TraverseCtx,
-    state::TransformState,
-    utils::ast_builder::create_property_access,
+    Helper, common::helper_loader::helper_call_expr, context::TraverseCtx,
+    decorator::DecoratorOptions, state::TransformState, utils::ast_builder::create_property_access,
 };
 
 /// Type of an enum inferred from its members
@@ -139,14 +127,16 @@ pub struct LegacyDecoratorMetadata<'a> {
     /// in the class, we need to handle it in `exit_class` rather than `exit_method_definition`.
     constructor_metadata_stack: SparseStack<Expression<'a>>,
     enum_types: FxHashMap<SymbolId, EnumType>,
+    strict_null_checks: bool,
 }
 
 impl LegacyDecoratorMetadata<'_> {
-    pub fn new() -> Self {
+    pub fn new(options: DecoratorOptions) -> Self {
         LegacyDecoratorMetadata {
             method_metadata_stack: SparseStack::new(),
             constructor_metadata_stack: SparseStack::new(),
             enum_types: FxHashMap::default(),
+            strict_null_checks: options.strict_null_checks,
         }
     }
 }
@@ -371,12 +361,12 @@ impl<'a> LegacyDecoratorMetadata<'a> {
             TSType::TSVoidKeyword(_)
             | TSType::TSUndefinedKeyword(_)
             | TSType::TSNullKeyword(_)
-            | TSType::TSNeverKeyword(_) => ctx.ast.void_0(SPAN),
+            | TSType::TSNeverKeyword(_) => Expression::new_void_0(SPAN, ctx),
             TSType::TSFunctionType(_) | TSType::TSConstructorType(_) => Self::global_function(ctx),
             TSType::TSArrayType(_) | TSType::TSTupleType(_) => Self::global_array(ctx),
             TSType::TSTypePredicate(t) => {
                 if t.asserts {
-                    ctx.ast.void_0(SPAN)
+                    Expression::new_void_0(SPAN, ctx)
                 } else {
                     Self::global_boolean(ctx)
                 }
@@ -438,8 +428,10 @@ impl<'a> LegacyDecoratorMetadata<'a> {
         params: &FormalParameters<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let mut elements =
-            ctx.ast.vec_with_capacity(params.items.len() + usize::from(params.rest.is_some()));
+        let mut elements = ArenaVec::with_capacity_in(
+            params.items.len() + usize::from(params.rest.is_some()),
+            ctx,
+        );
         elements.extend(params.items.iter().map(|param| {
             ArrayExpressionElement::from(self.serialize_parameter_types_of_node(param, ctx))
         }));
@@ -449,7 +441,7 @@ impl<'a> LegacyDecoratorMetadata<'a> {
                 self.serialize_type_annotation(rest.type_annotation.as_ref(), ctx),
             ));
         }
-        ctx.ast.expression_array(SPAN, elements)
+        Expression::new_array_expression(SPAN, elements, ctx)
     }
 
     fn serialize_parameter_types_of_node(
@@ -472,114 +464,136 @@ impl<'a> LegacyDecoratorMetadata<'a> {
         } else if let Some(return_type) = &func.return_type {
             self.serialize_type_node(&return_type.type_annotation, ctx)
         } else {
-            ctx.ast.void_0(SPAN)
+            Expression::new_void_0(SPAN, ctx)
         }
     }
 
-    /// `A.B` -> `typeof (_a$b = typeof A !== "undefined" && A.B) == "function" ? _a$b : Object`
+    /// Serializes a type reference for `design:type` / `design:paramtypes` / `design:returntype`.
     ///
-    /// NOTE: This function only ports `unknown` part from [TypeScript](https://github.com/microsoft/TypeScript/blob/d85767abfd83880cea17cea70f9913e9c4496dcc/src/compiler/transformers/typeSerializer.ts#L499-L506)
+    /// Matches the emit shape used by SWC and Babel:
+    ///
+    /// - `X` → `typeof X === "undefined" ? Object : X`
+    /// - `A.B` → `typeof A === "undefined" || typeof A.B === "undefined" ? Object : A.B`
+    /// - `A.B.C` → `typeof A === "undefined" || typeof A.B === "undefined" || typeof A.B.C === "undefined" ? Object : A.B.C`
+    ///
+    /// Local enums are pre-classified through [`Self::enum_types`] and emit `String` /
+    /// `Number` / `Object` directly (matching SWC and tsc).
+    /// Type-only references and `this`-typed entity names emit `Object` without a
+    /// runtime check (matching tsc).
+    ///
+    /// See [issue #14740](https://github.com/oxc-project/oxc/issues/14740): the guard
+    /// short-circuits to `Object` when the binding is missing, but evaluates to the
+    /// actual runtime binding when present — including enum objects, so consumers like
+    /// `type-graphql` and `typeorm` can introspect them via `Object.values()`.
     fn serialize_type_reference_node(
-        &mut self,
+        &self,
         name: &TSTypeName<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        // Check if this is an enum type reference - if so, return the primitive type directly
-        if let TSTypeName::IdentifierReference(ident) = name {
-            let symbol_id = ctx.scoping().get_reference(ident.reference_id()).symbol_id();
-            if let Some(symbol_id) = symbol_id
-                && let Some(enum_type) = self.enum_types.get(&symbol_id)
-            {
-                return match enum_type {
-                    EnumType::String => Self::global_string(ctx),
-                    EnumType::Number => Self::global_number(ctx),
-                    EnumType::Object => Self::global_object(ctx),
-                };
-            }
-        }
-
-        let Some(serialized_type) = self.serialize_entity_name_as_expression_fallback(name, ctx)
-        else {
-            // Reach here means the referent is a type symbol, so use `Object` as fallback.
+        let Some((root_ident, properties)) = Self::decompose_entity_name(name) else {
+            // `this`-typed entity name — no runtime binding to check.
             return Self::global_object(ctx);
         };
-        let binding = VarDeclarationsStore::create_uid_var_based_on_node(&serialized_type, ctx);
-        let target = binding.create_write_target(ctx);
-        let assignment = ctx.ast.expression_assignment(
-            SPAN,
-            AssignmentOperator::Assign,
-            target,
-            serialized_type,
-        );
-        let type_of = ctx.ast.expression_unary(SPAN, UnaryOperator::Typeof, assignment);
-        let right = ctx.ast.expression_string_literal(SPAN, "function", None);
-        let operator = BinaryOperator::StrictEquality;
-        let test = ctx.ast.expression_binary(SPAN, type_of, operator, right);
-        let consequent = binding.create_read_expression(ctx);
-        let alternate = Self::global_object(ctx);
-        ctx.ast.expression_conditional(SPAN, test, consequent, alternate)
+
+        let symbol_id = ctx.scoping().get_reference(root_ident.reference_id()).symbol_id();
+
+        // Local enum fast path: classify by member shape and emit the primitive globally.
+        if properties.is_empty()
+            && let Some(symbol_id) = symbol_id
+            && let Some(enum_type) = self.enum_types.get(&symbol_id)
+        {
+            return match enum_type {
+                EnumType::String => Self::global_string(ctx),
+                EnumType::Number => Self::global_number(ctx),
+                EnumType::Object => Self::global_object(ctx),
+            };
+        }
+
+        // `ReadonlyArray<T>` is a TS-only utility type; tsc emits `Array`. Skip
+        // when shadowed by any local declaration so the user's binding wins.
+        if properties.is_empty() && root_ident.name == "ReadonlyArray" && symbol_id.is_none() {
+            return Self::global_array(ctx);
+        }
+
+        // Type-only references have no runtime binding either.
+        if Self::is_type_symbol(symbol_id, ctx) {
+            return Self::global_object(ctx);
+        }
+
+        Self::build_undefined_guard(root_ident, &properties, ctx)
     }
 
-    /// Serializes an entity name which may not exist at runtime, but whose access shouldn't throw
-    #[expect(clippy::self_only_used_in_recursion)]
-    fn serialize_entity_name_as_expression_fallback(
-        &mut self,
-        name: &TSTypeName<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Option<Expression<'a>> {
-        match name {
-            // `A` -> `typeof A !== "undefined" && A`
-            TSTypeName::IdentifierReference(ident) => {
-                let binding = MaybeBoundIdentifier::from_identifier_reference(ident, ctx);
-                if Self::is_type_symbol(binding.symbol_id, ctx) {
-                    return None;
+    /// Walk a [`TSTypeName`] from leaf to root, returning the root identifier and the
+    /// ordered list of property names (root → leaf). Returns `None` if the entity name
+    /// is rooted at a `this`-type, which has no static identifier to guard.
+    fn decompose_entity_name<'b>(
+        name: &'b TSTypeName<'a>,
+    ) -> Option<(&'b IdentifierReference<'a>, Vec<&'b str>)> {
+        let mut properties: Vec<&str> = vec![];
+        let mut current = name;
+        loop {
+            match current {
+                TSTypeName::IdentifierReference(ident) => {
+                    properties.reverse();
+                    return Some((ident, properties));
                 }
-                let flags = Self::get_reference_flags(&binding, ctx);
-                let ident1 = binding.create_expression(flags, ctx);
-                let ident2 = binding.create_expression(flags, ctx);
-                Some(Self::create_checked_value(ident1, ident2, ctx))
-            }
-            TSTypeName::QualifiedName(qualified) => {
-                if let TSTypeName::IdentifierReference(ident) = &qualified.left {
-                    // `A.B` -> `typeof A !== "undefined" && A.B`
-                    let binding = MaybeBoundIdentifier::from_identifier_reference(ident, ctx);
-                    if Self::is_type_symbol(binding.symbol_id, ctx) {
-                        return None;
-                    }
-                    let flags = Self::get_reference_flags(&binding, ctx);
-                    let ident1 = binding.create_expression(flags, ctx);
-                    let ident2 = binding.create_expression(flags, ctx);
-                    let member = create_property_access(SPAN, ident1, &qualified.right.name, ctx);
-                    Some(Self::create_checked_value(ident2, member, ctx))
-                } else {
-                    // `A.B.C` -> `typeof A !== "undefined" && (_a = A.B) !== void 0 && _a.C`
-                    let mut left =
-                        self.serialize_entity_name_as_expression_fallback(&qualified.left, ctx)?;
-                    let binding = VarDeclarationsStore::create_uid_var_based_on_node(&left, ctx);
-                    let Expression::LogicalExpression(logical) = &mut left else { unreachable!() };
-                    let right = logical.right.take_in(ctx.ast);
-                    // `(_a = A.B)`
-                    let right = ctx.ast.expression_assignment(
-                        SPAN,
-                        AssignmentOperator::Assign,
-                        binding.create_write_target(ctx),
-                        right,
-                    );
-                    // `(_a = A.B) !== void 0`
-                    logical.right = ctx.ast.expression_binary(
-                        SPAN,
-                        right,
-                        BinaryOperator::StrictInequality,
-                        ctx.ast.void_0(SPAN),
-                    );
-
-                    let object = binding.create_read_expression(ctx);
-                    let member = create_property_access(SPAN, object, &qualified.right.name, ctx);
-                    Some(ctx.ast.expression_logical(SPAN, left, LogicalOperator::And, member))
+                TSTypeName::QualifiedName(q) => {
+                    properties.push(q.right.name.as_str());
+                    current = &q.left;
                 }
+                TSTypeName::ThisExpression(_) => return None,
             }
-            TSTypeName::ThisExpression(_) => None,
         }
+    }
+
+    /// Build the SWC-style undefined-fallback guard for the given root + property path.
+    ///
+    /// OR-chains `typeof <prefix> === "undefined"` for every prefix from root to leaf.
+    /// Left-to-right short-circuit keeps the chain safe even when an intermediate is
+    /// undefined — the later `typeof <prefix>.foo` is never evaluated.
+    fn build_undefined_guard(
+        root: &IdentifierReference<'a>,
+        properties: &[&str],
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        let binding = MaybeBoundIdentifier::from_identifier_reference(root, ctx);
+        let ref_flags = Self::get_reference_flags(&binding, ctx);
+
+        let root_expr = binding.create_expression(ref_flags, ctx);
+        let mut test = Self::typeof_undefined(root_expr, ctx);
+        for i in 1..=properties.len() {
+            let prefix = Self::build_path(&binding, ref_flags, &properties[..i], ctx);
+            let next = Self::typeof_undefined(prefix, ctx);
+            test = Expression::new_logical_expression(SPAN, test, LogicalOperator::Or, next, ctx);
+        }
+
+        let alternate = Self::build_path(&binding, ref_flags, properties, ctx);
+        Expression::new_conditional_expression(SPAN, test, Self::global_object(ctx), alternate, ctx)
+    }
+
+    fn build_path(
+        binding: &MaybeBoundIdentifier<'a>,
+        ref_flags: ReferenceFlags,
+        properties: &[&str],
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        let mut expr = binding.create_expression(ref_flags, ctx);
+        for prop in properties {
+            expr = create_property_access(SPAN, expr, prop, ctx);
+        }
+        expr
+    }
+
+    fn typeof_undefined(expr: Expression<'a>, ctx: &TraverseCtx<'a>) -> Expression<'a> {
+        let typeof_expr = Expression::new_unary_expression(SPAN, UnaryOperator::Typeof, expr, ctx);
+        let undefined_str = Expression::new_string_literal(SPAN, "undefined", None, ctx);
+        Expression::new_binary_expression(
+            SPAN,
+            typeof_expr,
+            BinaryOperator::StrictEquality,
+            undefined_str,
+            ctx,
+        )
     }
 
     fn serialize_literal_of_literal_type_node(
@@ -617,9 +631,15 @@ impl<'a> LegacyDecoratorMetadata<'a> {
                 TSType::TSNeverKeyword(_) => {
                     if is_intersection {
                         // Reduce to `never` in an intersection
-                        return ctx.ast.void_0(SPAN);
+                        return Expression::new_void_0(SPAN, ctx);
                     }
                     // Elide `never` in a union
+                    continue;
+                }
+                // Elide `null` and `undefined` in a union when strictNullChecks is off
+                TSType::TSNullKeyword(_) | TSType::TSUndefinedKeyword(_)
+                    if !is_intersection && !self.strict_null_checks =>
+                {
                     continue;
                 }
                 TSType::TSUnknownKeyword(_) => {
@@ -663,7 +683,7 @@ impl<'a> LegacyDecoratorMetadata<'a> {
         // If we were able to find common type, use it
         serialized_type.unwrap_or_else(|| {
             // Fallback is only hit if all union constituents are null/undefined/never
-            ctx.ast.void_0(SPAN)
+            Expression::new_void_0(SPAN, ctx)
         })
     }
 
@@ -697,74 +717,53 @@ impl<'a> LegacyDecoratorMetadata<'a> {
     }
 
     #[inline]
-    fn create_global_identifier(ident: &'static str, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
-        ctx.create_unbound_ident_expr(SPAN, ctx.ast.ident(ident), ReferenceFlags::Read)
+    fn create_global_identifier(ident: Ident<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
+        ctx.create_unbound_ident_expr(SPAN, ident, ReferenceFlags::Read)
     }
 
     #[inline]
     fn global_object(ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
-        Self::create_global_identifier("Object", ctx)
+        Self::create_global_identifier(static_ident!("Object"), ctx)
     }
 
     #[inline]
     fn global_function(ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
-        Self::create_global_identifier("Function", ctx)
+        Self::create_global_identifier(static_ident!("Function"), ctx)
     }
 
     #[inline]
     fn global_array(ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
-        Self::create_global_identifier("Array", ctx)
+        Self::create_global_identifier(static_ident!("Array"), ctx)
     }
 
     #[inline]
     fn global_boolean(ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
-        Self::create_global_identifier("Boolean", ctx)
+        Self::create_global_identifier(static_ident!("Boolean"), ctx)
     }
 
     #[inline]
     fn global_string(ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
-        Self::create_global_identifier("String", ctx)
+        Self::create_global_identifier(static_ident!("String"), ctx)
     }
 
     #[inline]
     fn global_number(ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
-        Self::create_global_identifier("Number", ctx)
+        Self::create_global_identifier(static_ident!("Number"), ctx)
     }
 
     #[inline]
     fn global_bigint(ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
-        Self::create_global_identifier("BigInt", ctx)
+        Self::create_global_identifier(static_ident!("BigInt"), ctx)
     }
 
     #[inline]
     fn global_symbol(ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
-        Self::create_global_identifier("Symbol", ctx)
+        Self::create_global_identifier(static_ident!("Symbol"), ctx)
     }
 
     #[inline]
     fn global_promise(ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
-        Self::create_global_identifier("Promise", ctx)
-    }
-
-    /// Produces an expression that results in `right` if `left` is not undefined at runtime:
-    ///
-    /// ```rust,ignore
-    /// typeof left !== "undefined" && right
-    /// ```
-    ///
-    /// We use `typeof L !== "undefined"` (rather than `L !== undefined`) since `L` may not be declared.
-    /// It's acceptable for this expression to result in `false` at runtime, as the result is intended to be
-    /// further checked by any containing expression.
-    fn create_checked_value(
-        left: Expression<'a>,
-        right: Expression<'a>,
-        ctx: &TraverseCtx<'a>,
-    ) -> Expression<'a> {
-        let operator = BinaryOperator::StrictInequality;
-        let undefined = ctx.ast.expression_string_literal(SPAN, "undefined", None);
-        let typeof_left = ctx.ast.expression_unary(SPAN, UnaryOperator::Typeof, left);
-        let left_check = ctx.ast.expression_binary(SPAN, typeof_left, operator, undefined);
-        ctx.ast.expression_logical(SPAN, left_check, LogicalOperator::And, right)
+        Self::create_global_identifier(static_ident!("Promise"), ctx)
     }
 
     // `_metadata(key, value)
@@ -775,11 +774,14 @@ impl<'a> LegacyDecoratorMetadata<'a> {
         value: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let arguments = ctx.ast.vec_from_array([
-            Argument::from(ctx.ast.expression_string_literal(SPAN, key, None)),
-            Argument::from(value),
-        ]);
-        helper_call_expr(Helper::DecorateMetadata, SPAN, arguments, ctx)
+        let arguments = ArenaVec::from_array_in(
+            [
+                Argument::from(Expression::new_string_literal(SPAN, key, None, ctx)),
+                Argument::from(value),
+            ],
+            ctx,
+        );
+        helper_call_expr(Helper::DecorateMetadata, arguments, ctx)
     }
 
     // `_metadata(key, value)
@@ -789,7 +791,7 @@ impl<'a> LegacyDecoratorMetadata<'a> {
         value: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Decorator<'a> {
-        ctx.ast.decorator(SPAN, self.create_metadata(key, value, ctx))
+        Decorator::new(SPAN, self.create_metadata(key, value, ctx), ctx)
     }
 
     /// `_metadata("design:type", type)`

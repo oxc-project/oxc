@@ -6,7 +6,7 @@ arguments: -c .oxlintrc.json test.js
 working directory: fixtures/cli/import
 ----------
 
-  x eslint-plugin-import(no-default-export): Prefer named exports
+  x import(no-default-export): Prefer named exports
    ,-[test.js:7:8]
  6 | // import/no-default-export
  7 | export default function () { }
@@ -26,7 +26,7 @@ arguments: -c .oxlintrc-import-x.json test.js
 working directory: fixtures/cli/import
 ----------
 
-  x eslint-plugin-import(no-default-export): Prefer named exports
+  x import(no-default-export): Prefer named exports
    ,-[test.js:7:8]
  6 | // import/no-default-export
  7 | export default function () { }

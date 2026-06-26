@@ -1,0 +1,219 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ vue(no-reserved-keys): Key `$data` is reserved.
+   ╭─[no_reserved_keys.tsx:4:27]
+ 3 │                 export default {
+ 4 │                   props: ['$data']
+   ·                           ───────
+ 5 │                 }
+   ╰────
+
+  ⚠ vue(no-reserved-keys): Key `$data` is reserved.
+   ╭─[no_reserved_keys.tsx:4:28]
+ 3 │                 export default {
+ 4 │                   props: { $data: { type: String } }
+   ·                            ─────
+ 5 │                 }
+   ╰────
+
+  ⚠ vue(no-reserved-keys): Key `$emit` is reserved.
+   ╭─[no_reserved_keys.tsx:4:30]
+ 3 │                 export default {
+ 4 │                   methods: { $emit() {} }
+   ·                              ─────
+ 5 │                 }
+   ╰────
+
+  ⚠ vue(no-reserved-keys): Key `$forceUpdate` is reserved.
+   ╭─[no_reserved_keys.tsx:4:31]
+ 3 │                 export default {
+ 4 │                   computed: { $forceUpdate() {} }
+   ·                               ────────────
+ 5 │                 }
+   ╰────
+
+  ⚠ vue(no-reserved-keys): Key `$el` is reserved.
+   ╭─[no_reserved_keys.tsx:4:37]
+ 3 │                 export default {
+ 4 │                   data() { return { $el: 1 } }
+   ·                                     ───
+ 5 │                 }
+   ╰────
+
+  ⚠ vue(no-reserved-keys): Key `_foo` is reserved in `data` group.
+   ╭─[no_reserved_keys.tsx:4:37]
+ 3 │                 export default {
+ 4 │                   data() { return { _foo: 1 } }
+   ·                                     ────
+ 5 │                 }
+   ╰────
+
+  ⚠ vue(no-reserved-keys): Key `$emit` is reserved.
+   ╭─[no_reserved_keys.tsx:4:30]
+ 3 │                 defineComponent({
+ 4 │                   methods: { $emit() {} }
+   ·                              ─────
+ 5 │                 })
+   ╰────
+
+  ⚠ vue(no-reserved-keys): Key `$el` is reserved.
+   ╭─[no_reserved_keys.tsx:4:28]
+ 3 │                 new Vue({
+ 4 │                   props: { $el: String }
+   ·                            ───
+ 5 │                 })
+   ╰────
+
+  ⚠ vue(no-reserved-keys): Key `$el` is reserved.
+   ╭─[no_reserved_keys.tsx:4:39]
+ 3 │                 new Vue({
+ 4 │                   setup () { return { $el: '' } }
+   ·                                       ───
+ 5 │                 })
+   ╰────
+
+  ⚠ vue(no-reserved-keys): Key `$el` is reserved.
+   ╭─[no_reserved_keys.tsx:4:43]
+ 3 │                 new Vue({
+ 4 │                   asyncData () { return { $el: '' } }
+   ·                                           ───
+ 5 │                 })
+   ╰────
+
+  ⚠ vue(no-reserved-keys): Key `_foo` is reserved in `data` group.
+   ╭─[no_reserved_keys.tsx:4:27]
+ 3 │                 new Vue({
+ 4 │                   data: { _foo: String }
+   ·                           ────
+ 5 │                 })
+   ╰────
+
+  ⚠ vue(no-reserved-keys): Key `_foo` is reserved in `data` group.
+   ╭─[no_reserved_keys.tsx:4:42]
+ 3 │                 new Vue({
+ 4 │                   data: () => { return { _foo: String } }
+   ·                                          ────
+ 5 │                 })
+   ╰────
+
+  ⚠ vue(no-reserved-keys): Key `_foo` is reserved in `data` group.
+   ╭─[no_reserved_keys.tsx:4:34]
+ 3 │                 new Vue({
+ 4 │                   data: () => ({ _foo: String })
+   ·                                  ────
+ 5 │                 })
+   ╰────
+
+  ⚠ vue(no-reserved-keys): Key `_foo` is reserved in `asyncData` group.
+   ╭─[no_reserved_keys.tsx:4:39]
+ 3 │                 new Vue({
+ 4 │                   asyncData: () => ({ _foo: String })
+   ·                                       ────
+ 5 │                 })
+   ╰────
+
+  ⚠ vue(no-reserved-keys): Key `bar` is reserved.
+   ╭─[no_reserved_keys.tsx:4:26]
+ 3 │                 new Vue({
+ 4 │                   foo: { bar: String }
+   ·                          ───
+ 5 │                 })
+   ╰────
+
+  ⚠ vue(no-reserved-keys): Key `myKey` is reserved.
+   ╭─[no_reserved_keys.tsx:4:30]
+ 3 │                 export default {
+ 4 │                   methods: { myKey() {} }
+   ·                              ─────
+ 5 │                 }
+   ╰────
+
+  ⚠ vue(no-reserved-keys): Key `$emit` is reserved.
+   ╭─[no_reserved_keys.tsx:4:33]
+ 3 │                 export default {
+ 4 │                   extraGroup: { $emit() {} }
+   ·                                 ─────
+ 5 │                 }
+   ╰────
+
+  ⚠ vue(no-reserved-keys): Key `$emit` is reserved.
+   ╭─[no_reserved_keys.tsx:4:30]
+ 3 │                 createApp({
+ 4 │                   methods: { $emit() {} }
+   ·                              ─────
+ 5 │                 })
+   ╰────
+
+  ⚠ vue(no-reserved-keys): Key `$data` is reserved.
+   ╭─[no_reserved_keys.tsx:4:27]
+ 3 │                 Vue.component('foo', {
+ 4 │                   props: ['$data']
+   ·                           ───────
+ 5 │                 })
+   ╰────
+
+  ⚠ vue(no-reserved-keys): Key `$emit` is reserved.
+   ╭─[no_reserved_keys.tsx:4:30]
+ 3 │                 Vue.extend({
+ 4 │                   methods: { $emit() {} }
+   ·                              ─────
+ 5 │                 })
+   ╰────
+
+  ⚠ vue(no-reserved-keys): Key `_foo` is reserved in `data` group.
+   ╭─[no_reserved_keys.tsx:4:37]
+ 3 │                 Vue.mixin({
+ 4 │                   data() { return { _foo: 1 } }
+   ·                                     ────
+ 5 │                 })
+   ╰────
+
+  ⚠ vue(no-reserved-keys): Key `$forceUpdate` is reserved.
+   ╭─[no_reserved_keys.tsx:4:31]
+ 3 │                 app.component('foo', {
+ 4 │                   computed: { $forceUpdate() {} }
+   ·                               ────────────
+ 5 │                 })
+   ╰────
+
+  ⚠ vue(no-reserved-keys): Key `$emit` is reserved.
+   ╭─[no_reserved_keys.tsx:4:30]
+ 3 │                 defineNuxtComponent({
+ 4 │                   methods: { $emit() {} }
+   ·                              ─────
+ 5 │                 })
+   ╰────
+
+  ⚠ vue(no-reserved-keys): Key `$el` is reserved.
+   ╭─[no_reserved_keys.tsx:3:31]
+ 2 │                 <script setup>
+ 3 │                 defineProps({ $el: String })
+   ·                               ───
+ 4 │                 </script>
+   ╰────
+
+  ⚠ vue(no-reserved-keys): Key `$el` is reserved.
+   ╭─[no_reserved_keys.tsx:3:31]
+ 2 │                 <script setup lang="ts">
+ 3 │                 defineProps<{ $el: string }>()
+   ·                               ───
+ 4 │                 </script>
+   ╰────
+
+  ⚠ vue(no-reserved-keys): Key `$el` is reserved.
+   ╭─[no_reserved_keys.tsx:3:35]
+ 2 │                 <script setup lang="ts">
+ 3 │                 interface Props { $el: string }
+   ·                                   ───
+ 4 │                 defineProps<Props>()
+   ╰────
+
+  ⚠ vue(no-reserved-keys): Key `$el` is reserved.
+   ╭─[no_reserved_keys.tsx:3:28]
+ 2 │                 <script setup lang="ts">
+ 3 │                 type A = { $el: string }
+   ·                            ───
+ 4 │                 defineProps<A>()
+   ╰────

@@ -46,7 +46,9 @@ declare_oxc_lint!(
     /// ```
     BadCharAtComparison,
     oxc,
-    correctness
+    correctness,
+    version = "0.0.22",
+    short_description = "This rule warns when the return value of the `charAt` method is used to compare a string of length greater than 1.",
 );
 
 impl Rule for BadCharAtComparison {
@@ -106,7 +108,6 @@ fn test() {
         r"a.charAt(4) === 'a'",
         "a.charAt(4) === '\\n'",
         "a.charAt(4) === '\t'",
-        r"a.charAt(4) === 'a'",
         r"a.charAt(4) === '\ufeff'",
         r"a.charAt(4) !== '\ufeff'",
         "chatAt(4) === 'a2'",

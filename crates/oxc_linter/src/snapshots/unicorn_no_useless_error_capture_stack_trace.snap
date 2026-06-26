@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-unicorn(no-useless-error-capture-stack-trace): Do not use `Error.captureStackTrace(…)` in the constructor of an Error subclass
+  ⚠ unicorn(no-useless-error-capture-stack-trace): Do not use `Error.captureStackTrace(…)` in the constructor of an Error subclass
    ╭─[no_useless_error_capture_stack_trace.tsx:4:25]
  3 │                     const foo = () => {
  4 │                         Error.captureStackTrace(this, MyError)
@@ -11,7 +11,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: The Error constructor already calls `captureStackTrace` internally, so calling it again is unnecessary.
 
-  ⚠ eslint-plugin-unicorn(no-useless-error-capture-stack-trace): Do not use `Error.captureStackTrace(…)` in the constructor of an Error subclass
+  ⚠ unicorn(no-useless-error-capture-stack-trace): Do not use `Error.captureStackTrace(…)` in the constructor of an Error subclass
    ╭─[no_useless_error_capture_stack_trace.tsx:3:28]
  2 │                 constructor() {
  3 │                     if (a) Error.captureStackTrace(this, MyError)
@@ -20,7 +20,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: The Error constructor already calls `captureStackTrace` internally, so calling it again is unnecessary.
 
-  ⚠ eslint-plugin-unicorn(no-useless-error-capture-stack-trace): Do not use `Error.captureStackTrace(…)` in the constructor of an Error subclass
+  ⚠ unicorn(no-useless-error-capture-stack-trace): Do not use `Error.captureStackTrace(…)` in the constructor of an Error subclass
    ╭─[no_useless_error_capture_stack_trace.tsx:3:37]
  2 │                 constructor() {
  3 │                     const x = () => Error.captureStackTrace(this, MyError)
@@ -29,7 +29,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: The Error constructor already calls `captureStackTrace` internally, so calling it again is unnecessary.
 
-  ⚠ eslint-plugin-unicorn(no-useless-error-capture-stack-trace): Do not use `Error.captureStackTrace(…)` in the constructor of an Error subclass
+  ⚠ unicorn(no-useless-error-capture-stack-trace): Do not use `Error.captureStackTrace(…)` in the constructor of an Error subclass
    ╭─[no_useless_error_capture_stack_trace.tsx:3:26]
  2 │                 constructor() {
  3 │                     void Error.captureStackTrace(this, MyError)
@@ -38,7 +38,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: The Error constructor already calls `captureStackTrace` internally, so calling it again is unnecessary.
 
-  ⚠ eslint-plugin-unicorn(no-useless-error-capture-stack-trace): Do not use `Error.captureStackTrace(…)` in the constructor of an Error subclass
+  ⚠ unicorn(no-useless-error-capture-stack-trace): Do not use `Error.captureStackTrace(…)` in the constructor of an Error subclass
    ╭─[no_useless_error_capture_stack_trace.tsx:3:21]
  2 │                 constructor() {
  3 │                     Error.captureStackTrace(this, new.target)
@@ -47,7 +47,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: The Error constructor already calls `captureStackTrace` internally, so calling it again is unnecessary.
 
-  ⚠ eslint-plugin-unicorn(no-useless-error-capture-stack-trace): Do not use `Error.captureStackTrace(…)` in the constructor of an Error subclass
+  ⚠ unicorn(no-useless-error-capture-stack-trace): Do not use `Error.captureStackTrace(…)` in the constructor of an Error subclass
    ╭─[no_useless_error_capture_stack_trace.tsx:4:25]
  3 │                     constructor() {
  4 │                         Error.captureStackTrace(this, new.target)

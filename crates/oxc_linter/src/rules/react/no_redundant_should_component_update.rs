@@ -95,6 +95,8 @@ declare_oxc_lint!(
     NoRedundantShouldComponentUpdate,
     react,
     style,
+    version = "1.33.0",
+    short_description = "Disallow usage of `shouldComponentUpdate` when extending `React.PureComponent`.",
 );
 
 impl Rule for NoRedundantShouldComponentUpdate {

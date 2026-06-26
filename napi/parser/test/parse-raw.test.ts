@@ -29,11 +29,11 @@ import {
   TS_SNAPSHOT_PATH,
 } from "./parse-raw-common.ts";
 
-import type { TSTypeAliasDeclaration, VariableDeclaration } from "./parser.ts";
+import type { NumericLiteral, TSTypeAliasDeclaration, VariableDeclaration } from "./parser.ts";
 
 // Define `describe` and `it` variants which run/skip tests based on environment variables
 const { env } = process;
-const isEnabled = (envValue) => envValue === "true" || envValue === "1";
+const isEnabled = (envValue: string | undefined) => envValue === "true" || envValue === "1";
 
 const [describeRangeParent, itRangeParent] = isEnabled(env.RUN_RAW_RANGE_TESTS)
   ? [describe, it]
@@ -52,10 +52,13 @@ const [describeLazy, itLazy] = isEnabled(env.RUN_LAZY_TESTS)
 // So we run each case in a worker to achieve parallelism.
 const pool = new Tinypool({ filename: new URL("./parse-raw-worker.ts", import.meta.url).href });
 
-let runCase;
+type RunCase = (typeof import("./parse-raw-worker.ts"))["runCase"];
+type TestCaseData = Parameters<RunCase>[0];
+
+let runCase: RunCase;
 
 // Run test case in a worker
-async function runCaseInWorker(type, props) {
+async function runCaseInWorker(type: TestCaseData["type"], props: TestCaseData["props"]) {
   const success = await pool.run({ type, props });
 
   // If test failed in worker, run it again in main thread with Vitest's `expect`,
@@ -71,11 +74,11 @@ async function runCaseInWorker(type, props) {
 
 // Download fixtures.
 // Save in `target` directory, same as where benchmarks store them.
-let benchFixtureUrls = [
+const benchFixtureUrls = [
   // TypeScript syntax (2.81MB)
   "https://cdn.jsdelivr.net/gh/microsoft/TypeScript@v5.3.3/src/compiler/checker.ts",
-  // Real world app tsx (1.0M)
-  "https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@main/cal.com.tsx",
+  // Real world app tsx (415KB) — excalidraw App.tsx (master @ f6d85bc8)
+  "https://cdn.jsdelivr.net/gh/excalidraw/excalidraw@f6d85bc80fe328e8f472636eb0d541f7bb891aa0/packages/excalidraw/components/App.tsx",
   // Real world content-heavy app jsx (3K)
   "https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@main/RadixUIAdoptionSection.jsx",
   // Heavy with classes (554K)
@@ -83,11 +86,6 @@ let benchFixtureUrls = [
   // ES5 (3.9M)
   "https://cdn.jsdelivr.net/npm/antd@4.16.1/dist/antd.js",
 ];
-
-// `antd.js` tests sometimes take longer than 5 secs on CI, so skip that fixture in CI.
-// Tried setting `{ timeout: 10_000 }` option, but it didn't work for some reason.
-// TODO: Get longer timeout working and re-enable these tests in CI.
-if (process.env.CI) benchFixtureUrls = benchFixtureUrls.filter((url) => !url.endsWith("/antd.js"));
 
 await mkdir(TARGET_DIR_PATH, { recursive: true });
 
@@ -112,7 +110,7 @@ const benchFixturePaths = await Promise.all(
 // Skip tests which we know we can't pass (listed as failing in `estree_test262.snap` snapshot file),
 // and skip tests related to hashbangs (where output is correct, but Acorn doesn't parse hashbangs).
 const test262FailPaths = await getTestFailurePaths(TEST262_SNAPSHOT_PATH, TEST262_SHORT_DIR_PATH);
-const test262FixturePaths = [];
+const test262FixturePaths: string[] = [];
 for (let path of await readdir(ACORN_TEST262_DIR_PATH, { recursive: true })) {
   if (!path.endsWith(".json")) continue;
   path = path.slice(0, -2);
@@ -298,7 +296,7 @@ describeLazy.concurrent("lazy fixtures", () => {
 });
 
 // Get `Set` containing test paths which failed from snapshot file
-async function getTestFailurePaths(snapshotPath, pathPrefix) {
+async function getTestFailurePaths(snapshotPath: string, pathPrefix: string) {
   const mismatchPrefix = `Mismatch: ${pathPrefix}/`,
     mismatchPrefixLen = mismatchPrefix.length;
 
@@ -311,15 +309,16 @@ async function getTestFailurePaths(snapshotPath, pathPrefix) {
   );
 }
 
-describe.concurrent("`parse`", () => {
-  it("matches `parseSync`", async () => {
-    const path = benchFixturePaths[0],
-      filename = basename(path),
-      sourceText = await readFile(pathJoin(ROOT_DIR_PATH, path), "utf8");
-    const programStandard = parseSync(filename, sourceText).program;
-    const programRaw = (await parse(filename, sourceText, { experimentalRawTransfer: true }))
-      .program;
-    expect(programRaw).toEqual(programStandard);
+describe("`parse`", { concurrent: false }, () => {
+  describe("matches `parseSync`", () => {
+    it.each(benchFixturePaths)("%s", async (path) => {
+      const filename = basename(path),
+        sourceText = await readFile(pathJoin(ROOT_DIR_PATH, path), "utf8");
+      const programStandard = parseSync(filename, sourceText).program;
+      const programRaw = (await parse(filename, sourceText, { experimentalRawTransfer: true }))
+        .program;
+      expect(programRaw).toEqual(programStandard);
+    });
   });
 
   // oxlint-disable-next-line jest/expect-expect
@@ -335,7 +334,7 @@ describe.concurrent("`parse`", () => {
     await testMultiple(10_000);
   });
 
-  async function testMultiple(iterations) {
+  async function testMultiple(iterations: number) {
     const promises = [];
     for (let i = 0; i < iterations; i++) {
       const code = `let x = ${i}`;
@@ -346,7 +345,9 @@ describe.concurrent("`parse`", () => {
     for (let i = 0; i < iterations; i++) {
       const { program } = results[i];
       expect(program.body.length).toBe(1);
-      expect(program.body[0].declarations[0].init.value).toBe(i);
+      expect(
+        ((program.body[0] as VariableDeclaration).declarations[0].init as NumericLiteral).value,
+      ).toBe(i);
     }
   }
 });

@@ -79,7 +79,9 @@ declare_oxc_lint!(
     NumberLiteralCase,
     unicorn,
     style,
-    fix
+    fix,
+    version = "0.0.18",
+    short_description = "This rule enforces proper case for numeric literals.",
 );
 
 impl Rule for NumberLiteralCase {

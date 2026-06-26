@@ -97,7 +97,9 @@ declare_oxc_lint!(
     PreferToBeTruthy,
     vitest,
     style,
-    fix
+    fix,
+    version = "0.7.1",
+    short_description = "Prefer `toBeTruthy()` over `toBe(true)`.",
 );
 
 impl Rule for PreferToBeTruthy {

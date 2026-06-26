@@ -69,8 +69,10 @@ declare_oxc_lint!(
     /// ```
     PreferReadonlyParameterTypes(tsgolint),
     typescript,
-    nursery,
+    pedantic,
     config = PreferReadonlyParameterTypesConfig,
+    version = "1.49.0",
+    short_description = "Require function and method parameters to use readonly-compatible types.",
 );
 
 impl Rule for PreferReadonlyParameterTypes {

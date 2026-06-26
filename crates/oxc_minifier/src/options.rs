@@ -179,6 +179,21 @@ pub struct TreeShakeOptions {
     /// Default [PropertyReadSideEffects::All]
     pub property_read_side_effects: PropertyReadSideEffects,
 
+    /// Whether property write accesses (assignments to member expressions) have side effects.
+    ///
+    /// When `false`, assignments like `obj.prop = value` are considered side-effect-free
+    /// (assuming the object and value expressions themselves are side-effect-free).
+    /// This enables dropping property assignments to unused local variables,
+    /// e.g. `function A() {} A.from = () => {}` can be eliminated entirely.
+    ///
+    /// Requires assuming that `Object.prototype` / `Function.prototype` properties
+    /// are not setters with side effects.
+    ///
+    /// <https://rolldown.rs/reference/InputOptions.treeshake#propertywritesideeffects>
+    ///
+    /// Default `true`
+    pub property_write_side_effects: bool,
+
     /// Whether accessing a global variable has side effects.
     ///
     /// Accessing a non-existing global variable will throw an error.
@@ -204,6 +219,7 @@ impl Default for TreeShakeOptions {
             annotations: true,
             manual_pure_functions: vec![],
             property_read_side_effects: PropertyReadSideEffects::default(),
+            property_write_side_effects: true,
             unknown_global_side_effects: true,
             invalid_import_side_effects: false,
         }

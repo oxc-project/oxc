@@ -77,6 +77,8 @@ declare_oxc_lint!(
     suspicious,
     fix_dangerous,
     config = NoUnneededTernary,
+    version = "0.15.12",
+    short_description = "Disallow ternary operators when simpler alternatives exist.",
 );
 
 impl Rule for NoUnneededTernary {

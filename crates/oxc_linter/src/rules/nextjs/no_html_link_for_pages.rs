@@ -75,7 +75,9 @@ declare_oxc_lint!(
     /// ```
     NoHtmlLinkForPages,
     nextjs,
-    correctness
+    correctness,
+    version = "1.7.0",
+    short_description = "Prevents the usage of `<a>` elements to navigate between Next.js pages.",
 );
 
 impl Rule for NoHtmlLinkForPages {

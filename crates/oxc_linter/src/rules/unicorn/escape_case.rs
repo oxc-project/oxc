@@ -48,7 +48,9 @@ declare_oxc_lint!(
     EscapeCase,
     unicorn,
     pedantic,
-    fix
+    fix,
+    version = "0.0.19",
+    short_description = "Enforce uppercase characters for the value of the escape sequence.",
 );
 
 fn is_hex(iter: &Chars, count: usize) -> bool {

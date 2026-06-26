@@ -32,7 +32,7 @@ fn require_param_diagnostic(violations: Vec<Span>) -> OxcDiagnostic {
 pub struct RequireParam(Box<RequireParamConfig>);
 
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct RequireParamConfig {
     /// List of JSDoc tags that exempt functions from `@param` checking.
     #[serde(default = "default_exempted_by")]
@@ -102,6 +102,8 @@ declare_oxc_lint!(
     pedantic,
     pending,
     config = RequireParamConfig,
+    version = "0.4.3",
+    short_description = "Requires that all function parameters are documented with JSDoc `@param` tags.",
 );
 
 impl Rule for RequireParam {

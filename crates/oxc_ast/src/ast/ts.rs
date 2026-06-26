@@ -24,7 +24,8 @@ use std::cell::Cell;
 use oxc_allocator::{Box, CloneIn, Dummy, GetAddress, TakeIn, UnstableAddress, Vec};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
-use oxc_span::{ContentEq, GetSpan, GetSpanMut, Span, Str};
+use oxc_span::{ContentEq, GetSpan, GetSpanMut, Span};
+use oxc_str::Str;
 use oxc_syntax::{node::NodeId, scope::ScopeId};
 
 use super::{inherit_variants, js::*, literal::*};
@@ -1207,7 +1208,7 @@ pub struct TSTypePredicate<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub enum TSTypePredicateName<'a> {
     Identifier(Box<'a, IdentifierName<'a>>) = 0,
-    This(TSThisType) = 1,
+    This(Box<'a, TSThisType>) = 1,
 }
 
 /// TypeScript Module and Namespace Declarations

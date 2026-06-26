@@ -204,6 +204,7 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
         AttrLocation::Meta(meta) => match part {
             AttrPart::String("ts_type", ts_type) => meta.estree.ts_type = Some(ts_type),
             AttrPart::String("raw_deser", raw_deser) => meta.estree.raw_deser = Some(raw_deser),
+            AttrPart::Tag("raw_deser_inline") => meta.estree.raw_deser_inline = true,
             _ => return Err(()),
         },
         _ => unreachable!(),
@@ -635,10 +636,6 @@ fn get_converter_path(converter_name: &str, from_krate: &str, schema: &Schema) -
 ///
 /// This function also used by Typescript and raw transfer generators.
 pub fn should_skip_field(field: &FieldDef, schema: &Schema) -> bool {
-    // Always skip node_id field - it's internal and not part of ESTree serialization
-    if field.name() == "node_id" {
-        return true;
-    }
     if field.estree.skip {
         true
     } else {

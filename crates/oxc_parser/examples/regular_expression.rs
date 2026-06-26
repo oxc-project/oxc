@@ -23,9 +23,9 @@ fn main() {
 
     let parser_ret =
         Parser::new(&allocator, source_text.as_ref(), source_type).with_options(options).parse();
-    if !parser_ret.errors.is_empty() {
+    if !parser_ret.diagnostics.is_empty() {
         println!("Parsing failed:");
-        for error in parser_ret.errors {
+        for error in parser_ret.diagnostics {
             let error = error.with_source_code(Arc::clone(&source_text));
             println!("{error:?}");
         }
@@ -52,12 +52,7 @@ impl<'a> Visit<'a> for RegularExpressionVisitor {
     }
 
     fn visit_new_expression(&mut self, new_expr: &NewExpression<'a>) {
-        if new_expr
-            .callee
-            .get_identifier_reference()
-            .filter(|ident| ident.name == "RegExp")
-            .is_some()
-        {
+        if new_expr.callee.get_identifier_reference().is_some_and(|ident| ident.name == "RegExp") {
             println!("🍀 {}", new_expr.span.source_text(&self.source_text));
 
             let pattern_span = match new_expr.arguments.first() {

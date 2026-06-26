@@ -80,7 +80,9 @@ declare_oxc_lint!(
     /// ```
     NoAsyncPromiseExecutor,
     eslint,
-    correctness
+    correctness,
+    version = "0.0.3",
+    short_description = "Disallow using an async function as a Promise executor.",
 );
 
 impl Rule for NoAsyncPromiseExecutor {

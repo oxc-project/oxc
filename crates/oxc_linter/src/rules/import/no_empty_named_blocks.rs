@@ -38,7 +38,9 @@ declare_oxc_lint!(
     NoEmptyNamedBlocks,
     import,
     suspicious,
-    fix
+    fix,
+    version = "0.16.1",
+    short_description = "Enforces that named import blocks are not empty.",
 );
 
 impl Rule for NoEmptyNamedBlocks {

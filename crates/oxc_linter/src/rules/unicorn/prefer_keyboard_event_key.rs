@@ -1,8 +1,8 @@
 use phf::{Map, phf_map};
 
-use oxc_allocator::{Allocator, GetAddress, UnstableAddress};
+use oxc_allocator::{GetAddress, UnstableAddress};
 use oxc_ast::{
-    AstBuilder, AstKind,
+    AstKind,
     ast::{
         Argument, BindingPattern, BindingProperty, CallExpression, Expression, Function,
         MemberExpression, PropertyKey,
@@ -11,7 +11,7 @@ use oxc_ast::{
 use oxc_codegen::CodegenOptions;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{SPAN, Span};
+use oxc_span::Span;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -69,7 +69,9 @@ declare_oxc_lint!(
     PreferKeyboardEventKey,
     unicorn,
     style,
-    fix
+    fix,
+    version = "1.33.0",
+    short_description = "Prefer `KeyboardEvent#key` over `KeyboardEvent#keyCode`.",
 );
 
 impl Rule for PreferKeyboardEventKey {
@@ -313,16 +315,15 @@ impl PreferKeyboardEventKey {
                 AstKind::Function(func) => {
                     callback = Some(CallbackFunction::Regular(func));
                 }
-                AstKind::CallExpression(call) => {
-                    // Check if this is addEventListener
-                    if Self::is_add_event_listener_call(call) && callback.is_some() {
-                        // Verify the callback is the second argument
-                        if Self::is_callback_argument(call, callback.as_ref()) {
-                            return callback;
-                        }
-                    }
-                    // Not our addEventListener, keep looking up
+                AstKind::CallExpression(call)
+                    // Check if this is addEventListener, and verify the callback is the second argument
+                    if Self::is_add_event_listener_call(call)
+                        && callback.is_some()
+                        && Self::is_callback_argument(call, callback.as_ref()) =>
+                {
+                    return callback;
                 }
+                // Not our addEventListener, keep looking up
                 AstKind::Program(_) => {
                     return None;
                 }
@@ -417,13 +418,7 @@ impl PreferKeyboardEventKey {
                 let mut codegen = fixer
                     .codegen()
                     .with_options(CodegenOptions { single_quote: true, ..Default::default() });
-                let alloc = Allocator::default();
-                let ast = AstBuilder::new(&alloc);
-                codegen.print_expression(&ast.expression_string_literal(
-                    SPAN,
-                    ast.str(&key_name),
-                    None,
-                ));
+                codegen.print_string(&key_name);
                 let key_str = codegen.into_source_text();
 
                 let mut fix = fixer.new_fix_with_capacity(2);

@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ typescript-eslint(class-literal-property-style): Literals should be exposed using readonly fields.
+  ⚠ typescript(class-literal-property-style): Literals should be exposed using readonly fields.
    ╭─[class_literal_property_style.tsx:3:19]
  2 │             class Mx {
  3 │               get p1() {
@@ -11,7 +11,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace this getter with a readonly field initialized to the returned literal.
 
-  ⚠ typescript-eslint(class-literal-property-style): Literals should be exposed using readonly fields.
+  ⚠ typescript(class-literal-property-style): Literals should be exposed using readonly fields.
    ╭─[class_literal_property_style.tsx:3:19]
  2 │             class Mx {
  3 │               get p1() {
@@ -20,7 +20,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace this getter with a readonly field initialized to the returned literal.
 
-  ⚠ typescript-eslint(class-literal-property-style): Literals should be exposed using readonly fields.
+  ⚠ typescript(class-literal-property-style): Literals should be exposed using readonly fields.
    ╭─[class_literal_property_style.tsx:3:26]
  2 │             class Mx {
  3 │               static get p1() {
@@ -29,7 +29,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace this getter with a readonly field initialized to the returned literal.
 
-  ⚠ typescript-eslint(class-literal-property-style): Literals should be exposed using readonly fields.
+  ⚠ typescript(class-literal-property-style): Literals should be exposed using readonly fields.
    ╭─[class_literal_property_style.tsx:3:33]
  2 │             class Mx {
  3 │               public static get foo() {
@@ -38,7 +38,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace this getter with a readonly field initialized to the returned literal.
 
-  ⚠ typescript-eslint(class-literal-property-style): Literals should be exposed using readonly fields.
+  ⚠ typescript(class-literal-property-style): Literals should be exposed using readonly fields.
    ╭─[class_literal_property_style.tsx:3:27]
  2 │             class Mx {
  3 │               public get [myValue]() {
@@ -47,7 +47,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace this getter with a readonly field initialized to the returned literal.
 
-  ⚠ typescript-eslint(class-literal-property-style): Literals should be exposed using readonly fields.
+  ⚠ typescript(class-literal-property-style): Literals should be exposed using readonly fields.
    ╭─[class_literal_property_style.tsx:3:27]
  2 │             class Mx {
  3 │               public get [myValue]() {
@@ -56,7 +56,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace this getter with a readonly field initialized to the returned literal.
 
-  ⚠ typescript-eslint(class-literal-property-style): Literals should be exposed using getters.
+  ⚠ typescript(class-literal-property-style): Literals should be exposed using getters.
    ╭─[class_literal_property_style.tsx:3:32]
  2 │             class Mx {
  3 │               public readonly [myValue] = 'a literal value';
@@ -65,7 +65,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace this readonly literal field with a getter.
 
-  ⚠ typescript-eslint(class-literal-property-style): Literals should be exposed using getters.
+  ⚠ typescript(class-literal-property-style): Literals should be exposed using getters.
    ╭─[class_literal_property_style.tsx:3:24]
  2 │             class Mx {
  3 │               readonly p1 = 'hello world';
@@ -74,7 +74,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace this readonly literal field with a getter.
 
-  ⚠ typescript-eslint(class-literal-property-style): Literals should be exposed using getters.
+  ⚠ typescript(class-literal-property-style): Literals should be exposed using getters.
    ╭─[class_literal_property_style.tsx:3:24]
  2 │             class Mx {
  3 │               readonly p1 = `hello world`;
@@ -83,7 +83,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace this readonly literal field with a getter.
 
-  ⚠ typescript-eslint(class-literal-property-style): Literals should be exposed using getters.
+  ⚠ typescript(class-literal-property-style): Literals should be exposed using getters.
    ╭─[class_literal_property_style.tsx:3:31]
  2 │             class Mx {
  3 │               static readonly p1 = 'hello world';
@@ -92,7 +92,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace this readonly literal field with a getter.
 
-  ⚠ typescript-eslint(class-literal-property-style): Literals should be exposed using readonly fields.
+  ⚠ typescript(class-literal-property-style): Literals should be exposed using readonly fields.
    ╭─[class_literal_property_style.tsx:3:29]
  2 │             class Mx {
  3 │               protected get p1() {
@@ -101,7 +101,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace this getter with a readonly field initialized to the returned literal.
 
-  ⚠ typescript-eslint(class-literal-property-style): Literals should be exposed using getters.
+  ⚠ typescript(class-literal-property-style): Literals should be exposed using getters.
    ╭─[class_literal_property_style.tsx:3:34]
  2 │             class Mx {
  3 │               protected readonly p1 = 'hello world';
@@ -110,7 +110,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace this readonly literal field with a getter.
 
-  ⚠ typescript-eslint(class-literal-property-style): Literals should be exposed using readonly fields.
+  ⚠ typescript(class-literal-property-style): Literals should be exposed using readonly fields.
    ╭─[class_literal_property_style.tsx:3:33]
  2 │             class Mx {
  3 │               public static get p1() {
@@ -119,7 +119,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace this getter with a readonly field initialized to the returned literal.
 
-  ⚠ typescript-eslint(class-literal-property-style): Literals should be exposed using getters.
+  ⚠ typescript(class-literal-property-style): Literals should be exposed using getters.
    ╭─[class_literal_property_style.tsx:3:38]
  2 │             class Mx {
  3 │               public static readonly p1 = 'hello world';
@@ -128,7 +128,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace this readonly literal field with a getter.
 
-  ⚠ typescript-eslint(class-literal-property-style): Literals should be exposed using readonly fields.
+  ⚠ typescript(class-literal-property-style): Literals should be exposed using readonly fields.
    ╭─[class_literal_property_style.tsx:3:26]
  2 │             class Mx {
  3 │               public get myValue() {
@@ -137,7 +137,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace this getter with a readonly field initialized to the returned literal.
 
-  ⚠ typescript-eslint(class-literal-property-style): Literals should be exposed using getters.
+  ⚠ typescript(class-literal-property-style): Literals should be exposed using getters.
    ╭─[class_literal_property_style.tsx:3:31]
  2 │             class Mx {
  3 │               public readonly myValue = gql`
@@ -146,7 +146,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace this readonly literal field with a getter.
 
-  ⚠ typescript-eslint(class-literal-property-style): Literals should be exposed using getters.
+  ⚠ typescript(class-literal-property-style): Literals should be exposed using getters.
    ╭─[class_literal_property_style.tsx:3:32]
  2 │             class A {
  3 │               private readonly foo: string = 'bar';
@@ -155,7 +155,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace this readonly literal field with a getter.
 
-  ⚠ typescript-eslint(class-literal-property-style): Literals should be exposed using getters.
+  ⚠ typescript(class-literal-property-style): Literals should be exposed using getters.
    ╭─[class_literal_property_style.tsx:6:36]
  5 │                 const bar = new (class {
  6 │                   private readonly foo: string = 'baz';
@@ -164,7 +164,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace this readonly literal field with a getter.
 
-  ⚠ typescript-eslint(class-literal-property-style): Literals should be exposed using getters.
+  ⚠ typescript(class-literal-property-style): Literals should be exposed using getters.
    ╭─[class_literal_property_style.tsx:3:32]
  2 │             class A {
  3 │               private readonly foo: string = 'bar';

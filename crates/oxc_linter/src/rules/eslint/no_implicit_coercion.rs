@@ -1,7 +1,8 @@
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, UnaryOperator};
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -148,7 +149,7 @@ impl std::ops::Deref for NoImplicitCoercion {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallows shorthand type conversions using operators like `!!`, `+`, `""+ `, etc.
+    /// Disallow shorthand type conversions using operators like `!!`, unary `+`, and `"" +`.
     ///
     /// ### Why is this bad?
     ///
@@ -176,6 +177,8 @@ declare_oxc_lint!(
     style,
     fix,
     config = NoImplicitCoercionConfig,
+    version = "1.33.0",
+    short_description = "Disallow shorthand type conversions using operators like `!!`, unary `+`, and `\"\" +`.",
 );
 
 impl Rule for NoImplicitCoercion {
@@ -291,17 +294,16 @@ impl Rule for NoImplicitCoercion {
                     }
                 }
             }
-            AstKind::AssignmentExpression(assign_expr) => {
+            AstKind::AssignmentExpression(assign_expr)
                 // Check for foo += "" (string coercion)
                 if self.string
                     && assign_expr.operator == AssignmentOperator::Addition
                     && !self.is_allowed(AllowedOperators::PLUS)
                     && is_empty_string(&assign_expr.right)
-                {
+                => {
                     ctx.diagnostic(string_coercion_diagnostic(assign_expr.span));
                 }
-            }
-            AstKind::TemplateLiteral(template) => {
+            AstKind::TemplateLiteral(template)
                 // Check for `${foo}` (string coercion via template literal)
                 // Skip if this is a tagged template literal (e.g., tag`${foo}`)
                 if self.string
@@ -309,7 +311,7 @@ impl Rule for NoImplicitCoercion {
                     && template.quasis.len() == 2
                     && template.expressions.len() == 1
                     && !is_tagged_template(ctx, node)
-                {
+                => {
                     let first_quasi = &template.quasis[0];
                     let last_quasi = &template.quasis[1];
 
@@ -340,7 +342,6 @@ impl Rule for NoImplicitCoercion {
                         }
                     }
                 }
-            }
             _ => {}
         }
     }
@@ -578,7 +579,6 @@ fn test() {
         ("!!foo", None),
         ("!!(foo + bar)", None),
         ("!!(foo + bar); var Boolean = null", None),
-        ("!!(foo + bar)", None),
         ("~foo.indexOf(1)", None),
         ("~foo.bar.indexOf(2)", None),
         ("~foo.lastIndexOf(1)", None),

@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-jest(no-duplicate-hooks): Duplicate "beforeEach" in describe block.
+  ⚠ jest(no-duplicate-hooks): Duplicate "beforeEach" in describe block.
    ╭─[no_duplicate_hooks.tsx:4:21]
  3 │                     beforeEach(() => {});
  4 │                     beforeEach(() => {});
@@ -11,7 +11,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Describe blocks can only have one of each hook. Consider consolidating the duplicate hooks into a single call.
 
-  ⚠ eslint-plugin-jest(no-duplicate-hooks): Duplicate "beforeAll" in describe block.
+  ⚠ jest(no-duplicate-hooks): Duplicate "beforeAll" in describe block.
    ╭─[no_duplicate_hooks.tsx:5:21]
  4 │                     beforeAll(() => {}),
  5 │                     beforeAll(() => {}),
@@ -20,7 +20,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Describe blocks can only have one of each hook. Consider consolidating the duplicate hooks into a single call.
 
-  ⚠ eslint-plugin-jest(no-duplicate-hooks): Duplicate "afterEach" in describe block.
+  ⚠ jest(no-duplicate-hooks): Duplicate "afterEach" in describe block.
    ╭─[no_duplicate_hooks.tsx:4:21]
  3 │                     afterEach(() => {}),
  4 │                     afterEach(() => {}),
@@ -29,7 +29,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Describe blocks can only have one of each hook. Consider consolidating the duplicate hooks into a single call.
 
-  ⚠ eslint-plugin-jest(no-duplicate-hooks): Duplicate "afterEach" in describe block.
+  ⚠ jest(no-duplicate-hooks): Duplicate "afterEach" in describe block.
    ╭─[no_duplicate_hooks.tsx:6:21]
  5 │                     afterEach(() => {}),
  6 │                     afterEach(() => {}),
@@ -38,7 +38,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Describe blocks can only have one of each hook. Consider consolidating the duplicate hooks into a single call.
 
-  ⚠ eslint-plugin-jest(no-duplicate-hooks): Duplicate "afterEach" in describe block.
+  ⚠ jest(no-duplicate-hooks): Duplicate "afterEach" in describe block.
    ╭─[no_duplicate_hooks.tsx:6:21]
  5 │                     afterEach(() => {}),
  6 │                     somethingElse(() => {}),
@@ -47,7 +47,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Describe blocks can only have one of each hook. Consider consolidating the duplicate hooks into a single call.
 
-  ⚠ eslint-plugin-jest(no-duplicate-hooks): Duplicate "afterAll" in describe block.
+  ⚠ jest(no-duplicate-hooks): Duplicate "afterAll" in describe block.
    ╭─[no_duplicate_hooks.tsx:4:21]
  3 │                     afterAll(() => {}),
  4 │                     afterAll(() => {}),
@@ -56,7 +56,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Describe blocks can only have one of each hook. Consider consolidating the duplicate hooks into a single call.
 
-  ⚠ eslint-plugin-jest(no-duplicate-hooks): Duplicate "afterAll" in describe block.
+  ⚠ jest(no-duplicate-hooks): Duplicate "afterAll" in describe block.
    ╭─[no_duplicate_hooks.tsx:3:17]
  2 │                 afterAll(() => {}),
  3 │                 afterAll(() => {}),
@@ -65,7 +65,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Describe blocks can only have one of each hook. Consider consolidating the duplicate hooks into a single call.
 
-  ⚠ eslint-plugin-jest(no-duplicate-hooks): Duplicate "beforeEach" in describe block.
+  ⚠ jest(no-duplicate-hooks): Duplicate "beforeEach" in describe block.
    ╭─[no_duplicate_hooks.tsx:4:21]
  3 │                     beforeEach(() => {}),
  4 │                     beforeEach(() => {}),
@@ -74,7 +74,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Describe blocks can only have one of each hook. Consider consolidating the duplicate hooks into a single call.
 
-  ⚠ eslint-plugin-jest(no-duplicate-hooks): Duplicate "beforeEach" in describe block.
+  ⚠ jest(no-duplicate-hooks): Duplicate "beforeEach" in describe block.
    ╭─[no_duplicate_hooks.tsx:5:21]
  4 │                     beforeEach(() => {}),
  5 │                     beforeEach(() => {}),
@@ -83,7 +83,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Describe blocks can only have one of each hook. Consider consolidating the duplicate hooks into a single call.
 
-  ⚠ eslint-plugin-jest(no-duplicate-hooks): Duplicate "afterAll" in describe block.
+  ⚠ jest(no-duplicate-hooks): Duplicate "afterAll" in describe block.
    ╭─[no_duplicate_hooks.tsx:4:21]
  3 │                     afterAll(() => {}),
  4 │                     afterAll(() => {}),
@@ -92,7 +92,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Describe blocks can only have one of each hook. Consider consolidating the duplicate hooks into a single call.
 
-  ⚠ eslint-plugin-jest(no-duplicate-hooks): Duplicate "beforeAll" in describe block.
+  ⚠ jest(no-duplicate-hooks): Duplicate "beforeAll" in describe block.
    ╭─[no_duplicate_hooks.tsx:6:21]
  5 │                     beforeAll(() => {}),
  6 │                     beforeAll(() => {}),
@@ -101,7 +101,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Describe blocks can only have one of each hook. Consider consolidating the duplicate hooks into a single call.
 
-  ⚠ eslint-plugin-jest(no-duplicate-hooks): Duplicate "beforeEach" in describe block.
+  ⚠ jest(no-duplicate-hooks): Duplicate "beforeEach" in describe block.
     ╭─[no_duplicate_hooks.tsx:11:21]
  10 │                     beforeEach(() => {}),
  11 │                     beforeEach(() => {}),
@@ -110,7 +110,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Describe blocks can only have one of each hook. Consider consolidating the duplicate hooks into a single call.
 
-  ⚠ eslint-plugin-jest(no-duplicate-hooks): Duplicate "beforeEach" in describe block.
+  ⚠ jest(no-duplicate-hooks): Duplicate "beforeEach" in describe block.
     ╭─[no_duplicate_hooks.tsx:9:25]
   8 │                         beforeEach(() => {})
   9 │                         beforeEach(() => {})
@@ -119,7 +119,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Describe blocks can only have one of each hook. Consider consolidating the duplicate hooks into a single call.
 
-  ⚠ eslint-plugin-jest(no-duplicate-hooks): Duplicate "beforeEach" in describe block.
+  ⚠ jest(no-duplicate-hooks): Duplicate "beforeEach" in describe block.
    ╭─[no_duplicate_hooks.tsx:4:21]
  3 │                     beforeEach(() => {});
  4 │                     beforeEach(() => {});
@@ -128,7 +128,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Describe blocks can only have one of each hook. Consider consolidating the duplicate hooks into a single call.
 
-  ⚠ eslint-plugin-jest(no-duplicate-hooks): Duplicate "beforeEach" in describe block.
+  ⚠ jest(no-duplicate-hooks): Duplicate "beforeEach" in describe block.
     ╭─[no_duplicate_hooks.tsx:11:25]
  10 │                         beforeEach(() => {});
  11 │                         beforeEach(() => {});
@@ -137,7 +137,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Describe blocks can only have one of each hook. Consider consolidating the duplicate hooks into a single call.
 
-  ⚠ eslint-plugin-jest(no-duplicate-hooks): Duplicate "beforeEach" in describe block.
+  ⚠ jest(no-duplicate-hooks): Duplicate "beforeEach" in describe block.
     ╭─[no_duplicate_hooks.tsx:12:29]
  11 │                             beforeEach(() => {});
  12 │                             beforeEach(() => {});
@@ -146,7 +146,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Describe blocks can only have one of each hook. Consider consolidating the duplicate hooks into a single call.
 
-  ⚠ eslint-plugin-jest(no-duplicate-hooks): Duplicate "beforeEach" in describe block.
+  ⚠ jest(no-duplicate-hooks): Duplicate "beforeEach" in describe block.
    ╭─[no_duplicate_hooks.tsx:4:21]
  3 │                     beforeEach(() => {});
  4 │                     beforeEach(() => {});
@@ -155,7 +155,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Describe blocks can only have one of each hook. Consider consolidating the duplicate hooks into a single call.
 
-  ⚠ eslint-plugin-jest(no-duplicate-hooks): Duplicate "beforeEach" in describe block.
+  ⚠ jest(no-duplicate-hooks): Duplicate "beforeEach" in describe block.
     ╭─[no_duplicate_hooks.tsx:11:25]
  10 │                         beforeEach(() => {});
  11 │                         beforeEach(() => {});
@@ -164,7 +164,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Describe blocks can only have one of each hook. Consider consolidating the duplicate hooks into a single call.
 
-  ⚠ eslint-plugin-jest(no-duplicate-hooks): Duplicate "beforeEach" in describe block.
+  ⚠ jest(no-duplicate-hooks): Duplicate "beforeEach" in describe block.
    ╭─[no_duplicate_hooks.tsx:4:21]
  3 │                     beforeEach(() => {}),
  4 │                     beforeEach(() => {}),
@@ -173,7 +173,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Describe blocks can only have one of each hook. Consider consolidating the duplicate hooks into a single call.
 
-  ⚠ eslint-plugin-jest(no-duplicate-hooks): Duplicate "afterEach" in describe block.
+  ⚠ jest(no-duplicate-hooks): Duplicate "afterEach" in describe block.
    ╭─[no_duplicate_hooks.tsx:4:21]
  3 │                     afterEach(() => {}),
  4 │                     afterEach(() => {}),
@@ -182,7 +182,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Describe blocks can only have one of each hook. Consider consolidating the duplicate hooks into a single call.
 
-  ⚠ eslint-plugin-jest(no-duplicate-hooks): Duplicate "beforeEach" in describe block.
+  ⚠ jest(no-duplicate-hooks): Duplicate "beforeEach" in describe block.
     ╭─[no_duplicate_hooks.tsx:11:21]
  10 │                     beforeEach(() => {}),
  11 │                     beforeEach(() => {}),
@@ -191,7 +191,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Describe blocks can only have one of each hook. Consider consolidating the duplicate hooks into a single call.
 
-  ⚠ eslint-plugin-jest(no-duplicate-hooks): Duplicate "beforeEach" in describe block.
+  ⚠ jest(no-duplicate-hooks): Duplicate "beforeEach" in describe block.
     ╭─[no_duplicate_hooks.tsx:11:21]
  10 │                     beforeEach(() => {}),
  11 │                     beforeEach(() => {}),
@@ -200,7 +200,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Describe blocks can only have one of each hook. Consider consolidating the duplicate hooks into a single call.
 
-  ⚠ eslint-plugin-jest(no-duplicate-hooks): Duplicate "beforeEach" in describe block.
+  ⚠ jest(no-duplicate-hooks): Duplicate "beforeEach" in describe block.
    ╭─[no_duplicate_hooks.tsx:4:21]
  3 │                     beforeEach(() => {});
  4 │                     beforeEach(() => {});
@@ -209,7 +209,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Describe blocks can only have one of each hook. Consider consolidating the duplicate hooks into a single call.
 
-  ⚠ eslint-plugin-jest(no-duplicate-hooks): Duplicate "beforeEach" in describe block.
+  ⚠ jest(no-duplicate-hooks): Duplicate "beforeEach" in describe block.
     ╭─[no_duplicate_hooks.tsx:11:25]
  10 │                         beforeEach(() => {});
  11 │                         beforeEach(() => {});

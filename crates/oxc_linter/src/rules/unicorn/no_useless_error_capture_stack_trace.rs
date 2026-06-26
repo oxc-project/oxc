@@ -59,7 +59,9 @@ declare_oxc_lint!(
     NoUselessErrorCaptureStackTrace,
     unicorn,
     restriction,
-    suggestion
+    suggestion,
+    version = "1.20.0",
+    short_description = "Disallows unnecessary `Error.captureStackTrace(…)` in error constructors.",
 );
 
 impl Rule for NoUselessErrorCaptureStackTrace {

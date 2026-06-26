@@ -46,6 +46,8 @@ declare_oxc_lint!(
     unicorn,
     style,
     fix_dangerous,
+    version = "0.0.19",
+    short_description = "Disallows member access from `await` expressions.",
 );
 
 impl Rule for NoAwaitExpressionMember {

@@ -57,7 +57,9 @@ declare_oxc_lint!(
     /// ```
     NoAssignModuleVariable,
     nextjs,
-    correctness
+    correctness,
+    version = "0.2.0",
+    short_description = "Prevents the assignment or declaration of variables named `module` in Next.js applications.",
 );
 
 impl Rule for NoAssignModuleVariable {

@@ -58,6 +58,8 @@ declare_oxc_lint!(
     NoUndefined,
     eslint,
     restriction,
+    version = "0.5.3",
+    short_description = "Disallow the use of `undefined` as an identifier.",
 );
 
 fn diagnostic_undefined_keyword(name: &str, span: Span, ctx: &LintContext) {

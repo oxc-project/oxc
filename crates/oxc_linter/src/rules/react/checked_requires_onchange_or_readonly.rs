@@ -78,6 +78,8 @@ declare_oxc_lint!(
     react,
     pedantic,
     config = CheckedRequiresOnchangeOrReadonly,
+    version = "0.2.15",
+    short_description = "Enforce using `onChange` or `readOnly` attributes when `checked` is used on an `<input>` field.",
 );
 
 impl Rule for CheckedRequiresOnchangeOrReadonly {

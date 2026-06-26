@@ -2,35 +2,35 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-unicorn(no-negation-in-equality-check): Negated expression is not allowed in equality check.
+  ⚠ unicorn(no-negation-in-equality-check): Negated expression is not allowed in equality check.
    ╭─[no_negation_in_equality_check.tsx:1:1]
  1 │ !foo === bar
    · ────
    ╰────
   help: Remove the negation operator and use '!==' instead of '==='.
 
-  ⚠ eslint-plugin-unicorn(no-negation-in-equality-check): Negated expression is not allowed in equality check.
+  ⚠ unicorn(no-negation-in-equality-check): Negated expression is not allowed in equality check.
    ╭─[no_negation_in_equality_check.tsx:1:1]
  1 │ !foo !== bar
    · ────
    ╰────
   help: Remove the negation operator and use '===' instead of '!=='.
 
-  ⚠ eslint-plugin-unicorn(no-negation-in-equality-check): Negated expression is not allowed in equality check.
+  ⚠ unicorn(no-negation-in-equality-check): Negated expression is not allowed in equality check.
    ╭─[no_negation_in_equality_check.tsx:1:1]
  1 │ !foo == bar
    · ────
    ╰────
   help: Remove the negation operator and use '!=' instead of '=='.
 
-  ⚠ eslint-plugin-unicorn(no-negation-in-equality-check): Negated expression is not allowed in equality check.
+  ⚠ unicorn(no-negation-in-equality-check): Negated expression is not allowed in equality check.
    ╭─[no_negation_in_equality_check.tsx:1:1]
  1 │ !foo != bar
    · ────
    ╰────
   help: Remove the negation operator and use '==' instead of '!='.
 
-  ⚠ eslint-plugin-unicorn(no-negation-in-equality-check): Negated expression is not allowed in equality check.
+  ⚠ unicorn(no-negation-in-equality-check): Negated expression is not allowed in equality check.
    ╭─[no_negation_in_equality_check.tsx:2:23]
  1 │ function x() {
  2 │                 return!foo === bar;
@@ -39,7 +39,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the negation operator and use '!==' instead of '==='.
 
-  ⚠ eslint-plugin-unicorn(no-negation-in-equality-check): Negated expression is not allowed in equality check.
+  ⚠ unicorn(no-negation-in-equality-check): Negated expression is not allowed in equality check.
    ╭─[no_negation_in_equality_check.tsx:2:23]
  1 │     function x() {
  2 │ ╭─▶                 return!
@@ -48,7 +48,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the negation operator and use '!==' instead of '==='.
 
-  ⚠ eslint-plugin-unicorn(no-negation-in-equality-check): Negated expression is not allowed in equality check.
+  ⚠ unicorn(no-negation-in-equality-check): Negated expression is not allowed in equality check.
    ╭─[no_negation_in_equality_check.tsx:4:22]
  3 │                         foo === bar;
  4 │ ╭─▶                 throw!
@@ -57,7 +57,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the negation operator and use '!==' instead of '==='.
 
-  ⚠ eslint-plugin-unicorn(no-negation-in-equality-check): Negated expression is not allowed in equality check.
+  ⚠ unicorn(no-negation-in-equality-check): Negated expression is not allowed in equality check.
    ╭─[no_negation_in_equality_check.tsx:2:13]
  1 │ foo
  2 │             !(a) === b
@@ -65,7 +65,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the negation operator and use '!==' instead of '==='.
 
-  ⚠ eslint-plugin-unicorn(no-negation-in-equality-check): Negated expression is not allowed in equality check.
+  ⚠ unicorn(no-negation-in-equality-check): Negated expression is not allowed in equality check.
    ╭─[no_negation_in_equality_check.tsx:2:13]
  1 │ foo
  2 │             ![a, b].join('') === c
@@ -73,7 +73,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the negation operator and use '!==' instead of '==='.
 
-  ⚠ eslint-plugin-unicorn(no-negation-in-equality-check): Negated expression is not allowed in equality check.
+  ⚠ unicorn(no-negation-in-equality-check): Negated expression is not allowed in equality check.
    ╭─[no_negation_in_equality_check.tsx:2:13]
  1 │ foo
  2 │             ! [a, b].join('') === c
@@ -81,7 +81,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the negation operator and use '!==' instead of '==='.
 
-  ⚠ eslint-plugin-unicorn(no-negation-in-equality-check): Negated expression is not allowed in equality check.
+  ⚠ unicorn(no-negation-in-equality-check): Negated expression is not allowed in equality check.
    ╭─[no_negation_in_equality_check.tsx:2:13]
  1 │ foo
  2 │             !/* comment */[a, b].join('') === c

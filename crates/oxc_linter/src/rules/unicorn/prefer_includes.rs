@@ -37,7 +37,7 @@ enum ComparisonKind {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
+    /// Prefer `includes()` over `indexOf()` when checking for existence/non-existence.
     /// All built-ins have `.includes()` in addition to `.indexOf()`.
     ///
     /// ### Why is this bad?
@@ -58,7 +58,9 @@ declare_oxc_lint!(
     PreferIncludes,
     unicorn,
     style,
-    suggestion
+    suggestion,
+    version = "0.0.18",
+    short_description = "Prefer `includes()` over `indexOf()` when checking for existence/non-existence.",
 );
 
 impl Rule for PreferIncludes {

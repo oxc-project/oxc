@@ -26,9 +26,9 @@ import type {
 
 const CLI_PATH = join(import.meta.dirname, "..", "..", "dist", "cli.js");
 
-export function createLspConnection() {
+export function createLspConnection(env: Record<string, string> = {}) {
   const proc = spawn("node", [CLI_PATH, "--lsp"], {
-    // env: { ...process.env, OXC_LOG: "info" }, for debugging
+    env: { ...process.env, ...env },
   });
 
   const connection = createMessageConnection(
@@ -177,6 +177,52 @@ ${content}
 ${applyEdits(content, edits, languageId)}
 --------------------
 `.trim();
+}
+
+export async function formatMultipleFixtures(
+  fixturesDir: string,
+  workspaceDir: string,
+  files: { uri: string; content: string; languageId: string }[],
+  clientOrConfig?: OxfmtLSPConfig | ReturnType<typeof createLspConnection>,
+): Promise<string> {
+  let innerClient: ReturnType<typeof createLspConnection> | undefined;
+
+  if (clientOrConfig === undefined || !("initialize" in clientOrConfig)) {
+    innerClient = createLspConnection();
+
+    await innerClient.initialize([{ uri: pathToFileURL(workspaceDir).href, name: "test" }], {}, [
+      {
+        workspaceUri: pathToFileURL(workspaceDir).href,
+        options: clientOrConfig,
+      },
+    ]);
+
+    clientOrConfig = innerClient;
+  }
+
+  const snapshot = [];
+  // oxlint-disable no-await-in-loop
+  for (const { uri, content, languageId } of files) {
+    await clientOrConfig.didOpen(uri, languageId, content);
+    const edits = await clientOrConfig.format(uri);
+
+    snapshot.push(
+      `${uriSnapshotHeader(uri, fixturesDir)}
+--- BEFORE ---------
+${content}
+--- AFTER ----------
+${applyEdits(content, edits, languageId)}
+--------------------
+`.trim(),
+    );
+  }
+  // oxlint-enable no-await-in-loop
+
+  if (innerClient) {
+    await innerClient[Symbol.asyncDispose]();
+  }
+
+  return snapshot.join("\n\n");
 }
 
 export async function formatFixtureAfterConfigChange(

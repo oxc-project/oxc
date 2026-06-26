@@ -1,0 +1,11 @@
+[
+  { "args": ["--check", "--config", "custom_groups.json", "custom_groups.ts"] },
+  {
+    "args": [
+      "--check",
+      "--config",
+      "custom_groups_selector_modifiers.json",
+      "custom_groups_selector_modifiers.ts"
+    ]
+  }
+]

@@ -44,6 +44,8 @@ declare_oxc_lint!(
     NoNamespace,
     react,
     suspicious,
+    version = "0.15.13",
+    short_description = "Enforce that namespaces are not used in React elements.",
 );
 
 impl Rule for NoNamespace {
@@ -60,15 +62,13 @@ impl Rule for NoNamespace {
                     ));
                 }
             }
-            AstKind::CallExpression(call_expr) => {
-                if is_create_element_call(call_expr) {
-                    let Some(Argument::StringLiteral(str_lit)) = call_expr.arguments.first() else {
-                        return;
-                    };
+            AstKind::CallExpression(call_expr) if is_create_element_call(call_expr) => {
+                let Some(Argument::StringLiteral(str_lit)) = call_expr.arguments.first() else {
+                    return;
+                };
 
-                    if str_lit.value.contains(':') {
-                        ctx.diagnostic(no_namespace_diagnostic(str_lit.span, &str_lit.value));
-                    }
+                if str_lit.value.contains(':') {
+                    ctx.diagnostic(no_namespace_diagnostic(str_lit.span, &str_lit.value));
                 }
             }
             _ => {}

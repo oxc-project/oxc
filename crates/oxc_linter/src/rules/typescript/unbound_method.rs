@@ -18,7 +18,7 @@ pub struct UnboundMethodConfig {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule enforces unbound methods are called with their expected scope.
+    /// This rule enforces that unbound methods are called with their expected scope.
     ///
     /// ### Why is this bad?
     ///
@@ -97,6 +97,8 @@ declare_oxc_lint!(
     typescript,
     correctness,
     config = UnboundMethodConfig,
+    version = "1.12.0",
+    short_description = "This rule enforces that unbound methods are called with their expected scope.",
 );
 
 impl Rule for UnboundMethod {

@@ -1,7 +1,10 @@
+import repos from "../../repos.json" with { type: "json" };
+
 import type { TestGroup } from "../index.ts";
 
 const group: TestGroup = {
   name: "cypress",
+  ...repos.cypress,
 
   submoduleName: "cypress",
   testFilesDirPath: "tests/lib/rules",

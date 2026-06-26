@@ -53,6 +53,8 @@ declare_oxc_lint!(
     NoLoneBlocks,
     eslint,
     style,
+    version = "0.15.6",
+    short_description = "Disallows unnecessary standalone block statements.",
 );
 
 impl Rule for NoLoneBlocks {
@@ -69,6 +71,7 @@ impl Rule for NoLoneBlocks {
 
             if !is_comment_in_stmt
                 && !matches!(parent_node.kind(), AstKind::TryStatement(_) | AstKind::CatchClause(_))
+                && !parent_node.kind().is_iteration_statement()
             {
                 report(ctx, node, parent_node);
             }
@@ -101,20 +104,16 @@ impl Rule for NoLoneBlocks {
         }
 
         match parent_node.kind() {
-            AstKind::FunctionBody(parent) => {
-                if parent.statements.len() == 1 && stmt.body.len() == 1 {
-                    report(ctx, node, parent_node);
-                }
+            AstKind::FunctionBody(parent)
+                if parent.statements.len() == 1 && stmt.body.len() == 1 =>
+            {
+                report(ctx, node, parent_node);
             }
-            AstKind::BlockStatement(parent_statement) => {
-                if parent_statement.body.len() == 1 {
-                    report(ctx, node, parent_node);
-                }
+            AstKind::BlockStatement(parent_statement) if parent_statement.body.len() == 1 => {
+                report(ctx, node, parent_node);
             }
-            AstKind::StaticBlock(parent_statement) => {
-                if parent_statement.body.len() == 1 {
-                    report(ctx, node, parent_node);
-                }
+            AstKind::StaticBlock(parent_statement) if parent_statement.body.len() == 1 => {
+                report(ctx, node, parent_node);
             }
             _ => {}
         }
@@ -207,6 +206,12 @@ fn test() {
         ", // {                "parser": require(parser("typescript-parsers/no-lone-blocks/await-using")),                "ecmaVersion": 2022            }
         // Issue: <https://github.com/oxc-project/oxc/issues/8515>
         "try {} catch {}",
+        // Issue: <https://github.com/oxc-project/oxc/issues/22648>
+        "while (i > 0) {}",
+        "for (let idx = 0; idx < 5; idx++) {}",
+        "do {} while (foo)",
+        "for (const key in obj) {}",
+        "for (const value of values) {}",
         // Issue: https://github.com/oxc-project/oxc/issues/8697
         "
             if (foo) {
@@ -233,7 +238,6 @@ fn test() {
         "while (foo) { {} }",
         // MEMO: Currently, this rule always analyzes in strict mode (as it cannot retrieve ecmaFeatures).
         // "{ function bar() {} }", // { "ecmaVersion": 6 },
-        "{var x = 1;}", // { "ecmaVersion": 6 },
         "{
 			{var x = 1;}
 			let y = 2; } {let z = 1;}", // { "ecmaVersion": 6 },

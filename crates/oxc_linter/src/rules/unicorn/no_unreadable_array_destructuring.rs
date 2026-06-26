@@ -1,4 +1,4 @@
-use oxc_allocator::Vec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -45,10 +45,15 @@ declare_oxc_lint!(
     NoUnreadableArrayDestructuring,
     unicorn,
     style,
-    pending
+    pending,
+    version = "0.0.19",
+    short_description = "Disallows destructuring values from an array in ways that are difficult to read.",
 );
 
-fn is_unreadable_array_destructuring<T, U>(elements: &Vec<Option<T>>, rest: Option<&U>) -> bool {
+fn is_unreadable_array_destructuring<T, U>(
+    elements: &ArenaVec<'_, Option<T>>,
+    rest: Option<&U>,
+) -> bool {
     if elements.len() >= 3 && elements.windows(2).any(|window| window.iter().all(Option::is_none)) {
         return true;
     }

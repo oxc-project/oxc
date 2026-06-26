@@ -80,7 +80,9 @@ declare_oxc_lint!(
     /// ```
     DefaultCaseLast,
     eslint,
-    style
+    style,
+    version = "0.0.16",
+    short_description = "Requires the `default` clause in `switch` statements to be the last one.",
 );
 
 impl Rule for DefaultCaseLast {

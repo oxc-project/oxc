@@ -2,14 +2,15 @@ use std::borrow::Cow;
 
 use rustc_hash::FxHashSet;
 
-use oxc_allocator::GetAddress;
+use oxc_allocator::{ArenaVec, GetAddress};
 use oxc_ast::{
     AstKind,
     ast::{BindingIdentifier, *},
 };
 use oxc_ecmascript::{ToBoolean, WithoutGlobalReferenceInformation};
 use oxc_semantic::{AstNode, AstNodes, IsGlobalReference, NodeId, ReferenceId, Semantic, SymbolId};
-use oxc_span::{GetSpan, Span, ident::REQUIRE};
+use oxc_span::{GetSpan, Span};
+use oxc_str::static_ident;
 use oxc_syntax::{
     identifier::is_irregular_whitespace,
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
@@ -295,9 +296,7 @@ pub fn get_symbol_id_of_variable(
     semantic.scoping().get_reference(ident.reference_id()).symbol_id()
 }
 
-pub fn extract_regex_flags<'a>(
-    args: &'a oxc_allocator::Vec<'a, Argument<'a>>,
-) -> Option<RegExpFlags> {
+pub fn extract_regex_flags<'a>(args: &'a ArenaVec<'a, Argument<'a>>) -> Option<RegExpFlags> {
     if args.len() <= 1 {
         return Some(RegExpFlags::empty());
     }
@@ -405,7 +404,7 @@ pub fn is_global_require_call(call_expr: &CallExpression, ctx: &Semantic) -> boo
     if call_expr.arguments.len() != 1 {
         return false;
     }
-    call_expr.callee.is_global_reference_name(REQUIRE, ctx.scoping())
+    call_expr.callee.is_global_reference_name(static_ident!("require"), ctx.scoping())
 }
 
 pub fn is_function_node(node: &AstNode) -> bool {

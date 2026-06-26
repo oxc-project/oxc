@@ -79,7 +79,7 @@ fn test_ts(source_text: &str, expected: bool) {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, SourceType::tsx()).parse();
     assert!(!ret.panicked, "{source_text}");
-    assert!(ret.errors.is_empty(), "{source_text}");
+    assert!(ret.diagnostics.is_empty(), "{source_text}");
 
     let Some(Statement::ExpressionStatement(stmt)) = &ret.program.body.first() else {
         panic!("should have a expression statement body: {source_text}");
@@ -105,7 +105,7 @@ fn test_with_ctx(source_text: &str, ctx: &Ctx, expected: bool) {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
     assert!(!ret.panicked, "{source_text}");
-    assert!(ret.errors.is_empty(), "{source_text}");
+    assert!(ret.diagnostics.is_empty(), "{source_text}");
 
     let Some(Statement::ExpressionStatement(stmt)) = &ret.program.body.first() else {
         panic!("should have a expression statement body: {source_text}");
@@ -119,7 +119,7 @@ fn test_in_function(source_text: &str, expected: bool) {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
     assert!(!ret.panicked, "{source_text}");
-    assert!(ret.errors.is_empty(), "{source_text}");
+    assert!(ret.diagnostics.is_empty(), "{source_text}");
 
     let Some(Statement::FunctionDeclaration(stmt)) = &ret.program.body.first() else {
         panic!("should have a function declaration: {source_text}");
@@ -151,7 +151,7 @@ fn test_assign_target_with_global_variables(
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
     assert!(!ret.panicked, "{source_text}");
-    assert!(ret.errors.is_empty(), "{source_text}");
+    assert!(ret.diagnostics.is_empty(), "{source_text}");
 
     let Some(Statement::ExpressionStatement(stmt)) = &ret.program.body.first() else {
         panic!("should have a expression statement body: {source_text}");
@@ -471,9 +471,11 @@ fn test_identifier_reference() {
 fn test_simple_expressions() {
     test("1n", false);
     test("true", false);
-    test("this", false);
     test("import.meta", false);
     test("(() => {})", false);
+
+    // referencing `this` in a derived class before `super()` is called causes a ReferenceError
+    test("this", true);
 }
 
 #[test]
@@ -1175,18 +1177,20 @@ fn test_call_expressions() {
     test("Number.parseFloat()", false);
     test("Number.parseInt()", false);
 
-    test("Object.create()", false);
-    test("Object.getOwnPropertyDescriptor()", false);
-    test("Object.getOwnPropertyDescriptors()", false);
-    test("Object.getOwnPropertyNames()", false);
-    test("Object.getOwnPropertySymbols()", false);
-    test("Object.getPrototypeOf()", false);
-    test("Object.hasOwn()", false);
+    // These throw on the `undefined` receiver (`ToObject(undefined)`) or are
+    // conservatively kept; `Object.is()` is `Object.is(undefined, undefined)` -> true.
+    test("Object.create()", true);
+    test("Object.getOwnPropertyDescriptor()", true);
+    test("Object.getOwnPropertyDescriptors()", true);
+    test("Object.getOwnPropertyNames()", true);
+    test("Object.getOwnPropertySymbols()", true);
+    test("Object.getPrototypeOf()", true);
+    test("Object.hasOwn()", true);
     test("Object.is()", false);
-    test("Object.isExtensible()", false);
-    test("Object.isFrozen()", false);
-    test("Object.isSealed()", false);
-    test("Object.keys()", false);
+    test("Object.isExtensible()", true);
+    test("Object.isFrozen()", true);
+    test("Object.isSealed()", true);
+    test("Object.keys()", true);
 
     test("String.fromCharCode()", false);
     test("String.fromCodePoint()", false);
@@ -1212,6 +1216,60 @@ fn test_call_expressions() {
     // may have side effects if shadowed
     test_with_global_variables("Date()", &[], true);
     test_with_global_variables("Object.create()", &[], true);
+}
+
+#[test]
+fn test_proxy_sensitive_object_methods() {
+    // Pure with a determined, non-Proxy, non-null target (a literal cannot be a Proxy
+    // and these methods never `[[Get]]`, so a literal getter is not invoked).
+    test("Object.keys({})", false);
+    test("Object.keys([])", false);
+    test("Object.keys(42)", false);
+    test("Object.keys('s')", false);
+    test("Object.keys(true)", false);
+    test("Object.keys(10n)", false);
+    test("Object.keys({ get a() { f() } })", false);
+    test("Object[\"keys\"]({})", false);
+    test("Object.getOwnPropertyDescriptor({}, 'x')", false);
+    test("Object.getOwnPropertyDescriptors({})", false);
+    test("Object.getOwnPropertyNames({})", false);
+    test("Object.getOwnPropertySymbols({})", false);
+    test("Object.getPrototypeOf({})", false);
+    test("Object.hasOwn({}, 'x')", false);
+    test("Object.isExtensible({})", false);
+    test("Object.isFrozen({})", false);
+    test("Object.isSealed({})", false);
+
+    // Kept when the target could be a Proxy (undetermined) or would throw (null/undefined).
+    test("Object.keys(x)", true);
+    test("Object.keys(new Proxy({}, {}))", true);
+    test("Object.keys(null)", true);
+    test("Object.keys(undefined)", true);
+    test("Object.keys(...x)", true);
+    test("Object.getOwnPropertyDescriptor(x, 'x')", true);
+    test("Object.getPrototypeOf(x)", true);
+    test("Object.hasOwn(x, 'x')", true);
+    test("Object[\"keys\"](x)", true);
+
+    // `Object.values`/`entries` invoke `[[Get]]` (run getters), so they are always kept.
+    test("Object.values({})", true);
+    test("Object.entries({})", true);
+    test("Object.values(x)", true);
+    test("Object.values({ get a() { f() } })", true);
+
+    // `Object.is` is unconditionally pure (never introspects its arguments).
+    test("Object.is(1, 2)", false);
+    test("Object.is(f(), 2)", true);
+
+    // `Object.create(proto)` is pure with an object/null prototype and no properties.
+    test("Object.create({})", false);
+    test("Object.create([])", false);
+    test("Object.create(null)", false);
+    test("Object.create(x)", true); // proto could be a non-object -> throws
+    test("Object.create(42)", true); // primitive proto -> throws
+    test("Object.create(undefined)", true); // throws
+    test("Object.create({}, x)", true); // properties read via [[OwnPropertyKeys]]/[[Get]]
+    test("Object.create({}, {})", true);
 }
 
 #[test]
@@ -1448,12 +1506,12 @@ fn test_property_write_side_effects_support() {
     test_with_ctx("a['b'] += 1", &no_write_ctx, true);
     test_with_ctx("a.#b += 1", &no_write_ctx, true);
 
-    // Update expressions have an implicit read
-    test_with_ctx("a.b++", &no_write_ctx, false);
-    test_with_ctx("a.b--", &no_write_ctx, false);
-    test_with_ctx("++a.b", &no_write_ctx, false);
-    test_with_ctx("a['b']++", &no_write_ctx, false);
-    test_with_ctx("a.#b++", &no_write_ctx, false);
+    // Update expressions have an implicit read — side-effectful when reads have side effects
+    test_with_ctx("a.b++", &no_write_ctx, true);
+    test_with_ctx("a.b--", &no_write_ctx, true);
+    test_with_ctx("++a.b", &no_write_ctx, true);
+    test_with_ctx("a['b']++", &no_write_ctx, true);
+    test_with_ctx("a.#b++", &no_write_ctx, true);
 
     // Compound assignments and updates always have side effects due to implicit coercions
     // (ToPrimitive/ToNumeric), even with both write and read side effects off
@@ -1464,11 +1522,11 @@ fn test_property_write_side_effects_support() {
     };
     test_with_ctx("a.b = 1", &no_side_effects_ctx, false); // simple assign is free
     test_with_ctx("a.b += 1", &no_side_effects_ctx, true); // compound: ToNumeric coercion
-    test_with_ctx("a.b++", &no_side_effects_ctx, false); // update: ToNumeric coercion
+    test_with_ctx("a.b++", &no_side_effects_ctx, true); // update: ToNumeric coercion
     test_with_ctx("a['b'] += 1", &no_side_effects_ctx, true);
-    test_with_ctx("a['b']++", &no_side_effects_ctx, false);
+    test_with_ctx("a['b']++", &no_side_effects_ctx, true);
     test_with_ctx("a.#b += 1", &no_side_effects_ctx, true);
-    test_with_ctx("a.#b++", &no_side_effects_ctx, false);
+    test_with_ctx("a.#b++", &no_side_effects_ctx, true);
 
     // Sub-expression side effects still propagate
     test_with_ctx("(foo()).b = 1", &no_side_effects_ctx, true);

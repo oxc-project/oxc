@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ typescript-eslint(ban-types): Do not use "String" as a type. Use "string" instead
+  ⚠ typescript(ban-types): Do not use "String" as a type. Use "string" instead
    ╭─[ban_types.tsx:1:8]
  1 │ let a: String;
    ·        ──────
@@ -10,7 +10,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace "String" with the lowercase primitive type "string".
   note: String is a wrapper object type, while string is the primitive type. Using the primitive type is more idiomatic and avoids confusion between the object wrapper and the primitive value.
 
-  ⚠ typescript-eslint(ban-types): Do not use "Boolean" as a type. Use "boolean" instead
+  ⚠ typescript(ban-types): Do not use "Boolean" as a type. Use "boolean" instead
    ╭─[ban_types.tsx:1:8]
  1 │ let b: Boolean;
    ·        ───────
@@ -18,7 +18,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace "Boolean" with the lowercase primitive type "boolean".
   note: Boolean is a wrapper object type, while boolean is the primitive type. Using the primitive type is more idiomatic and avoids confusion between the object wrapper and the primitive value.
 
-  ⚠ typescript-eslint(ban-types): Do not use "Number" as a type. Use "number" instead
+  ⚠ typescript(ban-types): Do not use "Number" as a type. Use "number" instead
    ╭─[ban_types.tsx:1:8]
  1 │ let c: Number;
    ·        ──────
@@ -26,7 +26,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace "Number" with the lowercase primitive type "number".
   note: Number is a wrapper object type, while number is the primitive type. Using the primitive type is more idiomatic and avoids confusion between the object wrapper and the primitive value.
 
-  ⚠ typescript-eslint(ban-types): Do not use "Symbol" as a type. Use "symbol" instead
+  ⚠ typescript(ban-types): Do not use "Symbol" as a type. Use "symbol" instead
    ╭─[ban_types.tsx:1:8]
  1 │ let d: Symbol;
    ·        ──────
@@ -34,7 +34,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace "Symbol" with the lowercase primitive type "symbol".
   note: Symbol is a wrapper object type, while symbol is the primitive type. Using the primitive type is more idiomatic and avoids confusion between the object wrapper and the primitive value.
 
-  ⚠ typescript-eslint(ban-types): Do not use "BigInt" as a type. Use "bigint" instead
+  ⚠ typescript(ban-types): Do not use "BigInt" as a type. Use "bigint" instead
    ╭─[ban_types.tsx:1:8]
  1 │ let e: BigInt;
    ·        ──────
@@ -42,7 +42,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace "BigInt" with the lowercase primitive type "bigint".
   note: BigInt is a wrapper object type, while bigint is the primitive type. Using the primitive type is more idiomatic and avoids confusion between the object wrapper and the primitive value.
 
-  ⚠ typescript-eslint(ban-types): 'The `Object` type actually means "any non-nullish value"
+  ⚠ typescript(ban-types): 'The `Object` type actually means "any non-nullish value"
    ╭─[ban_types.tsx:1:8]
  1 │ let f: Object;
    ·        ──────
@@ -50,21 +50,21 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `Object` with a more specific type. If you need a generic object, use `Record<string, unknown>` or define an interface/type with explicit properties. If you need any value, use `unknown` instead.
   note: The `Object` type is confusing because it doesn't mean 'any object' - it means 'any non-nullish value', which includes primitives. This makes code harder to understand and can lead to unexpected behavior.
 
-  ⚠ typescript-eslint(ban-types): Don't use `Function` as a type
+  ⚠ typescript(ban-types): Don't use `Function` as a type
    ╭─[ban_types.tsx:1:8]
  1 │ let g: Function;
    ·        ────────
    ╰────
   help: The `Function` type accepts any function-like value
 
-  ⚠ typescript-eslint(ban-types): Prefer explicitly define the object shape
+  ⚠ typescript(ban-types): Prefer explicitly define the object shape
    ╭─[ban_types.tsx:1:8]
  1 │ let h: {}; 
    ·        ──
    ╰────
   help: This type means "any non-nullish value", which is slightly better than 'unknown', but it's still a broad type
 
-  ⚠ typescript-eslint(ban-types): Do not use "String" as a type. Use "string" instead
+  ⚠ typescript(ban-types): Do not use "String" as a type. Use "string" instead
    ╭─[ban_types.tsx:1:13]
  1 │ let i: { b: String };
    ·             ──────
@@ -72,7 +72,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace "String" with the lowercase primitive type "string".
   note: String is a wrapper object type, while string is the primitive type. Using the primitive type is more idiomatic and avoids confusion between the object wrapper and the primitive value.
 
-  ⚠ typescript-eslint(ban-types): Do not use "String" as a type. Use "string" instead
+  ⚠ typescript(ban-types): Do not use "String" as a type. Use "string" instead
    ╭─[ban_types.tsx:1:13]
  1 │ let j: { c: String };
    ·             ──────
@@ -80,7 +80,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace "String" with the lowercase primitive type "string".
   note: String is a wrapper object type, while string is the primitive type. Using the primitive type is more idiomatic and avoids confusion between the object wrapper and the primitive value.
 
-  ⚠ typescript-eslint(ban-types): Do not use "String" as a type. Use "string" instead
+  ⚠ typescript(ban-types): Do not use "String" as a type. Use "string" instead
    ╭─[ban_types.tsx:1:20]
  1 │ function foo(arg0: String) {}
    ·                    ──────
@@ -88,7 +88,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace "String" with the lowercase primitive type "string".
   note: String is a wrapper object type, while string is the primitive type. Using the primitive type is more idiomatic and avoids confusion between the object wrapper and the primitive value.
 
-  ⚠ typescript-eslint(ban-types): Do not use "String" as a type. Use "string" instead
+  ⚠ typescript(ban-types): Do not use "String" as a type. Use "string" instead
    ╭─[ban_types.tsx:1:10]
  1 │ 'foo' as String;
    ·          ──────
@@ -96,14 +96,14 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace "String" with the lowercase primitive type "string".
   note: String is a wrapper object type, while string is the primitive type. Using the primitive type is more idiomatic and avoids confusion between the object wrapper and the primitive value.
 
-  ⚠ typescript-eslint(ban-types): Don't use `Function` as a type
+  ⚠ typescript(ban-types): Don't use `Function` as a type
    ╭─[ban_types.tsx:1:10]
  1 │ 'baz' as Function;
    ·          ────────
    ╰────
   help: The `Function` type accepts any function-like value
 
-  ⚠ typescript-eslint(ban-types): Do not use "Symbol" as a type. Use "symbol" instead
+  ⚠ typescript(ban-types): Do not use "Symbol" as a type. Use "symbol" instead
    ╭─[ban_types.tsx:1:8]
  1 │ let d: Symbol = Symbol('foo');
    ·        ──────
@@ -111,7 +111,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace "Symbol" with the lowercase primitive type "symbol".
   note: Symbol is a wrapper object type, while symbol is the primitive type. Using the primitive type is more idiomatic and avoids confusion between the object wrapper and the primitive value.
 
-  ⚠ typescript-eslint(ban-types): Do not use "Boolean" as a type. Use "boolean" instead
+  ⚠ typescript(ban-types): Do not use "Boolean" as a type. Use "boolean" instead
    ╭─[ban_types.tsx:1:20]
  1 │ let baz: [boolean, Boolean] = [true, false];
    ·                    ───────
@@ -119,7 +119,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace "Boolean" with the lowercase primitive type "boolean".
   note: Boolean is a wrapper object type, while boolean is the primitive type. Using the primitive type is more idiomatic and avoids confusion between the object wrapper and the primitive value.
 
-  ⚠ typescript-eslint(ban-types): Do not use "Boolean" as a type. Use "boolean" instead
+  ⚠ typescript(ban-types): Do not use "Boolean" as a type. Use "boolean" instead
    ╭─[ban_types.tsx:1:17]
  1 │ let z = true as Boolean;
    ·                 ───────
@@ -127,21 +127,21 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace "Boolean" with the lowercase primitive type "boolean".
   note: Boolean is a wrapper object type, while boolean is the primitive type. Using the primitive type is more idiomatic and avoids confusion between the object wrapper and the primitive value.
 
-  ⚠ typescript-eslint(ban-types): Prefer explicitly define the object shape
+  ⚠ typescript(ban-types): Prefer explicitly define the object shape
    ╭─[ban_types.tsx:1:14]
  1 │ type Props = {};
    ·              ──
    ╰────
   help: This type means "any non-nullish value", which is slightly better than 'unknown', but it's still a broad type
 
-  ⚠ typescript-eslint(ban-types): Don't use `Function` as a type
+  ⚠ typescript(ban-types): Don't use `Function` as a type
    ╭─[ban_types.tsx:1:9]
  1 │ let fn: Function = () => true
    ·         ────────
    ╰────
   help: The `Function` type accepts any function-like value
 
-  ⚠ typescript-eslint(ban-types): Do not use "String" as a type. Use "string" instead
+  ⚠ typescript(ban-types): Do not use "String" as a type. Use "string" instead
    ╭─[ban_types.tsx:1:12]
  1 │ const str: String = 'foo';
    ·            ──────
@@ -149,7 +149,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace "String" with the lowercase primitive type "string".
   note: String is a wrapper object type, while string is the primitive type. Using the primitive type is more idiomatic and avoids confusion between the object wrapper and the primitive value.
 
-  ⚠ typescript-eslint(ban-types): Do not use "Boolean" as a type. Use "boolean" instead
+  ⚠ typescript(ban-types): Do not use "Boolean" as a type. Use "boolean" instead
    ╭─[ban_types.tsx:1:13]
  1 │ const bool: Boolean = true;
    ·             ───────
@@ -157,7 +157,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace "Boolean" with the lowercase primitive type "boolean".
   note: Boolean is a wrapper object type, while boolean is the primitive type. Using the primitive type is more idiomatic and avoids confusion between the object wrapper and the primitive value.
 
-  ⚠ typescript-eslint(ban-types): Do not use "Number" as a type. Use "number" instead
+  ⚠ typescript(ban-types): Do not use "Number" as a type. Use "number" instead
    ╭─[ban_types.tsx:1:12]
  1 │ const num: Number = 1;
    ·            ──────
@@ -165,7 +165,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace "Number" with the lowercase primitive type "number".
   note: Number is a wrapper object type, while number is the primitive type. Using the primitive type is more idiomatic and avoids confusion between the object wrapper and the primitive value.
 
-  ⚠ typescript-eslint(ban-types): Do not use "Symbol" as a type. Use "symbol" instead
+  ⚠ typescript(ban-types): Do not use "Symbol" as a type. Use "symbol" instead
    ╭─[ban_types.tsx:1:13]
  1 │ const symb: Symbol = Symbol('foo');
    ·             ──────
@@ -173,7 +173,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace "Symbol" with the lowercase primitive type "symbol".
   note: Symbol is a wrapper object type, while symbol is the primitive type. Using the primitive type is more idiomatic and avoids confusion between the object wrapper and the primitive value.
 
-  ⚠ typescript-eslint(ban-types): Do not use "BigInt" as a type. Use "bigint" instead
+  ⚠ typescript(ban-types): Do not use "BigInt" as a type. Use "bigint" instead
    ╭─[ban_types.tsx:1:15]
  1 │ const bigInt: BigInt = 1n;
    ·               ──────
@@ -181,7 +181,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace "BigInt" with the lowercase primitive type "bigint".
   note: BigInt is a wrapper object type, while bigint is the primitive type. Using the primitive type is more idiomatic and avoids confusion between the object wrapper and the primitive value.
 
-  ⚠ typescript-eslint(ban-types): Prefer explicitly define the object shape
+  ⚠ typescript(ban-types): Prefer explicitly define the object shape
    ╭─[ban_types.tsx:1:17]
  1 │ ╭─▶ const emptyObj: {
  2 │ │   
@@ -189,14 +189,14 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: This type means "any non-nullish value", which is slightly better than 'unknown', but it's still a broad type
 
-  ⚠ typescript-eslint(ban-types): Prefer explicitly define the object shape
+  ⚠ typescript(ban-types): Prefer explicitly define the object shape
    ╭─[ban_types.tsx:1:22]
  1 │ const emptyEmptyObj: {} = { };
    ·                      ──
    ╰────
   help: This type means "any non-nullish value", which is slightly better than 'unknown', but it's still a broad type
 
-  ⚠ typescript-eslint(ban-types): Do not use "Boolean" as a type. Use "boolean" instead
+  ⚠ typescript(ban-types): Do not use "Boolean" as a type. Use "boolean" instead
    ╭─[ban_types.tsx:2:24]
  1 │ 
  2 │         class Test<T = Boolean> extends Foo<String> implements Bar<Object> {
@@ -206,7 +206,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace "Boolean" with the lowercase primitive type "boolean".
   note: Boolean is a wrapper object type, while boolean is the primitive type. Using the primitive type is more idiomatic and avoids confusion between the object wrapper and the primitive value.
 
-  ⚠ typescript-eslint(ban-types): Do not use "String" as a type. Use "string" instead
+  ⚠ typescript(ban-types): Do not use "String" as a type. Use "string" instead
    ╭─[ban_types.tsx:2:45]
  1 │ 
  2 │         class Test<T = Boolean> extends Foo<String> implements Bar<Object> {
@@ -216,7 +216,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace "String" with the lowercase primitive type "string".
   note: String is a wrapper object type, while string is the primitive type. Using the primitive type is more idiomatic and avoids confusion between the object wrapper and the primitive value.
 
-  ⚠ typescript-eslint(ban-types): 'The `Object` type actually means "any non-nullish value"
+  ⚠ typescript(ban-types): 'The `Object` type actually means "any non-nullish value"
    ╭─[ban_types.tsx:2:68]
  1 │ 
  2 │         class Test<T = Boolean> extends Foo<String> implements Bar<Object> {
@@ -226,7 +226,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `Object` with a more specific type. If you need a generic object, use `Record<string, unknown>` or define an interface/type with explicit properties. If you need any value, use `unknown` instead.
   note: The `Object` type is confusing because it doesn't mean 'any object' - it means 'any non-nullish value', which includes primitives. This makes code harder to understand and can lead to unexpected behavior.
 
-  ⚠ typescript-eslint(ban-types): Do not use "String" as a type. Use "string" instead
+  ⚠ typescript(ban-types): Do not use "String" as a type. Use "string" instead
    ╭─[ban_types.tsx:3:28]
  2 │         class Test<T = Boolean> extends Foo<String> implements Bar<Object> {
  3 │           constructor(foo: String | Object | Function) {}
@@ -236,7 +236,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace "String" with the lowercase primitive type "string".
   note: String is a wrapper object type, while string is the primitive type. Using the primitive type is more idiomatic and avoids confusion between the object wrapper and the primitive value.
 
-  ⚠ typescript-eslint(ban-types): 'The `Object` type actually means "any non-nullish value"
+  ⚠ typescript(ban-types): 'The `Object` type actually means "any non-nullish value"
    ╭─[ban_types.tsx:3:37]
  2 │         class Test<T = Boolean> extends Foo<String> implements Bar<Object> {
  3 │           constructor(foo: String | Object | Function) {}
@@ -246,7 +246,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `Object` with a more specific type. If you need a generic object, use `Record<string, unknown>` or define an interface/type with explicit properties. If you need any value, use `unknown` instead.
   note: The `Object` type is confusing because it doesn't mean 'any object' - it means 'any non-nullish value', which includes primitives. This makes code harder to understand and can lead to unexpected behavior.
 
-  ⚠ typescript-eslint(ban-types): Don't use `Function` as a type
+  ⚠ typescript(ban-types): Don't use `Function` as a type
    ╭─[ban_types.tsx:3:46]
  2 │         class Test<T = Boolean> extends Foo<String> implements Bar<Object> {
  3 │           constructor(foo: String | Object | Function) {}
@@ -255,7 +255,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: The `Function` type accepts any function-like value
 
-  ⚠ typescript-eslint(ban-types): Do not use "String" as a type. Use "string" instead
+  ⚠ typescript(ban-types): Do not use "String" as a type. Use "string" instead
    ╭─[ban_types.tsx:5:24]
  4 │ 
  5 │           arg(): Array<String> {
@@ -265,7 +265,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace "String" with the lowercase primitive type "string".
   note: String is a wrapper object type, while string is the primitive type. Using the primitive type is more idiomatic and avoids confusion between the object wrapper and the primitive value.
 
-  ⚠ typescript-eslint(ban-types): Do not use "String" as a type. Use "string" instead
+  ⚠ typescript(ban-types): Do not use "String" as a type. Use "string" instead
    ╭─[ban_types.tsx:6:24]
  5 │           arg(): Array<String> {
  6 │             const foo: String = 1 as String;
@@ -275,7 +275,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace "String" with the lowercase primitive type "string".
   note: String is a wrapper object type, while string is the primitive type. Using the primitive type is more idiomatic and avoids confusion between the object wrapper and the primitive value.
 
-  ⚠ typescript-eslint(ban-types): Do not use "String" as a type. Use "string" instead
+  ⚠ typescript(ban-types): Do not use "String" as a type. Use "string" instead
    ╭─[ban_types.tsx:6:38]
  5 │           arg(): Array<String> {
  6 │             const foo: String = 1 as String;
@@ -285,7 +285,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace "String" with the lowercase primitive type "string".
   note: String is a wrapper object type, while string is the primitive type. Using the primitive type is more idiomatic and avoids confusion between the object wrapper and the primitive value.
 
-  ⚠ typescript-eslint(ban-types): Don't use `Function` as a type
+  ⚠ typescript(ban-types): Don't use `Function` as a type
    ╭─[ban_types.tsx:3:12]
  2 │ type Props = {
  3 │   onClick: Function

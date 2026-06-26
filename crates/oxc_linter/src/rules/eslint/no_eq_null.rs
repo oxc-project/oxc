@@ -57,7 +57,9 @@ declare_oxc_lint!(
     NoEqNull,
     eslint,
     restriction,
-    fix_dangerous
+    fix_dangerous,
+    version = "0.2.14",
+    short_description = "Disallow `null` comparisons without type-checking operators.",
 );
 
 impl Rule for NoEqNull {

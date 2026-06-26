@@ -7,7 +7,10 @@ use bpaf::Bpaf;
 
 pub use self::{
     ignore::IgnoreOptions,
-    lint::{LintCommand, OutputOptions, ReportUnusedDirectives, WarningOptions, lint_command},
+    lint::{
+        DebugOption, LintCommand, OutputOptions, ReportUnusedDirectives, WarningOptions,
+        lint_command,
+    },
 };
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -18,6 +21,11 @@ pub struct MiscOptions {
     /// Do not display any diagnostics
     #[bpaf(switch, hide_usage)]
     pub silent: bool,
+
+    /// Do not exit with an error when no files are selected for linting
+    /// (for example, after applying ignore patterns)
+    #[bpaf(switch, hide_usage)]
+    pub no_error_on_unmatched_pattern: bool,
 
     /// Number of threads to use. Set to 1 for using only 1 CPU core.
     #[bpaf(argument("INT"), hide_usage)]
@@ -52,7 +60,14 @@ mod misc_options {
     #[test]
     fn default() {
         let options = get_misc_options(".");
+        assert!(!options.no_error_on_unmatched_pattern);
         assert!(options.threads.is_none());
+    }
+
+    #[test]
+    fn no_error_on_unmatched_pattern() {
+        let options = get_misc_options("--no-error-on-unmatched-pattern .");
+        assert!(options.no_error_on_unmatched_pattern);
     }
 
     #[test]

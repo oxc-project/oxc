@@ -5,7 +5,7 @@
 
 use std::fmt;
 
-use oxc_span::Str;
+use oxc_str::Str;
 
 use crate::ast::*;
 

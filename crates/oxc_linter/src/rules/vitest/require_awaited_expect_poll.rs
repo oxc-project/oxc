@@ -69,6 +69,8 @@ declare_oxc_lint!(
     RequireAwaitedExpectPoll,
     vitest,
     correctness,
+    version = "1.58.0",
+    short_description = "This rule ensures that promises returned by `expect.poll` and `expect.element` calls are handled properly.",
 );
 
 impl Rule for RequireAwaitedExpectPoll {

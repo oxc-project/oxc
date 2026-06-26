@@ -1,10 +1,12 @@
+use oxc_allocator::ArenaVec;
 use oxc_ast::{
     AstKind,
     ast::{Argument, Expression, JSXAttributeItem, JSXAttributeName, JSXChild, ObjectPropertyKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Ident, Span};
+use oxc_span::Span;
+use oxc_str::Ident;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -20,7 +22,7 @@ pub struct NoDangerWithChildren;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallows when a DOM element is using both `children` and `dangerouslySetInnerHTML` properties.
+    /// Disallows DOM elements from using both `children` and `dangerouslySetInnerHTML` properties.
     ///
     /// ### Why is this bad?
     ///
@@ -45,7 +47,9 @@ declare_oxc_lint!(
     /// ```
     NoDangerWithChildren,
     react,
-    correctness
+    correctness,
+    version = "0.9.6",
+    short_description = "Disallows DOM elements from using both `children` and `dangerouslySetInnerHTML` properties.",
 );
 
 impl Rule for NoDangerWithChildren {
@@ -333,7 +337,7 @@ fn find_var_in_scope<'c>(
 
 /// Returns whether a given object has a property with the given name.
 fn is_object_with_prop_name(
-    obj_props: &oxc_allocator::Vec<'_, ObjectPropertyKind<'_>>,
+    obj_props: &ArenaVec<'_, ObjectPropertyKind<'_>>,
     prop_name: &str,
 ) -> bool {
     obj_props.iter().any(|prop| {

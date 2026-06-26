@@ -12,7 +12,11 @@ use serde::{Deserialize, Serialize};
 
 use serde_json::Value;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{MixedTupleRuleConfig, Rule},
+};
 
 fn extension_should_not_be_included_in_diagnostic(
     span: Span,
@@ -96,6 +100,42 @@ impl PathGroupOverride {
     }
 }
 
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "lowercase", deny_unknown_fields)]
+#[expect(dead_code)]
+struct PathGroupOverrideConfig {
+    /// Glob pattern to match import specifiers.
+    pattern: String,
+    /// Action to take when pattern matches.
+    action: PathGroupAction,
+}
+
+#[derive(Debug, Clone, Default, JsonSchema)]
+#[serde(transparent)]
+#[expect(dead_code)]
+struct ExtensionRulesConfig(FxHashMap<String, ExtensionRule>);
+
+#[derive(Debug, Clone, Default, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+struct ImportExtensionsConfig {
+    /// Whether to ignore package imports when enforcing extension rules.
+    ignore_packages: bool,
+    /// Whether to check type imports when enforcing extension rules.
+    check_type_imports: bool,
+    /// Per-extension rules.
+    pattern: ExtensionRulesConfig,
+    /// Path group overrides for bespoke import specifiers.
+    path_group_overrides: Vec<PathGroupOverrideConfig>,
+}
+
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(untagged)]
+#[expect(dead_code)]
+enum ImportExtensionsObject {
+    Config(ImportExtensionsConfig),
+    Extensions(FxHashMap<String, ExtensionRule>),
+}
+
 /// This rule accepts three types of configuration:
 ///
 /// 1. **Global rule** (string): `"always"`, `"never"`, or `"ignorePackages"`
@@ -146,7 +186,7 @@ impl PathGroupOverride {
 /// **Default behavior (no configuration)**: All imports - of all kinds - pass.
 /// Unconfigured file extensions are ignored, to avoid false positives.
 #[derive(Debug, Clone, JsonSchema, Serialize, Default)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct ExtensionsConfig {
     /// Whether to ignore package imports when enforcing extension rules.
     ///
@@ -472,7 +512,9 @@ declare_oxc_lint!(
     Extensions,
     import,
     restriction,
-    config = ExtensionsConfig,
+    config = MixedTupleRuleConfig<ExtensionRule, ImportExtensionsObject>,
+    version = "1.2.0",
+    short_description = "Enforce consistent use of file extensions in import paths.",
 );
 
 impl Rule for Extensions {

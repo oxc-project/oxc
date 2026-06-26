@@ -1,4 +1,4 @@
-use oxc_allocator::{Box as ArenaBox, CloneIn};
+use oxc_allocator::{ArenaBox, ArenaVec, CloneIn};
 use oxc_ast::{NONE, ast::*};
 use oxc_span::{SPAN, Span};
 
@@ -22,7 +22,7 @@ impl<'a> IsolatedDeclarations<'a> {
             self.error(function_must_have_explicit_return_type(get_function_span(func)));
         }
         let params = self.transform_formal_parameters(&func.params, false);
-        self.ast.alloc_function(
+        Function::boxed(
             func.span,
             func.r#type,
             func.id.clone_in(self.ast.allocator),
@@ -34,6 +34,7 @@ impl<'a> IsolatedDeclarations<'a> {
             params,
             return_type,
             NONE,
+            self,
         )
     }
 
@@ -41,6 +42,7 @@ impl<'a> IsolatedDeclarations<'a> {
         &self,
         param: &FormalParameter<'a>,
         is_remaining_params_have_required: bool,
+        in_private_constructor: bool,
     ) -> Option<FormalParameter<'a>> {
         let pattern = &param.pattern;
         if param.initializer.is_some()
@@ -58,7 +60,7 @@ impl<'a> IsolatedDeclarations<'a> {
             param.pattern.clone_in(self.ast.allocator)
         };
 
-        FormalParameterBindingPattern::remove_assignments_from_kind(self.ast, &mut pattern);
+        FormalParameterBindingPattern::remove_assignments_from_kind(self, &mut pattern);
 
         if is_assignment_pattern
             || param.type_annotation.is_none()
@@ -69,9 +71,14 @@ impl<'a> IsolatedDeclarations<'a> {
                 .as_ref()
                 .map(|type_annotation| type_annotation.type_annotation.clone_in(self.ast.allocator))
                 .or_else(|| {
-                    // report error for has no type annotation
                     let new_type = self.infer_type_from_formal_parameter(param);
-                    if new_type.is_none() {
+                    // A private parameter property on a private constructor needs no
+                    // explicit type: the constructor signature is collapsed to
+                    // `private constructor();` and the class member is emitted as
+                    // `private readonly name;` with no type annotation.
+                    let is_elided_private_param = in_private_constructor
+                        && param.accessibility.is_some_and(TSAccessibility::is_private);
+                    if new_type.is_none() && !is_elided_private_param {
                         self.error(parameter_must_have_explicit_type(param.span));
                     }
                     new_type
@@ -85,27 +92,29 @@ impl<'a> IsolatedDeclarations<'a> {
                             self.error(implicitly_adding_undefined_to_type(param.span));
                         } else if !ts_type.is_maybe_undefined() {
                             // union with `undefined`
-                            return self.ast.ts_type_annotation(
+                            return TSTypeAnnotation::new(
                                 SPAN,
-                                self.ast.ts_type_union_type(
+                                TSType::new_ts_union_type(
                                     SPAN,
-                                    self.ast.vec_from_array([
-                                        ts_type,
-                                        self.ast.ts_type_undefined_keyword(SPAN),
-                                    ]),
+                                    ArenaVec::from_array_in(
+                                        [ts_type, TSType::new_ts_undefined_keyword(SPAN, self)],
+                                        self,
+                                    ),
+                                    self,
                                 ),
+                                self,
                             );
                         }
                     }
 
-                    self.ast.ts_type_annotation(SPAN, ts_type)
+                    TSTypeAnnotation::new(SPAN, ts_type, self)
                 });
 
             let optional =
                 param.optional || (!is_remaining_params_have_required && is_assignment_pattern);
-            return Some(self.ast.formal_parameter(
+            return Some(FormalParameter::new(
                 param.span,
-                self.ast.vec(),
+                ArenaVec::new_in(self),
                 pattern.clone_in(self.ast.allocator),
                 type_annotation,
                 NONE,
@@ -113,12 +122,13 @@ impl<'a> IsolatedDeclarations<'a> {
                 None,
                 false,
                 false,
+                self,
             ));
         }
 
-        Some(self.ast.formal_parameter(
+        Some(FormalParameter::new(
             param.span,
-            self.ast.vec(),
+            ArenaVec::new_in(self),
             pattern,
             param.type_annotation.clone_in(self.ast.allocator),
             NONE,
@@ -126,32 +136,38 @@ impl<'a> IsolatedDeclarations<'a> {
             None,
             false,
             false,
+            self,
         ))
     }
 
     pub(crate) fn transform_formal_parameters(
         &self,
-        params: &FormalParameters<'a>,
-        skip_no_accessibility_param: bool,
+        params: &ArenaBox<'a, FormalParameters<'a>>,
+        in_private_constructor: bool,
     ) -> ArenaBox<'a, FormalParameters<'a>> {
         if params.kind.is_signature() || (params.rest.is_none() && params.items.is_empty()) {
-            return self.ast.alloc(params.clone_in(self.ast.allocator));
+            return params.clone_in(self.ast.allocator);
         }
 
-        let items = self.ast.vec_from_iter(
+        let items = ArenaVec::from_iter_in(
             params
                 .items
                 .iter()
                 .enumerate()
-                .filter(|(_, item)| !skip_no_accessibility_param || item.has_modifier())
+                .filter(|(_, item)| !in_private_constructor || item.has_modifier())
                 .filter_map(|(index, item)| {
                     let is_remaining_params_have_required = params
                         .items
                         .iter()
                         .skip(index)
                         .any(|item| !(item.optional || item.initializer.is_some()));
-                    self.transform_formal_parameter(item, is_remaining_params_have_required)
+                    self.transform_formal_parameter(
+                        item,
+                        is_remaining_params_have_required,
+                        in_private_constructor,
+                    )
                 }),
+            self,
         );
 
         if let Some(rest) = &params.rest
@@ -163,13 +179,13 @@ impl<'a> IsolatedDeclarations<'a> {
         let rest = params.rest.as_ref().map(|rest| {
             let mut rest = rest.clone_in(self.ast.allocator);
             FormalParameterBindingPattern::remove_assignments_from_kind(
-                self.ast,
+                self,
                 &mut rest.rest.argument,
             );
             rest
         });
 
-        self.ast.alloc_formal_parameters(params.span, FormalParameterKind::Signature, items, rest)
+        FormalParameters::boxed(params.span, FormalParameterKind::Signature, items, rest, self)
     }
 }
 

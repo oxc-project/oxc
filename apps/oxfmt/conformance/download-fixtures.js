@@ -8,7 +8,7 @@ import pkg from "../package.json" with { type: "json" };
 
 const execAsync = promisify(exec);
 
-const fixturesDir = join(import.meta.dirname, "fixtures");
+const externalsDir = join(import.meta.dirname, "fixtures", "externals");
 const cwd = join(import.meta.dirname, "..");
 
 const sources = [
@@ -20,27 +20,27 @@ const sources = [
   {
     name: "vue-vben-admin",
     repo: "vbenjs/vue-vben-admin/packages",
-    version: "main",
+    version: "v5.6.0",
   },
   {
     name: "webawesome",
     repo: "shoelace-style/webawesome/packages/webawesome/src/components",
-    version: "next",
+    version: "v3.6.0",
   },
-  // {
-  //   name: "plugin-svelte",
-  //   repo: "sveltejs/prettier-plugin-svelte/tests",
-  //   version: pkg.dependencies["prettier-plugin-svelte"],
-  // },
+  {
+    name: "plugin-svelte",
+    repo: "sveltejs/prettier-plugin-svelte/test/formatting/samples",
+    version: `prettier-plugin-svelte@${pkg.dependencies["prettier-plugin-svelte"]}`,
+  },
 ];
 
 await Promise.all(
   sources.map(async ({ name, repo, version }) => {
-    const dest = join(fixturesDir, name);
+    const dest = join(externalsDir, name);
     rmSync(dest, { recursive: true, force: true });
 
     console.log(`Downloading ${name}@${version} fixtures...`);
     await execAsync(`pnpm exec degit ${repo}#${version} "${dest}"`, { cwd });
-    console.log(`Done: ${name}`);
+    console.log(`Done: ${name}@${version}`);
   }),
 );

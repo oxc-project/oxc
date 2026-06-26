@@ -22,7 +22,7 @@ pub struct BadMinMaxFunc;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Checks whether the clamp function `Math.min(Math.max(x, y), z)` always evaluate to a
+    /// Checks whether the clamp function `Math.min(Math.max(x, y), z)` always evaluates to a
     /// constant result because the arguments are in the wrong order.
     ///
     /// ### Why is this bad?
@@ -45,7 +45,9 @@ declare_oxc_lint!(
     /// ```
     BadMinMaxFunc,
     oxc,
-    correctness
+    correctness,
+    version = "0.0.3",
+    short_description = "Checks whether the clamp function `Math.min(Math.max(x, y), z)` always evaluates to a constant result because the arguments are in the wrong order.",
 );
 
 impl Rule for BadMinMaxFunc {

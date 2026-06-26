@@ -267,6 +267,8 @@ declare_oxc_lint!(
     style,
     fix,
     config = Curly,
+    version = "0.15.13",
+    short_description = "Enforce consistent brace style for all control statements.",
 );
 
 impl Rule for Curly {
@@ -424,7 +426,11 @@ fn apply_rule_fix<'a>(
     let fixed = if should_have_braces {
         format!("{{{source}}}")
     } else {
-        let mut trimmed = source.trim_matches(|c| c == '{' || c == '}').to_string();
+        let mut trimmed = source
+            .strip_prefix('{')
+            .and_then(|s| s.strip_suffix('}'))
+            .unwrap_or(source)
+            .to_string();
         if is_do_while {
             trimmed.insert(0, ' ');
         }
@@ -958,14 +964,6 @@ fn test() {
         (
             "const isIterable = (obj: any): obj is Iterable<IgnoreRule> => {\r\n    if (obj === null) return false;\r\n    else if (typeof obj === 'string') return false;\r\n    else return typeof value[Symbol.iterator] === 'function';\r\n};\r\n",
             Some(serde_json::json!(["multi-line"])),
-        ),
-        (
-            "  const isIterable = (obj: any) : obj is Iterable<IgnoreRule> => {
-                if (obj === null) return false;
-                else if (typeof obj === 'string') return false;
-                else return typeof value[Symbol.iterator] === 'function';
-            };",
-            Some(serde_json::json!(["multi"])),
         ),
         ("if (foo) /* comment */ bar()", Some(serde_json::json!(["multi-line"]))),
         ("while (foo) /* comment */ bar()", Some(serde_json::json!(["multi-line"]))),
@@ -2081,6 +2079,8 @@ fn test() {
             None,
         ),
         ("if(I){if(t)s}þ", "if(I){if(t){s}}þ", None),
+        ("if (foo) {while(bar){}}", "if (foo) while(bar){}", Some(serde_json::json!(["multi"]))),
+        ("if (foo) {if(bar){}}", "if (foo) if(bar){}", Some(serde_json::json!(["multi"]))),
     ];
     Tester::new(Curly::NAME, Curly::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
 }

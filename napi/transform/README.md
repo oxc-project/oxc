@@ -5,7 +5,7 @@ See [usage instructions](https://oxc.rs/docs/guide/usage/transformer).
 ## TypeScript and React JSX Transform
 
 ```javascript
-import assert from "assert";
+import assert from "node:assert";
 import { transformSync } from "oxc-transform";
 
 const { code, declaration, errors } = transformSync("test.ts", "class A<T> {}", {
@@ -27,7 +27,7 @@ Conforms to TypeScript compiler's `--isolatedDeclarations` `.d.ts` emit.
 ### Usage
 
 ```javascript
-import assert from "assert";
+import assert from "node:assert";
 import { isolatedDeclarationSync } from "oxc-transform";
 
 const { map, code, errors } = isolatedDeclarationSync("test.ts", "class A {}");

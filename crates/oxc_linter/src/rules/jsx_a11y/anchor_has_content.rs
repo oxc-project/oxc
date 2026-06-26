@@ -58,7 +58,9 @@ declare_oxc_lint!(
     AnchorHasContent,
     jsx_a11y,
     correctness,
-    conditional_suggestion
+    conditional_suggestion,
+    version = "0.0.18",
+    short_description = "Enforce that anchors have content and that the content is accessible to screen readers.",
 );
 
 impl Rule for AnchorHasContent {

@@ -5,7 +5,8 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -23,7 +24,7 @@ fn no_nodejs_modules_diagnostic(span: Span, module_name: &str) -> OxcDiagnostic 
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
-#[schemars(rename_all = "camelCase")]
+#[schemars(rename_all = "camelCase", deny_unknown_fields)]
 pub struct NoNodejsModulesConfig {
     /// Array of names of allowed modules. Defaults to an empty array.
     allow: FxHashSet<CompactStr>,
@@ -78,6 +79,8 @@ declare_oxc_lint!(
     import,
     style,
     config = NoNodejsModulesConfig,
+    version = "1.43.0",
+    short_description = "Forbid the use of Node.js built-in modules.",
 );
 
 impl Rule for NoNodejsModules {

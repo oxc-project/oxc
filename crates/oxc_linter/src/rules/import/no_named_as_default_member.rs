@@ -62,7 +62,9 @@ declare_oxc_lint!(
     /// ```
     NoNamedAsDefaultMember,
     import,
-    suspicious
+    suspicious,
+    version = "0.2.1",
+    short_description = "Forbid using an exported name as a property on a default export.",
 );
 
 fn get_symbol_id_from_ident(

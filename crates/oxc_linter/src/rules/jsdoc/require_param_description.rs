@@ -1,12 +1,16 @@
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use oxc_str::CompactStr;
 
 use crate::{
     AstNode,
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{
         ParamKind, collect_params, get_function_nearest_jsdoc_node, should_ignore_as_internal,
         should_ignore_as_private,
@@ -19,8 +23,34 @@ fn missing_type_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
+fn missing_root_description_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Missing root description for @param.")
+        .with_help("Add root description to `@param`.")
+        .with_label(span)
+}
+
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+pub struct RequireParamDescriptionConfig {
+    /// The description string to set by default for destructured roots. Defaults to "The root object".
+    default_destructured_root_description: CompactStr,
+    /// Whether to set a default destructured root description.
+    /// For example, you may wish to avoid manually having to set the description for a @param corresponding to a destructured root object as it should always be the same type of object.
+    /// Uses `defaultDestructuredRootDescription` for the description string. Defaults to `false`.
+    set_default_destructured_root_description: bool,
+}
+
+impl Default for RequireParamDescriptionConfig {
+    fn default() -> Self {
+        Self {
+            default_destructured_root_description: CompactStr::from("The root object"),
+            set_default_destructured_root_description: false,
+        }
+    }
+}
+
 #[derive(Debug, Default, Clone)]
-pub struct RequireParamDescription;
+pub struct RequireParamDescription(Box<RequireParamDescriptionConfig>);
 
 declare_oxc_lint!(
     /// ### What it does
@@ -48,9 +78,17 @@ declare_oxc_lint!(
     jsdoc,
     pedantic,
     pending,
+    config = RequireParamDescriptionConfig,
+    version = "0.4.4",
+    short_description = "Requires that each `@param` tag has a description value.",
 );
 
 impl Rule for RequireParamDescription {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<RequireParamDescriptionConfig>>(value)
+            .map(|config| Self(Box::new(config.into_inner())))
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         // Collected targets from `FormalParameters`
         let params_to_check = match node.kind() {
@@ -98,7 +136,17 @@ impl Rule for RequireParamDescription {
                     continue;
                 }
 
-                ctx.diagnostic(missing_type_diagnostic(tag.kind.span));
+                let is_destructured_root =
+                    matches!(params_to_check.get(root_count - 1), Some(ParamKind::Nested(_)));
+
+                if self.0.set_default_destructured_root_description
+                    && is_destructured_root
+                    && name_part.is_some()
+                {
+                    ctx.diagnostic(missing_root_description_diagnostic(tag.kind.span));
+                } else {
+                    ctx.diagnostic(missing_type_diagnostic(tag.kind.span));
+                }
             }
         }
     }
@@ -115,7 +163,7 @@ fn test() {
 			           *
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
@@ -127,7 +175,7 @@ fn test() {
 			           * @param foo Foo.
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
@@ -176,7 +224,7 @@ fn test() {
 			           * @param {boolean} baz Baz description
 			           */
 			          function quux (foo, {bar}, baz) {
-			
+
 			          }
 			      ",
             None,
@@ -192,7 +240,7 @@ fn test() {
 			           * @param {object} root.bar
 			           */
 			          function quux (foo, {bar: {baz}}) {
-			
+
 			          }
 			      ",
             None,
@@ -209,7 +257,7 @@ fn test() {
 			           * @param foo
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
@@ -221,7 +269,7 @@ fn test() {
 			           * @arg foo
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
@@ -237,44 +285,26 @@ fn test() {
 			           * @param {boolean} baz Baz description
 			           */
 			          function quux (foo, {bar}, baz) {
-			
-			          }
-			      ",
-            Some(
-                serde_json::json!([        {          "setDefaultDestructuredRootDescription": true,        },      ]),
-            ),
-            None,
-        ),
-        (
-            "
-			          /**
-			           * @param {number} foo Foo description
-			           * @param {object} root
-			           * @param {boolean} baz Baz description
-			           */
-			          function quux (foo, {bar}, baz) {
-			
-			          }
-			      ",
-            Some(
-                serde_json::json!([        {          "defaultDestructuredRootDescription": "Root description",          "setDefaultDestructuredRootDescription": true,        },      ]),
-            ),
-            None,
-        ),
-        (
-            "
-			          /**
-			           * @param {number} foo Foo description
-			           * @param {object} root
-			           * @param {boolean} baz Baz description
-			           */
-			          function quux (foo, {bar}, baz) {
-			
+
 			          }
 			      ",
             Some(
                 serde_json::json!([        {          "setDefaultDestructuredRootDescription": false,        },      ]),
             ),
+            None,
+        ),
+        (
+            "
+                          /**
+                           * @param {number} foo Foo description
+                           * @param {object} root
+                           * @param {boolean} baz Baz description
+                           */
+                          function quux (foo, {bar}, baz) {
+
+                          }
+                      ",
+            Some(serde_json::json!([{ "setDefaultDestructuredRootDescription": true }])),
             None,
         ),
     ];

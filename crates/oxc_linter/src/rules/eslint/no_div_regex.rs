@@ -39,7 +39,9 @@ declare_oxc_lint!(
     NoDivRegex,
     eslint,
     restriction,
-    fix
+    fix,
+    version = "0.4.2",
+    short_description = "Disallow equal signs explicitly at the beginning of regular expressions.",
 );
 
 impl Rule for NoDivRegex {

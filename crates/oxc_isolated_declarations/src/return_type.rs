@@ -1,15 +1,13 @@
 use std::cell::Cell;
 
-use oxc_allocator::CloneIn;
-use oxc_ast::{
-    AstBuilder,
-    ast::{
-        ArrowFunctionExpression, BindingIdentifier, Expression, Function, FunctionBody,
-        ReturnStatement, TSType, TSTypeAliasDeclaration, TSTypeName, TSTypeQueryExprName,
-    },
+use oxc_allocator::{Allocator, ArenaVec, CloneIn, GetAllocator};
+use oxc_ast::ast::{
+    ArrowFunctionExpression, BindingIdentifier, Expression, Function, FunctionBody,
+    ReturnStatement, TSType, TSTypeAliasDeclaration, TSTypeName, TSTypeQueryExprName,
 };
 use oxc_ast_visit::Visit;
-use oxc_span::{GetSpan, SPAN, Str};
+use oxc_span::{GetSpan, SPAN};
+use oxc_str::Str;
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
 use crate::{IsolatedDeclarations, diagnostics::type_containing_private_name};
@@ -39,7 +37,7 @@ use crate::{IsolatedDeclarations, diagnostics::type_containing_private_name};
 /// ```
 #[expect(clippy::option_option)]
 pub struct FunctionReturnType<'a> {
-    ast: AstBuilder<'a>,
+    allocator: &'a Allocator,
     return_expression: Option<Option<Expression<'a>>>,
     value_bindings: Vec<Str<'a>>,
     type_bindings: Vec<Str<'a>>,
@@ -53,7 +51,7 @@ impl<'a> FunctionReturnType<'a> {
         body: &FunctionBody<'a>,
     ) -> Option<TSType<'a>> {
         let mut visitor = FunctionReturnType {
-            ast: transformer.ast,
+            allocator: transformer.allocator(),
             return_expression: None,
             return_statement_count: 0,
             scope_depth: 0,
@@ -67,7 +65,7 @@ impl<'a> FunctionReturnType<'a> {
         let Some(mut expr_type) = transformer.infer_type_from_expression(&expr) else {
             // Avoid report error in parent function
             return if expr.is_function() {
-                Some(transformer.ast.ts_type_unknown_keyword(SPAN))
+                Some(TSType::new_ts_unknown_keyword(SPAN, transformer))
             } else {
                 None
             };
@@ -111,13 +109,14 @@ impl<'a> FunctionReturnType<'a> {
         if visitor.return_statement_count > 1 {
             // Here is a union type, if the return type is a function type, we need to wrap it in parentheses
             if matches!(expr_type, TSType::TSFunctionType(_)) {
-                expr_type = transformer.ast.ts_type_parenthesized_type(SPAN, expr_type);
+                expr_type = TSType::new_ts_parenthesized_type(SPAN, expr_type, transformer);
             }
 
-            let types = transformer
-                .ast
-                .vec_from_array([expr_type, transformer.ast.ts_type_undefined_keyword(SPAN)]);
-            expr_type = transformer.ast.ts_type_union_type(SPAN, types);
+            let types = ArenaVec::from_array_in(
+                [expr_type, TSType::new_ts_undefined_keyword(SPAN, transformer)],
+                transformer,
+            );
+            expr_type = TSType::new_ts_union_type(SPAN, types, transformer);
         }
         Some(expr_type)
     }
@@ -166,6 +165,6 @@ impl<'a> Visit<'a> for FunctionReturnType<'a> {
             }
         }
 
-        self.return_expression = Some(stmt.argument.clone_in(self.ast.allocator));
+        self.return_expression = Some(stmt.argument.clone_in(self.allocator));
     }
 }

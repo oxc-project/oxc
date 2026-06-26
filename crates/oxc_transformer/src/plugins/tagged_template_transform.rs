@@ -40,7 +40,7 @@
 
 use std::iter;
 
-use oxc_allocator::{TakeIn, Vec as ArenaVec};
+use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::{NONE, ast::*};
 use oxc_semantic::SymbolFlags;
 use oxc_span::SPAN;
@@ -83,7 +83,7 @@ impl<'a> TaggedTemplateTransform {
             return;
         }
 
-        let Expression::TaggedTemplateExpression(tagged) = expr.take_in(ctx.ast) else {
+        let Expression::TaggedTemplateExpression(tagged) = expr.take_in(ctx) else {
             unreachable!();
         };
 
@@ -92,7 +92,7 @@ impl<'a> TaggedTemplateTransform {
 
         let binding = self.create_top_level_binding(ctx);
         let arguments = self.transform_template_literal(&binding, template_lit, ctx);
-        *expr = ctx.ast.expression_call(span, tag, type_arguments, arguments, false);
+        *expr = Expression::new_call_expression(span, tag, type_arguments, arguments, false, ctx);
     }
 
     /// Check if the template literal contains a `</script` tag; note it is case-insensitive.
@@ -152,45 +152,54 @@ impl<'a> TaggedTemplateTransform {
         // Use `void 0` for elements with invalid escape sequences (where `cooked` is `None`).
         // Also check if we need to pass the raw array separately.
         let mut needs_raw_array = false;
-        let cooked_elements = ctx.ast.vec_from_iter(template_lit.quasis.iter().map(|quasi| {
-            let expr = if let Some(cooked) = &quasi.value.cooked {
-                if cooked.as_str() != quasi.value.raw.as_str() {
+        let cooked_elements = ArenaVec::from_iter_in(
+            template_lit.quasis.iter().map(|quasi| {
+                let expr = if let Some(cooked) = &quasi.value.cooked {
+                    if cooked.as_str() != quasi.value.raw.as_str() {
+                        needs_raw_array = true;
+                    }
+                    Expression::new_string_literal(SPAN, *cooked, None, ctx)
+                } else {
+                    // Invalid escape sequence - cooked is None
                     needs_raw_array = true;
-                }
-                ctx.ast.expression_string_literal(SPAN, *cooked, None)
-            } else {
-                // Invalid escape sequence - cooked is None
-                needs_raw_array = true;
-                ctx.ast.void_0(SPAN)
-            };
-            ArrayExpressionElement::from(expr)
-        }));
-        let cooked_argument = Argument::from(ctx.ast.expression_array(SPAN, cooked_elements));
+                    Expression::new_void_0(SPAN, ctx)
+                };
+                ArrayExpressionElement::from(expr)
+            }),
+            ctx,
+        );
+        let cooked_argument =
+            Argument::from(Expression::new_array_expression(SPAN, cooked_elements, ctx));
 
         // Add raw array if needed: `[raw0, raw1, ...]`
         let template_arguments = if needs_raw_array {
-            let elements = ctx.ast.vec_from_iter(template_lit.quasis.iter().map(|quasi| {
-                let string = ctx.ast.expression_string_literal(SPAN, quasi.value.raw, None);
-                ArrayExpressionElement::from(string)
-            }));
-            let raws_argument = Argument::from(ctx.ast.expression_array(SPAN, elements));
-            ctx.ast.vec_from_array([cooked_argument, raws_argument])
+            let elements = ArenaVec::from_iter_in(
+                template_lit.quasis.iter().map(|quasi| {
+                    let string = Expression::new_string_literal(SPAN, quasi.value.raw, None, ctx);
+                    ArrayExpressionElement::from(string)
+                }),
+                ctx,
+            );
+            let raws_argument =
+                Argument::from(Expression::new_array_expression(SPAN, elements, ctx));
+            ArenaVec::from_array_in([cooked_argument, raws_argument], ctx)
         } else {
-            ctx.ast.vec1(cooked_argument)
+            ArenaVec::from_value_in(cooked_argument, ctx)
         };
 
         // `babelHelpers.taggedTemplateLiteral([<...cooked>], [<...raw>]?)`
         let template_call =
-            helper_call_expr(Helper::TaggedTemplateLiteral, SPAN, template_arguments, ctx);
+            helper_call_expr(Helper::TaggedTemplateLiteral, template_arguments, ctx);
         // `binding || (binding = babelHelpers.taggedTemplateLiteral([<...cooked>], [<...raw>]?))`
         let template_call =
             Argument::from(Self::create_logical_or_expression(binding, template_call, ctx));
 
         // `(binding || (binding = babelHelpers.taggedTemplateLiteral([<...cooked>], [<...raw>]?)), <...expressions>)`
-        ctx.ast.vec_from_iter(
+        ArenaVec::from_iter_in(
             // Add the template expressions as the remaining arguments
             iter::once(template_call)
                 .chain(template_lit.expressions.into_iter().map(Argument::from)),
+            ctx,
         )
     }
 
@@ -201,13 +210,14 @@ impl<'a> TaggedTemplateTransform {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let left = binding.create_read_expression(ctx);
-        let right = ctx.ast.expression_assignment(
+        let right = Expression::new_assignment_expression(
             SPAN,
             AssignmentOperator::Assign,
             binding.create_write_target(ctx),
             expr,
+            ctx,
         );
-        ctx.ast.expression_logical(SPAN, left, LogicalOperator::Or, right)
+        Expression::new_logical_expression(SPAN, left, LogicalOperator::Or, right, ctx)
     }
 
     /// Creates a `var binding;` variable declaration at the top level and returns the binding
@@ -219,20 +229,22 @@ impl<'a> TaggedTemplateTransform {
             SymbolFlags::FunctionScopedVariable,
         );
 
-        let variable = ctx.ast.variable_declarator(
+        let variable = VariableDeclarator::new(
             SPAN,
             VariableDeclarationKind::Var,
             binding.create_binding_pattern(ctx),
             NONE,
             None,
             false,
+            ctx,
         );
 
-        let stmt = Statement::from(ctx.ast.declaration_variable(
+        let stmt = Statement::from(Declaration::new_variable_declaration(
             SPAN,
             VariableDeclarationKind::Var,
-            ctx.ast.vec1(variable),
+            ArenaVec::from_value_in(variable, ctx),
             false,
+            ctx,
         ));
 
         ctx.state.top_level_statements.insert_statement(stmt);

@@ -42,7 +42,9 @@ declare_oxc_lint!(
     /// ```
     BadComparisonSequence,
     oxc,
-    correctness
+    correctness,
+    version = "0.0.3",
+    short_description = "This rule applies when the comparison operator is applied two or more times in a row.",
 );
 
 impl Rule for BadComparisonSequence {

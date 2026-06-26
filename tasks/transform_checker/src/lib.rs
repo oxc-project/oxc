@@ -99,9 +99,9 @@ use oxc_ast::ast::*;
 use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::{Scoping, SemanticBuilder};
-use oxc_span::CompactStr;
+use oxc_str::CompactStr;
 use oxc_syntax::{
-    reference::ReferenceId,
+    reference::{ReferenceFlags, ReferenceId},
     scope::{ScopeFlags, ScopeId},
     symbol::SymbolId,
 };
@@ -457,9 +457,10 @@ impl PostTransformChecker<'_, '_> {
                 );
             }
 
-            // Check flags match
+            // Check flags match.
+            // Ignore `MemberWriteTarget` flag - it's set by `SemanticBuilder` but not by the transformer.
             let flags = self.get_pair(reference_ids, |scoping, reference_id| {
-                scoping.get_reference(reference_id).flags()
+                scoping.get_reference(reference_id).flags() - ReferenceFlags::MemberWriteTarget
             });
             if flags.is_mismatch() {
                 self.errors.push_mismatch(

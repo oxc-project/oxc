@@ -387,6 +387,35 @@ impl PossibleFixes {
             }
         }
     }
+
+    #[cfg(debug_assertions)]
+    pub(crate) fn cmp_fix_sequence(&self, other: &Self) -> std::cmp::Ordering {
+        fn fix_sort_key(fix: &Fix) -> (&str, Option<&str>, FixKind, Span) {
+            (fix.content.as_ref(), fix.message.as_deref(), fix.kind, fix.span)
+        }
+
+        let cmp_fix_iter = |left: &[Fix], right: &[Fix]| {
+            left.iter().map(fix_sort_key).cmp(right.iter().map(fix_sort_key))
+        };
+
+        match (self, other) {
+            (PossibleFixes::None, PossibleFixes::None) => std::cmp::Ordering::Equal,
+            (PossibleFixes::None, _) => std::cmp::Ordering::Less,
+            (_, PossibleFixes::None) => std::cmp::Ordering::Greater,
+            (PossibleFixes::Single(left), PossibleFixes::Single(right)) => {
+                fix_sort_key(left).cmp(&fix_sort_key(right))
+            }
+            (PossibleFixes::Single(left), PossibleFixes::Multiple(right)) => {
+                cmp_fix_iter(std::slice::from_ref(left), right)
+            }
+            (PossibleFixes::Multiple(left), PossibleFixes::Single(right)) => {
+                cmp_fix_iter(left, std::slice::from_ref(right))
+            }
+            (PossibleFixes::Multiple(left), PossibleFixes::Multiple(right)) => {
+                cmp_fix_iter(left, right)
+            }
+        }
+    }
 }
 
 impl From<Option<Fix>> for PossibleFixes {
@@ -598,7 +627,7 @@ impl CompositeFix {
             return Ok(fixes.pop().unwrap());
         }
 
-        fixes.sort_unstable_by(|a, b| a.span.cmp(&b.span));
+        fixes.sort_unstable_by_key(|a| a.span);
 
         // safe, as fixes.len() > 1
         let start = fixes[0].span.start;

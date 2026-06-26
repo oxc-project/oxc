@@ -53,6 +53,8 @@ declare_oxc_lint!(
     NoUnsafeArgument(tsgolint),
     typescript,
     pedantic,
+    version = "1.12.0",
+    short_description = "This rule disallows calling a function with an argument which is typed as `any`.",
 );
 
 impl Rule for NoUnsafeArgument {}

@@ -21,8 +21,8 @@ pub struct NoSyncScripts;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule prevents the use of synchronous `<script>` tags in Next.js applications.
-    /// It requires that any `<script>` tag with a `src` attribute must also have either
+    /// Prevent the use of synchronous `<script>` tags in Next.js applications.
+    /// Require any `<script>` tag with a `src` attribute to also have either
     /// the `async` or `defer` attribute.
     ///
     /// ### Why is this bad?
@@ -55,7 +55,9 @@ declare_oxc_lint!(
     /// ```
     NoSyncScripts,
     nextjs,
-    correctness
+    correctness,
+    version = "0.2.0",
+    short_description = "Prevent the use of synchronous `<script>` tags in Next.js applications.",
 );
 
 impl Rule for NoSyncScripts {
@@ -99,7 +101,7 @@ fn test() {
 
     let pass = vec![
         r"import {Head} from 'next/document';
-			
+
 			      export class Blah extends Head {
 			        render() {
 			          return (
@@ -111,7 +113,7 @@ fn test() {
 			        }
 			    }",
         r"import {Head} from 'next/document';
-			
+
 			      export class Blah extends Head {
 			        render(props) {
 			          return (
@@ -127,7 +129,7 @@ fn test() {
     let fail = vec![
         r"
 			      import {Head} from 'next/document';
-			
+
 			        export class Blah extends Head {
 			          render() {
 			            return (
@@ -140,7 +142,7 @@ fn test() {
 			      }",
         r"
 			      import {Head} from 'next/document';
-			
+
 			        export class Blah extends Head {
 			          render(props) {
 			            return (

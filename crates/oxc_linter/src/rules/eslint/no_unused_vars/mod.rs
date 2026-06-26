@@ -11,19 +11,30 @@ mod usage;
 
 use std::ops::Deref;
 
+use allowed::FunctionParameterKind;
 use ignored::IgnoreReason;
 use options::{IgnorePattern, NoUnusedVarsFixMode, NoUnusedVarsOptions};
-use oxc_ast::AstKind;
+use oxc_ast::{AstKind, ast::CatchParameter};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, ScopeFlags, SymbolFlags};
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
 use symbol::Symbol;
 
 use crate::{
     context::{ContextHost, LintContext},
     rule::Rule,
+    rules::eslint::no_unused_vars::options::VarsOption,
 };
+
+#[derive(JsonSchema, Debug)]
+#[serde(untagged)]
+#[expect(unused)] // only for schemars generation, not actually used in code
+pub enum NoUnusedVarsConfig {
+    Vars(VarsOption),
+    Options(NoUnusedVarsOptions),
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoUnusedVars(Box<NoUnusedVarsOptions>);
@@ -192,7 +203,9 @@ declare_oxc_lint!(
     eslint,
     correctness,
     fix = conditional_dangerous_fix_or_suggestion,
-    config = NoUnusedVarsOptions
+    config = NoUnusedVarsConfig,
+    version = "0.7.0",
+    short_description = "Disallows variable declarations, imports, or type declarations that are not used in code.",
 );
 
 impl Deref for NoUnusedVars {
@@ -205,7 +218,9 @@ impl Deref for NoUnusedVars {
 
 impl Rule for NoUnusedVars {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(Self(Box::new(NoUnusedVarsOptions::try_from(value).unwrap_or_default())))
+        NoUnusedVarsOptions::try_from(value)
+            .map(|options| Self(Box::new(options)))
+            .map_err(|error| <serde_json::Error as serde::de::Error>::custom(error.to_string()))
     }
 
     fn run_once(&self, ctx: &LintContext) {
@@ -274,7 +289,7 @@ impl NoUnusedVars {
 
                 if let Some(declaration) = declaration {
                     Self::report_with_fix_mode(self.fix.imports, ctx, diagnostic, |fixer| {
-                        self.remove_unused_import_declaration(fixer, symbol, declaration)
+                        self.remove_unused_import_declaration(fixer, ctx, symbol, declaration)
                     });
                 } else {
                     ctx.diagnostic(diagnostic);
@@ -303,16 +318,41 @@ impl NoUnusedVars {
                 });
             }
             AstKind::FormalParameter(param) => {
-                if self.is_allowed_argument(ctx.semantic(), ctx.module_record(), symbol, param) {
+                if self.is_allowed_argument(
+                    ctx.semantic(),
+                    ctx.module_record(),
+                    symbol,
+                    &FunctionParameterKind::Normal(param),
+                ) {
                     return;
                 }
-                ctx.diagnostic(diagnostic::param(symbol, &self.args_ignore_pattern));
+                Self::report_with_fix_mode(
+                    self.fix.variables,
+                    ctx,
+                    diagnostic::param(
+                        symbol,
+                        &self.args_ignore_pattern,
+                        symbol.is_used_in_return_type_predicate()
+                            || symbol.has_reference_used_as_type_query(),
+                    ),
+                    |fixer| self.rename_unused_function_parameter(fixer, symbol, param),
+                );
             }
-            AstKind::FormalParameterRest(_) => {
-                if NoUnusedVars::is_allowed_binding_rest_element(symbol) {
+            AstKind::FormalParameterRest(param) => {
+                if self.is_allowed_argument(
+                    ctx.semantic(),
+                    ctx.module_record(),
+                    symbol,
+                    &FunctionParameterKind::Rest(param),
+                ) {
                     return;
                 }
-                ctx.diagnostic(diagnostic::param(symbol, &self.vars_ignore_pattern));
+                ctx.diagnostic(diagnostic::param(
+                    symbol,
+                    &self.args_ignore_pattern,
+                    symbol.is_used_in_return_type_predicate()
+                        || symbol.has_reference_used_as_type_query(),
+                ));
             }
             AstKind::BindingRestElement(_) => {
                 if NoUnusedVars::is_allowed_binding_rest_element(symbol) {
@@ -347,20 +387,7 @@ impl NoUnusedVars {
                     self.fix.variables,
                     ctx,
                     diagnostic::declared(symbol, &self.caught_errors_ignore_pattern, false),
-                    |fixer| {
-                        let Span { start, end, .. } = catch.span();
-
-                        let (Some(paren_start), Some(paren_end_offset)) = (
-                            ctx.find_prev_token_from(start, "("),
-                            ctx.find_next_token_from(end, ")"),
-                        ) else {
-                            return fixer.noop();
-                        };
-
-                        let paren_end = end + paren_end_offset;
-                        let delete_span = Span::new(paren_start, paren_end + 1);
-                        fixer.delete_range(delete_span)
-                    },
+                    |fixer| remove_unused_catch_parameter(fixer, ctx, catch),
                 );
             }
             _ => ctx.diagnostic(diagnostic::declared(symbol, &IgnorePattern::<&str>::None, false)),
@@ -424,6 +451,24 @@ impl NoUnusedVars {
 
         false
     }
+}
+
+fn remove_unused_catch_parameter<'a>(
+    fixer: crate::fixer::RuleFixer<'_, 'a>,
+    ctx: &LintContext<'a>,
+    catch: &CatchParameter<'a>,
+) -> crate::fixer::RuleFix {
+    let Span { start, end, .. } = catch.span();
+
+    let (Some(paren_start), Some(paren_end_offset)) =
+        (ctx.find_prev_token_from(start, "("), ctx.find_next_token_from(end, ")"))
+    else {
+        return fixer.noop();
+    };
+
+    let paren_end = end + paren_end_offset;
+    let delete_span = Span::new(paren_start, paren_end + 1);
+    fixer.delete_range(delete_span)
 }
 
 impl Symbol<'_, '_> {

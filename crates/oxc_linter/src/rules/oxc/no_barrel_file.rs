@@ -10,7 +10,7 @@ use oxc_span::Span;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-fn no_barrel_file(total: usize, threshold: usize, labels: Vec<LabeledSpan>) -> OxcDiagnostic {
+fn no_barrel_file(total: u32, threshold: u32, labels: Vec<LabeledSpan>) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
         "Barrel file detected, {total} modules are loaded which exceeds the threshold of {threshold}.",
     ))
@@ -24,7 +24,7 @@ fn no_barrel_file(total: usize, threshold: usize, labels: Vec<LabeledSpan>) -> O
 pub struct NoBarrelFile {
     /// The maximum number of modules that can be re-exported via `export *`
     /// before the rule is triggered.
-    threshold: usize,
+    threshold: u32,
 }
 
 impl Default for NoBarrelFile {
@@ -37,7 +37,7 @@ declare_oxc_lint!(
     /// ### What it does
     ///
     /// Disallow the use of barrel files where the file contains `export *` statements,
-    /// and the total number of modules exceed a threshold.
+    /// and the total number of modules exceeds a threshold.
     ///
     /// The default threshold is 100.
     ///
@@ -72,6 +72,8 @@ declare_oxc_lint!(
     oxc,
     restriction,
     config = NoBarrelFile,
+    version = "0.3.0",
+    short_description = "Disallow barrel files containing `export *` statements when the total number of modules exceeds a threshold.",
 );
 
 impl Rule for NoBarrelFile {
@@ -102,7 +104,7 @@ impl Rule for NoBarrelFile {
             .collect::<Vec<_>>();
 
         let mut labels = vec![];
-        let mut total: usize = 0;
+        let mut total: u32 = 0;
 
         for module_request in module_requests {
             // the own module is counted as well
@@ -131,7 +133,7 @@ impl Rule for NoBarrelFile {
     }
 }
 
-fn count_loaded_modules(module_record: &ModuleRecord) -> Option<usize> {
+fn count_loaded_modules(module_record: &ModuleRecord) -> Option<u32> {
     if module_record.loaded_modules().is_empty() {
         return None;
     }

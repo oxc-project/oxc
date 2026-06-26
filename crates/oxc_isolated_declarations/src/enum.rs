@@ -1,15 +1,16 @@
 use rustc_hash::FxHashMap;
 
-use oxc_allocator::CloneIn;
+use oxc_allocator::{ArenaVec, CloneIn};
 use oxc_ast::ast::*;
 use oxc_ecmascript::{ToInt32, ToUint32};
-use oxc_span::{GetSpan, SPAN, Str};
+use oxc_span::{GetSpan, SPAN};
+use oxc_str::Str;
 use oxc_syntax::{
     number::{NumberBase, ToJsString},
     operator::{BinaryOperator, UnaryOperator},
 };
 
-use crate::{IsolatedDeclarations, diagnostics::enum_member_initializers};
+use crate::{IsolatedDeclarations, diagnostics::const_enum_member_initializers};
 
 #[derive(Debug, Clone)]
 enum ConstantValue {
@@ -20,7 +21,7 @@ enum ConstantValue {
 impl<'a> IsolatedDeclarations<'a> {
     /// Transform a TypeScript enum declaration into its declaration output form.
     pub fn transform_ts_enum_declaration(&self, decl: &TSEnumDeclaration<'a>) -> Declaration<'a> {
-        let mut members = self.ast.vec();
+        let mut members = ArenaVec::new_in(self);
         let mut prev_initializer_value = Some(ConstantValue::Number(-1.0));
         let mut prev_members = FxHashMap::default();
         for member in &decl.body.members {
@@ -28,8 +29,8 @@ impl<'a> IsolatedDeclarations<'a> {
                 let computed_value =
                     self.computed_constant_value(initializer, &decl.id.name, &prev_members);
 
-                if computed_value.is_none() {
-                    self.error(enum_member_initializers(member.id.span()));
+                if decl.r#const && computed_value.is_none() {
+                    self.error(const_enum_member_initializers(initializer.span()));
                 }
 
                 computed_value
@@ -46,7 +47,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 prev_members.insert(member_name, value.clone());
             }
 
-            let member = self.ast.ts_enum_member(
+            let member = TSEnumMember::new(
                 member.span,
                 member.id.clone_in(self.ast.allocator),
                 value.map(|v| match v {
@@ -55,38 +56,46 @@ impl<'a> IsolatedDeclarations<'a> {
 
                         // Infinity
                         let expr = if v.is_infinite() {
-                            self.ast.expression_identifier(SPAN, "Infinity")
+                            Expression::new_identifier(SPAN, "Infinity", self)
                         } else {
                             let value = if is_negative { -v } else { v };
-                            self.ast.expression_numeric_literal(
+                            Expression::new_numeric_literal(
                                 SPAN,
                                 value,
                                 None,
                                 NumberBase::Decimal,
+                                self,
                             )
                         };
 
                         if is_negative {
-                            self.ast.expression_unary(SPAN, UnaryOperator::UnaryNegation, expr)
+                            Expression::new_unary_expression(
+                                SPAN,
+                                UnaryOperator::UnaryNegation,
+                                expr,
+                                self,
+                            )
                         } else {
                             expr
                         }
                     }
                     ConstantValue::String(v) => {
-                        self.ast.expression_string_literal(SPAN, self.ast.str(&v), None)
+                        Expression::new_string_literal(SPAN, Str::from_str_in(&v, self), None, self)
                     }
                 }),
+                self,
             );
 
             members.push(member);
         }
 
-        self.ast.declaration_ts_enum(
+        Declaration::new_ts_enum_declaration(
             decl.span,
             decl.id.clone_in(self.ast.allocator),
-            self.ast.ts_enum_body(decl.body.span, members),
+            TSEnumBody::new(decl.body.span, members, self),
             decl.r#const,
             self.is_declare(),
+            self,
         )
     }
 

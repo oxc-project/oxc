@@ -35,13 +35,13 @@ fn main() -> std::io::Result<()> {
     let ret = Parser::new(&allocator, &source_text, source_type).parse();
 
     // Handle parser errors
-    if !ret.errors.is_empty() {
-        print_errors(&source_text, ret.errors);
+    if !ret.diagnostics.is_empty() {
+        print_errors(&source_text, ret.diagnostics.into());
         return Ok(());
     }
 
     // Build semantic model for AST analysis
-    let semantic_ret = SemanticBuilder::new().build(&ret.program);
+    let semantic_ret = SemanticBuilder::new_linter().build(&ret.program);
 
     let mut errors: Vec<OxcDiagnostic> = vec![];
 

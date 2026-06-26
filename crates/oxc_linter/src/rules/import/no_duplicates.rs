@@ -103,6 +103,8 @@ declare_oxc_lint!(
     // same thing as this rule and is also pending a fixer.
     none,
     config = NoDuplicates,
+    version = "0.2.11",
+    short_description = "Forbid importing the same module multiple times.",
 );
 
 impl Rule for NoDuplicates {

@@ -40,7 +40,9 @@ declare_oxc_lint!(
     PreferOptionalCatchBinding,
     unicorn,
     style,
-    fix
+    fix,
+    version = "0.0.17",
+    short_description = "Prefers omitting the catch binding parameter if it is unused.",
 );
 
 impl Rule for PreferOptionalCatchBinding {

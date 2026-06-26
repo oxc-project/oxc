@@ -1,0 +1,331 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(require-unicode-regexp): Use the 'u' flag.
+   ╭─[require_unicode_regexp.tsx:1:1]
+ 1 │ /\a/
+   · ────
+   ╰────
+  help: Add the 'u' flag.
+  note: The 'u' and 'v' flags enable Unicode-aware regular expression behavior and stricter pattern parsing.
+
+  ⚠ eslint(require-unicode-regexp): Use the 'u' flag.
+   ╭─[require_unicode_regexp.tsx:1:1]
+ 1 │ /foo/
+   · ─────
+   ╰────
+  help: Add the 'u' flag.
+  note: The 'u' and 'v' flags enable Unicode-aware regular expression behavior and stricter pattern parsing.
+
+  ⚠ eslint(require-unicode-regexp): Use the 'u' flag.
+   ╭─[require_unicode_regexp.tsx:1:1]
+ 1 │ /foo/gimy
+   · ─────────
+   ╰────
+  help: Add the 'u' flag.
+  note: The 'u' and 'v' flags enable Unicode-aware regular expression behavior and stricter pattern parsing.
+
+  ⚠ eslint(require-unicode-regexp): Use the 'u' flag.
+   ╭─[require_unicode_regexp.tsx:1:1]
+ 1 │ RegExp()
+   · ────────
+   ╰────
+  help: Add the 'u' flag.
+  note: The 'u' and 'v' flags enable Unicode-aware regular expression behavior and stricter pattern parsing.
+
+  ⚠ eslint(require-unicode-regexp): Use the 'u' flag.
+   ╭─[require_unicode_regexp.tsx:1:1]
+ 1 │ RegExp('foo')
+   · ─────────────
+   ╰────
+  help: Add the 'u' flag.
+  note: The 'u' and 'v' flags enable Unicode-aware regular expression behavior and stricter pattern parsing.
+
+  ⚠ eslint(require-unicode-regexp): Use the 'u' flag.
+   ╭─[require_unicode_regexp.tsx:1:1]
+ 1 │ RegExp('\\a')
+   · ─────────────
+   ╰────
+  help: Add the 'u' flag.
+  note: The 'u' and 'v' flags enable Unicode-aware regular expression behavior and stricter pattern parsing.
+
+  ⚠ eslint(require-unicode-regexp): Use the 'u' flag.
+   ╭─[require_unicode_regexp.tsx:1:1]
+ 1 │ RegExp('foo', '')
+   · ─────────────────
+   ╰────
+  help: Add the 'u' flag.
+  note: The 'u' and 'v' flags enable Unicode-aware regular expression behavior and stricter pattern parsing.
+
+  ⚠ eslint(require-unicode-regexp): Use the 'u' flag.
+   ╭─[require_unicode_regexp.tsx:1:1]
+ 1 │ RegExp('foo', 'gimy')
+   · ─────────────────────
+   ╰────
+  help: Add the 'u' flag.
+  note: The 'u' and 'v' flags enable Unicode-aware regular expression behavior and stricter pattern parsing.
+
+  ⚠ eslint(require-unicode-regexp): Use the 'u' flag.
+   ╭─[require_unicode_regexp.tsx:1:1]
+ 1 │ RegExp('foo', `gimy`)
+   · ─────────────────────
+   ╰────
+  help: Add the 'u' flag.
+  note: The 'u' and 'v' flags enable Unicode-aware regular expression behavior and stricter pattern parsing.
+
+  ⚠ eslint(require-unicode-regexp): Use the 'u' flag.
+   ╭─[require_unicode_regexp.tsx:1:1]
+ 1 │ new RegExp('foo')
+   · ─────────────────
+   ╰────
+  help: Add the 'u' flag.
+  note: The 'u' and 'v' flags enable Unicode-aware regular expression behavior and stricter pattern parsing.
+
+  ⚠ eslint(require-unicode-regexp): Use the 'u' flag.
+   ╭─[require_unicode_regexp.tsx:1:1]
+ 1 │ new RegExp('foo',)
+   · ──────────────────
+   ╰────
+  help: Add the 'u' flag.
+  note: The 'u' and 'v' flags enable Unicode-aware regular expression behavior and stricter pattern parsing.
+
+  ⚠ eslint(require-unicode-regexp): Use the 'u' flag.
+   ╭─[require_unicode_regexp.tsx:1:1]
+ 1 │ new RegExp('foo', false)
+   · ────────────────────────
+   ╰────
+  help: Add the 'u' flag.
+  note: The 'u' and 'v' flags enable Unicode-aware regular expression behavior and stricter pattern parsing.
+
+  ⚠ eslint(require-unicode-regexp): Use the 'u' flag.
+   ╭─[require_unicode_regexp.tsx:1:1]
+ 1 │ new RegExp('foo', 1)
+   · ────────────────────
+   ╰────
+  help: Add the 'u' flag.
+  note: The 'u' and 'v' flags enable Unicode-aware regular expression behavior and stricter pattern parsing.
+
+  ⚠ eslint(require-unicode-regexp): Use the 'u' flag.
+   ╭─[require_unicode_regexp.tsx:1:1]
+ 1 │ new RegExp('foo', '')
+   · ─────────────────────
+   ╰────
+  help: Add the 'u' flag.
+  note: The 'u' and 'v' flags enable Unicode-aware regular expression behavior and stricter pattern parsing.
+
+  ⚠ eslint(require-unicode-regexp): Use the 'u' flag.
+   ╭─[require_unicode_regexp.tsx:1:1]
+ 1 │ new RegExp('foo', 'gimy')
+   · ─────────────────────────
+   ╰────
+  help: Add the 'u' flag.
+  note: The 'u' and 'v' flags enable Unicode-aware regular expression behavior and stricter pattern parsing.
+
+  ⚠ eslint(require-unicode-regexp): Use the 'u' flag.
+   ╭─[require_unicode_regexp.tsx:1:1]
+ 1 │ new RegExp(('foo'))
+   · ───────────────────
+   ╰────
+  help: Add the 'u' flag.
+  note: The 'u' and 'v' flags enable Unicode-aware regular expression behavior and stricter pattern parsing.
+
+  ⚠ eslint(require-unicode-regexp): Use the 'u' flag.
+   ╭─[require_unicode_regexp.tsx:1:1]
+ 1 │ new RegExp(('unrelated', 'foo'))
+   · ────────────────────────────────
+   ╰────
+  help: Add the 'u' flag.
+  note: The 'u' and 'v' flags enable Unicode-aware regular expression behavior and stricter pattern parsing.
+
+  ⚠ eslint(require-unicode-regexp): Use the 'u' flag.
+   ╭─[require_unicode_regexp.tsx:1:21]
+ 1 │ const flags = 'gi'; new RegExp('foo', flags)
+   ·                     ────────────────────────
+   ╰────
+  help: Add the 'u' flag.
+  note: The 'u' and 'v' flags enable Unicode-aware regular expression behavior and stricter pattern parsing.
+
+  ⚠ eslint(require-unicode-regexp): Use the 'u' flag.
+   ╭─[require_unicode_regexp.tsx:1:21]
+ 1 │ const flags = 'gi'; new RegExp('foo', ('unrelated', flags))
+   ·                     ───────────────────────────────────────
+   ╰────
+  help: Add the 'u' flag.
+  note: The 'u' and 'v' flags enable Unicode-aware regular expression behavior and stricter pattern parsing.
+
+  ⚠ eslint(require-unicode-regexp): Use the 'u' flag.
+   ╭─[require_unicode_regexp.tsx:1:12]
+ 1 │ let flags; new RegExp('foo', flags = 'g')
+   ·            ──────────────────────────────
+   ╰────
+  help: Add the 'u' flag.
+  note: The 'u' and 'v' flags enable Unicode-aware regular expression behavior and stricter pattern parsing.
+
+  ⚠ eslint(require-unicode-regexp): Use the 'u' flag.
+   ╭─[require_unicode_regexp.tsx:1:21]
+ 1 │ const flags = `gi`; new RegExp(`foo`, (`unrelated`, flags))
+   ·                     ───────────────────────────────────────
+   ╰────
+  help: Add the 'u' flag.
+  note: The 'u' and 'v' flags enable Unicode-aware regular expression behavior and stricter pattern parsing.
+
+  ⚠ eslint(require-unicode-regexp): Use the 'u' flag.
+   ╭─[require_unicode_regexp.tsx:1:23]
+ 1 │ const flags = 'gimu'; new RegExp('foo', flags[0])
+   ·                       ───────────────────────────
+   ╰────
+  help: Add the 'u' flag.
+  note: The 'u' and 'v' flags enable Unicode-aware regular expression behavior and stricter pattern parsing.
+
+  ⚠ eslint(require-unicode-regexp): Use the 'u' flag.
+   ╭─[require_unicode_regexp.tsx:1:1]
+ 1 │ new window.RegExp('foo')
+   · ────────────────────────
+   ╰────
+  help: Add the 'u' flag.
+  note: The 'u' and 'v' flags enable Unicode-aware regular expression behavior and stricter pattern parsing.
+
+  ⚠ eslint(require-unicode-regexp): Use the 'u' flag.
+   ╭─[require_unicode_regexp.tsx:1:1]
+ 1 │ new global.RegExp('foo')
+   · ────────────────────────
+   ╰────
+  help: Add the 'u' flag.
+  note: The 'u' and 'v' flags enable Unicode-aware regular expression behavior and stricter pattern parsing.
+
+  ⚠ eslint(require-unicode-regexp): Use the 'u' flag.
+   ╭─[require_unicode_regexp.tsx:1:1]
+ 1 │ new globalThis.RegExp('foo')
+   · ────────────────────────────
+   ╰────
+  help: Add the 'u' flag.
+  note: The 'u' and 'v' flags enable Unicode-aware regular expression behavior and stricter pattern parsing.
+
+  ⚠ eslint(require-unicode-regexp): Use the 'v' flag.
+   ╭─[require_unicode_regexp.tsx:1:1]
+ 1 │ /foo/
+   · ─────
+   ╰────
+  help: Add the 'v' flag.
+  note: The 'u' and 'v' flags enable Unicode-aware regular expression behavior and stricter pattern parsing.
+
+  ⚠ eslint(require-unicode-regexp): Use the 'v' flag.
+   ╭─[require_unicode_regexp.tsx:1:1]
+ 1 │ /foo/u
+   · ──────
+   ╰────
+  help: Add the 'v' flag.
+  note: The 'u' and 'v' flags enable Unicode-aware regular expression behavior and stricter pattern parsing.
+
+  ⚠ eslint(require-unicode-regexp): Use the 'v' flag.
+   ╭─[require_unicode_regexp.tsx:1:1]
+ 1 │ /foo/u
+   · ──────
+   ╰────
+  help: Add the 'v' flag.
+  note: The 'u' and 'v' flags enable Unicode-aware regular expression behavior and stricter pattern parsing.
+
+  ⚠ eslint(require-unicode-regexp): Use the 'v' flag.
+   ╭─[require_unicode_regexp.tsx:1:1]
+ 1 │ /[[a]/u
+   · ───────
+   ╰────
+  help: Add the 'v' flag.
+  note: The 'u' and 'v' flags enable Unicode-aware regular expression behavior and stricter pattern parsing.
+
+  ⚠ eslint(require-unicode-regexp): Use the 'v' flag.
+   ╭─[require_unicode_regexp.tsx:1:1]
+ 1 │ new RegExp('foo', 'u')
+   · ──────────────────────
+   ╰────
+  help: Add the 'v' flag.
+  note: The 'u' and 'v' flags enable Unicode-aware regular expression behavior and stricter pattern parsing.
+
+  ⚠ eslint(require-unicode-regexp): Use the 'v' flag.
+   ╭─[require_unicode_regexp.tsx:1:1]
+ 1 │ new RegExp('[[a]', 'u')
+   · ───────────────────────
+   ╰────
+  help: Add the 'v' flag.
+  note: The 'u' and 'v' flags enable Unicode-aware regular expression behavior and stricter pattern parsing.
+
+  ⚠ eslint(require-unicode-regexp): Use the 'v' flag.
+   ╭─[require_unicode_regexp.tsx:1:1]
+ 1 │ new RegExp("foo", "\u0067")
+   · ───────────────────────────
+   ╰────
+  help: Add the 'v' flag.
+  note: The 'u' and 'v' flags enable Unicode-aware regular expression behavior and stricter pattern parsing.
+
+  ⚠ eslint(require-unicode-regexp): Use the 'v' flag.
+   ╭─[require_unicode_regexp.tsx:1:1]
+ 1 │ new RegExp("foo", `\u0067`)
+   · ───────────────────────────
+   ╰────
+  help: Add the 'v' flag.
+  note: The 'u' and 'v' flags enable Unicode-aware regular expression behavior and stricter pattern parsing.
+
+  ⚠ eslint(require-unicode-regexp): Use the 'v' flag.
+   ╭─[require_unicode_regexp.tsx:1:1]
+ 1 │ new RegExp("foo", "\u0075")
+   · ───────────────────────────
+   ╰────
+  help: Add the 'v' flag.
+  note: The 'u' and 'v' flags enable Unicode-aware regular expression behavior and stricter pattern parsing.
+
+  ⚠ eslint(require-unicode-regexp): Use the 'v' flag.
+   ╭─[require_unicode_regexp.tsx:1:1]
+ 1 │ new RegExp("foo", `\u0075`)
+   · ───────────────────────────
+   ╰────
+  help: Add the 'v' flag.
+  note: The 'u' and 'v' flags enable Unicode-aware regular expression behavior and stricter pattern parsing.
+
+  ⚠ eslint(require-unicode-regexp): Use the 'v' flag.
+   ╭─[require_unicode_regexp.tsx:1:28]
+ 1 │ const regularFlags = "sm"; new RegExp("foo", `${regularFlags}g`)
+   ·                            ─────────────────────────────────────
+   ╰────
+  help: Add the 'v' flag.
+  note: The 'u' and 'v' flags enable Unicode-aware regular expression behavior and stricter pattern parsing.
+
+  ⚠ eslint(require-unicode-regexp): Use the 'v' flag.
+   ╭─[require_unicode_regexp.tsx:1:29]
+ 1 │ const regularFlags = "smu"; new RegExp("foo", `${regularFlags}g`)
+   ·                             ─────────────────────────────────────
+   ╰────
+  help: Add the 'v' flag.
+  note: The 'u' and 'v' flags enable Unicode-aware regular expression behavior and stricter pattern parsing.
+
+  ⚠ eslint(require-unicode-regexp): Use the 'u' flag.
+   ╭─[require_unicode_regexp.tsx:1:1]
+ 1 │ /foo/v
+   · ──────
+   ╰────
+  help: Add the 'u' flag.
+  note: The 'u' and 'v' flags enable Unicode-aware regular expression behavior and stricter pattern parsing.
+
+  ⚠ eslint(require-unicode-regexp): Use the 'v' flag.
+   ╭─[require_unicode_regexp.tsx:1:1]
+ 1 │ new RegExp('foo')
+   · ─────────────────
+   ╰────
+  help: Add the 'v' flag.
+  note: The 'u' and 'v' flags enable Unicode-aware regular expression behavior and stricter pattern parsing.
+
+  ⚠ eslint(require-unicode-regexp): Use the 'u' flag.
+   ╭─[require_unicode_regexp.tsx:1:1]
+ 1 │ new RegExp('foo', 'v')
+   · ──────────────────────
+   ╰────
+  help: Add the 'u' flag.
+  note: The 'u' and 'v' flags enable Unicode-aware regular expression behavior and stricter pattern parsing.
+
+  ⚠ eslint(require-unicode-regexp): Use the 'u' flag.
+   ╭─[require_unicode_regexp.tsx:1:29]
+ 1 │ const a = 'g'; const b = a; new RegExp('x', b)
+   ·                             ──────────────────
+   ╰────
+  help: Add the 'u' flag.
+  note: The 'u' and 'v' flags enable Unicode-aware regular expression behavior and stricter pattern parsing.

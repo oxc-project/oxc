@@ -25,7 +25,7 @@ pub struct RequireModuleSpecifiers;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce non-empty specifier list in `import` and `export` statements.
+    /// Enforce a non-empty specifier list in `import` and `export` statements.
     ///
     /// ### Why is this bad?
     ///
@@ -50,7 +50,9 @@ declare_oxc_lint!(
     RequireModuleSpecifiers,
     unicorn,
     suspicious,
-    fix
+    fix,
+    version = "1.20.0",
+    short_description = "Enforce a non-empty specifier list in `import` and `export` statements.",
 );
 
 impl Rule for RequireModuleSpecifiers {
@@ -65,15 +67,15 @@ impl Rule for RequireModuleSpecifiers {
                     |fixer| fix_import(fixer, import_decl),
                 );
             }
-            AstKind::ExportNamedDeclaration(export_decl) => {
-                if export_decl.declaration.is_none() && export_decl.specifiers.is_empty() {
-                    let span =
-                        find_empty_braces_in_export(ctx, export_decl).unwrap_or(export_decl.span);
-                    ctx.diagnostic_with_fix(
-                        require_module_specifiers_diagnostic(span, "export"),
-                        |fixer| fix_export(fixer, export_decl),
-                    );
-                }
+            AstKind::ExportNamedDeclaration(export_decl)
+                if export_decl.declaration.is_none() && export_decl.specifiers.is_empty() =>
+            {
+                let span =
+                    find_empty_braces_in_export(ctx, export_decl).unwrap_or(export_decl.span);
+                ctx.diagnostic_with_fix(
+                    require_module_specifiers_diagnostic(span, "export"),
+                    |fixer| fix_export(fixer, export_decl),
+                );
             }
             _ => {}
         }

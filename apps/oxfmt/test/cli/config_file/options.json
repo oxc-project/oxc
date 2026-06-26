@@ -1,0 +1,25 @@
+[
+  {
+    "args": ["--check", "!*.{json,jsonc,ts}"]
+  },
+  {
+    "cwd": "nested",
+    "args": ["--check", "!*.{json,jsonc,ts}"]
+  },
+  {
+    "cwd": "nested/deep",
+    "args": ["--check", "!*.{json,jsonc,ts}"]
+  },
+  {
+    "args": ["--check", "!*.{json,jsonc,ts}", "--config", "./fmt.json"]
+  },
+  {
+    "args": ["--check", "!*.{json,jsonc,ts}", "--config", "./fmt.jsonc"]
+  },
+  {
+    "args": ["--check", "!*.{json,jsonc,ts}", "--config", "./fmt.config.ts"]
+  },
+  {
+    "args": ["--check", "--config", "NOT_EXISTS.json"]
+  }
+]

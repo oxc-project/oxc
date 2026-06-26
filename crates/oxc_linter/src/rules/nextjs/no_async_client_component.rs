@@ -85,7 +85,9 @@ declare_oxc_lint!(
     /// ```
     NoAsyncClientComponent,
     nextjs,
-    correctness
+    correctness,
+    version = "0.2.0",
+    short_description = "Prevent client components from being async functions.",
 );
 
 impl Rule for NoAsyncClientComponent {

@@ -4,7 +4,7 @@ use itertools::Itertools;
 use lazy_regex::Regex;
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use oxc_ast::{
     AstKind, AstType,
@@ -23,7 +23,8 @@ use oxc_ast_visit::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ReferenceId, ScopeId, Semantic, SymbolId};
-use oxc_span::{GetSpan, Span, Str};
+use oxc_span::{GetSpan, Span};
+use oxc_str::Str;
 use oxc_syntax::scope::ScopeFlags;
 
 use crate::{
@@ -32,10 +33,11 @@ use crate::{
         get_declaration_from_reference_id, get_declaration_of_variable, get_enclosing_function,
     },
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
+    utils::deserialize_regex_option,
 };
 
-const SCOPE: &str = "eslint-plugin-react-hooks";
+const SCOPE: &str = "react-hooks";
 
 fn missing_callback_diagnostic(hook_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("React hook {hook_name} requires an effect callback."))
@@ -83,7 +85,7 @@ fn missing_dependency_diagnostic(
         let all_but_last = iter
             .by_ref()
             .take(deps.len() - 1)
-            .map(|s| format!("'{s}'",))
+            .map(|s| format!("'{s}'"))
             .collect::<Vec<_>>()
             .join(", ");
         let last = iter.next().unwrap();
@@ -218,19 +220,23 @@ fn functions_returned_from_use_effect_event_must_not_be_included_in_dependency_a
     .with_error_code_scope(SCOPE)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct ExhaustiveDeps(Box<ExhaustiveDepsConfig>);
 
-#[derive(Debug, Clone, Default)]
-pub struct ExhaustiveDepsConfig {
+#[derive(Debug, Clone, Default, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+struct ExhaustiveDepsConfig {
+    /// Optionally provide a regex of additional hooks to check.
+    #[serde(default, deserialize_with = "deserialize_additional_hooks")]
     additional_hooks: Option<Regex>,
 }
 
-#[derive(Debug, Default, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
-struct ExhaustiveDepsConfigJson {
-    /// Optionally provide a regex of additional hooks to check.
-    additional_hooks: Option<String>,
+fn deserialize_additional_hooks<'de, D>(deserializer: D) -> Result<Option<Regex>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    deserialize_regex_option(deserializer)
+        .map(|regex| regex.filter(|regex| !regex.as_str().is_empty()))
 }
 
 declare_oxc_lint!(
@@ -268,28 +274,16 @@ declare_oxc_lint!(
     react,
     correctness,
     safe_fixes_and_dangerous_suggestions,
-    config = ExhaustiveDepsConfigJson,
+    config = ExhaustiveDepsConfig,
+    version = "0.12.0",
+    short_description = "Verifies the list of dependencies for Hooks like `useEffect` and similar.",
 );
 
 const HOOKS_USELESS_WITHOUT_DEPENDENCIES: [&str; 2] = ["useCallback", "useMemo"];
 
 impl Rule for ExhaustiveDeps {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let config = value
-            .as_array()
-            .and_then(|arr| arr.first())
-            .and_then(|first| {
-                serde_json::from_value::<ExhaustiveDepsConfigJson>(first.clone()).ok()
-            })
-            .map(|config_json| ExhaustiveDepsConfig {
-                additional_hooks: config_json
-                    .additional_hooks
-                    .filter(|pattern| !pattern.is_empty())
-                    .and_then(|pattern| Regex::new(&pattern).ok()),
-            })
-            .unwrap_or_default();
-
-        Ok(Self(Box::new(config)))
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -376,9 +370,7 @@ impl Rule for ExhaustiveDeps {
                                 if ctx
                                     .semantic()
                                     .scoping()
-                                    .scope_ancestors(component_scope_id)
-                                    .skip(1)
-                                    .contains(&decl.scope_id())
+                                    .scope_is_descendant_of(component_scope_id, decl.scope_id())
                                 {
                                     return;
                                 }
@@ -594,9 +586,7 @@ impl Rule for ExhaustiveDeps {
                 if !(ctx
                     .semantic()
                     .scoping()
-                    .scope_ancestors(component_scope_id)
-                    .skip(1)
-                    .contains(&dependency_scope_id)
+                    .scope_is_descendant_of(component_scope_id, dependency_scope_id)
                     || is_ref_current_non_dependency)
                 {
                     continue;
@@ -700,7 +690,7 @@ impl Rule for ExhaustiveDeps {
             // lastly, we need co compare for any unnecessary deps
             // for example if `props.foo`, AND `props.foo.bar.baz` was declared in the deps array
             // `props.foo.bar.baz` is unnecessary (already covered by `props.foo`)
-            declared_dependencies.iter().tuple_combinations().for_each(|(a, b)| {
+            declared_dependencies.iter().array_combinations().for_each(|[a, b]| {
                 if a.contains(b) {
                     ctx.diagnostic(unnecessary_dependency_diagnostic(
                         hook_name,
@@ -854,7 +844,11 @@ impl ExhaustiveDeps {
 fn get_node_name_without_react_namespace<'a>(expr: &Expression<'a>) -> Option<&'a str> {
     match expr {
         Expression::StaticMemberExpression(member) => {
-            if let Expression::Identifier(_ident) = &member.object {
+            if member
+                .object
+                .get_identifier_reference()
+                .is_some_and(|reference| reference.name == "React")
+            {
                 return Some(member.property.name.as_str());
             }
             None
@@ -920,7 +914,7 @@ impl Eq for Dependency<'_> {}
 impl Dependency<'_> {
     #[expect(clippy::inherent_to_string)]
     fn to_string(&self) -> String {
-        std::iter::once(&self.name).chain(self.chain.iter()).map(oxc_span::Str::as_str).join(".")
+        std::iter::once(&self.name).chain(self.chain.iter()).map(Str::as_str).join(".")
     }
 
     fn contains(&self, other: &Self) -> bool {
@@ -1109,7 +1103,7 @@ fn is_stable_value<'a, 'b>(
             // if the variables is a constant, and the initializer is a literal, then it's a stable value. (excluding regex literals)
             if declaration.kind == VariableDeclarationKind::Const
                 && (matches!(
-                    init,
+                    init.get_inner_expression(),
                     Expression::BooleanLiteral(_)
                         | Expression::NullLiteral(_)
                         | Expression::NumericLiteral(_)
@@ -1120,7 +1114,7 @@ fn is_stable_value<'a, 'b>(
                 return true;
             }
 
-            let Expression::CallExpression(init_expr) = &init else {
+            let Expression::CallExpression(init_expr) = init.get_inner_expression() else {
                 return false;
             };
 
@@ -1609,12 +1603,13 @@ fn is_inside_effect_cleanup(stack: &[AstType]) -> bool {
 
 mod fix {
     use super::Name;
-    use oxc_allocator::{Allocator, CloneIn};
+    use oxc_allocator::{Allocator, ArenaVec, CloneIn};
     use oxc_ast::{
-        AstBuilder,
         ast::{ArrayExpression, Expression},
+        builder::AstBuilder,
     };
-    use oxc_span::{GetSpan, SPAN, Str};
+    use oxc_span::{GetSpan, SPAN};
+    use oxc_str::Str;
 
     use crate::{
         fixer::{RuleFix, RuleFixer},
@@ -1629,19 +1624,23 @@ mod fix {
         let mut codegen = fixer.codegen();
 
         let alloc = Allocator::default();
-        let ast_builder = AstBuilder::new(&alloc);
+        let alloc = &alloc;
+        let ast_builder = AstBuilder::new(alloc);
 
-        let mut vec = deps.elements.clone_in(&alloc);
+        let mut vec = deps.elements.clone_in(alloc);
 
         for name in names {
             vec.push(
-                ast_builder
-                    .expression_identifier(SPAN, Str::from_cow_in(&name.name, &alloc))
-                    .into(),
+                Expression::new_identifier(
+                    SPAN,
+                    Str::from_cow_in(&name.name, &alloc),
+                    &ast_builder,
+                )
+                .into(),
             );
         }
 
-        codegen.print_expression(&ast_builder.expression_array(SPAN, vec));
+        codegen.print_expression(&Expression::new_array_expression(SPAN, vec, &ast_builder));
         fixer.replace(deps.span, codegen.into_source_text())
     }
 
@@ -1661,12 +1660,31 @@ mod fix {
             .filter(|el| (*el).span() != dependency.span)
             .map(|el| el.clone_in(&alloc));
 
-        codegen.print_expression(&Expression::ArrayExpression(ast_builder.alloc_array_expression(
+        codegen.print_expression(&Expression::new_array_expression(
             deps.span,
-            oxc_allocator::Vec::from_iter_in(new_deps, &alloc),
-        )));
+            ArenaVec::from_iter_in(new_deps, &ast_builder),
+            &ast_builder,
+        ));
         fixer.replace(deps.span, codegen.into_source_text())
     }
+}
+
+#[test]
+fn invalid_configs_error_in_from_configuration() {
+    let invalid_regex = serde_json::json!([{ "additionalHooks": "[" }]);
+    assert!(ExhaustiveDeps::from_configuration(invalid_regex).is_err());
+
+    let unknown_field = serde_json::json!([{ "unknown": true }]);
+    assert!(ExhaustiveDeps::from_configuration(unknown_field).is_err());
+
+    let wrong_type = serde_json::json!([{ "additionalHooks": 1 }]);
+    assert!(ExhaustiveDeps::from_configuration(wrong_type).is_err());
+
+    let empty_regex = serde_json::json!([{ "additionalHooks": "" }]);
+    assert!(ExhaustiveDeps::from_configuration(empty_regex).is_ok());
+
+    let valid_regex = serde_json::json!([{ "additionalHooks": "useSpecialEffect" }]);
+    assert!(ExhaustiveDeps::from_configuration(valid_regex).is_ok());
 }
 
 #[test]
@@ -2837,6 +2855,33 @@ export const useTest = () => {
 
     console.log(state);
 }"#,
+        r"const Component = () => {
+  const DATA = 'test' as const;
+  const data = useMemo(() => DATA, []);
+  return <div>{data}</div>;
+};",
+        "const ReactActual = jest.requireActual('react');
+const Component = ({ filter }) => {
+    const [data, setData] = ReactActual.useState(filter);
+    ReactActual.useEffect(() => {
+        setData(filter);
+    }, [filter]);
+
+    return <div>test</div>;
+};",
+        r"const Component = () => {
+          const setRef = React.useRef<(value: string) => void | null>(
+            null,
+          ) as React.MutableRefObject<(value: string) => void | null>;
+
+          React.useEffect(() => {
+            if (setRef.current) {
+              console.log(setRef.current);
+            }
+          }, []);
+
+          return <div>test</div>;
+        };",
     ];
 
     let fail = vec![

@@ -16,9 +16,10 @@ pub struct NoDefaultExport;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Forbids a module from having default exports. This helps your editor
-    /// provide better auto-import functionality, as named exports offer more
-    /// explicit and predictable imports compared to default exports.
+    /// Disallow modules from having default exports.
+    ///
+    /// This can help your editor provide better auto-import functionality, as named exports
+    /// offer more explicit and predictable imports compared to default exports.
     ///
     /// ### Why is this bad?
     ///
@@ -43,7 +44,9 @@ declare_oxc_lint!(
     /// ```
     NoDefaultExport,
     import,
-    restriction
+    restriction,
+    version = "0.2.14",
+    short_description = "Disallow modules from having default exports.",
 );
 
 impl Rule for NoDefaultExport {

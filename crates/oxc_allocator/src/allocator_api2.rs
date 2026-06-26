@@ -1,22 +1,22 @@
-// All methods just delegate to `Bump`, so all marked `#[inline(always)]`.
-// All have same safety preconditions of `Bump` methods of the same name.
+// All methods just delegate to `Arena`, so all marked `#[inline(always)]`.
+// All have same safety preconditions of `Arena` methods of the same name.
 #![expect(clippy::inline_always, clippy::undocumented_unsafe_blocks)]
 
 use std::{alloc::Layout, ptr::NonNull};
 
 use allocator_api2::alloc::{AllocError, Allocator};
 
-/// SAFETY: See `bump.rs` for the implementation of `Allocator` for `&Bump`.
+/// SAFETY: See `arena.rs` for the implementation of `Allocator` for `&Arena`.
 unsafe impl Allocator for &crate::Allocator {
     #[inline(always)]
     fn allocate(&self, layout: Layout) -> Result<NonNull<[u8]>, AllocError> {
-        Allocator::allocate(&self.bump(), layout)
+        Allocator::allocate(&self.arena(), layout)
     }
 
     #[inline(always)]
     unsafe fn deallocate(&self, ptr: NonNull<u8>, layout: Layout) {
         unsafe {
-            Allocator::deallocate(&self.bump(), ptr, layout);
+            Allocator::deallocate(&self.arena(), ptr, layout);
         }
     }
 
@@ -27,7 +27,7 @@ unsafe impl Allocator for &crate::Allocator {
         old_layout: Layout,
         new_layout: Layout,
     ) -> Result<NonNull<[u8]>, AllocError> {
-        unsafe { Allocator::shrink(&self.bump(), ptr, old_layout, new_layout) }
+        unsafe { Allocator::shrink(&self.arena(), ptr, old_layout, new_layout) }
     }
 
     #[inline(always)]
@@ -37,7 +37,7 @@ unsafe impl Allocator for &crate::Allocator {
         old_layout: Layout,
         new_layout: Layout,
     ) -> Result<NonNull<[u8]>, AllocError> {
-        unsafe { Allocator::grow(&self.bump(), ptr, old_layout, new_layout) }
+        unsafe { Allocator::grow(&self.arena(), ptr, old_layout, new_layout) }
     }
 
     #[inline(always)]
@@ -47,6 +47,6 @@ unsafe impl Allocator for &crate::Allocator {
         old_layout: Layout,
         new_layout: Layout,
     ) -> Result<NonNull<[u8]>, AllocError> {
-        unsafe { Allocator::grow_zeroed(&self.bump(), ptr, old_layout, new_layout) }
+        unsafe { Allocator::grow_zeroed(&self.arena(), ptr, old_layout, new_layout) }
     }
 }

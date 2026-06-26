@@ -41,7 +41,9 @@ declare_oxc_lint!(
     NoObjectConstructor,
     eslint,
     pedantic,
-    pending
+    pending,
+    version = "0.13.2",
+    short_description = "Disallow calls to the Object constructor without an argument.",
 );
 
 impl Rule for NoObjectConstructor {

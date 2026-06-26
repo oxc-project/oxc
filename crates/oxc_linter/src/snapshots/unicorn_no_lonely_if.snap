@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
+  ⚠ unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
    ╭─[no_lonely_if.tsx:2:9]
  1 │ 
  2 │         if (a) {
@@ -13,7 +13,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the inner `if` test to the outer `if` test.
 
-  ⚠ eslint-plugin-unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
+  ⚠ unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
    ╭─[no_lonely_if.tsx:2:9]
  1 │ 
  2 │         if (a) if (b) {
@@ -22,7 +22,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the inner `if` test to the outer `if` test.
 
-  ⚠ eslint-plugin-unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
+  ⚠ unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
    ╭─[no_lonely_if.tsx:2:9]
  1 │ 
  2 │         if (a) {
@@ -33,14 +33,14 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the inner `if` test to the outer `if` test.
 
-  ⚠ eslint-plugin-unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
+  ⚠ unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
    ╭─[no_lonely_if.tsx:1:1]
  1 │ if (a) if (b) foo();
    · ──     ──
    ╰────
   help: Move the inner `if` test to the outer `if` test.
 
-  ⚠ eslint-plugin-unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
+  ⚠ unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
    ╭─[no_lonely_if.tsx:2:9]
  1 │ 
  2 │         if (a) {
@@ -51,14 +51,14 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the inner `if` test to the outer `if` test.
 
-  ⚠ eslint-plugin-unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
+  ⚠ unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
    ╭─[no_lonely_if.tsx:1:1]
  1 │ if (a) if (b);
    · ──     ──
    ╰────
   help: Move the inner `if` test to the outer `if` test.
 
-  ⚠ eslint-plugin-unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
+  ⚠ unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
    ╭─[no_lonely_if.tsx:6:16]
  5 │             }
  6 │         } else if (c) {
@@ -69,7 +69,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the inner `if` test to the outer `if` test.
 
-  ⚠ eslint-plugin-unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
+  ⚠ unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
    ╭─[no_lonely_if.tsx:3:13]
  2 │         function * foo() {
  3 │             if (a || b)
@@ -80,7 +80,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the inner `if` test to the outer `if` test.
 
-  ⚠ eslint-plugin-unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
+  ⚠ unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
    ╭─[no_lonely_if.tsx:4:13]
  3 │             if (a || b)
  4 │             if (a ?? b)
@@ -91,7 +91,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the inner `if` test to the outer `if` test.
 
-  ⚠ eslint-plugin-unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
+  ⚠ unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
    ╭─[no_lonely_if.tsx:5:13]
  4 │             if (a ?? b)
  5 │             if (a ? b : c)
@@ -102,7 +102,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the inner `if` test to the outer `if` test.
 
-  ⚠ eslint-plugin-unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
+  ⚠ unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
    ╭─[no_lonely_if.tsx:6:13]
  5 │             if (a ? b : c)
  6 │             if (a = b)
@@ -113,7 +113,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the inner `if` test to the outer `if` test.
 
-  ⚠ eslint-plugin-unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
+  ⚠ unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
    ╭─[no_lonely_if.tsx:7:13]
  6 │             if (a = b)
  7 │             if (a += b)
@@ -124,7 +124,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the inner `if` test to the outer `if` test.
 
-  ⚠ eslint-plugin-unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
+  ⚠ unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
     ╭─[no_lonely_if.tsx:8:13]
   7 │             if (a += b)
   8 │             if (a -= b)
@@ -135,7 +135,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Move the inner `if` test to the outer `if` test.
 
-  ⚠ eslint-plugin-unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
+  ⚠ unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
     ╭─[no_lonely_if.tsx:9:13]
   8 │             if (a -= b)
   9 │             if (a &&= b)
@@ -146,7 +146,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Move the inner `if` test to the outer `if` test.
 
-  ⚠ eslint-plugin-unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
+  ⚠ unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
     ╭─[no_lonely_if.tsx:10:13]
   9 │             if (a &&= b)
  10 │             if (yield a)
@@ -157,7 +157,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Move the inner `if` test to the outer `if` test.
 
-  ⚠ eslint-plugin-unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
+  ⚠ unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
    ╭─[no_lonely_if.tsx:3:13]
  2 │         async function foo() {
  3 │             if (a)
@@ -168,7 +168,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the inner `if` test to the outer `if` test.
 
-  ⚠ eslint-plugin-unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
+  ⚠ unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
    ╭─[no_lonely_if.tsx:4:13]
  3 │             if (a)
  4 │             if (await a)
@@ -179,7 +179,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the inner `if` test to the outer `if` test.
 
-  ⚠ eslint-plugin-unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
+  ⚠ unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
    ╭─[no_lonely_if.tsx:5:13]
  4 │             if (await a)
  5 │             if (a.b)
@@ -190,7 +190,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the inner `if` test to the outer `if` test.
 
-  ⚠ eslint-plugin-unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
+  ⚠ unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
    ╭─[no_lonely_if.tsx:2:9]
  1 │ 
  2 │         if // 1
@@ -205,7 +205,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Move the inner `if` test to the outer `if` test.
 
-  ⚠ eslint-plugin-unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
+  ⚠ unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
    ╭─[no_lonely_if.tsx:2:9]
  1 │ 
  2 │         if (a) {
@@ -216,7 +216,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the inner `if` test to the outer `if` test.
 
-  ⚠ eslint-plugin-unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
+  ⚠ unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
    ╭─[no_lonely_if.tsx:2:9]
  1 │ 
  2 │         if (a)
@@ -227,7 +227,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the inner `if` test to the outer `if` test.
 
-  ⚠ eslint-plugin-unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
+  ⚠ unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
    ╭─[no_lonely_if.tsx:2:9]
  1 │ 
  2 │         if (a) {

@@ -187,15 +187,31 @@ fn test_fold_literal_array_constructors() {
     test("x = new Array(7n)", "x = [7n]");
     test("x = new Array(y)", "x = Array(y)");
     test("x = new Array(foo())", "x = Array(foo())");
+    test_same("x = new Array(...y)");
+    test("x = new Array(...[3])", "x = [,,,]");
     test("x = Array(0)", "x = []");
     test("x = Array(\"a\")", "x = [\"a\"]");
     test_same("x = Array(7)");
     test_same("x = Array(y)");
     test_same("x = Array(foo())");
+    test_same("x = Array(...y)");
+    test("x = Array(...[3])", "x = [,,,]");
 
     // 1+ arguments
     test("x = new Array(1, 2, 3, 4)", "x = [1, 2, 3, 4]");
     test("x = Array(1, 2, 3, 4)", "x = [1, 2, 3, 4]");
+    test_same("x = new Array(foo, ...bar)");
+    test_same("x = Array(foo, ...bar)");
+    test_same("x = new Array(...foo, bar)");
+    test_same("x = Array(...foo, bar)");
+    test("x = new Array(foo, bar, ...baz)", "x = [foo, bar, ...baz]");
+    test("x = Array(foo, bar, ...baz)", "x = [foo, bar, ...baz]");
+    test("x = new Array(foo, ...bar, baz)", "x = [foo, ...bar, baz]");
+    test("x = Array(foo, ...bar, baz)", "x = [foo, ...bar, baz]");
+    test("x = new Array(...foo, bar, baz)", "x = [...foo, bar, baz]");
+    test("x = Array(...foo, bar, baz)", "x = [...foo, bar, baz]");
+    test("x = new Array(3, ...[])", "x = [,,,]");
+    test("x = Array(3, ...[])", "x = [,,,]");
     test("x = new Array('a', 1, 2, 'bc', 3, {}, 'abc')", "x = ['a', 1, 2, 'bc', 3, {}, 'abc']");
     test("x = Array('a', 1, 2, 'bc', 3, {}, 'abc')", "x = ['a', 1, 2, 'bc', 3, {}, 'abc']");
     test("x = new Array(Array(1, '2', 3, '4'))", "x = [[1, '2', 3, '4']]");
@@ -246,20 +262,26 @@ fn test_fold_new_expressions() {
 
 #[test]
 fn test_compress_typed_array_constructor() {
-    test("new Int8Array(0)", "new Int8Array()");
-    test("new Uint8Array(0)", "new Uint8Array()");
-    test("new Uint8ClampedArray(0)", "new Uint8ClampedArray()");
-    test("new Int16Array(0)", "new Int16Array()");
-    test("new Uint16Array(0)", "new Uint16Array()");
-    test("new Int32Array(0)", "new Int32Array()");
-    test("new Uint32Array(0)", "new Uint32Array()");
-    test("new Float32Array(0)", "new Float32Array()");
-    test("new Float64Array(0)", "new Float64Array()");
-    test("new BigInt64Array(0)", "new BigInt64Array()");
-    test("new BigUint64Array(0)", "new BigUint64Array()");
+    // `new Int8Array(0)` is equivalent to `new Int8Array()`: the `0` arg is folded
+    // away and the pure empty construction is dropped when its result is unused.
+    test("new Int8Array(0)", "");
+    test("new Uint8Array(0)", "");
+    test("new Uint8ClampedArray(0)", "");
+    test("new Int16Array(0)", "");
+    test("new Uint16Array(0)", "");
+    test("new Int32Array(0)", "");
+    test("new Uint32Array(0)", "");
+    test("new Float32Array(0)", "");
+    test("new Float64Array(0)", "");
+    test("new BigInt64Array(0)", "");
+    test("new BigUint64Array(0)", "");
+    test("new Int8Array()", "");
+    // A numeric-literal length is pure (or a droppable max-length RangeError).
+    test("new Int8Array(8)", "");
 
+    // Not optimized when shadowed, or with a negative / non-literal / extra length.
     test_same("var Int8Array; new Int8Array(0)");
-    test_same("new Int8Array(1)");
+    test_same("new Int8Array(-1)");
     test_same("new Int8Array(a)");
     test_same("new Int8Array(0, a)");
 }
@@ -516,6 +538,21 @@ fn test_fold_is_object_and_not_null() {
 }
 
 #[test]
+fn test_fold_is_object_and_not_null_minted_then_dropped() {
+    // Exercises the same-pass mint-then-drop flow through `DropDiff`'s
+    // capacity guard: `substitute_is_object_and_not_null` mints fresh
+    // references (indices beyond the pass bitset's capacity) at
+    // `exit_expression`, then the unreachable statement containing them is
+    // dropped at `exit_statements` in the same pass. The guard must treat
+    // the minted refs as live (conservative — callers rebuild scoping), not
+    // panic.
+    test(
+        "function f(a) { return 1; if (typeof a === 'object' && a !== null) b(a); } f();",
+        "function f(a) { return 1; }",
+    );
+}
+
+#[test]
 fn test_swap_binary_expressions() {
     test_same("v = a === 0");
     test("v = 0 === a", "v = a === 0");
@@ -737,22 +774,48 @@ fn optional_catch_binding() {
     test("try { foo } catch(e) {}", "try { foo } catch {}");
     test("try { foo } catch(e) {foo}", "try { foo } catch {foo}");
     test_same("try { foo } catch(e) { bar(e) }");
+    test_same("try { throw 'caught'; } catch (e) { eval('console.log(e)'); }");
+    test_same("try { throw 'caught'; } catch (e) { function f() { eval('console.log(e)') } f() }");
     test_same("try { foo } catch([e]) {}");
     test_same("try { foo } catch({e}) {}");
     test_same("try { foo } catch(e) { var e = baz; bar(e) }");
-    test("try { foo } catch(e) { var e = 2 }", "try { foo } catch { var e = 2 }");
+    // catch param must be kept when body has a same-named var. Removing
+    // the param would change which binding the assignment targets.
+    test_same("try { foo } catch(e) { var e = 2 }");
     test_same("try { foo } catch(e) { var e = 2 } bar(e)");
+    test_same("try { foo } catch(e) { var {e} = obj }");
+    test_same("try { foo } catch(e) { var [e] = arr }");
 
-    // FIXME catch(a) has no references but it cannot be removed.
-    // test_same(
-    // r#"var a = "PASS";
-    // try {
-    // throw "FAIL1";
-    // } catch (a) {
-    // var a = "FAIL2";
-    // }
-    // console.log(a);"#,
-    // );
+    // var inside a function does NOT interact with the catch parameter;
+    // var doesn't hoist out of functions, so the catch param can be removed.
+    test(
+        "try { foo } catch(e) { (function() { var e = 2 })() }",
+        "try { foo } catch { (function() { var e = 2;})();}",
+    );
+    test(
+        "try { foo } catch(e) { function f() { var e = 2 } }",
+        "try { foo } catch { function f() { var e = 2 } }",
+    );
+
+    test_same(
+        r#"var a = "PASS";
+    try {
+    throw "FAIL1";
+    } catch (a) {
+    var a = "FAIL2";
+    }
+    console.log(a);"#,
+    );
+
+    // Regression tests for https://github.com/oxc-project/oxc/issues/17307
+    test(
+        "try {} catch (e) { try {} catch (e) { var e = 'e'; console.log(e === 'e') } } console.log(e === undefined)",
+        "try {} catch (e) { var e } console.log(e === void 0)",
+    );
+    test(
+        "try { throw 1 } catch (e) { try { throw 2 } catch (e) { var e = 'e'; console.log(e === 'e') } } console.log(e === undefined)",
+        "try { throw 1 } catch (e) { try { throw 2 } catch (e) { var e = 'e'; console.log(e === 'e') } } console.log(e === void 0)",
+    );
 
     test_target_same("try { foo } catch(e) {}", "chrome65");
 }
@@ -761,9 +824,11 @@ fn optional_catch_binding() {
 fn test_remove_name_from_expressions() {
     test("var a = function f() {}", "var a = function () {}");
     test_same("var a = function f() { return f; }");
+    test_same("var a = function f() { return eval('f'); }");
 
     test("var a = class C {}", "var a = class {}");
     test_same("var a = class C { foo() { return C } }");
+    test_same("var a = class C { foo() { return eval('C') } }");
 
     let options = CompressOptions {
         keep_names: CompressOptionsKeepNames::function_only(),
@@ -841,6 +906,11 @@ fn test_rewrite_arguments_copy_loop() {
     test(
         "function _() { for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a] = arguments[a]; }",
         "function _() {}",
+    );
+    // Unused copy result + consequent must not become illegal `var;` (see `for_stmt.init = None`).
+    test(
+        "function _(){if(window.__x)for(var n=arguments.length,a=[],i=0;i<n;i++)a[i]=arguments[i]}",
+        "function _(){window.__x}",
     );
     test(
         "function _() { for (var e = arguments.length, r = Array(e > 1 ? e - 1 : 0), a = 1; a < e; a++) r[a - 1] = arguments[a] }",
@@ -928,4 +998,27 @@ fn test_flatten_nested_chain_expression() {
     test_same("a.b?.c");
     test_same("a?.b?.c");
     test_same("(a?.b).c");
+}
+
+#[test]
+fn test_flatten_array_spread_elements() {
+    test("var y = [3, 4, ...[1, 2]]", "var y = [3, 4, 1, 2]");
+    test("var y = [...[1, 2], 3, 4]", "var y = [1, 2, 3, 4]");
+    test("var y = [...[1, 2], ...[3, 4]]", "var y = [1, 2, 3, 4]");
+    test("var y = [1, ...[], 2]", "var y = [1, 2]");
+    test("var y = [...[1, , 3]]", "var y = [1, void 0, 3]");
+    test("var y = [...[1, ...[2, 3]]]", "var y = [1, 2, 3]");
+    test("var y = [1, , ...[2, 3]]", "var y = [1, , 2, 3]");
+    test_same("var y = [...x]");
+    test_same("var y = [1, ...x, 2]");
+    test("var x = [1, 2]; var y = [3, 4, ...x]", "var y = [3, 4, 1, 2]");
+    test("var x = [1, 2]; var y = [0, ...x, ...x]", "var x = [1, 2], y = [0, ...x, ...x]");
+    test("var x = [1, ...[2, 3]]; var y = [4, ...x]", "var y = [4, 1, 2, 3]");
+    test("var x = [1, , 3]; var y = [0, ...x]", "var y = [0, 1, void 0, 3]");
+    test("var x = []; var y = [1, ...x, 2]", "var y = [1, 2]");
+    test("var x = [1, 2]; var y = [0, , ...x]", "var y = [0, , 1, 2]");
+    test("var x = [1, 2]; var y = [0, ...x, 3]", "var y = [0, 1, 2, 3]");
+    test("var x=[30,40];var y = [10,...[],20,...x,50];", "var y = [10,20,30,40,50]");
+    test_same("var y = [0, ...[1, , , 3]]");
+    test("var y = [...[1, , ,], ...[, 2], , 2];", "var y = [...[1, , , ], void 0, 2, , 2];");
 }

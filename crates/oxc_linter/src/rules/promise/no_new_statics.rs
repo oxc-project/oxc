@@ -40,7 +40,9 @@ declare_oxc_lint!(
     NoNewStatics,
     promise,
     correctness,
-    fix
+    fix,
+    version = "0.6.1",
+    short_description = "Disallows calling new on static `Promise` methods.",
 );
 
 impl Rule for NoNewStatics {

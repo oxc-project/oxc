@@ -31,6 +31,7 @@ src:
   - 'crates/oxc_parser/src/**/*.rs'
   - 'crates/oxc_regular_expression/src/**/*.rs'
   - 'crates/oxc_span/src/**/*.rs'
+  - 'crates/oxc_str/src/**/*.rs'
   - 'crates/oxc_syntax/src/**/*.rs'
   - 'crates/oxc_traverse/src/generated/ancestor.rs'
   - 'crates/oxc_traverse/src/generated/scopes_collector.rs'

@@ -1337,8 +1337,7 @@ fn test_eslint() {
         ), // { "globals": { "Foopy5": false, }, },
         (
             "
-              declare;
-              foo5: boolean;
+              declare var foo5: boolean;
                     ",
             Some(serde_json::json!([{ "builtinGlobals": true }])),
             None,
@@ -1426,8 +1425,7 @@ fn test_eslint() {
         ), // { "globals": { "Foopy5": false, }, },
         (
             "
-              declare;
-              foo5: boolean;
+              declare var foo5: boolean;
                     ",
             Some(serde_json::json!([{ "builtinGlobals": true }])),
             None,
@@ -1515,8 +1513,7 @@ fn test_eslint() {
         ), // { "globals": { "Foopy5": false, }, },
         (
             "
-              declare;
-              foo5: boolean;
+              declare var foo5: boolean;
                     ",
             Some(serde_json::json!([{ "builtinGlobals": true }])),
             None,
@@ -2301,6 +2298,17 @@ fn test_eslint() {
                         enum Test {
                             A = 1,
                             B = A,
+                        }
+                    ",
+            None,
+            None,
+            None,
+        ),
+        (
+            "
+                        enum Example {
+                            NotExample,
+                            Example,
                         }
                     ",
             None,
@@ -3209,8 +3217,7 @@ fn test_typescript_eslint() {
         ), // { "globals": { "Foopy5": false, }, },
         (
             "
-            declare;
-            foo5: boolean;
+            declare var foo5: boolean;
                   ",
             Some(serde_json::json!([{ "builtinGlobals": true }])),
             None,

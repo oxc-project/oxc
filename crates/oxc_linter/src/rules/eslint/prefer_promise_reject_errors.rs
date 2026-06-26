@@ -1,4 +1,4 @@
-use oxc_allocator::Box as ArenaBox;
+use oxc_allocator::ArenaBox;
 use oxc_ast::{
     AstKind,
     ast::{Argument, CallExpression, Expression, FormalParameters},
@@ -80,6 +80,8 @@ declare_oxc_lint!(
     style,
     none,
     config = PreferPromiseRejectErrors,
+    version = "0.15.7",
+    short_description = "Require using Error objects as Promise rejection reasons.",
 );
 
 impl Rule for PreferPromiseRejectErrors {

@@ -1,4 +1,6 @@
-use oxc_ast::ast::{AssignmentTarget, AssignmentTargetMaybeDefault, AssignmentTargetProperty};
+use oxc_ast::ast::{
+    AssignmentTarget, AssignmentTargetMaybeDefault, AssignmentTargetProperty, VariableDeclaration,
+};
 use oxc_ast::{AstKind, ast::VariableDeclarationKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -92,6 +94,8 @@ declare_oxc_lint!(
     style,
     conditional_fix,
     config = PreferConst,
+    version = "1.43.0",
+    short_description = "Requires `const` declarations for variables that are never reassigned after their initial declaration.",
 );
 
 impl Rule for PreferConst {
@@ -194,7 +198,7 @@ impl PreferConst {
     /// Returns `noop` if the fix should not be applied.
     fn fix_let_to_const<'a>(
         fixer: RuleFixer<'_, 'a>,
-        decl: &oxc_ast::ast::VariableDeclaration<'a>,
+        decl: &VariableDeclaration<'a>,
         declarator_index: usize,
         all_const: bool,
         is_for_in_of_init: bool,
@@ -536,7 +540,6 @@ impl PreferConst {
         //
         // EXCEPTION: Variables declared in for-in/of loop bodies get fresh bindings per iteration
         let mut is_invalid_destructuring = false;
-        let mut is_in_loop_body = false;
 
         for ancestor in ctx.nodes().ancestors(write_node_id).skip(1) {
             match ancestor.kind() {
@@ -549,25 +552,9 @@ impl PreferConst {
                 // Check for for-in/of loops FIRST before other checks
                 // Variables declared in the loop body get a fresh binding each iteration
                 AstKind::ForInStatement(_) | AstKind::ForOfStatement(_) => {
-                    // Check if the variable's scope is a child of this loop's scope
                     let loop_scope = ancestor.scope_id();
-                    let mut current_scope = Some(symbol_scope);
-
-                    // Walk up the scope tree from the variable's scope
-                    while let Some(scope) = current_scope {
-                        if scope == loop_scope {
-                            // We found the loop scope - variable is NOT in loop body
-                            break;
-                        }
-                        let parent_scope = symbol_table.scope_parent_id(scope);
-                        if parent_scope == Some(loop_scope) {
-                            // The variable's scope's parent is the loop scope
-                            // This means the variable is declared in the loop body
-                            is_in_loop_body = true;
-                            break;
-                        }
-                        current_scope = parent_scope;
-                    }
+                    let is_in_loop_body =
+                        symbol_table.scope_is_descendant_of(symbol_scope, loop_scope);
 
                     if !is_in_loop_body {
                         // Variable is declared outside the loop - can't be const
@@ -679,16 +666,8 @@ impl PreferConst {
 
                     // Otherwise, check if variable is declared inside the for loop scope
                     let control_flow_scope = ancestor.scope_id();
-                    let mut current = symbol_table.scope_parent_id(symbol_scope);
-                    let mut is_inside = false;
-
-                    while let Some(scope) = current {
-                        if scope == control_flow_scope {
-                            is_inside = true;
-                            break;
-                        }
-                        current = symbol_table.scope_parent_id(scope);
-                    }
+                    let is_inside =
+                        symbol_table.scope_is_descendant_of(symbol_scope, control_flow_scope);
 
                     if !is_inside {
                         return false;
@@ -710,18 +689,8 @@ impl PreferConst {
                     // If yes, the variable is declared inside the control flow
                     let control_flow_scope = ancestor.scope_id();
 
-                    // Walk up from symbol_scope - if we find control_flow_scope as a parent,
-                    // then symbol_scope is inside the control flow
-                    let mut current = symbol_table.scope_parent_id(symbol_scope);
-                    let mut is_inside = false;
-
-                    while let Some(scope) = current {
-                        if scope == control_flow_scope {
-                            is_inside = true;
-                            break;
-                        }
-                        current = symbol_table.scope_parent_id(scope);
-                    }
+                    let is_inside =
+                        symbol_table.scope_is_descendant_of(symbol_scope, control_flow_scope);
 
                     if !is_inside {
                         // Variable is declared outside the control flow but written inside

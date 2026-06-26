@@ -2,11 +2,11 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_allocator::Allocator;
 use oxc_ast::{AstKind, ast};
-use oxc_parser::{Parser, ParserReturn};
+use oxc_parser::ParserReturn;
 use oxc_semantic::{AstNode, Semantic, SemanticBuilder};
 use oxc_span::SourceType;
 
-use crate::get_parse_options;
+use crate::parse_for_format;
 
 pub fn detect_code_removal(
     before_text: &str,
@@ -21,21 +21,21 @@ pub fn detect_code_removal(
 
 /// Collect statistics from source code.
 fn collect(code: &str, source_type: SourceType) -> StatsCollector {
+    // Parse the way the formatter does (so the before/after comparison matches the formatter's view).
     let allocator = Allocator::default();
-    let parser = Parser::new(&allocator, code, source_type).with_options(get_parse_options());
-    let ParserReturn { program, errors, .. } = parser.parse();
+    let ParserReturn { program, diagnostics, .. } = parse_for_format(&allocator, code, source_type);
 
     let mut collector = StatsCollector::default();
 
     // If there are parse errors, skip further analysis.
     // This will be reported in `diff()` later.
-    if !errors.is_empty() {
+    if !diagnostics.is_empty() {
         collector.has_parse_error = true;
         return collector;
     }
 
     // Using semantic analysis here only to get parent node
-    let semantic_ret = SemanticBuilder::new().build(&program);
+    let semantic_ret = SemanticBuilder::new().with_build_nodes(true).build(&program);
     collector.collect(&program, &semantic_ret.semantic)
 }
 
@@ -54,8 +54,7 @@ fn diff(before: &StatsCollector, after: &StatsCollector) -> Option<String> {
             let after_count = after.get(key).copied().unwrap_or(0);
 
             if before_count != after_count {
-                errors
-                    .push(format!("Count mismatch for '{key}': {before_count} -> {after_count}",));
+                errors.push(format!("Count mismatch for '{key}': {before_count} -> {after_count}"));
             }
         }
 
@@ -208,6 +207,8 @@ impl StatsCollector {
         if matches!(
             parent_kind,
             AstKind::ObjectProperty(_)
+                | AstKind::BindingProperty(_)
+                | AstKind::AssignmentTargetPropertyProperty(_)
                 | AstKind::MethodDefinition(_)
                 | AstKind::PropertyDefinition(_)
                 | AstKind::ImportAttribute(_)
@@ -335,6 +336,8 @@ mod tests {
             ("for ((let.a) of foo);", "for ((let).a of foo);"),
             ("for ((let[a]) of foo);", "for ((let)[a] of foo);"),
             ("for ((let.a) in foo);", "for (let.a in foo);"),
+            (r#"const { index, "0": code } = match;"#, r"const { index, 0: code } = match;"),
+            (r#"({ "0": code } = match);"#, r"({ 0: code } = match);"),
             ("<div>{' '}</div>", "<div> </div>"),
             ("type T = | A;", "type T = A;"),
             ("type T = & A;", "type T = A;"),

@@ -120,13 +120,19 @@ Arguments:
 
 ## Output
 - **`-f`**, **`--format`**=_`ARG`_ &mdash; 
-  Use a specific output format. Possible values: `checkstyle`, `default`, `github`, `gitlab`, `json`, `junit`, `stylish`, `unix`
+  Use a specific output format. Possible values: `checkstyle`, `default`, `agent`, `github`, `gitlab`, `json`, `junit`, `sarif`, `stylish`, `unix`
+- **`    --debug`**=_`OPTIONS`_ &mdash; 
+  Enable debug output options. Options are comma-separated. Possible values:
+ * `files` - Print the list of files that will be linted, then exit.
+ * `timings` - Enable per-rule timing information.
 
 
 
 ## Miscellaneous
 - **`    --silent`** &mdash; 
   Do not display any diagnostics
+- **`    --no-error-on-unmatched-pattern`** &mdash; 
+  Do not exit with an error when no files are selected for linting (for example, after applying ignore patterns)
 - **`    --threads`**=_`INT`_ &mdash; 
   Number of threads to use. Set to 1 for using only 1 CPU core.
 - **`    --print-config`** &mdash; 

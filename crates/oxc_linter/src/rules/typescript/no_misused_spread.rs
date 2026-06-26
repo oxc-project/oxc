@@ -67,6 +67,8 @@ declare_oxc_lint!(
     correctness,
     suggestion,
     config = NoMisusedSpreadConfig,
+    version = "1.12.0",
+    short_description = "This rule disallows spreading syntax in places where it doesn't make sense or could cause runtime errors.",
 );
 
 impl Rule for NoMisusedSpread {

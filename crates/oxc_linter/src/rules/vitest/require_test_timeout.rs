@@ -94,6 +94,8 @@ declare_oxc_lint!(
     RequireTestTimeout,
     vitest,
     restriction,
+    version = "1.58.0",
+    short_description = "Requires every test to have a timeout specified, either as a numeric third argument, a `{ timeout }` option, or via `vi.setConfig({ testTimeout: ... })`.",
 );
 
 impl Rule for RequireTestTimeout {

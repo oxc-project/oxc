@@ -47,6 +47,9 @@ working directory:
     },
     "vitest": {
       "typecheck": false
+    },
+    "jest": {
+      "version": null
     }
   },
   "env": {

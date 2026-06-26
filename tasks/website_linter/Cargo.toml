@@ -16,7 +16,7 @@ doctest = false
 bpaf = { workspace = true, features = ["docgen"] }
 itertools = { workspace = true }
 oxc_linter = { workspace = true, features = ["ruledocs"] }
-oxlint = { workspace = true }
+oxlint = { workspace = true, features = ["ruledocs"] }
 pico-args = { workspace = true }
 project-root = { workspace = true }
 schemars = { workspace = true }

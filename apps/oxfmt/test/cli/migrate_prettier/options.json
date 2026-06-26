@@ -1,0 +1,12 @@
+[
+  { "cwd": "no_config", "args": ["--migrate", "prettier"] },
+  { "cwd": "already_exists", "args": ["--migrate", "prettier"] },
+  { "cwd": "basic_config", "args": ["--migrate", "prettier"] },
+  { "cwd": "default_printwidth", "args": ["--migrate", "prettier"] },
+  { "cwd": "with_ignore", "args": ["--migrate", "prettier"] },
+  { "cwd": "tailwind_options", "args": ["--migrate", "prettier"] },
+  { "cwd": "tailwind_empty", "args": ["--migrate", "prettier"] },
+  { "cwd": "tailwind_regex", "args": ["--migrate", "prettier"] },
+  { "cwd": "sort_pkg_disabled", "args": ["--migrate", "prettier"] },
+  { "cwd": "sort_pkg_enabled", "args": ["--migrate", "prettier"] }
+]

@@ -1,0 +1,9 @@
+{
+  // This is a comment
+  "formatter": {
+    "lineWidth": 100,
+    /* Multi-line
+       comment */
+    "indentStyle": "tab"
+  }
+}

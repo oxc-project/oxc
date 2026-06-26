@@ -50,7 +50,9 @@ declare_oxc_lint!(
     NoTypos,
     nextjs,
     correctness,
-    pending
+    pending,
+    version = "0.2.1",
+    short_description = "Detects common typos in Next.js data fetching function names.",
 );
 
 const NEXTJS_DATA_FETCHING_FUNCTIONS: [&str; 3] =

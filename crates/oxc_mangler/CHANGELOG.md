@@ -4,6 +4,31 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.137.0] - 2026-06-18
+
+### ⚡ Performance
+
+- cf24329 mangler: Compile slot sort once instead of per CAPACITY (#23577) (Boshen)
+- 3170c0e semantic,mangler,minifier: Fix `Semantic::stats` node count and reuse stats in mangler builds (#23352) (Boshen)
+
+## [0.135.0] - 2026-06-08
+
+### 🚀 Features
+
+- 85efabf semantic: Make building the class table optional, off by default (#22862) (Boshen)
+
+## [0.127.0] - 2026-04-20
+
+### 🐛 Bug Fixes
+
+- 50e9d26 mangler: Assign correct slot to shadowed function-expression names (#21535) (Dunqing)
+
+## [0.125.0] - 2026-04-13
+
+### 💥 BREAKING CHANGES
+
+- 382958a span: [**BREAKING**] Remove re-exports of string types from `oxc_span` crate (#21246) (overlookmotel)
+
 ## [0.113.0] - 2026-02-10
 
 ### 💥 BREAKING CHANGES

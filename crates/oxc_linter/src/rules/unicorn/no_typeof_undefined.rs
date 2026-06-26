@@ -52,6 +52,8 @@ declare_oxc_lint!(
     pedantic,
     fix_or_suggestion,
     config = NoTypeofUndefined,
+    version = "0.0.18",
+    short_description = "Disallow `typeof` comparisons with `undefined`.",
 );
 
 impl Rule for NoTypeofUndefined {

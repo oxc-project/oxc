@@ -2,98 +2,98 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
+  ⚠ promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
    ╭─[prefer_await_to_then.tsx:1:22]
  1 │ function foo() { hey.then(x => {}) }
    ·                      ────
    ╰────
   help: Use `await` with `try`/`catch` instead of promise chaining for more readable and maintainable async code.
 
-  ⚠ eslint-plugin-promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
+  ⚠ promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
    ╭─[prefer_await_to_then.tsx:1:43]
  1 │ function foo() { hey.then(function() { }).then() }
    ·                                           ────
    ╰────
   help: Use `await` with `try`/`catch` instead of promise chaining for more readable and maintainable async code.
 
-  ⚠ eslint-plugin-promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
+  ⚠ promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
    ╭─[prefer_await_to_then.tsx:1:22]
  1 │ function foo() { hey.then(function() { }).then() }
    ·                      ────
    ╰────
   help: Use `await` with `try`/`catch` instead of promise chaining for more readable and maintainable async code.
 
-  ⚠ eslint-plugin-promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
+  ⚠ promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
    ╭─[prefer_await_to_then.tsx:1:51]
  1 │ function foo() { hey.then(function() { }).then(x).catch() }
    ·                                                   ─────
    ╰────
   help: Use `await` with `try`/`catch` instead of promise chaining for more readable and maintainable async code.
 
-  ⚠ eslint-plugin-promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
+  ⚠ promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
    ╭─[prefer_await_to_then.tsx:1:43]
  1 │ function foo() { hey.then(function() { }).then(x).catch() }
    ·                                           ────
    ╰────
   help: Use `await` with `try`/`catch` instead of promise chaining for more readable and maintainable async code.
 
-  ⚠ eslint-plugin-promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
+  ⚠ promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
    ╭─[prefer_await_to_then.tsx:1:22]
  1 │ function foo() { hey.then(function() { }).then(x).catch() }
    ·                      ────
    ╰────
   help: Use `await` with `try`/`catch` instead of promise chaining for more readable and maintainable async code.
 
-  ⚠ eslint-plugin-promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
+  ⚠ promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
    ╭─[prefer_await_to_then.tsx:1:47]
  1 │ async function a() { hey.then(function() { }).then(function() { }) }
    ·                                               ────
    ╰────
   help: Use `await` with `try`/`catch` instead of promise chaining for more readable and maintainable async code.
 
-  ⚠ eslint-plugin-promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
+  ⚠ promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
    ╭─[prefer_await_to_then.tsx:1:26]
  1 │ async function a() { hey.then(function() { }).then(function() { }) }
    ·                          ────
    ╰────
   help: Use `await` with `try`/`catch` instead of promise chaining for more readable and maintainable async code.
 
-  ⚠ eslint-plugin-promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
+  ⚠ promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
    ╭─[prefer_await_to_then.tsx:1:22]
  1 │ function foo() { hey.catch(x => {}) }
    ·                      ─────
    ╰────
   help: Use `await` with `try`/`catch` instead of promise chaining for more readable and maintainable async code.
 
-  ⚠ eslint-plugin-promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
+  ⚠ promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
    ╭─[prefer_await_to_then.tsx:1:22]
  1 │ function foo() { hey.finally(x => {}) }
    ·                      ───────
    ╰────
   help: Use `await` with `try`/`catch` instead of promise chaining for more readable and maintainable async code.
 
-  ⚠ eslint-plugin-promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
+  ⚠ promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
    ╭─[prefer_await_to_then.tsx:1:13]
  1 │ something().then(async () => await somethingElse())
    ·             ────
    ╰────
   help: Use `await` with `try`/`catch` instead of promise chaining for more readable and maintainable async code.
 
-  ⚠ eslint-plugin-promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
+  ⚠ promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
    ╭─[prefer_await_to_then.tsx:1:38]
  1 │ async function foo() { await thing().then() }
    ·                                      ────
    ╰────
   help: Use `await` with `try`/`catch` instead of promise chaining for more readable and maintainable async code.
 
-  ⚠ eslint-plugin-promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
+  ⚠ promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
    ╭─[prefer_await_to_then.tsx:1:32]
  1 │ async function foo() { thing().then() }
    ·                                ────
    ╰────
   help: Use `await` with `try`/`catch` instead of promise chaining for more readable and maintainable async code.
 
-  ⚠ eslint-plugin-promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
+  ⚠ promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
    ╭─[prefer_await_to_then.tsx:1:37]
  1 │ async function hi() { await thing().then(x => {}) }
    ·                                     ────

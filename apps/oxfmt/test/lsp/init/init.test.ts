@@ -1,7 +1,7 @@
 import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vitest";
 import { createLspConnection } from "../utils";
-import { WatchKind } from "vscode-languageserver-protocol/lib/node/main";
+import { WatchKind } from "vscode-languageserver-protocol/node";
 
 describe("LSP initialization", () => {
   it("should start LSP server and respond to initialize request", async () => {
@@ -23,16 +23,23 @@ describe("LSP initialization", () => {
     expect(initResult.serverInfo?.name).toBe("oxfmt");
   });
 
+  it("should append VP version to server info if VP_VERSION env variable is set", async () => {
+    const vpVersion = "1.2.3";
+    await using client = createLspConnection({
+      VP_VERSION: vpVersion,
+    });
+    const initResult = await client.initialize(null);
+
+    expect(initResult.serverInfo?.version).toContain(`(VP: ${vpVersion})`);
+  });
+
   it.each([
-    [
-      undefined,
-      [".oxfmtrc.json", ".oxfmtrc.jsonc", "oxfmt.config.ts", "vite.config.ts", ".editorconfig"],
-    ],
+    [undefined, ["**/.oxfmtrc.json", "**/.oxfmtrc.jsonc", "**/oxfmt.config.ts", ".editorconfig"]],
     [
       { "fmt.configPath": "" },
-      [".oxfmtrc.json", ".oxfmtrc.jsonc", "oxfmt.config.ts", "vite.config.ts", ".editorconfig"],
+      ["**/.oxfmtrc.json", "**/.oxfmtrc.jsonc", "**/oxfmt.config.ts", ".editorconfig"],
     ],
-    [{ "fmt.configPath": "./custom-config.json" }, ["./custom-config.json", ".editorconfig"]],
+    [{ "fmt.configPath": "./custom-config.json" }, ["custom-config.json", ".editorconfig"]],
   ])(
     "should send correct dynamic watch pattern registration for config: %s",
     async (lspConfig, expectedPatterns) => {
@@ -52,7 +59,7 @@ describe("LSP initialization", () => {
       const registrations = await client.getDynamicRegistration();
       expect(registrations).toEqual([
         {
-          id: `watcher-formatter-${dirUri}`,
+          id: `watcher-${dirUri}`,
           method: "workspace/didChangeWatchedFiles",
           registerOptions: {
             watchers: expectedPatterns.map((pattern) => ({

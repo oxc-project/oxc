@@ -40,7 +40,9 @@ declare_oxc_lint!(
     /// ```
     NoSetterReturn,
     eslint,
-    correctness
+    correctness,
+    version = "0.0.3",
+    short_description = "Disallow returning values from setters.",
 );
 
 impl Rule for NoSetterReturn {

@@ -63,7 +63,9 @@ declare_oxc_lint!(
     PreferToBeObject,
     vitest,
     style,
-    fix
+    fix,
+    version = "0.9.2",
+    short_description = "This rule enforces using `toBeObject()` to check if a value is of type `Object`.",
 );
 
 impl Rule for PreferToBeObject {

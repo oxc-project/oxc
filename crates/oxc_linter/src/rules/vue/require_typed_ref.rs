@@ -44,6 +44,8 @@ declare_oxc_lint!(
     RequireTypedRef,
     vue,
     style,
+    version = "1.17.0",
+    short_description = "Require `ref` and `shallowRef` functions to be strongly typed.",
 );
 
 impl Rule for RequireTypedRef {

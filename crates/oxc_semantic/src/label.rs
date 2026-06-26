@@ -1,4 +1,4 @@
-use oxc_span::Ident;
+use oxc_str::Ident;
 use oxc_syntax::node::NodeId;
 
 #[derive(Debug)]

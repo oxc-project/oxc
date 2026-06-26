@@ -44,7 +44,9 @@ declare_oxc_lint!(
     NoPrototypeBuiltins,
     eslint,
     pedantic,
-    pending
+    pending,
+    version = "0.0.5",
+    short_description = "Disallow calling some `Object.prototype` methods directly on objects.",
 );
 
 const DISALLOWED_PROPS: &[&str; 3] = &["hasOwnProperty", "isPrototypeOf", "propertyIsEnumerable"];

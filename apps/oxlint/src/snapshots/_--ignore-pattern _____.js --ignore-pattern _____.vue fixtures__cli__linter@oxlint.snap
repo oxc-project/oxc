@@ -5,8 +5,8 @@ source: apps/oxlint/src/tester.rs
 arguments: --ignore-pattern **/*.js --ignore-pattern **/*.vue fixtures/cli/linter
 working directory: 
 ----------
-Found 0 warnings and 0 errors.
-Finished in <variable>ms on 0 files with 93 rules using 1 threads.
+No files found to lint. Please check your paths and ignore patterns.
+Finished in <variable>ms on 0 files with 95 rules using 1 threads.
 ----------
-CLI result: LintSucceeded
+CLI result: LintNoFilesFound
 ----------

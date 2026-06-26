@@ -29,9 +29,6 @@ pub trait ToolBuilder: Send + Sync {
 pub type DiagnosticResult = Result<Vec<(Uri, Vec<Diagnostic>)>, String>;
 
 pub trait Tool: Send + Sync {
-    /// Get the name of the tool.
-    fn name(&self) -> &'static str;
-
     /// The Server has new configuration changes.
     /// Returns a [ToolRestartChanges] indicating what changes were made for the Tool.
     fn handle_configuration_change(
@@ -49,6 +46,9 @@ pub trait Tool: Send + Sync {
     /// Handle a watched file change event for the given URI.
     /// Returns a [ToolRestartChanges] indicating what changes were made for the Tool.
     /// The Tool should decide whether it needs to restart or take any action based on the URI.
+    ///
+    /// The given URI may not match the watch patterns or may be irrelevant for the workspace.
+    /// A file change can affect multiple workspaces, so the Tool should check if it is relevant.
     fn handle_watched_file_change(
         &self,
         builder: &dyn ToolBuilder,

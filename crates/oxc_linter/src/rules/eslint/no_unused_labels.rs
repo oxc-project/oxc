@@ -46,7 +46,9 @@ declare_oxc_lint!(
     NoUnusedLabels,
     eslint,
     correctness,
-    fix
+    fix,
+    version = "0.0.3",
+    short_description = "Disallow unused labels.",
 );
 
 impl Rule for NoUnusedLabels {

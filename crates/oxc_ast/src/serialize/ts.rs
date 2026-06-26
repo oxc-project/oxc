@@ -15,7 +15,7 @@ use super::Null;
 // TODO: Not ideal to have to include the enum discriminant's value here explicitly.
 // Need a "macro" e.g. `ENUM_MATCHES(id, ComputedString | ComputedTemplateString)`.
 #[ast_meta]
-#[estree(ts_type = "boolean", raw_deser = "DESER[u8](POS_OFFSET.id) > 1")]
+#[estree(ts_type = "boolean", raw_deser = "DESER[u8](POS_OFFSET.id) > 1", raw_deser_inline)]
 pub struct TSEnumMemberComputed<'a, 'b>(pub &'b TSEnumMember<'a>);
 
 impl ESTree for TSEnumMemberComputed<'_, '_> {
@@ -32,7 +32,7 @@ impl ESTree for TSEnumMemberComputed<'_, '_> {
 ///
 /// This field is always `null`, and only appears in the TS-ESTree AST, not JS ESTree.
 #[ast_meta]
-#[estree(ts_type = "string | null", raw_deser = "null")]
+#[estree(ts_type = "string | null", raw_deser = "null", raw_deser_inline)]
 #[ts]
 pub struct ExpressionStatementDirective<'a, 'b>(
     #[expect(dead_code)] pub &'b ExpressionStatement<'a>,
@@ -52,8 +52,8 @@ impl ESTree for ExpressionStatementDirective<'_, '_> {
 #[ast_meta]
 #[estree(raw_deser = "
     const kind = DESER[TSModuleDeclarationKind](POS_OFFSET.kind),
-        start = DESER[u32](POS_OFFSET.span.start),
-        end = DESER[u32](POS_OFFSET.span.end),
+        start = DESER[i32](POS_OFFSET.span.start),
+        end = DESER[i32](POS_OFFSET.span.end),
         declare = DESER[bool](POS_OFFSET.declare);
 
     let node;
@@ -266,8 +266,8 @@ impl ESTree for TSModuleDeclarationIdParts<'_, '_> {
                 optional: false,
                 typeAnnotation: null,
             }),
-            start: keywordStart = DESER[u32](POS_OFFSET.global_span.start),
-            end: keywordEnd = DESER[u32](POS_OFFSET.global_span.end),
+            start: keywordStart = DESER[i32](POS_OFFSET.global_span.start),
+            end: keywordEnd = DESER[i32](POS_OFFSET.global_span.end),
             ...(RANGE && { range: [keywordStart, keywordEnd] }),
             ...(PARENT && { parent }),
         };
@@ -488,8 +488,8 @@ impl ESTree for TSFunctionTypeParams<'_, '_> {
         node = parent = {
             type: 'TSParenthesizedType',
             typeAnnotation: null,
-            start: start = DESER[u32]( POS_OFFSET.span.start ),
-            end: end = DESER[u32]( POS_OFFSET.span.end ),
+            start: start = DESER[i32]( POS_OFFSET.span.start ),
+            end: end = DESER[i32]( POS_OFFSET.span.end ),
             ...(RANGE && { range: [start, end] }),
             ...(PARENT && { parent }),
         };

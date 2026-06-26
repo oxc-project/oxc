@@ -34,6 +34,17 @@ fn test_void_ident() {
     test("void x", "x"); // reference error
 }
 
+// Leak regression: Normalize runs before the peephole fixed-point loop, but
+// `PassDirty` is live from `MinifierState::new`, so Normalize's typed-helper
+// drops are recorded like any pass's and consumed by the driver's pre-loop
+// `flush_pass_dirty`. A leaked read makes `x` look referenced, blocking
+// unused-declaration removal.
+#[test]
+fn test_void_ident_does_not_leak_reference() {
+    let options = CompressOptions::smallest();
+    test_options("let x = 1; void x; console.log(2);", "console.log(2);", &options);
+}
+
 #[test]
 fn parens() {
     test("(((x)))", "x");
@@ -50,6 +61,18 @@ fn drop_console() {
         "(() => { try { return } catch {} })()",
         &options,
     );
+}
+
+// Same leak class as `test_void_ident_does_not_leak_reference`: dropped
+// `console.*` calls (statement position and expression position) contain
+// argument subtrees whose resolved references must be deleted from scoping.
+#[test]
+fn drop_console_does_not_leak_references() {
+    let options = CompressOptions { drop_console: true, ..CompressOptions::smallest() };
+    // Statement position.
+    test_options("let x = 1; console.log(x); foo(2);", "foo(2);", &options);
+    // Expression position: the call is replaced with `void 0`.
+    test_options("let x = 1; foo(console.log(x));", "foo(void 0);", &options);
 }
 
 #[test]
@@ -284,4 +307,34 @@ fn remove_unused_use_strict_directive() {
     );
     test("'use strict'; function _() { 'use strict' }", "function _() {}");
     test("'use strict';", "");
+}
+
+// Legal comments anchored to a removed `"use strict"` directive are rescued
+// by the same `print_legal_orphans_before` flush used for #19750: the
+// directive's `span.start` is gone, but the orphan re-anchors at the next
+// surviving statement. Pin that for the legal-comment subset of #19748.
+// Non-legal comments above a removed directive are not covered:
+// `print_legal_orphans_before` is gated on `Comment::is_legal()` by design.
+
+#[test]
+fn preserve_legal_comment_above_removed_use_strict() {
+    // Both `//!` and `/*! ... */` forms.
+    test(
+        "//! license\n'use strict';\nexport function foo(){}",
+        "//! license\nexport function foo() {}",
+    );
+    test(
+        "/*! banner */\n'use strict';\nexport function foo(){}",
+        "/*! banner */\nexport function foo() {}",
+    );
+}
+
+#[test]
+fn preserve_legal_comment_above_removed_inner_function_use_strict() {
+    // Redundant inner `"use strict"` is dropped under a strict outer scope;
+    // the comment must stay inside the function body, not escape outward.
+    test(
+        "//! outer\n'use strict';\nexport function f() {\n  //! inner\n  'use strict';\n  bar();\n}",
+        "//! outer\nexport function f() {\n\t//! inner\n\tbar();\n}",
+    );
 }

@@ -7,7 +7,8 @@ use oxc_ast::{
 };
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span, Str};
+use oxc_span::Span;
+use oxc_str::{CompactStr, Str};
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde_json::Value;
@@ -25,7 +26,7 @@ impl Deref for NoAsyncEndpointHandlers {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoAsyncEndpointHandlersConfig {
     /// An array of names that are allowed to be async.
     allowed_names: Vec<CompactStr>,
@@ -176,7 +177,9 @@ declare_oxc_lint!(
     NoAsyncEndpointHandlers,
     oxc,
     suspicious,
-    config = NoAsyncEndpointHandlersConfig
+    config = NoAsyncEndpointHandlersConfig,
+    version = "0.9.2",
+    short_description = "Disallows the use of `async` functions as Express endpoint handlers.",
 );
 
 impl Rule for NoAsyncEndpointHandlers {
@@ -195,8 +198,8 @@ impl Rule for NoAsyncEndpointHandlers {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let kind = node.kind();
-        let Some((endpoint, args)) = utils::as_endpoint_registration(&kind) else {
+        let AstKind::CallExpression(call) = node.kind() else { return };
+        let Some((endpoint, args)) = utils::as_endpoint_registration(call) else {
             return;
         };
         for arg in
@@ -355,12 +358,10 @@ fn test() {
     let pass = vec![
         ("app.get('/', fooController)", None),
         ("app.get('/', (req, res) => {})", None),
-        ("app.get('/', (req, res) => {})", None),
         ("app.get('/', function (req, res) {})", None),
         ("app.get('/', middleware, function (req, res) {})", None),
         ("app.get('/', (req, res, next) => {})", None),
         ("app.get('/', (err, req, res, next) => {})", None),
-        ("app.get('/', (err, req, res) => {})", None),
         ("app.get('/', (err, req, res) => {})", None),
         ("app.get('/', (req, res) => Promise.resolve())", None),
         ("app.get('/', (req, res) => new Promise((resolve, reject) => resolve()))", None),
@@ -401,7 +402,6 @@ fn test() {
         ("app.get('/', async function (req, res) {})", None),
         ("app.get('/', async (req, res) =>  {})", None),
         ("app.get('/', async (req, res, next) =>  {})", None),
-        ("weirdName.get('/', async (req, res) =>  {})", None),
         ("weirdName.get('/', async (req, res) =>  {})", None),
         (
             "

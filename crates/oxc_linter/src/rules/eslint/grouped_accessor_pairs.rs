@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use oxc_allocator::Box as ArenaBox;
+use oxc_allocator::ArenaBox;
 use oxc_ast::{
     AstKind,
     ast::{
@@ -182,6 +182,8 @@ declare_oxc_lint!(
     style,
     pending,
     config = GroupedAccessorPairs,
+    version = "0.15.12",
+    short_description = "Require grouped accessor pairs in object literals and classes.",
 );
 
 impl Rule for GroupedAccessorPairs {
@@ -192,8 +194,10 @@ impl Rule for GroupedAccessorPairs {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::ObjectExpression(obj_expr) => {
-                let mut prop_map =
-                    FxHashMap::<(String, bool), Vec<(usize, &ArenaBox<ObjectProperty>)>>::default();
+                let mut prop_map = FxHashMap::<
+                    (String, bool),
+                    Vec<(usize, &ArenaBox<'_, ObjectProperty<'_>>)>,
+                >::default();
                 let properties = &obj_expr.properties;
 
                 for (idx, v) in properties.iter().enumerate() {
@@ -251,7 +255,7 @@ impl Rule for GroupedAccessorPairs {
                 let method_defines = &class_body.body;
                 let mut prop_map = FxHashMap::<
                     (String, bool, bool, bool),
-                    Vec<(usize, &ArenaBox<MethodDefinition>)>,
+                    Vec<(usize, &ArenaBox<'_, MethodDefinition<'_>>)>,
                 >::default();
 
                 for (idx, v) in method_defines.iter().enumerate() {
@@ -342,8 +346,10 @@ impl GroupedAccessorPairs {
     }
 
     fn check_ts_signatures<'a>(&self, signatures: &[TSSignature<'a>], ctx: &LintContext<'a>) {
-        let mut prop_map =
-            FxHashMap::<(String, bool), Vec<(usize, &ArenaBox<TSMethodSignature>)>>::default();
+        let mut prop_map = FxHashMap::<
+            (String, bool),
+            Vec<(usize, &ArenaBox<'_, TSMethodSignature<'_>>)>,
+        >::default();
 
         for (idx, signature) in signatures.iter().enumerate() {
             let TSSignature::TSMethodSignature(method_sig) = signature else {

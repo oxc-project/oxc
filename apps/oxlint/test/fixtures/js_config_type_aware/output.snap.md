@@ -3,7 +3,7 @@
 
 # stdout
 ```
-  x typescript-eslint(no-floating-promises): Promises must be awaited, add void operator to ignore.
+  x typescript(no-floating-promises): Promises must be awaited, add void operator to ignore.
    ,-[files/test.js:3:1]
  2 | 
  3 | floating;

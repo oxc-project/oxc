@@ -74,7 +74,9 @@ declare_oxc_lint!(
     NoImportTypeSideEffects,
     typescript,
     restriction,
-    fix
+    fix,
+    version = "0.5.0",
+    short_description = "Enforce the use of top-level `import type` qualifier when an import only has specifiers with inline type qualifiers.",
 );
 
 impl Rule for NoImportTypeSideEffects {

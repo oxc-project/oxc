@@ -91,7 +91,9 @@ declare_oxc_lint!(
     NoImmediateMutation,
     unicorn,
     pedantic,
-    pending
+    pending,
+    version = "1.35.0",
+    short_description = "Disallows mutating a variable immediately after initialization.",
 );
 
 /// The type of initialization

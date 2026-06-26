@@ -5,7 +5,7 @@ use oxc_syntax::precedence::{GetPrecedence, Precedence};
 use crate::{
     Format,
     ast_nodes::{AstNode, AstNodes},
-    formatter::Formatter,
+    formatter::JsFormatter,
 };
 
 use crate::{format_args, formatter::prelude::*, write};
@@ -28,8 +28,8 @@ impl From<LogicalOperator> for BinaryLikeOperator {
     }
 }
 
-impl Format<'_> for BinaryLikeOperator {
-    fn fmt(&self, f: &mut Formatter<'_, '_>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for BinaryLikeOperator {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let operator = match self {
             Self::BinaryOperator(op) => op.as_str(),
             Self::LogicalOperator(op) => op.as_str(),
@@ -192,8 +192,8 @@ impl<'a, 'b> TryFrom<&'b AstNode<'a, Expression<'a>>> for BinaryLikeExpression<'
     }
 }
 
-impl<'a> Format<'a> for BinaryLikeExpression<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for BinaryLikeExpression<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let parent = self.parent();
         let is_inside_condition = self.is_inside_condition(parent);
 
@@ -262,10 +262,18 @@ impl<'a> Format<'a> for BinaryLikeExpression<'a, '_> {
         // split_into_left_and_right_sides always pushes at least one Right,
         // and either pushes Left or recursively adds items that include Left(s)
         let first = &parts[0];
-        let last_is_jsx = parts.last().is_some_and(BinaryLeftOrRightSide::is_jsx);
-        let tail_parts = if last_is_jsx { &parts[1..parts.len() - 1] } else { &parts[1..] };
+        let jsx_element = parts.last().filter(|part| part.is_jsx());
+        let tail_parts =
+            if jsx_element.is_some() { &parts[1..parts.len() - 1] } else { &parts[1..] };
 
         let group_id = f.group_id("logicalChain");
+
+        // A leading line comment on the final JSX operand forces a newline in Prettier,
+        // which breaks the surrounding chain. Mirror that by expanding the chain group;
+        // block comments don't force a newline and stay length-driven.
+        let should_expand_chain = jsx_element.is_some_and(|jsx| {
+            f.comments().comments_before_iter(jsx.span().start).any(|comment| comment.is_line())
+        });
 
         let format_non_jsx_parts = format_with(|f| {
             write!(
@@ -276,13 +284,12 @@ impl<'a> Format<'a> for BinaryLikeExpression<'a, '_> {
                         f.join().entries(tail_parts.iter());
                     })))
                 ))
-                .with_group_id(Some(group_id))]
+                .with_group_id(Some(group_id))
+                .should_expand(should_expand_chain)]
             );
         });
 
-        if last_is_jsx {
-            // `last_is_jsx` is only true if parts is not empty (which is always the case)
-            let jsx_element = parts.last().unwrap();
+        if let Some(jsx_element) = jsx_element {
             write!(
                 f,
                 [group(&format_args!(
@@ -319,12 +326,12 @@ enum BinaryLeftOrRightSide<'a, 'b> {
 fn format_flattened_logical_expression<'a>(
     binary: BinaryLikeExpression<'a, '_>,
     inside_condition: bool,
-    f: &mut Formatter<'_, 'a>,
+    f: &mut JsFormatter<'_, 'a>,
 ) {
     fn format_recursive<'a>(
         binary: BinaryLikeExpression<'a, '_>,
         inside_condition: bool,
-        f: &mut Formatter<'_, 'a>,
+        f: &mut JsFormatter<'_, 'a>,
     ) {
         let left = binary.left();
 
@@ -343,8 +350,8 @@ fn format_flattened_logical_expression<'a>(
     format_recursive(binary, inside_condition, f);
 }
 
-impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for BinaryLeftOrRightSide<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         match self {
             Self::Left { parent } => write!(f, group(parent.left())),
             Self::Right {
@@ -517,6 +524,15 @@ impl BinaryLeftOrRightSide<'_, '_> {
         match self {
             BinaryLeftOrRightSide::Left { parent } => parent.left().is_jsx(),
             BinaryLeftOrRightSide::Right { parent, .. } => parent.right().is_jsx(),
+        }
+    }
+}
+
+impl GetSpan for BinaryLeftOrRightSide<'_, '_> {
+    fn span(&self) -> oxc_span::Span {
+        match self {
+            BinaryLeftOrRightSide::Left { parent } => parent.left().span(),
+            BinaryLeftOrRightSide::Right { parent, .. } => parent.right().span(),
         }
     }
 }

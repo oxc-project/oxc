@@ -90,6 +90,8 @@ declare_oxc_lint!(
     correctness,
     conditional_fix,
     config = ValidTypeof,
+    version = "0.0.3",
+    short_description = "Enforce comparing `typeof` expressions against valid strings.",
 );
 
 impl Rule for ValidTypeof {

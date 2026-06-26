@@ -143,6 +143,7 @@ mod tests {
                 "eslint/no-unused-vars"
                 | "import/namespace"
                 | "jest/expect-expect"
+                | "jest/require-top-level-describe"
                 | "jsdoc/require-returns"
                 | "jsx-a11y/aria-role"
                 | "nextjs/no-duplicate-head"

@@ -4,7 +4,7 @@ import { Visitor } from "oxc-parser";
 import { parse } from "./utils.ts";
 
 import type { Plugin } from "rolldown";
-import type * as ESTree from "@oxc-project/types";
+import type * as ESTree from "oxc-parser";
 
 // Name of binary search function to inline
 const INLINE_FUNC_NAME = "firstTokenAtOrAfter";
@@ -32,13 +32,13 @@ const { fnParams, returnParamIndex, fnBodySource } = extractInlinedFunction(
  *
  * ```ts
  * // Original code
- * const index = firstTokenAtOrAfter(uint32, rangeStart, searchFromIndex, length);
+ * const index = firstTokenAtOrAfter(int32, rangeStart, searchFromIndex, length);
  *
  * // After transform
  * let index = searchFromIndex;
  * for (let endIndex = length; index < endIndex; ) {
  *   const mid = (index + endIndex) >> 1;
- *   if (uint32[mid << 2] < rangeStart) {
+ *   if (int32[mid << 2] < rangeStart) {
  *     index = mid + 1;
  *   } else {
  *     endIndex = mid;
@@ -76,7 +76,7 @@ const plugin: Plugin = {
       // Visit AST.
       // Inline call sites and check for any calls that could not be inlined.
       const visitor = new Visitor({
-        VariableDeclaration(varDecl: ESTree.VariableDeclaration) {
+        VariableDeclaration(varDecl) {
           if (varDecl.declarations.length !== 1) return;
 
           const declarator = varDecl.declarations[0];
@@ -140,7 +140,7 @@ const plugin: Plugin = {
           inlinedCallExprs.add(callNode);
         },
 
-        CallExpression(callExpr: ESTree.CallExpression) {
+        CallExpression(callExpr) {
           if (isTargetCall(callExpr) && !inlinedCallExprs.has(callExpr)) {
             throw new Error(
               `\`${INLINE_FUNC_NAME}\` call on line ${lineNumber(callExpr.start)} could not be inlined. ` +

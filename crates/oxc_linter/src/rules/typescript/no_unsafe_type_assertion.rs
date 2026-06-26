@@ -44,6 +44,8 @@ declare_oxc_lint!(
     NoUnsafeTypeAssertion(tsgolint),
     typescript,
     suspicious,
+    version = "1.12.0",
+    short_description = "Disallows unsafe type assertions that narrow a type.",
 );
 
 impl Rule for NoUnsafeTypeAssertion {}

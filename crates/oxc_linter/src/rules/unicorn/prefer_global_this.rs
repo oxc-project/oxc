@@ -59,7 +59,9 @@ declare_oxc_lint!(
     PreferGlobalThis,
     unicorn,
     style,
-    suggestion
+    suggestion,
+    version = "0.16.12",
+    short_description = "Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.",
 );
 
 impl Rule for PreferGlobalThis {

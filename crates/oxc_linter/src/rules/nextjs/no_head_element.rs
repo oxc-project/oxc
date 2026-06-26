@@ -66,7 +66,9 @@ declare_oxc_lint!(
     /// ```
     NoHeadElement,
     nextjs,
-    correctness
+    correctness,
+    version = "0.2.1",
+    short_description = "Prevents the usage of the native `<head>` element inside a Next.js application.",
 );
 
 impl Rule for NoHeadElement {

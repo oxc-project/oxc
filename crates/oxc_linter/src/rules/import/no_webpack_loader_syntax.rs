@@ -50,6 +50,8 @@ declare_oxc_lint!(
     NoWebpackLoaderSyntax,
     import,
     restriction,
+    version = "0.7.0",
+    short_description = "Forbids using Webpack loader syntax directly in import or require statements.",
 );
 
 impl Rule for NoWebpackLoaderSyntax {

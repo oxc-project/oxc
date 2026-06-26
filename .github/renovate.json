@@ -11,6 +11,11 @@
       "rangeStrategy": "auto",
       "schedule": ["at any time"],
       "automergeSchedule": ["at any time"]
+    },
+    {
+      "groupName": "emnapi",
+      "matchManagers": ["npm"],
+      "matchPackageNames": ["emnapi", "/^@emnapi\\//"]
     }
   ]
 }

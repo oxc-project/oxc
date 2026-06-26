@@ -458,7 +458,7 @@ impl NoUnusedVars {
 
 #[cfg(test)]
 mod test {
-    use oxc_span::Str;
+    use oxc_str::Str;
 
     use super::super::NoUnusedVars;
     use super::{IgnoreReason, Ignored};

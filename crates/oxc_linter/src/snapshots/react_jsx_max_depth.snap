@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-react(jsx-max-depth): JSX nesting depth of 1 exceeds the configured maximum of 0
+  ⚠ react(jsx-max-depth): JSX nesting depth of 1 exceeds the configured maximum of 0
    ╭─[jsx_max_depth.tsx:3:14]
  2 │                     <App>
  3 │                       <foo />
@@ -10,7 +10,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                     </App>
    ╰────
 
-  ⚠ eslint-plugin-react(jsx-max-depth): JSX nesting depth of 1 exceeds the configured maximum of 0
+  ⚠ react(jsx-max-depth): JSX nesting depth of 1 exceeds the configured maximum of 0
    ╭─[jsx_max_depth.tsx:3:14]
  2 │                     <App>
  3 │                       <foo>{bar}</foo>
@@ -18,7 +18,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                     </App>
    ╰────
 
-  ⚠ eslint-plugin-react(jsx-max-depth): JSX nesting depth of 2 exceeds the configured maximum of 1
+  ⚠ react(jsx-max-depth): JSX nesting depth of 2 exceeds the configured maximum of 1
    ╭─[jsx_max_depth.tsx:4:16]
  3 │                       <foo>
  4 │                         <bar />
@@ -26,7 +26,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                       </foo>
    ╰────
 
-  ⚠ eslint-plugin-react(jsx-max-depth): JSX nesting depth of 2 exceeds the configured maximum of 1
+  ⚠ react(jsx-max-depth): JSX nesting depth of 2 exceeds the configured maximum of 1
    ╭─[jsx_max_depth.tsx:3:12]
  2 │                     const x = <div><span /></div>;
  3 │                     <div>{x}</div>
@@ -34,7 +34,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                   
    ╰────
 
-  ⚠ eslint-plugin-react(jsx-max-depth): JSX nesting depth of 2 exceeds the configured maximum of 1
+  ⚠ react(jsx-max-depth): JSX nesting depth of 2 exceeds the configured maximum of 1
    ╭─[jsx_max_depth.tsx:4:12]
  3 │                     let y = x;
  4 │                     <div>{y}</div>
@@ -42,7 +42,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                   
    ╰────
 
-  ⚠ eslint-plugin-react(jsx-max-depth): JSX nesting depth of 2 exceeds the configured maximum of 1
+  ⚠ react(jsx-max-depth): JSX nesting depth of 2 exceeds the configured maximum of 1
    ╭─[jsx_max_depth.tsx:4:12]
  3 │                     let y = x;
  4 │                     <div>{x}-{y}</div>
@@ -50,7 +50,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                   
    ╰────
 
-  ⚠ eslint-plugin-react(jsx-max-depth): JSX nesting depth of 3 exceeds the configured maximum of 2
+  ⚠ react(jsx-max-depth): JSX nesting depth of 3 exceeds the configured maximum of 2
    ╭─[jsx_max_depth.tsx:3:23]
  2 │                     <div>
  3 │                     {<div><div><span /></div></div>}
@@ -58,7 +58,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                     </div>
    ╰────
 
-  ⚠ eslint-plugin-react(jsx-max-depth): JSX nesting depth of 1 exceeds the configured maximum of 0
+  ⚠ react(jsx-max-depth): JSX nesting depth of 1 exceeds the configured maximum of 0
    ╭─[jsx_max_depth.tsx:3:14]
  2 │                     <>
  3 │                       <foo />
@@ -66,7 +66,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                     </>
    ╰────
 
-  ⚠ eslint-plugin-react(jsx-max-depth): JSX nesting depth of 2 exceeds the configured maximum of 1
+  ⚠ react(jsx-max-depth): JSX nesting depth of 2 exceeds the configured maximum of 1
    ╭─[jsx_max_depth.tsx:4:16]
  3 │                       <>
  4 │                         <bar />
@@ -74,7 +74,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                       </>
    ╰────
 
-  ⚠ eslint-plugin-react(jsx-max-depth): JSX nesting depth of 2 exceeds the configured maximum of 1
+  ⚠ react(jsx-max-depth): JSX nesting depth of 2 exceeds the configured maximum of 1
    ╭─[jsx_max_depth.tsx:4:12]
  3 │                     let y = x;
  4 │                     <>{x}-{y}</>
@@ -82,7 +82,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                   
    ╰────
 
-  ⚠ eslint-plugin-react(jsx-max-depth): JSX nesting depth of 2 exceeds the configured maximum of 1
+  ⚠ react(jsx-max-depth): JSX nesting depth of 2 exceeds the configured maximum of 1
     ╭─[jsx_max_depth.tsx:8:12]
   7 │                         );
   8 │ ╭─▶                     <tbody>
@@ -91,7 +91,7 @@ source: crates/oxc_linter/src/tester.rs
  11 │                       
     ╰────
 
-  ⚠ eslint-plugin-react(jsx-max-depth): JSX nesting depth of 5 exceeds the configured maximum of 4
+  ⚠ react(jsx-max-depth): JSX nesting depth of 5 exceeds the configured maximum of 4
     ╭─[jsx_max_depth.tsx:9:22]
   8 │                                 <div className={clxs('modal_buttons', classes.buttons)}>
   9 │ ╭─▶                               <Button className="modal_buttons--cancel" onClick={onCancel}>

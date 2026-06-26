@@ -23,8 +23,10 @@ fn prefer_default_export_diagnostic(span: Span, target: Target) -> OxcDiagnostic
 #[derive(Debug, Default, PartialEq, Clone, Copy, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 enum Target {
+    /// Prefer default export when there is only one export in the module.
     #[default]
     Single,
+    /// Prefer default export in any module that has exports.
     Any,
 }
 
@@ -32,15 +34,13 @@ enum Target {
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct PreferDefaultExport {
     /// Configuration option to specify the target type for preferring default exports.
-    /// - `"single"`: Prefer default export when there is only one export in the module.
-    /// - `"any"`: Prefer default export in any module that has exports.
     target: Target,
 }
 
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// In exporting files, this rule checks if there is default export or not.
+    /// Checks whether there is a default export.
     ///
     /// ### Why is this bad?
     ///
@@ -75,6 +75,8 @@ declare_oxc_lint!(
     import,
     style,
     config = PreferDefaultExport,
+    version = "1.4.0",
+    short_description = "Checks whether there is a default export.",
 );
 
 impl Rule for PreferDefaultExport {

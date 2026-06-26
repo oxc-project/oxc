@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-jsdoc(empty-tags): Expects the void tags to be empty of any content.
+  ⚠ jsdoc(empty-tags): Expects the void tags to be empty of any content.
    ╭─[empty_tags.tsx:3:27]
  2 │                       /**
  3 │                        * @abstract extra text
@@ -11,7 +11,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: `@abstract` tag should not have body.
 
-  ⚠ eslint-plugin-jsdoc(empty-tags): Expects the void tags to be empty of any content.
+  ⚠ jsdoc(empty-tags): Expects the void tags to be empty of any content.
    ╭─[empty_tags.tsx:4:27]
  3 │                       /**
  4 │                        * @abstract extra text
@@ -20,7 +20,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: `@abstract` tag should not have body.
 
-  ⚠ eslint-plugin-jsdoc(empty-tags): Expects the void tags to be empty of any content.
+  ⚠ jsdoc(empty-tags): Expects the void tags to be empty of any content.
    ╭─[empty_tags.tsx:3:27]
  2 │                       /**
  3 │                        * @abstract extra text
@@ -29,7 +29,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: `@abstract` tag should not have body.
 
-  ⚠ eslint-plugin-jsdoc(empty-tags): Expects the void tags to be empty of any content.
+  ⚠ jsdoc(empty-tags): Expects the void tags to be empty of any content.
    ╭─[empty_tags.tsx:5:24]
  4 │                        * @inheritdoc
  5 │                        * @async out of place
@@ -38,7 +38,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: `@async` tag should not have body.
 
-  ⚠ eslint-plugin-jsdoc(empty-tags): Expects the void tags to be empty of any content.
+  ⚠ jsdoc(empty-tags): Expects the void tags to be empty of any content.
    ╭─[empty_tags.tsx:3:24]
  2 │                       /**
  3 │                        * @event anEvent
@@ -47,7 +47,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: `@event` tag should not have body.
 
-  ⚠ eslint-plugin-jsdoc(empty-tags): Expects the void tags to be empty of any content.
+  ⚠ jsdoc(empty-tags): Expects the void tags to be empty of any content.
    ╭─[empty_tags.tsx:3:22]
  2 │                   /**
  3 │                    * @private foo
@@ -56,7 +56,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: `@private` tag should not have body.
 
-  ⚠ eslint-plugin-jsdoc(empty-tags): Expects the void tags to be empty of any content.
+  ⚠ jsdoc(empty-tags): Expects the void tags to be empty of any content.
    ╭─[empty_tags.tsx:4:20]
  3 │                    * @internal
  4 │                    * foo
@@ -65,7 +65,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: `@internal` tag should not have body.
 
-  ⚠ eslint-plugin-jsdoc(empty-tags): Expects the void tags to be empty of any content.
+  ⚠ jsdoc(empty-tags): Expects the void tags to be empty of any content.
    ╭─[empty_tags.tsx:3:22]
  2 │                   /**
  3 │                    * @private {someType}

@@ -40,7 +40,9 @@ declare_oxc_lint!(
     /// ```
     JsxNoUndef,
     react,
-    correctness
+    correctness,
+    version = "0.1.1",
+    short_description = "Disallow undeclared variables in JSX.",
 );
 
 fn get_resolvable_ident<'a>(node: &'a JSXElementName<'a>) -> Option<&'a IdentifierReference<'a>> {

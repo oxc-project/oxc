@@ -25,6 +25,6 @@ export type NodeOrToken = Node | Token | Comment;
 
 // Buffer with typed array views of itself stored as properties.
 export interface BufferWithArrays extends Uint8Array {
-  uint32: Uint32Array;
+  int32: Int32Array;
   float64: Float64Array;
 }

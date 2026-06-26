@@ -1,10 +1,12 @@
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{AstKind, ast::Statement};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeId;
 use oxc_span::{GetSpan, Span};
-use schemars::JsonSchema;
-use serde::Deserialize;
+use oxc_syntax::line_terminator::is_line_terminator;
 
 use crate::{
     AstNode,
@@ -16,7 +18,7 @@ fn no_else_return_diagnostic(else_keyword: Span, last_return: Span) -> OxcDiagno
     OxcDiagnostic::warn("Unnecessary `else` after `return`.")
         .with_labels([
             last_return.label("This consequent block always returns,"),
-            else_keyword.label("Making this `else` block unnecessary."),
+            else_keyword.primary_label("Making this `else` block unnecessary."),
         ])
         .with_help("Remove the `else` block, moving its contents outside of the `if` statement.")
 }
@@ -183,6 +185,8 @@ declare_oxc_lint!(
     pedantic,
     conditional_fix,
     config = NoElseReturn,
+    version = "0.9.10",
+    short_description = "Disallow `else` blocks after `return` statements in `if` statements.",
 );
 
 fn is_safe_from_name_collisions(
@@ -250,13 +254,52 @@ fn no_else_return_diagnostic_fix(
             Statement::ReturnStatement(s) => !ctx.source_range(s.span).ends_with(';'),
             _ => false,
         };
-        if needs_newline {
-            let replacement = ctx.source_range(replacement_span);
-            fixer.replace(target_span, "\n".to_string() + replacement)
+
+        let needs_trailing_semicolon =
+            needs_trailing_statement_separator(ctx, else_stmt, target_span.end);
+        if needs_newline || needs_trailing_semicolon {
+            let replacement_text = ctx.source_range(replacement_span);
+            let mut replacement = String::with_capacity(replacement_text.len() + 2);
+            if needs_newline {
+                replacement.push('\n');
+            }
+            replacement.push_str(replacement_text);
+            if needs_trailing_semicolon {
+                replacement.push(';');
+            }
+            fixer.replace(target_span, replacement)
         } else {
             fixer.replace_with(&target_span, &replacement_span)
         }
     });
+}
+
+fn needs_trailing_statement_separator(
+    ctx: &LintContext,
+    else_stmt: &Statement,
+    target_end: u32,
+) -> bool {
+    if let Some(last_stmt) = last_statement(else_stmt)
+        && !ctx.source_range(last_stmt.span()).trim_end().ends_with([';', '}'])
+    {
+        for ch in ctx.source_text()[target_end as usize..].chars() {
+            if is_line_terminator(ch) || ch == '}' || ch == ';' {
+                return false;
+            }
+            if !ch.is_whitespace() {
+                return true;
+            }
+        }
+    }
+
+    false
+}
+
+fn last_statement<'a>(stmt: &'a Statement<'a>) -> Option<&'a Statement<'a>> {
+    match stmt {
+        Statement::BlockStatement(block) => block.body.last(),
+        stmt => Some(stmt),
+    }
 }
 
 fn naive_has_return(node: &Statement) -> Option<Span> {
@@ -275,10 +318,10 @@ fn check_for_return_or_if(node: &Statement) -> Option<Span> {
         Statement::ReturnStatement(r) => Some(r.span),
         Statement::IfStatement(if_stmt) => {
             let alternate = if_stmt.alternate.as_ref()?;
-            if let (Some(_), Some(ret_span)) =
-                (naive_has_return(alternate), naive_has_return(&if_stmt.consequent))
+            if naive_has_return(alternate).is_some()
+                && naive_has_return(&if_stmt.consequent).is_some()
             {
-                Some(ret_span)
+                Some(if_stmt.span)
             } else {
                 None
             }
@@ -516,8 +559,6 @@ fn test() {
         ),
         ("function foo() { var a; if (bar) { return true; } else { var a; } }", None),
         ("function foo() { if (bar) { var a; if (baz) { return true; } else { var a; } } }", None),
-        ("function foo() { var a; if (bar) { return true; } else { var a; } }", None), // { "ecmaVersion": 6 },
-        ("function foo() { if (bar) { var a; if (baz) { return true; } else { var a; } } }", None), // { "ecmaVersion": 6 },
         ("function foo() { let a; if (bar) { return true; } else { let a; } }", None), // { "ecmaVersion": 6 },
         ("class foo { bar() { let a; if (baz) { return true; } else { let a; } } }", None), // { "ecmaVersion": 6 },
         ("function foo() { if (bar) { let a; if (baz) { return true; } else { let a; } } }", None), // { "ecmaVersion": 6 },
@@ -629,6 +670,24 @@ fn test() {
         ("function foo() { if (bar) { return true; } else function baz() {} };", None),
         ("if (foo) { return true; } else { let a; }", None), // { "ecmaVersion": 6, "sourceType": "commonjs" },
         ("let a; if (foo) { return true; } else { let a; }", None), // { "ecmaVersion": 6, "sourceType": "commonjs" }
+        (
+            "
+                function createReexports(meta, builder, value) {
+                    return meta.items.map(item => {
+                        if (value) {
+                            if (meta.has(item)) {
+                                return builder.computed(item);
+                            } else {
+                                return builder.constant(item);
+                            }
+                        } else {
+                            return builder.spec(item);
+                        }
+                    });
+                }
+            ",
+            None,
+        ),
     ];
 
     let fix = vec![
@@ -708,16 +767,17 @@ fn test() {
             "function foo14() { if (foo) return bar
             else { baz(); }
             [1, 2, 3].map(foo) }",
-            "function foo14() { if (foo) return bar\n baz(); 
-            [1, 2, 3].map(foo) }",
+            concat!(
+                "function foo14() { if (foo) return bar\n baz(); \n",
+                "            [1, 2, 3].map(foo) }",
+            ),
             None,
         ),
         (
             "function foo17() { if (foo) return bar
             else { baz() }
             qaz() }",
-            "function foo17() { if (foo) return bar\n baz() 
-            qaz() }",
+            concat!("function foo17() { if (foo) return bar\n baz() \n", "            qaz() }",),
             None,
         ),
         (
@@ -841,6 +901,21 @@ fn test() {
                 return baz;
                 // comments
             ",
+            None,
+        ),
+        (
+            "function foo(){if(foo){return bar}else{baz=qux}while(baz){}}",
+            "function foo(){if(foo){return bar}baz=qux;while(baz){}}",
+            None,
+        ),
+        (
+            "function foo(){if(foo){return bar}else{baz=qux;}while(baz){}}",
+            "function foo(){if(foo){return bar}baz=qux;while(baz){}}",
+            None,
+        ),
+        (
+            "function foo(){if(foo){return bar}else{if(a)baz=qux}while(baz){}}",
+            "function foo(){if(foo){return bar}if(a)baz=qux;while(baz){}}",
             None,
         ),
     ];

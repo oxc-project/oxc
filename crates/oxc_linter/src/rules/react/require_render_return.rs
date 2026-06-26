@@ -26,7 +26,7 @@ pub struct RequireRenderReturn;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce ES5 or ES2015 class for returning value in the `render` function.
+    /// Require render methods in ES5 and ES2015 React components to return a value.
     ///
     /// This rule is not relevant for function components, and so can potentially be
     /// disabled for modern React codebases.
@@ -69,7 +69,9 @@ declare_oxc_lint!(
     /// ```
     RequireRenderReturn,
     react,
-    nursery
+    nursery,
+    version = "0.2.0",
+    short_description = "Require render methods in ES5 and ES2015 React components to return a value.",
 );
 
 impl Rule for RequireRenderReturn {
@@ -171,24 +173,22 @@ const RENDER_METHOD_NAME: &str = "render";
 
 fn is_render_fn(node: &AstNode) -> bool {
     match node.kind() {
-        AstKind::MethodDefinition(method) => {
-            if method.key.is_specific_static_name(RENDER_METHOD_NAME) {
-                return true;
-            }
+        AstKind::MethodDefinition(method)
+            if method.key.is_specific_static_name(RENDER_METHOD_NAME) =>
+        {
+            return true;
         }
-        AstKind::PropertyDefinition(property) => {
+        AstKind::PropertyDefinition(property)
             if property.key.is_specific_static_name(RENDER_METHOD_NAME)
-                && property.value.as_ref().is_some_and(Expression::is_function)
-            {
-                return true;
-            }
+                && property.value.as_ref().is_some_and(Expression::is_function) =>
+        {
+            return true;
         }
-        AstKind::ObjectProperty(property) => {
+        AstKind::ObjectProperty(property)
             if property.key.is_specific_static_name(RENDER_METHOD_NAME)
-                && property.value.is_function()
-            {
-                return true;
-            }
+                && property.value.is_function() =>
+        {
+            return true;
         }
         _ => {}
     }

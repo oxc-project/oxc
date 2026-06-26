@@ -60,14 +60,14 @@ fn main() -> std::io::Result<()> {
     let source_type = SourceType::from_path(test_file_path).unwrap();
     let parser_ret = Parser::new(&allocator, &source_text, source_type).parse();
 
-    if !parser_ret.errors.is_empty() {
+    if !parser_ret.diagnostics.is_empty() {
         let error_message: String = parser_ret
-            .errors
+            .diagnostics
             .into_iter()
             .map(|error| error.with_source_code(Arc::clone(&source_text)).to_string())
             .join("\n\n");
 
-        println!("Parsing failed:\n\n{error_message}",);
+        println!("Parsing failed:\n\n{error_message}");
         return Ok(());
     }
 
@@ -76,16 +76,16 @@ fn main() -> std::io::Result<()> {
     println!("Wrote AST to: {}", &ast_file_name);
 
     let semantic =
-        SemanticBuilder::new().with_check_syntax_error(true).with_cfg(true).build(&program);
+        SemanticBuilder::new_compiler().with_build_nodes(true).with_cfg(true).build(&program);
 
-    if !semantic.errors.is_empty() {
+    if !semantic.diagnostics.is_empty() {
         let error_message: String = semantic
-            .errors
+            .diagnostics
             .into_iter()
             .map(|error| error.with_source_code(Arc::clone(&source_text)).to_string())
             .join("\n\n");
 
-        println!("Semantic analysis failed:\n\n{error_message}",);
+        println!("Semantic analysis failed:\n\n{error_message}");
         return Ok(());
     }
 

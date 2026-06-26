@@ -86,7 +86,7 @@ impl<'a> ClassProperties<'a> {
         let outer_scope_id = ctx.current_scope_id();
         ctx.scoping_mut().change_scope_parent_id(scope_id, Some(outer_scope_id));
 
-        wrap_statements_in_arrow_function_iife(stmts.take_in(ctx.ast), scope_id, block.span, ctx)
+        wrap_statements_in_arrow_function_iife(stmts.take_in(ctx), scope_id, block.span, ctx)
     }
 
     fn convert_static_block_with_single_expression_to_expression(
@@ -99,7 +99,7 @@ impl<'a> ClassProperties<'a> {
         let mut replacer = StaticVisitor::new(make_sloppy_mode, true, self, ctx);
         replacer.visit_expression(expr);
 
-        expr.take_in(ctx.ast)
+        expr.take_in(ctx)
     }
 
     /// Replace reference to class name with reference to temp var for class.
@@ -253,15 +253,24 @@ impl<'a> VisitMut<'a> for StaticVisitor<'a, '_> {
                 self.replace_this_with_temp_var(expr, span);
                 return;
             }
+            // `new.target` is always `undefined` in class static blocks. Replace it before moving
+            // the block body outside the class.
+            Expression::MetaProperty(meta_property)
+                if self.this_depth == 0
+                    && meta_property.meta.name == "new"
+                    && meta_property.property.name == "target" =>
+            {
+                *expr = Expression::new_void_0(meta_property.span, self.ctx);
+                return;
+            }
             // `delete this`
-            Expression::UnaryExpression(unary_expr) => {
+            Expression::UnaryExpression(unary_expr)
                 if unary_expr.operator == UnaryOperator::Delete
-                    && matches!(&unary_expr.argument, Expression::ThisExpression(_))
-                {
-                    let span = unary_expr.span;
-                    self.replace_delete_this_with_true(expr, span);
-                    return;
-                }
+                    && matches!(&unary_expr.argument, Expression::ThisExpression(_)) =>
+            {
+                let span = unary_expr.span;
+                self.replace_delete_this_with_true(expr, span);
+                return;
             }
             // `super.prop`
             Expression::StaticMemberExpression(_) if self.this_depth == 0 => {
@@ -529,7 +538,7 @@ impl<'a> StaticVisitor<'a, '_> {
     /// Replace `delete this` with `true`.
     fn replace_delete_this_with_true(&self, expr: &mut Expression<'a>, span: Span) {
         if self.this_depth == 0 {
-            *expr = self.ctx.ast.expression_boolean_literal(span, true);
+            *expr = Expression::new_boolean_literal(span, true, self.ctx);
         }
     }
 

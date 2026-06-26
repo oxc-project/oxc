@@ -1,8 +1,8 @@
 mod sort_imports;
 
 use oxc_formatter::{
-    CustomGroupDefinition, FormatOptions, GroupEntry, ImportModifier, ImportSelector, QuoteStyle,
-    Semicolons, SortImportsOptions, SortOrder,
+    CustomGroupDefinition, GroupEntry, ImportModifier, ImportSelector, JsFormatOptions,
+    JsdocOptions, QuoteStyle, Semicolons, SortImportsOptions, SortOrder,
 };
 use serde::Deserialize;
 
@@ -55,6 +55,7 @@ struct TestConfig {
     single_quote: Option<bool>,
     semi: Option<bool>,
     sort_imports: Option<TestSortImportsConfig>,
+    jsdoc: Option<bool>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -123,15 +124,18 @@ where
     Ok(Some(ParsedGroups { groups, newline_boundary_overrides }))
 }
 
-fn parse_test_config(json: &str) -> FormatOptions {
+fn parse_test_config(json: &str) -> JsFormatOptions {
     let config: TestConfig = serde_json::from_str(json).expect("Invalid test config JSON");
-    let mut options = FormatOptions::default();
+    let mut options = JsFormatOptions::default();
 
     if let Some(single_quote) = config.single_quote {
         options.quote_style = if single_quote { QuoteStyle::Single } else { QuoteStyle::Double };
     }
     if let Some(semi) = config.semi {
         options.semicolons = if semi { Semicolons::Always } else { Semicolons::AsNeeded };
+    }
+    if config.jsdoc == Some(true) {
+        options.jsdoc = Some(JsdocOptions::default());
     }
     if let Some(sort_config) = config.sort_imports {
         let mut sort_imports = SortImportsOptions::default();
@@ -185,20 +189,15 @@ fn parse_test_config(json: &str) -> FormatOptions {
     options
 }
 
-fn format_code(code: &str, options: &FormatOptions) -> String {
+fn format_code(code: &str, options: &JsFormatOptions) -> String {
     use oxc_allocator::Allocator;
-    use oxc_formatter::{Formatter, get_parse_options};
-    use oxc_parser::Parser;
     use oxc_span::SourceType;
 
     let allocator = Allocator::new();
     let source_type = SourceType::from_path("dummy.tsx").unwrap();
 
-    let ret = Parser::new(&allocator, code, source_type).with_options(get_parse_options()).parse();
-
-    if let Some(error) = ret.errors.first() {
-        panic!("💥 Parser error: {}", error.message);
+    match oxc_formatter::format(&allocator, code, source_type, options.clone(), None) {
+        Ok(formatted) => formatted.print().unwrap().into_code(),
+        Err(error) => panic!("💥 Parser error: {}", error.message),
     }
-
-    Formatter::new(&allocator, options.clone()).build(&ret.program)
 }

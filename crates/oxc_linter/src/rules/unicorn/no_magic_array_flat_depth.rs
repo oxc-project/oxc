@@ -48,6 +48,8 @@ declare_oxc_lint!(
     NoMagicArrayFlatDepth,
     unicorn,
     restriction,
+    version = "0.4.2",
+    short_description = "Disallow magic numbers for `Array.prototype.flat` depth.",
 );
 
 impl Rule for NoMagicArrayFlatDepth {

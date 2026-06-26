@@ -1,3 +1,5 @@
+use cow_utils::CowUtils;
+use lazy_regex::Regex;
 use std::borrow::Cow;
 
 use oxc_allocator::GetAddress;
@@ -9,7 +11,7 @@ use oxc_ast::{
     },
 };
 use oxc_semantic::{AstNode, ReferenceId, Semantic, SymbolId};
-use oxc_span::CompactStr;
+use oxc_str::CompactStr;
 
 use crate::LintContext;
 pub use crate::utils::jest::parse_jest_fn::{
@@ -49,6 +51,7 @@ pub enum JestFnKind {
     Expect,
     ExpectTypeOf,
     General(JestGeneralFnKind),
+    VitestFixture,
     Unknown,
 }
 
@@ -316,6 +319,32 @@ pub fn is_equality_matcher(matcher: &KnownMemberExpressionProperty) -> bool {
         || matcher.is_name_equal("toStrictEqual")
 }
 
+/// Checks if node names returned by getNodeName matches any of the given star patterns
+pub fn matches_assert_function_name(name: &str, patterns: &[CompactStr]) -> bool {
+    patterns.iter().any(|pattern| Regex::new(pattern).unwrap().is_match(name))
+}
+
+pub fn convert_pattern(pattern: &str) -> CompactStr {
+    // Pre-process pattern, e.g.
+    // request.*.expect -> request.[a-z\\d]*.expect
+    // request.**.expect -> request.[a-z\\d\\.]*.expect
+    // request.**.expect* -> request.[a-z\\d\\.]*.expect[a-z\\d]*
+    let pattern = pattern
+        .split('.')
+        .map(|p| {
+            if p == "**" {
+                CompactStr::from("[a-z\\d\\.]*")
+            } else {
+                p.cow_replace('*', "[a-z\\d]*").into()
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("\\.");
+
+    // 'a.b.c' -> /^a\.b\.c(\.|$)/iu
+    format!("(?ui)^{pattern}(\\.|$)").into()
+}
+
 #[cfg(test)]
 mod test {
     use std::{rc::Rc, sync::Arc};
@@ -325,7 +354,11 @@ mod test {
     use oxc_semantic::SemanticBuilder;
     use oxc_span::SourceType;
 
-    use crate::{ContextHost, ModuleRecord, context::ContextSubHost, options::LintOptions};
+    use crate::{
+        ContextHost, ModuleRecord,
+        context::{ContextSubHost, ContextSubHostOptions},
+        options::LintOptions,
+    };
 
     #[test]
     fn test_is_jest_file() {
@@ -335,10 +368,15 @@ mod test {
             let source_type = SourceType::default();
             let parser_ret = Parser::new(&allocator, "", source_type).parse();
             let program = allocator.alloc(parser_ret.program);
-            let semantic = SemanticBuilder::new().with_cfg(true).build(program).semantic;
+            let semantic = SemanticBuilder::new_linter().build(program).semantic;
             Rc::new(ContextHost::new(
                 path,
-                vec![ContextSubHost::new(semantic, Arc::new(ModuleRecord::default()), 0)],
+                vec![ContextSubHost::new(
+                    semantic,
+                    Arc::new(ModuleRecord::default()),
+                    0,
+                    ContextSubHostOptions::default(),
+                )],
                 LintOptions::default(),
                 Arc::default(),
             ))

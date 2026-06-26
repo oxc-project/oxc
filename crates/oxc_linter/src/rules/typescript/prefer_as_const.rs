@@ -24,7 +24,7 @@ pub struct PreferAsConst;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce the use of `as const` over literal type.
+    /// Enforce the use of `as const` over literal types.
     ///
     /// ### Why is this bad?
     ///
@@ -56,7 +56,9 @@ declare_oxc_lint!(
     PreferAsConst,
     typescript,
     correctness,
-    conditional_fix
+    conditional_fix,
+    version = "0.0.8",
+    short_description = "Enforce the use of `as const` over literal types.",
 );
 
 impl Rule for PreferAsConst {

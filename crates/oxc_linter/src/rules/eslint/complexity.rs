@@ -17,21 +17,21 @@ use crate::{
     rule::{DefaultRuleConfig, Rule},
 };
 
-fn complexity_diagnostic(span: Span, name: &str, complexity: usize, max: usize) -> OxcDiagnostic {
+fn complexity_diagnostic(span: Span, name: &str, complexity: u32, max: u32) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
         "{name} has a complexity of {complexity}. Maximum allowed is {max}."
     ))
     .with_label(span)
 }
 
-const THRESHOLD_DEFAULT: usize = 20;
+const THRESHOLD_DEFAULT: u32 = 20;
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct ComplexityConfig {
     /// Maximum amount of cyclomatic complexity
     #[serde(alias = "maximum")]
-    max: usize,
+    max: u32,
     /// The cyclomatic complexity variant to use
     variant: Variant,
 }
@@ -40,6 +40,14 @@ impl Default for ComplexityConfig {
     fn default() -> Self {
         Self { max: THRESHOLD_DEFAULT, variant: Variant::Classic }
     }
+}
+
+#[derive(Debug, JsonSchema)]
+#[serde(untagged)]
+#[expect(unused)]
+enum ComplexityConfigEnum {
+    Number(u32),
+    Object(ComplexityConfig),
 }
 
 #[derive(Debug, Default, Clone, Copy, Serialize, Deserialize, JsonSchema, PartialEq, Eq)]
@@ -134,7 +142,9 @@ declare_oxc_lint!(
     Complexity,
     eslint,
     restriction,
-    config = ComplexityConfig,
+    config = ComplexityConfigEnum,
+    version = "1.37.0",
+    short_description = "Enforces a maximum cyclomatic complexity in a program, which is the number of linearly independent paths in a program.",
 );
 
 impl Rule for Complexity {
@@ -143,13 +153,12 @@ impl Rule for Complexity {
             .get(0)
             .and_then(Value::as_number)
             .and_then(serde_json::Number::as_u64)
-            .and_then(|v| usize::try_from(v).ok())
+            .and_then(|v| u32::try_from(v).ok())
         {
             Ok(Self(Box::new(ComplexityConfig { max, variant: Variant::Classic })))
         } else {
-            Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-                .unwrap_or_default()
-                .into_inner())
+            serde_json::from_value::<DefaultRuleConfig<Self>>(value)
+                .map(DefaultRuleConfig::into_inner)
         }
     }
 
@@ -223,7 +232,7 @@ impl Rule for Complexity {
 
 struct ComplexityVisitor {
     variant: Variant,
-    complexity: usize,
+    complexity: u32,
     has_entered_complexity_evaluation: bool,
 }
 

@@ -94,6 +94,8 @@ declare_oxc_lint!(
     NoEmptyFile,
     unicorn,
     correctness,
+    version = "0.0.15",
+    short_description = "Disallow empty files.",
 );
 
 impl Rule for NoEmptyFile {

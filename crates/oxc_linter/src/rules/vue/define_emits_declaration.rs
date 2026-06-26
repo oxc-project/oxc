@@ -53,8 +53,8 @@ pub struct DefineEmitsDeclaration(DeclarationStyle);
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule enforces `defineEmits` typing style which you should use `type-based`, strict `type-literal` (introduced in Vue 3.3), or `runtime` declaration.
-    /// This rule only works in setup script and `lang="ts"`.
+    /// Enforce consistent declaration style for `defineEmits` in Vue.
+    /// This rule only works in `<script setup>` with `lang="ts"`.
     ///
     /// ### Why is this bad?
     ///
@@ -130,6 +130,8 @@ declare_oxc_lint!(
     style,
     pending, // TODO: transform it to the other declaration (if possible)
     config = DeclarationStyle,
+    version = "1.15.0",
+    short_description = "Enforce consistent declaration style for `defineEmits` in Vue.",
 );
 
 impl Rule for DefineEmitsDeclaration {

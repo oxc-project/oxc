@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-vue(define-props-destructuring): Prefer destructuring from `defineProps` directly.
+  ⚠ vue(define-props-destructuring): Prefer destructuring from `defineProps` directly.
    ╭─[define_props_destructuring.tsx:3:33]
  2 │                   <script setup>
  3 │                   const props = defineProps(['foo'])
@@ -10,7 +10,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                   </script>
    ╰────
 
-  ⚠ eslint-plugin-vue(define-props-destructuring): Prefer destructuring from `defineProps` directly.
+  ⚠ vue(define-props-destructuring): Prefer destructuring from `defineProps` directly.
    ╭─[define_props_destructuring.tsx:3:46]
  2 │                   <script setup>
  3 │                   const props = withDefaults(defineProps(['foo']), { foo: 'default' })
@@ -18,7 +18,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                   </script>
    ╰────
 
-  ⚠ eslint-plugin-vue(define-props-destructuring): Avoid using `withDefaults` with destructuring.
+  ⚠ vue(define-props-destructuring): Avoid using `withDefaults` with destructuring.
    ╭─[define_props_destructuring.tsx:3:35]
  2 │                   <script setup>
  3 │                   const { foo } = withDefaults(defineProps(['foo']), { foo: 'default' })
@@ -26,7 +26,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                   </script>
    ╰────
 
-  ⚠ eslint-plugin-vue(define-props-destructuring): Prefer destructuring from `defineProps` directly.
+  ⚠ vue(define-props-destructuring): Prefer destructuring from `defineProps` directly.
    ╭─[define_props_destructuring.tsx:3:46]
  2 │                   <script setup lang="ts">
  3 │                   const props = withDefaults(defineProps<{ foo?: string }>(), { foo: 'default' })
@@ -34,7 +34,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                   </script>
    ╰────
 
-  ⚠ eslint-plugin-vue(define-props-destructuring): Avoid using `withDefaults` with destructuring.
+  ⚠ vue(define-props-destructuring): Avoid using `withDefaults` with destructuring.
    ╭─[define_props_destructuring.tsx:3:35]
  2 │                   <script setup lang="ts">
  3 │                   const { foo } = withDefaults(defineProps<{ foo?: string }>(), { foo: 'default' })
@@ -42,7 +42,31 @@ source: crates/oxc_linter/src/tester.rs
  4 │                   </script>
    ╰────
 
-  ⚠ eslint-plugin-vue(define-props-destructuring): Avoid destructuring from `defineProps`.
+  ⚠ vue(define-props-destructuring): Prefer destructuring from `defineProps` directly.
+   ╭─[define_props_destructuring.tsx:4:33]
+ 3 │                   import type { Props } from './type'
+ 4 │                   const props = defineProps<Props>()
+   ·                                 ────────────────────
+ 5 │                   </script>
+   ╰────
+
+  ⚠ vue(define-props-destructuring): Prefer destructuring from `defineProps` directly.
+   ╭─[define_props_destructuring.tsx:4:33]
+ 3 │                   import { propsObj } from './type'
+ 4 │                   const props = defineProps(propsObj)
+   ·                                 ─────────────────────
+ 5 │                   </script>
+   ╰────
+
+  ⚠ vue(define-props-destructuring): Prefer destructuring from `defineProps` directly.
+   ╭─[define_props_destructuring.tsx:3:33]
+ 2 │                   <script setup>
+ 3 │                   const props = defineProps(['foo'])
+   ·                                 ────────────────────
+ 4 │                   </script>
+   ╰────
+
+  ⚠ vue(define-props-destructuring): Avoid destructuring from `defineProps`.
    ╭─[define_props_destructuring.tsx:3:35]
  2 │                   <script setup>
  3 │                   const { foo } = defineProps(['foo'])
@@ -50,7 +74,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                   </script>
    ╰────
 
-  ⚠ eslint-plugin-vue(define-props-destructuring): Avoid destructuring from `defineProps`.
+  ⚠ vue(define-props-destructuring): Avoid destructuring from `defineProps`.
    ╭─[define_props_destructuring.tsx:3:48]
  2 │                   <script setup>
  3 │                   const { foo } = withDefaults(defineProps(['foo']), { foo: 'default' })
@@ -58,10 +82,74 @@ source: crates/oxc_linter/src/tester.rs
  4 │                   </script>
    ╰────
 
-  ⚠ eslint-plugin-vue(define-props-destructuring): Avoid destructuring from `defineProps`.
+  ⚠ vue(define-props-destructuring): Avoid destructuring from `defineProps`.
    ╭─[define_props_destructuring.tsx:3:35]
  2 │                   <script setup lang="ts">
  3 │                   const { foo } = defineProps<{ foo?: string }>()
    ·                                   ───────────────────────────────
+ 4 │                   </script>
+   ╰────
+
+  ⚠ vue(define-props-destructuring): Avoid destructuring from `defineProps`.
+   ╭─[define_props_destructuring.tsx:4:35]
+ 3 │                   import type { Props } from './type'
+ 4 │                   const { foo } = defineProps<Props>()
+   ·                                   ────────────────────
+ 5 │                   </script>
+   ╰────
+
+  ⚠ vue(define-props-destructuring): Avoid destructuring from `defineProps`.
+   ╭─[define_props_destructuring.tsx:4:35]
+ 3 │                   import { propsObj } from './type'
+ 4 │                   const { foo } = defineProps(propsObj)
+   ·                                   ─────────────────────
+ 5 │                   </script>
+   ╰────
+
+  ⚠ vue(define-props-destructuring): Avoid using `withDefaults` with destructuring.
+   ╭─[define_props_destructuring.tsx:3:19]
+ 2 │                   <script setup lang="ts">
+ 3 │                   withDefaults(defineProps(['foo']), { foo: 'default' })
+   ·                   ────────────
+ 4 │                   </script>
+   ╰────
+
+  ⚠ vue(define-props-destructuring): Avoid using `withDefaults` with destructuring.
+   ╭─[define_props_destructuring.tsx:3:19]
+ 2 │                   <script setup lang="ts">
+ 3 │                   withDefaults(defineProps<{ foo?: string }>(), { foo: 'default' })
+   ·                   ────────────
+ 4 │                   </script>
+   ╰────
+
+  ⚠ vue(define-props-destructuring): Prefer destructuring from `defineProps` directly.
+   ╭─[define_props_destructuring.tsx:3:32]
+ 2 │                   <script setup lang="ts">
+ 3 │                   withDefaults(defineProps(['foo']), { foo: 'default' })
+   ·                                ────────────────────
+ 4 │                   </script>
+   ╰────
+
+  ⚠ vue(define-props-destructuring): Prefer destructuring from `defineProps` directly.
+   ╭─[define_props_destructuring.tsx:3:32]
+ 2 │                   <script setup lang="ts">
+ 3 │                   withDefaults(defineProps<{ foo?: string }>(), { foo: 'default' })
+   ·                                ───────────────────────────────
+ 4 │                   </script>
+   ╰────
+
+  ⚠ vue(define-props-destructuring): Prefer destructuring from `defineProps` directly.
+   ╭─[define_props_destructuring.tsx:3:19]
+ 2 │                   <script setup>
+ 3 │                   defineProps(['foo'])
+   ·                   ────────────────────
+ 4 │                   </script>
+   ╰────
+
+  ⚠ vue(define-props-destructuring): Prefer destructuring from `defineProps` directly.
+   ╭─[define_props_destructuring.tsx:3:19]
+ 2 │                   <script setup lang="ts">
+ 3 │                   defineProps<{ foo?: string }>()
+   ·                   ───────────────────────────────
  4 │                   </script>
    ╰────

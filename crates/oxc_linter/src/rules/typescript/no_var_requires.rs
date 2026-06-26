@@ -39,7 +39,9 @@ declare_oxc_lint!(
     /// ```
     NoVarRequires,
     typescript,
-    restriction
+    restriction,
+    version = "0.0.7",
+    short_description = "Disallow `require` statements except in import statements.",
 );
 
 impl Rule for NoVarRequires {

@@ -2,7 +2,8 @@ use itertools::Itertools;
 use oxc_ast::{AstKind, ast::JSXAttributeItem};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span, Str};
+use oxc_span::{GetSpan, Span};
+use oxc_str::Str;
 use rustc_hash::FxHashMap;
 
 use crate::{
@@ -61,7 +62,9 @@ declare_oxc_lint!(
     JsxPropsNoSpreadMulti,
     react,
     correctness,
-    fix
+    fix,
+    version = "0.7.2",
+    short_description = "Enforces that any unique expression is only spread once.",
 );
 
 impl Rule for JsxPropsNoSpreadMulti {
@@ -116,8 +119,8 @@ impl Rule for JsxPropsNoSpreadMulti {
                 );
             }
 
-            member_expressions.iter().tuple_combinations().for_each(
-                |((left, left_span), (right, right_span))| {
+            member_expressions.iter().array_combinations().for_each(
+                |[(left, left_span), (right, right_span)]| {
                     if is_same_member_expression(left, right, ctx) {
                         // 'foo.bar'
                         let member_prop_name = ctx.source_range(left.span());

@@ -1,5 +1,5 @@
 use oxc_diagnostics::Result;
-use oxc_span::Str;
+use oxc_str::Str;
 
 use crate::parser::reader::{
     Options,

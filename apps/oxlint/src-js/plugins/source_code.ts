@@ -14,6 +14,7 @@ import visitorKeys from "../generated/keys.ts";
 import { resetComments } from "./comments.ts";
 import * as commentMethods from "./comments_methods.ts";
 import { ecmaVersion } from "./context.ts";
+import * as directiveMethods from "./directives.ts";
 import * as locationMethods from "./location.ts";
 import { initLines, lines, lineStartIndices, resetLinesAndLocs } from "./location.ts";
 import { resetScopeManager, SCOPE_MANAGER } from "./scope.ts";
@@ -60,10 +61,17 @@ export function setupSourceForFile(bufferInput: BufferWithArrays, hasBOMInput: b
  */
 export function initSourceText(): void {
   debugAssertIsNonNull(buffer);
-  const { uint32 } = buffer,
-    programPos = uint32[DATA_POINTER_POS_32];
-  sourceStartPos = uint32[(programPos + SOURCE_START_OFFSET) >> 2];
-  sourceByteLen = uint32[(programPos + SOURCE_LEN_OFFSET) >> 2];
+  const { int32 } = buffer,
+    programPos = int32[DATA_POINTER_POS_32];
+  sourceStartPos = int32[(programPos + SOURCE_START_OFFSET) >> 2];
+  sourceByteLen = int32[(programPos + SOURCE_LEN_OFFSET) >> 2];
+
+  // This will throw an error "Cannot create a string longer than 0x1fffffe8 characters"
+  // if `sourceByteLen > (2 ** 29 - 24)` (slightly less than 512 MiB).
+  // This is a useful invariant as it means source text offsets, number of lines, and number of tokens are limited
+  // in range so they're always valid SMIs.
+  // This makes it safe to use `>>` for division on these numbers without risking turning them into negative numbers.
+  // So we can use the cheaper `>>` operator instead of `>>>` in various places.
   sourceText = utf8Slice.call(buffer, sourceStartPos, sourceStartPos + sourceByteLen);
 }
 
@@ -341,6 +349,9 @@ export const SOURCE_CODE = Object.freeze({
   getTokenByRangeStart: tokenMethods.getTokenByRangeStart,
   isSpaceBetween: tokenMethods.isSpaceBetween,
   isSpaceBetweenTokens: tokenMethods.isSpaceBetweenTokens,
+
+  // Directive methods
+  getDisableDirectives: directiveMethods.getDisableDirectives,
 });
 
 export type SourceCode = typeof SOURCE_CODE;

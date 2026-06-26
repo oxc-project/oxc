@@ -1,6 +1,6 @@
 use super::PeepholeOptimizations;
 use crate::TraverseCtx;
-use oxc_allocator::{TakeIn, Vec};
+use oxc_allocator::{ArenaVec, TakeIn, Vec};
 use oxc_ast::ast::*;
 use oxc_ast_visit::{Visit, walk};
 use oxc_ecmascript::side_effects::MayHaveSideEffects;
@@ -27,10 +27,8 @@ impl<'a> PeepholeOptimizations {
             return;
         };
 
-        if let Some(last_case) = switch_stmt.cases.last_mut()
-            && Self::remove_last_break(&mut last_case.consequent, ctx)
-        {
-            ctx.state.changed = true;
+        if let Some(last_case) = switch_stmt.cases.last_mut() {
+            Self::remove_last_break(&mut last_case.consequent, ctx);
         }
     }
 
@@ -96,7 +94,7 @@ impl<'a> PeepholeOptimizations {
             last.test = None;
             switch_stmt.cases.push(last);
         }
-        ctx.state.changed = true;
+        ctx.notice_change();
     }
 
     /// Removes an empty switch statement from the given AST statement.
@@ -105,10 +103,12 @@ impl<'a> PeepholeOptimizations {
             return;
         };
         if switch_stmt.cases.is_empty() {
-            *stmt = ctx
-                .ast
-                .statement_expression(switch_stmt.span, switch_stmt.discriminant.take_in(ctx.ast));
-            ctx.state.changed = true;
+            let new_stmt = Statement::new_expression_statement(
+                switch_stmt.span,
+                switch_stmt.discriminant.take_in(ctx),
+                ctx,
+            );
+            ctx.replace_statement(stmt, new_stmt);
         }
     }
 
@@ -145,18 +145,20 @@ impl<'a> PeepholeOptimizations {
             (second.test.unwrap(), second.consequent, first.consequent)
         };
 
-        ctx.state.changed = true;
-        *stmt = ctx.ast.statement_if(
+        let new_stmt = Statement::new_if_statement(
             switch_stmt.span,
-            ctx.ast.expression_binary(
+            Expression::new_binary_expression(
                 SPAN,
-                switch_stmt.discriminant.take_in(ctx.ast),
+                switch_stmt.discriminant.take_in(ctx),
                 BinaryOperator::StrictEquality,
                 test,
+                ctx,
             ),
             Self::create_if_block_from_switch_case(consequent, ctx),
             Some(Self::create_if_block_from_switch_case(alternate, ctx)),
+            ctx,
         );
+        ctx.replace_statement(stmt, new_stmt);
     }
 
     fn create_if_block_from_switch_case(
@@ -166,10 +168,11 @@ impl<'a> PeepholeOptimizations {
         if vec.len() == 1 && matches!(vec.first(), Some(Statement::BlockStatement(_))) {
             vec.pop().unwrap()
         } else {
-            ctx.ast.statement_block_with_scope_id(
+            Statement::new_block_statement_with_scope_id(
                 SPAN,
                 vec,
                 ctx.create_child_scope_of_current(ScopeFlags::empty()),
+                ctx,
             )
         }
     }
@@ -185,36 +188,43 @@ impl<'a> PeepholeOptimizations {
             }
             let mut case = switch_stmt.cases.pop().unwrap();
 
-            ctx.state.changed = true;
-            let discriminant = switch_stmt.discriminant.take_in(ctx.ast);
+            let discriminant = switch_stmt.discriminant.take_in(ctx);
             Self::remove_last_break(&mut case.consequent, ctx);
 
-            if let Some(test) = case.test {
-                *stmt = ctx.ast.statement_if(
+            let new_stmt = if let Some(test) = case.test {
+                Statement::new_if_statement(
                     switch_stmt.span,
-                    ctx.ast.expression_binary(
+                    Expression::new_binary_expression(
                         SPAN,
                         discriminant,
                         BinaryOperator::StrictEquality,
                         test,
+                        ctx,
                     ),
                     Self::create_if_block_from_switch_case(case.consequent, ctx),
                     None,
-                );
+                    ctx,
+                )
             } else {
-                let mut stmts = ctx.ast.vec();
+                let mut stmts = ArenaVec::new_in(ctx);
                 if discriminant.may_have_side_effects(ctx) {
-                    stmts.push(ctx.ast.statement_expression(discriminant.span(), discriminant));
+                    stmts.push(Statement::new_expression_statement(
+                        discriminant.span(),
+                        discriminant,
+                        ctx,
+                    ));
                 }
                 if !Self::is_empty_switch_case(&case.consequent, true) {
                     stmts.extend(case.consequent);
                 }
-                *stmt = ctx.ast.statement_block_with_scope_id(
+                Statement::new_block_statement_with_scope_id(
                     switch_stmt.span,
                     stmts,
                     ctx.create_child_scope_of_current(ScopeFlags::empty()),
-                );
-            }
+                    ctx,
+                )
+            };
+            ctx.replace_statement(stmt, new_stmt);
         }
     }
 
@@ -234,11 +244,12 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn remove_break_from_statement(stmt: &mut Statement<'a>, ctx: &TraverseCtx<'a>) -> bool {
+    fn remove_break_from_statement(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
         match stmt {
             Statement::BreakStatement(break_stmt) => {
                 if break_stmt.label.is_none() {
-                    *stmt = ctx.ast.statement_empty(break_stmt.span);
+                    let new_stmt = Statement::new_empty_statement(break_stmt.span, ctx);
+                    ctx.replace_statement(stmt, new_stmt);
                     true
                 } else {
                     false
@@ -258,7 +269,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn remove_last_break(stmt: &mut Vec<'a, Statement<'a>>, ctx: &TraverseCtx<'a>) -> bool {
+    fn remove_last_break(stmt: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) -> bool {
         if stmt.is_empty() {
             return false;
         }
@@ -268,6 +279,7 @@ impl<'a> PeepholeOptimizations {
             Some(Statement::BreakStatement(break_stmt)) => {
                 if break_stmt.label.is_none() {
                     stmt.truncate(len - 1);
+                    ctx.notice_change();
                     true
                 } else {
                     false

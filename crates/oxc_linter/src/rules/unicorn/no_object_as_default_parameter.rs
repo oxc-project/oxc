@@ -42,7 +42,9 @@ declare_oxc_lint!(
     /// ```
     NoObjectAsDefaultParameter,
     unicorn,
-    pedantic
+    pedantic,
+    version = "0.0.16",
+    short_description = "Disallow the use of an object literal as a default value for a parameter.",
 );
 impl Rule for NoObjectAsDefaultParameter {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

@@ -83,6 +83,8 @@ declare_oxc_lint!(
     correctness,
     pending,
     config = CheckTagNamesConfig,
+    version = "0.3.2",
+    short_description = "Reports invalid block tag names.",
 );
 
 #[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
@@ -1170,7 +1172,7 @@ fn test() {
         (
             "
                             /** @abstract */
-                            { declare let a; }
+                            declare namespace b { let a; }
                           ",
             Some(serde_json::json!([
               {
@@ -1181,9 +1183,9 @@ fn test() {
         ),
         (
             "
-                            function test() {
+                            declare namespace test {
                               /** @abstract */
-                              declare let a;
+                              let a;
                             }
                           ",
             Some(serde_json::json!([

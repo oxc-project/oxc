@@ -62,7 +62,9 @@ declare_oxc_lint!(
     NoCompareNegZero,
     eslint,
     correctness,
-    conditional_fix_suggestion
+    conditional_fix_suggestion,
+    version = "0.0.3",
+    short_description = "Disallow comparing against `-0`",
 );
 
 impl Rule for NoCompareNegZero {
@@ -96,13 +98,13 @@ impl Rule for NoCompareNegZero {
                     ctx.diagnostic_with_fix(
                         no_compare_neg_zero_diagnostic(op, expr.span),
                         |fixer| {
-                            let start = if is_left_neg_zero {
-                                expr.left.span().start
+                            let neg_zero = if is_left_neg_zero {
+                                expr.left.get_inner_expression()
                             } else {
-                                expr.right.span().start
+                                expr.right.get_inner_expression()
                             };
-                            let end = start + 1;
-                            let span = Span::new(start, end);
+                            let start = neg_zero.span().start;
+                            let span = Span::new(start, start + 1);
                             fixer.delete(&span)
                         },
                     );
@@ -197,6 +199,11 @@ fn test() {
         ("x <= -0", "x <= 0", None),
         ("-0 <= x", "0 <= x", None),
         ("-0n <= x", "0n <= x", None),
+        ("x > (-0)", "x > (0)", None),
+        ("(-0) > x", "(0) > x", None),
+        ("x <= (-0n)", "x <= (0n)", None),
+        ("x > (-0 as number)", "x > (0 as number)", None),
+        ("(-0 satisfies number) > x", "(0 satisfies number) > x", None),
     ];
 
     Tester::new(NoCompareNegZero::NAME, NoCompareNegZero::PLUGIN, pass, fail)

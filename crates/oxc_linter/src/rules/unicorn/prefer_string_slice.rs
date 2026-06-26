@@ -39,7 +39,9 @@ declare_oxc_lint!(
     PreferStringSlice,
     unicorn,
     pedantic,
-    conditional_fix
+    conditional_fix,
+    version = "0.0.18",
+    short_description = "Prefer `String#slice()` over `String#substr()` and `String#substring()`.",
 );
 
 impl Rule for PreferStringSlice {

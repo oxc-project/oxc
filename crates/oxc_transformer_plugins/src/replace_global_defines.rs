@@ -2,13 +2,14 @@ use std::{cmp::Ordering, sync::Arc};
 
 use rustc_hash::FxHashSet;
 
-use oxc_allocator::{Address, Allocator, GetAddress, TakeIn, UnstableAddress};
+use oxc_allocator::{Address, Allocator, ArenaBox, GetAddress, TakeIn, UnstableAddress};
 use oxc_ast::ast::*;
 use oxc_ast_visit::{VisitMut, walk_mut};
-use oxc_diagnostics::OxcDiagnostic;
+use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 use oxc_parser::Parser;
-use oxc_semantic::{IsGlobalReference, ReferenceFlags, ScopeFlags, Scoping};
-use oxc_span::{CompactStr, SPAN, SourceType};
+use oxc_semantic::{ReferenceFlags, ScopeFlags, Scoping};
+use oxc_span::{SPAN, SourceType};
+use oxc_str::CompactStr;
 use oxc_syntax::identifier::is_identifier_name;
 use oxc_syntax::node::NodeId;
 use oxc_syntax::reference::Reference;
@@ -83,7 +84,7 @@ impl ReplaceGlobalDefinesConfig {
     ///
     /// * key is not an identifier
     /// * value has a syntax error
-    pub fn new<S: AsRef<str>>(defines: &[(S, S)]) -> Result<Self, Vec<OxcDiagnostic>> {
+    pub fn new<S: AsRef<str>>(defines: &[(S, S)]) -> Result<Self, Diagnostics> {
         let allocator = Allocator::default();
         let mut identifier_defines = vec![];
         let mut dot_defines = vec![];
@@ -144,7 +145,7 @@ impl ReplaceGlobalDefinesConfig {
         })))
     }
 
-    fn check_key(key: &str) -> Result<IdentifierType, Vec<OxcDiagnostic>> {
+    fn check_key(key: &str) -> Result<IdentifierType, Diagnostics> {
         let parts: Vec<&str> = key.split('.').collect();
 
         assert!(!parts.is_empty());
@@ -153,7 +154,8 @@ impl ReplaceGlobalDefinesConfig {
             if !is_identifier_name(parts[0]) {
                 return Err(vec![OxcDiagnostic::error(format!(
                     "The define key `{key}` is not an identifier."
-                ))]);
+                ))]
+                .into());
             }
             return Ok(IdentifierType::Identifier);
         }
@@ -166,7 +168,8 @@ impl ReplaceGlobalDefinesConfig {
             if !is_identifier_name(part) {
                 return Err(vec![OxcDiagnostic::error(format!(
                     "The define key `{key}` contains an invalid identifier `{part}`."
-                ))]);
+                ))]
+                .into());
             }
         }
         if is_import_meta {
@@ -186,7 +189,8 @@ impl ReplaceGlobalDefinesConfig {
         } else if normalized_parts_len != parts.len() {
             Err(vec![OxcDiagnostic::error(
                 "The postfix wildcard is only allowed for `import.meta`.".to_string(),
-            )])
+            )]
+            .into())
         } else {
             Ok(IdentifierType::DotDefines {
                 parts: parts
@@ -198,7 +202,7 @@ impl ReplaceGlobalDefinesConfig {
         }
     }
 
-    fn check_value(allocator: &Allocator, source_text: &str) -> Result<(), Vec<OxcDiagnostic>> {
+    fn check_value(allocator: &Allocator, source_text: &str) -> Result<(), Diagnostics> {
         Parser::new(allocator, source_text, SourceType::default()).parse_expression()?;
         Ok(())
     }
@@ -264,7 +268,7 @@ impl<'a> VisitMut<'a> for ReplaceGlobalDefines<'a> {
         // leaving an invalid `ChainExpression` with no optional elements.
         // Unwrap it to a plain expression to produce a valid AST.
         if matches!(expr, Expression::ChainExpression(_)) {
-            Self::unwrap_chain_expression_if_no_optional(self.allocator, expr);
+            self.unwrap_chain_expression_if_no_optional(expr);
         }
     }
 
@@ -393,20 +397,11 @@ impl<'a> ReplaceGlobalDefines<'a> {
 
     fn replace_identifier_define_impl(
         &mut self,
-        ident: &oxc_allocator::Box<'_, IdentifierReference<'_>>,
+        ident: &ArenaBox<'_, IdentifierReference<'_>>,
     ) -> Option<Expression<'a>> {
-        let scoping = self.scoping();
-        if let Some(symbol_id) = ident
-            .reference_id
-            .get()
-            .and_then(|reference_id| scoping.get_reference(reference_id).symbol_id())
-        {
-            // Ignore `declare const IS_PROD: boolean;`
-            if !scoping.symbol_flags(symbol_id).is_ambient() {
-                return None;
-            }
+        if !Self::is_global_or_ambient_reference(self.scoping(), ident) {
+            return None;
         }
-        // This is a global variable, including ambient variants such as `declare const`.
         for (key, value) in &self.config.0.identifier.identifier_defines {
             if ident.name.as_str() == key {
                 let value = value.clone();
@@ -697,7 +692,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
     /// If `expr` is a `ChainExpression` whose chain no longer contains any
     /// `optional: true` markers (because a define replacement removed them),
     /// unwrap it to a plain expression.
-    fn unwrap_chain_expression_if_no_optional(allocator: &'a Allocator, expr: &mut Expression<'a>) {
+    fn unwrap_chain_expression_if_no_optional(&self, expr: &mut Expression<'a>) {
         let Expression::ChainExpression(chain) = &*expr else { return };
 
         // Check the chain element's optional flag and get the first object/callee to walk.
@@ -745,7 +740,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
         }
 
         // No optional markers remain — unwrap the chain to a plain expression.
-        let chain_expr = expr.take_in(allocator);
+        let chain_expr = expr.take_in(&self.allocator);
         let Expression::ChainExpression(chain) = chain_expr else { unreachable!() };
         *expr = Expression::from(chain.unbox().expression);
     }
@@ -785,7 +780,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
                         })
                     }
                     Expression::Identifier(ident) => {
-                        if !ident.is_global_reference(scoping) {
+                        if !Self::is_global_or_ambient_reference(scoping, ident) {
                             return false;
                         }
                         cur_part_name = &ident.name;
@@ -858,6 +853,30 @@ impl<'a> ReplaceGlobalDefines<'a> {
         let mut iter = should_preserved_keys.iter();
         obj.properties.retain(|_| *iter.next().unwrap());
         expr
+    }
+
+    /// Return whether an identifier reference should be treated like a global define root.
+    ///
+    /// Unresolved references are globals, so `foo.bar` can be replaced by a `foo.bar` define.
+    /// Ambient declarations are also replaceable because they are TypeScript-only and do not
+    /// create runtime bindings:
+    ///
+    /// ```ts
+    /// declare let self: ServiceWorkerGlobalScope;
+    /// precacheAndRoute(self.__WB_MANIFEST); // replace `self.__WB_MANIFEST`
+    /// ```
+    ///
+    /// Runtime bindings still shadow define roots:
+    ///
+    /// ```ts
+    /// let self;
+    /// precacheAndRoute(self.__WB_MANIFEST); // do not replace
+    /// ```
+    fn is_global_or_ambient_reference(scoping: &Scoping, ident: &IdentifierReference<'_>) -> bool {
+        scoping
+            .get_reference(ident.reference_id())
+            .symbol_id()
+            .is_none_or(|symbol_id| scoping.symbol_flags(symbol_id).is_ambient())
     }
 }
 

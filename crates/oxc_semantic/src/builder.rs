@@ -7,7 +7,7 @@ use std::{
 
 use rustc_hash::FxHashMap;
 
-use oxc_allocator::Address;
+use oxc_allocator::{Address, ArenaVec};
 use oxc_ast::{AstKind, ast::*};
 use oxc_ast_visit::Visit;
 #[cfg(feature = "cfg")]
@@ -15,8 +15,9 @@ use oxc_cfg::{
     ControlFlowGraphBuilder, CtxCursor, CtxFlags, EdgeType, ErrorEdgeKind, InstructionKind,
     IterationInstructionKind, ReturnInstructionKind,
 };
-use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{Ident, IdentHashMap, SourceType, Span};
+use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
+use oxc_span::{SourceType, Span};
+use oxc_str::{Ident, IdentHashMap};
 use oxc_syntax::{
     node::{NodeFlags, NodeId},
     reference::{Reference, ReferenceFlags, ReferenceId},
@@ -31,7 +32,7 @@ use crate::{
     class::ClassTableBuilder,
     diagnostics::redeclaration,
     label::UnusedLabels,
-    node::AstNodes,
+    node::{Ancestry, AstNodeStore, AstNodeStoreKind},
     scoping::{Bindings, Scoping},
     stats::Stats,
     unresolved_stack::UnresolvedReferences,
@@ -73,11 +74,9 @@ pub struct SemanticBuilder<'a> {
     pub(crate) source_type: SourceType,
 
     /// Semantic early errors such as redeclaration errors.
-    pub(crate) errors: RefCell<Vec<OxcDiagnostic>>,
+    pub(crate) errors: RefCell<Diagnostics>,
 
     // states
-    pub(crate) current_node_id: NodeId,
-    pub(crate) current_node_flags: NodeFlags,
     pub(crate) current_scope_id: ScopeId,
     /// `NodeId` of current `Function` (not including arrow functions).
     /// When not in a function, is `NodeId` of `Program`.
@@ -91,7 +90,9 @@ pub struct SemanticBuilder<'a> {
     pub(crate) hoisting_variables: FxHashMap<ScopeId, IdentHashMap<'a, SymbolId>>,
 
     // builders
-    pub(crate) nodes: AstNodes<'a>,
+    /// Node-id counter, current-node cursor/flags, and the node storage (full
+    /// store or ancestry stack). See [`AstNodeStore`].
+    pub(crate) node_store: AstNodeStore<'a>,
     pub(crate) scoping: Scoping,
 
     pub(crate) unresolved_references: UnresolvedReferences<'a>,
@@ -104,6 +105,9 @@ pub struct SemanticBuilder<'a> {
     jsdoc: JSDocBuilder<'a>,
     stats: Option<Stats>,
     excess_capacity: f64,
+
+    /// Should enum member values be evaluated?
+    enum_eval: bool,
 
     /// Should additional syntax checks be performed?
     ///
@@ -127,7 +131,7 @@ pub struct SemanticBuilderReturn<'a> {
     /// Built semantic model.
     pub semantic: Semantic<'a>,
     /// Diagnostics collected during semantic analysis.
-    pub errors: Vec<OxcDiagnostic>,
+    pub diagnostics: Diagnostics,
 }
 
 impl Default for SemanticBuilder<'_> {
@@ -145,14 +149,12 @@ impl<'a> SemanticBuilder<'a> {
         Self {
             source_text: "",
             source_type: SourceType::default(),
-            errors: RefCell::new(vec![]),
-            current_node_id: NodeId::new(0),
-            current_node_flags: NodeFlags::empty(),
+            errors: RefCell::new(Diagnostics::new()),
             current_reference_flags: ReferenceFlags::empty(),
             current_scope_id,
             current_function_node_id: NodeId::ROOT,
             module_instance_state_cache: FxHashMap::default(),
-            nodes: AstNodes::default(),
+            node_store: AstNodeStore::default(),
             hoisting_variables: FxHashMap::default(),
             scoping,
             unresolved_references: UnresolvedReferences::new(),
@@ -162,6 +164,7 @@ impl<'a> SemanticBuilder<'a> {
             jsdoc: JSDocBuilder::default(),
             stats: None,
             excess_capacity: 0.0,
+            enum_eval: false,
             check_syntax_error: false,
             #[cfg(feature = "cfg")]
             cfg: None,
@@ -171,6 +174,41 @@ impl<'a> SemanticBuilder<'a> {
             #[cfg(feature = "cfg")]
             ast_node_records: Vec::new(),
         }
+    }
+
+    /// Create a builder configured for the **compiler pipeline** (the
+    /// [`Compiler`], transformer, codegen, minifier, napi bindings, ...).
+    ///
+    /// Enables syntax error checking. Does **not** build the full [`AstNodes`](crate::AstNodes)
+    /// store — ancestry is served from the lightweight ancestry stack instead.
+    /// Use this whenever you only need [`Scoping`] and diagnostics, not random
+    /// access to [`AstNodes`](crate::AstNodes). Individual options can still be overridden with
+    /// the `with_*` methods.
+    ///
+    /// [`Compiler`]: https://docs.rs/oxc/latest/oxc/struct.Compiler.html
+    #[must_use]
+    pub fn new_compiler() -> Self {
+        Self::new().with_build_nodes(false).with_check_syntax_error(true)
+    }
+
+    /// Create a builder configured for the **linter**.
+    ///
+    /// Enables everything the linter requires: the full [`AstNodes`](crate::AstNodes) store
+    /// (random access to nodes), the control flow graph, the class table, and
+    /// syntax error checking. JSDoc is built whenever the `jsdoc` feature is
+    /// enabled, which the `linter` feature turns on. Individual options can still
+    /// be overridden with the `with_*` methods.
+    ///
+    /// Tools that need the node store but not the linter analyses or syntax
+    /// checking (e.g. the mangler) should use `new().with_build_nodes(true)`
+    /// instead.
+    #[must_use]
+    pub fn new_linter() -> Self {
+        Self::new()
+            .with_build_nodes(true)
+            .with_cfg(true)
+            .with_class_table(true)
+            .with_check_syntax_error(true)
     }
 
     /// Enable/disable additional syntax checks.
@@ -183,6 +221,31 @@ impl<'a> SemanticBuilder<'a> {
     #[must_use]
     pub fn with_check_syntax_error(mut self, yes: bool) -> Self {
         self.check_syntax_error = yes;
+        self
+    }
+
+    /// Enable or disable building the full [`AstNodes`](crate::AstNodes) store.
+    ///
+    /// Disabled by default: [`Semantic::nodes`] is empty and only the ancestry
+    /// stack and node-id counter are maintained while traversing — cheaper for
+    /// the compiler pipeline, which does not need random access to nodes. Enable
+    /// it for the linter and mangler, which read [`Semantic::nodes`].
+    #[must_use]
+    pub fn with_build_nodes(mut self, yes: bool) -> Self {
+        self.node_store.set_build_nodes(yes);
+        self
+    }
+
+    /// Enable or disable evaluation of TypeScript enum member values.
+    ///
+    /// When enabled, enum member values are computed during semantic analysis
+    /// and stored in [`Scoping`], allowing the transformer to inline const enum
+    /// member accesses.
+    ///
+    /// By default, this is `false`.
+    #[must_use]
+    pub fn with_enum_eval(mut self, yes: bool) -> Self {
+        self.enum_eval = yes;
         self
     }
 
@@ -200,6 +263,13 @@ impl<'a> SemanticBuilder<'a> {
     #[must_use]
     /// No-op when `cfg` feature is disabled.
     pub fn with_cfg(self, _cfg: bool) -> Self {
+        self
+    }
+
+    /// Enable/disable building the class table.
+    #[must_use]
+    pub fn with_class_table(mut self, yes: bool) -> Self {
+        self.class_table_builder.enabled = yes;
         self
     }
 
@@ -264,12 +334,15 @@ impl<'a> SemanticBuilder<'a> {
             let stats_with_excess = stats.increase_by(self.excess_capacity);
             (stats_with_excess, Some(stats))
         };
-        self.nodes.reserve(stats.nodes as usize);
+        self.node_store.reserve(stats.nodes as usize);
         self.scoping.reserve(
             stats.symbols as usize,
             stats.references as usize,
             stats.scopes as usize,
         );
+        self.unresolved_references.reserve_exact(stats.references as usize);
+
+        self.class_table_builder.enabled |= self.check_syntax_error;
 
         // Visit AST to generate scopes tree etc
         self.visit_program(program);
@@ -279,7 +352,9 @@ impl<'a> SemanticBuilder<'a> {
         if let Some(stats) = check_stats {
             #[expect(clippy::cast_possible_truncation)]
             let actual_stats = Stats::new(
-                self.nodes.len() as u32,
+                // `node_count` is the source of truth, valid even when the full
+                // node store is not built.
+                self.node_store.node_count(),
                 self.scoping.scopes_len() as u32,
                 self.scoping.symbols_len() as u32,
                 self.scoping.references.len() as u32,
@@ -299,12 +374,14 @@ impl<'a> SemanticBuilder<'a> {
         #[cfg(debug_assertions)]
         self.unused_labels.assert_empty();
 
+        let node_count = self.node_store.node_count();
         let semantic = Semantic {
             source_text: self.source_text,
             source_type: self.source_type,
             comments: &program.comments,
             irregular_whitespaces: [].into(),
-            nodes: self.nodes,
+            nodes: self.node_store.into_nodes(),
+            node_count,
             scoping: self.scoping,
             classes: self.class_table_builder.build(),
             #[cfg(feature = "jsdoc")]
@@ -315,12 +392,22 @@ impl<'a> SemanticBuilder<'a> {
             #[cfg(not(feature = "cfg"))]
             cfg: (),
         };
-        SemanticBuilderReturn { semantic, errors: self.errors.into_inner() }
+        SemanticBuilderReturn { semantic, diagnostics: self.errors.into_inner() }
     }
 
     /// Push a Syntax Error
     pub(crate) fn error(&self, error: OxcDiagnostic) {
         self.errors.borrow_mut().push(error);
+    }
+
+    /// Upward-walking view of the current node's ancestors.
+    ///
+    /// This is the only ancestry information the syntax checker and binder read.
+    /// Reads from the full node store when it is built, otherwise from the
+    /// standalone ancestry stack.
+    #[inline]
+    pub(crate) fn ancestry(&self) -> Ancestry<'a, '_> {
+        self.node_store.ancestry()
     }
 
     pub(crate) fn in_declare_scope(&self) -> bool {
@@ -333,28 +420,54 @@ impl<'a> SemanticBuilder<'a> {
 
     fn create_ast_node(&mut self, kind: AstKind<'a>) {
         #[cfg(not(feature = "jsdoc"))]
-        let flags = self.current_node_flags;
+        let flags = self.node_store.current_node_flags;
         #[cfg(feature = "jsdoc")]
-        let mut flags = self.current_node_flags;
+        let mut flags = self.node_store.current_node_flags;
         #[cfg(feature = "jsdoc")]
         if self.jsdoc.retrieve_attached_jsdoc(&kind) {
             flags |= NodeFlags::JSDoc;
         }
 
-        self.current_node_id = self.nodes.add_node(
-            kind,
-            self.current_scope_id,
-            self.current_node_id,
-            #[cfg(feature = "cfg")]
-            control_flow!(self, |cfg| cfg.current_node_ix),
-            flags,
-        );
+        // 1. Standalone node-id increment.
+        let node_id = self.node_store.alloc_node_id();
+        kind.set_node_id(node_id);
+        let parent_node_id = self.node_store.current_node_id;
+        self.node_store.current_node_id = node_id;
+
+        // 2 & 3. Either the full node store or the ancestry stack — never both.
+        #[cfg(feature = "cfg")]
+        let cfg_id = control_flow!(self, |cfg| cfg.current_node_ix);
+        let scope_id = self.current_scope_id;
+        match &mut self.node_store.kind {
+            AstNodeStoreKind::Full(nodes) => {
+                nodes.add_node(
+                    node_id,
+                    kind,
+                    scope_id,
+                    parent_node_id,
+                    #[cfg(feature = "cfg")]
+                    cfg_id,
+                    flags,
+                );
+            }
+            AstNodeStoreKind::Ancestry(stack) => stack.push(kind),
+        }
         self.record_ast_node();
     }
 
     #[inline]
     fn pop_ast_node(&mut self) {
-        self.current_node_id = self.nodes.parent_id(self.current_node_id);
+        // Restore `current_node_id` to the parent from whichever ancestry source
+        // is in use.
+        match &mut self.node_store.kind {
+            AstNodeStoreKind::Full(nodes) => {
+                self.node_store.current_node_id = nodes.parent_id(self.node_store.current_node_id);
+            }
+            AstNodeStoreKind::Ancestry(stack) => {
+                stack.pop();
+                self.node_store.current_node_id = stack.current_node_id();
+            }
+        }
     }
 
     #[inline]
@@ -385,7 +498,7 @@ impl<'a> SemanticBuilder<'a> {
             && let Some(record) = self.ast_node_records.last_mut()
             && *record == NodeId::DUMMY
         {
-            *record = self.current_node_id;
+            *record = self.node_store.current_node_id;
         }
     }
 
@@ -425,11 +538,14 @@ impl<'a> SemanticBuilder<'a> {
             return symbol_id;
         }
 
-        let symbol_id =
-            self.scoping.create_symbol(span, name, includes, scope_id, self.current_node_id);
-
-        self.scoping.add_binding(scope_id, name, symbol_id);
-        symbol_id
+        self.scoping.create_symbol_with_binding(
+            span,
+            name,
+            includes,
+            scope_id,
+            scope_id,
+            self.node_store.current_node_id,
+        )
     }
 
     /// Declare a new symbol on the current scope.
@@ -456,23 +572,14 @@ impl<'a> SemanticBuilder<'a> {
             self.hoisting_variables.get(&scope_id).and_then(|symbols| symbols.get(&name).copied())
         })?;
 
-        // `(function n(n) {})()`
-        //              ^ is not a redeclaration
-        // Since we put the function expression binding 'n' Symbol into the function itself scope,
-        // then defining a variable with the same name as the function name will be considered
-        // a redeclaration, but it's actually not a redeclaration, so if the symbol declaration
-        // is a function expression, then return None to tell the caller that it's not a redeclaration.
-        if self.scoping.symbol_flags(symbol_id).is_function()
-            && self
-                .nodes
-                .kind(self.scoping.symbol_declaration(symbol_id))
-                .as_function()
-                .is_some_and(Function::is_expression)
-        {
+        let flags = self.scoping.symbol_flags(symbol_id);
+
+        // A named function expression binds its own name in the function's scope, so a same-named
+        // parameter is not a redeclaration: `(function n(n) {})` - param `n` is fine.
+        if flags.contains(SymbolFlags::FunctionExpression) {
             return None;
         }
 
-        let flags = self.scoping.symbol_flags(symbol_id);
         if flags.intersects(excludes) {
             let symbol_span = self.scoping.symbol_span(symbol_id);
             self.error(redeclaration(&name, symbol_span, span));
@@ -503,15 +610,14 @@ impl<'a> SemanticBuilder<'a> {
         scope_id: ScopeId,
         includes: SymbolFlags,
     ) -> SymbolId {
-        let symbol_id = self.scoping.create_symbol(
+        self.scoping.create_symbol_with_binding(
             span,
             name,
             includes,
             self.current_scope_id,
-            self.current_node_id,
-        );
-        self.scoping.insert_binding(scope_id, name, symbol_id);
-        symbol_id
+            scope_id,
+            self.node_store.current_node_id,
+        )
     }
 
     /// Resolve all collected references by walking up the scope chain from each
@@ -604,19 +710,27 @@ impl<'a> SemanticBuilder<'a> {
     /// list for later resolution by `resolve_all_references` (which handles
     /// forward references to declarations not yet visited).
     fn resolve_references_for_current_scope(&mut self) {
+        // Process in-place using a retain-style write-cursor — no temporary
+        // `Vec`. Reads each `(name, reference_id)` by value out of the flat
+        // list (both fields are `Copy`), so calling `walk_up_resolve_reference`
+        // (which takes `&mut self`) doesn't conflict with the index read.
         let checkpoint = self.unresolved_references_checkpoint;
-        let refs = self.unresolved_references.slice_from(checkpoint).to_vec();
-        if refs.is_empty() {
+        let end = self.unresolved_references.len();
+        if end <= checkpoint {
             return;
         }
-        self.unresolved_references.truncate(checkpoint);
-
-        for (name, reference_id) in refs {
+        let mut write_idx = checkpoint;
+        for read_idx in checkpoint..end {
+            let (name, reference_id) = self.unresolved_references.get(read_idx);
             if !self.walk_up_resolve_reference(name, reference_id) {
-                // Keep in the flat list — may resolve later via forward declarations
-                self.unresolved_references.push(name, reference_id);
+                // Keep in the flat list — may resolve later via forward declarations.
+                if write_idx != read_idx {
+                    self.unresolved_references.set(write_idx, name, reference_id);
+                }
+                write_idx += 1;
             }
         }
+        self.unresolved_references.truncate(write_idx);
     }
 
     pub(crate) fn add_redeclare_variable(
@@ -625,7 +739,48 @@ impl<'a> SemanticBuilder<'a> {
         flags: SymbolFlags,
         span: Span,
     ) {
-        self.scoping.add_symbol_redeclaration(symbol_id, flags, self.current_node_id, span);
+        self.scoping.add_symbol_redeclaration(
+            symbol_id,
+            flags,
+            self.node_store.current_node_id,
+            span,
+        );
+    }
+
+    fn visit_parameter_decorators(&mut self, decorators: &ArenaVec<'a, Decorator<'a>>) {
+        if decorators.is_empty() {
+            return;
+        }
+
+        // TypeScript resolves parameter decorators in the enclosing class scope,
+        // not the constructor scope. Both `foo` references below therefore
+        // resolve to the outer binding — the first decorator must not see its
+        // own parameter, and the second must not see the first parameter:
+        //
+        // ```ts
+        // constructor(
+        //   @Inject(foo.KEY) private readonly foo: number,
+        //   @Inject(foo.KEY) private readonly foo2: number,
+        // ) {}
+        // ```
+        //
+        // `reference_identifier` stamps each new reference with `current_scope_id`,
+        // and `walk_up_resolve_reference` later walks from that recorded scope
+        // via `scope_parent_id`. Pointing `current_scope_id` at the class scope
+        // for the decorator visit brands every reference inside it with the
+        // class scope, so resolution skips the constructor's bindings entirely.
+        // Restore on the way back.
+        //
+        // Mirrors the `Decorator` case in TypeScript's `resolveName`:
+        // <https://github.com/microsoft/TypeScript/blob/0105bbb63689372f2cbeec7c884c27906ac0ef7f/src/compiler/utilities.ts#L11772-L11800>.
+        let parent_scope_id = self
+            .scoping
+            .scope_parent_id(self.current_scope_id)
+            .expect("parameter decorators should always be visited from a function scope");
+        let function_scope_id = self.current_scope_id;
+        self.current_scope_id = parent_scope_id;
+        self.visit_decorators(decorators);
+        self.current_scope_id = function_scope_id;
     }
 }
 
@@ -635,7 +790,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let parent_scope_id = self.current_scope_id;
         let flags = self.scoping.get_new_scope_flags(flags, parent_scope_id);
         self.current_scope_id =
-            self.scoping.add_scope(Some(parent_scope_id), self.current_node_id, flags);
+            self.scoping.add_scope(Some(parent_scope_id), self.node_store.current_node_id, flags);
         scope_id.set(Some(self.current_scope_id));
     }
 
@@ -691,13 +846,28 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // This avoids `Nodes::add_node` having to handle the special case.
         // We can also skip calling `self.enter_kind`, `self.record_ast_node`
         // and `self.jsdoc.retrieve_attached_jsdoc`, as they are all no-ops for `Program`.
-        self.current_node_id = self.nodes.add_program_node(
-            kind,
-            self.current_scope_id,
-            #[cfg(feature = "cfg")]
-            control_flow!(self, |cfg| cfg.current_node_ix),
-            self.current_node_flags,
-        );
+        // 1. Standalone node-id increment: `Program` is always `NodeId::ROOT`.
+        let node_id = self.node_store.alloc_node_id();
+        debug_assert_eq!(node_id, NodeId::ROOT);
+        kind.set_node_id(node_id);
+        self.node_store.current_node_id = node_id;
+        // 2 & 3. Either the full node store or the ancestry stack — never both.
+        #[cfg(feature = "cfg")]
+        let cfg_id = control_flow!(self, |cfg| cfg.current_node_ix);
+        let scope_id = self.current_scope_id;
+        let flags = self.node_store.current_node_flags;
+        match &mut self.node_store.kind {
+            AstNodeStoreKind::Full(nodes) => {
+                nodes.add_program_node(
+                    kind,
+                    scope_id,
+                    #[cfg(feature = "cfg")]
+                    cfg_id,
+                    flags,
+                );
+            }
+            AstNodeStoreKind::Ancestry(stack) => stack.push(kind),
+        }
 
         // Don't call `enter_scope` here as `Program` is a special case - scope has no `parent_id`.
         // Inline the specific logic for `Program` here instead.
@@ -706,7 +876,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         if self.source_type.is_strict() || program.has_use_strict_directive() {
             flags |= ScopeFlags::StrictMode;
         }
-        self.current_scope_id = self.scoping.add_scope(None, self.current_node_id, flags);
+        self.current_scope_id =
+            self.scoping.add_scope(None, self.node_store.current_node_id, flags);
         program.scope_id.set(Some(self.current_scope_id));
         // NB: Don't call `self.unresolved_references.increment_scope_depth()`
         // as scope depth is initialized as 1 already (the scope depth for `Program`).
@@ -744,7 +915,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         /* cfg */
         #[cfg(feature = "cfg")]
-        let node_id = self.current_node_id;
+        let node_id = self.node_store.current_node_id;
         /* cfg */
 
         if let Some(break_target) = &stmt.label {
@@ -762,7 +933,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_class(&mut self, class: &Class<'a>) {
         let kind = AstKind::Class(self.alloc(class));
         self.enter_node(kind);
-        self.current_node_flags |= NodeFlags::Class;
+        self.node_store.current_node_flags |= NodeFlags::Class;
         if class.is_declaration() {
             class.bind(self);
         }
@@ -793,14 +964,14 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         self.leave_scope();
         self.leave_node(kind);
-        self.current_node_flags -= NodeFlags::Class;
+        self.node_store.current_node_flags -= NodeFlags::Class;
         self.class_table_builder.pop_class();
     }
 
     fn visit_block_statement(&mut self, it: &BlockStatement<'a>) {
         let kind = AstKind::BlockStatement(self.alloc(it));
         self.enter_node(kind);
-        control_flow!(self, |cfg| cfg.enter_statement(self.current_node_id));
+        control_flow!(self, |cfg| cfg.enter_statement(self.node_store.current_node_id));
 
         let parent_scope_id = self.current_scope_id;
         self.enter_scope(ScopeFlags::empty(), &it.scope_id);
@@ -841,7 +1012,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         /* cfg */
         #[cfg(feature = "cfg")]
-        let node_id = self.current_node_id;
+        let node_id = self.node_store.current_node_id;
         /* cfg */
 
         if let Some(continue_target) = &stmt.label {
@@ -859,7 +1030,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_do_while_statement(&mut self, stmt: &DoWhileStatement<'a>) {
         let kind = AstKind::DoWhileStatement(self.alloc(stmt));
         self.enter_node(kind);
-        control_flow!(self, |cfg| cfg.enter_statement(self.current_node_id));
+        control_flow!(self, |cfg| cfg.enter_statement(self.node_store.current_node_id));
 
         /* cfg */
         #[cfg(feature = "cfg")]
@@ -1059,7 +1230,12 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         #[cfg(feature = "cfg")]
         self.record_ast_nodes();
+        // The test of a conditional is always a pure read — strip MemberWriteTarget
+        // so that `(a ? x : y).foo = 1` doesn't mark `a` as a property-write target.
+        let saved_flags = self.current_reference_flags;
+        self.current_reference_flags -= ReferenceFlags::MemberWriteTarget;
         self.visit_expression(&expr.test);
+        self.current_reference_flags = saved_flags;
         #[cfg(feature = "cfg")]
         let test_node_id = self.retrieve_recorded_ast_node();
 
@@ -1119,7 +1295,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_for_statement(&mut self, stmt: &ForStatement<'a>) {
         let kind = AstKind::ForStatement(self.alloc(stmt));
         self.enter_node(kind);
-        control_flow!(self, |cfg| cfg.enter_statement(self.current_node_id));
+        control_flow!(self, |cfg| cfg.enter_statement(self.node_store.current_node_id));
         self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
         if let Some(init) = &stmt.init {
             self.visit_for_statement_init(init);
@@ -1157,10 +1333,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         /* cfg */
         #[cfg(feature = "cfg")]
-        let before_body_graph_ix = control_flow!(self, |cfg| {
+        let (after_update_graph_ix, before_body_graph_ix) = control_flow!(self, |cfg| {
+            let after_update_graph_ix = cfg.current_node_ix;
             let before_body_graph_ix = cfg.new_basic_block_normal();
             cfg.ctx(None).default().allow_break().allow_continue();
-            before_body_graph_ix
+            (after_update_graph_ix, before_body_graph_ix)
         });
         /* cfg */
 
@@ -1173,7 +1350,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             cfg.add_edge(before_for_graph_ix, test_graph_ix, EdgeType::Normal);
             cfg.add_edge(after_test_graph_ix, before_body_graph_ix, EdgeType::Jump);
             cfg.add_edge(after_body_graph_ix, update_graph_ix, EdgeType::Backedge);
-            cfg.add_edge(update_graph_ix, test_graph_ix, EdgeType::Backedge);
+            cfg.add_edge(after_update_graph_ix, test_graph_ix, EdgeType::Backedge);
             cfg.add_edge(after_test_graph_ix, after_for_stmt, EdgeType::Normal);
 
             cfg.ctx(None)
@@ -1190,7 +1367,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_for_in_statement(&mut self, stmt: &ForInStatement<'a>) {
         let kind = AstKind::ForInStatement(self.alloc(stmt));
         self.enter_node(kind);
-        control_flow!(self, |cfg| cfg.enter_statement(self.current_node_id));
+        control_flow!(self, |cfg| cfg.enter_statement(self.node_store.current_node_id));
         self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
 
         self.visit_for_statement_left(&stmt.left);
@@ -1254,7 +1431,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_for_of_statement(&mut self, stmt: &ForOfStatement<'a>) {
         let kind = AstKind::ForOfStatement(self.alloc(stmt));
         self.enter_node(kind);
-        control_flow!(self, |cfg| cfg.enter_statement(self.current_node_id));
+        control_flow!(self, |cfg| cfg.enter_statement(self.node_store.current_node_id));
         self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
 
         self.visit_for_statement_left(&stmt.left);
@@ -1317,7 +1494,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_if_statement(&mut self, stmt: &IfStatement<'a>) {
         let kind = AstKind::IfStatement(self.alloc(stmt));
         self.enter_node(kind);
-        control_flow!(self, |cfg| cfg.enter_statement(self.current_node_id));
+        control_flow!(self, |cfg| cfg.enter_statement(self.node_store.current_node_id));
 
         /* cfg - condition basic block */
         #[cfg(feature = "cfg")]
@@ -1391,8 +1568,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_labeled_statement(&mut self, stmt: &LabeledStatement<'a>) {
         let kind = AstKind::LabeledStatement(self.alloc(stmt));
         self.enter_node(kind);
-        control_flow!(self, |cfg| cfg.enter_statement(self.current_node_id));
-        self.unused_labels.add(stmt.label.name, self.current_node_id);
+        control_flow!(self, |cfg| cfg.enter_statement(self.node_store.current_node_id));
+        self.unused_labels.add(stmt.label.name, self.node_store.current_node_id);
 
         /* cfg */
         #[cfg(feature = "cfg")]
@@ -1429,7 +1606,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         /* cfg */
         #[cfg(feature = "cfg")]
-        let node_id = self.current_node_id;
+        let node_id = self.node_store.current_node_id;
         /* cfg */
 
         #[cfg(feature = "cfg")]
@@ -1458,7 +1635,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_switch_statement(&mut self, stmt: &SwitchStatement<'a>) {
         let kind = AstKind::SwitchStatement(self.alloc(stmt));
         self.enter_node(kind);
-        control_flow!(self, |cfg| cfg.enter_statement(self.current_node_id));
+        control_flow!(self, |cfg| cfg.enter_statement(self.node_store.current_node_id));
         self.visit_expression(&stmt.discriminant);
         self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
 
@@ -1569,7 +1746,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         /* cfg */
         #[cfg(feature = "cfg")]
-        let node_id = self.current_node_id;
+        let node_id = self.node_store.current_node_id;
         /* cfg */
 
         self.visit_expression(&stmt.argument);
@@ -1584,7 +1761,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_try_statement(&mut self, stmt: &TryStatement<'a>) {
         let kind = AstKind::TryStatement(self.alloc(stmt));
         self.enter_node(kind);
-        control_flow!(self, |cfg| cfg.enter_statement(self.current_node_id));
+        control_flow!(self, |cfg| cfg.enter_statement(self.node_store.current_node_id));
 
         /* cfg */
 
@@ -1719,7 +1896,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_while_statement(&mut self, stmt: &WhileStatement<'a>) {
         let kind = AstKind::WhileStatement(self.alloc(stmt));
         self.enter_node(kind);
-        control_flow!(self, |cfg| cfg.enter_statement(self.current_node_id));
+        control_flow!(self, |cfg| cfg.enter_statement(self.node_store.current_node_id));
 
         /* cfg - condition basic block */
         #[cfg(feature = "cfg")]
@@ -1735,12 +1912,13 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         /* cfg - body basic block */
         #[cfg(feature = "cfg")]
-        let body_graph_ix = control_flow!(self, |cfg| {
+        let (after_test_graph_ix, body_graph_ix) = control_flow!(self, |cfg| {
             cfg.append_condition_to(condition_graph_ix, test_node_id);
+            let after_test_graph_ix = cfg.current_node_ix;
             let body_graph_ix = cfg.new_basic_block_normal();
 
             cfg.ctx(None).default().allow_break().allow_continue();
-            body_graph_ix
+            (after_test_graph_ix, body_graph_ix)
         });
         /* cfg */
 
@@ -1752,9 +1930,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             let after_while_graph_ix = cfg.new_basic_block_normal();
 
             cfg.add_edge(before_while_stmt_graph_ix, condition_graph_ix, EdgeType::Normal);
-            cfg.add_edge(condition_graph_ix, body_graph_ix, EdgeType::Jump);
+            cfg.add_edge(after_test_graph_ix, body_graph_ix, EdgeType::Jump);
             cfg.add_edge(after_body_graph_ix, condition_graph_ix, EdgeType::Backedge);
-            cfg.add_edge(condition_graph_ix, after_while_graph_ix, EdgeType::Normal);
+            cfg.add_edge(after_test_graph_ix, after_while_graph_ix, EdgeType::Normal);
 
             cfg.ctx(None)
                 .mark_break(after_while_graph_ix)
@@ -1768,7 +1946,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_with_statement(&mut self, stmt: &WithStatement<'a>) {
         let kind = AstKind::WithStatement(self.alloc(stmt));
         self.enter_node(kind);
-        control_flow!(self, |cfg| cfg.enter_statement(self.current_node_id));
+        control_flow!(self, |cfg| cfg.enter_statement(self.node_store.current_node_id));
 
         /* cfg - condition basic block */
         #[cfg(feature = "cfg")]
@@ -1821,7 +1999,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
 
         let parent_function_node_id = self.current_function_node_id;
-        self.current_function_node_id = self.current_node_id;
+        self.current_function_node_id = self.node_store.current_node_id;
 
         if func.is_declaration() {
             func.bind(self);
@@ -2009,10 +2187,31 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_node(kind);
     }
 
+    fn visit_unary_expression(&mut self, it: &UnaryExpression<'a>) {
+        let kind = AstKind::UnaryExpression(self.alloc(it));
+        self.enter_node(kind);
+        // `delete a.foo` — the argument is in a property-write context.
+        // Set Write so `visit_member_expression` can detect it and mark MemberWriteTarget.
+        // Only for member expressions — `delete x` (bare identifier in sloppy mode)
+        // is not a property modification.
+        if it.operator == UnaryOperator::Delete && it.argument.is_member_expression() {
+            self.current_reference_flags = ReferenceFlags::Write;
+        }
+        self.visit_expression(&it.argument);
+        self.leave_node(kind);
+    }
+
     fn visit_member_expression(&mut self, it: &MemberExpression<'a>) {
         // A.B = 1;
         // ^^^ Can't treat A as a Write reference since it's A's property(B) that changes.
-        self.current_reference_flags -= ReferenceFlags::Write;
+        // When the member expression is in any write context (simple `=`, compound `+=`,
+        // update `++`, `delete`, for-in/of), mark as MemberWriteTarget so downstream
+        // consumers can identify property-modification-only references.
+        if self.current_reference_flags.is_write() {
+            self.current_reference_flags = ReferenceFlags::Read | ReferenceFlags::MemberWriteTarget;
+        } else {
+            self.current_reference_flags -= ReferenceFlags::Write;
+        }
 
         match it {
             MemberExpression::ComputedMemberExpression(it) => {
@@ -2021,6 +2220,25 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             MemberExpression::StaticMemberExpression(it) => self.visit_static_member_expression(it),
             MemberExpression::PrivateFieldExpression(it) => self.visit_private_field_expression(it),
         }
+
+        // Clear any unconsumed flags to prevent leaking to sibling AST nodes.
+        // When the object is `this` or a call expression (not an IdentifierReference),
+        // the flags set above aren't consumed by `resolve_reference_usages`,
+        // and would incorrectly propagate to the next visited identifier (e.g., the RHS).
+        self.current_reference_flags = ReferenceFlags::empty();
+    }
+
+    fn visit_computed_member_expression(&mut self, it: &ComputedMemberExpression<'a>) {
+        let kind = AstKind::ComputedMemberExpression(self.alloc(it));
+        self.enter_node(kind);
+        self.visit_span(&it.span);
+        self.visit_expression(&it.object);
+        // The key expression is a read context, not part of the property write —
+        // strip MemberWriteTarget so it doesn't leak onto identifiers inside the key
+        // (e.g. `key` in `this[key] = 1`, where `this` doesn't consume the flag).
+        self.current_reference_flags -= ReferenceFlags::MemberWriteTarget;
+        self.visit_expression(&it.expression);
+        self.leave_node(kind);
     }
 
     fn visit_simple_assignment_target(&mut self, it: &SimpleAssignmentTarget<'a>) {
@@ -2125,12 +2343,12 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
         self.visit_span(&it.span);
 
-        self.current_node_flags |= NodeFlags::ExportSpecifier;
+        self.node_store.current_node_flags |= NodeFlags::ExportSpecifier;
 
         self.visit_module_export_name(&it.local);
         self.visit_module_export_name(&it.exported);
 
-        self.current_node_flags -= NodeFlags::ExportSpecifier;
+        self.node_store.current_node_flags -= NodeFlags::ExportSpecifier;
 
         self.leave_node(kind);
     }
@@ -2254,7 +2472,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_class_body(&mut self, body: &ClassBody<'a>) {
         let kind = AstKind::ClassBody(self.alloc(body));
         self.enter_node(kind);
-        self.class_table_builder.declare_class_body(body, self.current_node_id, &self.nodes);
+        let parent_node_id = self.ancestry().parent_node_id();
+        self.class_table_builder.declare_class_body(body, parent_node_id);
         self.visit_span(&body.span);
         self.visit_class_elements(&body.body);
         self.leave_node(kind);
@@ -2263,10 +2482,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_private_identifier(&mut self, ident: &PrivateIdentifier<'a>) {
         let kind = AstKind::PrivateIdentifier(self.alloc(ident));
         self.enter_node(kind);
+        let parent_kind = self.ancestry().parent_kind();
         self.class_table_builder.add_private_identifier_reference(
             ident,
-            self.current_node_id,
-            &self.nodes,
+            self.node_store.current_node_id,
+            parent_kind,
         );
         self.visit_span(&ident.span);
         self.leave_node(kind);
@@ -2286,7 +2506,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
         param.bind(self);
         self.visit_span(&param.span);
-        self.visit_decorators(&param.decorators);
+        self.visit_parameter_decorators(&param.decorators);
         self.visit_binding_pattern(&param.pattern);
         if let Some(type_annotation) = &param.type_annotation {
             self.visit_ts_type_annotation(type_annotation);
@@ -2302,7 +2522,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
         param.bind(self);
         self.visit_span(&param.span);
-        self.visit_decorators(&param.decorators);
+        self.visit_parameter_decorators(&param.decorators);
         self.visit_binding_rest_element(&param.rest);
         if let Some(type_annotation) = &param.type_annotation {
             self.visit_ts_type_annotation(type_annotation);
@@ -2372,6 +2592,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_span(&decl.span);
         self.visit_binding_identifier(&decl.id);
         self.visit_ts_enum_body(&decl.body);
+        // Evaluate enum member values after all members are bound
+        if self.enum_eval {
+            crate::ts_enum::eval::evaluate_enum_members(decl, &mut self.scoping);
+        }
         self.leave_node(kind);
     }
 
@@ -2433,7 +2657,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
         // If not in a function, `current_function_node_id` is `NodeId` of `Program`.
         // But it shouldn't be possible for `yield` to be at top level - that's a parse error.
-        *self.nodes.flags_mut(self.current_function_node_id) |= NodeFlags::HasYield;
+        // `HasYield` is a flag on the full node store, so only set it when that store is built.
+        if let AstNodeStoreKind::Full(nodes) = &mut self.node_store.kind {
+            *nodes.flags_mut(self.current_function_node_id) |= NodeFlags::HasYield;
+        }
         self.visit_span(&expr.span);
         if let Some(argument) = &expr.argument {
             self.visit_expression(argument);
@@ -2518,7 +2745,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_expression_statement(&mut self, it: &ExpressionStatement<'a>) {
         let kind = AstKind::ExpressionStatement(self.alloc(it));
         self.enter_node(kind);
-        control_flow!(self, |cfg| cfg.enter_statement(self.current_node_id));
+        control_flow!(self, |cfg| cfg.enter_statement(self.node_store.current_node_id));
         self.visit_span(&it.span);
         self.visit_expression(&it.expression);
         self.leave_node(kind);
@@ -2527,7 +2754,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_variable_declaration(&mut self, it: &VariableDeclaration<'a>) {
         let kind = AstKind::VariableDeclaration(self.alloc(it));
         self.enter_node(kind);
-        control_flow!(self, |cfg| cfg.enter_statement(self.current_node_id));
+        control_flow!(self, |cfg| cfg.enter_statement(self.node_store.current_node_id));
         self.visit_span(&it.span);
         self.visit_variable_declarators(&it.declarations);
         self.leave_node(kind);
@@ -2536,7 +2763,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_empty_statement(&mut self, it: &EmptyStatement) {
         let kind = AstKind::EmptyStatement(self.alloc(it));
         self.enter_node(kind);
-        control_flow!(self, |cfg| cfg.enter_statement(self.current_node_id));
+        control_flow!(self, |cfg| cfg.enter_statement(self.node_store.current_node_id));
         self.visit_span(&it.span);
         self.leave_node(kind);
     }
@@ -2544,7 +2771,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_debugger_statement(&mut self, it: &DebuggerStatement) {
         let kind = AstKind::DebuggerStatement(self.alloc(it));
         self.enter_node(kind);
-        control_flow!(self, |cfg| cfg.enter_statement(self.current_node_id));
+        control_flow!(self, |cfg| cfg.enter_statement(self.node_store.current_node_id));
         self.visit_span(&it.span);
         self.leave_node(kind);
     }
@@ -2552,7 +2779,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_export_default_declaration(&mut self, it: &ExportDefaultDeclaration<'a>) {
         let kind = AstKind::ExportDefaultDeclaration(self.alloc(it));
         self.enter_node(kind);
-        control_flow!(self, |cfg| cfg.enter_statement(self.current_node_id));
+        control_flow!(self, |cfg| cfg.enter_statement(self.node_store.current_node_id));
         self.visit_span(&it.span);
         self.visit_export_default_declaration_kind(&it.declaration);
         self.leave_node(kind);
@@ -2563,7 +2790,8 @@ impl<'a> SemanticBuilder<'a> {
     #[inline]
     fn reference_identifier(&mut self, ident: &IdentifierReference<'a>) {
         let flags = self.resolve_reference_usages();
-        let reference = Reference::new(self.current_node_id, self.current_scope_id, flags);
+        let reference =
+            Reference::new(self.node_store.current_node_id, self.current_scope_id, flags);
         let reference_id = self.declare_reference(ident.name, reference);
         ident.reference_id.set(Some(reference_id));
     }

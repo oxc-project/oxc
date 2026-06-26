@@ -17,7 +17,7 @@
 //! Vectors have `O(1)` indexing, amortized `O(1)` push (to the end) and
 //! `O(1)` pop (from the end).
 //!
-//! This module is a fork of the [`std::vec`] module, that uses a bump allocator.
+//! This module is a fork of the [`std::vec`] module, that uses an arena allocator.
 //!
 //! [`std::vec`]: https://doc.rust-lang.org/std/vec/index.html
 //!
@@ -527,10 +527,9 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
 
     /// Creates a `Vec<'a, T>` directly from the raw components of another vector.
     ///
-    /// # Safety
+    /// # SAFETY
     ///
-    /// This is highly unsafe, due to the number of invariants that aren't
-    /// checked:
+    /// This is highly unsafe, due to the number of invariants that aren't checked:
     ///
     /// * `ptr` needs to have been previously allocated via [`String`] / `Vec<'a, T>`
     ///   (at least, it's highly likely to be incorrect if it wasn't).
@@ -653,7 +652,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// This will explicitly set the size of the vector, without actually modifying its buffers,
     /// so it is up to the caller to ensure that the vector is actually the specified size.
     ///
-    /// # Safety
+    /// # SAFETY
     ///
     /// * `new_len` must be less than or equal to `u32::MAX`.
     /// * `new_len` must be less than or equal to [`capacity()`].
@@ -862,10 +861,10 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// let b = Bump::new();
     /// let v = Vec::from_iter_in([1, 2, 3], &b);
     ///
-    /// let slice = v.into_bump_slice();
+    /// let slice = v.into_arena_slice();
     /// assert_eq!(slice, [1, 2, 3]);
     /// ```
-    pub fn into_bump_slice(self) -> &'a [T] {
+    pub fn into_arena_slice(self) -> &'a [T] {
         unsafe {
             let ptr = self.as_ptr();
             let len = self.len_usize();
@@ -884,14 +883,14 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// let b = Bump::new();
     /// let v = Vec::from_iter_in([1, 2, 3], &b);
     ///
-    /// let mut slice = v.into_bump_slice_mut();
+    /// let mut slice = v.into_arena_slice_mut();
     ///
     /// slice[0] = 3;
     /// slice[2] = 1;
     ///
     /// assert_eq!(slice, [3, 2, 1]);
     /// ```
-    pub fn into_bump_slice_mut(mut self) -> &'a mut [T] {
+    pub fn into_arena_slice_mut(mut self) -> &'a mut [T] {
         let ptr = self.as_mut_ptr();
         let len = self.len_usize();
         // Don't need `mem::forget(self)` here, because `Vec` does not implement `Drop`.
@@ -1614,10 +1613,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// except by the pointer `other`, and that they are not read after this call.
     #[inline]
     unsafe fn append_elements(&mut self, other: *const [T]) {
-        // See https://github.com/oxc-project/oxc/pull/11092 for why this `#[allow]` attribute.
-        // TODO: Remove this once we bump MSRV and it's no longer required.
-        #[allow(clippy::needless_borrow, clippy::allow_attributes)]
-        let count = (&*other).len();
+        let count = other.len();
         self.reserve(count);
         let len = self.len_usize();
         ptr::copy_nonoverlapping(other as *const T, self.as_mut_ptr().add(len), count);
@@ -1778,9 +1774,9 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
 
         let other_len = self.len_usize() - at;
         // SAFETY: This method takes a `&mut self`. It lives for the duration of this method
-        // - longer than we use `bump` for.
-        let bump = unsafe { self.buf.bump() };
-        let mut other = Vec::with_capacity_in(other_len, bump);
+        // - longer than we use `arena` for.
+        let arena = unsafe { self.buf.arena() };
+        let mut other = Vec::with_capacity_in(other_len, arena);
 
         // Unsafely `set_len` and copy items to `other`.
         unsafe {
@@ -2343,6 +2339,7 @@ macro_rules! __impl_slice_eq1 {
 }
 
 __impl_slice_eq1! { Vec<'_, U, A2>, A2: Alloc }
+__impl_slice_eq1! { [U] }
 __impl_slice_eq1! { &[U] }
 __impl_slice_eq1! { &mut [U] }
 
@@ -2364,6 +2361,27 @@ macro_rules! __impl_slice_eq1_array {
 __impl_slice_eq1_array! { [U; N] }
 __impl_slice_eq1_array! { &[U; N] }
 __impl_slice_eq1_array! { &mut [U; N] }
+
+// Reverse direction: slice/`Vec` on the left-hand side, `Vec` on the right (e.g. `&[T] == vec`).
+// `std::vec::Vec` provides these, so mirror them here.
+macro_rules! __impl_slice_eq1_reverse {
+    ($Lhs: ty) => {
+        impl<T, U, A> PartialEq<Vec<'_, U, A>> for $Lhs
+        where
+            T: PartialEq<U>,
+            A: Alloc,
+        {
+            #[inline]
+            fn eq(&self, other: &Vec<'_, U, A>) -> bool {
+                self[..] == other[..]
+            }
+        }
+    };
+}
+
+__impl_slice_eq1_reverse! { [T] }
+__impl_slice_eq1_reverse! { &[T] }
+__impl_slice_eq1_reverse! { &mut [T] }
 
 /// Implements comparison of vectors, lexicographically.
 impl<'a, T: 'a + PartialOrd, A: Alloc, A2: Alloc> PartialOrd<Vec<'a, T, A2>> for Vec<'a, T, A> {
@@ -2727,10 +2745,10 @@ impl<I: Iterator, A: Alloc> Drop for Splice<'_, '_, I, A> {
             // `Splice` inherits the lifetime of `&mut self` from that method, so the mut borrow
             // of the `Vec` is held for the life of the `Splice`.
             // Therefore we have exclusive access to the `Vec` until end of this method.
-            // That is longer than we use `bump` for.
-            let bump = self.drain.vec.as_ref().buf.bump();
+            // That is longer than we use `arena` for.
+            let arena = self.drain.vec.as_ref().buf.arena();
 
-            let mut collected = Vec::new_in(bump);
+            let mut collected = Vec::new_in(arena);
             collected.extend(self.replace_with.by_ref());
             let mut collected = collected.into_iter();
             // Now we have an exact count.

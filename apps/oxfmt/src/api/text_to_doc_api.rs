@@ -1,22 +1,20 @@
 use std::path::PathBuf;
 
+use serde::Deserialize;
 use serde_json::Value;
 use tracing::{debug, instrument};
 
 use oxc_allocator::Allocator;
-use oxc_ast::ast::*;
-use oxc_formatter::{
-    AstNode, AstNodes, FormatOptions, FormatVueBindingParams, FormatVueScriptGeneric, Formatter,
-    enable_jsx_source_type, get_parse_options,
-};
-use oxc_parser::{Parser, ParserReturn};
+use oxc_formatter::FragmentContext;
 use oxc_span::SourceType;
 
 use crate::{
     core::{
-        ExternalFormatter, FormatFileStrategy, JsFormatEmbeddedCb, JsFormatEmbeddedDocCb,
-        JsFormatFileCb, JsInitExternalFormatterCb, JsSortTailwindClassesCb, ResolvedOptions,
-        resolve_options_from_value,
+        ExternalFormatter, JsFormatEmbeddedCb, JsFormatEmbeddedDocCb, JsFormatFileCb,
+        JsSortTailwindClassesCb,
+        options::{inject_filepath, inject_tailwind_plugin_payload, to_prettier},
+        oxfmtrc::FormatConfig,
+        resolve_for_embedded_js,
     },
     prettier_compat::to_prettier_doc,
 };
@@ -50,7 +48,6 @@ pub fn run(
     source_text: &str,
     oxfmt_plugin_options_json: &str,
     parent_context: &str,
-    init_external_formatter_cb: JsInitExternalFormatterCb,
     format_file_cb: JsFormatFileCb,
     format_embedded_cb: JsFormatEmbeddedCb,
     format_embedded_doc_cb: JsFormatEmbeddedDocCb,
@@ -60,7 +57,7 @@ pub fn run(
         "vue-for-binding-left" => Some(FragmentKind::VueForBindingLeft),
         "vue-bindings" => Some(FragmentKind::VueBindings),
         "vue-script-generic" => Some(FragmentKind::VueScriptGeneric),
-        // "vue-script"
+        // "vue-script", "svelte-script"
         _ => None,
     };
 
@@ -71,7 +68,6 @@ pub fn run(
             source_ext,
             source_text,
             oxfmt_plugin_options_json,
-            init_external_formatter_cb,
             format_file_cb,
             format_embedded_cb,
             format_embedded_doc_cb,
@@ -100,83 +96,56 @@ fn run_full(
     source_ext: &str,
     source_text: &str,
     oxfmt_plugin_options_json: &str,
-    init_external_formatter_cb: JsInitExternalFormatterCb,
     format_file_cb: JsFormatFileCb,
     format_embedded_cb: JsFormatEmbeddedCb,
     format_embedded_doc_cb: JsFormatEmbeddedDocCb,
     sort_tailwind_classes_cb: JsSortTailwindClassesCb,
 ) -> Option<Value> {
-    let num_of_threads = 1;
-
-    // Options and paths in `_oxfmtPluginOptionsJson` are already resolved to absolute paths
-    // by `finalize_external_options()` when processing the parent file (e.g., App.vue).
-    // No further relative path resolution is needed here.
-    let (options, parent_filepath) = parse_options_and_filepath(oxfmt_plugin_options_json);
+    // Tailwind paths in the payload are already absolute (resolved by the host before serialization),
+    // so no `cwd` is threaded through here.
+    let (config, parent_filepath) = parse_payload(oxfmt_plugin_options_json);
 
     let external_formatter = ExternalFormatter::new(
-        init_external_formatter_cb,
         format_file_cb,
         format_embedded_cb,
         format_embedded_doc_cb,
         sort_tailwind_classes_cb,
     );
 
-    // Use `block_in_place()` to avoid nested async runtime access
-    match tokio::task::block_in_place(|| external_formatter.init(num_of_threads)) {
-        // TODO: Plugins support
-        Ok(_) => {}
+    let source_type = SourceType::from_extension(source_ext)
+        .expect("source_ext should be a valid JS/TS extension");
+
+    let resolved = resolve_for_embedded_js(config, parent_filepath)
+        .expect("`_oxfmtPluginOptionsJson` should contain valid config");
+
+    // Prettier options for callbacks that `oxc_formatter` may dispatch (e.g., CSS-in-JS).
+    // The embedded JS context is treated as always Tailwind-capable, so the inject is unconditional.
+    // The helper no-ops when user config has Tailwind disabled.
+    let mut external_options = to_prettier(&resolved.config);
+    inject_filepath(&mut external_options, &resolved.parent_filepath);
+    inject_tailwind_plugin_payload(&mut external_options, &resolved.config);
+
+    let external_callbacks =
+        external_formatter.to_external_callbacks(&resolved.format_options, external_options);
+    let format_options = resolved.format_options;
+
+    let allocator = Allocator::default();
+    let formatted = match tokio::task::block_in_place(|| {
+        oxc_formatter::format(
+            &allocator,
+            source_text,
+            source_type,
+            *format_options,
+            Some(external_callbacks),
+        )
+    }) {
+        Ok(formatted) => formatted,
         Err(err) => {
-            debug!("`external_formatter.init()` failed: {err}");
+            debug!("`oxc_formatter::format()` failed: {err:?}");
             external_formatter.cleanup();
             return None;
         }
-    }
-
-    let source_type = enable_jsx_source_type(
-        SourceType::from_extension(source_ext)
-            .expect("source_ext should be a valid JS/TS extension"),
-    );
-
-    let strategy = FormatFileStrategy::OxcFormatter {
-        path: format!("embedded.{source_ext}").into(),
-        source_type,
     };
-    let resolved_options = resolve_options_from_value(options, &strategy, None)
-        .expect("`_oxfmtPluginOptionsJson` should contain valid config");
-    let ResolvedOptions::OxcFormatter {
-        format_options,
-        mut external_options,
-        filepath_override,
-        ..
-    } = resolved_options
-    else {
-        unreachable!("OxcFormatter strategy should always resolve to OxcFormatter options");
-    };
-
-    // Set filepath on external options for Prettier plugins and Tailwind sorter.
-    // Use the filepath override (parent filepath, e.g., `App.vue`) if available,
-    // otherwise fall back to the parent filepath from plugin options.
-    let filepath = filepath_override.as_deref().unwrap_or(&parent_filepath);
-    if let Value::Object(ref mut map) = external_options {
-        map.insert("filepath".to_string(), Value::String(filepath.to_string_lossy().to_string()));
-    }
-
-    let external_callbacks =
-        external_formatter.to_external_callbacks(&format_options, external_options);
-
-    let allocator = Allocator::default();
-    let ret =
-        Parser::new(&allocator, source_text, source_type).with_options(get_parse_options()).parse();
-    if !ret.errors.is_empty() {
-        debug!("`Parser::new().parse()` failed: {:?}", ret.errors);
-        external_formatter.cleanup();
-        return None;
-    }
-
-    let base_formatter = Formatter::new(&allocator, *format_options);
-    let formatted = tokio::task::block_in_place(|| {
-        base_formatter.format_with_external_callbacks(&ret.program, Some(external_callbacks))
-    });
 
     let (elements, sorted_tailwind_classes) =
         formatted.into_document().into_elements_and_tailwind_classes();
@@ -208,88 +177,33 @@ fn run_fragment(
     let source_type = SourceType::from_extension(source_ext)
         .expect("source_ext should be a valid JS/TS extension");
 
-    // NOTE: Options and paths are already resolved (see `run_full()` comment).
-    // And `run_fragment()` does not support external formatting, so no need to use `parent_filepath`.
-    let (options, _parent_filepath) = parse_options_and_filepath(oxfmt_plugin_options_json);
-
-    let strategy = FormatFileStrategy::OxcFormatter {
-        path: format!("embedded.{source_ext}").into(),
-        source_type,
-    };
-
-    let resolved_options = resolve_options_from_value(options, &strategy, None)
+    let (config, parent_filepath) = parse_payload(oxfmt_plugin_options_json);
+    // Reuses the same config resolver as `run_full()`, but only `format_options` is needed here,
+    // since `run_fragment()` does not dispatch external formatter callbacks.
+    let resolved = resolve_for_embedded_js(config, parent_filepath)
         .expect("`_oxfmtPluginOptionsJson` should contain valid config");
-    let ResolvedOptions::OxcFormatter { format_options, .. } = resolved_options else {
-        unreachable!("OxcFormatter strategy should always resolve to OxcFormatter options");
+    let format_options = resolved.format_options;
+
+    // Map the Prettier-side fragment kind to the formatter's usage context.
+    // The parens-vs-no-parens / quote-style decisions live inside `format_fragment`.
+    let context = match kind {
+        FragmentKind::VueForBindingLeft => FragmentContext::FunctionParamsAsBindingLhs,
+        FragmentKind::VueBindings => FragmentContext::FunctionParamsAsBinding,
+        FragmentKind::VueScriptGeneric => FragmentContext::TypeParameters,
     };
 
     let allocator = Allocator::default();
-    let ParserReturn { program, errors, .. } =
-        Parser::new(&allocator, source_text, source_type).with_options(get_parse_options()).parse();
-    if !errors.is_empty() {
-        debug!("`Parser::new().parse()` failed: {errors:?}");
-        return None;
-    }
-
-    let formatter = Formatter::new(
+    let formatted = match oxc_formatter::format_fragment(
         &allocator,
-        FormatOptions {
-            // TODO: Fragments inside of Vue attributes should always use single quotes,
-            // since double quotes are used for the attribute value itself.
-            //
-            // Prettier also replaces double quotes with `&quot;` in this case,
-            // but to reduce the diff, we set the quote style to single, regardless of the user config.
-            //
-            // However, this option is just a preference, so `singleQuote: true` is not enough.
-            // But it works for most cases, so leave it for now...
-            quote_style: oxc_formatter::QuoteStyle::Single,
-            ..*format_options
-        },
-    );
-
-    let formatted = match kind {
-        FragmentKind::VueForBindingLeft | FragmentKind::VueBindings => {
-            let params = {
-                let Some(Statement::FunctionDeclaration(func)) = program.body.first() else {
-                    unreachable!("Prettier wraps v-for/v-slot as `function _(...) {{}}`");
-                };
-                &*func.params
-            };
-            let node = AstNode::new(params, AstNodes::Dummy(), &allocator);
-            let content = FormatVueBindingParams::new(
-                &node,
-                matches!(kind, FragmentKind::VueForBindingLeft)
-                    && (1 < params.items.len() || params.rest.is_some()),
-            );
-
-            formatter.format_node(
-                &content,
-                program.source_text,
-                source_type,
-                &program.comments,
-                None,
-            )
-        }
-        FragmentKind::VueScriptGeneric => {
-            let type_params = {
-                let Some(Statement::TSTypeAliasDeclaration(decl)) = program.body.first() else {
-                    unreachable!("Prettier wraps script-generic as `type T<...> = any`");
-                };
-                let Some(type_params) = decl.type_parameters.as_deref() else {
-                    unreachable!("Prettier wraps script-generic as `type T<...> = any`");
-                };
-                type_params
-            };
-            let node = AstNode::new(type_params, AstNodes::Dummy(), &allocator);
-            let content = FormatVueScriptGeneric::new(&node);
-
-            formatter.format_node(
-                &content,
-                program.source_text,
-                source_type,
-                &program.comments,
-                None,
-            )
+        source_text,
+        source_type,
+        *format_options,
+        context,
+    ) {
+        Ok(formatted) => formatted,
+        Err(err) => {
+            debug!("`oxc_formatter::format_fragment()` failed: {err:?}");
+            return None;
         }
     };
 
@@ -303,16 +217,14 @@ fn run_fragment(
 
 // ---
 
-/// Parses the plugin options JSON and extracts parent file path for external callbacks.
-///
-/// The `filepath` field (set by `core::oxfmtrc::finalize_external_options`) stores
-/// the parent file path (e.g. `App.vue`) for js-in-xxx formatting.
-fn parse_options_and_filepath(oxfmt_plugin_options_json: &str) -> (Value, PathBuf) {
-    let Ok(Value::Object(mut obj)) = serde_json::from_str(oxfmt_plugin_options_json) else {
-        unreachable!("`_oxfmtPluginOptionsJson` should be a valid JSON object");
-    };
-    let Some(Value::String(s)) = obj.remove("filepath") else {
-        unreachable!("Expected `filepath` in `_oxfmtPluginOptionsJson`");
-    };
-    (Value::Object(obj), PathBuf::from(s))
+/// Deserialize `_oxfmtPluginOptionsJson` into the typed config + parent filepath.
+fn parse_payload(oxfmt_plugin_options_json: &str) -> (FormatConfig, PathBuf) {
+    #[derive(Deserialize)]
+    struct Payload {
+        config: FormatConfig,
+        filepath: String,
+    }
+    let payload: Payload = serde_json::from_str(oxfmt_plugin_options_json)
+        .expect("`_oxfmtPluginOptionsJson` should deserialize");
+    (payload.config, PathBuf::from(payload.filepath))
 }

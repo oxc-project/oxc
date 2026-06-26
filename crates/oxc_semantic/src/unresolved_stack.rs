@@ -1,4 +1,4 @@
-use oxc_span::Ident;
+use oxc_str::Ident;
 use oxc_syntax::reference::ReferenceId;
 
 /// Flat list of unresolved references collected during AST traversal.
@@ -14,6 +14,14 @@ pub struct UnresolvedReferences<'a> {
 impl<'a> UnresolvedReferences<'a> {
     pub(crate) fn new() -> Self {
         Self { references: Vec::new() }
+    }
+
+    /// Reserve exactly `additional` more slots in the underlying `Vec`.
+    /// Avoids growth reallocations when the expected count is known up-front
+    /// (typically from [`crate::Stats::count`]).
+    #[inline]
+    pub(crate) fn reserve_exact(&mut self, additional: usize) {
+        self.references.reserve_exact(additional);
     }
 
     /// Push an unresolved reference to the flat list.
@@ -34,10 +42,34 @@ impl<'a> UnresolvedReferences<'a> {
         std::mem::take(&mut self.references)
     }
 
-    /// Get a slice of references from `start` to end and the length for truncation.
+    /// Current number of unresolved references.
     #[inline]
-    pub(crate) fn slice_from(&self, start: usize) -> &[(Ident<'a>, ReferenceId)] {
-        &self.references[start..]
+    pub(crate) fn len(&self) -> usize {
+        self.references.len()
+    }
+
+    /// Read a reference by index, by value.
+    ///
+    /// Used by [`crate::SemanticBuilder::resolve_references_for_current_scope`]
+    /// to process the list in-place without allocating a temporary `Vec`. Both
+    /// `Ident<'a>` and `ReferenceId` are `Copy`, so this hands the caller an
+    /// owned pair that's detached from the underlying borrow.
+    ///
+    /// # Panics
+    /// Panics if `idx >= self.len()`.
+    #[inline]
+    pub(crate) fn get(&self, idx: usize) -> (Ident<'a>, ReferenceId) {
+        self.references[idx]
+    }
+
+    /// Overwrite the reference at `idx` (write-cursor support for in-place
+    /// processing).
+    ///
+    /// # Panics
+    /// Panics if `idx >= self.len()`.
+    #[inline]
+    pub(crate) fn set(&mut self, idx: usize, name: Ident<'a>, reference_id: ReferenceId) {
+        self.references[idx] = (name, reference_id);
     }
 
     /// Truncate the list to `len`, removing references at the end.

@@ -49,7 +49,9 @@ declare_oxc_lint!(
     NoProcessExit,
     unicorn,
     restriction,
-    pending // TODO: suggestion
+    pending, // TODO: suggestion
+    version = "0.2.9",
+    short_description = "Disallow all usage of `process.exit()`.",
 );
 
 impl Rule for NoProcessExit {

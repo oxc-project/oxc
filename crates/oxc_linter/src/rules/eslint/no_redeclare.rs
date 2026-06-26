@@ -67,6 +67,8 @@ declare_oxc_lint!(
     eslint,
     pedantic,
     config = NoRedeclare,
+    version = "0.0.13",
+    short_description = "Disallow variable redeclaration.",
 );
 
 impl Rule for NoRedeclare {

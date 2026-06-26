@@ -1,0 +1,12 @@
+{
+  "plugins": ["eslint", "typescript"],
+  "rules": {
+    "no-compare-neg-zero": "error",
+    "no-eq-null": "error",
+    "no-unused-vars": "off",
+    "typescript/await-thenable": "error",
+    "typescript/array-type": ["error", { "default": "array" }],
+    "no-debugger": "error"
+  },
+  "ignorePatterns": ["files/test-backup.ts"]
+}

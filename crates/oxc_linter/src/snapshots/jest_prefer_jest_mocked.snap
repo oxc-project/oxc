@@ -2,126 +2,126 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-jest(prefer-jest-mocked): Prefer `jest.mocked()` over `fn as jest.Mock`.
+  ⚠ jest(prefer-jest-mocked): Prefer `jest.mocked()` over `fn as jest.Mock`.
    ╭─[prefer_jest_mocked.tsx:1:2]
  1 │ (foo as jest.Mock).mockReturnValue(1);
    ·  ────────────────
    ╰────
   help: Prefer `jest.mocked()`
 
-  ⚠ eslint-plugin-jest(prefer-jest-mocked): Prefer `jest.mocked()` over `fn as jest.Mock`.
+  ⚠ jest(prefer-jest-mocked): Prefer `jest.mocked()` over `fn as jest.Mock`.
    ╭─[prefer_jest_mocked.tsx:1:2]
  1 │ (foo as unknown as string as unknown as jest.Mock).mockReturnValue(1);
    ·  ────────────────────────────────────────────────
    ╰────
   help: Prefer `jest.mocked()`
 
-  ⚠ eslint-plugin-jest(prefer-jest-mocked): Prefer `jest.mocked()` over `fn as jest.Mock`.
+  ⚠ jest(prefer-jest-mocked): Prefer `jest.mocked()` over `fn as jest.Mock`.
    ╭─[prefer_jest_mocked.tsx:1:2]
  1 │ (foo as unknown as jest.Mock as unknown as jest.Mock).mockReturnValue(1);
    ·  ───────────────────────────────────────────────────
    ╰────
   help: Prefer `jest.mocked()`
 
-  ⚠ eslint-plugin-jest(prefer-jest-mocked): Prefer `jest.mocked()` over `fn as jest.Mock`.
+  ⚠ jest(prefer-jest-mocked): Prefer `jest.mocked()` over `fn as jest.Mock`.
    ╭─[prefer_jest_mocked.tsx:1:2]
  1 │ (<jest.Mock>foo).mockReturnValue(1);
    ·  ──────────────
    ╰────
   help: Prefer `jest.mocked()`
 
-  ⚠ eslint-plugin-jest(prefer-jest-mocked): Prefer `jest.mocked()` over `fn as jest.Mock`.
+  ⚠ jest(prefer-jest-mocked): Prefer `jest.mocked()` over `fn as jest.Mock`.
    ╭─[prefer_jest_mocked.tsx:1:2]
  1 │ (foo as jest.Mock).mockImplementation(1);
    ·  ────────────────
    ╰────
   help: Prefer `jest.mocked()`
 
-  ⚠ eslint-plugin-jest(prefer-jest-mocked): Prefer `jest.mocked()` over `fn as jest.Mock`.
+  ⚠ jest(prefer-jest-mocked): Prefer `jest.mocked()` over `fn as jest.Mock`.
    ╭─[prefer_jest_mocked.tsx:1:2]
  1 │ (foo as unknown as jest.Mock).mockReturnValue(1);
    ·  ───────────────────────────
    ╰────
   help: Prefer `jest.mocked()`
 
-  ⚠ eslint-plugin-jest(prefer-jest-mocked): Prefer `jest.mocked()` over `fn as jest.Mock`.
+  ⚠ jest(prefer-jest-mocked): Prefer `jest.mocked()` over `fn as jest.Mock`.
    ╭─[prefer_jest_mocked.tsx:1:2]
  1 │ (<jest.Mock>foo as unknown).mockReturnValue(1);
    ·  ──────────────
    ╰────
   help: Prefer `jest.mocked()`
 
-  ⚠ eslint-plugin-jest(prefer-jest-mocked): Prefer `jest.mocked()` over `fn as jest.Mock`.
+  ⚠ jest(prefer-jest-mocked): Prefer `jest.mocked()` over `fn as jest.Mock`.
    ╭─[prefer_jest_mocked.tsx:1:2]
  1 │ (Obj.foo as jest.Mock).mockReturnValue(1);
    ·  ────────────────────
    ╰────
   help: Prefer `jest.mocked()`
 
-  ⚠ eslint-plugin-jest(prefer-jest-mocked): Prefer `jest.mocked()` over `fn as jest.Mock`.
+  ⚠ jest(prefer-jest-mocked): Prefer `jest.mocked()` over `fn as jest.Mock`.
    ╭─[prefer_jest_mocked.tsx:1:2]
  1 │ ([].foo as jest.Mock).mockReturnValue(1);
    ·  ───────────────────
    ╰────
   help: Prefer `jest.mocked()`
 
-  ⚠ eslint-plugin-jest(prefer-jest-mocked): Prefer `jest.mocked()` over `fn as jest.Mock`.
+  ⚠ jest(prefer-jest-mocked): Prefer `jest.mocked()` over `fn as jest.Mock`.
    ╭─[prefer_jest_mocked.tsx:1:2]
  1 │ (foo as jest.MockedFunction).mockReturnValue(1);
    ·  ──────────────────────────
    ╰────
   help: Prefer `jest.mocked()`
 
-  ⚠ eslint-plugin-jest(prefer-jest-mocked): Prefer `jest.mocked()` over `fn as jest.Mock`.
+  ⚠ jest(prefer-jest-mocked): Prefer `jest.mocked()` over `fn as jest.Mock`.
    ╭─[prefer_jest_mocked.tsx:1:2]
  1 │ (foo as jest.MockedFunction).mockImplementation(1);
    ·  ──────────────────────────
    ╰────
   help: Prefer `jest.mocked()`
 
-  ⚠ eslint-plugin-jest(prefer-jest-mocked): Prefer `jest.mocked()` over `fn as jest.Mock`.
+  ⚠ jest(prefer-jest-mocked): Prefer `jest.mocked()` over `fn as jest.Mock`.
    ╭─[prefer_jest_mocked.tsx:1:2]
  1 │ (foo as unknown as jest.MockedFunction).mockReturnValue(1);
    ·  ─────────────────────────────────────
    ╰────
   help: Prefer `jest.mocked()`
 
-  ⚠ eslint-plugin-jest(prefer-jest-mocked): Prefer `jest.mocked()` over `fn as jest.Mock`.
+  ⚠ jest(prefer-jest-mocked): Prefer `jest.mocked()` over `fn as jest.Mock`.
    ╭─[prefer_jest_mocked.tsx:1:2]
  1 │ (Obj.foo as jest.MockedFunction).mockReturnValue(1);
    ·  ──────────────────────────────
    ╰────
   help: Prefer `jest.mocked()`
 
-  ⚠ eslint-plugin-jest(prefer-jest-mocked): Prefer `jest.mocked()` over `fn as jest.Mock`.
+  ⚠ jest(prefer-jest-mocked): Prefer `jest.mocked()` over `fn as jest.Mock`.
    ╭─[prefer_jest_mocked.tsx:1:2]
  1 │ (new Array(0).fill(null).foo as jest.MockedFunction).mockReturnValue(1);
    ·  ──────────────────────────────────────────────────
    ╰────
   help: Prefer `jest.mocked()`
 
-  ⚠ eslint-plugin-jest(prefer-jest-mocked): Prefer `jest.mocked()` over `fn as jest.Mock`.
+  ⚠ jest(prefer-jest-mocked): Prefer `jest.mocked()` over `fn as jest.Mock`.
    ╭─[prefer_jest_mocked.tsx:1:2]
  1 │ (jest.fn(() => foo) as jest.MockedFunction).mockReturnValue(1);
    ·  ─────────────────────────────────────────
    ╰────
   help: Prefer `jest.mocked()`
 
-  ⚠ eslint-plugin-jest(prefer-jest-mocked): Prefer `jest.mocked()` over `fn as jest.Mock`.
+  ⚠ jest(prefer-jest-mocked): Prefer `jest.mocked()` over `fn as jest.Mock`.
    ╭─[prefer_jest_mocked.tsx:1:26]
  1 │ const mockedUseFocused = useFocused as jest.MockedFunction<typeof useFocused>;
    ·                          ────────────────────────────────────────────────────
    ╰────
   help: Prefer `jest.mocked()`
 
-  ⚠ eslint-plugin-jest(prefer-jest-mocked): Prefer `jest.mocked()` over `fn as jest.Mock`.
+  ⚠ jest(prefer-jest-mocked): Prefer `jest.mocked()` over `fn as jest.Mock`.
    ╭─[prefer_jest_mocked.tsx:1:17]
  1 │ const filter = (MessageService.getMessage as jest.Mock).mock.calls[0][0];
    ·                 ──────────────────────────────────────
    ╰────
   help: Prefer `jest.mocked()`
 
-  ⚠ eslint-plugin-jest(prefer-jest-mocked): Prefer `jest.mocked()` over `fn as jest.Mock`.
+  ⚠ jest(prefer-jest-mocked): Prefer `jest.mocked()` over `fn as jest.Mock`.
    ╭─[prefer_jest_mocked.tsx:3:18]
  2 │                 class A {}
  3 │                 (foo as jest.MockedClass<A>)
@@ -130,21 +130,21 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Prefer `jest.mocked()`
 
-  ⚠ eslint-plugin-jest(prefer-jest-mocked): Prefer `jest.mocked()` over `fn as jest.Mock`.
+  ⚠ jest(prefer-jest-mocked): Prefer `jest.mocked()` over `fn as jest.Mock`.
    ╭─[prefer_jest_mocked.tsx:1:2]
  1 │ (foo as jest.MockedObject<{method: () => void}>)
    ·  ──────────────────────────────────────────────
    ╰────
   help: Prefer `jest.mocked()`
 
-  ⚠ eslint-plugin-jest(prefer-jest-mocked): Prefer `jest.mocked()` over `fn as jest.Mock`.
+  ⚠ jest(prefer-jest-mocked): Prefer `jest.mocked()` over `fn as jest.Mock`.
    ╭─[prefer_jest_mocked.tsx:1:2]
  1 │ (Obj['foo'] as jest.MockedFunction).mockReturnValue(1);
    ·  ─────────────────────────────────
    ╰────
   help: Prefer `jest.mocked()`
 
-  ⚠ eslint-plugin-jest(prefer-jest-mocked): Prefer `jest.mocked()` over `fn as jest.Mock`.
+  ⚠ jest(prefer-jest-mocked): Prefer `jest.mocked()` over `fn as jest.Mock`.
    ╭─[prefer_jest_mocked.tsx:3:17]
  2 │                     (
  3 │ ╭─▶                 new Array(100)

@@ -3,9 +3,18 @@ use itertools::Itertools as _;
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{
-    Attribute, Error, Expr, Ident, Lit, LitStr, Meta, Result, Token,
+    Attribute, Error, Expr, Ident, Lit, LitStr, Meta, Path, Result, Token,
     parse::{Parse, ParseStream},
 };
+
+/// Documentation source for a lint rule
+#[cfg(feature = "ruledocs")]
+pub enum DocumentationSource {
+    /// Inline documentation from doc comments
+    Inline(String),
+    /// Reference to a shared documentation constant
+    Path(syn::Path),
+}
 
 pub struct LintRuleMeta {
     name: Ident,
@@ -16,18 +25,24 @@ pub struct LintRuleMeta {
     /// Describes what auto-fixing capabilities the rule has
     fix: Option<Ident>,
     #[cfg(feature = "ruledocs")]
-    documentation: String,
+    documentation: DocumentationSource,
     pub used_in_test: bool,
     /// Rule configuration
-    /// This is the name of a struct/enum/whatever implementing
+    /// This is the path to a struct/enum/whatever implementing
     /// schemars::JsonSchema
-    config: Option<Ident>,
+    config: Option<Path>,
+    /// The version of oxlint in which this rule was first available.
+    version: LitStr,
+    /// A short, one-line summary of what the rule does.
+    short_description: Option<LitStr>,
 }
 
 impl Parse for LintRuleMeta {
     fn parse(input: ParseStream<'_>) -> Result<Self> {
         #[cfg(feature = "ruledocs")]
-        let mut documentation = String::new();
+        let mut documentation = None;
+        #[cfg(feature = "ruledocs")]
+        let mut doc_comments = String::new();
 
         #[cfg(feature = "ruledocs")]
         let mut backtick_fences_count: usize = 0;
@@ -39,9 +54,8 @@ impl Parse for LintRuleMeta {
                     {
                         let value = lit.value();
                         let line = value.strip_prefix(' ').unwrap_or(&value);
-
-                        documentation.push_str(line);
-                        documentation.push('\n');
+                        doc_comments.push_str(line);
+                        doc_comments.push('\n');
 
                         // Count occurrences of "```" to ensure the markdown code blocks are closed properly.
                         backtick_fences_count += line.matches("```").count();
@@ -54,6 +68,13 @@ impl Parse for LintRuleMeta {
                 _ => {
                     return Err(Error::new_spanned(attr, "unexpected attribute"));
                 }
+            }
+        }
+
+        #[cfg(feature = "ruledocs")]
+        {
+            if !doc_comments.is_empty() {
+                documentation.replace(DocumentationSource::Inline(doc_comments));
             }
         }
 
@@ -85,7 +106,9 @@ impl Parse for LintRuleMeta {
         // the RuleMeta impl, falling back on default set by RuleMeta itself.
         // Do not provide a default value here so that it can be set there instead.
         let mut fix: Option<Ident> = None;
-        let mut config: Option<Ident> = None;
+        let mut config: Option<Path> = None;
+        let mut version: Option<LitStr> = None;
+        let mut short_description: Option<LitStr> = None;
 
         // remaining options are `key = value` pairs, with the exception of
         // fix kinds. Those can be short-handed to just the fix kind
@@ -106,18 +129,42 @@ impl Parse for LintRuleMeta {
                         fix.replace(key);
                     }
                 }
-                // config = StructImplementingJsonSchemaTrait
+                // config = path::to::StructImplementingJsonSchemaTrait
                 "config" => {
                     input.parse::<Token!(=)>()?;
                     config.replace(input.parse()?);
                 }
+                // docs = path::to::SHARED_DOCUMENTATION_CONSTANT
+                "docs" => {
+                    #[cfg(feature = "ruledocs")]
+                    {
+                        if documentation.is_some() {
+                            return Err(Error::new_spanned(
+                                key,
+                                "documentation source already specified inlined via doc comments",
+                            ));
+                        }
+                        input.parse::<Token!(=)>()?;
+
+                        documentation.replace(DocumentationSource::Path(input.parse()?));
+                    }
+                }
+                // version = "x.y.z" or version = "next"
+                "version" => {
+                    input.parse::<Token!(=)>()?;
+                    version.replace(input.parse()?);
+                }
+                // short_description = "One-line summary."
+                "short_description" => {
+                    input.parse::<Token!(=)>()?;
+                    short_description.replace(input.parse()?);
+                }
                 _ => {
                     if input.peek(Token!(=)) || fix.is_some() {
-                        panic!("invalid key: {key}");
-                    } else {
-                        // fix kind shorthand, e.g. `dangerous-suggestion``
-                        fix.replace(key);
+                        return Err(Error::new_spanned(key, "unexpected key in rule declaration"));
                     }
+                    // fix kind shorthand, e.g. `dangerous-suggestion``
+                    fix.replace(key);
                 }
             }
         }
@@ -130,6 +177,13 @@ impl Parse for LintRuleMeta {
             ));
         }
 
+        let Some(version) = version else {
+            return Err(Error::new(
+                struct_name.span(),
+                "missing `version = \"x.y.z\"` or `version = \"next\"` in `declare_oxc_lint!`",
+            ));
+        };
+
         // Validate that any markdown fenced code blocks (```) in rule docs are properly closed.
         // If the total number of fences found is odd, a block was not closed.
         #[cfg(feature = "ruledocs")]
@@ -139,6 +193,13 @@ impl Parse for LintRuleMeta {
                 "unclosed markdown code block in documentation, please close all ``` fences",
             ));
         }
+        #[cfg(feature = "ruledocs")]
+        let Some(documentation) = documentation else {
+            return Err(Error::new(
+                struct_name.span(),
+                "rule documentation must be specified either via doc comments or the `docs` attribute",
+            ));
+        };
 
         Ok(Self {
             name: struct_name,
@@ -150,6 +211,8 @@ impl Parse for LintRuleMeta {
             documentation,
             used_in_test: false,
             config,
+            version,
+            short_description,
         })
     }
 }
@@ -169,6 +232,8 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
         documentation,
         used_in_test,
         config,
+        version,
+        short_description,
     } = metadata;
 
     let canonical_name = rule_name_converter().convert(name.to_string());
@@ -195,7 +260,7 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
         None
     } else {
         Some(quote! {
-            use crate::{rule::{RuleCategory, RuleMeta, RuleFixMeta, RuleRunner}, fixer::FixKind};
+            use crate::{rule::{RuleCategory, RuleMeta, RuleInfo, RuleFixMeta, RuleRunner}, fixer::FixKind};
             use oxc_semantic::AstTypesBitset;
         })
     };
@@ -204,10 +269,17 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
     let docs: Option<proc_macro2::TokenStream> = None;
 
     #[cfg(feature = "ruledocs")]
-    let docs = Some(quote! {
-        fn documentation() -> Option<&'static str> {
-            Some(#documentation)
-        }
+    let docs = Some(match documentation {
+        DocumentationSource::Inline(documentation) => quote! {
+            fn documentation() -> Option<&'static str> {
+                Some(#documentation)
+            }
+        },
+        DocumentationSource::Path(shared_docs_path) => quote! {
+            fn documentation() -> Option<&'static str> {
+                Some(#shared_docs_path)
+            }
+        },
     });
 
     let has_config = if config.is_some() {
@@ -235,6 +307,20 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
         }),
     };
 
+    let version_const = {
+        quote! {
+            const VERSION: &'static str = #version;
+        }
+    };
+
+    let info_const = short_description.map(|short_description| {
+        quote! {
+            const INFO: RuleInfo = RuleInfo {
+                short_description: #short_description,
+            };
+        }
+    });
+
     let output = quote! {
         #import_statement
 
@@ -254,6 +340,10 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
             #has_config
 
             #config_schema
+
+            #version_const
+
+            #info_const
         }
     };
 

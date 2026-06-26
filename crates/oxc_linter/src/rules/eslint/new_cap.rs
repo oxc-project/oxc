@@ -8,7 +8,8 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
 
 use crate::{
     AstNode,
@@ -411,6 +412,8 @@ declare_oxc_lint!(
     style,
     pending, // TODO: maybe?
     config = NewCapConfig,
+    version = "0.15.5",
+    short_description = "This rule requires constructor names to begin with a capital letter.",
 );
 
 impl Rule for NewCap {

@@ -1,0 +1,9 @@
+[
+  { "args": ["--check", "simple.js", "arrow.js"] },
+  { "args": ["--check"] },
+  { "args": ["--check", "."] },
+  { "args": ["--check", "./"] },
+  { "args": ["--check", ".//simple.js"] },
+  { "args": ["--check", ".///simple.js"] },
+  { "args": ["--check", "!*.{ts,tsx}"] }
+]

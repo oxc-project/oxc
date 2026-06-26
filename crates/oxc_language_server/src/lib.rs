@@ -9,18 +9,24 @@ mod capabilities;
 mod file_system;
 mod language_id;
 mod options;
+mod position;
 #[cfg(test)]
 mod tests;
 mod tool;
+pub mod utils;
 mod worker;
 mod worker_manager;
 
 pub use crate::capabilities::{Capabilities, DiagnosticMode};
 pub use crate::language_id::LanguageId;
+pub use crate::position::offset_to_position;
 pub use crate::tool::{DiagnosticResult, Tool, ToolBuilder, ToolRestartChanges};
+pub use crate::worker::WorkspaceWorker;
+pub use crate::worker_manager::WorkerManager;
 
 pub type ConcurrentHashMap<K, V> = papaya::HashMap<K, V, FxBuildHasher>;
 
+#[derive(Debug)]
 pub struct TextDocument<'a> {
     pub uri: &'a Uri,
     pub language_id: LanguageId,
@@ -34,7 +40,11 @@ impl<'a> TextDocument<'a> {
 }
 
 /// Run the language server
-pub async fn run_server(server_name: String, server_version: String, tool: Arc<dyn ToolBuilder>) {
+pub async fn run_server(
+    server_name: String,
+    server_version: String,
+    worker_manager: WorkerManager,
+) {
     let stdin = tokio::io::stdin();
     let stdout = tokio::io::stdout();
 
@@ -42,7 +52,7 @@ pub async fn run_server(server_name: String, server_version: String, tool: Arc<d
         crate::backend::Backend::new(
             client,
             ServerInfo { name: server_name, version: Some(server_version) },
-            tool,
+            worker_manager,
         )
     })
     .finish();

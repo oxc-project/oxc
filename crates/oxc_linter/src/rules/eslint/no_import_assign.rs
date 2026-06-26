@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTarget, AssignmentTargetMaybeDefault, Expression},
+    ast::{AssignmentTarget, AssignmentTargetMaybeDefault, Expression, ImportDeclarationSpecifier},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -49,7 +49,9 @@ declare_oxc_lint!(
     /// ```
     NoImportAssign,
     eslint,
-    correctness
+    correctness,
+    version = "0.0.5",
+    short_description = "Disallow assigning to imported bindings.",
 );
 
 const OBJECT_MUTATION_METHODS: [&str; 5] =
@@ -66,10 +68,8 @@ impl Rule for NoImportAssign {
         if let Some(specifiers) = &import_decl.specifiers {
             for specifier in specifiers {
                 let symbol_id = specifier.local().symbol_id();
-                let is_namespace_specifier = matches!(
-                    specifier,
-                    oxc_ast::ast::ImportDeclarationSpecifier::ImportNamespaceSpecifier(_)
-                );
+                let is_namespace_specifier =
+                    matches!(specifier, ImportDeclarationSpecifier::ImportNamespaceSpecifier(_));
                 for reference in symbol_table.get_resolved_references(symbol_id) {
                     if is_namespace_specifier {
                         let parent_node = ctx.nodes().parent_node(reference.node_id());

@@ -5,7 +5,7 @@ use oxc_ast::{
     ast::{
         BindingPattern, CallExpression, ExportDefaultDeclaration, ExportDefaultDeclarationKind,
         Expression, ObjectExpression, ObjectPropertyKind, PropertyKey, TSMethodSignatureKind,
-        TSSignature, TSType, TSTypeName, VariableDeclarator,
+        TSSignature, TSType, VariableDeclarator,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -19,6 +19,7 @@ use crate::{
     fixer::{RuleFix, RuleFixer},
     frameworks::FrameworkOptions,
     rule::Rule,
+    utils::{find_property, for_each_define_props_type_signature},
 };
 
 fn no_required_prop_with_default_diagnostic(span: Span, prop_name: &str) -> OxcDiagnostic {
@@ -76,7 +77,9 @@ declare_oxc_lint!(
     NoRequiredPropWithDefault,
     vue,
     suspicious,
-    suggestion
+    suggestion,
+    version = "1.17.0",
+    short_description = "Enforce props with default values to be optional.",
 );
 
 impl Rule for NoRequiredPropWithDefault {
@@ -249,9 +252,9 @@ fn get_first_variable_decl_ancestor<'a>(
     })
 }
 
-fn process_define_props_call(
-    ctx: &LintContext,
-    first_arg_expr: &Expression,
+fn process_define_props_call<'a>(
+    ctx: &LintContext<'a>,
+    first_arg_expr: &Expression<'a>,
     key_hash: &FxHashSet<String>,
 ) {
     let Expression::CallExpression(first_call_expr) = first_arg_expr.get_inner_expression() else {
@@ -279,105 +282,42 @@ fn create_optional_fix(fixer: RuleFixer<'_, '_>, key: &PropertyKey) -> RuleFix {
     fixer.insert_text_after_range(Span::new(insert_pos, insert_pos), "?")
 }
 
-fn handle_type_argument(ctx: &LintContext, ts_type: &TSType, key_hash: &FxHashSet<String>) {
-    match ts_type {
-        // e.g. `const props = defineProps<IProps>()`
-        TSType::TSTypeReference(type_ref) => {
-            let TSTypeName::IdentifierReference(ident_ref) = &type_ref.type_name else {
-                return;
-            };
-            // we need to find the reference of type_ref
-            let reference = ctx.scoping().get_reference(ident_ref.reference_id());
-            if !reference.is_type() {
-                return;
+fn handle_type_argument<'a>(
+    ctx: &LintContext<'a>,
+    ts_type: &TSType<'a>,
+    key_hash: &FxHashSet<String>,
+) {
+    for_each_define_props_type_signature(ts_type, ctx, &mut |item| {
+        let (key_name, optional, key) = match item {
+            TSSignature::TSPropertySignature(prop_sign) => {
+                (prop_sign.key.static_name(), prop_sign.optional, &prop_sign.key)
             }
-            let Some(symbol_id) = reference.symbol_id() else {
-                return;
-            };
-            let reference_node = ctx.symbol_declaration(symbol_id);
-            let AstKind::TSInterfaceDeclaration(interface_decl) = reference_node.kind() else {
-                return;
-            };
-            let body = &interface_decl.body;
-            body.body.iter().for_each(|item| {
-                let (key_name, optional, key) = match item {
-                    TSSignature::TSPropertySignature(prop_sign) => {
-                        (prop_sign.key.static_name(), prop_sign.optional, &prop_sign.key)
-                    }
-                    TSSignature::TSMethodSignature(method_sign)
-                        if method_sign.kind == TSMethodSignatureKind::Method =>
-                    {
-                        (method_sign.key.static_name(), method_sign.optional, &method_sign.key)
-                    }
-                    _ => return,
-                };
-                if let Some(key_name) = key_name
-                    && !optional
-                    && key_hash.contains(key_name.as_ref())
-                {
-                    let diagnostic =
-                        no_required_prop_with_default_diagnostic(item.span(), key_name.as_ref());
-                    // Check for comments around the key before applying fix
-                    let fix_span = Span::new(key.span().start, key.span().end + 1);
-                    if ctx.has_comments_between(fix_span) {
-                        ctx.diagnostic(diagnostic);
-                    } else {
-                        ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
-                            create_optional_fix(fixer, key)
-                        });
-                    }
-                }
-            });
+            TSSignature::TSMethodSignature(method_sign)
+                if method_sign.kind == TSMethodSignatureKind::Method =>
+            {
+                (method_sign.key.static_name(), method_sign.optional, &method_sign.key)
+            }
+            _ => return,
+        };
+        if let Some(key_name) = key_name
+            && !optional
+            && key_hash.contains(key_name.as_ref())
+        {
+            let diagnostic =
+                no_required_prop_with_default_diagnostic(item.span(), key_name.as_ref());
+            // Check for comments around the key before applying fix
+            let fix_span = Span::new(key.span().start, key.span().end + 1);
+            if ctx.has_comments_between(fix_span) {
+                ctx.diagnostic(diagnostic);
+            } else {
+                ctx.diagnostic_with_suggestion(diagnostic, |fixer| create_optional_fix(fixer, key));
+            }
         }
-        // e.g. `const props = defineProps<{ name: string }>()`
-        TSType::TSTypeLiteral(type_literal) => {
-            type_literal.members.iter().for_each(|item| {
-                let (key_name, optional, key) = match item {
-                    TSSignature::TSPropertySignature(prop_sign) => {
-                        (prop_sign.key.static_name(), prop_sign.optional, &prop_sign.key)
-                    }
-                    TSSignature::TSMethodSignature(method_sign)
-                        if method_sign.kind == TSMethodSignatureKind::Method =>
-                    {
-                        (method_sign.key.static_name(), method_sign.optional, &method_sign.key)
-                    }
-                    _ => return,
-                };
-                if let Some(key_name) = key_name
-                    && !optional
-                    && key_hash.contains(key_name.as_ref())
-                {
-                    let diagnostic =
-                        no_required_prop_with_default_diagnostic(item.span(), key_name.as_ref());
-                    // Check for comments around the key before applying fix
-                    let fix_span = Span::new(key.span().start, key.span().end + 1);
-                    if ctx.has_comments_between(fix_span) {
-                        ctx.diagnostic(diagnostic);
-                    } else {
-                        ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
-                            create_optional_fix(fixer, key)
-                        });
-                    }
-                }
-            });
-        }
-        _ => {}
-    }
+    });
 }
 
 fn handle_object_expression(ctx: &LintContext, obj: &ObjectExpression) {
-    let Some(prop) = obj.properties.iter().find(|item| {
-        if let ObjectPropertyKind::ObjectProperty(obj_prop) = item
-            && let Some(key) = obj_prop.key.static_name()
-        {
-            key == "props"
-        } else {
-            false
-        }
-    }) else {
-        return;
-    };
-    let ObjectPropertyKind::ObjectProperty(prop_obj) = prop else {
+    let Some(prop_obj) = find_property(obj, "props") else {
         return;
     };
     let Expression::ObjectExpression(prop_obj_expr) = prop_obj.value.get_inner_expression() else {
@@ -709,7 +649,7 @@ fn test() {
                       );
                     </script>
                   "#,
-            Some(serde_json::json!([{ "autofix": true }])),
+            None, // Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
@@ -728,7 +668,7 @@ fn test() {
                       );
                     </script>
                   "#,
-            Some(serde_json::json!([{ "autofix": true }])),
+            None, // Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
@@ -747,7 +687,7 @@ fn test() {
                       );
                     </script>
                   "#,
-            Some(serde_json::json!([{ "autofix": true }])),
+            None, // Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
@@ -767,7 +707,7 @@ fn test() {
                       );
                     </script>
                   "#,
-            Some(serde_json::json!([{ "autofix": true }])),
+            None, // Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
@@ -785,7 +725,7 @@ fn test() {
                       );
                     </script>
                   "#,
-            Some(serde_json::json!([{ "autofix": true }])),
+            None, // Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
@@ -804,7 +744,7 @@ fn test() {
                       );
                     </script>
                   "#,
-            Some(serde_json::json!([{ "autofix": true }])),
+            None, // Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
@@ -823,7 +763,7 @@ fn test() {
                       );
                     </script>
                   "#,
-            Some(serde_json::json!([{ "autofix": true }])),
+            None, // Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
@@ -842,7 +782,7 @@ fn test() {
                       );
                     </script>
                   "#,
-            Some(serde_json::json!([{ "autofix": true }])),
+            None, // Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
@@ -861,7 +801,7 @@ fn test() {
                       );
                     </script>
                   "#,
-            Some(serde_json::json!([{ "autofix": true }])),
+            None, // Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
@@ -880,7 +820,7 @@ fn test() {
                       );
                     </script>
                   "#,
-            Some(serde_json::json!([{ "autofix": true }])),
+            None, // Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
@@ -900,7 +840,7 @@ fn test() {
                       );
                     </script>
                   "#,
-            Some(serde_json::json!([{ "autofix": true }])),
+            None, // Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
@@ -920,7 +860,7 @@ fn test() {
                       );
                     </script>
                   "#,
-            Some(serde_json::json!([{ "autofix": true }])),
+            None, // Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
@@ -937,7 +877,7 @@ fn test() {
                     }
                     </script>
                   ",
-            Some(serde_json::json!([{ "autofix": true }])),
+            None, // Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ),
@@ -954,7 +894,7 @@ fn test() {
                     }
                     </script>
                   ",
-            Some(serde_json::json!([{ "autofix": true }])),
+            None, // Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ),
@@ -972,7 +912,7 @@ fn test() {
                     })
                     </script>
                   ",
-            Some(serde_json::json!([{ "autofix": true }])),
+            None, // Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ),
@@ -990,7 +930,7 @@ fn test() {
                     })
                     </script>
                   ",
-            Some(serde_json::json!([{ "autofix": true }])),
+            None, // Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ),
@@ -1023,7 +963,7 @@ fn test() {
                       })
                     </script>
                   ",
-            Some(serde_json::json!([{ "autofix": true }])),
+            None, // Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ),
@@ -1036,7 +976,7 @@ fn test() {
                       const {name="World"} = defineProps<TestPropType>();
                     </script>
                   "#,
-            Some(serde_json::json!([{ "autofix": true }])),
+            None, // Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
@@ -1048,7 +988,7 @@ fn test() {
                       }>();
                     </script>
                   "#,
-            Some(serde_json::json!([{ "autofix": true }])),
+            None, // Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
@@ -1062,7 +1002,26 @@ fn test() {
                       });
                     </script>
                   "#,
-            Some(serde_json::json!([{ "autofix": true }])),
+            None, // Some(serde_json::json!([{ "autofix": true }])),
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            r#"
+                    <script setup lang="ts">
+                      type TestPropType = {
+                        name: string
+                        age?: number
+                      }
+                      const props = withDefaults(
+                        defineProps<TestPropType>(),
+                        {
+                          name: "World",
+                        }
+                      );
+                    </script>
+                  "#,
+            None,
             None,
             Some(PathBuf::from("test.vue")),
         ),

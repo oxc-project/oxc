@@ -6,7 +6,8 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -93,6 +94,8 @@ declare_oxc_lint!(
     jsx_a11y,
     restriction,
     config = AnchorAmbiguousTextConfig,
+    version = "0.13.2",
+    short_description = "Inspects anchor link text for the use of ambiguous words.",
 );
 
 impl Rule for AnchorAmbiguousText {

@@ -1,10 +1,11 @@
 use std::str;
 
-use oxc_allocator::{Allocator, Vec as ArenaVec};
+use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::ast::*;
 use oxc_ast_visit::Visit;
 use oxc_semantic::{NodeId, Reference, Scoping};
-use oxc_span::{Ident, SPAN};
+use oxc_span::SPAN;
+use oxc_str::Ident;
 use oxc_syntax::{
     reference::{ReferenceFlags, ReferenceId},
     scope::{ScopeFlags, ScopeId},
@@ -142,7 +143,7 @@ impl<'a> TraverseScoping<'a> {
     /// `flags` provided are amended to inherit from parent scope's flags.
     pub fn insert_scope_below_statements(
         &mut self,
-        stmts: &ArenaVec<Statement>,
+        stmts: &ArenaVec<'a, Statement<'a>>,
         flags: ScopeFlags,
     ) -> ScopeId {
         let mut collector = ChildScopeCollector::new();

@@ -354,6 +354,49 @@ impl<'a> Symbol<'_, 'a> {
         false
     }
 
+    /// Checks if this formal parameter is used in a TypeScript return type predicate.
+    pub fn is_used_in_return_type_predicate(&self) -> bool {
+        if !matches!(
+            self.declaration().kind(),
+            AstKind::FormalParameter(_) | AstKind::FormalParameterRest(_)
+        ) {
+            return false;
+        }
+
+        for parent in self.iter_parents().map(AstNode::kind) {
+            match parent {
+                AstKind::Function(func) => {
+                    return self
+                        .return_type_predicate_references_symbol(func.return_type.as_deref());
+                }
+                AstKind::ArrowFunctionExpression(expr) => {
+                    return self
+                        .return_type_predicate_references_symbol(expr.return_type.as_deref());
+                }
+                AstKind::Program(_) => return false,
+                _ => {}
+            }
+        }
+
+        false
+    }
+
+    fn return_type_predicate_references_symbol(
+        &self,
+        return_type: Option<&TSTypeAnnotation<'a>>,
+    ) -> bool {
+        let Some(TSTypeAnnotation { type_annotation: TSType::TSTypePredicate(predicate), .. }) =
+            return_type
+        else {
+            return false;
+        };
+
+        matches!(
+            &predicate.parameter_name,
+            TSTypePredicateName::Identifier(identifier) if identifier.name == self.name()
+        )
+    }
+
     /// Checks if a read reference is only ever used to modify itself.
     ///
     /// ## Algorithm
@@ -408,7 +451,6 @@ impl<'a> Symbol<'_, 'a> {
         // Have we seen this reference be used to update the value of another
         // symbol, or for some other logically-relevant purpose?
         let mut is_used_by_others = true;
-        let name = self.name();
         let ref_span = self.get_ref_span(reference);
 
         for node in self.nodes().ancestors(reference.node_id()) {
@@ -430,9 +472,9 @@ impl<'a> Symbol<'_, 'a> {
                 }
                 // When symbol is being assigned a new value, we flag the reference
                 // as only affecting itself until proven otherwise.
-                AstKind::UpdateExpression(UpdateExpression { argument, .. }) => {
+                AstKind::UpdateExpression(UpdateExpression { argument, .. })
                     // `for (let x = 0; x++; ) {}` is valid usage, as the loop body running is a side-effect
-                    if !self.is_in_for_loop_test_or_update(node.id(), ref_span) {
+                    if !self.is_in_for_loop_test_or_update(node.id(), ref_span) => {
                         // `a.b++` or `a[b] + 1` are not reassignment of `a`
                         let is_member_expr = argument.is_member_expression()
                             || argument
@@ -442,13 +484,14 @@ impl<'a> Symbol<'_, 'a> {
                             is_used_by_others = false;
                         }
                     }
-                }
                 // RHS usage when LHS != reference's symbol is definitely used by
                 // others
                 AstKind::AssignmentExpression(AssignmentExpression { left, .. }) => {
                     match left {
                         AssignmentTarget::AssignmentTargetIdentifier(id) => {
-                            if id.name == name {
+                            if self.scoping().get_reference(id.reference_id()).symbol_id()
+                                == Some(self.id())
+                            {
                                 // Compare *variable scopes* (the nearest function / TS module / class‑static block).
                                 //
                                 // If the variable scope is the same, the the variable is still unused
@@ -704,26 +747,25 @@ impl<'a> Symbol<'_, 'a> {
                 // used. Note that this branch must come before the sequence
                 // expression check.
                 (AstKind::AssignmentExpression(assignment), _) if self != &assignment.left => break,
-                (AstKind::ConditionalExpression(cond), _) => {
-                    if cond.test.span().contains_inclusive(ref_span()) {
-                        return false;
-                    }
+                (AstKind::ConditionalExpression(cond), _)
+                    if cond.test.span().contains_inclusive(ref_span()) =>
+                {
+                    return false;
                 }
                 // x && (a = x)
-                (AstKind::LogicalExpression(expr), _) => {
+                (AstKind::LogicalExpression(expr), _)
                     if expr.left.span().contains_inclusive(ref_span())
-                        && expr.right.get_inner_expression().is_assignment()
-                    {
-                        return false;
-                    }
+                        && expr.right.get_inner_expression().is_assignment() =>
+                {
+                    return false;
                 }
                 // x instanceof Foo && (a = x)
-                (AstKind::BinaryExpression(expr), _) if expr.operator.is_relational() => {
-                    if expr.left.span().contains_inclusive(ref_span())
-                        && expr.right.get_inner_expression().is_assignment()
-                    {
-                        return false;
-                    }
+                (AstKind::BinaryExpression(expr), _)
+                    if expr.operator.is_relational()
+                        && expr.left.span().contains_inclusive(ref_span())
+                        && expr.right.get_inner_expression().is_assignment() =>
+                {
+                    return false;
                 }
                 (parent, AstKind::SequenceExpression(seq)) => {
                     if matches!(

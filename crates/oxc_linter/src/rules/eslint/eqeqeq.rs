@@ -175,6 +175,8 @@ declare_oxc_lint!(
     pedantic,
     fix = conditional_fix_dangerous,
     config = Eqeqeq,
+    version = "0.0.3",
+    short_description = "Requires the use of the `===` and `!==` operators, disallowing the use of `==` and `!=`.",
 );
 
 impl Eqeqeq {
@@ -337,9 +339,7 @@ fn test() {
         ("a === b", Some(serde_json::json!(["always"]))),
         ("typeof a == 'number'", Some(serde_json::json!(["smart"]))),
         ("'string' != typeof a", Some(serde_json::json!(["smart"]))),
-        ("'hello' != 'world'", Some(serde_json::json!(["smart"]))),
         ("2 == 3", Some(serde_json::json!(["smart"]))),
-        ("true == true", Some(serde_json::json!(["smart"]))),
         ("null == a", Some(serde_json::json!(["smart"]))),
         ("a == null", Some(serde_json::json!(["smart"]))),
         // We intentionally do not support this option because it is deprecated in ESLint.

@@ -61,6 +61,8 @@ declare_oxc_lint!(
     style,
     none,
     config = NoReturnAssignMode,
+    version = "0.9.10",
+    short_description = "Disallows assignment operators in return statements.",
 );
 
 fn is_sentinel_node(ast_kind: AstKind) -> bool {
@@ -103,13 +105,11 @@ impl Rule for NoReturnAssign {
                     "Return statements should not contain an assignment.",
                 ));
             }
-            AstKind::ArrowFunctionExpression(arrow) => {
-                if arrow.expression {
-                    ctx.diagnostic(no_return_assign_diagnostic(
-                        assign.span(),
-                        "Arrow functions should not return an assignment.",
-                    ));
-                }
+            AstKind::ArrowFunctionExpression(arrow) if arrow.expression => {
+                ctx.diagnostic(no_return_assign_diagnostic(
+                    assign.span(),
+                    "Arrow functions should not return an assignment.",
+                ));
             }
             _ => (),
         }

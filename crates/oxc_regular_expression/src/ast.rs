@@ -1,8 +1,9 @@
 use bitflags::bitflags;
 
-use oxc_allocator::{Box, CloneIn, GetAddress, Vec};
+use oxc_allocator::{ArenaBox, ArenaVec, CloneIn, GetAddress};
 use oxc_ast_macros::ast;
-use oxc_span::{ContentEq, Span, Str};
+use oxc_span::{ContentEq, Span};
+use oxc_str::Str;
 
 /// The root of the `PatternParser` result.
 #[ast]
@@ -19,7 +20,7 @@ pub struct Pattern<'a> {
 #[generate_derive(CloneIn, ContentEq)]
 pub struct Disjunction<'a> {
     pub span: Span,
-    pub body: Vec<'a, Alternative<'a>>,
+    pub body: ArenaVec<'a, Alternative<'a>>,
 }
 
 /// Single unit of `|` separated alternatives.
@@ -28,7 +29,7 @@ pub struct Disjunction<'a> {
 #[generate_derive(CloneIn, ContentEq)]
 pub struct Alternative<'a> {
     pub span: Span,
-    pub body: Vec<'a, Term<'a>>,
+    pub body: ArenaVec<'a, Term<'a>>,
 }
 
 /// Single unit of [`Alternative`], containing various kinds.
@@ -37,20 +38,20 @@ pub struct Alternative<'a> {
 #[generate_derive(CloneIn, ContentEq)]
 pub enum Term<'a> {
     // Assertion, QuantifiableAssertion
-    BoundaryAssertion(Box<'a, BoundaryAssertion>) = 0,
-    LookAroundAssertion(Box<'a, LookAroundAssertion<'a>>) = 1,
+    BoundaryAssertion(ArenaBox<'a, BoundaryAssertion>) = 0,
+    LookAroundAssertion(ArenaBox<'a, LookAroundAssertion<'a>>) = 1,
     // Quantifier
-    Quantifier(Box<'a, Quantifier<'a>>) = 2,
+    Quantifier(ArenaBox<'a, Quantifier<'a>>) = 2,
     // Atom, ExtendedAtom
-    Character(Box<'a, Character>) = 3,
+    Character(ArenaBox<'a, Character>) = 3,
     Dot(Dot) = 4,
-    CharacterClassEscape(Box<'a, CharacterClassEscape>) = 5,
-    UnicodePropertyEscape(Box<'a, UnicodePropertyEscape<'a>>) = 6,
-    CharacterClass(Box<'a, CharacterClass<'a>>) = 7,
-    CapturingGroup(Box<'a, CapturingGroup<'a>>) = 8,
-    IgnoreGroup(Box<'a, IgnoreGroup<'a>>) = 9,
-    IndexedReference(Box<'a, IndexedReference>) = 10,
-    NamedReference(Box<'a, NamedReference<'a>>) = 11,
+    CharacterClassEscape(ArenaBox<'a, CharacterClassEscape>) = 5,
+    UnicodePropertyEscape(ArenaBox<'a, UnicodePropertyEscape<'a>>) = 6,
+    CharacterClass(ArenaBox<'a, CharacterClass<'a>>) = 7,
+    CapturingGroup(ArenaBox<'a, CapturingGroup<'a>>) = 8,
+    IgnoreGroup(ArenaBox<'a, IgnoreGroup<'a>>) = 9,
+    IndexedReference(ArenaBox<'a, IndexedReference>) = 10,
+    NamedReference(ArenaBox<'a, NamedReference<'a>>) = 11,
 }
 
 /// Simple form of assertion.
@@ -194,7 +195,7 @@ pub struct CharacterClass<'a> {
     /// - and matches each logic depends on `kind`
     pub strings: bool,
     pub kind: CharacterClassContentsKind,
-    pub body: Vec<'a, CharacterClassContents<'a>>,
+    pub body: ArenaVec<'a, CharacterClassContents<'a>>,
 }
 
 #[ast]
@@ -212,14 +213,14 @@ pub enum CharacterClassContentsKind {
 #[derive(Debug)]
 #[generate_derive(CloneIn, ContentEq, GetAddress)]
 pub enum CharacterClassContents<'a> {
-    CharacterClassRange(Box<'a, CharacterClassRange>) = 0,
-    CharacterClassEscape(Box<'a, CharacterClassEscape>) = 1,
-    UnicodePropertyEscape(Box<'a, UnicodePropertyEscape<'a>>) = 2,
-    Character(Box<'a, Character>) = 3,
+    CharacterClassRange(ArenaBox<'a, CharacterClassRange>) = 0,
+    CharacterClassEscape(ArenaBox<'a, CharacterClassEscape>) = 1,
+    UnicodePropertyEscape(ArenaBox<'a, UnicodePropertyEscape<'a>>) = 2,
+    Character(ArenaBox<'a, Character>) = 3,
     /// `UnicodeSetsMode` only
-    NestedCharacterClass(Box<'a, CharacterClass<'a>>) = 4,
+    NestedCharacterClass(ArenaBox<'a, CharacterClass<'a>>) = 4,
     /// `UnicodeSetsMode` only
-    ClassStringDisjunction(Box<'a, ClassStringDisjunction<'a>>) = 5,
+    ClassStringDisjunction(ArenaBox<'a, ClassStringDisjunction<'a>>) = 5,
 }
 
 /// `-` separated range of characters.
@@ -241,7 +242,7 @@ pub struct ClassStringDisjunction<'a> {
     pub span: Span,
     /// `true` if body is empty or contains [`ClassString`] which `strings` is `true`.
     pub strings: bool,
-    pub body: Vec<'a, ClassString<'a>>,
+    pub body: ArenaVec<'a, ClassString<'a>>,
 }
 
 /// Single unit of [`ClassStringDisjunction`].
@@ -252,7 +253,7 @@ pub struct ClassString<'a> {
     pub span: Span,
     /// `true` if body is empty or contain 2 more characters.
     pub strings: bool,
-    pub body: Vec<'a, Character>,
+    pub body: ArenaVec<'a, Character>,
 }
 
 /// Named or unnamed capturing group.

@@ -61,6 +61,8 @@ pub struct OxcTransformerOptions {
     pub use_define_for_class_fields: bool,
     pub experimental_decorators: bool,
     pub emit_decorator_metadata: bool,
+    pub optimize_enums: bool,
+    pub optimize_const_enums: bool,
 }
 
 #[napi(object)]

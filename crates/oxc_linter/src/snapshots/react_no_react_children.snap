@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-react(no-react-children): `React.Children` should not be used.
+  ⚠ react(no-react-children): `React.Children` should not be used.
    ╭─[no_react_children.tsx:1:35]
  1 │ import { Children } from 'react'; Children.toArray(children)
    ·                                   ────────────────
@@ -10,7 +10,7 @@ source: crates/oxc_linter/src/tester.rs
   help: `React.Children` is uncommon and leads to fragile React components.
   note: https://react.dev/reference/react/Children#alternatives
 
-  ⚠ eslint-plugin-react(no-react-children): `React.Children` should not be used.
+  ⚠ react(no-react-children): `React.Children` should not be used.
    ╭─[no_react_children.tsx:1:35]
  1 │ import { Children } from 'react'; Children.map(children, child => <div>{child}</div>)
    ·                                   ────────────
@@ -18,7 +18,7 @@ source: crates/oxc_linter/src/tester.rs
   help: `React.Children` is uncommon and leads to fragile React components.
   note: https://react.dev/reference/react/Children#alternatives
 
-  ⚠ eslint-plugin-react(no-react-children): `React.Children` should not be used.
+  ⚠ react(no-react-children): `React.Children` should not be used.
    ╭─[no_react_children.tsx:1:35]
  1 │ import { Children } from 'react'; Children.only(children)
    ·                                   ─────────────
@@ -26,7 +26,7 @@ source: crates/oxc_linter/src/tester.rs
   help: `React.Children` is uncommon and leads to fragile React components.
   note: https://react.dev/reference/react/Children#alternatives
 
-  ⚠ eslint-plugin-react(no-react-children): `React.Children` should not be used.
+  ⚠ react(no-react-children): `React.Children` should not be used.
    ╭─[no_react_children.tsx:1:35]
  1 │ import { Children } from 'react'; Children.count(children)
    ·                                   ──────────────
@@ -34,7 +34,7 @@ source: crates/oxc_linter/src/tester.rs
   help: `React.Children` is uncommon and leads to fragile React components.
   note: https://react.dev/reference/react/Children#alternatives
 
-  ⚠ eslint-plugin-react(no-react-children): `React.Children` should not be used.
+  ⚠ react(no-react-children): `React.Children` should not be used.
    ╭─[no_react_children.tsx:1:35]
  1 │ import { Children } from 'react'; Children.forEach(children, (child, index) => {})
    ·                                   ────────────────
@@ -42,7 +42,7 @@ source: crates/oxc_linter/src/tester.rs
   help: `React.Children` is uncommon and leads to fragile React components.
   note: https://react.dev/reference/react/Children#alternatives
 
-  ⚠ eslint-plugin-react(no-react-children): `React.Children` should not be used.
+  ⚠ react(no-react-children): `React.Children` should not be used.
    ╭─[no_react_children.tsx:1:28]
  1 │ import React from 'react'; React.Children.toArray(children)
    ·                            ──────────────────────
@@ -50,7 +50,7 @@ source: crates/oxc_linter/src/tester.rs
   help: `React.Children` is uncommon and leads to fragile React components.
   note: https://react.dev/reference/react/Children#alternatives
 
-  ⚠ eslint-plugin-react(no-react-children): `React.Children` should not be used.
+  ⚠ react(no-react-children): `React.Children` should not be used.
    ╭─[no_react_children.tsx:1:28]
  1 │ import React from 'react'; React.Children.map(children, child => <div>{child}</div>)
    ·                            ──────────────────
@@ -58,7 +58,7 @@ source: crates/oxc_linter/src/tester.rs
   help: `React.Children` is uncommon and leads to fragile React components.
   note: https://react.dev/reference/react/Children#alternatives
 
-  ⚠ eslint-plugin-react(no-react-children): `React.Children` should not be used.
+  ⚠ react(no-react-children): `React.Children` should not be used.
    ╭─[no_react_children.tsx:1:28]
  1 │ import React from 'react'; React.Children.only(children)
    ·                            ───────────────────
@@ -66,7 +66,7 @@ source: crates/oxc_linter/src/tester.rs
   help: `React.Children` is uncommon and leads to fragile React components.
   note: https://react.dev/reference/react/Children#alternatives
 
-  ⚠ eslint-plugin-react(no-react-children): `React.Children` should not be used.
+  ⚠ react(no-react-children): `React.Children` should not be used.
    ╭─[no_react_children.tsx:1:28]
  1 │ import React from 'react'; React.Children.count(children)
    ·                            ────────────────────
@@ -74,7 +74,7 @@ source: crates/oxc_linter/src/tester.rs
   help: `React.Children` is uncommon and leads to fragile React components.
   note: https://react.dev/reference/react/Children#alternatives
 
-  ⚠ eslint-plugin-react(no-react-children): `React.Children` should not be used.
+  ⚠ react(no-react-children): `React.Children` should not be used.
    ╭─[no_react_children.tsx:1:28]
  1 │ import React from 'react'; React.Children.forEach(children, (child, index) => {})
    ·                            ──────────────────────
@@ -82,7 +82,7 @@ source: crates/oxc_linter/src/tester.rs
   help: `React.Children` is uncommon and leads to fragile React components.
   note: https://react.dev/reference/react/Children#alternatives
 
-  ⚠ eslint-plugin-react(no-react-children): `React.Children` should not be used.
+  ⚠ react(no-react-children): `React.Children` should not be used.
    ╭─[no_react_children.tsx:1:33]
  1 │ import * as React from 'react'; React.Children.map(children, child => <div>{child}</div>)
    ·                                 ──────────────────
@@ -90,7 +90,7 @@ source: crates/oxc_linter/src/tester.rs
   help: `React.Children` is uncommon and leads to fragile React components.
   note: https://react.dev/reference/react/Children#alternatives
 
-  ⚠ eslint-plugin-react(no-react-children): `React.Children` should not be used.
+  ⚠ react(no-react-children): `React.Children` should not be used.
    ╭─[no_react_children.tsx:1:42]
  1 │ import React, { Children } from 'react'; Children.toArray(children)
    ·                                          ────────────────
@@ -98,7 +98,7 @@ source: crates/oxc_linter/src/tester.rs
   help: `React.Children` is uncommon and leads to fragile React components.
   note: https://react.dev/reference/react/Children#alternatives
 
-  ⚠ eslint-plugin-react(no-react-children): `React.Children` should not be used.
+  ⚠ react(no-react-children): `React.Children` should not be used.
    ╭─[no_react_children.tsx:4:33]
  3 │            return (
  4 │              <><h1>Total rows: {Children.count(children)}</h1></>
@@ -108,7 +108,7 @@ source: crates/oxc_linter/src/tester.rs
   help: `React.Children` is uncommon and leads to fragile React components.
   note: https://react.dev/reference/react/Children#alternatives
 
-  ⚠ eslint-plugin-react(no-react-children): `React.Children` should not be used.
+  ⚠ react(no-react-children): `React.Children` should not be used.
    ╭─[no_react_children.tsx:3:35]
  2 │          export const Table = ({ children }) => {
  3 │            const mappedChildren = React.Children.map(children, (child) =>
@@ -118,7 +118,7 @@ source: crates/oxc_linter/src/tester.rs
   help: `React.Children` is uncommon and leads to fragile React components.
   note: https://react.dev/reference/react/Children#alternatives
 
-  ⚠ eslint-plugin-react(no-react-children): `React.Children` should not be used.
+  ⚠ react(no-react-children): `React.Children` should not be used.
    ╭─[no_react_children.tsx:4:12]
  3 │            const result = [];
  4 │            Children.forEach(children, (child, index) => {
@@ -128,7 +128,7 @@ source: crates/oxc_linter/src/tester.rs
   help: `React.Children` is uncommon and leads to fragile React components.
   note: https://react.dev/reference/react/Children#alternatives
 
-  ⚠ eslint-plugin-react(no-react-children): `React.Children` should not be used.
+  ⚠ react(no-react-children): `React.Children` should not be used.
    ╭─[no_react_children.tsx:5:19]
  4 │                <div className="RowList">
  5 │                  {Children.map(children, child =>
@@ -138,7 +138,7 @@ source: crates/oxc_linter/src/tester.rs
   help: `React.Children` is uncommon and leads to fragile React components.
   note: https://react.dev/reference/react/Children#alternatives
 
-  ⚠ eslint-plugin-react(no-react-children): `React.Children` should not be used.
+  ⚠ react(no-react-children): `React.Children` should not be used.
    ╭─[no_react_children.tsx:4:12]
  3 │            const result = [];
  4 │            React.Children.forEach(children, (child, index) => {
@@ -148,7 +148,7 @@ source: crates/oxc_linter/src/tester.rs
   help: `React.Children` is uncommon and leads to fragile React components.
   note: https://react.dev/reference/react/Children#alternatives
 
-  ⚠ eslint-plugin-react(no-react-children): `React.Children` should not be used.
+  ⚠ react(no-react-children): `React.Children` should not be used.
    ╭─[no_react_children.tsx:1:28]
  1 │ import React from 'react'; React.Children?.map(children, child => child)
    ·                            ───────────────────
@@ -156,7 +156,7 @@ source: crates/oxc_linter/src/tester.rs
   help: `React.Children` is uncommon and leads to fragile React components.
   note: https://react.dev/reference/react/Children#alternatives
 
-  ⚠ eslint-plugin-react(no-react-children): `React.Children` should not be used.
+  ⚠ react(no-react-children): `React.Children` should not be used.
    ╭─[no_react_children.tsx:1:35]
  1 │ import { Children } from 'react'; (Children).map(children, child => child)
    ·                                   ──────────────
@@ -164,7 +164,7 @@ source: crates/oxc_linter/src/tester.rs
   help: `React.Children` is uncommon and leads to fragile React components.
   note: https://react.dev/reference/react/Children#alternatives
 
-  ⚠ eslint-plugin-react(no-react-children): `React.Children` should not be used.
+  ⚠ react(no-react-children): `React.Children` should not be used.
    ╭─[no_react_children.tsx:1:28]
  1 │ import React from 'react'; (React.Children).map(children, child => child)
    ·                            ────────────────────
@@ -172,7 +172,7 @@ source: crates/oxc_linter/src/tester.rs
   help: `React.Children` is uncommon and leads to fragile React components.
   note: https://react.dev/reference/react/Children#alternatives
 
-  ⚠ eslint-plugin-react(no-react-children): `React.Children` should not be used.
+  ⚠ react(no-react-children): `React.Children` should not be used.
    ╭─[no_react_children.tsx:1:28]
  1 │ import React from 'react'; (React.Children as any).map(children, child => child)
    ·                            ───────────────────────────

@@ -9,6 +9,7 @@ use crate::{
     AstNode,
     context::{ContextHost, LintContext},
     rule::{DefaultRuleConfig, Rule},
+    utils::has_ambient_typescript_ancestor,
 };
 
 fn no_namespace_diagnostic(span: Span) -> OxcDiagnostic {
@@ -113,6 +114,8 @@ declare_oxc_lint!(
     typescript,
     restriction,
     config = NoNamespace,
+    version = "0.0.8",
+    short_description = "Disallow TypeScript namespaces.",
 );
 
 impl Rule for NoNamespace {
@@ -135,7 +138,7 @@ impl Rule for NoNamespace {
         }
 
         if self.allow_declarations
-            && (declaration.declare || is_any_ancestor_declaration(node, ctx))
+            && (declaration.declare || has_ambient_typescript_ancestor(node.id(), ctx.nodes()))
         {
             return;
         }
@@ -154,15 +157,6 @@ impl Rule for NoNamespace {
         }
         ctx.source_type().is_typescript()
     }
-}
-
-fn is_any_ancestor_declaration(node: &AstNode, ctx: &LintContext) -> bool {
-    ctx.nodes().ancestors(node.id()).any(|node| match node.kind() {
-        AstKind::TSModuleDeclaration(decl) => decl.declare,
-        // No need to check `declare` field, as `global` is only valid in ambient context
-        AstKind::TSGlobalDeclaration(_) => true,
-        _ => false,
-    })
 }
 
 #[test]
@@ -240,6 +234,12 @@ fn test() {
         (
             "module foo {}",
             Some(serde_json::json!([{ "allowDefinitionFiles": true }])),
+            None,
+            Some(PathBuf::from("test.d.ts")),
+        ),
+        (
+            "global { namespace foo {} }",
+            Some(serde_json::json!([{ "allowDeclarations": true, "allowDefinitionFiles": false }])),
             None,
             Some(PathBuf::from("test.d.ts")),
         ),
@@ -349,7 +349,7 @@ fn test() {
         (
             "namespace A {
                export declare namespace B {
-                 declare namespace C {}
+                 namespace C {}
                }
              }",
             Some(serde_json::json!([{ "allowDeclarations": true }])),
@@ -359,7 +359,7 @@ fn test() {
         (
             "namespace A {
                export declare namespace B {
-                 export declare namespace C {}
+                 export namespace C {}
                }
              }",
             Some(serde_json::json!([{ "allowDeclarations": true }])),
@@ -429,7 +429,7 @@ fn test() {
         (
             "export namespace A {
                export declare namespace B {
-                 declare namespace C {}
+                 namespace C {}
                }
              }",
             Some(serde_json::json!([{ "allowDeclarations": true }])),
@@ -439,7 +439,7 @@ fn test() {
         (
             "export namespace A {
                export declare namespace B {
-                 export declare namespace C {}
+                 export namespace C {}
                }
              }",
             Some(serde_json::json!([{ "allowDeclarations": true }])),

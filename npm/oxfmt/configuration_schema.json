@@ -5,50 +5,50 @@
   "type": "object",
   "properties": {
     "arrowParens": {
-      "description": "Include parentheses around a sole arrow function parameter.\n\n- Default: `\"always\"`",
+      "description": "Include parentheses around a sole arrow function parameter.\n\n- Languages: JS, JSX, TS, TSX\n- Default: `\"always\"`",
       "allOf": [
         {
           "$ref": "#/definitions/ArrowParensConfig"
         }
       ],
-      "markdownDescription": "Include parentheses around a sole arrow function parameter.\n\n- Default: `\"always\"`"
+      "markdownDescription": "Include parentheses around a sole arrow function parameter.\n\n- Languages: JS, JSX, TS, TSX\n- Default: `\"always\"`"
     },
     "bracketSameLine": {
-      "description": "Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,\ninstead of being alone on the next line (does not apply to self closing elements).\n\n- Default: `false`",
+      "description": "Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,\ninstead of being alone on the next line (does not apply to self closing elements).\n\n- Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte\n- Default: `false`",
       "type": "boolean",
-      "markdownDescription": "Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,\ninstead of being alone on the next line (does not apply to self closing elements).\n\n- Default: `false`"
+      "markdownDescription": "Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,\ninstead of being alone on the next line (does not apply to self closing elements).\n\n- Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte\n- Default: `false`"
     },
     "bracketSpacing": {
-      "description": "Print spaces between brackets in object literals.\n\n- Default: `true`",
+      "description": "Print spaces between brackets in object literals.\n\n- Languages: JS, JSX, TS, TSX, JSON, JSONC, JSON5, GraphQL, YAML\n- Default: `true`",
       "type": "boolean",
-      "markdownDescription": "Print spaces between brackets in object literals.\n\n- Default: `true`"
+      "markdownDescription": "Print spaces between brackets in object literals.\n\n- Languages: JS, JSX, TS, TSX, JSON, JSONC, JSON5, GraphQL, YAML\n- Default: `true`"
     },
     "embeddedLanguageFormatting": {
-      "description": "Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.\n\nNOTE: XXX-in-JS support is incomplete.\n\n- Default: `\"auto\"`",
+      "description": "Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.\n\n- Languages: JS, JSX, TS, TSX, HTML, Vue, Angular, Svelte, Markdown, MDX (languages with embedded code)\n- Default: `\"auto\"`",
       "allOf": [
         {
           "$ref": "#/definitions/EmbeddedLanguageFormattingConfig"
         }
       ],
-      "markdownDescription": "Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.\n\nNOTE: XXX-in-JS support is incomplete.\n\n- Default: `\"auto\"`"
+      "markdownDescription": "Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.\n\n- Languages: JS, JSX, TS, TSX, HTML, Vue, Angular, Svelte, Markdown, MDX (languages with embedded code)\n- Default: `\"auto\"`"
     },
     "endOfLine": {
-      "description": "Which end of line characters to apply.\n\nNOTE: `\"auto\"` is not supported.\n\n- Default: `\"lf\"`\n- Overrides `.editorconfig.end_of_line`",
+      "description": "Which end of line characters to apply.\n\nNOTE: `\"auto\"` is not supported.\n\n- Languages: All\n- Default: `\"lf\"`\n- Overrides `.editorconfig.end_of_line`",
       "allOf": [
         {
           "$ref": "#/definitions/EndOfLineConfig"
         }
       ],
-      "markdownDescription": "Which end of line characters to apply.\n\nNOTE: `\"auto\"` is not supported.\n\n- Default: `\"lf\"`\n- Overrides `.editorconfig.end_of_line`"
+      "markdownDescription": "Which end of line characters to apply.\n\nNOTE: `\"auto\"` is not supported.\n\n- Languages: All\n- Default: `\"lf\"`\n- Overrides `.editorconfig.end_of_line`"
     },
     "htmlWhitespaceSensitivity": {
-      "description": "Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.\n\n- Default: `\"css\"`",
+      "description": "Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.\n\n- Languages: HTML, Angular, Vue, Handlebars, Svelte\n- Default: `\"css\"`",
       "allOf": [
         {
           "$ref": "#/definitions/HtmlWhitespaceSensitivityConfig"
         }
       ],
-      "markdownDescription": "Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.\n\n- Default: `\"css\"`"
+      "markdownDescription": "Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.\n\n- Languages: HTML, Angular, Vue, Handlebars, Svelte\n- Default: `\"css\"`"
     },
     "ignorePatterns": {
       "description": "Ignore files matching these glob patterns.\nPatterns are based on the location of the Oxfmt configuration file.\n\n- Default: `[]`",
@@ -59,32 +59,32 @@
       "markdownDescription": "Ignore files matching these glob patterns.\nPatterns are based on the location of the Oxfmt configuration file.\n\n- Default: `[]`"
     },
     "insertFinalNewline": {
-      "description": "Whether to insert a final newline at the end of the file.\n\n- Default: `true`\n- Overrides `.editorconfig.insert_final_newline`",
+      "description": "Whether to insert a final newline at the end of the file.\n\n- Languages: All\n- Default: `true`\n- Overrides `.editorconfig.insert_final_newline`",
       "type": "boolean",
-      "markdownDescription": "Whether to insert a final newline at the end of the file.\n\n- Default: `true`\n- Overrides `.editorconfig.insert_final_newline`"
+      "markdownDescription": "Whether to insert a final newline at the end of the file.\n\n- Languages: All\n- Default: `true`\n- Overrides `.editorconfig.insert_final_newline`"
     },
     "jsdoc": {
-      "description": "Enable JSDoc comment formatting.\n\nWhen enabled, JSDoc comments are normalized and reformatted:\ntag aliases are canonicalized, descriptions are capitalized,\nlong lines are wrapped, and short comments are collapsed to single-line.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Default: Disabled",
+      "description": "Enable JSDoc comment formatting.\n\nWhen enabled, JSDoc comments are normalized and reformatted:\ntag aliases are canonicalized, descriptions are capitalized,\nlong lines are wrapped, and short comments are collapsed to single-line.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Languages: JS, JSX, TS, TSX\n- Default: Disabled",
       "allOf": [
         {
           "$ref": "#/definitions/JsdocUserConfig"
         }
       ],
-      "markdownDescription": "Enable JSDoc comment formatting.\n\nWhen enabled, JSDoc comments are normalized and reformatted:\ntag aliases are canonicalized, descriptions are capitalized,\nlong lines are wrapped, and short comments are collapsed to single-line.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Default: Disabled"
+      "markdownDescription": "Enable JSDoc comment formatting.\n\nWhen enabled, JSDoc comments are normalized and reformatted:\ntag aliases are canonicalized, descriptions are capitalized,\nlong lines are wrapped, and short comments are collapsed to single-line.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Languages: JS, JSX, TS, TSX\n- Default: Disabled"
     },
     "jsxSingleQuote": {
-      "description": "Use single quotes instead of double quotes in JSX.\n\n- Default: `false`",
+      "description": "Use single quotes instead of double quotes in JSX.\n\n- Languages: JSX, TSX\n- Default: `false`",
       "type": "boolean",
-      "markdownDescription": "Use single quotes instead of double quotes in JSX.\n\n- Default: `false`"
+      "markdownDescription": "Use single quotes instead of double quotes in JSX.\n\n- Languages: JSX, TSX\n- Default: `false`"
     },
     "objectWrap": {
-      "description": "How to wrap object literals when they could fit on one line or span multiple lines.\n\nBy default, formats objects as multi-line if there is a newline prior to the first property.\nAuthors can use this heuristic to contextually improve readability, though it has some downsides.\n\n- Default: `\"preserve\"`",
+      "description": "How to wrap object literals when they could fit on one line or span multiple lines.\n\nBy default, formats objects as multi-line if there is a newline prior to the first property.\nAuthors can use this heuristic to contextually improve readability, though it has some downsides.\n\n- Languages: JS, JSX, TS, TSX, JSON, JSONC, JSON5\n- Default: `\"preserve\"`",
       "allOf": [
         {
           "$ref": "#/definitions/ObjectWrapConfig"
         }
       ],
-      "markdownDescription": "How to wrap object literals when they could fit on one line or span multiple lines.\n\nBy default, formats objects as multi-line if there is a newline prior to the first property.\nAuthors can use this heuristic to contextually improve readability, though it has some downsides.\n\n- Default: `\"preserve\"`"
+      "markdownDescription": "How to wrap object literals when they could fit on one line or span multiple lines.\n\nBy default, formats objects as multi-line if there is a newline prior to the first property.\nAuthors can use this heuristic to contextually improve readability, though it has some downsides.\n\n- Languages: JS, JSX, TS, TSX, JSON, JSONC, JSON5\n- Default: `\"preserve\"`"
     },
     "overrides": {
       "description": "File-specific overrides.\nWhen a file matches multiple overrides, the later override takes precedence (array order matters).\n\n- Default: `[]`",
@@ -95,97 +95,106 @@
       "markdownDescription": "File-specific overrides.\nWhen a file matches multiple overrides, the later override takes precedence (array order matters).\n\n- Default: `[]`"
     },
     "printWidth": {
-      "description": "Specify the line length that the printer will wrap on.\n\nIf you don't want line wrapping when formatting Markdown, you can set the `proseWrap` option to disable it.\n\n- Default: `100`\n- Overrides `.editorconfig.max_line_length`",
+      "description": "Specify the line length that the printer will wrap on.\n\nIf you don't want line wrapping when formatting Markdown, you can set the `proseWrap` option to disable it.\n\n- Languages: All\n- Default: `100`\n- Overrides `.editorconfig.max_line_length`",
       "type": "integer",
       "format": "uint16",
       "minimum": 0.0,
-      "markdownDescription": "Specify the line length that the printer will wrap on.\n\nIf you don't want line wrapping when formatting Markdown, you can set the `proseWrap` option to disable it.\n\n- Default: `100`\n- Overrides `.editorconfig.max_line_length`"
+      "markdownDescription": "Specify the line length that the printer will wrap on.\n\nIf you don't want line wrapping when formatting Markdown, you can set the `proseWrap` option to disable it.\n\n- Languages: All\n- Default: `100`\n- Overrides `.editorconfig.max_line_length`"
     },
     "proseWrap": {
-      "description": "How to wrap prose.\n\nBy default, formatter will not change wrapping in markdown text since some services use a linebreak-sensitive renderer, e.g. GitHub comments and BitBucket.\nTo wrap prose to the print width, change this option to \"always\".\nIf you want to force all prose blocks to be on a single line and rely on editor/viewer soft wrapping instead, you can use \"never\".\n\n- Default: `\"preserve\"`",
+      "description": "How to wrap prose.\n\nBy default, formatter will not change wrapping in markdown text since some services use a linebreak-sensitive renderer, e.g. GitHub comments and BitBucket.\nTo wrap prose to the print width, change this option to \"always\".\nIf you want to force all prose blocks to be on a single line and rely on editor/viewer soft wrapping instead, you can use \"never\".\n\n- Languages: Markdown, MDX, YAML\n- Default: `\"preserve\"`",
       "allOf": [
         {
           "$ref": "#/definitions/ProseWrapConfig"
         }
       ],
-      "markdownDescription": "How to wrap prose.\n\nBy default, formatter will not change wrapping in markdown text since some services use a linebreak-sensitive renderer, e.g. GitHub comments and BitBucket.\nTo wrap prose to the print width, change this option to \"always\".\nIf you want to force all prose blocks to be on a single line and rely on editor/viewer soft wrapping instead, you can use \"never\".\n\n- Default: `\"preserve\"`"
+      "markdownDescription": "How to wrap prose.\n\nBy default, formatter will not change wrapping in markdown text since some services use a linebreak-sensitive renderer, e.g. GitHub comments and BitBucket.\nTo wrap prose to the print width, change this option to \"always\".\nIf you want to force all prose blocks to be on a single line and rely on editor/viewer soft wrapping instead, you can use \"never\".\n\n- Languages: Markdown, MDX, YAML\n- Default: `\"preserve\"`"
     },
     "quoteProps": {
-      "description": "Change when properties in objects are quoted.\n\n- Default: `\"as-needed\"`",
+      "description": "Change when properties in objects are quoted.\n\n- Languages: JS, JSX, TS, TSX\n- Default: `\"as-needed\"`",
       "allOf": [
         {
           "$ref": "#/definitions/QuotePropsConfig"
         }
       ],
-      "markdownDescription": "Change when properties in objects are quoted.\n\n- Default: `\"as-needed\"`"
+      "markdownDescription": "Change when properties in objects are quoted.\n\n- Languages: JS, JSX, TS, TSX\n- Default: `\"as-needed\"`"
     },
     "semi": {
-      "description": "Print semicolons at the ends of statements.\n\n- Default: `true`",
+      "description": "Print semicolons at the ends of statements.\n\n- Languages: JS, JSX, TS, TSX\n- Default: `true`",
       "type": "boolean",
-      "markdownDescription": "Print semicolons at the ends of statements.\n\n- Default: `true`"
+      "markdownDescription": "Print semicolons at the ends of statements.\n\n- Languages: JS, JSX, TS, TSX\n- Default: `true`"
     },
     "singleAttributePerLine": {
-      "description": "Enforce single attribute per line in HTML, Vue, and JSX.\n\n- Default: `false`",
+      "description": "Enforce single attribute per line in HTML, Vue, and JSX.\n\n- Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte\n- Default: `false`",
       "type": "boolean",
-      "markdownDescription": "Enforce single attribute per line in HTML, Vue, and JSX.\n\n- Default: `false`"
+      "markdownDescription": "Enforce single attribute per line in HTML, Vue, and JSX.\n\n- Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte\n- Default: `false`"
     },
     "singleQuote": {
-      "description": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Default: `false`",
+      "description": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Languages: JS, JSX, TS, TSX, CSS, Less, SCSS, Markdown, MDX, YAML, Handlebars, Svelte\n- Default: `false`\n- Overrides `.editorconfig.quote_type`",
       "type": "boolean",
-      "markdownDescription": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Default: `false`"
+      "markdownDescription": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Languages: JS, JSX, TS, TSX, CSS, Less, SCSS, Markdown, MDX, YAML, Handlebars, Svelte\n- Default: `false`\n- Overrides `.editorconfig.quote_type`"
     },
     "sortImports": {
-      "description": "Sort import statements.\n\nUsing the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).\nFor details, see each field's documentation.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Default: Disabled",
+      "description": "Sort import statements.\n\nUsing the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).\nFor details, see each field's documentation.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Languages: JS, JSX, TS, TSX\n- Default: Disabled",
       "allOf": [
         {
           "$ref": "#/definitions/SortImportsUserConfig"
         }
       ],
-      "markdownDescription": "Sort import statements.\n\nUsing the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).\nFor details, see each field's documentation.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Default: Disabled"
+      "markdownDescription": "Sort import statements.\n\nUsing the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).\nFor details, see each field's documentation.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Languages: JS, JSX, TS, TSX\n- Default: Disabled"
     },
     "sortPackageJson": {
-      "description": "Sort `package.json` keys.\n\nThe algorithm is NOT compatible with [prettier-plugin-sort-packagejson](https://github.com/matzkoh/prettier-plugin-packagejson).\nBut we believe it is clearer and easier to navigate.\nFor details, see each field's documentation.\n\n- Default: `true`",
+      "description": "Sort `package.json` keys.\n\nThe algorithm is NOT compatible with [prettier-plugin-sort-packagejson](https://github.com/matzkoh/prettier-plugin-packagejson).\nBut we believe it is clearer and easier to navigate.\nFor details, see each field's documentation.\n\n- Languages: JSON (`package.json` only)\n- Default: `true`",
       "allOf": [
         {
           "$ref": "#/definitions/SortPackageJsonUserConfig"
         }
       ],
-      "markdownDescription": "Sort `package.json` keys.\n\nThe algorithm is NOT compatible with [prettier-plugin-sort-packagejson](https://github.com/matzkoh/prettier-plugin-packagejson).\nBut we believe it is clearer and easier to navigate.\nFor details, see each field's documentation.\n\n- Default: `true`"
+      "markdownDescription": "Sort `package.json` keys.\n\nThe algorithm is NOT compatible with [prettier-plugin-sort-packagejson](https://github.com/matzkoh/prettier-plugin-packagejson).\nBut we believe it is clearer and easier to navigate.\nFor details, see each field's documentation.\n\n- Languages: JSON (`package.json` only)\n- Default: `true`"
     },
     "sortTailwindcss": {
-      "description": "Sort Tailwind CSS classes.\n\nUsing the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).\nOption names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).\nFor details, see each field's documentation.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Default: Disabled",
+      "description": "Sort Tailwind CSS classes.\n\nUsing the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).\nOption names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).\nFor details, see each field's documentation.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Languages: JS, JSX, TS, TSX, HTML, Vue, Angular, Handlebars, CSS, SCSS, Less, Svelte\n- Default: Disabled",
       "allOf": [
         {
           "$ref": "#/definitions/SortTailwindcssUserConfig"
         }
       ],
-      "markdownDescription": "Sort Tailwind CSS classes.\n\nUsing the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).\nOption names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).\nFor details, see each field's documentation.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Default: Disabled"
+      "markdownDescription": "Sort Tailwind CSS classes.\n\nUsing the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).\nOption names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).\nFor details, see each field's documentation.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Languages: JS, JSX, TS, TSX, HTML, Vue, Angular, Handlebars, CSS, SCSS, Less, Svelte\n- Default: Disabled"
+    },
+    "svelte": {
+      "description": "Options for `prettier-plugin-svelte`.\n\nPass `true` or an object to enable `.svelte` file formatting,\nor `false` (handy in overrides) / omit to disable.\nSetting `true` resets to defaults — any options inherited from a parent scope are dropped.\n\nNOTE: `prettier-plugin-svelte` requires the `svelte` package (`svelte/compiler`) at runtime,\nbut Oxfmt does NOT bundle or auto-install it.\nYou must install `svelte` yourself in your project, formatting will fail at runtime otherwise.\n\n- Languages: Svelte\n- Default: Disabled",
+      "allOf": [
+        {
+          "$ref": "#/definitions/SvelteUserConfig"
+        }
+      ],
+      "markdownDescription": "Options for `prettier-plugin-svelte`.\n\nPass `true` or an object to enable `.svelte` file formatting,\nor `false` (handy in overrides) / omit to disable.\nSetting `true` resets to defaults — any options inherited from a parent scope are dropped.\n\nNOTE: `prettier-plugin-svelte` requires the `svelte` package (`svelte/compiler`) at runtime,\nbut Oxfmt does NOT bundle or auto-install it.\nYou must install `svelte` yourself in your project, formatting will fail at runtime otherwise.\n\n- Languages: Svelte\n- Default: Disabled"
     },
     "tabWidth": {
-      "description": "Specify the number of spaces per indentation-level.\n\n- Default: `2`\n- Overrides `.editorconfig.indent_size` (falls back to `.editorconfig.tab_width`)",
+      "description": "Specify the number of spaces per indentation-level.\n\n- Languages: All\n- Default: `2`\n- Overrides `.editorconfig.indent_size` (falls back to `.editorconfig.tab_width`)",
       "type": "integer",
       "format": "uint8",
       "minimum": 0.0,
-      "markdownDescription": "Specify the number of spaces per indentation-level.\n\n- Default: `2`\n- Overrides `.editorconfig.indent_size` (falls back to `.editorconfig.tab_width`)"
+      "markdownDescription": "Specify the number of spaces per indentation-level.\n\n- Languages: All\n- Default: `2`\n- Overrides `.editorconfig.indent_size` (falls back to `.editorconfig.tab_width`)"
     },
     "trailingComma": {
-      "description": "Print trailing commas wherever possible in multi-line comma-separated syntactic structures.\n\nA single-line array, for example, never gets trailing commas.\n\n- Default: `\"all\"`",
+      "description": "Print trailing commas wherever possible in multi-line comma-separated syntactic structures.\n\nA single-line array, for example, never gets trailing commas.\n\n- Languages: JS, JSX, TS, TSX, JSONC, JSON5, TOML, CSS, Less, SCSS, YAML\n- Default: `\"all\"`",
       "allOf": [
         {
           "$ref": "#/definitions/TrailingCommaConfig"
         }
       ],
-      "markdownDescription": "Print trailing commas wherever possible in multi-line comma-separated syntactic structures.\n\nA single-line array, for example, never gets trailing commas.\n\n- Default: `\"all\"`"
+      "markdownDescription": "Print trailing commas wherever possible in multi-line comma-separated syntactic structures.\n\nA single-line array, for example, never gets trailing commas.\n\n- Languages: JS, JSX, TS, TSX, JSONC, JSON5, TOML, CSS, Less, SCSS, YAML\n- Default: `\"all\"`"
     },
     "useTabs": {
-      "description": "Indent lines with tabs instead of spaces.\n\n- Default: `false`\n- Overrides `.editorconfig.indent_style`",
+      "description": "Indent lines with tabs instead of spaces.\n\n- Languages: All\n- Default: `false`\n- Overrides `.editorconfig.indent_style`",
       "type": "boolean",
-      "markdownDescription": "Indent lines with tabs instead of spaces.\n\n- Default: `false`\n- Overrides `.editorconfig.indent_style`"
+      "markdownDescription": "Indent lines with tabs instead of spaces.\n\n- Languages: All\n- Default: `false`\n- Overrides `.editorconfig.indent_style`"
     },
     "vueIndentScriptAndStyle": {
-      "description": "Whether or not to indent the code inside `<script>` and `<style>` tags in Vue files.\n\n- Default: `false`",
+      "description": "Whether or not to indent the code inside `<script>` and `<style>` tags in Vue files.\n\n- Languages: Vue\n- Default: `false`",
       "type": "boolean",
-      "markdownDescription": "Whether or not to indent the code inside `<script>` and `<style>` tags in Vue files.\n\n- Default: `false`"
+      "markdownDescription": "Whether or not to indent the code inside `<script>` and `<style>` tags in Vue files.\n\n- Languages: Vue\n- Default: `false`"
     }
   },
   "allowComments": true,
@@ -250,173 +259,190 @@
       "type": "object",
       "properties": {
         "arrowParens": {
-          "description": "Include parentheses around a sole arrow function parameter.\n\n- Default: `\"always\"`",
+          "description": "Include parentheses around a sole arrow function parameter.\n\n- Languages: JS, JSX, TS, TSX\n- Default: `\"always\"`",
           "allOf": [
             {
               "$ref": "#/definitions/ArrowParensConfig"
             }
           ],
-          "markdownDescription": "Include parentheses around a sole arrow function parameter.\n\n- Default: `\"always\"`"
+          "markdownDescription": "Include parentheses around a sole arrow function parameter.\n\n- Languages: JS, JSX, TS, TSX\n- Default: `\"always\"`"
         },
         "bracketSameLine": {
-          "description": "Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,\ninstead of being alone on the next line (does not apply to self closing elements).\n\n- Default: `false`",
+          "description": "Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,\ninstead of being alone on the next line (does not apply to self closing elements).\n\n- Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte\n- Default: `false`",
           "type": "boolean",
-          "markdownDescription": "Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,\ninstead of being alone on the next line (does not apply to self closing elements).\n\n- Default: `false`"
+          "markdownDescription": "Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,\ninstead of being alone on the next line (does not apply to self closing elements).\n\n- Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte\n- Default: `false`"
         },
         "bracketSpacing": {
-          "description": "Print spaces between brackets in object literals.\n\n- Default: `true`",
+          "description": "Print spaces between brackets in object literals.\n\n- Languages: JS, JSX, TS, TSX, JSON, JSONC, JSON5, GraphQL, YAML\n- Default: `true`",
           "type": "boolean",
-          "markdownDescription": "Print spaces between brackets in object literals.\n\n- Default: `true`"
+          "markdownDescription": "Print spaces between brackets in object literals.\n\n- Languages: JS, JSX, TS, TSX, JSON, JSONC, JSON5, GraphQL, YAML\n- Default: `true`"
         },
         "embeddedLanguageFormatting": {
-          "description": "Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.\n\nNOTE: XXX-in-JS support is incomplete.\n\n- Default: `\"auto\"`",
+          "description": "Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.\n\n- Languages: JS, JSX, TS, TSX, HTML, Vue, Angular, Svelte, Markdown, MDX (languages with embedded code)\n- Default: `\"auto\"`",
           "allOf": [
             {
               "$ref": "#/definitions/EmbeddedLanguageFormattingConfig"
             }
           ],
-          "markdownDescription": "Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.\n\nNOTE: XXX-in-JS support is incomplete.\n\n- Default: `\"auto\"`"
+          "markdownDescription": "Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.\n\n- Languages: JS, JSX, TS, TSX, HTML, Vue, Angular, Svelte, Markdown, MDX (languages with embedded code)\n- Default: `\"auto\"`"
         },
         "endOfLine": {
-          "description": "Which end of line characters to apply.\n\nNOTE: `\"auto\"` is not supported.\n\n- Default: `\"lf\"`\n- Overrides `.editorconfig.end_of_line`",
+          "description": "Which end of line characters to apply.\n\nNOTE: `\"auto\"` is not supported.\n\n- Languages: All\n- Default: `\"lf\"`\n- Overrides `.editorconfig.end_of_line`",
           "allOf": [
             {
               "$ref": "#/definitions/EndOfLineConfig"
             }
           ],
-          "markdownDescription": "Which end of line characters to apply.\n\nNOTE: `\"auto\"` is not supported.\n\n- Default: `\"lf\"`\n- Overrides `.editorconfig.end_of_line`"
+          "markdownDescription": "Which end of line characters to apply.\n\nNOTE: `\"auto\"` is not supported.\n\n- Languages: All\n- Default: `\"lf\"`\n- Overrides `.editorconfig.end_of_line`"
         },
         "htmlWhitespaceSensitivity": {
-          "description": "Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.\n\n- Default: `\"css\"`",
+          "description": "Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.\n\n- Languages: HTML, Angular, Vue, Handlebars, Svelte\n- Default: `\"css\"`",
           "allOf": [
             {
               "$ref": "#/definitions/HtmlWhitespaceSensitivityConfig"
             }
           ],
-          "markdownDescription": "Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.\n\n- Default: `\"css\"`"
+          "markdownDescription": "Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.\n\n- Languages: HTML, Angular, Vue, Handlebars, Svelte\n- Default: `\"css\"`"
         },
         "insertFinalNewline": {
-          "description": "Whether to insert a final newline at the end of the file.\n\n- Default: `true`\n- Overrides `.editorconfig.insert_final_newline`",
+          "description": "Whether to insert a final newline at the end of the file.\n\n- Languages: All\n- Default: `true`\n- Overrides `.editorconfig.insert_final_newline`",
           "type": "boolean",
-          "markdownDescription": "Whether to insert a final newline at the end of the file.\n\n- Default: `true`\n- Overrides `.editorconfig.insert_final_newline`"
+          "markdownDescription": "Whether to insert a final newline at the end of the file.\n\n- Languages: All\n- Default: `true`\n- Overrides `.editorconfig.insert_final_newline`"
         },
         "jsdoc": {
-          "description": "Enable JSDoc comment formatting.\n\nWhen enabled, JSDoc comments are normalized and reformatted:\ntag aliases are canonicalized, descriptions are capitalized,\nlong lines are wrapped, and short comments are collapsed to single-line.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Default: Disabled",
+          "description": "Enable JSDoc comment formatting.\n\nWhen enabled, JSDoc comments are normalized and reformatted:\ntag aliases are canonicalized, descriptions are capitalized,\nlong lines are wrapped, and short comments are collapsed to single-line.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Languages: JS, JSX, TS, TSX\n- Default: Disabled",
           "allOf": [
             {
               "$ref": "#/definitions/JsdocUserConfig"
             }
           ],
-          "markdownDescription": "Enable JSDoc comment formatting.\n\nWhen enabled, JSDoc comments are normalized and reformatted:\ntag aliases are canonicalized, descriptions are capitalized,\nlong lines are wrapped, and short comments are collapsed to single-line.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Default: Disabled"
+          "markdownDescription": "Enable JSDoc comment formatting.\n\nWhen enabled, JSDoc comments are normalized and reformatted:\ntag aliases are canonicalized, descriptions are capitalized,\nlong lines are wrapped, and short comments are collapsed to single-line.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Languages: JS, JSX, TS, TSX\n- Default: Disabled"
         },
         "jsxSingleQuote": {
-          "description": "Use single quotes instead of double quotes in JSX.\n\n- Default: `false`",
+          "description": "Use single quotes instead of double quotes in JSX.\n\n- Languages: JSX, TSX\n- Default: `false`",
           "type": "boolean",
-          "markdownDescription": "Use single quotes instead of double quotes in JSX.\n\n- Default: `false`"
+          "markdownDescription": "Use single quotes instead of double quotes in JSX.\n\n- Languages: JSX, TSX\n- Default: `false`"
         },
         "objectWrap": {
-          "description": "How to wrap object literals when they could fit on one line or span multiple lines.\n\nBy default, formats objects as multi-line if there is a newline prior to the first property.\nAuthors can use this heuristic to contextually improve readability, though it has some downsides.\n\n- Default: `\"preserve\"`",
+          "description": "How to wrap object literals when they could fit on one line or span multiple lines.\n\nBy default, formats objects as multi-line if there is a newline prior to the first property.\nAuthors can use this heuristic to contextually improve readability, though it has some downsides.\n\n- Languages: JS, JSX, TS, TSX, JSON, JSONC, JSON5\n- Default: `\"preserve\"`",
           "allOf": [
             {
               "$ref": "#/definitions/ObjectWrapConfig"
             }
           ],
-          "markdownDescription": "How to wrap object literals when they could fit on one line or span multiple lines.\n\nBy default, formats objects as multi-line if there is a newline prior to the first property.\nAuthors can use this heuristic to contextually improve readability, though it has some downsides.\n\n- Default: `\"preserve\"`"
+          "markdownDescription": "How to wrap object literals when they could fit on one line or span multiple lines.\n\nBy default, formats objects as multi-line if there is a newline prior to the first property.\nAuthors can use this heuristic to contextually improve readability, though it has some downsides.\n\n- Languages: JS, JSX, TS, TSX, JSON, JSONC, JSON5\n- Default: `\"preserve\"`"
         },
         "printWidth": {
-          "description": "Specify the line length that the printer will wrap on.\n\nIf you don't want line wrapping when formatting Markdown, you can set the `proseWrap` option to disable it.\n\n- Default: `100`\n- Overrides `.editorconfig.max_line_length`",
+          "description": "Specify the line length that the printer will wrap on.\n\nIf you don't want line wrapping when formatting Markdown, you can set the `proseWrap` option to disable it.\n\n- Languages: All\n- Default: `100`\n- Overrides `.editorconfig.max_line_length`",
           "type": "integer",
           "format": "uint16",
           "minimum": 0.0,
-          "markdownDescription": "Specify the line length that the printer will wrap on.\n\nIf you don't want line wrapping when formatting Markdown, you can set the `proseWrap` option to disable it.\n\n- Default: `100`\n- Overrides `.editorconfig.max_line_length`"
+          "markdownDescription": "Specify the line length that the printer will wrap on.\n\nIf you don't want line wrapping when formatting Markdown, you can set the `proseWrap` option to disable it.\n\n- Languages: All\n- Default: `100`\n- Overrides `.editorconfig.max_line_length`"
         },
         "proseWrap": {
-          "description": "How to wrap prose.\n\nBy default, formatter will not change wrapping in markdown text since some services use a linebreak-sensitive renderer, e.g. GitHub comments and BitBucket.\nTo wrap prose to the print width, change this option to \"always\".\nIf you want to force all prose blocks to be on a single line and rely on editor/viewer soft wrapping instead, you can use \"never\".\n\n- Default: `\"preserve\"`",
+          "description": "How to wrap prose.\n\nBy default, formatter will not change wrapping in markdown text since some services use a linebreak-sensitive renderer, e.g. GitHub comments and BitBucket.\nTo wrap prose to the print width, change this option to \"always\".\nIf you want to force all prose blocks to be on a single line and rely on editor/viewer soft wrapping instead, you can use \"never\".\n\n- Languages: Markdown, MDX, YAML\n- Default: `\"preserve\"`",
           "allOf": [
             {
               "$ref": "#/definitions/ProseWrapConfig"
             }
           ],
-          "markdownDescription": "How to wrap prose.\n\nBy default, formatter will not change wrapping in markdown text since some services use a linebreak-sensitive renderer, e.g. GitHub comments and BitBucket.\nTo wrap prose to the print width, change this option to \"always\".\nIf you want to force all prose blocks to be on a single line and rely on editor/viewer soft wrapping instead, you can use \"never\".\n\n- Default: `\"preserve\"`"
+          "markdownDescription": "How to wrap prose.\n\nBy default, formatter will not change wrapping in markdown text since some services use a linebreak-sensitive renderer, e.g. GitHub comments and BitBucket.\nTo wrap prose to the print width, change this option to \"always\".\nIf you want to force all prose blocks to be on a single line and rely on editor/viewer soft wrapping instead, you can use \"never\".\n\n- Languages: Markdown, MDX, YAML\n- Default: `\"preserve\"`"
         },
         "quoteProps": {
-          "description": "Change when properties in objects are quoted.\n\n- Default: `\"as-needed\"`",
+          "description": "Change when properties in objects are quoted.\n\n- Languages: JS, JSX, TS, TSX\n- Default: `\"as-needed\"`",
           "allOf": [
             {
               "$ref": "#/definitions/QuotePropsConfig"
             }
           ],
-          "markdownDescription": "Change when properties in objects are quoted.\n\n- Default: `\"as-needed\"`"
+          "markdownDescription": "Change when properties in objects are quoted.\n\n- Languages: JS, JSX, TS, TSX\n- Default: `\"as-needed\"`"
         },
         "semi": {
-          "description": "Print semicolons at the ends of statements.\n\n- Default: `true`",
+          "description": "Print semicolons at the ends of statements.\n\n- Languages: JS, JSX, TS, TSX\n- Default: `true`",
           "type": "boolean",
-          "markdownDescription": "Print semicolons at the ends of statements.\n\n- Default: `true`"
+          "markdownDescription": "Print semicolons at the ends of statements.\n\n- Languages: JS, JSX, TS, TSX\n- Default: `true`"
         },
         "singleAttributePerLine": {
-          "description": "Enforce single attribute per line in HTML, Vue, and JSX.\n\n- Default: `false`",
+          "description": "Enforce single attribute per line in HTML, Vue, and JSX.\n\n- Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte\n- Default: `false`",
           "type": "boolean",
-          "markdownDescription": "Enforce single attribute per line in HTML, Vue, and JSX.\n\n- Default: `false`"
+          "markdownDescription": "Enforce single attribute per line in HTML, Vue, and JSX.\n\n- Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte\n- Default: `false`"
         },
         "singleQuote": {
-          "description": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Default: `false`",
+          "description": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Languages: JS, JSX, TS, TSX, CSS, Less, SCSS, Markdown, MDX, YAML, Handlebars, Svelte\n- Default: `false`\n- Overrides `.editorconfig.quote_type`",
           "type": "boolean",
-          "markdownDescription": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Default: `false`"
+          "markdownDescription": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Languages: JS, JSX, TS, TSX, CSS, Less, SCSS, Markdown, MDX, YAML, Handlebars, Svelte\n- Default: `false`\n- Overrides `.editorconfig.quote_type`"
         },
         "sortImports": {
-          "description": "Sort import statements.\n\nUsing the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).\nFor details, see each field's documentation.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Default: Disabled",
+          "description": "Sort import statements.\n\nUsing the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).\nFor details, see each field's documentation.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Languages: JS, JSX, TS, TSX\n- Default: Disabled",
           "allOf": [
             {
               "$ref": "#/definitions/SortImportsUserConfig"
             }
           ],
-          "markdownDescription": "Sort import statements.\n\nUsing the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).\nFor details, see each field's documentation.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Default: Disabled"
+          "markdownDescription": "Sort import statements.\n\nUsing the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).\nFor details, see each field's documentation.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Languages: JS, JSX, TS, TSX\n- Default: Disabled"
         },
         "sortPackageJson": {
-          "description": "Sort `package.json` keys.\n\nThe algorithm is NOT compatible with [prettier-plugin-sort-packagejson](https://github.com/matzkoh/prettier-plugin-packagejson).\nBut we believe it is clearer and easier to navigate.\nFor details, see each field's documentation.\n\n- Default: `true`",
+          "description": "Sort `package.json` keys.\n\nThe algorithm is NOT compatible with [prettier-plugin-sort-packagejson](https://github.com/matzkoh/prettier-plugin-packagejson).\nBut we believe it is clearer and easier to navigate.\nFor details, see each field's documentation.\n\n- Languages: JSON (`package.json` only)\n- Default: `true`",
           "allOf": [
             {
               "$ref": "#/definitions/SortPackageJsonUserConfig"
             }
           ],
-          "markdownDescription": "Sort `package.json` keys.\n\nThe algorithm is NOT compatible with [prettier-plugin-sort-packagejson](https://github.com/matzkoh/prettier-plugin-packagejson).\nBut we believe it is clearer and easier to navigate.\nFor details, see each field's documentation.\n\n- Default: `true`"
+          "markdownDescription": "Sort `package.json` keys.\n\nThe algorithm is NOT compatible with [prettier-plugin-sort-packagejson](https://github.com/matzkoh/prettier-plugin-packagejson).\nBut we believe it is clearer and easier to navigate.\nFor details, see each field's documentation.\n\n- Languages: JSON (`package.json` only)\n- Default: `true`"
         },
         "sortTailwindcss": {
-          "description": "Sort Tailwind CSS classes.\n\nUsing the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).\nOption names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).\nFor details, see each field's documentation.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Default: Disabled",
+          "description": "Sort Tailwind CSS classes.\n\nUsing the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).\nOption names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).\nFor details, see each field's documentation.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Languages: JS, JSX, TS, TSX, HTML, Vue, Angular, Handlebars, CSS, SCSS, Less, Svelte\n- Default: Disabled",
           "allOf": [
             {
               "$ref": "#/definitions/SortTailwindcssUserConfig"
             }
           ],
-          "markdownDescription": "Sort Tailwind CSS classes.\n\nUsing the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).\nOption names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).\nFor details, see each field's documentation.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Default: Disabled"
+          "markdownDescription": "Sort Tailwind CSS classes.\n\nUsing the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).\nOption names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).\nFor details, see each field's documentation.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Languages: JS, JSX, TS, TSX, HTML, Vue, Angular, Handlebars, CSS, SCSS, Less, Svelte\n- Default: Disabled"
+        },
+        "svelte": {
+          "description": "Options for `prettier-plugin-svelte`.\n\nPass `true` or an object to enable `.svelte` file formatting,\nor `false` (handy in overrides) / omit to disable.\nSetting `true` resets to defaults — any options inherited from a parent scope are dropped.\n\nNOTE: `prettier-plugin-svelte` requires the `svelte` package (`svelte/compiler`) at runtime,\nbut Oxfmt does NOT bundle or auto-install it.\nYou must install `svelte` yourself in your project, formatting will fail at runtime otherwise.\n\n- Languages: Svelte\n- Default: Disabled",
+          "allOf": [
+            {
+              "$ref": "#/definitions/SvelteUserConfig"
+            }
+          ],
+          "markdownDescription": "Options for `prettier-plugin-svelte`.\n\nPass `true` or an object to enable `.svelte` file formatting,\nor `false` (handy in overrides) / omit to disable.\nSetting `true` resets to defaults — any options inherited from a parent scope are dropped.\n\nNOTE: `prettier-plugin-svelte` requires the `svelte` package (`svelte/compiler`) at runtime,\nbut Oxfmt does NOT bundle or auto-install it.\nYou must install `svelte` yourself in your project, formatting will fail at runtime otherwise.\n\n- Languages: Svelte\n- Default: Disabled"
         },
         "tabWidth": {
-          "description": "Specify the number of spaces per indentation-level.\n\n- Default: `2`\n- Overrides `.editorconfig.indent_size` (falls back to `.editorconfig.tab_width`)",
+          "description": "Specify the number of spaces per indentation-level.\n\n- Languages: All\n- Default: `2`\n- Overrides `.editorconfig.indent_size` (falls back to `.editorconfig.tab_width`)",
           "type": "integer",
           "format": "uint8",
           "minimum": 0.0,
-          "markdownDescription": "Specify the number of spaces per indentation-level.\n\n- Default: `2`\n- Overrides `.editorconfig.indent_size` (falls back to `.editorconfig.tab_width`)"
+          "markdownDescription": "Specify the number of spaces per indentation-level.\n\n- Languages: All\n- Default: `2`\n- Overrides `.editorconfig.indent_size` (falls back to `.editorconfig.tab_width`)"
         },
         "trailingComma": {
-          "description": "Print trailing commas wherever possible in multi-line comma-separated syntactic structures.\n\nA single-line array, for example, never gets trailing commas.\n\n- Default: `\"all\"`",
+          "description": "Print trailing commas wherever possible in multi-line comma-separated syntactic structures.\n\nA single-line array, for example, never gets trailing commas.\n\n- Languages: JS, JSX, TS, TSX, JSONC, JSON5, TOML, CSS, Less, SCSS, YAML\n- Default: `\"all\"`",
           "allOf": [
             {
               "$ref": "#/definitions/TrailingCommaConfig"
             }
           ],
-          "markdownDescription": "Print trailing commas wherever possible in multi-line comma-separated syntactic structures.\n\nA single-line array, for example, never gets trailing commas.\n\n- Default: `\"all\"`"
+          "markdownDescription": "Print trailing commas wherever possible in multi-line comma-separated syntactic structures.\n\nA single-line array, for example, never gets trailing commas.\n\n- Languages: JS, JSX, TS, TSX, JSONC, JSON5, TOML, CSS, Less, SCSS, YAML\n- Default: `\"all\"`"
         },
         "useTabs": {
-          "description": "Indent lines with tabs instead of spaces.\n\n- Default: `false`\n- Overrides `.editorconfig.indent_style`",
+          "description": "Indent lines with tabs instead of spaces.\n\n- Languages: All\n- Default: `false`\n- Overrides `.editorconfig.indent_style`",
           "type": "boolean",
-          "markdownDescription": "Indent lines with tabs instead of spaces.\n\n- Default: `false`\n- Overrides `.editorconfig.indent_style`"
+          "markdownDescription": "Indent lines with tabs instead of spaces.\n\n- Languages: All\n- Default: `false`\n- Overrides `.editorconfig.indent_style`"
         },
         "vueIndentScriptAndStyle": {
-          "description": "Whether or not to indent the code inside `<script>` and `<style>` tags in Vue files.\n\n- Default: `false`",
+          "description": "Whether or not to indent the code inside `<script>` and `<style>` tags in Vue files.\n\n- Languages: Vue\n- Default: `false`",
           "type": "boolean",
-          "markdownDescription": "Whether or not to indent the code inside `<script>` and `<style>` tags in Vue files.\n\n- Default: `false`"
+          "markdownDescription": "Whether or not to indent the code inside `<script>` and `<style>` tags in Vue files.\n\n- Languages: Vue\n- Default: `false`"
         }
       }
+    },
+    "GlobSet": {
+      "description": "A set of glob patterns.\nPatterns are matched against paths relative to the configuration file's directory.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "markdownDescription": "A set of glob patterns.\nPatterns are matched against paths relative to the configuration file's directory."
     },
     "HtmlWhitespaceSensitivityConfig": {
       "type": "string",
@@ -524,19 +550,21 @@
       "properties": {
         "excludeFiles": {
           "description": "Glob patterns to exclude from this override.",
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/GlobSet"
+            }
+          ],
           "markdownDescription": "Glob patterns to exclude from this override."
         },
         "files": {
-          "description": "Glob patterns to match files for this override.\nAll patterns are relative to the Oxfmt configuration file.",
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "markdownDescription": "Glob patterns to match files for this override.\nAll patterns are relative to the Oxfmt configuration file."
+          "description": "Glob patterns to match files for this override.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/GlobSet"
+            }
+          ],
+          "markdownDescription": "Glob patterns to match files for this override."
         },
         "options": {
           "description": "Format options to apply for matched files.",
@@ -617,12 +645,12 @@
           "markdownDescription": "Specifies whether sorting should be case-sensitive.\n\n- Default: `true`"
         },
         "internalPattern": {
-          "description": "Specifies a prefix for identifying internal imports.\n\nThis is useful for distinguishing your own modules from external dependencies.\n\n- Default: `[\"~/\", \"@/\"]`",
+          "description": "Specifies a prefix for identifying internal imports.\n\nThis is useful for distinguishing your own modules from external dependencies.\n\n- Default: `[\"~/\", \"@/\", \"#\"]`",
           "type": "array",
           "items": {
             "type": "string"
           },
-          "markdownDescription": "Specifies a prefix for identifying internal imports.\n\nThis is useful for distinguishing your own modules from external dependencies.\n\n- Default: `[\"~/\", \"@/\"]`"
+          "markdownDescription": "Specifies a prefix for identifying internal imports.\n\nThis is useful for distinguishing your own modules from external dependencies.\n\n- Default: `[\"~/\", \"@/\", \"#\"]`"
         },
         "newlinesBetween": {
           "description": "Specifies whether to add newlines between groups.\n\nWhen `false`, no newlines are added between groups.\n\n- Default: `true`",
@@ -740,6 +768,36 @@
         },
         {
           "$ref": "#/definitions/SortTailwindcssConfig"
+        }
+      ]
+    },
+    "SvelteConfig": {
+      "type": "object",
+      "properties": {
+        "allowShorthand": {
+          "description": "Whether to allow attribute shorthand if attribute name and expression are same.\n\n- Default: `true`",
+          "type": "boolean",
+          "markdownDescription": "Whether to allow attribute shorthand if attribute name and expression are same.\n\n- Default: `true`"
+        },
+        "indentScriptAndStyle": {
+          "description": "Whether to indent code inside `<script>` and `<style>` tags.\n\n- Default: `true`",
+          "type": "boolean",
+          "markdownDescription": "Whether to indent code inside `<script>` and `<style>` tags.\n\n- Default: `true`"
+        },
+        "sortOrder": {
+          "description": "The order in which Svelte component sections are printed.\nFormat: join the keywords `options`, `scripts`, `markup`, `styles` with a `-` in the order you want;\nor `none` if you don't want to reorder anything.\n\n- Default: `\"options-scripts-markup-styles\"`",
+          "type": "string",
+          "markdownDescription": "The order in which Svelte component sections are printed.\nFormat: join the keywords `options`, `scripts`, `markup`, `styles` with a `-` in the order you want;\nor `none` if you don't want to reorder anything.\n\n- Default: `\"options-scripts-markup-styles\"`"
+        }
+      }
+    },
+    "SvelteUserConfig": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "$ref": "#/definitions/SvelteConfig"
         }
       ]
     },

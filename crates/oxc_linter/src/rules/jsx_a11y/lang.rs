@@ -26,7 +26,7 @@ pub struct Lang;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// The lang prop on the `<html>` element must be a valid IETF's BCP 47 language tag.
+    /// The lang prop on the `<html>` element must be a valid IETF BCP 47 language tag.
     ///
     /// ### Why is this bad?
     ///
@@ -54,7 +54,9 @@ declare_oxc_lint!(
     /// - [IANA Language Subtag Registry](https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry)
     Lang,
     jsx_a11y,
-    correctness
+    correctness,
+    version = "0.1.1",
+    short_description = "The lang prop on the `<html>` element must be a valid IETF BCP 47 language tag.",
 );
 
 impl Rule for Lang {

@@ -34,6 +34,10 @@ const _: () = {
     assert!(align_of::<Span>() == 8);
     assert!(offset_of!(Span, start) == 0);
     assert!(offset_of!(Span, end) == 4);
+
+    // Padding: 0 bytes
+    assert!(size_of::<I32Dummy>() == 4);
+    assert!(align_of::<I32Dummy>() == 4);
 };
 
 #[cfg(target_pointer_width = "32")]
@@ -63,6 +67,10 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(align_of::<Span>() == 4);
     assert!(offset_of!(Span, start) == 0);
     assert!(offset_of!(Span, end) == 4);
+
+    // Padding: 0 bytes
+    assert!(size_of::<I32Dummy>() == 4);
+    assert!(align_of::<I32Dummy>() == 4);
 };
 
 #[cfg(not(any(target_pointer_width = "64", target_pointer_width = "32")))]

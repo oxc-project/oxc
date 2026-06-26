@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use crate::{LintContext, ast_util::is_new_expression, rule::Rule};
 use cow_utils::CowUtils;
-use oxc_allocator::Box;
+use oxc_allocator::ArenaBox;
 use oxc_ast::{
     AstKind,
     ast::{
@@ -13,7 +13,8 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
 
 fn no_invalid_fetch_options_diagnostic(span: Span, method: &str) -> OxcDiagnostic {
     let message = format!(r#""body" is not allowed when method is "{method}""#);
@@ -54,6 +55,8 @@ declare_oxc_lint!(
     NoInvalidFetchOptions,
     unicorn,
     correctness,
+    version = "0.15.12",
+    short_description = "Disallow invalid options in `fetch()` and `new Request()`.",
 );
 
 impl Rule for NoInvalidFetchOptions {
@@ -90,7 +93,7 @@ impl Rule for NoInvalidFetchOptions {
 const UNKNOWN_METHOD_NAME: Cow<'static, str> = Cow::Borrowed("UNKNOWN");
 
 fn is_invalid_fetch_options<'a>(
-    obj_expr: &'a Box<'_, ObjectExpression<'_>>,
+    obj_expr: &'a ArenaBox<'_, ObjectExpression<'_>>,
     ctx: &'a LintContext<'_>,
 ) -> Option<(Cow<'a, str>, Span)> {
     // fetch and Request method defaults to "GET"

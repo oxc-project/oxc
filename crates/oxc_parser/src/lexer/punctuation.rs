@@ -2,7 +2,7 @@ use oxc_span::Span;
 
 use crate::{config::LexerConfig as Config, diagnostics};
 
-use super::{Kind, Lexer, Token};
+use super::{Kind, Lexer, Token, cold_branch};
 
 impl<C: Config> Lexer<'_, C> {
     /// Section 12.8 Punctuators
@@ -33,11 +33,13 @@ impl<C: Config> Lexer<'_, C> {
                 self.consume_char();
                 Some(Kind::LtEq)
             }
-            // `<!--` HTML comment (Annex B.1.1)
-            Some(b'!') if self.remaining().starts_with("!--") => {
+            // `<!--` HTML comment (Annex B.1.1). Rare legacy syntax, so handle out of line:
+            // it builds/pushes a diagnostic, whose `OxcDiagnostic` buffer would otherwise inflate
+            // the `<` byte-handler's stack frame on the common `<`/`<<`/`<=` path.
+            Some(b'!') if self.remaining().starts_with("!--") => cold_branch(|| {
                 if self.source_type.is_module() {
                     if self.token.is_on_new_line() {
-                        let span = Span::new(self.token.start(), self.token.start() + 4);
+                        let span = Span::sized(self.token.start(), 4);
                         self.errors.push(diagnostics::html_comment_in_module(span));
                         None
                     } else {
@@ -48,7 +50,7 @@ impl<C: Config> Lexer<'_, C> {
                     self.defer_html_comment_error(4);
                     None
                 }
-            }
+            }),
             _ => Some(Kind::LAngle),
         }
     }
@@ -80,7 +82,7 @@ impl<C: Config> Lexer<'_, C> {
     /// Defer HTML comment error for unambiguous mode (emitted if file resolves to module)
     fn defer_html_comment_error(&mut self, len: u32) {
         if self.source_type.is_unambiguous() {
-            let span = Span::new(self.token.start(), self.token.start() + len);
+            let span = Span::sized(self.token.start(), len);
             self.deferred_module_errors.push(diagnostics::html_comment_in_module(span));
         }
     }

@@ -1,6 +1,7 @@
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -59,6 +60,8 @@ declare_oxc_lint!(
     promise,
     restriction,
     config = SpecOnlyConfig,
+    version = "0.9.2",
+    short_description = "Disallow use of non-standard Promise static methods.",
 );
 
 impl Rule for SpecOnly {
@@ -102,6 +105,7 @@ fn test() {
         ("Promise.all()", None),
         ("Promise.all()", Some(serde_json::json!([{ "allowedMethods": [] }]))),
         ("Promise.race()", None),
+        ("Promise.try()", None),
         ("Promise.withResolvers()", None),
         ("new Promise(function (resolve, reject) {})", None),
         ("SomeClass.resolve()", None),

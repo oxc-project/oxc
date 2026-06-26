@@ -3,7 +3,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::Span;
-use schemars::JsonSchema;
 use serde::Deserialize;
 
 use crate::{
@@ -11,7 +10,7 @@ use crate::{
     ast_util::get_outer_member_expression,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
-    utils::{is_es6_component, is_state_member_expression},
+    utils::{AlwaysNever, is_es6_component, is_state_member_expression},
 };
 
 fn state_in_constructor_diagnostic(span: Span, is_state_init_constructor: bool) -> OxcDiagnostic {
@@ -23,37 +22,18 @@ fn state_in_constructor_diagnostic(span: Span, is_state_init_constructor: bool) 
     OxcDiagnostic::warn(message).with_label(span)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "kebab-case")]
-pub enum StateInConstructorConfig {
-    /// Enforce state initialization in the constructor.
-    /// This is the default mode.
-    #[default]
-    Always,
-    /// Enforce state initialization with a class property.
-    Never,
-}
-
-impl StateInConstructorConfig {
+impl StateInConstructor {
     pub const fn is_always(&self) -> bool {
-        matches!(self, Self::Always)
+        matches!(*self.0, AlwaysNever::Always)
     }
 
     pub const fn is_never(&self) -> bool {
-        matches!(self, Self::Never)
+        matches!(*self.0, AlwaysNever::Never)
     }
 }
 
 #[derive(Debug, Default, Clone, Deserialize)]
-pub struct StateInConstructor(Box<StateInConstructorConfig>);
-
-impl std::ops::Deref for StateInConstructor {
-    type Target = StateInConstructorConfig;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
+pub struct StateInConstructor(Box<AlwaysNever>);
 
 declare_oxc_lint!(
     /// ### What it does
@@ -123,7 +103,9 @@ declare_oxc_lint!(
     StateInConstructor,
     react,
     style,
-    config = StateInConstructorConfig,
+    config = AlwaysNever,
+    version = "1.26.0",
+    short_description = "Enforce a consistent style for initializing class component state.",
 );
 
 impl Rule for StateInConstructor {
@@ -133,14 +115,13 @@ impl Rule for StateInConstructor {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::PropertyDefinition(prop_def) => {
+            AstKind::PropertyDefinition(prop_def)
                 if self.is_always()
                     && !prop_def.r#static
                     && prop_def.key.name().is_some_and(|name| name == "state")
-                    && has_parent_es6_component(node, ctx)
-                {
-                    ctx.diagnostic(state_in_constructor_diagnostic(prop_def.span, true));
-                }
+                    && has_parent_es6_component(node, ctx) =>
+            {
+                ctx.diagnostic(state_in_constructor_diagnostic(prop_def.span, true));
             }
             AstKind::AssignmentExpression(assign_expr) => {
                 if self.is_never()

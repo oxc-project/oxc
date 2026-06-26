@@ -45,7 +45,9 @@ declare_oxc_lint!(
     NoAriaHiddenOnFocusable,
     jsx_a11y,
     correctness,
-    fix
+    fix,
+    version = "0.0.22",
+    short_description = "Enforces that `aria-hidden=\"true\"` is not set on focusable elements.",
 );
 
 impl Rule for NoAriaHiddenOnFocusable {

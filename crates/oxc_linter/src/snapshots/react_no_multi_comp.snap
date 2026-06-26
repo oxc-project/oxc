@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: HelloAgain
+  ⚠ react(no-multi-comp): Declare only one React component per file. Found: HelloAgain
    ╭─[no_multi_comp.tsx:4:11]
  3 │               }
  4 │ ╭─▶           function HelloAgain(props) {
@@ -11,7 +11,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move this component to a separate file.
 
-  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: HelloJohn
+  ⚠ react(no-multi-comp): Declare only one React component per file. Found: HelloJohn
    ╭─[no_multi_comp.tsx:4:13]
  3 │                 }
  4 │ ╭─▶             class HelloJohn extends React.Component {
@@ -22,7 +22,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move this component to a separate file.
 
-  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: RenderHello2
+  ⚠ react(no-multi-comp): Declare only one React component per file. Found: RenderHello2
     ╭─[no_multi_comp.tsx:6:13]
   5 │                 },
   6 │ ╭─▶             RenderHello2(props) {
@@ -33,7 +33,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Move this component to a separate file.
 
-  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: Foo
+  ⚠ react(no-multi-comp): Declare only one React component per file. Found: Foo
    ╭─[no_multi_comp.tsx:6:20]
  5 │               exports.createSomeComponent = function createSomeComponent(opts) {
  6 │ ╭─▶             return function Foo() {
@@ -43,7 +43,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move this component to a separate file.
 
-  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: UnnamedComponent
+  ⚠ react(no-multi-comp): Declare only one React component per file. Found: UnnamedComponent
    ╭─[no_multi_comp.tsx:4:13]
  3 │           }
  4 │             export default React.forwardRef((props, ref) => <div><StoreListItem {...props} forwardRef={ref} /></div>);
@@ -51,7 +51,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move this component to a separate file.
 
-  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: HelloComponent2
+  ⚠ react(no-multi-comp): Declare only one React component per file. Found: HelloComponent2
    ╭─[no_multi_comp.tsx:4:17]
  3 │           }
  4 │           const HelloComponent2 = React.forwardRef((props, ref) => <div></div>);
@@ -59,7 +59,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move this component to a separate file.
 
-  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: HelloComponent2
+  ⚠ react(no-multi-comp): Declare only one React component per file. Found: HelloComponent2
    ╭─[no_multi_comp.tsx:4:17]
  3 │           });
  4 │           const HelloComponent2 = React.forwardRef((props, ref) => <><HelloComponent></HelloComponent></>);
@@ -67,7 +67,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move this component to a separate file.
 
-  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: HelloComponent2
+  ⚠ react(no-multi-comp): Declare only one React component per file. Found: HelloComponent2
    ╭─[no_multi_comp.tsx:5:17]
  4 │           });
  5 │           const HelloComponent2 = forwardRef((props, ref) => <HelloComponent></HelloComponent>);
@@ -75,7 +75,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move this component to a separate file.
 
-  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: HelloComponent2
+  ⚠ react(no-multi-comp): Declare only one React component per file. Found: HelloComponent2
    ╭─[no_multi_comp.tsx:5:17]
  4 │           };
  5 │           const HelloComponent2 = memo((props) => <HelloComponent></HelloComponent>);
@@ -83,7 +83,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move this component to a separate file.
 
-  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: HelloComponent2
+  ⚠ react(no-multi-comp): Declare only one React component per file. Found: HelloComponent2
    ╭─[no_multi_comp.tsx:5:17]
  4 │           });
  5 │           const HelloComponent2 = forwardRef((props, ref) => <HelloComponent></HelloComponent>);
@@ -91,7 +91,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move this component to a separate file.
 
-  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: HelloComponent2
+  ⚠ react(no-multi-comp): Declare only one React component per file. Found: HelloComponent2
    ╭─[no_multi_comp.tsx:5:17]
  4 │           });
  5 │           const HelloComponent2 = memo((props) => <HelloComponent></HelloComponent>);
@@ -99,7 +99,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move this component to a separate file.
 
-  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: HelloComponent2
+  ⚠ react(no-multi-comp): Declare only one React component per file. Found: HelloComponent2
    ╭─[no_multi_comp.tsx:5:17]
  4 │           });
  5 │           const HelloComponent2 = memo((props) => <HelloComponent></HelloComponent>);
@@ -107,7 +107,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move this component to a separate file.
 
-  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: HelloComponent2
+  ⚠ react(no-multi-comp): Declare only one React component per file. Found: HelloComponent2
    ╭─[no_multi_comp.tsx:5:17]
  4 │           });
  5 │           const HelloComponent2 = forwardRef((props, ref) => <HelloComponent></HelloComponent>);
@@ -115,7 +115,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move this component to a separate file.
 
-  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: HelloComponent2
+  ⚠ react(no-multi-comp): Declare only one React component per file. Found: HelloComponent2
    ╭─[no_multi_comp.tsx:5:17]
  4 │           });
  5 │           const HelloComponent2 = memo((props) => <HelloComponent></HelloComponent>);
@@ -123,7 +123,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move this component to a separate file.
 
-  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: HelloComponent2
+  ⚠ react(no-multi-comp): Declare only one React component per file. Found: HelloComponent2
    ╭─[no_multi_comp.tsx:5:17]
  4 │           });
  5 │           const HelloComponent2 = forwardRef((props, ref) => <HelloComponent></HelloComponent>);
@@ -131,7 +131,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move this component to a separate file.
 
-  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: HelloComponent2
+  ⚠ react(no-multi-comp): Declare only one React component per file. Found: HelloComponent2
    ╭─[no_multi_comp.tsx:5:17]
  4 │           });
  5 │           const HelloComponent2 = forwardRef((props, ref) => <HelloComponent></HelloComponent>);
@@ -139,7 +139,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move this component to a separate file.
 
-  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: HelloComponent2
+  ⚠ react(no-multi-comp): Declare only one React component per file. Found: HelloComponent2
    ╭─[no_multi_comp.tsx:5:17]
  4 │           });
  5 │           const HelloComponent2 = memo((props) => <HelloComponent></HelloComponent>);
@@ -147,7 +147,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move this component to a separate file.
 
-  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: Bar
+  ⚠ react(no-multi-comp): Declare only one React component per file. Found: Bar
    ╭─[no_multi_comp.tsx:3:24]
  2 │           export const Foo = memo(() => <div/>);
  3 │           export const Bar = forwardRef((props, ref) => <span ref={ref}/>);
@@ -155,7 +155,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move this component to a separate file.
 
-  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: Bar
+  ⚠ react(no-multi-comp): Declare only one React component per file. Found: Bar
    ╭─[no_multi_comp.tsx:5:11]
  4 │               }
  5 │ ╭─▶           class Bar extends Component {
@@ -164,7 +164,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move this component to a separate file.
 
-  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: Bar
+  ⚠ react(no-multi-comp): Declare only one React component per file. Found: Bar
    ╭─[no_multi_comp.tsx:5:11]
  4 │               }
  5 │ ╭─▶           class Bar extends PureComponent {
@@ -173,7 +173,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move this component to a separate file.
 
-  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: UnnamedComponent
+  ⚠ react(no-multi-comp): Declare only one React component per file. Found: UnnamedComponent
    ╭─[no_multi_comp.tsx:3:11]
  2 │           const Foo = () => <div/>;
  3 │           export default memo(() => <span/>);
@@ -181,7 +181,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move this component to a separate file.
 
-  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: Bar
+  ⚠ react(no-multi-comp): Declare only one React component per file. Found: Bar
    ╭─[no_multi_comp.tsx:4:24]
  3 │           }
  4 │           export const Bar = () => { return null; }
@@ -189,7 +189,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move this component to a separate file.
 
-  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: Bar
+  ⚠ react(no-multi-comp): Declare only one React component per file. Found: Bar
    ╭─[no_multi_comp.tsx:2:24]
  1 │ export const Foo = () => { return null; }
  2 │           export const Bar = () => { return null; }
@@ -197,7 +197,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move this component to a separate file.
 
-  ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: Bar
+  ⚠ react(no-multi-comp): Declare only one React component per file. Found: Bar
    ╭─[no_multi_comp.tsx:2:24]
  1 │ export const Foo = () => null;
  2 │           export const Bar = () => null;

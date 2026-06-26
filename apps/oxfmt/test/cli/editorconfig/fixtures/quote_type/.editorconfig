@@ -1,0 +1,2 @@
+[*]
+quote_type = single

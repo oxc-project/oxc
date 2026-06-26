@@ -85,7 +85,9 @@ declare_oxc_lint!(
     /// ```
     NoDuplicateEnumValues,
     typescript,
-    correctness
+    correctness,
+    version = "0.0.8",
+    short_description = "Disallow duplicate enum member values.",
 );
 
 impl Rule for NoDuplicateEnumValues {

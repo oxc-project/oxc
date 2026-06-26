@@ -24,6 +24,13 @@
    : ^^^^^^^^^^^^^^^^^^^^^^^
    `----
 
+  x @scope4/subplugin(rule): id: @scope4/subplugin/rule
+   ,-[files/index.js:4:1]
+ 3 |  */
+ 4 | function f(foo, bar) {}
+   : ^^^^^^^^^^^^^^^^^^^^^^^
+   `----
+
   x js-jsdoc(rule): id: js-jsdoc/rule
    ,-[files/index.js:4:1]
  3 |  */
@@ -80,7 +87,21 @@
    : ^^^^^^^^^^^^^^^^^^^^^^^
    `----
 
-  x eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  x plugin5-name-from-package(rule): id: plugin5-name-from-package/rule
+   ,-[files/index.js:4:1]
+ 3 |  */
+ 4 | function f(foo, bar) {}
+   : ^^^^^^^^^^^^^^^^^^^^^^^
+   `----
+
+  x plugin6-name-from-rule(rule): id: plugin6-name-from-rule/rule
+   ,-[files/index.js:4:1]
+ 3 |  */
+ 4 | function f(foo, bar) {}
+   : ^^^^^^^^^^^^^^^^^^^^^^^
+   `----
+
+  x jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ,-[files/index.js:4:17]
  3 |  */
  4 | function f(foo, bar) {}
@@ -88,8 +109,8 @@
    `----
   help: Add `@param` tag with name.
 
-Found 0 warnings and 12 errors.
-Finished in Xms on 1 file with 12 rules using X threads.
+Found 0 warnings and 15 errors.
+Finished in Xms on 1 file with 15 rules using X threads.
 ```
 
 # stderr

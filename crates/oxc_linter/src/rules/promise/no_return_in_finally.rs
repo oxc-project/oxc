@@ -1,4 +1,4 @@
-use oxc_allocator::Box as OBox;
+use oxc_allocator::ArenaBox;
 use oxc_ast::{
     AstKind,
     ast::{Expression, FunctionBody, Statement},
@@ -44,6 +44,8 @@ declare_oxc_lint!(
     NoReturnInFinally,
     promise,
     nursery,
+    version = "0.7.1",
+    short_description = "Disallow return statements in a `finally()` callback of a promise.",
 );
 
 impl Rule for NoReturnInFinally {
@@ -80,7 +82,7 @@ impl Rule for NoReturnInFinally {
     }
 }
 
-fn find_return_statement<'a>(func_body: &OBox<'_, FunctionBody<'a>>, ctx: &LintContext<'a>) {
+fn find_return_statement<'a>(func_body: &ArenaBox<'_, FunctionBody<'a>>, ctx: &LintContext<'a>) {
     let Some(return_stmt) =
         func_body.statements.iter().find(|stmt| matches!(stmt, Statement::ReturnStatement(_)))
     else {

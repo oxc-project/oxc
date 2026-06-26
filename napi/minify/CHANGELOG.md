@@ -4,6 +4,30 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.135.0] - 2026-06-08
+
+### 📚 Documentation
+
+- 275d318 napi/minifier: Point `target` to oxc docs (#23102) (camc314)
+
+## [0.133.0] - 2026-05-26
+
+### 🚀 Features
+
+- e857b0c napi/minify: Expose legalComments option and result (#20370) (Boshen)
+
+## [0.128.0] - 2026-04-27
+
+### 🛡️ Security
+
+- d8076c9 deps: Update rolldown (#21639) (renovate)
+
+## [0.125.0] - 2026-04-13
+
+### 🚀 Features
+
+- f134e24 minifier: Support `property_write_side_effects` option to drop unused property assignments (#20773) (Dunqing)
+
 ## [0.119.0] - 2026-03-14
 
 ### 🚀 Features

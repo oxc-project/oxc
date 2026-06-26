@@ -23,11 +23,11 @@ pub struct NoNonoctalDecimalEscape;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule disallows \8 and \9 escape sequences in string literals.
+    /// Disallow `\8` and `\9` escape sequences in string literals.
     ///
     /// ### Why is this bad?
     ///
-    /// ECMAScript specification treats \8 and \9 in string literals as a legacy feature
+    /// ECMAScript specification treats `\8` and `\9` in string literals as a legacy feature
     ///
     /// ### Examples
     ///
@@ -45,7 +45,9 @@ declare_oxc_lint!(
     NoNonoctalDecimalEscape,
     eslint,
     correctness,
-    suggestion
+    suggestion,
+    version = "0.2.10",
+    short_description = "Disallow `\\8` and `\\9` escape sequences in string literals.",
 );
 
 impl Rule for NoNonoctalDecimalEscape {
@@ -83,13 +85,16 @@ impl StickyRegex for Regex {
     }
 }
 
+// Fast path scan for non-octal decimal escape sequences (`\8` or `\9`).
 fn quick_test(s: &str) -> bool {
-    let mut chars = s.chars().peekable();
-    while let Some(c) = chars.next() {
-        if c == '\\' && chars.peek().is_some_and(|c| *c == '8' || *c == '9') {
+    let bytes = s.as_bytes();
+
+    for [a, b] in bytes.array_windows() {
+        if *a == b'\\' && (*b == b'8' || *b == b'9') {
             return true;
         }
     }
+
     false
 }
 

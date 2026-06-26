@@ -6,7 +6,8 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 use rustc_hash::FxHashSet;
 
 use crate::{
@@ -20,7 +21,7 @@ fn prefer_importing_vitest_globals_diagnostic(
     spans: &[Span],
     globals_founds: &str,
 ) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Do not use vitest global functions")
+    OxcDiagnostic::warn("Do not use Vitest global functions")
         .with_help(format!(
             "Import global functions `{globals_founds}` from `vitest` package instead of using globals."
         ))
@@ -56,11 +57,11 @@ pub struct PreferImportingVitestGlobals;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforces explicit imports from 'vitest' instead of using vitest globals.
+    /// Enforces explicit imports from 'vitest' instead of using Vitest globals.
     ///
     /// ### Why is this bad?
     ///
-    /// Using vitest globals without importing them relies on implicit global configuration
+    /// Using Vitest globals without importing them relies on implicit global configuration
     /// (`globals: true` in vitest config). Explicit imports make dependencies clear,
     /// improve IDE support, and ensure compatibility across different setups.
     ///
@@ -88,7 +89,9 @@ declare_oxc_lint!(
     PreferImportingVitestGlobals,
     vitest,
     style,
-    fix
+    fix,
+    version = "1.59.0",
+    short_description = "Enforces explicit imports from 'vitest' instead of using Vitest globals.",
 );
 
 impl Rule for PreferImportingVitestGlobals {

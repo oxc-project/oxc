@@ -72,6 +72,8 @@ declare_oxc_lint!(
     eslint,
     pedantic,
     conditional_suggestion,
+    version = "0.9.10",
+    short_description = "Disallow throwing literals or non-Error objects as exceptions.",
 );
 
 const SPECIAL_IDENTIFIERS: [&str; 3] = ["undefined", "Infinity", "NaN"];

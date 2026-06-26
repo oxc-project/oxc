@@ -50,7 +50,9 @@ declare_oxc_lint!(
     NoArrayMethodThisArgument,
     unicorn,
     style,
-    pending
+    pending,
+    version = "0.16.12",
+    short_description = "Disallows the use of the `thisArg` parameter in array iteration methods such as `map`, `filter`, `some`, `every`, and similar methods.",
 );
 
 impl Rule for NoArrayMethodThisArgument {

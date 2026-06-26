@@ -37,7 +37,9 @@ declare_oxc_lint!(
     PreferDomNodeAppend,
     unicorn,
     pedantic,
-    fix
+    fix,
+    version = "0.0.18",
+    short_description = "Enforces the use of, for example, `document.body.append(div);` over `document.body.appendChild(div);` for DOM nodes.",
 );
 
 impl Rule for PreferDomNodeAppend {

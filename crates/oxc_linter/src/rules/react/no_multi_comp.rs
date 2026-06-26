@@ -82,6 +82,8 @@ declare_oxc_lint!(
     restriction,
     none,
     config = NoMultiComp,
+    version = "1.43.0",
+    short_description = "Prevents multiple React components from being defined in the same file.",
 );
 
 /// Represents a detected React component

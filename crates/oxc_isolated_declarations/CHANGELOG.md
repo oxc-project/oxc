@@ -4,6 +4,27 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.135.0] - 2026-06-08
+
+### 🐛 Bug Fixes
+
+- 8b631bf codegen: Remove stray space before mapped type value colon (#23010) (Boshen)
+- 49e63f7 isolated-declarations: Require annotations for satisfies initializers (#22898) (camc314)
+- 8c93601 isolated-declarations: Allow unknown enum initializer in non-const enum (#22900) (camc314)
+
+## [0.127.0] - 2026-04-20
+
+### 🐛 Bug Fixes
+
+- 48967e8 isolated_declarations: Drop required type check for private parameter properties on private constructors (#21515) (Dunqing)
+- 065ce47 isolated_declarations: Collect types from private accessors for paired inference (#21516) (Dunqing)
+
+## [0.125.0] - 2026-04-13
+
+### 💥 BREAKING CHANGES
+
+- 382958a span: [**BREAKING**] Remove re-exports of string types from `oxc_span` crate (#21246) (overlookmotel)
+
 ## [0.116.0] - 2026-03-02
 
 ### 🚀 Features

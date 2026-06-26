@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ typescript-eslint(parameter-properties): Property name should be declared as a class property.
+  ⚠ typescript(parameter-properties): Property name should be declared as a class property.
    ╭─[parameter_properties.tsx:3:27]
  2 │             class Foo {
  3 │               constructor(readonly name: string) {}
@@ -11,7 +11,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the parameter modifier and declare this member on the class instead.
 
-  ⚠ typescript-eslint(parameter-properties): Property name should be declared as a class property.
+  ⚠ typescript(parameter-properties): Property name should be declared as a class property.
    ╭─[parameter_properties.tsx:3:27]
  2 │             class Foo {
  3 │               constructor(private name: string) {}
@@ -20,7 +20,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the parameter modifier and declare this member on the class instead.
 
-  ⚠ typescript-eslint(parameter-properties): Property name should be declared as a class property.
+  ⚠ typescript(parameter-properties): Property name should be declared as a class property.
    ╭─[parameter_properties.tsx:3:27]
  2 │             class Foo {
  3 │               constructor(protected name: string) {}
@@ -29,7 +29,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the parameter modifier and declare this member on the class instead.
 
-  ⚠ typescript-eslint(parameter-properties): Property name should be declared as a class property.
+  ⚠ typescript(parameter-properties): Property name should be declared as a class property.
    ╭─[parameter_properties.tsx:3:27]
  2 │             class Foo {
  3 │               constructor(public name: string) {}
@@ -38,7 +38,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the parameter modifier and declare this member on the class instead.
 
-  ⚠ typescript-eslint(parameter-properties): Property name should be declared as a class property.
+  ⚠ typescript(parameter-properties): Property name should be declared as a class property.
    ╭─[parameter_properties.tsx:3:27]
  2 │             class Foo {
  3 │               constructor(private readonly name: string) {}
@@ -47,7 +47,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the parameter modifier and declare this member on the class instead.
 
-  ⚠ typescript-eslint(parameter-properties): Property name should be declared as a class property.
+  ⚠ typescript(parameter-properties): Property name should be declared as a class property.
    ╭─[parameter_properties.tsx:3:27]
  2 │             class Foo {
  3 │               constructor(protected readonly name: string) {}
@@ -56,7 +56,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the parameter modifier and declare this member on the class instead.
 
-  ⚠ typescript-eslint(parameter-properties): Property name should be declared as a class property.
+  ⚠ typescript(parameter-properties): Property name should be declared as a class property.
    ╭─[parameter_properties.tsx:3:27]
  2 │             class Foo {
  3 │               constructor(public readonly name: string) {}
@@ -65,7 +65,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the parameter modifier and declare this member on the class instead.
 
-  ⚠ typescript-eslint(parameter-properties): Property name should be declared as a class property.
+  ⚠ typescript(parameter-properties): Property name should be declared as a class property.
    ╭─[parameter_properties.tsx:4:17]
  3 │               constructor(
  4 │                 public name: string,
@@ -74,7 +74,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the parameter modifier and declare this member on the class instead.
 
-  ⚠ typescript-eslint(parameter-properties): Property name should be declared as a class property.
+  ⚠ typescript(parameter-properties): Property name should be declared as a class property.
    ╭─[parameter_properties.tsx:4:17]
  3 │               constructor(
  4 │                 private name: string,
@@ -83,7 +83,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the parameter modifier and declare this member on the class instead.
 
-  ⚠ typescript-eslint(parameter-properties): Property age should be declared as a class property.
+  ⚠ typescript(parameter-properties): Property age should be declared as a class property.
    ╭─[parameter_properties.tsx:5:17]
  4 │                 private name: string,
  5 │                 private age: number,
@@ -92,7 +92,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the parameter modifier and declare this member on the class instead.
 
-  ⚠ typescript-eslint(parameter-properties): Property name should be declared as a class property.
+  ⚠ typescript(parameter-properties): Property name should be declared as a class property.
    ╭─[parameter_properties.tsx:4:17]
  3 │               constructor(
  4 │                 protected name: string,
@@ -101,7 +101,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the parameter modifier and declare this member on the class instead.
 
-  ⚠ typescript-eslint(parameter-properties): Property age should be declared as a class property.
+  ⚠ typescript(parameter-properties): Property age should be declared as a class property.
    ╭─[parameter_properties.tsx:5:17]
  4 │                 protected name: string,
  5 │                 protected age: number,
@@ -110,7 +110,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the parameter modifier and declare this member on the class instead.
 
-  ⚠ typescript-eslint(parameter-properties): Property name should be declared as a class property.
+  ⚠ typescript(parameter-properties): Property name should be declared as a class property.
    ╭─[parameter_properties.tsx:4:17]
  3 │               constructor(
  4 │                 public name: string,
@@ -119,7 +119,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the parameter modifier and declare this member on the class instead.
 
-  ⚠ typescript-eslint(parameter-properties): Property age should be declared as a class property.
+  ⚠ typescript(parameter-properties): Property age should be declared as a class property.
    ╭─[parameter_properties.tsx:5:17]
  4 │                 public name: string,
  5 │                 public age: number,
@@ -128,7 +128,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the parameter modifier and declare this member on the class instead.
 
-  ⚠ typescript-eslint(parameter-properties): Property name should be declared as a class property.
+  ⚠ typescript(parameter-properties): Property name should be declared as a class property.
    ╭─[parameter_properties.tsx:5:17]
  4 │               constructor(
  5 │                 private name: string,
@@ -137,7 +137,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the parameter modifier and declare this member on the class instead.
 
-  ⚠ typescript-eslint(parameter-properties): Property name should be declared as a class property.
+  ⚠ typescript(parameter-properties): Property name should be declared as a class property.
    ╭─[parameter_properties.tsx:3:27]
  2 │             class Foo {
  3 │               constructor(private name: string) {}
@@ -146,7 +146,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the parameter modifier and declare this member on the class instead.
 
-  ⚠ typescript-eslint(parameter-properties): Property name should be declared as a class property.
+  ⚠ typescript(parameter-properties): Property name should be declared as a class property.
    ╭─[parameter_properties.tsx:5:17]
  4 │               constructor(
  5 │                 private name: string,
@@ -155,7 +155,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the parameter modifier and declare this member on the class instead.
 
-  ⚠ typescript-eslint(parameter-properties): Property name should be declared as a class property.
+  ⚠ typescript(parameter-properties): Property name should be declared as a class property.
    ╭─[parameter_properties.tsx:3:27]
  2 │             class Foo {
  3 │               constructor(private name: string) {}
@@ -164,7 +164,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the parameter modifier and declare this member on the class instead.
 
-  ⚠ typescript-eslint(parameter-properties): Property name should be declared as a class property.
+  ⚠ typescript(parameter-properties): Property name should be declared as a class property.
    ╭─[parameter_properties.tsx:5:17]
  4 │               constructor(
  5 │                 private name: string,
@@ -173,7 +173,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the parameter modifier and declare this member on the class instead.
 
-  ⚠ typescript-eslint(parameter-properties): Property age should be declared as a class property.
+  ⚠ typescript(parameter-properties): Property age should be declared as a class property.
    ╭─[parameter_properties.tsx:6:17]
  5 │                 private name: string,
  6 │                 private age?: number,
@@ -182,7 +182,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the parameter modifier and declare this member on the class instead.
 
-  ⚠ typescript-eslint(parameter-properties): Property name should be declared as a class property.
+  ⚠ typescript(parameter-properties): Property name should be declared as a class property.
    ╭─[parameter_properties.tsx:5:17]
  4 │               constructor(
  5 │                 protected name: string,
@@ -191,7 +191,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the parameter modifier and declare this member on the class instead.
 
-  ⚠ typescript-eslint(parameter-properties): Property name should be declared as a class property.
+  ⚠ typescript(parameter-properties): Property name should be declared as a class property.
    ╭─[parameter_properties.tsx:3:27]
  2 │             class Foo {
  3 │               constructor(protected name: string) {}
@@ -200,7 +200,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the parameter modifier and declare this member on the class instead.
 
-  ⚠ typescript-eslint(parameter-properties): Property name should be declared as a class property.
+  ⚠ typescript(parameter-properties): Property name should be declared as a class property.
    ╭─[parameter_properties.tsx:5:17]
  4 │               constructor(
  5 │                 protected name: string,
@@ -209,7 +209,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the parameter modifier and declare this member on the class instead.
 
-  ⚠ typescript-eslint(parameter-properties): Property name should be declared as a class property.
+  ⚠ typescript(parameter-properties): Property name should be declared as a class property.
    ╭─[parameter_properties.tsx:3:27]
  2 │             class Foo {
  3 │               constructor(protected name: string) {}
@@ -218,7 +218,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the parameter modifier and declare this member on the class instead.
 
-  ⚠ typescript-eslint(parameter-properties): Property name should be declared as a class property.
+  ⚠ typescript(parameter-properties): Property name should be declared as a class property.
    ╭─[parameter_properties.tsx:5:17]
  4 │               constructor(
  5 │                 protected name: string,
@@ -227,7 +227,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the parameter modifier and declare this member on the class instead.
 
-  ⚠ typescript-eslint(parameter-properties): Property age should be declared as a class property.
+  ⚠ typescript(parameter-properties): Property age should be declared as a class property.
    ╭─[parameter_properties.tsx:6:17]
  5 │                 protected name: string,
  6 │                 protected age?: number,
@@ -236,7 +236,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the parameter modifier and declare this member on the class instead.
 
-  ⚠ typescript-eslint(parameter-properties): Property name should be declared as a class property.
+  ⚠ typescript(parameter-properties): Property name should be declared as a class property.
    ╭─[parameter_properties.tsx:5:17]
  4 │               constructor(
  5 │                 public name: string,
@@ -245,7 +245,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the parameter modifier and declare this member on the class instead.
 
-  ⚠ typescript-eslint(parameter-properties): Property name should be declared as a class property.
+  ⚠ typescript(parameter-properties): Property name should be declared as a class property.
    ╭─[parameter_properties.tsx:3:27]
  2 │             class Foo {
  3 │               constructor(public name: string) {}
@@ -254,7 +254,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the parameter modifier and declare this member on the class instead.
 
-  ⚠ typescript-eslint(parameter-properties): Property name should be declared as a class property.
+  ⚠ typescript(parameter-properties): Property name should be declared as a class property.
    ╭─[parameter_properties.tsx:5:17]
  4 │               constructor(
  5 │                 public name: string,
@@ -263,7 +263,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the parameter modifier and declare this member on the class instead.
 
-  ⚠ typescript-eslint(parameter-properties): Property name should be declared as a class property.
+  ⚠ typescript(parameter-properties): Property name should be declared as a class property.
    ╭─[parameter_properties.tsx:3:27]
  2 │             class Foo {
  3 │               constructor(public name: string) {}
@@ -272,7 +272,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the parameter modifier and declare this member on the class instead.
 
-  ⚠ typescript-eslint(parameter-properties): Property name should be declared as a class property.
+  ⚠ typescript(parameter-properties): Property name should be declared as a class property.
    ╭─[parameter_properties.tsx:5:17]
  4 │               constructor(
  5 │                 public name: string,
@@ -281,7 +281,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the parameter modifier and declare this member on the class instead.
 
-  ⚠ typescript-eslint(parameter-properties): Property age should be declared as a class property.
+  ⚠ typescript(parameter-properties): Property age should be declared as a class property.
    ╭─[parameter_properties.tsx:6:17]
  5 │                 public name: string,
  6 │                 public age?: number,
@@ -290,7 +290,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the parameter modifier and declare this member on the class instead.
 
-  ⚠ typescript-eslint(parameter-properties): Property name should be declared as a class property.
+  ⚠ typescript(parameter-properties): Property name should be declared as a class property.
    ╭─[parameter_properties.tsx:3:27]
  2 │             class Foo {
  3 │               constructor(readonly name: string) {}
@@ -299,7 +299,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the parameter modifier and declare this member on the class instead.
 
-  ⚠ typescript-eslint(parameter-properties): Property name should be declared as a class property.
+  ⚠ typescript(parameter-properties): Property name should be declared as a class property.
    ╭─[parameter_properties.tsx:3:27]
  2 │             class Foo {
  3 │               constructor(private name: string) {}
@@ -308,7 +308,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the parameter modifier and declare this member on the class instead.
 
-  ⚠ typescript-eslint(parameter-properties): Property name should be declared as a class property.
+  ⚠ typescript(parameter-properties): Property name should be declared as a class property.
    ╭─[parameter_properties.tsx:3:27]
  2 │             class Foo {
  3 │               constructor(protected name: string) {}
@@ -317,7 +317,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the parameter modifier and declare this member on the class instead.
 
-  ⚠ typescript-eslint(parameter-properties): Property name should be declared as a class property.
+  ⚠ typescript(parameter-properties): Property name should be declared as a class property.
    ╭─[parameter_properties.tsx:3:27]
  2 │             class Foo {
  3 │               constructor(public name: string) {}
@@ -326,7 +326,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the parameter modifier and declare this member on the class instead.
 
-  ⚠ typescript-eslint(parameter-properties): Property name should be declared as a class property.
+  ⚠ typescript(parameter-properties): Property name should be declared as a class property.
    ╭─[parameter_properties.tsx:3:27]
  2 │             class Foo {
  3 │               constructor(private readonly name: string) {}
@@ -335,7 +335,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the parameter modifier and declare this member on the class instead.
 
-  ⚠ typescript-eslint(parameter-properties): Property name should be declared as a class property.
+  ⚠ typescript(parameter-properties): Property name should be declared as a class property.
    ╭─[parameter_properties.tsx:3:27]
  2 │             class Foo {
  3 │               constructor(protected readonly name: string) {}
@@ -344,7 +344,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the parameter modifier and declare this member on the class instead.
 
-  ⚠ typescript-eslint(parameter-properties): Property age should be declared as a class property.
+  ⚠ typescript(parameter-properties): Property age should be declared as a class property.
    ╭─[parameter_properties.tsx:6:17]
  5 │                 private name: string,
  6 │                 protected age?: number,
@@ -353,7 +353,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the parameter modifier and declare this member on the class instead.
 
-  ⚠ typescript-eslint(parameter-properties): Property member should be declared as a parameter property.
+  ⚠ typescript(parameter-properties): Property member should be declared as a parameter property.
    ╭─[parameter_properties.tsx:3:15]
  2 │             class Foo {
  3 │               member: string;
@@ -362,7 +362,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Declare this member as a constructor parameter property and remove the class field plus assignment.
 
-  ⚠ typescript-eslint(parameter-properties): Property member should be declared as a parameter property.
+  ⚠ typescript(parameter-properties): Property member should be declared as a parameter property.
    ╭─[parameter_properties.tsx:7:15]
  6 │ 
  7 │               member: string;
@@ -371,7 +371,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Declare this member as a constructor parameter property and remove the class field plus assignment.
 
-  ⚠ typescript-eslint(parameter-properties): Property member should be declared as a parameter property.
+  ⚠ typescript(parameter-properties): Property member should be declared as a parameter property.
    ╭─[parameter_properties.tsx:3:15]
  2 │             class Foo {
  3 │               member;
@@ -380,7 +380,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Declare this member as a constructor parameter property and remove the class field plus assignment.
 
-  ⚠ typescript-eslint(parameter-properties): Property member should be declared as a parameter property.
+  ⚠ typescript(parameter-properties): Property member should be declared as a parameter property.
    ╭─[parameter_properties.tsx:3:15]
  2 │             class Foo {
  3 │               public member: string;

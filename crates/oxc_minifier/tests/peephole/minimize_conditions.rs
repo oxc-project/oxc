@@ -1191,3 +1191,18 @@ fn try_minimize_binary() {
     test("f(!a === true)", "f(!a)");
     test("f(!a === false)", "f(!!a)");
 }
+
+#[test]
+fn test_fold_equal_branches_keeps_indirect_access() {
+    // `(c ? eval : eval)(x)` is an indirect eval (runs in global scope);
+    // folding the equal branches must not form a direct eval call.
+    test("var c; (c ? eval : eval)('x')", "var c; (0, eval)('x')");
+    // Member-expression callees have the same hazard: the fold must not
+    // rebind `this` from undefined to the member object.
+    test("var c; (c ? o.f : o.f)('y')", "var c; (0, o.f)('y')");
+    test("var c; (c ? o.f : o.f)`y`", "var c; (0, o.f)`y`");
+    // No hazard: a plain identifier callee still folds.
+    test("var c; (c ? foo : foo)('x')", "var c; foo('x')");
+    // A side-effectful test folds to a sequence, which stays indirect.
+    test("(c() ? eval : eval)('x')", "(c(), eval)('x')");
+}

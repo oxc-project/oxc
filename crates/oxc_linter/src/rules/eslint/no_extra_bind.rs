@@ -56,7 +56,9 @@ declare_oxc_lint!(
     NoExtraBind,
     eslint,
     suspicious,
-    pending
+    pending,
+    version = "1.1.0",
+    short_description = "Disallow unnecessary calls to `.bind()`.",
 );
 
 impl Rule for NoExtraBind {

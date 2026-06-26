@@ -46,7 +46,9 @@ declare_oxc_lint!(
     NoHexEscape,
     unicorn,
     pedantic,
-    fix
+    fix,
+    version = "0.0.18",
+    short_description = "Enforces a convention of using Unicode escapes instead of hexadecimal escapes for consistency and clarity.",
 );
 
 // \x -> \u00

@@ -1,0 +1,11 @@
+[
+  {
+    "args": ["unformatted.js", "complex.js"]
+  },
+  {
+    "args": ["--write", "unformatted.js", "complex.js"]
+  },
+  {
+    "args": ["already_formatted.js"]
+  }
+]

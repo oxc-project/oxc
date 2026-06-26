@@ -123,6 +123,8 @@ declare_oxc_lint!(
     typescript,
     correctness,
     config = RestrictTemplateExpressionsConfig,
+    version = "1.12.0",
+    short_description = "This rule restricts the types allowed in template literal expressions.",
 );
 
 impl Rule for RestrictTemplateExpressions {

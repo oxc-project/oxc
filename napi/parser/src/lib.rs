@@ -3,9 +3,11 @@ use std::mem;
 use napi::{Task, bindgen_prelude::AsyncTask};
 use napi_derive::napi;
 
+#[cfg(feature = "tokens")]
+use oxc::parser::config::RuntimeParserConfig;
 use oxc::{
     allocator::Allocator,
-    parser::{ParseOptions, Parser, ParserReturn, config::RuntimeParserConfig},
+    parser::{ParseOptions, Parser, ParserReturn},
     semantic::SemanticBuilder,
     span::SourceType,
 };
@@ -80,13 +82,18 @@ fn parse_impl<'a>(
     source_text: &'a str,
     options: &ParserOptions,
 ) -> ParserReturn<'a> {
-    Parser::new(allocator, source_text, source_type)
-        .with_options(ParseOptions {
-            preserve_parens: options.preserve_parens.unwrap_or(true),
-            ..ParseOptions::default()
-        })
-        .with_config(RuntimeParserConfig::new(options.tokens.unwrap_or(false)))
-        .parse()
+    let parser = Parser::new(allocator, source_text, source_type).with_options(ParseOptions {
+        preserve_parens: options.preserve_parens.unwrap_or(true),
+        ..ParseOptions::default()
+    });
+
+    // When `tokens` feature is disabled, parser uses the default `NoTokensParserConfig`,
+    // which avoids the runtime branch on whether to collect tokens, and so is faster.
+    // The `experimentalTokens` option in `ParserOptions` is silently ignored in that case.
+    #[cfg(feature = "tokens")]
+    let parser = parser.with_config(RuntimeParserConfig::new(options.tokens.unwrap_or(false)));
+
+    parser.parse()
 }
 
 fn parse_with_return(filename: &str, source_text: &str, options: &ParserOptions) -> ParseResult {
@@ -99,11 +106,11 @@ fn parse_with_return(filename: &str, source_text: &str, options: &ParserOptions)
 
     let mut program = ret.program;
     let mut module_record = ret.module_record;
-    let mut diagnostics = ret.errors;
+    let mut diagnostics = ret.diagnostics;
 
     if options.show_semantic_errors == Some(true) {
-        let semantic_ret = SemanticBuilder::new().with_check_syntax_error(true).build(&program);
-        diagnostics.extend(semantic_ret.errors);
+        let semantic_ret = SemanticBuilder::new_compiler().build(&program);
+        diagnostics.extend(semantic_ret.diagnostics);
     }
 
     let mut errors = OxcError::from_diagnostics(filename, source_text, diagnostics);
@@ -111,31 +118,26 @@ fn parse_with_return(filename: &str, source_text: &str, options: &ParserOptions)
     let mut comments =
         convert_utf8_to_utf16(source_text, &mut program, &mut module_record, &mut errors);
 
-    let program_and_fixes = match ast_type {
-        AstType::JavaScript => {
-            // Add hashbang to start of comments
-            if let Some(hashbang) = &program.hashbang {
-                comments.insert(
-                    0,
-                    Comment {
-                        r#type: "Line".to_string(),
-                        value: hashbang.value.to_string(),
-                        start: hashbang.span.start,
-                        end: hashbang.span.end,
-                    },
-                );
-            }
+    if ast_type == AstType::JavaScript {
+        // Add hashbang to start of comments.
+        // Note: `@typescript-eslint/parser` ignores hashbangs, despite appearances to the contrary in AST explorers.
+        // So we ignore them too for TS.
+        // See: https://github.com/typescript-eslint/typescript-eslint/issues/6500
+        if let Some(hashbang) = &program.hashbang {
+            comments.insert(
+                0,
+                Comment {
+                    r#type: "Line".to_string(),
+                    value: hashbang.value.to_string(),
+                    start: hashbang.span.start,
+                    end: hashbang.span.end,
+                },
+            );
+        }
+    }
 
-            program.to_estree_js_json_with_fixes(ranges)
-        }
-        AstType::TypeScript => {
-            // Note: `@typescript-eslint/parser` ignores hashbangs,
-            // despite appearances to the contrary in AST explorers.
-            // So we ignore them too.
-            // See: https://github.com/typescript-eslint/typescript-eslint/issues/6500
-            program.to_estree_ts_json_with_fixes(ranges)
-        }
-    };
+    let include_ts_fields = ast_type == AstType::TypeScript;
+    let program_and_fixes = program.to_estree_json_with_fixes(include_ts_fields, ranges);
 
     let module = EcmaScriptModule::from(&module_record);
 

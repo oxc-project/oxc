@@ -1,3 +1,4 @@
+use oxc_allocator::ArenaBox;
 use oxc_ast::{
     AstKind,
     ast::{
@@ -12,7 +13,12 @@ use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{AstNode, context::LintContext, fixer::RuleFixer, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    fixer::RuleFixer,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn consistent_generic_constructors_diagnostic_prefer_annotation(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
@@ -30,19 +36,8 @@ fn consistent_generic_constructors_diagnostic_prefer_constructor(span: Span) -> 
     .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
-pub struct ConsistentGenericConstructors(Box<ConsistentGenericConstructorsConfig>);
-
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
-pub struct ConsistentGenericConstructorsConfig {
-    /// Specifies where the generic type should be specified.
-    ///
-    /// Possible values:
-    /// - `"constructor"` (default): Type arguments that only appear on the type annotation are disallowed.
-    /// - `"type-annotation"`: Type arguments that only appear on the constructor are disallowed.
-    option: PreferGenericType,
-}
+pub struct ConsistentGenericConstructors(PreferGenericType);
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
@@ -52,18 +47,6 @@ enum PreferGenericType {
     Constructor,
     /// Type arguments that only appear on the constructor are disallowed.
     TypeAnnotation,
-}
-
-impl TryFrom<&str> for PreferGenericType {
-    type Error = &'static str;
-
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
-        match value {
-            "constructor" => Ok(Self::Constructor),
-            "type-annotation" => Ok(Self::TypeAnnotation),
-            _ => Err("Invalid value"),
-        }
-    }
 }
 
 declare_oxc_lint!(
@@ -94,7 +77,9 @@ declare_oxc_lint!(
     typescript,
     style,
     fix,
-    config = ConsistentGenericConstructorsConfig
+    config = PreferGenericType,
+    version = "0.14.0",
+    short_description = "Enforce specifying generic type arguments on type annotation or constructor name of a constructor call.",
 );
 
 impl Rule for ConsistentGenericConstructors {
@@ -125,13 +110,7 @@ impl Rule for ConsistentGenericConstructors {
     }
 
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(Self(Box::new(ConsistentGenericConstructorsConfig {
-            option: value
-                .get(0)
-                .and_then(|v| v.as_str())
-                .and_then(|s| PreferGenericType::try_from(s).ok())
-                .unwrap_or_default(),
-        })))
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn should_run(&self, ctx: &crate::rules::ContextHost) -> bool {
@@ -143,7 +122,7 @@ impl ConsistentGenericConstructors {
     fn check<'a>(
         &self,
         node: &AstNode<'a>,
-        type_annotation: Option<&oxc_allocator::Box<'a, TSTypeAnnotation<'a>>>,
+        type_annotation: Option<&ArenaBox<'a, TSTypeAnnotation<'a>>>,
         init: Option<&Expression<'a>>,
         ctx: &LintContext<'a>,
     ) {
@@ -173,7 +152,7 @@ impl ConsistentGenericConstructors {
             }
         }
 
-        if matches!(self.0.option, PreferGenericType::TypeAnnotation) {
+        if matches!(self.0, PreferGenericType::TypeAnnotation) {
             if type_annotation.is_none()
                 && let Some(type_arguments) = &new_expression.type_arguments
             {

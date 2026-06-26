@@ -2,7 +2,8 @@ use oxc_ast::{AstKind, ast::IdentifierReference};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
-use oxc_span::{GetSpan, Span, ident::FUNCTION};
+use oxc_span::{GetSpan, Span};
+use oxc_str::static_ident;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -30,7 +31,7 @@ pub struct NoNewFunc;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// The rule disallow `new` operators with the `Function` object.
+    /// Disallow `new` operators with the `Function` object.
     ///
     /// ### Why is this bad?
     ///
@@ -56,7 +57,9 @@ declare_oxc_lint!(
     /// ```
     NoNewFunc,
     eslint,
-    style
+    style,
+    version = "0.9.2",
+    short_description = "Disallow `new` operators with the `Function` object.",
 );
 
 impl Rule for NoNewFunc {
@@ -118,7 +121,7 @@ impl Rule for NoNewFunc {
 }
 
 fn check(ident: &IdentifierReference, arguments_span: Option<Span>, ctx: &LintContext) {
-    if ident.is_global_reference_name(FUNCTION, ctx.scoping()) {
+    if ident.is_global_reference_name(static_ident!("Function"), ctx.scoping()) {
         ctx.diagnostic(no_new_func(ident.span, arguments_span));
     }
 }

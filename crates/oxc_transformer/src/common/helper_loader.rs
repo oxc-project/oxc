@@ -70,13 +70,14 @@ use std::borrow::Cow;
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
-use oxc_allocator::Vec as ArenaVec;
+use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::{
     NONE,
-    ast::{Argument, CallExpression, Expression},
+    ast::{Argument, CallExpression, Expression, IdentifierName, MemberExpression},
 };
 use oxc_semantic::{ReferenceFlags, SymbolFlags};
-use oxc_span::{SPAN, Span, Str};
+use oxc_span::SPAN;
+use oxc_str::{Str, static_ident};
 use oxc_traverse::BoundIdentifier;
 
 use crate::context::TraverseCtx;
@@ -266,15 +267,16 @@ impl HelperLoaderStore<'_> {
 /// Load and call a helper function and return a `CallExpression`.
 ///
 /// This is a free function to avoid borrow conflicts when accessing state through `ctx.state`.
+///
+/// Uses `SPAN` for the call expression since it's synthesized and has no original source position.
 pub fn helper_call<'a>(
     helper: Helper,
-    span: Span,
     arguments: ArenaVec<'a, Argument<'a>>,
     ctx: &mut TraverseCtx<'a>,
-) -> CallExpression<'a> {
+) -> ArenaBox<'a, CallExpression<'a>> {
     let callee = helper_load(helper, ctx);
     let pure = helper.pure();
-    ctx.ast.call_expression_with_pure(span, callee, NONE, arguments, false, pure)
+    CallExpression::boxed_with_pure(SPAN, callee, NONE, arguments, false, pure, ctx)
 }
 
 /// Same as [`helper_call`], but returns a `CallExpression` wrapped in an `Expression`.
@@ -282,13 +284,12 @@ pub fn helper_call<'a>(
 /// This is a free function to avoid borrow conflicts when accessing state through `ctx.state`.
 pub fn helper_call_expr<'a>(
     helper: Helper,
-    span: Span,
     arguments: ArenaVec<'a, Argument<'a>>,
     ctx: &mut TraverseCtx<'a>,
 ) -> Expression<'a> {
     let callee = helper_load(helper, ctx);
     let pure = helper.pure();
-    ctx.ast.expression_call_with_pure(span, callee, NONE, arguments, false, pure)
+    Expression::new_call_expression_with_pure(SPAN, callee, NONE, arguments, false, pure, ctx)
 }
 
 /// Load a helper function and return a callee expression.
@@ -329,16 +330,16 @@ pub fn helper_load<'a>(helper: Helper, ctx: &mut TraverseCtx<'a>) -> Expression<
 impl<'a> HelperLoaderStore<'a> {
     // Construct string directly in arena without an intermediate temp allocation
     fn get_runtime_source(&self, helper: Helper, ctx: &TraverseCtx<'a>) -> Str<'a> {
-        ctx.ast.str_from_strs_array([&self.module_name, "/helpers/", helper.name()])
+        Str::from_strs_array_in([&self.module_name, "/helpers/", helper.name()], ctx)
     }
 
     fn transform_for_external_helper(helper: Helper, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
-        static HELPER_VAR: &str = "babelHelpers";
-
-        let helper_var = ctx.ast.ident(HELPER_VAR);
+        let helper_var = static_ident!("babelHelpers");
         let symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), helper_var);
         let object = ctx.create_ident_expr(SPAN, helper_var, symbol_id, ReferenceFlags::Read);
-        let property = ctx.ast.identifier_name(SPAN, helper.name());
-        Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false))
+        let property = IdentifierName::new(SPAN, helper.name(), ctx);
+        Expression::from(MemberExpression::new_static_member_expression(
+            SPAN, object, property, false, ctx,
+        ))
     }
 }

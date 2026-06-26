@@ -4,7 +4,7 @@ use oxc_ast::ast::*;
 use oxc_ecmascript::constant_evaluation::{DetermineValueType, ValueType};
 
 impl<'a> PeepholeOptimizations {
-    fn can_remove_unused_declarators(ctx: &TraverseCtx<'a>) -> bool {
+    pub(super) fn can_remove_unused_declarators(ctx: &TraverseCtx<'a>) -> bool {
         ctx.state.options.unused != CompressOptionsUnused::Keep
             && !Self::keep_top_level_var_in_script_mode(ctx)
             && !ctx.scoping().root_scope_flags().contains_direct_eval()
@@ -65,6 +65,19 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    /// Filter unused declarators out of a `KeepVar`-synthesized `var`
+    /// statement. Both callers pass `KeepVar` output: a TRANSIENT statement
+    /// that is not (yet) part of the live tree, whose declarators never
+    /// carry initializers (`KeepVar` hoists names only).
+    ///
+    /// Because the statement is transient and init-less, removing a
+    /// declarator discards no references and must NOT record a mutation or
+    /// route through the `drop_*` helpers: if the caller then skips
+    /// installation (e.g. `try_fold_if`'s already-canonical slot), nothing
+    /// in the live AST changed this pass, and a spurious mutation spins the
+    /// fixed-point loop past its iteration guard (bluebird.js, monitor-oxc).
+    /// Installing — or declining to install — the filtered statement is the
+    /// caller's mutation event.
     pub fn remove_unused_variable_declaration(
         mut stmt: Statement<'a>,
         ctx: &TraverseCtx<'a>,
@@ -73,7 +86,14 @@ impl<'a> PeepholeOptimizations {
         if !Self::can_remove_unused_declarators(ctx) {
             return Some(stmt);
         }
-        var_decl.declarations.retain(|decl| !Self::should_remove_unused_declarator(decl, ctx));
+        var_decl.declarations.retain(|decl| {
+            debug_assert!(
+                decl.init.is_none(),
+                "callers must pass KeepVar output (init-less declarators); a declarator \
+                 with an init would need a `drop_*` walk for its references"
+            );
+            !Self::should_remove_unused_declarator(decl, ctx)
+        });
         if var_decl.declarations.is_empty() {
             return None;
         }
@@ -95,8 +115,8 @@ impl<'a> PeepholeOptimizations {
         if !ctx.scoping().symbol_is_unused(symbol_id) {
             return;
         }
-        *stmt = ctx.ast.statement_empty(f.span);
-        ctx.state.changed = true;
+        let new_stmt = Statement::new_empty_statement(f.span, ctx);
+        ctx.replace_statement(stmt, new_stmt);
     }
 
     pub fn remove_unused_class_declaration(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -116,14 +136,13 @@ impl<'a> PeepholeOptimizations {
         }
         if let Some(changed) = Self::remove_unused_class(c, ctx).map(|exprs| {
             if exprs.is_empty() {
-                ctx.ast.statement_empty(c.span)
+                Statement::new_empty_statement(c.span, ctx)
             } else {
-                let expr = ctx.ast.expression_sequence(c.span, exprs);
-                ctx.ast.statement_expression(c.span, expr)
+                let expr = Expression::new_sequence_expression(c.span, exprs, ctx);
+                Statement::new_expression_statement(c.span, expr, ctx)
             }
         }) {
-            *stmt = changed;
-            ctx.state.changed = true;
+            ctx.replace_statement(stmt, changed);
         }
     }
 
@@ -176,8 +195,8 @@ impl<'a> PeepholeOptimizations {
             if ctx.scoping().symbol_is_unused(
                 import_decl.specifiers.as_ref().unwrap().first().unwrap().local().symbol_id(),
             ) {
-                *stmt = ctx.ast.statement_empty(import_decl.span);
-                ctx.state.changed = true;
+                let new_stmt = Statement::new_empty_statement(import_decl.span, ctx);
+                ctx.replace_statement(stmt, new_stmt);
             }
 
             return;
@@ -201,12 +220,12 @@ impl<'a> PeepholeOptimizations {
         });
 
         if specifiers.len() != original_len {
-            ctx.state.changed = true;
+            ctx.notice_change();
         }
 
         if specifiers.is_empty() {
             import_decl.specifiers = None;
-            ctx.state.changed = true;
+            ctx.notice_change();
         }
     }
 }

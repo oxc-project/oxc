@@ -1,0 +1,8 @@
+[
+  { "args": ["."] },
+  { "args": ["--config", ".oxfmtrc.json", "."] },
+  { "args": ["--check", "**/*.js"] },
+  { "args": ["--disable-nested-config"] },
+  { "cwd": "sub", "args": [] },
+  { "cwd": "sub", "args": ["--disable-nested-config"] }
+]

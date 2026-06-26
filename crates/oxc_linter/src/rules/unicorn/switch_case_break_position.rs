@@ -47,6 +47,8 @@ declare_oxc_lint!(
     unicorn,
     style,
     pending,
+    version = "1.59.0",
+    short_description = "Enforce consistent `break`/`return`/`continue`/`throw` position in `case` clauses.",
 );
 
 impl Rule for SwitchCaseBreakPosition {

@@ -1,5 +1,6 @@
 import { unindent } from "eslint-vitest-rule-tester";
 import { RuleTester } from "../rule_tester.ts";
+import repos from "../../repos.json" with { type: "json" };
 
 import type { MockFn, TestGroup } from "../index.ts";
 import type {
@@ -17,6 +18,7 @@ type TSEslintParser = typeof import("@typescript-eslint/parser");
 
 const group: TestGroup = {
   name: "stylistic",
+  ...repos.stylistic,
 
   submoduleName: "stylistic",
   testFilesDirPath: "packages/eslint-plugin/rules",

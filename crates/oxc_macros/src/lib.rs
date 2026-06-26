@@ -14,6 +14,7 @@ mod declare_oxc_lint;
 /// 4. What kind of auto-fixes the lint supports, if any
 ///
 /// And optionally, a 5th part for defining configuration if there are any config options.
+/// The config value may be a local type or a type path such as `shared::rule::RuleConfig`.
 ///
 /// ## Documentation
 /// Lint rule documentation added here will be used to build documentation pages

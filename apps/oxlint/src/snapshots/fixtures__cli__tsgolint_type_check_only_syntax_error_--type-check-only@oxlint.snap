@@ -1,0 +1,25 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --type-check-only
+working directory: fixtures/cli/tsgolint_type_check_only_syntax_error
+----------
+
+  x Unexpected token
+   ,-[index.ts:1:21]
+ 1 | const foo: number = ;
+   :                     ^
+   `----
+
+  x typescript(TS1109): Expression expected.
+   ,-[index.ts:1:21]
+ 1 | const foo: number = ;
+   :                     ^
+   `----
+
+Found 0 warnings and 2 errors.
+Finished in <variable>ms on 1 file using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------

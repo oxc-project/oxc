@@ -85,8 +85,17 @@ pub struct TypeScriptOptions {
     #[serde(default)]
     pub remove_class_fields_without_initializer: bool,
 
-    /// Unused.
+    /// When true, optimize const enums by inlining their values at usage sites
+    /// and removing the enum declaration.
     pub optimize_const_enums: bool,
+
+    /// When true, optimize regular (non-const) enums by inlining their member
+    /// accesses at usage sites when the member value is statically known.
+    ///
+    /// Non-exported enum declarations are also removed when all members are
+    /// evaluable and no references to the enum as a runtime value exist
+    /// (e.g., `console.log(Foo)`, `typeof Foo`, or passing the enum as an argument).
+    pub optimize_enums: bool,
 
     // Preset options
     /// Modifies extensions in import and export declarations.
@@ -109,6 +118,7 @@ impl Default for TypeScriptOptions {
             allow_declare_fields: default_as_true(),
             remove_class_fields_without_initializer: false,
             optimize_const_enums: false,
+            optimize_enums: false,
             rewrite_import_extensions: None,
         }
     }

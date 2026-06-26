@@ -66,7 +66,7 @@
 
 mod for_await;
 
-use oxc_allocator::TakeIn;
+use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::ast::*;
 use oxc_span::SPAN;
 use oxc_traverse::{Ancestor, Traverse};
@@ -172,12 +172,12 @@ impl<'a> AsyncGeneratorFunctions<'a> {
         }
 
         expr.argument.as_mut().map(|argument| {
-            let argument = Argument::from(argument.take_in(ctx.ast));
-            let arguments = ctx.ast.vec1(argument);
-            let mut argument = helper_call_expr(Helper::AsyncIterator, SPAN, arguments, ctx);
-            let arguments = ctx.ast.vec1(Argument::from(argument));
-            argument = helper_call_expr(Helper::AsyncGeneratorDelegate, SPAN, arguments, ctx);
-            ctx.ast.expression_yield(SPAN, expr.delegate, Some(argument))
+            let argument = Argument::from(argument.take_in(ctx));
+            let arguments = ArenaVec::from_value_in(argument, ctx);
+            let mut argument = helper_call_expr(Helper::AsyncIterator, arguments, ctx);
+            let arguments = ArenaVec::from_value_in(Argument::from(argument), ctx);
+            argument = helper_call_expr(Helper::AsyncGeneratorDelegate, arguments, ctx);
+            Expression::new_yield_expression(SPAN, expr.delegate, Some(argument), ctx)
         })
     }
 
@@ -206,11 +206,11 @@ impl<'a> AsyncGeneratorFunctions<'a> {
             return None;
         }
 
-        let mut argument = expr.argument.take_in(ctx.ast);
-        let arguments = ctx.ast.vec1(Argument::from(argument));
-        argument = helper_call_expr(Helper::AwaitAsyncGenerator, SPAN, arguments, ctx);
+        let mut argument = expr.argument.take_in(ctx);
+        let arguments = ArenaVec::from_value_in(Argument::from(argument), ctx);
+        argument = helper_call_expr(Helper::AwaitAsyncGenerator, arguments, ctx);
 
-        Some(ctx.ast.expression_yield(SPAN, false, Some(argument)))
+        Some(Expression::new_yield_expression(SPAN, false, Some(argument), ctx))
     }
 
     /// Check whether `await` is inside an async generator function.

@@ -255,7 +255,6 @@ impl<'c> Parser<'c> {
             "&str" => primitive("&str"),
             "Str" => primitive("Str"),
             "Ident" => primitive("Ident"),
-            "NodeId" => primitive("NodeId"),
             // TODO: Remove the need for this by adding
             // `#[cfg_attr(target_pointer_width = "64", repr(align(8)))]` to all AST types
             "PointerAlign" => primitive("PointerAlign"),
@@ -577,14 +576,14 @@ impl<'c> Parser<'c> {
                 self.options.insert(inner_type_id, type_id);
                 type_id
             }),
-            "Box" => self.boxes.get(&inner_type_id).copied().unwrap_or_else(|| {
+            "Box" | "ArenaBox" => self.boxes.get(&inner_type_id).copied().unwrap_or_else(|| {
                 let name = format!("Box<{}>", self.type_name(inner_type_id));
                 let type_def = TypeDef::Box(BoxDef::new(name, inner_type_id));
                 let type_id = self.create_new_type(type_def);
                 self.boxes.insert(inner_type_id, type_id);
                 type_id
             }),
-            "Vec" => self.vecs.get(&inner_type_id).copied().unwrap_or_else(|| {
+            "Vec" | "ArenaVec" => self.vecs.get(&inner_type_id).copied().unwrap_or_else(|| {
                 let name = format!("Vec<{}>", self.type_name(inner_type_id));
                 let type_def = TypeDef::Vec(VecDef::new(name, inner_type_id));
                 let type_id = self.create_new_type(type_def);

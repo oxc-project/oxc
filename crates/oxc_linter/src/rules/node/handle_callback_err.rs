@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use lazy_regex::Regex;
 use schemars::JsonSchema;
-use serde::Deserialize;
+use serde::{Deserialize, de::Error as _};
 
 use oxc_ast::{AstKind, ast::FormalParameters};
 use oxc_diagnostics::OxcDiagnostic;
@@ -48,12 +48,12 @@ where
 {
     let s = <Cow<str>>::deserialize(deserializer)?;
 
-    let pattern = {
-        if s.starts_with('^') {
-            Regex::new(&s).map_or_else(|_| ErrorPattern::Plain(s.to_string()), ErrorPattern::Regex)
-        } else {
-            ErrorPattern::Plain(s.to_string())
-        }
+    let pattern = if s.starts_with('^') {
+        Regex::new(&s).map(ErrorPattern::Regex).map_err(|err| {
+            D::Error::custom(format!("invalid error parameter regex `{s}`: {err}"))
+        })?
+    } else {
+        ErrorPattern::Plain(s.to_string())
     };
 
     Ok(Box::new(pattern))
@@ -66,6 +66,7 @@ where
 /// - a regexp pattern (e.g. `"^(err|error)$"`)
 ///
 /// If the configured name of the error variable begins with a `^` it is considered to be a regexp pattern.
+/// Invalid regexp patterns are rejected during configuration parsing.
 ///
 /// Default: `"err"`.
 #[derive(Debug, Clone, Default, JsonSchema, Deserialize)]
@@ -130,6 +131,8 @@ declare_oxc_lint!(
     node,
     restriction,
     config = HandleCallbackErrConfig,
+    version = "1.56.0",
+    short_description = "This rule expects that when you're using the callback pattern in Node.js you'll handle the error.",
 );
 
 impl Rule for HandleCallbackErr {

@@ -2,203 +2,217 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:1:1]
  1 │ x!;
    · ──
    ╰────
-  help: Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.
+  note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:1:1]
  1 │ x!.y;
    · ──
    ╰────
-  help: Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.
+  help: Consider using the optional chain operator `?.` instead. `x!.y` is equivalent to `x.y` at runtime and will throw if `x` is `null` or `undefined`, but `x?.y` will return `undefined`.
+  note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:1:1]
  1 │ x.y!;
    · ────
    ╰────
-  help: Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.
+  note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:1:2]
  1 │ !x!.y;
    ·  ──
    ╰────
-  help: Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.
+  help: Consider using the optional chain operator `?.` instead. `x!.y` is equivalent to `x.y` at runtime and will throw if `x` is `null` or `undefined`, but `x?.y` will return `undefined`.
+  note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:1:1]
  1 │ x!.y?.z;
    · ──
    ╰────
-  help: Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.
+  help: Consider using the optional chain operator `?.` instead. `x!.y` is equivalent to `x.y` at runtime and will throw if `x` is `null` or `undefined`, but `x?.y` will return `undefined`.
+  note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:1:1]
  1 │ x![y];
    · ──
    ╰────
-  help: Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.
+  help: Consider using the optional chain operator `?.` instead. `x!.y` is equivalent to `x.y` at runtime and will throw if `x` is `null` or `undefined`, but `x?.y` will return `undefined`.
+  note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:1:1]
  1 │ x![y]?.z;
    · ──
    ╰────
-  help: Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.
+  help: Consider using the optional chain operator `?.` instead. `x!.y` is equivalent to `x.y` at runtime and will throw if `x` is `null` or `undefined`, but `x?.y` will return `undefined`.
+  note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:1:1]
  1 │ x.y.z!();
    · ──────
    ╰────
-  help: Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.
+  note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:1:1]
  1 │ x.y?.z!();
    · ───────
    ╰────
-  help: Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.
+  note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:1:1]
  1 │ x!!!;
    · ────
    ╰────
-  help: Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.
+  note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:1:1]
  1 │ x!!!;
    · ───
    ╰────
-  help: Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.
+  note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:1:1]
  1 │ x!!!;
    · ──
    ╰────
-  help: Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.
+  note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:1:1]
  1 │ x!!.y;
    · ───
    ╰────
-  help: Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.
+  help: Consider using the optional chain operator `?.` instead. `x!.y` is equivalent to `x.y` at runtime and will throw if `x` is `null` or `undefined`, but `x?.y` will return `undefined`.
+  note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:1:1]
  1 │ x!!.y;
    · ──
    ╰────
-  help: Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.
+  note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:1:1]
  1 │ x.y!!;
    · ─────
    ╰────
-  help: Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.
+  note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:1:1]
  1 │ x.y!!;
    · ────
    ╰────
-  help: Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.
+  note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:1:1]
  1 │ x.y.z!!();
    · ───────
    ╰────
-  help: Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.
+  note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:1:1]
  1 │ x.y.z!!();
    · ──────
    ╰────
-  help: Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.
+  note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:1:1]
  1 │ x!?.[y].z;
    · ──
    ╰────
-  help: Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.
+  help: Consider using the optional chain operator `?.` instead. `x!.y` is equivalent to `x.y` at runtime and will throw if `x` is `null` or `undefined`, but `x?.y` will return `undefined`.
+  note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:1:1]
  1 │ x!?.y.z;
    · ──
    ╰────
-  help: Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.
+  help: Consider using the optional chain operator `?.` instead. `x!.y` is equivalent to `x.y` at runtime and will throw if `x` is `null` or `undefined`, but `x?.y` will return `undefined`.
+  note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:1:1]
  1 │ x.y.z!?.();
    · ──────
    ╰────
-  help: Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.
+  note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:2:13]
  1 │ 
  2 │             x!
    ·             ──
  3 │             .y
    ╰────
-  help: Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.
+  help: Consider using the optional chain operator `?.` instead. `x!.y` is equivalent to `x.y` at runtime and will throw if `x` is `null` or `undefined`, but `x?.y` will return `undefined`.
+  note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:2:13]
  1 │ 
  2 │             x!
    ·             ──
  3 │             // comment
    ╰────
-  help: Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.
+  help: Consider using the optional chain operator `?.` instead. `x!.y` is equivalent to `x.y` at runtime and will throw if `x` is `null` or `undefined`, but `x?.y` will return `undefined`.
+  note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:2:13]
  1 │ 
  2 │             x!
    ·             ──
  3 │              // comment
    ╰────
-  help: Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.
+  help: Consider using the optional chain operator `?.` instead. `x!.y` is equivalent to `x.y` at runtime and will throw if `x` is `null` or `undefined`, but `x?.y` will return `undefined`.
+  note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:2:13]
  1 │ 
  2 │             x!
    ·             ──
  3 │              // comment
    ╰────
-  help: Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.
+  help: Consider using the optional chain operator `?.` instead. `x!.y` is equivalent to `x.y` at runtime and will throw if `x` is `null` or `undefined`, but `x?.y` will return `undefined`.
+  note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:2:13]
  1 │ 
  2 │             document.querySelector('input')!.files = new FileList();
    ·             ────────────────────────────────
  3 │                   
    ╰────
-  help: Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.
+  help: Consider using the optional chain operator `?.` instead. `x!.y` is equivalent to `x.y` at runtime and will throw if `x` is `null` or `undefined`, but `x?.y` will return `undefined`.
+  note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:2:26]
  1 │ 
  2 │             hoge.files = document.querySelector('input')!.files;
    ·                          ────────────────────────────────
  3 │                   
    ╰────
-  help: Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.
+  help: Consider using the optional chain operator `?.` instead. `x!.y` is equivalent to `x.y` at runtime and will throw if `x` is `null` or `undefined`, but `x?.y` will return `undefined`.
+  note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.

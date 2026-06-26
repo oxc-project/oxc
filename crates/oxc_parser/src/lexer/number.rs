@@ -10,7 +10,7 @@ use num_bigint::BigInt;
 use num_traits::Num;
 
 use oxc_allocator::Allocator;
-use oxc_span::{Str, format_str};
+use oxc_str::{Str, format_str};
 
 use super::kind::Kind;
 
@@ -403,7 +403,7 @@ pub fn parse_big_int<'a>(
 
     let radix = match kind {
         // Skip parsing with `BigInt` - it's already in decimal form, and underscores are removed
-        Kind::Decimal => return Str::from_cow_in(&s, allocator),
+        Kind::Decimal => return Str::from_cow_in(&s, &allocator),
         Kind::Binary => 2,
         Kind::Octal => 8,
         Kind::Hex => 16,

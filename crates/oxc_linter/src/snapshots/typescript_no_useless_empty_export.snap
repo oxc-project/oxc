@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ typescript-eslint(no-useless-empty-export): Empty exports do nothing in module files
+  ⚠ typescript(no-useless-empty-export): Empty exports do nothing in module files
    ╭─[no_useless_empty_export.tsx:3:13]
  2 │             export const _ = {};
  3 │             export {};
@@ -11,7 +11,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove this empty export.
 
-  ⚠ typescript-eslint(no-useless-empty-export): Empty exports do nothing in module files
+  ⚠ typescript(no-useless-empty-export): Empty exports do nothing in module files
    ╭─[no_useless_empty_export.tsx:3:13]
  2 │             export * from '_';
  3 │             export {};
@@ -20,7 +20,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove this empty export.
 
-  ⚠ typescript-eslint(no-useless-empty-export): Empty exports do nothing in module files
+  ⚠ typescript(no-useless-empty-export): Empty exports do nothing in module files
    ╭─[no_useless_empty_export.tsx:2:13]
  1 │ 
  2 │             export {};
@@ -29,7 +29,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove this empty export.
 
-  ⚠ typescript-eslint(no-useless-empty-export): Empty exports do nothing in module files
+  ⚠ typescript(no-useless-empty-export): Empty exports do nothing in module files
    ╭─[no_useless_empty_export.tsx:4:13]
  3 │             export default _;
  4 │             export {};
@@ -38,7 +38,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove this empty export.
 
-  ⚠ typescript-eslint(no-useless-empty-export): Empty exports do nothing in module files
+  ⚠ typescript(no-useless-empty-export): Empty exports do nothing in module files
    ╭─[no_useless_empty_export.tsx:2:13]
  1 │ 
  2 │             export {};
@@ -47,7 +47,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove this empty export.
 
-  ⚠ typescript-eslint(no-useless-empty-export): Empty exports do nothing in module files
+  ⚠ typescript(no-useless-empty-export): Empty exports do nothing in module files
    ╭─[no_useless_empty_export.tsx:4:13]
  3 │             export { _ };
  4 │             export {};

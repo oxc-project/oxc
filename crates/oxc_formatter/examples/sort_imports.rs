@@ -4,10 +4,8 @@ use std::{fs, path::Path};
 
 use oxc_allocator::Allocator;
 use oxc_formatter::{
-    FormatOptions, Formatter, SortImportsOptions, SortOrder, default_groups,
-    default_internal_patterns, get_parse_options,
+    JsFormatOptions, SortImportsOptions, SortOrder, default_groups, default_internal_patterns,
 };
-use oxc_parser::Parser;
 use oxc_span::SourceType;
 use pico_args::Arguments;
 
@@ -43,24 +41,19 @@ fn main() -> Result<(), String> {
     let source_type = SourceType::from_path(path).unwrap();
     let allocator = Allocator::new();
 
-    // Parse the source code
-    let ret = Parser::new(&allocator, &source_text, source_type)
-        .with_options(get_parse_options())
-        .parse();
-
-    // Report any parsing errors
-    for error in ret.errors {
-        let error = error.with_source_code(source_text.clone());
-        println!("{error:?}");
-        println!("Parsed with Errors.");
-    }
-
     // Format the parsed code
     let options =
-        FormatOptions { sort_imports: Some(sort_imports_options.clone()), ..Default::default() };
+        JsFormatOptions { sort_imports: Some(sort_imports_options.clone()), ..Default::default() };
 
-    let formatter = Formatter::new(&allocator, options);
-    let formatted = formatter.format(&ret.program);
+    let formatted =
+        match oxc_formatter::format(&allocator, &source_text, source_type, options, None) {
+            Ok(formatted) => formatted,
+            Err(error) => {
+                let error = error.with_source_code(source_text.clone());
+                println!("{error:?}");
+                return Err("Parsed with Errors.".to_string());
+            }
+        };
     if show_ir {
         // Do not rely on `Display` of `Document` here, as it shows Prettier IR
         println!("[");
@@ -74,7 +67,7 @@ fn main() -> Result<(), String> {
     }
 
     println!("=======================");
-    println!("Formatted with {sort_imports_options:#?}",);
+    println!("Formatted with {sort_imports_options:#?}");
 
     Ok(())
 }

@@ -1,4 +1,4 @@
-// All methods just delegate to `Bump`'s methods
+// All methods just delegate to `Arena`'s methods
 #![expect(clippy::inline_always)]
 
 use std::{
@@ -8,7 +8,7 @@ use std::{
 
 use allocator_api2::alloc::Allocator;
 
-use crate::bump::Bump;
+use crate::arena::Arena;
 
 /// Trait describing an allocator.
 ///
@@ -82,10 +82,10 @@ pub trait Alloc {
     ) -> NonNull<u8>;
 }
 
-/// Implement [`Alloc`] for [`Bump`].
+/// Implement [`Alloc`] for [`Arena`].
 ///
-/// All methods except `alloc` delegate to [`Bump`]'s impl of `allocator_api2`'s [`Allocator`] trait.
-impl Alloc for Bump {
+/// All methods except `alloc` delegate to [`Arena`]'s impl of `allocator_api2`'s [`Allocator`] trait.
+impl Alloc for Arena {
     /// Allocate space for an object with the given [`Layout`].
     ///
     /// The returned pointer points at uninitialized memory, and should be initialized
@@ -96,13 +96,6 @@ impl Alloc for Bump {
     /// Panics if reserving space for `layout` fails.
     #[inline(always)]
     fn alloc(&self, layout: Layout) -> NonNull<u8> {
-        // SAFETY: This is UNSOUND (see comment on `get_stats_ref`). But usage is gated behind
-        // `track_allocations` feature, so should never be compiled in production code.
-        #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
-        unsafe {
-            crate::tracking::get_stats_ref(self).record_allocation();
-        }
-
         self.alloc_layout(layout)
     }
 
@@ -141,13 +134,6 @@ impl Alloc for Bump {
     /// Panics / aborts if reserving space for `new_layout` fails.
     #[inline(always)]
     unsafe fn grow(&self, ptr: NonNull<u8>, old_layout: Layout, new_layout: Layout) -> NonNull<u8> {
-        // SAFETY: This is UNSOUND (see comment on `get_stats_ref`). But usage is gated behind
-        // `track_allocations` feature, so should never be compiled in production code.
-        #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
-        unsafe {
-            crate::tracking::get_stats_ref(self).record_reallocation();
-        }
-
         // SAFETY: Safety requirements of `Allocator::grow` are the same as for this method
         let res = unsafe { Allocator::grow(&self, ptr, old_layout, new_layout) };
         match res {

@@ -10,12 +10,12 @@
 //! Other transforms can add declarators to the store by calling methods of `VarDeclarationsStore`:
 //!
 //! ```rs
-//! ctx.state.var_declarations.insert_var(name, binding, None, ctx.ast);
-//! ctx.state.var_declarations.insert_let(name2, binding2, None, ctx.ast);
+//! ctx.state.var_declarations.insert_var(name, binding, None, &ctx.ast);
+//! ctx.state.var_declarations.insert_let(name2, binding2, None, &ctx.ast);
 //! ```
 
-use oxc_allocator::Vec as ArenaVec;
-use oxc_ast::{AstBuilder, NONE, ast::*};
+use oxc_allocator::ArenaVec;
+use oxc_ast::{NONE, ast::*, builder::AstBuilder};
 use oxc_data_structures::stack::SparseStack;
 use oxc_span::SPAN;
 use oxc_traverse::{BoundIdentifier, ast_operations::GatherNodeParts};
@@ -34,8 +34,8 @@ struct Declarators<'a> {
 }
 
 impl<'a> Declarators<'a> {
-    fn new(ast: AstBuilder<'a>) -> Self {
-        Self { var_declarators: ast.vec(), let_declarators: ast.vec() }
+    fn new(ast: &AstBuilder<'a>) -> Self {
+        Self { var_declarators: ArenaVec::new_in(ast), let_declarators: ArenaVec::new_in(ast) }
     }
 }
 
@@ -49,9 +49,13 @@ impl<'a> VarDeclarationsStore<'a> {
     /// Add a `var` declaration to be inserted at top of current enclosing statement block,
     /// given a `BoundIdentifier`.
     #[inline]
-    pub fn insert_var(&mut self, binding: &BoundIdentifier<'a>, ast: AstBuilder<'a>) {
-        let ident = ast.binding_identifier_with_symbol_id(SPAN, binding.name, binding.symbol_id);
-        let pattern = BindingPattern::BindingIdentifier(ast.alloc(ident));
+    pub fn insert_var(&mut self, binding: &BoundIdentifier<'a>, ast: &AstBuilder<'a>) {
+        let pattern = BindingPattern::new_binding_identifier_with_symbol_id(
+            SPAN,
+            binding.name,
+            binding.symbol_id,
+            ast,
+        );
         self.insert_var_binding_pattern(pattern, None, ast);
     }
 
@@ -62,10 +66,14 @@ impl<'a> VarDeclarationsStore<'a> {
         &mut self,
         binding: &BoundIdentifier<'a>,
         init: Expression<'a>,
-        ast: AstBuilder<'a>,
+        ast: &AstBuilder<'a>,
     ) {
-        let ident = ast.binding_identifier_with_symbol_id(SPAN, binding.name, binding.symbol_id);
-        let pattern = BindingPattern::BindingIdentifier(ast.alloc(ident));
+        let pattern = BindingPattern::new_binding_identifier_with_symbol_id(
+            SPAN,
+            binding.name,
+            binding.symbol_id,
+            ast,
+        );
         self.insert_var_binding_pattern(pattern, Some(init), ast);
     }
 
@@ -77,7 +85,7 @@ impl<'a> VarDeclarationsStore<'a> {
     #[inline]
     pub fn create_uid_var(name: &str, ctx: &mut TraverseCtx<'a>) -> BoundIdentifier<'a> {
         let binding = ctx.generate_uid_in_current_hoist_scope(name);
-        ctx.state.var_declarations.insert_var(&binding, ctx.ast);
+        ctx.state.var_declarations.insert_var(&binding, &ctx.ast);
         binding
     }
 
@@ -94,7 +102,7 @@ impl<'a> VarDeclarationsStore<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> BoundIdentifier<'a> {
         let binding = ctx.generate_uid_in_current_hoist_scope(name);
-        ctx.state.var_declarations.insert_var_with_init(&binding, expression, ctx.ast);
+        ctx.state.var_declarations.insert_var_with_init(&binding, expression, &ctx.ast);
         binding
     }
 
@@ -109,7 +117,7 @@ impl<'a> VarDeclarationsStore<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> BoundIdentifier<'a> {
         let binding = ctx.generate_uid_in_current_hoist_scope_based_on_node(node);
-        ctx.state.var_declarations.insert_var(&binding, ctx.ast);
+        ctx.state.var_declarations.insert_var(&binding, &ctx.ast);
         binding
     }
 
@@ -119,10 +127,14 @@ impl<'a> VarDeclarationsStore<'a> {
         &mut self,
         binding: &BoundIdentifier<'a>,
         init: Option<Expression<'a>>,
-        ast: AstBuilder<'a>,
+        ast: &AstBuilder<'a>,
     ) {
-        let ident = ast.binding_identifier_with_symbol_id(SPAN, binding.name, binding.symbol_id);
-        let pattern = BindingPattern::BindingIdentifier(ast.alloc(ident));
+        let pattern = BindingPattern::new_binding_identifier_with_symbol_id(
+            SPAN,
+            binding.name,
+            binding.symbol_id,
+            ast,
+        );
         self.insert_let_binding_pattern(pattern, init, ast);
     }
 
@@ -132,10 +144,17 @@ impl<'a> VarDeclarationsStore<'a> {
         &mut self,
         ident: BindingPattern<'a>,
         init: Option<Expression<'a>>,
-        ast: AstBuilder<'a>,
+        ast: &AstBuilder<'a>,
     ) {
-        let declarator =
-            ast.variable_declarator(SPAN, VariableDeclarationKind::Var, ident, NONE, init, false);
+        let declarator = VariableDeclarator::new(
+            SPAN,
+            VariableDeclarationKind::Var,
+            ident,
+            NONE,
+            init,
+            false,
+            ast,
+        );
         self.insert_var_declarator(declarator, ast);
     }
 
@@ -145,10 +164,17 @@ impl<'a> VarDeclarationsStore<'a> {
         &mut self,
         ident: BindingPattern<'a>,
         init: Option<Expression<'a>>,
-        ast: AstBuilder<'a>,
+        ast: &AstBuilder<'a>,
     ) {
-        let declarator =
-            ast.variable_declarator(SPAN, VariableDeclarationKind::Let, ident, NONE, init, false);
+        let declarator = VariableDeclarator::new(
+            SPAN,
+            VariableDeclarationKind::Let,
+            ident,
+            NONE,
+            init,
+            false,
+            ast,
+        );
         self.insert_let_declarator(declarator, ast);
     }
 
@@ -156,7 +182,7 @@ impl<'a> VarDeclarationsStore<'a> {
     pub fn insert_var_declarator(
         &mut self,
         declarator: VariableDeclarator<'a>,
-        ast: AstBuilder<'a>,
+        ast: &AstBuilder<'a>,
     ) {
         let declarators = self.stack.last_mut_or_init(|| Declarators::new(ast));
         declarators.var_declarators.push(declarator);
@@ -166,7 +192,7 @@ impl<'a> VarDeclarationsStore<'a> {
     pub fn insert_let_declarator(
         &mut self,
         declarator: VariableDeclarator<'a>,
-        ast: AstBuilder<'a>,
+        ast: &AstBuilder<'a>,
     ) {
         let declarators = self.stack.last_mut_or_init(|| Declarators::new(ast));
         declarators.let_declarators.push(declarator);
@@ -183,7 +209,7 @@ impl<'a> VarDeclarationsStore<'a> {
         &mut self,
         stmts: &mut ArenaVec<'a, Statement<'a>>,
         is_program_body: bool,
-        ast: AstBuilder<'a>,
+        ast: &AstBuilder<'a>,
     ) {
         if is_program_body {
             // Handle in `insert_into_program` instead
@@ -191,7 +217,7 @@ impl<'a> VarDeclarationsStore<'a> {
         }
 
         if let Some((var_statement, let_statement)) = self.get_var_statement(ast) {
-            let mut new_stmts = ast.vec_with_capacity(stmts.len() + 2);
+            let mut new_stmts = ArenaVec::with_capacity_in(stmts.len() + 2, ast);
             match (var_statement, let_statement) {
                 (Some(var_statement), Some(let_statement)) => {
                     // Insert `var` and `let` statements
@@ -211,7 +237,7 @@ impl<'a> VarDeclarationsStore<'a> {
     /// Pop the var/let declarations from the stack and return as statements.
     pub(crate) fn get_var_statement(
         &mut self,
-        ast: AstBuilder<'a>,
+        ast: &AstBuilder<'a>,
     ) -> Option<(Option<Statement<'a>>, Option<Statement<'a>>)> {
         let Declarators { var_declarators, let_declarators } = self.stack.pop()?;
 
@@ -235,13 +261,8 @@ impl<'a> VarDeclarationsStore<'a> {
     fn create_declaration(
         kind: VariableDeclarationKind,
         declarators: ArenaVec<'a, VariableDeclarator<'a>>,
-        ast: AstBuilder<'a>,
+        ast: &AstBuilder<'a>,
     ) -> Statement<'a> {
-        Statement::VariableDeclaration(ast.alloc_variable_declaration(
-            SPAN,
-            kind,
-            declarators,
-            false,
-        ))
+        Statement::new_variable_declaration(SPAN, kind, declarators, false, ast)
     }
 }

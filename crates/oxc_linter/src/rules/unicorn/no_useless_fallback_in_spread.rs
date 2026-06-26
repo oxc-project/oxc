@@ -39,7 +39,9 @@ declare_oxc_lint!(
     NoUselessFallbackInSpread,
     unicorn,
     correctness,
-    conditional_fix
+    conditional_fix,
+    version = "0.0.16",
+    short_description = "Disallow useless fallback when spreading in object literals.",
 );
 
 impl Rule for NoUselessFallbackInSpread {

@@ -88,6 +88,8 @@ declare_oxc_lint!(
     style,
     conditional_fix_dangerous,
     config = ConsistentTypeDefinitionsConfig,
+    version = "0.2.17",
+    short_description = "Enforce type definitions to consistently use either `interface` or `type`.",
 );
 
 impl Rule for ConsistentTypeDefinitions {
@@ -130,7 +132,7 @@ impl Rule for ConsistentTypeDefinitions {
                             ctx.diagnostic_with_fix(
                                 consistent_type_definitions_diagnostic(
                                     ConsistentTypeDefinitionsConfig::Interface,
-                                    Span::new(start, start + 4),
+                                    Span::sized(start, 4),
                                 ),
                                 |fixer| {
                                     fixer.replace(

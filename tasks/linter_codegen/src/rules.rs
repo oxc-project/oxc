@@ -43,6 +43,7 @@ pub fn get_all_rules(contents: &str) -> Vec<RuleEntry<'_>> {
 
         // Inside a plugin module, detect rule module: `pub mod no_debugger;`
         if let Some(plugin) = current_plugin
+            && plugin != "shared"
             && line.starts_with("pub mod ")
             && line.ends_with(';')
             && let Some(rule_name) = line.strip_prefix("pub mod ").and_then(|s| s.strip_suffix(';'))

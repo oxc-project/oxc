@@ -1,4 +1,4 @@
-use oxc_ast::{AstBuilder, ast::*};
+use oxc_ast::{ast::*, builder::AstBuilder};
 use oxc_traverse::Traverse;
 
 use crate::{context::TraverseCtx, es2018::ObjectRestSpreadOptions, state::TransformState};
@@ -42,7 +42,7 @@ impl<'a> Jsx<'a> {
     pub fn new(
         mut options: JsxOptions,
         object_rest_spread_options: Option<ObjectRestSpreadOptions>,
-        ast: AstBuilder<'a>,
+        ast: &AstBuilder<'a>,
         source_type: oxc_span::SourceType,
     ) -> Self {
         if options.jsx_plugin || options.development {

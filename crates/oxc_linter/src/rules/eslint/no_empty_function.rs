@@ -4,8 +4,8 @@ use bitflags::bitflags;
 use oxc_ast::{
     AstKind,
     ast::{
-        Expression, FormalParameter, IdentifierName, IdentifierReference, MethodDefinition,
-        MethodDefinitionKind, ObjectProperty, PropertyKind, TSAccessibility,
+        Expression, FormalParameter, Function, IdentifierName, IdentifierReference,
+        MethodDefinition, MethodDefinitionKind, ObjectProperty, PropertyKind, TSAccessibility,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -300,8 +300,10 @@ declare_oxc_lint!(
     NoEmptyFunction,
     eslint,
     restriction,
-    pending,
+    suggestion,
     config = NoEmptyFunctionConfig,
+    version = "0.3.3",
+    short_description = "Disallows the usage of empty functions.",
 );
 
 impl Rule for NoEmptyFunction {
@@ -322,7 +324,14 @@ impl Rule for NoEmptyFunction {
         else {
             return;
         };
-        ctx.diagnostic(no_empty_function_diagnostic(fb.span, kind, fn_name));
+        ctx.diagnostic_with_suggestion(
+            no_empty_function_diagnostic(fb.span, kind, fn_name),
+            |fixer| {
+                fixer
+                    .replace(Span::new(fb.span.start + 1, fb.span.end - 1), " /* empty */ ")
+                    .with_message(format!("Add comment inside empty {kind}."))
+            },
+        );
     }
 }
 
@@ -341,31 +350,32 @@ impl NoEmptyFunction {
         node: &AstNode<'a>,
         ctx: &LintContext<'a>,
     ) -> ViolationInfo<'a> {
-        for parent in ctx.nodes().ancestor_kinds(node.id()) {
+        let mut ancestors = ctx.nodes().ancestor_kinds(node.id());
+        while let Some(parent) = ancestors.next() {
             match parent {
                 AstKind::Function(f) => {
                     if let Some(name) = f.name() {
-                        let is_generator = f.generator;
-                        let is_async = f.r#async;
-
-                        if is_generator && self.allow.contains(Allowed::GeneratorFunctions) {
-                            return ViolationInfo::default();
-                        }
-                        if is_async && self.allow.contains(Allowed::AsyncFunctions) {
-                            return ViolationInfo::default();
-                        }
-                        if !is_generator && !is_async && self.allow.contains(Allowed::Function) {
+                        if self.is_allowed_function_expression(f) {
                             return ViolationInfo::default();
                         }
 
-                        let kind = if is_async {
+                        let kind = if f.r#async {
                             "async function"
-                        } else if is_generator {
+                        } else if f.generator {
                             "generator function"
                         } else {
                             "function"
                         };
                         return (kind, Some(name.into())).into();
+                    }
+                    if f.is_expression()
+                        && self.is_allowed_function_expression(f)
+                        && ancestors
+                            .clone()
+                            .next()
+                            .is_none_or(Self::is_plain_function_expression_container)
+                    {
+                        return ViolationInfo::default();
                     }
                 }
                 AstKind::ArrowFunctionExpression(arrow) => {
@@ -411,6 +421,23 @@ impl NoEmptyFunction {
                     return ("function", None).into();
                 }
                 AstKind::VariableDeclarator(decl) => {
+                    if let Some(init) = &decl.init {
+                        match init.get_inner_expression() {
+                            Expression::FunctionExpression(function)
+                                if self.is_allowed_function_expression(function) =>
+                            {
+                                return ViolationInfo::default();
+                            }
+                            Expression::ArrowFunctionExpression(function)
+                                if (self.allow.contains(Allowed::ArrowFunction)
+                                    || function.r#async
+                                        && self.allow.contains(Allowed::AsyncFunctions)) =>
+                            {
+                                return ViolationInfo::default();
+                            }
+                            _ => {}
+                        }
+                    }
                     return ("function", decl.id.get_identifier_name().map(Into::into)).into();
                 }
                 _ => return ("function", None).into(),
@@ -476,16 +503,25 @@ impl NoEmptyFunction {
                     }
                     self.allow.contains(Allowed::Methods)
                 } else {
-                    if function.r#async && self.allow.contains(Allowed::AsyncFunctions)
-                        || function.generator && self.allow.contains(Allowed::GeneratorFunctions)
-                    {
-                        return true;
-                    }
-                    !function.r#async
-                        && !function.generator
-                        && self.allow.contains(Allowed::Function)
+                    self.is_allowed_function_expression(function)
                 }
             }
+        }
+    }
+
+    fn is_allowed_function_expression(&self, function: &Function) -> bool {
+        function.r#async && self.allow.contains(Allowed::AsyncFunctions)
+            || function.generator && self.allow.contains(Allowed::GeneratorFunctions)
+            || !function.r#async && !function.generator && self.allow.contains(Allowed::Function)
+    }
+
+    fn is_plain_function_expression_container(parent: AstKind) -> bool {
+        match parent {
+            AstKind::MethodDefinition(_) => false,
+            AstKind::ObjectProperty(property) => {
+                property.kind == PropertyKind::Init && !property.method
+            }
+            _ => true,
         }
     }
 
@@ -691,19 +727,22 @@ fn test() {
             "function* foo(param: string) {}",
             Some(serde_json::json!([{ "allow": ["generatorFunctions"] }])),
         ),
-        // TODO: Fix these.
-        // (
-        //     "const foo = function*(param: string) {};",
-        //     Some(serde_json::json!([{ "allow": ["generatorFunctions"] }])),
-        // ),
-        // (
-        //     "const obj = {foo: function*(param: string) {}};",
-        //     Some(serde_json::json!([{ "allow": ["generatorFunctions"] }])),
-        // ),
-        // (
-        //     "const obj = {foo(param: string) {}};",
-        //     Some(serde_json::json!([{ "allow": ["methods"] }])),
-        // ),
+        (
+            "const foo = function(param: string) {};",
+            Some(serde_json::json!([{ "allow": ["functions"] }])),
+        ),
+        (
+            "const foo = function*(param: string) {};",
+            Some(serde_json::json!([{ "allow": ["generatorFunctions"] }])),
+        ),
+        (
+            "const obj = {foo: function*(param: string) {}};",
+            Some(serde_json::json!([{ "allow": ["generatorFunctions"] }])),
+        ),
+        (
+            "const obj = {foo(param: string) {}};",
+            Some(serde_json::json!([{ "allow": ["methods"] }])),
+        ),
         ("class A { foo(param: string) {} }", Some(serde_json::json!([{ "allow": ["methods"] }]))),
         ("class A { private foo() {} }", Some(serde_json::json!([{ "allow": ["methods"] }]))),
         ("class A { protected foo() {} }", Some(serde_json::json!([{ "allow": ["methods"] }]))),
@@ -753,11 +792,10 @@ fn test() {
                 serde_json::json!([{ "allow": ["methods", "decoratedFunctions", "overrideMethods"] }]),
             ),
         ),
-        // TODO: Fix.
-        // (
-        //     "const obj = {*foo(param: string) {}};",
-        //     Some(serde_json::json!([{ "allow": ["generatorMethods"] }])),
-        // ),
+        (
+            "const obj = {*foo(param: string) {}};",
+            Some(serde_json::json!([{ "allow": ["generatorMethods"] }])),
+        ),
         (
             "class A { *foo(param: string) {} }",
             Some(serde_json::json!([{ "allow": ["generatorMethods"] }])),
@@ -782,11 +820,10 @@ fn test() {
             "const A = class {static *foo(param: string) {}};",
             Some(serde_json::json!([{ "allow": ["generatorMethods"] }])),
         ),
-        // TODO: Fix.
-        // (
-        //     "const obj = {get foo(): string {}};",
-        //     Some(serde_json::json!([{ "allow": ["getters"] }])),
-        // ),
+        (
+            "const obj = {get foo(): string {}};",
+            Some(serde_json::json!([{ "allow": ["getters"] }])),
+        ),
         ("class A {get foo(): string {}}", Some(serde_json::json!([{ "allow": ["getters"] }]))),
         (
             "class A {static get foo(): string {}}",
@@ -832,11 +869,10 @@ fn test() {
             "const A = class extends B {static override get foo(): string {}};",
             Some(serde_json::json!([{ "allow": ["getters", "overrideMethods"] }])),
         ),
-        // TODO: Fix
-        // (
-        //     "const obj = {set foo(value: string) {}};",
-        //     Some(serde_json::json!([{ "allow": ["setters"] }])),
-        // ),
+        (
+            "const obj = {set foo(value: string) {}};",
+            Some(serde_json::json!([{ "allow": ["setters"] }])),
+        ),
         (
             "class A {set foo(value: string) {}}",
             Some(serde_json::json!([{ "allow": ["setters"] }])),
@@ -909,20 +945,18 @@ fn test() {
             "const B = class { protected constructor() {} }",
             Some(serde_json::json!([{ "allow": ["constructors", "protectedConstructors"] }])),
         ),
-        // TODO: Fix.
-        // (
-        //     "const foo = { async method(param: string) {} }",
-        //     Some(serde_json::json!([{ "allow": ["asyncMethods"] }])),
-        // ),
+        (
+            "const foo = { async method(param: string) {} }",
+            Some(serde_json::json!([{ "allow": ["asyncMethods"] }])),
+        ),
         (
             "async function a(param: string){}",
             Some(serde_json::json!([{ "allow": ["asyncFunctions"] }])),
         ),
-        // TODO: Fix
-        // (
-        //     "const foo = async function(param: string) {}",
-        //     Some(serde_json::json!([{ "allow": ["asyncFunctions"] }])),
-        // ),
+        (
+            "const foo = async function(param: string) {}",
+            Some(serde_json::json!([{ "allow": ["asyncFunctions"] }])),
+        ),
         (
             "class A { async foo(param: string) {} }",
             Some(serde_json::json!([{ "allow": ["asyncMethods"] }])),
@@ -1051,6 +1085,17 @@ fn test() {
             "class A extends B { override foo() {} }",
             Some(serde_json::json!([{ "allow": ["overrideMethods", "methods"] }])),
         ),
+        (
+            "
+            const x = function () {};
+            function fetchData(callback = function () {}) {
+                callback();
+            }
+            button.onclick = function () {};
+            setTimeout(function () {}, 1000);
+            ",
+            Some(serde_json::json!([{ "allow": ["functions"] }])),
+        ),
     ];
 
     let fail = vec![
@@ -1100,7 +1145,6 @@ fn test() {
         ("class Person { otherMethod(name: string) {} }", None),
         ("class Foo { private constructor() {} }", None),
         ("class Foo { protected constructor() {} }", None),
-        ("function foo() {}", None),
         (
             "
         class Foo {
@@ -1214,5 +1258,66 @@ fn test() {
         ("class A extends B { override foo() {} }", None),
     ];
 
-    Tester::new(NoEmptyFunction::NAME, NoEmptyFunction::PLUGIN, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("function foo() {}", "function foo() { /* empty */ }", None),
+        ("var foo = function () {};", "var foo = function () { /* empty */ };", None),
+        (
+            "var obj = { foo: function() {} };",
+            "var obj = { foo: function() { /* empty */ } };",
+            None,
+        ),
+        ("var foo = () => { \n\n  }", "var foo = () => { /* empty */ }", None),
+        ("function* gen() {}", "function* gen() { /* empty */ }", None),
+        ("async function foo() {}", "async function foo() { /* empty */ }", None),
+        ("var obj = { foo() {} }", "var obj = { foo() { /* empty */ } }", None),
+        ("var obj = { *foo() {} }", "var obj = { *foo() { /* empty */ } }", None),
+        ("var obj = { async foo() {} }", "var obj = { async foo() { /* empty */ } }", None),
+        ("class A { constructor() { } }", "class A { constructor() { /* empty */ } }", None),
+        (
+            "class A { private constructor() {} }",
+            "class A { private constructor() { /* empty */ } }",
+            None,
+        ),
+        (
+            "class A { protected constructor() {} }",
+            "class A { protected constructor() { /* empty */ } }",
+            None,
+        ),
+        ("class A { foo() { } }", "class A { foo() { /* empty */ } }", None),
+        ("class A { static foo() {} }", "class A { static foo() { /* empty */ } }", None),
+        ("class A { get foo() {} }", "class A { get foo() { /* empty */ } }", None),
+        ("class A { set foo(value) {} }", "class A { set foo(value) { /* empty */ } }", None),
+        (
+            "class A extends B { override foo() {} }",
+            "class A extends B { override foo() { /* empty */ } }",
+            None,
+        ),
+        (
+            "class A { @decorator() foo() {} }",
+            "class A { @decorator() foo() { /* empty */ } }",
+            None,
+        ),
+        (
+            "
+        const obj = {
+            foo: function() {
+            },
+            bar: function*() {
+            },
+            foobar() {
+            }
+        };",
+            "
+        const obj = {
+            foo: function() { /* empty */ },
+            bar: function*() { /* empty */ },
+            foobar() { /* empty */ }
+        };",
+            None,
+        ),
+    ];
+
+    Tester::new(NoEmptyFunction::NAME, NoEmptyFunction::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

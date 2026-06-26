@@ -8,7 +8,7 @@ use cow_utils::CowUtils;
 use oxc::{
     allocator::Allocator,
     codegen::{Codegen, CodegenOptions, CommentOptions, IndentChar},
-    diagnostics::{NamedSource, OxcDiagnostic},
+    diagnostics::{Diagnostics, NamedSource, OxcDiagnostic},
     parser::{ParseOptions, Parser},
     span::{SourceType, VALID_EXTENSIONS},
     transformer::{BabelOptions, HelperLoaderMode, TransformOptions},
@@ -29,7 +29,7 @@ pub struct TestCase {
     options: BabelOptions,
     source_type: SourceType,
     transform_options: Result<TransformOptions, Vec<String>>,
-    pub errors: Vec<OxcDiagnostic>,
+    pub errors: Diagnostics,
     pub transformed_code: String,
 }
 
@@ -53,7 +53,7 @@ impl TestCase {
         options.cwd.replace(cwd.to_path_buf());
         let transform_options = TransformOptions::try_from(&options);
         let path = path.to_path_buf();
-        let errors = vec![];
+        let errors = Diagnostics::new();
 
         // in `exec` directory
         let kind = if path
@@ -210,7 +210,7 @@ impl TestCase {
         {
             let allocator = Allocator::default();
             let ret = Parser::new(&allocator, &source, self.source_type).parse();
-            if !ret.errors.is_empty() {
+            if !ret.diagnostics.is_empty() {
                 return true;
             }
         }

@@ -89,6 +89,8 @@ declare_oxc_lint!(
     typescript,
     pedantic,
     config = OnlyThrowErrorConfig,
+    version = "1.12.0",
+    short_description = "This rule disallows throwing non-Error values.",
 );
 
 impl Rule for OnlyThrowError {

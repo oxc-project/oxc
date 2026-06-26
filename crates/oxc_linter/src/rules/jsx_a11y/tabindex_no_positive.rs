@@ -46,7 +46,9 @@ declare_oxc_lint!(
     TabindexNoPositive,
     jsx_a11y,
     correctness,
-    dangerous_suggestion
+    dangerous_suggestion,
+    version = "0.0.21",
+    short_description = "Enforces that positive values for the `tabIndex` attribute are not used in JSX.",
 );
 
 impl Rule for TabindexNoPositive {

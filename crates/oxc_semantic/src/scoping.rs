@@ -3,9 +3,11 @@ use std::{collections::hash_map::Entry, fmt, mem};
 use rustc_hash::{FxHashMap, FxHashSet};
 use self_cell::self_cell;
 
-use oxc_allocator::{Allocator, CloneIn, Vec as ArenaVec};
+use oxc_allocator::{Allocator, ArenaVec, BitSet, CloneIn};
 use oxc_index::IndexVec;
-use oxc_span::{ArenaIdentHashMap, Ident, Span};
+use oxc_span::Span;
+use oxc_str::{ArenaIdentHashMap, Ident};
+use oxc_syntax::constant_value::ConstantValue;
 use oxc_syntax::{
     node::NodeId,
     reference::{Reference, ReferenceId},
@@ -79,6 +81,8 @@ multi_index_vec! {
 ///
 /// ## Scope Tree
 ///
+use crate::ts_enum::EnumData;
+
 /// The scope tree stores lexical scopes created by a program, and all the
 /// variable bindings each scope creates.
 ///
@@ -93,6 +97,9 @@ pub struct Scoping {
 
     /// Function or Variable Symbol IDs that are marked with `@__NO_SIDE_EFFECTS__`.
     pub(crate) no_side_effects: FxHashSet<SymbolId>,
+
+    /// Pre-computed enum member values and scope mappings.
+    pub(crate) enum_data: EnumData,
 
     /* Scope Tree - single allocation for all scope-indexed flat fields */
     scope_table: ScopeTable,
@@ -112,10 +119,11 @@ impl Default for Scoping {
             symbol_table: SymbolTable::new(),
             references: IndexVec::new(),
             no_side_effects: FxHashSet::default(),
+            enum_data: EnumData::default(),
             scope_table: ScopeTable::new(),
             cell: ScopingCell::new(Allocator::default(), |allocator| ScopingInner {
-                symbol_names: ArenaVec::new_in(allocator),
-                resolved_references: ArenaVec::new_in(allocator),
+                symbol_names: ArenaVec::new_in(&allocator),
+                resolved_references: ArenaVec::new_in(&allocator),
                 symbol_redeclarations: FxHashMap::default(),
                 bindings: IndexVec::new(),
                 root_unresolved_references: UnresolvedReferences::new_in(allocator),
@@ -294,6 +302,12 @@ impl Scoping {
         self.symbol_table.is_empty()
     }
 
+    /// Returns the number of references in this table.
+    #[inline]
+    pub fn references_len(&self) -> usize {
+        self.references.len()
+    }
+
     /// Iterate all symbol names in insertion order.
     pub fn symbol_names(&self) -> impl Iterator<Item = &str> + '_ {
         self.cell.borrow_dependent().symbol_names.iter().map(Ident::as_str)
@@ -427,9 +441,29 @@ impl Scoping {
     ) -> SymbolId {
         self.cell.with_dependent_mut(|allocator, cell| {
             cell.symbol_names.push(name.clone_in(allocator));
-            cell.resolved_references.push(ArenaVec::new_in(allocator));
+            cell.resolved_references.push(ArenaVec::new_in(&allocator));
         });
         self.symbol_table.push(span, flags, scope_id, node_id)
+    }
+
+    /// Create a new symbol, append symbol metadata to the symbol table, and bind it to a scope.
+    pub(crate) fn create_symbol_with_binding(
+        &mut self,
+        span: Span,
+        name: Ident<'_>,
+        flags: SymbolFlags,
+        symbol_scope_id: ScopeId,
+        binding_scope_id: ScopeId,
+        node_id: NodeId,
+    ) -> SymbolId {
+        let symbol_id = self.symbol_table.push(span, flags, symbol_scope_id, node_id);
+        self.cell.with_dependent_mut(|allocator, cell| {
+            let name = name.clone_in(allocator);
+            cell.symbol_names.push(name);
+            cell.resolved_references.push(ArenaVec::new_in(&allocator));
+            cell.bindings[binding_scope_id].insert(name, symbol_id);
+        });
+        symbol_id
     }
 
     /// Record a redeclaration for an existing symbol.
@@ -462,7 +496,7 @@ impl Scoping {
                             "The above step has already been checked, and it was first declared."
                         )
                     });
-                    let v = ArenaVec::from_array_in([first_declaration, redeclaration], allocator);
+                    let v = ArenaVec::from_array_in([first_declaration, redeclaration], &allocator);
                     vacant.insert(v);
                 }
             }
@@ -565,6 +599,25 @@ impl Scoping {
         });
     }
 
+    /// Remove every `ReferenceId` whose bit is set in `excluded` from each
+    /// symbol's resolved-references list. O(total_references) in the worst
+    /// case; short-circuits when `excluded` has no bits set.
+    ///
+    /// `excluded` should be sized to at least [`Self::references_len`] at the
+    /// time it was constructed. References created after the bitset was
+    /// constructed have indices beyond `excluded.capacity()` and are treated
+    /// as live (never excluded) — `BitSet::contains` is `false` past capacity.
+    pub fn retain_resolved_references_excluding(&mut self, excluded: &BitSet<'_>) {
+        if excluded.is_empty() {
+            return;
+        }
+        self.cell.with_dependent_mut(|_allocator, cell| {
+            for reference_ids in &mut cell.resolved_references {
+                reference_ids.retain(|id| !excluded.contains(id.index()));
+            }
+        });
+    }
+
     /// Reserve additional capacity for symbols, references, and scopes.
     pub fn reserve(
         &mut self,
@@ -588,6 +641,28 @@ impl Scoping {
     /// Symbols marked with `@__NO_SIDE_EFFECTS__`.
     pub fn no_side_effects(&self) -> &FxHashSet<SymbolId> {
         &self.no_side_effects
+    }
+
+    /// Get the computed constant value for an enum member symbol.
+    pub fn get_enum_member_value(&self, symbol_id: SymbolId) -> Option<&ConstantValue> {
+        self.enum_data.get_member_value(symbol_id)
+    }
+
+    /// Set a computed constant value for an enum member symbol.
+    pub(crate) fn set_enum_member_value(&mut self, symbol_id: SymbolId, value: ConstantValue) {
+        self.enum_data.set_member_value(symbol_id, value);
+    }
+
+    /// Get the body scopes for an enum declaration symbol.
+    /// Returns multiple scopes for merged enum declarations.
+    pub fn get_enum_body_scopes(&self, symbol_id: SymbolId) -> Option<&[ScopeId]> {
+        self.enum_data.get_body_scopes(symbol_id)
+    }
+
+    /// Add a body scope for an enum declaration symbol.
+    /// Appends to the list (supports merged enum declarations).
+    pub(crate) fn add_enum_body_scope(&mut self, symbol_id: SymbolId, scope_id: ScopeId) {
+        self.enum_data.add_body_scope(symbol_id, scope_id);
     }
 }
 
@@ -617,6 +692,13 @@ impl Scoping {
     /// guarantees the iterator will have at least 1 element.
     pub fn scope_ancestors(&self, scope_id: ScopeId) -> impl Iterator<Item = ScopeId> + '_ {
         std::iter::successors(Some(scope_id), |&scope_id| *self.scope_table.parent_ids(scope_id))
+    }
+
+    /// Returns `true` if `scope_id` is a descendant of `ancestor_scope_id`.
+    ///
+    /// A scope is not considered a descendant of itself.
+    pub fn scope_is_descendant_of(&self, scope_id: ScopeId, ancestor_scope_id: ScopeId) -> bool {
+        self.scope_ancestors(scope_id).skip(1).any(|scope_id| scope_id == ancestor_scope_id)
     }
 
     /// Iterate all scope IDs from the root scope through all descendants.
@@ -723,7 +805,7 @@ impl Scoping {
             let name = name.clone_in(allocator);
             cell.root_unresolved_references
                 .entry(name)
-                .or_insert_with(|| ArenaVec::new_in(allocator))
+                .or_insert_with(|| ArenaVec::new_in(&allocator))
                 .push(reference_id);
         });
     }
@@ -741,6 +823,7 @@ impl Scoping {
     /// binding that might be declared in a parent scope, use [`find_binding`].
     ///
     /// [`find_binding`]: Scoping::find_binding
+    #[inline]
     pub fn get_binding(&self, scope_id: ScopeId, name: Ident<'_>) -> Option<SymbolId> {
         self.cell.borrow_dependent().bindings[scope_id].get(&name).copied()
     }
@@ -789,19 +872,6 @@ impl Scoping {
         self.cell.borrow_dependent().bindings[scope_id].values().copied()
     }
 
-    #[inline]
-    pub(crate) fn insert_binding(
-        &mut self,
-        scope_id: ScopeId,
-        name: Ident<'_>,
-        symbol_id: SymbolId,
-    ) {
-        self.cell.with_dependent_mut(|allocator, cell| {
-            let name = name.clone_in(allocator);
-            cell.bindings[scope_id].insert(name, symbol_id);
-        });
-    }
-
     /// Create a scope.
     #[inline]
     pub fn add_scope(
@@ -840,6 +910,29 @@ impl Scoping {
                 cell.bindings[to].insert(name, symbol_id);
             }
         });
+    }
+
+    /// Move a binding from one scope to another by its [`SymbolId`].
+    ///
+    /// Looks up the symbol's name internally, moves the entry from `from`'s binding map to `to`'s
+    /// (a no-op if no binding for the symbol exists in `from`), and always updates the symbol's
+    /// recorded scope id to `to`.
+    ///
+    /// Prefer this over the [`move_binding`] + [`set_symbol_scope_id`] pair when a `SymbolId` is
+    /// available, and use it when the name isn't otherwise accessible with the arena lifetime
+    /// (e.g. when iterating `from`'s binding map).
+    ///
+    /// [`move_binding`]: Scoping::move_binding
+    /// [`set_symbol_scope_id`]: Scoping::set_symbol_scope_id
+    pub fn move_binding_by_symbol_id(&mut self, from: ScopeId, to: ScopeId, symbol_id: SymbolId) {
+        debug_assert_ne!(from, to);
+        self.cell.with_dependent_mut(|_allocator, cell| {
+            let name = cell.symbol_names[symbol_id.index()];
+            if let Some((name, sid)) = cell.bindings[from].remove_entry(&name) {
+                cell.bindings[to].insert(name, sid);
+            }
+        });
+        self.set_symbol_scope_id(symbol_id, to);
     }
 
     /// Rename a binding to a new name.
@@ -918,6 +1011,7 @@ impl Scoping {
             symbol_table: self.symbol_table.clone(),
             references: self.references.clone(),
             no_side_effects: self.no_side_effects.clone(),
+            enum_data: self.enum_data.clone(),
             scope_table: self.scope_table.clone(),
             cell: {
                 let allocator = Allocator::with_capacity(used_bytes);

@@ -41,7 +41,9 @@ declare_oxc_lint!(
     ConsistentDateClone,
     unicorn,
     style,
-    fix
+    fix,
+    version = "0.15.13",
+    short_description = "Enforce consistent cloning of `Date` objects without unnecessary `.getTime()` calls.",
 );
 
 impl Rule for ConsistentDateClone {

@@ -46,7 +46,9 @@ declare_oxc_lint!(
     /// ```
     NoAwaitInLoop,
     eslint,
-    perf
+    perf,
+    version = "0.3.2",
+    short_description = "Disallow the use of `await` within loop bodies.",
 );
 
 impl Rule for NoAwaitInLoop {

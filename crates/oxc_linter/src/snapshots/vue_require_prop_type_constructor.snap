@@ -1,0 +1,232 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ vue(require-prop-type-constructor): The "myProp" property should be a constructor.
+   ╭─[require_prop_type_constructor.tsx:4:25]
+ 3 │               props: {
+ 4 │                 myProp: 'Number',
+   ·                         ────────
+ 5 │                 anotherType: ['Number', 'String'],
+   ╰────
+  help: Replace `'Number'` with `Number`.
+
+  ⚠ vue(require-prop-type-constructor): The "anotherType" property should be a constructor.
+   ╭─[require_prop_type_constructor.tsx:5:31]
+ 4 │                 myProp: 'Number',
+ 5 │                 anotherType: ['Number', 'String'],
+   ·                               ────────
+ 6 │                 extraProp: {
+   ╰────
+  help: Replace `'Number'` with `Number`.
+
+  ⚠ vue(require-prop-type-constructor): The "anotherType" property should be a constructor.
+   ╭─[require_prop_type_constructor.tsx:5:41]
+ 4 │                 myProp: 'Number',
+ 5 │                 anotherType: ['Number', 'String'],
+   ·                                         ────────
+ 6 │                 extraProp: {
+   ╰────
+  help: Replace `'String'` with `String`.
+
+  ⚠ vue(require-prop-type-constructor): The "extraProp" property should be a constructor.
+   ╭─[require_prop_type_constructor.tsx:7:25]
+ 6 │                 extraProp: {
+ 7 │                   type: 'Number',
+   ·                         ────────
+ 8 │                   default: 10
+   ╰────
+  help: Replace `'Number'` with `Number`.
+
+  ⚠ vue(require-prop-type-constructor): The "lastProp" property should be a constructor.
+    ╭─[require_prop_type_constructor.tsx:11:26]
+ 10 │                 lastProp: {
+ 11 │                   type: ['Boolean']
+    ·                          ─────────
+ 12 │                 },
+    ╰────
+  help: Replace `'Boolean'` with `Boolean`.
+
+  ⚠ vue(require-prop-type-constructor): The "nullProp" property should be a constructor.
+    ╭─[require_prop_type_constructor.tsx:13:27]
+ 12 │                 },
+ 13 │                 nullProp: 'null'
+    ·                           ──────
+ 14 │               }
+    ╰────
+  help: Replace `'null'` with `null`.
+
+  ⚠ vue(require-prop-type-constructor): The "a" property should be a constructor.
+   ╭─[require_prop_type_constructor.tsx:4:20]
+ 3 │               props: {
+ 4 │                 a: `String`,
+   ·                    ────────
+ 5 │                 b: Foo + '',
+   ╰────
+  help: Replace ``String`` with `String`.
+
+  ⚠ vue(require-prop-type-constructor): The "b" property should be a constructor.
+   ╭─[require_prop_type_constructor.tsx:5:20]
+ 4 │                 a: `String`,
+ 5 │                 b: Foo + '',
+   ·                    ────────
+ 6 │                 c: 1,
+   ╰────
+
+  ⚠ vue(require-prop-type-constructor): The "c" property should be a constructor.
+   ╭─[require_prop_type_constructor.tsx:6:20]
+ 5 │                 b: Foo + '',
+ 6 │                 c: 1,
+   ·                    ─
+ 7 │                 d: true,
+   ╰────
+
+  ⚠ vue(require-prop-type-constructor): The "d" property should be a constructor.
+   ╭─[require_prop_type_constructor.tsx:7:20]
+ 6 │                 c: 1,
+ 7 │                 d: true,
+   ·                    ────
+ 8 │               }
+   ╰────
+
+  ⚠ vue(require-prop-type-constructor): The "a" property should be a constructor.
+   ╭─[require_prop_type_constructor.tsx:5:25]
+ 4 │                 a: {
+ 5 │                   type: 'String',
+   ·                         ────────
+ 6 │                   default: 10
+   ╰────
+  help: Replace `'String'` with `String`.
+
+  ⚠ vue(require-prop-type-constructor): The "name" property should be a constructor.
+   ╭─[require_prop_type_constructor.tsx:4:24]
+ 3 │               props: {
+ 4 │                 name: ['String',,]
+   ·                        ────────
+ 5 │               }
+   ╰────
+  help: Replace `'String'` with `String`.
+
+  ⚠ vue(require-prop-type-constructor): The "str" property should be a constructor.
+   ╭─[require_prop_type_constructor.tsx:4:22]
+ 3 │               props: {
+ 4 │                 str: 'String',
+   ·                      ────────
+ 5 │                 str2: 'a',
+   ╰────
+  help: Replace `'String'` with `String`.
+
+  ⚠ vue(require-prop-type-constructor): The "str2" property should be a constructor.
+   ╭─[require_prop_type_constructor.tsx:5:23]
+ 4 │                 str: 'String',
+ 5 │                 str2: 'a',
+   ·                       ───
+ 6 │                 emptyStr: '',
+   ╰────
+  help: Replace `'a'` with `a`.
+
+  ⚠ vue(require-prop-type-constructor): The "emptyStr" property should be a constructor.
+   ╭─[require_prop_type_constructor.tsx:6:27]
+ 5 │                 str2: 'a',
+ 6 │                 emptyStr: '',
+   ·                           ──
+ 7 │                 number: 1000,
+   ╰────
+
+  ⚠ vue(require-prop-type-constructor): The "number" property should be a constructor.
+   ╭─[require_prop_type_constructor.tsx:7:25]
+ 6 │                 emptyStr: '',
+ 7 │                 number: 1000,
+   ·                         ────
+ 8 │                 binumber: 0b10000000000000000000000000000000,
+   ╰────
+
+  ⚠ vue(require-prop-type-constructor): The "binumber" property should be a constructor.
+   ╭─[require_prop_type_constructor.tsx:8:27]
+ 7 │                 number: 1000,
+ 8 │                 binumber: 0b10000000000000000000000000000000,
+   ·                           ──────────────────────────────────
+ 9 │                 hexnumber: 0x123456789ABCDEF,
+   ╰────
+
+  ⚠ vue(require-prop-type-constructor): The "hexnumber" property should be a constructor.
+    ╭─[require_prop_type_constructor.tsx:9:28]
+  8 │                 binumber: 0b10000000000000000000000000000000,
+  9 │                 hexnumber: 0x123456789ABCDEF,
+    ·                            ─────────────────
+ 10 │                 exp1: 1E3,
+    ╰────
+
+  ⚠ vue(require-prop-type-constructor): The "exp1" property should be a constructor.
+    ╭─[require_prop_type_constructor.tsx:10:23]
+  9 │                 hexnumber: 0x123456789ABCDEF,
+ 10 │                 exp1: 1E3,
+    ·                       ───
+ 11 │                 exp2: 2e6,
+    ╰────
+
+  ⚠ vue(require-prop-type-constructor): The "exp2" property should be a constructor.
+    ╭─[require_prop_type_constructor.tsx:11:23]
+ 10 │                 exp1: 1E3,
+ 11 │                 exp2: 2e6,
+    ·                       ───
+ 12 │                 exp3: 0.1e2,
+    ╰────
+
+  ⚠ vue(require-prop-type-constructor): The "exp3" property should be a constructor.
+    ╭─[require_prop_type_constructor.tsx:12:23]
+ 11 │                 exp2: 2e6,
+ 12 │                 exp3: 0.1e2,
+    ·                       ─────
+ 13 │                 bigInt: 9007199254740991n,
+    ╰────
+
+  ⚠ vue(require-prop-type-constructor): The "bigInt" property should be a constructor.
+    ╭─[require_prop_type_constructor.tsx:13:25]
+ 12 │                 exp3: 0.1e2,
+ 13 │                 bigInt: 9007199254740991n,
+    ·                         ─────────────────
+ 14 │                 boolean: true,
+    ╰────
+
+  ⚠ vue(require-prop-type-constructor): The "boolean" property should be a constructor.
+    ╭─[require_prop_type_constructor.tsx:14:26]
+ 13 │                 bigInt: 9007199254740991n,
+ 14 │                 boolean: true,
+    ·                          ────
+ 15 │                 'null': null,
+    ╰────
+
+  ⚠ vue(require-prop-type-constructor): The "regex" property should be a constructor.
+    ╭─[require_prop_type_constructor.tsx:16:24]
+ 15 │                 'null': null,
+ 16 │                 regex: /a/,
+    ·                        ───
+ 17 │                 template: `String`,
+    ╰────
+
+  ⚠ vue(require-prop-type-constructor): The "template" property should be a constructor.
+    ╭─[require_prop_type_constructor.tsx:17:27]
+ 16 │                 regex: /a/,
+ 17 │                 template: `String`,
+    ·                           ────────
+ 18 │                 emptyTemplate: ``,
+    ╰────
+  help: Replace ``String`` with `String`.
+
+  ⚠ vue(require-prop-type-constructor): The "emptyTemplate" property should be a constructor.
+    ╭─[require_prop_type_constructor.tsx:18:32]
+ 17 │                 template: `String`,
+ 18 │                 emptyTemplate: ``,
+    ·                                ──
+ 19 │               }
+    ╰────
+
+  ⚠ vue(require-prop-type-constructor): The "a" property should be a constructor.
+   ╭─[require_prop_type_constructor.tsx:4:23]
+ 3 │               a: {
+ 4 │                 type: 'String',
+   ·                       ────────
+ 5 │                 default: 'abc'
+   ╰────
+  help: Replace `'String'` with `String`.

@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use rustc_hash::FxHashMap;
-use schemars::JsonSchema;
+use schemars::{JsonSchema, SchemaGenerator, schema::Schema};
 use serde::{Deserialize, Serialize};
 
 use oxc_ast::AstKind;
@@ -48,7 +48,7 @@ struct NoRestrictedTypesConfig {
 /// - A string - ban with custom message
 /// - An object with `message` and optional `fixWith` and `suggest`
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(untagged)]
+#[serde(untagged, deny_unknown_fields)]
 enum BanConfigValue {
     /// `"TypeName": true` - ban with default message
     /// Note: Only `true` is valid; `false` would fail to deserialize and be ignored.
@@ -70,7 +70,7 @@ enum BanConfigValue {
 
 /// A type that only deserializes from `true`.
 /// This matches the upstream typescript-eslint schema which only allows `true`, not `false`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, JsonSchema)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 struct True;
 
 impl<'de> Deserialize<'de> for True {
@@ -80,6 +80,22 @@ impl<'de> Deserialize<'de> for True {
     {
         let value = bool::deserialize(deserializer)?;
         if value { Ok(True) } else { Err(serde::de::Error::custom("expected `true`, got `false`")) }
+    }
+}
+
+impl JsonSchema for True {
+    fn schema_name() -> String {
+        "True".to_string()
+    }
+
+    fn schema_id() -> Cow<'static, str> {
+        "True".into()
+    }
+
+    fn json_schema(r#gen: &mut SchemaGenerator) -> Schema {
+        let mut schema = <bool as JsonSchema>::json_schema(r#gen).into_object();
+        schema.enum_values = Some(vec![true.into()]);
+        schema.into()
     }
 }
 
@@ -146,6 +162,8 @@ declare_oxc_lint!(
     restriction,
     fix_suggestion,
     config = NoRestrictedTypesConfig,
+    version = "1.31.0",
+    short_description = "Disallow certain types from being used.",
 );
 
 impl Rule for NoRestrictedTypes {
@@ -227,16 +245,12 @@ impl Rule for NoRestrictedTypes {
                 }
             }
             // Handle empty tuple type `[]`
-            AstKind::TSTupleType(tuple) => {
-                if tuple.element_types.is_empty() {
-                    self.check_banned_types(tuple.span, ctx);
-                }
+            AstKind::TSTupleType(tuple) if tuple.element_types.is_empty() => {
+                self.check_banned_types(tuple.span, ctx);
             }
             // Handle empty object type `{}`
-            AstKind::TSTypeLiteral(lit) => {
-                if lit.members.is_empty() {
-                    self.check_banned_types(lit.span, ctx);
-                }
+            AstKind::TSTypeLiteral(lit) if lit.members.is_empty() => {
+                self.check_banned_types(lit.span, ctx);
             }
             // Handle `class X implements Banned`
             AstKind::TSClassImplements(implements) => {

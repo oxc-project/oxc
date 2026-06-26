@@ -1,8 +1,9 @@
-use oxc_allocator::{TakeIn, Vec as ArenaVec};
+use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::{Reference, SymbolFlags};
-use oxc_span::{GetSpan, SPAN, Span, Str};
+use oxc_span::{GetSpan, SPAN, Span};
+use oxc_str::Str;
 use oxc_syntax::{
     operator::AssignmentOperator,
     reference::ReferenceFlags,
@@ -159,7 +160,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
         // still considered a module
         if no_modules_remaining && some_modules_deleted && ctx.state.module_imports.is_empty() {
             let export_decl = Statement::ExportNamedDeclaration(
-                ctx.ast.plain_export_named_declaration(SPAN, ctx.ast.vec(), None),
+                ExportNamedDeclaration::boxed_plain(SPAN, ArenaVec::new_in(ctx), None, ctx),
             );
             program.body.push(export_decl);
         }
@@ -189,7 +190,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
 
     fn enter_chain_element(&mut self, element: &mut ChainElement<'a>, ctx: &mut TraverseCtx<'a>) {
         if let ChainElement::TSNonNullExpression(e) = element {
-            *element = match e.expression.get_inner_expression_mut().take_in(ctx.ast) {
+            *element = match e.expression.get_inner_expression_mut().take_in(ctx) {
                 Expression::CallExpression(call_expr) => ChainElement::CallExpression(call_expr),
                 expr @ match_member_expression!(Expression) => {
                     ChainElement::from(expr.into_member_expression())
@@ -248,7 +249,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if expr.is_typescript_syntax() {
             let inner_expr = expr.get_inner_expression_mut();
-            *expr = inner_expr.take_in(ctx.ast);
+            *expr = inner_expr.take_in(ctx);
         }
     }
 
@@ -261,7 +262,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
             match expr.get_inner_expression_mut() {
                 // `foo!++` to `foo++`
                 inner_expr @ Expression::Identifier(_) => {
-                    let inner_expr = inner_expr.take_in(ctx.ast);
+                    let inner_expr = inner_expr.take_in(ctx);
                     let Expression::Identifier(ident) = inner_expr else {
                         unreachable!();
                     };
@@ -269,7 +270,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
                 }
                 // `foo.bar!++` to `foo.bar++`
                 inner_expr @ match_member_expression!(Expression) => {
-                    let inner_expr = inner_expr.take_in(ctx.ast);
+                    let inner_expr = inner_expr.take_in(ctx);
                     let member_expr = inner_expr.into_member_expression();
                     *target = SimpleAssignmentTarget::from(member_expr);
                 }
@@ -289,7 +290,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
         if let Some(expr) = target.get_expression_mut() {
             let inner_expr = expr.get_inner_expression_mut();
             if inner_expr.is_member_expression() {
-                let inner_expr = inner_expr.take_in(ctx.ast);
+                let inner_expr = inner_expr.take_in(ctx);
                 let member_expr = inner_expr.into_member_expression();
                 *target = AssignmentTarget::from(member_expr);
             }
@@ -411,7 +412,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
                 _ => None,
             };
             if let Some(span) = consequent_span {
-                let consequent = stmt.consequent.take_in(ctx.ast);
+                let consequent = stmt.consequent.take_in(ctx);
                 stmt.consequent = Self::create_block_with_statement(consequent, span, ctx);
             }
 
@@ -555,7 +556,12 @@ impl<'a> TypeScriptAnnotations<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
         let scope_id = ctx.insert_scope_below_statement(&stmt, ScopeFlags::empty());
-        ctx.ast.statement_block_with_scope_id(span, ctx.ast.vec1(stmt), scope_id)
+        Statement::new_block_statement_with_scope_id(
+            span,
+            ArenaVec::from_value_in(stmt, ctx),
+            scope_id,
+            ctx,
+        )
     }
 
     fn replace_for_statement_body_with_empty_block_if_ts(
@@ -573,7 +579,12 @@ impl<'a> TypeScriptAnnotations<'a> {
     ) {
         if stmt.is_typescript_syntax() {
             let scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::empty());
-            *stmt = ctx.ast.statement_block_with_scope_id(stmt.span(), ctx.ast.vec(), scope_id);
+            *stmt = Statement::new_block_statement_with_scope_id(
+                stmt.span(),
+                ArenaVec::new_in(ctx),
+                scope_id,
+                ctx,
+            );
         }
     }
 
@@ -624,22 +635,26 @@ impl<'a> Assignment<'a> {
     // Creates `this.name = name`
     fn create_this_property_assignment(&self, ctx: &mut TraverseCtx<'a>) -> Statement<'a> {
         let reference_id = ctx.create_bound_reference(self.symbol_id, ReferenceFlags::Read);
-        let id = ctx.ast.identifier_reference_with_reference_id(self.span, self.name, reference_id);
+        let id =
+            IdentifierReference::boxed_with_reference_id(self.span, self.name, reference_id, ctx);
 
-        ctx.ast.statement_expression(
+        Statement::new_expression_statement(
             SPAN,
-            ctx.ast.expression_assignment(
+            Expression::new_assignment_expression(
                 SPAN,
                 AssignmentOperator::Assign,
-                SimpleAssignmentTarget::from(ctx.ast.member_expression_static(
+                SimpleAssignmentTarget::from(MemberExpression::new_static_member_expression(
                     SPAN,
-                    ctx.ast.expression_this(SPAN),
-                    ctx.ast.identifier_name(self.span, self.name),
+                    Expression::new_this_expression(SPAN, ctx),
+                    IdentifierName::new(self.span, self.name, ctx),
                     false,
+                    ctx,
                 ))
                 .into(),
-                Expression::Identifier(ctx.alloc(id)),
+                Expression::Identifier(id),
+                ctx,
             ),
+            ctx,
         )
     }
 }
