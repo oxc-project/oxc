@@ -2511,6 +2511,7 @@ dependencies = [
  "oxc_parser",
  "oxc_semantic",
  "oxc_span",
+ "oxc_str",
  "oxc_syntax",
  "rustc-hash",
  "serde_json",

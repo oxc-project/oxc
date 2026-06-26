@@ -15,6 +15,7 @@ use oxc_ast::builder::{AstBuilder, GetAstBuilder};
 use oxc_ast_visit::VisitMut;
 use oxc_span::SPAN;
 use oxc_span::Span;
+use oxc_str::Str;
 use oxc_syntax::identifier::is_identifier_name;
 use react_compiler_ast::common::BaseNode;
 use react_compiler_ast::declarations::*;
@@ -985,12 +986,12 @@ impl<'a> ReverseCtx<'a> {
                 .is_some_and(|text| text.trim_start().starts_with("interface"))
     }
 
-    /// Allocate a string in the arena and return a `&str` with lifetime 'a.
+    /// Allocate a string in the arena and return a `Str<'a>`.
     ///
-    /// The returned `&'a str` converts into both `Ident` and `Str` (identifier
-    /// and string-literal name types), so it feeds every `AstBuilder` method.
-    fn str(&self, s: &str) -> &'a str {
-        oxc_allocator::ArenaStringBuilder::from_str_in(s, self.allocator).into_str()
+    /// `Str<'a>` converts to `Ident<'a>`, so can be passed to any `AstBuilder` method.
+    #[inline]
+    fn str(&self, s: &str) -> Str<'a> {
+        Str::from_str_in(s, self)
     }
 
     /// Convert a BaseNode's start/end into an OXC Span.
@@ -1432,8 +1433,7 @@ impl<'a> ReverseCtx<'a> {
             ),
             Expression::RegExpLiteral(lit) => {
                 let flags = self.parse_regexp_flags(&lit.flags);
-                let pattern =
-                    oxc::RegExpPattern { text: self.str(&lit.pattern).into(), pattern: None };
+                let pattern = oxc::RegExpPattern { text: self.str(&lit.pattern), pattern: None };
                 let regex = oxc::RegExp { pattern, flags };
                 oxc::Expression::new_reg_exp_literal(SPAN, regex, None, self)
             }
@@ -2019,8 +2019,8 @@ impl<'a> ReverseCtx<'a> {
     ) -> oxc::TemplateLiteral<'a> {
         let quasis = ArenaVec::from_iter_in(
             tl.quasis.iter().map(|q| {
-                let raw = self.str(&q.value.raw).into();
-                let cooked = q.value.cooked.as_ref().map(|c| self.str(c).into());
+                let raw = self.str(&q.value.raw);
+                let cooked = q.value.cooked.as_ref().map(|c| self.str(c));
                 let value = oxc::TemplateElementValue { raw, cooked };
                 oxc::TemplateElement::new(SPAN, value, q.tail, self)
             }),
