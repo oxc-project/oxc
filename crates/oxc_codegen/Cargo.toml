@@ -37,6 +37,9 @@ itoa = { workspace = true }
 rustc-hash = { workspace = true }
 
 [dev-dependencies]
+# `AstBuilder` is only used in tests
+oxc_ast = { workspace = true, features = ["builder_new"] }
+
 insta = { workspace = true }
 oxc_parser = { workspace = true }
 pico-args = { workspace = true }
