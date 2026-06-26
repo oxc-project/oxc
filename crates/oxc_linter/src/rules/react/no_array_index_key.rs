@@ -57,29 +57,32 @@ declare_oxc_lint!(
 );
 
 fn check_jsx_element<'a>(jsx: &'a JSXElement, node: &'a AstNode, ctx: &'a LintContext) {
+    let mut key_attrs = jsx
+        .opening_element
+        .attributes
+        .iter()
+        .filter_map(|attr| {
+            if let JSXAttributeItem::Attribute(attr) = attr
+                && let JSXAttributeName::Identifier(ident) = &attr.name
+                && ident.name.as_str() == "key"
+                && let Some(JSXAttributeValue::ExpressionContainer(container)) = &attr.value
+            {
+                return Some((attr.span, &container.expression));
+            }
+            None
+        })
+        .peekable();
+
+    if key_attrs.peek().is_none() {
+        return;
+    }
     let Some(index_param_symbol_id) = find_index_param_symbol_id(node, ctx) else {
         return;
     };
 
-    for attr in &jsx.opening_element.attributes {
-        let JSXAttributeItem::Attribute(attr) = attr else {
-            continue;
-        };
-
-        let JSXAttributeName::Identifier(ident) = &attr.name else {
-            continue;
-        };
-
-        if ident.name.as_str() != "key" {
-            continue;
-        }
-
-        let Some(JSXAttributeValue::ExpressionContainer(container)) = &attr.value else {
-            continue;
-        };
-
-        if jsx_expression_uses_index(ctx, index_param_symbol_id, &container.expression) {
-            ctx.diagnostic(no_array_index_key_diagnostic(attr.span));
+    for (span, expression) in key_attrs {
+        if jsx_expression_uses_index(ctx, index_param_symbol_id, expression) {
+            ctx.diagnostic(no_array_index_key_diagnostic(span));
         }
     }
 }
@@ -89,29 +92,37 @@ fn check_react_clone_element<'a>(
     node: &'a AstNode,
     ctx: &'a LintContext,
 ) {
+    if !is_method_call(call_expr, Some(&["React"]), Some(&["cloneElement"]), Some(2), Some(3)) {
+        return;
+    }
+    let Some(Argument::ObjectExpression(obj_expr)) = call_expr.arguments.get(1) else {
+        return;
+    };
+
+    let mut key_props = obj_expr
+        .properties
+        .iter()
+        .filter_map(|prop_kind| {
+            let ObjectPropertyKind::ObjectProperty(prop) = prop_kind else {
+                return None;
+            };
+            let PropertyKey::StaticIdentifier(key_ident) = &prop.key else {
+                return None;
+            };
+            (key_ident.name.as_str() == "key").then_some((prop.span, &prop.value))
+        })
+        .peekable();
+
+    if key_props.peek().is_none() {
+        return;
+    }
     let Some(index_param_symbol_id) = find_index_param_symbol_id(node, ctx) else {
         return;
     };
 
-    if is_method_call(call_expr, Some(&["React"]), Some(&["cloneElement"]), Some(2), Some(3)) {
-        let Some(Argument::ObjectExpression(obj_expr)) = call_expr.arguments.get(1) else {
-            return;
-        };
-
-        for prop_kind in &obj_expr.properties {
-            let ObjectPropertyKind::ObjectProperty(prop) = prop_kind else {
-                continue;
-            };
-
-            let PropertyKey::StaticIdentifier(key_ident) = &prop.key else {
-                continue;
-            };
-
-            if key_ident.name.as_str() == "key"
-                && expression_uses_index(ctx, index_param_symbol_id, &prop.value)
-            {
-                ctx.diagnostic(no_array_index_key_diagnostic(prop.span));
-            }
+    for (span, value) in key_props {
+        if expression_uses_index(ctx, index_param_symbol_id, value) {
+            ctx.diagnostic(no_array_index_key_diagnostic(span));
         }
     }
 }
@@ -338,7 +349,15 @@ fn test() {
           ));
         ",
         r"things.map((thing, index) => (
+            <Hello key={thing.id} key={index} />
+          ));
+        ",
+        r"things.map((thing, index) => (
             React.cloneElement(thing, { key: index })
+          ));
+        ",
+        r"things.map((thing, index) => (
+            React.cloneElement(thing, { key: thing.id, key: index })
           ));
         ",
         r"things.map((thing, index) => (
