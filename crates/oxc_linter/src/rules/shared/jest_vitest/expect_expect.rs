@@ -3,8 +3,8 @@ use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 
 use oxc_ast::{
-    AstKind,
-    ast::{CallExpression, Expression, FormalParameter, Function, Statement},
+    AstKind, match_member_expression,
+    ast::{CallExpression, Expression, FormalParameter, Function},
 };
 use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
@@ -113,6 +113,15 @@ impl AssertFunctionMatcher {
             Self::Pattern(pattern) => pattern.is_match(name),
         }
     }
+
+    /// Match a simple identifier callee without allocating a node-name string.
+    fn is_match_ident(&self, ident: &str) -> bool {
+        match self {
+            Self::Exact(expected) => ident.eq_ignore_ascii_case(expected),
+            // Patterns may need dotted names; fall back to full-name matching.
+            Self::Pattern(_) => false,
+        }
+    }
 }
 
 fn is_exact_assert_function_name(name: &str) -> bool {
@@ -132,6 +141,49 @@ fn compile_assert_function_matchers(
     assert_function_names: &[CompactStr],
 ) -> Vec<AssertFunctionMatcher> {
     assert_function_names.iter().map(AssertFunctionMatcher::new).collect()
+}
+
+/// True if any matcher needs `get_node_name` (patterns or dotted exact names like `assert.ok`).
+fn matchers_need_full_name(matchers: &[AssertFunctionMatcher]) -> bool {
+    matchers.iter().any(|m| match m {
+        AssertFunctionMatcher::Exact(name) => name.contains('.'),
+        AssertFunctionMatcher::Pattern(_) => true,
+    })
+}
+
+/// Check whether a call callee is an assertion, avoiding `get_node_name` allocation
+/// for the common `expect(...)` / `assert(...)` identifier case.
+fn is_assertion_call(
+    call_expr: &CallExpression<'_>,
+    matchers: &[AssertFunctionMatcher],
+    need_full_name: bool,
+) -> bool {
+    let callee = call_expr.callee.get_inner_expression();
+
+    // Fast path: bare identifier (`expect`, `assert`, …)
+    if let Expression::Identifier(ident) = callee {
+        let name = ident.name.as_str();
+        if matchers.iter().any(|m| m.is_match_ident(name)) {
+            return true;
+        }
+        // Exact matchers with a prefix rule: `expect` matches `expect` only for idents;
+        // dotted exact names never apply to a plain identifier.
+        if !need_full_name {
+            return false;
+        }
+    }
+
+    // Member calls like `expect.soft(...)` / `assert.ok(...)` need the dotted chain.
+    // Also used when custom patterns are configured.
+    let needs_chain = need_full_name
+        || matches!(callee, match_member_expression!(Expression))
+        || matches!(callee, Expression::CallExpression(_));
+    if needs_chain {
+        let name = get_node_name(&call_expr.callee);
+        return matchers.iter().any(|m| m.is_match(&name));
+    }
+
+    false
 }
 
 impl ExpectExpectConfig {
@@ -198,56 +250,71 @@ fn run<'a>(
     use_vitest_assertions: bool,
 ) {
     let node = possible_jest_node.node;
-    if let AstKind::CallExpression(call_expr) = node.kind() {
+    let AstKind::CallExpression(call_expr) = node.kind() else {
+        return;
+    };
+
+    // Cheap bail-outs before jest-fn classification when possible.
+    if let Some(member_expr) = call_expr.callee.as_member_expression() {
+        let Some(property_name) = member_expr.static_property_name() else {
+            return;
+        };
+        // `test.todo` / `it.todo` never need assertions; `test.skip` under Vitest is ignored.
+        if property_name == "todo" {
+            return;
+        }
+        if property_name == "skip" && use_vitest_assertions {
+            return;
+        }
+    }
+
+    let is_test_call = is_type_of_jest_fn_call(
+        call_expr,
+        possible_jest_node,
+        ctx,
+        &[JestFnKind::General(JestGeneralFnKind::Test)],
+    );
+
+    if !is_test_call {
+        if rule.additional_test_block_functions.is_empty() {
+            return;
+        }
         let name = get_node_name(&call_expr.callee);
-        if is_type_of_jest_fn_call(
-            call_expr,
-            possible_jest_node,
-            ctx,
-            &[JestFnKind::General(JestGeneralFnKind::Test)],
-        ) || rule.additional_test_block_functions.contains(&name)
-        {
-            if let Some(member_expr) = call_expr.callee.as_member_expression() {
-                let Some(property_name) = member_expr.static_property_name() else {
-                    return;
-                };
-                if property_name == "todo" {
-                    return;
-                }
-                if property_name == "skip" && use_vitest_assertions {
-                    return;
-                }
-            }
+        if !rule.additional_test_block_functions.iter().any(|n| n == &name) {
+            return;
+        }
+    }
 
-            let assert_function_matchers = if use_vitest_assertions {
-                &rule.assert_function_matchers_vitest
-            } else {
-                &rule.assert_function_matchers_jest
-            };
+    let assert_function_matchers = if use_vitest_assertions {
+        &rule.assert_function_matchers_vitest
+    } else {
+        &rule.assert_function_matchers_jest
+    };
+    let need_full_name = matchers_need_full_name(assert_function_matchers);
 
-            let mut visitor = AssertionVisitor::new(ctx, assert_function_matchers);
+    let mut visitor = AssertionVisitor::new(ctx, assert_function_matchers, need_full_name);
 
-            // Visit each argument of the test call
-            for argument in &call_expr.arguments {
-                if let Some(expr) = argument.as_expression() {
-                    visitor.check_expression(expr);
-                    if visitor.found_assertion {
-                        return;
-                    }
-                }
-            }
-
-            if !visitor.found_assertion {
-                ctx.diagnostic(expect_expect_diagnostic(call_expr.callee.span()));
+    // Visit each argument of the test call (title + callback, etc.)
+    for argument in &call_expr.arguments {
+        if let Some(expr) = argument.as_expression() {
+            visitor.check_expression(expr);
+            if visitor.found_assertion {
+                return;
             }
         }
+    }
+
+    if !visitor.found_assertion {
+        ctx.diagnostic(expect_expect_diagnostic(call_expr.callee.span()));
     }
 }
 
 struct AssertionVisitor<'a, 'b> {
     ctx: &'b LintContext<'a>,
     assert_function_matchers: &'b [AssertFunctionMatcher],
-    visited: FxHashSet<Span>,
+    need_full_name: bool,
+    /// Only allocated when resolving identifiers to function declarations (cycle guard).
+    visited_decls: Option<FxHashSet<Span>>,
     found_assertion: bool,
 }
 
@@ -255,22 +322,19 @@ impl<'a, 'b> AssertionVisitor<'a, 'b> {
     fn new(
         ctx: &'b LintContext<'a>,
         assert_function_matchers: &'b [AssertFunctionMatcher],
+        need_full_name: bool,
     ) -> Self {
         Self {
             ctx,
             assert_function_matchers,
-            visited: FxHashSet::default(),
+            need_full_name,
+            visited_decls: None,
             found_assertion: false,
         }
     }
 
     fn check_expression(&mut self, expr: &Expression<'a>) {
-        // Avoid infinite loops by tracking visited expressions
-        if !self.visited.insert(expr.span()) {
-            return;
-        }
-
-        match expr {
+        match expr.get_inner_expression() {
             Expression::FunctionExpression(fn_expr) => {
                 if let Some(body) = &fn_expr.body {
                     self.visit_function_body(body);
@@ -285,8 +349,8 @@ impl<'a, 'b> AssertionVisitor<'a, 'b> {
             Expression::Identifier(ident) => {
                 self.check_identifier(ident);
             }
-            Expression::AwaitExpression(expr) => {
-                self.check_expression(&expr.argument);
+            Expression::AwaitExpression(await_expr) => {
+                self.check_expression(&await_expr.argument);
             }
             Expression::ArrayExpression(array_expr) => {
                 for element in &array_expr.elements {
@@ -309,6 +373,12 @@ impl<'a, 'b> AssertionVisitor<'a, 'b> {
         let AstKind::Function(function) = node.kind() else {
             return;
         };
+        // Cycle guard only when we chase declarations (uncommon vs walking the test body).
+        let span = function.span;
+        let visited = self.visited_decls.get_or_insert_with(FxHashSet::default);
+        if !visited.insert(span) {
+            return;
+        }
         if let Some(body) = &function.body {
             self.visit_function_body(body);
         }
@@ -317,27 +387,48 @@ impl<'a, 'b> AssertionVisitor<'a, 'b> {
 
 impl<'a> Visit<'a> for AssertionVisitor<'a, '_> {
     fn visit_call_expression(&mut self, call_expr: &CallExpression<'a>) {
-        let name = get_node_name(&call_expr.callee);
-        if self.assert_function_matchers.iter().any(|matcher| matcher.is_match(&name)) {
+        if is_assertion_call(call_expr, self.assert_function_matchers, self.need_full_name) {
             self.found_assertion = true;
             return;
         }
 
-        for argument in &call_expr.arguments {
-            if let Some(expr) = argument.as_expression() {
+        // Walk callee + args once (no separate argument pre-pass — avoids double traversal).
+        walk::walk_call_expression(self, call_expr);
+    }
+
+    fn visit_expression(&mut self, expr: &Expression<'a>) {
+        // Prefer our specialized checks for constructs that contain assertions or callbacks.
+        match expr.get_inner_expression() {
+            Expression::FunctionExpression(_)
+            | Expression::ArrowFunctionExpression(_)
+            | Expression::CallExpression(_)
+            | Expression::Identifier(_)
+            | Expression::AwaitExpression(_)
+            | Expression::ArrayExpression(_) => {
                 self.check_expression(expr);
-                if self.found_assertion {
-                    return;
+            }
+            _ => {
+                if !self.found_assertion {
+                    walk::walk_expression(self, expr);
                 }
             }
         }
-
-        walk::walk_call_expression(self, call_expr);
     }
 
     fn visit_expression_statement(&mut self, stmt: &oxc_ast::ast::ExpressionStatement<'a>) {
         self.check_expression(&stmt.expression);
-        if !self.found_assertion {
+        // `check_expression` already covers functions/calls/idents; only walk other kinds.
+        if !self.found_assertion
+            && !matches!(
+                stmt.expression.get_inner_expression(),
+                Expression::FunctionExpression(_)
+                    | Expression::ArrowFunctionExpression(_)
+                    | Expression::CallExpression(_)
+                    | Expression::Identifier(_)
+                    | Expression::AwaitExpression(_)
+                    | Expression::ArrayExpression(_)
+            )
+        {
             walk::walk_expression_statement(self, stmt);
         }
     }
@@ -352,9 +443,7 @@ impl<'a> Visit<'a> for AssertionVisitor<'a, '_> {
     }
 
     fn visit_if_statement(&mut self, if_stmt: &oxc_ast::ast::IfStatement<'a>) {
-        if let Statement::BlockStatement(block_stmt) = &if_stmt.consequent {
-            self.visit_block_statement(block_stmt);
-        }
+        self.visit_statement(&if_stmt.consequent);
         if self.found_assertion {
             return;
         }
@@ -363,6 +452,8 @@ impl<'a> Visit<'a> for AssertionVisitor<'a, '_> {
         }
     }
 
+    // Nested function *declarations* are ignored unless referenced (via `check_identifier`).
+    // Callback *expressions* are handled in `check_expression` / `visit_expression`.
     fn visit_function(&mut self, _func: &Function<'a>, _flags: ScopeFlags) {}
 
     fn visit_formal_parameter(&mut self, _param: &FormalParameter<'a>) {}
