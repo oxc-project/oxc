@@ -1,13 +1,11 @@
-use oxc_allocator::Allocator;
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, MemberExpression, RegExpFlags, RegExpLiteral, Str},
-    builder::AstBuilder,
+    ast::{CallExpression, Expression, MemberExpression, RegExpFlags, RegExpLiteral},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_regular_expression::ast::{BoundaryAssertionKind, Term};
-use oxc_span::{GetSpan, SPAN, Span};
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     AstNode,
@@ -122,15 +120,8 @@ fn do_fix<'a>(
     };
     let Some(argument) = argument else { return fixer.noop() };
     let mut content = fixer.codegen();
-    let alloc = Allocator::default();
-    let ast = AstBuilder::new(&alloc);
     content.print_str(&format!(r"{}.{}(", fixer.source_range(target_span), method));
-    content.print_expression(&Expression::new_string_literal(
-        SPAN,
-        Str::from_str_in(&argument, &ast),
-        None,
-        &ast,
-    ));
+    content.print_string(&argument);
     content.print_str(r")");
     fixer.replace(call_expr.span, content.into_source_text())
 }
