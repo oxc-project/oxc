@@ -33,7 +33,7 @@ import type { TSTypeAliasDeclaration, VariableDeclaration } from "./parser.ts";
 
 // Define `describe` and `it` variants which run/skip tests based on environment variables
 const { env } = process;
-const isEnabled = (envValue) => envValue === "true" || envValue === "1";
+const isEnabled = (envValue: string | undefined) => envValue === "true" || envValue === "1";
 
 const [describeRangeParent, itRangeParent] = isEnabled(env.RUN_RAW_RANGE_TESTS)
   ? [describe, it]
@@ -52,7 +52,7 @@ const [describeLazy, itLazy] = isEnabled(env.RUN_LAZY_TESTS)
 // So we run each case in a worker to achieve parallelism.
 const pool = new Tinypool({ filename: new URL("./parse-raw-worker.ts", import.meta.url).href });
 
-let runCase;
+let runCase: (typeof import("./parse-raw-worker.ts"))["runCase"];
 
 // Run test case in a worker
 async function runCaseInWorker(type, props) {
@@ -112,7 +112,7 @@ const benchFixturePaths = await Promise.all(
 // Skip tests which we know we can't pass (listed as failing in `estree_test262.snap` snapshot file),
 // and skip tests related to hashbangs (where output is correct, but Acorn doesn't parse hashbangs).
 const test262FailPaths = await getTestFailurePaths(TEST262_SNAPSHOT_PATH, TEST262_SHORT_DIR_PATH);
-const test262FixturePaths = [];
+const test262FixturePaths: string[] = [];
 for (let path of await readdir(ACORN_TEST262_DIR_PATH, { recursive: true })) {
   if (!path.endsWith(".json")) continue;
   path = path.slice(0, -2);
@@ -298,7 +298,7 @@ describeLazy.concurrent("lazy fixtures", () => {
 });
 
 // Get `Set` containing test paths which failed from snapshot file
-async function getTestFailurePaths(snapshotPath, pathPrefix) {
+async function getTestFailurePaths(snapshotPath: string, pathPrefix: string) {
   const mismatchPrefix = `Mismatch: ${pathPrefix}/`,
     mismatchPrefixLen = mismatchPrefix.length;
 
@@ -335,7 +335,7 @@ describe.concurrent("`parse`", () => {
     await testMultiple(10_000);
   });
 
-  async function testMultiple(iterations) {
+  async function testMultiple(iterations: number) {
     const promises = [];
     for (let i = 0; i < iterations; i++) {
       const code = `let x = ${i}`;
