@@ -307,14 +307,15 @@ async function getTestFailurePaths(snapshotPath: string, pathPrefix: string) {
 }
 
 describe("`parse`", { concurrent: false }, () => {
-  it("matches `parseSync`", async () => {
-    const path = benchFixturePaths[0],
-      filename = basename(path),
-      sourceText = await readFile(pathJoin(ROOT_DIR_PATH, path), "utf8");
-    const programStandard = parseSync(filename, sourceText).program;
-    const programRaw = (await parse(filename, sourceText, { experimentalRawTransfer: true }))
-      .program;
-    expect(programRaw).toEqual(programStandard);
+  describe("matches `parseSync`", () => {
+    it.each(benchFixturePaths)("%s", async (path) => {
+      const filename = basename(path),
+        sourceText = await readFile(pathJoin(ROOT_DIR_PATH, path), "utf8");
+      const programStandard = parseSync(filename, sourceText).program;
+      const programRaw = (await parse(filename, sourceText, { experimentalRawTransfer: true }))
+        .program;
+      expect(programRaw).toEqual(programStandard);
+    });
   });
 
   // oxlint-disable-next-line jest/expect-expect
