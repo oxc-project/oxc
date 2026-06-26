@@ -3,8 +3,9 @@ use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 
 use oxc_ast::{
-    AstKind, match_member_expression,
+    AstKind,
     ast::{Argument, CallExpression, Expression, FormalParameter, Function},
+    match_member_expression,
 };
 use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
