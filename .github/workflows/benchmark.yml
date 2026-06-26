@@ -96,5 +96,4 @@ jobs:
         timeout-minutes: 30
         with:
           mode: simulation
-          mode: simulation
           run: cargo codspeed run ${{ matrix.component }}
