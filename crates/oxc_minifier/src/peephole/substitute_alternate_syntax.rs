@@ -1843,11 +1843,11 @@ impl<'a> PeepholeOptimizations {
         if let Expression::SequenceExpression(argument) = &mut binary_expr.left
             && argument.expressions.len() > 1
         {
-            let mut seq_expr = argument.take_in_box(ctx.ast);
+            let mut seq_expr = argument.take_in_box(ctx);
             binary_expr.left = seq_expr.expressions.pop().unwrap();
-            seq_expr.expressions.push(expr.take_in(ctx.ast));
-            *expr = Expression::SequenceExpression(seq_expr);
-            ctx.state.changed = true;
+            seq_expr.expressions.push(expr.take_in(ctx));
+            let new_value = Expression::SequenceExpression(seq_expr);
+            ctx.replace_expression(expr, new_value);
         }
     }
 
@@ -1860,11 +1860,11 @@ impl<'a> PeepholeOptimizations {
         if let Expression::SequenceExpression(sequence_expr) = &mut logical_expr.left
             && let Some(last_expr) = sequence_expr.expressions.pop()
         {
-            let mut seq_expr = sequence_expr.take_in_box(ctx.ast);
+            let mut seq_expr = sequence_expr.take_in_box(ctx);
             logical_expr.left = last_expr;
-            seq_expr.expressions.push(expr.take_in(ctx.ast));
-            *expr = Expression::SequenceExpression(seq_expr);
-            ctx.state.changed = true;
+            seq_expr.expressions.push(expr.take_in(ctx));
+            let new_value = Expression::SequenceExpression(seq_expr);
+            ctx.replace_expression(expr, new_value);
         }
     }
 
@@ -1876,11 +1876,11 @@ impl<'a> PeepholeOptimizations {
             && let Expression::SequenceExpression(argument) = &mut unary_expr.argument
             && argument.expressions.len() > 1
         {
-            let mut seq_expr = argument.take_in_box(ctx.ast);
+            let mut seq_expr = argument.take_in_box(ctx);
             unary_expr.argument = seq_expr.expressions.pop().unwrap();
-            seq_expr.expressions.push(expr.take_in(ctx.ast));
-            *expr = Expression::SequenceExpression(seq_expr);
-            ctx.state.changed = true;
+            seq_expr.expressions.push(expr.take_in(ctx));
+            let new_value = Expression::SequenceExpression(seq_expr);
+            ctx.replace_expression(expr, new_value);
         }
     }
 
@@ -1890,11 +1890,11 @@ impl<'a> PeepholeOptimizations {
         if let Expression::SequenceExpression(argument) = &mut await_expr.argument
             && argument.expressions.len() > 1
         {
-            let mut seq_expr = argument.take_in_box(ctx.ast);
+            let mut seq_expr = argument.take_in_box(ctx);
             await_expr.argument = seq_expr.expressions.pop().unwrap();
-            seq_expr.expressions.push(expr.take_in(ctx.ast));
-            *expr = Expression::SequenceExpression(seq_expr);
-            ctx.state.changed = true;
+            seq_expr.expressions.push(expr.take_in(ctx));
+            let new_value = Expression::SequenceExpression(seq_expr);
+            ctx.replace_expression(expr, new_value);
         }
     }
 
@@ -1904,12 +1904,12 @@ impl<'a> PeepholeOptimizations {
         if let Some(Expression::SequenceExpression(argument)) = &mut yield_expr.argument
             && argument.expressions.len() > 1
         {
-            let mut seq_expr = argument.take_in_box(ctx.ast);
+            let mut seq_expr = argument.take_in_box(ctx);
             yield_expr.argument = seq_expr.expressions.pop();
 
-            seq_expr.expressions.push(expr.take_in(ctx.ast));
-            *expr = Expression::SequenceExpression(seq_expr);
-            ctx.state.changed = true;
+            seq_expr.expressions.push(expr.take_in(ctx));
+            let new_value = Expression::SequenceExpression(seq_expr);
+            ctx.replace_expression(expr, new_value);
         }
     }
 
