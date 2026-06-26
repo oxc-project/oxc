@@ -11,6 +11,37 @@ import path from "path";
 // Regex patterns equivalent to the Rust version
 const META_OPTIONS_REGEX = /^\/\/\s*@(\w+)\s*:\s*([^\r\n]*)/gm;
 
+interface CompilerSettings {
+  modules: string[];
+  targets: string[];
+  strict: boolean;
+  jsx: string[];
+  declaration: boolean;
+  emitDeclarationOnly: boolean;
+  alwaysStrict: boolean;
+  allowUnreachableCode: boolean;
+  allowUnusedLabels: boolean;
+  noFallthroughCasesInSwitch: boolean;
+}
+
+interface SourceType {
+  typescript: boolean;
+  jsx: boolean;
+  module: boolean;
+}
+
+interface TestUnitData {
+  name: string;
+  content: string;
+  sourceType: SourceType;
+}
+
+interface TestCaseContent {
+  tests: TestUnitData[];
+  settings: CompilerSettings;
+  errorFiles: string[];
+}
+
 /**
  * Convert settings value to boolean
  * @param value - Setting value
@@ -34,9 +65,9 @@ function splitValueOptions(value: string | null): string[] {
 /**
  * Create compiler settings from options map
  * @param options - Compiler options
- * @returns {Object} CompilerSettings
+ * @returns Compiler settings
  */
-function createCompilerSettings(options: Map<string, string>) {
+function createCompilerSettings(options: Map<string, string>): CompilerSettings {
   return {
     modules: splitValueOptions(options.get("module")),
     targets: splitValueOptions(options.get("target")),
@@ -63,6 +94,10 @@ const EXTENSIONS = {
   ".tsx": { typescript: true, jsx: true, module: true },
 };
 
+function isSupportedExtension(ext: string): ext is keyof typeof EXTENSIONS {
+  return Object.hasOwn(EXTENSIONS, ext);
+}
+
 /**
  * Check if extension explicitly indicates module type
  * @param ext - File extension (lowercase, with dot)
@@ -73,21 +108,19 @@ function isExplicitModuleExtension(ext: string): boolean {
 
 /**
  * Get source type from file path
- * @param {string} filePath - Path to the file
- * @param {Object} options - Compiler options
- * @returns {Object|null} Source type
+ * @param filePath - Path to the file
+ * @param options - Compiler options
+ * @returns Source type, or `null` for an unsupported extension
  */
-function getSourceType(filePath, options) {
+function getSourceType(filePath: string, options: CompilerSettings): SourceType | null {
   const ext = path.extname(filePath).toLowerCase();
-  let sourceType = EXTENSIONS[ext];
-
-  if (!sourceType) return null;
+  if (!isSupportedExtension(ext)) return null;
 
   // For explicit module extensions (.mts, .mjs, .cjs, .cts), preserve the extension-based module value.
   // For ambiguous extensions (.js, .jsx, .ts, .tsx), use content-based detection (start with false).
-  sourceType = {
-    ...sourceType,
-    module: isExplicitModuleExtension(ext) ? sourceType.module : false,
+  const sourceType: SourceType = {
+    ...EXTENSIONS[ext],
+    module: isExplicitModuleExtension(ext) ? EXTENSIONS[ext].module : false,
   };
   if (options.jsx.length > 0) sourceType.jsx = true;
 
@@ -96,11 +129,11 @@ function getSourceType(filePath, options) {
 
 /**
  * Get error files for the test
- * @param {string} filePath - Path to the test file
- * @param {Object} options - Compiler options
- * @returns {string[]} Error files content
+ * @param filePath - Path to the test file
+ * @param options - Compiler options
+ * @returns Error files content
  */
-function getErrorFiles(filePath, options) {
+function getErrorFiles(filePath: string, options: CompilerSettings): string[] {
   const fileName = path.basename(filePath, path.extname(filePath));
   const root = path.join(process.cwd(), "typescript/tests/baselines/reference");
 
@@ -130,14 +163,14 @@ function getErrorFiles(filePath, options) {
 
 /**
  * Extract individual test units from a TypeScript test file
- * @param {string} filePath - Path to the test file
- * @param {string} code - Content of the test file
- * @returns {Object} TestCaseContent object
+ * @param filePath - Path to the test file
+ * @param code - Content of the test file
+ * @returns Parsed test case content
  */
-export function makeUnitsFromTest(filePath, code) {
-  const currentFileOptions = new Map();
-  let currentFileName = null;
-  const testUnitData = [];
+export function makeUnitsFromTest(filePath: string, code: string): TestCaseContent {
+  const currentFileOptions = new Map<string, string>();
+  let currentFileName: string | null = null;
+  const testUnitData: Omit<TestUnitData, "sourceType">[] = [];
   let currentFileContent = "";
 
   // Process the file line by line
@@ -158,7 +191,6 @@ export function makeUnitsFromTest(filePath, code) {
           testUnitData.push({
             name: currentFileName,
             content: currentFileContent,
-            sourceType: null, // Will be set later
           });
           currentFileContent = "";
         }
@@ -179,23 +211,22 @@ export function makeUnitsFromTest(filePath, code) {
   testUnitData.push({
     name: fileName,
     content: currentFileContent,
-    sourceType: null, // Will be set later
   });
 
   const settings = createCompilerSettings(currentFileOptions);
 
   // Update source types and filter out unsupported files
   const isModule = testUnitData.length > 1;
-  const validTestUnits = testUnitData.filter((unit) => {
+  const validTestUnits: TestUnitData[] = [];
+  for (const unit of testUnitData) {
     const sourceType = getSourceType(unit.name, settings);
-    if (!sourceType) return false;
+    if (!sourceType) continue;
     // Only upgrade to module for ambiguous extensions (.ts, .js, .tsx, .jsx).
     // Explicit extensions (.mts, .mjs, .cjs, .cts) should keep their extension-based module kind.
     const ext = path.extname(unit.name).toLowerCase();
     if (isModule && !isExplicitModuleExtension(ext)) sourceType.module = true;
-    unit.sourceType = sourceType;
-    return true;
-  });
+    validTestUnits.push({ ...unit, sourceType });
+  }
 
   const errorFiles = getErrorFiles(filePath, settings);
 
