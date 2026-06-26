@@ -254,9 +254,8 @@ fn binary_operator_span(binary: &BinaryExpression<'_>, ctx: &LintContext<'_>) ->
         if chunk != op_bytes {
             return None;
         }
-        #[expect(clippy::cast_possible_truncation)]
-        let pos_start = left_end + index as u32;
-        let pos_end = pos_start + op_bytes.len() as u32;
+        let pos_start = left_end.checked_add(u32::try_from(index).ok()?)?;
+        let pos_end = pos_start.checked_add(u32::try_from(op_bytes.len()).ok()?)?;
         // Skip matches that sit inside comments between the operands.
         if ctx.comments().iter().any(|c| c.span.start <= pos_start && pos_end <= c.span.end) {
             return None;
