@@ -71,7 +71,7 @@ async function runCaseInWorker(type, props) {
 
 // Download fixtures.
 // Save in `target` directory, same as where benchmarks store them.
-let benchFixtureUrls = [
+const benchFixtureUrls = [
   // TypeScript syntax (2.81MB)
   "https://cdn.jsdelivr.net/gh/microsoft/TypeScript@v5.3.3/src/compiler/checker.ts",
   // Real world app tsx (415KB) — excalidraw App.tsx (master @ f6d85bc8)
@@ -83,11 +83,6 @@ let benchFixtureUrls = [
   // ES5 (3.9M)
   "https://cdn.jsdelivr.net/npm/antd@4.16.1/dist/antd.js",
 ];
-
-// `antd.js` tests sometimes take longer than 5 secs on CI, so skip that fixture in CI.
-// Tried setting `{ timeout: 10_000 }` option, but it didn't work for some reason.
-// TODO: Get longer timeout working and re-enable these tests in CI.
-if (process.env.CI) benchFixtureUrls = benchFixtureUrls.filter((url) => !url.endsWith("/antd.js"));
 
 await mkdir(TARGET_DIR_PATH, { recursive: true });
 
