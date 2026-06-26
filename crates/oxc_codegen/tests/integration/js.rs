@@ -765,6 +765,24 @@ fn string() {
 }
 
 #[test]
+fn print_string() {
+    fn print(value: &str, options: CodegenOptions) -> String {
+        let mut codegen = Codegen::new().with_options(options);
+        codegen.print_string(value);
+        codegen.into_source_text()
+    }
+
+    assert_eq!(print("hello \"world\"", CodegenOptions::default()), r#""hello \"world\"""#);
+    assert_eq!(
+        print("hello 'world'", CodegenOptions { single_quote: true, ..Default::default() }),
+        r"'hello \'world\''"
+    );
+    assert_eq!(print("line\n\u{00a0}🦄", CodegenOptions::default()), "\"line\\n\\xA0🦄\"");
+    assert_eq!(print("\"\"''", CodegenOptions::minify()), r#""\"\"''""#);
+    assert_eq!(print("\"\"''${", CodegenOptions::minify()), r#""\"\"''${""#);
+}
+
+#[test]
 fn v8_intrinsics() {
     let parse_opts = oxc_parser::ParseOptions {
         allow_v8_intrinsics: true,
