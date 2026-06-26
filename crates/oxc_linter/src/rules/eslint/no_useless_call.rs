@@ -74,15 +74,14 @@ impl Rule for NoUselessCall {
         let AstKind::CallExpression(call_expr) = node.kind() else { return };
 
         // Fast path for the common case: `foo.call(...)` / `foo.apply(...)` without parens/chain.
-        let (method_name, applied) = match &call_expr.callee {
-            Expression::StaticMemberExpression(member) => {
+        let (method_name, applied) =
+            if let Expression::StaticMemberExpression(member) = &call_expr.callee {
                 let name = member.property.name.as_str();
                 if name != "call" && name != "apply" {
                     return;
                 }
                 (name, member.object.without_parentheses())
-            }
-            _ => {
+            } else {
                 // ChainExpression / ParenthesizedExpression / optional chaining, etc.
                 let Some(callee) = as_member_expression_without_chain_expression(
                     call_expr.callee.without_parentheses(),
@@ -99,8 +98,7 @@ impl Rule for NoUselessCall {
                     return;
                 }
                 (method_name, callee.object().without_parentheses())
-            }
-        };
+            };
 
         let is_call = method_name == "call";
         if is_call {
