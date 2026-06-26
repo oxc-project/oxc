@@ -149,8 +149,10 @@ impl<'a> MayHaveSideEffectsContext<'a> for &mut TraverseCtx<'a, MinifierState<'a
 }
 
 impl<'a> ConstantEvaluationCtx<'a> for TraverseCtx<'a, MinifierState<'a>> {
+    // `oxc_ecmascript` still uses the old `AstBuilder`.
+    // Bridge to it from the allocator behind the new builder held in `self.ast`.
     fn ast(&self) -> AstBuilder<'a> {
-        self.ast
+        AstBuilder::new(self.ast.allocator)
     }
 }
 
@@ -220,18 +222,18 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
             ConstantValue::Number(n) => {
                 let number_base =
                     if is_exact_int64(n) { NumberBase::Decimal } else { NumberBase::Float };
-                self.ast.expression_numeric_literal(span, n, None, number_base)
+                Expression::new_numeric_literal(span, n, None, number_base, self)
             }
             ConstantValue::BigInt(bigint) => {
                 let value = format_str!(self.ast.allocator, "{bigint}");
-                self.ast.expression_big_int_literal(span, value, None, BigintBase::Decimal)
+                Expression::new_big_int_literal(span, value, None, BigintBase::Decimal, self)
             }
             ConstantValue::String(s) => {
-                self.ast.expression_string_literal(span, self.ast.str_from_cow(&s), None)
+                Expression::new_string_literal(span, Str::from_cow_in(&s, self), None, self)
             }
-            ConstantValue::Boolean(b) => self.ast.expression_boolean_literal(span, b),
-            ConstantValue::Undefined => self.ast.void_0(span),
-            ConstantValue::Null => self.ast.expression_null_literal(span),
+            ConstantValue::Boolean(b) => Expression::new_boolean_literal(span, b, self),
+            ConstantValue::Undefined => Expression::new_void_0(span, self),
+            ConstantValue::Null => Expression::new_null_literal(span, self),
         }
     }
 

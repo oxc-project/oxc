@@ -55,7 +55,7 @@ impl<'a> PeepholeOptimizations {
         }
         // "a op b" => "a op b"
         // "(a op b) op c" => "(a op b) op c"
-        let mut logic_expr = ctx.ast.expression_logical(span, a, op, b);
+        let mut logic_expr = Expression::new_logical_expression(span, a, op, b, ctx);
         Self::minimize_logical_expression(&mut logic_expr, ctx);
         logic_expr
     }
@@ -112,7 +112,7 @@ impl<'a> PeepholeOptimizations {
             e.left.take_in(ctx)
         } else {
             let argument = e.left.take_in(ctx);
-            ctx.ast.expression_unary(e.span, UnaryOperator::LogicalNot, argument)
+            Expression::new_unary_expression(e.span, UnaryOperator::LogicalNot, argument, ctx)
         };
         ctx.replace_expression(expr, new_expr);
     }
@@ -130,21 +130,23 @@ impl<'a> PeepholeOptimizations {
             return;
         }
         if let Some(ConstantValue::Boolean(left_bool)) = e.left.evaluate_value(ctx) {
-            let new_left = ctx.ast.expression_numeric_literal(
+            let new_left = Expression::new_numeric_literal(
                 e.left.span(),
                 if left_bool { 1.0 } else { 0.0 },
                 None,
                 NumberBase::Decimal,
+                ctx,
             );
             ctx.replace_expression(&mut e.left, new_left);
             return;
         }
         if let Some(ConstantValue::Boolean(right_bool)) = e.right.evaluate_value(ctx) {
-            let new_right = ctx.ast.expression_numeric_literal(
+            let new_right = Expression::new_numeric_literal(
                 e.right.span(),
                 if right_bool { 1.0 } else { 0.0 },
                 None,
                 NumberBase::Decimal,
+                ctx,
             );
             ctx.replace_expression(&mut e.right, new_right);
         }
@@ -254,7 +256,7 @@ impl<'a> PeepholeOptimizations {
         };
         let Some(target) = e.left.as_simple_assignment_target_mut() else { return };
         let target = target.take_in(ctx);
-        let new_expr = ctx.ast.expression_update(e.span, operator, true, target);
+        let new_expr = Expression::new_update_expression(e.span, operator, true, target, ctx);
         ctx.replace_expression(expr, new_expr);
     }
 }
