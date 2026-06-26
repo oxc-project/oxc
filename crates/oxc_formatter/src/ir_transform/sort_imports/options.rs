@@ -140,6 +140,10 @@ pub fn default_internal_patterns() -> Vec<String> {
 }
 
 /// Returns default groups configuration for organizing imports.
+///
+/// # Panics
+///
+/// Never panics in practice; the predefined group names are hard-coded and known to be valid.
 pub fn default_groups() -> Vec<Vec<GroupEntry>> {
     // Helper to parse a predefined group name
     let p = |s: &str| GroupEntry::Predefined(GroupName::parse(s).unwrap());

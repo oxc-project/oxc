@@ -4,6 +4,32 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.137.0] - 2026-06-18
+
+### ⚡ Performance
+
+- 3170c0e semantic,mangler,minifier: Fix `Semantic::stats` node count and reuse stats in mangler builds (#23352) (Boshen)
+
+## [0.136.0] - 2026-06-15
+
+### 💥 BREAKING CHANGES
+
+- 7a24911 codegen: [**BREAKING**] Borrow sourcemaps from codegen (#23422) (Boshen)
+
+### 🚀 Features
+
+- ec266bb transformer: Run React Compiler as a feature-gated transform pass (#23201) (Boshen)
+
+### ⚡ Performance
+
+- 534f9c6 oxc: Conditionally rebuild semantic in compiler pipeline (#23153) (Boshen)
+
+## [0.135.0] - 2026-06-08
+
+### 🚀 Features
+
+- b846ab2 react_compiler: Integrate the Rust port of the React Compiler (#22942) (Boshen)
+
 ## [0.130.0] - 2026-05-11
 
 ### 📚 Documentation

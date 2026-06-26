@@ -1,6 +1,6 @@
 //! [Reporters](DiagnosticReporter) for rendering and writing diagnostics.
 
-use miette::SourceSpan;
+use miette::{SourceSpan, SpanContents};
 
 use crate::{Error, Severity};
 
@@ -125,9 +125,8 @@ impl Info {
         let mut severity = Severity::Warning;
         let rule_id = diagnostic.code().map(|code| code.to_string());
 
-        if let Some(mut labels) = diagnostic.labels()
-            && let Some(source) = diagnostic.source_code()
-            && let Some(label) = labels.next()
+        if let Some(source) = diagnostic.source_code()
+            && let Some(label) = diagnostic.labels().first()
             && let Ok(span_content) = source.read_span(label.inner(), 0, 0)
         {
             start.line = span_content.line() + 1;

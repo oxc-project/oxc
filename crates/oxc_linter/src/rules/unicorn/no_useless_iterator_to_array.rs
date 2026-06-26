@@ -134,6 +134,7 @@ declare_oxc_lint!(
     nursery,
     fix_or_suggestion,
     version = "1.59.0",
+    short_description = "Disallow unnecessary `.toArray()` on iterators.",
 );
 
 impl Rule for NoUselessIteratorToArray {

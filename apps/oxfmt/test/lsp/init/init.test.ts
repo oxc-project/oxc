@@ -1,7 +1,7 @@
 import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vitest";
 import { createLspConnection } from "../utils";
-import { WatchKind } from "vscode-languageserver-protocol/lib/node/main";
+import { WatchKind } from "vscode-languageserver-protocol/node";
 
 describe("LSP initialization", () => {
   it("should start LSP server and respond to initialize request", async () => {
@@ -39,7 +39,7 @@ describe("LSP initialization", () => {
       { "fmt.configPath": "" },
       ["**/.oxfmtrc.json", "**/.oxfmtrc.jsonc", "**/oxfmt.config.ts", ".editorconfig"],
     ],
-    [{ "fmt.configPath": "./custom-config.json" }, ["./custom-config.json", ".editorconfig"]],
+    [{ "fmt.configPath": "./custom-config.json" }, ["custom-config.json", ".editorconfig"]],
   ])(
     "should send correct dynamic watch pattern registration for config: %s",
     async (lspConfig, expectedPatterns) => {

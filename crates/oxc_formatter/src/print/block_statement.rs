@@ -1,16 +1,16 @@
-use oxc_allocator::Vec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 
 use super::FormatWrite;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
-    formatter::{Buffer, Formatter, prelude::*},
+    formatter::{Buffer, prelude::*},
     write,
 };
 
-impl<'a> Format<'a> for AstNode<'a, Vec<'a, Statement<'a>>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, Statement<'a>>> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         f.join_nodes_with_hardline().entries(
             self.iter().filter(|stmt| !matches!(stmt.as_ref(), Statement::EmptyStatement(_))),
         );
@@ -18,7 +18,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, Statement<'a>>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, BlockStatement<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, "{");
 
         let comments_before_catch_clause = if let AstNodes::CatchClause(catch) = self.parent() {

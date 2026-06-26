@@ -127,6 +127,7 @@ declare_oxc_lint!(
     pedantic,
     config = NoMisusedPromisesConfig,
     version = "1.11.0",
+    short_description = "Disallow Promises in places not designed to handle them.",
 );
 
 impl Rule for NoMisusedPromises {

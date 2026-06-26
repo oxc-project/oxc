@@ -1,6 +1,6 @@
 use oxc_ecmascript::constant_evaluation::ConstantValue;
 use oxc_index::IndexVec;
-use oxc_syntax::{scope::ScopeId, symbol::SymbolId};
+use oxc_syntax::symbol::SymbolId;
 
 #[derive(Debug)]
 pub struct SymbolValue<'a> {
@@ -24,7 +24,14 @@ pub struct SymbolValue<'a> {
     /// with object/array/function/class literals.
     pub is_fresh_value: bool,
 
-    pub scope_id: ScopeId,
+    /// The symbol is provably falsy in **boolean context** but not necessarily
+    /// foldable in value context. Set for a write-once binding with a falsy
+    /// constant initializer whose `initialized_constant` was withheld (a hoisted
+    /// `var` whose declarative prelude isn't clean): a read before the
+    /// initializer sees `undefined`, but `undefined` and the falsy init are
+    /// indistinguishable inside `if (x)` / `x ? …` / `!x`, so such reads fold to
+    /// `false` there. See `minimize_expression_in_boolean_context` / #14001.
+    pub boolean_falsy: bool,
 }
 
 /// Per-symbol scratch store indexed by `SymbolId`.

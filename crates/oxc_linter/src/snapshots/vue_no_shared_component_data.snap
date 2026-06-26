@@ -61,3 +61,11 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ────────────────────
  5 │                 })
    ╰────
+
+  ⚠ vue(no-shared-component-data): `data` property in component must be a function.
+   ╭─[no_shared_component_data.tsx:4:19]
+ 3 │                 Vue.mixin({
+ 4 │                   data: { foo: 'bar' }
+   ·                   ────────────────────
+ 5 │                 })
+   ╰────

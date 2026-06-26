@@ -3,6 +3,8 @@
 //! Code adapted from
 //! * [esbuild](https://github.com/evanw/esbuild/blob/v0.24.0/internal/js_printer/js_printer.go)
 
+#[cfg(not(feature = "sourcemap"))]
+use std::marker::PhantomData;
 use std::{borrow::Cow, cmp, slice};
 
 use cow_utils::CowUtils;
@@ -22,6 +24,7 @@ use oxc_syntax::{
 use rustc_hash::FxHashMap;
 
 mod binary_expr_visitor;
+mod cjs_module_lexer;
 mod comment;
 mod context;
 mod r#gen;
@@ -47,7 +50,7 @@ pub use oxc_data_structures::code_buffer::IndentChar;
 
 /// Output from [`Codegen::build`]
 #[non_exhaustive]
-pub struct CodegenReturn {
+pub struct CodegenReturn<'a> {
     /// The generated source code.
     pub code: String,
 
@@ -55,7 +58,10 @@ pub struct CodegenReturn {
     ///
     /// You must set [`CodegenOptions::source_map_path`] for this to be [`Some`].
     #[cfg(feature = "sourcemap")]
-    pub map: Option<oxc_sourcemap::SourceMap>,
+    pub map: Option<oxc_sourcemap::SourceMap<'a>>,
+
+    #[cfg(not(feature = "sourcemap"))]
+    _source_map_lifetime: PhantomData<&'a ()>,
 
     /// All the legal comments returned from [LegalComment::Linked] or [LegalComment::External].
     pub legal_comments: Vec<Comment>,
@@ -74,7 +80,7 @@ pub struct CodegenReturn {
 /// let allocator = Allocator::default();
 /// let source = "const a = 1 + 2;";
 /// let parsed = Parser::new(&allocator, source, SourceType::mjs()).parse();
-/// assert!(parsed.errors.is_empty());
+/// assert!(parsed.diagnostics.is_empty());
 ///
 /// let js = Codegen::new().build(&parsed.program);
 /// assert_eq!(js.code, "const a = 1 + 2;\n");
@@ -122,6 +128,16 @@ pub struct Codegen<'a> {
 
     // Builders
     comments: CommentsMap,
+
+    /// Pure / no-side-effects annotation comments keyed by `attached_to`,
+    /// so the emission site can recover verbatim source text instead of a
+    /// canonicalised literal (rolldown#9408). The emission site falls back
+    /// to the canonical literal when (a) no comment is stashed, (b) the
+    /// stashed comment's kind doesn't match the emission site (mixed
+    /// `@__PURE__` and `@__NO_SIDE_EFFECTS__` on the same `attached_to`),
+    /// (c) the comment is a line comment but the site can't break the line,
+    /// or (d) source text isn't available.
+    annotation_comments: FxHashMap<u32, Comment>,
 
     /// Sorted, deduped `attached_to` keys for pending legal comments. Lets
     /// `print_legal_orphans_before` flush via `partition_point` + `drain`.
@@ -179,6 +195,7 @@ impl<'a> Codegen<'a> {
             indent: 0,
             quote: Quote::Double,
             comments: CommentsMap::default(),
+            annotation_comments: FxHashMap::default(),
             legal_comment_keys: Vec::new(),
             #[cfg(feature = "sourcemap")]
             sourcemap_builder: None,
@@ -234,7 +251,7 @@ impl<'a> Codegen<'a> {
     ///
     /// A source map will be generated if [`CodegenOptions::source_map_path`] is set.
     #[must_use]
-    pub fn build(mut self, program: &Program<'a>) -> CodegenReturn {
+    pub fn build(mut self, program: &Program<'a>) -> CodegenReturn<'a> {
         self.quote = if self.options.single_quote { Quote::Single } else { Quote::Double };
         self.source_text = Some(program.source_text);
         self.indent = self.options.initial_indent;
@@ -253,6 +270,8 @@ impl<'a> Codegen<'a> {
             code,
             #[cfg(feature = "sourcemap")]
             map,
+            #[cfg(not(feature = "sourcemap"))]
+            _source_map_lifetime: PhantomData,
             legal_comments,
         }
     }
@@ -403,6 +422,11 @@ impl<'a> Codegen<'a> {
     pub fn print_expression(&mut self, expr: &Expression<'_>) {
         expr.print_expr(self, Precedence::Lowest, Context::empty());
     }
+
+    /// Print a string as a JavaScript string literal.
+    pub fn print_string(&mut self, s: &str) {
+        self.print_string_impl(s, false, false);
+    }
 }
 
 // Private APIs
@@ -512,7 +536,7 @@ impl<'a> Codegen<'a> {
     }
 
     #[inline]
-    fn wrap<F: FnMut(&mut Self)>(&mut self, wrap: bool, mut f: F) {
+    fn wrap<F: FnOnce(&mut Self)>(&mut self, wrap: bool, f: F) {
         if wrap {
             self.print_ascii_byte(b'(');
         }
@@ -618,7 +642,7 @@ impl<'a> Codegen<'a> {
         self.print_ascii_byte(b'}');
     }
 
-    fn print_body(&mut self, stmt: &Statement<'_>, need_space: bool, ctx: Context) {
+    fn print_body(&mut self, stmt: &Statement<'_>, ctx: Context) {
         match stmt {
             Statement::BlockStatement(stmt) => {
                 self.print_soft_space();
@@ -630,9 +654,10 @@ impl<'a> Codegen<'a> {
                 self.print_soft_newline();
             }
             stmt => {
-                if need_space && self.options.minify {
-                    self.print_hard_space();
-                }
+                // The statement's first token inserts a hard space itself (via
+                // `print_space_before_identifier`) when it would merge with a preceding
+                // identifier char (e.g. `else`), so `else{...}`/`else++x`/`else[0]` stay
+                // tight while `else x` keeps its space.
                 self.print_next_indent_as_space = true;
                 stmt.print(self, ctx);
             }
@@ -813,27 +838,32 @@ impl<'a> Codegen<'a> {
         // "x + + y" => "x+ +y"
         // "x ++ + y" => "x+++y"
         // "x + ++ y" => "x+ ++y"
-        // "-- >" => "-- >"
         // "< ! --" => "<! --"
+        // Note: `a-- > b` does not need a space (`a-->b` is `(a--) > b`); `-->` is
+        // only an HTML close comment at the start of a line, and a postfix `--`
+        // always has an operand before it.
         let bin_op_add = Operator::Binary(BinaryOperator::Addition);
         let bin_op_sub = Operator::Binary(BinaryOperator::Subtraction);
         let un_op_pos = Operator::Unary(UnaryOperator::UnaryPlus);
         let un_op_pre_inc = Operator::Update(UpdateOperator::Increment);
         let un_op_neg = Operator::Unary(UnaryOperator::UnaryNegation);
         let un_op_pre_dec = Operator::Update(UpdateOperator::Decrement);
-        let un_op_post_dec = Operator::Update(UpdateOperator::Decrement);
-        let bin_op_gt = Operator::Binary(BinaryOperator::GreaterThan);
         let un_op_not = Operator::Unary(UnaryOperator::LogicalNot);
         if ((prev == bin_op_add || prev == un_op_pos)
             && (next == bin_op_add || next == un_op_pos || next == un_op_pre_inc))
             || ((prev == bin_op_sub || prev == un_op_neg)
                 && (next == bin_op_sub || next == un_op_neg || next == un_op_pre_dec))
-            || (prev == un_op_post_dec && next == bin_op_gt)
             || (prev == un_op_not
                 && next == un_op_pre_dec
                 // `prev == UnaryOperator::LogicalNot` which means last byte is ASCII,
                 // and therefore previous character is 1 byte from end of buffer
                 && self.code.peek_nth_byte_back(1) == Some(b'<'))
+            // `a! == b`: keep the non-null `!` from gluing to `=` as `!=`/`!==`.
+            || (prev == un_op_not
+                && matches!(
+                    next,
+                    Operator::Binary(BinaryOperator::Equality | BinaryOperator::StrictEquality)
+                ))
         {
             self.print_hard_space();
         }
@@ -853,7 +883,10 @@ impl<'a> Codegen<'a> {
     fn print_decorators(&mut self, decorators: &[Decorator<'_>], ctx: Context) {
         for decorator in decorators {
             decorator.print(self, ctx);
-            self.print_hard_space();
+            // Only separate from the following token when the decorator ends in an
+            // identifier char (`@dec class`); `@dec() class` can be `@dec()class`.
+            self.print_soft_space();
+            self.print_space_before_identifier();
         }
     }
 
@@ -979,6 +1012,31 @@ impl<'a> Codegen<'a> {
     #[inline]
     #[expect(clippy::needless_pass_by_ref_mut, clippy::unused_self)]
     fn add_source_mapping_end(&mut self, _span: Span) {}
+
+    /// A postfix operand ending in `)` or `]` (a call or index result) leaves no
+    /// trailing identifier for a source-map consumer to anchor on, so the chain
+    /// punctuation after it (`.`/`[`/`(`/`` ` ``) would be unmapped and V8 would
+    /// resolve the stack frame one column too far left — the off-by-one in
+    /// `f(a)(b)` and `expect(x).resolves`. Map that punctuation back to the
+    /// operand's `span.end`. Called from `print_expr`, mirroring how Babel and TSC
+    /// give every node a trailing end-mapping. Synthesized nodes whose `span.end`
+    /// has no source byte are skipped.
+    #[cfg(feature = "sourcemap")]
+    fn add_source_mapping_after_postfix(&mut self, span: Span, precedence: Precedence) {
+        if precedence == Precedence::Postfix
+            && let Some(sourcemap_builder) = self.sourcemap_builder.as_mut()
+            && !span.is_empty()
+            && matches!(self.code.as_bytes().last(), Some(b')' | b']'))
+            && self.source_text.is_none_or(|src| (span.end as usize) < src.len())
+        {
+            sourcemap_builder.add_source_mapping(self.code.as_bytes(), span.end, None);
+        }
+    }
+
+    #[cfg(not(feature = "sourcemap"))]
+    #[inline]
+    #[expect(clippy::needless_pass_by_ref_mut, clippy::unused_self)]
+    fn add_source_mapping_after_postfix(&mut self, _span: Span, _precedence: Precedence) {}
 
     #[cfg(feature = "sourcemap")]
     fn add_source_mapping_for_name(&mut self, span: Span, name: &str) {

@@ -1,4 +1,4 @@
-//! Iterator implementations for `Vec<T>` in AstNode.
+//! Iterator implementations for `ArenaVec<T>` in AstNode.
 //!
 //! This module provides two macros for generating iterator implementations:
 //! - `impl_ast_node_vec!` - For non-Option types (uses `.map()`)
@@ -6,13 +6,13 @@
 
 use std::cmp::min;
 
-use oxc_allocator::{Allocator, Vec};
+use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use super::{AstNode, AstNodes};
 
-/// Iterator for `AstNode<Vec<T>>`.
+/// Iterator for `AstNode<ArenaVec<T>>`.
 pub struct AstNodeIterator<'a, T> {
     inner: std::iter::Peekable<std::slice::Iter<'a, T>>,
     parent: AstNodes<'a>,
@@ -72,7 +72,7 @@ macro_rules! impl_ast_node_vec {
         impl_ast_node_vec!($type, true, |n: &$type| n.span().start);
     };
     ($type:ty, $has_following_span_in_the_last_item:tt, $get_span:expr) => {
-        impl<'a> AstNode<'a, Vec<'a, $type>> {
+        impl<'a> AstNode<'a, ArenaVec<'a, $type>> {
             pub fn iter(&self) -> AstNodeIterator<'a, $type> {
                 AstNodeIterator {
                     inner: self.inner.iter().peekable(),
@@ -139,7 +139,7 @@ macro_rules! impl_ast_node_vec {
             }
         }
 
-        impl<'a> IntoIterator for &AstNode<'a, Vec<'a, $type>> {
+        impl<'a> IntoIterator for &AstNode<'a, ArenaVec<'a, $type>> {
             type Item = &'a AstNode<'a, $type>;
             type IntoIter = AstNodeIterator<'a, $type>;
             fn into_iter(self) -> Self::IntoIter {
@@ -167,7 +167,7 @@ macro_rules! impl_ast_node_vec_for_option {
         impl_ast_node_vec_for_option!($type, true);
     };
     ($type:ty, $has_following_span_in_the_last_item:tt) => {
-        impl<'a> AstNode<'a, Vec<'a, $type>> {
+        impl<'a> AstNode<'a, ArenaVec<'a, $type>> {
             pub fn iter(&self) -> AstNodeIterator<'a, $type> {
                 AstNodeIterator {
                     inner: self.inner.iter().peekable(),
@@ -252,7 +252,7 @@ macro_rules! impl_ast_node_vec_for_option {
             }
         }
 
-        impl<'a> IntoIterator for &AstNode<'a, Vec<'a, $type>> {
+        impl<'a> IntoIterator for &AstNode<'a, ArenaVec<'a, $type>> {
             type Item = &'a AstNode<'a, $type>;
             type IntoIter = AstNodeIterator<'a, $type>;
             fn into_iter(self) -> Self::IntoIter {

@@ -5,7 +5,10 @@ use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::DefaultRuleConfig, rule::Rule};
+use crate::{
+    AstNode, ast_util::outermost_paren_parent, context::LintContext, rule::DefaultRuleConfig,
+    rule::Rule,
+};
 
 fn no_sequences_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected use of comma operator")
@@ -18,7 +21,6 @@ fn no_sequences_diagnostic(span: Span) -> OxcDiagnostic {
 pub struct NoSequences {
     /// If this option is set to `false`, this rule disallows the comma operator
     /// even when the expression sequence is explicitly wrapped in parentheses.
-    /// Default is `true`.
     allow_in_parentheses: bool,
 }
 
@@ -38,11 +40,6 @@ declare_oxc_lint!(
     /// The comma operator evaluates each of its operands (from left to right)
     /// and returns the value of the last operand. However, this frequently
     /// obscures side effects, and its use is often an accident.
-    ///
-    /// ### Options
-    ///
-    /// - `allowInParentheses` (default: `true`): If set to `false`, disallows
-    ///   the comma operator even when wrapped in parentheses.
     ///
     /// ### Examples
     ///
@@ -78,6 +75,7 @@ declare_oxc_lint!(
     restriction,
     config = NoSequences,
     version = "1.33.0",
+    short_description = "Disallows the use of the comma operator.",
 );
 
 impl Rule for NoSequences {
@@ -118,14 +116,10 @@ impl NoSequences {
     /// Check if the sequence expression is in a for loop's init or update position.
     /// This walks up the parent chain, skipping ParenthesizedExpression nodes,
     /// to handle cases like `for ((a, b);;)`.
-    fn is_in_for_loop_init_or_update(node: &AstNode, ctx: &LintContext) -> bool {
-        let nodes = ctx.nodes();
-        let mut cur = nodes.parent_node(node.id());
-
-        // Skip through ParenthesizedExpression nodes
-        while matches!(cur.kind(), AstKind::ParenthesizedExpression(_)) {
-            cur = nodes.parent_node(cur.id());
-        }
+    fn is_in_for_loop_init_or_update<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+        let Some(cur) = outermost_paren_parent(node, ctx) else {
+            return false;
+        };
 
         // Check if we've reached a ForStatement
         if let AstKind::ForStatement(for_stmt) = cur.kind() {

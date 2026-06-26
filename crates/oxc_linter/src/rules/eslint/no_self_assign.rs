@@ -103,6 +103,7 @@ declare_oxc_lint!(
     correctness,
     config = NoSelfAssign,
     version = "0.0.5",
+    short_description = "Disallow assignments where both sides are exactly the same.",
 );
 
 impl Rule for NoSelfAssign {

@@ -1,12 +1,9 @@
-use oxc_ast::{
-    AstKind,
-    ast::{Expression, Statement},
-};
+use oxc_ast::ast::{ConditionalExpression, Expression, IfStatement, Statement};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
-use crate::{AstNode, context::LintContext};
+use crate::context::LintContext;
 
 fn no_negated_condition_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected negated condition.")
@@ -47,29 +44,28 @@ a ? doSomethingB() : doSomethingC()
 ```
 ";
 
-pub fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
-    match node.kind() {
-        AstKind::IfStatement(if_stmt) => {
-            let Some(if_stmt_alternate) = &if_stmt.alternate else {
-                return;
-            };
+pub fn run_on_if_statement(if_stmt: &IfStatement<'_>, ctx: &LintContext) {
+    let Some(if_stmt_alternate) = &if_stmt.alternate else {
+        return;
+    };
 
-            if matches!(if_stmt_alternate, Statement::IfStatement(_)) {
-                return;
-            }
+    if matches!(if_stmt_alternate, Statement::IfStatement(_)) {
+        return;
+    }
 
-            let test = if_stmt.test.without_parentheses();
-            if is_negated_expression(test) {
-                ctx.diagnostic(no_negated_condition_diagnostic(test.span()));
-            }
-        }
-        AstKind::ConditionalExpression(conditional_expr) => {
-            let test = conditional_expr.test.without_parentheses();
-            if is_negated_expression(test) {
-                ctx.diagnostic(no_negated_condition_diagnostic(test.span()));
-            }
-        }
-        _ => {}
+    let test = if_stmt.test.without_parentheses();
+    if is_negated_expression(test) {
+        ctx.diagnostic(no_negated_condition_diagnostic(test.span()));
+    }
+}
+
+pub fn run_on_conditional_expression(
+    conditional_expr: &ConditionalExpression<'_>,
+    ctx: &LintContext,
+) {
+    let test = conditional_expr.test.without_parentheses();
+    if is_negated_expression(test) {
+        ctx.diagnostic(no_negated_condition_diagnostic(test.span()));
     }
 }
 

@@ -1,12 +1,7 @@
-use oxc_allocator::{Allocator, StringBuilder};
+use oxc_allocator::{Allocator, ArenaStringBuilder};
 use oxc_ast::ast::*;
 
-use crate::{
-    ast_nodes::AstNode,
-    format_args,
-    formatter::{Formatter, prelude::*},
-    write,
-};
+use crate::{ast_nodes::AstNode, format_args, formatter::prelude::*, write};
 
 /// Format a Markdown-in-JS tagged template literal via the Doc→IR path.
 ///
@@ -14,7 +9,7 @@ use crate::{
 /// then re-escapes backticks and applies indented or dedent-to-root layout.
 pub(super) fn try_embed_markdown<'a>(
     tagged: &AstNode<'a, TaggedTemplateExpression<'a>>,
-    f: &mut Formatter<'_, 'a>,
+    f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
     let raw = tagged.quasi.quasis[0].value.raw.as_str();
 
@@ -23,7 +18,7 @@ pub(super) fn try_embed_markdown<'a>(
         return true;
     }
 
-    let allocator = f.context().allocator();
+    let allocator = f.allocator();
 
     // Phase 1: Unescape backticks (= `raw.replaceAll(/((?:\\\\)*)\\`/g, ...)`)
     // https://github.com/prettier/prettier/blob/90983f40dce5e20beea4e5618b5e0426a6a7f4f0/src/language-js/embed/markdown.js#L11-L14
@@ -72,7 +67,7 @@ fn unescape_backticks<'a>(raw: &'a str, allocator: &'a Allocator) -> &'a str {
         return raw;
     }
 
-    let mut result = StringBuilder::with_capacity_in(raw.len(), allocator);
+    let mut result = ArenaStringBuilder::with_capacity_in(raw.len(), allocator);
     let mut chars = raw.chars().peekable();
     while let Some(c) = chars.next() {
         if c == '\\' {
@@ -119,7 +114,7 @@ fn get_indentation(text: &str) -> &str {
 /// `text.replaceAll(new RegExp(\`^${indentation}\`, "gm"), "")`
 /// <https://github.com/prettier/prettier/blob/90983f40dce5e20beea4e5618b5e0426a6a7f4f0/src/language-js/embed/markdown.js#L17-L19>
 fn strip_indentation<'a>(text: &'a str, indent: &str, allocator: &'a Allocator) -> &'a str {
-    let mut result = StringBuilder::with_capacity_in(text.len(), allocator);
+    let mut result = ArenaStringBuilder::with_capacity_in(text.len(), allocator);
     for (i, line) in text.split('\n').enumerate() {
         if i > 0 {
             result.push('\n');

@@ -32,10 +32,11 @@
 //! * Exponentiation operator TC39 proposal: <https://github.com/tc39/proposal-exponentiation-operator>
 //! * Exponentiation operator specification: <https://tc39.es/ecma262/#sec-exp-operator>
 
-use oxc_allocator::{CloneIn, TakeIn, Vec as ArenaVec};
+use oxc_allocator::{ArenaVec, CloneIn, TakeIn};
 use oxc_ast::{NONE, ast::*};
 use oxc_semantic::ReferenceFlags;
 use oxc_span::{SPAN, Span};
+use oxc_str::static_ident;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator};
 use oxc_traverse::{BoundIdentifier, Traverse};
 
@@ -108,7 +109,7 @@ impl<'a> ExponentiationOperator<'a> {
     // `#[inline]` so compiler knows `expr` is a `BinaryExpression`
     #[inline]
     fn convert_binary_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let binary_expr = match expr.take_in(ctx.ast) {
+        let binary_expr = match expr.take_in(ctx) {
             Expression::BinaryExpression(binary_expr) => binary_expr.unbox(),
             _ => unreachable!(),
         };
@@ -150,7 +151,7 @@ impl<'a> ExponentiationOperator<'a> {
         // Temporary var initializations
         ArenaVec<'a, Expression<'a>>,
     ) {
-        let mut temp_var_inits = ctx.ast.vec();
+        let mut temp_var_inits = ArenaVec::new_in(ctx);
 
         // Make sure side-effects of evaluating `left` only happen once
         let reference = ctx.scoping.scoping_mut().get_reference_mut(ident.reference_id());
@@ -231,7 +232,7 @@ impl<'a> ExponentiationOperator<'a> {
         // obj["prop"] = Math.pow(obj["prop"], right)
         //                        ^^^
         // ```
-        let mut temp_var_inits = ctx.ast.vec();
+        let mut temp_var_inits = ArenaVec::new_in(ctx);
         let obj = self.get_second_member_expression_object(
             &mut member_expr.object,
             &mut temp_var_inits,
@@ -245,14 +246,16 @@ impl<'a> ExponentiationOperator<'a> {
         // ```
         let prop_span = member_expr.property.span;
         let prop_name = member_expr.property.name;
-        let prop = ctx.ast.expression_string_literal(prop_span, prop_name, None);
+        let prop = Expression::new_string_literal(prop_span, prop_name, None, ctx);
 
         // Complete 2nd member expression
         // ```
         // obj["prop"] = Math.pow(obj["prop"], right)
         //                        ^^^^^^^^^^^
         // ```
-        let pow_left = Expression::from(ctx.ast.member_expression_computed(SPAN, obj, prop, false));
+        let pow_left = Expression::from(MemberExpression::new_computed_member_expression(
+            SPAN, obj, prop, false, ctx,
+        ));
 
         // Replacement for original member expression
         // ```
@@ -260,11 +263,12 @@ impl<'a> ExponentiationOperator<'a> {
         // ^^^^^^^^^^^
         // ```
         let replacement_left =
-            AssignmentTarget::ComputedMemberExpression(ctx.ast.alloc_computed_member_expression(
+            AssignmentTarget::ComputedMemberExpression(ComputedMemberExpression::boxed(
                 member_expr.span,
-                member_expr.object.take_in(ctx.ast),
-                ctx.ast.expression_string_literal(prop_span, prop_name, None),
+                member_expr.object.take_in(ctx),
+                Expression::new_string_literal(prop_span, prop_name, None, ctx),
                 false,
+                ctx,
             ));
 
         (replacement_left, pow_left, temp_var_inits)
@@ -326,7 +330,7 @@ impl<'a> ExponentiationOperator<'a> {
         // obj[_prop] = Math.pow(obj[_prop], right)
         //                       ^^^
         // ```
-        let mut temp_var_inits = ctx.ast.vec();
+        let mut temp_var_inits = ArenaVec::new_in(ctx);
         let obj = self.get_second_member_expression_object(
             &mut member_expr.object,
             &mut temp_var_inits,
@@ -342,7 +346,7 @@ impl<'a> ExponentiationOperator<'a> {
         let prop = if prop.is_literal() {
             prop.clone_in(ctx.ast.allocator)
         } else {
-            let owned_prop = prop.take_in(ctx.ast);
+            let owned_prop = prop.take_in(ctx);
             let binding = self.create_temp_var(owned_prop, &mut temp_var_inits, ctx);
             *prop = binding.create_read_expression(ctx);
             binding.create_read_expression(ctx)
@@ -353,7 +357,9 @@ impl<'a> ExponentiationOperator<'a> {
         // obj[_prop] = Math.pow(obj[_prop], right)
         //                       ^^^^^^^^^^
         // ```
-        let pow_left = Expression::from(ctx.ast.member_expression_computed(SPAN, obj, prop, false));
+        let pow_left = Expression::from(MemberExpression::new_computed_member_expression(
+            SPAN, obj, prop, false, ctx,
+        ));
 
         (pow_left, temp_var_inits)
     }
@@ -409,7 +415,7 @@ impl<'a> ExponentiationOperator<'a> {
         // obj.#prop = Math.pow(obj.#prop, right)
         //                      ^^^
         // ```
-        let mut temp_var_inits = ctx.ast.vec();
+        let mut temp_var_inits = ArenaVec::new_in(ctx);
         let obj = self.get_second_member_expression_object(
             &mut field_expr.object,
             &mut temp_var_inits,
@@ -428,9 +434,9 @@ impl<'a> ExponentiationOperator<'a> {
         // obj.#prop = Math.pow(obj.#prop, right)
         //                      ^^^^^^^^^
         // ```
-        let pow_left = Expression::from(
-            ctx.ast.member_expression_private_field_expression(SPAN, obj, field, false),
-        );
+        let pow_left = Expression::from(MemberExpression::new_private_field_expression(
+            SPAN, obj, field, false, ctx,
+        ));
 
         (pow_left, temp_var_inits)
     }
@@ -483,7 +489,7 @@ impl<'a> ExponentiationOperator<'a> {
         // will not trigger getters or setters. `super` cannot be directly assigned, so use it directly too.
         // TODO(improve-on-babel): We could also skip creating a temp var for `this.x **= 2`.
         match obj {
-            Expression::Super(super_) => return ctx.ast.expression_super(super_.span),
+            Expression::Super(super_) => return Expression::new_super(super_.span, ctx),
             Expression::Identifier(ident) => {
                 let symbol_id = ctx.scoping().get_reference(ident.reference_id()).symbol_id();
                 if let Some(symbol_id) = symbol_id {
@@ -504,7 +510,7 @@ impl<'a> ExponentiationOperator<'a> {
             }
         }
 
-        let binding = self.create_temp_var(obj.take_in(ctx.ast), temp_var_inits, ctx);
+        let binding = self.create_temp_var(obj.take_in(ctx), temp_var_inits, ctx);
         *obj = binding.create_read_expression(ctx);
         binding.create_read_expression(ctx)
     }
@@ -516,7 +522,7 @@ impl<'a> ExponentiationOperator<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let span = assign_expr.span;
-        let pow_right = assign_expr.right.take_in(ctx.ast);
+        let pow_right = assign_expr.right.take_in(ctx);
         assign_expr.right = Self::math_pow(span, pow_left, pow_right, ctx);
         assign_expr.operator = AssignmentOperator::Assign;
     }
@@ -530,8 +536,8 @@ impl<'a> ExponentiationOperator<'a> {
     ) {
         if !temp_var_inits.is_empty() {
             temp_var_inits.reserve_exact(1);
-            temp_var_inits.push(expr.take_in(ctx.ast));
-            *expr = ctx.ast.expression_sequence(span, temp_var_inits);
+            temp_var_inits.push(expr.take_in(ctx));
+            *expr = Expression::new_sequence_expression(span, temp_var_inits, ctx);
         }
     }
 
@@ -542,14 +548,15 @@ impl<'a> ExponentiationOperator<'a> {
         right: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let math = ctx.ast.ident("Math");
+        let math = static_ident!("Math");
         let math_symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), math);
         let object = ctx.create_ident_expr(SPAN, math, math_symbol_id, ReferenceFlags::Read);
-        let property = ctx.ast.identifier_name(SPAN, "pow");
-        let callee =
-            Expression::from(ctx.ast.member_expression_static(span, object, property, false));
-        let arguments = ctx.ast.vec_from_array([Argument::from(left), Argument::from(right)]);
-        ctx.ast.expression_call(span, callee, NONE, arguments, false)
+        let property = IdentifierName::new(SPAN, "pow", ctx);
+        let callee = Expression::from(MemberExpression::new_static_member_expression(
+            span, object, property, false, ctx,
+        ));
+        let arguments = ArenaVec::from_array_in([Argument::from(left), Argument::from(right)], ctx);
+        Expression::new_call_expression(span, callee, NONE, arguments, false, ctx)
     }
 
     /// Create a temporary variable.
@@ -567,11 +574,12 @@ impl<'a> ExponentiationOperator<'a> {
         let binding = VarDeclarationsStore::create_uid_var_based_on_node(&expr, ctx);
 
         // Add new reference `_name = name` to `temp_var_inits`
-        temp_var_inits.push(ctx.ast.expression_assignment(
+        temp_var_inits.push(Expression::new_assignment_expression(
             SPAN,
             AssignmentOperator::Assign,
             binding.create_write_target(ctx),
             expr,
+            ctx,
         ));
 
         binding

@@ -1,9 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{
-        AssignmentTarget, CallExpression, ChainElement, Expression, IdentifierReference,
-        StaticMemberExpression,
-    },
+    ast::{AssignmentTarget, ChainElement, Expression, StaticMemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -11,7 +8,10 @@ use oxc_semantic::SymbolId;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    AstNode, ast_util::get_declaration_from_reference_id, context::LintContext, rule::Rule,
+    AstNode,
+    context::LintContext,
+    rule::Rule,
+    utils::{is_this_object, is_vue_component_options_object},
 };
 
 fn require_slots_as_functions_diagnostic(span: Span) -> OxcDiagnostic {
@@ -24,7 +24,7 @@ pub struct RequireSlotsAsFunctions;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce properties of `$slots` to be used as a function.
+    /// Enforce properties of `$slots` to be used as functions.
     ///
     /// ### Why is this bad?
     ///
@@ -60,7 +60,8 @@ declare_oxc_lint!(
     RequireSlotsAsFunctions,
     vue,
     correctness,
-    version = "next",
+    version = "1.67.0",
+    short_description = "Enforce properties of `$slots` to be used as functions.",
 );
 
 impl Rule for RequireSlotsAsFunctions {
@@ -100,23 +101,6 @@ fn inner_static_member_expression<'a, 'b>(
         },
         _ => None,
     }
-}
-
-fn is_this_object(expr: &Expression, ctx: &LintContext<'_>) -> bool {
-    match expr.get_inner_expression() {
-        Expression::ThisExpression(_) => true,
-        Expression::Identifier(ident) => is_this_alias(ident, ctx),
-        _ => false,
-    }
-}
-
-fn is_this_alias(ident: &IdentifierReference, ctx: &LintContext<'_>) -> bool {
-    get_declaration_from_reference_id(ident.reference_id(), ctx.semantic())
-        .and_then(|node| match node.kind() {
-            AstKind::VariableDeclarator(var) => var.init.as_ref(),
-            _ => None,
-        })
-        .is_some_and(|init| matches!(init.get_inner_expression(), Expression::ThisExpression(_)))
 }
 
 fn verify(node: &AstNode<'_>, report_span: Span, ctx: &LintContext<'_>) {
@@ -166,40 +150,6 @@ fn verify(node: &AstNode<'_>, report_span: Span, ctx: &LintContext<'_>) {
 
 fn is_under_vue_component_options_object(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
     ctx.nodes().ancestors(node.id()).any(|ancestor| is_vue_component_options_object(ancestor, ctx))
-}
-
-fn is_vue_component_options_object(object_node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
-    let AstKind::ObjectExpression(object_expr) = object_node.kind() else {
-        return false;
-    };
-
-    ctx.nodes().ancestors(object_node.id()).any(|ancestor| match ancestor.kind() {
-        AstKind::ExportDefaultDeclaration(export_default_decl) => {
-            export_default_decl.declaration.span() == object_expr.span
-        }
-        AstKind::CallExpression(call_expr) => {
-            call_expr
-                .arguments
-                .iter()
-                .any(|arg| arg.as_expression().is_some_and(|expr| expr.span() == object_expr.span))
-                && is_vue_component_options_call(call_expr)
-        }
-        _ => false,
-    })
-}
-
-fn is_vue_component_options_call(call_expr: &CallExpression<'_>) -> bool {
-    if call_expr
-        .callee
-        .get_identifier_reference()
-        .is_some_and(|ident| matches!(ident.name.as_str(), "createApp" | "defineComponent"))
-    {
-        return true;
-    }
-
-    call_expr.callee.get_member_expr().is_some_and(|member_expr| {
-        member_expr.static_property_name().is_some_and(|name| name == "component")
-    })
 }
 
 fn follow_references(symbol_id: SymbolId, report_span: Span, ctx: &LintContext<'_>) {
@@ -285,6 +235,37 @@ fn test() {
             None,
             Some(PathBuf::from("test.vue")),
         ),
+        (
+            r"
+                  <script>
+                  export default {
+                    render(h) {
+                      const { vm } = this
+                      return h('div', vm.$slots.default.filter(test))
+                    }
+                  }
+                  </script>
+                  ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            r"
+                  <script>
+                  export default {
+                    render(h) {
+                      let vm = this
+                      vm = other
+                      return h('div', vm.$slots.default.filter(test))
+                    }
+                  }
+                  </script>
+                  ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
     ];
 
     let fail = vec![
@@ -317,6 +298,36 @@ fn test() {
                       var bar = (this?.$slots)?.foo?.bar // NG
                       var bar = (this?.$slots)?.foo?.() // OK
                       return h('div', bar)
+                    }
+                  }
+                  </script>
+                  ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                  <script>
+                  Vue.mixin({
+                    render (h) {
+                      var children = this.$slots.default
+                      return h('div', [...children])
+                    }
+                  })
+                  </script>
+                  ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            r"
+                  <script>
+                  export default {
+                    render(h) {
+                      const vm = this
+                      return h('div', vm.$slots.default.filter(test))
                     }
                   }
                   </script>

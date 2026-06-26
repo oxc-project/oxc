@@ -44,7 +44,10 @@ pub fn evaluate_enum_members(decl: &TSEnumDeclaration<'_>, scoping: &mut Scoping
         scoping.add_enum_body_scope(id, scope_id);
     }
 
-    let mut prev_value: Option<ConstantValue> = None;
+    // Sentinel: the first member with no initializer evaluates to `-1.0 + 1.0 = 0.0`.
+    // Once a member fails to resolve, `prev_value` becomes `None` and stays there, so
+    // subsequent auto-increment members correctly propagate "unknown" instead of restarting at 0.
+    let mut prev_value: Option<ConstantValue> = Some(ConstantValue::Number(-1.0));
 
     for member in &decl.body.members {
         let value = if let Some(init) = &member.initializer {
@@ -52,9 +55,8 @@ pub fn evaluate_enum_members(decl: &TSEnumDeclaration<'_>, scoping: &mut Scoping
             evaluate_expression(init, &ctx)
         } else {
             match &prev_value {
-                None => Some(ConstantValue::Number(0.0)),
                 Some(ConstantValue::Number(n)) => Some(ConstantValue::Number(n + 1.0)),
-                Some(ConstantValue::String(_)) => None,
+                None | Some(ConstantValue::String(_)) => None,
             }
         };
 

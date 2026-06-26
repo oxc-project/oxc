@@ -4,6 +4,62 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.56.0] - 2026-06-22
+
+### 💥 BREAKING CHANGES
+
+- 36009dd allocator: [**BREAKING**] `GetAllocator::allocator` take `&self` (#23676) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 7cd1737 formatter: Normalize CRLF for suppressed text (#23701) (leaysgur)
+- a36e444 formatter: Member chain panic when tail is merged with comment in dev build (#23698) (leaysgur)
+- 600d306 formatter: Preserve parens with default export and type cast (#23697) (leaysgur)
+- 61290f2 formatter: Single-member intersection/union type with comment formatting (#21915) (Leonabcd123)
+- 5a1b0b4 formatter: Parenthesize a type assertion used as the base of `**` (#23633) (Jerry Zhao)
+- 91827e2 formatter: Use `Ordering::reverse()` with `order: desc` for idempotency (#23543) (leaysgur)
+
+### ⚡ Performance
+
+- 80f1697 formatter: Avoid arena copy for already-lowercase bigint literals (#23534) (Yunfei He)
+- 1a40b71 formatter: Avoid arena copy for borrowed numeric-literal text (#23512) (Yunfei He)
+- 12e4451 formatter: Avoid arena copy for borrowed string-literal text (#23465) (Yunfei He)
+
+## [0.54.0] - 2026-06-08
+
+### 🚀 Features
+
+- 27a6db8 formatter_json: Implement jsonc variant (#22912) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 01e0871 formatter,formatter_json: Handle PS/LS as line terminator (#22978) (leaysgur)
+
+## [0.53.0] - 2026-06-01
+
+### 🚀 Features
+
+- 9c71f2e ast, codegen, formatter: Add `WithClauseKeyword::as_str` helper and use it (#22791) (camc314)
+
+### 🐛 Bug Fixes
+
+- 23f0cc8 formatter: Don't move comments inside variable declaration in for in loop (#22776) (leaysgur)
+- f200c40 formatter: Don't move comments inside variable declaration in for of loop (#22773) (Leonabcd123)
+
+### 📚 Documentation
+
+- 845f393 oxfmt,formatter,formatter_json,formatter_core: Add/update AGENTS.md (#22873) (leaysgur)
+
+## [0.52.0] - 2026-05-26
+
+### 🐛 Bug Fixes
+
+- 5a26479 formatter: Preserve import phases (#22692) (Cameron)
+
+### ⚡ Performance
+
+- 78cf83f formatter: Pre-size output buffer using source text length (#22594) (Dunqing)
+
 ## [0.51.0] - 2026-05-18
 
 ### 🐛 Bug Fixes

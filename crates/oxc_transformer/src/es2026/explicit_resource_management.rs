@@ -37,11 +37,12 @@ use std::mem;
 
 use rustc_hash::FxHashMap;
 
-use oxc_allocator::{Address, Box as ArenaBox, GetAddress, TakeIn, Vec as ArenaVec};
+use oxc_allocator::{Address, ArenaBox, ArenaVec, GetAddress, TakeIn};
 use oxc_ast::{NONE, ast::*};
 use oxc_ecmascript::BoundNames;
 use oxc_semantic::{NodeId, ScopeFlags, ScopeId, SymbolFlags, SymbolId};
 use oxc_span::{SPAN, Span};
+use oxc_str::static_ident;
 use oxc_traverse::{BoundIdentifier, Traverse};
 
 use crate::{
@@ -101,18 +102,23 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
             mem::replace(&mut variable_declarator.id, temp_id.create_binding_pattern(ctx));
 
         // `using x = _x;`
-        let using_stmt = Statement::from(ctx.ast.declaration_variable(
+        let using_stmt = Statement::from(Declaration::new_variable_declaration(
             SPAN,
             variable_decl_kind,
-            ctx.ast.vec1(ctx.ast.variable_declarator(
-                SPAN,
-                variable_decl_kind,
-                binding_pattern,
-                NONE,
-                Some(temp_id.create_read_expression(ctx)),
-                false,
-            )),
+            ArenaVec::from_value_in(
+                VariableDeclarator::new(
+                    SPAN,
+                    variable_decl_kind,
+                    binding_pattern,
+                    NONE,
+                    Some(temp_id.create_read_expression(ctx)),
+                    false,
+                    ctx,
+                ),
+                ctx,
+            ),
             false,
+            ctx,
         ));
 
         if let Statement::BlockStatement(body) = &mut for_of_stmt.body {
@@ -134,9 +140,10 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                     for_of_init_symbol_id,
                 );
 
-                let old_body = for_of_stmt.body.take_in(ctx.ast);
-                let new_body = ctx.ast.vec_from_array([using_stmt, old_body]);
-                for_of_stmt.body = ctx.ast.statement_block_with_scope_id(SPAN, new_body, scope_id);
+                let old_body = for_of_stmt.body.take_in(ctx);
+                let new_body = ArenaVec::from_array_in([using_stmt, old_body], ctx);
+                for_of_stmt.body =
+                    Statement::new_block_statement_with_scope_id(SPAN, new_body, scope_id, ctx);
                 return;
             }
 
@@ -161,10 +168,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                 for_of_init_symbol_id,
             );
 
-            let old_body = for_of_stmt.body.take_in(ctx.ast);
+            let old_body = for_of_stmt.body.take_in(ctx);
 
-            let new_body = ctx.ast.vec_from_array([using_stmt, old_body]);
-            for_of_stmt.body = ctx.ast.statement_block_with_scope_id(SPAN, new_body, scope_id);
+            let new_body = ArenaVec::from_array_in([using_stmt, old_body], ctx);
+            for_of_stmt.body =
+                Statement::new_block_statement_with_scope_id(SPAN, new_body, scope_id, ctx);
         }
     }
 
@@ -207,14 +215,17 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
             *ctx.scoping_mut().scope_flags_mut(scope_id) = ScopeFlags::StrictMode;
 
             block.set_scope_id(static_block_new_scope_id);
-            block.body = ctx.ast.vec1(Self::create_try_stmt(
-                ctx.ast.block_statement_with_scope_id(SPAN, new_stmts, scope_id),
-                &using_ctx,
-                static_block_new_scope_id,
-                needs_await,
-                SPAN,
+            block.body = ArenaVec::from_value_in(
+                Self::create_try_stmt(
+                    BlockStatement::new_with_scope_id(SPAN, new_stmts, scope_id, ctx),
+                    &using_ctx,
+                    static_block_new_scope_id,
+                    needs_await,
+                    SPAN,
+                    ctx,
+                ),
                 ctx,
-            ));
+            );
         }
     }
 
@@ -269,14 +280,17 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                 );
             }
 
-            body.statements = ctx.ast.vec1(Self::create_try_stmt(
-                ctx.ast.block_statement_with_scope_id(SPAN, new_stmts, block_stmt_scope_id),
-                &using_ctx,
-                current_scope_id,
-                needs_await,
-                SPAN,
+            body.statements = ArenaVec::from_value_in(
+                Self::create_try_stmt(
+                    BlockStatement::new_with_scope_id(SPAN, new_stmts, block_stmt_scope_id, ctx),
+                    &using_ctx,
+                    current_scope_id,
+                    needs_await,
+                    SPAN,
+                    ctx,
+                ),
                 ctx,
-            ));
+            );
         }
     }
 
@@ -329,14 +343,17 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                 ScopeFlags::empty(),
             );
 
-            node.block.body = ctx.ast.vec1(Self::create_try_stmt(
-                ctx.ast.block_statement_with_scope_id(SPAN, new_stmts, scope_id),
-                &using_ctx,
-                block_stmt_scope_id,
-                needs_await,
-                SPAN,
+            node.block.body = ArenaVec::from_value_in(
+                Self::create_try_stmt(
+                    BlockStatement::new_with_scope_id(SPAN, new_stmts, scope_id, ctx),
+                    &using_ctx,
+                    block_stmt_scope_id,
+                    needs_await,
+                    SPAN,
+                    ctx,
+                ),
                 ctx,
-            ));
+            );
 
             let current_hoist_scope_id = ctx.current_hoist_scope_id();
             node.block.set_scope_id(block_stmt_scope_id);
@@ -364,13 +381,13 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
             return;
         }
 
-        let program_body = program.body.take_in(ctx.ast);
+        let program_body = program.body.take_in(ctx);
 
         let (mut program_body, inner_block): (
             ArenaVec<'a, Statement<'a>>,
             ArenaVec<'a, Statement<'a>>,
         ) = program_body.into_iter().fold(
-            (ctx.ast.vec(), ctx.ast.vec()),
+            (ArenaVec::new_in(ctx), ArenaVec::new_in(ctx)),
             |(mut program_body, mut inner_block), mut stmt| {
                 let address = stmt.address();
                 match stmt {
@@ -392,7 +409,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                             }
                             _ => (
                                 ctx.generate_binding_in_current_scope(
-                                    ctx.ast.ident("_default"),
+                                    static_ident!("_default"),
                                     SymbolFlags::FunctionScopedVariable,
                                 ),
                                 SPAN,
@@ -401,9 +418,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
 
                         let decl = mem::replace(
                             &mut export_default_decl.declaration,
-                            ExportDefaultDeclarationKind::NullLiteral(
-                                ctx.ast.alloc_null_literal(SPAN),
-                            ),
+                            ExportDefaultDeclarationKind::NullLiteral(NullLiteral::boxed(
+                                SPAN, ctx,
+                            )),
                         );
 
                         let expr = match decl {
@@ -418,36 +435,46 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                         };
 
                         inner_block.push(Statement::VariableDeclaration(
-                            ctx.ast.alloc_variable_declaration(
+                            VariableDeclaration::boxed(
                                 span,
                                 VariableDeclarationKind::Var,
-                                ctx.ast.vec1(ctx.ast.variable_declarator(
-                                    span,
-                                    VariableDeclarationKind::Var,
-                                    var_id.create_spanned_binding_pattern(span, ctx),
-                                    NONE,
-                                    Some(expr),
-                                    false,
-                                )),
+                                ArenaVec::from_value_in(
+                                    VariableDeclarator::new(
+                                        span,
+                                        VariableDeclarationKind::Var,
+                                        var_id.create_spanned_binding_pattern(span, ctx),
+                                        NONE,
+                                        Some(expr),
+                                        false,
+                                        ctx,
+                                    ),
+                                    ctx,
+                                ),
                                 false,
+                                ctx,
                             ),
                         ));
 
                         program_body.push(Statement::ExportNamedDeclaration(
-                            ctx.ast.alloc_export_named_declaration(
+                            ExportNamedDeclaration::boxed(
                                 SPAN,
                                 None,
-                                ctx.ast.vec1(ctx.ast.export_specifier(
-                                    SPAN,
-                                    ModuleExportName::IdentifierReference(
-                                        var_id.create_read_reference(ctx),
+                                ArenaVec::from_value_in(
+                                    ExportSpecifier::new(
+                                        SPAN,
+                                        ModuleExportName::IdentifierReference(
+                                            var_id.create_read_reference(ctx),
+                                        ),
+                                        ModuleExportName::new_identifier_name(SPAN, "default", ctx),
+                                        ImportOrExportKind::Value,
+                                        ctx,
                                     ),
-                                    ctx.ast.module_export_name_identifier_name(SPAN, "default"),
-                                    ImportOrExportKind::Value,
-                                )),
+                                    ctx,
+                                ),
                                 None,
                                 ImportOrExportKind::Value,
                                 NONE,
+                                ctx,
                             ),
                         ));
                     }
@@ -471,30 +498,38 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                             return (program_body, inner_block);
                         }
 
-                        let export_specifiers = match decl.take_in(ctx.ast) {
+                        let export_specifiers = match decl.take_in(ctx) {
                             Declaration::ClassDeclaration(class_decl) => {
                                 let class_binding = class_decl.id.as_ref().unwrap();
                                 let class_binding_name = class_binding.name;
 
-                                let xx = BoundIdentifier::from_binding_ident(class_binding)
-                                    .create_read_reference(ctx);
+                                let class_binding_reference =
+                                    BoundIdentifier::from_binding_ident(class_binding)
+                                        .create_read_reference(ctx);
 
                                 inner_block.push(Self::transform_class_decl(class_decl, ctx));
 
-                                let local = ModuleExportName::IdentifierReference(xx);
-                                let exported = ctx
-                                    .ast
-                                    .module_export_name_identifier_name(SPAN, class_binding_name);
-                                ctx.ast.vec1(ctx.ast.export_specifier(
+                                let local =
+                                    ModuleExportName::IdentifierReference(class_binding_reference);
+                                let exported = ModuleExportName::new_identifier_name(
                                     SPAN,
-                                    local,
-                                    exported,
-                                    ImportOrExportKind::Value,
-                                ))
+                                    class_binding_name,
+                                    ctx,
+                                );
+                                ArenaVec::from_value_in(
+                                    ExportSpecifier::new(
+                                        SPAN,
+                                        local,
+                                        exported,
+                                        ImportOrExportKind::Value,
+                                        ctx,
+                                    ),
+                                    ctx,
+                                )
                             }
                             Declaration::VariableDeclaration(mut var_decl) => {
                                 var_decl.kind = VariableDeclarationKind::Var;
-                                let mut export_specifiers = ctx.ast.vec();
+                                let mut export_specifiers = ArenaVec::new_in(ctx);
 
                                 for decl in &mut var_decl.declarations {
                                     decl.kind = VariableDeclarationKind::Var;
@@ -504,19 +539,18 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                                     *ctx.scoping_mut().symbol_flags_mut(ident.symbol_id()) =
                                         SymbolFlags::FunctionScopedVariable;
 
-                                    export_specifiers.push(
-                                        ctx.ast.export_specifier(
-                                            SPAN,
-                                            ModuleExportName::IdentifierReference(
-                                                BoundIdentifier::from_binding_ident(ident)
-                                                    .create_read_reference(ctx),
-                                            ),
-                                            ctx.ast.module_export_name_identifier_name(
-                                                SPAN, ident.name,
-                                            ),
-                                            ImportOrExportKind::Value,
+                                    export_specifiers.push(ExportSpecifier::new(
+                                        SPAN,
+                                        ModuleExportName::IdentifierReference(
+                                            BoundIdentifier::from_binding_ident(ident)
+                                                .create_read_reference(ctx),
                                         ),
-                                    );
+                                        ModuleExportName::new_identifier_name(
+                                            SPAN, ident.name, ctx,
+                                        ),
+                                        ImportOrExportKind::Value,
+                                        ctx,
+                                    ));
                                 });
                                 inner_block.push(Statement::VariableDeclaration(var_decl));
                                 export_specifiers
@@ -525,13 +559,14 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                         };
 
                         program_body.push(Statement::ExportNamedDeclaration(
-                            ctx.ast.alloc_export_named_declaration(
+                            ExportNamedDeclaration::boxed(
                                 SPAN,
                                 None,
                                 export_specifiers,
                                 None,
                                 export_named_declaration.export_kind,
                                 NONE,
+                                ctx,
                             ),
                         ));
                     }
@@ -564,7 +599,12 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
         );
 
         let block_scope_id = ctx.insert_scope_below_statements(&inner_block, ScopeFlags::empty());
-        program_body.push(ctx.ast.statement_block_with_scope_id(SPAN, inner_block, block_scope_id));
+        program_body.push(Statement::new_block_statement_with_scope_id(
+            SPAN,
+            inner_block,
+            block_scope_id,
+            ctx,
+        ));
 
         std::mem::swap(&mut program.body, &mut program_body);
     }
@@ -600,7 +640,7 @@ impl<'a> ExplicitResourceManagement<'a> {
             let current_scope_id = ctx.current_scope_id();
 
             *stmt = Self::create_try_stmt(
-                ctx.ast.block_statement_with_scope_id(SPAN, new_stmts, block_stmt.scope_id()),
+                BlockStatement::new_with_scope_id(SPAN, new_stmts, block_stmt.scope_id(), ctx),
                 &using_ctx,
                 current_scope_id,
                 needs_await,
@@ -672,28 +712,31 @@ impl<'a> ExplicitResourceManagement<'a> {
 
                 for decl in &mut var_decl.declarations {
                     if let Some(old_init) = decl.init.take() {
-                        decl.init = Some(
-                            ctx.ast.expression_call(
+                        decl.init = Some(Expression::new_call_expression(
+                            SPAN,
+                            Expression::from(MemberExpression::new_static_member_expression(
                                 SPAN,
-                                Expression::from(
-                                    ctx.ast.member_expression_static(
-                                        SPAN,
-                                        using_ctx
-                                            .as_ref()
-                                            .expect("`using_ctx` should have been set")
-                                            .create_read_expression(ctx),
-                                        ctx.ast.identifier_name(
-                                            SPAN,
-                                            if needs_await { "a" } else { "u" },
-                                        ),
-                                        false,
-                                    ),
+                                using_ctx
+                                    .as_ref()
+                                    .expect("`using_ctx` should have been set")
+                                    .create_read_expression(ctx),
+                                IdentifierName::new(
+                                    SPAN,
+                                    if needs_await {
+                                        static_ident!("a")
+                                    } else {
+                                        static_ident!("u")
+                                    },
+                                    ctx,
                                 ),
-                                NONE,
-                                ctx.ast.vec1(Argument::from(old_init)),
                                 false,
-                            ),
-                        );
+                                ctx,
+                            )),
+                            NONE,
+                            ArenaVec::from_value_in(Argument::from(old_init), ctx),
+                            false,
+                            ctx,
+                        ));
                     }
                 }
             }
@@ -708,29 +751,44 @@ impl<'a> ExplicitResourceManagement<'a> {
         let callee = helper_load(Helper::UsingCtx, ctx);
 
         let block = {
-            let vec = ctx.ast.vec_from_array([
-                Statement::from(ctx.ast.declaration_variable(
-                    SPAN,
-                    VariableDeclarationKind::Var,
-                    ctx.ast.vec1(ctx.ast.variable_declarator(
+            let vec = ArenaVec::from_array_in(
+                [
+                    Statement::from(Declaration::new_variable_declaration(
                         SPAN,
                         VariableDeclarationKind::Var,
-                        using_ctx.create_binding_pattern(ctx),
-                        NONE,
-                        Some(ctx.ast.expression_call(SPAN, callee, NONE, ctx.ast.vec(), false)),
+                        ArenaVec::from_value_in(
+                            VariableDeclarator::new(
+                                SPAN,
+                                VariableDeclarationKind::Var,
+                                using_ctx.create_binding_pattern(ctx),
+                                NONE,
+                                Some(Expression::new_call_expression(
+                                    SPAN,
+                                    callee,
+                                    NONE,
+                                    ArenaVec::new_in(ctx),
+                                    false,
+                                    ctx,
+                                )),
+                                false,
+                                ctx,
+                            ),
+                            ctx,
+                        ),
                         false,
+                        ctx,
                     )),
-                    false,
-                )),
-                stmt.take_in(ctx.ast),
-            ]);
+                    stmt.take_in(ctx),
+                ],
+                ctx,
+            );
 
-            ctx.ast.block_statement_with_scope_id(SPAN, vec, block_stmt_sid)
+            BlockStatement::new_with_scope_id(SPAN, vec, block_stmt_sid, ctx)
         };
 
         let catch = Self::create_catch_clause(&using_ctx, current_scope_id, ctx);
         let finally = Self::create_finally_block(&using_ctx, current_scope_id, needs_await, ctx);
-        *stmt = ctx.ast.statement_try(span, block, Some(catch), Some(finally));
+        *stmt = Statement::new_try_statement(span, block, Some(catch), Some(finally), ctx);
     }
 
     /// Transforms:
@@ -799,17 +857,27 @@ impl<'a> ExplicitResourceManagement<'a> {
             // `await using foo = bar;` -> `const foo = _usingCtx.a(bar);`
             for decl in &mut variable_declaration.declarations {
                 if let Some(old_init) = decl.init.take() {
-                    decl.init = Some(ctx.ast.expression_call(
+                    decl.init = Some(Expression::new_call_expression(
                         SPAN,
-                        Expression::from(ctx.ast.member_expression_static(
+                        Expression::from(MemberExpression::new_static_member_expression(
                             SPAN,
                             using_ctx.as_ref().unwrap().create_read_expression(ctx),
-                            ctx.ast.identifier_name(SPAN, if is_await_using { "a" } else { "u" }),
+                            IdentifierName::new(
+                                SPAN,
+                                if is_await_using {
+                                    static_ident!("a")
+                                } else {
+                                    static_ident!("u")
+                                },
+                                ctx,
+                            ),
                             false,
+                            ctx,
                         )),
                         NONE,
-                        ctx.ast.vec1(Argument::from(old_init)),
+                        ArenaVec::from_value_in(Argument::from(old_init), ctx),
                         false,
+                        ctx,
                     ));
                 }
             }
@@ -817,22 +885,34 @@ impl<'a> ExplicitResourceManagement<'a> {
 
         let using_ctx = using_ctx?;
 
-        let mut stmts = stmts.take_in(ctx.ast);
+        let mut stmts = stmts.take_in(ctx);
 
         // `var _usingCtx = babelHelpers.usingCtx();`
         let callee = helper_load(Helper::UsingCtx, ctx);
-        let helper = ctx.ast.declaration_variable(
+        let helper = Declaration::new_variable_declaration(
             SPAN,
             VariableDeclarationKind::Var,
-            ctx.ast.vec1(ctx.ast.variable_declarator(
-                SPAN,
-                VariableDeclarationKind::Var,
-                using_ctx.create_binding_pattern(ctx),
-                NONE,
-                Some(ctx.ast.expression_call(SPAN, callee, NONE, ctx.ast.vec(), false)),
-                false,
-            )),
+            ArenaVec::from_value_in(
+                VariableDeclarator::new(
+                    SPAN,
+                    VariableDeclarationKind::Var,
+                    using_ctx.create_binding_pattern(ctx),
+                    NONE,
+                    Some(Expression::new_call_expression(
+                        SPAN,
+                        callee,
+                        NONE,
+                        ArenaVec::new_in(ctx),
+                        false,
+                        ctx,
+                    )),
+                    false,
+                    ctx,
+                ),
+                ctx,
+            ),
             false,
+            ctx,
         );
         stmts.insert(0, Statement::from(helper));
 
@@ -849,7 +929,7 @@ impl<'a> ExplicitResourceManagement<'a> {
     ) -> Statement<'a> {
         let catch = Self::create_catch_clause(using_ctx, parent_scope_id, ctx);
         let finally = Self::create_finally_block(using_ctx, parent_scope_id, needs_await, ctx);
-        ctx.ast.statement_try(span, body, Some(catch), Some(finally))
+        Statement::new_try_statement(span, body, Some(catch), Some(finally), ctx)
     }
 
     /// `catch (_) { _usingCtx.e = _; }`
@@ -867,36 +947,45 @@ impl<'a> ExplicitResourceManagement<'a> {
         // We can skip using `generate_uid` here as no code within the `catch` block which can use a
         // binding called `_`. `using_ctx` is a UID with prefix `_usingCtx`.
         let ident = ctx.generate_binding(
-            ctx.ast.ident("_"),
+            static_ident!("_"),
             block_scope_id,
             SymbolFlags::CatchVariable | SymbolFlags::FunctionScopedVariable,
         );
 
         let catch_parameter =
-            ctx.ast.catch_parameter(SPAN, ident.create_binding_pattern(ctx), NONE);
+            CatchParameter::new(SPAN, ident.create_binding_pattern(ctx), NONE, ctx);
 
         // `_usingCtx.e = _;`
-        let stmt = ctx.ast.statement_expression(
+        let stmt = Statement::new_expression_statement(
             SPAN,
-            ctx.ast.expression_assignment(
+            Expression::new_assignment_expression(
                 SPAN,
                 AssignmentOperator::Assign,
-                AssignmentTarget::from(ctx.ast.member_expression_static(
+                AssignmentTarget::from(MemberExpression::new_static_member_expression(
                     SPAN,
                     using_ctx.create_read_expression(ctx),
-                    ctx.ast.identifier_name(SPAN, "e"),
+                    IdentifierName::new(SPAN, "e", ctx),
                     false,
+                    ctx,
                 )),
                 ident.create_read_expression(ctx),
+                ctx,
             ),
+            ctx,
         );
 
         // `catch (_) { _usingCtx.e = _; }`
-        ctx.ast.alloc_catch_clause_with_scope_id(
+        CatchClause::boxed_with_scope_id(
             SPAN,
             Some(catch_parameter),
-            ctx.ast.block_statement_with_scope_id(SPAN, ctx.ast.vec1(stmt), block_scope_id),
+            BlockStatement::new_with_scope_id(
+                SPAN,
+                ArenaVec::from_value_in(stmt, ctx),
+                block_scope_id,
+                ctx,
+            ),
             catch_scope_id,
+            ctx,
         )
     }
 
@@ -910,25 +999,29 @@ impl<'a> ExplicitResourceManagement<'a> {
         let finally_scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::empty());
 
         // `_usingCtx.d()`
-        let expr = ctx.ast.expression_call(
+        let expr = Expression::new_call_expression(
             SPAN,
-            Expression::from(ctx.ast.member_expression_static(
+            Expression::from(MemberExpression::new_static_member_expression(
                 SPAN,
                 using_ctx.create_read_expression(ctx),
-                ctx.ast.identifier_name(SPAN, "d"),
+                IdentifierName::new(SPAN, "d", ctx),
                 false,
+                ctx,
             )),
             NONE,
-            ctx.ast.vec(),
+            ArenaVec::new_in(ctx),
             false,
+            ctx,
         );
 
-        let stmt = if needs_await { ctx.ast.expression_await(SPAN, expr) } else { expr };
+        let stmt =
+            if needs_await { Expression::new_await_expression(SPAN, expr, ctx) } else { expr };
 
-        ctx.ast.alloc_block_statement_with_scope_id(
+        BlockStatement::boxed_with_scope_id(
             SPAN,
-            ctx.ast.vec1(ctx.ast.statement_expression(SPAN, stmt)),
+            ArenaVec::from_value_in(Statement::new_expression_statement(SPAN, stmt, ctx), ctx),
             finally_scope_id,
+            ctx,
         )
     }
 
@@ -942,18 +1035,23 @@ impl<'a> ExplicitResourceManagement<'a> {
         class_decl.r#type = ClassType::ClassExpression;
         let class_expr = Expression::ClassExpression(class_decl);
 
-        Statement::VariableDeclaration(ctx.ast.alloc_variable_declaration(
+        Statement::VariableDeclaration(VariableDeclaration::boxed(
             SPAN,
             VariableDeclarationKind::Var,
-            ctx.ast.vec1(ctx.ast.variable_declarator(
-                SPAN,
-                VariableDeclarationKind::Var,
-                binding.create_spanned_binding_pattern(original_span, ctx),
-                NONE,
-                Some(class_expr),
-                false,
-            )),
+            ArenaVec::from_value_in(
+                VariableDeclarator::new(
+                    SPAN,
+                    VariableDeclarationKind::Var,
+                    binding.create_spanned_binding_pattern(original_span, ctx),
+                    NONE,
+                    Some(class_expr),
+                    false,
+                    ctx,
+                ),
+                ctx,
+            ),
             false,
+            ctx,
         ))
     }
 

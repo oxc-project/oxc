@@ -816,7 +816,9 @@ fn generate_struct_details(schema: &Schema) -> Output {
             quote!(None)
         };
 
-        let details = quote!( StructDetails { field_order: #field_order } );
+        let is_node = struct_def.kind.has_kind;
+
+        let details = quote!( StructDetails { field_order: #field_order, is_node: #is_node } );
 
         map.entry(struct_def.name(), details.to_string());
     }

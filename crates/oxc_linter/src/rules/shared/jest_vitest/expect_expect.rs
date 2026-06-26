@@ -1,4 +1,6 @@
+use lazy_regex::Regex;
 use rustc_hash::FxHashSet;
+use schemars::JsonSchema;
 
 use oxc_ast::{
     AstKind,
@@ -9,14 +11,13 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
 use oxc_str::CompactStr;
 use oxc_syntax::scope::ScopeFlags;
-use schemars::JsonSchema;
 
 use crate::{
     ast_util::get_declaration_of_variable,
     context::LintContext,
     utils::{
         JestFnKind, JestGeneralFnKind, PossibleJestNode, convert_pattern, get_node_name,
-        is_type_of_jest_fn_call, matches_assert_function_name,
+        is_type_of_jest_fn_call,
     },
 };
 
@@ -45,7 +46,7 @@ test('should assert something', () => {});
 ```
 ";
 #[derive(Debug, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct ExpectExpectConfig {
     /// A list of function names that should be treated as assertion functions.
     ///
@@ -53,33 +54,91 @@ pub struct ExpectExpectConfig {
     /// `["expect", "expectTypeOf", "assert", "assertType"]` for Vitest.
     #[serde(rename = "assertFunctionNames")]
     assert_function_names_jest: Vec<CompactStr>,
-    #[schemars(skip)] // Skipped because this field isn't exposed to the user.
-    assert_function_names_vitest: Vec<CompactStr>,
+    #[serde(skip)]
+    #[schemars(skip)]
+    assert_function_matchers_jest: Vec<AssertFunctionMatcher>,
+    #[serde(skip)]
+    #[schemars(skip)]
+    assert_function_matchers_vitest: Vec<AssertFunctionMatcher>,
     /// An array of function names that should also be treated as test blocks.
     additional_test_block_functions: Vec<CompactStr>,
 }
 
 impl Default for ExpectExpectConfig {
     fn default() -> Self {
+        let assert_function_names_jest = default_assert_function_names_jest();
+        let assert_function_names_vitest = default_assert_function_names_vitest();
         Self {
-            assert_function_names_jest: vec!["expect".into()],
-            assert_function_names_vitest: vec![
-                "expect".into(),
-                "expectTypeOf".into(),
-                "assert".into(),
-                "assertType".into(),
-            ],
+            assert_function_matchers_jest: compile_assert_function_matchers(
+                &assert_function_names_jest,
+            ),
+            assert_function_matchers_vitest: compile_assert_function_matchers(
+                &assert_function_names_vitest,
+            ),
+            assert_function_names_jest,
             additional_test_block_functions: vec![],
         }
     }
 }
 
+fn default_assert_function_names_jest() -> Vec<CompactStr> {
+    vec!["expect".into()]
+}
+
+fn default_assert_function_names_vitest() -> Vec<CompactStr> {
+    vec!["expect".into(), "expectTypeOf".into(), "assert".into(), "assertType".into()]
+}
+
+#[derive(Debug, Clone)]
+enum AssertFunctionMatcher {
+    Exact(CompactStr),
+    Pattern(Regex),
+}
+
+impl AssertFunctionMatcher {
+    fn new(name: &CompactStr) -> Self {
+        if is_exact_assert_function_name(name) {
+            Self::Exact(name.clone())
+        } else {
+            Self::Pattern(
+                Regex::new(&convert_pattern(name))
+                    .expect("failed to compile expect-expect assert function pattern"),
+            )
+        }
+    }
+
+    fn is_match(&self, name: &str) -> bool {
+        match self {
+            Self::Exact(expected) => is_exact_assert_function_match(name, expected),
+            Self::Pattern(pattern) => pattern.is_match(name),
+        }
+    }
+}
+
+fn is_exact_assert_function_name(name: &str) -> bool {
+    name.bytes().all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'_' | b'.'))
+}
+
+fn is_exact_assert_function_match(name: &str, expected: &str) -> bool {
+    if name.len() == expected.len() {
+        return name.eq_ignore_ascii_case(expected);
+    }
+
+    name.as_bytes().get(expected.len()).is_some_and(|byte| *byte == b'.')
+        && name.get(..expected.len()).is_some_and(|prefix| prefix.eq_ignore_ascii_case(expected))
+}
+
+fn compile_assert_function_matchers(
+    assert_function_names: &[CompactStr],
+) -> Vec<AssertFunctionMatcher> {
+    assert_function_names.iter().map(AssertFunctionMatcher::new).collect()
+}
+
 impl ExpectExpectConfig {
     #[expect(clippy::unnecessary_wraps)]
     pub fn from_configuration(value: &serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let default_assert_function_names_jest = vec!["expect".into()];
-        let default_assert_function_names_vitest =
-            vec!["expect".into(), "expectTypeOf".into(), "assert".into(), "assertType".into()];
+        let default_assert_function_names_jest = default_assert_function_names_jest();
+        let default_assert_function_names_vitest = default_assert_function_names_vitest();
         let config = value.get(0);
 
         let assert_function_names = config
@@ -88,7 +147,7 @@ impl ExpectExpectConfig {
             .map(|v| {
                 v.iter()
                     .filter_map(serde_json::Value::as_str)
-                    .map(convert_pattern)
+                    .map(CompactStr::from)
                     .collect::<Vec<_>>()
             });
 
@@ -104,8 +163,13 @@ impl ExpectExpectConfig {
             .unwrap_or_default();
 
         Ok(ExpectExpectConfig {
+            assert_function_matchers_jest: compile_assert_function_matchers(
+                &assert_function_names_jest,
+            ),
+            assert_function_matchers_vitest: compile_assert_function_matchers(
+                &assert_function_names_vitest,
+            ),
             assert_function_names_jest,
-            assert_function_names_vitest,
             additional_test_block_functions,
         })
     }
@@ -115,7 +179,15 @@ impl ExpectExpectConfig {
         jest_node: &PossibleJestNode<'a, 'c>,
         ctx: &'c LintContext<'a>,
     ) {
-        run(self, jest_node, ctx);
+        run(self, jest_node, ctx, ctx.frameworks().is_vitest());
+    }
+
+    pub fn run_on_vitest_node<'a, 'c>(
+        &self,
+        jest_node: &PossibleJestNode<'a, 'c>,
+        ctx: &'c LintContext<'a>,
+    ) {
+        run(self, jest_node, ctx, true);
     }
 }
 
@@ -123,6 +195,7 @@ fn run<'a>(
     rule: &ExpectExpectConfig,
     possible_jest_node: &PossibleJestNode<'a, '_>,
     ctx: &LintContext<'a>,
+    use_vitest_assertions: bool,
 ) {
     let node = possible_jest_node.node;
     if let AstKind::CallExpression(call_expr) = node.kind() {
@@ -141,18 +214,18 @@ fn run<'a>(
                 if property_name == "todo" {
                     return;
                 }
-                if property_name == "skip" && ctx.frameworks().is_vitest() {
+                if property_name == "skip" && use_vitest_assertions {
                     return;
                 }
             }
 
-            let assert_function_names = if ctx.frameworks().is_vitest() {
-                &rule.assert_function_names_vitest
+            let assert_function_matchers = if use_vitest_assertions {
+                &rule.assert_function_matchers_vitest
             } else {
-                &rule.assert_function_names_jest
+                &rule.assert_function_matchers_jest
             };
 
-            let mut visitor = AssertionVisitor::new(ctx, assert_function_names);
+            let mut visitor = AssertionVisitor::new(ctx, assert_function_matchers);
 
             // Visit each argument of the test call
             for argument in &call_expr.arguments {
@@ -173,14 +246,22 @@ fn run<'a>(
 
 struct AssertionVisitor<'a, 'b> {
     ctx: &'b LintContext<'a>,
-    assert_function_names: &'b [CompactStr],
+    assert_function_matchers: &'b [AssertFunctionMatcher],
     visited: FxHashSet<Span>,
     found_assertion: bool,
 }
 
 impl<'a, 'b> AssertionVisitor<'a, 'b> {
-    fn new(ctx: &'b LintContext<'a>, assert_function_names: &'b [CompactStr]) -> Self {
-        Self { ctx, assert_function_names, visited: FxHashSet::default(), found_assertion: false }
+    fn new(
+        ctx: &'b LintContext<'a>,
+        assert_function_matchers: &'b [AssertFunctionMatcher],
+    ) -> Self {
+        Self {
+            ctx,
+            assert_function_matchers,
+            visited: FxHashSet::default(),
+            found_assertion: false,
+        }
     }
 
     fn check_expression(&mut self, expr: &Expression<'a>) {
@@ -237,7 +318,7 @@ impl<'a, 'b> AssertionVisitor<'a, 'b> {
 impl<'a> Visit<'a> for AssertionVisitor<'a, '_> {
     fn visit_call_expression(&mut self, call_expr: &CallExpression<'a>) {
         let name = get_node_name(&call_expr.callee);
-        if matches_assert_function_name(&name, self.assert_function_names) {
+        if self.assert_function_matchers.iter().any(|matcher| matcher.is_match(&name)) {
             self.found_assertion = true;
             return;
         }

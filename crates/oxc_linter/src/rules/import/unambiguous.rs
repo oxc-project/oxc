@@ -46,6 +46,7 @@ declare_oxc_lint!(
     import,
     restriction,
     version = "0.11.1",
+    short_description = "Warn if a `module` could be mistakenly parsed as a `script` instead of as a pure ES module.",
 );
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/unambiguous.md>

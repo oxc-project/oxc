@@ -3,7 +3,7 @@ use std::{collections::hash_map::Entry, fmt, mem};
 use rustc_hash::{FxHashMap, FxHashSet};
 use self_cell::self_cell;
 
-use oxc_allocator::{Allocator, BitSet, CloneIn, Vec as ArenaVec};
+use oxc_allocator::{Allocator, ArenaVec, BitSet, CloneIn};
 use oxc_index::IndexVec;
 use oxc_span::Span;
 use oxc_str::{ArenaIdentHashMap, Ident};
@@ -122,8 +122,8 @@ impl Default for Scoping {
             enum_data: EnumData::default(),
             scope_table: ScopeTable::new(),
             cell: ScopingCell::new(Allocator::default(), |allocator| ScopingInner {
-                symbol_names: ArenaVec::new_in(allocator),
-                resolved_references: ArenaVec::new_in(allocator),
+                symbol_names: ArenaVec::new_in(&allocator),
+                resolved_references: ArenaVec::new_in(&allocator),
                 symbol_redeclarations: FxHashMap::default(),
                 bindings: IndexVec::new(),
                 root_unresolved_references: UnresolvedReferences::new_in(allocator),
@@ -441,9 +441,29 @@ impl Scoping {
     ) -> SymbolId {
         self.cell.with_dependent_mut(|allocator, cell| {
             cell.symbol_names.push(name.clone_in(allocator));
-            cell.resolved_references.push(ArenaVec::new_in(allocator));
+            cell.resolved_references.push(ArenaVec::new_in(&allocator));
         });
         self.symbol_table.push(span, flags, scope_id, node_id)
+    }
+
+    /// Create a new symbol, append symbol metadata to the symbol table, and bind it to a scope.
+    pub(crate) fn create_symbol_with_binding(
+        &mut self,
+        span: Span,
+        name: Ident<'_>,
+        flags: SymbolFlags,
+        symbol_scope_id: ScopeId,
+        binding_scope_id: ScopeId,
+        node_id: NodeId,
+    ) -> SymbolId {
+        let symbol_id = self.symbol_table.push(span, flags, symbol_scope_id, node_id);
+        self.cell.with_dependent_mut(|allocator, cell| {
+            let name = name.clone_in(allocator);
+            cell.symbol_names.push(name);
+            cell.resolved_references.push(ArenaVec::new_in(&allocator));
+            cell.bindings[binding_scope_id].insert(name, symbol_id);
+        });
+        symbol_id
     }
 
     /// Record a redeclaration for an existing symbol.
@@ -476,7 +496,7 @@ impl Scoping {
                             "The above step has already been checked, and it was first declared."
                         )
                     });
-                    let v = ArenaVec::from_array_in([first_declaration, redeclaration], allocator);
+                    let v = ArenaVec::from_array_in([first_declaration, redeclaration], &allocator);
                     vacant.insert(v);
                 }
             }
@@ -579,18 +599,21 @@ impl Scoping {
         });
     }
 
-    /// Retain only resolved references that are in the given set.
+    /// Remove every `ReferenceId` whose bit is set in `excluded` from each
+    /// symbol's resolved-references list. O(total_references) in the worst
+    /// case; short-circuits when `excluded` has no bits set.
     ///
-    /// This is an O(n) batch operation across all symbols, much more efficient than
-    /// calling `delete_resolved_reference` repeatedly when many references from the
-    /// same symbol need to be removed (which would be O(n²) due to the linear scan
-    /// in each deletion).
-    ///
-    /// `live_references` should be sized to [`Self::references_len`] at construction time.
-    pub fn retain_resolved_references(&mut self, live_references: &BitSet<'_>) {
+    /// `excluded` should be sized to at least [`Self::references_len`] at the
+    /// time it was constructed. References created after the bitset was
+    /// constructed have indices beyond `excluded.capacity()` and are treated
+    /// as live (never excluded) — `BitSet::contains` is `false` past capacity.
+    pub fn retain_resolved_references_excluding(&mut self, excluded: &BitSet<'_>) {
+        if excluded.is_empty() {
+            return;
+        }
         self.cell.with_dependent_mut(|_allocator, cell| {
             for reference_ids in &mut cell.resolved_references {
-                reference_ids.retain(|id| live_references.has_bit(id.index()));
+                reference_ids.retain(|id| !excluded.contains(id.index()));
             }
         });
     }
@@ -669,6 +692,13 @@ impl Scoping {
     /// guarantees the iterator will have at least 1 element.
     pub fn scope_ancestors(&self, scope_id: ScopeId) -> impl Iterator<Item = ScopeId> + '_ {
         std::iter::successors(Some(scope_id), |&scope_id| *self.scope_table.parent_ids(scope_id))
+    }
+
+    /// Returns `true` if `scope_id` is a descendant of `ancestor_scope_id`.
+    ///
+    /// A scope is not considered a descendant of itself.
+    pub fn scope_is_descendant_of(&self, scope_id: ScopeId, ancestor_scope_id: ScopeId) -> bool {
+        self.scope_ancestors(scope_id).skip(1).any(|scope_id| scope_id == ancestor_scope_id)
     }
 
     /// Iterate all scope IDs from the root scope through all descendants.
@@ -775,7 +805,7 @@ impl Scoping {
             let name = name.clone_in(allocator);
             cell.root_unresolved_references
                 .entry(name)
-                .or_insert_with(|| ArenaVec::new_in(allocator))
+                .or_insert_with(|| ArenaVec::new_in(&allocator))
                 .push(reference_id);
         });
     }
@@ -840,19 +870,6 @@ impl Scoping {
     #[inline]
     pub fn iter_bindings_in(&self, scope_id: ScopeId) -> impl Iterator<Item = SymbolId> + '_ {
         self.cell.borrow_dependent().bindings[scope_id].values().copied()
-    }
-
-    #[inline]
-    pub(crate) fn insert_binding(
-        &mut self,
-        scope_id: ScopeId,
-        name: Ident<'_>,
-        symbol_id: SymbolId,
-    ) {
-        self.cell.with_dependent_mut(|allocator, cell| {
-            let name = name.clone_in(allocator);
-            cell.bindings[scope_id].insert(name, symbol_id);
-        });
     }
 
     /// Create a scope.

@@ -53,6 +53,7 @@ declare_oxc_lint!(
     pedantic,
     suggestion,
     version = "0.5.3",
+    short_description = "Disallow negated expressions on the left of (in)equality checks.",
 );
 
 impl Rule for NoNegationInEqualityCheck {

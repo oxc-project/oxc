@@ -57,3 +57,5 @@ Run
 - `npx --yes oxlint@latest` in your JavaScript / TypeScript codebase and see it complete in milliseconds. No configurations are required.
 - `npx oxlint@latest --help` for quick usage instructions.
 - `npx oxlint@latest --rules` for the list of rules.
+- `npx skills add https://github.com/oxc-project/oxc --skill migrate-oxlint` to install the [`migrate-oxlint`](https://skills.sh/oxc-project/oxc/migrate-oxlint) skill, then run `/migrate-oxlint` to migrate from ESLint.
+- See also [migrate from ESLint](https://oxc.rs/docs/guide/usage/linter/migrate-from-eslint.html).

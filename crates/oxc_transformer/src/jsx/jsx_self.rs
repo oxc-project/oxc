@@ -30,11 +30,12 @@
 
 use oxc_ast::ast::*;
 use oxc_span::SPAN;
+use oxc_str::{Ident, static_ident};
 use oxc_traverse::{Ancestor, Traverse};
 
 use crate::{context::TraverseCtx, state::TransformState};
 
-const SELF: &str = "__self";
+const SELF: Ident<'static> = static_ident!("__self");
 
 pub struct JsxSelf;
 
@@ -79,9 +80,9 @@ impl<'a> JsxSelf {
         ctx: &TraverseCtx<'a>,
     ) -> ObjectPropertyKind<'a> {
         let kind = PropertyKind::Init;
-        let key = ctx.ast.property_key_static_identifier(SPAN, SELF);
-        let value = ctx.ast.expression_this(SPAN);
-        ctx.ast.object_property_kind_object_property(SPAN, kind, key, value, false, false, false)
+        let key = PropertyKey::new_static_identifier(SPAN, SELF, ctx);
+        let value = Expression::new_this_expression(SPAN, ctx);
+        ObjectPropertyKind::new_object_property(SPAN, kind, key, value, false, false, false, ctx)
     }
 
     pub fn can_add_self_attribute(ctx: &TraverseCtx<'a>) -> bool {
@@ -100,12 +101,12 @@ impl<'a> JsxSelf {
             return;
         }
 
-        let name = ctx.ast.jsx_attribute_name_identifier(SPAN, SELF);
+        let name = JSXAttributeName::new_identifier(SPAN, SELF, ctx);
         let value = {
-            let jsx_expr = JSXExpression::from(ctx.ast.expression_this(SPAN));
-            ctx.ast.jsx_attribute_value_expression_container(SPAN, jsx_expr)
+            let jsx_expr = JSXExpression::from(Expression::new_this_expression(SPAN, ctx));
+            JSXAttributeValue::new_expression_container(SPAN, jsx_expr, ctx)
         };
-        let attribute = ctx.ast.jsx_attribute_item_attribute(SPAN, name, Some(value));
+        let attribute = JSXAttributeItem::new_attribute(SPAN, name, Some(value), ctx);
         elem.attributes.push(attribute);
     }
 }

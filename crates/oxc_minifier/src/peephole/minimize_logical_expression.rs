@@ -12,8 +12,7 @@ impl<'a> PeepholeOptimizations {
     pub fn minimize_logical_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::LogicalExpression(e) = expr else { return };
         if let Some(changed) = Self::try_compress_is_null_or_undefined(e, ctx) {
-            *expr = changed;
-            ctx.state.changed = true;
+            ctx.replace_expression(expr, changed);
         }
         Self::try_compress_logical_expression_to_assignment_expression(expr, ctx);
     }
@@ -64,11 +63,12 @@ impl<'a> PeepholeOptimizations {
             ctx,
         )
         .map(|new_expr| {
-            ctx.ast.expression_logical(
+            Expression::new_logical_expression(
                 expr.span,
-                left.left.take_in(ctx.ast),
+                left.left.take_in(ctx),
                 expr.operator,
                 new_expr,
+                ctx,
             )
         })
     }
@@ -141,11 +141,12 @@ impl<'a> PeepholeOptimizations {
             LeftPairValueResult::Null(span) => span,
             LeftPairValueResult::Undefined => right_value.unwrap(),
         };
-        Some(ctx.ast.expression_binary(
+        Some(Expression::new_binary_expression(
             span,
-            left_non_value_expr.take_in(ctx.ast),
+            left_non_value_expr.take_in(ctx),
             replace_op,
-            ctx.ast.expression_null_literal(null_expr_span),
+            Expression::new_null_literal(null_expr_span, ctx),
+            ctx,
         ))
     }
 
@@ -246,15 +247,16 @@ impl<'a> PeepholeOptimizations {
 
             Self::mark_assignment_target_as_read(&assignment_expr.left, ctx);
 
-            let assign_value = assignment_expr.right.take_in(ctx.ast);
+            let assign_value = assignment_expr.right.take_in(ctx);
             sequence_expr.expressions.push(assign_value);
-            *expr = ctx.ast.expression_assignment(
+            let new_expr = Expression::new_assignment_expression(
                 e.span,
                 e.operator.to_assignment_operator(),
-                assignment_expr.left.take_in(ctx.ast),
-                e.right.take_in(ctx.ast),
+                assignment_expr.left.take_in(ctx),
+                e.right.take_in(ctx),
+                ctx,
             );
-            ctx.state.changed = true;
+            ctx.replace_expression(expr, new_expr);
             return;
         }
 
@@ -278,8 +280,8 @@ impl<'a> PeepholeOptimizations {
         };
         assignment_expr.span = span;
         assignment_expr.operator = new_op;
-        *expr = e.right.take_in(ctx.ast);
-        ctx.state.changed = true;
+        let new_expr = e.right.take_in(ctx);
+        ctx.replace_expression(expr, new_expr);
     }
 
     /// Marks the AssignmentTargetIdentifier of assignment expressions as ReferenceFlags::Read

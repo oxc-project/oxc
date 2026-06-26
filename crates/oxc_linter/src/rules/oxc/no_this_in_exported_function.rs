@@ -62,6 +62,7 @@ declare_oxc_lint!(
     oxc,
     suspicious,
     version = "1.33.0",
+    short_description = "Disallows the use of `this` in exported functions.",
 );
 
 impl Rule for NoThisInExportedFunction {
@@ -111,6 +112,11 @@ impl Rule for NoThisInExportedFunction {
 
 fn check_function_for_this(func: &Function, ctx: &LintContext) {
     let Some(body) = &func.body else { return };
+
+    // Fast path for the case when there is undoubtedly no `this` inside the body.
+    if !ctx.source_range(body.span).contains("this") {
+        return;
+    }
 
     let mut finder =
         ThisExpressionFinder::new().skip_static_blocks().skip_property_definition_values();

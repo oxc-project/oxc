@@ -49,3 +49,19 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ╰── 'unused' is declared here
    ╰────
   help: Consider removing this parameter.
+
+  ⚠ eslint(no-unused-vars): Parameter 'args' is declared but never used.
+   ╭─[no_unused_vars.tsx:1:17]
+ 1 │ function foo(...args) { return 1 } foo()
+   ·                 ──┬─
+   ·                   ╰── 'args' is declared here
+   ╰────
+  help: Consider removing this parameter.
+
+  ⚠ eslint(no-unused-vars): Parameter 'args' is declared but never used.
+   ╭─[no_unused_vars.tsx:1:17]
+ 1 │ function foo(...args: unknown[]) { return 1 } foo()
+   ·                 ──┬─
+   ·                   ╰── 'args' is declared here
+   ╰────
+  help: Consider removing this parameter.

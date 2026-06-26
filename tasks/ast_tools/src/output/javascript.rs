@@ -5,8 +5,8 @@ use rayon::prelude::*;
 
 use oxc_allocator::Allocator;
 use oxc_ast::{
-    AstBuilder,
     ast::{Expression, Program, UnaryOperator},
+    builder::AstBuilder,
 };
 use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_codegen::Codegen;
@@ -281,7 +281,7 @@ pub(crate) use generate_variants;
 pub fn parse_js<'a>(source_text: &'a str, allocator: &'a Allocator) -> Program<'a> {
     let source_type = SourceType::mjs();
     let parser_ret = Parser::new(allocator, source_text, source_type).parse();
-    assert!(parser_ret.errors.is_empty(), "Parse errors: {:#?}", parser_ret.errors);
+    assert!(parser_ret.diagnostics.is_empty(), "Parse errors: {:#?}", parser_ret.diagnostics);
     parser_ret.program
 }
 
@@ -378,7 +378,7 @@ impl<'a> VisitMut<'a> for BooleanUnminifier<'a> {
             && unary_expr.operator == UnaryOperator::LogicalNot
             && let Expression::NumericLiteral(lit) = &unary_expr.argument
         {
-            *expr = self.ast.expression_boolean_literal(unary_expr.span, lit.value == 0.0);
+            *expr = Expression::new_boolean_literal(unary_expr.span, lit.value == 0.0, &self.ast);
             return;
         }
         walk_mut::walk_expression(self, expr);

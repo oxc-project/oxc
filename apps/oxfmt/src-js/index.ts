@@ -1,12 +1,12 @@
 // napi-JS `oxfmt` API entry point
 
-import { format as napiFormat, jsTextToDoc as napiJsTextToDoc } from "./bindings";
 import {
   formatFile,
   formatEmbeddedCode,
   formatEmbeddedDoc,
   sortTailwindClasses,
 } from "./libs/apis";
+import { toFormatFileResult, toNullable } from "./libs/napi-callbacks";
 // Types are auto-generated from the JSON Schema.
 import type {
   Oxfmtrc,
@@ -62,6 +62,23 @@ export function defineConfig<T extends OxfmtConfig>(config: T): T {
   return config;
 }
 
+// NOTE: Native bindings are loaded lazily on first `format()`/`jsTextToDoc()` call,
+// instead of via a static `import "./bindings"`.
+//
+// A static import would run `requireNative()` which `dlopen`s the native `.node` addon.
+// That is wasteful (and sometimes harmful),
+// because the two paths that import this entry don't always need the binding:
+// 1. Config loading: config files do `import { defineConfig } from "oxfmt"`,
+//    where `defineConfig` is a plain identity function needing no native code.
+//    Normally the binding is already cached there (the CLI's own copy),
+//    so an eager load is just a harmless cache hit.
+//    But when a nested config resolves "oxfmt" to a separate install (its own `node_modules`),
+//    it triggers a fresh re-entrant `dlopen` on the main thread, which hangs (observed on WSL2).
+//    See https://github.com/oxc-project/oxc/issues/23125
+// 2. `jsTextToDoc` (via prettier-plugin-oxfmt, runs in the worker process where the binding is NOT preloaded):
+//    deferring the load until it's actually called avoids paying the `dlopen` cost on runs that have no embedded code to format.
+let BINDINGS_CACHE = null as typeof import("./bindings") | null;
+
 /**
  * Format the given source text according to the specified options.
  */
@@ -69,14 +86,15 @@ export async function format(fileName: string, sourceText: string, options?: For
   if (typeof fileName !== "string") throw new TypeError("`fileName` must be a string");
   if (typeof sourceText !== "string") throw new TypeError("`sourceText` must be a string");
 
-  return napiFormat(
+  BINDINGS_CACHE ??= await import("./bindings");
+  return BINDINGS_CACHE.format(
     fileName,
     sourceText,
     options ?? {},
-    (options, code) => formatFile({ options, code }),
-    (options, code) => formatEmbeddedCode({ options, code }),
-    (options, texts) => formatEmbeddedDoc({ options, texts }),
-    (options, classes) => sortTailwindClasses({ options, classes }),
+    (options, code) => toFormatFileResult(formatFile({ options, code })),
+    (options, code) => toNullable(formatEmbeddedCode({ options, code })),
+    (options, texts) => toNullable(formatEmbeddedDoc({ options, texts })),
+    (options, classes) => toNullable(sortTailwindClasses({ options, classes })),
   );
 }
 
@@ -89,14 +107,15 @@ export async function jsTextToDoc(
   oxfmtPluginOptionsJson: string,
   parentContext: string,
 ) {
-  return napiJsTextToDoc(
+  BINDINGS_CACHE ??= await import("./bindings");
+  return BINDINGS_CACHE.jsTextToDoc(
     sourceExt,
     sourceText,
     oxfmtPluginOptionsJson,
     parentContext,
-    (_options, _code) => Promise.reject(/* Unreachable */),
-    (options, code) => formatEmbeddedCode({ options, code }),
-    (options, texts) => formatEmbeddedDoc({ options, texts }),
-    (options, classes) => sortTailwindClasses({ options, classes }),
+    () => toFormatFileResult(Promise.reject("formatFile is unavailable for jsTextToDoc")),
+    (options, code) => toNullable(formatEmbeddedCode({ options, code })),
+    (options, texts) => toNullable(formatEmbeddedDoc({ options, texts })),
+    (options, classes) => toNullable(sortTailwindClasses({ options, classes })),
   );
 }

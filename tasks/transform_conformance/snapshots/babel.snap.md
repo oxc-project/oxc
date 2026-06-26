@@ -1,6 +1,6 @@
-commit: 4079bcda
+commit: 1fb0b771
 
-Passed: 700/1165
+Passed: 702/1165
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -192,7 +192,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-class-properties (212/269)
+# babel-plugin-transform-class-properties (213/269)
 * assumption-constantSuper/complex-super-class/input.js
 x Output mismatch
 
@@ -277,14 +277,6 @@ x Output mismatch
 
 * private/static-infer-name/input.js
 x Output mismatch
-
-* private/static-self-method/input.js
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
 
 * private/static-shadow/input.js
 x Output mismatch
@@ -415,12 +407,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-private-methods (46/148)
-* accessors/tagged-template/input.js
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(4): ScopeFlags(Function | Arrow)
-
+# babel-plugin-transform-private-methods (48/148)
 * accessors-loose/basic/input.js
 x Output mismatch
 
@@ -698,11 +685,6 @@ x Output mismatch
 
 * static-accessors/set-only-getter/input.js
 x Output mismatch
-
-* static-accessors/tagged-template/input.js
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
 
 * static-accessors-loose/basic/input.js
 x Output mismatch
@@ -1113,7 +1095,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (55/157)
+# babel-plugin-transform-typescript (54/157)
 * cast/as-expression/input.ts
 Unresolved references mismatch:
 after transform: ["T", "x"]
@@ -1184,6 +1166,18 @@ x Output mismatch
 
 * class/private-method-override-transform-private/input.ts
 x Output mismatch
+
+* class/uninitialized-definite/input.ts
+
+  x TS(1264): Declarations with definite assignment assertions must also have
+  | type annotations.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/class/uninitialized-definite/input.ts:2:4]
+ 1 | class A {
+ 2 |   x!;
+   :    ^
+ 3 | }
+   `----
+
 
 * declarations/const-enum/input.ts
 Bindings mismatch:

@@ -176,6 +176,7 @@ declare_oxc_lint!(
     fix = conditional_fix_dangerous,
     config = Eqeqeq,
     version = "0.0.3",
+    short_description = "Requires the use of the `===` and `!==` operators, disallowing the use of `==` and `!=`.",
 );
 
 impl Eqeqeq {

@@ -224,6 +224,11 @@ fn test() {
         ),
         // https://github.com/oxc-project/oxc/issues/22268
         ("it(String.raw`foo`, () => {})", None),
+        (
+            "test('fooobar', () => {});",
+            Some(serde_json::json!([{ "disallowedWords": ["foo+bar"] }])),
+        ),
+        ("test('foo', () => {});", Some(serde_json::json!([{ "disallowedWords": ["foo|bar"] }]))),
     ];
 
     let fail = vec![
@@ -251,6 +256,18 @@ fn test() {
         (
             "test(`that the value is set properly`, function () {})",
             Some(serde_json::json!([{ "disallowedWords": ["properly"] }])),
+        ),
+        (
+            "test('foo+bar', () => {});",
+            Some(serde_json::json!([{ "disallowedWords": ["foo+bar"] }])),
+        ),
+        (
+            "test('foo|bar', () => {});",
+            Some(serde_json::json!([{ "disallowedWords": ["foo|bar"] }])),
+        ),
+        (
+            "test('foo[bar', () => {});",
+            Some(serde_json::json!([{ "disallowedWords": ["foo[bar"] }])),
         ),
         // TODO: The regex `(?:#(?!unit|e2e))\w+` in those test cases is not valid in Rust
         // (

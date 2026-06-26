@@ -1,10 +1,10 @@
 use std::iter;
 
-use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
+use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{GetSpan, SPAN};
-use oxc_str::Ident;
+use oxc_str::{Ident, static_ident};
 use oxc_traverse::BoundIdentifier;
 
 use crate::context::TraverseCtx;
@@ -12,12 +12,14 @@ use crate::context::TraverseCtx;
 /// `object` -> `object.call`.
 pub fn create_member_callee<'a>(
     object: Expression<'a>,
-    property: &'static str,
+    property: Ident<'a>,
     span: Span,
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
-    let property = ctx.ast.identifier_name(SPAN, Str::from(property));
-    Expression::from(ctx.ast.member_expression_static(span, object, property, false))
+    let property = IdentifierName::new(SPAN, property, ctx);
+    Expression::from(MemberExpression::new_static_member_expression(
+        span, object, property, false, ctx,
+    ))
 }
 
 /// `object` -> `object.bind(this)`.
@@ -27,9 +29,9 @@ pub fn create_bind_call<'a>(
     span: Span,
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
-    let callee = create_member_callee(callee, "bind", span, ctx);
-    let arguments = ctx.ast.vec1(Argument::from(this));
-    ctx.ast.expression_call(span, callee, NONE, arguments, false)
+    let callee = create_member_callee(callee, static_ident!("bind"), span, ctx);
+    let arguments = ArenaVec::from_value_in(Argument::from(this), ctx);
+    Expression::new_call_expression(span, callee, NONE, arguments, false, ctx)
 }
 
 /// `object` -> `object.call(...arguments)`.
@@ -39,9 +41,9 @@ pub fn create_call_call<'a>(
     span: Span,
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
-    let callee = create_member_callee(callee, "call", span, ctx);
-    let arguments = ctx.ast.vec1(Argument::from(this));
-    ctx.ast.expression_call(span, callee, NONE, arguments, false)
+    let callee = create_member_callee(callee, static_ident!("call"), span, ctx);
+    let arguments = ArenaVec::from_value_in(Argument::from(this), ctx);
+    Expression::new_call_expression(span, callee, NONE, arguments, false, ctx)
 }
 
 /// Wrap an `Expression` in an arrow function IIFE (immediately invoked function expression)
@@ -55,7 +57,8 @@ pub fn wrap_expression_in_arrow_function_iife<'a>(
     let scope_id =
         ctx.insert_scope_below_expression(&expr, ScopeFlags::Arrow | ScopeFlags::Function);
     let span = expr.span();
-    let stmts = ctx.ast.vec1(ctx.ast.statement_return(SPAN, Some(expr)));
+    let stmts =
+        ArenaVec::from_value_in(Statement::new_return_statement(SPAN, Some(expr), ctx), ctx);
     wrap_statements_in_arrow_function_iife(stmts, scope_id, span, ctx)
 }
 
@@ -69,12 +72,12 @@ pub fn wrap_statements_in_arrow_function_iife<'a>(
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
     let kind = FormalParameterKind::ArrowFormalParameters;
-    let params = ctx.ast.alloc_formal_parameters(SPAN, kind, ctx.ast.vec(), NONE);
-    let body = ctx.ast.alloc_function_body(SPAN, ctx.ast.vec(), stmts);
-    let arrow = ctx.ast.expression_arrow_function_with_scope_id_and_pure_and_pife(
-        SPAN, false, false, NONE, params, NONE, body, scope_id, false, false,
+    let params = FormalParameters::boxed(SPAN, kind, ArenaVec::new_in(ctx), NONE, ctx);
+    let body = FunctionBody::boxed(SPAN, ArenaVec::new_in(ctx), stmts, ctx);
+    let arrow = Expression::new_arrow_function_expression_with_scope_id_and_pure_and_pife(
+        SPAN, false, false, NONE, params, NONE, body, scope_id, false, false, ctx,
     );
-    ctx.ast.expression_call(span, arrow, NONE, ctx.ast.vec(), false)
+    Expression::new_call_expression(span, arrow, NONE, ArenaVec::new_in(ctx), false, ctx)
 }
 
 /// `object` -> `object.prototype`.
@@ -83,8 +86,9 @@ pub fn create_prototype_member<'a>(
     span: Span,
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
-    let property = ctx.ast.identifier_name(SPAN, Str::from("prototype"));
-    let static_member = ctx.ast.member_expression_static(span, object, property, false);
+    let property = IdentifierName::new(SPAN, "prototype", ctx);
+    let static_member =
+        MemberExpression::new_static_member_expression(span, object, property, false, ctx);
     Expression::from(static_member)
 }
 
@@ -95,8 +99,10 @@ pub fn create_property_access<'a>(
     property: &str,
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
-    let property = ctx.ast.identifier_name(SPAN, ctx.ast.str(property));
-    Expression::from(ctx.ast.member_expression_static(span, object, property, false))
+    let property = IdentifierName::new(SPAN, Str::from_str_in(property, ctx), ctx);
+    Expression::from(MemberExpression::new_static_member_expression(
+        span, object, property, false, ctx,
+    ))
 }
 
 /// `this.property`
@@ -106,9 +112,9 @@ pub fn create_this_property_access<'a>(
     property: Ident<'a>,
     ctx: &TraverseCtx<'a>,
 ) -> MemberExpression<'a> {
-    let object = ctx.ast.expression_this(span);
-    let property = ctx.ast.identifier_name(SPAN, property);
-    ctx.ast.member_expression_static(span, object, property, false)
+    let object = Expression::new_this_expression(span, ctx);
+    let property = IdentifierName::new(SPAN, property, ctx);
+    MemberExpression::new_static_member_expression(span, object, property, false, ctx)
 }
 
 /// `this.property`
@@ -128,11 +134,12 @@ pub fn create_assignment<'a>(
     span: Span,
     ctx: &mut TraverseCtx<'a>,
 ) -> Expression<'a> {
-    ctx.ast.expression_assignment(
+    Expression::new_assignment_expression(
         span,
         AssignmentOperator::Assign,
         binding.create_target(ReferenceFlags::Write, ctx),
         value,
+        ctx,
     )
 }
 
@@ -141,13 +148,16 @@ pub fn create_super_call<'a>(
     args_binding: &BoundIdentifier<'a>,
     ctx: &mut TraverseCtx<'a>,
 ) -> Expression<'a> {
-    ctx.ast.expression_call(
+    Expression::new_call_expression(
         SPAN,
-        ctx.ast.expression_super(SPAN),
+        Expression::new_super(SPAN, ctx),
         NONE,
-        ctx.ast
-            .vec1(ctx.ast.argument_spread_element(SPAN, args_binding.create_read_expression(ctx))),
+        ArenaVec::from_value_in(
+            Argument::new_spread_element(SPAN, args_binding.create_read_expression(ctx), ctx),
+            ctx,
+        ),
         false,
+        ctx,
     )
 }
 
@@ -168,22 +178,28 @@ pub fn create_class_constructor<'a, 'c>(
     let stmts = if has_super_class {
         let args_binding = ctx.generate_uid("args", scope_id, SymbolFlags::FunctionScopedVariable);
         let rest_element =
-            ctx.ast.binding_rest_element(SPAN, args_binding.create_binding_pattern(ctx));
+            BindingRestElement::new(SPAN, args_binding.create_binding_pattern(ctx), ctx);
         params_rest =
-            Some(ctx.ast.alloc_formal_parameter_rest(SPAN, ctx.ast.vec(), rest_element, NONE));
-        ctx.ast.vec_from_iter(
-            iter::once(ctx.ast.statement_expression(SPAN, create_super_call(&args_binding, ctx)))
-                .chain(stmts_iter),
+            Some(FormalParameterRest::boxed(SPAN, ArenaVec::new_in(ctx), rest_element, NONE, ctx));
+        ArenaVec::from_iter_in(
+            iter::once(Statement::new_expression_statement(
+                SPAN,
+                create_super_call(&args_binding, ctx),
+                ctx,
+            ))
+            .chain(stmts_iter),
+            ctx,
         )
     } else {
-        ctx.ast.vec_from_iter(stmts_iter)
+        ArenaVec::from_iter_in(stmts_iter, ctx)
     };
 
-    let params = ctx.ast.alloc_formal_parameters(
+    let params = FormalParameters::boxed(
         SPAN,
         FormalParameterKind::FormalParameter,
-        ctx.ast.vec(),
+        ArenaVec::new_in(ctx),
         params_rest,
+        ctx,
     );
 
     create_class_constructor_with_params(stmts, params, scope_id, ctx)
@@ -197,10 +213,8 @@ pub fn create_class_constructor_with_params<'a>(
     ctx: &TraverseCtx<'a>,
 ) -> ClassElement<'a> {
     create_class_method(
-        ctx.ast.vec(),
-        PropertyKey::StaticIdentifier(
-            ctx.ast.alloc_identifier_name(SPAN, Str::from("constructor")),
-        ),
+        ArenaVec::new_in(ctx),
+        PropertyKey::StaticIdentifier(IdentifierName::boxed(SPAN, "constructor", ctx)),
         MethodDefinitionKind::Constructor,
         params,
         None,
@@ -225,12 +239,12 @@ pub fn create_class_method<'a>(
     scope_id: ScopeId,
     ctx: &TraverseCtx<'a>,
 ) -> ClassElement<'a> {
-    ClassElement::MethodDefinition(ctx.ast.alloc_method_definition(
+    ClassElement::MethodDefinition(MethodDefinition::boxed(
         SPAN,
         MethodDefinitionType::MethodDefinition,
         decorators,
         key,
-        ctx.ast.alloc_function_with_scope_id(
+        Function::boxed_with_scope_id(
             SPAN,
             FunctionType::FunctionExpression,
             None,
@@ -241,8 +255,9 @@ pub fn create_class_method<'a>(
             NONE,
             params,
             return_type,
-            Some(ctx.ast.alloc_function_body(SPAN, ctx.ast.vec(), stmts)),
+            Some(FunctionBody::boxed(SPAN, ArenaVec::new_in(ctx), stmts, ctx)),
             scope_id,
+            ctx,
         ),
         kind,
         computed,
@@ -250,5 +265,6 @@ pub fn create_class_method<'a>(
         false,
         false,
         None,
+        ctx,
     ))
 }

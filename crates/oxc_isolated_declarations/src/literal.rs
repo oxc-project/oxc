@@ -1,4 +1,4 @@
-use oxc_allocator::Box as ArenaBox;
+use oxc_allocator::ArenaBox;
 use oxc_ast::ast::{StringLiteral, TemplateLiteral};
 
 use crate::IsolatedDeclarations;
@@ -10,10 +10,11 @@ impl<'a> IsolatedDeclarations<'a> {
     ) -> Option<ArenaBox<'a, StringLiteral<'a>>> {
         if lit.expressions.is_empty() {
             lit.quasis.first().map(|item| {
-                self.ast.alloc_string_literal(
+                StringLiteral::boxed(
                     lit.span,
                     item.value.cooked.unwrap_or(item.value.raw),
                     None,
+                    self,
                 )
             })
         } else {

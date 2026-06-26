@@ -23,9 +23,9 @@ fn main() {
 
     let parser_ret =
         Parser::new(&allocator, source_text.as_ref(), source_type).with_options(options).parse();
-    if !parser_ret.errors.is_empty() {
+    if !parser_ret.diagnostics.is_empty() {
         println!("Parsing failed:");
-        for error in parser_ret.errors {
+        for error in parser_ret.diagnostics {
             let error = error.with_source_code(Arc::clone(&source_text));
             println!("{error:?}");
         }

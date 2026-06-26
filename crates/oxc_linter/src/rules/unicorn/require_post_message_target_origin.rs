@@ -52,6 +52,7 @@ declare_oxc_lint!(
     suspicious,
     suggestion,
     version = "0.15.15",
+    short_description = "Enforce using the `targetOrigin` argument with `window.postMessage()`.",
 );
 
 impl Rule for RequirePostMessageTargetOrigin {

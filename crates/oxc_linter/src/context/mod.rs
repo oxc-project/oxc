@@ -440,6 +440,13 @@ impl<'a> LintContext<'a> {
         F: FnOnce(RuleFixer<'_, 'a>) -> C,
     {
         let (diagnostic, fix) = self.create_fix(fix_kind, fix, diagnostic);
+        self.emit_single_fix(diagnostic, fix);
+    }
+
+    /// Non-generic emit tail shared by the `diagnostic_with_fix*` family, kept
+    /// out of the generic methods so it is compiled once rather than
+    /// monomorphized at every rule call site.
+    fn emit_single_fix(&self, diagnostic: OxcDiagnostic, fix: Option<Fix>) {
         if let Some(fix) = fix {
             self.add_diagnostic(
                 Message::new(diagnostic, PossibleFixes::Single(fix))
@@ -541,7 +548,21 @@ impl<'a> LintContext<'a> {
             FixKind::from(self.current_rule_fix_capabilities),
             rule_fix.kind()
         );
+        self.finish_create_fix(rule_fix, diagnostic)
+    }
 
+    /// Non-generic tail of [`LintContext::create_fix`].
+    ///
+    /// `create_fix` is generic over the fixer closure and its return type, so it
+    /// is monomorphized at every rule call site (hundreds of them). Keeping only
+    /// the closure evaluation in the generic shim and routing the rest of the
+    /// body through this non-generic function lets the bulk of the logic be
+    /// compiled once instead of duplicated per instantiation.
+    fn finish_create_fix(
+        &self,
+        rule_fix: RuleFix,
+        diagnostic: OxcDiagnostic,
+    ) -> (OxcDiagnostic, Option<Fix>) {
         let diagnostic = match (rule_fix.message(), &diagnostic.help) {
             (Some(message), None) => diagnostic.with_help(message.to_owned()),
             _ => diagnostic,

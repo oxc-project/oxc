@@ -1,6 +1,6 @@
 use std::cmp::max;
 
-use oxc_allocator::StringBuilder;
+use oxc_allocator::ArenaStringBuilder;
 
 use crate::{config::LexerConfig as Config, diagnostics};
 
@@ -62,8 +62,13 @@ macro_rules! handle_string_literal {
             table: $table,
             start: after_opening_quote,
             handle_eof: {
-                $lexer.error(diagnostics::unterminated_string($lexer.unterminated_range()));
-                return Kind::Undetermined;
+                // Unterminated string is invalid JS, so a cold path. Building the diagnostic
+                // out-of-line keeps the `OxcDiagnostic` return buffer out of this handler's
+                // stack frame (matching the sibling `\\` and line-break arms below).
+                return cold_branch(|| {
+                    $lexer.error(diagnostics::unterminated_string($lexer.unterminated_range()));
+                    Kind::Undetermined
+                });
             },
         };
 
@@ -104,7 +109,7 @@ macro_rules! handle_string_literal_escape {
         // will be double what we've seen so far, or `MIN_ESCAPED_STR_LEN` minimum.
         let so_far = $lexer.source.str_from_pos_to_current($after_opening_quote);
         let capacity = max(so_far.len() * 2, MIN_ESCAPED_STR_LEN);
-        let mut str = StringBuilder::with_capacity_in(capacity, $lexer.allocator);
+        let mut str = ArenaStringBuilder::with_capacity_in(capacity, $lexer.allocator);
 
         // Push chunk before `\` into `str`.
         str.push_str(so_far);

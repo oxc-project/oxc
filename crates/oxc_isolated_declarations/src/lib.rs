@@ -9,10 +9,14 @@ use std::{cell::RefCell, iter::repeat_with, mem};
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use oxc_allocator::{Allocator, CloneIn, Vec as ArenaVec};
-use oxc_ast::{AstBuilder, NONE, ast::*};
+use oxc_allocator::{Allocator, ArenaVec, CloneIn, GetAllocator};
+use oxc_ast::{
+    NONE,
+    ast::*,
+    builder::{AstBuilder, GetAstBuilder},
+};
 use oxc_ast_visit::Visit;
-use oxc_diagnostics::OxcDiagnostic;
+use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 use oxc_span::{GetSpan, SPAN, SourceType};
 use oxc_str::{IdentHashSet, Str};
 
@@ -52,7 +56,7 @@ pub struct IsolatedDeclarationsReturn<'a> {
     /// Generated declaration program (`.d.ts` AST).
     pub program: Program<'a>,
     /// Diagnostics collected while generating declarations.
-    pub errors: Vec<OxcDiagnostic>,
+    pub diagnostics: Diagnostics,
 }
 
 /// Transformer that emits declaration-only AST from TypeScript source AST.
@@ -61,7 +65,7 @@ pub struct IsolatedDeclarations<'a> {
 
     // state
     scope: ScopeTree<'a>,
-    errors: RefCell<Vec<OxcDiagnostic>>,
+    errors: RefCell<Diagnostics>,
 
     // options
     strip_internal: bool,
@@ -79,7 +83,7 @@ impl<'a> IsolatedDeclarations<'a> {
             strip_internal,
             internal_annotations: FxHashSet::default(),
             scope: ScopeTree::new(),
-            errors: RefCell::new(vec![]),
+            errors: RefCell::new(Diagnostics::new()),
         }
     }
 
@@ -93,21 +97,25 @@ impl<'a> IsolatedDeclarations<'a> {
             FxHashSet::default()
         };
         let source_type = SourceType::d_ts();
-        let directives = self.ast.vec();
+        let directives = ArenaVec::new_in(&self);
         let stmts = self.transform_program(program);
-        let program = self.ast.program(
+        let program = Program::new(
             SPAN,
             source_type,
             program.source_text,
-            self.ast.vec_from_iter(program.comments.iter().filter(|c| c.is_jsdoc()).copied()),
+            ArenaVec::from_iter_in(
+                program.comments.iter().filter(|c| c.is_jsdoc()).copied(),
+                &self,
+            ),
             None,
             directives,
             stmts,
+            &self,
         );
-        IsolatedDeclarationsReturn { program, errors: self.take_errors() }
+        IsolatedDeclarationsReturn { program, diagnostics: self.take_errors() }
     }
 
-    fn take_errors(&self) -> Vec<OxcDiagnostic> {
+    fn take_errors(&self) -> Diagnostics {
         mem::take(&mut self.errors.borrow_mut())
     }
 
@@ -163,13 +171,19 @@ impl<'a> IsolatedDeclarations<'a> {
 
         Self::remove_function_overloads_implementation(&mut stmts);
 
-        self.ast.vec_from_iter(stmts.iter().map(|stmt| {
-            if let Some(new_decl) = self.transform_declaration(stmt.to_declaration(), false) {
-                Statement::from(new_decl)
-            } else {
-                stmt.clone_in(self.ast.allocator)
-            }
-        }))
+        // `from_iter_in`'s closure needs `&mut self` (`self.transform_declaration`),
+        // so the allocator can't be borrowed from `self` simultaneously — extract it first
+        let allocator = self.allocator();
+        ArenaVec::from_iter_in(
+            stmts.iter().map(|stmt| {
+                if let Some(new_decl) = self.transform_declaration(stmt.to_declaration(), false) {
+                    Statement::from(new_decl)
+                } else {
+                    stmt.clone_in(allocator)
+                }
+            }),
+            &allocator,
+        )
     }
 
     fn transform_statements_on_demand(
@@ -277,11 +291,8 @@ impl<'a> IsolatedDeclarations<'a> {
                         ModuleDeclaration::ExportNamedDeclaration(decl) => {
                             if let Some(new_decl) = self.transform_export_named_declaration(decl) {
                                 self.scope.visit_export_named_declaration(&new_decl);
-                                transformed_stmts[idx] = Some(Statement::from(
-                                    ModuleDeclaration::ExportNamedDeclaration(
-                                        self.ast.alloc(new_decl),
-                                    ),
-                                ));
+                                transformed_stmts[idx] =
+                                    Some(Statement::ExportNamedDeclaration(new_decl));
                             } else if decl.declaration.is_none() {
                                 need_empty_export_marker = false;
                                 self.scope.visit_export_named_declaration(decl);
@@ -335,19 +346,20 @@ impl<'a> IsolatedDeclarations<'a> {
                         }
                     }
                     if all_declarator_has_transformed {
-                        let declarations = self.ast.vec_from_iter(
+                        let declarations = ArenaVec::from_iter_in(
                             declaration.declarations.iter().map(|declarator| {
                                 transformed_variable_declarator.remove(&declarator.span).unwrap()
                             }),
+                            self,
                         );
-                        let decl = self.ast.variable_declaration(
+                        let decl = VariableDeclaration::boxed(
                             declaration.span,
                             declaration.kind,
                             declarations,
                             self.is_declare(),
+                            self,
                         );
-                        transformed_stmts[idx] =
-                            Some(Statement::VariableDeclaration(self.ast.alloc(decl)));
+                        transformed_stmts[idx] = Some(Statement::VariableDeclaration(decl));
                         transformed_count += 1;
                     }
                 } else if let Some(new_decl) = self.transform_declaration(decl, true) {
@@ -365,10 +377,11 @@ impl<'a> IsolatedDeclarations<'a> {
         }
 
         // 6. Transform variable/using declarations, import statements, remove unused imports
-        let mut new_stmts = self.ast.vec_with_capacity(
+        let mut new_stmts = ArenaVec::with_capacity_in(
             stmts.len()
                 + usize::from(extra_export_var_statement.is_some())
                 + usize::from(need_empty_export_marker),
+            self,
         );
         for (idx, stmt) in stmts.into_iter().enumerate() {
             if let Some(new_stmt) = transformed_stmts[idx].take() {
@@ -393,20 +406,21 @@ impl<'a> IsolatedDeclarations<'a> {
                 }
                 Statement::VariableDeclaration(decl) if decl.declarations.len() > 1 => {
                     // Remove unreferenced declarations
-                    let declarations =
-                        self.ast.vec_from_iter(decl.declarations.iter().filter_map(|declarator| {
+                    let declarations = ArenaVec::from_iter_in(
+                        decl.declarations.iter().filter_map(|declarator| {
                             transformed_variable_declarator.remove(&declarator.span)
-                        }));
+                        }),
+                        self,
+                    );
                     if declarations.is_empty() {
                         continue;
                     }
-                    new_stmts.push(Statement::VariableDeclaration(
-                        self.ast.alloc_variable_declaration(
-                            decl.span,
-                            decl.kind,
-                            declarations,
-                            self.is_declare(),
-                        ),
+                    new_stmts.push(Statement::new_variable_declaration(
+                        decl.span,
+                        decl.kind,
+                        declarations,
+                        self.is_declare(),
+                        self,
                     ));
                 }
                 _ => {}
@@ -414,12 +428,11 @@ impl<'a> IsolatedDeclarations<'a> {
         }
 
         if need_empty_export_marker {
-            let specifiers = self.ast.vec();
+            let specifiers = ArenaVec::new_in(self);
             let kind = ImportOrExportKind::Value;
-            let empty_export =
-                self.ast.alloc_export_named_declaration(SPAN, None, specifiers, None, kind, NONE);
-            new_stmts
-                .push(Statement::from(ModuleDeclaration::ExportNamedDeclaration(empty_export)));
+            new_stmts.push(Statement::new_export_named_declaration(
+                SPAN, None, specifiers, None, kind, NONE, self,
+            ));
         } else if self.scope.is_ts_module_block() {
             // If we are in a module block and we don't need to add `export {}`, in that case we need to remove `export` keyword from all ExportNamedDeclaration
             // <https://github.com/microsoft/TypeScript/blob/a709f9899c2a544b6de65a0f2623ecbbe1394eab/src/compiler/transformers/declarations.ts#L1556-L1563>
@@ -635,5 +648,21 @@ impl<'a> IsolatedDeclarations<'a> {
     fn is_declare(&self) -> bool {
         // If we are in a module block, we don't need to add declare
         !self.scope.is_ts_module_block()
+    }
+}
+
+impl<'a> GetAllocator<'a> for IsolatedDeclarations<'a> {
+    #[inline]
+    fn allocator(&self) -> &'a Allocator {
+        self.ast.allocator()
+    }
+}
+
+impl<'a> GetAstBuilder<'a> for IsolatedDeclarations<'a> {
+    type Builder = AstBuilder<'a>;
+
+    #[inline]
+    fn builder(&self) -> &AstBuilder<'a> {
+        &self.ast
     }
 }

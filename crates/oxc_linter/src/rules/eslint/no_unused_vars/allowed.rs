@@ -113,6 +113,20 @@ fn is_ambient_namespace_without_explicit_exports(namespace: &TSModuleDeclaration
     true
 }
 
+pub(super) enum FunctionParameterKind<'a> {
+    Normal(&'a FormalParameter<'a>),
+    Rest(&'a FormalParameterRest<'a>),
+}
+
+impl FunctionParameterKind<'_> {
+    pub fn node_id(&self) -> NodeId {
+        match self {
+            FunctionParameterKind::Normal(param) => param.node_id(),
+            FunctionParameterKind::Rest(param) => param.node_id(),
+        }
+    }
+}
+
 impl NoUnusedVars {
     #[expect(clippy::unused_self)]
     pub(super) fn is_allowed_ts_namespace<'a>(
@@ -207,24 +221,28 @@ impl NoUnusedVars {
         semantic: &Semantic<'a>,
         module_record: &ModuleRecord,
         symbol: &Symbol<'_, 'a>,
-        param: &FormalParameter<'a>,
+        argument: &FunctionParameterKind<'a>,
     ) -> bool {
         // early short-circuit when no argument checking should be performed
         if self.args.is_none() {
             return true;
         }
 
-        // find FormalParameters. Should be the next parent of param, but this
-        // is safer.
-        let Some((params, params_id)) = symbol.iter_parents().find_map(|p| {
-            let params = p.kind().as_formal_parameters()?;
-            Some((params, p.id()))
-        }) else {
+        let Some(params) = symbol.nodes().parent_kind(argument.node_id()).as_formal_parameters()
+        else {
             debug_assert!(false, "FormalParameter should always have a parent FormalParameters");
             return false;
         };
 
-        if Self::is_allowed_param_because_of_method(semantic, param, params_id) {
+        if let FunctionParameterKind::Normal(param) = argument
+            && Self::is_allowed_param_because_of_method(semantic, param)
+        {
+            return true;
+        }
+
+        if matches!(argument, FunctionParameterKind::Rest(_))
+            && Self::is_allowed_binding_rest_element(symbol)
+        {
             return true;
         }
 
@@ -236,6 +254,11 @@ impl NoUnusedVars {
         }
 
         debug_assert_eq!(self.args, ArgsOption::AfterUsed);
+
+        let FunctionParameterKind::Normal(param) = argument else {
+            // Rest parameters are always last, so `after-used` checks them.
+            return false;
+        };
 
         // from eslint rule documentation:
         // after-used - unused positional arguments that occur before the last
@@ -276,17 +299,17 @@ impl NoUnusedVars {
             .any(|p| p.has_modifier() || p.pattern.has_any_used_binding(ctx))
     }
 
-    /// `params_id` is the [`NodeId`] to a [`AstKind::FormalParameters`] node.
-    ///
     /// The following allowed conditions are handled:
     /// 1. setter parameters - removing them causes a syntax error.
     /// 2. TS constructor property definitions - they declare class members.
     fn is_allowed_param_because_of_method<'a>(
         semantic: &Semantic<'a>,
         param: &FormalParameter<'a>,
-        params_id: NodeId,
     ) -> bool {
-        let mut parents_iter = semantic.nodes().ancestor_kinds(params_id);
+        let mut parents_iter = semantic.nodes().ancestor_kinds(param.node_id());
+
+        // skip `FormalParameter`s parent, which is always a `FormalParameters` node
+        parents_iter.next();
 
         // in function declarations, the parent immediately before the
         // FormalParameters is a TSDeclareBlock

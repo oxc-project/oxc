@@ -2,8 +2,7 @@ use std::borrow::Cow;
 
 use cow_utils::CowUtils;
 
-use crate::generated::ancestor::Ancestor;
-use oxc_allocator::{Box, TakeIn};
+use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
 use oxc_ast::{NONE, ast::*};
 use oxc_compat::ESFeature;
 use oxc_ecmascript::{
@@ -16,11 +15,11 @@ use oxc_regular_expression::{
 };
 use oxc_span::SPAN;
 
-use crate::TraverseCtx;
+use crate::{TraverseCtx, generated::ancestor::Ancestor};
 
 use super::PeepholeOptimizations;
 
-type Arguments<'a> = oxc_allocator::Vec<'a, Argument<'a>>;
+type Arguments<'a> = ArenaVec<'a, Argument<'a>>;
 
 /// Minimize With Known Methods
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeReplaceKnownMethods.java>
@@ -30,8 +29,8 @@ impl<'a> PeepholeOptimizations {
 
         // Use constant evaluation for known method calls
         if let Some(constant_value) = ce.evaluate_value(ctx) {
-            ctx.state.changed = true;
-            *node = ctx.value_to_expr(ce.span, constant_value);
+            let new_expr = ctx.value_to_expr(ce.span, constant_value);
+            ctx.replace_expression(node, new_expr);
             return;
         }
 
@@ -56,8 +55,7 @@ impl<'a> PeepholeOptimizations {
             _ => None,
         };
         if let Some(replacement) = replacement {
-            ctx.state.changed = true;
-            *node = replacement;
+            ctx.replace_expression(node, replacement);
         }
     }
 
@@ -84,18 +82,24 @@ impl<'a> PeepholeOptimizations {
 
         let wrap_with_unary_plus_if_needed = |expr: &mut Expression<'a>| {
             if expr.value_type(ctx).is_number() {
-                expr.take_in(ctx.ast)
+                expr.take_in(ctx)
             } else {
-                ctx.ast.expression_unary(SPAN, UnaryOperator::UnaryPlus, expr.take_in(ctx.ast))
+                Expression::new_unary_expression(
+                    SPAN,
+                    UnaryOperator::UnaryPlus,
+                    expr.take_in(ctx),
+                    ctx,
+                )
             }
         };
 
-        Some(ctx.ast.expression_binary(
+        Some(Expression::new_binary_expression(
             span,
             // see [`PeepholeOptimizations::is_binary_operator_that_does_number_conversion`] why it does not require `wrap_with_unary_plus_if_needed` here
-            first_arg.take_in(ctx.ast),
+            first_arg.take_in(ctx),
             BinaryOperator::Exponential,
             wrap_with_unary_plus_if_needed(second_arg),
+            ctx,
         ))
     }
 
@@ -112,9 +116,10 @@ impl<'a> PeepholeOptimizations {
         if name != "of" {
             return None;
         }
-        Some(ctx.ast.expression_array(
+        Some(Expression::new_array_expression(
             span,
-            ctx.ast.vec_from_iter(arguments.drain(..).map(ArrayExpressionElement::from)),
+            ArenaVec::from_iter_in(arguments.drain(..).map(ArrayExpressionElement::from), ctx),
+            ctx,
         ))
     }
 
@@ -133,7 +138,7 @@ impl<'a> PeepholeOptimizations {
         }
 
         let mut current_node: &mut Expression = node;
-        let mut collected_arguments = ctx.ast.vec();
+        let mut collected_arguments = ArenaVec::new_in(ctx);
         let new_root_callee: &mut Expression<'a>;
         loop {
             let Expression::CallExpression(ce) = current_node else {
@@ -188,16 +193,18 @@ impl<'a> PeepholeOptimizations {
             return;
         }
 
-        *node = ctx.ast.expression_call(
+        let new_expr = Expression::new_call_expression(
             original_span,
-            new_root_callee.take_in(ctx.ast),
+            new_root_callee.take_in(ctx),
             NONE,
-            ctx.ast.vec_from_iter(
-                collected_arguments.into_iter().rev().flat_map(|arg| arg.take_in(ctx.ast)),
+            ArenaVec::from_iter_in(
+                collected_arguments.into_iter().rev().flat_map(|arg| arg.take_in(ctx)),
+                ctx,
             ),
             false,
+            ctx,
         );
-        ctx.state.changed = true;
+        ctx.replace_expression(node, new_expr);
     }
 
     /// `[].concat(1, 2)` -> `[1, 2]`
@@ -206,7 +213,7 @@ impl<'a> PeepholeOptimizations {
         span: Span,
         args: &mut Arguments<'a>,
         callee: &mut Expression<'a>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         // let concat chaining reduction handle it first
         if let Ancestor::StaticMemberExpressionObject(parent_member) = ctx.parent()
@@ -254,14 +261,15 @@ impl<'a> PeepholeOptimizations {
                 }
 
                 if args.is_empty() {
-                    Some(object.take_in(ctx.ast))
+                    Some(object.take_in(ctx))
                 } else if can_merge_until.is_some() {
-                    Some(ctx.ast.expression_call(
+                    Some(Expression::new_call_expression(
                         span,
-                        callee.take_in(ctx.ast),
+                        callee.take_in(ctx),
                         NONE,
-                        args.take_in(ctx.ast),
+                        args.take_in(ctx),
                         false,
+                        ctx,
                     ))
                 } else {
                     None
@@ -286,62 +294,71 @@ impl<'a> PeepholeOptimizations {
                     return None;
                 }
 
-                let mut quasi_strs: Vec<Cow<'a, str>> =
-                    vec![Cow::Borrowed(base_str.value.as_str())];
-                let mut expressions = ctx.ast.vec_with_capacity(expression_count);
-                let mut pushed_quasi = true;
+                // Borrow the arena builder field directly.
+                // It's disjoint from `&mut ctx.state` below, so the two can coexist.
+                let ast = &ctx.ast;
+
+                // Reuse a scratch `String` held on `MinifierState` across calls
+                // to accumulate the cooked text of the in-progress quasi. On
+                // flush we copy the text into the arena and clear the scratch.
+                //
+                // INVARIANT: every flush must end with `scratch.clear()` so
+                // the next string-arg `push_str` starts a fresh quasi. Two
+                // expressions in a row rely on this — the second one's flush
+                // sees an empty `scratch`, producing the required empty
+                // separator quasi without a state-machine flag.
+                let scratch = &mut ctx.state.concat_scratch;
+                scratch.clear();
+                scratch.push_str(base_str.value.as_str());
+
+                let mut expressions = ArenaVec::with_capacity_in(expression_count, ast);
+                let mut quasis = ArenaVec::with_capacity_in(expression_count + 1, ast);
+
                 for argument in args.drain(..) {
                     if let Argument::StringLiteral(str_lit) = argument {
-                        if pushed_quasi {
-                            let last_quasi = quasi_strs
-                                .last_mut()
-                                .expect("last element should exist because pushed_quasi is true");
-                            last_quasi.to_mut().push_str(&str_lit.value);
-                        } else {
-                            quasi_strs.push(Cow::Borrowed(str_lit.value.as_str()));
-                        }
-                        pushed_quasi = true;
+                        // Append onto the in-progress quasi.
+                        scratch.push_str(&str_lit.value);
                     } else {
-                        if !pushed_quasi {
-                            // need a pair
-                            quasi_strs.push(Cow::Borrowed(""));
-                        }
+                        // Flush the current quasi (possibly empty) before
+                        // pushing the next expression.
+                        let cooked = Str::from_str_in(scratch, ast);
+                        let raw_cow = Self::escape_string_for_template_literal(scratch);
+                        let raw = Str::from_str_in(&raw_cow, ast);
+                        // `raw` is already escaped
+                        quasis.push(TemplateElement::new(
+                            SPAN,
+                            TemplateElementValue { raw, cooked: Some(cooked) },
+                            false,
+                            ast,
+                        ));
+                        scratch.clear(); // maintains INVARIANT above
                         // checked that all the arguments are expression above
                         expressions.push(argument.into_expression());
-                        pushed_quasi = false;
                     }
-                }
-                if !pushed_quasi {
-                    quasi_strs.push(Cow::Borrowed(""));
                 }
 
                 if expressions.is_empty() {
-                    debug_assert_eq!(quasi_strs.len(), 1);
-                    return Some(ctx.ast.expression_string_literal(
-                        span,
-                        ctx.ast.str_from_cow(&quasi_strs.pop().unwrap()),
-                        None,
-                    ));
+                    debug_assert_eq!(quasis.len(), 0);
+                    let s = Str::from_str_in(scratch, ast);
+                    return Some(Expression::new_string_literal(span, s, None, ast));
                 }
 
-                let mut quasis = ctx.ast.vec_from_iter(quasi_strs.into_iter().map(|s| {
-                    let cooked = ctx.ast.str_from_cow(&s);
-                    ctx.ast.template_element(
-                        SPAN,
-                        TemplateElementValue {
-                            raw: ctx.ast.str(&Self::escape_string_for_template_literal(&s)),
-                            cooked: Some(cooked),
-                        },
-                        false,
-                        false, // raw is already escaped by escape_string_for_template_literal
-                    )
-                }));
-                if let Some(last_quasi) = quasis.last_mut() {
-                    last_quasi.tail = true;
-                }
+                // Flush the trailing quasi. If the last arg was an expression
+                // `scratch` is empty, giving the required trailing empty
+                // quasi; otherwise it holds the accumulated tail text.
+                let cooked = Str::from_str_in(scratch, ast);
+                let raw_cow = Self::escape_string_for_template_literal(scratch);
+                let raw = Str::from_str_in(&raw_cow, ast);
+                // `raw` is already escaped
+                quasis.push(TemplateElement::new(
+                    SPAN,
+                    TemplateElementValue { raw, cooked: Some(cooked) },
+                    true, /* tail */
+                    ast,
+                ));
 
                 debug_assert_eq!(quasis.len(), expressions.len() + 1);
-                Some(ctx.ast.expression_template_literal(span, quasis, expressions))
+                Some(Expression::new_template_literal(span, quasis, expressions, ast))
             }
             _ => None,
         }
@@ -390,8 +407,7 @@ impl<'a> PeepholeOptimizations {
                                 span,
                                 ctx,
                             ) {
-                                ctx.state.changed = true;
-                                *node = replacement;
+                                ctx.replace_expression(node, replacement);
                             }
                         }
                         return;
@@ -408,8 +424,7 @@ impl<'a> PeepholeOptimizations {
                                 span,
                                 ctx,
                             ) {
-                                ctx.state.changed = true;
-                                *node = replacement;
+                                ctx.replace_expression(node, replacement);
                             }
                         }
                         return;
@@ -449,7 +464,7 @@ impl<'a> PeepholeOptimizations {
                     if regex.regex.pattern.pattern.is_none()
                         && let Ok(pattern) = regex.parse_pattern(ctx.ast.allocator)
                     {
-                        regex.regex.pattern.pattern = Some(Box::new_in(pattern, ctx.ast.allocator));
+                        regex.regex.pattern.pattern = Some(ArenaBox::new_in(pattern, ctx));
                     }
                     if let Some(pattern) = &regex.regex.pattern.pattern
                         // for now, only replace regexes that are supported by ES2015 to preserve the syntax error
@@ -460,10 +475,11 @@ impl<'a> PeepholeOptimizations {
                             &ES2015_UNSUPPORTED_PATTERNS,
                         )
                     {
-                        Some(ctx.ast.expression_string_literal(
+                        Some(Expression::new_string_literal(
                             span,
                             regex.regex.pattern.text,
                             None,
+                            ctx,
                         ))
                     } else {
                         // the pattern might be invalid, keep it as-is to preserve the error
@@ -475,8 +491,7 @@ impl<'a> PeepholeOptimizations {
             _ => return,
         };
         if let Some(replacement) = replacement {
-            ctx.state.changed = true;
-            *node = replacement;
+            ctx.replace_expression(node, replacement);
         }
     }
 
@@ -487,21 +502,23 @@ impl<'a> PeepholeOptimizations {
         ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         let num = |span: Span, n: f64| {
-            ctx.ast.expression_numeric_literal(span, n, None, NumberBase::Decimal)
+            Expression::new_numeric_literal(span, n, None, NumberBase::Decimal, ctx)
         };
         // [neg] base ** exponent [op] a
         let pow_with_expr =
             |span: Span, base: f64, exponent: f64, op: BinaryOperator, a: f64| -> Expression<'a> {
-                ctx.ast.expression_binary(
+                Expression::new_binary_expression(
                     span,
-                    ctx.ast.expression_binary(
+                    Expression::new_binary_expression(
                         SPAN,
                         num(SPAN, base),
                         BinaryOperator::Exponential,
                         num(SPAN, exponent),
+                        ctx,
                     ),
                     op,
                     num(SPAN, a),
+                    ctx,
                 )
             };
 
@@ -520,10 +537,11 @@ impl<'a> PeepholeOptimizations {
             "MIN_SAFE_INTEGER" => {
                 if ctx.supports_feature(ESFeature::ES2016ExponentiationOperator) {
                     // -(2**53 - 1)
-                    ctx.ast.expression_unary(
+                    Expression::new_unary_expression(
                         span,
                         UnaryOperator::UnaryNegation,
                         pow_with_expr(SPAN, 2.0, 53.0, BinaryOperator::Subtraction, 1.0),
+                        ctx,
                     )
                 } else {
                     num(span, -(2.0f64.powi(53) - 1.0))
@@ -534,11 +552,12 @@ impl<'a> PeepholeOptimizations {
                     return None;
                 }
                 // 2**-52
-                ctx.ast.expression_binary(
+                Expression::new_binary_expression(
                     span,
                     num(SPAN, 2.0),
                     BinaryOperator::Exponential,
                     num(SPAN, -52.0),
+                    ctx,
                 )
             }
             _ => return None,
@@ -562,9 +581,9 @@ impl<'a> PeepholeOptimizations {
                     s.value.as_str().char_at(Some(property.into()))
                 {
                     s.span = span;
-                    s.value = ctx.ast.str(&c.to_string());
+                    s.value = Str::from_str_in(&c.to_string(), ctx);
                     s.raw = None;
-                    Some(object.take_in(ctx.ast))
+                    Some(object.take_in(ctx))
                 } else {
                     None
                 }
@@ -575,7 +594,9 @@ impl<'a> PeepholeOptimizations {
                 if (property as usize) < length_until_spread {
                     match &array_expr.elements[property as usize] {
                         ArrayExpressionElement::SpreadElement(_) => unreachable!(),
-                        ArrayExpressionElement::Elision(_) => Some(ctx.ast.void_0(span)),
+                        ArrayExpressionElement::Elision(_) => {
+                            Some(Expression::new_void_0(span, ctx))
+                        }
                         match_expression!(ArrayExpressionElement) => {
                             let element = array_expr.elements.swap_remove(property as usize);
                             Some(element.into_expression())

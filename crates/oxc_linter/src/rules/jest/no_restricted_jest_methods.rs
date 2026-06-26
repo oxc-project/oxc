@@ -10,14 +10,14 @@ use crate::{
 
 #[derive(Debug, Default, Clone)]
 pub struct NoRestrictedJestMethods(
-    Box<SharedNoRestrictedJestMethods::NoRestrictedJestMethodsConfig>,
+    Box<SharedNoRestrictedJestMethods::NoRestrictedTestMethodsConfig>,
 );
 
 declare_oxc_lint!(
     NoRestrictedJestMethods,
     jest,
     style,
-    config = SharedNoRestrictedJestMethods::NoRestrictedJestMethodsConfig,
+    config = SharedNoRestrictedJestMethods::NoRestrictedTestMethodsConfig,
     docs = SharedNoRestrictedJestMethods::DOCUMENTATION,
     version = "0.2.3",
 );
@@ -25,7 +25,7 @@ declare_oxc_lint!(
 impl Rule for NoRestrictedJestMethods {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         Ok(Self(Box::new(
-            SharedNoRestrictedJestMethods::NoRestrictedJestMethodsConfig::from_configuration(
+            SharedNoRestrictedJestMethods::NoRestrictedTestMethodsConfig::from_configuration(
                 &value,
             )?,
         )))

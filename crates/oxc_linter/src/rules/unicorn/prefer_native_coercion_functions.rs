@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression, FormalParameters, FunctionBody, Statement},
+    ast::{Argument, Expression, FormalParameters, FunctionBody, Statement, TSType},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -27,7 +27,7 @@ pub struct PreferNativeCoercionFunctions;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Prefers built in functions, over custom ones with the same functionality.
+    /// Prefers built-in functions over custom ones with the same functionality.
     ///
     /// ### Why is this bad?
     ///
@@ -55,13 +55,19 @@ declare_oxc_lint!(
     pedantic,
     pending,
     version = "0.0.19",
+    short_description = "Prefers built-in functions over custom ones with the same functionality.",
 );
 
 impl Rule for PreferNativeCoercionFunctions {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::ArrowFunctionExpression(arrow_expr) => {
-                if arrow_expr.r#async || arrow_expr.params.items.is_empty() {
+                if arrow_expr.r#async
+                    || arrow_expr.params.items.is_empty()
+                    || arrow_expr.return_type.as_ref().is_some_and(|ret| {
+                        matches!(ret.type_annotation, TSType::TSTypePredicate(_))
+                    })
+                {
                     return;
                 }
 
@@ -82,10 +88,14 @@ impl Rule for PreferNativeCoercionFunctions {
                 }
             }
             AstKind::Function(func) => {
-                if func.r#async || func.generator || func.params.items.is_empty() {
-                    return;
-                }
-                if matches!(ctx.nodes().parent_kind(node.id()), AstKind::ObjectProperty(_)) {
+                if func.r#async
+                    || func.generator
+                    || func.params.items.is_empty()
+                    || func.return_type.as_ref().is_some_and(|ret| {
+                        matches!(ret.type_annotation, TSType::TSTypePredicate(_))
+                    })
+                    || matches!(ctx.nodes().parent_kind(node.id()), AstKind::ObjectProperty(_))
+                {
                     return;
                 }
                 if let Some(function_body) = &func.body
@@ -317,12 +327,11 @@ fn test() {
                 "use strict";
                 return v;
             })"#,
-        // TODO: Get these passing.
-        // "array.filter((value): value is string => value)", // {"parser": parsers.typescript},
-        // "array.filter((value): value is string => {
-        //         return value;
-        //     })", // {"parser": parsers.typescript},
-        // "array.some((value): value is string => value)", // {"parser": parsers.typescript}
+        "array.filter((value): value is string => value)", // {"parser": parsers.typescript},
+        "array.filter((value): value is string => {
+                return value;
+            })", // {"parser": parsers.typescript},
+        "array.some((value): value is string => value)",   // {"parser": parsers.typescript}
     ];
 
     let fail = vec![

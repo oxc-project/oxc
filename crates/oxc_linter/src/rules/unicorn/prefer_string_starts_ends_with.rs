@@ -1,12 +1,11 @@
-use oxc_allocator::Allocator;
 use oxc_ast::{
-    AstBuilder, AstKind,
+    AstKind,
     ast::{CallExpression, Expression, MemberExpression, RegExpFlags, RegExpLiteral},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_regular_expression::ast::{BoundaryAssertionKind, Term};
-use oxc_span::{GetSpan, SPAN, Span};
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     AstNode,
@@ -31,6 +30,10 @@ declare_oxc_lint!(
     ///
     /// Prefer [`String#startsWith()`](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/String/startsWith) and [`String#endsWith()`](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/String/endsWith) over using a regex with `/^foo/` or `/foo$/`.
     ///
+    /// ::: warning
+    /// This rule is deprecated. Prefer the type-aware [`typescript/prefer-string-starts-ends-with`](https://oxc.rs/docs/guide/usage/linter/rules/typescript/prefer-string-starts-ends-with.html) rule instead.
+    /// :::
+    ///
     /// ### Why is this bad?
     ///
     /// Using `String#startsWith()` and `String#endsWith()` is more readable and performant as it does not need to parse a regex.
@@ -53,6 +56,7 @@ declare_oxc_lint!(
     correctness,
     fix,
     version = "0.0.18",
+    short_description = "Prefer `String#startsWith()` and `String#endsWith()` over `RegExp#test()`.",
 );
 
 impl Rule for PreferStringStartsEndsWith {
@@ -116,10 +120,8 @@ fn do_fix<'a>(
     };
     let Some(argument) = argument else { return fixer.noop() };
     let mut content = fixer.codegen();
-    let alloc = Allocator::default();
-    let ast = AstBuilder::new(&alloc);
     content.print_str(&format!(r"{}.{}(", fixer.source_range(target_span), method));
-    content.print_expression(&ast.expression_string_literal(SPAN, ast.str(&argument), None));
+    content.print_string(&argument);
     content.print_str(r")");
     fixer.replace(call_expr.span, content.into_source_text())
 }

@@ -3,7 +3,7 @@
 
 use std::mem::transmute;
 
-use oxc_allocator::Vec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 use oxc_str::Ident;
@@ -11,7 +11,7 @@ use oxc_syntax::node::NodeId;
 
 use crate::ast_nodes::AstNode;
 use crate::formatter::{
-    Format, Formatter,
+    Format, JsFormatter,
     trivia::{format_leading_comments, format_trailing_comments},
 };
 
@@ -216,6 +216,11 @@ pub enum AstNodes<'a> {
     JSDocUnknownType(&'a AstNode<'a, JSDocUnknownType>),
 }
 impl AstNodes<'_> {
+    /// Returns the span of this AST node.
+    ///
+    /// # Panics
+    ///
+    /// Panics when called on a `Dummy` node, which should never appear in a real AST.
     #[inline]
     pub fn span(&self) -> Span {
         match self {
@@ -410,6 +415,11 @@ impl AstNodes<'_> {
             Self::JSDocUnknownType(n) => n.span(),
         }
     }
+    /// Returns the parent of this AST node.
+    ///
+    /// # Panics
+    ///
+    /// Panics when called on a `Dummy` node, which should never appear in a real AST.
     #[inline]
     pub fn parent(&self) -> &Self {
         match self {
@@ -817,7 +827,7 @@ impl<'a> AstNode<'a, Program<'a>> {
     }
 
     #[inline]
-    pub fn comments(&self) -> &Vec<'a, Comment> {
+    pub fn comments(&self) -> &ArenaVec<'a, Comment> {
         &self.inner.comments
     }
 
@@ -842,7 +852,7 @@ impl<'a> AstNode<'a, Program<'a>> {
     }
 
     #[inline]
-    pub fn directives(&self) -> &AstNode<'a, Vec<'a, Directive<'a>>> {
+    pub fn directives(&self) -> &AstNode<'a, ArenaVec<'a, Directive<'a>>> {
         let following_span_start = self
             .inner
             .body
@@ -859,7 +869,7 @@ impl<'a> AstNode<'a, Program<'a>> {
     }
 
     #[inline]
-    pub fn body(&self) -> &AstNode<'a, Vec<'a, Statement<'a>>> {
+    pub fn body(&self) -> &AstNode<'a, ArenaVec<'a, Statement<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
@@ -869,11 +879,11 @@ impl<'a> AstNode<'a, Program<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -1219,11 +1229,11 @@ impl<'a> AstNode<'a, IdentifierName<'a>> {
         self.inner.name
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -1240,11 +1250,11 @@ impl<'a> AstNode<'a, IdentifierReference<'a>> {
         self.inner.name
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -1261,11 +1271,11 @@ impl<'a> AstNode<'a, BindingIdentifier<'a>> {
         self.inner.name
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -1282,11 +1292,11 @@ impl<'a> AstNode<'a, LabelIdentifier<'a>> {
         self.inner.name
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -1298,11 +1308,11 @@ impl<'a> AstNode<'a, ThisExpression> {
         self.inner.node_id()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -1315,7 +1325,7 @@ impl<'a> AstNode<'a, ArrayExpression<'a>> {
     }
 
     #[inline]
-    pub fn elements(&self) -> &AstNode<'a, Vec<'a, ArrayExpressionElement<'a>>> {
+    pub fn elements(&self) -> &AstNode<'a, ArenaVec<'a, ArrayExpressionElement<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.elements,
@@ -1325,11 +1335,11 @@ impl<'a> AstNode<'a, ArrayExpression<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -1378,11 +1388,11 @@ impl<'a> AstNode<'a, Elision> {
         self.inner.node_id()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -1395,7 +1405,7 @@ impl<'a> AstNode<'a, ObjectExpression<'a>> {
     }
 
     #[inline]
-    pub fn properties(&self) -> &AstNode<'a, Vec<'a, ObjectPropertyKind<'a>>> {
+    pub fn properties(&self) -> &AstNode<'a, ArenaVec<'a, ObjectPropertyKind<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.properties,
@@ -1405,11 +1415,11 @@ impl<'a> AstNode<'a, ObjectExpression<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -1489,11 +1499,11 @@ impl<'a> AstNode<'a, ObjectProperty<'a>> {
         self.inner.computed
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -1543,7 +1553,7 @@ impl<'a> AstNode<'a, TemplateLiteral<'a>> {
     }
 
     #[inline]
-    pub fn quasis(&self) -> &AstNode<'a, Vec<'a, TemplateElement<'a>>> {
+    pub fn quasis(&self) -> &AstNode<'a, ArenaVec<'a, TemplateElement<'a>>> {
         let following_span_start = self
             .inner
             .expressions
@@ -1560,7 +1570,7 @@ impl<'a> AstNode<'a, TemplateLiteral<'a>> {
     }
 
     #[inline]
-    pub fn expressions(&self) -> &AstNode<'a, Vec<'a, Expression<'a>>> {
+    pub fn expressions(&self) -> &AstNode<'a, ArenaVec<'a, Expression<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.expressions,
@@ -1570,11 +1580,11 @@ impl<'a> AstNode<'a, TemplateLiteral<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -1627,11 +1637,11 @@ impl<'a> AstNode<'a, TaggedTemplateExpression<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -1658,11 +1668,11 @@ impl<'a> AstNode<'a, TemplateElement<'a>> {
         self.inner.lone_surrogates
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -1735,11 +1745,11 @@ impl<'a> AstNode<'a, ComputedMemberExpression<'a>> {
         self.inner.optional
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -1778,11 +1788,11 @@ impl<'a> AstNode<'a, StaticMemberExpression<'a>> {
         self.inner.optional
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -1821,11 +1831,11 @@ impl<'a> AstNode<'a, PrivateFieldExpression<'a>> {
         self.inner.optional
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -1875,7 +1885,7 @@ impl<'a> AstNode<'a, CallExpression<'a>> {
     }
 
     #[inline]
-    pub fn arguments(&self) -> &AstNode<'a, Vec<'a, Argument<'a>>> {
+    pub fn arguments(&self) -> &AstNode<'a, ArenaVec<'a, Argument<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.arguments,
@@ -1895,11 +1905,11 @@ impl<'a> AstNode<'a, CallExpression<'a>> {
         self.inner.pure
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -1949,7 +1959,7 @@ impl<'a> AstNode<'a, NewExpression<'a>> {
     }
 
     #[inline]
-    pub fn arguments(&self) -> &AstNode<'a, Vec<'a, Argument<'a>>> {
+    pub fn arguments(&self) -> &AstNode<'a, ArenaVec<'a, Argument<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.arguments,
@@ -1964,11 +1974,11 @@ impl<'a> AstNode<'a, NewExpression<'a>> {
         self.inner.pure
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -2002,11 +2012,11 @@ impl<'a> AstNode<'a, MetaProperty<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -2029,11 +2039,11 @@ impl<'a> AstNode<'a, SpreadElement<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -2093,11 +2103,11 @@ impl<'a> AstNode<'a, UpdateExpression<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -2125,11 +2135,11 @@ impl<'a> AstNode<'a, UnaryExpression<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -2168,11 +2178,11 @@ impl<'a> AstNode<'a, BinaryExpression<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -2206,11 +2216,11 @@ impl<'a> AstNode<'a, PrivateInExpression<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -2249,11 +2259,11 @@ impl<'a> AstNode<'a, LogicalExpression<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -2298,11 +2308,11 @@ impl<'a> AstNode<'a, ConditionalExpression<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -2341,11 +2351,11 @@ impl<'a> AstNode<'a, AssignmentExpression<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -2477,7 +2487,7 @@ impl<'a> AstNode<'a, ArrayAssignmentTarget<'a>> {
     }
 
     #[inline]
-    pub fn elements(&self) -> &AstNode<'a, Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>> {
+    pub fn elements(&self) -> &AstNode<'a, ArenaVec<'a, Option<AssignmentTargetMaybeDefault<'a>>>> {
         let following_span_start = self.inner.rest.as_deref().map_or(0, |n| n.span().start);
         self.allocator.alloc(AstNode {
             inner: &self.inner.elements,
@@ -2500,11 +2510,11 @@ impl<'a> AstNode<'a, ArrayAssignmentTarget<'a>> {
             .as_ref()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -2517,7 +2527,7 @@ impl<'a> AstNode<'a, ObjectAssignmentTarget<'a>> {
     }
 
     #[inline]
-    pub fn properties(&self) -> &AstNode<'a, Vec<'a, AssignmentTargetProperty<'a>>> {
+    pub fn properties(&self) -> &AstNode<'a, ArenaVec<'a, AssignmentTargetProperty<'a>>> {
         let following_span_start = self.inner.rest.as_deref().map_or(0, |n| n.span().start);
         self.allocator.alloc(AstNode {
             inner: &self.inner.properties,
@@ -2540,11 +2550,11 @@ impl<'a> AstNode<'a, ObjectAssignmentTarget<'a>> {
             .as_ref()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -2567,11 +2577,11 @@ impl<'a> AstNode<'a, AssignmentTargetRest<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -2634,11 +2644,11 @@ impl<'a> AstNode<'a, AssignmentTargetWithDefault<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -2706,11 +2716,11 @@ impl<'a> AstNode<'a, AssignmentTargetPropertyIdentifier<'a>> {
             .as_ref()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -2749,11 +2759,11 @@ impl<'a> AstNode<'a, AssignmentTargetPropertyProperty<'a>> {
         self.inner.computed
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -2766,7 +2776,7 @@ impl<'a> AstNode<'a, SequenceExpression<'a>> {
     }
 
     #[inline]
-    pub fn expressions(&self) -> &AstNode<'a, Vec<'a, Expression<'a>>> {
+    pub fn expressions(&self) -> &AstNode<'a, ArenaVec<'a, Expression<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.expressions,
@@ -2776,11 +2786,11 @@ impl<'a> AstNode<'a, SequenceExpression<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -2792,11 +2802,11 @@ impl<'a> AstNode<'a, Super> {
         self.inner.node_id()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -2819,11 +2829,11 @@ impl<'a> AstNode<'a, AwaitExpression<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -2846,11 +2856,11 @@ impl<'a> AstNode<'a, ChainExpression<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -2910,11 +2920,11 @@ impl<'a> AstNode<'a, ParenthesizedExpression<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -3110,11 +3120,11 @@ impl<'a> AstNode<'a, Directive<'a>> {
         self.inner.directive
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -3131,11 +3141,11 @@ impl<'a> AstNode<'a, Hashbang<'a>> {
         self.inner.value
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -3148,7 +3158,7 @@ impl<'a> AstNode<'a, BlockStatement<'a>> {
     }
 
     #[inline]
-    pub fn body(&self) -> &AstNode<'a, Vec<'a, Statement<'a>>> {
+    pub fn body(&self) -> &AstNode<'a, ArenaVec<'a, Statement<'a>>> {
         let following_span_start = 0;
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
@@ -3158,11 +3168,11 @@ impl<'a> AstNode<'a, BlockStatement<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -3260,7 +3270,7 @@ impl<'a> AstNode<'a, VariableDeclaration<'a>> {
     }
 
     #[inline]
-    pub fn declarations(&self) -> &AstNode<'a, Vec<'a, VariableDeclarator<'a>>> {
+    pub fn declarations(&self) -> &AstNode<'a, ArenaVec<'a, VariableDeclarator<'a>>> {
         let following_span_start = 0;
         self.allocator.alloc(AstNode {
             inner: &self.inner.declarations,
@@ -3275,11 +3285,11 @@ impl<'a> AstNode<'a, VariableDeclaration<'a>> {
         self.inner.declare
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -3351,11 +3361,11 @@ impl<'a> AstNode<'a, VariableDeclarator<'a>> {
         self.inner.definite
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -3367,11 +3377,11 @@ impl<'a> AstNode<'a, EmptyStatement> {
         self.inner.node_id()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -3394,11 +3404,11 @@ impl<'a> AstNode<'a, ExpressionStatement<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -3445,11 +3455,11 @@ impl<'a> AstNode<'a, IfStatement<'a>> {
             .as_ref()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -3483,11 +3493,11 @@ impl<'a> AstNode<'a, DoWhileStatement<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -3521,11 +3531,11 @@ impl<'a> AstNode<'a, WhileStatement<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -3600,11 +3610,11 @@ impl<'a> AstNode<'a, ForStatement<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -3678,11 +3688,11 @@ impl<'a> AstNode<'a, ForInStatement<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -3761,11 +3771,11 @@ impl<'a> AstNode<'a, ForOfStatement<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -3790,11 +3800,11 @@ impl<'a> AstNode<'a, ContinueStatement<'a>> {
             .as_ref()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -3819,11 +3829,11 @@ impl<'a> AstNode<'a, BreakStatement<'a>> {
             .as_ref()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -3848,11 +3858,11 @@ impl<'a> AstNode<'a, ReturnStatement<'a>> {
             .as_ref()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -3886,11 +3896,11 @@ impl<'a> AstNode<'a, WithStatement<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -3914,7 +3924,7 @@ impl<'a> AstNode<'a, SwitchStatement<'a>> {
     }
 
     #[inline]
-    pub fn cases(&self) -> &AstNode<'a, Vec<'a, SwitchCase<'a>>> {
+    pub fn cases(&self) -> &AstNode<'a, ArenaVec<'a, SwitchCase<'a>>> {
         let following_span_start = 0;
         self.allocator.alloc(AstNode {
             inner: &self.inner.cases,
@@ -3924,11 +3934,11 @@ impl<'a> AstNode<'a, SwitchStatement<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -3960,7 +3970,7 @@ impl<'a> AstNode<'a, SwitchCase<'a>> {
     }
 
     #[inline]
-    pub fn consequent(&self) -> &AstNode<'a, Vec<'a, Statement<'a>>> {
+    pub fn consequent(&self) -> &AstNode<'a, ArenaVec<'a, Statement<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.consequent,
@@ -3970,11 +3980,11 @@ impl<'a> AstNode<'a, SwitchCase<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -4008,11 +4018,11 @@ impl<'a> AstNode<'a, LabeledStatement<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -4035,11 +4045,11 @@ impl<'a> AstNode<'a, ThrowStatement<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -4094,11 +4104,11 @@ impl<'a> AstNode<'a, TryStatement<'a>> {
             .as_ref()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -4134,11 +4144,11 @@ impl<'a> AstNode<'a, CatchClause<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -4180,11 +4190,11 @@ impl<'a> AstNode<'a, CatchParameter<'a>> {
             .as_ref()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -4196,11 +4206,11 @@ impl<'a> AstNode<'a, DebuggerStatement> {
         self.inner.node_id()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -4276,11 +4286,11 @@ impl<'a> AstNode<'a, AssignmentPattern<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -4293,7 +4303,7 @@ impl<'a> AstNode<'a, ObjectPattern<'a>> {
     }
 
     #[inline]
-    pub fn properties(&self) -> &AstNode<'a, Vec<'a, BindingProperty<'a>>> {
+    pub fn properties(&self) -> &AstNode<'a, ArenaVec<'a, BindingProperty<'a>>> {
         let following_span_start = self.inner.rest.as_deref().map_or(0, |n| n.span().start);
         self.allocator.alloc(AstNode {
             inner: &self.inner.properties,
@@ -4316,11 +4326,11 @@ impl<'a> AstNode<'a, ObjectPattern<'a>> {
             .as_ref()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -4364,11 +4374,11 @@ impl<'a> AstNode<'a, BindingProperty<'a>> {
         self.inner.computed
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -4381,7 +4391,7 @@ impl<'a> AstNode<'a, ArrayPattern<'a>> {
     }
 
     #[inline]
-    pub fn elements(&self) -> &AstNode<'a, Vec<'a, Option<BindingPattern<'a>>>> {
+    pub fn elements(&self) -> &AstNode<'a, ArenaVec<'a, Option<BindingPattern<'a>>>> {
         let following_span_start = self.inner.rest.as_deref().map_or(0, |n| n.span().start);
         self.allocator.alloc(AstNode {
             inner: &self.inner.elements,
@@ -4404,11 +4414,11 @@ impl<'a> AstNode<'a, ArrayPattern<'a>> {
             .as_ref()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -4431,11 +4441,11 @@ impl<'a> AstNode<'a, BindingRestElement<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -4579,11 +4589,11 @@ impl<'a> AstNode<'a, Function<'a>> {
         self.inner.pife
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -4601,7 +4611,7 @@ impl<'a> AstNode<'a, FormalParameters<'a>> {
     }
 
     #[inline]
-    pub fn items(&self) -> &AstNode<'a, Vec<'a, FormalParameter<'a>>> {
+    pub fn items(&self) -> &AstNode<'a, ArenaVec<'a, FormalParameter<'a>>> {
         let following_span_start = self.inner.rest.as_deref().map_or(0, |n| n.span().start);
         self.allocator.alloc(AstNode {
             inner: &self.inner.items,
@@ -4624,11 +4634,11 @@ impl<'a> AstNode<'a, FormalParameters<'a>> {
             .as_ref()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -4641,7 +4651,7 @@ impl<'a> AstNode<'a, FormalParameter<'a>> {
     }
 
     #[inline]
-    pub fn decorators(&self) -> &AstNode<'a, Vec<'a, Decorator<'a>>> {
+    pub fn decorators(&self) -> &AstNode<'a, ArenaVec<'a, Decorator<'a>>> {
         let following_span_start = self.inner.pattern.span().start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.decorators,
@@ -4721,11 +4731,11 @@ impl<'a> AstNode<'a, FormalParameter<'a>> {
         self.inner.r#override
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -4738,7 +4748,7 @@ impl<'a> AstNode<'a, FormalParameterRest<'a>> {
     }
 
     #[inline]
-    pub fn decorators(&self) -> &AstNode<'a, Vec<'a, Decorator<'a>>> {
+    pub fn decorators(&self) -> &AstNode<'a, ArenaVec<'a, Decorator<'a>>> {
         let following_span_start = self.inner.rest.span().start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.decorators,
@@ -4778,11 +4788,11 @@ impl<'a> AstNode<'a, FormalParameterRest<'a>> {
             .as_ref()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -4795,7 +4805,7 @@ impl<'a> AstNode<'a, FunctionBody<'a>> {
     }
 
     #[inline]
-    pub fn directives(&self) -> &AstNode<'a, Vec<'a, Directive<'a>>> {
+    pub fn directives(&self) -> &AstNode<'a, ArenaVec<'a, Directive<'a>>> {
         let following_span_start = self
             .inner
             .statements
@@ -4812,7 +4822,7 @@ impl<'a> AstNode<'a, FunctionBody<'a>> {
     }
 
     #[inline]
-    pub fn statements(&self) -> &AstNode<'a, Vec<'a, Statement<'a>>> {
+    pub fn statements(&self) -> &AstNode<'a, ArenaVec<'a, Statement<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.statements,
@@ -4822,11 +4832,11 @@ impl<'a> AstNode<'a, FunctionBody<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -4912,11 +4922,11 @@ impl<'a> AstNode<'a, ArrowFunctionExpression<'a>> {
         self.inner.pife
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -4946,11 +4956,11 @@ impl<'a> AstNode<'a, YieldExpression<'a>> {
             .as_ref()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -4968,7 +4978,7 @@ impl<'a> AstNode<'a, Class<'a>> {
     }
 
     #[inline]
-    pub fn decorators(&self) -> &AstNode<'a, Vec<'a, Decorator<'a>>> {
+    pub fn decorators(&self) -> &AstNode<'a, ArenaVec<'a, Decorator<'a>>> {
         let following_span_start = self
             .inner
             .id
@@ -5071,7 +5081,7 @@ impl<'a> AstNode<'a, Class<'a>> {
     }
 
     #[inline]
-    pub fn implements(&self) -> &AstNode<'a, Vec<'a, TSClassImplements<'a>>> {
+    pub fn implements(&self) -> &AstNode<'a, ArenaVec<'a, TSClassImplements<'a>>> {
         let following_span_start = self.inner.body.span().start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.implements,
@@ -5102,11 +5112,11 @@ impl<'a> AstNode<'a, Class<'a>> {
         self.inner.declare
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -5119,7 +5129,7 @@ impl<'a> AstNode<'a, ClassBody<'a>> {
     }
 
     #[inline]
-    pub fn body(&self) -> &AstNode<'a, Vec<'a, ClassElement<'a>>> {
+    pub fn body(&self) -> &AstNode<'a, ArenaVec<'a, ClassElement<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
@@ -5129,11 +5139,11 @@ impl<'a> AstNode<'a, ClassBody<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -5199,7 +5209,7 @@ impl<'a> AstNode<'a, MethodDefinition<'a>> {
     }
 
     #[inline]
-    pub fn decorators(&self) -> &AstNode<'a, Vec<'a, Decorator<'a>>> {
+    pub fn decorators(&self) -> &AstNode<'a, ArenaVec<'a, Decorator<'a>>> {
         let following_span_start = self.inner.key.span().start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.decorators,
@@ -5261,11 +5271,11 @@ impl<'a> AstNode<'a, MethodDefinition<'a>> {
         self.inner.accessibility
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -5283,7 +5293,7 @@ impl<'a> AstNode<'a, PropertyDefinition<'a>> {
     }
 
     #[inline]
-    pub fn decorators(&self) -> &AstNode<'a, Vec<'a, Decorator<'a>>> {
+    pub fn decorators(&self) -> &AstNode<'a, ArenaVec<'a, Decorator<'a>>> {
         let following_span_start = self.inner.key.span().start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.decorators,
@@ -5383,11 +5393,11 @@ impl<'a> AstNode<'a, PropertyDefinition<'a>> {
         self.inner.accessibility
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -5404,11 +5414,11 @@ impl<'a> AstNode<'a, PrivateIdentifier<'a>> {
         self.inner.name
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -5421,7 +5431,7 @@ impl<'a> AstNode<'a, StaticBlock<'a>> {
     }
 
     #[inline]
-    pub fn body(&self) -> &AstNode<'a, Vec<'a, Statement<'a>>> {
+    pub fn body(&self) -> &AstNode<'a, ArenaVec<'a, Statement<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
@@ -5431,11 +5441,11 @@ impl<'a> AstNode<'a, StaticBlock<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -5511,7 +5521,7 @@ impl<'a> AstNode<'a, AccessorProperty<'a>> {
     }
 
     #[inline]
-    pub fn decorators(&self) -> &AstNode<'a, Vec<'a, Decorator<'a>>> {
+    pub fn decorators(&self) -> &AstNode<'a, ArenaVec<'a, Decorator<'a>>> {
         let following_span_start = self.inner.key.span().start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.decorators,
@@ -5596,11 +5606,11 @@ impl<'a> AstNode<'a, AccessorProperty<'a>> {
         self.inner.accessibility
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -5647,11 +5657,11 @@ impl<'a> AstNode<'a, ImportExpression<'a>> {
         self.inner.phase
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -5664,7 +5674,7 @@ impl<'a> AstNode<'a, ImportDeclaration<'a>> {
     }
 
     #[inline]
-    pub fn specifiers(&self) -> Option<&AstNode<'a, Vec<'a, ImportDeclarationSpecifier<'a>>>> {
+    pub fn specifiers(&self) -> Option<&AstNode<'a, ArenaVec<'a, ImportDeclarationSpecifier<'a>>>> {
         let following_span_start = self.inner.source.span().start;
         self.allocator
             .alloc(self.inner.specifiers.as_ref().map(|inner| AstNode {
@@ -5710,11 +5720,11 @@ impl<'a> AstNode<'a, ImportDeclaration<'a>> {
         self.inner.import_kind
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -5787,11 +5797,11 @@ impl<'a> AstNode<'a, ImportSpecifier<'a>> {
         self.inner.import_kind
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -5814,11 +5824,11 @@ impl<'a> AstNode<'a, ImportDefaultSpecifier<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -5841,11 +5851,11 @@ impl<'a> AstNode<'a, ImportNamespaceSpecifier<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -5863,7 +5873,7 @@ impl<'a> AstNode<'a, WithClause<'a>> {
     }
 
     #[inline]
-    pub fn with_entries(&self) -> &AstNode<'a, Vec<'a, ImportAttribute<'a>>> {
+    pub fn with_entries(&self) -> &AstNode<'a, ArenaVec<'a, ImportAttribute<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.with_entries,
@@ -5873,11 +5883,11 @@ impl<'a> AstNode<'a, WithClause<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -5911,11 +5921,11 @@ impl<'a> AstNode<'a, ImportAttribute<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -5974,7 +5984,7 @@ impl<'a> AstNode<'a, ExportNamedDeclaration<'a>> {
     }
 
     #[inline]
-    pub fn specifiers(&self) -> &AstNode<'a, Vec<'a, ExportSpecifier<'a>>> {
+    pub fn specifiers(&self) -> &AstNode<'a, ArenaVec<'a, ExportSpecifier<'a>>> {
         let following_span_start = self
             .inner
             .source
@@ -6021,11 +6031,11 @@ impl<'a> AstNode<'a, ExportNamedDeclaration<'a>> {
             .as_ref()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -6048,11 +6058,11 @@ impl<'a> AstNode<'a, ExportDefaultDeclaration<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -6106,11 +6116,11 @@ impl<'a> AstNode<'a, ExportAllDeclaration<'a>> {
         self.inner.export_kind
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -6149,11 +6159,11 @@ impl<'a> AstNode<'a, ExportSpecifier<'a>> {
         self.inner.export_kind
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -6262,7 +6272,7 @@ impl<'a> AstNode<'a, V8IntrinsicExpression<'a>> {
     }
 
     #[inline]
-    pub fn arguments(&self) -> &AstNode<'a, Vec<'a, Argument<'a>>> {
+    pub fn arguments(&self) -> &AstNode<'a, ArenaVec<'a, Argument<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.arguments,
@@ -6272,11 +6282,11 @@ impl<'a> AstNode<'a, V8IntrinsicExpression<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -6293,11 +6303,11 @@ impl<'a> AstNode<'a, BooleanLiteral> {
         self.inner.value
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -6309,11 +6319,11 @@ impl<'a> AstNode<'a, NullLiteral> {
         self.inner.node_id()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -6340,11 +6350,11 @@ impl<'a> AstNode<'a, NumericLiteral<'a>> {
         self.inner.base
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -6371,11 +6381,11 @@ impl<'a> AstNode<'a, StringLiteral<'a>> {
         self.inner.lone_surrogates
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -6402,11 +6412,11 @@ impl<'a> AstNode<'a, BigIntLiteral<'a>> {
         self.inner.base
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -6428,11 +6438,11 @@ impl<'a> AstNode<'a, RegExpLiteral<'a>> {
         self.inner.raw
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -6463,7 +6473,7 @@ impl<'a> AstNode<'a, JSXElement<'a>> {
     }
 
     #[inline]
-    pub fn children(&self) -> &AstNode<'a, Vec<'a, JSXChild<'a>>> {
+    pub fn children(&self) -> &AstNode<'a, ArenaVec<'a, JSXChild<'a>>> {
         let following_span_start = self
             .inner
             .closing_element
@@ -6492,11 +6502,11 @@ impl<'a> AstNode<'a, JSXElement<'a>> {
             .as_ref()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -6546,7 +6556,7 @@ impl<'a> AstNode<'a, JSXOpeningElement<'a>> {
     }
 
     #[inline]
-    pub fn attributes(&self) -> &AstNode<'a, Vec<'a, JSXAttributeItem<'a>>> {
+    pub fn attributes(&self) -> &AstNode<'a, ArenaVec<'a, JSXAttributeItem<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.attributes,
@@ -6556,11 +6566,11 @@ impl<'a> AstNode<'a, JSXOpeningElement<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -6583,11 +6593,11 @@ impl<'a> AstNode<'a, JSXClosingElement<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -6617,7 +6627,7 @@ impl<'a> AstNode<'a, JSXFragment<'a>> {
     }
 
     #[inline]
-    pub fn children(&self) -> &AstNode<'a, Vec<'a, JSXChild<'a>>> {
+    pub fn children(&self) -> &AstNode<'a, ArenaVec<'a, JSXChild<'a>>> {
         let following_span_start = self.inner.closing_fragment.span().start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.children,
@@ -6638,11 +6648,11 @@ impl<'a> AstNode<'a, JSXFragment<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -6654,11 +6664,11 @@ impl<'a> AstNode<'a, JSXOpeningFragment> {
         self.inner.node_id()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -6670,11 +6680,11 @@ impl<'a> AstNode<'a, JSXClosingFragment> {
         self.inner.node_id()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -6758,11 +6768,11 @@ impl<'a> AstNode<'a, JSXNamespacedName<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -6796,11 +6806,11 @@ impl<'a> AstNode<'a, JSXMemberExpression<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -6857,11 +6867,11 @@ impl<'a> AstNode<'a, JSXExpressionContainer<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -6902,11 +6912,11 @@ impl<'a> AstNode<'a, JSXEmptyExpression> {
         self.inner.node_id()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -6974,11 +6984,11 @@ impl<'a> AstNode<'a, JSXAttribute<'a>> {
             .as_ref()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -7001,11 +7011,11 @@ impl<'a> AstNode<'a, JSXSpreadAttribute<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -7088,11 +7098,11 @@ impl<'a> AstNode<'a, JSXIdentifier<'a>> {
         self.inner.name
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -7157,11 +7167,11 @@ impl<'a> AstNode<'a, JSXSpreadChild<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -7183,11 +7193,11 @@ impl<'a> AstNode<'a, JSXText<'a>> {
         self.inner.raw
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -7217,11 +7227,11 @@ impl<'a> AstNode<'a, TSThisParameter<'a>> {
             .as_ref()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -7265,11 +7275,11 @@ impl<'a> AstNode<'a, TSEnumDeclaration<'a>> {
         self.inner.declare
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -7282,7 +7292,7 @@ impl<'a> AstNode<'a, TSEnumBody<'a>> {
     }
 
     #[inline]
-    pub fn members(&self) -> &AstNode<'a, Vec<'a, TSEnumMember<'a>>> {
+    pub fn members(&self) -> &AstNode<'a, ArenaVec<'a, TSEnumMember<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.members,
@@ -7292,11 +7302,11 @@ impl<'a> AstNode<'a, TSEnumBody<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -7338,11 +7348,11 @@ impl<'a> AstNode<'a, TSEnumMember<'a>> {
             .as_ref()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -7405,11 +7415,11 @@ impl<'a> AstNode<'a, TSTypeAnnotation<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -7432,11 +7442,11 @@ impl<'a> AstNode<'a, TSLiteralType<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -7822,11 +7832,11 @@ impl<'a> AstNode<'a, TSConditionalType<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -7839,7 +7849,7 @@ impl<'a> AstNode<'a, TSUnionType<'a>> {
     }
 
     #[inline]
-    pub fn types(&self) -> &AstNode<'a, Vec<'a, TSType<'a>>> {
+    pub fn types(&self) -> &AstNode<'a, ArenaVec<'a, TSType<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.types,
@@ -7849,11 +7859,11 @@ impl<'a> AstNode<'a, TSUnionType<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -7866,7 +7876,7 @@ impl<'a> AstNode<'a, TSIntersectionType<'a>> {
     }
 
     #[inline]
-    pub fn types(&self) -> &AstNode<'a, Vec<'a, TSType<'a>>> {
+    pub fn types(&self) -> &AstNode<'a, ArenaVec<'a, TSType<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.types,
@@ -7876,11 +7886,11 @@ impl<'a> AstNode<'a, TSIntersectionType<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -7903,11 +7913,11 @@ impl<'a> AstNode<'a, TSParenthesizedType<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -7935,11 +7945,11 @@ impl<'a> AstNode<'a, TSTypeOperator<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -7962,11 +7972,11 @@ impl<'a> AstNode<'a, TSArrayType<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -8000,11 +8010,11 @@ impl<'a> AstNode<'a, TSIndexedAccessType<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -8017,7 +8027,7 @@ impl<'a> AstNode<'a, TSTupleType<'a>> {
     }
 
     #[inline]
-    pub fn element_types(&self) -> &AstNode<'a, Vec<'a, TSTupleElement<'a>>> {
+    pub fn element_types(&self) -> &AstNode<'a, ArenaVec<'a, TSTupleElement<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.element_types,
@@ -8027,11 +8037,11 @@ impl<'a> AstNode<'a, TSTupleType<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -8070,11 +8080,11 @@ impl<'a> AstNode<'a, TSNamedTupleMember<'a>> {
         self.inner.optional
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -8097,11 +8107,11 @@ impl<'a> AstNode<'a, TSOptionalType<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -8124,11 +8134,11 @@ impl<'a> AstNode<'a, TSRestType<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -8175,11 +8185,11 @@ impl<'a> AstNode<'a, TSAnyKeyword> {
         self.inner.node_id()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -8191,11 +8201,11 @@ impl<'a> AstNode<'a, TSStringKeyword> {
         self.inner.node_id()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -8207,11 +8217,11 @@ impl<'a> AstNode<'a, TSBooleanKeyword> {
         self.inner.node_id()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -8223,11 +8233,11 @@ impl<'a> AstNode<'a, TSNumberKeyword> {
         self.inner.node_id()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -8239,11 +8249,11 @@ impl<'a> AstNode<'a, TSNeverKeyword> {
         self.inner.node_id()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -8255,11 +8265,11 @@ impl<'a> AstNode<'a, TSIntrinsicKeyword> {
         self.inner.node_id()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -8271,11 +8281,11 @@ impl<'a> AstNode<'a, TSUnknownKeyword> {
         self.inner.node_id()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -8287,11 +8297,11 @@ impl<'a> AstNode<'a, TSNullKeyword> {
         self.inner.node_id()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -8303,11 +8313,11 @@ impl<'a> AstNode<'a, TSUndefinedKeyword> {
         self.inner.node_id()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -8319,11 +8329,11 @@ impl<'a> AstNode<'a, TSVoidKeyword> {
         self.inner.node_id()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -8335,11 +8345,11 @@ impl<'a> AstNode<'a, TSSymbolKeyword> {
         self.inner.node_id()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -8351,11 +8361,11 @@ impl<'a> AstNode<'a, TSThisType> {
         self.inner.node_id()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -8367,11 +8377,11 @@ impl<'a> AstNode<'a, TSObjectKeyword> {
         self.inner.node_id()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -8383,11 +8393,11 @@ impl<'a> AstNode<'a, TSBigIntKeyword> {
         self.inner.node_id()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -8429,11 +8439,11 @@ impl<'a> AstNode<'a, TSTypeReference<'a>> {
             .as_ref()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -8501,11 +8511,11 @@ impl<'a> AstNode<'a, TSQualifiedName<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -8518,7 +8528,7 @@ impl<'a> AstNode<'a, TSTypeParameterInstantiation<'a>> {
     }
 
     #[inline]
-    pub fn params(&self) -> &AstNode<'a, Vec<'a, TSType<'a>>> {
+    pub fn params(&self) -> &AstNode<'a, ArenaVec<'a, TSType<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.params,
@@ -8528,11 +8538,11 @@ impl<'a> AstNode<'a, TSTypeParameterInstantiation<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -8609,11 +8619,11 @@ impl<'a> AstNode<'a, TSTypeParameter<'a>> {
         self.inner.r#const
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -8626,7 +8636,7 @@ impl<'a> AstNode<'a, TSTypeParameterDeclaration<'a>> {
     }
 
     #[inline]
-    pub fn params(&self) -> &AstNode<'a, Vec<'a, TSTypeParameter<'a>>> {
+    pub fn params(&self) -> &AstNode<'a, ArenaVec<'a, TSTypeParameter<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.params,
@@ -8636,11 +8646,11 @@ impl<'a> AstNode<'a, TSTypeParameterDeclaration<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -8698,11 +8708,11 @@ impl<'a> AstNode<'a, TSTypeAliasDeclaration<'a>> {
         self.inner.declare
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -8744,11 +8754,11 @@ impl<'a> AstNode<'a, TSClassImplements<'a>> {
             .as_ref()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -8798,7 +8808,7 @@ impl<'a> AstNode<'a, TSInterfaceDeclaration<'a>> {
     }
 
     #[inline]
-    pub fn extends(&self) -> &AstNode<'a, Vec<'a, TSInterfaceHeritage<'a>>> {
+    pub fn extends(&self) -> &AstNode<'a, ArenaVec<'a, TSInterfaceHeritage<'a>>> {
         let following_span_start = self.inner.body.span().start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.extends,
@@ -8824,11 +8834,11 @@ impl<'a> AstNode<'a, TSInterfaceDeclaration<'a>> {
         self.inner.declare
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -8841,7 +8851,7 @@ impl<'a> AstNode<'a, TSInterfaceBody<'a>> {
     }
 
     #[inline]
-    pub fn body(&self) -> &AstNode<'a, Vec<'a, TSSignature<'a>>> {
+    pub fn body(&self) -> &AstNode<'a, ArenaVec<'a, TSSignature<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
@@ -8851,11 +8861,11 @@ impl<'a> AstNode<'a, TSInterfaceBody<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -8912,11 +8922,11 @@ impl<'a> AstNode<'a, TSPropertySignature<'a>> {
             .as_ref()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -8979,7 +8989,7 @@ impl<'a> AstNode<'a, TSIndexSignature<'a>> {
     }
 
     #[inline]
-    pub fn parameters(&self) -> &AstNode<'a, Vec<'a, TSIndexSignatureName<'a>>> {
+    pub fn parameters(&self) -> &AstNode<'a, ArenaVec<'a, TSIndexSignatureName<'a>>> {
         let following_span_start = self.inner.type_annotation.span().start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.parameters,
@@ -9010,11 +9020,11 @@ impl<'a> AstNode<'a, TSIndexSignature<'a>> {
         self.inner.r#static
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -9088,11 +9098,11 @@ impl<'a> AstNode<'a, TSCallSignatureDeclaration<'a>> {
             .as_ref()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -9199,11 +9209,11 @@ impl<'a> AstNode<'a, TSMethodSignature<'a>> {
             .as_ref()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -9258,11 +9268,11 @@ impl<'a> AstNode<'a, TSConstructSignatureDeclaration<'a>> {
             .as_ref()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -9290,11 +9300,11 @@ impl<'a> AstNode<'a, TSIndexSignatureName<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -9336,11 +9346,11 @@ impl<'a> AstNode<'a, TSInterfaceHeritage<'a>> {
             .as_ref()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -9387,11 +9397,11 @@ impl<'a> AstNode<'a, TSTypePredicate<'a>> {
             .as_ref()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -9461,11 +9471,11 @@ impl<'a> AstNode<'a, TSModuleDeclaration<'a>> {
         self.inner.declare
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -9550,11 +9560,11 @@ impl<'a> AstNode<'a, TSGlobalDeclaration<'a>> {
         self.inner.declare
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -9567,7 +9577,7 @@ impl<'a> AstNode<'a, TSModuleBlock<'a>> {
     }
 
     #[inline]
-    pub fn directives(&self) -> &AstNode<'a, Vec<'a, Directive<'a>>> {
+    pub fn directives(&self) -> &AstNode<'a, ArenaVec<'a, Directive<'a>>> {
         let following_span_start = self
             .inner
             .body
@@ -9584,7 +9594,7 @@ impl<'a> AstNode<'a, TSModuleBlock<'a>> {
     }
 
     #[inline]
-    pub fn body(&self) -> &AstNode<'a, Vec<'a, Statement<'a>>> {
+    pub fn body(&self) -> &AstNode<'a, ArenaVec<'a, Statement<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
@@ -9594,11 +9604,11 @@ impl<'a> AstNode<'a, TSModuleBlock<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -9611,7 +9621,7 @@ impl<'a> AstNode<'a, TSTypeLiteral<'a>> {
     }
 
     #[inline]
-    pub fn members(&self) -> &AstNode<'a, Vec<'a, TSSignature<'a>>> {
+    pub fn members(&self) -> &AstNode<'a, ArenaVec<'a, TSSignature<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.members,
@@ -9621,11 +9631,11 @@ impl<'a> AstNode<'a, TSTypeLiteral<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -9648,11 +9658,11 @@ impl<'a> AstNode<'a, TSInferType<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -9694,11 +9704,11 @@ impl<'a> AstNode<'a, TSTypeQuery<'a>> {
             .as_ref()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -9810,11 +9820,11 @@ impl<'a> AstNode<'a, TSImportType<'a>> {
             .as_ref()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -9874,11 +9884,11 @@ impl<'a> AstNode<'a, TSImportTypeQualifiedName<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -9944,11 +9954,11 @@ impl<'a> AstNode<'a, TSFunctionType<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -10000,11 +10010,11 @@ impl<'a> AstNode<'a, TSConstructorType<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -10087,11 +10097,11 @@ impl<'a> AstNode<'a, TSMappedType<'a>> {
         self.inner.readonly
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -10104,7 +10114,7 @@ impl<'a> AstNode<'a, TSTemplateLiteralType<'a>> {
     }
 
     #[inline]
-    pub fn quasis(&self) -> &AstNode<'a, Vec<'a, TemplateElement<'a>>> {
+    pub fn quasis(&self) -> &AstNode<'a, ArenaVec<'a, TemplateElement<'a>>> {
         let following_span_start = self
             .inner
             .types
@@ -10121,7 +10131,7 @@ impl<'a> AstNode<'a, TSTemplateLiteralType<'a>> {
     }
 
     #[inline]
-    pub fn types(&self) -> &AstNode<'a, Vec<'a, TSType<'a>>> {
+    pub fn types(&self) -> &AstNode<'a, ArenaVec<'a, TSType<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.types,
@@ -10131,11 +10141,11 @@ impl<'a> AstNode<'a, TSTemplateLiteralType<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -10169,11 +10179,11 @@ impl<'a> AstNode<'a, TSAsExpression<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -10207,11 +10217,11 @@ impl<'a> AstNode<'a, TSSatisfiesExpression<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -10245,11 +10255,11 @@ impl<'a> AstNode<'a, TSTypeAssertion<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -10288,11 +10298,11 @@ impl<'a> AstNode<'a, TSImportEqualsDeclaration<'a>> {
         self.inner.import_kind
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -10349,11 +10359,11 @@ impl<'a> AstNode<'a, TSExternalModuleReference<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -10376,11 +10386,11 @@ impl<'a> AstNode<'a, TSNonNullExpression<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -10403,11 +10413,11 @@ impl<'a> AstNode<'a, Decorator<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -10430,11 +10440,11 @@ impl<'a> AstNode<'a, TSExportAssignment<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -10457,11 +10467,11 @@ impl<'a> AstNode<'a, TSNamespaceExportDeclaration<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -10495,11 +10505,11 @@ impl<'a> AstNode<'a, TSInstantiationExpression<'a>> {
         })
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -10527,11 +10537,11 @@ impl<'a> AstNode<'a, JSDocNullableType<'a>> {
         self.inner.postfix
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -10559,11 +10569,11 @@ impl<'a> AstNode<'a, JSDocNonNullableType<'a>> {
         self.inner.postfix
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }
@@ -10575,11 +10585,11 @@ impl<'a> AstNode<'a, JSDocUnknownType> {
         self.inner.node_id()
     }
 
-    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
 
-    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
     }

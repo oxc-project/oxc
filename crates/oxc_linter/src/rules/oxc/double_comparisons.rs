@@ -43,8 +43,9 @@ declare_oxc_lint!(
     DoubleComparisons,
     oxc,
     correctness,
-    fix,
+    suggestion,
     version = "0.0.22",
+    short_description = "This rule checks for double comparisons in logical expressions.",
 );
 
 impl Rule for DoubleComparisons {
@@ -96,7 +97,7 @@ impl Rule for DoubleComparisons {
             _ => return,
         };
 
-        ctx.diagnostic_with_fix(
+        ctx.diagnostic_with_suggestion(
             double_comparisons_diagnostic(logical_expr.span, new_op),
             |fixer| {
                 let modified_code = {
@@ -168,6 +169,7 @@ fn test() {
         ("x > y || x == y", "x >= y"),
         ("x < y || x > y", "x != y"),
         ("x > y || x < y", "x != y"),
+        ("x > 0 || x < 0", "x != 0"),
         ("x <= y && x >= y", "x == y"),
         ("x >= y && x <= y", "x == y"),
         ("x === y || x < y", "x <= y"),

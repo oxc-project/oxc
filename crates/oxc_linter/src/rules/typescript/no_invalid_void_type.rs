@@ -131,6 +131,7 @@ declare_oxc_lint!(
     none,
     config = NoInvalidVoidTypeConfig,
     version = "1.47.0",
+    short_description = "Disallow `void` type usage outside return types and configured generic contexts.",
 );
 
 impl Rule for NoInvalidVoidType {
@@ -693,7 +694,7 @@ fn test() {
         ),
         (
             "
-            declare module foo {
+            module foo {
               function f(): void;
               function f(x: string): string;
               function f(x?: string): string | void {

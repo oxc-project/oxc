@@ -9,7 +9,10 @@ use std::{
 
 use convert_case::{Case, Casing};
 use lazy_regex::regex;
-use oxc_allocator::Allocator;
+use rustc_hash::{FxHashMap, FxHashSet};
+use serde::Serialize;
+
+use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::ast::{
     Argument, ArrayExpression, ArrayExpressionElement, AssignmentTarget, CallExpression,
     Expression, ExpressionStatement, IdentifierName, ObjectExpression, ObjectProperty,
@@ -20,8 +23,6 @@ use oxc_ast_visit::Visit;
 use oxc_parser::Parser;
 use oxc_span::{GetSpan, SourceType, Span};
 use oxc_tasks_common::project_root;
-use rustc_hash::{FxHashMap, FxHashSet};
-use serde::Serialize;
 
 mod json;
 mod template;
@@ -215,18 +216,24 @@ fn format_code_snippet(code: &str) -> String {
         return format!("\"{code}\"");
     }
 
-    // "document.querySelector("#foo");" => r##"document.querySelector("#foo");"##
-    if code.contains("\"#") {
-        return format!("r##\"{code}\"##");
-    }
-
     // 'import foo from "foo";' => r#"import foo from "foo";"#
     if code.contains('"') {
-        return format!("r#\"{}\"#", code.replace("\\\"", "\""));
+        return format_raw_string_literal(&code.replace("\\\"", "\""));
     }
 
     // `foo === bar` => `r"foo === bar"`
-    format!("r\"{code}\"")
+    format_raw_string_literal(&code)
+}
+
+fn format_raw_string_literal(code: &str) -> String {
+    let hashes = (0..=code.len())
+        .find(|hash_count| {
+            let terminator = format!("\"{}", "#".repeat(*hash_count));
+            !code.contains(&terminator)
+        })
+        .expect("raw string delimiter search should always terminate");
+    let hashes = "#".repeat(hashes);
+    format!("r{hashes}\"{code}\"{hashes}")
 }
 // TODO: handle `noFormat`(in typescript-eslint)
 fn format_tagged_template_expression(tag_expr: &TaggedTemplateExpression) -> Option<String> {
@@ -235,7 +242,7 @@ fn format_tagged_template_expression(tag_expr: &TaggedTemplateExpression) -> Opt
     // String.raw`foobar\n\t escapedthing`
     // ```
     if tag_expr.tag.is_specific_member_access("String", "raw") {
-        tag_expr.quasi.quasis.first().map(|quasi| format!("r#\"{}\"#", quasi.value.raw))
+        tag_expr.quasi.quasis.first().map(|quasi| format_raw_string_literal(&quasi.value.raw))
     } else if tag_expr.tag.is_specific_id("dedent") || tag_expr.tag.is_specific_id("outdent") {
         tag_expr.quasi.quasis.first().map(|quasi| util::dedent(&quasi.value.raw))
     } else {
@@ -642,7 +649,7 @@ impl<'a> Visit<'a> for State<'a> {
 
 fn find_parser_arguments<'a, 'b>(
     mut expr: &'b Expression<'a>,
-) -> Option<&'b oxc_allocator::Vec<'a, Argument<'a>>> {
+) -> Option<&'b ArenaVec<'a, Argument<'a>>> {
     loop {
         let Expression::CallExpression(call_expr) = expr else { return None };
         let Expression::StaticMemberExpression(static_member_expr) = &call_expr.callee else {
@@ -867,10 +874,14 @@ impl RuleConfigOutput {
                     else {
                         continue;
                     };
-                    if key.to_case(Case::Camel) != *raw_key {
+                    let field_name = key.to_case(Case::Snake);
+                    let rust_field_name = rust_field_name(&field_name);
+                    let serialized_field_name =
+                        rust_field_name.strip_prefix("r#").unwrap_or(&rust_field_name);
+                    if key.to_case(Case::Camel) != *raw_key || serialized_field_name != field_name {
                         let _ = writeln!(output, "    #[serde(rename = \"{raw_key}\")]");
                     }
-                    let _ = writeln!(output, "    {}: {value_label},", key.to_case(Case::Snake));
+                    let _ = writeln!(output, "    {rust_field_name}: {value_label},");
                     if let Some(value_output) = value_output {
                         let _ = writeln!(fields_output, "{value_output}\n");
                     }
@@ -912,6 +923,24 @@ impl RuleConfigOutput {
                 None
             }
         }
+    }
+}
+
+/// Convert a config property name into a valid Rust field identifier.
+///
+/// Most Rust keywords can be used as raw identifiers. `self`, `Self`, `super`, and `crate`
+/// cannot, so append an underscore for those names. The caller adds a serde rename when the
+/// returned identifier does not serialize back to `name`.
+fn rust_field_name(name: &str) -> Cow<'_, str> {
+    if syn::parse_str::<syn::Ident>(name).is_ok() {
+        return Cow::Borrowed(name);
+    }
+
+    let raw_name = format!("r#{name}");
+    if syn::parse_str::<syn::Ident>(&raw_name).is_ok() {
+        Cow::Owned(raw_name)
+    } else {
+        Cow::Owned(format!("{name}_"))
     }
 }
 
@@ -1488,14 +1517,14 @@ fn main() {
             let allocator = Allocator::default();
             let source_type = SourceType::from_path(rule_test_path).unwrap();
             let ret = Parser::new(&allocator, &body, source_type).parse();
-            if !ret.errors.is_empty() {
-                let first_error = ret.errors.first().map_or_else(
+            if !ret.diagnostics.is_empty() {
+                let first_error = ret.diagnostics.first().map_or_else(
                     || "unknown parse error".to_string(),
                     std::string::ToString::to_string,
                 );
                 eprintln!(
                     "Warning: {} parse error(s) in test file (possibly due to unsupported or invalid syntax). First error: {}. Attempting to extract test cases anyway.",
-                    ret.errors.len(),
+                    ret.diagnostics.len(),
                     first_error
                 );
             }
@@ -1588,10 +1617,10 @@ fn main() {
             let allocator = Allocator::default();
             let source_type = SourceType::from_path(rule_src_path).unwrap();
             let ret = Parser::new(&allocator, &body, source_type).parse();
-            if !ret.errors.is_empty() {
+            if !ret.diagnostics.is_empty() {
                 eprintln!(
                     "Warning: {} parse error(s) in rule source file (possibly due to Flow types). Attempting to extract rule config anyway.",
-                    ret.errors.len()
+                    ret.diagnostics.len()
                 );
             }
             let debug_mode = false;
@@ -2131,6 +2160,18 @@ mod tests {
     }
 
     #[test]
+    fn test_format_code_snippet_raw_string_terminator() {
+        assert_eq!(
+            format_code_snippet("document.getElementById(\"#id\")"),
+            "r##\"document.getElementById(\"#id\")\"##"
+        );
+        assert_eq!(
+            format_code_snippet("document.getElementById(\"##id\")"),
+            "r###\"document.getElementById(\"##id\")\"###"
+        );
+    }
+
+    #[test]
     fn test_format_code_snippet_newline_normalization() {
         // Newline characters get indented with spaces, not tabs
         let input = "line1\nline2\nline3";
@@ -2153,5 +2194,25 @@ mod tests {
     fn test_format_code_snippet_single_quotes() {
         // Single quotes (no double quotes) - treated as regular string
         assert_eq!(format_code_snippet("const msg = 'hello';"), "\"const msg = 'hello';\"");
+    }
+
+    #[test]
+    fn test_string_raw_backslash_uses_unhashed_raw_string() {
+        let source_text = "String.raw`new RegExp('([\\\\q])', 'v')`";
+        let allocator = Allocator::default();
+        let ret = Parser::new(&allocator, source_text, SourceType::default()).parse();
+        assert!(ret.diagnostics.is_empty(), "{:?}", ret.diagnostics);
+
+        let Statement::ExpressionStatement(stmt) = ret.program.body.first().unwrap() else {
+            panic!("expected expression statement");
+        };
+        let Expression::TaggedTemplateExpression(tag_expr) = &stmt.expression else {
+            panic!("expected tagged template expression");
+        };
+
+        assert_eq!(
+            format_tagged_template_expression(tag_expr),
+            Some("r\"new RegExp('([\\\\q])', 'v')\"".to_string())
+        );
     }
 }

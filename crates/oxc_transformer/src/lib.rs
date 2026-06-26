@@ -7,10 +7,14 @@
 
 use std::path::Path;
 
-use oxc_allocator::{Allocator, TakeIn, Vec as ArenaVec};
-use oxc_ast::{AstBuilder, ast::*};
-use oxc_diagnostics::OxcDiagnostic;
+use oxc_allocator::{Allocator, ArenaVec, TakeIn};
+use oxc_ast::{ast::*, builder::AstBuilder};
+use oxc_diagnostics::Diagnostics;
+#[cfg(feature = "react_compiler")]
+use oxc_react_compiler::{PluginOptions, transform as react_compiler_transform};
 use oxc_semantic::Scoping;
+#[cfg(feature = "react_compiler")]
+use oxc_semantic::SemanticBuilder;
 use oxc_span::{GetSpan, SPAN};
 use oxc_traverse::{ReusableTraverseCtx, Traverse, traverse_mut_with_ctx};
 
@@ -87,7 +91,7 @@ pub use crate::{
 #[non_exhaustive]
 pub struct TransformerReturn {
     /// Diagnostics produced during transformation.
-    pub errors: std::vec::Vec<OxcDiagnostic>,
+    pub diagnostics: Diagnostics,
     /// Updated semantic scoping after all transforms have run.
     pub scoping: Scoping,
     /// Helpers used by this transform.
@@ -102,6 +106,9 @@ pub struct Transformer<'a> {
     state: TransformState<'a>,
     allocator: &'a Allocator,
 
+    // Options, in evaluation order.
+    #[cfg(feature = "react_compiler")]
+    react_compiler: Option<PluginOptions>,
     typescript: TypeScriptOptions,
     decorator: DecoratorOptions,
     plugins: PluginsOptions,
@@ -118,6 +125,8 @@ impl<'a> Transformer<'a> {
         Self {
             state,
             allocator,
+            #[cfg(feature = "react_compiler")]
+            react_compiler: options.react_compiler.clone(),
             typescript: options.typescript.clone(),
             decorator: options.decorator,
             plugins: options.plugins.clone(),
@@ -134,6 +143,22 @@ impl<'a> Transformer<'a> {
         program: &mut Program<'a>,
     ) -> TransformerReturn {
         let allocator = self.allocator;
+
+        #[cfg(feature = "react_compiler")]
+        let (scoping, react_compiler_diagnostics) = self.run_react_compiler(scoping, program);
+        #[cfg(not(feature = "react_compiler"))]
+        let react_compiler_diagnostics = Diagnostics::new();
+
+        // A React Compiler error is fatal: stop before the rest of the transform runs.
+        if react_compiler_diagnostics.has_errors() {
+            #[expect(deprecated)]
+            return TransformerReturn {
+                diagnostics: react_compiler_diagnostics,
+                scoping,
+                helpers_used: FxHashMap::default(),
+            };
+        }
+
         let ast_builder = AstBuilder::new(allocator);
 
         self.state.source_type = program.source_type;
@@ -165,7 +190,7 @@ impl<'a> Transformer<'a> {
             x1_jsx: Jsx::new(
                 self.jsx,
                 self.env.es2018.object_rest_spread,
-                ast_builder,
+                &ast_builder,
                 program.source_type,
             ),
             x2_es2026: ES2026::new(self.env.es2026),
@@ -188,13 +213,35 @@ impl<'a> Transformer<'a> {
         traverse_mut_with_ctx(&mut transformer, program, &mut reusable_ctx);
         let (mut state, scoping) = reusable_ctx.into_state_and_scoping();
         let helpers_used = state.helper_loader.used_helpers.drain().collect();
+        let mut diagnostics = react_compiler_diagnostics;
+        diagnostics.extend(state.take_errors());
         #[expect(deprecated)]
-        TransformerReturn { errors: state.take_errors(), scoping, helpers_used }
+        TransformerReturn { diagnostics, scoping, helpers_used }
+    }
+
+    #[cfg(feature = "react_compiler")]
+    fn run_react_compiler(
+        &mut self,
+        scoping: Scoping,
+        program: &mut Program<'a>,
+    ) -> (Scoping, Diagnostics) {
+        let Some(options) = self.react_compiler.take() else {
+            return (scoping, Diagnostics::new());
+        };
+        let result = react_compiler_transform(program, self.allocator, options);
+        let Some(compiled) = result.program else {
+            return (scoping, result.diagnostics);
+        };
+        *program = compiled;
+        let scoping =
+            SemanticBuilder::new().with_enum_eval(true).build(program).semantic.into_scoping();
+        (scoping, result.diagnostics)
     }
 }
 
 struct TransformerImpl<'a> {
     // NOTE: all callbacks must run in order.
+    // Keep `TransformOptions` field order and docs in sync with this order.
     x0_typescript: Option<TypeScript<'a>>,
     decorator: Decorator<'a>,
     plugins: Plugins<'a>,
@@ -598,8 +645,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
                 let Statement::ExpressionStatement(expr_stmt) = stmt else {
                     continue;
                 };
-                let expression = Some(expr_stmt.expression.take_in(ctx.ast));
-                *stmt = ctx.ast.statement_return(SPAN, expression);
+                let expression = Some(expr_stmt.expression.take_in(ctx));
+                *stmt = Statement::new_return_statement(SPAN, expression, ctx);
                 return;
             }
             unreachable!("At least one statement should be expression statement")
