@@ -448,6 +448,40 @@ impl<'a, 'b> AssertionVisitor<'a, 'b> {
             }
         }
     }
+
+    /// Walk call/function receivers in a callee expression without resolving arbitrary idents.
+    /// Handles `(async () => { expect() })().finally(...)` and `fn().then(() => expect())`.
+    fn visit_callee_nested_calls(&mut self, expr: &Expression<'a>) {
+        let mut current = expr.get_inner_expression();
+        loop {
+            if self.found_assertion {
+                return;
+            }
+            match current {
+                Expression::CallExpression(call) => {
+                    self.visit_call_expression(call);
+                    return;
+                }
+                Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_) => {
+                    self.check_expression(current);
+                    return;
+                }
+                Expression::AwaitExpression(await_expr) => {
+                    current = await_expr.argument.get_inner_expression();
+                }
+                Expression::ChainExpression(chain) => {
+                    let Some(member) = chain.expression.as_member_expression() else {
+                        return;
+                    };
+                    current = member.object().get_inner_expression();
+                }
+                expr if matches!(expr, match_member_expression!(Expression)) => {
+                    current = expr.to_member_expression().object().get_inner_expression();
+                }
+                _ => return,
+            }
+        }
+    }
 }
 
 impl<'a> Visit<'a> for AssertionVisitor<'a, '_> {
@@ -465,15 +499,24 @@ impl<'a> Visit<'a> for AssertionVisitor<'a, '_> {
             if self.found_assertion {
                 return;
             }
-        } else if self.need_full_name {
-            // Custom patterns may assert on chained callees; walk callee only then.
-            self.visit_expression(callee);
+        } else {
+            // Chained calls must still see asserts in the receiver, e.g.
+            // `(async () => { expect(1) })().finally(...)` — walk nested calls/arrows only,
+            // not every identifier along a member path.
+            self.visit_callee_nested_calls(callee);
             if self.found_assertion {
                 return;
             }
+            if self.need_full_name {
+                // Custom patterns may assert on dotted callee chains.
+                self.visit_expression(callee);
+                if self.found_assertion {
+                    return;
+                }
+            }
         }
 
-        // Arguments only — where nested callbacks and further calls live.
+        // Arguments — nested callbacks and further calls.
         self.visit_call_arguments(&call_expr.arguments);
     }
 
