@@ -3602,6 +3602,47 @@ Negative Passed: 149/149 (100.00%)
    ·     ─────────
    ╰────
 
+  × Cannot use new with dynamic import
+   ╭─[misc/fail/oxc-23458.js:1:5]
+ 1 │ new import('').prop;
+   ·     ───────────────
+ 2 │ new import.source('<module source>').prop;
+   ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
+   ╭─[misc/fail/oxc-23458.js:2:5]
+ 1 │ new import('').prop;
+ 2 │ new import.source('<module source>').prop;
+   ·     ─────────────────────────────────────
+ 3 │ new import.defer('./empty_FIXTURE.js').prop;
+   ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
+   ╭─[misc/fail/oxc-23458.js:3:5]
+ 2 │ new import.source('<module source>').prop;
+ 3 │ new import.defer('./empty_FIXTURE.js').prop;
+   ·     ───────────────────────────────────────
+ 4 │ new import('x').prop``;
+   ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
+   ╭─[misc/fail/oxc-23458.js:4:5]
+ 3 │ new import.defer('./empty_FIXTURE.js').prop;
+ 4 │ new import('x').prop``;
+   ·     ──────────────────
+   ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
+   ╭─[misc/fail/oxc-23458.ts:1:5]
+ 1 │ new import('x').prop!;
+   ·     ─────────────────
+   ╰────
+  help: Wrap this with parenthesis
+
   × Expected 'with' in import type options
     ╭─[misc/fail/oxc-2394.ts:20:22]
  19 │ export type LocalInterface =
