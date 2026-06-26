@@ -311,7 +311,7 @@ async function getTestFailurePaths(snapshotPath: string, pathPrefix: string) {
   );
 }
 
-describe.concurrent("`parse`", () => {
+describe("`parse`", { concurrent: false }, () => {
   it("matches `parseSync`", async () => {
     const path = benchFixturePaths[0],
       filename = basename(path),
