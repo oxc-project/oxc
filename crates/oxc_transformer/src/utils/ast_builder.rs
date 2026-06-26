@@ -1,10 +1,10 @@
 use std::iter;
 
-use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
+use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{GetSpan, SPAN};
-use oxc_str::Ident;
+use oxc_str::{Ident, static_ident};
 use oxc_traverse::BoundIdentifier;
 
 use crate::context::TraverseCtx;
@@ -12,11 +12,11 @@ use crate::context::TraverseCtx;
 /// `object` -> `object.call`.
 pub fn create_member_callee<'a>(
     object: Expression<'a>,
-    property: &'static str,
+    property: Ident<'a>,
     span: Span,
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
-    let property = ctx.ast.identifier_name(SPAN, Str::from(property));
+    let property = ctx.ast.identifier_name(SPAN, property);
     Expression::from(ctx.ast.member_expression_static(span, object, property, false))
 }
 
@@ -27,7 +27,7 @@ pub fn create_bind_call<'a>(
     span: Span,
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
-    let callee = create_member_callee(callee, "bind", span, ctx);
+    let callee = create_member_callee(callee, static_ident!("bind"), span, ctx);
     let arguments = ctx.ast.vec1(Argument::from(this));
     ctx.ast.expression_call(span, callee, NONE, arguments, false)
 }
@@ -39,7 +39,7 @@ pub fn create_call_call<'a>(
     span: Span,
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
-    let callee = create_member_callee(callee, "call", span, ctx);
+    let callee = create_member_callee(callee, static_ident!("call"), span, ctx);
     let arguments = ctx.ast.vec1(Argument::from(this));
     ctx.ast.expression_call(span, callee, NONE, arguments, false)
 }
@@ -83,7 +83,7 @@ pub fn create_prototype_member<'a>(
     span: Span,
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
-    let property = ctx.ast.identifier_name(SPAN, Str::from("prototype"));
+    let property = ctx.ast.identifier_name(SPAN, "prototype");
     let static_member = ctx.ast.member_expression_static(span, object, property, false);
     Expression::from(static_member)
 }
@@ -198,9 +198,7 @@ pub fn create_class_constructor_with_params<'a>(
 ) -> ClassElement<'a> {
     create_class_method(
         ctx.ast.vec(),
-        PropertyKey::StaticIdentifier(
-            ctx.ast.alloc_identifier_name(SPAN, Str::from("constructor")),
-        ),
+        PropertyKey::StaticIdentifier(ctx.ast.alloc_identifier_name(SPAN, "constructor")),
         MethodDefinitionKind::Constructor,
         params,
         None,

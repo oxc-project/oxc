@@ -5,7 +5,7 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::Ident;
 
-use crate::utils::{create_ident, pluralize};
+use crate::utils::{create_ident, pluralize, snake_case};
 
 use super::{
     Containers, Def, Derives, File, FileId, Schema, TypeDef, TypeId, Visibility,
@@ -201,7 +201,7 @@ impl VariantDef {
 
     /// Get variant name in snake case.
     pub fn snake_name(&self) -> String {
-        self.name().to_case(Case::Snake)
+        snake_case(self.name())
     }
 
     /// Get variant name in camel case.

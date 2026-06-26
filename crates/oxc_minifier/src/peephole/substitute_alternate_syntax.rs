@@ -1,7 +1,7 @@
 use std::iter::repeat_with;
 
 use crate::generated::ancestor::Ancestor;
-use oxc_allocator::{CloneIn, TakeIn, Vec};
+use oxc_allocator::{ArenaVec, CloneIn, TakeIn};
 use oxc_ast::{NONE, ast::*};
 use oxc_compat::ESFeature;
 use oxc_ecmascript::side_effects::MayHaveSideEffectsContext;
@@ -13,6 +13,7 @@ use oxc_ecmascript::{
 use oxc_semantic::ReferenceFlags;
 use oxc_span::GetSpan;
 use oxc_span::SPAN;
+use oxc_str::static_ident;
 use oxc_syntax::precedence::GetPrecedence;
 use oxc_syntax::{
     identifier::is_identifier_name_patched,
@@ -1336,11 +1337,11 @@ impl<'a> PeepholeOptimizations {
                     .as_member_expression()
                     .is_some_and(|mem_expr| mem_expr.is_specific_member_access("window", "Object"))
             {
-                let object = ctx.ast.ident("Object");
+                let object = static_ident!("Object");
                 let reference_id = ctx.create_unbound_reference(object, ReferenceFlags::Read);
                 let new_callee = ctx.ast.expression_identifier_with_reference_id(
                     call_expr.callee.span(),
-                    "Object",
+                    object,
                     reference_id,
                 );
                 ctx.replace_expression(&mut call_expr.callee, new_callee);
@@ -1403,7 +1404,7 @@ impl<'a> PeepholeOptimizations {
 
     // `foo(...[1,2,3])` -> `foo(1,2,3)`
     // `new Foo(...[1,2,3])` -> `new Foo(1,2,3)`
-    fn try_flatten_arguments(args: &mut Vec<'a, Argument<'a>>, ctx: &mut TraverseCtx<'a>) {
+    fn try_flatten_arguments(args: &mut ArenaVec<'a, Argument<'a>>, ctx: &mut TraverseCtx<'a>) {
         let (new_size, should_fold) =
             args.iter().fold((0, false), |(mut new_size, mut should_fold), arg| {
                 new_size += if let Argument::SpreadElement(spread_el) = arg {
@@ -1703,7 +1704,7 @@ impl<'a> PeepholeOptimizations {
         });
         let Some(delimiter) = Self::pick_delimiter(&strings) else { return };
 
-        let concatenated_string = strings.collect::<std::vec::Vec<_>>().join(delimiter);
+        let concatenated_string = strings.collect::<Vec<_>>().join(delimiter);
 
         // "str1,str2".split(',')
         let new_value = ctx.ast.expression_call_with_pure(

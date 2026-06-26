@@ -212,7 +212,9 @@ impl IdLength {
         }
 
         let parent_node = ctx.nodes().parent_node(node.id());
-        if !self.check_generic && matches!(parent_node.kind(), AstKind::TSTypeParameter(_)) {
+        if !self.check_generic
+            && matches!(parent_node.kind(), AstKind::TSTypeParameter(_) | AstKind::TSMappedType(_))
+        {
             return;
         }
 
@@ -566,6 +568,10 @@ fn test() {
             "export type Example<T> = T extends Array<infer U> ? U : never;",
             Some(serde_json::json!([{ "min": 2, "checkGeneric": false }])),
         ),
+        (
+            "type Foo<T> = { [K in keyof T]: unknown };",
+            Some(serde_json::json!([{ "min": 2, "checkGeneric": false }])),
+        ),
         ("var 𠮟 = 2", Some(serde_json::json!([{ "min": 1, "max": 1 }]))), // { "ecmaVersion": 6 },
         ("var 葛󠄀 = 2", Some(serde_json::json!([{ "min": 1, "max": 1 }]))), // { "ecmaVersion": 6 },
         ("var a = { 𐌘: 1 };", Some(serde_json::json!([{ "min": 1, "max": 1 }]))), // { "ecmaVersion": 6, },
@@ -686,6 +692,10 @@ fn test() {
         ("class Foo { #abcdefg = 1 }", Some(serde_json::json!([{ "max": 3 }]))), // { "ecmaVersion": 2022 },
         (
             "export type Example<T> = T extends Array<infer U> ? U : never;",
+            Some(serde_json::json!([{ "min": 2, "checkGeneric": true }])),
+        ),
+        (
+            "type Foo<T> = { [K in keyof T]: unknown };",
             Some(serde_json::json!([{ "min": 2, "checkGeneric": true }])),
         ),
         ("var 𠮟 = 2", None),              // { "ecmaVersion": 6 },

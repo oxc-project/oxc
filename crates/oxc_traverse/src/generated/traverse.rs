@@ -1,7 +1,7 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/traverse/mod.rs`.
 
-use oxc_allocator::Vec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 
 use crate::TraverseCtx;
@@ -3119,14 +3119,14 @@ pub trait Traverse<'a, State> {
     #[inline]
     fn enter_statements(
         &mut self,
-        node: &mut Vec<'a, Statement<'a>>,
+        node: &mut ArenaVec<'a, Statement<'a>>,
         ctx: &mut TraverseCtx<'a, State>,
     ) {
     }
     #[inline]
     fn exit_statements(
         &mut self,
-        node: &mut Vec<'a, Statement<'a>>,
+        node: &mut ArenaVec<'a, Statement<'a>>,
         ctx: &mut TraverseCtx<'a, State>,
     ) {
     }

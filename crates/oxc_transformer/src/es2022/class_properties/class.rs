@@ -4,7 +4,7 @@
 use oxc_allocator::{Address, GetAddress, TakeIn, UnstableAddress};
 use oxc_ast::{NONE, ast::*};
 use oxc_span::SPAN;
-use oxc_str::Ident;
+use oxc_str::{Ident, static_ident};
 use oxc_syntax::{
     node::NodeId,
     reference::ReferenceFlags,
@@ -884,7 +884,7 @@ fn create_new_weakmap<'a>(
     symbol_id: &mut Option<Option<SymbolId>>,
     ctx: &mut TraverseCtx<'a>,
 ) -> Expression<'a> {
-    let weak_map = ctx.ast.ident("WeakMap");
+    let weak_map = static_ident!("WeakMap");
     let symbol_id = *symbol_id
         .get_or_insert_with(|| ctx.scoping().find_binding(ctx.current_scope_id(), weak_map));
     let ident = ctx.create_ident_expr(SPAN, weak_map, symbol_id, ReferenceFlags::Read);
@@ -893,7 +893,7 @@ fn create_new_weakmap<'a>(
 
 /// Create `new WeakSet()` expression.
 fn create_new_weakset<'a>(ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
-    let weak_set = ctx.ast.ident("WeakSet");
+    let weak_set = static_ident!("WeakSet");
     let symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), weak_set);
     let ident = ctx.create_ident_expr(SPAN, weak_set, symbol_id, ReferenceFlags::Read);
     ctx.ast.expression_new_with_pure(SPAN, ident, NONE, ctx.ast.vec(), true)

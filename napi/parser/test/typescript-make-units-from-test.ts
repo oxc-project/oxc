@@ -13,11 +13,10 @@ const META_OPTIONS_REGEX = /^\/\/\s*@(\w+)\s*:\s*([^\r\n]*)/gm;
 
 /**
  * Convert settings value to boolean
- * @param {string|null} value - Setting value
- * @param {boolean} defaultValue - Default value if setting is not present
- * @returns {boolean}
+ * @param value - Setting value
+ * @param defaultValue - Default value if setting is not present
  */
-function valueToBoolean(value, defaultValue) {
+function valueToBoolean(value: string | null, defaultValue: boolean): boolean {
   if (value === "true") return true;
   if (value === "false") return false;
   return defaultValue;
@@ -25,20 +24,19 @@ function valueToBoolean(value, defaultValue) {
 
 /**
  * Split comma-separated values into array
- * @param {string|null} value - Setting value
- * @returns {string[]}
+ * @param value - Setting value
  */
-function splitValueOptions(value) {
+function splitValueOptions(value: string | null): string[] {
   if (!value) return [];
   return value.split(",").map((s) => s.trim().toLowerCase());
 }
 
 /**
  * Create compiler settings from options map
- * @param {Map<string, string>} options - Compiler options
+ * @param options - Compiler options
  * @returns {Object} CompilerSettings
  */
-function createCompilerSettings(options) {
+function createCompilerSettings(options: Map<string, string>) {
   return {
     modules: splitValueOptions(options.get("module")),
     targets: splitValueOptions(options.get("target")),
@@ -67,10 +65,9 @@ const EXTENSIONS = {
 
 /**
  * Check if extension explicitly indicates module type
- * @param {string} ext - File extension (lowercase, with dot)
- * @returns {boolean}
+ * @param ext - File extension (lowercase, with dot)
  */
-function isExplicitModuleExtension(ext) {
+function isExplicitModuleExtension(ext: string): boolean {
   return [".mts", ".mjs", ".cjs", ".cts"].includes(ext);
 }
 

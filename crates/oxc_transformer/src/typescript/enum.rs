@@ -1,12 +1,12 @@
 use std::cell::Cell;
 
-use oxc_allocator::{TakeIn, Vec as ArenaVec};
+use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::{NONE, ast::*};
 use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_semantic::{ScopeFlags, ScopeId};
 use oxc_span::{SPAN, Span};
-use oxc_str::Ident;
+use oxc_str::{Ident, static_ident};
 use oxc_syntax::{
     constant_value::ConstantValue,
     number::NumberBase,
@@ -283,8 +283,11 @@ impl<'a> TypeScriptEnum {
             VariableDeclarationKind::Var
         };
         let decls = {
-            let binding_identifier = decl.id.clone();
-            let binding = BindingPattern::BindingIdentifier(ctx.alloc(binding_identifier));
+            let binding = ast.binding_pattern_binding_identifier_with_symbol_id(
+                decl.id.span,
+                decl.id.name,
+                enum_symbol_id,
+            );
             let decl =
                 ast.variable_declarator(span, kind, binding, NONE, Some(call_expression), false);
             ast.vec1(decl)
@@ -478,7 +481,7 @@ impl<'a> TypeScriptEnum {
 
         // Infinity
         let expr = if value.is_infinite() {
-            let infinity = ctx.ast.ident("Infinity");
+            let infinity = static_ident!("Infinity");
             let infinity_symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), infinity);
             ctx.create_ident_expr(SPAN, infinity, infinity_symbol_id, ReferenceFlags::Read)
         } else {

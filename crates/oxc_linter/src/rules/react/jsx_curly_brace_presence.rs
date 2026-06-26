@@ -4,14 +4,15 @@ use crate::{
     rule::{DefaultRuleConfig, Rule},
 };
 use lazy_regex::{Lazy, Regex, lazy_regex};
-use oxc_allocator::{Allocator, Vec};
+use oxc_allocator::{Allocator, ArenaVec};
 
 use oxc_ast::{
-    AstBuilder, AstKind,
+    AstKind,
     ast::{
         Expression, JSXAttributeItem, JSXAttributeValue, JSXChild, JSXElementName, JSXExpression,
         JSXExpressionContainer,
     },
+    builder::AstBuilder,
 };
 use oxc_codegen::CodegenOptions;
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
@@ -373,7 +374,7 @@ impl JsxCurlyBracePresence {
     fn check_jsx_child<'a>(
         &self,
         ctx: &LintContext<'a>,
-        children: &Vec<'a, JSXChild<'a>>,
+        children: &ArenaVec<'a, JSXChild<'a>>,
         node: &AstNode<'a>,
     ) {
         for child in children {
@@ -632,10 +633,11 @@ fn report_unnecessary_curly_for_attribute_value<'a>(
             fix = fix.with_options(CodegenOptions::default());
         }
 
-        fix.print_expression(&ast_builder.expression_string_literal(
+        fix.print_expression(&Expression::new_string_literal(
             Span::default(),
             str.as_str(),
             None,
+            &ast_builder,
         ));
 
         fixer.replace(container.span, fix.into_source_text())
@@ -662,10 +664,11 @@ fn report_missing_curly_for_string_attribute_value(
         let alloc = Allocator::default();
         let ast_builder = AstBuilder::new(&alloc);
 
-        replace.print_expression(&ast_builder.expression_string_literal(
+        replace.print_expression(&Expression::new_string_literal(
             Span::default(),
             string_value,
             None,
+            &ast_builder,
         ));
 
         let mut fix = fixer.new_fix_with_capacity(3);
@@ -680,13 +683,12 @@ fn report_missing_curly_for_text_node(ctx: &LintContext, span: Span, string_valu
         let fixer = fixer.for_multifix();
         let alloc = Allocator::default();
         let ast_builder = AstBuilder::new(&alloc);
-        let line_matches =
-            string_value.match_indices('\n').map(|(i, _)| i).collect::<std::vec::Vec<_>>();
+        let line_matches = string_value.match_indices('\n').map(|(i, _)| i).collect::<Vec<_>>();
         let fix_contexts = if line_matches.is_empty() {
             build_missing_curly_fix_context_for_part(span, string_value, 0)
                 .iter()
                 .copied()
-                .collect::<std::vec::Vec<_>>()
+                .collect::<Vec<_>>()
         } else {
             string_value
                 .split('\n')
@@ -695,7 +697,7 @@ fn report_missing_curly_for_text_node(ctx: &LintContext, span: Span, string_valu
                     let line_start = calculate_line_start(line_matches.as_slice(), index);
                     build_missing_curly_fix_context_for_line(span, line, line_start)
                 })
-                .collect::<std::vec::Vec<_>>()
+                .collect::<Vec<_>>()
         };
         if fix_contexts.is_empty() {
             return fixer.noop();
@@ -703,10 +705,11 @@ fn report_missing_curly_for_text_node(ctx: &LintContext, span: Span, string_valu
         let mut fix = fixer.new_fix_with_capacity(fix_contexts.len() * 3);
         for (span_from_first_char, text) in fix_contexts {
             let mut replace = fixer.codegen().with_options(CodegenOptions::default());
-            replace.print_expression(&ast_builder.expression_string_literal(
+            replace.print_expression(&Expression::new_string_literal(
                 Span::default(),
                 text,
                 None,
+                &ast_builder,
             ));
             fix.push(fixer.replace(span_from_first_char, replace.into_source_text()));
             fix.push(fixer.insert_text_before(&span_from_first_char, "{"));
@@ -720,9 +723,8 @@ fn build_missing_curly_fix_context_for_line(
     span: Span,
     line: &str,
     line_start: u32,
-) -> std::vec::Vec<(Span, &str)> {
-    let html_entities =
-        HTML_ENTITY_REGEX.find_iter(line).map(|mat| mat.end()).collect::<std::vec::Vec<_>>();
+) -> Vec<(Span, &str)> {
+    let html_entities = HTML_ENTITY_REGEX.find_iter(line).map(|mat| mat.end()).collect::<Vec<_>>();
     HTML_ENTITY_REGEX
         .split(line)
         .enumerate()
@@ -730,7 +732,7 @@ fn build_missing_curly_fix_context_for_line(
             let part_start = calculate_part_start(html_entities.as_slice(), index);
             build_missing_curly_fix_context_for_part(span, part, line_start + part_start)
         })
-        .collect::<std::vec::Vec<_>>()
+        .collect::<Vec<_>>()
 }
 
 fn build_missing_curly_fix_context_for_part(

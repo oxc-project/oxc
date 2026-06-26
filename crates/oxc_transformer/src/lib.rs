@@ -7,7 +7,7 @@
 
 use std::path::Path;
 
-use oxc_allocator::{Allocator, TakeIn, Vec as ArenaVec};
+use oxc_allocator::{Allocator, ArenaVec, TakeIn};
 use oxc_ast::{AstBuilder, ast::*};
 use oxc_diagnostics::Diagnostics;
 #[cfg(feature = "react_compiler")]

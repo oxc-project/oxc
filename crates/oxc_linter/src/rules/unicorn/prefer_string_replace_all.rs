@@ -1,7 +1,8 @@
 use oxc_allocator::Allocator;
 use oxc_ast::{
-    AstBuilder, AstKind,
-    ast::{Argument, MemberExpression, RegExpFlags},
+    AstKind,
+    ast::{Argument, Expression, MemberExpression, RegExpFlags, Str},
+    builder::AstBuilder,
 };
 use oxc_codegen::CodegenOptions;
 use oxc_diagnostics::OxcDiagnostic;
@@ -94,10 +95,11 @@ impl Rule for PreferStringReplaceAll {
                         });
                         let alloc = Allocator::default();
                         let ast = AstBuilder::new(&alloc);
-                        codegen.print_expression(&ast.expression_string_literal(
+                        codegen.print_expression(&Expression::new_string_literal(
                             SPAN,
-                            ast.str(&k),
+                            Str::from_str_in(&k, &ast),
                             None,
+                            &ast,
                         ));
                         fixer.replace(pattern.span(), codegen.into_source_text())
                     });

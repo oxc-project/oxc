@@ -583,7 +583,7 @@ impl<'a> ConstructorParamsSuperReplacer<'a, '_> {
             Expression::from(ctx.ast.member_expression_static(
                 SPAN,
                 super_binding.create_read_expression(ctx),
-                ctx.ast.identifier_name(SPAN, Str::from("call")),
+                ctx.ast.identifier_name(SPAN, "call"),
                 false,
             )),
             NONE,

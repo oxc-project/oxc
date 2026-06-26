@@ -14,7 +14,7 @@
 //! ctx.state.var_declarations.insert_let(name2, binding2, None, ctx.ast);
 //! ```
 
-use oxc_allocator::Vec as ArenaVec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::{AstBuilder, NONE, ast::*};
 use oxc_data_structures::stack::SparseStack;
 use oxc_span::SPAN;
@@ -50,8 +50,11 @@ impl<'a> VarDeclarationsStore<'a> {
     /// given a `BoundIdentifier`.
     #[inline]
     pub fn insert_var(&mut self, binding: &BoundIdentifier<'a>, ast: AstBuilder<'a>) {
-        let ident = ast.binding_identifier_with_symbol_id(SPAN, binding.name, binding.symbol_id);
-        let pattern = BindingPattern::BindingIdentifier(ast.alloc(ident));
+        let pattern = ast.binding_pattern_binding_identifier_with_symbol_id(
+            SPAN,
+            binding.name,
+            binding.symbol_id,
+        );
         self.insert_var_binding_pattern(pattern, None, ast);
     }
 
@@ -64,8 +67,11 @@ impl<'a> VarDeclarationsStore<'a> {
         init: Expression<'a>,
         ast: AstBuilder<'a>,
     ) {
-        let ident = ast.binding_identifier_with_symbol_id(SPAN, binding.name, binding.symbol_id);
-        let pattern = BindingPattern::BindingIdentifier(ast.alloc(ident));
+        let pattern = ast.binding_pattern_binding_identifier_with_symbol_id(
+            SPAN,
+            binding.name,
+            binding.symbol_id,
+        );
         self.insert_var_binding_pattern(pattern, Some(init), ast);
     }
 
@@ -121,8 +127,11 @@ impl<'a> VarDeclarationsStore<'a> {
         init: Option<Expression<'a>>,
         ast: AstBuilder<'a>,
     ) {
-        let ident = ast.binding_identifier_with_symbol_id(SPAN, binding.name, binding.symbol_id);
-        let pattern = BindingPattern::BindingIdentifier(ast.alloc(ident));
+        let pattern = ast.binding_pattern_binding_identifier_with_symbol_id(
+            SPAN,
+            binding.name,
+            binding.symbol_id,
+        );
         self.insert_let_binding_pattern(pattern, init, ast);
     }
 

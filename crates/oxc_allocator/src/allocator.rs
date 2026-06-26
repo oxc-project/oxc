@@ -552,7 +552,7 @@ impl Allocator {
     ///
     /// allocator.reset();
     ///
-    /// let mut vec = Vec::<u64>::with_capacity_in(2, &allocator);
+    /// let mut vec = Vec::<u64>::with_capacity_in(2, &&allocator);
     ///
     /// // Allocate something else, so `vec`'s allocation is not the most recent
     /// allocator.alloc(123u64);

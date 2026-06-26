@@ -103,6 +103,25 @@ impl<'a> PeepholeOptimizations {
                     Self::minimize_expression_in_boolean_context(last, ctx);
                 }
             }
+            // A binding that is provably falsy in boolean context (a write-once
+            // falsy `var` whose constant was withheld from value-context folding,
+            // e.g. a bundled `var hydrating = false` flag) folds to `false` here,
+            // where `undefined`-before-init is indistinguishable from the falsy
+            // init. The existing `if (false)` dead-code pass removes the branch.
+            Expression::Identifier(ident) => {
+                let reference_id = ident.reference_id();
+                let span = ident.span;
+                if let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id()
+                    && ctx
+                        .state
+                        .symbol_values
+                        .get_symbol_value(symbol_id)
+                        .is_some_and(|sv| sv.boolean_falsy)
+                {
+                    let new_expr = ctx.ast.expression_boolean_literal(span, false);
+                    ctx.replace_expression(expr, new_expr);
+                }
+            }
             _ => {}
         }
     }

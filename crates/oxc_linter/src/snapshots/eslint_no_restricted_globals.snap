@@ -451,23 +451,9 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a local variable or function parameter instead of the restricted global.
 
   ⚠ eslint(no-restricted-globals): Unexpected use of 'event'.
-   ╭─[no_restricted_globals.tsx:1:39]
- 1 │ function onClick(event) { console.log(event); console.log(window.event); }
-   ·                                       ─────
-   ╰────
-  help: Use a local variable or function parameter instead of the restricted global.
-
-  ⚠ eslint(no-restricted-globals): Unexpected use of 'event'.
    ╭─[no_restricted_globals.tsx:1:66]
  1 │ function onClick(event) { console.log(event); console.log(window.event); }
    ·                                                                  ─────
-   ╰────
-  help: Use a local variable or function parameter instead of the restricted global.
-
-  ⚠ eslint(no-restricted-globals): Unexpected use of 'event'.
-   ╭─[no_restricted_globals.tsx:1:39]
- 1 │ function onClick(event) { console.log(event); console.log(self.event); }
-   ·                                       ─────
    ╰────
   help: Use a local variable or function parameter instead of the restricted global.
 
@@ -479,23 +465,9 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a local variable or function parameter instead of the restricted global.
 
   ⚠ eslint(no-restricted-globals): Unexpected use of 'event'.
-   ╭─[no_restricted_globals.tsx:1:39]
- 1 │ function onClick(event) { console.log(event); console.log(globalThis.event); }
-   ·                                       ─────
-   ╰────
-  help: Use a local variable or function parameter instead of the restricted global.
-
-  ⚠ eslint(no-restricted-globals): Unexpected use of 'event'.
    ╭─[no_restricted_globals.tsx:1:70]
  1 │ function onClick(event) { console.log(event); console.log(globalThis.event); }
    ·                                                                      ─────
-   ╰────
-  help: Use a local variable or function parameter instead of the restricted global.
-
-  ⚠ eslint(no-restricted-globals): Unexpected use of 'event'.
-   ╭─[no_restricted_globals.tsx:1:39]
- 1 │ function onClick(event) { console.log(event); console.log(myGlobal.event); }
-   ·                                       ─────
    ╰────
   help: Use a local variable or function parameter instead of the restricted global.
 

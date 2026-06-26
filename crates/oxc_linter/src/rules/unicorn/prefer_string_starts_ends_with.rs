@@ -1,7 +1,8 @@
 use oxc_allocator::Allocator;
 use oxc_ast::{
-    AstBuilder, AstKind,
-    ast::{CallExpression, Expression, MemberExpression, RegExpFlags, RegExpLiteral},
+    AstKind,
+    ast::{CallExpression, Expression, MemberExpression, RegExpFlags, RegExpLiteral, Str},
+    builder::AstBuilder,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -124,7 +125,12 @@ fn do_fix<'a>(
     let alloc = Allocator::default();
     let ast = AstBuilder::new(&alloc);
     content.print_str(&format!(r"{}.{}(", fixer.source_range(target_span), method));
-    content.print_expression(&ast.expression_string_literal(SPAN, ast.str(&argument), None));
+    content.print_expression(&Expression::new_string_literal(
+        SPAN,
+        Str::from_str_in(&argument, &ast),
+        None,
+        &ast,
+    ));
     content.print_str(r")");
     fixer.replace(call_expr.span, content.into_source_text())
 }
