@@ -50,7 +50,7 @@ impl<'a> PeepholeOptimizations {
     pub fn minimize_statements(stmts: &mut ArenaVec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
         let mut old_stmts = stmts.take_in(ctx);
         let mut is_control_flow_dead = false;
-        let mut keep_var = KeepVar::new(&ctx.ast);
+        let mut keep_var = KeepVar::new();
         let mut identity_drops = 0u32;
         for i in 0..old_stmts.len() {
             let stmt = old_stmts[i].take_in(ctx);
@@ -86,7 +86,7 @@ impl<'a> PeepholeOptimizations {
                 break;
             }
         }
-        if let Some(stmt) = keep_var.get_variable_declaration_statement() {
+        if let Some(stmt) = keep_var.get_variable_declaration_statement(&ctx.ast) {
             match Self::remove_unused_variable_declaration(stmt, ctx) {
                 // Multiple identity-dropped `var x;`s coalesce into a single
                 // `var x, y;`. The individual drops looked byte-identical, but

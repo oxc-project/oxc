@@ -7,7 +7,6 @@ use oxc_str::Str;
 use oxc_syntax::symbol::SymbolId;
 
 pub struct KeepVar<'a> {
-    ast: AstBuilder<'a>,
     vars: Vec<(Str<'a>, Span, Option<SymbolId>)>,
     all_hoisted: bool,
 }
@@ -56,11 +55,14 @@ impl<'a> Visit<'a> for KeepVar<'a> {
 }
 
 impl<'a> KeepVar<'a> {
-    pub fn new(ast: &AstBuilder<'a>) -> Self {
-        Self { ast: AstBuilder::new(ast.allocator), vars: std::vec![], all_hoisted: true }
+    pub fn new() -> Self {
+        Self { vars: std::vec![], all_hoisted: true }
     }
 
-    pub fn get_variable_declaration(self) -> Option<ArenaBox<'a, VariableDeclaration<'a>>> {
+    pub fn get_variable_declaration(
+        self,
+        ast: &AstBuilder<'a>,
+    ) -> Option<ArenaBox<'a, VariableDeclaration<'a>>> {
         if self.vars.is_empty() {
             return None;
         }
@@ -69,22 +71,22 @@ impl<'a> KeepVar<'a> {
         let decls = ArenaVec::from_iter_in(
             self.vars.into_iter().map(|(name, span, symbol_id)| {
                 let id = symbol_id.map_or_else(
-                    || BindingPattern::new_binding_identifier(span, name, &self.ast),
+                    || BindingPattern::new_binding_identifier(span, name, ast),
                     |symbol_id| {
                         BindingPattern::new_binding_identifier_with_symbol_id(
-                            span, name, symbol_id, &self.ast,
+                            span, name, symbol_id, ast,
                         )
                     },
                 );
-                VariableDeclarator::new(span, kind, id, NONE, None, false, &self.ast)
+                VariableDeclarator::new(span, kind, id, NONE, None, false, ast)
             }),
-            &self.ast,
+            ast,
         );
 
-        Some(VariableDeclaration::boxed(SPAN, kind, decls, false, &self.ast))
+        Some(VariableDeclaration::boxed(SPAN, kind, decls, false, ast))
     }
 
-    pub fn get_variable_declaration_statement(self) -> Option<Statement<'a>> {
-        self.get_variable_declaration().map(Statement::VariableDeclaration)
+    pub fn get_variable_declaration_statement(self, ast: &AstBuilder<'a>) -> Option<Statement<'a>> {
+        self.get_variable_declaration(ast).map(Statement::VariableDeclaration)
     }
 }

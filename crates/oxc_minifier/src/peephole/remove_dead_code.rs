@@ -97,7 +97,7 @@ impl<'a> PeepholeOptimizations {
                 );
                 ctx.replace_expression(&mut if_stmt.test, new_test);
             }
-            let mut keep_var = KeepVar::new(&ctx.ast);
+            let mut keep_var = KeepVar::new();
             if boolean {
                 if let Some(alternate) = &if_stmt.alternate {
                     keep_var.visit_statement(alternate);
@@ -106,7 +106,7 @@ impl<'a> PeepholeOptimizations {
                 keep_var.visit_statement(&if_stmt.consequent);
             }
             let var_stmt = keep_var
-                .get_variable_declaration_statement()
+                .get_variable_declaration_statement(&ctx.ast)
                 .and_then(|stmt| Self::remove_unused_variable_declaration(stmt, ctx));
             let has_var_stmt = var_stmt.is_some();
             if let Some(var_stmt) = var_stmt {
@@ -198,9 +198,9 @@ impl<'a> PeepholeOptimizations {
         match test_boolean {
             Some(false) => match &for_stmt.init {
                 Some(ForStatementInit::VariableDeclaration(_)) => {
-                    let mut keep_var = KeepVar::new(&ctx.ast);
+                    let mut keep_var = KeepVar::new();
                     keep_var.visit_statement(&for_stmt.body);
-                    let mut var_decl = keep_var.get_variable_declaration();
+                    let mut var_decl = keep_var.get_variable_declaration(&ctx.ast);
                     let Some(ForStatementInit::VariableDeclaration(var_init)) = &mut for_stmt.init
                     else {
                         return;
@@ -219,9 +219,9 @@ impl<'a> PeepholeOptimizations {
                     ctx.replace_statement(stmt, new_stmt);
                 }
                 None => {
-                    let mut keep_var = KeepVar::new(&ctx.ast);
+                    let mut keep_var = KeepVar::new();
                     keep_var.visit_statement(&for_stmt.body);
-                    let new_stmt = keep_var.get_variable_declaration().map_or_else(
+                    let new_stmt = keep_var.get_variable_declaration(&ctx.ast).map_or_else(
                         || Statement::new_empty_statement(for_stmt.span, ctx),
                         Statement::VariableDeclaration,
                     );
@@ -267,9 +267,9 @@ impl<'a> PeepholeOptimizations {
             }
             _ => return
         }
-        let mut var = KeepVar::new(&ctx.ast);
+        let mut var = KeepVar::new();
         var.visit_statement(&s.body);
-        let var_decl = var.get_variable_declaration_statement();
+        let var_decl = var.get_variable_declaration_statement(&ctx.ast);
         let new_stmt = var_decl.unwrap_or_else(|| Statement::new_empty_statement(s.span, ctx));
         ctx.replace_statement(stmt, new_stmt);
     }
@@ -299,14 +299,14 @@ impl<'a> PeepholeOptimizations {
             let is_canonical_body =
                 body.is_empty() || (body.len() == 1 && Self::is_keep_var_canonical(&body[0]));
             if !is_canonical_body {
-                let mut var = KeepVar::new(&ctx.ast);
+                let mut var = KeepVar::new();
                 var.visit_block_statement(&handler.body);
                 let Some(handler) = &mut s.handler else { return };
 
                 for dropped in handler.body.body.take_in(ctx) {
                     ctx.drop_statement(&dropped);
                 }
-                if let Some(var_decl) = var.get_variable_declaration_statement() {
+                if let Some(var_decl) = var.get_variable_declaration_statement(&ctx.ast) {
                     handler.body.body.push(var_decl);
                 }
             }
