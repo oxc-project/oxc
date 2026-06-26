@@ -109,8 +109,7 @@ impl Rule for PreferNumberProperties {
                 let Some(name) = member_expr.static_property_name() else {
                     return;
                 };
-                if (name == "NaN" && self.check_nan)
-                    || (name == "Infinity" && self.check_infinity)
+                if (name == "NaN" && self.check_nan) || (name == "Infinity" && self.check_infinity)
                 {
                     ctx.diagnostic_with_fix(
                         prefer_number_properties_diagnostic(member_expr.span(), name.as_str()),
@@ -152,15 +151,15 @@ impl Rule for PreferNumberProperties {
                     (ident_ref.span, "")
                 };
 
-                let fixer = |fixer: RuleFixer<'_, 'a>| match ctx.nodes().parent_kind(node.id()) {
-                    AstKind::ObjectProperty(prop) if prop.shorthand && is_infinity => fixer
-                        .insert_text_after(&ident_ref.span, format!(": {replacement_text}")),
-                    AstKind::ObjectProperty(prop) if prop.shorthand => {
-                        fixer.insert_text_before(&ident_ref.span, format!("{ident_name}: Number."))
-                    }
-                    _ if is_infinity => fixer.replace(replacement_span, replacement_text),
-                    _ => fixer.insert_text_before(&ident_ref.span, "Number."),
-                };
+                let fixer =
+                    |fixer: RuleFixer<'_, 'a>| match ctx.nodes().parent_kind(node.id()) {
+                        AstKind::ObjectProperty(prop) if prop.shorthand && is_infinity => fixer
+                            .insert_text_after(&ident_ref.span, format!(": {replacement_text}")),
+                        AstKind::ObjectProperty(prop) if prop.shorthand => fixer
+                            .insert_text_before(&ident_ref.span, format!("{ident_name}: Number.")),
+                        _ if is_infinity => fixer.replace(replacement_span, replacement_text),
+                        _ => fixer.insert_text_before(&ident_ref.span, "Number."),
+                    };
 
                 if ident_name == "isNaN" || ident_name == "isFinite" {
                     ctx.diagnostic_with_dangerous_fix(
@@ -200,8 +199,7 @@ impl Rule for PreferNumberProperties {
                     }
                     match_member_expression!(Expression) => {
                         let member_expr = call_expr.callee.to_member_expression();
-                        let mut args_span =
-                            Span::new(member_expr.span().end, call_expr.span.end);
+                        let mut args_span = Span::new(member_expr.span().end, call_expr.span.end);
                         if let Some(s) = &call_expr.type_arguments {
                             args_span = args_span.merge(s.span());
                         }

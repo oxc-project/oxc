@@ -195,8 +195,7 @@ impl<'a> Symbol<'_, 'a> {
     /// checking many symbols in one file.
     pub fn is_exported(&self, exported_names: &FxHashSet<&str>) -> bool {
         let is_in_exportable_scope = self.is_root() || self.is_in_ts_namespace();
-        is_in_exportable_scope
-            && (exported_names.contains(self.name()) || self.in_export_node())
+        is_in_exportable_scope && (exported_names.contains(self.name()) || self.in_export_node())
     }
 
     /// Convenience wrapper that builds the export set (for call sites that check one symbol).
