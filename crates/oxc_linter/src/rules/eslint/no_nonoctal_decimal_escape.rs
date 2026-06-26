@@ -86,11 +86,14 @@ impl StickyRegex for Regex {
 }
 
 fn quick_test(s: &str) -> bool {
-    let mut chars = s.chars().peekable();
-    while let Some(c) = chars.next() {
-        if c == '\\' && chars.peek().is_some_and(|c| *c == '8' || *c == '9') {
+    // Byte scan is enough (escape sequences are ASCII); avoids char iterators on every string.
+    let bytes = s.as_bytes();
+    let mut i = 0;
+    while i + 1 < bytes.len() {
+        if bytes[i] == b'\\' && (bytes[i + 1] == b'8' || bytes[i + 1] == b'9') {
             return true;
         }
+        i += 1;
     }
     false
 }
