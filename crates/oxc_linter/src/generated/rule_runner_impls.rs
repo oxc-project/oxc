@@ -968,7 +968,7 @@ impl RuleRunner for crate::rules::eslint::no_restricted_exports::NoRestrictedExp
 
 impl RuleRunner for crate::rules::eslint::no_restricted_globals::NoRestrictedGlobals {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Unknown;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
 }
 
 impl RuleRunner for crate::rules::eslint::no_restricted_imports::NoRestrictedImports {

@@ -183,7 +183,8 @@ impl Rule for NoRestrictedGlobals {
     }
 
     fn run_once(&self, ctx: &LintContext) {
-        // Iterate only configured names in unresolved globals (not every identifier in the file).
+        // Prefer `run_once` only (not `run` + `run_once`): implementing both forces NODE_TYPES=None
+        // and invokes the rule on every AST node.
         if self.globals.is_empty() {
             return;
         }
@@ -209,65 +210,73 @@ impl Rule for NoRestrictedGlobals {
                 ctx.diagnostic(no_restricted_globals(name, message, ident.span));
             }
         }
-    }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        // Member access via global objects only when enabled (window.event, etc.).
+        // Restricted globals accessed as `window.event` / `globalThis['event']`.
         if !self.check_global_object {
             return;
         }
-        match node.kind() {
-            AstKind::ComputedMemberExpression(expression) => {
-                let Some(ident) = expression.object.get_identifier_reference() else {
-                    return;
-                };
-                if !ctx.scoping().root_unresolved_references().contains_key(ident.name.as_str()) {
-                    return;
-                }
-                if !self.global_objects.iter().any(|g| g.as_str() == ident.name.as_str()) {
-                    return;
-                }
-                let property_name = match &expression.expression {
-                    Expression::StringLiteral(str) => str.value.as_str(),
-                    Expression::TemplateLiteral(template)
-                        if template.is_no_substitution_template() =>
-                    {
-                        let Some(cooked) = &template.quasis[0].value.cooked else {
-                            return;
+        // `global_objects` may contain duplicates (defaults are appended in from_configuration).
+        let mut seen_global_objs = rustc_hash::FxHashSet::default();
+        for global_obj in &self.global_objects {
+            if !seen_global_objs.insert(global_obj.as_str()) {
+                continue;
+            }
+            let Some(ref_ids) = unresolved.get(global_obj.as_str()) else {
+                continue;
+            };
+            for &ref_id in ref_ids {
+                let node = ctx.nodes().get_node(ctx.scoping().get_reference(ref_id).node_id());
+                let parent = ctx.nodes().parent_node(node.id());
+                match parent.kind() {
+                    AstKind::StaticMemberExpression(expression) => {
+                        // Only when this ident is the object, not the property.
+                        let Some(obj_ident) = expression.object.get_identifier_reference() else {
+                            continue;
                         };
-                        cooked.as_str()
+                        if obj_ident.span != node.kind().span() {
+                            continue;
+                        }
+                        let Some(message) = self.globals.get(expression.property.name.as_str())
+                        else {
+                            continue;
+                        };
+                        ctx.diagnostic(no_restricted_globals(
+                            expression.property.name.as_str(),
+                            message,
+                            expression.property.span,
+                        ));
                     }
-                    _ => return,
-                };
-                let Some(message) = self.globals.get(property_name) else {
-                    return;
-                };
-                ctx.diagnostic(no_restricted_globals(
-                    property_name,
-                    message,
-                    expression.expression.span(),
-                ));
-            }
-            AstKind::StaticMemberExpression(expression) => {
-                let Some(ident) = expression.object.get_identifier_reference() else {
-                    return;
-                };
-                if !ctx.scoping().root_unresolved_references().contains_key(ident.name.as_str()) {
-                    return;
+                    AstKind::ComputedMemberExpression(expression) => {
+                        let Some(obj_ident) = expression.object.get_identifier_reference() else {
+                            continue;
+                        };
+                        if obj_ident.span != node.kind().span() {
+                            continue;
+                        }
+                        let property_name = match &expression.expression {
+                            Expression::StringLiteral(str) => str.value.as_str(),
+                            Expression::TemplateLiteral(template)
+                                if template.is_no_substitution_template() =>
+                            {
+                                let Some(cooked) = &template.quasis[0].value.cooked else {
+                                    continue;
+                                };
+                                cooked.as_str()
+                            }
+                            _ => continue,
+                        };
+                        let Some(message) = self.globals.get(property_name) else {
+                            continue;
+                        };
+                        ctx.diagnostic(no_restricted_globals(
+                            property_name,
+                            message,
+                            expression.expression.span(),
+                        ));
+                    }
+                    _ => {}
                 }
-                if !self.global_objects.iter().any(|g| g.as_str() == ident.name.as_str()) {
-                    return;
-                }
-                let Some(message) = self.globals.get(expression.property.name.as_str()) else {
-                    return;
-                };
-                ctx.diagnostic(no_restricted_globals(
-                    expression.property.name.as_str(),
-                    message,
-                    expression.property.span,
-                ));
             }
-            _ => {}
         }
     }
 }
