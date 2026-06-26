@@ -4,7 +4,7 @@ use schemars::JsonSchema;
 
 use oxc_ast::{
     AstKind, match_member_expression,
-    ast::{CallExpression, Expression, FormalParameter, Function},
+    ast::{Argument, CallExpression, Expression, FormalParameter, Function},
 };
 use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
@@ -60,6 +60,13 @@ pub struct ExpectExpectConfig {
     #[serde(skip)]
     #[schemars(skip)]
     assert_function_matchers_vitest: Vec<AssertFunctionMatcher>,
+    /// Precomputed: any matcher needs a full dotted callee name (patterns / `Foo.expect`).
+    #[serde(skip)]
+    #[schemars(skip)]
+    need_full_name_jest: bool,
+    #[serde(skip)]
+    #[schemars(skip)]
+    need_full_name_vitest: bool,
     /// An array of function names that should also be treated as test blocks.
     additional_test_block_functions: Vec<CompactStr>,
 }
@@ -68,13 +75,17 @@ impl Default for ExpectExpectConfig {
     fn default() -> Self {
         let assert_function_names_jest = default_assert_function_names_jest();
         let assert_function_names_vitest = default_assert_function_names_vitest();
+        let assert_function_matchers_jest =
+            compile_assert_function_matchers(&assert_function_names_jest);
+        let assert_function_matchers_vitest =
+            compile_assert_function_matchers(&assert_function_names_vitest);
+        let need_full_name_jest = matchers_need_full_name(&assert_function_matchers_jest);
+        let need_full_name_vitest = matchers_need_full_name(&assert_function_matchers_vitest);
         Self {
-            assert_function_matchers_jest: compile_assert_function_matchers(
-                &assert_function_names_jest,
-            ),
-            assert_function_matchers_vitest: compile_assert_function_matchers(
-                &assert_function_names_vitest,
-            ),
+            assert_function_matchers_jest,
+            assert_function_matchers_vitest,
+            need_full_name_jest,
+            need_full_name_vitest,
             assert_function_names_jest,
             additional_test_block_functions: vec![],
         }
@@ -114,11 +125,13 @@ impl AssertFunctionMatcher {
         }
     }
 
-    /// Match a simple identifier callee without allocating a node-name string.
+    /// Match a simple identifier (or member-expression root) without allocating.
     fn is_match_ident(&self, ident: &str) -> bool {
         match self {
-            Self::Exact(expected) => ident.eq_ignore_ascii_case(expected),
-            // Patterns may need dotted names; fall back to full-name matching.
+            Self::Exact(expected) => {
+                // Dotted exact names (`Foo.expect`) never match a single ident alone.
+                !expected.contains('.') && ident.eq_ignore_ascii_case(expected)
+            }
             Self::Pattern(_) => false,
         }
     }
@@ -151,8 +164,29 @@ fn matchers_need_full_name(matchers: &[AssertFunctionMatcher]) -> bool {
     })
 }
 
-/// Check whether a call callee is an assertion, avoiding `get_node_name` allocation
-/// for the common `expect(...)` / `assert(...)` identifier case.
+/// Leftmost identifier in a member/call chain (`foo.bar().baz` → `foo`).
+fn leftmost_identifier_name<'a>(expr: &'a Expression<'a>) -> Option<&'a str> {
+    let mut current = expr.get_inner_expression();
+    loop {
+        match current {
+            Expression::Identifier(ident) => return Some(ident.name.as_str()),
+            Expression::CallExpression(call) => {
+                current = call.callee.get_inner_expression();
+            }
+            Expression::ChainExpression(chain) => {
+                let member = chain.expression.as_member_expression()?;
+                current = member.object().get_inner_expression();
+            }
+            expr if matches!(expr, match_member_expression!(Expression)) => {
+                current = expr.to_member_expression().object().get_inner_expression();
+            }
+            _ => return None,
+        }
+    }
+}
+
+/// Check whether a call is an assertion without allocating for the common cases:
+/// `expect(...)`, `assert(...)`, `expect.soft(...)`, etc.
 fn is_assertion_call(
     call_expr: &CallExpression<'_>,
     matchers: &[AssertFunctionMatcher],
@@ -160,25 +194,23 @@ fn is_assertion_call(
 ) -> bool {
     let callee = call_expr.callee.get_inner_expression();
 
-    // Fast path: bare identifier (`expect`, `assert`, …)
-    if let Expression::Identifier(ident) = callee {
-        let name = ident.name.as_str();
-        if matchers.iter().any(|m| m.is_match_ident(name)) {
-            return true;
-        }
-        // Exact matchers with a prefix rule: `expect` matches `expect` only for idents;
-        // dotted exact names never apply to a plain identifier.
+    // Fast path: root identifier matches an exact non-dotted assertion name.
+    // Covers `expect()`, `expect.soft()`, `assert.ok()` for default vitest/jest names.
+    if let Some(root) = leftmost_identifier_name(callee)
+        && matchers.iter().any(|m| m.is_match_ident(root))
+    {
+        return true;
+    }
+
+    // Patterns / dotted exact names (`Foo.expect`, `expect*`) need the full chain string.
+    if need_full_name
+        || matches!(callee, match_member_expression!(Expression))
+        || matches!(callee, Expression::CallExpression(_) | Expression::ChainExpression(_))
+    {
+        // Member with non-matching root and only simple exact names: cannot be an assertion.
         if !need_full_name {
             return false;
         }
-    }
-
-    // Member calls like `expect.soft(...)` / `assert.ok(...)` need the dotted chain.
-    // Also used when custom patterns are configured.
-    let needs_chain = need_full_name
-        || matches!(callee, match_member_expression!(Expression))
-        || matches!(callee, Expression::CallExpression(_));
-    if needs_chain {
         let name = get_node_name(&call_expr.callee);
         return matchers.iter().any(|m| m.is_match(&name));
     }
@@ -214,13 +246,16 @@ impl ExpectExpectConfig {
             .map(|v| v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect())
             .unwrap_or_default();
 
+        let assert_function_matchers_jest =
+            compile_assert_function_matchers(&assert_function_names_jest);
+        let assert_function_matchers_vitest =
+            compile_assert_function_matchers(&assert_function_names_vitest);
+
         Ok(ExpectExpectConfig {
-            assert_function_matchers_jest: compile_assert_function_matchers(
-                &assert_function_names_jest,
-            ),
-            assert_function_matchers_vitest: compile_assert_function_matchers(
-                &assert_function_names_vitest,
-            ),
+            need_full_name_jest: matchers_need_full_name(&assert_function_matchers_jest),
+            need_full_name_vitest: matchers_need_full_name(&assert_function_matchers_vitest),
+            assert_function_matchers_jest,
+            assert_function_matchers_vitest,
             assert_function_names_jest,
             additional_test_block_functions,
         })
@@ -285,18 +320,19 @@ fn run<'a>(
         }
     }
 
-    let assert_function_matchers = if use_vitest_assertions {
-        &rule.assert_function_matchers_vitest
+    let (assert_function_matchers, need_full_name) = if use_vitest_assertions {
+        (&rule.assert_function_matchers_vitest, rule.need_full_name_vitest)
     } else {
-        &rule.assert_function_matchers_jest
+        (&rule.assert_function_matchers_jest, rule.need_full_name_jest)
     };
-    let need_full_name = matchers_need_full_name(assert_function_matchers);
 
     let mut visitor = AssertionVisitor::new(ctx, assert_function_matchers, need_full_name);
 
     // Visit each argument of the test call (title + callback, etc.)
     for argument in &call_expr.arguments {
         if let Some(expr) = argument.as_expression() {
+            // Test callback passed by name: `it('x', myTest)` — resolve only here, not for
+            // every identifier in the test body (that was a major perf cost).
             visitor.check_expression(expr);
             if visitor.found_assertion {
                 return;
@@ -347,7 +383,8 @@ impl<'a, 'b> AssertionVisitor<'a, 'b> {
                 self.visit_call_expression(call_expr);
             }
             Expression::Identifier(ident) => {
-                self.check_identifier(ident);
+                // Only used for test args like `it('x', myTest)` and helper callees.
+                self.check_function_identifier(ident);
             }
             Expression::AwaitExpression(await_expr) => {
                 self.check_expression(&await_expr.argument);
@@ -366,14 +403,14 @@ impl<'a, 'b> AssertionVisitor<'a, 'b> {
         }
     }
 
-    fn check_identifier(&mut self, ident: &oxc_ast::ast::IdentifierReference<'a>) {
+    /// Resolve `ident` only when it names a function declaration (helpers / named callbacks).
+    fn check_function_identifier(&mut self, ident: &oxc_ast::ast::IdentifierReference<'a>) {
         let Some(node) = get_declaration_of_variable(ident, self.ctx) else {
             return;
         };
         let AstKind::Function(function) = node.kind() else {
             return;
         };
-        // Cycle guard only when we chase declarations (uncommon vs walking the test body).
         let span = function.span;
         let visited = self.visited_decls.get_or_insert_with(FxHashSet::default);
         if !visited.insert(span) {
@@ -381,6 +418,33 @@ impl<'a, 'b> AssertionVisitor<'a, 'b> {
         }
         if let Some(body) = &function.body {
             self.visit_function_body(body);
+        }
+    }
+
+    fn visit_call_arguments(&mut self, arguments: &[Argument<'a>]) {
+        for argument in arguments {
+            if let Some(expr) = argument.as_expression() {
+                // Prefer specialized entry points for functions/calls; walk other kinds.
+                match expr.get_inner_expression() {
+                    Expression::FunctionExpression(_)
+                    | Expression::ArrowFunctionExpression(_)
+                    | Expression::CallExpression(_)
+                    | Expression::AwaitExpression(_)
+                    | Expression::ArrayExpression(_) => {
+                        self.check_expression(expr);
+                    }
+                    Expression::Identifier(_) => {
+                        // Do not resolve random identifiers in call args (e.g. `expect(x)`'s `x`).
+                        // Nested assertions are the call itself; values are irrelevant.
+                    }
+                    other => {
+                        self.visit_expression(other);
+                    }
+                }
+                if self.found_assertion {
+                    return;
+                }
+            }
         }
     }
 }
@@ -392,45 +456,70 @@ impl<'a> Visit<'a> for AssertionVisitor<'a, '_> {
             return;
         }
 
-        // Walk callee + args once (no separate argument pre-pass — avoids double traversal).
-        walk::walk_call_expression(self, call_expr);
+        // Follow `helper()` only when the callee is a bare identifier naming a function.
+        // Avoid walking huge member/callee trees and avoid semantic lookup on every ident.
+        let callee = call_expr.callee.get_inner_expression();
+        if let Expression::Identifier(ident) = callee {
+            self.check_function_identifier(ident);
+            if self.found_assertion {
+                return;
+            }
+        } else if self.need_full_name {
+            // Custom patterns may assert on chained callees; walk callee only then.
+            self.visit_expression(callee);
+            if self.found_assertion {
+                return;
+            }
+        }
+
+        // Arguments only — where nested callbacks and further calls live.
+        self.visit_call_arguments(&call_expr.arguments);
     }
 
     fn visit_expression(&mut self, expr: &Expression<'a>) {
-        // Prefer our specialized checks for constructs that contain assertions or callbacks.
+        if self.found_assertion {
+            return;
+        }
         match expr.get_inner_expression() {
             Expression::FunctionExpression(_)
             | Expression::ArrowFunctionExpression(_)
             | Expression::CallExpression(_)
-            | Expression::Identifier(_)
             | Expression::AwaitExpression(_)
             | Expression::ArrayExpression(_) => {
                 self.check_expression(expr);
             }
+            // Do not resolve arbitrary identifiers in the body (semantic lookup × N idents).
+            Expression::Identifier(_) => {}
             _ => {
-                if !self.found_assertion {
-                    walk::walk_expression(self, expr);
-                }
+                walk::walk_expression(self, expr);
             }
         }
     }
 
     fn visit_expression_statement(&mut self, stmt: &oxc_ast::ast::ExpressionStatement<'a>) {
         self.check_expression(&stmt.expression);
-        // `check_expression` already covers functions/calls/idents; only walk other kinds.
-        if !self.found_assertion
-            && !matches!(
-                stmt.expression.get_inner_expression(),
-                Expression::FunctionExpression(_)
-                    | Expression::ArrowFunctionExpression(_)
-                    | Expression::CallExpression(_)
-                    | Expression::Identifier(_)
-                    | Expression::AwaitExpression(_)
-                    | Expression::ArrayExpression(_)
-            )
-        {
+        if self.found_assertion {
+            return;
+        }
+        // `check_expression` already covers functions/calls; walk other expression kinds.
+        if !matches!(
+            stmt.expression.get_inner_expression(),
+            Expression::FunctionExpression(_)
+                | Expression::ArrowFunctionExpression(_)
+                | Expression::CallExpression(_)
+                | Expression::Identifier(_)
+                | Expression::AwaitExpression(_)
+                | Expression::ArrayExpression(_)
+        ) {
             walk::walk_expression_statement(self, stmt);
         }
+    }
+
+    fn visit_statement(&mut self, stmt: &oxc_ast::ast::Statement<'a>) {
+        if self.found_assertion {
+            return;
+        }
+        walk::walk_statement(self, stmt);
     }
 
     fn visit_block_statement(&mut self, block: &oxc_ast::ast::BlockStatement<'a>) {
@@ -452,8 +541,7 @@ impl<'a> Visit<'a> for AssertionVisitor<'a, '_> {
         }
     }
 
-    // Nested function *declarations* are ignored unless referenced (via `check_identifier`).
-    // Callback *expressions* are handled in `check_expression` / `visit_expression`.
+    // Nested function *declarations* are ignored unless referenced as a call/test callback.
     fn visit_function(&mut self, _func: &Function<'a>, _flags: ScopeFlags) {}
 
     fn visit_formal_parameter(&mut self, _param: &FormalParameter<'a>) {}
