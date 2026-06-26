@@ -229,8 +229,9 @@ impl Rule for PreferNumberProperties {
                 };
 
                 let fixer = |fixer: RuleFixer<'_, '_>| match ctx.nodes().parent_kind(node.id()) {
-                    AstKind::ObjectProperty(prop) if prop.shorthand && is_infinity => fixer
-                        .insert_text_after(&ident_ref.span, format!(": {replacement_text}")),
+                    AstKind::ObjectProperty(prop) if prop.shorthand && is_infinity => {
+                        fixer.insert_text_after(&ident_ref.span, format!(": {replacement_text}"))
+                    }
                     AstKind::ObjectProperty(prop) if prop.shorthand => {
                         fixer.insert_text_before(&ident_ref.span, format!("{name}: Number."))
                     }
