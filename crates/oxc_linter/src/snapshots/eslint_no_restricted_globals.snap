@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+assertion_line: 490
 ---
 
   ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'.
@@ -381,16 +382,16 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a local variable or function parameter instead of the restricted global.
 
   ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'.
-   ╭─[no_restricted_globals.tsx:1:8]
+   ╭─[no_restricted_globals.tsx:1:24]
  1 │ window.foo(); myGlobal.foo()
-   ·        ───
+   ·                        ───
    ╰────
   help: Use a local variable or function parameter instead of the restricted global.
 
   ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'.
-   ╭─[no_restricted_globals.tsx:1:24]
+   ╭─[no_restricted_globals.tsx:1:8]
  1 │ window.foo(); myGlobal.foo()
-   ·                        ───
+   ·        ───
    ╰────
   help: Use a local variable or function parameter instead of the restricted global.
 

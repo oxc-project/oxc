@@ -13,7 +13,7 @@ use schemars::JsonSchema;
 use serde::de::Error;
 use serde_json::Value;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{context::LintContext, rule::Rule};
 
 fn no_restricted_globals(global_name: &str, suffix: &str, span: Span) -> OxcDiagnostic {
     let warn_text = if suffix.is_empty() {
