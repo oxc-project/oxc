@@ -80,9 +80,7 @@ impl RestrictedTypesIndex {
                 "any" => index.ban_any = true,
                 "[]" => index.ban_empty_tuple = true,
                 "{}" => index.ban_empty_object = true,
-                other
-                    if other.contains('<') || other.contains('{') || other.contains('[') =>
-                {
+                other if other.contains('<') || other.contains('{') || other.contains('[') => {
                     index.has_generic_or_complex_keys = true;
                 }
                 _ => {}
