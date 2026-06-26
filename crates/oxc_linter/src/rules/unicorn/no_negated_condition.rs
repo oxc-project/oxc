@@ -17,7 +17,7 @@ declare_oxc_lint!(
     NoNegatedCondition,
     unicorn,
     pedantic,
-    pending,
+    fix,
     docs = DOCUMENTATION,
     version = "0.0.18",
     short_description = "Disallow negated conditions.",
@@ -30,7 +30,7 @@ impl Rule for NoNegatedCondition {
                 run_on_if_statement(if_stmt, ctx);
             }
             AstKind::ConditionalExpression(conditional_expr) => {
-                run_on_conditional_expression(conditional_expr, ctx);
+                run_on_conditional_expression(node, conditional_expr, ctx);
             }
             _ => {}
         }
@@ -78,6 +78,40 @@ fn test() {
         r"(!!a) ? b() : c();",
     ];
 
+    let fix = vec![
+        (r"if (!a) {;} else {;}", r"if (a) {;} else {;}"),
+        (r"if (a != b) {;} else {;}", r"if (a == b) {;} else {;}"),
+        (r"if (a !== b) {;} else {;}", r"if (a === b) {;} else {;}"),
+        (r"!a ? b : c", r"a ? c : b"),
+        (r"a != b ? c : d", r"a == b ? d : c"),
+        (r"a !== b ? c : d", r"a === b ? d : c"),
+        (r"(( !a )) ? b : c", r"(( a )) ? c : b"),
+        (r"!(( a )) ? b : c", r"(( a )) ? c : b"),
+        (r"if(!(( a ))) b(); else c();", r"if(a) {c();} else {b();}"),
+        (r"if((( !a ))) b(); else c();", r"if((( a ))) {c();} else {b();}"),
+        (r"function a() {return!a ? b : c}", r"function a() {return a ? c : b}"),
+        (r"function a() {return!(( a )) ? b : c}", r"function a() {return (( a )) ? c : b}"),
+        (r"!a ? b : c ? d : e", r"a ? c ? d : e : b"),
+        (r"!a ? b : (( c ? d : e ))", r"a ? (( c ? d : e )) : b"),
+        (r"if(!a) b(); else c()", r"if(a) {c()} else {b();}"),
+        (r"if(!a) {b()} else {c()}", r"if(a) {c()} else {b()}"),
+        (r"if(!!a) b(); else c();", r"if(!a) {c();} else {b();}"),
+        (r"(!!a) ? b() : c();", r"(!a) ? c() : b();"),
+        (
+            "a
+![] ? b : c",
+            "a
+;[] ? c : b",
+        ),
+        (
+            "a
+!(b) ? c : d",
+            "a
+;(b) ? d : c",
+        ),
+    ];
+
     Tester::new(NoNegatedCondition::NAME, NoNegatedCondition::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }
