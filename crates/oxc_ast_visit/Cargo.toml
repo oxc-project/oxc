@@ -25,6 +25,10 @@ oxc_ast = { workspace = true }
 oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
 
+[dev-dependencies]
+# `AstBuilder` is only used in tests
+oxc_ast = { workspace = true, features = ["builder_new"] }
+
 [features]
 default = []
 serialize = [
