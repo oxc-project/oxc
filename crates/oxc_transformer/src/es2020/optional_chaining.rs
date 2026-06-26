@@ -49,7 +49,7 @@
 
 use std::mem;
 
-use oxc_allocator::{CloneIn, TakeIn};
+use oxc_allocator::{ArenaVec, CloneIn, TakeIn};
 use oxc_ast::{NONE, ast::*};
 use oxc_span::{GetSpan, SPAN, Span};
 use oxc_traverse::{Ancestor, BoundIdentifier, MaybeBoundIdentifier, Traverse};
@@ -140,7 +140,7 @@ impl<'a> OptionalChaining<'a> {
         Argument::from(if let CallContext::Binding(binding) = &self.call_context {
             binding.create_read_expression(ctx)
         } else {
-            ctx.ast.expression_this(SPAN)
+            Expression::new_this_expression(SPAN, ctx)
         })
     }
 
@@ -196,13 +196,25 @@ impl<'a> OptionalChaining<'a> {
         } else {
             BinaryOperator::StrictEquality
         };
-        ctx.ast.expression_binary(SPAN, left, operator, ctx.ast.expression_null_literal(SPAN))
+        Expression::new_binary_expression(
+            SPAN,
+            left,
+            operator,
+            Expression::new_null_literal(SPAN, ctx),
+            ctx,
+        )
     }
 
     /// Return `left === void 0`
     fn wrap_void0_check(left: Expression<'a>, ctx: &TraverseCtx<'a>) -> Expression<'a> {
         let operator = BinaryOperator::StrictEquality;
-        ctx.ast.expression_binary(SPAN, left, operator, ctx.ast.void_0(SPAN))
+        Expression::new_binary_expression(
+            SPAN,
+            left,
+            operator,
+            Expression::new_void_0(SPAN, ctx),
+            ctx,
+        )
     }
 
     /// Return `left1 === null || left2 === void 0`
@@ -223,7 +235,7 @@ impl<'a> OptionalChaining<'a> {
         right: Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
-        ctx.ast.expression_logical(SPAN, left, LogicalOperator::Or, right)
+        Expression::new_logical_expression(SPAN, left, LogicalOperator::Or, right, ctx)
     }
 
     /// Return `left ? void 0 : alternative`
@@ -238,11 +250,11 @@ impl<'a> OptionalChaining<'a> {
         ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
         let consequent = if is_delete {
-            ctx.ast.expression_boolean_literal(SPAN, true)
+            Expression::new_boolean_literal(SPAN, true, ctx)
         } else {
-            ctx.ast.void_0(SPAN)
+            Expression::new_void_0(SPAN, ctx)
         };
-        ctx.ast.expression_conditional(span, test, consequent, alternate)
+        Expression::new_conditional_expression(span, test, consequent, alternate, ctx)
     }
 
     /// Convert chain expression to expression
@@ -275,7 +287,7 @@ impl<'a> OptionalChaining<'a> {
         right: Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
-        ctx.ast.expression_assignment(SPAN, AssignmentOperator::Assign, left, right)
+        Expression::new_assignment_expression(SPAN, AssignmentOperator::Assign, left, right, ctx)
     }
 
     /// Transform chain expression
@@ -336,7 +348,8 @@ impl<'a> OptionalChaining<'a> {
         // `delete foo?.bar` -> `... || delete _Foo.bar;`
         //                              ^^^^^^ ^^^^^^^^ Here we will wrap the right part with a `delete` unary expression
         if is_delete {
-            chain_expr = ctx.ast.expression_unary(SPAN, UnaryOperator::Delete, chain_expr);
+            chain_expr =
+                Expression::new_unary_expression(SPAN, UnaryOperator::Delete, chain_expr, ctx);
         }
 
         // If this chain expression is a callee of a CallExpression, we need to transform it to accept a proper context
@@ -387,11 +400,12 @@ impl<'a> OptionalChaining<'a> {
         };
 
         // `expr.bind(context)`
-        let arguments = ctx.ast.vec1(context);
-        let property = ctx.ast.identifier_name(SPAN, "bind");
-        let callee = ctx.ast.member_expression_static(SPAN, expr, property, false);
+        let arguments = ArenaVec::from_value_in(context, ctx);
+        let property = IdentifierName::new(SPAN, "bind", ctx);
+        let callee =
+            MemberExpression::new_static_member_expression(SPAN, expr, property, false, ctx);
         let callee = Expression::from(callee);
-        ctx.ast.expression_call(SPAN, callee, NONE, arguments, false)
+        Expression::new_call_expression(SPAN, callee, NONE, arguments, false, ctx)
     }
 
     /// Recursively transform chain expression elements
@@ -492,9 +506,10 @@ impl<'a> OptionalChaining<'a> {
                         {
                             // `foo$bar(...)` -> `foo$bar.call(context, ...)`
                             let callee = callee.take_in(ctx);
-                            let property = ctx.ast.identifier_name(SPAN, "call");
-                            let member =
-                                ctx.ast.member_expression_static(SPAN, callee, property, false);
+                            let property = IdentifierName::new(SPAN, "call", ctx);
+                            let member = MemberExpression::new_static_member_expression(
+                                SPAN, callee, property, false, ctx,
+                            );
                             call.callee = Expression::from(member);
                             call.arguments.insert(0, self.get_call_context(ctx));
                         }
@@ -536,10 +551,10 @@ impl<'a> OptionalChaining<'a> {
         {
             if ident.name == "eval" {
                 // `eval?.()` is an indirect eval call transformed to `(0,eval)()`
-                let zero = ctx.ast.number_0();
+                let zero = Expression::new_number_0(ctx);
                 let original_callee = expr.take_in(ctx);
-                let expressions = ctx.ast.vec_from_array([zero, original_callee]);
-                *expr = ctx.ast.expression_sequence(SPAN, expressions);
+                let expressions = ArenaVec::from_array_in([zero, original_callee], ctx);
+                *expr = Expression::new_sequence_expression(SPAN, expressions, ctx);
             }
 
             let left1 = binding.create_read_expression(ctx);

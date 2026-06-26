@@ -2,8 +2,12 @@ use std::{borrow::Cow, sync::Arc};
 
 use cow_utils::CowUtils;
 
-use oxc_allocator::Allocator;
-use oxc_ast::{AstBuilder, NONE, ast::*};
+use oxc_allocator::{Allocator, ArenaVec, GetAllocator};
+use oxc_ast::{
+    NONE,
+    ast::*,
+    builder::{AstBuilder, GetAstBuilder},
+};
 use oxc_semantic::Scoping;
 use oxc_span::SPAN;
 use oxc_str::{CompactStr, format_compact_str};
@@ -212,12 +216,14 @@ impl<'a> InjectGlobalVariables<'a> {
 
     fn inject_imports(&mut self, injects: &[InjectImport], program: &mut Program<'a>) {
         let imports = injects.iter().map(|inject| {
-            let specifiers = Some(self.ast.vec1(self.inject_import_to_specifier(inject)));
-            let source = self.ast.string_literal(SPAN, self.ast.str(&inject.source), None);
+            let specifiers =
+                Some(ArenaVec::from_value_in(self.inject_import_to_specifier(inject), self));
+            let source =
+                StringLiteral::new(SPAN, Str::from_str_in(&inject.source, self), None, self);
             let kind = ImportOrExportKind::Value;
-            let import_decl = self
-                .ast
-                .module_declaration_import_declaration(SPAN, specifiers, source, None, NONE, kind);
+            let import_decl = ModuleDeclaration::new_import_declaration(
+                SPAN, specifiers, source, None, NONE, kind, self,
+            );
             Statement::from(import_decl)
         });
         program.body.splice(0..0, imports);
@@ -229,34 +235,35 @@ impl<'a> InjectGlobalVariables<'a> {
             InjectImportSpecifier::Specifier { imported, local } => {
                 let imported = match imported {
                     Some(imported_name) => {
-                        let imported_name = self.ast.str(imported_name);
+                        let imported_name = Str::from_str_in(imported_name, self);
                         if identifier::is_identifier_name(&imported_name) {
-                            self.ast.module_export_name_identifier_name(SPAN, imported_name)
+                            ModuleExportName::new_identifier_name(SPAN, imported_name, self)
                         } else {
-                            self.ast.module_export_name_string_literal(SPAN, imported_name, None)
+                            ModuleExportName::new_string_literal(SPAN, imported_name, None, self)
                         }
                     }
-                    None => self.ast.module_export_name_identifier_name(SPAN, "default"),
+                    None => ModuleExportName::new_identifier_name(SPAN, "default", self),
                 };
 
                 let local = inject.replace_value.as_ref().unwrap_or(local).as_str();
 
-                self.ast.import_declaration_specifier_import_specifier(
+                ImportDeclarationSpecifier::new_import_specifier(
                     SPAN,
                     imported,
-                    self.ast.binding_identifier(SPAN, self.ast.str(local)),
+                    BindingIdentifier::new(SPAN, Str::from_str_in(local, self), self),
                     ImportOrExportKind::Value,
+                    self,
                 )
             }
             InjectImportSpecifier::DefaultSpecifier { local } => {
                 let local = inject.replace_value.as_ref().unwrap_or(local).as_str();
-                let local = self.ast.binding_identifier(SPAN, self.ast.str(local));
-                self.ast.import_declaration_specifier_import_default_specifier(SPAN, local)
+                let local = BindingIdentifier::new(SPAN, Str::from_str_in(local, self), self);
+                ImportDeclarationSpecifier::new_import_default_specifier(SPAN, local, self)
             }
             InjectImportSpecifier::NamespaceSpecifier { local } => {
                 let local = inject.replace_value.as_ref().unwrap_or(local).as_str();
-                let local = self.ast.binding_identifier(SPAN, self.ast.str(local));
-                self.ast.import_declaration_specifier_import_namespace_specifier(SPAN, local)
+                let local = BindingIdentifier::new(SPAN, Str::from_str_in(local, self), self);
+                ImportDeclarationSpecifier::new_import_namespace_specifier(SPAN, local, self)
             }
         }
     }
@@ -276,10 +283,10 @@ impl<'a> InjectGlobalVariables<'a> {
                         let value_str = *value_str.get_or_insert_with(|| {
                             self.replaced_dot_defines
                                 .push((dot_define.parts[0].clone(), dot_define.value.clone()));
-                            self.ast.str(dot_define.value.as_str())
+                            Str::from_str_in(dot_define.value.as_str(), &self.ast)
                         });
 
-                        let value = self.ast.expression_identifier(SPAN, value_str);
+                        let value = Expression::new_identifier(SPAN, value_str, self);
                         *expr = value;
                         self.mark_as_changed();
                         break;
@@ -300,10 +307,10 @@ impl<'a> InjectGlobalVariables<'a> {
                             let value_str = *value_str.get_or_insert_with(|| {
                                 self.replaced_dot_defines
                                     .push((dot_define.parts[0].clone(), dot_define.value.clone()));
-                                self.ast.str(dot_define.value.as_str())
+                                Str::from_str_in(dot_define.value.as_str(), &self.ast)
                             });
 
-                            let value = self.ast.expression_identifier(SPAN, value_str);
+                            let value = Expression::new_identifier(SPAN, value_str, self);
                             *expr = value;
                             self.mark_as_changed();
                             break;
@@ -312,5 +319,21 @@ impl<'a> InjectGlobalVariables<'a> {
                 }
             _ => {}
         }
+    }
+}
+
+impl<'a> GetAllocator<'a> for InjectGlobalVariables<'a> {
+    #[inline]
+    fn allocator(&self) -> &'a Allocator {
+        self.ast.allocator()
+    }
+}
+
+impl<'a> GetAstBuilder<'a> for InjectGlobalVariables<'a> {
+    type Builder = AstBuilder<'a>;
+
+    #[inline]
+    fn builder(&self) -> &AstBuilder<'a> {
+        &self.ast
     }
 }

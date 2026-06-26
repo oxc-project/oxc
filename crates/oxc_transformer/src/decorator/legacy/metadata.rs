@@ -77,7 +77,7 @@
 ///
 /// ## References
 /// * TypeScript's [emitDecoratorMetadata](https://www.typescriptlang.org/tsconfig#emitDecoratorMetadata)
-use oxc_allocator::ArenaBox;
+use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::ast::*;
 use oxc_data_structures::stack::SparseStack;
 use oxc_semantic::{Reference, ReferenceFlags, SymbolId};
@@ -361,12 +361,12 @@ impl<'a> LegacyDecoratorMetadata<'a> {
             TSType::TSVoidKeyword(_)
             | TSType::TSUndefinedKeyword(_)
             | TSType::TSNullKeyword(_)
-            | TSType::TSNeverKeyword(_) => ctx.ast.void_0(SPAN),
+            | TSType::TSNeverKeyword(_) => Expression::new_void_0(SPAN, ctx),
             TSType::TSFunctionType(_) | TSType::TSConstructorType(_) => Self::global_function(ctx),
             TSType::TSArrayType(_) | TSType::TSTupleType(_) => Self::global_array(ctx),
             TSType::TSTypePredicate(t) => {
                 if t.asserts {
-                    ctx.ast.void_0(SPAN)
+                    Expression::new_void_0(SPAN, ctx)
                 } else {
                     Self::global_boolean(ctx)
                 }
@@ -428,8 +428,10 @@ impl<'a> LegacyDecoratorMetadata<'a> {
         params: &FormalParameters<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let mut elements =
-            ctx.ast.vec_with_capacity(params.items.len() + usize::from(params.rest.is_some()));
+        let mut elements = ArenaVec::with_capacity_in(
+            params.items.len() + usize::from(params.rest.is_some()),
+            ctx,
+        );
         elements.extend(params.items.iter().map(|param| {
             ArrayExpressionElement::from(self.serialize_parameter_types_of_node(param, ctx))
         }));
@@ -439,7 +441,7 @@ impl<'a> LegacyDecoratorMetadata<'a> {
                 self.serialize_type_annotation(rest.type_annotation.as_ref(), ctx),
             ));
         }
-        ctx.ast.expression_array(SPAN, elements)
+        Expression::new_array_expression(SPAN, elements, ctx)
     }
 
     fn serialize_parameter_types_of_node(
@@ -462,7 +464,7 @@ impl<'a> LegacyDecoratorMetadata<'a> {
         } else if let Some(return_type) = &func.return_type {
             self.serialize_type_node(&return_type.type_annotation, ctx)
         } else {
-            ctx.ast.void_0(SPAN)
+            Expression::new_void_0(SPAN, ctx)
         }
     }
 
@@ -562,11 +564,11 @@ impl<'a> LegacyDecoratorMetadata<'a> {
         for i in 1..=properties.len() {
             let prefix = Self::build_path(&binding, ref_flags, &properties[..i], ctx);
             let next = Self::typeof_undefined(prefix, ctx);
-            test = ctx.ast.expression_logical(SPAN, test, LogicalOperator::Or, next);
+            test = Expression::new_logical_expression(SPAN, test, LogicalOperator::Or, next, ctx);
         }
 
         let alternate = Self::build_path(&binding, ref_flags, properties, ctx);
-        ctx.ast.expression_conditional(SPAN, test, Self::global_object(ctx), alternate)
+        Expression::new_conditional_expression(SPAN, test, Self::global_object(ctx), alternate, ctx)
     }
 
     fn build_path(
@@ -583,9 +585,15 @@ impl<'a> LegacyDecoratorMetadata<'a> {
     }
 
     fn typeof_undefined(expr: Expression<'a>, ctx: &TraverseCtx<'a>) -> Expression<'a> {
-        let typeof_expr = ctx.ast.expression_unary(SPAN, UnaryOperator::Typeof, expr);
-        let undefined_str = ctx.ast.expression_string_literal(SPAN, "undefined", None);
-        ctx.ast.expression_binary(SPAN, typeof_expr, BinaryOperator::StrictEquality, undefined_str)
+        let typeof_expr = Expression::new_unary_expression(SPAN, UnaryOperator::Typeof, expr, ctx);
+        let undefined_str = Expression::new_string_literal(SPAN, "undefined", None, ctx);
+        Expression::new_binary_expression(
+            SPAN,
+            typeof_expr,
+            BinaryOperator::StrictEquality,
+            undefined_str,
+            ctx,
+        )
     }
 
     fn serialize_literal_of_literal_type_node(
@@ -623,7 +631,7 @@ impl<'a> LegacyDecoratorMetadata<'a> {
                 TSType::TSNeverKeyword(_) => {
                     if is_intersection {
                         // Reduce to `never` in an intersection
-                        return ctx.ast.void_0(SPAN);
+                        return Expression::new_void_0(SPAN, ctx);
                     }
                     // Elide `never` in a union
                     continue;
@@ -675,7 +683,7 @@ impl<'a> LegacyDecoratorMetadata<'a> {
         // If we were able to find common type, use it
         serialized_type.unwrap_or_else(|| {
             // Fallback is only hit if all union constituents are null/undefined/never
-            ctx.ast.void_0(SPAN)
+            Expression::new_void_0(SPAN, ctx)
         })
     }
 
@@ -766,10 +774,13 @@ impl<'a> LegacyDecoratorMetadata<'a> {
         value: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let arguments = ctx.ast.vec_from_array([
-            Argument::from(ctx.ast.expression_string_literal(SPAN, key, None)),
-            Argument::from(value),
-        ]);
+        let arguments = ArenaVec::from_array_in(
+            [
+                Argument::from(Expression::new_string_literal(SPAN, key, None, ctx)),
+                Argument::from(value),
+            ],
+            ctx,
+        );
         helper_call_expr(Helper::DecorateMetadata, arguments, ctx)
     }
 
@@ -780,7 +791,7 @@ impl<'a> LegacyDecoratorMetadata<'a> {
         value: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Decorator<'a> {
-        ctx.ast.decorator(SPAN, self.create_metadata(key, value, ctx))
+        Decorator::new(SPAN, self.create_metadata(key, value, ctx), ctx)
     }
 
     /// `_metadata("design:type", type)`

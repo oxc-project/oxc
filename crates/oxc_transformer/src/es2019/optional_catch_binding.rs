@@ -61,7 +61,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for OptionalCatchBinding {
             SymbolFlags::CatchVariable | SymbolFlags::FunctionScopedVariable,
         );
         let binding_pattern = binding.create_binding_pattern(ctx);
-        let param = ctx.ast.catch_parameter(SPAN, binding_pattern, NONE);
+        let param = CatchParameter::new(SPAN, binding_pattern, NONE, ctx);
         clause.param = Some(param);
     }
 }

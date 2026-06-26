@@ -33,6 +33,7 @@
 //!
 //! * Babel plugin implementation: <https://github.com/babel/babel/blob/v7.26.2/packages/babel-plugin-transform-react-jsx-source/src/index.ts>
 
+use oxc_allocator::ArenaVec;
 use oxc_ast::{NONE, ast::*};
 use oxc_data_structures::rope::{Rope, get_line_column};
 use oxc_span::SPAN;
@@ -93,9 +94,9 @@ impl<'a> JsxSource<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> ObjectPropertyKind<'a> {
         let kind = PropertyKind::Init;
-        let key = ctx.ast.property_key_static_identifier(SPAN, SOURCE);
+        let key = PropertyKey::new_static_identifier(SPAN, SOURCE, ctx);
         let value = self.get_source_object(line, column, ctx);
-        ctx.ast.object_property_kind_object_property(SPAN, kind, key, value, false, false, false)
+        ObjectPropertyKind::new_object_property(SPAN, kind, key, value, false, false, false, ctx)
     }
 
     /// `<sometag __source={ { fileName: 'this/file.js', lineNumber: 10, columnNumber: 1 } } />`
@@ -118,15 +119,15 @@ impl<'a> JsxSource<'a> {
             return;
         }
 
-        let key = ctx.ast.jsx_attribute_name_identifier(SPAN, SOURCE);
+        let key = JSXAttributeName::new_identifier(SPAN, SOURCE, ctx);
         // TODO: We shouldn't calculate line + column from scratch each time as it's expensive.
         // Build a table of byte indexes of each line's start on first usage, and save it.
         // Then calculate line and column from that.
         let (line, column) = self.get_line_column(elem.span.start, ctx);
         let object = self.get_source_object(line, column, ctx);
         let value =
-            ctx.ast.jsx_attribute_value_expression_container(SPAN, JSXExpression::from(object));
-        let attribute_item = ctx.ast.jsx_attribute_item_attribute(SPAN, key, Some(value));
+            JSXAttributeValue::new_expression_container(SPAN, JSXExpression::from(object), ctx);
+        let attribute_item = JSXAttributeItem::new_attribute(SPAN, key, Some(value), ctx);
         elem.attributes.push(attribute_item);
     }
 
@@ -140,40 +141,49 @@ impl<'a> JsxSource<'a> {
         let kind = PropertyKind::Init;
 
         let filename = {
-            let key = ctx.ast.property_key_static_identifier(SPAN, "fileName");
+            let key = PropertyKey::new_static_identifier(SPAN, "fileName", ctx);
             let value = self.get_filename_var(ctx).create_read_expression(ctx);
-            ctx.ast
-                .object_property_kind_object_property(SPAN, kind, key, value, false, false, false)
+            ObjectPropertyKind::new_object_property(
+                SPAN, kind, key, value, false, false, false, ctx,
+            )
         };
 
         let line_number = {
-            let key = ctx.ast.property_key_static_identifier(SPAN, "lineNumber");
+            let key = PropertyKey::new_static_identifier(SPAN, "lineNumber", ctx);
             let value =
-                ctx.ast.expression_numeric_literal(SPAN, line as f64, None, NumberBase::Decimal);
-            ctx.ast
-                .object_property_kind_object_property(SPAN, kind, key, value, false, false, false)
+                Expression::new_numeric_literal(SPAN, line as f64, None, NumberBase::Decimal, ctx);
+            ObjectPropertyKind::new_object_property(
+                SPAN, kind, key, value, false, false, false, ctx,
+            )
         };
 
         let column_number = {
-            let key = ctx.ast.property_key_static_identifier(SPAN, "columnNumber");
-            let value =
-                ctx.ast.expression_numeric_literal(SPAN, column as f64, None, NumberBase::Decimal);
-            ctx.ast
-                .object_property_kind_object_property(SPAN, kind, key, value, false, false, false)
+            let key = PropertyKey::new_static_identifier(SPAN, "columnNumber", ctx);
+            let value = Expression::new_numeric_literal(
+                SPAN,
+                column as f64,
+                None,
+                NumberBase::Decimal,
+                ctx,
+            );
+            ObjectPropertyKind::new_object_property(
+                SPAN, kind, key, value, false, false, false, ctx,
+            )
         };
 
-        let properties = ctx.ast.vec_from_array([filename, line_number, column_number]);
-        ctx.ast.expression_object(SPAN, properties)
+        let properties = ArenaVec::from_array_in([filename, line_number, column_number], ctx);
+        Expression::new_object_expression(SPAN, properties, ctx)
     }
 
     pub fn get_filename_var_statement(&self, ctx: &TraverseCtx<'a>) -> Option<Statement<'a>> {
         let decl = self.get_filename_var_declarator(ctx)?;
 
-        let var_decl = Statement::VariableDeclaration(ctx.ast.alloc_variable_declaration(
+        let var_decl = Statement::VariableDeclaration(VariableDeclaration::boxed(
             SPAN,
             VariableDeclarationKind::Var,
-            ctx.ast.vec1(decl),
+            ArenaVec::from_value_in(decl, ctx),
             false,
+            ctx,
         ));
         Some(var_decl)
     }
@@ -185,15 +195,16 @@ impl<'a> JsxSource<'a> {
         let filename_var = self.filename_var.as_ref()?;
 
         let id = filename_var.create_binding_pattern(ctx);
-        let source_path = ctx.ast.str(&ctx.state.source_path.to_string_lossy());
-        let init = ctx.ast.expression_string_literal(SPAN, source_path, None);
-        let decl = ctx.ast.variable_declarator(
+        let source_path = Str::from_str_in(&ctx.state.source_path.to_string_lossy(), ctx);
+        let init = Expression::new_string_literal(SPAN, source_path, None, ctx);
+        let decl = VariableDeclarator::new(
             SPAN,
             VariableDeclarationKind::Var,
             id,
             NONE,
             Some(init),
             false,
+            ctx,
         );
         Some(decl)
     }

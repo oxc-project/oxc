@@ -3,7 +3,7 @@
 
 use std::mem;
 
-use oxc_allocator::{ArenaBox, TakeIn};
+use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
 use oxc_ast::{NONE, ast::*};
 use oxc_span::SPAN;
 use oxc_str::static_ident;
@@ -295,12 +295,13 @@ impl<'a> ClassProperties<'a> {
         ctx: &TraverseCtx<'a>,
     ) {
         // Substitute `<callee>.call` as callee of call expression
-        call_expr.callee = Expression::from(ctx.ast.member_expression_static(
+        call_expr.callee = Expression::from(MemberExpression::new_static_member_expression(
             SPAN,
             callee,
-            ctx.ast.identifier_name(SPAN, "call"),
+            IdentifierName::new(SPAN, "call", ctx),
             // Make sure the `callee` can access `call` safely. i.e `callee?.()` -> `callee?.call()`
             mem::replace(&mut call_expr.optional, false),
+            ctx,
         ));
         // Insert `context` to call arguments
         call_expr.arguments.insert(0, Argument::from(context));
@@ -633,14 +634,16 @@ impl<'a> ClassProperties<'a> {
                     // `Class.#prop += value` -> `_prop._ = _prop._ + value`
                     let value = assign_expr.right.take_in(ctx);
                     assign_expr.operator = AssignmentOperator::Assign;
-                    assign_expr.right = ctx.ast.expression_binary(SPAN, prop_obj, operator, value);
+                    assign_expr.right =
+                        Expression::new_binary_expression(SPAN, prop_obj, operator, value, ctx);
                 } else if let Some(operator) = operator.to_logical_operator() {
                     // `Class.#prop &&= value` -> `_prop._ && (_prop._ = value)`
                     let span = assign_expr.span;
                     assign_expr.span = SPAN;
                     assign_expr.operator = AssignmentOperator::Assign;
                     let right = expr.take_in(ctx);
-                    *expr = ctx.ast.expression_logical(span, prop_obj, operator, right);
+                    *expr =
+                        Expression::new_logical_expression(span, prop_obj, operator, right, ctx);
                 } else {
                     // The above covers all types of `AssignmentOperator`
                     unreachable!();
@@ -692,7 +695,8 @@ impl<'a> ClassProperties<'a> {
                         ctx,
                     );
                     // `_assertClassBrand(Class, object, _prop)._ + value`
-                    let value = ctx.ast.expression_binary(SPAN, get_expr, operator, value);
+                    let value =
+                        Expression::new_binary_expression(SPAN, get_expr, operator, value, ctx);
                     // `_assertClassBrand(Class, object, _assertClassBrand(Class, object, _prop)._ + value)`
                     assign_expr.right =
                         self.create_assert_class_brand(class_ident2, object1, value, SPAN, ctx);
@@ -720,7 +724,7 @@ impl<'a> ClassProperties<'a> {
                         self.create_assert_class_brand(class_ident2, object2, value, SPAN, ctx);
                     let right = expr.take_in(ctx);
                     // `_assertClassBrand(Class, object, _prop)._ && (_prop._ = _assertClassBrand(Class, object, value))`
-                    *expr = ctx.ast.expression_logical(span, left, operator, right);
+                    *expr = Expression::new_logical_expression(span, left, operator, right, ctx);
                 } else {
                     // The above covers all types of `AssignmentOperator`
                     unreachable!();
@@ -788,7 +792,7 @@ impl<'a> ClassProperties<'a> {
                 );
 
                 // `_classPrivateFieldGet2(_prop, object) + value`
-                let value = ctx.ast.expression_binary(SPAN, get_call, operator, value);
+                let value = Expression::new_binary_expression(SPAN, get_call, operator, value, ctx);
 
                 // `_classPrivateFieldSet2(_prop, object, _classPrivateFieldGet2(_prop, object) + value)`
                 *expr = self.create_private_setter(
@@ -825,7 +829,7 @@ impl<'a> ClassProperties<'a> {
                     ctx,
                 );
                 // `_classPrivateFieldGet2(_prop, object) && _classPrivateFieldSet2(_prop, object, value)`
-                *expr = ctx.ast.expression_logical(span, get_call, operator, set_call);
+                *expr = Expression::new_logical_expression(span, get_call, operator, set_call, ctx);
             } else {
                 // The above covers all types of `AssignmentOperator`
                 unreachable!();
@@ -1025,9 +1029,11 @@ impl<'a> ClassProperties<'a> {
                 // Source = `++object.#prop` (prefix `++`)
 
                 // `(_object$prop = _assertClassBrand(Class, object, _prop)._, ++_object$prop)`
-                let mut value = ctx
-                    .ast
-                    .expression_sequence(SPAN, ctx.ast.vec_from_array([assignment, update_expr]));
+                let mut value = Expression::new_sequence_expression(
+                    SPAN,
+                    ArenaVec::from_array_in([assignment, update_expr], ctx),
+                    ctx,
+                );
 
                 // If no shortcut, wrap in `_assertClassBrand(Class, object, <value>)`
                 if let Some(class_ident) = class_ident {
@@ -1035,11 +1041,12 @@ impl<'a> ClassProperties<'a> {
                 }
 
                 // `_prop._ = <value>`
-                *expr = ctx.ast.expression_assignment(
+                *expr = Expression::new_assignment_expression(
                     span,
                     AssignmentOperator::Assign,
                     Self::create_underscore_member_expr_target(prop_ident2, SPAN, ctx),
                     value,
+                    ctx,
                 );
             } else {
                 // Source = `object.#prop++` (postfix `++`)
@@ -1049,13 +1056,13 @@ impl<'a> ClassProperties<'a> {
                 let assignment2 = create_assignment(&temp_binding2, update_expr, SPAN, ctx);
 
                 // `(_object$prop = _assertClassBrand(Class, object, _prop)._, _object$prop2 = _object$prop++, _object$prop)`
-                let mut value = ctx.ast.expression_sequence(
+                let mut value = Expression::new_sequence_expression(
                     SPAN,
-                    ctx.ast.vec_from_array([
-                        assignment,
-                        assignment2,
-                        temp_binding.create_read_expression(ctx),
-                    ]),
+                    ArenaVec::from_array_in(
+                        [assignment, assignment2, temp_binding.create_read_expression(ctx)],
+                        ctx,
+                    ),
+                    ctx,
                 );
 
                 // If no shortcut, wrap in `_assertClassBrand(Class, object, <value>)`
@@ -1064,20 +1071,24 @@ impl<'a> ClassProperties<'a> {
                 }
 
                 // `_prop._ = <value>`
-                let assignment3 = ctx.ast.expression_assignment(
+                let assignment3 = Expression::new_assignment_expression(
                     SPAN,
                     AssignmentOperator::Assign,
                     Self::create_underscore_member_expr_target(prop_ident2, SPAN, ctx),
                     value,
+                    ctx,
                 );
 
                 // `(_prop._ = <value>, _object$prop2)`
                 // TODO(improve-on-babel): Final `_object$prop2` is only needed if this expression
                 // is consumed (i.e. not in an `ExpressionStatement`)
-                *expr = ctx.ast.expression_sequence(
+                *expr = Expression::new_sequence_expression(
                     span,
-                    ctx.ast
-                        .vec_from_array([assignment3, temp_binding2.create_read_expression(ctx)]),
+                    ArenaVec::from_array_in(
+                        [assignment3, temp_binding2.create_read_expression(ctx)],
+                        ctx,
+                    ),
+                    ctx,
                 );
             }
         } else {
@@ -1120,9 +1131,11 @@ impl<'a> ClassProperties<'a> {
             if prefix {
                 // Source = `++object.#prop` (prefix `++`)
                 // `(_object$prop = _classPrivateFieldGet(_prop, object), ++_object$prop)`
-                let value = ctx
-                    .ast
-                    .expression_sequence(SPAN, ctx.ast.vec_from_array([assignment, update_expr]));
+                let value = Expression::new_sequence_expression(
+                    SPAN,
+                    ArenaVec::from_array_in([assignment, update_expr], ctx),
+                    ctx,
+                );
                 // `_classPrivateFieldSet(_prop, object, <value>)`
                 *expr = self.create_private_setter(
                     &private_name,
@@ -1140,13 +1153,13 @@ impl<'a> ClassProperties<'a> {
                 let assignment2 = create_assignment(&temp_binding2, update_expr, SPAN, ctx);
 
                 // `(_object$prop = _classPrivateFieldGet(_prop, object), _object$prop2 = _object$prop++, _object$prop)`
-                let value = ctx.ast.expression_sequence(
+                let value = Expression::new_sequence_expression(
                     SPAN,
-                    ctx.ast.vec_from_array([
-                        assignment,
-                        assignment2,
-                        temp_binding.create_read_expression(ctx),
-                    ]),
+                    ArenaVec::from_array_in(
+                        [assignment, assignment2, temp_binding.create_read_expression(ctx)],
+                        ctx,
+                    ),
+                    ctx,
                 );
 
                 // `_classPrivateFieldSet(_prop, object, <value>)`
@@ -1162,9 +1175,13 @@ impl<'a> ClassProperties<'a> {
                 // `(_classPrivateFieldSet(_prop, object, <value>), _object$prop2)`
                 // TODO(improve-on-babel): Final `_object$prop2` is only needed if this expression
                 // is consumed (i.e. not in an `ExpressionStatement`)
-                *expr = ctx.ast.expression_sequence(
+                *expr = Expression::new_sequence_expression(
                     span,
-                    ctx.ast.vec_from_array([set_call, temp_binding2.create_read_expression(ctx)]),
+                    ArenaVec::from_array_in(
+                        [set_call, temp_binding2.create_read_expression(ctx)],
+                        ctx,
+                    ),
+                    ctx,
                 );
             }
         }
@@ -1488,7 +1505,7 @@ impl<'a> ClassProperties<'a> {
                 }
                 _ => unreachable!(),
             };
-            ctx.ast.expression_chain(SPAN, chain_element)
+            Expression::new_chain_expression(SPAN, chain_element, ctx)
         } else {
             expr
         }
@@ -1603,13 +1620,25 @@ impl<'a> ClassProperties<'a> {
         } else {
             BinaryOperator::StrictEquality
         };
-        ctx.ast.expression_binary(SPAN, left, operator, ctx.ast.expression_null_literal(SPAN))
+        Expression::new_binary_expression(
+            SPAN,
+            left,
+            operator,
+            Expression::new_null_literal(SPAN, ctx),
+            ctx,
+        )
     }
 
     /// Returns `left === void 0`
     fn wrap_void0_check(left: Expression<'a>, ctx: &TraverseCtx<'a>) -> Expression<'a> {
         let operator = BinaryOperator::StrictEquality;
-        ctx.ast.expression_binary(SPAN, left, operator, ctx.ast.void_0(SPAN))
+        Expression::new_binary_expression(
+            SPAN,
+            left,
+            operator,
+            Expression::new_void_0(SPAN, ctx),
+            ctx,
+        )
     }
 
     /// Returns `left1 === null || left2 === void 0`
@@ -1624,7 +1653,13 @@ impl<'a> ClassProperties<'a> {
             null_check
         } else {
             let void0_check = Self::wrap_void0_check(left2, ctx);
-            ctx.ast.expression_logical(SPAN, null_check, LogicalOperator::Or, void0_check)
+            Expression::new_logical_expression(
+                SPAN,
+                null_check,
+                LogicalOperator::Or,
+                void0_check,
+                ctx,
+            )
         }
     }
 
@@ -1634,7 +1669,13 @@ impl<'a> ClassProperties<'a> {
         alternative: Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
-        ctx.ast.expression_conditional(SPAN, test, ctx.ast.void_0(SPAN), alternative)
+        Expression::new_conditional_expression(
+            SPAN,
+            test,
+            Expression::new_void_0(SPAN, ctx),
+            alternative,
+            ctx,
+        )
     }
 
     /// Transform chain expression inside unary expression.
@@ -1681,15 +1722,16 @@ impl<'a> ClassProperties<'a> {
         if let Some((result, chain_expr)) =
             self.transform_chain_expression_impl(&mut unary_expr.argument, ctx)
         {
-            *expr = ctx.ast.expression_conditional(
+            *expr = Expression::new_conditional_expression(
                 unary_expr.span,
                 result,
-                ctx.ast.expression_boolean_literal(SPAN, true),
+                Expression::new_boolean_literal(SPAN, true, ctx),
                 {
                     // We still need this unary expr, but it needs to be used as the alternative of the conditional
                     unary_expr.argument = chain_expr;
                     expr.take_in(ctx)
                 },
+                ctx,
             );
         }
     }
@@ -1769,14 +1811,15 @@ impl<'a> ClassProperties<'a> {
         let (callee, context) = self.transform_private_field_callee(field_expr, ctx);
 
         // Return `<callee>.bind(object)`, to be substituted as tag of tagged template expression
-        let callee = Expression::from(ctx.ast.member_expression_static(
+        let callee = Expression::from(MemberExpression::new_static_member_expression(
             SPAN,
             callee,
-            ctx.ast.identifier_name(SPAN, "bind"),
+            IdentifierName::new(SPAN, "bind", ctx),
             false,
+            ctx,
         ));
-        let arguments = ctx.ast.vec1(Argument::from(context));
-        ctx.ast.expression_call(field_expr.span, callee, NONE, arguments, false)
+        let arguments = ArenaVec::from_value_in(Argument::from(context), ctx);
+        Expression::new_call_expression(field_expr.span, callee, NONE, arguments, false, ctx)
     }
 
     /// Transform private field in assignment pattern.
@@ -1858,11 +1901,12 @@ impl<'a> ClassProperties<'a> {
             let class_binding = class_bindings.get_or_init_static_binding(ctx);
             let class_ident = class_binding.create_read_expression(ctx);
             let left = self.create_check_in_rhs(right, ctx);
-            return ctx.ast.expression_binary(
+            return Expression::new_binary_expression(
                 span,
                 left,
                 BinaryOperator::StrictEquality,
                 class_ident,
+                ctx,
             );
         }
 
@@ -1873,7 +1917,14 @@ impl<'a> ClassProperties<'a> {
         };
         let callee = create_member_callee(callee, static_ident!("has"), span, ctx);
         let argument = self.create_check_in_rhs(right, ctx);
-        ctx.ast.expression_call(span, callee, NONE, ctx.ast.vec1(Argument::from(argument)), false)
+        Expression::new_call_expression(
+            span,
+            callee,
+            NONE,
+            ArenaVec::from_value_in(Argument::from(argument), ctx),
+            false,
+            ctx,
+        )
     }
 
     /// Duplicate object to be used in get/set pair.
@@ -1928,17 +1979,18 @@ impl<'a> ClassProperties<'a> {
     ) -> MemberExpression<'a> {
         let call_expr = helper_call_expr(
             Helper::ClassPrivateFieldLooseBase,
-            ctx.ast.vec_from_array([
-                Argument::from(object),
-                Argument::from(prop_binding.create_read_expression(ctx)),
-            ]),
+            ArenaVec::from_array_in(
+                [Argument::from(object), Argument::from(prop_binding.create_read_expression(ctx))],
+                ctx,
+            ),
             ctx,
         );
-        ctx.ast.member_expression_computed(
+        MemberExpression::new_computed_member_expression(
             span,
             call_expr,
             prop_binding.create_read_expression(ctx),
             false,
+            ctx,
         )
     }
 
@@ -1952,7 +2004,7 @@ impl<'a> ClassProperties<'a> {
     ) -> Expression<'a> {
         helper_call_expr(
             Helper::ClassPrivateFieldGet2,
-            ctx.ast.vec_from_array([Argument::from(prop_ident), Argument::from(object)]),
+            ArenaVec::from_array_in([Argument::from(prop_ident), Argument::from(object)], ctx),
             ctx,
         )
     }
@@ -1968,11 +2020,10 @@ impl<'a> ClassProperties<'a> {
     ) -> Expression<'a> {
         helper_call_expr(
             Helper::ClassPrivateFieldSet2,
-            ctx.ast.vec_from_array([
-                Argument::from(prop_ident),
-                Argument::from(object),
-                Argument::from(value),
-            ]),
+            ArenaVec::from_array_in(
+                [Argument::from(prop_ident), Argument::from(object), Argument::from(value)],
+                ctx,
+            ),
             ctx,
         )
     }
@@ -1986,17 +2037,21 @@ impl<'a> ClassProperties<'a> {
         span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let arguments = ctx.ast.expression_array(
+        let arguments = Expression::new_array_expression(
             SPAN,
-            ctx.ast.vec_from_array([
-                ArrayExpressionElement::from(prop_ident),
-                ArrayExpressionElement::from(object),
-            ]),
+            ArenaVec::from_array_in(
+                [ArrayExpressionElement::from(prop_ident), ArrayExpressionElement::from(object)],
+                ctx,
+            ),
+            ctx,
         );
-        let arguments = ctx.ast.vec_from_array([
-            Argument::from(helper_load(Helper::ClassPrivateFieldSet2, ctx)),
-            Argument::from(arguments),
-        ]);
+        let arguments = ArenaVec::from_array_in(
+            [
+                Argument::from(helper_load(Helper::ClassPrivateFieldSet2, ctx)),
+                Argument::from(arguments),
+            ],
+            ctx,
+        );
         let call = helper_call_expr(Helper::ToSetter, arguments, ctx);
         Self::create_underscore_member_expression(call, span, ctx)
     }
@@ -2011,7 +2066,7 @@ impl<'a> ClassProperties<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let prop_call = create_bind_call(prop_ident, object, span, ctx);
-        let arguments = ctx.ast.vec_from_array([Argument::from(prop_call)]);
+        let arguments = ArenaVec::from_array_in([Argument::from(prop_call)], ctx);
         let call = helper_call_expr(Helper::ToSetter, arguments, ctx);
         Self::create_underscore_member_expression(call, span, ctx)
     }
@@ -2028,11 +2083,14 @@ impl<'a> ClassProperties<'a> {
     ) -> Expression<'a> {
         helper_call_expr(
             Helper::AssertClassBrand,
-            ctx.ast.vec_from_array([
-                Argument::from(class_ident),
-                Argument::from(object),
-                Argument::from(value_or_prop_ident),
-            ]),
+            ArenaVec::from_array_in(
+                [
+                    Argument::from(class_ident),
+                    Argument::from(object),
+                    Argument::from(value_or_prop_ident),
+                ],
+                ctx,
+            ),
             ctx,
         )
     }
@@ -2046,7 +2104,7 @@ impl<'a> ClassProperties<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let arguments =
-            ctx.ast.vec_from_array([Argument::from(class_ident), Argument::from(object)]);
+            ArenaVec::from_array_in([Argument::from(class_ident), Argument::from(object)], ctx);
         helper_call_expr(Helper::AssertClassBrand, arguments, ctx)
     }
 
@@ -2087,7 +2145,13 @@ impl<'a> ClassProperties<'a> {
         span: Span,
         ctx: &TraverseCtx<'a>,
     ) -> MemberExpression<'a> {
-        ctx.ast.member_expression_static(span, object, create_underscore_ident_name(ctx), false)
+        MemberExpression::new_static_member_expression(
+            span,
+            object,
+            create_underscore_ident_name(ctx),
+            false,
+            ctx,
+        )
     }
 
     /// * Getter: `_prop.call(_assertClassBrand(Class, object))`
@@ -2145,10 +2209,11 @@ impl<'a> ClassProperties<'a> {
         if let Some(class_binding) = class_binding {
             let class_ident = class_binding.create_read_expression(ctx);
             let object = self.create_assert_class_brand_without_value(class_ident, object, ctx);
-            let arguments = ctx.ast.vec_from_array([Argument::from(object), Argument::from(value)]);
+            let arguments =
+                ArenaVec::from_array_in([Argument::from(object), Argument::from(value)], ctx);
             let callee = create_member_callee(prop_ident, static_ident!("call"), span, ctx);
             // `_prop.call(_assertClassBrand(Class, object), value)`
-            ctx.ast.expression_call(span, callee, NONE, arguments, false)
+            Expression::new_call_expression(span, callee, NONE, arguments, false, ctx)
         } else {
             // `_privateFieldSet(_prop, object, value)`
             self.create_private_field_set(prop_ident, object, value, ctx)
@@ -2164,9 +2229,9 @@ impl<'a> ClassProperties<'a> {
         private_name: &str,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let message = ctx.ast.str_from_strs_array(["#", private_name]);
-        let message = ctx.ast.expression_string_literal(SPAN, message, None);
-        helper_call_expr(helper, ctx.ast.vec1(Argument::from(message)), ctx)
+        let message = Str::from_strs_array_in(["#", private_name], ctx);
+        let message = Expression::new_string_literal(SPAN, message, None, ctx);
+        helper_call_expr(helper, ArenaVec::from_value_in(Argument::from(message), ctx), ctx)
     }
 
     /// `object, value, _readOnlyError("#method")`
@@ -2181,11 +2246,11 @@ impl<'a> ClassProperties<'a> {
         let has_value = value.is_some();
         let error = self.create_throw_error(Helper::ReadOnlyError, private_name, ctx);
         let expressions = if let Some(value) = value {
-            ctx.ast.vec_from_array([object, value, error])
+            ArenaVec::from_array_in([object, value, error], ctx)
         } else {
-            ctx.ast.vec_from_array([object, error])
+            ArenaVec::from_array_in([object, error], ctx)
         };
-        let expr = ctx.ast.expression_sequence(span, expressions);
+        let expr = Expression::new_sequence_expression(span, expressions, ctx);
         if has_value {
             expr
         } else {
@@ -2202,8 +2267,8 @@ impl<'a> ClassProperties<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let error = self.create_throw_error(Helper::WriteOnlyError, private_name, ctx);
-        let expressions = ctx.ast.vec_from_array([object, error]);
-        ctx.ast.expression_sequence(span, expressions)
+        let expressions = ArenaVec::from_array_in([object, error], ctx);
+        Expression::new_sequence_expression(span, expressions, ctx)
     }
 
     /// _checkInRHS(object)
@@ -2213,6 +2278,10 @@ impl<'a> ClassProperties<'a> {
         object: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        helper_call_expr(Helper::CheckInRHS, ctx.ast.vec1(Argument::from(object)), ctx)
+        helper_call_expr(
+            Helper::CheckInRHS,
+            ArenaVec::from_value_in(Argument::from(object), ctx),
+            ctx,
+        )
     }
 }

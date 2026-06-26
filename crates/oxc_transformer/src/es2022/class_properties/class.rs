@@ -1,7 +1,7 @@
 //! ES2022: Class Properties
 //! Transform of class itself.
 
-use oxc_allocator::{Address, GetAddress, TakeIn, UnstableAddress};
+use oxc_allocator::{Address, ArenaVec, GetAddress, TakeIn, UnstableAddress};
 use oxc_ast::{NONE, ast::*};
 use oxc_span::SPAN;
 use oxc_str::{Ident, static_ident};
@@ -206,7 +206,7 @@ impl<'a> ClassProperties<'a> {
                 // TODO(improve-on-babel): Inserting the temp var `var _Class` statement here is only
                 // to match Babel's output. It'd be simpler just to insert it at the end and get rid of
                 // `temp_var_is_created` that tracks whether it's done already or not.
-                ctx.state.var_declarations.insert_var(&temp_binding, ctx.ast);
+                ctx.state.var_declarations.insert_var(&temp_binding, &ctx.ast);
             }
             Some(temp_binding)
         } else {
@@ -454,7 +454,7 @@ impl<'a> ClassProperties<'a> {
             if let Some(ident) = &class.id {
                 // Insert `var _Class` statement, if it wasn't already in entry phase
                 if !class_details.bindings.temp_var_is_created {
-                    ctx.state.var_declarations.insert_var(temp_binding, ctx.ast);
+                    ctx.state.var_declarations.insert_var(temp_binding, &ctx.ast);
                 }
 
                 // Insert `_Class = Class` after class.
@@ -463,7 +463,7 @@ impl<'a> ClassProperties<'a> {
                 let class_name =
                     BoundIdentifier::from_binding_ident(ident).create_read_expression(ctx);
                 let expr = create_assignment(temp_binding, class_name, SPAN, ctx);
-                let stmt = ctx.ast.statement_expression(SPAN, expr);
+                let stmt = Statement::new_expression_statement(SPAN, expr, ctx);
                 self.insert_after_stmts.insert(0, stmt);
             } else {
                 // Class must be default export `export default class {}`, as all other class declarations
@@ -484,7 +484,7 @@ impl<'a> ClassProperties<'a> {
         if !self.insert_before.is_empty() {
             ctx.state.statement_injector.insert_many_before(
                 &stmt_address,
-                exprs_into_stmts(self.insert_before.drain(..), ctx.ast),
+                exprs_into_stmts(self.insert_before.drain(..), &ctx.ast),
             );
         }
 
@@ -632,7 +632,7 @@ impl<'a> ClassProperties<'a> {
 
         expr_count += 1 + usize::from(class_details.bindings.temp.is_some());
 
-        let mut exprs = ctx.ast.vec_with_capacity(expr_count);
+        let mut exprs = ArenaVec::with_capacity_in(expr_count, ctx);
 
         // Insert `_prop = new WeakMap()` expressions for private instance props
         // (or `_prop = _classPrivateFieldLooseKey("prop")` if loose mode).
@@ -651,7 +651,7 @@ impl<'a> ClassProperties<'a> {
                     }
 
                     // Insert `var _prop;` declaration
-                    ctx.state.var_declarations.insert_var(&prop.binding, ctx.ast);
+                    ctx.state.var_declarations.insert_var(&prop.binding, &ctx.ast);
 
                     // `_prop = _classPrivateFieldLooseKey("prop")`
                     let value = Self::create_private_prop_key_loose(name, ctx);
@@ -672,13 +672,13 @@ impl<'a> ClassProperties<'a> {
                         has_method = true;
                         // `_C_brand = new WeakSet()`
                         let binding = class_details.bindings.brand();
-                        ctx.state.var_declarations.insert_var(binding, ctx.ast);
+                        ctx.state.var_declarations.insert_var(binding, &ctx.ast);
                         let value = create_new_weakset(ctx);
                         return Some(create_assignment(binding, value, SPAN, ctx));
                     }
 
                     // Insert `var _prop;` declaration
-                    ctx.state.var_declarations.insert_var(&prop.binding, ctx.ast);
+                    ctx.state.var_declarations.insert_var(&prop.binding, &ctx.ast);
 
                     if prop.is_static {
                         return None;
@@ -714,7 +714,7 @@ impl<'a> ClassProperties<'a> {
         if let Some(binding) = &class_details.bindings.temp {
             // Insert `var _Class` statement, if it wasn't already in entry phase
             if !class_details.bindings.temp_var_is_created {
-                ctx.state.var_declarations.insert_var(binding, ctx.ast);
+                ctx.state.var_declarations.insert_var(binding, &ctx.ast);
             }
 
             // `_Class = class {}`
@@ -754,7 +754,7 @@ impl<'a> ClassProperties<'a> {
         debug_assert!(exprs.len() > 1);
         debug_assert!(exprs.len() <= expr_count);
 
-        *expr = ctx.ast.expression_sequence(SPAN, exprs);
+        *expr = Expression::new_sequence_expression(SPAN, exprs, ctx);
     }
 
     /// Transform class elements.
@@ -854,7 +854,10 @@ impl<'a> ClassProperties<'a> {
     fn create_private_prop_key_loose(name: Ident<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         helper_call_expr(
             Helper::ClassPrivateFieldLooseKey,
-            ctx.ast.vec1(Argument::from(ctx.ast.expression_string_literal(SPAN, name, None))),
+            ArenaVec::from_value_in(
+                Argument::from(Expression::new_string_literal(SPAN, name, None, ctx)),
+                ctx,
+            ),
             ctx,
         )
     }
@@ -862,7 +865,7 @@ impl<'a> ClassProperties<'a> {
     /// Insert an expression after the class.
     pub(super) fn insert_expr_after_class(&mut self, expr: Expression<'a>, ctx: &TraverseCtx<'a>) {
         if self.current_class().is_declaration {
-            self.insert_after_stmts.push(ctx.ast.statement_expression(SPAN, expr));
+            self.insert_after_stmts.push(Statement::new_expression_statement(SPAN, expr, ctx));
         } else {
             self.insert_after_exprs.push(expr);
         }
@@ -888,7 +891,7 @@ fn create_new_weakmap<'a>(
     let symbol_id = *symbol_id
         .get_or_insert_with(|| ctx.scoping().find_binding(ctx.current_scope_id(), weak_map));
     let ident = ctx.create_ident_expr(SPAN, weak_map, symbol_id, ReferenceFlags::Read);
-    ctx.ast.expression_new_with_pure(SPAN, ident, NONE, ctx.ast.vec(), true)
+    Expression::new_new_expression_with_pure(SPAN, ident, NONE, ArenaVec::new_in(ctx), true, ctx)
 }
 
 /// Create `new WeakSet()` expression.
@@ -896,5 +899,5 @@ fn create_new_weakset<'a>(ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
     let weak_set = static_ident!("WeakSet");
     let symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), weak_set);
     let ident = ctx.create_ident_expr(SPAN, weak_set, symbol_id, ReferenceFlags::Read);
-    ctx.ast.expression_new_with_pure(SPAN, ident, NONE, ctx.ast.vec(), true)
+    Expression::new_new_expression_with_pure(SPAN, ident, NONE, ArenaVec::new_in(ctx), true, ctx)
 }
