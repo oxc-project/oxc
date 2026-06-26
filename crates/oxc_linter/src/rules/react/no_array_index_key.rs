@@ -56,12 +56,7 @@ declare_oxc_lint!(
     short_description = "Warn if an element uses an Array index in its key.",
 );
 
-fn check_jsx_element<'a>(
-    jsx: &'a JSXElement,
-    node: &'a AstNode,
-    ctx: &'a LintContext,
-    prop_name: &'static str,
-) {
+fn check_jsx_element<'a>(jsx: &'a JSXElement, node: &'a AstNode, ctx: &'a LintContext) {
     let Some(index_param_symbol_id) = find_index_param_symbol_id(node, ctx) else {
         return;
     };
@@ -75,7 +70,7 @@ fn check_jsx_element<'a>(
             continue;
         };
 
-        if ident.name.as_str() != prop_name {
+        if ident.name.as_str() != "key" {
             continue;
         }
 
@@ -248,7 +243,7 @@ impl Rule for NoArrayIndexKey {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::JSXElement(jsx) => {
-                check_jsx_element(jsx, node, ctx, "key");
+                check_jsx_element(jsx, node, ctx);
             }
             AstKind::CallExpression(call_expr) => {
                 check_react_clone_element(call_expr, node, ctx);
