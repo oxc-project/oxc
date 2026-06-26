@@ -85,6 +85,7 @@ impl StickyRegex for Regex {
     }
 }
 
+// Fast path scan for non-octal decimal escape sequences (`\8` or `\9`).
 fn quick_test(s: &str) -> bool {
     // Byte scan is enough (escape sequences are ASCII); avoids char iterators on every string.
     let bytes = s.as_bytes();
