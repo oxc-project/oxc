@@ -289,6 +289,11 @@ impl Rule for ExhaustiveDeps {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else { return };
 
+        // Most calls are not React hooks; reject before name extraction / ancestor walks.
+        if !callee_might_be_react_hook(&call_expr.callee, self.0.additional_hooks.is_some()) {
+            return;
+        }
+
         let Some(hook_name) = get_node_name_without_react_namespace(&call_expr.callee) else {
             return;
         };
@@ -857,6 +862,24 @@ fn get_node_name_without_react_namespace<'a>(expr: &Expression<'a>) -> Option<&'
         }
         Expression::Identifier(ident) => Some(ident.name.as_str()),
         _ => None,
+    }
+}
+
+/// Cheap gate: only identifiers named `use…` or `React.use…` (or custom hooks via config)
+/// can be reactive hooks we care about.
+#[inline]
+fn callee_might_be_react_hook(expr: &Expression<'_>, has_additional_hooks: bool) -> bool {
+    match expr {
+        Expression::Identifier(ident) => {
+            let name = ident.name.as_str();
+            name.starts_with("use") || (has_additional_hooks && !name.is_empty())
+        }
+        Expression::StaticMemberExpression(member) => {
+            member.object.get_identifier_reference().is_some_and(|r| r.name == "React")
+                && (member.property.name.as_str().starts_with("use") || has_additional_hooks)
+        }
+        // Parenthesized / TS wrappers are uncommon for hooks; fall through to full path.
+        _ => true,
     }
 }
 

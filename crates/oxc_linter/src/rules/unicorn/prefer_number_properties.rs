@@ -117,62 +117,6 @@ impl Rule for PreferNumberProperties {
                     );
                 }
             }
-            AstKind::IdentifierReference(ident_ref) => {
-                // Cheap name filter before semantic global lookup (hot path: every identifier).
-                let ident_name = ident_ref.name.as_str();
-                let is_nan = ident_name == "NaN" && self.check_nan;
-                let is_infinity = ident_name == "Infinity" && self.check_infinity;
-                let is_method_shorthand =
-                    matches!(ident_name, "isNaN" | "isFinite" | "parseFloat" | "parseInt");
-                if !is_nan && !is_infinity && !is_method_shorthand {
-                    return;
-                }
-                if is_method_shorthand
-                    && !matches!(ctx.nodes().parent_kind(node.id()), AstKind::ObjectProperty(_))
-                {
-                    return;
-                }
-                if !ctx.is_reference_to_global_variable(ident_ref) {
-                    return;
-                }
-
-                let (replacement_span, replacement_text) = if is_infinity {
-                    if let Some(unary) = find_ancestor_unary(node, ctx) {
-                        match unary.operator {
-                            UnaryOperator::UnaryNegation => {
-                                (unary.span, "Number.NEGATIVE_INFINITY")
-                            }
-                            _ => (ident_ref.span, "Number.POSITIVE_INFINITY"),
-                        }
-                    } else {
-                        (ident_ref.span, "Number.POSITIVE_INFINITY")
-                    }
-                } else {
-                    (ident_ref.span, "")
-                };
-
-                let fixer =
-                    |fixer: RuleFixer<'_, 'a>| match ctx.nodes().parent_kind(node.id()) {
-                        AstKind::ObjectProperty(prop) if prop.shorthand && is_infinity => fixer
-                            .insert_text_after(&ident_ref.span, format!(": {replacement_text}")),
-                        AstKind::ObjectProperty(prop) if prop.shorthand => fixer
-                            .insert_text_before(&ident_ref.span, format!("{ident_name}: Number.")),
-                        _ if is_infinity => fixer.replace(replacement_span, replacement_text),
-                        _ => fixer.insert_text_before(&ident_ref.span, "Number."),
-                    };
-
-                if ident_name == "isNaN" || ident_name == "isFinite" {
-                    ctx.diagnostic_with_dangerous_fix(
-                        prefer_number_properties_diagnostic(ident_ref.span, ident_name),
-                        fixer,
-                    );
-                } else {
-                    ctx.diagnostic_with_fix(
-                        prefer_number_properties_diagnostic(ident_ref.span, ident_name),
-                        fixer,
-                    );
-                }
-            }
             AstKind::CallExpression(call_expr) => {
                 let Some(ident_name) = extract_ident_from_expression(&call_expr.callee) else {
                     return;
@@ -223,6 +167,89 @@ impl Rule for PreferNumberProperties {
                 }
             }
             _ => {}
+        }
+    }
+
+    /// Handle bare global identifiers (`NaN`, `Infinity`, method shorthand) without
+    /// visiting every `IdentifierReference` in the file (hundreds of thousands of calls).
+    fn run_once(&self, ctx: &LintContext) {
+        let unresolved = ctx.scoping().root_unresolved_references();
+        let names: &[&str] = if self.check_nan && self.check_infinity {
+            &["NaN", "Infinity", "isNaN", "isFinite", "parseFloat", "parseInt"]
+        } else if self.check_nan {
+            &["NaN", "isNaN", "isFinite", "parseFloat", "parseInt"]
+        } else if self.check_infinity {
+            &["Infinity", "isNaN", "isFinite", "parseFloat", "parseInt"]
+        } else {
+            &["isNaN", "isFinite", "parseFloat", "parseInt"]
+        };
+
+        for &name in names {
+            let Some(ref_ids) = unresolved.get(name) else {
+                continue;
+            };
+            for &ref_id in ref_ids {
+                let reference = ctx.scoping().get_reference(ref_id);
+                let node = ctx.nodes().get_node(reference.node_id());
+                let AstKind::IdentifierReference(ident_ref) = node.kind() else {
+                    continue;
+                };
+                // Skip identifiers that are call callees — handled in `run` on CallExpression.
+                if matches!(ctx.nodes().parent_kind(node.id()), AstKind::CallExpression(_))
+                    && matches!(name, "isNaN" | "isFinite" | "parseFloat" | "parseInt")
+                {
+                    continue;
+                }
+                let is_method_shorthand =
+                    matches!(name, "isNaN" | "isFinite" | "parseFloat" | "parseInt");
+                if is_method_shorthand
+                    && !matches!(ctx.nodes().parent_kind(node.id()), AstKind::ObjectProperty(_))
+                {
+                    continue;
+                }
+                // Globals are off? is_reference_to_global_variable also checks globals table.
+                if !ctx.is_reference_to_global_variable(ident_ref) {
+                    continue;
+                }
+
+                let is_infinity = name == "Infinity";
+                let (replacement_span, replacement_text) = if is_infinity {
+                    if let Some(unary) = find_ancestor_unary(node, ctx) {
+                        match unary.operator {
+                            UnaryOperator::UnaryNegation => {
+                                (unary.span, "Number.NEGATIVE_INFINITY")
+                            }
+                            _ => (ident_ref.span, "Number.POSITIVE_INFINITY"),
+                        }
+                    } else {
+                        (ident_ref.span, "Number.POSITIVE_INFINITY")
+                    }
+                } else {
+                    (ident_ref.span, "")
+                };
+
+                let fixer = |fixer: RuleFixer<'_, '_>| match ctx.nodes().parent_kind(node.id()) {
+                    AstKind::ObjectProperty(prop) if prop.shorthand && is_infinity => fixer
+                        .insert_text_after(&ident_ref.span, format!(": {replacement_text}")),
+                    AstKind::ObjectProperty(prop) if prop.shorthand => {
+                        fixer.insert_text_before(&ident_ref.span, format!("{name}: Number."))
+                    }
+                    _ if is_infinity => fixer.replace(replacement_span, replacement_text),
+                    _ => fixer.insert_text_before(&ident_ref.span, "Number."),
+                };
+
+                if name == "isNaN" || name == "isFinite" {
+                    ctx.diagnostic_with_dangerous_fix(
+                        prefer_number_properties_diagnostic(ident_ref.span, name),
+                        fixer,
+                    );
+                } else {
+                    ctx.diagnostic_with_fix(
+                        prefer_number_properties_diagnostic(ident_ref.span, name),
+                        fixer,
+                    );
+                }
+            }
         }
     }
 }

@@ -3641,11 +3641,10 @@ impl RuleRunner for crate::rules::unicorn::prefer_number_properties::PreferNumbe
     const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
         AstType::CallExpression,
         AstType::ComputedMemberExpression,
-        AstType::IdentifierReference,
         AstType::PrivateFieldExpression,
         AstType::StaticMemberExpression,
     ]));
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Unknown;
 }
 
 impl RuleRunner for crate::rules::unicorn::prefer_object_from_entries::PreferObjectFromEntries {

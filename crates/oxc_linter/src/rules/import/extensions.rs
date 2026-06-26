@@ -657,6 +657,14 @@ impl Extensions {
     ) {
         let config = &self.0;
 
+        // Default / empty config: nothing is enforced (all imports pass).
+        if config.require_extension.is_none()
+            && config.extensions.is_empty()
+            && config.path_group_overrides.is_empty()
+        {
+            return;
+        }
+
         // Type imports check (only for ESM, always false for require)
         if is_type_import && !config.check_type_imports {
             return;
@@ -829,20 +837,19 @@ fn get_file_extension_from_module_name(module_name: &str) -> Option<std::borrow:
 /// - Resolved `./foo.TS` → `Some("ts")` (normalized to lowercase)
 /// - Package import `lodash` → `None` (not resolved locally)
 /// - Path alias `@/utils/foo.js` → `Some("js")` (if resolved)
-fn get_resolved_extension<'a>(
-    module_record: &'a crate::module_record::ModuleRecord,
+fn get_resolved_extension(
+    module_record: &crate::module_record::ModuleRecord,
     module_name: &str,
-) -> Option<std::borrow::Cow<'a, str>> {
+) -> Option<String> {
     use cow_utils::CowUtils;
-    use std::borrow::Cow;
     module_record.get_loaded_module(module_name).and_then(|loaded_module| {
         loaded_module.resolved_absolute_path.extension().and_then(|ext| {
             let s = ext.to_str()?;
-            // Most extensions are already lowercase ASCII; avoid allocation.
+            // Avoid Cow::to_string when already lowercase.
             if s.bytes().all(|b| b.is_ascii_lowercase()) {
-                Some(Cow::Borrowed(s))
+                Some(s.to_string())
             } else {
-                Some(s.cow_to_ascii_lowercase())
+                Some(s.cow_to_ascii_lowercase().into_owned())
             }
         })
     })

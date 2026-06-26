@@ -73,27 +73,36 @@ impl Rule for NoUselessCall {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else { return };
 
-        // Most calls are not `.call`/`.apply`; reject early before expensive checks.
-        let Some(callee) =
-            as_member_expression_without_chain_expression(call_expr.callee.without_parentheses())
-        else {
-            return;
-        };
-
-        if callee.is_computed() {
-            return;
-        }
-
-        let Some(method_name) = callee.static_property_name() else {
-            return;
+        // Fast path for the common case: `foo.call(...)` / `foo.apply(...)` without parens/chain.
+        let (method_name, applied) = match &call_expr.callee {
+            Expression::StaticMemberExpression(member) => {
+                let name = member.property.name.as_str();
+                if name != "call" && name != "apply" {
+                    return;
+                }
+                (name, member.object.without_parentheses())
+            }
+            _ => {
+                // ChainExpression / ParenthesizedExpression / optional chaining, etc.
+                let Some(callee) = as_member_expression_without_chain_expression(
+                    call_expr.callee.without_parentheses(),
+                ) else {
+                    return;
+                };
+                if callee.is_computed() {
+                    return;
+                }
+                let Some(method_name) = callee.static_property_name() else {
+                    return;
+                };
+                if method_name != "call" && method_name != "apply" {
+                    return;
+                }
+                (method_name, callee.object().without_parentheses())
+            }
         };
 
         let is_call = method_name == "call";
-        let is_apply = method_name == "apply";
-        if !is_call && !is_apply {
-            return;
-        }
-
         if is_call {
             if call_expr.arguments.is_empty() {
                 return;
@@ -111,7 +120,6 @@ impl Rule for NoUselessCall {
             }
         }
 
-        let applied = callee.object().without_parentheses();
         let Some(first_arg) = call_expr.arguments.first() else { return };
         let Some(this_arg) = first_arg.as_expression() else { return };
 

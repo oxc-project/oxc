@@ -263,7 +263,17 @@ impl NoUnusedVars {
         }
 
         // Order matters. We want to call cheap/high "yield" functions first.
-        let is_used = symbol.is_exported(exported_names) || symbol.has_usages(self);
+        // Exported symbols are always "used" — skip the expensive reference walk.
+        if symbol.is_exported(exported_names) {
+            if matches!(*is_ignored, Some(IgnoreReason::NamePattern))
+                && self.report_used_ignore_pattern
+            {
+                ctx.diagnostic(diagnostic::used_ignored(symbol, &self.vars_ignore_pattern));
+            }
+            return;
+        }
+
+        let is_used = symbol.has_usages(self);
 
         match (is_used, *is_ignored) {
             // used, ignored because variable name matches one of several
