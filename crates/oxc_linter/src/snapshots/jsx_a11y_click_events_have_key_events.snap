@@ -85,3 +85,17 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────────────
    ╰────
   help: Visible, non-interactive elements with click handlers must have one of `keyup`, `keydown`, or `keypress` listener.
+
+  ⚠ jsx-a11y(click-events-have-key-events): Enforce a clickable non-interactive element has at least one keyboard event listener.
+   ╭─[click_events_have_key_events.tsx:1:1]
+ 1 │ <Link onClick={() => void 0}>label</Link>
+   · ─────────────────────────────
+   ╰────
+  help: Visible, non-interactive elements with click handlers must have one of `keyup`, `keydown`, or `keypress` listener.
+
+  ⚠ jsx-a11y(click-events-have-key-events): Enforce a clickable non-interactive element has at least one keyboard event listener.
+   ╭─[click_events_have_key_events.tsx:1:1]
+ 1 │ <Link to="/x" onClick={() => void 0}>label</Link>
+   · ─────────────────────────────────────
+   ╰────
+  help: Visible, non-interactive elements with click handlers must have one of `keyup`, `keydown`, or `keypress` listener.

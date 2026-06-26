@@ -176,7 +176,8 @@ impl Rule for ControlHasAssociatedLabel {
         }
 
         let is_dom_element = HTML_TAG.contains(element_type.as_ref());
-        let is_interactive_el = is_interactive_element(&element_type, &element.opening_element);
+        let is_interactive_el =
+            is_interactive_element(ctx, &element_type, &element.opening_element);
         let is_interactive_role_el = role.is_some_and(is_interactive_role);
         let is_control_component =
             self.control_components.iter().any(|c| c.as_str() == element_type.as_ref());

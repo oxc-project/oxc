@@ -49,7 +49,7 @@ pub fn is_create_element_call(call_expr: &CallExpression) -> bool {
 
 pub fn has_jsx_prop<'a, 'b>(
     node: &'b JSXOpeningElement<'a>,
-    target_prop: &'b str,
+    target_prop: &str,
 ) -> Option<&'b JSXAttributeItem<'a>> {
     node.attributes
         .iter()
@@ -63,6 +63,27 @@ pub fn has_jsx_prop_ignore_case<'a, 'b>(
     node.attributes.iter().find(|attr| {
         attr.as_attribute().is_some_and(|attr| attr.is_identifier_ignore_case(target_prop))
     })
+}
+
+/// Like [`has_jsx_prop`], but resolves `canonical` through the
+/// `settings.jsx-a11y.attributes` alias map first.
+///
+/// `settings['jsx-a11y'].attributes` lets a project remap a DOM attribute name
+/// to the prop names its codebase actually uses (e.g. `{ "href": ["href", "to"] }`
+/// so that react-router's `<Link to>` is recognized as an anchor with an `href`).
+/// When `canonical` is present in the map, every listed alias is checked;
+/// otherwise this falls back to looking up `canonical` itself.
+///
+/// ref: <https://github.com/jsx-eslint/eslint-plugin-jsx-a11y#attributes>
+pub fn has_jsx_prop_aliased<'a, 'b>(
+    ctx: &LintContext<'a>,
+    node: &'b JSXOpeningElement<'a>,
+    canonical: &str,
+) -> Option<&'b JSXAttributeItem<'a>> {
+    match ctx.settings().jsx_a11y.attributes.get(canonical) {
+        Some(aliases) => aliases.iter().find_map(|alias| has_jsx_prop(node, alias.as_str())),
+        None => has_jsx_prop(node, canonical),
+    }
 }
 
 pub fn get_prop_value<'a, 'b>(item: &'b JSXAttributeItem<'a>) -> Option<&'b JSXAttributeValue<'a>> {
@@ -192,7 +213,11 @@ pub fn is_abstract_role<'a>(ctx: &LintContext<'a>, jsx_opening_el: &JSXOpeningEl
 // ref: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/4c7e7815c12a797587bb8e3cdced7f3003848964/src/util/isInteractiveElement.js
 //
 // See also https://html.spec.whatwg.org/multipage/dom.html#interactive-content
-pub fn is_interactive_element(element_type: &str, jsx_opening_el: &JSXOpeningElement) -> bool {
+pub fn is_interactive_element<'a>(
+    ctx: &LintContext<'a>,
+    element_type: &str,
+    jsx_opening_el: &JSXOpeningElement<'a>,
+) -> bool {
     // Interactive contents are...
     // - a, area (when they have `href`)
     // - audio, video
@@ -212,7 +237,10 @@ pub fn is_interactive_element(element_type: &str, jsx_opening_el: &JSXOpeningEle
             }
             true
         }
-        "a" | "area" => has_jsx_prop(jsx_opening_el, "href").is_some(),
+        // `href` is resolved through `settings.jsx-a11y.attributes` so that a
+        // component mapped to `a` via `settings.jsx-a11y.components` (e.g.
+        // `<Link to>`) is still recognized as an interactive anchor.
+        "a" | "area" => has_jsx_prop_aliased(ctx, jsx_opening_el, "href").is_some(),
         "img" => has_jsx_prop(jsx_opening_el, "usemap").is_some(),
         _ => false,
     }

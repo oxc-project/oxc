@@ -193,7 +193,8 @@ impl Rule for NoNoninteractiveElementInteractions {
         // Oxc's `is_interactive_element` follows HTML interactive-content semantics, which are
         // broader than this rule's accessibility semantics. Some elements such as `<iframe>`,
         // `<label>`, and `<details>` are still non-interactive for this rule.
-        if is_interactive_element(element_type.as_ref(), jsx_el) && !is_non_interactive_element {
+        if is_interactive_element(ctx, element_type.as_ref(), jsx_el) && !is_non_interactive_element
+        {
             return;
         }
 

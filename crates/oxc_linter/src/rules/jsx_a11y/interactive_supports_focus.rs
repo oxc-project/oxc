@@ -126,7 +126,7 @@ impl Rule for InteractiveSupportsFocus {
 
         let Some(role) = role_str else { return };
         if !is_interactive_role(role)
-            || is_interactive_element(&element_type, jsx_el)
+            || is_interactive_element(ctx, &element_type, jsx_el)
             || is_non_interactive_role(role)
             || is_non_interactive_element(&element_type, jsx_el)
             || has_tab_index

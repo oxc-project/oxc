@@ -91,7 +91,7 @@ impl Rule for AriaActivedescendantHasTabindex {
             if !is_valid_tab_index_attr(tab_index_attr) {
                 return;
             }
-        } else if is_interactive_element(&element_type, jsx_opening_el) {
+        } else if is_interactive_element(ctx, &element_type, jsx_opening_el) {
             return;
         }
 
