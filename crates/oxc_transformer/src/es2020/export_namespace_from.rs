@@ -71,13 +71,12 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExportNamespaceFrom {
                     );
 
                     // Create `import * as _ns from "mod"`
-                    let import_specifier = ImportDeclarationSpecifier::ImportNamespaceSpecifier(
-                        ImportNamespaceSpecifier::boxed(
+                    let import_specifier =
+                        ImportDeclarationSpecifier::new_import_namespace_specifier(
                             SPAN,
                             binding.create_binding_identifier(ctx),
                             ctx,
-                        ),
-                    );
+                        );
 
                     let import_decl = ImportDeclaration::boxed(
                         SPAN,

@@ -420,13 +420,13 @@ impl<'a> Pragma<'a> {
         let (object, parts) = match self {
             Self::Double(first, second) => {
                 let object = get_read_identifier_reference(SPAN, *first, ctx);
-                return Expression::from(MemberExpression::new_static_member_expression(
+                return Expression::new_static_member_expression(
                     SPAN,
                     object,
                     IdentifierName::new(SPAN, *second, ctx),
                     false,
                     ctx,
-                ));
+                );
             }
             Self::Single(single) => {
                 return get_read_identifier_reference(SPAN, *single, ctx);
@@ -566,13 +566,13 @@ impl<'a> JsxImpl<'a> {
         // TODO(improve-on-babel): Simplify this once we don't need to follow Babel exactly.
         if self.bindings.is_classic() || ctx.state.source_type.is_module() {
             // Insert before imports - add to `top_level_statements` immediately
-            let stmt = Statement::VariableDeclaration(VariableDeclaration::boxed(
+            let stmt = Statement::new_variable_declaration(
                 SPAN,
                 VariableDeclarationKind::Var,
                 ArenaVec::from_value_in(declarator, ctx),
                 false,
                 ctx,
-            ));
+            );
             ctx.state.top_level_statements.insert_statement(stmt);
         } else {
             // Insert after imports - add to `var_declarations`, which are inserted after `require` statements
@@ -737,11 +737,7 @@ impl<'a> JsxImpl<'a> {
 
             // isStaticChildren
             if is_development {
-                arguments.push(Argument::from(Expression::new_boolean_literal(
-                    SPAN,
-                    children_len > 1,
-                    ctx,
-                )));
+                arguments.push(Argument::new_boolean_literal(SPAN, children_len > 1, ctx));
             }
 
             // { __source: { fileName, lineNumber, columnNumber } }
@@ -753,7 +749,7 @@ impl<'a> JsxImpl<'a> {
 
             // this
             if self.options.jsx_self_plugin && JsxSelf::can_add_self_attribute(ctx) {
-                arguments.push(Argument::from(Expression::new_this_expression(SPAN, ctx)));
+                arguments.push(Argument::new_this_expression(SPAN, ctx));
             }
         } else {
             // React.createElement's second argument
@@ -998,14 +994,14 @@ impl<'a> JsxImpl<'a> {
             JSXAttributeName::Identifier(ident) => {
                 let name = ident.name;
                 if ident.name.contains('-') {
-                    PropertyKey::from(Expression::new_string_literal(ident.span, name, None, ctx))
+                    PropertyKey::new_string_literal(ident.span, name, None, ctx)
                 } else {
                     PropertyKey::new_static_identifier(ident.span, name, ctx)
                 }
             }
             JSXAttributeName::NamespacedName(namespaced) => {
                 let name = Str::from_str_in(&namespaced.to_string(), ctx);
-                PropertyKey::from(Expression::new_string_literal(namespaced.span, name, None, ctx))
+                PropertyKey::new_string_literal(namespaced.span, name, None, ctx)
             }
         }
     }

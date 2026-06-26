@@ -502,13 +502,13 @@ impl<'a> LegacyDecorator<'a> {
                 NONE,
                 ctx,
             );
-            let field_expr = Expression::from(MemberExpression::new_private_field_expression(
+            let field_expr = Expression::new_private_field_expression(
                 SPAN,
                 create_object(ctx),
                 PrivateIdentifier::new(SPAN, storage_name, ctx),
                 false,
                 ctx,
-            ));
+            );
             let stmt = Statement::new_return_statement(SPAN, Some(field_expr), ctx);
             (params, stmt)
         } else {
@@ -539,15 +539,13 @@ impl<'a> LegacyDecorator<'a> {
             let assign = Expression::new_assignment_expression(
                 SPAN,
                 AssignmentOperator::Assign,
-                AssignmentTarget::from(SimpleAssignmentTarget::from(
-                    MemberExpression::new_private_field_expression(
-                        SPAN,
-                        create_object(ctx),
-                        PrivateIdentifier::new(SPAN, storage_name, ctx),
-                        false,
-                        ctx,
-                    ),
-                )),
+                AssignmentTarget::new_private_field_expression(
+                    SPAN,
+                    create_object(ctx),
+                    PrivateIdentifier::new(SPAN, storage_name, ctx),
+                    false,
+                    ctx,
+                ),
                 value_binding.create_read_expression(ctx),
                 ctx,
             );

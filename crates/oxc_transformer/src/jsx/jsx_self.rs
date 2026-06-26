@@ -103,7 +103,7 @@ impl<'a> JsxSelf {
 
         let name = JSXAttributeName::new_identifier(SPAN, SELF, ctx);
         let value = {
-            let jsx_expr = JSXExpression::from(Expression::new_this_expression(SPAN, ctx));
+            let jsx_expr = JSXExpression::new_this_expression(SPAN, ctx);
             JSXAttributeValue::new_expression_container(SPAN, jsx_expr, ctx)
         };
         let attribute = JSXAttributeItem::new_attribute(SPAN, name, Some(value), ctx);

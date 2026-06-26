@@ -203,15 +203,13 @@ impl<'a> TypeScriptModule {
                     ctx,
                 )
             }
-            TSTypeName::QualifiedName(qualified_name) => {
-                Expression::from(MemberExpression::new_static_member_expression(
-                    SPAN,
-                    self.transform_ts_type_name(&mut qualified_name.left, ctx),
-                    qualified_name.right.clone(),
-                    false,
-                    ctx,
-                ))
-            }
+            TSTypeName::QualifiedName(qualified_name) => Expression::new_static_member_expression(
+                SPAN,
+                self.transform_ts_type_name(&mut qualified_name.left, ctx),
+                qualified_name.right.clone(),
+                false,
+                ctx,
+            ),
             TSTypeName::ThisExpression(e) => Expression::new_this_expression(e.span, ctx),
         }
     }

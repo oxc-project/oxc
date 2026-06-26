@@ -775,10 +775,7 @@ impl<'a> LegacyDecoratorMetadata<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let arguments = ArenaVec::from_array_in(
-            [
-                Argument::from(Expression::new_string_literal(SPAN, key, None, ctx)),
-                Argument::from(value),
-            ],
+            [Argument::new_string_literal(SPAN, key, None, ctx), Argument::from(value)],
             ctx,
         );
         helper_call_expr(Helper::DecorateMetadata, arguments, ctx)

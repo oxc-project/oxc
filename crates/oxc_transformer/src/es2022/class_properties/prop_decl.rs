@@ -87,7 +87,7 @@ impl<'a> ClassProperties<'a> {
         let prop = &private_props[&ident.name];
         let arguments = ArenaVec::from_array_in(
             [
-                Argument::from(Expression::new_this_expression(SPAN, ctx)),
+                Argument::new_this_expression(SPAN, ctx),
                 Argument::from(prop.binding.create_read_expression(ctx)),
                 Argument::from(value),
             ],
@@ -365,9 +365,7 @@ impl<'a> ClassProperties<'a> {
         let object =
             ctx.create_ident_expr(SPAN, object_name, object_symbol_id, ReferenceFlags::Read);
         let property = IdentifierName::new(SPAN, "defineProperty", ctx);
-        let callee = Expression::from(MemberExpression::new_static_member_expression(
-            SPAN, object, property, false, ctx,
-        ));
+        let callee = Expression::new_static_member_expression(SPAN, object, property, false, ctx);
 
         // `{writable: true, value: <value>}`
         let prop_def = Expression::new_object_expression(

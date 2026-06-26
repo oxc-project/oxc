@@ -663,7 +663,7 @@ impl<'a> ModuleRunnerTransform<'a> {
             self.import_bindings.insert(symbol_id, (binding.clone(), Some(key)));
         }
 
-        ArrayExpressionElement::from(Expression::new_string_literal(span, key, None, ctx))
+        ArrayExpressionElement::new_string_literal(span, key, None, ctx)
     }
 
     #[inline]
@@ -709,11 +709,7 @@ impl<'a> ModuleRunnerTransform<'a> {
             false,
             ctx,
         );
-        Argument::from(Expression::new_object_expression(
-            SPAN,
-            ArenaVec::from_value_in(imported_names, ctx),
-            ctx,
-        ))
+        Argument::new_object_expression(SPAN, ArenaVec::from_value_in(imported_names, ctx), ctx)
     }
 
     // `const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['foo'] });`
@@ -836,7 +832,7 @@ impl<'a> ModuleRunnerTransform<'a> {
                     static_ident!("__vite_ssr_exports__"),
                     ReferenceFlags::Read,
                 )),
-                Argument::from(Expression::new_string_literal(SPAN, exported_name, None, ctx)),
+                Argument::new_string_literal(SPAN, exported_name, None, ctx),
                 Argument::from(object),
             ],
             ctx,
@@ -892,9 +888,7 @@ fn create_compute_property_access<'a>(
 ) -> Expression<'a> {
     let expression =
         Expression::new_string_literal(SPAN, Str::from_str_in(property, ctx), None, ctx);
-    Expression::from(MemberExpression::new_computed_member_expression(
-        span, object, expression, false, ctx,
-    ))
+    Expression::new_computed_member_expression(span, object, expression, false, ctx)
 }
 
 /// `object` -> `object.call`.
@@ -904,9 +898,7 @@ pub fn create_member_callee<'a>(
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
     let property = IdentifierName::new(SPAN, property, ctx);
-    Expression::from(MemberExpression::new_static_member_expression(
-        SPAN, object, property, false, ctx,
-    ))
+    Expression::new_static_member_expression(SPAN, object, property, false, ctx)
 }
 
 /// `object` -> `object.a`.
@@ -917,9 +909,7 @@ pub fn create_property_access<'a>(
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
     let property = IdentifierName::new(SPAN, Str::from_str_in(property, ctx), ctx);
-    Expression::from(MemberExpression::new_static_member_expression(
-        span, object, property, false, ctx,
-    ))
+    Expression::new_static_member_expression(span, object, property, false, ctx)
 }
 
 #[cfg(test)]

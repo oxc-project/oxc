@@ -143,27 +143,23 @@ impl<'a> ModuleImportsStore<'a> {
     ) -> Statement<'a> {
         let specifiers = ArenaVec::from_iter_in(
             names.into_iter().map(|import| match import {
-                Import::Named(import) => {
-                    ImportDeclarationSpecifier::ImportSpecifier(ImportSpecifier::boxed(
-                        SPAN,
-                        ModuleExportName::IdentifierName(IdentifierName::new(
-                            SPAN,
-                            import.imported,
-                            ctx,
-                        )),
-                        import.local.create_binding_identifier(ctx),
-                        ImportOrExportKind::Value,
-                        ctx,
-                    ))
-                }
-                Import::Default(local) => ImportDeclarationSpecifier::ImportDefaultSpecifier(
-                    ImportDefaultSpecifier::boxed(SPAN, local.create_binding_identifier(ctx), ctx),
+                Import::Named(import) => ImportDeclarationSpecifier::new_import_specifier(
+                    SPAN,
+                    ModuleExportName::new_identifier_name(SPAN, import.imported, ctx),
+                    import.local.create_binding_identifier(ctx),
+                    ImportOrExportKind::Value,
+                    ctx,
+                ),
+                Import::Default(local) => ImportDeclarationSpecifier::new_import_default_specifier(
+                    SPAN,
+                    local.create_binding_identifier(ctx),
+                    ctx,
                 ),
             }),
             ctx,
         );
 
-        Statement::from(ModuleDeclaration::new_import_declaration(
+        Statement::new_import_declaration(
             SPAN,
             Some(specifiers),
             StringLiteral::new(SPAN, source, None, ctx),
@@ -171,7 +167,7 @@ impl<'a> ModuleImportsStore<'a> {
             NONE,
             ImportOrExportKind::Value,
             ctx,
-        ))
+        )
     }
 
     pub(crate) fn get_require(
@@ -188,7 +184,7 @@ impl<'a> ModuleImportsStore<'a> {
         );
 
         let args = {
-            let arg = Argument::from(Expression::new_string_literal(SPAN, source, None, ctx));
+            let arg = Argument::new_string_literal(SPAN, source, None, ctx);
             ArenaVec::from_value_in(arg, ctx)
         };
         let Some(Import::Default(local)) = names.into_iter().next() else { unreachable!() };
@@ -199,6 +195,6 @@ impl<'a> ModuleImportsStore<'a> {
             let decl = VariableDeclarator::new(SPAN, var_kind, id, NONE, Some(init), false, ctx);
             ArenaVec::from_value_in(decl, ctx)
         };
-        Statement::from(Declaration::new_variable_declaration(SPAN, var_kind, decl, false, ctx))
+        Statement::new_variable_declaration(SPAN, var_kind, decl, false, ctx)
     }
 }

@@ -26,13 +26,13 @@ pub(super) fn create_variable_declaration<'a>(
         false,
         ctx,
     );
-    Statement::from(Declaration::new_variable_declaration(
+    Statement::new_variable_declaration(
         SPAN,
         kind,
         ArenaVec::from_value_in(declarator, ctx),
         false,
         ctx,
-    ))
+    )
 }
 
 /// Convert an iterator of `Expression`s into an iterator of `Statement::ExpressionStatement`s.

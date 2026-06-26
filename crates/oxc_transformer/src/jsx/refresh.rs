@@ -97,13 +97,7 @@ impl<'a> RefreshIdentifierResolver<'a> {
                     reference_id,
                     ctx,
                 );
-                Expression::from(MemberExpression::new_static_member_expression(
-                    SPAN,
-                    ident,
-                    property.clone(),
-                    false,
-                    ctx,
-                ))
+                Expression::new_static_member_expression(SPAN, ident, property.clone(), false, ctx)
             }
             Self::Expression(expr) => expr.clone_in(ctx.ast.allocator),
         }
@@ -169,13 +163,13 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
             return;
         }
 
-        let var_decl = Statement::from(Declaration::new_variable_declaration(
+        let var_decl = Statement::new_variable_declaration(
             SPAN,
             VariableDeclarationKind::Var,
             ArenaVec::new_in(ctx), // This is replaced at the end
             false,
             ctx,
-        ));
+        );
 
         let mut variable_declarator_items =
             ArenaVec::with_capacity_in(self.registrations.len(), ctx);
@@ -194,7 +188,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
             let arguments = ArenaVec::from_array_in(
                 [
                     Argument::from(binding.create_read_expression(ctx)),
-                    Argument::from(Expression::new_string_literal(SPAN, *persistent_id, None, ctx)),
+                    Argument::new_string_literal(SPAN, *persistent_id, None, ctx),
                 ],
                 ctx,
             );
@@ -387,25 +381,21 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
                             if is_member_expression {
                                 if let Some(middle_property) = middle_property {
                                     // binding_name.middle_property
-                                    expr = Expression::from(
-                                        MemberExpression::new_static_member_expression(
-                                            SPAN,
-                                            expr,
-                                            IdentifierName::new(SPAN, middle_property, ctx),
-                                            false,
-                                            ctx,
-                                        ),
+                                    expr = Expression::new_static_member_expression(
+                                        SPAN,
+                                        expr,
+                                        IdentifierName::new(SPAN, middle_property, ctx),
+                                        false,
+                                        ctx,
                                     );
                                 }
                                 // binding_name.hook_name
-                                expr = Expression::from(
-                                    MemberExpression::new_static_member_expression(
-                                        SPAN,
-                                        expr,
-                                        IdentifierName::new(SPAN, hook_name, ctx),
-                                        false,
-                                        ctx,
-                                    ),
+                                expr = Expression::new_static_member_expression(
+                                    SPAN,
+                                    expr,
+                                    IdentifierName::new(SPAN, hook_name, ctx),
+                                    false,
+                                    ctx,
                                 );
                             }
                             expr
@@ -638,10 +628,10 @@ impl<'a> ReactRefresh<'a> {
         let force_reset = custom_hooks_in_scope.len() != callee_len;
 
         let mut arguments = ArenaVec::new_in(ctx);
-        arguments.push(Argument::from(Expression::new_string_literal(SPAN, key, None, ctx)));
+        arguments.push(Argument::new_string_literal(SPAN, key, None, ctx));
 
         if force_reset || !custom_hooks_in_scope.is_empty() {
-            arguments.push(Argument::from(Expression::new_boolean_literal(SPAN, force_reset, ctx)));
+            arguments.push(Argument::new_boolean_literal(SPAN, force_reset, ctx));
         }
 
         if !custom_hooks_in_scope.is_empty() {
@@ -667,24 +657,22 @@ impl<'a> ReactRefresh<'a> {
                 ctx,
             );
             let scope_id = ctx.create_child_scope_of_current(ScopeFlags::Function);
-            let function = Argument::from(
-                Expression::new_function_expression_with_scope_id_and_pure_and_pife(
-                    SPAN,
-                    FunctionType::FunctionExpression,
-                    None,
-                    false,
-                    false,
-                    false,
-                    NONE,
-                    NONE,
-                    formal_parameters,
-                    NONE,
-                    Some(function_body),
-                    scope_id,
-                    false,
-                    false,
-                    ctx,
-                ),
+            let function = Argument::new_function_expression_with_scope_id_and_pure_and_pife(
+                SPAN,
+                FunctionType::FunctionExpression,
+                None,
+                false,
+                false,
+                false,
+                NONE,
+                NONE,
+                formal_parameters,
+                NONE,
+                Some(function_body),
+                scope_id,
+                false,
+                false,
+                ctx,
             );
             arguments.push(function);
         }

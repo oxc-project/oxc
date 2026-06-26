@@ -111,26 +111,26 @@ impl<'a> AsyncGeneratorFunctions<'a> {
             SymbolFlags::FunctionScopedVariable,
         );
         // step.value
-        let step_value = Expression::from(MemberExpression::new_static_member_expression(
+        let step_value = Expression::new_static_member_expression(
             SPAN,
             step_key.create_read_expression(ctx),
             IdentifierName::new(SPAN, "value", ctx),
             false,
             ctx,
-        ));
+        );
 
         let assignment_statement = match &mut stmt.left {
             ForStatementLeft::VariableDeclaration(variable) => {
                 // for await (let i of test)
                 let mut declarator = variable.declarations.pop().unwrap();
                 declarator.init = Some(step_value);
-                Statement::VariableDeclaration(VariableDeclaration::boxed(
+                Statement::new_variable_declaration(
                     SPAN,
                     declarator.kind,
                     ArenaVec::from_value_in(declarator, ctx),
                     false,
                     ctx,
-                ))
+                )
             }
             left @ match_assignment_target!(ForStatementLeft) => {
                 // for await (i of test), for await ({ i } of test)
@@ -229,7 +229,7 @@ impl<'a> AsyncGeneratorFunctions<'a> {
             ctx.generate_uid("iteratorError", var_scope_id, SymbolFlags::FunctionScopedVariable);
 
         let mut items = ArenaVec::with_capacity_in(4, ctx);
-        items.push(Statement::from(Declaration::new_variable_declaration(
+        items.push(Statement::new_variable_declaration(
             SPAN,
             VariableDeclarationKind::Var,
             ArenaVec::from_value_in(
@@ -246,8 +246,8 @@ impl<'a> AsyncGeneratorFunctions<'a> {
             ),
             false,
             ctx,
-        )));
-        items.push(Statement::from(Declaration::new_variable_declaration(
+        ));
+        items.push(Statement::new_variable_declaration(
             SPAN,
             VariableDeclarationKind::Var,
             ArenaVec::from_value_in(
@@ -264,8 +264,8 @@ impl<'a> AsyncGeneratorFunctions<'a> {
             ),
             false,
             ctx,
-        )));
-        items.push(Statement::from(Declaration::new_variable_declaration(
+        ));
+        items.push(Statement::new_variable_declaration(
             SPAN,
             VariableDeclarationKind::Var,
             ArenaVec::from_value_in(
@@ -282,7 +282,7 @@ impl<'a> AsyncGeneratorFunctions<'a> {
             ),
             false,
             ctx,
-        )));
+        ));
 
         let iterator_key =
             ctx.generate_uid("iterator", var_scope_id, SymbolFlags::FunctionScopedVariable);
@@ -329,7 +329,7 @@ impl<'a> AsyncGeneratorFunctions<'a> {
                     Expression::new_unary_expression(
                         SPAN,
                         UnaryOperator::LogicalNot,
-                        Expression::from(MemberExpression::new_static_member_expression(
+                        Expression::new_static_member_expression(
                             SPAN,
                             Expression::new_parenthesized_expression(
                                 SPAN,
@@ -341,14 +341,12 @@ impl<'a> AsyncGeneratorFunctions<'a> {
                                         SPAN,
                                         Expression::new_call_expression(
                                             SPAN,
-                                            Expression::from(
-                                                MemberExpression::new_static_member_expression(
-                                                    SPAN,
-                                                    iterator_key.create_read_expression(ctx),
-                                                    IdentifierName::new(SPAN, "next", ctx),
-                                                    false,
-                                                    ctx,
-                                                ),
+                                            Expression::new_static_member_expression(
+                                                SPAN,
+                                                iterator_key.create_read_expression(ctx),
+                                                IdentifierName::new(SPAN, "next", ctx),
+                                                false,
+                                                ctx,
                                             ),
                                             NONE,
                                             ArenaVec::new_in(ctx),
@@ -364,7 +362,7 @@ impl<'a> AsyncGeneratorFunctions<'a> {
                             IdentifierName::new(SPAN, "done", ctx),
                             false,
                             ctx,
-                        )),
+                        ),
                         ctx,
                     ),
                     ctx,
@@ -452,80 +450,108 @@ impl<'a> AsyncGeneratorFunctions<'a> {
 
         let finally = {
             let finally_scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::empty());
-            let try_statement =
-                {
-                    let try_block_scope_id =
-                        ctx.create_child_scope(finally_scope_id, ScopeFlags::empty());
-                    let if_statement =
-                        {
-                            let if_block_scope_id =
-                                ctx.create_child_scope(try_block_scope_id, ScopeFlags::empty());
-                            Statement::new_if_statement(SPAN,
-                    Expression::new_logical_expression(SPAN,
-                    iterator_abrupt_completion.create_read_expression(ctx),
-                    LogicalOperator::And,
-                    Expression::new_binary_expression(SPAN,
-                    Expression::from(MemberExpression::new_static_member_expression(SPAN,
-                    iterator_key.create_read_expression(ctx),
-                    IdentifierName::new(SPAN, "return", ctx),
-                    false, ctx)),
-                    BinaryOperator::Inequality,
-                    Expression::new_null_literal(SPAN, ctx), ctx), ctx),
-                    Statement::new_block_statement_with_scope_id(SPAN,
-                    ArenaVec::from_value_in(Statement::new_expression_statement(SPAN,
-                    Expression::new_await_expression(SPAN,
-                    Expression::new_call_expression(SPAN,
-                    Expression::from(MemberExpression::new_static_member_expression(SPAN,
-                    iterator_key.create_read_expression(ctx),
-                    IdentifierName::new(SPAN, "return", ctx),
-                    false, ctx)),
-                    NONE,
-                    ArenaVec::new_in(ctx),
-                    false, ctx), ctx), ctx), ctx),
-                    if_block_scope_id, ctx),
-                    None, ctx)
-                        };
-                    let block = BlockStatement::new_with_scope_id(
+            let try_statement = {
+                let try_block_scope_id =
+                    ctx.create_child_scope(finally_scope_id, ScopeFlags::empty());
+                let if_statement = {
+                    let if_block_scope_id =
+                        ctx.create_child_scope(try_block_scope_id, ScopeFlags::empty());
+                    Statement::new_if_statement(
                         SPAN,
-                        ArenaVec::from_value_in(if_statement, ctx),
-                        try_block_scope_id,
-                        ctx,
-                    );
-                    let finally = {
-                        let finally_scope_id =
-                            ctx.create_child_scope(finally_scope_id, ScopeFlags::empty());
-                        let if_statement = {
-                            let if_block_scope_id =
-                                ctx.create_child_scope(finally_scope_id, ScopeFlags::empty());
-                            Statement::new_if_statement(
+                        Expression::new_logical_expression(
+                            SPAN,
+                            iterator_abrupt_completion.create_read_expression(ctx),
+                            LogicalOperator::And,
+                            Expression::new_binary_expression(
                                 SPAN,
-                                iterator_had_error_key.create_read_expression(ctx),
-                                Statement::new_block_statement_with_scope_id(
+                                Expression::new_static_member_expression(
                                     SPAN,
-                                    ArenaVec::from_value_in(
-                                        Statement::new_throw_statement(
+                                    iterator_key.create_read_expression(ctx),
+                                    IdentifierName::new(SPAN, "return", ctx),
+                                    false,
+                                    ctx,
+                                ),
+                                BinaryOperator::Inequality,
+                                Expression::new_null_literal(SPAN, ctx),
+                                ctx,
+                            ),
+                            ctx,
+                        ),
+                        Statement::new_block_statement_with_scope_id(
+                            SPAN,
+                            ArenaVec::from_value_in(
+                                Statement::new_expression_statement(
+                                    SPAN,
+                                    Expression::new_await_expression(
+                                        SPAN,
+                                        Expression::new_call_expression(
                                             SPAN,
-                                            iterator_error_key.create_read_expression(ctx),
+                                            Expression::new_static_member_expression(
+                                                SPAN,
+                                                iterator_key.create_read_expression(ctx),
+                                                IdentifierName::new(SPAN, "return", ctx),
+                                                false,
+                                                ctx,
+                                            ),
+                                            NONE,
+                                            ArenaVec::new_in(ctx),
+                                            false,
                                             ctx,
                                         ),
                                         ctx,
                                     ),
-                                    if_block_scope_id,
                                     ctx,
                                 ),
-                                None,
                                 ctx,
-                            )
-                        };
-                        BlockStatement::new_with_scope_id(
+                            ),
+                            if_block_scope_id,
+                            ctx,
+                        ),
+                        None,
+                        ctx,
+                    )
+                };
+                let block = BlockStatement::new_with_scope_id(
+                    SPAN,
+                    ArenaVec::from_value_in(if_statement, ctx),
+                    try_block_scope_id,
+                    ctx,
+                );
+                let finally = {
+                    let finally_scope_id =
+                        ctx.create_child_scope(finally_scope_id, ScopeFlags::empty());
+                    let if_statement = {
+                        let if_block_scope_id =
+                            ctx.create_child_scope(finally_scope_id, ScopeFlags::empty());
+                        Statement::new_if_statement(
                             SPAN,
-                            ArenaVec::from_value_in(if_statement, ctx),
-                            finally_scope_id,
+                            iterator_had_error_key.create_read_expression(ctx),
+                            Statement::new_block_statement_with_scope_id(
+                                SPAN,
+                                ArenaVec::from_value_in(
+                                    Statement::new_throw_statement(
+                                        SPAN,
+                                        iterator_error_key.create_read_expression(ctx),
+                                        ctx,
+                                    ),
+                                    ctx,
+                                ),
+                                if_block_scope_id,
+                                ctx,
+                            ),
+                            None,
                             ctx,
                         )
                     };
-                    Statement::new_try_statement(SPAN, block, NONE, Some(finally), ctx)
+                    BlockStatement::new_with_scope_id(
+                        SPAN,
+                        ArenaVec::from_value_in(if_statement, ctx),
+                        finally_scope_id,
+                        ctx,
+                    )
                 };
+                Statement::new_try_statement(SPAN, block, NONE, Some(finally), ctx)
+            };
 
             let block_statement = BlockStatement::new_with_scope_id(
                 SPAN,

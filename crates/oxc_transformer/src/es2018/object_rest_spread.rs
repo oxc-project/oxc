@@ -1140,13 +1140,9 @@ impl<'a> SpreadPair<'a> {
             // `function _objectDestructuringEmpty(t) { if (null == t) throw new TypeError("Cannot destructure " + t); }`
             let mut arguments = ArenaVec::new_in(ctx);
             // Add `{}`.
-            arguments.push(Argument::ObjectExpression(ObjectExpression::boxed(
-                SPAN,
-                ArenaVec::new_in(ctx),
-                ctx,
-            )));
+            arguments.push(Argument::new_object_expression(SPAN, ArenaVec::new_in(ctx), ctx));
             // Add `(_objectDestructuringEmpty(b), b);`
-            arguments.push(Argument::SequenceExpression(SequenceExpression::boxed(
+            arguments.push(Argument::new_sequence_expression(
                 SPAN,
                 {
                     let mut sequence = ArenaVec::new_in(ctx);
@@ -1162,7 +1158,7 @@ impl<'a> SpreadPair<'a> {
                     sequence
                 },
                 ctx,
-            )));
+            ));
             helper_call_expr(Helper::Extends, arguments, ctx)
         } else {
             // / `let { a, b, ...c } = z` -> _objectWithoutProperties(_z, ["a", "b"]);
@@ -1197,13 +1193,13 @@ impl<'a> SpreadPair<'a> {
                 // map to `toPropertyKey` to handle the possible non-string values
                 // `[_ref].map(babelHelpers.toPropertyKey))`
                 let property = IdentifierName::new(SPAN, "map", ctx);
-                let callee = Expression::StaticMemberExpression(StaticMemberExpression::boxed(
+                let callee = Expression::new_static_member_expression(
                     SPAN,
                     key_expression,
                     property,
                     false,
                     ctx,
-                ));
+                );
                 let arguments = ArenaVec::from_value_in(
                     Argument::from(helper_load(Helper::ToPropertyKey, ctx)),
                     ctx,

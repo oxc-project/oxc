@@ -167,13 +167,13 @@ impl<'a> RegExp {
 
         let arguments = ArenaVec::from_array_in(
             [
-                Argument::from(Expression::new_string_literal(SPAN, pattern_text, None, ctx)),
-                Argument::from(Expression::new_string_literal(
+                Argument::new_string_literal(SPAN, pattern_text, None, ctx),
+                Argument::new_string_literal(
                     SPAN,
                     Str::from_str_in(flags.to_inline_string().as_str(), ctx),
                     None,
                     ctx,
-                )),
+                ),
             ],
             ctx,
         );
