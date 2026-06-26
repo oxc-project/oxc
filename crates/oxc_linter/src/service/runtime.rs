@@ -46,6 +46,7 @@ pub struct Runtime {
     cwd: Box<Path>,
     pub(super) linter: Linter,
     resolver: Option<Resolver>,
+    autofix_write_roots: Vec<PathBuf>,
 
     /// Pool of allocators for parsing and linting.
     allocator_pool: AllocatorPool,
@@ -249,6 +250,7 @@ impl Runtime {
         #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
         let allocator_pool = AllocatorPool::new(thread_count);
 
+        let autofix_write_roots = options.autofix_write_roots;
         let resolver = options.cross_module.then(|| Self::get_resolver(options.tsconfig));
 
         Self {
@@ -258,6 +260,7 @@ impl Runtime {
             cwd: options.cwd,
             linter,
             resolver,
+            autofix_write_roots,
             modules_by_path: papaya::HashMap::builder()
                 .hasher(BuildHasherDefault::default())
                 .resize_mode(papaya::ResizeMode::Blocking)
@@ -718,20 +721,42 @@ impl Runtime {
 
                         // If the new source text is owned, that means it was modified,
                         // so we write the new source text to the file.
-                        if let Cow::Owned(new_source_text) = &new_source_text
-                            && let Err(error) = file_system.write_file(path, new_source_text)
-                        {
-                            tx_error
-                                .send(vec![Error::new(OxcDiagnostic::error(format!(
-                                    "Failed to write file {} with error \"{error}\"",
-                                    path.display()
-                                )))])
-                                .unwrap();
+                        if let Cow::Owned(new_source_text) = &new_source_text {
+                            if let Err(error) = me.check_autofix_write_allowed(path) {
+                                tx_error.send(vec![error]).unwrap();
+                            } else if let Err(error) = file_system.write_file(path, new_source_text)
+                            {
+                                tx_error
+                                    .send(vec![Error::new(OxcDiagnostic::error(format!(
+                                        "Failed to write file {} with error \"{error}\"",
+                                        path.display()
+                                    )))])
+                                    .unwrap();
+                            }
                         }
                     });
                 },
             );
         });
+    }
+
+    fn check_autofix_write_allowed(&self, path: &Path) -> Result<(), Error> {
+        if self.autofix_write_roots.is_empty() {
+            return Ok(());
+        }
+
+        let Ok(canonical_path) = path.canonicalize() else {
+            return Ok(());
+        };
+
+        if self.autofix_write_roots.iter().any(|root| canonical_path.starts_with(root)) {
+            return Ok(());
+        }
+
+        Err(Error::new(OxcDiagnostic::warn(format!(
+            "Skipped autofix for {} because it resolves outside the selected lint paths",
+            path.display()
+        ))))
     }
 
     // language_server: the language server needs line and character position

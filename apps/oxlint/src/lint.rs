@@ -184,6 +184,9 @@ impl CliRunner {
             paths.push(self.cwd.clone());
         }
 
+        let autofix_write_roots =
+            fix_options.is_enabled().then(|| Self::autofix_write_roots(&paths, &self.cwd));
+
         let walker = Walk::new(&paths, &self.cwd, &ignore_options, override_builder);
         let mut paths = walker.paths();
 
@@ -362,6 +365,9 @@ impl CliRunner {
             || nested_configs.values().any(|config| config.plugins().has_import());
         let mut options =
             LintServiceOptions::new(self.cwd.clone()).with_cross_module(use_cross_module);
+        if let Some(autofix_write_roots) = autofix_write_roots {
+            options = options.with_autofix_write_roots(autofix_write_roots);
+        }
 
         let mut suppression_manager = SuppressionManager::load(
             options.cwd(),
@@ -593,6 +599,16 @@ impl CliRunner {
         )
     }
 
+    fn autofix_write_roots(paths: &[PathBuf], cwd: &Path) -> Vec<PathBuf> {
+        paths
+            .iter()
+            .filter_map(|path| {
+                let path = if path.is_absolute() { path.clone() } else { cwd.join(path) };
+                path.canonicalize().or_else(|_| absolute(path)).ok()
+            })
+            .collect()
+    }
+
     fn handle_no_files_found(
         stdout: &mut dyn Write,
         output_formatter: &OutputFormatter,
@@ -705,6 +721,8 @@ fn render_config_builder_error(
 #[cfg(test)]
 mod test {
     use std::fs;
+    #[cfg(unix)]
+    use std::os::unix::fs as unix_fs;
 
     use crate::{DEFAULT_OXLINTRC_NAME, tester::Tester};
     use oxc_linter::rules::RULES;
@@ -1156,6 +1174,60 @@ mod test {
         tester.test_fix("skip_suggestion.js", test_1, test_1);
         let test_2 = "<script>debugger;</script>\n<script>debugger;</script>\n";
         tester.test_fix("skip_suggestion.vue", test_2, test_2);
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn test_fix_does_not_write_outside_lint_root_through_symlink() {
+        let cases = [
+            (
+                "dir-fix-suggestions",
+                true,
+                "--fix-suggestions",
+                "no-debugger",
+                "let before = 1;\ndebugger;\nlet after = 2;\n",
+            ),
+            (
+                "file-fix-suggestions",
+                false,
+                "--fix-suggestions",
+                "no-debugger",
+                "let before = 1;\ndebugger;\nlet after = 2;\n",
+            ),
+            ("dir-fix", true, "--fix", "no-var", "var before = 1;\nvar after = 2;\n"),
+            ("file-fix", false, "--fix", "no-var", "var before = 1;\nvar after = 2;\n"),
+        ];
+
+        for (name, symlink_dir, fix_flag, rule, victim_before) in cases {
+            let temp_dir = tempfile::tempdir().expect("Could not create a temp dir");
+            let repo = temp_dir.path().join("repo");
+            let outside = temp_dir.path().join("outside");
+            let repo_src = repo.join("src");
+            fs::create_dir_all(&repo_src).unwrap();
+            fs::create_dir_all(&outside).unwrap();
+
+            let victim = outside.join("victim.js");
+            fs::write(&victim, victim_before).unwrap();
+
+            if symlink_dir {
+                unix_fs::symlink(&outside, repo_src.join("linked-outside")).unwrap();
+            } else {
+                unix_fs::symlink(&victim, repo_src.join("victim-link.js")).unwrap();
+            }
+
+            let in_tree = repo_src.join(format!("{name}.js"));
+            fs::write(&in_tree, victim_before).unwrap();
+
+            Tester::new().with_cwd(repo).test(&[fix_flag, "--threads", "1", "-D", rule, "."]);
+
+            assert_eq!(fs::read_to_string(&victim).unwrap(), victim_before);
+            let in_tree_after = match rule {
+                "no-debugger" => "let before = 1;\n\nlet after = 2;\n",
+                "no-var" => "const before = 1;\nconst after = 2;\n",
+                _ => unreachable!(),
+            };
+            assert_eq!(fs::read_to_string(&in_tree).unwrap(), in_tree_after);
+        }
     }
 
     #[test]
