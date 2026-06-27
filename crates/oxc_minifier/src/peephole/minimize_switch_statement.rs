@@ -15,7 +15,7 @@ impl<'a> PeepholeOptimizations {
     /// - Converts the `switch` if it contains only one or two cases to `if`/`else` statements.
     pub fn try_minimize_switch(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         Self::try_remove_last_break_from_case(stmt, ctx);
-        Self::collapse_empty_switch_cases(stmt, ctx);
+        // Self::collapse_empty_switch_cases(stmt, ctx);
         Self::remove_empty_switch(stmt, ctx);
         Self::fold_switch_with_one_case(stmt, ctx);
         Self::fold_switch_with_two_cases(stmt, ctx);
