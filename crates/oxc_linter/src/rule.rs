@@ -744,6 +744,10 @@ mod test {
             &promise::always_return::AlwaysReturn::default(),
             &[Function, ArrowFunctionExpression],
         );
+        assert_rule_runs_on_node_types(
+            &eslint::prefer_named_capture_group::PreferNamedCaptureGroup,
+            &[RegExpLiteral, CallExpression, NewExpression],
+        );
     }
 
     #[test]
