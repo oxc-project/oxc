@@ -24,13 +24,13 @@ fn lowercase_hexadecimal_digits(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-fn uppercase_prefix_and_lowercase_hexadecimal_digits(span: Span, prefix: &str) -> OxcDiagnostic {
+fn uppercase_prefix_and_lowercase_hexadecimal_digits(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "Unexpected number literal prefix in uppercase and hexadecimal digits in lowercase.",
     )
-    .with_help(format!(
-        "Use lowercase for the number literal prefix `{prefix}` and uppercase for hexadecimal digits."
-    ))
+    .with_help(
+        "Use lowercase for the number literal prefix `0x` and uppercase for hexadecimal digits.",
+    )
     .with_label(span)
 }
 
@@ -117,7 +117,7 @@ fn check_number_literal(number_literal: &str, raw_span: Span) -> Option<(OxcDiag
         let has_lowercase_digits = number_literal[2..].chars().any(|c| ('a'..='f').contains(&c));
         if has_uppercase_prefix && has_lowercase_digits {
             return Some((
-                uppercase_prefix_and_lowercase_hexadecimal_digits(raw_span, "0x"),
+                uppercase_prefix_and_lowercase_hexadecimal_digits(raw_span),
                 "0x".to_owned() + &digits_to_uppercase(&number_literal[2..]),
             ));
         }
