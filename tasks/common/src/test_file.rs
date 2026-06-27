@@ -1,4 +1,4 @@
-use std::fmt;
+use std::fmt::{self, Write};
 
 use oxc_span::SourceType;
 
@@ -74,6 +74,46 @@ impl TestFiles {
                 // <https://github.com/oxc-project/benchmark-files/blob/main/kitchen-sink.tsx>
                 "https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@ac5609a8fe9ae8d1a1de0f2ef251d562630c77e0/kitchen-sink.tsx",
             ].into_iter().map(TestFile::new).collect(),
+        }
+    }
+
+    /// Fixtures for the linter benchmarks: [`TestFiles::minimal`] plus a synthetic
+    /// import / re-export barrel.
+    ///
+    /// None of the `minimal` fixtures is import-heavy (they contain between 0 and 83
+    /// `import` statements), so without the barrel the cost of per-`ImportDeclaration`
+    /// work in lint rules is invisible to the benchmark.
+    pub fn linter() -> Self {
+        let mut test_files = Self::minimal();
+        test_files.files.push(Self::barrel(1000));
+        test_files
+    }
+
+    /// Synthetic TypeScript import / re-export barrel:
+    /// `import { IconN } from './icons/IconN';` repeated `import_count` times, followed
+    /// by one `export { Icon0, ..., IconN };`.
+    ///
+    /// This is the import-then-re-export form (the shape `unicorn/prefer-export-from`
+    /// targets), and every import adds one binding to the module scope, making it the
+    /// worst case for rules that do per-import work against that scope. Barrels of this
+    /// size are a common real-world shape: icon and "public API" index files regularly
+    /// re-export 1-2k names. Generated deterministically so results are reproducible.
+    fn barrel(import_count: usize) -> TestFile {
+        let mut source_text = String::with_capacity(import_count * 64);
+        for i in 0..import_count {
+            writeln!(source_text, "import {{ Icon{i} }} from './icons/Icon{i}';").unwrap();
+        }
+        source_text.push_str("\nexport {\n");
+        for i in 0..import_count {
+            writeln!(source_text, "  Icon{i},").unwrap();
+        }
+        source_text.push_str("};\n");
+
+        TestFile {
+            url: String::new(),
+            file_name: "barrel.ts".to_string(),
+            source_text,
+            source_type: SourceType::ts(),
         }
     }
 
