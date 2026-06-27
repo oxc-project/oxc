@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{context::LintContext, rule::Rule};
 
 fn bad_array_method_on_arguments_diagnostic(method_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Bad array method on `arguments`.")
@@ -63,29 +63,34 @@ declare_oxc_lint!(
 );
 
 impl Rule for BadArrayMethodOnArguments {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::IdentifierReference(ident) = node.kind() else {
+    /// Only unresolved `arguments` references can be the special arguments object.
+    fn run_once(&self, ctx: &LintContext) {
+        let Some(ref_ids) = ctx.scoping().root_unresolved_references().get("arguments") else {
             return;
         };
-        if ident.name != "arguments" {
-            return;
-        }
 
-        let parent = ctx.nodes().parent_node(node.id());
-        let Some(member_expr) = parent.kind().as_member_expression_kind() else {
-            return;
-        };
-        let AstKind::CallExpression(_) = ctx.nodes().parent_kind(parent.id()) else {
-            return;
-        };
-        let Some(name) = member_expr.static_property_name() else {
-            return;
-        };
-        if ARRAY_METHODS.binary_search(&name.as_str()).is_ok() {
-            ctx.diagnostic(bad_array_method_on_arguments_diagnostic(
-                name.as_str(),
-                member_expr.span(),
-            ));
+        for &ref_id in ref_ids {
+            let node = ctx.nodes().get_node(ctx.scoping().get_reference(ref_id).node_id());
+            let AstKind::IdentifierReference(_) = node.kind() else {
+                continue;
+            };
+
+            let parent = ctx.nodes().parent_node(node.id());
+            let Some(member_expr) = parent.kind().as_member_expression_kind() else {
+                continue;
+            };
+            let AstKind::CallExpression(_) = ctx.nodes().parent_kind(parent.id()) else {
+                continue;
+            };
+            let Some(name) = member_expr.static_property_name() else {
+                continue;
+            };
+            if ARRAY_METHODS.binary_search(&name.as_str()).is_ok() {
+                ctx.diagnostic(bad_array_method_on_arguments_diagnostic(
+                    name.as_str(),
+                    member_expr.span(),
+                ));
+            }
         }
     }
 }
