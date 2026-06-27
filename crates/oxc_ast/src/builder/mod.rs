@@ -43,7 +43,7 @@ pub trait GetAstBuilder<'a> {
 /// e.g. parser, because `NodeId`s are assigned later when building `Semantic`.
 pub struct AstBuilder<'a> {
     /// The memory allocator used to allocate AST nodes in the arena.
-    pub allocator: &'a Allocator,
+    allocator: &'a Allocator,
 }
 
 impl<'a> AstBuilder<'a> {

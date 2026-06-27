@@ -1,7 +1,7 @@
 use std::iter::repeat_with;
 
 use crate::generated::ancestor::Ancestor;
-use oxc_allocator::{ArenaVec, CloneIn, TakeIn};
+use oxc_allocator::{ArenaVec, CloneIn, GetAllocator, TakeIn};
 use oxc_ast::{NONE, ast::*};
 use oxc_compat::ESFeature;
 use oxc_ecmascript::side_effects::MayHaveSideEffectsContext;
@@ -576,7 +576,7 @@ impl<'a> PeepholeOptimizations {
         // Plain `clone_in` resets every `reference_id` to `None`, making id
         // aliasing structurally impossible; the loop below installs the one
         // fresh reference the clone needs.
-        let mut new_left_expr = typeof_binary_expr.clone_in(ctx.ast.allocator);
+        let mut new_left_expr = typeof_binary_expr.clone_in(ctx.allocator());
         if let Expression::BinaryExpression(new_left_expr_binary) = &mut new_left_expr {
             new_left_expr_binary.operator =
                 if inversed { BinaryOperator::Inequality } else { BinaryOperator::Equality };

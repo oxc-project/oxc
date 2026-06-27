@@ -32,7 +32,7 @@
 //! * Exponentiation operator TC39 proposal: <https://github.com/tc39/proposal-exponentiation-operator>
 //! * Exponentiation operator specification: <https://tc39.es/ecma262/#sec-exp-operator>
 
-use oxc_allocator::{ArenaVec, CloneIn, TakeIn};
+use oxc_allocator::{ArenaVec, CloneIn, GetAllocator, TakeIn};
 use oxc_ast::{NONE, ast::*};
 use oxc_semantic::ReferenceFlags;
 use oxc_span::{SPAN, Span};
@@ -341,7 +341,7 @@ impl<'a> ExponentiationOperator<'a> {
         // ```
         let prop = &mut member_expr.expression;
         let prop = if prop.is_literal() {
-            prop.clone_in(ctx.ast.allocator)
+            prop.clone_in(ctx.allocator())
         } else {
             let owned_prop = prop.take_in(ctx);
             let binding = self.create_temp_var(owned_prop, &mut temp_var_inits, ctx);

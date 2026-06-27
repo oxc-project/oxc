@@ -53,7 +53,7 @@
 
 use std::{borrow::Cow, mem};
 
-use oxc_allocator::{ArenaBox, ArenaStringBuilder, ArenaVec, TakeIn};
+use oxc_allocator::{ArenaBox, ArenaStringBuilder, ArenaVec, GetAllocator, TakeIn};
 use oxc_ast::{NONE, ast::*};
 use oxc_ast_visit::Visit;
 use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
@@ -650,7 +650,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
             return Ident::from_cow_in(input, ctx);
         }
 
-        let mut name = ArenaStringBuilder::with_capacity_in(input_str.len() + 1, ctx.ast.allocator);
+        let mut name = ArenaStringBuilder::with_capacity_in(input_str.len() + 1, ctx.allocator());
         let mut capitalize_next = false;
 
         let mut chars = input_str.chars();

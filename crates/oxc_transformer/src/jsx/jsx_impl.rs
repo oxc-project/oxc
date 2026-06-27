@@ -1106,7 +1106,7 @@ impl<'a> JsxImpl<'a> {
             // This is the 2nd line containing text. Previous line did not contain any HTML entities.
             // Generate an accumulator containing previous line and a trailing space.
             // Current line will be added to the accumulator after it.
-            let mut buffer = ArenaStringBuilder::with_capacity_in(text_len, ctx.ast.allocator);
+            let mut buffer = ArenaStringBuilder::with_capacity_in(text_len, ctx.allocator());
             buffer.push_str(only_line.as_str());
             buffer.push(' ');
             *acc = Some(buffer);
@@ -1157,7 +1157,7 @@ impl<'a> JsxImpl<'a> {
                 }
                 if let Some(end) = end {
                     let buffer = acc.get_or_insert_with(|| {
-                        ArenaStringBuilder::with_capacity_in(text_len, ctx.ast.allocator)
+                        ArenaStringBuilder::with_capacity_in(text_len, ctx.allocator())
                     });
 
                     buffer.push_str(&s[prev..start]);

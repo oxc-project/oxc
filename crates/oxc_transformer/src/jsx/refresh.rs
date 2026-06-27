@@ -7,7 +7,9 @@ use base64::{
 use hmac_sha1_compact::Hash as Sha1;
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use oxc_allocator::{ArenaStringBuilder, ArenaVec, CloneIn, GetAddress, TakeIn, UnstableAddress};
+use oxc_allocator::{
+    ArenaStringBuilder, ArenaVec, CloneIn, GetAddress, GetAllocator, TakeIn, UnstableAddress,
+};
 use oxc_ast::{NONE, ast::*, builder::AstBuilder, match_expression};
 use oxc_ast_visit::{
     Visit,
@@ -99,7 +101,7 @@ impl<'a> RefreshIdentifierResolver<'a> {
                 );
                 Expression::new_static_member_expression(SPAN, ident, property.clone(), false, ctx)
             }
-            Self::Expression(expr) => expr.clone_in(ctx.ast.allocator),
+            Self::Expression(expr) => expr.clone_in(ctx.allocator()),
         }
     }
 }
@@ -261,7 +263,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
 
         if found_call_expression {
             self.last_signature =
-                Some((binding_identifier.clone(), arguments.clone_in(ctx.ast.allocator)));
+                Some((binding_identifier.clone(), arguments.clone_in(ctx.allocator())));
         }
 
         let span = expr.span();
@@ -609,7 +611,7 @@ impl<'a> ReactRefresh<'a> {
                 }
             };
 
-            let mut hashed_key = ArenaStringBuilder::from_str_in(ZEROS_STR, ctx.ast.allocator);
+            let mut hashed_key = ArenaStringBuilder::from_str_in(ZEROS_STR, ctx.allocator());
             // SAFETY: Base64 encoding only produces ASCII bytes. Even if our assumptions are incorrect,
             // and Base64 bytes do not fill `hashed_key` completely, the remaining bytes are 0, so also ASCII.
             let hashed_key_bytes = unsafe { hashed_key.as_mut_str().as_bytes_mut() };

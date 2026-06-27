@@ -1,4 +1,4 @@
-use oxc_allocator::{ArenaBox, ArenaVec, CloneIn};
+use oxc_allocator::{ArenaBox, ArenaVec, CloneIn, GetAllocator};
 use oxc_ast::{NONE, ast::*};
 use oxc_span::{SPAN, Span};
 
@@ -25,12 +25,12 @@ impl<'a> IsolatedDeclarations<'a> {
         Function::boxed(
             func.span,
             func.r#type,
-            func.id.clone_in(self.ast.allocator),
+            func.id.clone_in(self.allocator()),
             false,
             false,
             declare.unwrap_or_else(|| self.is_declare()),
-            func.type_parameters.clone_in(self.ast.allocator),
-            func.this_param.clone_in(self.ast.allocator),
+            func.type_parameters.clone_in(self.allocator()),
+            func.this_param.clone_in(self.allocator()),
             params,
             return_type,
             NONE,
@@ -55,9 +55,9 @@ impl<'a> IsolatedDeclarations<'a> {
 
         let is_assignment_pattern = param.initializer.is_some();
         let mut pattern = if let BindingPattern::AssignmentPattern(pattern) = &param.pattern {
-            pattern.left.clone_in(self.ast.allocator)
+            pattern.left.clone_in(self.allocator())
         } else {
-            param.pattern.clone_in(self.ast.allocator)
+            param.pattern.clone_in(self.allocator())
         };
 
         FormalParameterBindingPattern::remove_assignments_from_kind(self, &mut pattern);
@@ -69,7 +69,7 @@ impl<'a> IsolatedDeclarations<'a> {
             let type_annotation = param
                 .type_annotation
                 .as_ref()
-                .map(|type_annotation| type_annotation.type_annotation.clone_in(self.ast.allocator))
+                .map(|type_annotation| type_annotation.type_annotation.clone_in(self.allocator()))
                 .or_else(|| {
                     let new_type = self.infer_type_from_formal_parameter(param);
                     // A private parameter property on a private constructor needs no
@@ -115,7 +115,7 @@ impl<'a> IsolatedDeclarations<'a> {
             return Some(FormalParameter::new(
                 param.span,
                 ArenaVec::new_in(self),
-                pattern.clone_in(self.ast.allocator),
+                pattern.clone_in(self.allocator()),
                 type_annotation,
                 NONE,
                 optional,
@@ -130,7 +130,7 @@ impl<'a> IsolatedDeclarations<'a> {
             param.span,
             ArenaVec::new_in(self),
             pattern,
-            param.type_annotation.clone_in(self.ast.allocator),
+            param.type_annotation.clone_in(self.allocator()),
             NONE,
             param.optional,
             None,
@@ -146,7 +146,7 @@ impl<'a> IsolatedDeclarations<'a> {
         in_private_constructor: bool,
     ) -> ArenaBox<'a, FormalParameters<'a>> {
         if params.kind.is_signature() || (params.rest.is_none() && params.items.is_empty()) {
-            return params.clone_in(self.ast.allocator);
+            return params.clone_in(self.allocator());
         }
 
         let items = ArenaVec::from_iter_in(
@@ -177,7 +177,7 @@ impl<'a> IsolatedDeclarations<'a> {
         }
 
         let rest = params.rest.as_ref().map(|rest| {
-            let mut rest = rest.clone_in(self.ast.allocator);
+            let mut rest = rest.clone_in(self.allocator());
             FormalParameterBindingPattern::remove_assignments_from_kind(
                 self,
                 &mut rest.rest.argument,

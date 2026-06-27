@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use cow_utils::CowUtils;
 
-use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
+use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator, TakeIn};
 use oxc_ast::{NONE, ast::*};
 use oxc_compat::ESFeature;
 use oxc_ecmascript::{
@@ -462,7 +462,7 @@ impl<'a> PeepholeOptimizations {
                         };
 
                     if regex.regex.pattern.pattern.is_none()
-                        && let Ok(pattern) = regex.parse_pattern(ctx.ast.allocator)
+                        && let Ok(pattern) = regex.parse_pattern(ctx.allocator())
                     {
                         regex.regex.pattern.pattern = Some(ArenaBox::new_in(pattern, ctx));
                     }

@@ -1,4 +1,4 @@
-use oxc_allocator::{ArenaBox, ArenaVec, CloneIn, TakeIn};
+use oxc_allocator::{ArenaBox, ArenaVec, CloneIn, GetAllocator, TakeIn};
 use oxc_ast::{NONE, ast::*};
 use oxc_span::{GetSpan, SPAN};
 use oxc_str::Str;
@@ -51,7 +51,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 ),
             )),
             ExportDefaultDeclarationKind::TSInterfaceDeclaration(_) => {
-                Some((None, decl.declaration.clone_in(self.ast.allocator)))
+                Some((None, decl.declaration.clone_in(self.allocator())))
             }
             declaration @ match_expression!(ExportDefaultDeclarationKind) => self
                 .transform_export_expression(decl.span, declaration.to_expression())
@@ -151,7 +151,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 }
             };
             if is_referenced {
-                new_specifiers.push(specifier.clone_in(self.ast.allocator));
+                new_specifiers.push(specifier.clone_in(self.allocator()));
             }
         });
 
@@ -164,7 +164,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 Some(new_specifiers),
                 decl.source.clone(),
                 None,
-                decl.with_clause.clone_in(self.ast.allocator),
+                decl.with_clause.clone_in(self.allocator()),
                 decl.import_kind,
                 self,
             ))

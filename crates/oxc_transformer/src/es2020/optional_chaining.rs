@@ -49,7 +49,7 @@
 
 use std::mem;
 
-use oxc_allocator::{ArenaVec, CloneIn, TakeIn};
+use oxc_allocator::{ArenaVec, CloneIn, GetAllocator, TakeIn};
 use oxc_ast::{NONE, ast::*};
 use oxc_span::{GetSpan, SPAN, Span};
 use oxc_traverse::{Ancestor, BoundIdentifier, MaybeBoundIdentifier, Traverse};
@@ -380,7 +380,7 @@ impl<'a> OptionalChaining<'a> {
             let object = member.object_mut().get_inner_expression_mut();
             let context = if ctx.state.assumptions.pure_getters {
                 // TODO: `clone_in` causes reference loss of reference id
-                object.clone_in(ctx.ast.allocator)
+                object.clone_in(ctx.allocator())
             } else if let Expression::Identifier(ident) = object {
                 MaybeBoundIdentifier::from_identifier_reference(ident, ctx)
                     .create_read_expression(ctx)

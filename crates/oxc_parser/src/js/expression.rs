@@ -1,5 +1,5 @@
 use cow_utils::CowUtils;
-use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
+use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator, TakeIn};
 use oxc_ast::ast::*;
 #[cfg(feature = "regular_expression")]
 use oxc_regular_expression::ast::Pattern;
@@ -402,7 +402,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let span = token.span();
         let raw = self.cur_src();
         let src = raw.strip_suffix('n').unwrap();
-        let value = parse_big_int(src, number_kind, has_separator, self.ast.allocator);
+        let value = parse_big_int(src, number_kind, has_separator, self.allocator());
 
         self.bump_any();
         BigIntLiteral::boxed(span, value, Some(Str::from(raw)), base, self)
@@ -453,7 +453,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> Option<ArenaBox<'a, Pattern<'a>>> {
         use oxc_regular_expression::{LiteralParser, Options};
         match LiteralParser::new(
-            self.ast.allocator,
+            self.allocator(),
             pattern,
             Some(flags),
             Options { pattern_span_offset, flags_span_offset },

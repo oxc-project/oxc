@@ -1,4 +1,4 @@
-use oxc_allocator::{ArenaVec, CloneIn};
+use oxc_allocator::{ArenaVec, CloneIn, GetAllocator};
 use oxc_ast::{
     NONE,
     ast::{
@@ -33,8 +33,8 @@ impl<'a> IsolatedDeclarations<'a> {
         return_type.map(|return_type| {
             TSType::new_ts_function_type(
                 func.span,
-                func.type_parameters.clone_in(self.ast.allocator),
-                func.this_param.clone_in(self.ast.allocator),
+                func.type_parameters.clone_in(self.allocator()),
+                func.this_param.clone_in(self.allocator()),
                 params,
                 return_type,
                 self,
@@ -60,7 +60,7 @@ impl<'a> IsolatedDeclarations<'a> {
         return_type.map(|return_type| {
             TSType::new_ts_function_type(
                 func.span,
-                func.type_parameters.clone_in(self.ast.allocator),
+                func.type_parameters.clone_in(self.allocator()),
                 NONE,
                 params,
                 return_type,
@@ -84,7 +84,7 @@ impl<'a> IsolatedDeclarations<'a> {
             }
             // [100] -> 100
             // number literal will be cloned as-is
-            _ => key.clone_in(self.ast.allocator),
+            _ => key.clone_in(self.allocator()),
         }
     }
 
@@ -148,8 +148,8 @@ impl<'a> IsolatedDeclarations<'a> {
                             computed,
                             false,
                             TSMethodSignatureKind::Method,
-                            function.type_parameters.clone_in(self.ast.allocator),
-                            function.this_param.clone_in(self.ast.allocator),
+                            function.type_parameters.clone_in(self.allocator()),
+                            function.this_param.clone_in(self.allocator()),
                             params,
                             return_type,
                             self,
@@ -187,9 +187,10 @@ impl<'a> IsolatedDeclarations<'a> {
                                     "`object.kind` being `Set` guarantees that it is a function"
                                 );
                             };
-                            let annotation = function.params.items.first().and_then(|param| {
-                                param.type_annotation.clone_in(self.ast.allocator)
-                            });
+                            let annotation =
+                                function.params.items.first().and_then(|param| {
+                                    param.type_annotation.clone_in(self.allocator())
+                                });
                             if annotation.is_none() {
                                 accessor_spans.push((key, function.params.span));
                                 return None;
@@ -306,22 +307,22 @@ impl<'a> IsolatedDeclarations<'a> {
         match expr {
             Expression::BooleanLiteral(lit) => Some(TSType::new_ts_literal_type(
                 SPAN,
-                TSLiteral::BooleanLiteral(lit.clone_in(self.ast.allocator)),
+                TSLiteral::BooleanLiteral(lit.clone_in(self.allocator())),
                 self,
             )),
             Expression::NumericLiteral(lit) => Some(TSType::new_ts_literal_type(
                 SPAN,
-                TSLiteral::NumericLiteral(lit.clone_in(self.ast.allocator)),
+                TSLiteral::NumericLiteral(lit.clone_in(self.allocator())),
                 self,
             )),
             Expression::BigIntLiteral(lit) => Some(TSType::new_ts_literal_type(
                 SPAN,
-                TSLiteral::BigIntLiteral(lit.clone_in(self.ast.allocator)),
+                TSLiteral::BigIntLiteral(lit.clone_in(self.allocator())),
                 self,
             )),
             Expression::StringLiteral(lit) => Some(TSType::new_ts_literal_type(
                 SPAN,
-                TSLiteral::StringLiteral(lit.clone_in(self.ast.allocator)),
+                TSLiteral::StringLiteral(lit.clone_in(self.allocator())),
                 self,
             )),
             Expression::NullLiteral(lit) => Some(TSType::new_ts_null_keyword(lit.span, self)),
@@ -338,7 +339,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 if Self::can_infer_unary_expression(expr) {
                     Some(TSType::new_ts_literal_type(
                         SPAN,
-                        TSLiteral::UnaryExpression(expr.clone_in(self.ast.allocator)),
+                        TSLiteral::UnaryExpression(expr.clone_in(self.allocator())),
                         self,
                     ))
                 } else {
@@ -359,14 +360,14 @@ impl<'a> IsolatedDeclarations<'a> {
                 if expr.type_annotation.is_const_type_reference() {
                     self.transform_const_expression_to_ts_type(&expr.expression)
                 } else {
-                    Some(expr.type_annotation.clone_in(self.ast.allocator))
+                    Some(expr.type_annotation.clone_in(self.allocator()))
                 }
             }
             Expression::TSTypeAssertion(expr) => {
                 if expr.type_annotation.is_const_type_reference() {
                     self.transform_const_expression_to_ts_type(&expr.expression)
                 } else {
-                    Some(expr.type_annotation.clone_in(self.ast.allocator))
+                    Some(expr.type_annotation.clone_in(self.allocator()))
                 }
             }
             Expression::ParenthesizedExpression(expr) => {

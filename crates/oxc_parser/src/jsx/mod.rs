@@ -1,6 +1,6 @@
 //! [JSX](https://facebook.github.io/jsx)
 
-use oxc_allocator::{Allocator, ArenaBox, ArenaVec, Dummy};
+use oxc_allocator::{Allocator, ArenaBox, ArenaVec, Dummy, GetAllocator};
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 use oxc_str::Str;
@@ -157,7 +157,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
 
         if self.fatal_error.is_some() {
-            return JSXElementName::dummy(self.ast.allocator);
+            return JSXElementName::dummy(self.allocator());
         }
 
         // Determine if this JSX element name is a reference (component) or an intrinsic element.

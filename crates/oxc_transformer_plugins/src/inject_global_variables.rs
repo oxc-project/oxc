@@ -177,7 +177,7 @@ impl<'a> InjectGlobalVariables<'a> {
 
         if !dot_defines.is_empty() {
             self.dot_defines = dot_defines;
-            scoping = traverse_mut(self, self.ast.allocator, program, scoping, ());
+            scoping = traverse_mut(self, self.allocator(), program, scoping, ());
         }
 
         // Step 2: find all the injects that are referenced.
