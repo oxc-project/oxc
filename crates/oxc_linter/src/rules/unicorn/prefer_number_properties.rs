@@ -117,8 +117,14 @@ impl Rule for PreferNumberProperties {
                     }
                 }
             }
+            // `run` fires on every `IdentifierReference`, but only these names can
+            // produce a diagnostic. Gate on the name before the global-variable
+            // lookup (two hash-map lookups) so the common reference skips it.
             AstKind::IdentifierReference(ident_ref)
-                if ctx.is_reference_to_global_variable(ident_ref) =>
+                if matches!(
+                    ident_ref.name.as_str(),
+                    "NaN" | "Infinity" | "isNaN" | "isFinite" | "parseFloat" | "parseInt"
+                ) && ctx.is_reference_to_global_variable(ident_ref) =>
             {
                 let ident_name = ident_ref.name.as_str();
                 if (ident_name == "NaN" && self.check_nan)
