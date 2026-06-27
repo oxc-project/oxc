@@ -11,7 +11,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
 use oxc_span::Span;
 
-use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_array_index_key_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Usage of Array index in keys is not allowed")
@@ -92,7 +92,19 @@ fn check_react_clone_element<'a>(
     node: &'a AstNode,
     ctx: &'a LintContext,
 ) {
-    if !is_method_call(call_expr, Some(&["React"]), Some(&["cloneElement"]), Some(2), Some(3)) {
+    if !(2..=3).contains(&call_expr.arguments.len()) {
+        return;
+    }
+    let Expression::StaticMemberExpression(member) = &call_expr.callee else {
+        return;
+    };
+    if member.property.name != "cloneElement" {
+        return;
+    }
+    let Expression::Identifier(object) = member.object.without_parentheses() else {
+        return;
+    };
+    if object.name != "React" {
         return;
     }
     let Some(Argument::ObjectExpression(obj_expr)) = call_expr.arguments.get(1) else {
