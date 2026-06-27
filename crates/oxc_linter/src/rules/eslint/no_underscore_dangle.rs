@@ -183,11 +183,6 @@ impl NoUnderscoreDangle {
 
     fn check_member(&self, ctx: &LintContext, expr: &StaticMemberExpression) {
         let prop = &expr.property;
-        // Cheap early-out before walking the object expression: most member accesses have no
-        // dangling underscore, and an always-allowed name can never be reported regardless of object.
-        if self.is_allowed(prop.name.as_str()) {
-            return;
-        }
         if is_prototype_accessor(prop.name.as_str()) {
             return;
         }
