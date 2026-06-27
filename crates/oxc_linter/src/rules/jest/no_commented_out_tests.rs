@@ -39,6 +39,7 @@ fn test() {
         ("testSomething()", None),
         ("// latest(dates)", None),
         ("// TODO: unify with Git implementation from Shipit (?)", None),
+        ("// test['not a method?']()", None),
         ("#!/usr/bin/env node", None),
         (
             r#"
@@ -108,6 +109,7 @@ fn test() {
         ("// it('has title but no callback')", None),
         ("// it()", None),
         ("// test.someNewMethodThatMightBeAddedInTheFuture()", None),
+        ("// test.123()", None),
         ("// test['someNewMethodThatMightBeAddedInTheFuture']()", None),
         ("// test('has title but no callback')", None),
         (
