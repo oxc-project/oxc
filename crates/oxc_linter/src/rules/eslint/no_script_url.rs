@@ -82,11 +82,8 @@ fn test() {
         "var url = `xjavascript:`",
         "var url = `${foo}javascript:`",
         "var a = foo`javaScript:`;",
-        // Shorter than `javascript:` (11 bytes): exercises the length guard.
         "var a = 'js:';",
         "var url = `js:`",
-        // Multi-byte chars in the first 11 bytes: byte-slice prefix compare must
-        // not panic and must not match.
         "var a = 'über cool stuff';",
     ];
 
