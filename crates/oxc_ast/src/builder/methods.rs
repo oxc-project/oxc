@@ -1,44 +1,15 @@
 use std::{alloc::Layout, borrow::Cow, mem::MaybeUninit, slice, str};
 
-use oxc_allocator::{Allocator, ArenaBox, ArenaVec, FromIn, GetAllocator, IntoIn};
+use oxc_allocator::{ArenaBox, ArenaVec, FromIn, IntoIn};
 use oxc_span::{SPAN, Span};
 use oxc_str::{Ident, Str};
 use oxc_syntax::{number::NumberBase, operator::UnaryOperator, scope::ScopeId};
 
 use crate::ast::*;
 
-/// Type that can be used in any AST builder method call which requires an `IntoIn<'a, Option<Anything<'a>>>`.
-/// Pass `NONE` instead of `None::<Anything<'a>>`.
-#[expect(clippy::upper_case_acronyms)]
-pub struct NONE;
-
-impl<'a, T> FromIn<'a, NONE> for Option<ArenaBox<'a, T>> {
-    fn from_in(_: NONE, _: &'a Allocator) -> Self {
-        None
-    }
-}
-
-/// AST builder for creating AST nodes.
-#[derive(Clone, Copy)]
-pub struct AstBuilder<'a> {
-    /// The memory allocator used to allocate AST nodes in the arena.
-    pub allocator: &'a Allocator,
-}
-
-impl<'a> GetAllocator<'a> for AstBuilder<'a> {
-    #[inline]
-    fn allocator(&self) -> &'a Allocator {
-        self.allocator
-    }
-}
+use super::{AstBuilder, NONE};
 
 impl<'a> AstBuilder<'a> {
-    /// Create a new AST builder that will allocate nodes in the given allocator.
-    #[inline]
-    pub fn new(allocator: &'a Allocator) -> Self {
-        Self { allocator }
-    }
-
     /// Move a value into the memory arena.
     #[inline]
     pub fn alloc<T>(self, value: T) -> ArenaBox<'a, T> {
