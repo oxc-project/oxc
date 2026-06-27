@@ -51,7 +51,7 @@ use std::mem;
 use oxc_allocator::{
     Address, ArenaBox, ArenaVec, CloneIn, GetAddress, GetAllocator, TakeIn, UnstableAddress,
 };
-use oxc_ast::{NONE, ast::*};
+use oxc_ast::{ast::*, builder::NONE};
 use oxc_ast_visit::{Visit, VisitMut};
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};

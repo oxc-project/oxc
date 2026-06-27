@@ -11,9 +11,8 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_allocator::{Allocator, ArenaVec, CloneIn, GetAllocator};
 use oxc_ast::{
-    NONE,
     ast::*,
-    builder::{AstBuilder, GetAstBuilder},
+    builder::{AstBuilder, GetAstBuilder, NONE},
 };
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};

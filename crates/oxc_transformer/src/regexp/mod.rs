@@ -45,7 +45,7 @@
 //! (actually these would be improvements on ESBuild, not Babel)
 
 use oxc_allocator::{ArenaVec, GetAllocator};
-use oxc_ast::{NONE, ast::*};
+use oxc_ast::{ast::*, builder::NONE};
 use oxc_regular_expression::{
     RegexUnsupportedPatterns, has_unsupported_regular_expression_pattern,
 };

@@ -33,7 +33,7 @@
 //! * Exponentiation operator specification: <https://tc39.es/ecma262/#sec-exp-operator>
 
 use oxc_allocator::{ArenaVec, CloneIn, GetAllocator, TakeIn};
-use oxc_ast::{NONE, ast::*};
+use oxc_ast::{ast::*, builder::NONE};
 use oxc_semantic::ReferenceFlags;
 use oxc_span::{SPAN, Span};
 use oxc_str::static_ident;

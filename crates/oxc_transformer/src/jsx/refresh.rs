@@ -10,7 +10,11 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use oxc_allocator::{
     ArenaStringBuilder, ArenaVec, CloneIn, GetAddress, GetAllocator, TakeIn, UnstableAddress,
 };
-use oxc_ast::{NONE, ast::*, builder::AstBuilder, match_expression};
+use oxc_ast::{
+    ast::*,
+    builder::{AstBuilder, NONE},
+    match_expression,
+};
 use oxc_ast_visit::{
     Visit,
     walk::{walk_call_expression, walk_declaration},

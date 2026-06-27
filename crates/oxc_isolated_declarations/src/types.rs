@@ -1,12 +1,12 @@
 use oxc_allocator::{ArenaVec, CloneIn, GetAllocator};
 use oxc_ast::{
-    NONE,
     ast::{
         ArrayExpression, ArrayExpressionElement, ArrowFunctionExpression, Expression, Function,
         ObjectExpression, ObjectPropertyKind, PropertyKey, PropertyKind, TSLiteral,
         TSMethodSignatureKind, TSSignature, TSTupleElement, TSType, TSTypeAnnotation,
         TSTypeOperatorOperator,
     },
+    builder::NONE,
 };
 use oxc_span::{ContentEq, GetSpan, SPAN, Span};
 use oxc_syntax::identifier::is_identifier_name;

@@ -64,7 +64,10 @@ use rustc_hash::FxHasher;
 use serde::Deserialize;
 
 use oxc_allocator::{ArenaVec, TakeIn};
-use oxc_ast::{NONE, ast::*, builder::AstBuilder};
+use oxc_ast::{
+    ast::*,
+    builder::{AstBuilder, NONE},
+};
 use oxc_data_structures::{inline_string::InlineString, slice_iter::SliceIter};
 use oxc_semantic::SymbolId;
 use oxc_span::SPAN;

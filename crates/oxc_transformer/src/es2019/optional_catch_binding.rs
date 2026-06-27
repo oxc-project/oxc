@@ -33,7 +33,7 @@
 //! * Babel plugin implementation: <https://github.com/babel/babel/tree/v7.26.2/packages/babel-plugin-transform-optional-catch-binding>
 //! * Optional catch binding TC39 proposal: <https://github.com/tc39/proposal-optional-catch-binding>
 
-use oxc_ast::{NONE, ast::*};
+use oxc_ast::{ast::*, builder::NONE};
 use oxc_semantic::SymbolFlags;
 use oxc_span::SPAN;
 use oxc_traverse::Traverse;

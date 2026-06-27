@@ -50,7 +50,7 @@
 use std::mem;
 
 use oxc_allocator::{ArenaVec, CloneIn, GetAllocator, TakeIn};
-use oxc_ast::{NONE, ast::*};
+use oxc_ast::{ast::*, builder::NONE};
 use oxc_span::{GetSpan, SPAN, Span};
 use oxc_traverse::{Ancestor, BoundIdentifier, MaybeBoundIdentifier, Traverse};
 

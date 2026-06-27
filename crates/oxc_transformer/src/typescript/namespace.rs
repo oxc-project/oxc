@@ -1,5 +1,5 @@
 use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
-use oxc_ast::{NONE, ast::*};
+use oxc_ast::{ast::*, builder::NONE};
 use oxc_ecmascript::BoundNames;
 use oxc_span::{SPAN, Span};
 use oxc_syntax::{

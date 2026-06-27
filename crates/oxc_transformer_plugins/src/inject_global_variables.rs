@@ -4,9 +4,8 @@ use cow_utils::CowUtils;
 
 use oxc_allocator::{Allocator, ArenaVec, GetAllocator};
 use oxc_ast::{
-    NONE,
     ast::*,
-    builder::{AstBuilder, GetAstBuilder},
+    builder::{AstBuilder, GetAstBuilder, NONE},
 };
 use oxc_semantic::Scoping;
 use oxc_span::SPAN;

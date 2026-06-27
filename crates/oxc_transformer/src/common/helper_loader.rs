@@ -72,8 +72,8 @@ use serde::Deserialize;
 
 use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::{
-    NONE,
     ast::{Argument, CallExpression, Expression, IdentifierName},
+    builder::NONE,
 };
 use oxc_semantic::{ReferenceFlags, SymbolFlags};
 use oxc_span::SPAN;

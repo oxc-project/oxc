@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use cow_utils::CowUtils;
 
 use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator, TakeIn};
-use oxc_ast::{NONE, ast::*};
+use oxc_ast::{ast::*, builder::NONE};
 use oxc_compat::ESFeature;
 use oxc_ecmascript::{
     StringCharAt, StringCharAtResult, ToBigInt, ToIntegerIndex,

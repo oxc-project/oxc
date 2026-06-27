@@ -89,7 +89,10 @@
 //! * Babel plugin implementation: <https://github.com/babel/babel/tree/v7.26.2/packages/babel-helper-builder-react-jsx>
 
 use oxc_allocator::{ArenaBox, ArenaStringBuilder, ArenaVec, GetAllocator, TakeIn};
-use oxc_ast::{NONE, ast::*, builder::AstBuilder};
+use oxc_ast::{
+    ast::*,
+    builder::{AstBuilder, NONE},
+};
 use oxc_ecmascript::PropName;
 use oxc_span::{SPAN, Span};
 use oxc_str::{Ident, Str};

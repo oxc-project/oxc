@@ -2,7 +2,7 @@ use std::iter::repeat_with;
 
 use crate::generated::ancestor::Ancestor;
 use oxc_allocator::{ArenaVec, CloneIn, GetAllocator, TakeIn};
-use oxc_ast::{NONE, ast::*};
+use oxc_ast::{ast::*, builder::NONE};
 use oxc_compat::ESFeature;
 use oxc_ecmascript::side_effects::MayHaveSideEffectsContext;
 use oxc_ecmascript::{

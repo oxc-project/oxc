@@ -1,5 +1,5 @@
 use oxc_allocator::{ArenaBox, ArenaVec, CloneIn, GetAllocator, TakeIn};
-use oxc_ast::{NONE, ast::*};
+use oxc_ast::{ast::*, builder::NONE};
 use oxc_span::{GetSpan, SPAN};
 use oxc_str::Str;
 

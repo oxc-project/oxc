@@ -1,7 +1,7 @@
 use rustc_hash::FxHashSet;
 
 use oxc_allocator::{ArenaVec, TakeIn};
-use oxc_ast::{NONE, ast::*};
+use oxc_ast::{ast::*, builder::NONE};
 use oxc_semantic::{ScopeFlags, ScopeId};
 use oxc_span::SPAN;
 use oxc_str::Ident;
