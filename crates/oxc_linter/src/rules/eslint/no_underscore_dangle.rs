@@ -126,34 +126,19 @@ impl Rule for NoUnderscoreDangle {
             AstKind::StaticMemberExpression(expr) => self.check_member(ctx, expr),
             AstKind::PrivateFieldExpression(expr) => self.check_private_member(ctx, expr),
             AstKind::BindingIdentifier(ident) => self.check_binding(ctx, node.id(), ident),
-            AstKind::Function(func) => {
-                if func.r#type != FunctionType::FunctionExpression
-                    && let Some(id) = &func.id
-                {
+            AstKind::Function(func) if func.r#type != FunctionType::FunctionExpression => {
+                if let Some(id) = &func.id {
                     self.report(ctx, id.span, id.name.as_str());
                 }
             }
-            AstKind::MethodDefinition(m) => {
-                if self.enforce_in_method_names
-                    && let Some((name, span)) = property_key_name_span(&m.key)
-                {
-                    self.report(ctx, span, name);
-                }
+            AstKind::MethodDefinition(m) if self.enforce_in_method_names => {
+                self.check_property_key(ctx, &m.key);
             }
-            AstKind::PropertyDefinition(p) => {
-                if self.enforce_in_class_fields
-                    && let Some((name, span)) = property_key_name_span(&p.key)
-                {
-                    self.report(ctx, span, name);
-                }
+            AstKind::ObjectProperty(o) if self.enforce_in_method_names && o.method => {
+                self.check_property_key(ctx, &o.key);
             }
-            AstKind::ObjectProperty(o) => {
-                if self.enforce_in_method_names
-                    && o.method
-                    && let Some((name, span)) = property_key_name_span(&o.key)
-                {
-                    self.report(ctx, span, name);
-                }
+            AstKind::PropertyDefinition(p) if self.enforce_in_class_fields => {
+                self.check_property_key(ctx, &p.key);
             }
             _ => {}
         }
@@ -179,6 +164,12 @@ impl NoUnderscoreDangle {
             return;
         }
         ctx.diagnostic(no_underscore_dangle_diagnostic(span, name));
+    }
+
+    fn check_property_key(&self, ctx: &LintContext, key: &PropertyKey) {
+        if let Some((name, span)) = property_key_name_span(key) {
+            self.report(ctx, span, name);
+        }
     }
 
     fn check_member(&self, ctx: &LintContext, expr: &StaticMemberExpression) {
