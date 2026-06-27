@@ -1,4 +1,3 @@
-use cow_utils::CowUtils;
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -45,28 +44,31 @@ declare_oxc_lint!(
 impl Rule for NoScriptUrl {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::StringLiteral(literal)
-                if literal.value.cow_to_ascii_lowercase().starts_with("javascript:") =>
-            {
+            AstKind::StringLiteral(literal) if is_javascript_url(&literal.value) => {
                 ctx.diagnostic(no_script_url_diagnostic(literal.span));
             }
             AstKind::TemplateLiteral(literal)
                 if !is_tagged_template_expression(ctx, node, literal.span)
                     && literal.quasis.len() == 1
-                    && literal
-                        .quasis
-                        .first()
-                        .unwrap()
-                        .value
-                        .raw
-                        .cow_to_ascii_lowercase()
-                        .starts_with("javascript:") =>
+                    && is_javascript_url(&literal.quasis.first().unwrap().value.raw) =>
             {
                 ctx.diagnostic(no_script_url_diagnostic(literal.span));
             }
             _ => {}
         }
     }
+}
+
+/// Whether `value` begins with a case-insensitive `javascript:` prefix.
+///
+/// Equivalent to `value.cow_to_ascii_lowercase().starts_with("javascript:")` but
+/// allocation-free: `"javascript:"` is ASCII, so ASCII-lowercasing cannot change byte
+/// length and only the first 11 bytes can affect the match. This runs on every string and
+/// template literal, so it avoids both the full-length lowercase scan and the heap copy the
+/// previous `cow_to_ascii_lowercase` made whenever the value contained an uppercase letter.
+fn is_javascript_url(value: &str) -> bool {
+    const PREFIX: &[u8] = b"javascript:";
+    value.len() >= PREFIX.len() && value.as_bytes()[..PREFIX.len()].eq_ignore_ascii_case(PREFIX)
 }
 
 fn is_tagged_template_expression(ctx: &LintContext, node: &AstNode, literal_span: Span) -> bool {
@@ -87,6 +89,12 @@ fn test() {
         "var url = `xjavascript:`",
         "var url = `${foo}javascript:`",
         "var a = foo`javaScript:`;",
+        // Shorter than `javascript:` (11 bytes): exercises the length guard.
+        "var a = 'js:';",
+        "var url = `js:`",
+        // Multi-byte chars in the first 11 bytes: byte-slice prefix compare must
+        // not panic and must not match.
+        "var a = 'über cool stuff';",
     ];
 
     let fail = vec![
