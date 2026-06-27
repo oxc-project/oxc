@@ -9,6 +9,7 @@ use oxc_span::Span;
 use rustc_hash::{FxBuildHasher, FxHashMap};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
 
 use serde_json::Value;
 
@@ -314,6 +315,16 @@ impl ExtensionsConfig {
             .map(PathGroupOverride::action)
     }
 
+    /// Check if the rule has the default empty config, where every import is allowed.
+    #[inline]
+    pub fn is_noop(&self) -> bool {
+        !self.ignore_packages
+            && self.require_extension.is_none()
+            && !self.check_type_imports
+            && self.extensions.is_empty()
+            && self.path_group_overrides.is_empty()
+    }
+
     /// Determine if an extension violation should be flagged.
     ///
     /// Returns `true` if the import violates the configured extension rules.
@@ -544,6 +555,10 @@ impl Rule for Extensions {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        if self.0.is_noop() {
+            return;
+        }
+
         // Process require() calls
         let AstKind::CallExpression(call_expr) = node.kind() else { return };
         let Expression::Identifier(ident) = &call_expr.callee else { return };
@@ -564,6 +579,10 @@ impl Rule for Extensions {
     }
 
     fn run_once(&self, ctx: &LintContext) {
+        if self.0.is_noop() {
+            return;
+        }
+
         // Process import/export statements
         for (module_name, modules) in &ctx.module_record().requested_modules {
             for module in modules {
@@ -807,17 +826,15 @@ fn is_package_import(module_name: &str) -> bool {
 /// - `"./foo"` → `None`
 /// - `"./foo."` → `None` (empty extension)
 /// - `"./foo.bar/"` → `None` (directory path)
-fn get_file_extension_from_module_name(module_name: &str) -> Option<String> {
+fn get_file_extension_from_module_name(module_name: &str) -> Option<Cow<'_, str>> {
     use cow_utils::CowUtils;
-    if let Some((_, extension)) =
-        module_name.split('?').next().unwrap_or(module_name).rsplit_once('.')
-        && !extension.is_empty()
-        && !extension.starts_with('/')
-    {
-        return Some(extension.cow_to_ascii_lowercase().into_owned());
+    let path = module_name.split_once('?').map_or(module_name, |(path, _)| path);
+    let (_, extension) = path.rsplit_once('.')?;
+    if extension.is_empty() || extension.starts_with('/') {
+        return None;
     }
 
-    None
+    Some(extension.cow_to_ascii_lowercase())
 }
 
 /// Get the actual file extension from the resolved module path.
