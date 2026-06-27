@@ -11,7 +11,6 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule};
 
 const GLOBAL_THIS: &str = "globalThis";
-const NON_CALLABLE_GLOBALS: [&str; 5] = ["Atomics", "Intl", "JSON", "Math", "Reflect"];
 
 fn no_obj_calls_diagnostic(obj_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("`{obj_name}` is not a function and cannot be called"))
@@ -69,8 +68,9 @@ declare_oxc_lint!(
     short_description = "Disallow calling some global objects as functions.",
 );
 
+#[inline]
 fn is_global_obj(s: &str) -> bool {
-    NON_CALLABLE_GLOBALS.contains(&s)
+    matches!(s, "Atomics" | "Intl" | "JSON" | "Math" | "Reflect")
 }
 
 fn global_this_member<'a>(expr: &'a MemberExpression<'_>) -> Option<&'a str> {
@@ -137,11 +137,18 @@ impl Rule for NoObjCalls {
 fn check_callee<'a>(callee: &'a Expression, span: Span, node: &AstNode<'a>, ctx: &LintContext<'a>) {
     match callee {
         Expression::Identifier(ident) => {
-            // handle new Math(), Math(), etc
+            let name = ident.name.as_str();
+            if ctx.is_reference_to_global_variable(ident) {
+                if is_global_obj(name) {
+                    ctx.diagnostic(no_obj_calls_diagnostic(name, span));
+                }
+                return;
+            }
+
             if let Some(top_level_reference) = resolve_global_binding(ident, node.scope_id(), ctx)
                 && is_global_obj(top_level_reference)
             {
-                ctx.diagnostic(no_obj_calls_diagnostic(ident.name.as_str(), span));
+                ctx.diagnostic(no_obj_calls_diagnostic(name, span));
             }
         }
 
