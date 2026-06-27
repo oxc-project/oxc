@@ -984,16 +984,22 @@ pub fn is_node_within_call_argument<'a>(
 /// Returns `true` if the node is at the start of an `ExpressionStatement` and the
 /// character before it could cause the replacement to be parsed as a continuation
 /// of the previous expression.
+///
+/// Returns `false` when that `ExpressionStatement` is the *unbraced* body of a
+/// control-flow statement (`if (…) <stmt>`, `for/while (…) <stmt>`, `do <stmt> while`,
+/// `else <stmt>`, `label: <stmt>`): the preceding token closes the control-flow header
+/// rather than an expression, so there is no hazard — and inserting `;` there would
+/// wrongly empty the body (`if (foo) ;[] === undefined`).
 pub fn could_be_asi_hazard(node: &AstNode, ctx: &LintContext) -> bool {
     let node_span = node.span();
 
     // Find the enclosing ExpressionStatement, bailing early for nodes that can't
     // be at statement start position
-    let mut expr_stmt_span = None;
+    let mut expr_stmt = None;
     for ancestor in ctx.nodes().ancestors(node.id()) {
         match ancestor.kind() {
-            AstKind::ExpressionStatement(expr_stmt) => {
-                expr_stmt_span = Some(expr_stmt.span);
+            AstKind::ExpressionStatement(expr_stmt_node) => {
+                expr_stmt = Some((expr_stmt_node.span, ancestor.id()));
                 break;
             }
             // Expression types that can have our node at their start position
@@ -1019,9 +1025,27 @@ pub fn could_be_asi_hazard(node: &AstNode, ctx: &LintContext) -> bool {
         }
     }
 
-    let Some(expr_stmt_span) = expr_stmt_span else {
+    let Some((expr_stmt_span, expr_stmt_id)) = expr_stmt else {
         return false;
     };
+
+    // The unbraced body of a control-flow statement is never an ASI hazard: the token
+    // before it (`)` of `if`/`for`/`while`/`with`, or the `else`/`do`/label) closes the
+    // control-flow header, not an expression, so the inserted `[`/`(` can't continue a
+    // previous statement. Inserting `;` there would empty the body instead.
+    if matches!(
+        ctx.nodes().parent_kind(expr_stmt_id),
+        AstKind::IfStatement(_)
+            | AstKind::ForStatement(_)
+            | AstKind::ForInStatement(_)
+            | AstKind::ForOfStatement(_)
+            | AstKind::WhileStatement(_)
+            | AstKind::DoWhileStatement(_)
+            | AstKind::WithStatement(_)
+            | AstKind::LabeledStatement(_)
+    ) {
+        return false;
+    }
 
     // Node must be at the start of the statement for ASI hazard to apply
     if node_span.start != expr_stmt_span.start {

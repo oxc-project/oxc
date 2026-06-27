@@ -233,6 +233,15 @@ fn test() {
                         ;[a, b].join('') !== c
                     ",
         ),
+        // The unbraced body of a control-flow statement is NOT an ASI hazard: the token before
+        // it (`)`/`else`) closes the header, not an expression, so no `;` must be inserted —
+        // inserting one would empty the body.
+        ("if (x) ![a].b === c", "if (x) [a].b !== c"),
+        ("for (;;) !(a) === b", "for (;;) (a) !== b"),
+        ("while (x) ![a].b === c", "while (x) [a].b !== c"),
+        ("if (x) {} else ![a].b === c", "if (x) {} else [a].b !== c"),
+        // ...but a *braced* body that follows another statement still needs the `;` guard.
+        ("if (x) { foo\n![a].b === c }", "if (x) { foo\n;[a].b !== c }"),
     ];
 
     Tester::new(NoNegationInEqualityCheck::NAME, NoNegationInEqualityCheck::PLUGIN, pass, fail)
