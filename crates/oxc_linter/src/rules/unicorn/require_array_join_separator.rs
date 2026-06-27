@@ -49,8 +49,8 @@ declare_oxc_lint!(
     short_description = "Enforce using the separator argument with `Array#join()`.",
 );
 
-fn is_array_prototype_property(member_expr: &MemberExpression, property: &str) -> bool {
-    is_prototype_property(member_expr, property, Some("Array"))
+fn is_array_prototype_property(member_expr: &MemberExpression) -> bool {
+    is_prototype_property(member_expr, "join", Some("Array"))
 }
 
 impl Rule for RequireArrayJoinSeparator {
@@ -106,7 +106,7 @@ impl Rule for RequireArrayJoinSeparator {
             && !member_expr.optional()
             && !call_expr.optional
             && !call_expr.arguments.iter().any(Argument::is_spread)
-            && is_array_prototype_property(member_expr_obj, "join")
+            && is_array_prototype_property(member_expr_obj)
         {
             ctx.diagnostic_with_fix(
                 require_array_join_separator_diagnostic(Span::new(
