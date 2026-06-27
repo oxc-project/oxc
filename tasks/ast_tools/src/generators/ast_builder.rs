@@ -264,6 +264,7 @@ fn generate_builder_methods_for_struct_impl(
         ///@@line_break
         #fn_docs
         #params_docs
+        #[deprecated(note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043")]
         #[inline]
         pub fn #fn_name #generic_params (&self, #fn_params) -> #struct_ty #where_clause {
             #struct_ident { #fields }
@@ -288,6 +289,7 @@ fn generate_builder_methods_for_struct_impl(
         #[doc = " Returns a [`Box`](ArenaBox) containing the newly-allocated node."]
         #[doc = #alloc_doc2]
         #params_docs
+        #[deprecated(note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043")]
         #[inline]
         pub fn #alloc_fn_name #generic_params (&self, #fn_params) -> ArenaBox<'a, #struct_ty> #where_clause {
             ArenaBox::new_in(self.#fn_name(#(#args),*), self)
@@ -581,6 +583,7 @@ fn generate_builder_method_for_enum_variant_impl(
         ///@@line_break
         #fn_docs
         #params_docs
+        #[deprecated(note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043")]
         #[inline]
         pub fn #fn_name #generic_params(&self, #(#fn_params),*) -> #enum_ty #where_clause {
             #enum_ident::#variant_ident(self.#inner_builder_name(#(#args),*))
