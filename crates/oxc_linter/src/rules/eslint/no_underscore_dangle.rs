@@ -122,10 +122,6 @@ impl Rule for NoUnderscoreDangle {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        // NOTE: Keep this as a flat `match node.kind()` with one bare `AstKind::Variant(_)` arm per
-        // node type and an empty `_ => {}`. This lets `linter_codegen` derive `NODE_TYPES` so the
-        // rule is only dispatched to these node kinds rather than every node in the AST. Avoid
-        // OR-patterns and a non-empty wildcard arm, both of which defeat that derivation.
         match node.kind() {
             AstKind::StaticMemberExpression(expr) => self.check_member(ctx, expr),
             AstKind::PrivateFieldExpression(expr) => self.check_private_member(ctx, expr),
