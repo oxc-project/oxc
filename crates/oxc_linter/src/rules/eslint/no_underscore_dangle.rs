@@ -122,19 +122,44 @@ impl Rule for NoUnderscoreDangle {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        // NOTE: Keep this as a flat `match node.kind()` with one bare `AstKind::Variant(_)` arm per
+        // node type and an empty `_ => {}`. This lets `linter_codegen` derive `NODE_TYPES` so the
+        // rule is only dispatched to these node kinds rather than every node in the AST. Avoid
+        // OR-patterns and a non-empty wildcard arm, both of which defeat that derivation.
         match node.kind() {
             AstKind::StaticMemberExpression(expr) => self.check_member(ctx, expr),
             AstKind::PrivateFieldExpression(expr) => self.check_private_member(ctx, expr),
             AstKind::BindingIdentifier(ident) => self.check_binding(ctx, node.id(), ident),
-            AstKind::MethodDefinition(_) | AstKind::ObjectProperty(_)
-                if !self.enforce_in_method_names => {}
-            AstKind::PropertyDefinition(_) if !self.enforce_in_class_fields => {}
-            AstKind::Function(func) if func.r#type == FunctionType::FunctionExpression => {}
-            _ => {
-                if let Some((name, span)) = get_identifier(node) {
+            AstKind::Function(func) => {
+                if func.r#type != FunctionType::FunctionExpression
+                    && let Some(id) = &func.id
+                {
+                    self.report(ctx, id.span, id.name.as_str());
+                }
+            }
+            AstKind::MethodDefinition(m) => {
+                if self.enforce_in_method_names
+                    && let Some((name, span)) = property_key_name_span(&m.key)
+                {
                     self.report(ctx, span, name);
                 }
             }
+            AstKind::PropertyDefinition(p) => {
+                if self.enforce_in_class_fields
+                    && let Some((name, span)) = property_key_name_span(&p.key)
+                {
+                    self.report(ctx, span, name);
+                }
+            }
+            AstKind::ObjectProperty(o) => {
+                if self.enforce_in_method_names
+                    && o.method
+                    && let Some((name, span)) = property_key_name_span(&o.key)
+                {
+                    self.report(ctx, span, name);
+                }
+            }
+            _ => {}
         }
     }
 }
@@ -162,6 +187,11 @@ impl NoUnderscoreDangle {
 
     fn check_member(&self, ctx: &LintContext, expr: &StaticMemberExpression) {
         let prop = &expr.property;
+        // Cheap early-out before walking the object expression: most member accesses have no
+        // dangling underscore, and an always-allowed name can never be reported regardless of object.
+        if self.is_allowed(prop.name.as_str()) {
+            return;
+        }
         if is_prototype_accessor(prop.name.as_str()) {
             return;
         }
@@ -241,16 +271,6 @@ fn binding_context(ctx: &LintContext, id: NodeId) -> BindingContext {
         }
     }
     BindingContext::NotInteresting
-}
-
-fn get_identifier<'a>(node: &AstNode<'a>) -> Option<(&'a str, Span)> {
-    match node.kind() {
-        AstKind::Function(f) => f.id.as_ref().map(|id| (id.name.as_str(), id.span)),
-        AstKind::MethodDefinition(m) => property_key_name_span(&m.key),
-        AstKind::PropertyDefinition(p) => property_key_name_span(&p.key),
-        AstKind::ObjectProperty(o) if o.method => property_key_name_span(&o.key),
-        _ => None,
-    }
 }
 
 fn has_dangling_underscore(name: &str) -> bool {
