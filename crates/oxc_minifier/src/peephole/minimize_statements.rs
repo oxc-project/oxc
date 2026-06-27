@@ -677,7 +677,6 @@ impl<'a> PeepholeOptimizations {
     fn handle_switch_statement(
         mut switch_stmt: ArenaBox<'a, SwitchStatement<'a>>,
         result: &mut ArenaVec<'a, Statement<'a>>,
-
         ctx: &mut TraverseCtx<'a>,
     ) {
         Self::substitute_single_use_symbol_in_statement(
@@ -697,32 +696,52 @@ impl<'a> PeepholeOptimizations {
             ctx.drop_statement(&dropped);
         }
 
-        // Prune empty case clauses before a trailing default
-        // e.g., `switch (x) { case 0: foo(); break; case 1: default: bar() }`
-        // => `switch (x) { case 0: foo(); break; default: bar() }`
-        // https://github.com/evanw/esbuild/commit/add452ed51333953dd38a26f28a775bb220ea2e9
-        if let Some(last_case) = switch_stmt.cases.last()
-            && last_case.test.is_none()
-        {
-            let default_idx = switch_stmt.cases.len() - 1;
-            let mut first_empty_idx = default_idx;
-            // Iterate backward through preceding cases
-            while first_empty_idx > 0 {
-                let case = &switch_stmt.cases[first_empty_idx - 1];
-                // Only remove empty cases with primitive literal tests
-                if case.consequent.is_empty()
-                    && case.test.as_ref().is_some_and(Expression::is_literal)
-                {
-                    first_empty_idx -= 1;
+        // Collapse empty cases: Prune empty case clauses and consolidate switch statement
+        // This handles the logic from both "collapse_empty_switch_cases" and
+        let case_count = switch_stmt.cases.len();
+        if case_count > 1 {
+            // if a default case is last we can skip checking if it has body
+            let (end, allow_break) = if let Some(default_pos) =
+                switch_stmt.cases.iter().rposition(SwitchCase::is_default_case)
+            {
+                if default_pos == case_count - 1 {
+                    (
+                        case_count - 1,
+                        Self::is_empty_switch_case(
+                            &switch_stmt.cases[default_pos].consequent,
+                            true,
+                        ),
+                    )
                 } else {
-                    break;
+                    (case_count, false)
                 }
-            }
-            // If we found cases to remove, keep cases [0..first_empty_idx] + [default]
-            if first_empty_idx < default_idx {
-                let default_case = switch_stmt.cases.pop().unwrap();
-                switch_stmt.cases.truncate(first_empty_idx);
-                switch_stmt.cases.push(default_case);
+            } else {
+                (case_count, true)
+            };
+            // Find the last non-removable case (any case whose consequent is non-empty).
+            let last_non_empty_before_last = switch_stmt.cases[..end].iter().rposition(|case| {
+                !Self::is_empty_switch_case(&case.consequent, allow_break)
+                    || case.test.as_ref().is_some_and(|test| test.may_have_side_effects(ctx))
+            });
+
+            // start is the first index of the removable suffix
+            let start = match last_non_empty_before_last {
+                Some(pos) => pos + 1,
+                None => 0,
+            };
+
+            // Remove the removable suffix if any
+            if start < end {
+                for removed_case in &switch_stmt.cases[start..end] {
+                    ctx.drop_switch_case(removed_case);
+                }
+                let mut last = switch_stmt.cases.pop().unwrap();
+                switch_stmt.cases.truncate(start);
+
+                if !Self::is_empty_switch_case(&last.consequent, true) {
+                    last.test = None;
+                    switch_stmt.cases.push(last);
+                }
                 ctx.notice_change();
             }
         }

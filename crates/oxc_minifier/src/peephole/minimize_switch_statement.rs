@@ -15,7 +15,6 @@ impl<'a> PeepholeOptimizations {
     /// - Converts the `switch` if it contains only one or two cases to `if`/`else` statements.
     pub fn try_minimize_switch(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         Self::try_remove_last_break_from_case(stmt, ctx);
-        // Self::collapse_empty_switch_cases(stmt, ctx);
         Self::remove_empty_switch(stmt, ctx);
         Self::fold_switch_with_one_case(stmt, ctx);
         Self::fold_switch_with_two_cases(stmt, ctx);
@@ -30,71 +29,6 @@ impl<'a> PeepholeOptimizations {
         if let Some(last_case) = switch_stmt.cases.last_mut() {
             Self::remove_last_break(&mut last_case.consequent, ctx);
         }
-    }
-
-    /// Collapses empty cases in a `SwitchStatement` by removing redundant cases with empty
-    /// consequent's and consolidating them into a more concise representation.
-    ///
-    /// - If the switch statement contains one or fewer cases, it is considered already optimal, and no actions are taken.
-    /// - If the `default` case is the last case, it is treated as a special case where its emptiness directly
-    ///   influences the analysis of the rest of the cases.
-    /// - The function identifies a `removable suffix` of cases at the end of the statement, starting from the first
-    ///   non-empty case or case with side-effect-producing expressions backward to the last case.
-    /// - All cases in the identified removable suffix are eliminated, except for the last case,
-    ///   which is preserved and its test is removed (if applicable).
-    fn collapse_empty_switch_cases(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Statement::SwitchStatement(switch_stmt) = stmt else {
-            return;
-        };
-
-        let case_count = switch_stmt.cases.len();
-        if case_count <= 1 {
-            return;
-        }
-
-        // if a default case is last we can skip checking if it has body
-        let (end, allow_break) = if let Some(default_pos) =
-            switch_stmt.cases.iter().rposition(SwitchCase::is_default_case)
-        {
-            if default_pos == case_count - 1 {
-                (
-                    case_count - 1,
-                    Self::is_empty_switch_case(&switch_stmt.cases[default_pos].consequent, true),
-                )
-            } else {
-                (case_count, false)
-            }
-        } else {
-            (case_count, true)
-        };
-
-        // Find the last non-removable case (any case whose consequent is non-empty).
-        let last_non_empty_before_last = switch_stmt.cases[..end].iter().rposition(|case| {
-            !Self::is_empty_switch_case(&case.consequent, allow_break)
-                || case.test.as_ref().is_some_and(|test| test.may_have_side_effects(ctx))
-        });
-
-        // start is the first index of the removable suffix
-        let start = match last_non_empty_before_last {
-            Some(pos) => pos + 1,
-            None => 0,
-        };
-
-        // nothing removable
-        if start >= end {
-            return;
-        }
-
-        let Some(mut last) = switch_stmt.cases.pop() else {
-            return;
-        };
-        switch_stmt.cases.truncate(start);
-
-        if !Self::is_empty_switch_case(&last.consequent, true) {
-            last.test = None;
-            switch_stmt.cases.push(last);
-        }
-        ctx.notice_change();
     }
 
     /// Removes an empty switch statement from the given AST statement.
@@ -228,7 +162,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn is_empty_switch_case(stmt: &Vec<'a, Statement<'a>>, allow_break: bool) -> bool {
+    pub fn is_empty_switch_case(stmt: &Vec<'a, Statement<'a>>, allow_break: bool) -> bool {
         if stmt.len() != 1 {
             return stmt.is_empty();
         }
