@@ -266,7 +266,7 @@ fn generate_builder_methods_for_struct_impl(
         #params_docs
         #[deprecated(note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043")]
         #[inline]
-        pub fn #fn_name #generic_params (&self, #fn_params) -> #struct_ty #where_clause {
+        pub fn #fn_name #generic_params (self, #fn_params) -> #struct_ty #where_clause {
             #struct_ident { #fields }
         }
     };
@@ -291,8 +291,8 @@ fn generate_builder_methods_for_struct_impl(
         #params_docs
         #[deprecated(note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043")]
         #[inline]
-        pub fn #alloc_fn_name #generic_params (&self, #fn_params) -> ArenaBox<'a, #struct_ty> #where_clause {
-            ArenaBox::new_in(self.#fn_name(#(#args),*), self)
+        pub fn #alloc_fn_name #generic_params (self, #fn_params) -> ArenaBox<'a, #struct_ty> #where_clause {
+            ArenaBox::new_in(self.#fn_name(#(#args),*), &self)
         }
     }
 }
@@ -303,7 +303,7 @@ fn generate_builder_methods_for_struct_impl(
 ///
 /// ```
 /// //        ↓↓↓↓ generic params
-/// pub fn foo<T1>(&self, span: Span, type_parameters: T1) -> Foo<'a>
+/// pub fn foo<T1>(self, span: Span, type_parameters: T1) -> Foo<'a>
 ///     where T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>> {}
 /// //  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ where clause
 /// ```
@@ -404,8 +404,8 @@ fn get_struct_params<'s>(
 /// Omit default fields from function params if `include_default_fields == false`.
 ///
 /// ```
-/// //         ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ function params
-/// pub fn foo(span: Span, bar: Bar<'a>) -> Foo<'a> {
+/// //               ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ function params
+/// pub fn foo(self, span: Span, bar: Bar<'a>) -> Foo<'a> {
 ///     Bar { span, bar }
 /// //        ^^^^^^^^^ fields
 /// }
@@ -585,7 +585,7 @@ fn generate_builder_method_for_enum_variant_impl(
         #params_docs
         #[deprecated(note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043")]
         #[inline]
-        pub fn #fn_name #generic_params(&self, #(#fn_params),*) -> #enum_ty #where_clause {
+        pub fn #fn_name #generic_params(self, #(#fn_params),*) -> #enum_ty #where_clause {
             #enum_ident::#variant_ident(self.#inner_builder_name(#(#args),*))
         }
     }
