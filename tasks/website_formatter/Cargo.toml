@@ -14,6 +14,7 @@ doctest = false
 
 [dependencies]
 bpaf = { workspace = true, features = ["docgen"] }
+oxc_ast = { workspace = true, features = ["disable_old_builder"] }
 oxfmt = { workspace = true }
 pico-args = { workspace = true }
 schemars = { workspace = true }
@@ -24,4 +25,5 @@ insta = { workspace = true }
 project-root = { workspace = true }
 
 [package.metadata.cargo-shear]
-ignored = ["bpaf"]
+# `oxc_ast` is a feature-only dependency, to enable its `disable_old_builder` feature
+ignored = ["bpaf", "oxc_ast"]
