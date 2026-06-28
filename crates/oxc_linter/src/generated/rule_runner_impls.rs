@@ -1086,7 +1086,15 @@ impl RuleRunner for crate::rules::eslint::no_undefined::NoUndefined {
 }
 
 impl RuleRunner for crate::rules::eslint::no_underscore_dangle::NoUnderscoreDangle {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::BindingIdentifier,
+        AstType::Function,
+        AstType::MethodDefinition,
+        AstType::ObjectProperty,
+        AstType::PrivateFieldExpression,
+        AstType::PropertyDefinition,
+        AstType::StaticMemberExpression,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
