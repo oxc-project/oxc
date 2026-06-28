@@ -1,5 +1,8 @@
 use oxc_allocator::{ArenaBox, ArenaVec};
-use oxc_ast::{NONE, ast::*, builder::AstBuilder};
+use oxc_ast::{
+    ast::*,
+    builder::{AstBuilder, NONE},
+};
 use oxc_ast_visit::Visit;
 use oxc_ecmascript::BoundNames;
 use oxc_span::{SPAN, Span};

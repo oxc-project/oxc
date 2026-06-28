@@ -44,8 +44,8 @@
 //! TODO(improve-on-babel): When flags is empty, we could output `RegExp("(?<=x)")` instead of `RegExp("(?<=x)", "")`.
 //! (actually these would be improvements on ESBuild, not Babel)
 
-use oxc_allocator::ArenaVec;
-use oxc_ast::{NONE, ast::*};
+use oxc_allocator::{ArenaVec, GetAllocator};
+use oxc_ast::{ast::*, builder::NONE};
 use oxc_regular_expression::{
     RegexUnsupportedPatterns, has_unsupported_regular_expression_pattern,
 };
@@ -142,7 +142,7 @@ impl<'a> RegExp {
             let pattern = if let Some(pattern) = &regexp.regex.pattern.pattern {
                 pattern
             } else {
-                match regexp.parse_pattern(ctx.ast.allocator) {
+                match regexp.parse_pattern(ctx.allocator()) {
                     Ok(pattern) => {
                         owned_pattern = Some(pattern);
                         owned_pattern.as_ref().unwrap()

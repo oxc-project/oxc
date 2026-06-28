@@ -1,7 +1,7 @@
 //! This module is responsible for transforming `for await` to `for` statement
 
 use oxc_allocator::{ArenaVec, TakeIn};
-use oxc_ast::{NONE, ast::*};
+use oxc_ast::{ast::*, builder::NONE};
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{SPAN, Span};
 use oxc_str::static_ident;

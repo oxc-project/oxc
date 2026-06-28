@@ -4,7 +4,7 @@
 use std::path::Path;
 
 use oxc_allocator::ArenaVec;
-use oxc_ast::{NONE, ast::*, builder::AstBuilder};
+use oxc_ast::{ast::*, builder::AstBuilder, builder::NONE};
 use oxc_span::SPAN;
 use oxc_traverse::BoundIdentifier;
 

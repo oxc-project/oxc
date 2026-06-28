@@ -48,8 +48,10 @@ mod metadata;
 use std::borrow::Cow;
 use std::mem;
 
-use oxc_allocator::{Address, ArenaBox, ArenaVec, CloneIn, GetAddress, TakeIn, UnstableAddress};
-use oxc_ast::{NONE, ast::*};
+use oxc_allocator::{
+    Address, ArenaBox, ArenaVec, CloneIn, GetAddress, GetAllocator, TakeIn, UnstableAddress,
+};
+use oxc_ast::{ast::*, builder::NONE};
 use oxc_ast_visit::{Visit, VisitMut};
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
@@ -396,8 +398,8 @@ impl<'a> LegacyDecorator<'a> {
                     .unwrap_or_else(|| Cow::Owned(get_var_name_from_node(&accessor.key)));
                 let storage_name =
                     Str::from_strs_array_in(["_", &key_name, "_accessor_storage"], ctx);
-                let getter_key = accessor.key.clone_in(ctx.ast.allocator);
-                let setter_key = accessor.key.clone_in(ctx.ast.allocator);
+                let getter_key = accessor.key.clone_in(ctx.ast.allocator());
+                let setter_key = accessor.key.clone_in(ctx.ast.allocator());
                 (storage_name, getter_key, setter_key)
             };
 
@@ -1369,13 +1371,13 @@ impl<'a> LegacyDecorator<'a> {
             }
             // Copiable literals
             PropertyKey::NumericLiteral(literal) => {
-                Expression::NumericLiteral(literal.clone_in(ctx.ast.allocator))
+                Expression::NumericLiteral(literal.clone_in(ctx.allocator()))
             }
             PropertyKey::StringLiteral(literal) => {
-                Expression::StringLiteral(literal.clone_in(ctx.ast.allocator))
+                Expression::StringLiteral(literal.clone_in(ctx.allocator()))
             }
             PropertyKey::TemplateLiteral(literal) if literal.expressions.is_empty() => {
-                let quasis = literal.quasis.clone_in(ctx.ast.allocator);
+                let quasis = literal.quasis.clone_in(ctx.allocator());
                 Expression::new_template_literal(SPAN, quasis, ArenaVec::new_in(ctx), ctx)
             }
             PropertyKey::NullLiteral(_) => Expression::new_null_literal(SPAN, ctx),

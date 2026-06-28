@@ -41,7 +41,7 @@
 use std::iter;
 
 use oxc_allocator::{ArenaVec, TakeIn};
-use oxc_ast::{NONE, ast::*};
+use oxc_ast::{ast::*, builder::NONE};
 use oxc_semantic::SymbolFlags;
 use oxc_span::SPAN;
 use oxc_traverse::{BoundIdentifier, Traverse};

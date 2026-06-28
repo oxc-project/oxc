@@ -104,7 +104,7 @@ use std::iter;
 use oxc_allocator::{ArenaVec, TakeIn};
 use rustc_hash::FxHashMap;
 
-use oxc_ast::{NONE, ast::*};
+use oxc_ast::{ast::*, builder::NONE};
 use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_span::SPAN;
 use oxc_str::Ident;
