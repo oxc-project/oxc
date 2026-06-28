@@ -403,7 +403,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let type_annotation = if self.is_ts { self.parse_ts_type_annotation() } else { None };
         // `new.target` is allowed in a class accessor field initializer.
         let value = self.eat(Kind::Eq).then(|| {
-            self.context_add(Context::NewTarget, Self::parse_assignment_expression_or_higher)
+            let cover_paren_depth = std::mem::replace(&mut self.state.cover_paren_depth, 0);
+            let value =
+                self.context_add(Context::NewTarget, Self::parse_assignment_expression_or_higher);
+            self.state.cover_paren_depth = cover_paren_depth;
+            value
         });
         self.asi();
         let r#type = if modifiers.contains(ModifierKind::Abstract) {
@@ -670,11 +674,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // Initializer[+In, ?Yield, ?Await]opt
         // `new.target` is allowed in a class field initializer.
         let initializer = self.eat(Kind::Eq).then(|| {
-            self.context(
+            // A field initializer re-establishes its own `await`/`yield` contexts; it is not
+            // part of any enclosing cover paren frame.
+            let cover_paren_depth = std::mem::replace(&mut self.state.cover_paren_depth, 0);
+            let initializer = self.context(
                 Context::In | Context::NewTarget,
                 Context::Yield | Context::Await,
                 Self::parse_expr,
-            )
+            );
+            self.state.cover_paren_depth = cover_paren_depth;
+            initializer
         });
 
         // Handle trailing `;` or newline

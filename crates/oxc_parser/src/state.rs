@@ -8,6 +8,12 @@ use crate::cursor::ParserCheckpoint;
 pub struct ParserState<'a> {
     pub not_parenthesized_arrow: FxHashSet<u32>,
 
+    /// Number of `CoverParenthesizedExpressionAndArrowParameterList` frames currently
+    /// being parsed. Non-zero while parsing the items of a `( ... )` that may turn out
+    /// to be arrow function parameters. Reset to 0 while parsing nested function bodies,
+    /// which re-establish their own `await`/`yield` contexts.
+    pub cover_paren_depth: u32,
+
     /// Temporary storage for `CoverInitializedName` `({ foo = bar })`.
     /// Keyed by `ObjectProperty`'s span.start.
     pub cover_initialized_name: FxHashMap<u32, AssignmentExpression<'a>>,
@@ -37,6 +43,7 @@ impl ParserState<'_> {
     pub fn new() -> Self {
         Self {
             not_parenthesized_arrow: FxHashSet::default(),
+            cover_paren_depth: 0,
             cover_initialized_name: FxHashMap::default(),
             trailing_commas: FxHashMap::default(),
             potential_await_reparse: Vec::new(),

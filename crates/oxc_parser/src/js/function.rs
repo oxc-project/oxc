@@ -33,10 +33,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let opening_span = self.cur_token().span();
         self.expect(Kind::LCurly);
 
+        // A function body re-establishes its own `await`/`yield` contexts; it is not part of
+        // any enclosing cover paren frame.
+        let cover_paren_depth = std::mem::replace(&mut self.state.cover_paren_depth, 0);
+
         // Add Return context, remove TopLevel context
         let (directives, statements) = self.context(Context::Return, Context::TopLevel, |p| {
             p.parse_directives_and_statements(/* in_ts_namespace_body */ false)
         });
+
+        self.state.cover_paren_depth = cover_paren_depth;
 
         self.expect_closing(Kind::RCurly, opening_span);
         FunctionBody::boxed(self.end_span(span), directives, statements, self)
@@ -257,6 +263,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // functions, which are parsed via `parse_function_body` directly).
         self.ctx =
             self.ctx.and_in(true).and_await(r#async).and_yield(generator).and_new_target(true);
+        // A function re-establishes its own `await`/`yield` contexts for both parameters and
+        // body; none of it is part of any enclosing cover paren frame.
+        let cover_paren_depth = std::mem::replace(&mut self.state.cover_paren_depth, 0);
         let type_parameters = self.parse_ts_type_parameters();
         let (this_param, params) = self.parse_formal_parameters(func_kind, param_kind);
         let return_type = if self.is_ts { self.parse_ts_return_type_annotation() } else { None };
@@ -265,6 +274,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         } else {
             None
         };
+        self.state.cover_paren_depth = cover_paren_depth;
         self.ctx = self
             .ctx
             .and_in(ctx.has_in())
