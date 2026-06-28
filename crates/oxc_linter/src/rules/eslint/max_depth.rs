@@ -122,9 +122,6 @@ impl Rule for MaxDepth {
 
     #[expect(clippy::cast_possible_truncation)] // the length of ancestors can't be over u32::MAX, because the source code is already limited by u32::MAX.
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        // Narrow to the node kinds this rule acts on so the linter codegen can derive a
-        // `NODE_TYPES` bitset and only dispatch `run` for these kinds, rather than every node.
-        // Must mirror the kinds matched in `should_count`.
         match node.kind() {
             AstKind::IfStatement(_)
             | AstKind::SwitchStatement(_)
