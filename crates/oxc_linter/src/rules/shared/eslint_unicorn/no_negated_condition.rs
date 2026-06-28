@@ -228,29 +228,21 @@ fn push_invert_test_fixes<'a>(
             }
         }
         Expression::BinaryExpression(binary) => {
-            // Replace only the operator token so surrounding spacing is preserved (`a!=b` → `a==b`).
-            if let Some(op_span) = binary_operator_span(binary, ctx) {
-                let replacement = match binary.operator {
-                    BinaryOperator::Inequality => "==",
-                    BinaryOperator::StrictInequality => "===",
-                    _ => unreachable!(),
-                };
-                fixes.push(fixer.replace(op_span, replacement));
+            let binary_operator_str = binary.operator.as_str();
+            if let Some(op_span) = ctx
+                .find_next_token_within(
+                    binary.left.span().end,
+                    binary.right.span().start,
+                    binary_operator_str,
+                )
+                .map(|s| Span::sized(binary.left.span().end + s, binary_operator_str.len() as u32))
+                && let Some(inverse_op) = binary.operator.equality_inverse_operator()
+            {
+                fixes.push(fixer.replace(op_span, binary_operator_str));
             }
         }
         _ => {}
     }
-}
-
-/// Locate `!=` / `!==` between left and right without copying the operands.
-fn binary_operator_span(binary: &BinaryExpression<'_>, ctx: &LintContext<'_>) -> Option<Span> {
-    let binary_operator_str = binary.operator.as_str();
-    ctx.find_next_token_within(
-        binary.left.span().end,
-        binary.right.span().start,
-        binary_operator_str,
-    )
-    .map(|s| Span::sized(binary.left.span().end + s, binary_operator_str.len() as u32))
 }
 
 fn push_swap_statement_branches<'a>(
