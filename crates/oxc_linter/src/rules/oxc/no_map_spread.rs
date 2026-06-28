@@ -3,6 +3,7 @@ use std::ops::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+use oxc_allocator::ArenaVec;
 use oxc_ast::{
     AstKind,
     ast::{
@@ -466,7 +467,7 @@ fn fix_spread_to_object_assign<'a>(
     obj: &ObjectExpression<'a>,
 ) -> RuleFix {
     use oxc_allocator::{Allocator, CloneIn};
-    use oxc_ast::AstBuilder;
+    use oxc_ast::builder::AstBuilder;
     use oxc_span::SPAN;
 
     if obj.properties.len() <= 1 {
@@ -479,7 +480,7 @@ fn fix_spread_to_object_assign<'a>(
     // almost always overshoots, but will not re-alloc, so it's more performant
     // than creating an empty vec.
     // let mut args = ast.vec_with_capacity::<Argument>(obj.properties.len());
-    let mut curr_obj_properties = ast.vec::<ObjectPropertyKind>();
+    let mut curr_obj_properties = ArenaVec::new_in(&ast);
     let mut codegen = fixer.codegen();
     let mut is_first = true;
     codegen.print_str("Object.assign(");
@@ -491,8 +492,9 @@ fn fix_spread_to_object_assign<'a>(
             }
             ObjectPropertyKind::SpreadProperty(spread) => {
                 if !curr_obj_properties.is_empty() {
-                    let properties = std::mem::replace(&mut curr_obj_properties, ast.vec());
-                    let obj_arg = ast.expression_object(SPAN, properties);
+                    let properties =
+                        std::mem::replace(&mut curr_obj_properties, ArenaVec::new_in(&ast));
+                    let obj_arg = Expression::new_object_expression(SPAN, properties, &ast);
                     if is_first {
                         is_first = false;
                     } else {
@@ -514,8 +516,8 @@ fn fix_spread_to_object_assign<'a>(
         if !is_first {
             codegen.print_str(", ");
         }
-        let properties = std::mem::replace(&mut curr_obj_properties, ast.vec());
-        let obj_arg = ast.expression_object(SPAN, properties);
+        let properties = std::mem::replace(&mut curr_obj_properties, ArenaVec::new_in(&ast));
+        let obj_arg = Expression::new_object_expression(SPAN, properties, &ast);
         codegen.print_expression(&obj_arg);
     }
     codegen.print_ascii_byte(b')');

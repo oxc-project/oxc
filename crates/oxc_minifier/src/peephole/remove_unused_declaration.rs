@@ -115,7 +115,7 @@ impl<'a> PeepholeOptimizations {
         if !ctx.scoping().symbol_is_unused(symbol_id) {
             return;
         }
-        let new_stmt = ctx.ast.statement_empty(f.span);
+        let new_stmt = Statement::new_empty_statement(f.span, ctx);
         ctx.replace_statement(stmt, new_stmt);
     }
 
@@ -136,10 +136,10 @@ impl<'a> PeepholeOptimizations {
         }
         if let Some(changed) = Self::remove_unused_class(c, ctx).map(|exprs| {
             if exprs.is_empty() {
-                ctx.ast.statement_empty(c.span)
+                Statement::new_empty_statement(c.span, ctx)
             } else {
-                let expr = ctx.ast.expression_sequence(c.span, exprs);
-                ctx.ast.statement_expression(c.span, expr)
+                let expr = Expression::new_sequence_expression(c.span, exprs, ctx);
+                Statement::new_expression_statement(c.span, expr, ctx)
             }
         }) {
             ctx.replace_statement(stmt, changed);
@@ -195,7 +195,7 @@ impl<'a> PeepholeOptimizations {
             if ctx.scoping().symbol_is_unused(
                 import_decl.specifiers.as_ref().unwrap().first().unwrap().local().symbol_id(),
             ) {
-                let new_stmt = ctx.ast.statement_empty(import_decl.span);
+                let new_stmt = Statement::new_empty_statement(import_decl.span, ctx);
                 ctx.replace_statement(stmt, new_stmt);
             }
 

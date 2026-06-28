@@ -50,7 +50,7 @@ impl<'a> PeepholeOptimizations {
     pub fn minimize_statements(stmts: &mut ArenaVec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
         let mut old_stmts = stmts.take_in(ctx);
         let mut is_control_flow_dead = false;
-        let mut keep_var = KeepVar::new(ctx.ast);
+        let mut keep_var = KeepVar::new();
         let mut identity_drops = 0u32;
         for i in 0..old_stmts.len() {
             let stmt = old_stmts[i].take_in(ctx);
@@ -86,7 +86,7 @@ impl<'a> PeepholeOptimizations {
                 break;
             }
         }
-        if let Some(stmt) = keep_var.get_variable_declaration_statement() {
+        if let Some(stmt) = keep_var.get_variable_declaration_statement(&ctx.ast) {
             match Self::remove_unused_variable_declaration(stmt, ctx) {
                 // Multiple identity-dropped `var x;`s coalesce into a single
                 // `var x, y;`. The individual drops looked byte-identical, but
@@ -160,7 +160,7 @@ impl<'a> PeepholeOptimizations {
                             let argument = Self::join_sequence(&mut expr_stmt.expression, b, ctx);
                             let right_span = last_return.span;
                             let last_return_stmt =
-                                ctx.ast.statement_return(right_span, Some(argument));
+                                Statement::new_return_statement(right_span, Some(argument), ctx);
                             stmts.push(last_return_stmt);
                         }
                         // Merge the last two statements
@@ -198,12 +198,12 @@ impl<'a> PeepholeOptimizations {
                             let mut left = prev_return
                                 .unbox()
                                 .argument
-                                .unwrap_or_else(|| ctx.ast.void_0(left_span));
+                                .unwrap_or_else(|| Expression::new_void_0(left_span, ctx));
                             // "if (a) return a; return;" => "return a ? b : void 0;"
                             let mut right = last_return
                                 .unbox()
                                 .argument
-                                .unwrap_or_else(|| ctx.ast.void_0(right_span));
+                                .unwrap_or_else(|| Expression::new_void_0(right_span, ctx));
 
                             // "if (!a) return b; return c;" => "return a ? c : b;"
                             if let Expression::UnaryExpression(unary_expr) = &mut prev_if.test
@@ -237,7 +237,7 @@ impl<'a> PeepholeOptimizations {
                                 )
                             };
                             let last_return_stmt =
-                                ctx.ast.statement_return(right_span, Some(argument));
+                                Statement::new_return_statement(right_span, Some(argument), ctx);
                             stmts.push(last_return_stmt);
                         }
                         _ => break 'return_loop,
@@ -265,7 +265,8 @@ impl<'a> PeepholeOptimizations {
                                 ctx,
                             );
                             let right_span = last_throw.span;
-                            let last_throw_stmt = ctx.ast.statement_throw(right_span, argument);
+                            let last_throw_stmt =
+                                Statement::new_throw_statement(right_span, argument, ctx);
                             stmts.push(last_throw_stmt);
                         }
                         // Merge the last two statements
@@ -331,7 +332,8 @@ impl<'a> PeepholeOptimizations {
                                     ctx,
                                 )
                             };
-                            let last_throw_stmt = ctx.ast.statement_throw(right_span, argument);
+                            let last_throw_stmt =
+                                Statement::new_throw_statement(right_span, argument, ctx);
                             stmts.push(last_throw_stmt);
                         }
                         _ => break 'throw_loop,
@@ -427,12 +429,12 @@ impl<'a> PeepholeOptimizations {
         let span = a.span();
         let exprs = if let Expression::SequenceExpression(sequence_expr) = b {
             // `a; (b, c)`
-            ctx.ast.vec_from_iter(std::iter::once(a).chain(sequence_expr.unbox().expressions))
+            ArenaVec::from_iter_in(std::iter::once(a).chain(sequence_expr.unbox().expressions), ctx)
         } else {
             // `a; b`
-            ctx.ast.vec_from_array([a, b])
+            ArenaVec::from_array_in([a, b], ctx)
         };
-        ctx.ast.expression_sequence(span, exprs)
+        Expression::new_sequence_expression(span, exprs, ctx)
     }
 
     fn jump_stmts_look_the_same(left: &Statement<'a>, right: &Statement<'a>) -> bool {
@@ -487,7 +489,7 @@ impl<'a> PeepholeOptimizations {
                     if Self::remove_unused_expression(&mut init, ctx) {
                         ctx.drop_expression(&init);
                     } else {
-                        result.push(ctx.ast.statement_expression(init.span(), init));
+                        result.push(Statement::new_expression_statement(init.span(), init, ctx));
                     }
                 }
                 // Walk the rest of the dropped declarator (binding pattern +
@@ -501,8 +503,8 @@ impl<'a> PeepholeOptimizations {
                     prev_var_decl.declarations.push(decl);
                     continue;
                 }
-                let decls = ctx.ast.vec1(decl);
-                let new_decl = ctx.ast.alloc_variable_declaration(span, kind, decls, declare);
+                let decls = ArenaVec::from_value_in(decl, ctx);
+                let new_decl = VariableDeclaration::boxed(span, kind, decls, declare, ctx);
                 result.push(Statement::VariableDeclaration(new_decl));
             }
         }
@@ -595,7 +597,11 @@ impl<'a> PeepholeOptimizations {
                     Some(val) if val == sequence_len - 1 => {
                         // all elements are merged except for the last expression
                         let last_expr = sequence_expr.expressions.pop().unwrap();
-                        result.push(ctx.ast.statement_expression(last_expr.span(), last_expr));
+                        result.push(Statement::new_expression_statement(
+                            last_expr.span(),
+                            last_expr,
+                            ctx,
+                        ));
                         let dropped = Statement::ExpressionStatement(expr_stmt);
                         ctx.drop_statement(&dropped);
                         return;
@@ -816,9 +822,9 @@ impl<'a> PeepholeOptimizations {
                     if can_move_branch_condition_outside_scope {
                         let drained_stmts = stmts.drain(i + 1..);
                         let mut body = if let Some(alternate) = if_stmt.alternate.take() {
-                            ctx.ast.vec_from_iter(iter::once(alternate).chain(drained_stmts))
+                            ArenaVec::from_iter_in(iter::once(alternate).chain(drained_stmts), ctx)
                         } else {
-                            ctx.ast.vec_from_iter(drained_stmts)
+                            ArenaVec::from_iter_in(drained_stmts, ctx)
                         };
 
                         Self::minimize_statements(&mut body, ctx);
@@ -834,11 +840,14 @@ impl<'a> PeepholeOptimizations {
                             body.remove(0)
                         } else {
                             let scope_id = ctx.create_child_scope_of_current(ScopeFlags::empty());
-                            ctx.ast.statement_block_with_scope_id(span, body, scope_id)
+                            Statement::new_block_statement_with_scope_id(span, body, scope_id, ctx)
                         };
-                        let mut if_stmt = ctx.ast.if_statement(test.span(), test, consequent, None);
-                        let if_stmt = Self::try_minimize_if(&mut if_stmt, ctx)
-                            .unwrap_or_else(|| Statement::IfStatement(ctx.ast.alloc(if_stmt)));
+                        let mut if_stmt =
+                            IfStatement::new(test.span(), test, consequent, None, ctx);
+                        let if_stmt =
+                            Self::try_minimize_if(&mut if_stmt, ctx).unwrap_or_else(|| {
+                                Statement::IfStatement(ArenaBox::new_in(if_stmt, ctx))
+                            });
                         result.push(if_stmt);
                         ctx.notice_change();
                         return ControlFlow::Break(());
@@ -895,8 +904,11 @@ impl<'a> PeepholeOptimizations {
                     let a = &mut prev_expr_stmt.expression;
                     prev_expr_stmt.expression = Self::join_sequence(a, argument, ctx);
                 } else {
-                    result
-                        .push(ctx.ast.statement_expression(argument.span(), argument.take_in(ctx)));
+                    result.push(Statement::new_expression_statement(
+                        argument.span(),
+                        argument.take_in(ctx),
+                        ctx,
+                    ));
                 }
             }
             if let Some(old) = ret_stmt.argument.take() {
@@ -1850,12 +1862,7 @@ impl<'a> PeepholeOptimizations {
                                 if prop.shorthand && prop.key.is_specific_id("__proto__") {
                                     // { __proto__ } -> { ['__proto__']: value }
                                     prop.computed = true;
-                                    prop.key =
-                                        PropertyKey::from(ctx.ast.expression_string_literal(
-                                            prop.key.span(),
-                                            "__proto__",
-                                            None,
-                                        ));
+                                    prop.key = PropertyKey::new_string_literal(prop.key.span(), "__proto__", None, ctx);
                                 }
                                 prop.shorthand = false;
                                 return Some(changed);

@@ -1,5 +1,5 @@
-use oxc_allocator::{ArenaBox, CloneIn};
-use oxc_ast::{NONE, ast::*};
+use oxc_allocator::{ArenaBox, ArenaVec, CloneIn, GetAllocator};
+use oxc_ast::{ast::*, builder::NONE};
 use oxc_span::{SPAN, Span};
 
 use crate::{
@@ -22,18 +22,19 @@ impl<'a> IsolatedDeclarations<'a> {
             self.error(function_must_have_explicit_return_type(get_function_span(func)));
         }
         let params = self.transform_formal_parameters(&func.params, false);
-        self.ast.alloc_function(
+        Function::boxed(
             func.span,
             func.r#type,
-            func.id.clone_in(self.ast.allocator),
+            func.id.clone_in(self.allocator()),
             false,
             false,
             declare.unwrap_or_else(|| self.is_declare()),
-            func.type_parameters.clone_in(self.ast.allocator),
-            func.this_param.clone_in(self.ast.allocator),
+            func.type_parameters.clone_in(self.allocator()),
+            func.this_param.clone_in(self.allocator()),
             params,
             return_type,
             NONE,
+            self,
         )
     }
 
@@ -54,12 +55,12 @@ impl<'a> IsolatedDeclarations<'a> {
 
         let is_assignment_pattern = param.initializer.is_some();
         let mut pattern = if let BindingPattern::AssignmentPattern(pattern) = &param.pattern {
-            pattern.left.clone_in(self.ast.allocator)
+            pattern.left.clone_in(self.allocator())
         } else {
-            param.pattern.clone_in(self.ast.allocator)
+            param.pattern.clone_in(self.allocator())
         };
 
-        FormalParameterBindingPattern::remove_assignments_from_kind(self.ast, &mut pattern);
+        FormalParameterBindingPattern::remove_assignments_from_kind(self, &mut pattern);
 
         if is_assignment_pattern
             || param.type_annotation.is_none()
@@ -68,7 +69,7 @@ impl<'a> IsolatedDeclarations<'a> {
             let type_annotation = param
                 .type_annotation
                 .as_ref()
-                .map(|type_annotation| type_annotation.type_annotation.clone_in(self.ast.allocator))
+                .map(|type_annotation| type_annotation.type_annotation.clone_in(self.allocator()))
                 .or_else(|| {
                     let new_type = self.infer_type_from_formal_parameter(param);
                     // A private parameter property on a private constructor needs no
@@ -91,47 +92,51 @@ impl<'a> IsolatedDeclarations<'a> {
                             self.error(implicitly_adding_undefined_to_type(param.span));
                         } else if !ts_type.is_maybe_undefined() {
                             // union with `undefined`
-                            return self.ast.ts_type_annotation(
+                            return TSTypeAnnotation::new(
                                 SPAN,
-                                self.ast.ts_type_union_type(
+                                TSType::new_ts_union_type(
                                     SPAN,
-                                    self.ast.vec_from_array([
-                                        ts_type,
-                                        self.ast.ts_type_undefined_keyword(SPAN),
-                                    ]),
+                                    ArenaVec::from_array_in(
+                                        [ts_type, TSType::new_ts_undefined_keyword(SPAN, self)],
+                                        self,
+                                    ),
+                                    self,
                                 ),
+                                self,
                             );
                         }
                     }
 
-                    self.ast.ts_type_annotation(SPAN, ts_type)
+                    TSTypeAnnotation::new(SPAN, ts_type, self)
                 });
 
             let optional =
                 param.optional || (!is_remaining_params_have_required && is_assignment_pattern);
-            return Some(self.ast.formal_parameter(
+            return Some(FormalParameter::new(
                 param.span,
-                self.ast.vec(),
-                pattern.clone_in(self.ast.allocator),
+                ArenaVec::new_in(self),
+                pattern.clone_in(self.allocator()),
                 type_annotation,
                 NONE,
                 optional,
                 None,
                 false,
                 false,
+                self,
             ));
         }
 
-        Some(self.ast.formal_parameter(
+        Some(FormalParameter::new(
             param.span,
-            self.ast.vec(),
+            ArenaVec::new_in(self),
             pattern,
-            param.type_annotation.clone_in(self.ast.allocator),
+            param.type_annotation.clone_in(self.allocator()),
             NONE,
             param.optional,
             None,
             false,
             false,
+            self,
         ))
     }
 
@@ -141,10 +146,10 @@ impl<'a> IsolatedDeclarations<'a> {
         in_private_constructor: bool,
     ) -> ArenaBox<'a, FormalParameters<'a>> {
         if params.kind.is_signature() || (params.rest.is_none() && params.items.is_empty()) {
-            return params.clone_in(self.ast.allocator);
+            return params.clone_in(self.allocator());
         }
 
-        let items = self.ast.vec_from_iter(
+        let items = ArenaVec::from_iter_in(
             params
                 .items
                 .iter()
@@ -162,6 +167,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         in_private_constructor,
                     )
                 }),
+            self,
         );
 
         if let Some(rest) = &params.rest
@@ -171,15 +177,15 @@ impl<'a> IsolatedDeclarations<'a> {
         }
 
         let rest = params.rest.as_ref().map(|rest| {
-            let mut rest = rest.clone_in(self.ast.allocator);
+            let mut rest = rest.clone_in(self.allocator());
             FormalParameterBindingPattern::remove_assignments_from_kind(
-                self.ast,
+                self,
                 &mut rest.rest.argument,
             );
             rest
         });
 
-        self.ast.alloc_formal_parameters(params.span, FormalParameterKind::Signature, items, rest)
+        FormalParameters::boxed(params.span, FormalParameterKind::Signature, items, rest, self)
     }
 }
 

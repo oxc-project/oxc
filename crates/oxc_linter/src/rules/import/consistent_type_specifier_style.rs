@@ -2,8 +2,9 @@ use std::{path::Path, str::FromStr};
 
 use oxc_allocator::{Allocator, ArenaVec, CloneIn};
 use oxc_ast::{
-    AstBuilder, AstKind,
+    AstKind,
     ast::{ImportDeclaration, ImportDeclarationSpecifier, ImportOrExportKind},
+    builder::AstBuilder,
 };
 use oxc_codegen::{Context, Gen};
 use oxc_diagnostics::OxcDiagnostic;
@@ -216,13 +217,14 @@ fn gen_value_import_declaration<'c, 'a: 'c>(
     let ast_builder = AstBuilder::new(&alloc);
 
     let specifiers: Vec<_> = specifiers.iter().map(|it| it.clone_in(&alloc)).collect();
-    let import_declaration = ast_builder.alloc_import_declaration(
+    let import_declaration = ImportDeclaration::boxed(
         SPAN,
         Some(ArenaVec::from_iter_in(specifiers, &ast_builder)),
         import_decl.source.clone_in(&alloc),
         None,
         import_decl.with_clause.clone_in(&alloc),
         ImportOrExportKind::Value,
+        &ast_builder,
     );
 
     import_declaration.print(&mut codegen, Context::empty());
@@ -243,23 +245,25 @@ fn gen_type_import_declaration<'c, 'a: 'c>(
         .iter()
         .filter_map(|it| match it {
             ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
-                Some(ast_builder.import_declaration_specifier_import_specifier(
+                Some(ImportDeclarationSpecifier::new_import_specifier(
                     SPAN,
                     specifier.imported.clone_in(&alloc),
                     specifier.local.clone_in(&alloc),
                     ImportOrExportKind::Value,
+                    &ast_builder,
                 ))
             }
             _ => None,
         })
         .collect();
-    let import_declaration = ast_builder.alloc_import_declaration(
+    let import_declaration = ImportDeclaration::boxed(
         SPAN,
         Some(ArenaVec::from_iter_in(specifiers, &ast_builder)),
         import_decl.source.clone_in(&alloc),
         None,
         import_decl.with_clause.clone_in(&alloc),
         ImportOrExportKind::Type,
+        &ast_builder,
     );
 
     import_declaration.print(&mut codegen, Context::empty());

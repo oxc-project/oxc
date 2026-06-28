@@ -1,6 +1,6 @@
 use oxc_allocator::{ArenaBox, ArenaVec};
-use oxc_ast::{NONE, ast::*};
-use oxc_span::{FileExtension, GetSpan};
+use oxc_ast::{ast::*, builder::NONE};
+use oxc_span::FileExtension;
 use oxc_syntax::precedence::Precedence;
 
 use super::{FunctionKind, Tristate};
@@ -315,10 +315,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let expression = !self.at(Kind::LCurly);
         let body = if expression {
             // Remove TopLevel context for arrow function expression body
+            let span = self.start_span();
             let expr = self.context_remove(Context::TopLevel, |p| {
                 p.parse_assignment_expression_or_higher_impl(allow_return_type_in_arrow_function)
             });
-            let span = expr.span();
+            let span = self.end_span(span);
             let expr_stmt = Statement::new_expression_statement(span, expr, self);
             FunctionBody::boxed(
                 span,

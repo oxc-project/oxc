@@ -1,10 +1,11 @@
-use oxc_allocator::{Allocator, CloneIn};
+use oxc_allocator::{Allocator, ArenaVec, CloneIn};
 use oxc_ast::{
-    AstBuilder, AstKind,
+    AstKind,
     ast::{
         ArrayExpression, ArrayExpressionElement, CallExpression, Expression, NewExpression,
         ObjectExpression, ObjectPropertyKind, SpreadElement,
     },
+    builder::AstBuilder,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -473,7 +474,7 @@ fn fix_by_removing_object_spread<'a>(
 ) -> RuleFix {
     let alloc = Allocator::default();
     let ast = AstBuilder::new(&alloc);
-    let mut new_properties = ast.vec();
+    let mut new_properties = ArenaVec::new_in(&ast);
     for prop in &outer_obj.properties {
         match prop {
             ObjectPropertyKind::SpreadProperty(s) if s.span == spread.span => {
@@ -486,7 +487,7 @@ fn fix_by_removing_object_spread<'a>(
             }
         }
     }
-    let new_obj = ast.expression_object(SPAN, new_properties);
+    let new_obj = Expression::new_object_expression(SPAN, new_properties, &ast);
     let mut codegen = fixer.codegen();
     codegen.print_expression(&new_obj);
     fixer.replace(outer_obj.span, codegen.into_source_text())

@@ -740,6 +740,10 @@ mod test {
             &unicorn::consistent_assert::ConsistentAssert,
             &[ImportDeclaration],
         );
+        assert_rule_runs_on_node_types(
+            &promise::always_return::AlwaysReturn::default(),
+            &[Function, ArrowFunctionExpression],
+        );
     }
 
     #[test]
