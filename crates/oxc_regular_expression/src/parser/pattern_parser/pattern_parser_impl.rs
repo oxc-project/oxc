@@ -51,28 +51,42 @@ impl<'a> PatternParser<'a> {
         // - names of named capturing groups
         //   - For `\k<a>`, `\k<a>(?<b>)` to be handled as early error in `+NamedCaptureGroups`
         //
-        // NOTE: It means that this perform 2 loops for every cases.
+        // NOTE: It means that this performs 2 loops for every case.
         // - Pros: Code is simple enough and easy to understand
         // - Cons: 1st pass is completely useless if the pattern does not contain any capturing groups
-        // We may re-consider this if we need more performance rather than simplicity.
-        let checkpoint = self.reader.checkpoint();
-
-        // [SS:EE] Pattern :: Disjunction
-        // It is a Syntax Error if Pattern contains two or more GroupSpecifiers for which the CapturingGroupName of GroupSpecifier is the same.
-        self.state.initialize_with_parsing(&mut self.reader).map_err(|offsets| {
-            diagnostics::duplicated_capturing_group_names(
-                offsets.iter().map(|&(start, end)| self.span_factory.create(start, end)).collect(),
-            )
-        })?;
-        self.reader.rewind(checkpoint);
-
-        // [SS:EE] Pattern :: Disjunction
-        // It is a Syntax Error if CountLeftCapturingParensWithin(Pattern) ≥ 2**32 - 1.
         //
-        // If this is greater than `u32::MAX`, it is memory overflow, though.
-        // But I never seen such a gigantic pattern with 4,294,967,295 parens!
-        if u32::MAX == self.state.num_of_capturing_groups {
-            return Err(diagnostics::too_may_capturing_groups(self.span_factory.create(0, 0)));
+        // So skip the pre-parse entirely when the pattern has no `(`: it then has no
+        // capturing group, no named group and no duplicate name, which means the results
+        // are exactly `State::new`'s defaults — except `named_capture_groups`, which for a
+        // group-free pattern only depends on the `u`/`v` flag. (A `(` that turns out to be
+        // escaped or non-capturing still takes the slow path, which is correct, just not
+        // optimized.)
+        if self.reader.contains('(' as u32) {
+            let checkpoint = self.reader.checkpoint();
+
+            // [SS:EE] Pattern :: Disjunction
+            // It is a Syntax Error if Pattern contains two or more GroupSpecifiers for which the CapturingGroupName of GroupSpecifier is the same.
+            self.state.initialize_with_parsing(&mut self.reader).map_err(|offsets| {
+                diagnostics::duplicated_capturing_group_names(
+                    offsets
+                        .iter()
+                        .map(|&(start, end)| self.span_factory.create(start, end))
+                        .collect(),
+                )
+            })?;
+            self.reader.rewind(checkpoint);
+
+            // [SS:EE] Pattern :: Disjunction
+            // It is a Syntax Error if CountLeftCapturingParensWithin(Pattern) ≥ 2**32 - 1.
+            //
+            // If this is greater than `u32::MAX`, it is memory overflow, though.
+            // But I never seen such a gigantic pattern with 4,294,967,295 parens!
+            if u32::MAX == self.state.num_of_capturing_groups {
+                return Err(diagnostics::too_may_capturing_groups(self.span_factory.create(0, 0)));
+            }
+        } else {
+            self.state.named_capture_groups =
+                self.state.unicode_mode || self.state.unicode_sets_mode;
         }
 
         // Let's start parsing!
