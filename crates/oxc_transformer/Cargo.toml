@@ -28,7 +28,6 @@ oxc_compat = { workspace = true }
 oxc_data_structures = { workspace = true, features = [
   "assert_unchecked",
   "inline_string",
-  "rope",
   "slice_iter",
   "stack",
 ] }
