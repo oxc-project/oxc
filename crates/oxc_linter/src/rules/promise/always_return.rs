@@ -542,12 +542,12 @@ fn test() {
         ),
         // A `then()` callback with a loop, ending in `return <nested then-chain>`
         (
-            r#"hey.then(function (x) { while (x.next()) { collect(x); } return load().then(function (y) { return y; }); })"#,
+            r"hey.then(function (x) { while (x.next()) { collect(x); } return load().then(function (y) { return y; }); })",
             None,
         ),
         // `if`/`else` where the `else` branch loops, then `return <object>`.
         (
-            r#"hey.then(x => { let n = 0; if (a) { n = 1; } else { while (cond(n)) { n++; } } return { items: x.map(i => i) }; })"#,
+            r"hey.then(x => { let n = 0; if (a) { n = 1; } else { while (cond(n)) { n++; } } return { items: x.map(i => i) }; })",
             None,
         ),
     ];
