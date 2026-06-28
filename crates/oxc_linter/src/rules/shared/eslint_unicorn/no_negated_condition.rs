@@ -244,24 +244,13 @@ fn push_invert_test_fixes<'a>(
 
 /// Locate `!=` / `!==` between left and right without copying the operands.
 fn binary_operator_span(binary: &BinaryExpression<'_>, ctx: &LintContext<'_>) -> Option<Span> {
-    let left_end = binary.left.span().end;
-    let right_start = binary.right.span().start;
-    let operator_str = binary.operator.as_str();
-    let between = ctx.source_range(Span::new(left_end, right_start));
-    let op_bytes = operator_str.as_bytes();
-
-    between.as_bytes().windows(op_bytes.len()).enumerate().find_map(|(index, chunk)| {
-        if chunk != op_bytes {
-            return None;
-        }
-        let pos_start = left_end.checked_add(u32::try_from(index).ok()?)?;
-        let pos_end = pos_start.checked_add(u32::try_from(op_bytes.len()).ok()?)?;
-        // Skip matches that sit inside comments between the operands.
-        if ctx.comments().iter().any(|c| c.span.start <= pos_start && pos_end <= c.span.end) {
-            return None;
-        }
-        Some(Span::new(pos_start, pos_end))
-    })
+    let binary_operator_str = binary.operator.as_str();
+    ctx.find_next_token_within(
+        binary.left.span().end,
+        binary.right.span().start,
+        binary_operator_str,
+    )
+    .map(|s| Span::sized(binary.left.span().end + s, binary_operator_str.len() as u32))
 }
 
 fn push_swap_statement_branches<'a>(
