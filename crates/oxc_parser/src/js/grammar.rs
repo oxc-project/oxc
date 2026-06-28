@@ -1,8 +1,9 @@
-//! Cover Grammar for Destructuring Assignment
+//! Cover Grammar for Destructuring Assignment and Arrow Function Parameters
 
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
-use oxc_span::GetSpan;
+use oxc_span::{GetSpan, Span};
+use oxc_str::Ident;
 
 use crate::{ParserConfig as Config, ParserImpl, diagnostics};
 
@@ -210,6 +211,278 @@ impl<'a, C: Config> CoverGrammar<'a, ObjectExpression<'a>, C> for ObjectAssignme
         }
 
         ObjectAssignmentTarget::new(expr.span, properties, rest, p)
+    }
+}
+
+/// [`BindingIdentifier`](https://tc39.es/ecma262/#prod-BindingIdentifier) refinement of an
+/// identifier parsed as an expression.
+/// [Early errors](https://tc39.es/ecma262/#sec-identifiers-static-semantics-early-errors):
+/// `await` is a syntax error with an `[Await]` parameter, `yield` with a `[Yield]` parameter.
+fn cover_binding_identifier<'a, C: Config>(
+    span: Span,
+    name: Ident<'a>,
+    p: &mut ParserImpl<'a, C>,
+) -> BindingPattern<'a> {
+    if p.ctx.has_await() && name == "await" {
+        p.error(diagnostics::identifier_async("await", span));
+    } else if p.ctx.has_yield() && name == "yield" {
+        p.error(diagnostics::identifier_generator("yield", span, false));
+    }
+    BindingPattern::new_binding_identifier(span, name, p)
+}
+
+/// [`BindingElement`](https://tc39.es/ecma262/#prod-BindingElement) refinement of an
+/// expression parsed by the cover grammar:
+///     `BindingElement`[Yield, Await] :
+///         `SingleNameBinding`[?Yield, ?Await]
+///         `BindingPattern`[?Yield, ?Await] `Initializer`[+In, ?Yield, ?Await]opt
+///     `SingleNameBinding`[Yield, Await] :
+///         `BindingIdentifier`[?Yield, ?Await] `Initializer`[+In, ?Yield, ?Await]opt
+impl<'a, C: Config> CoverGrammar<'a, Expression<'a>, C> for BindingPattern<'a> {
+    fn cover(expr: Expression<'a>, p: &mut ParserImpl<'a, C>) -> Self {
+        match expr {
+            Expression::Identifier(ident) => {
+                let ident = ident.unbox();
+                cover_binding_identifier(ident.span, ident.name, p)
+            }
+            // Bare `yield` in a generator parsed as a yield expression; refine to a binding
+            // named `yield`, with the same error the binding identifier parser reports.
+            Expression::YieldExpression(e) if e.argument.is_none() && !e.delegate => {
+                let span = e.span;
+                p.error(diagnostics::identifier_generator("yield", span, false));
+                BindingPattern::new_binding_identifier(span, "yield", p)
+            }
+            Expression::ObjectExpression(obj) => {
+                let pat = ObjectPattern::cover(obj.unbox(), p);
+                BindingPattern::ObjectPattern(p.alloc(pat))
+            }
+            Expression::ArrayExpression(arr) => {
+                let pat = ArrayPattern::cover(arr.unbox(), p);
+                BindingPattern::ArrayPattern(p.alloc(pat))
+            }
+            Expression::AssignmentExpression(assign) => {
+                let assign = assign.unbox();
+                if assign.operator != AssignmentOperator::Assign {
+                    return p.fatal_error(
+                        diagnostics::invalid_assignment_target_default_value_operator(assign.span),
+                    );
+                }
+                let left = BindingPattern::cover(assign.left, p);
+                BindingPattern::new_assignment_pattern(assign.span, left, assign.right, p)
+            }
+            expr => p.fatal_error(diagnostics::invalid_binding_pattern(expr.span())),
+        }
+    }
+}
+
+/// [`ObjectBindingPattern`](https://tc39.es/ecma262/#prod-ObjectBindingPattern) refinement
+/// of an object literal:
+///     `ObjectBindingPattern`[Yield, Await] :
+///         { }
+///         { `BindingRestProperty`[?Yield, ?Await] }
+///         { `BindingPropertyList`[?Yield, ?Await] }
+///         { `BindingPropertyList`[?Yield, ?Await] , `BindingRestProperty`[?Yield, ?Await]opt }
+///     `BindingRestProperty`[Yield, Await] :
+///         ... `BindingIdentifier`[?Yield, ?Await]
+impl<'a, C: Config> CoverGrammar<'a, ObjectExpression<'a>, C> for ObjectPattern<'a> {
+    #[inline(never)]
+    fn cover(expr: ObjectExpression<'a>, p: &mut ParserImpl<'a, C>) -> Self {
+        let mut properties = ArenaVec::with_capacity_in(expr.properties.len(), p);
+        let mut rest = None;
+
+        let len = expr.properties.len();
+        for (i, prop) in expr.properties.into_iter().enumerate() {
+            match prop {
+                ObjectPropertyKind::ObjectProperty(property) => {
+                    properties.push(BindingProperty::cover(property.unbox(), p));
+                }
+                ObjectPropertyKind::SpreadProperty(spread) => {
+                    if i == len - 1 {
+                        let span = spread.span;
+                        let argument = spread.unbox().argument;
+                        if !matches!(argument, Expression::Identifier(_)) {
+                            return p.fatal_error(diagnostics::invalid_binding_rest_element(
+                                argument.span(),
+                            ));
+                        }
+                        let target = BindingPattern::cover(argument, p);
+                        rest = Some(BindingRestElement::boxed(span, target, p));
+                        if let Some(span) = p.state.trailing_commas.get(&expr.span.start) {
+                            p.error(diagnostics::rest_element_trailing_comma(*span));
+                        }
+                    } else {
+                        return p.fatal_error(diagnostics::binding_rest_element_last(spread.span));
+                    }
+                }
+            }
+        }
+
+        ObjectPattern::new(expr.span, properties, rest, p)
+    }
+}
+
+/// [`BindingProperty`](https://tc39.es/ecma262/#prod-BindingProperty) refinement of an
+/// object literal property:
+///     `BindingProperty`[Yield, Await] :
+///         `SingleNameBinding`[?Yield, ?Await]
+///         `PropertyName`[?Yield, ?Await] : `BindingElement`[?Yield, ?Await]
+///
+/// A shorthand property with an initializer is a
+/// [`CoverInitializedName`](https://tc39.es/ecma262/#prod-CoverInitializedName), recorded by
+/// the object literal parser and refined to a `SingleNameBinding` with an initializer here.
+impl<'a, C: Config> CoverGrammar<'a, ObjectProperty<'a>, C> for BindingProperty<'a> {
+    fn cover(property: ObjectProperty<'a>, p: &mut ParserImpl<'a, C>) -> Self {
+        if property.kind != PropertyKind::Init || property.method {
+            return p.fatal_error(diagnostics::invalid_binding_pattern(property.span));
+        }
+        if property.shorthand {
+            let (ident_span, ident_name) = match &property.key {
+                PropertyKey::StaticIdentifier(ident) => (ident.span, ident.name),
+                _ => return p.unexpected(),
+            };
+            let mut value = cover_binding_identifier(ident_span, ident_name, p);
+            // convert `CoverInitializedName`
+            if let Some(init) = p.state.cover_initialized_name.remove(&property.span.start) {
+                value = BindingPattern::new_assignment_pattern(property.span, value, init.right, p);
+            }
+            BindingProperty::new(property.span, property.key, value, true, property.computed, p)
+        } else {
+            let value = BindingPattern::cover(property.value, p);
+            BindingProperty::new(property.span, property.key, value, false, property.computed, p)
+        }
+    }
+}
+
+/// [`ArrayBindingPattern`](https://tc39.es/ecma262/#prod-ArrayBindingPattern) refinement
+/// of an array literal:
+///     `ArrayBindingPattern`[Yield, Await] :
+///         [ `Elision`opt `BindingRestElement`[?Yield, ?Await]opt ]
+///         [ `BindingElementList`[?Yield, ?Await] ]
+///         [ `BindingElementList`[?Yield, ?Await] , `Elision`opt `BindingRestElement`[?Yield, ?Await]opt ]
+///     `BindingRestElement`[Yield, Await] :
+///         ... `BindingIdentifier`[?Yield, ?Await]
+///         ... `BindingPattern`[?Yield, ?Await]
+impl<'a, C: Config> CoverGrammar<'a, ArrayExpression<'a>, C> for ArrayPattern<'a> {
+    #[inline(never)]
+    fn cover(expr: ArrayExpression<'a>, p: &mut ParserImpl<'a, C>) -> Self {
+        let mut elements = ArenaVec::with_capacity_in(expr.elements.len(), p);
+        let mut rest = None;
+
+        let len = expr.elements.len();
+        for (i, elem) in expr.elements.into_iter().enumerate() {
+            match elem {
+                match_expression!(ArrayExpressionElement) => {
+                    let expr = elem.into_expression();
+                    elements.push(Some(BindingPattern::cover(expr, p)));
+                }
+                ArrayExpressionElement::SpreadElement(spread) => {
+                    if i == len - 1 {
+                        let span = spread.span;
+                        let argument = spread.unbox().argument;
+                        let target = BindingPattern::cover(argument, p);
+                        if let BindingPattern::AssignmentPattern(pat) = &target {
+                            p.error(diagnostics::a_rest_element_cannot_have_an_initializer(
+                                pat.span,
+                            ));
+                        }
+                        rest = Some(BindingRestElement::boxed(span, target, p));
+                        if let Some(span) = p.state.trailing_commas.get(&expr.span.start) {
+                            p.error(diagnostics::rest_element_trailing_comma(*span));
+                        }
+                    } else {
+                        return p.fatal_error(diagnostics::binding_rest_element_last(spread.span));
+                    }
+                }
+                ArrayExpressionElement::Elision(_) => elements.push(None),
+            }
+        }
+
+        ArrayPattern::new(expr.span, elements, rest, p)
+    }
+}
+
+/// `BindingPattern` refinement of an assignment target. Inside the cover grammar, the left
+/// side of `=` was eagerly covered to a
+/// [`DestructuringAssignmentTarget`](https://tc39.es/ecma262/#sec-destructuring-assignment);
+/// the arrow refinement reinterprets the same source as binding patterns, which only bind
+/// identifiers — member expressions and the other assignment-only targets are errors.
+impl<'a, C: Config> CoverGrammar<'a, AssignmentTarget<'a>, C> for BindingPattern<'a> {
+    fn cover(target: AssignmentTarget<'a>, p: &mut ParserImpl<'a, C>) -> Self {
+        match target {
+            AssignmentTarget::AssignmentTargetIdentifier(ident) => {
+                let ident = ident.unbox();
+                cover_binding_identifier(ident.span, ident.name, p)
+            }
+            AssignmentTarget::ArrayAssignmentTarget(target) => {
+                let target = target.unbox();
+                let mut elements = ArenaVec::with_capacity_in(target.elements.len(), p);
+                for elem in target.elements {
+                    elements.push(elem.map(|e| BindingPattern::cover(e, p)));
+                }
+                let rest = target.rest.map(|rest| {
+                    let rest = rest.unbox();
+                    let argument = BindingPattern::cover(rest.target, p);
+                    BindingRestElement::boxed(rest.span, argument, p)
+                });
+                BindingPattern::new_array_pattern(target.span, elements, rest, p)
+            }
+            AssignmentTarget::ObjectAssignmentTarget(target) => {
+                let target = target.unbox();
+                let mut properties = ArenaVec::with_capacity_in(target.properties.len(), p);
+                for prop in target.properties {
+                    properties.push(BindingProperty::cover(prop, p));
+                }
+                let rest = target.rest.map(|rest| {
+                    let rest = rest.unbox();
+                    if !matches!(rest.target, AssignmentTarget::AssignmentTargetIdentifier(_)) {
+                        p.error(diagnostics::invalid_binding_rest_element(rest.target.span()));
+                    }
+                    let argument = BindingPattern::cover(rest.target, p);
+                    BindingRestElement::boxed(rest.span, argument, p)
+                });
+                BindingPattern::new_object_pattern(target.span, properties, rest, p)
+            }
+            target => p.fatal_error(diagnostics::invalid_binding_pattern(target.span())),
+        }
+    }
+}
+
+impl<'a, C: Config> CoverGrammar<'a, AssignmentTargetMaybeDefault<'a>, C> for BindingPattern<'a> {
+    fn cover(target: AssignmentTargetMaybeDefault<'a>, p: &mut ParserImpl<'a, C>) -> Self {
+        match target {
+            AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(target) => {
+                let target = target.unbox();
+                let left = BindingPattern::cover(target.binding, p);
+                BindingPattern::new_assignment_pattern(target.span, left, target.init, p)
+            }
+            match_assignment_target!(AssignmentTargetMaybeDefault) => {
+                BindingPattern::cover(target.into_assignment_target(), p)
+            }
+        }
+    }
+}
+
+impl<'a, C: Config> CoverGrammar<'a, AssignmentTargetProperty<'a>, C> for BindingProperty<'a> {
+    fn cover(property: AssignmentTargetProperty<'a>, p: &mut ParserImpl<'a, C>) -> Self {
+        match property {
+            AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(prop) => {
+                let prop = prop.unbox();
+                let ident_span = prop.binding.span;
+                let ident_name = prop.binding.name;
+                let mut value = cover_binding_identifier(ident_span, ident_name, p);
+                if let Some(init) = prop.init {
+                    value = BindingPattern::new_assignment_pattern(prop.span, value, init, p);
+                }
+                let key =
+                    PropertyKey::StaticIdentifier(IdentifierName::boxed(ident_span, ident_name, p));
+                BindingProperty::new(prop.span, key, value, true, false, p)
+            }
+            AssignmentTargetProperty::AssignmentTargetPropertyProperty(prop) => {
+                let prop = prop.unbox();
+                let value = BindingPattern::cover(prop.binding, p);
+                BindingProperty::new(prop.span, prop.name, value, false, prop.computed, p)
+            }
+        }
     }
 }
 

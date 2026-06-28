@@ -492,6 +492,11 @@ pub fn invalid_assignment(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn invalid_binding_pattern(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Invalid binding pattern in arrow function parameters").with_label(span)
+}
+
+#[cold]
 pub fn assignment_is_not_simple(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Invalid left-hand side in assignment").with_label(span)
 }
