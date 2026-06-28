@@ -36,10 +36,18 @@ pub fn parse_jest_fn_call<'a>(
 
     // Fast path (cost-only, result byte-identical to the slow path below):
     //
-    // When the callee is a bare identifier that is not a known Jest function
-    // name (recognized by neither `JestFnKind::from` nor `JEST_METHOD_NAMES`),
-    // the call cannot start a Jest call chain. For such a call the slow path
-    // builds a single-element node chain (so `members` is EMPTY) and reaches
+    // Restricted to NON-test files (`!is_jest && !is_vitest`). That is the only
+    // framework arm where an unknown call's result does not depend on the
+    // `is_valid_jest_call` / `is_valid_vitest_call` filtering the slow path runs
+    // when the file is a Jest/Vitest file: on a test file an unknown root is
+    // rejected there and the slow path returns `None` (e.g.
+    // `is_valid_vitest_call(["setTimeout"]) == false`), so test files must defer
+    // to the slow path — handling them here would wrongly return `Some`.
+    //
+    // On a non-test file, when the callee is a bare identifier that is not a
+    // known Jest function name (recognized by neither `JestFnKind::from` nor
+    // `JEST_METHOD_NAMES`), the slow path builds a single-element node chain (so
+    // `members` is EMPTY), skips the (test-only) `is_valid_*` checks, and reaches
     // exactly one of two outcomes:
     //   * `None`, when the call is not the top of its expression chain
     //     (parent is another call / member access), or
@@ -49,7 +57,9 @@ pub fn parse_jest_fn_call<'a>(
     // `each` is deliberately left to the slow path so its dedicated `each`
     // handling is unchanged. This keeps the fast path identical to the slow path
     // by construction (verified by `tests/jest_fn_fast_path_oracle.rs`).
-    if matches!(callee, Expression::Identifier(_))
+    if !ctx.frameworks().is_jest()
+        && !ctx.frameworks().is_vitest()
+        && matches!(callee, Expression::Identifier(_))
         && name != "each"
         && JestFnKind::from(name) == JestFnKind::Unknown
         && !super::JEST_METHOD_NAMES.contains(&name)
