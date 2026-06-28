@@ -32,6 +32,43 @@ pub fn parse_jest_fn_call<'a>(
     // If bailed out, we're not jest function
 
     let resolved = resolve_to_jest_fn(call_expr, original)?;
+    let name = resolved.original.unwrap_or(resolved.local);
+
+    // Fast path (cost-only, result byte-identical to the slow path below):
+    //
+    // When the callee is a bare identifier that is not a known Jest function
+    // name (recognized by neither `JestFnKind::from` nor `JEST_METHOD_NAMES`),
+    // the call cannot start a Jest call chain. For such a call the slow path
+    // builds a single-element node chain (so `members` is EMPTY) and reaches
+    // exactly one of two outcomes:
+    //   * `None`, when the call is not the top of its expression chain
+    //     (parent is another call / member access), or
+    //   * `Some(GeneralJest { kind: Unknown, members: [], name, local })`.
+    // Reproduce that here without the per-call `get_node_chain` heap allocation.
+    //
+    // `each` is deliberately left to the slow path so its dedicated `each`
+    // handling is unchanged. This keeps the fast path identical to the slow path
+    // by construction (verified by `tests/jest_fn_fast_path_oracle.rs`).
+    if matches!(callee, Expression::Identifier(_))
+        && name != "each"
+        && JestFnKind::from(name) == JestFnKind::Unknown
+        && !super::JEST_METHOD_NAMES.contains(&name)
+    {
+        if matches!(
+            ctx.nodes().parent_kind(node.id()),
+            AstKind::CallExpression(_)
+                | AstKind::StaticMemberExpression(_)
+                | AstKind::ComputedMemberExpression(_)
+        ) {
+            return None;
+        }
+        return Some(ParsedJestFnCall::GeneralJest(ParsedGeneralJestFnCall {
+            kind: JestFnKind::Unknown,
+            members: Vec::new(),
+            name: Cow::Borrowed(name),
+            local: Cow::Borrowed(resolved.local),
+        }));
+    }
 
     let params = NodeChainParams {
         expr: callee,
@@ -61,16 +98,15 @@ pub fn parse_jest_fn_call<'a>(
             return None;
         }
 
-        let name = resolved.original.unwrap_or(resolved.local);
         let kind = JestFnKind::from(name);
 
         // every member node must have a member expression as their parent
-        // in order to be part of the call chain we're parsing
-        let (head, members) = {
-            let rest = chain.split_off(1);
-            let head = chain.into_iter().next().unwrap();
-            (head, rest)
-        };
+        // in order to be part of the call chain we're parsing.
+        // `remove(0)` reuses `chain`'s existing allocation for `members`
+        // (i.e. `chain[1..]`), avoiding the extra allocation `split_off` makes
+        // for the tail; the resulting `head`/`members` values are unchanged.
+        let head = chain.remove(0);
+        let members = chain;
 
         if matches!(kind, JestFnKind::Expect | JestFnKind::ExpectTypeOf) {
             let options = ExpectFnCallOptions {
@@ -107,35 +143,44 @@ pub fn parse_jest_fn_call<'a>(
             return None;
         }
 
-        let mut call_chains = Vec::from([Cow::Borrowed(name)]);
-        call_chains.extend(members.iter().filter_map(KnownMemberExpressionProperty::name));
+        // `call_chains` is only consulted to validate/refine the call when the
+        // file is a Jest or Vitest file. On a non-test file (the `(false, false)`
+        // arm) it is built but never read, and `is_extend_fixture` is gated on
+        // `is_vitest()` — so skip building it entirely there. This is cost-only:
+        // the returned value is unchanged.
+        let is_jest = ctx.frameworks().is_jest();
+        let is_vitest = ctx.frameworks().is_vitest();
+        if is_jest || is_vitest {
+            let mut call_chains = Vec::from([Cow::Borrowed(name)]);
+            call_chains.extend(members.iter().filter_map(KnownMemberExpressionProperty::name));
 
-        match (ctx.frameworks().is_jest(), ctx.frameworks().is_vitest()) {
-            (true, true) => {
-                if !is_valid_jest_call(&call_chains) && !is_valid_vitest_call(&call_chains) {
-                    return None;
+            match (is_jest, is_vitest) {
+                (true, true) => {
+                    if !is_valid_jest_call(&call_chains) && !is_valid_vitest_call(&call_chains) {
+                        return None;
+                    }
                 }
-            }
-            (true, false) => {
-                if !is_valid_jest_call(&call_chains) {
-                    return None;
+                (true, false) => {
+                    if !is_valid_jest_call(&call_chains) {
+                        return None;
+                    }
                 }
-            }
-            (false, true) => {
-                if !is_valid_vitest_call(&call_chains) {
-                    return None;
+                (false, true) => {
+                    if !is_valid_vitest_call(&call_chains) {
+                        return None;
+                    }
                 }
+                (false, false) => unreachable!(),
             }
-            (false, false) => {}
-        }
 
-        if ctx.frameworks().is_vitest() && is_extend_fixture(&call_chains[1..]) {
-            return Some(ParsedJestFnCall::Fixture(ParsedGeneralJestFnCall {
-                kind: JestFnKind::VitestFixture,
-                members,
-                name: Cow::Borrowed(name),
-                local: Cow::Borrowed(resolved.local),
-            }));
+            if is_vitest && is_extend_fixture(&call_chains[1..]) {
+                return Some(ParsedJestFnCall::Fixture(ParsedGeneralJestFnCall {
+                    kind: JestFnKind::VitestFixture,
+                    members,
+                    name: Cow::Borrowed(name),
+                    local: Cow::Borrowed(resolved.local),
+                }));
+            }
         }
         return Some(ParsedJestFnCall::GeneralJest(ParsedGeneralJestFnCall {
             kind,
