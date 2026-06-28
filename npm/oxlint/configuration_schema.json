@@ -5081,7 +5081,43 @@
           ]
         },
         "no-restricted-globals": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
+                    },
+                    {
+                      "$ref": "#/definitions/RestrictedGlobal"
+                    }
+                  ],
+                  "additionalItems": {
+                    "$ref": "#/definitions/RestrictedGlobal"
+                  },
+                  "minItems": 2
+                },
+                {
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
+                    },
+                    {
+                      "$ref": "#/definitions/NoRestrictedGlobalsOptions"
+                    }
+                  ],
+                  "maxItems": 2,
+                  "minItems": 2
+                }
+              ]
+            }
+          ]
         },
         "no-restricted-imports": {
           "anyOf": [
@@ -14840,6 +14876,38 @@
       },
       "additionalProperties": false
     },
+    "NoRestrictedGlobalsOptions": {
+      "type": "object",
+      "required": [
+        "globals"
+      ],
+      "properties": {
+        "checkGlobalObject": {
+          "description": "Whether to check restricted globals accessed through global objects.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to check restricted globals accessed through global objects."
+        },
+        "globalObjects": {
+          "description": "Additional global object names to check when `checkGlobalObject` is enabled.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Additional global object names to check when `checkGlobalObject` is enabled."
+        },
+        "globals": {
+          "description": "Globals that are restricted from use.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RestrictedGlobal"
+          },
+          "markdownDescription": "Globals that are restricted from use."
+        }
+      },
+      "additionalProperties": false
+    },
     "NoRestrictedImportsConfig": {
       "type": "object",
       "properties": {
@@ -17875,6 +17943,35 @@
           "default": true,
           "type": "boolean",
           "markdownDescription": "Whether to allow RegExp values in template expressions."
+        }
+      },
+      "additionalProperties": false
+    },
+    "RestrictedGlobal": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/definitions/RestrictedGlobalConfig"
+        }
+      ]
+    },
+    "RestrictedGlobalConfig": {
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "message": {
+          "description": "A custom message to display.",
+          "type": "string",
+          "markdownDescription": "A custom message to display."
+        },
+        "name": {
+          "description": "The restricted global variable name.",
+          "type": "string",
+          "markdownDescription": "The restricted global variable name."
         }
       },
       "additionalProperties": false
