@@ -399,7 +399,17 @@ impl RuleRunner for crate::rules::eslint::max_classes_per_file::MaxClassesPerFil
 }
 
 impl RuleRunner for crate::rules::eslint::max_depth::MaxDepth {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::DoWhileStatement,
+        AstType::ForInStatement,
+        AstType::ForOfStatement,
+        AstType::ForStatement,
+        AstType::IfStatement,
+        AstType::SwitchStatement,
+        AstType::TryStatement,
+        AstType::WhileStatement,
+        AstType::WithStatement,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
