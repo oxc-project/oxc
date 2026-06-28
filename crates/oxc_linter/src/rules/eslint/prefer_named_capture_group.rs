@@ -79,8 +79,6 @@ impl Rule for PreferNamedCaptureGroup {
             check_pattern(pattern, ctx, None);
         });
 
-        // `run_on_regex_node` only covers directly-supported arguments; additionally handle
-        // statically-resolvable concatenated arguments like `'a' + '(b)'`.
         let (callee, arguments) = match node.kind() {
             AstKind::CallExpression(expr) => (&expr.callee, &expr.arguments),
             AstKind::NewExpression(expr) => (&expr.callee, &expr.arguments),
@@ -102,11 +100,6 @@ fn check_pattern(pattern: &Pattern<'_>, ctx: &LintContext<'_>, span_override: Op
     }
 }
 
-/// Handles statically-resolvable concatenated arguments like `'a' + '(b)'` for `RegExp(...)` /
-/// `new RegExp(...)` calls. This is complementary to `run_on_regex_node`, which only covers
-/// directly-supported arguments (regex literal, string literal, plain template):
-/// `check_static_arguments` ignores those (see `is_directly_supported_regex_argument`), so a
-/// pattern is never reported twice.
 fn check_static_arguments(arg0: Option<&Argument>, arg1: Option<&Argument>, ctx: &LintContext<'_>) {
     let Some(pattern_expr) = arg0
         .and_then(Argument::as_expression)
