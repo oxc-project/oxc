@@ -11,6 +11,7 @@ use oxc_syntax::{
 };
 
 use super::{
+    arrow::ArrowOrExpression,
     grammar::CoverGrammar,
     operator::{
         kind_to_precedence, map_assignment_operator, map_binary_operator, map_logical_operator,
@@ -303,6 +304,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if self.options.preserve_parens {
             Expression::new_parenthesized_expression(self.end_span(span), expression, self)
         } else {
+            if self.state.cover_paren_depth != 0 {
+                self.state.cover_invalid_patterns.push(self.end_span(span));
+            }
             expression
         }
     }
@@ -718,9 +722,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// Section 13.3 Left-Hand-Side Expression
     pub(crate) fn parse_lhs_expression_or_higher(&mut self) -> Expression<'a> {
         let span = self.start_span();
-        let mut in_optional_chain = false;
         // `MemberExpression`
         let primary = self.parse_primary_expression();
+        self.parse_lhs_expression_rest(span, primary)
+    }
+
+    /// Continue a `LeftHandSideExpression` from an already-parsed `PrimaryExpression`.
+    fn parse_lhs_expression_rest(&mut self, span: u32, primary: Expression<'a>) -> Expression<'a> {
+        let mut in_optional_chain = false;
         let member_expression = self.parse_member_expression_rest(
             span,
             primary,
@@ -1179,7 +1188,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         let span = self.start_span();
         let lhs = self.parse_lhs_expression_or_higher();
-        // ++ -- postfix update expressions
+        self.parse_update_expression_rest(span, lhs)
+    }
+
+    /// ++ -- postfix update expressions
+    fn parse_update_expression_rest(&mut self, span: u32, lhs: Expression<'a>) -> Expression<'a> {
         let post_kind = self.cur_kind();
         if post_kind.is_update_operator() && !self.cur_token().is_on_new_line() {
             let operator = map_update_operator(post_kind);
@@ -1415,9 +1428,22 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         allow_return_type_in_arrow_function: bool,
     ) -> Expression<'a> {
         let question_span = self.token.span();
-        if !self.eat(Kind::Question) {
+        if !self.at(Kind::Question) {
             return lhs;
         }
+        // Inside a cover-parenthesized frame, `?` followed by `:`/`,`/`)`/`=` can only be a TS
+        // optional parameter marker (`(a, b?: T) => {}`), never a valid conditional — leave it
+        // for the cover item loop.
+        if self.is_ts
+            && self.state.cover_paren_depth != 0
+            && matches!(
+                self.lexer.peek_token().kind(),
+                Kind::Colon | Kind::Comma | Kind::RParen | Kind::Eq
+            )
+        {
+            return lhs;
+        }
+        self.bump_any();
         let consequent = self.context_add(Context::In, |p| {
             p.parse_assignment_expression_or_higher_impl(
                 /* allow_return_type_in_arrow_function */ false,
@@ -1453,32 +1479,46 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if self.is_yield_expression() {
             return self.parse_yield_expression();
         }
-        // `() => {}`, `(x) => {}`
-        if let Some(mut arrow_expr) = self
-            .try_parse_parenthesized_arrow_function_expression(allow_return_type_in_arrow_function)
-        {
-            if has_no_side_effects_comment
-                && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
-            {
-                func.pure = true;
-            }
-            return arrow_expr;
-        }
-        // `async x => {}`
-        if let Some(mut arrow_expr) = self
-            .try_parse_async_simple_arrow_function_expression(allow_return_type_in_arrow_function)
-        {
-            if has_no_side_effects_comment
-                && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
-            {
-                func.pure = true;
-            }
-            return arrow_expr;
-        }
-
         let span = self.start_span();
         let lhs_parenthesized = self.at(Kind::LParen);
-        let lhs = self.parse_binary_expression_or_higher(Precedence::Comma);
+        // `() => {}`, `(x) => {}`
+        let covered_lhs = match self
+            .try_parse_parenthesized_arrow_function_expression(allow_return_type_in_arrow_function)
+        {
+            ArrowOrExpression::Arrow(mut arrow_expr) => {
+                if has_no_side_effects_comment
+                    && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
+                {
+                    func.pure = true;
+                }
+                return arrow_expr;
+            }
+            // A cover grammar `( ... )` refined to a parenthesized expression or `async(...)`
+            // call; continue parsing its member/call/binary continuations below.
+            ArrowOrExpression::Expression(expr) => Some(expr),
+            ArrowOrExpression::NotArrow => {
+                // `async x => {}`
+                if let Some(mut arrow_expr) = self.try_parse_async_simple_arrow_function_expression(
+                    allow_return_type_in_arrow_function,
+                ) {
+                    if has_no_side_effects_comment
+                        && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
+                    {
+                        func.pure = true;
+                    }
+                    return arrow_expr;
+                }
+                None
+            }
+        };
+
+        let lhs = if let Some(expr) = covered_lhs {
+            let expr = self.parse_lhs_expression_rest(span, expr);
+            let expr = self.parse_update_expression_rest(span, expr);
+            self.parse_binary_expression_rest(span, expr, lhs_parenthesized, Precedence::Comma)
+        } else {
+            self.parse_binary_expression_or_higher(Precedence::Comma)
+        };
         let lhs_parenthesized_span = lhs_parenthesized.then(|| self.end_span(span));
         let kind = self.cur_kind();
 

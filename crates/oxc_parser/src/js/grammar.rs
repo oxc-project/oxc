@@ -39,6 +39,11 @@ impl<'a, C: Config> CoverGrammar<'a, Expression<'a>, C> for SimpleAssignmentTarg
             }
             Expression::ParenthesizedExpression(expr) => {
                 let span = expr.span;
+                // The parens are unwrapped here; remember them in case this target is later
+                // refined to an arrow parameter, where they are invalid.
+                if p.state.cover_paren_depth != 0 {
+                    p.state.cover_invalid_patterns.push(span);
+                }
                 match expr.unbox().expression {
                     Expression::ObjectExpression(_) | Expression::ArrayExpression(_) => {
                         p.fatal_error(diagnostics::invalid_assignment(span))
@@ -150,6 +155,11 @@ impl<'a, C: Config> CoverGrammar<'a, Expression<'a>, C> for AssignmentTargetMayb
                     p.error(diagnostics::invalid_assignment_target_default_value_operator(
                         assignment_expr.span,
                     ));
+                    // The operator is erased by this conversion; a binding pattern requires a
+                    // plain `=` default, so a containing arrow head must not refine.
+                    if p.state.cover_paren_depth != 0 {
+                        p.state.cover_invalid_patterns.push(assignment_expr.span);
+                    }
                 }
                 let target = AssignmentTargetWithDefault::cover(assignment_expr.unbox(), p);
                 AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(p.alloc(target))
@@ -211,6 +221,108 @@ impl<'a, C: Config> CoverGrammar<'a, ObjectExpression<'a>, C> for ObjectAssignme
         }
 
         ObjectAssignmentTarget::new(expr.span, properties, rest, p)
+    }
+}
+
+/// Whether this pattern position overlaps syntax that the cover grammar parse erased from
+/// the AST (unwrapped parens, compound-operator defaults), making it invalid as a binding.
+fn span_has_invalid_pattern<C: Config>(span: Span, p: &ParserImpl<'_, C>) -> bool {
+    !p.state.cover_invalid_patterns.is_empty()
+        && p.state
+            .cover_invalid_patterns
+            .iter()
+            .any(|invalid| invalid.start <= span.start && span.end <= invalid.end)
+}
+
+/// Read-only check that an expression parsed by the cover grammar can refine to a
+/// [`BindingPattern`](https://tc39.es/ecma262/#sec-destructuring-binding-patterns),
+/// mirroring the fatal arms of the `cover` conversions below. When this fails, the
+/// enclosing `( ... )` refines to a parenthesized expression instead — matching the
+/// speculative parser, which rewound and re-parsed as an expression, leaving the stray
+/// `=>` to error downstream.
+pub(super) fn is_binding_pattern_expression<'a, C: Config>(
+    expr: &Expression<'a>,
+    p: &ParserImpl<'a, C>,
+) -> bool {
+    if span_has_invalid_pattern(expr.span(), p) {
+        return false;
+    }
+    match expr {
+        Expression::Identifier(_) => true,
+        // `(yield, a) => {}` in a generator: the item parses as a bare yield expression, but
+        // the speculative parser accepted it as a binding named `yield` (with an error).
+        Expression::YieldExpression(e) => e.argument.is_none() && !e.delegate,
+        Expression::ObjectExpression(obj) => {
+            let len = obj.properties.len();
+            obj.properties.iter().enumerate().all(|(i, prop)| match prop {
+                ObjectPropertyKind::ObjectProperty(property) => {
+                    property.kind == PropertyKind::Init
+                        && !property.method
+                        && (property.shorthand || is_binding_pattern_expression(&property.value, p))
+                }
+                ObjectPropertyKind::SpreadProperty(spread) => {
+                    i == len - 1 && matches!(spread.argument, Expression::Identifier(_))
+                }
+            })
+        }
+        Expression::ArrayExpression(arr) => {
+            let len = arr.elements.len();
+            arr.elements.iter().enumerate().all(|(i, elem)| match elem {
+                ArrayExpressionElement::Elision(_) => true,
+                ArrayExpressionElement::SpreadElement(spread) => {
+                    i == len - 1 && is_binding_pattern_expression(&spread.argument, p)
+                }
+                match_expression!(ArrayExpressionElement) => {
+                    is_binding_pattern_expression(elem.to_expression(), p)
+                }
+            })
+        }
+        Expression::AssignmentExpression(assign) => {
+            assign.operator == AssignmentOperator::Assign
+                && is_binding_pattern_target(&assign.left, p)
+        }
+        _ => false,
+    }
+}
+
+fn is_binding_pattern_target<'a, C: Config>(
+    target: &AssignmentTarget<'a>,
+    p: &ParserImpl<'a, C>,
+) -> bool {
+    if span_has_invalid_pattern(target.span(), p) {
+        return false;
+    }
+    match target {
+        AssignmentTarget::AssignmentTargetIdentifier(_) => true,
+        AssignmentTarget::ArrayAssignmentTarget(t) => {
+            t.elements.iter().flatten().all(|elem| is_binding_pattern_maybe_default(elem, p))
+                && t.rest.as_ref().is_none_or(|rest| is_binding_pattern_target(&rest.target, p))
+        }
+        AssignmentTarget::ObjectAssignmentTarget(t) => {
+            t.properties.iter().all(|prop| match prop {
+                AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(_) => true,
+                AssignmentTargetProperty::AssignmentTargetPropertyProperty(prop) => {
+                    is_binding_pattern_maybe_default(&prop.binding, p)
+                }
+            }) && t.rest.as_ref().is_none_or(|rest| {
+                matches!(rest.target, AssignmentTarget::AssignmentTargetIdentifier(_))
+            })
+        }
+        _ => false,
+    }
+}
+
+fn is_binding_pattern_maybe_default<'a, C: Config>(
+    target: &AssignmentTargetMaybeDefault<'a>,
+    p: &ParserImpl<'a, C>,
+) -> bool {
+    match target {
+        AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(t) => {
+            is_binding_pattern_target(&t.binding, p)
+        }
+        match_assignment_target!(AssignmentTargetMaybeDefault) => {
+            is_binding_pattern_target(target.to_assignment_target(), p)
+        }
     }
 }
 

@@ -14,6 +14,12 @@ pub struct ParserState<'a> {
     /// which re-establish their own `await`/`yield` contexts.
     pub cover_paren_depth: u32,
 
+    /// Spans inside cover paren frames whose pattern-invalidating syntax left no trace in the
+    /// AST: parenthesized expressions unwrapped by the assignment cover grammar (or dropped
+    /// when `preserve_parens` is off), and destructuring defaults with a compound operator.
+    /// A pattern position contained in one of these spans cannot refine to arrow parameters.
+    pub cover_invalid_patterns: Vec<Span>,
+
     /// Temporary storage for `CoverInitializedName` `({ foo = bar })`.
     /// Keyed by `ObjectProperty`'s span.start.
     pub cover_initialized_name: FxHashMap<u32, AssignmentExpression<'a>>,
@@ -44,6 +50,7 @@ impl ParserState<'_> {
         Self {
             not_parenthesized_arrow: FxHashSet::default(),
             cover_paren_depth: 0,
+            cover_invalid_patterns: Vec::new(),
             cover_initialized_name: FxHashMap::default(),
             trailing_commas: FxHashMap::default(),
             potential_await_reparse: Vec::new(),
