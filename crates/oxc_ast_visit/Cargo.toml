@@ -27,7 +27,7 @@ oxc_syntax = { workspace = true }
 
 [dev-dependencies]
 # Catch usage of old `AstBuilder` APIs in tests, without affecting downstream consumers.
-# if we enabled `disable_old_builder` feature in main dependency, feature unification would
+# If we enabled `disable_old_builder` feature in main dependency, feature unification would
 # cause it to be activated for `oxc_ast` for the user too.
 oxc_ast = { workspace = true, features = ["disable_old_builder"] }
 
