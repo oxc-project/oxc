@@ -31,7 +31,6 @@ fn add_header(code: &str, generator_path: &str, comment_start: &str) -> String {
 /// An output from codegen.
 ///
 /// Can be Rust, Javascript, or other formats.
-#[expect(dead_code)]
 pub enum Output {
     Rust {
         path: String,

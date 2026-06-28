@@ -52,10 +52,15 @@ impl Generator for AstBuilderGenerator {
         Ok(())
     }
 
-    /// Generate `AstBuilder`.
-    fn generate(&self, schema: &Schema, _codegen: &Codegen) -> Output {
+    /// Generate `AstBuilder`, plus a mapping from old `AstBuilder` method names to the equivalent
+    /// new builder methods defined on AST types.
+    fn generate_many(&self, schema: &Schema, _codegen: &Codegen) -> Vec<Output> {
         let node_id_cell_type_id =
             schema.type_by_name("NodeId").as_struct().unwrap().containers.cell_id.unwrap();
+
+        // Mapping from old `AstBuilder` method name (e.g. `null_literal`) to the equivalent method
+        // on the AST type (e.g. `NullLiteral::new`). Used to drive migration to the new builder.
+        let mut method_map = vec![];
 
         let fns = schema
             .structs_and_enums()
@@ -67,7 +72,9 @@ impl Generator for AstBuilderGenerator {
                     !enum_def.builder.skip && enum_def.visit.has_visitor()
                 }
             })
-            .map(|type_def| generate_builder_methods(type_def, node_id_cell_type_id, schema))
+            .map(|type_def| {
+                generate_builder_methods(type_def, node_id_cell_type_id, &mut method_map, schema)
+            })
             .collect::<TokenStream>();
 
         let output = quote! {
@@ -94,8 +101,219 @@ impl Generator for AstBuilderGenerator {
             }
         };
 
-        Output::Rust { path: output_path(AST_CRATE_PATH, "ast_builder.rs"), tokens: output }
+        vec![
+            Output::Rust { path: output_path(AST_CRATE_PATH, "ast_builder.rs"), tokens: output },
+            generate_method_map_output(&method_map),
+            generate_shorten_mappings_output(schema, node_id_cell_type_id),
+        ]
     }
+}
+
+/// Generate a JSON file mapping old `AstBuilder` method names to the equivalent new builder methods
+/// defined on AST types.
+///
+/// e.g. `"null_literal": "NullLiteral::new"`, `"alloc_null_literal": "NullLiteral::boxed"`,
+/// `"statement_expression": "Statement::new_expression_statement"`.
+///
+/// Consumed by the `tasks/ast_builder_migration` codemod, which migrates Oxc crates and downstream
+/// consumers from the old `AstBuilder` to the new builder methods.
+fn generate_method_map_output(method_map: &[(String, String)]) -> Output {
+    let mut code = String::from("{\n");
+    for (index, (old_name, new_path)) in method_map.iter().enumerate() {
+        let comma = if index + 1 < method_map.len() { "," } else { "" };
+        #[expect(clippy::format_push_string)]
+        code.push_str(&format!("  \"{old_name}\": \"{new_path}\"{comma}\n"));
+    }
+    code.push_str("}\n");
+
+    Output::Raw { path: "tasks/ast_builder_migration/generated/mappings.json".to_string(), code }
+}
+
+/// Generate a JSON file of *structural* mappings that drive the codemod's "shortening" pass, which
+/// collapses verbose new-builder call shapes into their shorthand equivalents:
+///
+/// * **box-collapse**: `ArenaBox::new_in(T::new(args), x)` -> `T::boxed(args)`
+/// * **variant-wrap**: `E::Variant(T::boxed(args))` -> `E::new_variant(args)`
+/// * **inherited-from**: `Outer::from(Inner::new_x(args))` -> `Outer::new_x(args)`
+///
+/// Emitting these from the same code that generates the builder methods means the exact method
+/// names (incl. `_with_*` default-field forms) are captured correctly.
+///
+/// Consumed by `generate_rules.mts`, alongside `mappings.json`.
+fn generate_shorten_mappings_output(schema: &Schema, node_id_cell_type_id: TypeId) -> Output {
+    // `[T::new path, T::boxed path]` for each boxable struct (+ `_with_*` forms).
+    let mut boxed: Vec<(String, String)> = vec![];
+    // `[enum, variant ident, inner builder path, ctor path]` for each struct-payload variant
+    // (own + inherited) of each enum (+ `_with_*` forms).
+    let mut variant_wrap: Vec<(String, String, String, String)> = vec![];
+    // `[outer enum, inherited enum, ctor method name]` for each constructor reachable via a
+    // directly-inherited enum (+ `_with_*` forms).
+    let mut inherited_from: Vec<(String, String, String)> = vec![];
+
+    for type_def in schema.structs_and_enums() {
+        match type_def {
+            StructOrEnum::Struct(struct_def) => {
+                // Skip types with no builder, and non-boxable structs (which have no `T::boxed`).
+                if struct_def.builder.skip
+                    || !struct_def.visit.has_visitor()
+                    || struct_def.containers.box_id.is_none()
+                {
+                    continue;
+                }
+                let name = struct_def.name();
+                boxed.push((format!("{name}::new"), format!("{name}::boxed")));
+                if let Some(postfix) =
+                    default_field_postfix(struct_def, node_id_cell_type_id, schema)
+                {
+                    boxed
+                        .push((format!("{name}::new{postfix}"), format!("{name}::boxed{postfix}")));
+                }
+            }
+            StructOrEnum::Enum(enum_def) => {
+                if enum_def.builder.skip || !enum_def.visit.has_visitor() {
+                    continue;
+                }
+                let enum_name = enum_def.name();
+
+                // `variant-wrap`: every variant (own + inherited) whose payload is a struct.
+                for variant in enum_def.all_variants(schema) {
+                    let Some((inner, is_boxed)) = struct_variant_payload(variant, schema) else {
+                        continue;
+                    };
+                    let inner_name = inner.name();
+                    let inner_method = if is_boxed { "boxed" } else { "new" };
+                    let variant_ident = variant.ident().to_string();
+                    let ctor = format!("new_{}", variant.snake_name());
+                    variant_wrap.push((
+                        enum_name.to_string(),
+                        variant_ident.clone(),
+                        format!("{inner_name}::{inner_method}"),
+                        format!("{enum_name}::{ctor}"),
+                    ));
+                    if let Some(postfix) =
+                        default_field_postfix(inner, node_id_cell_type_id, schema)
+                    {
+                        variant_wrap.push((
+                            enum_name.to_string(),
+                            variant_ident,
+                            format!("{inner_name}::{inner_method}{postfix}"),
+                            format!("{enum_name}::{ctor}{postfix}"),
+                        ));
+                    }
+                }
+
+                // `inherited-from`: every constructor reachable through an inherited enum. Walk the
+                // *transitive* closure - inheritance chains (e.g. `AssignmentTarget` ->
+                // `SimpleAssignmentTarget` -> `MemberExpression`) generate `From` impls and `new_*`
+                // ctors for the whole chain, so `Outer::from(Grandparent::new_x(..))` is valid too.
+                for inner_enum in transitively_inherited_enums(enum_def, schema) {
+                    let inner_enum_name = inner_enum.name();
+                    for variant in inner_enum.all_variants(schema) {
+                        let Some((inner, _)) = struct_variant_payload(variant, schema) else {
+                            continue;
+                        };
+                        let ctor = format!("new_{}", variant.snake_name());
+                        inherited_from.push((
+                            enum_name.to_string(),
+                            inner_enum_name.to_string(),
+                            ctor.clone(),
+                        ));
+                        if let Some(postfix) =
+                            default_field_postfix(inner, node_id_cell_type_id, schema)
+                        {
+                            inherited_from.push((
+                                enum_name.to_string(),
+                                inner_enum_name.to_string(),
+                                format!("{ctor}{postfix}"),
+                            ));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Emit one entry per line (compact arrays) for a readable, reviewable diff.
+    let mut code = String::from("{\n");
+    push_json_section(&mut code, "boxed", &boxed, false);
+    push_json_section(&mut code, "variantWrap", &variant_wrap, false);
+    push_json_section(&mut code, "inheritedFrom", &inherited_from, true);
+    code.push_str("}\n");
+
+    Output::Raw {
+        path: "tasks/ast_builder_migration/generated/shorten_mappings.json".to_string(),
+        code,
+    }
+}
+
+/// Append a JSON array section (`"key": [ ... ]`), one entry per line. `last` omits the trailing
+/// comma after the closing `]`.
+fn push_json_section<T: serde::Serialize>(code: &mut String, key: &str, entries: &[T], last: bool) {
+    #[expect(clippy::format_push_string)]
+    code.push_str(&format!("  \"{key}\": [\n"));
+    for (index, entry) in entries.iter().enumerate() {
+        let comma = if index + 1 < entries.len() { "," } else { "" };
+        let line = serde_json::to_string(entry).unwrap();
+        #[expect(clippy::format_push_string)]
+        code.push_str(&format!("    {line}{comma}\n"));
+    }
+    code.push_str(if last { "  ]\n" } else { "  ],\n" });
+}
+
+/// Get the `_with_<default fields>` postfix for a struct's builder method, if it has default fields.
+///
+/// Mirrors the postfix logic in `generate_builder_methods_for_struct` /
+/// `generate_builder_method_for_enum_variant`.
+fn default_field_postfix(
+    struct_def: &StructDef,
+    node_id_cell_type_id: TypeId,
+    schema: &Schema,
+) -> Option<String> {
+    let (params, _, _, has_default_fields) =
+        get_struct_params(struct_def, node_id_cell_type_id, schema);
+    if !has_default_fields {
+        return None;
+    }
+    // Exclude `node_id` (always set by the builder) - matches the generator.
+    let default_params = params.iter().filter(|param| param.is_default && !param.is_node_id);
+    Some(format!("_with_{}", default_params.map(|param| param.field.name()).join("_and_")))
+}
+
+/// Resolve an enum variant's payload to its inner struct, if it is one (unwrapping `Box`).
+///
+/// Returns `(struct, is_boxed)`, or `None` for fieldless or non-struct variants.
+fn struct_variant_payload<'s>(
+    variant: &VariantDef,
+    schema: &'s Schema,
+) -> Option<(&'s StructDef, bool)> {
+    let mut variant_type = variant.field_type(schema)?;
+    let mut is_boxed = false;
+    if let TypeDef::Box(box_def) = variant_type {
+        variant_type = box_def.inner_type(schema);
+        is_boxed = true;
+    }
+    match variant_type {
+        TypeDef::Struct(struct_def) => Some((struct_def, is_boxed)),
+        _ => None,
+    }
+}
+
+/// Collect every enum that `enum_def` inherits, transitively and de-duplicated.
+///
+/// Inheritance chains (e.g. `AssignmentTarget` inherits `SimpleAssignmentTarget`, which inherits
+/// `MemberExpression`), and the generated `From` impls / `new_*` constructors cover the whole chain.
+fn transitively_inherited_enums<'s>(enum_def: &'s EnumDef, schema: &'s Schema) -> Vec<&'s EnumDef> {
+    let mut result: Vec<&EnumDef> = vec![];
+    let mut stack: Vec<&EnumDef> =
+        enum_def.inherits_types(schema).filter_map(|type_def| type_def.as_enum()).collect();
+    while let Some(inner_enum) = stack.pop() {
+        if result.iter().any(|seen| seen.id() == inner_enum.id()) {
+            continue;
+        }
+        result.push(inner_enum);
+        stack.extend(inner_enum.inherits_types(schema).filter_map(|type_def| type_def.as_enum()));
+    }
+    result
 }
 
 /// Param for a builder function.
@@ -132,14 +350,18 @@ enum GenericType {
 fn generate_builder_methods(
     type_def: StructOrEnum<'_>,
     node_id_cell_type_id: TypeId,
+    method_map: &mut Vec<(String, String)>,
     schema: &Schema,
 ) -> TokenStream {
     match type_def {
-        StructOrEnum::Struct(struct_def) => {
-            generate_builder_methods_for_struct(struct_def, node_id_cell_type_id, schema)
-        }
+        StructOrEnum::Struct(struct_def) => generate_builder_methods_for_struct(
+            struct_def,
+            node_id_cell_type_id,
+            method_map,
+            schema,
+        ),
         StructOrEnum::Enum(enum_def) => {
-            generate_builder_methods_for_enum(enum_def, node_id_cell_type_id, schema)
+            generate_builder_methods_for_enum(enum_def, node_id_cell_type_id, method_map, schema)
         }
     }
 }
@@ -152,6 +374,7 @@ fn generate_builder_methods(
 fn generate_builder_methods_for_struct(
     struct_def: &StructDef,
     node_id_cell_type_id: TypeId,
+    method_map: &mut Vec<(String, String)>,
     schema: &Schema,
 ) -> TokenStream {
     let (mut params, generic_params, where_clause, has_default_fields) =
@@ -171,6 +394,16 @@ fn generate_builder_methods_for_struct(
     } else {
         (String::new(), String::new())
     };
+
+    // Record mappings from old method names to new methods (e.g. `null_literal` -> `NullLiteral::new`).
+    // The boxed (`alloc_*`) method only exists when `Box<T>` appears in the AST.
+    let struct_name = struct_def.name();
+    let snake_name = struct_def.snake_name();
+    let has_box = struct_def.containers.box_id.is_some();
+    push_struct_method_map(method_map, struct_name, &snake_name, "", has_box);
+    if has_default_fields {
+        push_struct_method_map(method_map, struct_name, &snake_name, &fn_name_postfix, has_box);
+    }
 
     // Generate builder functions including all fields (inc default fields)
     let output = generate_builder_methods_for_struct_impl(
@@ -456,6 +689,7 @@ fn get_struct_fn_params_and_fields(
 fn generate_builder_methods_for_enum(
     enum_def: &EnumDef,
     node_id_cell_type_id: TypeId,
+    method_map: &mut Vec<(String, String)>,
     schema: &Schema,
 ) -> TokenStream {
     enum_def
@@ -466,6 +700,7 @@ fn generate_builder_methods_for_enum(
                 enum_def,
                 variant,
                 node_id_cell_type_id,
+                method_map,
                 schema,
             )
         })
@@ -477,6 +712,7 @@ fn generate_builder_method_for_enum_variant(
     enum_def: &EnumDef,
     variant: &VariantDef,
     node_id_cell_type_id: TypeId,
+    method_map: &mut Vec<(String, String)>,
     schema: &Schema,
 ) -> TokenStream {
     let mut variant_type = variant.field_type(schema).unwrap();
@@ -493,6 +729,13 @@ fn generate_builder_method_for_enum_variant(
     let fn_name = enum_variant_builder_name(enum_def, variant);
     let variant_ident = variant.ident();
 
+    // Record mappings from old method names to new methods (e.g. `statement_expression` ->
+    // `Statement::new_expression_statement`). The old name is de-duplicated by
+    // `enum_variant_builder_name`, whereas the new name is always `new_<variant>`.
+    let enum_name = enum_def.name();
+    let new_method_name = format!("new_{}", variant.snake_name());
+    method_map.push((fn_name.clone(), format!("{enum_name}::{new_method_name}")));
+
     let output = has_default_fields.then(|| {
         // Exclude `node_id` from the list of default params (it's always set to `NodeId::DUMMY`)
         let default_params = params.iter().filter(|param| param.is_default && !param.is_node_id);
@@ -502,6 +745,10 @@ fn generate_builder_method_for_enum_variant(
         );
         let doc_postfix =
             format!(" with `{}`", default_params.map(|param| param.field.name()).join("` and `"));
+        method_map.push((
+            format!("{fn_name}{fn_name_postfix}"),
+            format!("{enum_name}::{new_method_name}{fn_name_postfix}"),
+        ));
         generate_builder_method_for_enum_variant_impl(
             enum_def,
             struct_def,
@@ -585,6 +832,31 @@ fn generate_builder_method_for_enum_variant_impl(
         pub fn #fn_name #generic_params(self, #(#fn_params),*) -> #enum_ty #where_clause {
             #enum_ident::#variant_ident(self.#inner_builder_name(#(#args),*))
         }
+    }
+}
+
+/// Record mappings for a struct's builder methods (with the given postfix) into `method_map`.
+///
+/// Maps old `AstBuilder` method names to the equivalent new methods on the AST type,
+/// e.g. `null_literal` -> `NullLiteral::new`, `alloc_null_literal` -> `NullLiteral::boxed`.
+/// The boxed (`alloc_*` / `::boxed`) method only exists when `has_box` is `true`.
+fn push_struct_method_map(
+    method_map: &mut Vec<(String, String)>,
+    struct_name: &str,
+    snake_name: &str,
+    postfix: &str,
+    has_box: bool,
+) {
+    let base = format!("{snake_name}{postfix}");
+    method_map.push((
+        struct_builder_name(&base, false).to_string(),
+        format!("{struct_name}::new{postfix}"),
+    ));
+    if has_box {
+        method_map.push((
+            struct_builder_name(&base, true).to_string(),
+            format!("{struct_name}::boxed{postfix}"),
+        ));
     }
 }
 

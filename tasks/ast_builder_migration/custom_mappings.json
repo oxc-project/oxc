@@ -1,0 +1,28 @@
+{
+  "mappings": {
+    "alloc": "ArenaBox::new_in",
+    "vec": "ArenaVec::new_in",
+    "vec_with_capacity": "ArenaVec::with_capacity_in",
+    "vec1": "ArenaVec::from_value_in",
+    "vec_from_iter": "ArenaVec::from_iter_in",
+    "vec_from_array": "ArenaVec::from_array_in",
+    "ident": "Ident::from_str_in",
+    "ident_from_strs_array": "Ident::from_strs_array_in",
+    "ident_from_cow": "Ident::from_cow_in",
+    "str": "Str::from_str_in",
+    "str_from_strs_array": "Str::from_strs_array_in",
+    "str_from_cow": "Str::from_cow_in",
+    "void_0": "Expression::new_void_0",
+    "nan": "Expression::new_nan",
+    "number_0": "Expression::new_number_0",
+    "use_strict_directive": "Directive::new_use_strict",
+    "plain_formal_parameter": "FormalParameter::new_plain",
+    "alloc_plain_function_with_scope_id": "Function::boxed_plain_with_scope_id",
+    "alloc_function_with_scope_id": "Function::boxed_with_scope_id",
+    "plain_export_named_declaration": "ExportNamedDeclaration::boxed_plain",
+    "plain_export_named_declaration_declaration": "ExportNamedDeclaration::boxed_plain_declaration",
+    "template_element_escape_raw": "TemplateElement::new_escape_raw",
+    "template_element_escape_raw_with_lone_surrogates": "TemplateElement::new_escape_raw_with_lone_surrogates"
+  },
+  "zeroArg": ["vec", "number_0", "use_strict_directive"]
+}
