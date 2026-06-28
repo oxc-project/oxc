@@ -16,7 +16,7 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::Rule,
-    utils::{is_regexp_callee, run_on_arguments, run_on_regex_node, static_string_value},
+    utils::{is_regexp_callee, run_on_regex_node, static_string_value},
 };
 
 fn prefer_named_capture_group_diagnostic(span: Span, unnamed_count: usize) -> OxcDiagnostic {
@@ -71,18 +71,25 @@ declare_oxc_lint!(
 impl Rule for PreferNamedCaptureGroup {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::RegExpLiteral(_) => {
-                run_on_regex_node(node, ctx, |pattern, _span| {
-                    check_pattern(pattern, ctx, None);
-                });
-            }
-            AstKind::CallExpression(expr) => {
-                check_regexp_call(&expr.callee, expr.arguments.first(), expr.arguments.get(1), ctx);
-            }
-            AstKind::NewExpression(expr) => {
-                check_regexp_call(&expr.callee, expr.arguments.first(), expr.arguments.get(1), ctx);
-            }
-            _ => {}
+            AstKind::RegExpLiteral(_)
+            | AstKind::CallExpression(_)
+            | AstKind::NewExpression(_) => {}
+            _ => return,
+        }
+
+        run_on_regex_node(node, ctx, |pattern, _span| {
+            check_pattern(pattern, ctx, None);
+        });
+
+        // `run_on_regex_node` only covers directly-supported arguments; additionally handle
+        // statically-resolvable concatenated arguments like `'a' + '(b)'`.
+        let (callee, arguments) = match node.kind() {
+            AstKind::CallExpression(expr) => (&expr.callee, &expr.arguments),
+            AstKind::NewExpression(expr) => (&expr.callee, &expr.arguments),
+            _ => return,
+        };
+        if is_regexp_callee(callee, ctx) {
+            check_static_arguments(arguments.first(), arguments.get(1), ctx);
         }
     }
 }
@@ -97,26 +104,11 @@ fn check_pattern(pattern: &Pattern<'_>, ctx: &LintContext<'_>, span_override: Op
     }
 }
 
-/// Handles `new RegExp(...)` / `RegExp(...)` calls. Checks `is_regexp_callee` a single time, then
-/// processes both directly-supported arguments (regex literal, string literal, plain template) via
-/// `run_on_arguments` and statically-resolvable concatenated arguments via `check_static_arguments`.
-/// These two paths are complementary: `check_static_arguments` ignores directly-supported arguments
-/// (see `is_directly_supported_regex_argument`), so a pattern is never reported twice.
-fn check_regexp_call(
-    callee: &Expression<'_>,
-    arg0: Option<&Argument>,
-    arg1: Option<&Argument>,
-    ctx: &LintContext<'_>,
-) {
-    if !is_regexp_callee(callee, ctx) {
-        return;
-    }
-    run_on_arguments(arg0, arg1, ctx, |pattern, _span| {
-        check_pattern(pattern, ctx, None);
-    });
-    check_static_arguments(arg0, arg1, ctx);
-}
-
+/// Handles statically-resolvable concatenated arguments like `'a' + '(b)'` for `RegExp(...)` /
+/// `new RegExp(...)` calls. This is complementary to `run_on_regex_node`, which only covers
+/// directly-supported arguments (regex literal, string literal, plain template):
+/// `check_static_arguments` ignores those (see `is_directly_supported_regex_argument`), so a
+/// pattern is never reported twice.
 fn check_static_arguments(arg0: Option<&Argument>, arg1: Option<&Argument>, ctx: &LintContext<'_>) {
     let Some(pattern_expr) = arg0
         .and_then(Argument::as_expression)
