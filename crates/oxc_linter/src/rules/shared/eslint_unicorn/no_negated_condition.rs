@@ -4,8 +4,11 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
-use oxc_syntax::identifier::is_identifier_start;
-use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
+use oxc_syntax::{
+    identifier::is_identifier_part,
+    line_terminator::is_line_terminator,
+    operator::{BinaryOperator, UnaryOperator},
+};
 
 use crate::{
     AstNode,
@@ -127,51 +130,49 @@ fn fix_conditional_expression<'a>(
     ctx: &LintContext<'a>,
 ) -> RuleFix {
     let fixer = fixer.for_multifix();
-    let mut fixes = fixer.new_fix_with_capacity(6);
+    let mut fixes = fixer.new_fix_with_capacity(10);
 
     let is_unary = matches!(negated_test, Expression::UnaryExpression(_));
     let source = ctx.source_text();
     let expr_span = conditional_expr.span;
 
     // Detect ASI / keyword spacing from what the expression will look like after removing `!`.
-    let (needs_space_before, needs_asi_semi, needs_return_throw_parens) = if is_unary {
-        let Expression::UnaryExpression(unary) = negated_test else { unreachable!() };
-        // Text after deleting the leading `!` (preserves comments between `!` and operand).
-        let after_bang = ctx.source_range(Span::new(unary.span.start + 1, unary.span.end));
-        let first_significant = after_bang.trim_start().chars().next();
-        let has_newline_in_remainder = after_bang.contains('\n');
+    let (needs_space_before, needs_asi_semi, needs_restricted_parens, needs_exposed_expr_parens) =
+        if is_unary {
+            let Expression::UnaryExpression(unary) = negated_test else { unreachable!() };
+            // Text after deleting the leading `!` (preserves comments between `!` and operand).
+            let after_bang = ctx.source_range(Span::new(unary.span.start + 1, unary.span.end));
+            let first_significant = after_bang.trim_start().chars().next();
+            let has_line_terminator_in_remainder = after_bang.chars().any(is_line_terminator);
 
-        let needs_return_throw_parens = has_newline_in_remainder
-            && !matches!(conditional_expr.test, Expression::ParenthesizedExpression(_))
-            && matches!(
-                ctx.nodes().parent_kind(node.id()),
-                AstKind::ReturnStatement(_) | AstKind::ThrowStatement(_)
-            );
+            let needs_restricted_parens = has_line_terminator_in_remainder
+                && !matches!(conditional_expr.test, Expression::ParenthesizedExpression(_))
+                && is_restricted_statement_or_yield_argument(node, ctx);
 
-        let needs_space_before = !needs_return_throw_parens && {
-            let start = expr_span.start as usize;
-            start > 0
-                && source[..start].chars().next_back().is_some_and(is_identifier_start)
-                && first_significant.is_some_and(|c| {
-                    is_identifier_start(c)
-                        || c == '('
-                        || c == '['
-                        || c == '`'
-                        || c == '/'
-                        || c == '+'
-                        || c == '-'
-                })
+            let needs_space_before = !needs_restricted_parens && {
+                let start = expr_span.start as usize;
+                start > 0
+                    && source[..start].chars().next_back().is_some_and(can_continue_token)
+                    && first_significant.is_some_and(needs_separator_after_keyword)
+            };
+
+            let needs_asi_semi = !needs_restricted_parens
+                && !needs_space_before
+                && matches!(first_significant, Some('(' | '[' | '`' | '+' | '-' | '/'))
+                && could_be_asi_hazard(node, ctx);
+
+            let needs_exposed_expr_parens = is_expression_statement_start(node, ctx)
+                && matches!(
+                    unary.argument.without_parentheses(),
+                    Expression::ObjectExpression(_)
+                        | Expression::FunctionExpression(_)
+                        | Expression::ClassExpression(_)
+                );
+
+            (needs_space_before, needs_asi_semi, needs_restricted_parens, needs_exposed_expr_parens)
+        } else {
+            (false, false, false, false)
         };
-
-        let needs_asi_semi = !needs_return_throw_parens
-            && !needs_space_before
-            && matches!(first_significant, Some('(' | '[' | '`' | '+' | '-' | '/'))
-            && could_be_asi_hazard(node, ctx);
-
-        (needs_space_before, needs_asi_semi, needs_return_throw_parens)
-    } else {
-        (false, false, false)
-    };
 
     if needs_asi_semi {
         fixes.push(fixer.insert_text_before_range(expr_span, ";"));
@@ -179,15 +180,23 @@ fn fix_conditional_expression<'a>(
         fixes.push(fixer.insert_text_before_range(expr_span, " "));
     }
 
-    if needs_return_throw_parens {
+    if needs_restricted_parens {
         fixes.push(fixer.insert_text_before_range(expr_span, "("));
         fixes.push(fixer.insert_text_after_range(expr_span, ")"));
+    }
+
+    if needs_exposed_expr_parens && let Expression::UnaryExpression(unary) = negated_test {
+        let argument_span = unary.argument.span();
+        fixes.push(fixer.insert_text_before_range(argument_span, "("));
+        fixes.push(fixer.insert_text_after_range(argument_span, ")"));
     }
 
     push_invert_test_fixes(&mut fixes, &fixer, negated_test, ctx);
     push_swap_expression_branches(
         &mut fixes,
         &fixer,
+        node,
+        conditional_expr,
         &conditional_expr.consequent,
         &conditional_expr.alternate,
         ctx,
@@ -261,6 +270,8 @@ fn push_swap_statement_branches<'a>(
 fn push_swap_expression_branches<'a>(
     fixes: &mut RuleFix,
     fixer: &RuleFixer<'_, 'a>,
+    node: &AstNode<'a>,
+    conditional_expr: &ConditionalExpression<'a>,
     consequent: &Expression<'a>,
     alternate: &Expression<'a>,
     ctx: &LintContext<'a>,
@@ -276,5 +287,71 @@ fn push_swap_expression_branches<'a>(
 
     // Must own the replacement strings because both edits reference the other branch's text.
     fixes.push(fixer.replace(cons_span, alt_src.to_string()));
-    fixes.push(fixer.replace(alt_span, cons_src.to_string()));
+    let new_alt = if is_for_statement_init(node, conditional_expr, ctx)
+        && contains_unparenthesized_in_expression(consequent)
+    {
+        format!("({cons_src})")
+    } else {
+        cons_src.to_string()
+    };
+    fixes.push(fixer.replace(alt_span, new_alt));
+}
+
+fn is_restricted_statement_or_yield_argument(node: &AstNode, ctx: &LintContext) -> bool {
+    matches!(
+        ctx.nodes().parent_kind(node.id()),
+        AstKind::ReturnStatement(_) | AstKind::ThrowStatement(_) | AstKind::YieldExpression(_)
+    )
+}
+
+fn can_continue_token(c: char) -> bool {
+    is_identifier_part(c) || c.is_ascii_digit()
+}
+
+fn needs_separator_after_keyword(c: char) -> bool {
+    is_identifier_part(c) || c == '\\' || matches!(c, '(' | '[' | '`' | '/' | '+' | '-' | '.')
+}
+
+fn is_expression_statement_start(node: &AstNode, ctx: &LintContext) -> bool {
+    let node_span = node.span();
+    for ancestor in ctx.nodes().ancestors(node.id()) {
+        match ancestor.kind() {
+            AstKind::ExpressionStatement(expr_stmt) => {
+                return node_span.start == expr_stmt.span.start;
+            }
+            AstKind::ParenthesizedExpression(_)
+            | AstKind::ChainExpression(_)
+            | AstKind::SequenceExpression(_)
+            | AstKind::AssignmentExpression(_)
+            | AstKind::LogicalExpression(_)
+            | AstKind::BinaryExpression(_)
+            | AstKind::ConditionalExpression(_)
+            | AstKind::TSAsExpression(_)
+            | AstKind::TSSatisfiesExpression(_)
+            | AstKind::TSNonNullExpression(_)
+            | AstKind::TSTypeAssertion(_)
+            | AstKind::TSInstantiationExpression(_) => {}
+            _ => return false,
+        }
+    }
+    false
+}
+
+fn is_for_statement_init(
+    node: &AstNode,
+    conditional_expr: &ConditionalExpression,
+    ctx: &LintContext,
+) -> bool {
+    matches!(
+        ctx.nodes().parent_kind(node.id()),
+        AstKind::ForStatement(for_stmt)
+            if for_stmt.init.as_ref().is_some_and(|init| init.span() == conditional_expr.span)
+    )
+}
+
+fn contains_unparenthesized_in_expression(expr: &Expression) -> bool {
+    matches!(
+        expr,
+        Expression::BinaryExpression(binary) if binary.operator == BinaryOperator::In
+    )
 }

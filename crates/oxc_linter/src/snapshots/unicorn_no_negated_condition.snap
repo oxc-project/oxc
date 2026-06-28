@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 490
 ---
 
   ⚠ unicorn(no-negated-condition): Unexpected negated condition.
@@ -82,6 +81,20 @@ assertion_line: 490
 
   ⚠ unicorn(no-negated-condition): Unexpected negated condition.
    ╭─[no_negated_condition.tsx:1:21]
+ 1 │ function a() {return!0 ? b:c}
+   ·                     ──
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:21]
+ 1 │ function a() {return!\u0061 ? b:c}
+   ·                     ───────
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:21]
  1 │ function a() {return!(( a )) ? b : c}
    ·                     ────────
    ╰────
@@ -120,6 +133,64 @@ assertion_line: 490
  2 │ ╭─▶ throw ! // comment
  3 │ ╰─▶ a ? b : c;
  4 │     }
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:2:7]
+ 1 │     function* a() {
+ 2 │ ╭─▶ yield ! // comment
+ 3 │ ╰─▶ a ? b : c;
+ 4 │     }
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:22]
+ 1 │ function a() {return ! a ? b : c;}
+   ·                      ────
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:21]
+ 1 │ function a() {throw ! a ? b : c;}
+   ·                     ───
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:22]
+ 1 │ function a() {return ! a ? b : c;}
+   ·                      ───
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:1]
+ 1 │ !{} ? a : b
+   · ───
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:1]
+ 1 │ !function(){} ? a : b
+   · ─────────────
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:1]
+ 1 │ !class {} ? a : b
+   · ─────────
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:6]
+ 1 │ for (!a ? x in y : z;;) {}
+   ·      ──
    ╰────
   help: Remove the negation operator and switch the consequent and alternate branches.
 
