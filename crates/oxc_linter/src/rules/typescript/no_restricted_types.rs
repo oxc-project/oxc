@@ -43,6 +43,8 @@ struct RestrictedTypesIndex {
     by_name: FxHashMap<Box<str>, (Box<str>, BanConfigValue)>,
     /// True if any banned name needs a full source span (e.g. `Banned<any>`, not `[]`/`{}`).
     has_generic_or_complex_keys: bool,
+    /// True if any banned name can match a qualified type name (e.g. `NS.Banned`).
+    has_qualified_keys: bool,
     ban_string: bool,
     ban_number: bool,
     ban_boolean: bool,
@@ -64,8 +66,14 @@ impl RestrictedTypesIndex {
         let mut index = Self::default();
         for (key, value) in types {
             let normalized = remove_spaces(key);
+            let normalized_key = normalized.as_ref();
             let display = key.trim();
-            match normalized.as_ref() {
+
+            if normalized_key.contains('.') {
+                index.has_qualified_keys = true;
+            }
+
+            match normalized_key {
                 "string" => index.ban_string = true,
                 "number" => index.ban_number = true,
                 "boolean" => index.ban_boolean = true,
@@ -85,10 +93,10 @@ impl RestrictedTypesIndex {
                 }
                 _ => {}
             }
-            index.by_name.insert(
-                normalized.into_owned().into_boxed_str(),
-                (display.to_string().into_boxed_str(), value.clone()),
-            );
+            index
+                .by_name
+                .entry(normalized.into_owned().into_boxed_str())
+                .or_insert_with(|| (display.to_string().into_boxed_str(), value.clone()));
         }
         index
     }
@@ -352,23 +360,31 @@ impl NoRestrictedTypes {
         let index = &self.0.index;
 
         if type_ref.type_arguments.is_none() {
-            if let Some(name) = type_name_to_cow(&type_ref.type_name) {
-                if let Some((display, config)) = index.lookup(name.as_ref()) {
-                    report(ctx, type_ref.type_name.span(), display, config);
+            match type_name_lookup(&type_ref.type_name, index.has_qualified_keys) {
+                TypeNameLookup::Name(name) => {
+                    if let Some((display, config)) = index.lookup(name.as_ref()) {
+                        report(ctx, type_ref.type_name.span(), display, config);
+                    }
                 }
-                return;
+                TypeNameLookup::SourceFallback => {
+                    self.check_banned_source(type_ref.type_name.span(), ctx);
+                }
+                TypeNameLookup::Skip => {}
             }
-            self.check_banned_source(type_ref.type_name.span(), ctx);
             return;
         }
 
         // With type arguments: check the head name (e.g. `Banned` in `Banned<any>`).
-        if let Some(name) = type_name_to_cow(&type_ref.type_name) {
-            if let Some((display, config)) = index.lookup(name.as_ref()) {
-                report(ctx, type_ref.type_name.span(), display, config);
+        match type_name_lookup(&type_ref.type_name, index.has_qualified_keys) {
+            TypeNameLookup::Name(name) => {
+                if let Some((display, config)) = index.lookup(name.as_ref()) {
+                    report(ctx, type_ref.type_name.span(), display, config);
+                }
             }
-        } else {
-            self.check_banned_source(type_ref.type_name.span(), ctx);
+            TypeNameLookup::SourceFallback => {
+                self.check_banned_source(type_ref.type_name.span(), ctx);
+            }
+            TypeNameLookup::Skip => {}
         }
 
         // Full `Banned<any>` source only when config has generic/complex keys.
@@ -385,10 +401,22 @@ impl NoRestrictedTypes {
     }
 }
 
+enum TypeNameLookup<'a> {
+    Name(Cow<'a, str>),
+    SourceFallback,
+    Skip,
+}
+
 /// Dotted name for simple type references. Borrows for a single identifier.
-fn type_name_to_cow<'a>(type_name: &'a TSTypeName<'a>) -> Option<Cow<'a, str>> {
+fn type_name_lookup<'a>(
+    type_name: &'a TSTypeName<'a>,
+    allow_qualified: bool,
+) -> TypeNameLookup<'a> {
     match type_name {
-        TSTypeName::IdentifierReference(ident) => Some(Cow::Borrowed(ident.name.as_str())),
+        TSTypeName::IdentifierReference(ident) => {
+            TypeNameLookup::Name(Cow::Borrowed(ident.name.as_str()))
+        }
+        TSTypeName::QualifiedName(_) if !allow_qualified => TypeNameLookup::Skip,
         TSTypeName::QualifiedName(qual) => {
             let mut parts = Vec::with_capacity(4);
             let mut current = qual.as_ref();
@@ -402,13 +430,13 @@ fn type_name_to_cow<'a>(type_name: &'a TSTypeName<'a>) -> Option<Cow<'a, str>> {
                     TSTypeName::QualifiedName(inner) => {
                         current = inner.as_ref();
                     }
-                    TSTypeName::ThisExpression(_) => return None,
+                    TSTypeName::ThisExpression(_) => return TypeNameLookup::SourceFallback,
                 }
             }
             parts.reverse();
-            Some(Cow::Owned(parts.join(".")))
+            TypeNameLookup::Name(Cow::Owned(parts.join(".")))
         }
-        TSTypeName::ThisExpression(_) => None,
+        TSTypeName::ThisExpression(_) => TypeNameLookup::SourceFallback,
     }
 }
 
@@ -446,6 +474,33 @@ fn remove_spaces(s: &str) -> Cow<'_, str> {
     } else {
         Cow::Borrowed(s)
     }
+}
+
+#[test]
+fn restricted_types_index_preserves_first_normalized_match() {
+    let mut types = FxHashMap::default();
+    types.insert("Banned".to_string(), BanConfigValue::Message("first".to_string()));
+    types.insert(" Banned ".to_string(), BanConfigValue::Message("second".to_string()));
+
+    let expected_message = types
+        .iter()
+        .find(|(key, _)| remove_spaces(key).as_ref() == "Banned")
+        .and_then(|(_, value)| value.message())
+        .unwrap();
+
+    let index = RestrictedTypesIndex::from_types_map(&types);
+    let (_, config) = index.lookup("Banned").unwrap();
+    assert_eq!(config.message(), Some(expected_message));
+}
+
+#[test]
+fn restricted_types_index_tracks_qualified_generic_keys() {
+    let mut types = FxHashMap::default();
+    types.insert("NS.Banned<any>".to_string(), BanConfigValue::Bool(True));
+
+    let index = RestrictedTypesIndex::from_types_map(&types);
+    assert!(index.has_qualified_keys);
+    assert!(index.has_generic_or_complex_keys);
 }
 
 #[test]
