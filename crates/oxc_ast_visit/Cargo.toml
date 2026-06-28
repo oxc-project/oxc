@@ -26,8 +26,10 @@ oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
 
 [dev-dependencies]
-# `AstBuilder` is only used in tests
-oxc_ast = { workspace = true, features = ["builder_new"] }
+# Catch usage of old `AstBuilder` APIs in tests, without affecting downstream consumers.
+# If we enabled `disable_old_builder` feature in main dependency, feature unification would
+# cause it to be activated for `oxc_ast` for the user too.
+oxc_ast = { workspace = true, features = ["disable_old_builder"] }
 
 [features]
 default = []

@@ -2,7 +2,7 @@
 //! Transform of class itself.
 
 use oxc_allocator::{Address, ArenaVec, GetAddress, TakeIn, UnstableAddress};
-use oxc_ast::{NONE, ast::*};
+use oxc_ast::{ast::*, builder::NONE};
 use oxc_span::SPAN;
 use oxc_str::{Ident, static_ident};
 use oxc_syntax::{
@@ -854,10 +854,7 @@ impl<'a> ClassProperties<'a> {
     fn create_private_prop_key_loose(name: Ident<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         helper_call_expr(
             Helper::ClassPrivateFieldLooseKey,
-            ArenaVec::from_value_in(
-                Argument::from(Expression::new_string_literal(SPAN, name, None, ctx)),
-                ctx,
-            ),
+            ArenaVec::from_value_in(Argument::new_string_literal(SPAN, name, None, ctx), ctx),
             ctx,
         )
     }

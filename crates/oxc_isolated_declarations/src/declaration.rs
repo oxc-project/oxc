@@ -1,6 +1,6 @@
 use std::cell::Cell;
 
-use oxc_allocator::{ArenaBox, ArenaVec, CloneIn};
+use oxc_allocator::{ArenaBox, ArenaVec, CloneIn, GetAllocator};
 use oxc_ast::ast::*;
 use oxc_ast_visit::{Visit, VisitMut, walk_mut::walk_ts_signatures};
 use oxc_ecmascript::BoundNames;
@@ -74,7 +74,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         init =
                             self.transform_template_to_string(lit).map(Expression::StringLiteral);
                     } else {
-                        init = Some(init_expr.clone_in(self.ast.allocator));
+                        init = Some(init_expr.clone_in(self.allocator()));
                     }
                 } else if !decl.kind.is_const()
                     || !matches!(init_expr, Expression::TemplateLiteral(_))
@@ -90,12 +90,12 @@ impl<'a> IsolatedDeclarations<'a> {
                 }
             }
         }
-        let id = decl.id.clone_in(self.ast.allocator);
+        let id = decl.id.clone_in(self.allocator());
 
         if binding_type.is_none()
             && let Some(ts_type) = &decl.type_annotation
         {
-            binding_type = Some(ts_type.type_annotation.clone_in(self.ast.allocator));
+            binding_type = Some(ts_type.type_annotation.clone_in(self.allocator()));
         }
 
         let type_annotation =
@@ -129,11 +129,11 @@ impl<'a> IsolatedDeclarations<'a> {
         decl: &ArenaBox<'a, TSModuleDeclaration<'a>>,
     ) -> ArenaBox<'a, TSModuleDeclaration<'a>> {
         if decl.declare {
-            return decl.clone_in(self.ast.allocator);
+            return decl.clone_in(self.allocator());
         }
 
         let Some(body) = &decl.body else {
-            return decl.clone_in(self.ast.allocator);
+            return decl.clone_in(self.allocator());
         };
 
         // Follows https://github.com/microsoft/TypeScript/pull/54134
@@ -143,7 +143,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 let inner = self.transform_ts_module_declaration(inner_decl);
                 TSModuleDeclaration::boxed(
                     decl.span,
-                    decl.id.clone_in(self.ast.allocator),
+                    decl.id.clone_in(self.allocator()),
                     Some(TSModuleDeclarationBody::TSModuleDeclaration(inner)),
                     kind,
                     self.is_declare(),
@@ -154,7 +154,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 let body = self.transform_ts_module_block(block);
                 TSModuleDeclaration::boxed(
                     decl.span,
-                    decl.id.clone_in(self.ast.allocator),
+                    decl.id.clone_in(self.allocator()),
                     Some(TSModuleDeclarationBody::TSModuleBlock(body)),
                     kind,
                     self.is_declare(),
@@ -187,7 +187,7 @@ impl<'a> IsolatedDeclarations<'a> {
             }
             Declaration::TSTypeAliasDeclaration(alias_decl) => {
                 if !check_binding || self.scope.has_reference(&alias_decl.id.name) {
-                    let mut decl = decl.clone_in(self.ast.allocator);
+                    let mut decl = decl.clone_in(self.allocator());
                     self.visit_declaration(&mut decl);
                     Some(decl)
                 } else {
@@ -196,7 +196,7 @@ impl<'a> IsolatedDeclarations<'a> {
             }
             Declaration::TSInterfaceDeclaration(interface_decl) => {
                 if !check_binding || self.scope.has_reference(&interface_decl.id.name) {
-                    let mut decl = decl.clone_in(self.ast.allocator);
+                    let mut decl = decl.clone_in(self.allocator());
                     self.visit_declaration(&mut decl);
                     Some(decl)
                 } else {
@@ -226,11 +226,11 @@ impl<'a> IsolatedDeclarations<'a> {
                 }
             }
             Declaration::TSGlobalDeclaration(decl) => {
-                Some(Declaration::TSGlobalDeclaration(decl.clone_in(self.ast.allocator)))
+                Some(Declaration::TSGlobalDeclaration(decl.clone_in(self.allocator())))
             }
             Declaration::TSImportEqualsDeclaration(decl) => {
                 if !check_binding || self.scope.has_reference(&decl.id.name) {
-                    Some(Declaration::TSImportEqualsDeclaration(decl.clone_in(self.ast.allocator)))
+                    Some(Declaration::TSImportEqualsDeclaration(decl.clone_in(self.allocator())))
                 } else {
                     None
                 }

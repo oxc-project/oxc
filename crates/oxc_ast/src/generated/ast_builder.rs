@@ -4,15 +4,15 @@
 //! AST node factories
 
 #![allow(unused_imports)]
-#![expect(clippy::default_trait_access, clippy::unused_self)]
+#![expect(deprecated, clippy::default_trait_access, clippy::unused_self)]
 
 use std::cell::Cell;
 
-use oxc_allocator::{Allocator, ArenaBox, ArenaVec, IntoIn};
+use oxc_allocator::{Allocator, ArenaBox, ArenaVec, GetAllocator, IntoIn};
 use oxc_str::{Ident, Str};
 use oxc_syntax::{reference::ReferenceId, scope::ScopeId, symbol::SymbolId};
 
-use crate::{AstBuilder, ast::*};
+use crate::{ast::*, builder::AstBuilder};
 
 impl<'a> AstBuilder<'a> {
     /// Build a [`Program`].
@@ -25,6 +25,9 @@ impl<'a> AstBuilder<'a> {
     /// * `hashbang`
     /// * `directives`
     /// * `body`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn program(
         self,
@@ -60,6 +63,9 @@ impl<'a> AstBuilder<'a> {
     /// * `directives`
     /// * `body`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn program_with_scope_id(
         self,
@@ -92,6 +98,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code.
     /// * `value`: The boolean value itself
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_boolean_literal(self, span: Span, value: bool) -> Expression<'a> {
         Expression::BooleanLiteral(self.alloc_boolean_literal(span, value))
@@ -103,6 +112,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: Node location in source code.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_null_literal(self, span: Span) -> Expression<'a> {
         Expression::NullLiteral(self.alloc_null_literal(span))
@@ -117,6 +129,9 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: The value of the number, converted into base 10
     /// * `raw`: The number as it appears in source code
     /// * `base`: The base representation used by the literal in source code
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_numeric_literal(
         self,
@@ -137,6 +152,9 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: Bigint value in base 10 with no underscores
     /// * `raw`: The bigint as it appears in source code
     /// * `base`: The base representation used by the literal in source code
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_big_int_literal<S1>(
         self,
@@ -159,6 +177,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code.
     /// * `regex`: The parsed regular expression. See [`oxc_regular_expression`] for more
     /// * `raw`: The regular expression as it appears in source code
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_reg_exp_literal(
         self,
@@ -177,6 +198,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_string_literal<S1>(
         self,
@@ -199,6 +223,9 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
     /// * `lone_surrogates`: The string value contains lone surrogates.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_string_literal_with_lone_surrogates<S1>(
         self,
@@ -226,6 +253,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `quasis`
     /// * `expressions`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_template_literal(
         self,
@@ -243,6 +273,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The name of the identifier being referenced.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_identifier<S1>(self, span: Span, name: S1) -> Expression<'a>
     where
@@ -259,6 +292,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The name of the identifier being referenced.
     /// * `reference_id`: Reference ID
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_identifier_with_reference_id<S1>(
         self,
@@ -284,6 +320,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `meta`
     /// * `property`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_meta_property(
         self,
@@ -300,6 +339,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_super(self, span: Span) -> Expression<'a> {
         Expression::Super(self.alloc_super(span))
@@ -312,6 +354,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `elements`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_array(
         self,
@@ -333,6 +378,9 @@ impl<'a> AstBuilder<'a> {
     /// * `params`
     /// * `return_type`
     /// * `body`: See `expression` for whether this arrow expression returns an expression.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_arrow_function<T1, T2, T3, T4>(
         self,
@@ -376,6 +424,9 @@ impl<'a> AstBuilder<'a> {
     /// * `scope_id`
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_arrow_function_with_scope_id_and_pure_and_pife<T1, T2, T3, T4>(
         self,
@@ -421,6 +472,9 @@ impl<'a> AstBuilder<'a> {
     /// * `operator`
     /// * `left`
     /// * `right`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_assignment(
         self,
@@ -441,6 +495,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `argument`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_await(self, span: Span, argument: Expression<'a>) -> Expression<'a> {
         Expression::AwaitExpression(self.alloc_await_expression(span, argument))
@@ -455,6 +512,9 @@ impl<'a> AstBuilder<'a> {
     /// * `left`
     /// * `operator`
     /// * `right`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_binary(
         self,
@@ -476,6 +536,9 @@ impl<'a> AstBuilder<'a> {
     /// * `type_arguments`
     /// * `arguments`
     /// * `optional`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_call<T1>(
         self,
@@ -508,6 +571,9 @@ impl<'a> AstBuilder<'a> {
     /// * `arguments`
     /// * `optional`
     /// * `pure`: `true` if the call expression is marked with a `/* @__PURE__ */` comment
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_call_with_pure<T1>(
         self,
@@ -538,6 +604,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expression`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_chain(self, span: Span, expression: ChainElement<'a>) -> Expression<'a> {
         Expression::ChainExpression(self.alloc_chain_expression(span, expression))
@@ -559,6 +628,9 @@ impl<'a> AstBuilder<'a> {
     /// * `body`
     /// * `abstract`: Whether the class is abstract
     /// * `declare`: Whether the class was `declare`ed
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_class<T1, T2, T3>(
         self,
@@ -611,6 +683,9 @@ impl<'a> AstBuilder<'a> {
     /// * `abstract`: Whether the class is abstract
     /// * `declare`: Whether the class was `declare`ed
     /// * `scope_id`: Id of the scope created by the [`Class`], including type parameters and
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_class_with_scope_id<T1, T2, T3>(
         self,
@@ -657,6 +732,9 @@ impl<'a> AstBuilder<'a> {
     /// * `test`
     /// * `consequent`
     /// * `alternate`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_conditional(
         self,
@@ -686,6 +764,9 @@ impl<'a> AstBuilder<'a> {
     /// * `params`: Function parameters.
     /// * `return_type`: The TypeScript return type annotation.
     /// * `body`: The function body.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_function<T1, T2, T3, T4, T5>(
         self,
@@ -742,6 +823,9 @@ impl<'a> AstBuilder<'a> {
     /// * `scope_id`
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_function_with_scope_id_and_pure_and_pife<T1, T2, T3, T4, T5>(
         self,
@@ -794,6 +878,9 @@ impl<'a> AstBuilder<'a> {
     /// * `source`
     /// * `options`
     /// * `phase`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_import(
         self,
@@ -814,6 +901,9 @@ impl<'a> AstBuilder<'a> {
     /// * `left`
     /// * `operator`
     /// * `right`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_logical(
         self,
@@ -834,6 +924,9 @@ impl<'a> AstBuilder<'a> {
     /// * `callee`
     /// * `type_arguments`
     /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_new<T1>(
         self,
@@ -863,6 +956,9 @@ impl<'a> AstBuilder<'a> {
     /// * `type_arguments`
     /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     /// * `pure`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_new_with_pure<T1>(
         self,
@@ -891,6 +987,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `properties`: Properties declared in the object
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_object(
         self,
@@ -907,6 +1006,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expression`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_parenthesized(
         self,
@@ -923,6 +1025,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expressions`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_sequence(
         self,
@@ -941,6 +1046,9 @@ impl<'a> AstBuilder<'a> {
     /// * `tag`
     /// * `type_arguments`
     /// * `quasi`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_tagged_template<T1>(
         self,
@@ -966,6 +1074,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_this(self, span: Span) -> Expression<'a> {
         Expression::ThisExpression(self.alloc_this_expression(span))
@@ -979,6 +1090,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `operator`
     /// * `argument`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_unary(
         self,
@@ -998,6 +1112,9 @@ impl<'a> AstBuilder<'a> {
     /// * `operator`
     /// * `prefix`
     /// * `argument`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_update(
         self,
@@ -1017,6 +1134,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `delegate`
     /// * `argument`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_yield(
         self,
@@ -1035,6 +1155,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `left`
     /// * `right`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_private_in(
         self,
@@ -1054,6 +1177,9 @@ impl<'a> AstBuilder<'a> {
     /// * `opening_element`: Opening tag of the element.
     /// * `children`: Children of the element.
     /// * `closing_element`: Closing tag of the element.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_jsx_element<T1, T2>(
         self,
@@ -1083,6 +1209,9 @@ impl<'a> AstBuilder<'a> {
     /// * `opening_fragment`: `<>`
     /// * `children`: Elements inside the fragment.
     /// * `closing_fragment`: `</>`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_jsx_fragment(
         self,
@@ -1107,6 +1236,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `expression`
     /// * `type_annotation`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_ts_as(
         self,
@@ -1125,6 +1257,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `expression`: The value expression being constrained.
     /// * `type_annotation`: The type `expression` must satisfy.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_ts_satisfies(
         self,
@@ -1147,6 +1282,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `type_annotation`
     /// * `expression`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_ts_type_assertion(
         self,
@@ -1164,6 +1302,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expression`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_ts_non_null(self, span: Span, expression: Expression<'a>) -> Expression<'a> {
         Expression::TSNonNullExpression(self.alloc_ts_non_null_expression(span, expression))
@@ -1177,6 +1318,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `expression`
     /// * `type_arguments`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_ts_instantiation<T1>(
         self,
@@ -1202,6 +1346,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`
     /// * `arguments`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_v8_intrinsic(
         self,
@@ -1220,6 +1367,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `name`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn identifier_name<S1>(self, span: Span, name: S1) -> IdentifierName<'a>
     where
@@ -1236,6 +1386,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `name`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_identifier_name<S1>(self, span: Span, name: S1) -> ArenaBox<'a, IdentifierName<'a>>
     where
@@ -1252,6 +1405,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The name of the identifier being referenced.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn identifier_reference<S1>(self, span: Span, name: S1) -> IdentifierReference<'a>
     where
@@ -1273,6 +1429,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The name of the identifier being referenced.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_identifier_reference<S1>(
         self,
@@ -1294,6 +1453,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The name of the identifier being referenced.
     /// * `reference_id`: Reference ID
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn identifier_reference_with_reference_id<S1>(
         self,
@@ -1321,6 +1483,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The name of the identifier being referenced.
     /// * `reference_id`: Reference ID
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_identifier_reference_with_reference_id<S1>(
         self,
@@ -1345,6 +1510,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The identifier name being bound.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn binding_identifier<S1>(self, span: Span, name: S1) -> BindingIdentifier<'a>
     where
@@ -1366,6 +1534,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The identifier name being bound.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_binding_identifier<S1>(
         self,
@@ -1387,6 +1558,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The identifier name being bound.
     /// * `symbol_id`: Unique identifier for this binding.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn binding_identifier_with_symbol_id<S1>(
         self,
@@ -1414,6 +1588,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The identifier name being bound.
     /// * `symbol_id`: Unique identifier for this binding.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_binding_identifier_with_symbol_id<S1>(
         self,
@@ -1432,6 +1609,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `name`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn label_identifier<S1>(self, span: Span, name: S1) -> LabelIdentifier<'a>
     where
@@ -1447,6 +1627,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn this_expression(self, span: Span) -> ThisExpression {
         ThisExpression { node_id: Default::default(), span }
@@ -1459,6 +1642,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_this_expression(self, span: Span) -> ArenaBox<'a, ThisExpression> {
         ArenaBox::new_in(self.this_expression(span), &self)
@@ -1472,6 +1658,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `elements`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn array_expression(
         self,
@@ -1489,6 +1678,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `elements`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_array_expression(
         self,
@@ -1505,6 +1697,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `argument`: The expression being spread.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn array_expression_element_spread_element(
         self,
@@ -1520,6 +1715,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn array_expression_element_elision(self, span: Span) -> ArrayExpressionElement<'a> {
         ArrayExpressionElement::Elision(self.alloc_elision(span))
@@ -1532,6 +1730,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn elision(self, span: Span) -> Elision {
         Elision { node_id: Default::default(), span }
@@ -1544,6 +1745,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_elision(self, span: Span) -> ArenaBox<'a, Elision> {
         ArenaBox::new_in(self.elision(span), &self)
@@ -1557,6 +1761,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `properties`: Properties declared in the object
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn object_expression(
         self,
@@ -1574,6 +1781,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `properties`: Properties declared in the object
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_object_expression(
         self,
@@ -1595,6 +1805,9 @@ impl<'a> AstBuilder<'a> {
     /// * `method`
     /// * `shorthand`
     /// * `computed`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn object_property_kind_object_property(
         self,
@@ -1618,6 +1831,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `argument`: The expression being spread.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn object_property_kind_spread_property(
         self,
@@ -1640,6 +1856,9 @@ impl<'a> AstBuilder<'a> {
     /// * `method`
     /// * `shorthand`
     /// * `computed`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn object_property(
         self,
@@ -1676,6 +1895,9 @@ impl<'a> AstBuilder<'a> {
     /// * `method`
     /// * `shorthand`
     /// * `computed`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_object_property(
         self,
@@ -1700,6 +1922,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `name`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn property_key_static_identifier<S1>(self, span: Span, name: S1) -> PropertyKey<'a>
     where
@@ -1715,6 +1940,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `name`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn property_key_private_identifier<S1>(self, span: Span, name: S1) -> PropertyKey<'a>
     where
@@ -1732,6 +1960,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `quasis`
     /// * `expressions`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn template_literal(
         self,
@@ -1751,6 +1982,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `quasis`
     /// * `expressions`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_template_literal(
         self,
@@ -1771,6 +2005,9 @@ impl<'a> AstBuilder<'a> {
     /// * `tag`
     /// * `type_arguments`
     /// * `quasi`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn tagged_template_expression<T1>(
         self,
@@ -1786,7 +2023,7 @@ impl<'a> AstBuilder<'a> {
             node_id: Default::default(),
             span,
             tag,
-            type_arguments: type_arguments.into_in(self.allocator),
+            type_arguments: type_arguments.into_in(self.allocator()),
             quasi,
         }
     }
@@ -1801,6 +2038,9 @@ impl<'a> AstBuilder<'a> {
     /// * `tag`
     /// * `type_arguments`
     /// * `quasi`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_tagged_template_expression<T1>(
         self,
@@ -1821,6 +2061,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `value`
     /// * `tail`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn template_element(
         self,
@@ -1844,6 +2087,9 @@ impl<'a> AstBuilder<'a> {
     /// * `value`
     /// * `tail`
     /// * `lone_surrogates`: The template element contains lone surrogates.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn template_element_with_lone_surrogates(
         self,
@@ -1864,6 +2110,9 @@ impl<'a> AstBuilder<'a> {
     /// * `object`
     /// * `expression`
     /// * `optional`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn member_expression_computed(
         self,
@@ -1886,6 +2135,9 @@ impl<'a> AstBuilder<'a> {
     /// * `object`
     /// * `property`
     /// * `optional`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn member_expression_static(
         self,
@@ -1908,6 +2160,9 @@ impl<'a> AstBuilder<'a> {
     /// * `object`
     /// * `field`
     /// * `optional`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn member_expression_private_field_expression(
         self,
@@ -1931,6 +2186,9 @@ impl<'a> AstBuilder<'a> {
     /// * `object`
     /// * `expression`
     /// * `optional`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn computed_member_expression(
         self,
@@ -1952,6 +2210,9 @@ impl<'a> AstBuilder<'a> {
     /// * `object`
     /// * `expression`
     /// * `optional`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_computed_member_expression(
         self,
@@ -1973,6 +2234,9 @@ impl<'a> AstBuilder<'a> {
     /// * `object`
     /// * `property`
     /// * `optional`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn static_member_expression(
         self,
@@ -1994,6 +2258,9 @@ impl<'a> AstBuilder<'a> {
     /// * `object`
     /// * `property`
     /// * `optional`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_static_member_expression(
         self,
@@ -2015,6 +2282,9 @@ impl<'a> AstBuilder<'a> {
     /// * `object`
     /// * `field`
     /// * `optional`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn private_field_expression(
         self,
@@ -2036,6 +2306,9 @@ impl<'a> AstBuilder<'a> {
     /// * `object`
     /// * `field`
     /// * `optional`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_private_field_expression(
         self,
@@ -2058,6 +2331,9 @@ impl<'a> AstBuilder<'a> {
     /// * `type_arguments`
     /// * `arguments`
     /// * `optional`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn call_expression<T1>(
         self,
@@ -2074,7 +2350,7 @@ impl<'a> AstBuilder<'a> {
             node_id: Default::default(),
             span,
             callee,
-            type_arguments: type_arguments.into_in(self.allocator),
+            type_arguments: type_arguments.into_in(self.allocator()),
             arguments,
             optional,
             pure: Default::default(),
@@ -2092,6 +2368,9 @@ impl<'a> AstBuilder<'a> {
     /// * `type_arguments`
     /// * `arguments`
     /// * `optional`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_call_expression<T1>(
         self,
@@ -2122,6 +2401,9 @@ impl<'a> AstBuilder<'a> {
     /// * `arguments`
     /// * `optional`
     /// * `pure`: `true` if the call expression is marked with a `/* @__PURE__ */` comment
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn call_expression_with_pure<T1>(
         self,
@@ -2139,7 +2421,7 @@ impl<'a> AstBuilder<'a> {
             node_id: Default::default(),
             span,
             callee,
-            type_arguments: type_arguments.into_in(self.allocator),
+            type_arguments: type_arguments.into_in(self.allocator()),
             arguments,
             optional,
             pure,
@@ -2158,6 +2440,9 @@ impl<'a> AstBuilder<'a> {
     /// * `arguments`
     /// * `optional`
     /// * `pure`: `true` if the call expression is marked with a `/* @__PURE__ */` comment
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_call_expression_with_pure<T1>(
         self,
@@ -2187,6 +2472,9 @@ impl<'a> AstBuilder<'a> {
     /// * `callee`
     /// * `type_arguments`
     /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn new_expression<T1>(
         self,
@@ -2202,7 +2490,7 @@ impl<'a> AstBuilder<'a> {
             node_id: Default::default(),
             span,
             callee,
-            type_arguments: type_arguments.into_in(self.allocator),
+            type_arguments: type_arguments.into_in(self.allocator()),
             arguments,
             pure: Default::default(),
         }
@@ -2218,6 +2506,9 @@ impl<'a> AstBuilder<'a> {
     /// * `callee`
     /// * `type_arguments`
     /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_new_expression<T1>(
         self,
@@ -2243,6 +2534,9 @@ impl<'a> AstBuilder<'a> {
     /// * `type_arguments`
     /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     /// * `pure`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn new_expression_with_pure<T1>(
         self,
@@ -2259,7 +2553,7 @@ impl<'a> AstBuilder<'a> {
             node_id: Default::default(),
             span,
             callee,
-            type_arguments: type_arguments.into_in(self.allocator),
+            type_arguments: type_arguments.into_in(self.allocator()),
             arguments,
             pure,
         }
@@ -2276,6 +2570,9 @@ impl<'a> AstBuilder<'a> {
     /// * `type_arguments`
     /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     /// * `pure`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_new_expression_with_pure<T1>(
         self,
@@ -2303,6 +2600,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `meta`
     /// * `property`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn meta_property(
         self,
@@ -2322,6 +2622,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `meta`
     /// * `property`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_meta_property(
         self,
@@ -2340,6 +2643,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `argument`: The expression being spread.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn spread_element(self, span: Span, argument: Expression<'a>) -> SpreadElement<'a> {
         SpreadElement { node_id: Default::default(), span, argument }
@@ -2353,6 +2659,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `argument`: The expression being spread.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_spread_element(
         self,
@@ -2369,6 +2678,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `argument`: The expression being spread.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn argument_spread_element(self, span: Span, argument: Expression<'a>) -> Argument<'a> {
         Argument::SpreadElement(self.alloc_spread_element(span, argument))
@@ -2384,6 +2696,9 @@ impl<'a> AstBuilder<'a> {
     /// * `operator`
     /// * `prefix`
     /// * `argument`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn update_expression(
         self,
@@ -2405,6 +2720,9 @@ impl<'a> AstBuilder<'a> {
     /// * `operator`
     /// * `prefix`
     /// * `argument`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_update_expression(
         self,
@@ -2425,6 +2743,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `operator`
     /// * `argument`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn unary_expression(
         self,
@@ -2444,6 +2765,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `operator`
     /// * `argument`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_unary_expression(
         self,
@@ -2464,6 +2788,9 @@ impl<'a> AstBuilder<'a> {
     /// * `left`
     /// * `operator`
     /// * `right`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn binary_expression(
         self,
@@ -2485,6 +2812,9 @@ impl<'a> AstBuilder<'a> {
     /// * `left`
     /// * `operator`
     /// * `right`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_binary_expression(
         self,
@@ -2505,6 +2835,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `left`
     /// * `right`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn private_in_expression(
         self,
@@ -2524,6 +2857,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `left`
     /// * `right`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_private_in_expression(
         self,
@@ -2544,6 +2880,9 @@ impl<'a> AstBuilder<'a> {
     /// * `left`
     /// * `operator`
     /// * `right`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn logical_expression(
         self,
@@ -2565,6 +2904,9 @@ impl<'a> AstBuilder<'a> {
     /// * `left`
     /// * `operator`
     /// * `right`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_logical_expression(
         self,
@@ -2586,6 +2928,9 @@ impl<'a> AstBuilder<'a> {
     /// * `test`
     /// * `consequent`
     /// * `alternate`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn conditional_expression(
         self,
@@ -2607,6 +2952,9 @@ impl<'a> AstBuilder<'a> {
     /// * `test`
     /// * `consequent`
     /// * `alternate`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_conditional_expression(
         self,
@@ -2628,6 +2976,9 @@ impl<'a> AstBuilder<'a> {
     /// * `operator`
     /// * `left`
     /// * `right`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn assignment_expression(
         self,
@@ -2649,6 +3000,9 @@ impl<'a> AstBuilder<'a> {
     /// * `operator`
     /// * `left`
     /// * `right`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_assignment_expression(
         self,
@@ -2667,6 +3021,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The name of the identifier being referenced.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn simple_assignment_target_assignment_target_identifier<S1>(
         self,
@@ -2689,6 +3046,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The name of the identifier being referenced.
     /// * `reference_id`: Reference ID
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn simple_assignment_target_assignment_target_identifier_with_reference_id<S1>(
         self,
@@ -2712,6 +3072,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `expression`
     /// * `type_annotation`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn simple_assignment_target_ts_as_expression(
         self,
@@ -2734,6 +3097,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `expression`: The value expression being constrained.
     /// * `type_annotation`: The type `expression` must satisfy.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn simple_assignment_target_ts_satisfies_expression(
         self,
@@ -2755,6 +3121,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expression`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn simple_assignment_target_ts_non_null_expression(
         self,
@@ -2774,6 +3143,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `type_annotation`
     /// * `expression`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn simple_assignment_target_ts_type_assertion(
         self,
@@ -2796,6 +3168,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `elements`
     /// * `rest`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn assignment_target_pattern_array_assignment_target<T1>(
         self,
@@ -2819,6 +3194,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `properties`
     /// * `rest`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn assignment_target_pattern_object_assignment_target<T1>(
         self,
@@ -2843,6 +3221,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `elements`
     /// * `rest`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn array_assignment_target<T1>(
         self,
@@ -2857,7 +3238,7 @@ impl<'a> AstBuilder<'a> {
             node_id: Default::default(),
             span,
             elements,
-            rest: rest.into_in(self.allocator),
+            rest: rest.into_in(self.allocator()),
         }
     }
 
@@ -2870,6 +3251,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `elements`
     /// * `rest`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_array_assignment_target<T1>(
         self,
@@ -2892,6 +3276,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `properties`
     /// * `rest`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn object_assignment_target<T1>(
         self,
@@ -2906,7 +3293,7 @@ impl<'a> AstBuilder<'a> {
             node_id: Default::default(),
             span,
             properties,
-            rest: rest.into_in(self.allocator),
+            rest: rest.into_in(self.allocator()),
         }
     }
 
@@ -2919,6 +3306,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `properties`
     /// * `rest`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_object_assignment_target<T1>(
         self,
@@ -2940,6 +3330,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `target`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn assignment_target_rest(
         self,
@@ -2957,6 +3350,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `target`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_assignment_target_rest(
         self,
@@ -2974,6 +3370,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `binding`
     /// * `init`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn assignment_target_maybe_default_assignment_target_with_default(
         self,
@@ -2995,6 +3394,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `binding`
     /// * `init`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn assignment_target_with_default(
         self,
@@ -3014,6 +3416,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `binding`
     /// * `init`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_assignment_target_with_default(
         self,
@@ -3032,6 +3437,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `binding`
     /// * `init`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn assignment_target_property_assignment_target_property_identifier(
         self,
@@ -3053,6 +3461,9 @@ impl<'a> AstBuilder<'a> {
     /// * `name`: The property key
     /// * `binding`: The binding part of the property
     /// * `computed`: Property was declared with a computed key
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn assignment_target_property_assignment_target_property_property(
         self,
@@ -3075,6 +3486,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `binding`
     /// * `init`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn assignment_target_property_identifier(
         self,
@@ -3094,6 +3508,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `binding`
     /// * `init`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_assignment_target_property_identifier(
         self,
@@ -3114,6 +3531,9 @@ impl<'a> AstBuilder<'a> {
     /// * `name`: The property key
     /// * `binding`: The binding part of the property
     /// * `computed`: Property was declared with a computed key
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn assignment_target_property_property(
         self,
@@ -3141,6 +3561,9 @@ impl<'a> AstBuilder<'a> {
     /// * `name`: The property key
     /// * `binding`: The binding part of the property
     /// * `computed`: Property was declared with a computed key
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_assignment_target_property_property(
         self,
@@ -3163,6 +3586,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expressions`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn sequence_expression(
         self,
@@ -3180,6 +3606,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expressions`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_sequence_expression(
         self,
@@ -3196,6 +3625,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn super_(self, span: Span) -> Super {
         Super { node_id: Default::default(), span }
@@ -3208,6 +3640,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_super(self, span: Span) -> ArenaBox<'a, Super> {
         ArenaBox::new_in(self.super_(span), &self)
@@ -3221,6 +3656,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `argument`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn await_expression(self, span: Span, argument: Expression<'a>) -> AwaitExpression<'a> {
         AwaitExpression { node_id: Default::default(), span, argument }
@@ -3234,6 +3672,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `argument`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_await_expression(
         self,
@@ -3251,6 +3692,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expression`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn chain_expression(self, span: Span, expression: ChainElement<'a>) -> ChainExpression<'a> {
         ChainExpression { node_id: Default::default(), span, expression }
@@ -3264,6 +3708,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expression`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_chain_expression(
         self,
@@ -3283,6 +3730,9 @@ impl<'a> AstBuilder<'a> {
     /// * `type_arguments`
     /// * `arguments`
     /// * `optional`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn chain_element_call_expression<T1>(
         self,
@@ -3315,6 +3765,9 @@ impl<'a> AstBuilder<'a> {
     /// * `arguments`
     /// * `optional`
     /// * `pure`: `true` if the call expression is marked with a `/* @__PURE__ */` comment
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn chain_element_call_expression_with_pure<T1>(
         self,
@@ -3345,6 +3798,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expression`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn chain_element_ts_non_null_expression(
         self,
@@ -3362,6 +3818,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expression`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn parenthesized_expression(
         self,
@@ -3379,6 +3838,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expression`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_parenthesized_expression(
         self,
@@ -3395,6 +3857,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `body`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn statement_block(self, span: Span, body: ArenaVec<'a, Statement<'a>>) -> Statement<'a> {
         Statement::BlockStatement(self.alloc_block_statement(span, body))
@@ -3408,6 +3873,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `body`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn statement_block_with_scope_id(
         self,
@@ -3425,6 +3893,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `label`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn statement_break(self, span: Span, label: Option<LabelIdentifier<'a>>) -> Statement<'a> {
         Statement::BreakStatement(self.alloc_break_statement(span, label))
@@ -3437,6 +3908,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `label`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn statement_continue(
         self,
@@ -3452,6 +3926,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn statement_debugger(self, span: Span) -> Statement<'a> {
         Statement::DebuggerStatement(self.alloc_debugger_statement(span))
@@ -3465,6 +3942,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `body`
     /// * `test`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn statement_do_while(
         self,
@@ -3481,6 +3961,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn statement_empty(self, span: Span) -> Statement<'a> {
         Statement::EmptyStatement(self.alloc_empty_statement(span))
@@ -3493,6 +3976,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expression`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn statement_expression(self, span: Span, expression: Expression<'a>) -> Statement<'a> {
         Statement::ExpressionStatement(self.alloc_expression_statement(span, expression))
@@ -3507,6 +3993,9 @@ impl<'a> AstBuilder<'a> {
     /// * `left`
     /// * `right`
     /// * `body`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn statement_for_in(
         self,
@@ -3528,6 +4017,9 @@ impl<'a> AstBuilder<'a> {
     /// * `right`
     /// * `body`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn statement_for_in_with_scope_id(
         self,
@@ -3552,6 +4044,9 @@ impl<'a> AstBuilder<'a> {
     /// * `left`
     /// * `right`
     /// * `body`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn statement_for_of(
         self,
@@ -3575,6 +4070,9 @@ impl<'a> AstBuilder<'a> {
     /// * `right`
     /// * `body`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn statement_for_of_with_scope_id(
         self,
@@ -3600,6 +4098,9 @@ impl<'a> AstBuilder<'a> {
     /// * `test`
     /// * `update`
     /// * `body`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn statement_for(
         self,
@@ -3623,6 +4124,9 @@ impl<'a> AstBuilder<'a> {
     /// * `update`
     /// * `body`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn statement_for_with_scope_id(
         self,
@@ -3647,6 +4151,9 @@ impl<'a> AstBuilder<'a> {
     /// * `test`
     /// * `consequent`
     /// * `alternate`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn statement_if(
         self,
@@ -3666,6 +4173,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `label`
     /// * `body`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn statement_labeled(
         self,
@@ -3683,6 +4193,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `argument`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn statement_return(self, span: Span, argument: Option<Expression<'a>>) -> Statement<'a> {
         Statement::ReturnStatement(self.alloc_return_statement(span, argument))
@@ -3696,6 +4209,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `discriminant`
     /// * `cases`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn statement_switch(
         self,
@@ -3715,6 +4231,9 @@ impl<'a> AstBuilder<'a> {
     /// * `discriminant`
     /// * `cases`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn statement_switch_with_scope_id(
         self,
@@ -3738,6 +4257,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `argument`: The expression being thrown, e.g. `err` in `throw err;`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn statement_throw(self, span: Span, argument: Expression<'a>) -> Statement<'a> {
         Statement::ThrowStatement(self.alloc_throw_statement(span, argument))
@@ -3752,6 +4274,9 @@ impl<'a> AstBuilder<'a> {
     /// * `block`: Statements in the `try` block
     /// * `handler`: The `catch` clause, including the parameter and the block statement
     /// * `finalizer`: The `finally` clause
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn statement_try<T1, T2, T3>(
         self,
@@ -3776,6 +4301,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `test`
     /// * `body`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn statement_while(
         self,
@@ -3794,6 +4322,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `object`
     /// * `body`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn statement_with(
         self,
@@ -3813,6 +4344,9 @@ impl<'a> AstBuilder<'a> {
     /// * `object`
     /// * `body`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn statement_with_with_scope_id(
         self,
@@ -3832,6 +4366,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `expression`: Directive with any escapes unescaped
     /// * `directive`: Raw content of directive as it appears in source, any escapes left as is
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn directive<S1>(
         self,
@@ -3850,6 +4387,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `value`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn hashbang<S1>(self, span: Span, value: S1) -> Hashbang<'a>
     where
@@ -3866,6 +4406,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `body`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn block_statement(
         self,
@@ -3883,6 +4426,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `body`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_block_statement(
         self,
@@ -3901,6 +4447,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `body`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn block_statement_with_scope_id(
         self,
@@ -3925,6 +4474,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `body`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_block_statement_with_scope_id(
         self,
@@ -3944,6 +4496,9 @@ impl<'a> AstBuilder<'a> {
     /// * `kind`
     /// * `declarations`
     /// * `declare`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn declaration_variable(
         self,
@@ -3976,6 +4531,9 @@ impl<'a> AstBuilder<'a> {
     /// * `params`: Function parameters.
     /// * `return_type`: The TypeScript return type annotation.
     /// * `body`: The function body.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn declaration_function<T1, T2, T3, T4, T5>(
         self,
@@ -4032,6 +4590,9 @@ impl<'a> AstBuilder<'a> {
     /// * `scope_id`
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn declaration_function_with_scope_id_and_pure_and_pife<T1, T2, T3, T4, T5>(
         self,
@@ -4091,6 +4652,9 @@ impl<'a> AstBuilder<'a> {
     /// * `body`
     /// * `abstract`: Whether the class is abstract
     /// * `declare`: Whether the class was `declare`ed
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn declaration_class<T1, T2, T3>(
         self,
@@ -4143,6 +4707,9 @@ impl<'a> AstBuilder<'a> {
     /// * `abstract`: Whether the class is abstract
     /// * `declare`: Whether the class was `declare`ed
     /// * `scope_id`: Id of the scope created by the [`Class`], including type parameters and
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn declaration_class_with_scope_id<T1, T2, T3>(
         self,
@@ -4190,6 +4757,9 @@ impl<'a> AstBuilder<'a> {
     /// * `type_parameters`
     /// * `type_annotation`
     /// * `declare`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn declaration_ts_type_alias<T1>(
         self,
@@ -4222,6 +4792,9 @@ impl<'a> AstBuilder<'a> {
     /// * `type_annotation`
     /// * `declare`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn declaration_ts_type_alias_with_scope_id<T1>(
         self,
@@ -4256,6 +4829,9 @@ impl<'a> AstBuilder<'a> {
     /// * `extends`: Other interfaces/types this interface extends.
     /// * `body`
     /// * `declare`: `true` for `declare interface Foo {}`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn declaration_ts_interface<T1, T2>(
         self,
@@ -4292,6 +4868,9 @@ impl<'a> AstBuilder<'a> {
     /// * `body`
     /// * `declare`: `true` for `declare interface Foo {}`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn declaration_ts_interface_with_scope_id<T1, T2>(
         self,
@@ -4328,6 +4907,9 @@ impl<'a> AstBuilder<'a> {
     /// * `body`
     /// * `const`: `true` for const enums
     /// * `declare`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn declaration_ts_enum(
         self,
@@ -4352,6 +4934,9 @@ impl<'a> AstBuilder<'a> {
     /// * `body`
     /// * `kind`: The keyword used to define this module declaration.
     /// * `declare`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn declaration_ts_module(
         self,
@@ -4377,6 +4962,9 @@ impl<'a> AstBuilder<'a> {
     /// * `kind`: The keyword used to define this module declaration.
     /// * `declare`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn declaration_ts_module_with_scope_id(
         self,
@@ -4401,6 +4989,9 @@ impl<'a> AstBuilder<'a> {
     /// * `global_span`: Span of `global` keyword
     /// * `body`
     /// * `declare`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn declaration_ts_global(
         self,
@@ -4427,6 +5018,9 @@ impl<'a> AstBuilder<'a> {
     /// * `body`
     /// * `declare`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn declaration_ts_global_with_scope_id(
         self,
@@ -4454,6 +5048,9 @@ impl<'a> AstBuilder<'a> {
     /// * `id`
     /// * `module_reference`
     /// * `import_kind`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn declaration_ts_import_equals(
         self,
@@ -4480,6 +5077,9 @@ impl<'a> AstBuilder<'a> {
     /// * `kind`
     /// * `declarations`
     /// * `declare`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn variable_declaration(
         self,
@@ -4501,6 +5101,9 @@ impl<'a> AstBuilder<'a> {
     /// * `kind`
     /// * `declarations`
     /// * `declare`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_variable_declaration(
         self,
@@ -4521,6 +5124,9 @@ impl<'a> AstBuilder<'a> {
     /// * `type_annotation`
     /// * `init`
     /// * `definite`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn variable_declarator<T1>(
         self,
@@ -4539,7 +5145,7 @@ impl<'a> AstBuilder<'a> {
             span,
             kind,
             id,
-            type_annotation: type_annotation.into_in(self.allocator),
+            type_annotation: type_annotation.into_in(self.allocator()),
             init,
             definite,
         }
@@ -4552,6 +5158,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn empty_statement(self, span: Span) -> EmptyStatement {
         EmptyStatement { node_id: Default::default(), span }
@@ -4564,6 +5173,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_empty_statement(self, span: Span) -> ArenaBox<'a, EmptyStatement> {
         ArenaBox::new_in(self.empty_statement(span), &self)
@@ -4577,6 +5189,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expression`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn expression_statement(
         self,
@@ -4594,6 +5209,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expression`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_expression_statement(
         self,
@@ -4613,6 +5231,9 @@ impl<'a> AstBuilder<'a> {
     /// * `test`
     /// * `consequent`
     /// * `alternate`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn if_statement(
         self,
@@ -4634,6 +5255,9 @@ impl<'a> AstBuilder<'a> {
     /// * `test`
     /// * `consequent`
     /// * `alternate`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_if_statement(
         self,
@@ -4654,6 +5278,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `body`
     /// * `test`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn do_while_statement(
         self,
@@ -4673,6 +5300,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `body`
     /// * `test`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_do_while_statement(
         self,
@@ -4692,6 +5322,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `test`
     /// * `body`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn while_statement(
         self,
@@ -4711,6 +5344,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `test`
     /// * `body`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_while_statement(
         self,
@@ -4732,6 +5368,9 @@ impl<'a> AstBuilder<'a> {
     /// * `test`
     /// * `update`
     /// * `body`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn for_statement(
         self,
@@ -4763,6 +5402,9 @@ impl<'a> AstBuilder<'a> {
     /// * `test`
     /// * `update`
     /// * `body`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_for_statement(
         self,
@@ -4787,6 +5429,9 @@ impl<'a> AstBuilder<'a> {
     /// * `update`
     /// * `body`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn for_statement_with_scope_id(
         self,
@@ -4820,6 +5465,9 @@ impl<'a> AstBuilder<'a> {
     /// * `update`
     /// * `body`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_for_statement_with_scope_id(
         self,
@@ -4845,6 +5493,9 @@ impl<'a> AstBuilder<'a> {
     /// * `kind`
     /// * `declarations`
     /// * `declare`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn for_statement_init_variable_declaration(
         self,
@@ -4871,6 +5522,9 @@ impl<'a> AstBuilder<'a> {
     /// * `left`
     /// * `right`
     /// * `body`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn for_in_statement(
         self,
@@ -4899,6 +5553,9 @@ impl<'a> AstBuilder<'a> {
     /// * `left`
     /// * `right`
     /// * `body`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_for_in_statement(
         self,
@@ -4921,6 +5578,9 @@ impl<'a> AstBuilder<'a> {
     /// * `right`
     /// * `body`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn for_in_statement_with_scope_id(
         self,
@@ -4951,6 +5611,9 @@ impl<'a> AstBuilder<'a> {
     /// * `right`
     /// * `body`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_for_in_statement_with_scope_id(
         self,
@@ -4975,6 +5638,9 @@ impl<'a> AstBuilder<'a> {
     /// * `kind`
     /// * `declarations`
     /// * `declare`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn for_statement_left_variable_declaration(
         self,
@@ -5002,6 +5668,9 @@ impl<'a> AstBuilder<'a> {
     /// * `left`
     /// * `right`
     /// * `body`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn for_of_statement(
         self,
@@ -5033,6 +5702,9 @@ impl<'a> AstBuilder<'a> {
     /// * `left`
     /// * `right`
     /// * `body`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_for_of_statement(
         self,
@@ -5057,6 +5729,9 @@ impl<'a> AstBuilder<'a> {
     /// * `right`
     /// * `body`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn for_of_statement_with_scope_id(
         self,
@@ -5090,6 +5765,9 @@ impl<'a> AstBuilder<'a> {
     /// * `right`
     /// * `body`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_for_of_statement_with_scope_id(
         self,
@@ -5114,6 +5792,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `label`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn continue_statement(
         self,
@@ -5131,6 +5812,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `label`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_continue_statement(
         self,
@@ -5148,6 +5832,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `label`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn break_statement(
         self,
@@ -5165,6 +5852,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `label`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_break_statement(
         self,
@@ -5182,6 +5872,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `argument`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn return_statement(
         self,
@@ -5199,6 +5892,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `argument`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_return_statement(
         self,
@@ -5217,6 +5913,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `object`
     /// * `body`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn with_statement(
         self,
@@ -5242,6 +5941,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `object`
     /// * `body`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_with_statement(
         self,
@@ -5262,6 +5964,9 @@ impl<'a> AstBuilder<'a> {
     /// * `object`
     /// * `body`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn with_statement_with_scope_id(
         self,
@@ -5289,6 +5994,9 @@ impl<'a> AstBuilder<'a> {
     /// * `object`
     /// * `body`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_with_statement_with_scope_id(
         self,
@@ -5309,6 +6017,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `discriminant`
     /// * `cases`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn switch_statement(
         self,
@@ -5334,6 +6045,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `discriminant`
     /// * `cases`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_switch_statement(
         self,
@@ -5354,6 +6068,9 @@ impl<'a> AstBuilder<'a> {
     /// * `discriminant`
     /// * `cases`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn switch_statement_with_scope_id(
         self,
@@ -5381,6 +6098,9 @@ impl<'a> AstBuilder<'a> {
     /// * `discriminant`
     /// * `cases`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_switch_statement_with_scope_id(
         self,
@@ -5401,6 +6121,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `test`
     /// * `consequent`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn switch_case(
         self,
@@ -5420,6 +6143,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `label`
     /// * `body`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn labeled_statement(
         self,
@@ -5439,6 +6165,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `label`
     /// * `body`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_labeled_statement(
         self,
@@ -5457,6 +6186,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `argument`: The expression being thrown, e.g. `err` in `throw err;`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn throw_statement(self, span: Span, argument: Expression<'a>) -> ThrowStatement<'a> {
         ThrowStatement { node_id: Default::default(), span, argument }
@@ -5470,6 +6202,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `argument`: The expression being thrown, e.g. `err` in `throw err;`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_throw_statement(
         self,
@@ -5489,6 +6224,9 @@ impl<'a> AstBuilder<'a> {
     /// * `block`: Statements in the `try` block
     /// * `handler`: The `catch` clause, including the parameter and the block statement
     /// * `finalizer`: The `finally` clause
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn try_statement<T1, T2, T3>(
         self,
@@ -5505,9 +6243,9 @@ impl<'a> AstBuilder<'a> {
         TryStatement {
             node_id: Default::default(),
             span,
-            block: block.into_in(self.allocator),
-            handler: handler.into_in(self.allocator),
-            finalizer: finalizer.into_in(self.allocator),
+            block: block.into_in(self.allocator()),
+            handler: handler.into_in(self.allocator()),
+            finalizer: finalizer.into_in(self.allocator()),
         }
     }
 
@@ -5521,6 +6259,9 @@ impl<'a> AstBuilder<'a> {
     /// * `block`: Statements in the `try` block
     /// * `handler`: The `catch` clause, including the parameter and the block statement
     /// * `finalizer`: The `finally` clause
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_try_statement<T1, T2, T3>(
         self,
@@ -5546,6 +6287,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `param`: The caught error parameter, e.g. `e` in `catch (e) {}`
     /// * `body`: The statements run when an error is caught
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn catch_clause<T1>(
         self,
@@ -5560,7 +6304,7 @@ impl<'a> AstBuilder<'a> {
             node_id: Default::default(),
             span,
             param,
-            body: body.into_in(self.allocator),
+            body: body.into_in(self.allocator()),
             scope_id: Default::default(),
         }
     }
@@ -5574,6 +6318,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `param`: The caught error parameter, e.g. `e` in `catch (e) {}`
     /// * `body`: The statements run when an error is caught
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_catch_clause<T1>(
         self,
@@ -5597,6 +6344,9 @@ impl<'a> AstBuilder<'a> {
     /// * `param`: The caught error parameter, e.g. `e` in `catch (e) {}`
     /// * `body`: The statements run when an error is caught
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn catch_clause_with_scope_id<T1>(
         self,
@@ -5612,7 +6362,7 @@ impl<'a> AstBuilder<'a> {
             node_id: Default::default(),
             span,
             param,
-            body: body.into_in(self.allocator),
+            body: body.into_in(self.allocator()),
             scope_id: Cell::new(Some(scope_id)),
         }
     }
@@ -5627,6 +6377,9 @@ impl<'a> AstBuilder<'a> {
     /// * `param`: The caught error parameter, e.g. `e` in `catch (e) {}`
     /// * `body`: The statements run when an error is caught
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_catch_clause_with_scope_id<T1>(
         self,
@@ -5647,6 +6400,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `pattern`: The bound error
     /// * `type_annotation`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn catch_parameter<T1>(
         self,
@@ -5661,7 +6417,7 @@ impl<'a> AstBuilder<'a> {
             node_id: Default::default(),
             span,
             pattern,
-            type_annotation: type_annotation.into_in(self.allocator),
+            type_annotation: type_annotation.into_in(self.allocator()),
         }
     }
 
@@ -5672,6 +6428,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn debugger_statement(self, span: Span) -> DebuggerStatement {
         DebuggerStatement { node_id: Default::default(), span }
@@ -5684,6 +6443,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_debugger_statement(self, span: Span) -> ArenaBox<'a, DebuggerStatement> {
         ArenaBox::new_in(self.debugger_statement(span), &self)
@@ -5696,6 +6458,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The identifier name being bound.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn binding_pattern_binding_identifier<S1>(self, span: Span, name: S1) -> BindingPattern<'a>
     where
@@ -5712,6 +6477,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The identifier name being bound.
     /// * `symbol_id`: Unique identifier for this binding.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn binding_pattern_binding_identifier_with_symbol_id<S1>(
         self,
@@ -5735,6 +6503,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `properties`
     /// * `rest`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn binding_pattern_object_pattern<T1>(
         self,
@@ -5756,6 +6527,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `elements`
     /// * `rest`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn binding_pattern_array_pattern<T1>(
         self,
@@ -5777,6 +6551,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `left`
     /// * `right`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn binding_pattern_assignment_pattern(
         self,
@@ -5796,6 +6573,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `left`
     /// * `right`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn assignment_pattern(
         self,
@@ -5815,6 +6595,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `left`
     /// * `right`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_assignment_pattern(
         self,
@@ -5834,6 +6617,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `properties`
     /// * `rest`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn object_pattern<T1>(
         self,
@@ -5848,7 +6634,7 @@ impl<'a> AstBuilder<'a> {
             node_id: Default::default(),
             span,
             properties,
-            rest: rest.into_in(self.allocator),
+            rest: rest.into_in(self.allocator()),
         }
     }
 
@@ -5861,6 +6647,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `properties`
     /// * `rest`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_object_pattern<T1>(
         self,
@@ -5882,6 +6671,9 @@ impl<'a> AstBuilder<'a> {
     /// * `value`
     /// * `shorthand`
     /// * `computed`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn binding_property(
         self,
@@ -5903,6 +6695,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `elements`
     /// * `rest`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn array_pattern<T1>(
         self,
@@ -5917,7 +6712,7 @@ impl<'a> AstBuilder<'a> {
             node_id: Default::default(),
             span,
             elements,
-            rest: rest.into_in(self.allocator),
+            rest: rest.into_in(self.allocator()),
         }
     }
 
@@ -5930,6 +6725,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `elements`
     /// * `rest`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_array_pattern<T1>(
         self,
@@ -5951,6 +6749,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `argument`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn binding_rest_element(
         self,
@@ -5968,6 +6769,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `argument`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_binding_rest_element(
         self,
@@ -5994,6 +6798,9 @@ impl<'a> AstBuilder<'a> {
     /// * `params`: Function parameters.
     /// * `return_type`: The TypeScript return type annotation.
     /// * `body`: The function body.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn function<T1, T2, T3, T4, T5>(
         self,
@@ -6024,11 +6831,11 @@ impl<'a> AstBuilder<'a> {
             generator,
             r#async,
             declare,
-            type_parameters: type_parameters.into_in(self.allocator),
-            this_param: this_param.into_in(self.allocator),
-            params: params.into_in(self.allocator),
-            return_type: return_type.into_in(self.allocator),
-            body: body.into_in(self.allocator),
+            type_parameters: type_parameters.into_in(self.allocator()),
+            this_param: this_param.into_in(self.allocator()),
+            params: params.into_in(self.allocator()),
+            return_type: return_type.into_in(self.allocator()),
+            body: body.into_in(self.allocator()),
             scope_id: Default::default(),
             pure: Default::default(),
             pife: Default::default(),
@@ -6052,6 +6859,9 @@ impl<'a> AstBuilder<'a> {
     /// * `params`: Function parameters.
     /// * `return_type`: The TypeScript return type annotation.
     /// * `body`: The function body.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_function<T1, T2, T3, T4, T5>(
         self,
@@ -6112,6 +6922,9 @@ impl<'a> AstBuilder<'a> {
     /// * `scope_id`
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn function_with_scope_id_and_pure_and_pife<T1, T2, T3, T4, T5>(
         self,
@@ -6145,11 +6958,11 @@ impl<'a> AstBuilder<'a> {
             generator,
             r#async,
             declare,
-            type_parameters: type_parameters.into_in(self.allocator),
-            this_param: this_param.into_in(self.allocator),
-            params: params.into_in(self.allocator),
-            return_type: return_type.into_in(self.allocator),
-            body: body.into_in(self.allocator),
+            type_parameters: type_parameters.into_in(self.allocator()),
+            this_param: this_param.into_in(self.allocator()),
+            params: params.into_in(self.allocator()),
+            return_type: return_type.into_in(self.allocator()),
+            body: body.into_in(self.allocator()),
             scope_id: Cell::new(Some(scope_id)),
             pure,
             pife,
@@ -6176,6 +6989,9 @@ impl<'a> AstBuilder<'a> {
     /// * `scope_id`
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_function_with_scope_id_and_pure_and_pife<T1, T2, T3, T4, T5>(
         self,
@@ -6232,6 +7048,9 @@ impl<'a> AstBuilder<'a> {
     /// * `kind`
     /// * `items`
     /// * `rest`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn formal_parameters<T1>(
         self,
@@ -6248,7 +7067,7 @@ impl<'a> AstBuilder<'a> {
             span,
             kind,
             items,
-            rest: rest.into_in(self.allocator),
+            rest: rest.into_in(self.allocator()),
         }
     }
 
@@ -6262,6 +7081,9 @@ impl<'a> AstBuilder<'a> {
     /// * `kind`
     /// * `items`
     /// * `rest`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_formal_parameters<T1>(
         self,
@@ -6288,6 +7110,9 @@ impl<'a> AstBuilder<'a> {
     /// * `accessibility`
     /// * `readonly`
     /// * `override`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn formal_parameter<T1, T2>(
         self,
@@ -6310,8 +7135,8 @@ impl<'a> AstBuilder<'a> {
             span,
             decorators,
             pattern,
-            type_annotation: type_annotation.into_in(self.allocator),
-            initializer: initializer.into_in(self.allocator),
+            type_annotation: type_annotation.into_in(self.allocator()),
+            initializer: initializer.into_in(self.allocator()),
             optional,
             accessibility,
             readonly,
@@ -6329,6 +7154,9 @@ impl<'a> AstBuilder<'a> {
     /// * `decorators`
     /// * `rest`
     /// * `type_annotation`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn formal_parameter_rest<T1>(
         self,
@@ -6345,7 +7173,7 @@ impl<'a> AstBuilder<'a> {
             span,
             decorators,
             rest,
-            type_annotation: type_annotation.into_in(self.allocator),
+            type_annotation: type_annotation.into_in(self.allocator()),
         }
     }
 
@@ -6359,6 +7187,9 @@ impl<'a> AstBuilder<'a> {
     /// * `decorators`
     /// * `rest`
     /// * `type_annotation`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_formal_parameter_rest<T1>(
         self,
@@ -6382,6 +7213,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `directives`
     /// * `statements`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn function_body(
         self,
@@ -6401,6 +7235,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `directives`
     /// * `statements`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_function_body(
         self,
@@ -6424,6 +7261,9 @@ impl<'a> AstBuilder<'a> {
     /// * `params`
     /// * `return_type`
     /// * `body`: See `expression` for whether this arrow expression returns an expression.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn arrow_function_expression<T1, T2, T3, T4>(
         self,
@@ -6446,10 +7286,10 @@ impl<'a> AstBuilder<'a> {
             span,
             expression,
             r#async,
-            type_parameters: type_parameters.into_in(self.allocator),
-            params: params.into_in(self.allocator),
-            return_type: return_type.into_in(self.allocator),
-            body: body.into_in(self.allocator),
+            type_parameters: type_parameters.into_in(self.allocator()),
+            params: params.into_in(self.allocator()),
+            return_type: return_type.into_in(self.allocator()),
+            body: body.into_in(self.allocator()),
             scope_id: Default::default(),
             pure: Default::default(),
             pife: Default::default(),
@@ -6469,6 +7309,9 @@ impl<'a> AstBuilder<'a> {
     /// * `params`
     /// * `return_type`
     /// * `body`: See `expression` for whether this arrow expression returns an expression.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_arrow_function_expression<T1, T2, T3, T4>(
         self,
@@ -6516,6 +7359,9 @@ impl<'a> AstBuilder<'a> {
     /// * `scope_id`
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn arrow_function_expression_with_scope_id_and_pure_and_pife<T1, T2, T3, T4>(
         self,
@@ -6541,10 +7387,10 @@ impl<'a> AstBuilder<'a> {
             span,
             expression,
             r#async,
-            type_parameters: type_parameters.into_in(self.allocator),
-            params: params.into_in(self.allocator),
-            return_type: return_type.into_in(self.allocator),
-            body: body.into_in(self.allocator),
+            type_parameters: type_parameters.into_in(self.allocator()),
+            params: params.into_in(self.allocator()),
+            return_type: return_type.into_in(self.allocator()),
+            body: body.into_in(self.allocator()),
             scope_id: Cell::new(Some(scope_id)),
             pure,
             pife,
@@ -6567,6 +7413,9 @@ impl<'a> AstBuilder<'a> {
     /// * `scope_id`
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_arrow_function_expression_with_scope_id_and_pure_and_pife<T1, T2, T3, T4>(
         self,
@@ -6613,6 +7462,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `delegate`
     /// * `argument`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn yield_expression(
         self,
@@ -6632,6 +7484,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `delegate`
     /// * `argument`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_yield_expression(
         self,
@@ -6659,6 +7514,9 @@ impl<'a> AstBuilder<'a> {
     /// * `body`
     /// * `abstract`: Whether the class is abstract
     /// * `declare`: Whether the class was `declare`ed
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn class<T1, T2, T3>(
         self,
@@ -6685,11 +7543,11 @@ impl<'a> AstBuilder<'a> {
             r#type,
             decorators,
             id,
-            type_parameters: type_parameters.into_in(self.allocator),
+            type_parameters: type_parameters.into_in(self.allocator()),
             super_class,
-            super_type_arguments: super_type_arguments.into_in(self.allocator),
+            super_type_arguments: super_type_arguments.into_in(self.allocator()),
             implements,
-            body: body.into_in(self.allocator),
+            body: body.into_in(self.allocator()),
             r#abstract,
             declare,
             scope_id: Default::default(),
@@ -6713,6 +7571,9 @@ impl<'a> AstBuilder<'a> {
     /// * `body`
     /// * `abstract`: Whether the class is abstract
     /// * `declare`: Whether the class was `declare`ed
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_class<T1, T2, T3>(
         self,
@@ -6769,6 +7630,9 @@ impl<'a> AstBuilder<'a> {
     /// * `abstract`: Whether the class is abstract
     /// * `declare`: Whether the class was `declare`ed
     /// * `scope_id`: Id of the scope created by the [`Class`], including type parameters and
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn class_with_scope_id<T1, T2, T3>(
         self,
@@ -6796,11 +7660,11 @@ impl<'a> AstBuilder<'a> {
             r#type,
             decorators,
             id,
-            type_parameters: type_parameters.into_in(self.allocator),
+            type_parameters: type_parameters.into_in(self.allocator()),
             super_class,
-            super_type_arguments: super_type_arguments.into_in(self.allocator),
+            super_type_arguments: super_type_arguments.into_in(self.allocator()),
             implements,
-            body: body.into_in(self.allocator),
+            body: body.into_in(self.allocator()),
             r#abstract,
             declare,
             scope_id: Cell::new(Some(scope_id)),
@@ -6825,6 +7689,9 @@ impl<'a> AstBuilder<'a> {
     /// * `abstract`: Whether the class is abstract
     /// * `declare`: Whether the class was `declare`ed
     /// * `scope_id`: Id of the scope created by the [`Class`], including type parameters and
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_class_with_scope_id<T1, T2, T3>(
         self,
@@ -6873,6 +7740,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `body`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn class_body(self, span: Span, body: ArenaVec<'a, ClassElement<'a>>) -> ClassBody<'a> {
         ClassBody { node_id: Default::default(), span, body }
@@ -6886,6 +7756,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `body`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_class_body(
         self,
@@ -6902,6 +7775,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `body`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn class_element_static_block(
         self,
@@ -6919,6 +7795,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `body`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn class_element_static_block_with_scope_id(
         self,
@@ -6945,6 +7824,9 @@ impl<'a> AstBuilder<'a> {
     /// * `override`
     /// * `optional`
     /// * `accessibility`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn class_element_method_definition<T1>(
         self,
@@ -6997,6 +7879,9 @@ impl<'a> AstBuilder<'a> {
     /// * `definite`
     /// * `readonly`: `true` when declared with a `readonly` modifier
     /// * `accessibility`: Accessibility modifier.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn class_element_property_definition<T1>(
         self,
@@ -7052,6 +7937,9 @@ impl<'a> AstBuilder<'a> {
     /// * `override`: Property was declared with a `override` modifier
     /// * `definite`: Property has a `!` after its key.
     /// * `accessibility`: Accessibility modifier.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn class_element_accessor_property<T1>(
         self,
@@ -7095,6 +7983,9 @@ impl<'a> AstBuilder<'a> {
     /// * `type_annotation`
     /// * `readonly`
     /// * `static`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn class_element_ts_index_signature<T1>(
         self,
@@ -7133,6 +8024,9 @@ impl<'a> AstBuilder<'a> {
     /// * `override`
     /// * `optional`
     /// * `accessibility`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn method_definition<T1>(
         self,
@@ -7157,7 +8051,7 @@ impl<'a> AstBuilder<'a> {
             r#type,
             decorators,
             key,
-            value: value.into_in(self.allocator),
+            value: value.into_in(self.allocator()),
             kind,
             computed,
             r#static,
@@ -7184,6 +8078,9 @@ impl<'a> AstBuilder<'a> {
     /// * `override`
     /// * `optional`
     /// * `accessibility`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_method_definition<T1>(
         self,
@@ -7240,6 +8137,9 @@ impl<'a> AstBuilder<'a> {
     /// * `definite`
     /// * `readonly`: `true` when declared with a `readonly` modifier
     /// * `accessibility`: Accessibility modifier.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn property_definition<T1>(
         self,
@@ -7267,7 +8167,7 @@ impl<'a> AstBuilder<'a> {
             r#type,
             decorators,
             key,
-            type_annotation: type_annotation.into_in(self.allocator),
+            type_annotation: type_annotation.into_in(self.allocator()),
             value,
             computed,
             r#static,
@@ -7300,6 +8200,9 @@ impl<'a> AstBuilder<'a> {
     /// * `definite`
     /// * `readonly`: `true` when declared with a `readonly` modifier
     /// * `accessibility`: Accessibility modifier.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_property_definition<T1>(
         self,
@@ -7350,6 +8253,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `name`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn private_identifier<S1>(self, span: Span, name: S1) -> PrivateIdentifier<'a>
     where
@@ -7366,6 +8272,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `name`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_private_identifier<S1>(
         self,
@@ -7386,6 +8295,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `body`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn static_block(self, span: Span, body: ArenaVec<'a, Statement<'a>>) -> StaticBlock<'a> {
         StaticBlock { node_id: Default::default(), span, body, scope_id: Default::default() }
@@ -7399,6 +8311,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `body`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_static_block(
         self,
@@ -7417,6 +8332,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `body`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn static_block_with_scope_id(
         self,
@@ -7436,6 +8354,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `body`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_static_block_with_scope_id(
         self,
@@ -7457,6 +8378,9 @@ impl<'a> AstBuilder<'a> {
     /// * `phase`
     /// * `with_clause`: Some(vec![]) for empty assertion
     /// * `import_kind`: `import type { foo } from 'bar'`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn module_declaration_import_declaration<T1>(
         self,
@@ -7490,6 +8414,9 @@ impl<'a> AstBuilder<'a> {
     /// * `source`
     /// * `with_clause`: Will be `Some(vec![])` for empty assertion
     /// * `export_kind`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn module_declaration_export_all_declaration<T1>(
         self,
@@ -7518,6 +8445,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `declaration`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn module_declaration_export_default_declaration(
         self,
@@ -7540,6 +8470,9 @@ impl<'a> AstBuilder<'a> {
     /// * `source`
     /// * `export_kind`: `export type { foo }`
     /// * `with_clause`: Some(vec![]) for empty assertion
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn module_declaration_export_named_declaration<T1>(
         self,
@@ -7570,6 +8503,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expression`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn module_declaration_ts_export_assignment(
         self,
@@ -7586,6 +8522,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn module_declaration_ts_namespace_export_declaration(
         self,
@@ -7614,6 +8553,9 @@ impl<'a> AstBuilder<'a> {
     /// * `override`: Property was declared with a `override` modifier
     /// * `definite`: Property has a `!` after its key.
     /// * `accessibility`: Accessibility modifier.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn accessor_property<T1>(
         self,
@@ -7638,7 +8580,7 @@ impl<'a> AstBuilder<'a> {
             r#type,
             decorators,
             key,
-            type_annotation: type_annotation.into_in(self.allocator),
+            type_annotation: type_annotation.into_in(self.allocator()),
             value,
             computed,
             r#static,
@@ -7665,6 +8607,9 @@ impl<'a> AstBuilder<'a> {
     /// * `override`: Property was declared with a `override` modifier
     /// * `definite`: Property has a `!` after its key.
     /// * `accessibility`: Accessibility modifier.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_accessor_property<T1>(
         self,
@@ -7711,6 +8656,9 @@ impl<'a> AstBuilder<'a> {
     /// * `source`
     /// * `options`
     /// * `phase`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn import_expression(
         self,
@@ -7732,6 +8680,9 @@ impl<'a> AstBuilder<'a> {
     /// * `source`
     /// * `options`
     /// * `phase`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_import_expression(
         self,
@@ -7755,6 +8706,9 @@ impl<'a> AstBuilder<'a> {
     /// * `phase`
     /// * `with_clause`: Some(vec![]) for empty assertion
     /// * `import_kind`: `import type { foo } from 'bar'`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn import_declaration<T1>(
         self,
@@ -7774,7 +8728,7 @@ impl<'a> AstBuilder<'a> {
             specifiers,
             source,
             phase,
-            with_clause: with_clause.into_in(self.allocator),
+            with_clause: with_clause.into_in(self.allocator()),
             import_kind,
         }
     }
@@ -7791,6 +8745,9 @@ impl<'a> AstBuilder<'a> {
     /// * `phase`
     /// * `with_clause`: Some(vec![]) for empty assertion
     /// * `import_kind`: `import type { foo } from 'bar'`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_import_declaration<T1>(
         self,
@@ -7819,6 +8776,9 @@ impl<'a> AstBuilder<'a> {
     /// * `imported`: Imported symbol.
     /// * `local`: Binding for local symbol.
     /// * `import_kind`: Value or type.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn import_declaration_specifier_import_specifier(
         self,
@@ -7842,6 +8802,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `local`: The name of the imported symbol.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn import_declaration_specifier_import_default_specifier(
         self,
@@ -7860,6 +8823,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `local`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn import_declaration_specifier_import_namespace_specifier(
         self,
@@ -7881,6 +8847,9 @@ impl<'a> AstBuilder<'a> {
     /// * `imported`: Imported symbol.
     /// * `local`: Binding for local symbol.
     /// * `import_kind`: Value or type.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn import_specifier(
         self,
@@ -7902,6 +8871,9 @@ impl<'a> AstBuilder<'a> {
     /// * `imported`: Imported symbol.
     /// * `local`: Binding for local symbol.
     /// * `import_kind`: Value or type.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_import_specifier(
         self,
@@ -7921,6 +8893,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `local`: The name of the imported symbol.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn import_default_specifier(
         self,
@@ -7938,6 +8913,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `local`: The name of the imported symbol.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_import_default_specifier(
         self,
@@ -7955,6 +8933,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `local`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn import_namespace_specifier(
         self,
@@ -7972,6 +8953,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `local`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_import_namespace_specifier(
         self,
@@ -7990,6 +8974,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `keyword`
     /// * `with_entries`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn with_clause(
         self,
@@ -8009,6 +8996,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `keyword`
     /// * `with_entries`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_with_clause(
         self,
@@ -8025,6 +9015,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `key`
     /// * `value`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn import_attribute(
         self,
@@ -8040,6 +9033,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `name`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn import_attribute_key_identifier<S1>(self, span: Span, name: S1) -> ImportAttributeKey<'a>
     where
@@ -8054,6 +9050,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn import_attribute_key_string_literal<S1>(
         self,
@@ -8074,6 +9073,9 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
     /// * `lone_surrogates`: The string value contains lone surrogates.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn import_attribute_key_string_literal_with_lone_surrogates<S1>(
         self,
@@ -8105,6 +9107,9 @@ impl<'a> AstBuilder<'a> {
     /// * `source`
     /// * `export_kind`: `export type { foo }`
     /// * `with_clause`: Some(vec![]) for empty assertion
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn export_named_declaration<T1>(
         self,
@@ -8125,7 +9130,7 @@ impl<'a> AstBuilder<'a> {
             specifiers,
             source,
             export_kind,
-            with_clause: with_clause.into_in(self.allocator),
+            with_clause: with_clause.into_in(self.allocator()),
         }
     }
 
@@ -8141,6 +9146,9 @@ impl<'a> AstBuilder<'a> {
     /// * `source`
     /// * `export_kind`: `export type { foo }`
     /// * `with_clause`: Some(vec![]) for empty assertion
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_export_named_declaration<T1>(
         self,
@@ -8175,6 +9183,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `declaration`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn export_default_declaration(
         self,
@@ -8192,6 +9203,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `declaration`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_export_default_declaration(
         self,
@@ -8212,6 +9226,9 @@ impl<'a> AstBuilder<'a> {
     /// * `source`
     /// * `with_clause`: Will be `Some(vec![])` for empty assertion
     /// * `export_kind`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn export_all_declaration<T1>(
         self,
@@ -8229,7 +9246,7 @@ impl<'a> AstBuilder<'a> {
             span,
             exported,
             source,
-            with_clause: with_clause.into_in(self.allocator),
+            with_clause: with_clause.into_in(self.allocator()),
             export_kind,
         }
     }
@@ -8245,6 +9262,9 @@ impl<'a> AstBuilder<'a> {
     /// * `source`
     /// * `with_clause`: Will be `Some(vec![])` for empty assertion
     /// * `export_kind`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_export_all_declaration<T1>(
         self,
@@ -8270,6 +9290,9 @@ impl<'a> AstBuilder<'a> {
     /// * `local`
     /// * `exported`
     /// * `export_kind`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn export_specifier(
         self,
@@ -8297,6 +9320,9 @@ impl<'a> AstBuilder<'a> {
     /// * `params`: Function parameters.
     /// * `return_type`: The TypeScript return type annotation.
     /// * `body`: The function body.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn export_default_declaration_kind_function_declaration<T1, T2, T3, T4, T5>(
         self,
@@ -8353,6 +9379,9 @@ impl<'a> AstBuilder<'a> {
     /// * `scope_id`
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn export_default_declaration_kind_function_declaration_with_scope_id_and_pure_and_pife<
         T1,
@@ -8420,6 +9449,9 @@ impl<'a> AstBuilder<'a> {
     /// * `body`
     /// * `abstract`: Whether the class is abstract
     /// * `declare`: Whether the class was `declare`ed
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn export_default_declaration_kind_class_declaration<T1, T2, T3>(
         self,
@@ -8472,6 +9504,9 @@ impl<'a> AstBuilder<'a> {
     /// * `abstract`: Whether the class is abstract
     /// * `declare`: Whether the class was `declare`ed
     /// * `scope_id`: Id of the scope created by the [`Class`], including type parameters and
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn export_default_declaration_kind_class_declaration_with_scope_id<T1, T2, T3>(
         self,
@@ -8520,6 +9555,9 @@ impl<'a> AstBuilder<'a> {
     /// * `extends`: Other interfaces/types this interface extends.
     /// * `body`
     /// * `declare`: `true` for `declare interface Foo {}`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn export_default_declaration_kind_ts_interface_declaration<T1, T2>(
         self,
@@ -8556,6 +9594,9 @@ impl<'a> AstBuilder<'a> {
     /// * `body`
     /// * `declare`: `true` for `declare interface Foo {}`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn export_default_declaration_kind_ts_interface_declaration_with_scope_id<T1, T2>(
         self,
@@ -8589,6 +9630,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `name`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn module_export_name_identifier_name<S1>(
         self,
@@ -8606,6 +9650,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The name of the identifier being referenced.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn module_export_name_identifier_reference<S1>(
         self,
@@ -8624,6 +9671,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The name of the identifier being referenced.
     /// * `reference_id`: Reference ID
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn module_export_name_identifier_reference_with_reference_id<S1>(
         self,
@@ -8647,6 +9697,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn module_export_name_string_literal<S1>(
         self,
@@ -8667,6 +9720,9 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
     /// * `lone_surrogates`: The string value contains lone surrogates.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn module_export_name_string_literal_with_lone_surrogates<S1>(
         self,
@@ -8695,6 +9751,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`
     /// * `arguments`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn v8_intrinsic_expression(
         self,
@@ -8714,6 +9773,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`
     /// * `arguments`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_v8_intrinsic_expression(
         self,
@@ -8732,6 +9794,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code.
     /// * `value`: The boolean value itself
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn boolean_literal(self, span: Span, value: bool) -> BooleanLiteral {
         BooleanLiteral { node_id: Default::default(), span, value }
@@ -8745,6 +9810,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code.
     /// * `value`: The boolean value itself
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_boolean_literal(self, span: Span, value: bool) -> ArenaBox<'a, BooleanLiteral> {
         ArenaBox::new_in(self.boolean_literal(span, value), &self)
@@ -8757,6 +9825,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: Node location in source code.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn null_literal(self, span: Span) -> NullLiteral {
         NullLiteral { node_id: Default::default(), span }
@@ -8769,6 +9840,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: Node location in source code.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_null_literal(self, span: Span) -> ArenaBox<'a, NullLiteral> {
         ArenaBox::new_in(self.null_literal(span), &self)
@@ -8784,6 +9858,9 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: The value of the number, converted into base 10
     /// * `raw`: The number as it appears in source code
     /// * `base`: The base representation used by the literal in source code
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn numeric_literal(
         self,
@@ -8805,6 +9882,9 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: The value of the number, converted into base 10
     /// * `raw`: The number as it appears in source code
     /// * `base`: The base representation used by the literal in source code
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_numeric_literal(
         self,
@@ -8825,6 +9905,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn string_literal<S1>(
         self,
@@ -8853,6 +9936,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_string_literal<S1>(
         self,
@@ -8876,6 +9962,9 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
     /// * `lone_surrogates`: The string value contains lone surrogates.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn string_literal_with_lone_surrogates<S1>(
         self,
@@ -8906,6 +9995,9 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
     /// * `lone_surrogates`: The string value contains lone surrogates.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_string_literal_with_lone_surrogates<S1>(
         self,
@@ -8933,6 +10025,9 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: Bigint value in base 10 with no underscores
     /// * `raw`: The bigint as it appears in source code
     /// * `base`: The base representation used by the literal in source code
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn big_int_literal<S1>(
         self,
@@ -8957,6 +10052,9 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: Bigint value in base 10 with no underscores
     /// * `raw`: The bigint as it appears in source code
     /// * `base`: The base representation used by the literal in source code
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_big_int_literal<S1>(
         self,
@@ -8980,6 +10078,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code.
     /// * `regex`: The parsed regular expression. See [`oxc_regular_expression`] for more
     /// * `raw`: The regular expression as it appears in source code
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn reg_exp_literal(
         self,
@@ -8999,6 +10100,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code.
     /// * `regex`: The parsed regular expression. See [`oxc_regular_expression`] for more
     /// * `raw`: The regular expression as it appears in source code
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_reg_exp_literal(
         self,
@@ -9019,6 +10123,9 @@ impl<'a> AstBuilder<'a> {
     /// * `opening_element`: Opening tag of the element.
     /// * `children`: Children of the element.
     /// * `closing_element`: Closing tag of the element.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn jsx_element<T1, T2>(
         self,
@@ -9034,9 +10141,9 @@ impl<'a> AstBuilder<'a> {
         JSXElement {
             node_id: Default::default(),
             span,
-            opening_element: opening_element.into_in(self.allocator),
+            opening_element: opening_element.into_in(self.allocator()),
             children,
-            closing_element: closing_element.into_in(self.allocator),
+            closing_element: closing_element.into_in(self.allocator()),
         }
     }
 
@@ -9050,6 +10157,9 @@ impl<'a> AstBuilder<'a> {
     /// * `opening_element`: Opening tag of the element.
     /// * `children`: Children of the element.
     /// * `closing_element`: Closing tag of the element.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_jsx_element<T1, T2>(
         self,
@@ -9075,6 +10185,9 @@ impl<'a> AstBuilder<'a> {
     /// * `name`: The possibly-namespaced tag name, e.g. `Foo` in `<Foo />`.
     /// * `type_arguments`: Type parameters for generic JSX elements.
     /// * `attributes`: List of JSX attributes. In React-like applications, these become props.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn jsx_opening_element<T1>(
         self,
@@ -9090,7 +10203,7 @@ impl<'a> AstBuilder<'a> {
             node_id: Default::default(),
             span,
             name,
-            type_arguments: type_arguments.into_in(self.allocator),
+            type_arguments: type_arguments.into_in(self.allocator()),
             attributes,
         }
     }
@@ -9105,6 +10218,9 @@ impl<'a> AstBuilder<'a> {
     /// * `name`: The possibly-namespaced tag name, e.g. `Foo` in `<Foo />`.
     /// * `type_arguments`: Type parameters for generic JSX elements.
     /// * `attributes`: List of JSX attributes. In React-like applications, these become props.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_jsx_opening_element<T1>(
         self,
@@ -9127,6 +10243,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code.
     /// * `name`: The tag name, e.g. `Foo` in `</Foo>`.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn jsx_closing_element(
         self,
@@ -9144,6 +10263,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code.
     /// * `name`: The tag name, e.g. `Foo` in `</Foo>`.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_jsx_closing_element(
         self,
@@ -9163,6 +10285,9 @@ impl<'a> AstBuilder<'a> {
     /// * `opening_fragment`: `<>`
     /// * `children`: Elements inside the fragment.
     /// * `closing_fragment`: `</>`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn jsx_fragment(
         self,
@@ -9190,6 +10315,9 @@ impl<'a> AstBuilder<'a> {
     /// * `opening_fragment`: `<>`
     /// * `children`: Elements inside the fragment.
     /// * `closing_fragment`: `</>`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_jsx_fragment(
         self,
@@ -9208,6 +10336,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: Node location in source code.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn jsx_opening_fragment(self, span: Span) -> JSXOpeningFragment {
         JSXOpeningFragment { node_id: Default::default(), span }
@@ -9217,6 +10348,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: Node location in source code.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn jsx_closing_fragment(self, span: Span) -> JSXClosingFragment {
         JSXClosingFragment { node_id: Default::default(), span }
@@ -9229,6 +10363,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code.
     /// * `name`: The name of the identifier.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn jsx_element_name_identifier<S1>(self, span: Span, name: S1) -> JSXElementName<'a>
     where
@@ -9244,6 +10381,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The name of the identifier being referenced.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn jsx_element_name_identifier_reference<S1>(
         self,
@@ -9264,6 +10404,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The name of the identifier being referenced.
     /// * `reference_id`: Reference ID
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn jsx_element_name_identifier_reference_with_reference_id<S1>(
         self,
@@ -9289,6 +10432,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code.
     /// * `namespace`: Namespace portion of the name, e.g. `Apple` in `<Apple:Orange />`
     /// * `name`: Name portion of the name, e.g. `Orange` in `<Apple:Orange />`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn jsx_element_name_namespaced_name(
         self,
@@ -9307,6 +10453,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code.
     /// * `object`: The object being accessed. This is everything before the last `.`.
     /// * `property`: The property being accessed. This is everything after the last `.`.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn jsx_element_name_member_expression(
         self,
@@ -9323,6 +10472,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn jsx_element_name_this_expression(self, span: Span) -> JSXElementName<'a> {
         JSXElementName::ThisExpression(self.alloc_this_expression(span))
@@ -9337,6 +10489,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code.
     /// * `namespace`: Namespace portion of the name, e.g. `Apple` in `<Apple:Orange />`
     /// * `name`: Name portion of the name, e.g. `Orange` in `<Apple:Orange />`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn jsx_namespaced_name(
         self,
@@ -9356,6 +10511,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code.
     /// * `namespace`: Namespace portion of the name, e.g. `Apple` in `<Apple:Orange />`
     /// * `name`: Name portion of the name, e.g. `Orange` in `<Apple:Orange />`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_jsx_namespaced_name(
         self,
@@ -9375,6 +10533,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code.
     /// * `object`: The object being accessed. This is everything before the last `.`.
     /// * `property`: The property being accessed. This is everything after the last `.`.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn jsx_member_expression(
         self,
@@ -9394,6 +10555,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code.
     /// * `object`: The object being accessed. This is everything before the last `.`.
     /// * `property`: The property being accessed. This is everything after the last `.`.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_jsx_member_expression(
         self,
@@ -9411,6 +10575,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The name of the identifier being referenced.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn jsx_member_expression_object_identifier_reference<S1>(
         self,
@@ -9431,6 +10598,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The name of the identifier being referenced.
     /// * `reference_id`: Reference ID
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn jsx_member_expression_object_identifier_reference_with_reference_id<S1>(
         self,
@@ -9454,6 +10624,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code.
     /// * `object`: The object being accessed. This is everything before the last `.`.
     /// * `property`: The property being accessed. This is everything after the last `.`.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn jsx_member_expression_object_member_expression(
         self,
@@ -9472,6 +10645,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn jsx_member_expression_object_this_expression(
         self,
@@ -9488,6 +10664,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code.
     /// * `expression`: The expression inside the container.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn jsx_expression_container(
         self,
@@ -9505,6 +10684,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code.
     /// * `expression`: The expression inside the container.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_jsx_expression_container(
         self,
@@ -9520,6 +10702,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: Node location in source code.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn jsx_expression_empty_expression(self, span: Span) -> JSXExpression<'a> {
         JSXExpression::EmptyExpression(self.alloc_jsx_empty_expression(span))
@@ -9532,6 +10717,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: Node location in source code.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn jsx_empty_expression(self, span: Span) -> JSXEmptyExpression {
         JSXEmptyExpression { node_id: Default::default(), span }
@@ -9544,6 +10732,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: Node location in source code.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_jsx_empty_expression(self, span: Span) -> ArenaBox<'a, JSXEmptyExpression> {
         ArenaBox::new_in(self.jsx_empty_expression(span), &self)
@@ -9557,6 +10748,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code.
     /// * `name`: The name of the attribute. This is a prop in React-like applications.
     /// * `value`: The value of the attribute. This can be a string literal, an expression,
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn jsx_attribute_item_attribute(
         self,
@@ -9574,6 +10768,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code.
     /// * `argument`: The expression being spread.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn jsx_attribute_item_spread_attribute(
         self,
@@ -9592,6 +10789,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code.
     /// * `name`: The name of the attribute. This is a prop in React-like applications.
     /// * `value`: The value of the attribute. This can be a string literal, an expression,
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn jsx_attribute(
         self,
@@ -9611,6 +10811,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code.
     /// * `name`: The name of the attribute. This is a prop in React-like applications.
     /// * `value`: The value of the attribute. This can be a string literal, an expression,
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_jsx_attribute(
         self,
@@ -9629,6 +10832,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code.
     /// * `argument`: The expression being spread.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn jsx_spread_attribute(
         self,
@@ -9646,6 +10852,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code.
     /// * `argument`: The expression being spread.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_jsx_spread_attribute(
         self,
@@ -9662,6 +10871,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code.
     /// * `name`: The name of the identifier.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn jsx_attribute_name_identifier<S1>(self, span: Span, name: S1) -> JSXAttributeName<'a>
     where
@@ -9678,6 +10890,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code.
     /// * `namespace`: Namespace portion of the name, e.g. `Apple` in `<Apple:Orange />`
     /// * `name`: Name portion of the name, e.g. `Orange` in `<Apple:Orange />`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn jsx_attribute_name_namespaced_name(
         self,
@@ -9696,6 +10911,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn jsx_attribute_value_string_literal<S1>(
         self,
@@ -9718,6 +10936,9 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
     /// * `lone_surrogates`: The string value contains lone surrogates.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn jsx_attribute_value_string_literal_with_lone_surrogates<S1>(
         self,
@@ -9744,6 +10965,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code.
     /// * `expression`: The expression inside the container.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn jsx_attribute_value_expression_container(
         self,
@@ -9764,6 +10988,9 @@ impl<'a> AstBuilder<'a> {
     /// * `opening_element`: Opening tag of the element.
     /// * `children`: Children of the element.
     /// * `closing_element`: Closing tag of the element.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn jsx_attribute_value_element<T1, T2>(
         self,
@@ -9793,6 +11020,9 @@ impl<'a> AstBuilder<'a> {
     /// * `opening_fragment`: `<>`
     /// * `children`: Elements inside the fragment.
     /// * `closing_fragment`: `</>`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn jsx_attribute_value_fragment(
         self,
@@ -9817,6 +11047,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code.
     /// * `name`: The name of the identifier.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn jsx_identifier<S1>(self, span: Span, name: S1) -> JSXIdentifier<'a>
     where
@@ -9833,6 +11066,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code.
     /// * `name`: The name of the identifier.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_jsx_identifier<S1>(self, span: Span, name: S1) -> ArenaBox<'a, JSXIdentifier<'a>>
     where
@@ -9849,6 +11085,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: The text content.
     /// * `raw`: The raw string as it appears in source code.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn jsx_child_text<S1>(self, span: Span, value: S1, raw: Option<Str<'a>>) -> JSXChild<'a>
     where
@@ -9866,6 +11105,9 @@ impl<'a> AstBuilder<'a> {
     /// * `opening_element`: Opening tag of the element.
     /// * `children`: Children of the element.
     /// * `closing_element`: Closing tag of the element.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn jsx_child_element<T1, T2>(
         self,
@@ -9890,6 +11132,9 @@ impl<'a> AstBuilder<'a> {
     /// * `opening_fragment`: `<>`
     /// * `children`: Elements inside the fragment.
     /// * `closing_fragment`: `</>`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn jsx_child_fragment(
         self,
@@ -9913,6 +11158,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code.
     /// * `expression`: The expression inside the container.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn jsx_child_expression_container(
         self,
@@ -9929,6 +11177,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code.
     /// * `expression`: The expression being spread.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn jsx_child_spread(self, span: Span, expression: Expression<'a>) -> JSXChild<'a> {
         JSXChild::Spread(self.alloc_jsx_spread_child(span, expression))
@@ -9942,6 +11193,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code.
     /// * `expression`: The expression being spread.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn jsx_spread_child(self, span: Span, expression: Expression<'a>) -> JSXSpreadChild<'a> {
         JSXSpreadChild { node_id: Default::default(), span, expression }
@@ -9955,6 +11209,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code.
     /// * `expression`: The expression being spread.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_jsx_spread_child(
         self,
@@ -9973,6 +11230,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: The text content.
     /// * `raw`: The raw string as it appears in source code.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn jsx_text<S1>(self, span: Span, value: S1, raw: Option<Str<'a>>) -> JSXText<'a>
     where
@@ -9990,6 +11250,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: The text content.
     /// * `raw`: The raw string as it appears in source code.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_jsx_text<S1>(
         self,
@@ -10012,6 +11275,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `this_span`
     /// * `type_annotation`: Type type the `this` keyword will have in the function
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_this_parameter<T1>(
         self,
@@ -10026,7 +11292,7 @@ impl<'a> AstBuilder<'a> {
             node_id: Default::default(),
             span,
             this_span,
-            type_annotation: type_annotation.into_in(self.allocator),
+            type_annotation: type_annotation.into_in(self.allocator()),
         }
     }
 
@@ -10039,6 +11305,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `this_span`
     /// * `type_annotation`: Type type the `this` keyword will have in the function
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_this_parameter<T1>(
         self,
@@ -10063,6 +11332,9 @@ impl<'a> AstBuilder<'a> {
     /// * `body`
     /// * `const`: `true` for const enums
     /// * `declare`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_enum_declaration(
         self,
@@ -10086,6 +11358,9 @@ impl<'a> AstBuilder<'a> {
     /// * `body`
     /// * `const`: `true` for const enums
     /// * `declare`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_enum_declaration(
         self,
@@ -10103,6 +11378,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `members`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_enum_body(
         self,
@@ -10118,6 +11396,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `members`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_enum_body_with_scope_id(
         self,
@@ -10139,6 +11420,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `id`
     /// * `initializer`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_enum_member(
         self,
@@ -10156,6 +11440,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `name`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_enum_member_name_identifier<S1>(self, span: Span, name: S1) -> TSEnumMemberName<'a>
     where
@@ -10172,6 +11459,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_enum_member_name_string<S1>(
         self,
@@ -10194,6 +11484,9 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
     /// * `lone_surrogates`: The string value contains lone surrogates.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_enum_member_name_string_with_lone_surrogates<S1>(
         self,
@@ -10221,6 +11514,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_enum_member_name_computed_string<S1>(
         self,
@@ -10243,6 +11539,9 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
     /// * `lone_surrogates`: The string value contains lone surrogates.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_enum_member_name_computed_string_with_lone_surrogates<S1>(
         self,
@@ -10270,6 +11569,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `quasis`
     /// * `expressions`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_enum_member_name_computed_template_string(
         self,
@@ -10292,6 +11594,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `type_annotation`: The actual type in the annotation
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_annotation(
         self,
@@ -10309,6 +11614,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `type_annotation`: The actual type in the annotation
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_type_annotation(
         self,
@@ -10326,6 +11634,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `literal`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_literal_type(self, span: Span, literal: TSLiteral<'a>) -> TSLiteralType<'a> {
         TSLiteralType { node_id: Default::default(), span, literal }
@@ -10339,6 +11650,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `literal`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_literal_type(
         self,
@@ -10355,6 +11669,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code.
     /// * `value`: The boolean value itself
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_literal_boolean_literal(self, span: Span, value: bool) -> TSLiteral<'a> {
         TSLiteral::BooleanLiteral(self.alloc_boolean_literal(span, value))
@@ -10369,6 +11686,9 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: The value of the number, converted into base 10
     /// * `raw`: The number as it appears in source code
     /// * `base`: The base representation used by the literal in source code
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_literal_numeric_literal(
         self,
@@ -10389,6 +11709,9 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: Bigint value in base 10 with no underscores
     /// * `raw`: The bigint as it appears in source code
     /// * `base`: The base representation used by the literal in source code
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_literal_big_int_literal<S1>(
         self,
@@ -10411,6 +11734,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_literal_string_literal<S1>(
         self,
@@ -10433,6 +11759,9 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
     /// * `lone_surrogates`: The string value contains lone surrogates.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_literal_string_literal_with_lone_surrogates<S1>(
         self,
@@ -10460,6 +11789,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `quasis`
     /// * `expressions`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_literal_template_literal(
         self,
@@ -10478,6 +11810,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `operator`
     /// * `argument`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_literal_unary_expression(
         self,
@@ -10494,6 +11829,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_any_keyword(self, span: Span) -> TSType<'a> {
         TSType::TSAnyKeyword(self.alloc_ts_any_keyword(span))
@@ -10505,6 +11843,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_big_int_keyword(self, span: Span) -> TSType<'a> {
         TSType::TSBigIntKeyword(self.alloc_ts_big_int_keyword(span))
@@ -10516,6 +11857,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_boolean_keyword(self, span: Span) -> TSType<'a> {
         TSType::TSBooleanKeyword(self.alloc_ts_boolean_keyword(span))
@@ -10527,6 +11871,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_intrinsic_keyword(self, span: Span) -> TSType<'a> {
         TSType::TSIntrinsicKeyword(self.alloc_ts_intrinsic_keyword(span))
@@ -10538,6 +11885,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_never_keyword(self, span: Span) -> TSType<'a> {
         TSType::TSNeverKeyword(self.alloc_ts_never_keyword(span))
@@ -10549,6 +11899,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_null_keyword(self, span: Span) -> TSType<'a> {
         TSType::TSNullKeyword(self.alloc_ts_null_keyword(span))
@@ -10560,6 +11913,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_number_keyword(self, span: Span) -> TSType<'a> {
         TSType::TSNumberKeyword(self.alloc_ts_number_keyword(span))
@@ -10571,6 +11927,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_object_keyword(self, span: Span) -> TSType<'a> {
         TSType::TSObjectKeyword(self.alloc_ts_object_keyword(span))
@@ -10582,6 +11941,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_string_keyword(self, span: Span) -> TSType<'a> {
         TSType::TSStringKeyword(self.alloc_ts_string_keyword(span))
@@ -10593,6 +11955,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_symbol_keyword(self, span: Span) -> TSType<'a> {
         TSType::TSSymbolKeyword(self.alloc_ts_symbol_keyword(span))
@@ -10604,6 +11969,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_undefined_keyword(self, span: Span) -> TSType<'a> {
         TSType::TSUndefinedKeyword(self.alloc_ts_undefined_keyword(span))
@@ -10615,6 +11983,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_unknown_keyword(self, span: Span) -> TSType<'a> {
         TSType::TSUnknownKeyword(self.alloc_ts_unknown_keyword(span))
@@ -10626,6 +11997,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_void_keyword(self, span: Span) -> TSType<'a> {
         TSType::TSVoidKeyword(self.alloc_ts_void_keyword(span))
@@ -10638,6 +12012,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `element_type`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_array_type(self, span: Span, element_type: TSType<'a>) -> TSType<'a> {
         TSType::TSArrayType(self.alloc_ts_array_type(span, element_type))
@@ -10653,6 +12030,9 @@ impl<'a> AstBuilder<'a> {
     /// * `extends_type`: The type `check_type` is being tested against.
     /// * `true_type`: The type evaluated to if the test is true.
     /// * `false_type`: The type evaluated to if the test is false.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_conditional_type(
         self,
@@ -10682,6 +12062,9 @@ impl<'a> AstBuilder<'a> {
     /// * `true_type`: The type evaluated to if the test is true.
     /// * `false_type`: The type evaluated to if the test is false.
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_conditional_type_with_scope_id(
         self,
@@ -10712,6 +12095,9 @@ impl<'a> AstBuilder<'a> {
     /// * `type_parameters`
     /// * `params`
     /// * `return_type`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_constructor_type<T1, T2, T3>(
         self,
@@ -10746,6 +12132,9 @@ impl<'a> AstBuilder<'a> {
     /// * `params`
     /// * `return_type`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_constructor_type_with_scope_id<T1, T2, T3>(
         self,
@@ -10781,6 +12170,9 @@ impl<'a> AstBuilder<'a> {
     /// * `this_param`: `this` parameter
     /// * `params`: Function parameters. Akin to [`Function::params`].
     /// * `return_type`: Return type of the function.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_function_type<T1, T2, T3, T4>(
         self,
@@ -10816,6 +12208,9 @@ impl<'a> AstBuilder<'a> {
     /// * `params`: Function parameters. Akin to [`Function::params`].
     /// * `return_type`: Return type of the function.
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_function_type_with_scope_id<T1, T2, T3, T4>(
         self,
@@ -10852,6 +12247,9 @@ impl<'a> AstBuilder<'a> {
     /// * `options`
     /// * `qualifier`
     /// * `type_arguments`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_import_type<T1, T2>(
         self,
@@ -10882,6 +12280,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `object_type`
     /// * `index_type`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_indexed_access_type(
         self,
@@ -10903,6 +12304,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `type_parameter`: The type bound when the
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_infer_type<T1>(self, span: Span, type_parameter: T1) -> TSType<'a>
     where
@@ -10918,6 +12322,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `types`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_intersection_type(
         self,
@@ -10934,6 +12341,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `literal`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_literal_type(self, span: Span, literal: TSLiteral<'a>) -> TSType<'a> {
         TSType::TSLiteralType(self.alloc_ts_literal_type(span, literal))
@@ -10951,6 +12361,9 @@ impl<'a> AstBuilder<'a> {
     /// * `type_annotation`
     /// * `optional`: Optional modifier on type annotation
     /// * `readonly`: Readonly modifier before keyed index signature
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_mapped_type(
         self,
@@ -10986,6 +12399,9 @@ impl<'a> AstBuilder<'a> {
     /// * `optional`: Optional modifier on type annotation
     /// * `readonly`: Readonly modifier before keyed index signature
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_mapped_type_with_scope_id(
         self,
@@ -11019,6 +12435,9 @@ impl<'a> AstBuilder<'a> {
     /// * `label`
     /// * `element_type`
     /// * `optional`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_named_tuple_member(
         self,
@@ -11043,6 +12462,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `quasis`: The string parts of the template literal.
     /// * `types`: The interpolated expressions in the template literal.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_template_literal_type(
         self,
@@ -11059,6 +12481,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_this_type(self, span: Span) -> TSType<'a> {
         TSType::TSThisType(self.alloc_ts_this_type(span))
@@ -11071,6 +12496,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `element_types`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_tuple_type(
         self,
@@ -11087,6 +12515,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `members`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_type_literal(
         self,
@@ -11104,6 +12535,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `operator`
     /// * `type_annotation`: The type being operated on
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_type_operator_type(
         self,
@@ -11123,6 +12557,9 @@ impl<'a> AstBuilder<'a> {
     /// * `parameter_name`: The identifier the predicate operates on
     /// * `asserts`: Does this predicate include an `asserts` modifier?
     /// * `type_annotation`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_type_predicate<T1>(
         self,
@@ -11150,6 +12587,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `expr_name`
     /// * `type_arguments`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_type_query<T1>(
         self,
@@ -11171,6 +12611,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `type_name`
     /// * `type_arguments`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_type_reference<T1>(
         self,
@@ -11191,6 +12634,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `types`: The types in the union.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_union_type(self, span: Span, types: ArenaVec<'a, TSType<'a>>) -> TSType<'a> {
         TSType::TSUnionType(self.alloc_ts_union_type(span, types))
@@ -11203,6 +12649,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `type_annotation`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_parenthesized_type(self, span: Span, type_annotation: TSType<'a>) -> TSType<'a> {
         TSType::TSParenthesizedType(self.alloc_ts_parenthesized_type(span, type_annotation))
@@ -11216,6 +12665,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `type_annotation`
     /// * `postfix`: Was `?` after the type annotation?
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_js_doc_nullable_type(
         self,
@@ -11234,6 +12686,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `type_annotation`
     /// * `postfix`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_js_doc_non_nullable_type(
         self,
@@ -11254,6 +12709,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_js_doc_unknown_type(self, span: Span) -> TSType<'a> {
         TSType::JSDocUnknownType(self.alloc_js_doc_unknown_type(span))
@@ -11270,6 +12728,9 @@ impl<'a> AstBuilder<'a> {
     /// * `extends_type`: The type `check_type` is being tested against.
     /// * `true_type`: The type evaluated to if the test is true.
     /// * `false_type`: The type evaluated to if the test is false.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_conditional_type(
         self,
@@ -11301,6 +12762,9 @@ impl<'a> AstBuilder<'a> {
     /// * `extends_type`: The type `check_type` is being tested against.
     /// * `true_type`: The type evaluated to if the test is true.
     /// * `false_type`: The type evaluated to if the test is false.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_conditional_type(
         self,
@@ -11328,6 +12792,9 @@ impl<'a> AstBuilder<'a> {
     /// * `true_type`: The type evaluated to if the test is true.
     /// * `false_type`: The type evaluated to if the test is false.
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_conditional_type_with_scope_id(
         self,
@@ -11361,6 +12828,9 @@ impl<'a> AstBuilder<'a> {
     /// * `true_type`: The type evaluated to if the test is true.
     /// * `false_type`: The type evaluated to if the test is false.
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_conditional_type_with_scope_id(
         self,
@@ -11392,6 +12862,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `types`: The types in the union.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_union_type(self, span: Span, types: ArenaVec<'a, TSType<'a>>) -> TSUnionType<'a> {
         TSUnionType { node_id: Default::default(), span, types }
@@ -11405,6 +12878,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `types`: The types in the union.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_union_type(
         self,
@@ -11422,6 +12898,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `types`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_intersection_type(
         self,
@@ -11439,6 +12918,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `types`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_intersection_type(
         self,
@@ -11456,6 +12938,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `type_annotation`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_parenthesized_type(
         self,
@@ -11473,6 +12958,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `type_annotation`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_parenthesized_type(
         self,
@@ -11491,6 +12979,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `operator`
     /// * `type_annotation`: The type being operated on
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_operator(
         self,
@@ -11510,6 +13001,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `operator`
     /// * `type_annotation`: The type being operated on
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_type_operator(
         self,
@@ -11528,6 +13022,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `element_type`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_array_type(self, span: Span, element_type: TSType<'a>) -> TSArrayType<'a> {
         TSArrayType { node_id: Default::default(), span, element_type }
@@ -11541,6 +13038,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `element_type`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_array_type(
         self,
@@ -11559,6 +13059,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `object_type`
     /// * `index_type`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_indexed_access_type(
         self,
@@ -11578,6 +13081,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `object_type`
     /// * `index_type`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_indexed_access_type(
         self,
@@ -11596,6 +13102,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `element_types`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_tuple_type(
         self,
@@ -11613,6 +13122,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `element_types`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_tuple_type(
         self,
@@ -11632,6 +13144,9 @@ impl<'a> AstBuilder<'a> {
     /// * `label`
     /// * `element_type`
     /// * `optional`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_named_tuple_member(
         self,
@@ -11653,6 +13168,9 @@ impl<'a> AstBuilder<'a> {
     /// * `label`
     /// * `element_type`
     /// * `optional`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_named_tuple_member(
         self,
@@ -11672,6 +13190,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `type_annotation`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_optional_type(self, span: Span, type_annotation: TSType<'a>) -> TSOptionalType<'a> {
         TSOptionalType { node_id: Default::default(), span, type_annotation }
@@ -11685,6 +13206,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `type_annotation`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_optional_type(
         self,
@@ -11702,6 +13226,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `type_annotation`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_rest_type(self, span: Span, type_annotation: TSType<'a>) -> TSRestType<'a> {
         TSRestType { node_id: Default::default(), span, type_annotation }
@@ -11715,6 +13242,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `type_annotation`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_rest_type(
         self,
@@ -11731,6 +13261,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `type_annotation`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_tuple_element_optional_type(
         self,
@@ -11747,6 +13280,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `type_annotation`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_tuple_element_rest_type(
         self,
@@ -11763,6 +13299,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_any_keyword(self, span: Span) -> TSAnyKeyword {
         TSAnyKeyword { node_id: Default::default(), span }
@@ -11775,6 +13314,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_any_keyword(self, span: Span) -> ArenaBox<'a, TSAnyKeyword> {
         ArenaBox::new_in(self.ts_any_keyword(span), &self)
@@ -11787,6 +13329,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_string_keyword(self, span: Span) -> TSStringKeyword {
         TSStringKeyword { node_id: Default::default(), span }
@@ -11799,6 +13344,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_string_keyword(self, span: Span) -> ArenaBox<'a, TSStringKeyword> {
         ArenaBox::new_in(self.ts_string_keyword(span), &self)
@@ -11811,6 +13359,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_boolean_keyword(self, span: Span) -> TSBooleanKeyword {
         TSBooleanKeyword { node_id: Default::default(), span }
@@ -11823,6 +13374,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_boolean_keyword(self, span: Span) -> ArenaBox<'a, TSBooleanKeyword> {
         ArenaBox::new_in(self.ts_boolean_keyword(span), &self)
@@ -11835,6 +13389,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_number_keyword(self, span: Span) -> TSNumberKeyword {
         TSNumberKeyword { node_id: Default::default(), span }
@@ -11847,6 +13404,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_number_keyword(self, span: Span) -> ArenaBox<'a, TSNumberKeyword> {
         ArenaBox::new_in(self.ts_number_keyword(span), &self)
@@ -11859,6 +13419,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_never_keyword(self, span: Span) -> TSNeverKeyword {
         TSNeverKeyword { node_id: Default::default(), span }
@@ -11871,6 +13434,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_never_keyword(self, span: Span) -> ArenaBox<'a, TSNeverKeyword> {
         ArenaBox::new_in(self.ts_never_keyword(span), &self)
@@ -11883,6 +13449,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_intrinsic_keyword(self, span: Span) -> TSIntrinsicKeyword {
         TSIntrinsicKeyword { node_id: Default::default(), span }
@@ -11895,6 +13464,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_intrinsic_keyword(self, span: Span) -> ArenaBox<'a, TSIntrinsicKeyword> {
         ArenaBox::new_in(self.ts_intrinsic_keyword(span), &self)
@@ -11907,6 +13479,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_unknown_keyword(self, span: Span) -> TSUnknownKeyword {
         TSUnknownKeyword { node_id: Default::default(), span }
@@ -11919,6 +13494,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_unknown_keyword(self, span: Span) -> ArenaBox<'a, TSUnknownKeyword> {
         ArenaBox::new_in(self.ts_unknown_keyword(span), &self)
@@ -11931,6 +13509,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_null_keyword(self, span: Span) -> TSNullKeyword {
         TSNullKeyword { node_id: Default::default(), span }
@@ -11943,6 +13524,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_null_keyword(self, span: Span) -> ArenaBox<'a, TSNullKeyword> {
         ArenaBox::new_in(self.ts_null_keyword(span), &self)
@@ -11955,6 +13539,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_undefined_keyword(self, span: Span) -> TSUndefinedKeyword {
         TSUndefinedKeyword { node_id: Default::default(), span }
@@ -11967,6 +13554,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_undefined_keyword(self, span: Span) -> ArenaBox<'a, TSUndefinedKeyword> {
         ArenaBox::new_in(self.ts_undefined_keyword(span), &self)
@@ -11979,6 +13569,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_void_keyword(self, span: Span) -> TSVoidKeyword {
         TSVoidKeyword { node_id: Default::default(), span }
@@ -11991,6 +13584,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_void_keyword(self, span: Span) -> ArenaBox<'a, TSVoidKeyword> {
         ArenaBox::new_in(self.ts_void_keyword(span), &self)
@@ -12003,6 +13599,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_symbol_keyword(self, span: Span) -> TSSymbolKeyword {
         TSSymbolKeyword { node_id: Default::default(), span }
@@ -12015,6 +13614,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_symbol_keyword(self, span: Span) -> ArenaBox<'a, TSSymbolKeyword> {
         ArenaBox::new_in(self.ts_symbol_keyword(span), &self)
@@ -12027,6 +13629,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_this_type(self, span: Span) -> TSThisType {
         TSThisType { node_id: Default::default(), span }
@@ -12039,6 +13644,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_this_type(self, span: Span) -> ArenaBox<'a, TSThisType> {
         ArenaBox::new_in(self.ts_this_type(span), &self)
@@ -12051,6 +13659,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_object_keyword(self, span: Span) -> TSObjectKeyword {
         TSObjectKeyword { node_id: Default::default(), span }
@@ -12063,6 +13674,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_object_keyword(self, span: Span) -> ArenaBox<'a, TSObjectKeyword> {
         ArenaBox::new_in(self.ts_object_keyword(span), &self)
@@ -12075,6 +13689,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_big_int_keyword(self, span: Span) -> TSBigIntKeyword {
         TSBigIntKeyword { node_id: Default::default(), span }
@@ -12087,6 +13704,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_big_int_keyword(self, span: Span) -> ArenaBox<'a, TSBigIntKeyword> {
         ArenaBox::new_in(self.ts_big_int_keyword(span), &self)
@@ -12101,6 +13721,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `type_name`
     /// * `type_arguments`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_reference<T1>(
         self,
@@ -12115,7 +13738,7 @@ impl<'a> AstBuilder<'a> {
             node_id: Default::default(),
             span,
             type_name,
-            type_arguments: type_arguments.into_in(self.allocator),
+            type_arguments: type_arguments.into_in(self.allocator()),
         }
     }
 
@@ -12128,6 +13751,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `type_name`
     /// * `type_arguments`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_type_reference<T1>(
         self,
@@ -12148,6 +13774,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The name of the identifier being referenced.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_name_identifier_reference<S1>(self, span: Span, name: S1) -> TSTypeName<'a>
     where
@@ -12164,6 +13793,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The name of the identifier being referenced.
     /// * `reference_id`: Reference ID
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_name_identifier_reference_with_reference_id<S1>(
         self,
@@ -12189,6 +13821,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `left`
     /// * `right`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_name_qualified_name(
         self,
@@ -12205,6 +13840,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_name_this_expression(self, span: Span) -> TSTypeName<'a> {
         TSTypeName::ThisExpression(self.alloc_this_expression(span))
@@ -12219,6 +13857,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `left`
     /// * `right`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_qualified_name(
         self,
@@ -12238,6 +13879,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `left`
     /// * `right`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_qualified_name(
         self,
@@ -12256,6 +13900,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `params`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_parameter_instantiation(
         self,
@@ -12273,6 +13920,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `params`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_type_parameter_instantiation(
         self,
@@ -12295,6 +13945,9 @@ impl<'a> AstBuilder<'a> {
     /// * `in`: Was an `in` modifier keyword present?
     /// * `out`: Was an `out` modifier keyword present?
     /// * `const`: Was a `const` modifier keyword present?
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_parameter(
         self,
@@ -12331,6 +13984,9 @@ impl<'a> AstBuilder<'a> {
     /// * `in`: Was an `in` modifier keyword present?
     /// * `out`: Was an `out` modifier keyword present?
     /// * `const`: Was a `const` modifier keyword present?
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_type_parameter(
         self,
@@ -12356,6 +14012,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `params`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_parameter_declaration(
         self,
@@ -12373,6 +14032,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `params`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_type_parameter_declaration(
         self,
@@ -12393,6 +14055,9 @@ impl<'a> AstBuilder<'a> {
     /// * `type_parameters`
     /// * `type_annotation`
     /// * `declare`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_alias_declaration<T1>(
         self,
@@ -12409,7 +14074,7 @@ impl<'a> AstBuilder<'a> {
             node_id: Default::default(),
             span,
             id,
-            type_parameters: type_parameters.into_in(self.allocator),
+            type_parameters: type_parameters.into_in(self.allocator()),
             type_annotation,
             declare,
             scope_id: Default::default(),
@@ -12427,6 +14092,9 @@ impl<'a> AstBuilder<'a> {
     /// * `type_parameters`
     /// * `type_annotation`
     /// * `declare`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_type_alias_declaration<T1>(
         self,
@@ -12457,6 +14125,9 @@ impl<'a> AstBuilder<'a> {
     /// * `type_annotation`
     /// * `declare`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_alias_declaration_with_scope_id<T1>(
         self,
@@ -12474,7 +14145,7 @@ impl<'a> AstBuilder<'a> {
             node_id: Default::default(),
             span,
             id,
-            type_parameters: type_parameters.into_in(self.allocator),
+            type_parameters: type_parameters.into_in(self.allocator()),
             type_annotation,
             declare,
             scope_id: Cell::new(Some(scope_id)),
@@ -12493,6 +14164,9 @@ impl<'a> AstBuilder<'a> {
     /// * `type_annotation`
     /// * `declare`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_type_alias_declaration_with_scope_id<T1>(
         self,
@@ -12525,6 +14199,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `expression`
     /// * `type_arguments`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_class_implements<T1>(
         self,
@@ -12539,7 +14216,7 @@ impl<'a> AstBuilder<'a> {
             node_id: Default::default(),
             span,
             expression,
-            type_arguments: type_arguments.into_in(self.allocator),
+            type_arguments: type_arguments.into_in(self.allocator()),
         }
     }
 
@@ -12555,6 +14232,9 @@ impl<'a> AstBuilder<'a> {
     /// * `extends`: Other interfaces/types this interface extends.
     /// * `body`
     /// * `declare`: `true` for `declare interface Foo {}`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_interface_declaration<T1, T2>(
         self,
@@ -12573,9 +14253,9 @@ impl<'a> AstBuilder<'a> {
             node_id: Default::default(),
             span,
             id,
-            type_parameters: type_parameters.into_in(self.allocator),
+            type_parameters: type_parameters.into_in(self.allocator()),
             extends,
-            body: body.into_in(self.allocator),
+            body: body.into_in(self.allocator()),
             declare,
             scope_id: Default::default(),
         }
@@ -12593,6 +14273,9 @@ impl<'a> AstBuilder<'a> {
     /// * `extends`: Other interfaces/types this interface extends.
     /// * `body`
     /// * `declare`: `true` for `declare interface Foo {}`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_interface_declaration<T1, T2>(
         self,
@@ -12626,6 +14309,9 @@ impl<'a> AstBuilder<'a> {
     /// * `body`
     /// * `declare`: `true` for `declare interface Foo {}`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_interface_declaration_with_scope_id<T1, T2>(
         self,
@@ -12645,9 +14331,9 @@ impl<'a> AstBuilder<'a> {
             node_id: Default::default(),
             span,
             id,
-            type_parameters: type_parameters.into_in(self.allocator),
+            type_parameters: type_parameters.into_in(self.allocator()),
             extends,
-            body: body.into_in(self.allocator),
+            body: body.into_in(self.allocator()),
             declare,
             scope_id: Cell::new(Some(scope_id)),
         }
@@ -12666,6 +14352,9 @@ impl<'a> AstBuilder<'a> {
     /// * `body`
     /// * `declare`: `true` for `declare interface Foo {}`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_interface_declaration_with_scope_id<T1, T2>(
         self,
@@ -12703,6 +14392,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `body`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_interface_body(
         self,
@@ -12720,6 +14412,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `body`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_interface_body(
         self,
@@ -12741,6 +14436,9 @@ impl<'a> AstBuilder<'a> {
     /// * `readonly`
     /// * `key`
     /// * `type_annotation`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_property_signature<T1>(
         self,
@@ -12761,7 +14459,7 @@ impl<'a> AstBuilder<'a> {
             optional,
             readonly,
             key,
-            type_annotation: type_annotation.into_in(self.allocator),
+            type_annotation: type_annotation.into_in(self.allocator()),
         }
     }
 
@@ -12777,6 +14475,9 @@ impl<'a> AstBuilder<'a> {
     /// * `readonly`
     /// * `key`
     /// * `type_annotation`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_property_signature<T1>(
         self,
@@ -12806,6 +14507,9 @@ impl<'a> AstBuilder<'a> {
     /// * `type_annotation`
     /// * `readonly`
     /// * `static`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_signature_index_signature<T1>(
         self,
@@ -12838,6 +14542,9 @@ impl<'a> AstBuilder<'a> {
     /// * `readonly`
     /// * `key`
     /// * `type_annotation`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_signature_property_signature<T1>(
         self,
@@ -12871,6 +14578,9 @@ impl<'a> AstBuilder<'a> {
     /// * `this_param`
     /// * `params`
     /// * `return_type`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_signature_call_signature_declaration<T1, T2, T3, T4>(
         self,
@@ -12906,6 +14616,9 @@ impl<'a> AstBuilder<'a> {
     /// * `params`
     /// * `return_type`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_signature_call_signature_declaration_with_scope_id<T1, T2, T3, T4>(
         self,
@@ -12943,6 +14656,9 @@ impl<'a> AstBuilder<'a> {
     /// * `type_parameters`
     /// * `params`
     /// * `return_type`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_signature_construct_signature_declaration<T1, T2, T3>(
         self,
@@ -12974,6 +14690,9 @@ impl<'a> AstBuilder<'a> {
     /// * `params`
     /// * `return_type`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_signature_construct_signature_declaration_with_scope_id<T1, T2, T3>(
         self,
@@ -13013,6 +14732,9 @@ impl<'a> AstBuilder<'a> {
     /// * `this_param`
     /// * `params`
     /// * `return_type`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_signature_method_signature<T1, T2, T3, T4>(
         self,
@@ -13060,6 +14782,9 @@ impl<'a> AstBuilder<'a> {
     /// * `params`
     /// * `return_type`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_signature_method_signature_with_scope_id<T1, T2, T3, T4>(
         self,
@@ -13105,6 +14830,9 @@ impl<'a> AstBuilder<'a> {
     /// * `type_annotation`
     /// * `readonly`
     /// * `static`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_index_signature<T1>(
         self,
@@ -13121,7 +14849,7 @@ impl<'a> AstBuilder<'a> {
             node_id: Default::default(),
             span,
             parameters,
-            type_annotation: type_annotation.into_in(self.allocator),
+            type_annotation: type_annotation.into_in(self.allocator()),
             readonly,
             r#static,
         }
@@ -13138,6 +14866,9 @@ impl<'a> AstBuilder<'a> {
     /// * `type_annotation`
     /// * `readonly`
     /// * `static`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_index_signature<T1>(
         self,
@@ -13167,6 +14898,9 @@ impl<'a> AstBuilder<'a> {
     /// * `this_param`
     /// * `params`
     /// * `return_type`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_call_signature_declaration<T1, T2, T3, T4>(
         self,
@@ -13185,10 +14919,10 @@ impl<'a> AstBuilder<'a> {
         TSCallSignatureDeclaration {
             node_id: Default::default(),
             span,
-            type_parameters: type_parameters.into_in(self.allocator),
-            this_param: this_param.into_in(self.allocator),
-            params: params.into_in(self.allocator),
-            return_type: return_type.into_in(self.allocator),
+            type_parameters: type_parameters.into_in(self.allocator()),
+            this_param: this_param.into_in(self.allocator()),
+            params: params.into_in(self.allocator()),
+            return_type: return_type.into_in(self.allocator()),
             scope_id: Default::default(),
         }
     }
@@ -13204,6 +14938,9 @@ impl<'a> AstBuilder<'a> {
     /// * `this_param`
     /// * `params`
     /// * `return_type`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_call_signature_declaration<T1, T2, T3, T4>(
         self,
@@ -13243,6 +14980,9 @@ impl<'a> AstBuilder<'a> {
     /// * `params`
     /// * `return_type`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_call_signature_declaration_with_scope_id<T1, T2, T3, T4>(
         self,
@@ -13262,10 +15002,10 @@ impl<'a> AstBuilder<'a> {
         TSCallSignatureDeclaration {
             node_id: Default::default(),
             span,
-            type_parameters: type_parameters.into_in(self.allocator),
-            this_param: this_param.into_in(self.allocator),
-            params: params.into_in(self.allocator),
-            return_type: return_type.into_in(self.allocator),
+            type_parameters: type_parameters.into_in(self.allocator()),
+            this_param: this_param.into_in(self.allocator()),
+            params: params.into_in(self.allocator()),
+            return_type: return_type.into_in(self.allocator()),
             scope_id: Cell::new(Some(scope_id)),
         }
     }
@@ -13282,6 +15022,9 @@ impl<'a> AstBuilder<'a> {
     /// * `params`
     /// * `return_type`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_call_signature_declaration_with_scope_id<T1, T2, T3, T4>(
         self,
@@ -13326,6 +15069,9 @@ impl<'a> AstBuilder<'a> {
     /// * `this_param`
     /// * `params`
     /// * `return_type`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_method_signature<T1, T2, T3, T4>(
         self,
@@ -13352,10 +15098,10 @@ impl<'a> AstBuilder<'a> {
             computed,
             optional,
             kind,
-            type_parameters: type_parameters.into_in(self.allocator),
-            this_param: this_param.into_in(self.allocator),
-            params: params.into_in(self.allocator),
-            return_type: return_type.into_in(self.allocator),
+            type_parameters: type_parameters.into_in(self.allocator()),
+            this_param: this_param.into_in(self.allocator()),
+            params: params.into_in(self.allocator()),
+            return_type: return_type.into_in(self.allocator()),
             scope_id: Default::default(),
         }
     }
@@ -13375,6 +15121,9 @@ impl<'a> AstBuilder<'a> {
     /// * `this_param`
     /// * `params`
     /// * `return_type`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_method_signature<T1, T2, T3, T4>(
         self,
@@ -13426,6 +15175,9 @@ impl<'a> AstBuilder<'a> {
     /// * `params`
     /// * `return_type`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_method_signature_with_scope_id<T1, T2, T3, T4>(
         self,
@@ -13453,10 +15205,10 @@ impl<'a> AstBuilder<'a> {
             computed,
             optional,
             kind,
-            type_parameters: type_parameters.into_in(self.allocator),
-            this_param: this_param.into_in(self.allocator),
-            params: params.into_in(self.allocator),
-            return_type: return_type.into_in(self.allocator),
+            type_parameters: type_parameters.into_in(self.allocator()),
+            this_param: this_param.into_in(self.allocator()),
+            params: params.into_in(self.allocator()),
+            return_type: return_type.into_in(self.allocator()),
             scope_id: Cell::new(Some(scope_id)),
         }
     }
@@ -13477,6 +15229,9 @@ impl<'a> AstBuilder<'a> {
     /// * `params`
     /// * `return_type`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_method_signature_with_scope_id<T1, T2, T3, T4>(
         self,
@@ -13524,6 +15279,9 @@ impl<'a> AstBuilder<'a> {
     /// * `type_parameters`
     /// * `params`
     /// * `return_type`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_construct_signature_declaration<T1, T2, T3>(
         self,
@@ -13540,9 +15298,9 @@ impl<'a> AstBuilder<'a> {
         TSConstructSignatureDeclaration {
             node_id: Default::default(),
             span,
-            type_parameters: type_parameters.into_in(self.allocator),
-            params: params.into_in(self.allocator),
-            return_type: return_type.into_in(self.allocator),
+            type_parameters: type_parameters.into_in(self.allocator()),
+            params: params.into_in(self.allocator()),
+            return_type: return_type.into_in(self.allocator()),
             scope_id: Default::default(),
         }
     }
@@ -13557,6 +15315,9 @@ impl<'a> AstBuilder<'a> {
     /// * `type_parameters`
     /// * `params`
     /// * `return_type`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_construct_signature_declaration<T1, T2, T3>(
         self,
@@ -13587,6 +15348,9 @@ impl<'a> AstBuilder<'a> {
     /// * `params`
     /// * `return_type`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_construct_signature_declaration_with_scope_id<T1, T2, T3>(
         self,
@@ -13604,9 +15368,9 @@ impl<'a> AstBuilder<'a> {
         TSConstructSignatureDeclaration {
             node_id: Default::default(),
             span,
-            type_parameters: type_parameters.into_in(self.allocator),
-            params: params.into_in(self.allocator),
-            return_type: return_type.into_in(self.allocator),
+            type_parameters: type_parameters.into_in(self.allocator()),
+            params: params.into_in(self.allocator()),
+            return_type: return_type.into_in(self.allocator()),
             scope_id: Cell::new(Some(scope_id)),
         }
     }
@@ -13622,6 +15386,9 @@ impl<'a> AstBuilder<'a> {
     /// * `params`
     /// * `return_type`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_construct_signature_declaration_with_scope_id<T1, T2, T3>(
         self,
@@ -13654,6 +15421,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`
     /// * `type_annotation`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_index_signature_name<S1, T1>(
         self,
@@ -13669,7 +15439,7 @@ impl<'a> AstBuilder<'a> {
             node_id: Default::default(),
             span,
             name: name.into(),
-            type_annotation: type_annotation.into_in(self.allocator),
+            type_annotation: type_annotation.into_in(self.allocator()),
         }
     }
 
@@ -13679,6 +15449,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `expression`
     /// * `type_arguments`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_interface_heritage<T1>(
         self,
@@ -13693,7 +15466,7 @@ impl<'a> AstBuilder<'a> {
             node_id: Default::default(),
             span,
             expression,
-            type_arguments: type_arguments.into_in(self.allocator),
+            type_arguments: type_arguments.into_in(self.allocator()),
         }
     }
 
@@ -13707,6 +15480,9 @@ impl<'a> AstBuilder<'a> {
     /// * `parameter_name`: The identifier the predicate operates on
     /// * `asserts`: Does this predicate include an `asserts` modifier?
     /// * `type_annotation`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_predicate<T1>(
         self,
@@ -13723,7 +15499,7 @@ impl<'a> AstBuilder<'a> {
             span,
             parameter_name,
             asserts,
-            type_annotation: type_annotation.into_in(self.allocator),
+            type_annotation: type_annotation.into_in(self.allocator()),
         }
     }
 
@@ -13737,6 +15513,9 @@ impl<'a> AstBuilder<'a> {
     /// * `parameter_name`: The identifier the predicate operates on
     /// * `asserts`: Does this predicate include an `asserts` modifier?
     /// * `type_annotation`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_type_predicate<T1>(
         self,
@@ -13761,6 +15540,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `name`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_predicate_name_identifier<S1>(
         self,
@@ -13779,6 +15561,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_predicate_name_this(self, span: Span) -> TSTypePredicateName<'a> {
         TSTypePredicateName::This(self.alloc_ts_this_type(span))
@@ -13795,6 +15580,9 @@ impl<'a> AstBuilder<'a> {
     /// * `body`
     /// * `kind`: The keyword used to define this module declaration.
     /// * `declare`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_module_declaration(
         self,
@@ -13826,6 +15614,9 @@ impl<'a> AstBuilder<'a> {
     /// * `body`
     /// * `kind`: The keyword used to define this module declaration.
     /// * `declare`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_module_declaration(
         self,
@@ -13850,6 +15641,9 @@ impl<'a> AstBuilder<'a> {
     /// * `kind`: The keyword used to define this module declaration.
     /// * `declare`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_module_declaration_with_scope_id(
         self,
@@ -13883,6 +15677,9 @@ impl<'a> AstBuilder<'a> {
     /// * `kind`: The keyword used to define this module declaration.
     /// * `declare`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_module_declaration_with_scope_id(
         self,
@@ -13904,6 +15701,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The identifier name being bound.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_module_declaration_name_identifier<S1>(
         self,
@@ -13922,6 +15722,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The identifier name being bound.
     /// * `symbol_id`: Unique identifier for this binding.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_module_declaration_name_identifier_with_symbol_id<S1>(
         self,
@@ -13943,6 +15746,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_module_declaration_name_string_literal<S1>(
         self,
@@ -13963,6 +15769,9 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
     /// * `lone_surrogates`: The string value contains lone surrogates.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_module_declaration_name_string_literal_with_lone_surrogates<S1>(
         self,
@@ -13992,6 +15801,9 @@ impl<'a> AstBuilder<'a> {
     /// * `body`
     /// * `kind`: The keyword used to define this module declaration.
     /// * `declare`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_module_declaration_body_module_declaration(
         self,
@@ -14017,6 +15829,9 @@ impl<'a> AstBuilder<'a> {
     /// * `kind`: The keyword used to define this module declaration.
     /// * `declare`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_module_declaration_body_module_declaration_with_scope_id(
         self,
@@ -14040,6 +15855,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `directives`
     /// * `body`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_module_declaration_body_module_block(
         self,
@@ -14060,6 +15878,9 @@ impl<'a> AstBuilder<'a> {
     /// * `global_span`: Span of `global` keyword
     /// * `body`
     /// * `declare`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_global_declaration(
         self,
@@ -14088,6 +15909,9 @@ impl<'a> AstBuilder<'a> {
     /// * `global_span`: Span of `global` keyword
     /// * `body`
     /// * `declare`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_global_declaration(
         self,
@@ -14110,6 +15934,9 @@ impl<'a> AstBuilder<'a> {
     /// * `body`
     /// * `declare`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_global_declaration_with_scope_id(
         self,
@@ -14140,6 +15967,9 @@ impl<'a> AstBuilder<'a> {
     /// * `body`
     /// * `declare`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_global_declaration_with_scope_id(
         self,
@@ -14164,6 +15994,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `directives`
     /// * `body`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_module_block(
         self,
@@ -14183,6 +16016,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `directives`
     /// * `body`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_module_block(
         self,
@@ -14201,6 +16037,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `members`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_literal(
         self,
@@ -14218,6 +16057,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `members`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_type_literal(
         self,
@@ -14235,6 +16077,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `type_parameter`: The type bound when the
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_infer_type<T1>(self, span: Span, type_parameter: T1) -> TSInferType<'a>
     where
@@ -14243,7 +16088,7 @@ impl<'a> AstBuilder<'a> {
         TSInferType {
             node_id: Default::default(),
             span,
-            type_parameter: type_parameter.into_in(self.allocator),
+            type_parameter: type_parameter.into_in(self.allocator()),
         }
     }
 
@@ -14255,6 +16100,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `type_parameter`: The type bound when the
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_infer_type<T1>(
         self,
@@ -14276,6 +16124,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `expr_name`
     /// * `type_arguments`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_query<T1>(
         self,
@@ -14290,7 +16141,7 @@ impl<'a> AstBuilder<'a> {
             node_id: Default::default(),
             span,
             expr_name,
-            type_arguments: type_arguments.into_in(self.allocator),
+            type_arguments: type_arguments.into_in(self.allocator()),
         }
     }
 
@@ -14303,6 +16154,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `expr_name`
     /// * `type_arguments`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_type_query<T1>(
         self,
@@ -14326,6 +16180,9 @@ impl<'a> AstBuilder<'a> {
     /// * `options`
     /// * `qualifier`
     /// * `type_arguments`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_query_expr_name_import_type<T1, T2>(
         self,
@@ -14359,6 +16216,9 @@ impl<'a> AstBuilder<'a> {
     /// * `options`
     /// * `qualifier`
     /// * `type_arguments`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_import_type<T1, T2>(
         self,
@@ -14376,9 +16236,9 @@ impl<'a> AstBuilder<'a> {
             node_id: Default::default(),
             span,
             source,
-            options: options.into_in(self.allocator),
+            options: options.into_in(self.allocator()),
             qualifier,
-            type_arguments: type_arguments.into_in(self.allocator),
+            type_arguments: type_arguments.into_in(self.allocator()),
         }
     }
 
@@ -14393,6 +16253,9 @@ impl<'a> AstBuilder<'a> {
     /// * `options`
     /// * `qualifier`
     /// * `type_arguments`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_import_type<T1, T2>(
         self,
@@ -14419,6 +16282,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `name`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_import_type_qualifier_identifier<S1>(
         self,
@@ -14439,6 +16305,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `left`
     /// * `right`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_import_type_qualifier_qualified_name(
         self,
@@ -14460,6 +16329,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `left`
     /// * `right`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_import_type_qualified_name(
         self,
@@ -14479,6 +16351,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `left`
     /// * `right`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_import_type_qualified_name(
         self,
@@ -14500,6 +16375,9 @@ impl<'a> AstBuilder<'a> {
     /// * `this_param`: `this` parameter
     /// * `params`: Function parameters. Akin to [`Function::params`].
     /// * `return_type`: Return type of the function.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_function_type<T1, T2, T3, T4>(
         self,
@@ -14518,10 +16396,10 @@ impl<'a> AstBuilder<'a> {
         TSFunctionType {
             node_id: Default::default(),
             span,
-            type_parameters: type_parameters.into_in(self.allocator),
-            this_param: this_param.into_in(self.allocator),
-            params: params.into_in(self.allocator),
-            return_type: return_type.into_in(self.allocator),
+            type_parameters: type_parameters.into_in(self.allocator()),
+            this_param: this_param.into_in(self.allocator()),
+            params: params.into_in(self.allocator()),
+            return_type: return_type.into_in(self.allocator()),
             scope_id: Default::default(),
         }
     }
@@ -14537,6 +16415,9 @@ impl<'a> AstBuilder<'a> {
     /// * `this_param`: `this` parameter
     /// * `params`: Function parameters. Akin to [`Function::params`].
     /// * `return_type`: Return type of the function.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_function_type<T1, T2, T3, T4>(
         self,
@@ -14570,6 +16451,9 @@ impl<'a> AstBuilder<'a> {
     /// * `params`: Function parameters. Akin to [`Function::params`].
     /// * `return_type`: Return type of the function.
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_function_type_with_scope_id<T1, T2, T3, T4>(
         self,
@@ -14589,10 +16473,10 @@ impl<'a> AstBuilder<'a> {
         TSFunctionType {
             node_id: Default::default(),
             span,
-            type_parameters: type_parameters.into_in(self.allocator),
-            this_param: this_param.into_in(self.allocator),
-            params: params.into_in(self.allocator),
-            return_type: return_type.into_in(self.allocator),
+            type_parameters: type_parameters.into_in(self.allocator()),
+            this_param: this_param.into_in(self.allocator()),
+            params: params.into_in(self.allocator()),
+            return_type: return_type.into_in(self.allocator()),
             scope_id: Cell::new(Some(scope_id)),
         }
     }
@@ -14609,6 +16493,9 @@ impl<'a> AstBuilder<'a> {
     /// * `params`: Function parameters. Akin to [`Function::params`].
     /// * `return_type`: Return type of the function.
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_function_type_with_scope_id<T1, T2, T3, T4>(
         self,
@@ -14649,6 +16536,9 @@ impl<'a> AstBuilder<'a> {
     /// * `type_parameters`
     /// * `params`
     /// * `return_type`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_constructor_type<T1, T2, T3>(
         self,
@@ -14667,9 +16557,9 @@ impl<'a> AstBuilder<'a> {
             node_id: Default::default(),
             span,
             r#abstract,
-            type_parameters: type_parameters.into_in(self.allocator),
-            params: params.into_in(self.allocator),
-            return_type: return_type.into_in(self.allocator),
+            type_parameters: type_parameters.into_in(self.allocator()),
+            params: params.into_in(self.allocator()),
+            return_type: return_type.into_in(self.allocator()),
             scope_id: Default::default(),
         }
     }
@@ -14685,6 +16575,9 @@ impl<'a> AstBuilder<'a> {
     /// * `type_parameters`
     /// * `params`
     /// * `return_type`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_constructor_type<T1, T2, T3>(
         self,
@@ -14717,6 +16610,9 @@ impl<'a> AstBuilder<'a> {
     /// * `params`
     /// * `return_type`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_constructor_type_with_scope_id<T1, T2, T3>(
         self,
@@ -14736,9 +16632,9 @@ impl<'a> AstBuilder<'a> {
             node_id: Default::default(),
             span,
             r#abstract,
-            type_parameters: type_parameters.into_in(self.allocator),
-            params: params.into_in(self.allocator),
-            return_type: return_type.into_in(self.allocator),
+            type_parameters: type_parameters.into_in(self.allocator()),
+            params: params.into_in(self.allocator()),
+            return_type: return_type.into_in(self.allocator()),
             scope_id: Cell::new(Some(scope_id)),
         }
     }
@@ -14755,6 +16651,9 @@ impl<'a> AstBuilder<'a> {
     /// * `params`
     /// * `return_type`
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_constructor_type_with_scope_id<T1, T2, T3>(
         self,
@@ -14796,6 +16695,9 @@ impl<'a> AstBuilder<'a> {
     /// * `type_annotation`
     /// * `optional`: Optional modifier on type annotation
     /// * `readonly`: Readonly modifier before keyed index signature
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_mapped_type(
         self,
@@ -14833,6 +16735,9 @@ impl<'a> AstBuilder<'a> {
     /// * `type_annotation`
     /// * `optional`: Optional modifier on type annotation
     /// * `readonly`: Readonly modifier before keyed index signature
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_mapped_type(
         self,
@@ -14872,6 +16777,9 @@ impl<'a> AstBuilder<'a> {
     /// * `optional`: Optional modifier on type annotation
     /// * `readonly`: Readonly modifier before keyed index signature
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_mapped_type_with_scope_id(
         self,
@@ -14911,6 +16819,9 @@ impl<'a> AstBuilder<'a> {
     /// * `optional`: Optional modifier on type annotation
     /// * `readonly`: Readonly modifier before keyed index signature
     /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_mapped_type_with_scope_id(
         self,
@@ -14947,6 +16858,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `quasis`: The string parts of the template literal.
     /// * `types`: The interpolated expressions in the template literal.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_template_literal_type(
         self,
@@ -14966,6 +16880,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `quasis`: The string parts of the template literal.
     /// * `types`: The interpolated expressions in the template literal.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_template_literal_type(
         self,
@@ -14985,6 +16902,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `expression`
     /// * `type_annotation`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_as_expression(
         self,
@@ -15004,6 +16924,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `expression`
     /// * `type_annotation`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_as_expression(
         self,
@@ -15023,6 +16946,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `expression`: The value expression being constrained.
     /// * `type_annotation`: The type `expression` must satisfy.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_satisfies_expression(
         self,
@@ -15042,6 +16968,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `expression`: The value expression being constrained.
     /// * `type_annotation`: The type `expression` must satisfy.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_satisfies_expression(
         self,
@@ -15061,6 +16990,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `type_annotation`
     /// * `expression`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_type_assertion(
         self,
@@ -15080,6 +17012,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `type_annotation`
     /// * `expression`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_type_assertion(
         self,
@@ -15100,6 +17035,9 @@ impl<'a> AstBuilder<'a> {
     /// * `id`
     /// * `module_reference`
     /// * `import_kind`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_import_equals_declaration(
         self,
@@ -15127,6 +17065,9 @@ impl<'a> AstBuilder<'a> {
     /// * `id`
     /// * `module_reference`
     /// * `import_kind`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_import_equals_declaration(
         self,
@@ -15148,6 +17089,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expression`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_module_reference_external_module_reference(
         self,
@@ -15166,6 +17110,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The name of the identifier being referenced.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_module_reference_identifier_reference<S1>(
         self,
@@ -15186,6 +17133,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The name of the identifier being referenced.
     /// * `reference_id`: Reference ID
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_module_reference_identifier_reference_with_reference_id<S1>(
         self,
@@ -15211,6 +17161,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `left`
     /// * `right`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_module_reference_qualified_name(
         self,
@@ -15229,6 +17182,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expression`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_external_module_reference(
         self,
@@ -15246,6 +17202,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expression`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_external_module_reference(
         self,
@@ -15263,6 +17222,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expression`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_non_null_expression(
         self,
@@ -15280,6 +17242,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expression`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_non_null_expression(
         self,
@@ -15294,6 +17259,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expression`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn decorator(self, span: Span, expression: Expression<'a>) -> Decorator<'a> {
         Decorator { node_id: Default::default(), span, expression }
@@ -15307,6 +17275,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expression`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_export_assignment(
         self,
@@ -15324,6 +17295,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expression`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_export_assignment(
         self,
@@ -15341,6 +17315,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_namespace_export_declaration(
         self,
@@ -15358,6 +17335,9 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_namespace_export_declaration(
         self,
@@ -15376,6 +17356,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `expression`
     /// * `type_arguments`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn ts_instantiation_expression<T1>(
         self,
@@ -15390,7 +17373,7 @@ impl<'a> AstBuilder<'a> {
             node_id: Default::default(),
             span,
             expression,
-            type_arguments: type_arguments.into_in(self.allocator),
+            type_arguments: type_arguments.into_in(self.allocator()),
         }
     }
 
@@ -15403,6 +17386,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `expression`
     /// * `type_arguments`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_ts_instantiation_expression<T1>(
         self,
@@ -15425,6 +17411,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `type_annotation`
     /// * `postfix`: Was `?` after the type annotation?
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn js_doc_nullable_type(
         self,
@@ -15444,6 +17433,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `type_annotation`
     /// * `postfix`: Was `?` after the type annotation?
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_js_doc_nullable_type(
         self,
@@ -15463,6 +17455,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `type_annotation`
     /// * `postfix`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn js_doc_non_nullable_type(
         self,
@@ -15482,6 +17477,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `type_annotation`
     /// * `postfix`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_js_doc_non_nullable_type(
         self,
@@ -15499,6 +17497,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn js_doc_unknown_type(self, span: Span) -> JSDocUnknownType {
         JSDocUnknownType { node_id: Default::default(), span }
@@ -15511,6 +17512,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
     #[inline]
     pub fn alloc_js_doc_unknown_type(self, span: Span) -> ArenaBox<'a, JSDocUnknownType> {
         ArenaBox::new_in(self.js_doc_unknown_type(span), &self)

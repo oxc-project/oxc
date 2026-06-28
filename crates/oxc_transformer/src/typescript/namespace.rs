@@ -1,5 +1,5 @@
 use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
-use oxc_ast::{NONE, ast::*};
+use oxc_ast::{ast::*, builder::NONE};
 use oxc_ecmascript::BoundNames;
 use oxc_span::{SPAN, Span};
 use oxc_syntax::{
@@ -366,13 +366,13 @@ impl<'a> TypeScriptNamespace {
             let mut logical_right = {
                 // _N.M
                 let assign_left = if let Some(parent_binding) = parent_binding {
-                    AssignmentTarget::from(MemberExpression::new_static_member_expression(
+                    AssignmentTarget::new_static_member_expression(
                         SPAN,
                         parent_binding.create_read_expression(ctx),
                         IdentifierName::new(SPAN, binding.name, ctx),
                         false,
                         ctx,
-                    ))
+                    )
                 } else {
                     // _N
                     binding.create_write_target(ctx)
@@ -478,14 +478,12 @@ impl<'a> TypeScriptNamespace {
                     declarator.init = Some(Expression::new_assignment_expression(
                         SPAN,
                         AssignmentOperator::Assign,
-                        SimpleAssignmentTarget::from(
-                            MemberExpression::new_static_member_expression(
-                                SPAN,
-                                binding.create_read_expression(ctx),
-                                IdentifierName::new(SPAN, property_name, ctx),
-                                false,
-                                ctx,
-                            ),
+                        SimpleAssignmentTarget::new_static_member_expression(
+                            SPAN,
+                            binding.create_read_expression(ctx),
+                            IdentifierName::new(SPAN, property_name, ctx),
+                            false,
+                            ctx,
                         )
                         .into(),
                         init.take_in(ctx),

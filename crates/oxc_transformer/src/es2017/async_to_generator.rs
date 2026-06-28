@@ -53,8 +53,8 @@
 
 use std::{borrow::Cow, mem};
 
-use oxc_allocator::{ArenaBox, ArenaStringBuilder, ArenaVec, TakeIn};
-use oxc_ast::{NONE, ast::*};
+use oxc_allocator::{ArenaBox, ArenaStringBuilder, ArenaVec, GetAllocator, TakeIn};
+use oxc_ast::{ast::*, builder::NONE};
 use oxc_ast_visit::Visit;
 use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{GetSpan, SPAN};
@@ -276,12 +276,11 @@ impl<'a> AsyncGeneratorExecutor<'a> {
         let (callee, arguments) = if needs_move_parameters_to_inner_function {
             // callee.apply(this, arguments)
             let property = IdentifierName::new(SPAN, "apply", ctx);
-            let callee = Expression::from(MemberExpression::new_static_member_expression(
-                SPAN, callee, property, false, ctx,
-            ));
+            let callee =
+                Expression::new_static_member_expression(SPAN, callee, property, false, ctx);
 
             // this, arguments
-            let this_argument = Argument::from(Expression::new_this_expression(SPAN, ctx));
+            let this_argument = Argument::new_this_expression(SPAN, ctx);
             let arguments_argument = Argument::from(ctx.create_unbound_ident_expr(
                 SPAN,
                 static_ident!("arguments"),
@@ -651,7 +650,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
             return Ident::from_cow_in(input, ctx);
         }
 
-        let mut name = ArenaStringBuilder::with_capacity_in(input_str.len() + 1, ctx.ast.allocator);
+        let mut name = ArenaStringBuilder::with_capacity_in(input_str.len() + 1, ctx.allocator());
         let mut capitalize_next = false;
 
         let mut chars = input_str.chars();
@@ -730,16 +729,16 @@ impl<'a> AsyncGeneratorExecutor<'a> {
             Argument::from(ctx.create_ident_expr(SPAN, arguments, symbol_id, ReferenceFlags::Read));
 
         // (this, arguments)
-        let this = Argument::from(Expression::new_this_expression(SPAN, ctx));
+        let this = Argument::new_this_expression(SPAN, ctx);
         let arguments = ArenaVec::from_array_in([this, arguments_ident], ctx);
         // _ref.apply
-        let callee = Expression::from(MemberExpression::new_static_member_expression(
+        let callee = Expression::new_static_member_expression(
             SPAN,
             bound_ident.create_read_expression(ctx),
             IdentifierName::new(SPAN, "apply", ctx),
             false,
             ctx,
-        ));
+        );
         let argument = Expression::new_call_expression(SPAN, callee, NONE, arguments, false, ctx);
         Statement::new_return_statement(SPAN, Some(argument), ctx)
     }
@@ -804,13 +803,13 @@ impl<'a> AsyncGeneratorExecutor<'a> {
             ),
             ctx,
         );
-        Statement::from(Declaration::new_variable_declaration(
+        Statement::new_variable_declaration(
             SPAN,
             VariableDeclarationKind::Var,
             declarations,
             false,
             ctx,
-        ))
+        )
     }
 
     /// Creates a helper assignment statement for async-to-generator transformation.

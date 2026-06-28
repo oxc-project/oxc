@@ -64,7 +64,10 @@ use rustc_hash::FxHasher;
 use serde::Deserialize;
 
 use oxc_allocator::{ArenaVec, TakeIn};
-use oxc_ast::{NONE, ast::*, builder::AstBuilder};
+use oxc_ast::{
+    ast::*,
+    builder::{AstBuilder, NONE},
+};
 use oxc_data_structures::{inline_string::InlineString, slice_iter::SliceIter};
 use oxc_semantic::SymbolId;
 use oxc_span::SPAN;
@@ -415,18 +418,12 @@ impl<'a> StyledComponents<'a> {
 
         let quasis_elements = ArenaVec::from_iter_in(
             quasis.into_iter().map(|quasi| {
-                ArrayExpressionElement::from(Expression::new_string_literal(
-                    quasi.span,
-                    quasi.value.raw,
-                    None,
-                    ctx,
-                ))
+                ArrayExpressionElement::new_string_literal(quasi.span, quasi.value.raw, None, ctx)
             }),
             ctx,
         );
 
-        let quasis =
-            Argument::from(Expression::new_array_expression(quasi_span, quasis_elements, ctx));
+        let quasis = Argument::new_array_expression(quasi_span, quasis_elements, ctx);
         let arguments = ArenaVec::from_iter_in(
             once(quasis).chain(expressions.into_iter().map(Argument::from)),
             ctx,
@@ -465,9 +462,8 @@ impl<'a> StyledComponents<'a> {
             let arguments = ArenaVec::from_value_in(Argument::ObjectExpression(object), ctx);
             let object = expr.take_in(ctx);
             let property = IdentifierName::new(SPAN, "withConfig", ctx);
-            let callee = Expression::from(MemberExpression::new_static_member_expression(
-                SPAN, object, property, false, ctx,
-            ));
+            let callee =
+                Expression::new_static_member_expression(SPAN, object, property, false, ctx);
             let call = Expression::new_call_expression(SPAN, callee, NONE, arguments, false, ctx);
             *expr = call;
         } else {

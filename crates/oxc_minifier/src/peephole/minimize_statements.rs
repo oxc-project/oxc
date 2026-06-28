@@ -697,7 +697,6 @@ impl<'a> PeepholeOptimizations {
         }
 
         // Collapse empty cases: Prune empty case clauses and consolidate switch statement
-        // This handles the logic from both "collapse_empty_switch_cases" and
         let case_count = switch_stmt.cases.len();
         if case_count > 1 {
             // if a default case is last we can skip checking if it has body
@@ -1881,10 +1880,7 @@ impl<'a> PeepholeOptimizations {
                                 if prop.shorthand && prop.key.is_specific_id("__proto__") {
                                     // { __proto__ } -> { ['__proto__']: value }
                                     prop.computed = true;
-                                    prop.key =
-                                        PropertyKey::from(Expression::new_string_literal(prop.key.span(),
-                                        "__proto__",
-                                        None, ctx));
+                                    prop.key = PropertyKey::new_string_literal(prop.key.span(), "__proto__", None, ctx);
                                 }
                                 prop.shorthand = false;
                                 return Some(changed);

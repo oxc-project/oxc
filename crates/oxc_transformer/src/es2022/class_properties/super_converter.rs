@@ -590,13 +590,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
                 Argument::from(property),
                 Argument::from(value),
                 receiver,
-                Argument::from(Expression::new_numeric_literal(
-                    SPAN,
-                    1.0,
-                    None,
-                    NumberBase::Decimal,
-                    ctx,
-                )),
+                Argument::new_numeric_literal(SPAN, 1.0, None, NumberBase::Decimal, ctx),
             ],
             ctx,
         );

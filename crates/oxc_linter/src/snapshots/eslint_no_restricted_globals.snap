@@ -318,6 +318,20 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a local variable or function parameter instead of the restricted global.
 
   ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'.
+   ╭─[no_restricted_globals.tsx:1:10]
+ 1 │ (window).foo()
+   ·          ───
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'.
+   ╭─[no_restricted_globals.tsx:1:9]
+ 1 │ window!.foo()
+   ·         ───
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'.
    ╭─[no_restricted_globals.tsx:1:6]
  1 │ self.foo()
    ·      ───
@@ -328,6 +342,13 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_restricted_globals.tsx:1:12]
  1 │ globalThis.foo()
    ·            ───
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'.
+   ╭─[no_restricted_globals.tsx:1:21]
+ 1 │ (globalThis as any).foo()
+   ·                     ───
    ╰────
   help: Use a local variable or function parameter instead of the restricted global.
 
@@ -381,16 +402,16 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a local variable or function parameter instead of the restricted global.
 
   ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'.
-   ╭─[no_restricted_globals.tsx:1:8]
+   ╭─[no_restricted_globals.tsx:1:24]
  1 │ window.foo(); myGlobal.foo()
-   ·        ───
+   ·                        ───
    ╰────
   help: Use a local variable or function parameter instead of the restricted global.
 
   ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'.
-   ╭─[no_restricted_globals.tsx:1:24]
+   ╭─[no_restricted_globals.tsx:1:8]
  1 │ window.foo(); myGlobal.foo()
-   ·                        ───
+   ·        ───
    ╰────
   help: Use a local variable or function parameter instead of the restricted global.
 

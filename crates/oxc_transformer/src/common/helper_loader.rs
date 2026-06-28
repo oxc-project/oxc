@@ -72,8 +72,8 @@ use serde::Deserialize;
 
 use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::{
-    NONE,
-    ast::{Argument, CallExpression, Expression, IdentifierName, MemberExpression},
+    ast::{Argument, CallExpression, Expression, IdentifierName},
+    builder::NONE,
 };
 use oxc_semantic::{ReferenceFlags, SymbolFlags};
 use oxc_span::SPAN;
@@ -338,8 +338,6 @@ impl<'a> HelperLoaderStore<'a> {
         let symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), helper_var);
         let object = ctx.create_ident_expr(SPAN, helper_var, symbol_id, ReferenceFlags::Read);
         let property = IdentifierName::new(SPAN, helper.name(), ctx);
-        Expression::from(MemberExpression::new_static_member_expression(
-            SPAN, object, property, false, ctx,
-        ))
+        Expression::new_static_member_expression(SPAN, object, property, false, ctx)
     }
 }

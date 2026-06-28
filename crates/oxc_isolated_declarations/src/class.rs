@@ -1,5 +1,5 @@
-use oxc_allocator::{Allocator, ArenaBox, ArenaVec, CloneIn};
-use oxc_ast::{NONE, ast::*};
+use oxc_allocator::{Allocator, ArenaBox, ArenaVec, CloneIn, GetAllocator};
+use oxc_ast::{ast::*, builder::NONE};
 use oxc_span::{ContentEq, GetSpan, SPAN};
 
 use crate::{
@@ -102,7 +102,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
         if property.accessibility.is_none_or(|a| !a.is_private()) {
             if property.type_annotation.is_some() {
-                type_annotation = property.type_annotation.clone_in(self.ast.allocator);
+                type_annotation = property.type_annotation.clone_in(self.allocator());
             } else if let Some(expr) = property.value.as_ref() {
                 let ts_type = if property.readonly {
                     // Keep literal const initializers on readonly class properties to match TS d.ts emit.
@@ -131,7 +131,7 @@ impl<'a> IsolatedDeclarations<'a> {
             property.span,
             property.r#type,
             ArenaVec::new_in(self),
-            property.key.clone_in(self.ast.allocator),
+            property.key.clone_in(self.allocator()),
             type_annotation,
             value,
             property.computed,
@@ -151,12 +151,12 @@ impl<'a> IsolatedDeclarations<'a> {
             Expression::BooleanLiteral(_)
             | Expression::NumericLiteral(_)
             | Expression::BigIntLiteral(_)
-            | Expression::StringLiteral(_) => Some(expr.clone_in(self.ast.allocator)),
+            | Expression::StringLiteral(_) => Some(expr.clone_in(self.allocator())),
             Expression::TemplateLiteral(lit) if lit.expressions.is_empty() => {
                 self.transform_template_to_string(lit).map(Expression::StringLiteral)
             }
             Expression::UnaryExpression(expr) if Self::can_infer_unary_expression(expr) => {
-                Some(Expression::UnaryExpression(expr.clone_in(self.ast.allocator)))
+                Some(Expression::UnaryExpression(expr.clone_in(self.allocator())))
             }
             Expression::ParenthesizedExpression(expr) => {
                 self.get_literal_const_initializer(&expr.expression)
@@ -192,12 +192,12 @@ impl<'a> IsolatedDeclarations<'a> {
         let value = Function::boxed(
             function.span,
             FunctionType::TSEmptyBodyFunctionExpression,
-            function.id.clone_in(self.ast.allocator),
+            function.id.clone_in(self.allocator()),
             false,
             false,
             false,
-            function.type_parameters.clone_in(self.ast.allocator),
-            function.this_param.clone_in(self.ast.allocator),
+            function.type_parameters.clone_in(self.allocator()),
+            function.this_param.clone_in(self.allocator()),
             params,
             return_type,
             NONE,
@@ -208,7 +208,7 @@ impl<'a> IsolatedDeclarations<'a> {
             definition.span,
             definition.r#type,
             ArenaVec::new_in(self),
-            definition.key.clone_in(self.ast.allocator),
+            definition.key.clone_in(self.allocator()),
             value,
             definition.kind,
             definition.computed,
@@ -291,7 +291,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 self.create_class_property(
                     r#type,
                     method.span,
-                    method.key.clone_in(self.ast.allocator),
+                    method.key.clone_in(self.allocator()),
                     method.r#static,
                     method.r#override,
                     Self::transform_accessibility(method.accessibility),
@@ -349,7 +349,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             None
                         } else {
                             // transformed params will definitely have type annotation
-                            typed_params.items[index].type_annotation.clone_in(self.ast.allocator)
+                            typed_params.items[index].type_annotation.clone_in(self.allocator())
                         };
                     self.transform_formal_parameter_to_class_property(param, type_annotation)
                 }),
@@ -389,7 +389,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             continue;
                         };
                         if let Some(annotation) =
-                            first_param.type_annotation.clone_in(self.ast.allocator)
+                            first_param.type_annotation.clone_in(self.allocator())
                         {
                             if let Some(entry) = method_annotations
                                 .iter_mut()
@@ -398,7 +398,7 @@ impl<'a> IsolatedDeclarations<'a> {
                                 entry.1.setter = Some(annotation);
                             } else {
                                 method_annotations.push((
-                                    method.key.clone_in(self.ast.allocator),
+                                    method.key.clone_in(self.allocator()),
                                     AccessorAnnotation { setter: Some(annotation), getter: None },
                                 ));
                             }
@@ -412,7 +412,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         // type-erased class member.
                         let annotation =
                             if method.accessibility.is_some_and(TSAccessibility::is_private) {
-                                function.return_type.clone_in(self.ast.allocator)
+                                function.return_type.clone_in(self.allocator())
                             } else {
                                 self.infer_function_return_type(function)
                             };
@@ -424,7 +424,7 @@ impl<'a> IsolatedDeclarations<'a> {
                                 entry.1.getter = Some(annotation);
                             } else {
                                 method_annotations.push((
-                                    method.key.clone_in(self.ast.allocator),
+                                    method.key.clone_in(self.allocator()),
                                     AccessorAnnotation { setter: None, getter: Some(annotation) },
                                 ));
                             }
@@ -501,14 +501,14 @@ impl<'a> IsolatedDeclarations<'a> {
                                     BindingPattern::new_binding_identifier(SPAN, "value", self),
                                 )
                             } else {
-                                let mut params = params.clone_in(self.ast.allocator);
+                                let mut params = params.clone_in(self.allocator());
                                 if let Some(param) = params.items.first_mut()
                                     && let Some(annotation) =
                                         accessor_annotations.iter().find_map(|(key, annotation)| {
                                             if method.key.content_eq(key) {
                                                 Some(
                                                     annotation
-                                                        .get_setter_annotation(self.ast.allocator),
+                                                        .get_setter_annotation(self.allocator()),
                                                 )
                                             } else {
                                                 None
@@ -570,9 +570,9 @@ impl<'a> IsolatedDeclarations<'a> {
                                     // No explicit return type for getter, should infer it from the first parameter of setter, if not exists,
                                     // use the inferred return type of getter.
                                     if method.value.return_type.is_none() {
-                                        annotation.get_setter_annotation(self.ast.allocator)
+                                        annotation.get_setter_annotation(self.allocator())
                                     } else {
-                                        annotation.get_getter_annotation(self.ast.allocator)
+                                        annotation.get_getter_annotation(self.allocator())
                                     }
                                 } else {
                                     None
@@ -622,7 +622,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
                     let type_annotation = match property.accessibility {
                         Some(TSAccessibility::Private) => None,
-                        _ => property.type_annotation.clone_in(self.ast.allocator),
+                        _ => property.type_annotation.clone_in(self.allocator()),
                     };
 
                     // FIXME: missing many fields
@@ -630,7 +630,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         property.span,
                         property.r#type,
                         ArenaVec::new_in(self),
-                        property.key.clone_in(self.ast.allocator),
+                        property.key.clone_in(self.allocator()),
                         type_annotation,
                         None,
                         property.computed,
@@ -647,7 +647,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         continue;
                     }
 
-                    element.clone_in(self.ast.allocator)
+                    element.clone_in(self.allocator())
                 }),
             }
         }
@@ -673,11 +673,11 @@ impl<'a> IsolatedDeclarations<'a> {
             decl.span,
             decl.r#type,
             ArenaVec::new_in(self),
-            decl.id.clone_in(self.ast.allocator),
-            decl.type_parameters.clone_in(self.ast.allocator),
-            decl.super_class.clone_in(self.ast.allocator),
-            decl.super_type_arguments.clone_in(self.ast.allocator),
-            decl.implements.clone_in(self.ast.allocator),
+            decl.id.clone_in(self.allocator()),
+            decl.type_parameters.clone_in(self.allocator()),
+            decl.super_class.clone_in(self.allocator()),
+            decl.super_type_arguments.clone_in(self.allocator()),
+            decl.implements.clone_in(self.allocator()),
             body,
             decl.r#abstract,
             declare.unwrap_or_else(|| self.is_declare()),

@@ -1,8 +1,8 @@
 use std::iter::repeat_with;
 
 use crate::generated::ancestor::Ancestor;
-use oxc_allocator::{ArenaVec, CloneIn, TakeIn};
-use oxc_ast::{NONE, ast::*};
+use oxc_allocator::{ArenaVec, CloneIn, GetAllocator, TakeIn};
+use oxc_ast::{ast::*, builder::NONE};
 use oxc_compat::ESFeature;
 use oxc_ecmascript::side_effects::MayHaveSideEffectsContext;
 use oxc_ecmascript::{
@@ -576,7 +576,7 @@ impl<'a> PeepholeOptimizations {
         // Plain `clone_in` resets every `reference_id` to `None`, making id
         // aliasing structurally impossible; the loop below installs the one
         // fresh reference the clone needs.
-        let mut new_left_expr = typeof_binary_expr.clone_in(ctx.ast.allocator);
+        let mut new_left_expr = typeof_binary_expr.clone_in(ctx.allocator());
         if let Expression::BinaryExpression(new_left_expr_binary) = &mut new_left_expr {
             new_left_expr_binary.operator =
                 if inversed { BinaryOperator::Inequality } else { BinaryOperator::Equality };
@@ -985,25 +985,19 @@ impl<'a> PeepholeOptimizations {
             // wrap with `.slice(offset)`
             let arr = if offset > 0.0 {
                 let obj = base_arr;
-                let callee = Expression::StaticMemberExpression(StaticMemberExpression::boxed(
+                let callee = Expression::new_static_member_expression(
                     SPAN,
                     obj,
                     IdentifierName::new(SPAN, "slice", ctx),
                     false,
                     ctx,
-                ));
+                );
                 Expression::new_call_expression(
                     SPAN,
                     callee,
                     NONE,
                     ArenaVec::from_value_in(
-                        Argument::from(Expression::new_numeric_literal(
-                            SPAN,
-                            offset,
-                            None,
-                            NumberBase::Decimal,
-                            ctx,
-                        )),
+                        Argument::new_numeric_literal(SPAN, offset, None, NumberBase::Decimal, ctx),
                         ctx,
                     ),
                     false,
@@ -1431,8 +1425,7 @@ impl<'a> PeepholeOptimizations {
                 if is_identifier_name_patched(value) {
                     // Bool field flip on an existing AST node, not a slot replacement.
                     *computed = false;
-                    let new_key =
-                        PropertyKey::StaticIdentifier(IdentifierName::boxed(s.span, s.value, ctx));
+                    let new_key = PropertyKey::new_static_identifier(s.span, s.value, ctx);
                     ctx.replace_property_key(key, new_key);
                     return;
                 }
@@ -1441,13 +1434,13 @@ impl<'a> PeepholeOptimizations {
                 {
                     // Bool field flip on an existing AST node, not a slot replacement.
                     *computed = false;
-                    let new_key = PropertyKey::NumericLiteral(NumericLiteral::boxed(
+                    let new_key = PropertyKey::new_numeric_literal(
                         s.span,
                         value,
                         None,
                         NumberBase::Decimal,
                         ctx,
-                    ));
+                    );
                     ctx.replace_property_key(key, new_key);
                     return;
                 }
@@ -1773,7 +1766,7 @@ impl<'a> PeepholeOptimizations {
         // "str1,str2".split(',')
         let new_value = Expression::new_call_expression_with_pure(
             expr.span(),
-            Expression::StaticMemberExpression(StaticMemberExpression::boxed(
+            Expression::new_static_member_expression(
                 expr.span(),
                 Expression::new_string_literal(
                     expr.span(),
@@ -1784,15 +1777,15 @@ impl<'a> PeepholeOptimizations {
                 IdentifierName::new(expr.span(), "split", ctx),
                 false,
                 ctx,
-            )),
+            ),
             NONE,
             ArenaVec::from_value_in(
-                Argument::from(Expression::new_string_literal(
+                Argument::new_string_literal(
                     expr.span(),
                     Str::from_str_in(delimiter, ctx),
                     None,
                     ctx,
-                )),
+                ),
                 ctx,
             ),
             false,

@@ -1,5 +1,5 @@
 use oxc_allocator::{ArenaBox, ArenaVec};
-use oxc_ast::{NONE, ast::*};
+use oxc_ast::{ast::*, builder::NONE};
 use oxc_span::GetSpan;
 use rustc_hash::FxHashMap;
 

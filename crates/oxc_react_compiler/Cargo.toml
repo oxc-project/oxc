@@ -28,7 +28,7 @@ doctest = false
 
 [dependencies]
 oxc_allocator = { workspace = true }
-oxc_ast = { workspace = true, features = ["builder_new"] }
+oxc_ast = { workspace = true }
 oxc_ast_visit = { workspace = true }
 oxc_codegen = { workspace = true }
 oxc_diagnostics = { workspace = true }
@@ -47,6 +47,12 @@ react_compiler_hir = { package = "forked_react_compiler_hir", version = "0.2.0" 
 indexmap = { workspace = true, features = ["serde"] }
 rustc-hash = { workspace = true }
 serde_json = { workspace = true, features = ["raw_value"] }
+
+[dev-dependencies]
+# Catch usage of old `AstBuilder` APIs in tests, without affecting downstream consumers.
+# If we enabled `disable_old_builder` feature in main dependency, feature unification would
+# cause it to be activated for `oxc_ast` for the user too.
+oxc_ast = { workspace = true, features = ["disable_old_builder"] }
 
 # The `src/` conversion modules are vendored close to upstream `react_compiler_oxc`
 # (kept near byte-for-byte to ease re-syncing), so relax the handful of lints they

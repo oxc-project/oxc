@@ -22,7 +22,7 @@ doctest = false
 
 [dependencies]
 oxc_allocator = { workspace = true }
-oxc_ast = { workspace = true, features = ["builder_new"] }
+oxc_ast = { workspace = true }
 oxc_ast_visit = { workspace = true }
 oxc_compat = { workspace = true }
 oxc_data_structures = { workspace = true, features = [
@@ -57,6 +57,11 @@ insta = { workspace = true }
 oxc_codegen = { workspace = true, features = ["sourcemap"] }
 oxc_parser = { workspace = true }
 pico-args = { workspace = true }
+
+# Catch usage of old `AstBuilder` APIs in tests, without affecting downstream consumers.
+# If we enabled `disable_old_builder` feature in main dependency, feature unification would
+# cause it to be activated for `oxc_ast` for the user too.
+oxc_ast = { workspace = true, features = ["disable_old_builder"] }
 
 [features]
 # Run the experimental React Compiler as the first transform pass.

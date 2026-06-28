@@ -1,5 +1,5 @@
 use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
-use oxc_ast::{NONE, ast::*};
+use oxc_ast::{ast::*, builder::NONE};
 use oxc_semantic::{Reference, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_str::static_ident;
@@ -203,15 +203,13 @@ impl<'a> TypeScriptModule {
                     ctx,
                 )
             }
-            TSTypeName::QualifiedName(qualified_name) => {
-                Expression::from(MemberExpression::new_static_member_expression(
-                    SPAN,
-                    self.transform_ts_type_name(&mut qualified_name.left, ctx),
-                    qualified_name.right.clone(),
-                    false,
-                    ctx,
-                ))
-            }
+            TSTypeName::QualifiedName(qualified_name) => Expression::new_static_member_expression(
+                SPAN,
+                self.transform_ts_type_name(&mut qualified_name.left, ctx),
+                qualified_name.right.clone(),
+                false,
+                ctx,
+            ),
             TSTypeName::ThisExpression(e) => Expression::new_this_expression(e.span, ctx),
         }
     }

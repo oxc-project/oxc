@@ -128,6 +128,15 @@ pub fn is_string_raw_member_expression(expr: &Expression, scoping: &Scoping) -> 
     }
 }
 
+/// Checks if `haystack` starts with `prefix`, ignoring ASCII case.
+pub fn starts_with_ignore_case(haystack: &str, prefix: &str) -> bool {
+    let len = prefix.len();
+    if haystack.len() < len {
+        return false;
+    }
+    haystack.as_bytes()[..len].eq_ignore_ascii_case(prefix.as_bytes())
+}
+
 /// Reads the content of a path and returns it.
 /// This function is faster than native `fs:read_to_string`.
 ///

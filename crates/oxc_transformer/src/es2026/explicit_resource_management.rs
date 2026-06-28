@@ -38,7 +38,7 @@ use std::mem;
 use rustc_hash::FxHashMap;
 
 use oxc_allocator::{Address, ArenaBox, ArenaVec, GetAddress, TakeIn};
-use oxc_ast::{NONE, ast::*};
+use oxc_ast::{ast::*, builder::NONE};
 use oxc_ecmascript::BoundNames;
 use oxc_semantic::{NodeId, ScopeFlags, ScopeId, SymbolFlags, SymbolId};
 use oxc_span::{SPAN, Span};
@@ -102,7 +102,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
             mem::replace(&mut variable_declarator.id, temp_id.create_binding_pattern(ctx));
 
         // `using x = _x;`
-        let using_stmt = Statement::from(Declaration::new_variable_declaration(
+        let using_stmt = Statement::new_variable_declaration(
             SPAN,
             variable_decl_kind,
             ArenaVec::from_value_in(
@@ -119,7 +119,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
             ),
             false,
             ctx,
-        ));
+        );
 
         if let Statement::BlockStatement(body) = &mut for_of_stmt.body {
             let body_scope_id = body.scope_id();
@@ -418,9 +418,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
 
                         let decl = mem::replace(
                             &mut export_default_decl.declaration,
-                            ExportDefaultDeclarationKind::NullLiteral(NullLiteral::boxed(
-                                SPAN, ctx,
-                            )),
+                            ExportDefaultDeclarationKind::new_null_literal(SPAN, ctx),
                         );
 
                         let expr = match decl {
@@ -434,48 +432,44 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                             _ => decl.into_expression(),
                         };
 
-                        inner_block.push(Statement::VariableDeclaration(
-                            VariableDeclaration::boxed(
-                                span,
-                                VariableDeclarationKind::Var,
-                                ArenaVec::from_value_in(
-                                    VariableDeclarator::new(
-                                        span,
-                                        VariableDeclarationKind::Var,
-                                        var_id.create_spanned_binding_pattern(span, ctx),
-                                        NONE,
-                                        Some(expr),
-                                        false,
-                                        ctx,
-                                    ),
+                        inner_block.push(Statement::new_variable_declaration(
+                            span,
+                            VariableDeclarationKind::Var,
+                            ArenaVec::from_value_in(
+                                VariableDeclarator::new(
+                                    span,
+                                    VariableDeclarationKind::Var,
+                                    var_id.create_spanned_binding_pattern(span, ctx),
+                                    NONE,
+                                    Some(expr),
+                                    false,
                                     ctx,
                                 ),
-                                false,
                                 ctx,
                             ),
+                            false,
+                            ctx,
                         ));
 
-                        program_body.push(Statement::ExportNamedDeclaration(
-                            ExportNamedDeclaration::boxed(
-                                SPAN,
-                                None,
-                                ArenaVec::from_value_in(
-                                    ExportSpecifier::new(
-                                        SPAN,
-                                        ModuleExportName::IdentifierReference(
-                                            var_id.create_read_reference(ctx),
-                                        ),
-                                        ModuleExportName::new_identifier_name(SPAN, "default", ctx),
-                                        ImportOrExportKind::Value,
-                                        ctx,
+                        program_body.push(Statement::new_export_named_declaration(
+                            SPAN,
+                            None,
+                            ArenaVec::from_value_in(
+                                ExportSpecifier::new(
+                                    SPAN,
+                                    ModuleExportName::IdentifierReference(
+                                        var_id.create_read_reference(ctx),
                                     ),
+                                    ModuleExportName::new_identifier_name(SPAN, "default", ctx),
+                                    ImportOrExportKind::Value,
                                     ctx,
                                 ),
-                                None,
-                                ImportOrExportKind::Value,
-                                NONE,
                                 ctx,
                             ),
+                            None,
+                            ImportOrExportKind::Value,
+                            NONE,
+                            ctx,
                         ));
                     }
                     Statement::ExportNamedDeclaration(ref mut export_named_declaration) => {
@@ -558,16 +552,14 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                             _ => unreachable!(),
                         };
 
-                        program_body.push(Statement::ExportNamedDeclaration(
-                            ExportNamedDeclaration::boxed(
-                                SPAN,
-                                None,
-                                export_specifiers,
-                                None,
-                                export_named_declaration.export_kind,
-                                NONE,
-                                ctx,
-                            ),
+                        program_body.push(Statement::new_export_named_declaration(
+                            SPAN,
+                            None,
+                            export_specifiers,
+                            None,
+                            export_named_declaration.export_kind,
+                            NONE,
+                            ctx,
                         ));
                     }
                     Statement::ClassDeclaration(class_decl) => {
@@ -714,7 +706,7 @@ impl<'a> ExplicitResourceManagement<'a> {
                     if let Some(old_init) = decl.init.take() {
                         decl.init = Some(Expression::new_call_expression(
                             SPAN,
-                            Expression::from(MemberExpression::new_static_member_expression(
+                            Expression::new_static_member_expression(
                                 SPAN,
                                 using_ctx
                                     .as_ref()
@@ -731,7 +723,7 @@ impl<'a> ExplicitResourceManagement<'a> {
                                 ),
                                 false,
                                 ctx,
-                            )),
+                            ),
                             NONE,
                             ArenaVec::from_value_in(Argument::from(old_init), ctx),
                             false,
@@ -753,7 +745,7 @@ impl<'a> ExplicitResourceManagement<'a> {
         let block = {
             let vec = ArenaVec::from_array_in(
                 [
-                    Statement::from(Declaration::new_variable_declaration(
+                    Statement::new_variable_declaration(
                         SPAN,
                         VariableDeclarationKind::Var,
                         ArenaVec::from_value_in(
@@ -777,7 +769,7 @@ impl<'a> ExplicitResourceManagement<'a> {
                         ),
                         false,
                         ctx,
-                    )),
+                    ),
                     stmt.take_in(ctx),
                 ],
                 ctx,
@@ -859,7 +851,7 @@ impl<'a> ExplicitResourceManagement<'a> {
                 if let Some(old_init) = decl.init.take() {
                     decl.init = Some(Expression::new_call_expression(
                         SPAN,
-                        Expression::from(MemberExpression::new_static_member_expression(
+                        Expression::new_static_member_expression(
                             SPAN,
                             using_ctx.as_ref().unwrap().create_read_expression(ctx),
                             IdentifierName::new(
@@ -873,7 +865,7 @@ impl<'a> ExplicitResourceManagement<'a> {
                             ),
                             false,
                             ctx,
-                        )),
+                        ),
                         NONE,
                         ArenaVec::from_value_in(Argument::from(old_init), ctx),
                         false,
@@ -961,13 +953,13 @@ impl<'a> ExplicitResourceManagement<'a> {
             Expression::new_assignment_expression(
                 SPAN,
                 AssignmentOperator::Assign,
-                AssignmentTarget::from(MemberExpression::new_static_member_expression(
+                AssignmentTarget::new_static_member_expression(
                     SPAN,
                     using_ctx.create_read_expression(ctx),
                     IdentifierName::new(SPAN, "e", ctx),
                     false,
                     ctx,
-                )),
+                ),
                 ident.create_read_expression(ctx),
                 ctx,
             ),
@@ -1001,13 +993,13 @@ impl<'a> ExplicitResourceManagement<'a> {
         // `_usingCtx.d()`
         let expr = Expression::new_call_expression(
             SPAN,
-            Expression::from(MemberExpression::new_static_member_expression(
+            Expression::new_static_member_expression(
                 SPAN,
                 using_ctx.create_read_expression(ctx),
                 IdentifierName::new(SPAN, "d", ctx),
                 false,
                 ctx,
-            )),
+            ),
             NONE,
             ArenaVec::new_in(ctx),
             false,
@@ -1035,7 +1027,7 @@ impl<'a> ExplicitResourceManagement<'a> {
         class_decl.r#type = ClassType::ClassExpression;
         let class_expr = Expression::ClassExpression(class_decl);
 
-        Statement::VariableDeclaration(VariableDeclaration::boxed(
+        Statement::new_variable_declaration(
             SPAN,
             VariableDeclarationKind::Var,
             ArenaVec::from_value_in(
@@ -1052,7 +1044,7 @@ impl<'a> ExplicitResourceManagement<'a> {
             ),
             false,
             ctx,
-        ))
+        )
     }
 
     /// Move the original class id symbol to a new `var`-style outer binding, and create a fresh

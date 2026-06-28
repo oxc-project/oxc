@@ -1,4 +1,4 @@
-use oxc_allocator::{ArenaBox, CloneIn};
+use oxc_allocator::{ArenaBox, CloneIn, GetAllocator};
 use oxc_ast::ast::{
     ArrowFunctionExpression, Expression, FormalParameter, Function, Statement, TSType,
     TSTypeAnnotation, UnaryExpression,
@@ -44,14 +44,14 @@ impl<'a> IsolatedDeclarations<'a> {
                 if expr.type_annotation.is_const_type_reference() {
                     self.transform_const_expression_to_ts_type(&expr.expression)
                 } else {
-                    Some(expr.type_annotation.clone_in(self.ast.allocator))
+                    Some(expr.type_annotation.clone_in(self.allocator()))
                 }
             }
             Expression::TSTypeAssertion(expr) => {
                 if expr.type_annotation.is_const_type_reference() {
                     self.transform_const_expression_to_ts_type(&expr.expression)
                 } else {
-                    Some(expr.type_annotation.clone_in(self.ast.allocator))
+                    Some(expr.type_annotation.clone_in(self.allocator()))
                 }
             }
             Expression::ClassExpression(expr) => {
@@ -91,7 +91,7 @@ impl<'a> IsolatedDeclarations<'a> {
         function: &Function<'a>,
     ) -> Option<ArenaBox<'a, TSTypeAnnotation<'a>>> {
         if function.return_type.is_some() {
-            return function.return_type.clone_in(self.ast.allocator);
+            return function.return_type.clone_in(self.allocator());
         }
 
         if function.r#async || function.generator {
@@ -109,7 +109,7 @@ impl<'a> IsolatedDeclarations<'a> {
         function: &ArrowFunctionExpression<'a>,
     ) -> Option<ArenaBox<'a, TSTypeAnnotation<'a>>> {
         if function.return_type.is_some() {
-            return function.return_type.clone_in(self.ast.allocator);
+            return function.return_type.clone_in(self.allocator());
         }
 
         if function.r#async {

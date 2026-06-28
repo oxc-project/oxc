@@ -4,7 +4,7 @@
 use std::mem;
 
 use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
-use oxc_ast::{NONE, ast::*};
+use oxc_ast::{ast::*, builder::NONE};
 use oxc_span::SPAN;
 use oxc_str::static_ident;
 use oxc_syntax::{reference::ReferenceId, symbol::SymbolId};
@@ -295,14 +295,14 @@ impl<'a> ClassProperties<'a> {
         ctx: &TraverseCtx<'a>,
     ) {
         // Substitute `<callee>.call` as callee of call expression
-        call_expr.callee = Expression::from(MemberExpression::new_static_member_expression(
+        call_expr.callee = Expression::new_static_member_expression(
             SPAN,
             callee,
             IdentifierName::new(SPAN, "call", ctx),
             // Make sure the `callee` can access `call` safely. i.e `callee?.()` -> `callee?.call()`
             mem::replace(&mut call_expr.optional, false),
             ctx,
-        ));
+        );
         // Insert `context` to call arguments
         call_expr.arguments.insert(0, Argument::from(context));
     }
@@ -1811,13 +1811,13 @@ impl<'a> ClassProperties<'a> {
         let (callee, context) = self.transform_private_field_callee(field_expr, ctx);
 
         // Return `<callee>.bind(object)`, to be substituted as tag of tagged template expression
-        let callee = Expression::from(MemberExpression::new_static_member_expression(
+        let callee = Expression::new_static_member_expression(
             SPAN,
             callee,
             IdentifierName::new(SPAN, "bind", ctx),
             false,
             ctx,
-        ));
+        );
         let arguments = ArenaVec::from_value_in(Argument::from(context), ctx);
         Expression::new_call_expression(field_expr.span, callee, NONE, arguments, false, ctx)
     }

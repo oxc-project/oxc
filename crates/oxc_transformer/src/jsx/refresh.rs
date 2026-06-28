@@ -7,8 +7,14 @@ use base64::{
 use hmac_sha1_compact::Hash as Sha1;
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use oxc_allocator::{ArenaStringBuilder, ArenaVec, CloneIn, GetAddress, TakeIn, UnstableAddress};
-use oxc_ast::{NONE, ast::*, builder::AstBuilder, match_expression};
+use oxc_allocator::{
+    ArenaStringBuilder, ArenaVec, CloneIn, GetAddress, GetAllocator, TakeIn, UnstableAddress,
+};
+use oxc_ast::{
+    ast::*,
+    builder::{AstBuilder, NONE},
+    match_expression,
+};
 use oxc_ast_visit::{
     Visit,
     walk::{walk_call_expression, walk_declaration},
@@ -97,15 +103,9 @@ impl<'a> RefreshIdentifierResolver<'a> {
                     reference_id,
                     ctx,
                 );
-                Expression::from(MemberExpression::new_static_member_expression(
-                    SPAN,
-                    ident,
-                    property.clone(),
-                    false,
-                    ctx,
-                ))
+                Expression::new_static_member_expression(SPAN, ident, property.clone(), false, ctx)
             }
-            Self::Expression(expr) => expr.clone_in(ctx.ast.allocator),
+            Self::Expression(expr) => expr.clone_in(ctx.allocator()),
         }
     }
 }
@@ -169,13 +169,13 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
             return;
         }
 
-        let var_decl = Statement::from(Declaration::new_variable_declaration(
+        let var_decl = Statement::new_variable_declaration(
             SPAN,
             VariableDeclarationKind::Var,
             ArenaVec::new_in(ctx), // This is replaced at the end
             false,
             ctx,
-        ));
+        );
 
         let mut variable_declarator_items =
             ArenaVec::with_capacity_in(self.registrations.len(), ctx);
@@ -194,7 +194,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
             let arguments = ArenaVec::from_array_in(
                 [
                     Argument::from(binding.create_read_expression(ctx)),
-                    Argument::from(Expression::new_string_literal(SPAN, *persistent_id, None, ctx)),
+                    Argument::new_string_literal(SPAN, *persistent_id, None, ctx),
                 ],
                 ctx,
             );
@@ -267,7 +267,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
 
         if found_call_expression {
             self.last_signature =
-                Some((binding_identifier.clone(), arguments.clone_in(ctx.ast.allocator)));
+                Some((binding_identifier.clone(), arguments.clone_in(ctx.allocator())));
         }
 
         let span = expr.span();
@@ -387,25 +387,21 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
                             if is_member_expression {
                                 if let Some(middle_property) = middle_property {
                                     // binding_name.middle_property
-                                    expr = Expression::from(
-                                        MemberExpression::new_static_member_expression(
-                                            SPAN,
-                                            expr,
-                                            IdentifierName::new(SPAN, middle_property, ctx),
-                                            false,
-                                            ctx,
-                                        ),
+                                    expr = Expression::new_static_member_expression(
+                                        SPAN,
+                                        expr,
+                                        IdentifierName::new(SPAN, middle_property, ctx),
+                                        false,
+                                        ctx,
                                     );
                                 }
                                 // binding_name.hook_name
-                                expr = Expression::from(
-                                    MemberExpression::new_static_member_expression(
-                                        SPAN,
-                                        expr,
-                                        IdentifierName::new(SPAN, hook_name, ctx),
-                                        false,
-                                        ctx,
-                                    ),
+                                expr = Expression::new_static_member_expression(
+                                    SPAN,
+                                    expr,
+                                    IdentifierName::new(SPAN, hook_name, ctx),
+                                    false,
+                                    ctx,
                                 );
                             }
                             expr
@@ -619,7 +615,7 @@ impl<'a> ReactRefresh<'a> {
                 }
             };
 
-            let mut hashed_key = ArenaStringBuilder::from_str_in(ZEROS_STR, ctx.ast.allocator);
+            let mut hashed_key = ArenaStringBuilder::from_str_in(ZEROS_STR, ctx.allocator());
             // SAFETY: Base64 encoding only produces ASCII bytes. Even if our assumptions are incorrect,
             // and Base64 bytes do not fill `hashed_key` completely, the remaining bytes are 0, so also ASCII.
             let hashed_key_bytes = unsafe { hashed_key.as_mut_str().as_bytes_mut() };
@@ -638,10 +634,10 @@ impl<'a> ReactRefresh<'a> {
         let force_reset = custom_hooks_in_scope.len() != callee_len;
 
         let mut arguments = ArenaVec::new_in(ctx);
-        arguments.push(Argument::from(Expression::new_string_literal(SPAN, key, None, ctx)));
+        arguments.push(Argument::new_string_literal(SPAN, key, None, ctx));
 
         if force_reset || !custom_hooks_in_scope.is_empty() {
-            arguments.push(Argument::from(Expression::new_boolean_literal(SPAN, force_reset, ctx)));
+            arguments.push(Argument::new_boolean_literal(SPAN, force_reset, ctx));
         }
 
         if !custom_hooks_in_scope.is_empty() {
@@ -667,24 +663,22 @@ impl<'a> ReactRefresh<'a> {
                 ctx,
             );
             let scope_id = ctx.create_child_scope_of_current(ScopeFlags::Function);
-            let function = Argument::from(
-                Expression::new_function_expression_with_scope_id_and_pure_and_pife(
-                    SPAN,
-                    FunctionType::FunctionExpression,
-                    None,
-                    false,
-                    false,
-                    false,
-                    NONE,
-                    NONE,
-                    formal_parameters,
-                    NONE,
-                    Some(function_body),
-                    scope_id,
-                    false,
-                    false,
-                    ctx,
-                ),
+            let function = Argument::new_function_expression_with_scope_id_and_pure_and_pife(
+                SPAN,
+                FunctionType::FunctionExpression,
+                None,
+                false,
+                false,
+                false,
+                NONE,
+                NONE,
+                formal_parameters,
+                NONE,
+                Some(function_body),
+                scope_id,
+                false,
+                false,
+                ctx,
             );
             arguments.push(function);
         }
