@@ -207,6 +207,7 @@ fn fix_conditional_expression<'a>(
     )
 }
 
+#[expect(clippy::cast_possible_truncation)]
 fn push_invert_test_fixes<'a>(
     fixes: &mut RuleFix,
     fixer: &RuleFixer<'_, 'a>,
