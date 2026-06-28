@@ -224,13 +224,15 @@ impl Rule for NoUnusedVars {
     }
 
     fn run_once(&self, ctx: &LintContext) {
+        let precomputed_exported_names = Symbol::collect_exported_local_names(ctx.module_record());
+
         for symbol in ctx.scoping().symbol_ids() {
             let symbol = Symbol::new(ctx, ctx.module_record(), symbol);
             if Self::should_skip_symbol(&symbol) {
                 continue;
             }
 
-            self.run_on_symbol_internal(&symbol, ctx);
+            self.run_on_symbol_internal(&symbol, ctx, &precomputed_exported_names);
         }
     }
 
@@ -247,15 +249,19 @@ impl Rule for NoUnusedVars {
 }
 
 impl NoUnusedVars {
-    fn run_on_symbol_internal<'a>(&self, symbol: &Symbol<'_, 'a>, ctx: &LintContext<'a>) {
+    fn run_on_symbol_internal<'a>(
+        &self,
+        symbol: &Symbol<'_, 'a>,
+        ctx: &LintContext<'a>,
+        exported_names: &rustc_hash::FxHashSet<&str>,
+    ) {
         let is_ignored = self.is_ignored(symbol);
 
         if is_ignored.is_some() && !self.report_used_ignore_pattern {
             return;
         }
 
-        // Order matters. We want to call cheap/high "yield" functions first.
-        let is_used = symbol.is_exported() || symbol.has_usages(self);
+        let is_used = symbol.is_exported(exported_names) || symbol.has_usages(self);
 
         match (is_used, *is_ignored) {
             // used, ignored because variable name matches one of several

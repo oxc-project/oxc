@@ -1,3 +1,6 @@
+// These methods are all deprecated, but they call each other internally
+#![expect(deprecated)]
+
 use std::{alloc::Layout, borrow::Cow, mem::MaybeUninit, slice, str};
 
 use oxc_allocator::{ArenaBox, ArenaVec, FromIn, IntoIn};
