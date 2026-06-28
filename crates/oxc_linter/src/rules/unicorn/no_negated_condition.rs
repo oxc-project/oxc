@@ -131,7 +131,7 @@ e();
         (r"a !== b ? c : d", r"a === b ? d : c"),
         (r"(( !a )) ? b : c", r"(( a )) ? c : b"),
         (r"!(( a )) ? b : c", r"(( a )) ? c : b"),
-        (r"if(!(( a ))) b(); else c();", r"if(a) {c();} else {b();}"),
+        (r"if(!(( a ))) b(); else c();", r"if((( a ))) {c();} else {b();}"),
         (r"if((( !a ))) b(); else c();", r"if((( a ))) {c();} else {b();}"),
         (r"function a() {return!a ? b : c}", r"function a() {return a ? c : b}"),
         (r"function a() {return!(( a )) ? b : c}", r"function a() {return (( a )) ? c : b}"),

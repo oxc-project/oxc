@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{BinaryExpression, ConditionalExpression, Expression, IfStatement, Statement},
+    ast::{ConditionalExpression, Expression, IfStatement, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
@@ -111,7 +111,7 @@ fn fix_if_statement<'a>(
     // invert test (1–2) + swap branches (2) — capacity 4 is enough
     let mut fixes = fixer.new_fix_with_capacity(4);
 
-    push_invert_test_fixes(&mut fixes, &fixer, negated_test, /* for_if_statement */ true, ctx);
+    push_invert_test_fixes(&mut fixes, &fixer, negated_test, ctx);
     push_swap_statement_branches(&mut fixes, &fixer, &if_stmt.consequent, alternate, ctx);
 
     fixes.with_message(
@@ -184,13 +184,7 @@ fn fix_conditional_expression<'a>(
         fixes.push(fixer.insert_text_after_range(expr_span, ")"));
     }
 
-    push_invert_test_fixes(
-        &mut fixes,
-        &fixer,
-        negated_test,
-        /* for_if_statement */ false,
-        ctx,
-    );
+    push_invert_test_fixes(&mut fixes, &fixer, negated_test, ctx);
     push_swap_expression_branches(
         &mut fixes,
         &fixer,
@@ -208,24 +202,12 @@ fn push_invert_test_fixes<'a>(
     fixes: &mut RuleFix,
     fixer: &RuleFixer<'_, 'a>,
     negated_test: &Expression<'a>,
-    for_if_statement: bool,
     ctx: &LintContext<'a>,
 ) {
     match negated_test {
         Expression::UnaryExpression(unary) if unary.operator == UnaryOperator::LogicalNot => {
             // Delete only the `!` punctuator (1 byte) so comments/whitespace after it stay.
             fixes.push(fixer.delete_range(Span::new(unary.span.start, unary.span.start + 1)));
-
-            // For `if`, also drop parentheses around the argument (`if (!((a)))` → `if (a)`).
-            if for_if_statement {
-                let inner = unary.argument.get_inner_expression();
-                let arg_span = unary.argument.span();
-                if inner.span() != arg_span {
-                    // Replace the parenthesized argument with the inner expression text only.
-                    let inner_text = ctx.source_range(inner.span());
-                    fixes.push(fixer.replace(arg_span, inner_text.to_string()));
-                }
-            }
         }
         Expression::BinaryExpression(binary) => {
             let binary_operator_str = binary.operator.as_str();
@@ -238,7 +220,7 @@ fn push_invert_test_fixes<'a>(
                 .map(|s| Span::sized(binary.left.span().end + s, binary_operator_str.len() as u32))
                 && let Some(inverse_op) = binary.operator.equality_inverse_operator()
             {
-                fixes.push(fixer.replace(op_span, binary_operator_str));
+                fixes.push(fixer.replace(op_span, inverse_op.as_str()));
             }
         }
         _ => {}
