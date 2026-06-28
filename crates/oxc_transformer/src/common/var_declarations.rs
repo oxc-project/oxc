@@ -15,7 +15,10 @@
 //! ```
 
 use oxc_allocator::ArenaVec;
-use oxc_ast::{NONE, ast::*, builder::AstBuilder};
+use oxc_ast::{
+    ast::*,
+    builder::{AstBuilder, NONE},
+};
 use oxc_data_structures::stack::SparseStack;
 use oxc_span::SPAN;
 use oxc_traverse::{BoundIdentifier, ast_operations::GatherNodeParts};

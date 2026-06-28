@@ -41,7 +41,7 @@
 use std::iter;
 
 use oxc_allocator::{ArenaVec, TakeIn};
-use oxc_ast::{NONE, ast::*};
+use oxc_ast::{ast::*, builder::NONE};
 use oxc_semantic::SymbolFlags;
 use oxc_span::SPAN;
 use oxc_traverse::{BoundIdentifier, Traverse};
@@ -168,8 +168,7 @@ impl<'a> TaggedTemplateTransform {
             }),
             ctx,
         );
-        let cooked_argument =
-            Argument::from(Expression::new_array_expression(SPAN, cooked_elements, ctx));
+        let cooked_argument = Argument::new_array_expression(SPAN, cooked_elements, ctx);
 
         // Add raw array if needed: `[raw0, raw1, ...]`
         let template_arguments = if needs_raw_array {
@@ -180,8 +179,7 @@ impl<'a> TaggedTemplateTransform {
                 }),
                 ctx,
             );
-            let raws_argument =
-                Argument::from(Expression::new_array_expression(SPAN, elements, ctx));
+            let raws_argument = Argument::new_array_expression(SPAN, elements, ctx);
             ArenaVec::from_array_in([cooked_argument, raws_argument], ctx)
         } else {
             ArenaVec::from_value_in(cooked_argument, ctx)
@@ -239,13 +237,13 @@ impl<'a> TaggedTemplateTransform {
             ctx,
         );
 
-        let stmt = Statement::from(Declaration::new_variable_declaration(
+        let stmt = Statement::new_variable_declaration(
             SPAN,
             VariableDeclarationKind::Var,
             ArenaVec::from_value_in(variable, ctx),
             false,
             ctx,
-        ));
+        );
 
         ctx.state.top_level_statements.insert_statement(stmt);
 

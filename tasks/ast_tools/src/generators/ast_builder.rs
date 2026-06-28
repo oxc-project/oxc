@@ -75,21 +75,18 @@ impl Generator for AstBuilderGenerator {
 
             //!@@line_break
             #![allow(unused_imports)]
-            #![expect(
-                clippy::default_trait_access,
-                clippy::unused_self,
-            )]
+            #![expect(deprecated, clippy::default_trait_access, clippy::unused_self)]
 
             ///@@line_break
             use std::cell::Cell;
 
             ///@@line_break
-            use oxc_allocator::{Allocator, ArenaBox, ArenaVec, IntoIn};
+            use oxc_allocator::{Allocator, ArenaBox, ArenaVec, GetAllocator, IntoIn};
             use oxc_str::{Ident, Str};
             use oxc_syntax::{scope::ScopeId, symbol::SymbolId, reference::ReferenceId};
 
             ///@@line_break
-            use crate::{AstBuilder, ast::*};
+            use crate::{ast::*, builder::AstBuilder};
 
             ///@@line_break
             impl<'a> AstBuilder<'a> {
@@ -264,6 +261,7 @@ fn generate_builder_methods_for_struct_impl(
         ///@@line_break
         #fn_docs
         #params_docs
+        #[deprecated(note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043")]
         #[inline]
         pub fn #fn_name #generic_params (self, #fn_params) -> #struct_ty #where_clause {
             #struct_ident { #fields }
@@ -288,6 +286,7 @@ fn generate_builder_methods_for_struct_impl(
         #[doc = " Returns a [`Box`](ArenaBox) containing the newly-allocated node."]
         #[doc = #alloc_doc2]
         #params_docs
+        #[deprecated(note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043")]
         #[inline]
         pub fn #alloc_fn_name #generic_params (self, #fn_params) -> ArenaBox<'a, #struct_ty> #where_clause {
             ArenaBox::new_in(self.#fn_name(#(#args),*), &self)
@@ -402,8 +401,8 @@ fn get_struct_params<'s>(
 /// Omit default fields from function params if `include_default_fields == false`.
 ///
 /// ```
-/// //         ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ function params
-/// pub fn foo(span: Span, bar: Bar<'a>) -> Foo<'a> {
+/// //               ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ function params
+/// pub fn foo(self, span: Span, bar: Bar<'a>) -> Foo<'a> {
 ///     Bar { span, bar }
 /// //        ^^^^^^^^^ fields
 /// }
@@ -436,7 +435,7 @@ fn get_struct_fn_params_and_fields(
         let field = match param.generic_type {
             Some(GenericType::Into) => quote!( #param_ident: #param_ident.into() ),
             Some(GenericType::IntoIn) => {
-                quote!( #param_ident: #param_ident.into_in(self.allocator) )
+                quote!( #param_ident: #param_ident.into_in(self.allocator()) )
             }
             None => quote!( #param_ident ),
         };
@@ -581,6 +580,7 @@ fn generate_builder_method_for_enum_variant_impl(
         ///@@line_break
         #fn_docs
         #params_docs
+        #[deprecated(note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043")]
         #[inline]
         pub fn #fn_name #generic_params(self, #(#fn_params),*) -> #enum_ty #where_clause {
             #enum_ident::#variant_ident(self.#inner_builder_name(#(#args),*))

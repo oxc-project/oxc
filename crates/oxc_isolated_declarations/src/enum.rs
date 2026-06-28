@@ -1,6 +1,6 @@
 use rustc_hash::FxHashMap;
 
-use oxc_allocator::{ArenaVec, CloneIn};
+use oxc_allocator::{ArenaVec, CloneIn, GetAllocator};
 use oxc_ast::ast::*;
 use oxc_ecmascript::{ToInt32, ToUint32};
 use oxc_span::{GetSpan, SPAN};
@@ -49,7 +49,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
             let member = TSEnumMember::new(
                 member.span,
-                member.id.clone_in(self.ast.allocator),
+                member.id.clone_in(self.allocator()),
                 value.map(|v| match v {
                     ConstantValue::Number(v) => {
                         let is_negative = v < 0.0;
@@ -91,7 +91,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
         Declaration::new_ts_enum_declaration(
             decl.span,
-            decl.id.clone_in(self.ast.allocator),
+            decl.id.clone_in(self.allocator()),
             TSEnumBody::new(decl.body.span, members, self),
             decl.r#const,
             self.is_declare(),

@@ -104,7 +104,7 @@ use std::iter;
 use oxc_allocator::{ArenaVec, TakeIn};
 use rustc_hash::FxHashMap;
 
-use oxc_ast::{NONE, ast::*};
+use oxc_ast::{ast::*, builder::NONE};
 use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_span::SPAN;
 use oxc_str::Ident;
@@ -354,7 +354,7 @@ impl<'a> ClassProperties<'a> {
         );
 
         // `var _super = (..._args) => ( ... );`
-        let super_func_decl = Statement::from(Declaration::new_variable_declaration(
+        let super_func_decl = Statement::new_variable_declaration(
             SPAN,
             VariableDeclarationKind::Var,
             ArenaVec::from_value_in(
@@ -371,7 +371,7 @@ impl<'a> ClassProperties<'a> {
             ),
             false,
             ctx,
-        ));
+        );
 
         // Insert at top of function
         let body_stmts = &mut constructor.body.as_mut().unwrap().statements;
@@ -615,13 +615,13 @@ impl<'a> ConstructorParamsSuperReplacer<'a, '_> {
         let super_call = expr.take_in(ctx);
         *expr = Expression::new_call_expression(
             span,
-            Expression::from(MemberExpression::new_static_member_expression(
+            Expression::new_static_member_expression(
                 SPAN,
                 super_binding.create_read_expression(ctx),
                 IdentifierName::new(SPAN, "call", ctx),
                 false,
                 ctx,
-            )),
+            ),
             NONE,
             ArenaVec::from_value_in(Argument::from(super_call), ctx),
             false,

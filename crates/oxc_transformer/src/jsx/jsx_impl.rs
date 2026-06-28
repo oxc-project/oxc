@@ -89,7 +89,10 @@
 //! * Babel plugin implementation: <https://github.com/babel/babel/tree/v7.26.2/packages/babel-helper-builder-react-jsx>
 
 use oxc_allocator::{ArenaBox, ArenaStringBuilder, ArenaVec, GetAllocator, TakeIn};
-use oxc_ast::{NONE, ast::*, builder::AstBuilder};
+use oxc_ast::{
+    ast::*,
+    builder::{AstBuilder, NONE},
+};
 use oxc_ecmascript::PropName;
 use oxc_span::{SPAN, Span};
 use oxc_str::{Ident, Str};
@@ -420,13 +423,13 @@ impl<'a> Pragma<'a> {
         let (object, parts) = match self {
             Self::Double(first, second) => {
                 let object = get_read_identifier_reference(SPAN, *first, ctx);
-                return Expression::from(MemberExpression::new_static_member_expression(
+                return Expression::new_static_member_expression(
                     SPAN,
                     object,
                     IdentifierName::new(SPAN, *second, ctx),
                     false,
                     ctx,
-                ));
+                );
             }
             Self::Single(single) => {
                 return get_read_identifier_reference(SPAN, *single, ctx);
@@ -566,13 +569,13 @@ impl<'a> JsxImpl<'a> {
         // TODO(improve-on-babel): Simplify this once we don't need to follow Babel exactly.
         if self.bindings.is_classic() || ctx.state.source_type.is_module() {
             // Insert before imports - add to `top_level_statements` immediately
-            let stmt = Statement::VariableDeclaration(VariableDeclaration::boxed(
+            let stmt = Statement::new_variable_declaration(
                 SPAN,
                 VariableDeclarationKind::Var,
                 ArenaVec::from_value_in(declarator, ctx),
                 false,
                 ctx,
-            ));
+            );
             ctx.state.top_level_statements.insert_statement(stmt);
         } else {
             // Insert after imports - add to `var_declarations`, which are inserted after `require` statements
@@ -737,11 +740,7 @@ impl<'a> JsxImpl<'a> {
 
             // isStaticChildren
             if is_development {
-                arguments.push(Argument::from(Expression::new_boolean_literal(
-                    SPAN,
-                    children_len > 1,
-                    ctx,
-                )));
+                arguments.push(Argument::new_boolean_literal(SPAN, children_len > 1, ctx));
             }
 
             // { __source: { fileName, lineNumber, columnNumber } }
@@ -753,7 +752,7 @@ impl<'a> JsxImpl<'a> {
 
             // this
             if self.options.jsx_self_plugin && JsxSelf::can_add_self_attribute(ctx) {
-                arguments.push(Argument::from(Expression::new_this_expression(SPAN, ctx)));
+                arguments.push(Argument::new_this_expression(SPAN, ctx));
             }
         } else {
             // React.createElement's second argument
@@ -998,14 +997,14 @@ impl<'a> JsxImpl<'a> {
             JSXAttributeName::Identifier(ident) => {
                 let name = ident.name;
                 if ident.name.contains('-') {
-                    PropertyKey::from(Expression::new_string_literal(ident.span, name, None, ctx))
+                    PropertyKey::new_string_literal(ident.span, name, None, ctx)
                 } else {
                     PropertyKey::new_static_identifier(ident.span, name, ctx)
                 }
             }
             JSXAttributeName::NamespacedName(namespaced) => {
                 let name = Str::from_str_in(&namespaced.to_string(), ctx);
-                PropertyKey::from(Expression::new_string_literal(namespaced.span, name, None, ctx))
+                PropertyKey::new_string_literal(namespaced.span, name, None, ctx)
             }
         }
     }
@@ -1110,7 +1109,7 @@ impl<'a> JsxImpl<'a> {
             // This is the 2nd line containing text. Previous line did not contain any HTML entities.
             // Generate an accumulator containing previous line and a trailing space.
             // Current line will be added to the accumulator after it.
-            let mut buffer = ArenaStringBuilder::with_capacity_in(text_len, ctx.ast.allocator);
+            let mut buffer = ArenaStringBuilder::with_capacity_in(text_len, ctx.allocator());
             buffer.push_str(only_line.as_str());
             buffer.push(' ');
             *acc = Some(buffer);
@@ -1161,7 +1160,7 @@ impl<'a> JsxImpl<'a> {
                 }
                 if let Some(end) = end {
                     let buffer = acc.get_or_insert_with(|| {
-                        ArenaStringBuilder::with_capacity_in(text_len, ctx.ast.allocator)
+                        ArenaStringBuilder::with_capacity_in(text_len, ctx.allocator())
                     });
 
                     buffer.push_str(&s[prev..start]);

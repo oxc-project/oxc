@@ -643,13 +643,13 @@ impl<'a> Assignment<'a> {
             Expression::new_assignment_expression(
                 SPAN,
                 AssignmentOperator::Assign,
-                SimpleAssignmentTarget::from(MemberExpression::new_static_member_expression(
+                SimpleAssignmentTarget::new_static_member_expression(
                     SPAN,
                     Expression::new_this_expression(SPAN, ctx),
                     IdentifierName::new(self.span, self.name, ctx),
                     false,
                     ctx,
-                ))
+                )
                 .into(),
                 Expression::Identifier(id),
                 ctx,

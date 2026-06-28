@@ -407,7 +407,7 @@ impl<'a, State> TraverseCtx<'a, State> {
     ///
     /// This is a shortcut for `ctx.scoping.generate_uid_name`.
     pub fn generate_uid_name(&mut self, name: &str) -> Ident<'a> {
-        self.scoping.generate_uid_name(name, self.ast.allocator)
+        self.scoping.generate_uid_name(name, self.allocator())
     }
 
     /// Generate UID.

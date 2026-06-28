@@ -1794,16 +1794,10 @@ impl<'a> ReverseCtx<'a> {
         let object = self.convert_expression(&m.object);
         if m.computed {
             let property = self.convert_expression(&m.property);
-            oxc::Expression::ComputedMemberExpression(ArenaBox::new_in(
-                oxc::ComputedMemberExpression::new(SPAN, object, property, false, self),
-                self,
-            ))
+            oxc::Expression::new_computed_member_expression(SPAN, object, property, false, self)
         } else {
             let prop_name = self.expression_to_identifier_name(&m.property);
-            oxc::Expression::StaticMemberExpression(ArenaBox::new_in(
-                oxc::StaticMemberExpression::new(SPAN, object, prop_name, false, self),
-                self,
-            ))
+            oxc::Expression::new_static_member_expression(SPAN, object, prop_name, false, self)
         }
     }
 
@@ -1814,16 +1808,14 @@ impl<'a> ReverseCtx<'a> {
         let object = self.convert_expression_for_chain(&m.object);
         if m.computed {
             let property = self.convert_expression(&m.property);
-            oxc::ChainElement::ComputedMemberExpression(ArenaBox::new_in(
-                oxc::ComputedMemberExpression::new(SPAN, object, property, m.optional, self),
-                self,
-            ))
+            oxc::ChainElement::new_computed_member_expression(
+                SPAN, object, property, m.optional, self,
+            )
         } else {
             let prop_name = self.expression_to_identifier_name(&m.property);
-            oxc::ChainElement::StaticMemberExpression(ArenaBox::new_in(
-                oxc::StaticMemberExpression::new(SPAN, object, prop_name, m.optional, self),
-                self,
-            ))
+            oxc::ChainElement::new_static_member_expression(
+                SPAN, object, prop_name, m.optional, self,
+            )
         }
     }
 
@@ -1834,16 +1826,12 @@ impl<'a> ReverseCtx<'a> {
         let object = self.convert_expression_for_chain(&m.object);
         if m.computed {
             let property = self.convert_expression(&m.property);
-            oxc::Expression::ComputedMemberExpression(ArenaBox::new_in(
-                oxc::ComputedMemberExpression::new(SPAN, object, property, m.optional, self),
-                self,
-            ))
+            oxc::Expression::new_computed_member_expression(
+                SPAN, object, property, m.optional, self,
+            )
         } else {
             let prop_name = self.expression_to_identifier_name(&m.property);
-            oxc::Expression::StaticMemberExpression(ArenaBox::new_in(
-                oxc::StaticMemberExpression::new(SPAN, object, prop_name, m.optional, self),
-                self,
-            ))
+            oxc::Expression::new_static_member_expression(SPAN, object, prop_name, m.optional, self)
         }
     }
 
@@ -3013,19 +3001,15 @@ impl<'a> ReverseCtx<'a> {
     ) -> oxc::ModuleExportName<'a> {
         match name {
             react_compiler_ast::declarations::ModuleExportName::Identifier(id) => {
-                oxc::ModuleExportName::IdentifierName(oxc::IdentifierName::new(
-                    SPAN,
-                    self.str(&id.name),
-                    self,
-                ))
+                oxc::ModuleExportName::new_identifier_name(SPAN, self.str(&id.name), self)
             }
             react_compiler_ast::declarations::ModuleExportName::StringLiteral(s) => {
-                oxc::ModuleExportName::StringLiteral(oxc::StringLiteral::new(
+                oxc::ModuleExportName::new_string_literal(
                     SPAN,
                     self.str(&s.value.to_string_lossy()),
                     None,
                     self,
-                ))
+                )
             }
         }
     }
@@ -3041,11 +3025,7 @@ impl<'a> ReverseCtx<'a> {
     ) -> oxc::ModuleExportName<'a> {
         match name {
             react_compiler_ast::declarations::ModuleExportName::Identifier(id) => {
-                oxc::ModuleExportName::IdentifierReference(oxc::IdentifierReference::new(
-                    SPAN,
-                    self.str(&id.name),
-                    self,
-                ))
+                oxc::ModuleExportName::new_identifier_reference(SPAN, self.str(&id.name), self)
             }
             react_compiler_ast::declarations::ModuleExportName::StringLiteral(_) => {
                 self.convert_module_export_name(name)
@@ -3136,16 +3116,13 @@ impl<'a> ReverseCtx<'a> {
                 oxc::ExportSpecifier::new(SPAN, local, exported, export_kind, self)
             }
             react_compiler_ast::declarations::ExportSpecifier::ExportDefaultSpecifier(s) => {
-                let name = oxc::ModuleExportName::IdentifierName(oxc::IdentifierName::new(
+                let name = oxc::ModuleExportName::new_identifier_name(
                     SPAN,
                     self.str(&s.exported.name),
                     self,
-                ));
-                let default_name = oxc::ModuleExportName::IdentifierName(oxc::IdentifierName::new(
-                    SPAN,
-                    self.str("default"),
-                    self,
-                ));
+                );
+                let default_name =
+                    oxc::ModuleExportName::new_identifier_name(SPAN, self.str("default"), self);
                 oxc::ExportSpecifier::new(
                     SPAN,
                     name,
@@ -3156,11 +3133,7 @@ impl<'a> ReverseCtx<'a> {
             }
             react_compiler_ast::declarations::ExportSpecifier::ExportNamespaceSpecifier(s) => {
                 let exported = self.convert_module_export_name(&s.exported);
-                let star = oxc::ModuleExportName::IdentifierName(oxc::IdentifierName::new(
-                    SPAN,
-                    self.str("*"),
-                    self,
-                ));
+                let star = oxc::ModuleExportName::new_identifier_name(SPAN, self.str("*"), self);
                 oxc::ExportSpecifier::new(
                     SPAN,
                     star,
@@ -3196,10 +3169,7 @@ impl<'a> ReverseCtx<'a> {
             ExportDefaultDecl::EnumDeclaration(_) => {
                 // Flow enum declarations cannot be represented in OXC AST;
                 // emit a null placeholder to preserve the export shape.
-                oxc::ExportDefaultDeclarationKind::from(oxc::Expression::new_null_literal(
-                    oxc::Span::default(),
-                    self,
-                ))
+                oxc::ExportDefaultDeclarationKind::new_null_literal(oxc::Span::default(), self)
             }
             ExportDefaultDecl::Expression(e) => {
                 oxc::ExportDefaultDeclarationKind::from(self.convert_expression(e))

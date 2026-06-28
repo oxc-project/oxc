@@ -99,7 +99,7 @@ impl<'a> ClassProperties<'a> {
         let brand = self.classes_stack.last().bindings.brand.as_ref().unwrap();
         let arguments = ArenaVec::from_array_in(
             [
-                Argument::from(Expression::new_this_expression(SPAN, ctx)),
+                Argument::new_this_expression(SPAN, ctx),
                 Argument::from(brand.create_read_expression(ctx)),
             ],
             ctx,

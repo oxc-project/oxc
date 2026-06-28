@@ -1,7 +1,7 @@
 use std::iter;
 
 use oxc_allocator::{ArenaBox, ArenaVec};
-use oxc_ast::{NONE, ast::*};
+use oxc_ast::{ast::*, builder::NONE};
 use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{GetSpan, SPAN};
 use oxc_str::{Ident, static_ident};
@@ -17,9 +17,7 @@ pub fn create_member_callee<'a>(
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
     let property = IdentifierName::new(SPAN, property, ctx);
-    Expression::from(MemberExpression::new_static_member_expression(
-        span, object, property, false, ctx,
-    ))
+    Expression::new_static_member_expression(span, object, property, false, ctx)
 }
 
 /// `object` -> `object.bind(this)`.
@@ -100,9 +98,7 @@ pub fn create_property_access<'a>(
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
     let property = IdentifierName::new(SPAN, Str::from_str_in(property, ctx), ctx);
-    Expression::from(MemberExpression::new_static_member_expression(
-        span, object, property, false, ctx,
-    ))
+    Expression::new_static_member_expression(span, object, property, false, ctx)
 }
 
 /// `this.property`
@@ -214,7 +210,7 @@ pub fn create_class_constructor_with_params<'a>(
 ) -> ClassElement<'a> {
     create_class_method(
         ArenaVec::new_in(ctx),
-        PropertyKey::StaticIdentifier(IdentifierName::boxed(SPAN, "constructor", ctx)),
+        PropertyKey::new_static_identifier(SPAN, "constructor", ctx),
         MethodDefinitionKind::Constructor,
         params,
         None,
@@ -239,7 +235,7 @@ pub fn create_class_method<'a>(
     scope_id: ScopeId,
     ctx: &TraverseCtx<'a>,
 ) -> ClassElement<'a> {
-    ClassElement::MethodDefinition(MethodDefinition::boxed(
+    ClassElement::new_method_definition(
         SPAN,
         MethodDefinitionType::MethodDefinition,
         decorators,
@@ -266,5 +262,5 @@ pub fn create_class_method<'a>(
         false,
         None,
         ctx,
-    ))
+    )
 }

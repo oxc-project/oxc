@@ -160,13 +160,13 @@ impl<'a> LogicalAssignmentOperators {
         let object = static_expr.object.take_in(ctx);
         let (object, object_ref) = duplicate_expression(object, true, ctx);
 
-        let left_expr = Expression::from(MemberExpression::new_static_member_expression(
+        let left_expr = Expression::new_static_member_expression(
             static_expr.span,
             object,
             static_expr.property.clone(),
             false,
             ctx,
-        ));
+        );
 
         let assign_expr = MemberExpression::new_static_member_expression(
             static_expr.span,
@@ -192,22 +192,21 @@ impl<'a> LogicalAssignmentOperators {
         let expression = computed_expr.expression.take_in(ctx);
         let (expression, expression_ref) = duplicate_expression(expression, true, ctx);
 
-        let left_expr = Expression::from(MemberExpression::new_computed_member_expression(
+        let left_expr = Expression::new_computed_member_expression(
             computed_expr.span,
             object,
             expression,
             false,
             ctx,
-        ));
+        );
 
-        let assign_target =
-            AssignmentTarget::from(MemberExpression::new_computed_member_expression(
-                computed_expr.span,
-                object_ref,
-                expression_ref,
-                false,
-                ctx,
-            ));
+        let assign_target = AssignmentTarget::new_computed_member_expression(
+            computed_expr.span,
+            object_ref,
+            expression_ref,
+            false,
+            ctx,
+        );
 
         (left_expr, assign_target)
     }

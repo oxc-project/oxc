@@ -293,6 +293,10 @@ impl Rule for ExhaustiveDeps {
             return;
         };
 
+        let Some(callback_index) = self.get_reactive_hook_callback_index(hook_name) else {
+            return;
+        };
+
         let component_scope_id = {
             match get_enclosing_function(node, ctx).map(oxc_semantic::AstNode::kind) {
                 Some(AstKind::Function(func)) => func.scope_id(),
@@ -303,9 +307,6 @@ impl Rule for ExhaustiveDeps {
             }
         };
 
-        let Some(callback_index) = self.get_reactive_hook_callback_index(hook_name) else {
-            return;
-        };
         let callback_node = call_expr.arguments.get(callback_index);
         let dependencies_node = call_expr.arguments.get(callback_index + 1);
 

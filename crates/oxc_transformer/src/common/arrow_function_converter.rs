@@ -92,7 +92,7 @@ use indexmap::IndexMap;
 use rustc_hash::{FxBuildHasher, FxHashSet};
 
 use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
-use oxc_ast::{NONE, ast::*};
+use oxc_ast::{ast::*, builder::NONE};
 use oxc_ast_visit::{VisitMut, walk_mut::walk_expression};
 use oxc_data_structures::stack::{NonEmptyStack, SparseStack};
 use oxc_semantic::{ReferenceFlags, SymbolId};
@@ -821,7 +821,7 @@ impl<'a> ArrowFunctionConverter<'a> {
         let object = self.transform_member_expression_for_super(&mut call.callee, None, ctx)?;
         // Add `this` as the first argument and original arguments as the rest.
         let mut arguments = ArenaVec::with_capacity_in(call.arguments.len() + 1, ctx);
-        arguments.push(Argument::from(Expression::new_this_expression(SPAN, ctx)));
+        arguments.push(Argument::new_this_expression(SPAN, ctx));
         arguments.extend(call.arguments.take_in(ctx));
 
         let property = IdentifierName::new(SPAN, "call", ctx);
@@ -925,13 +925,13 @@ impl<'a> ArrowFunctionConverter<'a> {
             items.push(param);
 
             // `super` -> `super[prop]`
-            init = Expression::from(MemberExpression::new_computed_member_expression(
+            init = Expression::new_computed_member_expression(
                 SPAN,
                 init,
                 param_binding.create_read_expression(ctx),
                 false,
                 ctx,
-            ));
+            );
         }
 
         // Create a parameter for the value if it's an assignment.

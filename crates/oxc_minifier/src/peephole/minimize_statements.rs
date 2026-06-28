@@ -1862,10 +1862,7 @@ impl<'a> PeepholeOptimizations {
                                 if prop.shorthand && prop.key.is_specific_id("__proto__") {
                                     // { __proto__ } -> { ['__proto__']: value }
                                     prop.computed = true;
-                                    prop.key =
-                                        PropertyKey::from(Expression::new_string_literal(prop.key.span(),
-                                        "__proto__",
-                                        None, ctx));
+                                    prop.key = PropertyKey::new_string_literal(prop.key.span(), "__proto__", None, ctx);
                                 }
                                 prop.shorthand = false;
                                 return Some(changed);

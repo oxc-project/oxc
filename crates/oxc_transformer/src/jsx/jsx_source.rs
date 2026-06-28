@@ -34,7 +34,7 @@
 //! * Babel plugin implementation: <https://github.com/babel/babel/blob/v7.26.2/packages/babel-plugin-transform-react-jsx-source/src/index.ts>
 
 use oxc_allocator::ArenaVec;
-use oxc_ast::{NONE, ast::*};
+use oxc_ast::{ast::*, builder::NONE};
 use oxc_data_structures::rope::{Rope, get_line_column};
 use oxc_span::SPAN;
 use oxc_syntax::{number::NumberBase, symbol::SymbolFlags};
@@ -178,13 +178,13 @@ impl<'a> JsxSource<'a> {
     pub fn get_filename_var_statement(&self, ctx: &TraverseCtx<'a>) -> Option<Statement<'a>> {
         let decl = self.get_filename_var_declarator(ctx)?;
 
-        let var_decl = Statement::VariableDeclaration(VariableDeclaration::boxed(
+        let var_decl = Statement::new_variable_declaration(
             SPAN,
             VariableDeclarationKind::Var,
             ArenaVec::from_value_in(decl, ctx),
             false,
             ctx,
-        ));
+        );
         Some(var_decl)
     }
 

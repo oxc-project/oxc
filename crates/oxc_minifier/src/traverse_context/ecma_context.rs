@@ -1,3 +1,4 @@
+use oxc_allocator::GetAllocator;
 use oxc_ast::ast::*;
 use oxc_compat::ESFeature;
 use oxc_ecmascript::{
@@ -207,7 +208,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
                 Expression::new_numeric_literal(span, n, None, number_base, self)
             }
             ConstantValue::BigInt(bigint) => {
-                let value = format_str!(self.ast.allocator, "{bigint}");
+                let value = format_str!(self.allocator(), "{bigint}");
                 Expression::new_big_int_literal(span, value, None, BigintBase::Decimal, self)
             }
             ConstantValue::String(s) => {
