@@ -4469,7 +4469,8 @@ impl RuleRunner for crate::rules::jsdoc::require_yields_type::RequireYieldsType 
 }
 
 impl RuleRunner for crate::rules::promise::always_return::AlwaysReturn {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::ArrowFunctionExpression, AstType::Function]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
