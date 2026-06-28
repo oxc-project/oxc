@@ -2,7 +2,7 @@
 //! Transform of class property declarations (instance or static properties).
 
 use oxc_allocator::{ArenaBox, ArenaVec};
-use oxc_ast::{NONE, ast::*};
+use oxc_ast::{ast::*, builder::NONE};
 use oxc_span::{SPAN, Span};
 use oxc_str::static_ident;
 use oxc_syntax::reference::ReferenceFlags;

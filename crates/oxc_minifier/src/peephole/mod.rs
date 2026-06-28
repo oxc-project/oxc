@@ -25,7 +25,7 @@ use oxc_syntax::{
 };
 use rustc_hash::FxHashSet;
 
-use oxc_allocator::{ArenaVec, BitSet};
+use oxc_allocator::{ArenaVec, BitSet, GetAllocator};
 use oxc_ast::ast::*;
 
 use crate::{
@@ -298,7 +298,7 @@ impl<'a> PeepholeOptimizations {
                 }
             }
         }
-        let mut live = BitSet::new_in(initial_references_len, ctx.ast.allocator);
+        let mut live = BitSet::new_in(initial_references_len, ctx.allocator());
         LiveRefCollector { live: &mut live }.visit_program(program);
         for reference_ids in ctx.scoping().resolved_references() {
             for reference_id in reference_ids {
@@ -425,7 +425,7 @@ impl<'a> PeepholeOptimizations {
                 ctx.state.dirty.dead_refs.clear();
             }
         } else {
-            ctx.state.dirty.dead_refs = BitSet::new_in(refs_len, ctx.ast.allocator);
+            ctx.state.dirty.dead_refs = BitSet::new_in(refs_len, ctx.allocator());
         }
         ctx.state.dirty.eval_dropped = false;
     }

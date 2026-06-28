@@ -11,9 +11,8 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_allocator::{Allocator, ArenaVec, CloneIn, GetAllocator};
 use oxc_ast::{
-    NONE,
     ast::*,
-    builder::{AstBuilder, GetAstBuilder},
+    builder::{AstBuilder, GetAstBuilder, NONE},
 };
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
@@ -224,7 +223,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         // `declare module "foo" { ... }`
                         // We need to emit it anyway
                         if decl.id.is_string_literal() {
-                            let mut decl = decl.clone_in(self.ast.allocator);
+                            let mut decl = decl.clone_in(self.allocator());
                             // Remove export keyword from all statements in `declare module "xxx" { ... }`
                             if let Some(body) =
                                 decl.body.as_mut().and_then(|body| body.as_module_block_mut())
@@ -241,7 +240,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     } else if let Statement::TSGlobalDeclaration(decl) = stmt {
                         // `declare global { ... }`
                         // We need to emit it anyway
-                        let decl = decl.clone_in(self.ast.allocator);
+                        let decl = decl.clone_in(self.allocator());
                         // We need to visit the module declaration to collect all references
                         self.scope.visit_ts_global_declaration(decl.as_ref());
 
@@ -264,7 +263,7 @@ impl<'a> IsolatedDeclarations<'a> {
                                 transformed_stmts[idx] = Some(new_decl);
                             } else {
                                 self.scope.visit_ts_export_assignment(decl);
-                                transformed_stmts[idx] = Some(stmt.clone_in(self.ast.allocator));
+                                transformed_stmts[idx] = Some(stmt.clone_in(self.allocator()));
                             }
                             transformed_count += 1;
                             need_empty_export_marker = false;
@@ -282,7 +281,7 @@ impl<'a> IsolatedDeclarations<'a> {
                                 transformed_stmts[idx] = Some(new_decl);
                             } else {
                                 self.scope.visit_export_default_declaration(decl);
-                                transformed_stmts[idx] = Some(stmt.clone_in(self.ast.allocator));
+                                transformed_stmts[idx] = Some(stmt.clone_in(self.allocator()));
                             }
                             transformed_count += 1;
                             need_empty_export_marker = false;
@@ -296,10 +295,10 @@ impl<'a> IsolatedDeclarations<'a> {
                             } else if decl.declaration.is_none() {
                                 need_empty_export_marker = false;
                                 self.scope.visit_export_named_declaration(decl);
-                                transformed_stmts[idx] = Some(stmt.clone_in(self.ast.allocator));
+                                transformed_stmts[idx] = Some(stmt.clone_in(self.allocator()));
                             } else {
                                 // Declaration couldn't be transformed; preserve as-is
-                                transformed_stmts[idx] = Some(stmt.clone_in(self.ast.allocator));
+                                transformed_stmts[idx] = Some(stmt.clone_in(self.allocator()));
                             }
                             transformed_count += 1;
                         }
@@ -308,7 +307,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         }
                         module_declaration => {
                             self.scope.visit_module_declaration(module_declaration);
-                            transformed_stmts[idx] = Some(stmt.clone_in(self.ast.allocator));
+                            transformed_stmts[idx] = Some(stmt.clone_in(self.allocator()));
                             transformed_count += 1;
                         }
                     }
@@ -399,7 +398,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 Statement::ImportDeclaration(decl) => {
                     // We must transform this in the end, because we need to know all references
                     if decl.specifiers.is_none() {
-                        new_stmts.push(stmt.clone_in(self.ast.allocator));
+                        new_stmts.push(stmt.clone_in(self.allocator()));
                     } else if let Some(new_decl) = self.transform_import_declaration(decl) {
                         new_stmts.push(Statement::ImportDeclaration(new_decl));
                     }

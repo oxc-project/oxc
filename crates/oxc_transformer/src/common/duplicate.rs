@@ -2,7 +2,7 @@
 
 use std::array;
 
-use oxc_allocator::{ArenaVec, CloneIn};
+use oxc_allocator::{ArenaVec, CloneIn, GetAllocator};
 use oxc_ast::ast::{AssignmentOperator, Expression};
 use oxc_span::SPAN;
 use oxc_syntax::reference::ReferenceFlags;
@@ -111,7 +111,7 @@ pub fn duplicate_expression_multiple<'a, const N: usize>(
         | Expression::BigIntLiteral(_)
         | Expression::RegExpLiteral(_)
         | Expression::StringLiteral(_) => {
-            let references = array::from_fn(|_| expr.clone_in(ctx.ast.allocator));
+            let references = array::from_fn(|_| expr.clone_in(ctx.allocator()));
             return (expr, references);
         }
         // Template literal cannot have side effects if it has no expressions.

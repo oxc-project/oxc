@@ -10,7 +10,9 @@ use oxc_span::{SPAN, Span};
 use oxc_str::Str;
 use oxc_syntax::{number::NumberBase, operator::UnaryOperator, scope::ScopeId};
 
-use crate::{NONE, ast::*, builder::GetAstBuilder};
+use crate::ast::*;
+
+use super::{GetAstBuilder, NONE};
 
 impl<'a> Expression<'a> {
     /// Build an [`Expression`] representing the number `0`.

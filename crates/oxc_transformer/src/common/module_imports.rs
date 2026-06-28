@@ -33,7 +33,7 @@
 use indexmap::{IndexMap, map::Entry as IndexMapEntry};
 
 use oxc_allocator::ArenaVec;
-use oxc_ast::{NONE, ast::*};
+use oxc_ast::{ast::*, builder::NONE};
 use oxc_semantic::ReferenceFlags;
 use oxc_span::SPAN;
 use oxc_str::{Str, static_ident};

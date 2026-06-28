@@ -32,7 +32,7 @@ use std::mem;
 use serde::Deserialize;
 
 use oxc_allocator::{Address, ArenaBox, ArenaVec, GetAddress, GetAllocator, TakeIn};
-use oxc_ast::{NONE, ast::*};
+use oxc_ast::{ast::*, builder::NONE};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::{BoundNames, ToJsString, WithoutGlobalReferenceInformation};
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};

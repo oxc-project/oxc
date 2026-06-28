@@ -26,7 +26,7 @@
 //! * "export ns from" TC39 proposal: <https://github.com/tc39/proposal-export-ns-from>
 
 use oxc_allocator::{ArenaVec, TakeIn};
-use oxc_ast::{NONE, ast::*};
+use oxc_ast::{ast::*, builder::NONE};
 use oxc_semantic::SymbolFlags;
 use oxc_span::SPAN;
 use oxc_traverse::Traverse;

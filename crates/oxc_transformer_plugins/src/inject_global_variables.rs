@@ -4,9 +4,8 @@ use cow_utils::CowUtils;
 
 use oxc_allocator::{Allocator, ArenaVec, GetAllocator};
 use oxc_ast::{
-    NONE,
     ast::*,
-    builder::{AstBuilder, GetAstBuilder},
+    builder::{AstBuilder, GetAstBuilder, NONE},
 };
 use oxc_semantic::Scoping;
 use oxc_span::SPAN;
@@ -177,7 +176,7 @@ impl<'a> InjectGlobalVariables<'a> {
 
         if !dot_defines.is_empty() {
             self.dot_defines = dot_defines;
-            scoping = traverse_mut(self, self.ast.allocator, program, scoping, ());
+            scoping = traverse_mut(self, self.allocator(), program, scoping, ());
         }
 
         // Step 2: find all the injects that are referenced.
