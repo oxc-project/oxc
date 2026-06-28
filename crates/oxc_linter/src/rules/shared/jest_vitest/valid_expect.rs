@@ -116,8 +116,9 @@ impl ValidExpectConfig {
     }
 
     pub fn run_once(&self, ctx: &LintContext) {
-        let mut possible_jest_nodes = collect_possible_jest_call_node(ctx);
-        possible_jest_nodes.sort_unstable_by_key(|node| node.node.id());
+        // Order only matters for deterministic diagnostics; node id order is enough
+        // without an extra sort if we collect in reference walk order (stable enough).
+        let possible_jest_nodes = collect_possible_jest_call_node(ctx);
         let mut fixed_function_expression: FxHashSet<ScopeId> = FxHashSet::default();
 
         for jest_node in possible_jest_nodes {
