@@ -4,7 +4,7 @@
 //! AST node factories
 
 #![allow(unused_imports)]
-#![expect(clippy::default_trait_access, clippy::unused_self)]
+#![expect(deprecated, clippy::default_trait_access, clippy::unused_self)]
 
 use std::cell::Cell;
 

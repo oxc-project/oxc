@@ -75,10 +75,7 @@ impl Generator for AstBuilderGenerator {
 
             //!@@line_break
             #![allow(unused_imports)]
-            #![expect(
-                clippy::default_trait_access,
-                clippy::unused_self,
-            )]
+            #![expect(deprecated, clippy::default_trait_access, clippy::unused_self)]
 
             ///@@line_break
             use std::cell::Cell;
