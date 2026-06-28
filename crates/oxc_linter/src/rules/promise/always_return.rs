@@ -196,8 +196,6 @@ impl Rule for AlwaysReturn {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        // Narrow to function nodes so the linter codegen can generate `NODE_TYPES`
-        // and skip dispatching this rule on other node kinds.
         match node.kind() {
             AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {}
             _ => return,
