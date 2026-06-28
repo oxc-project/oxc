@@ -123,6 +123,12 @@ impl Rule for MaxDepth {
     #[expect(clippy::cast_possible_truncation)] // the length of ancestors can't be over u32::MAX, because the source code is already limited by u32::MAX.
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
+            // An `else if`'s `IfStatement` continues its parent's chain, so it isn't a new level.
+            AstKind::IfStatement(_)
+                if matches!(ctx.nodes().parent_kind(node.id()), AstKind::IfStatement(_)) =>
+            {
+                return;
+            }
             AstKind::IfStatement(_)
             | AstKind::SwitchStatement(_)
             | AstKind::TryStatement(_)
@@ -134,20 +140,21 @@ impl Rule for MaxDepth {
             | AstKind::ForOfStatement(_) => {}
             _ => return,
         }
-        if should_count(node, ctx.nodes()) {
-            let depth = 1 + ctx
-                .nodes()
-                .ancestors(node.id())
-                .take_while(|node| !should_stop(node))
-                .filter(|node| should_count(node, ctx.nodes()))
-                .count() as u32;
-            if depth > self.max {
-                ctx.diagnostic(max_depth_diagnostic(depth, self.max, node.span()));
-            }
+
+        let depth = 1 + ctx
+            .nodes()
+            .ancestors(node.id())
+            .take_while(|node| !should_stop(node))
+            .filter(|node| should_count(node, ctx.nodes()))
+            .count() as u32;
+        if depth > self.max {
+            ctx.diagnostic(max_depth_diagnostic(depth, self.max, node.span()));
         }
     }
 }
 
+/// Whether an ancestor node counts as a nesting level. Mirrors the kinds matched in `run`;
+/// kept as a predicate because the ancestor walk needs to test arbitrary nodes.
 fn should_count(node: &AstNode<'_>, nodes: &AstNodes<'_>) -> bool {
     matches!(node.kind(), AstKind::IfStatement(_) if !matches!(nodes.parent_kind(node.id()), AstKind::IfStatement(_)))
         || matches!(node.kind(), |AstKind::SwitchStatement(_)| AstKind::TryStatement(_)
