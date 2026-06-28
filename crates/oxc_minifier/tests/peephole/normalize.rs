@@ -56,11 +56,7 @@ fn drop_console() {
     let options = CompressOptions { drop_console: true, ..default_options() };
     test_options("console.log()", "", &options);
     test_options("(() => console.log())()", "", &options);
-    test_options(
-        "(() => { try { return console.log() } catch {} })()",
-        "(() => { try { return } catch {} })()",
-        &options,
-    );
+    test_options("(() => { try { return console.log() } catch {} })()", "", &options);
 }
 
 // Same leak class as `test_void_ident_does_not_leak_reference`: dropped

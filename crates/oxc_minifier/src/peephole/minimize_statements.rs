@@ -1,6 +1,5 @@
 use std::{iter, ops::ControlFlow};
 
-use crate::generated::ancestor::Ancestor;
 use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
 use oxc_ast::ast::*;
 use oxc_ast_visit::Visit;
@@ -105,33 +104,8 @@ impl<'a> PeepholeOptimizations {
             }
         }
 
-        // Drop a trailing unconditional jump statement if applicable
-        if let Some(last_stmt) = stmts.last() {
-            match last_stmt {
-                // "while (x) { y(); continue; }" => "while (x) { y(); }"
-                Statement::ContinueStatement(s) if s.label.is_none() => {
-                    if matches!(
-                        ctx.ancestors().nth(1),
-                        Some(
-                            Ancestor::ForStatementBody(_)
-                                | Ancestor::ForInStatementBody(_)
-                                | Ancestor::ForOfStatementBody(_),
-                        )
-                    ) {
-                        let dropped = stmts.pop().unwrap();
-                        ctx.drop_statement(&dropped);
-                    }
-                }
-                // "function f() { x(); return; }" => "function f() { x(); }"
-                Statement::ReturnStatement(s) if s.argument.is_none() => {
-                    if let Ancestor::FunctionBodyStatements(_) = ctx.parent() {
-                        let dropped = stmts.pop().unwrap();
-                        ctx.drop_statement(&dropped);
-                    }
-                }
-                _ => {}
-            }
-        }
+        // Drop a trailing unconditional jump statement if applicable.
+        Self::remove_exit_statements(stmts, ctx);
 
         // Merge certain statements in reverse order
         if stmts.len() >= 2 && ctx.options().sequences {
