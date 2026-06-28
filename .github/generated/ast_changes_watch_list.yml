@@ -67,4 +67,6 @@ src:
   - 'npm/oxc-types/types.d.ts'
   - 'oxfmtrc.jsonc'
   - 'package.json'
+  - 'tasks/ast_builder_migration/generated/mappings.json'
+  - 'tasks/ast_builder_migration/generated/shorten_mappings.json'
   - 'tasks/ast_tools/src/**'
