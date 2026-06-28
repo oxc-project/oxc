@@ -1322,7 +1322,11 @@ impl RuleRunner
 }
 
 impl RuleRunner for crate::rules::eslint::prefer_named_capture_group::PreferNamedCaptureGroup {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::CallExpression,
+        AstType::NewExpression,
+        AstType::RegExpLiteral,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
