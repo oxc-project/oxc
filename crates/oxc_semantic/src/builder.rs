@@ -6,6 +6,7 @@ use std::{
 };
 
 use rustc_hash::FxHashMap;
+use smallvec::SmallVec;
 
 use oxc_allocator::{Address, ArenaVec};
 use oxc_ast::{AstKind, ast::*};
@@ -985,7 +986,12 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
                 } else {
                     let mut parent_bindings = Bindings::new_in(allocator);
                     mem::swap(&mut cell.bindings[parent_scope_id], &mut parent_bindings);
-                    let parent_symbol_ids = parent_bindings.values().copied().collect::<Vec<_>>();
+                    // Collect into a `SmallVec` so the common `catch (e)` (a single binding)
+                    // resolves inline without a heap allocation. The ids must be collected
+                    // here to escape the `with_dependent_mut` borrow before calling
+                    // `set_symbol_scope_id` below.
+                    let parent_symbol_ids =
+                        parent_bindings.values().copied().collect::<SmallVec<[SymbolId; 4]>>();
                     cell.bindings[self.current_scope_id] = parent_bindings;
                     Some(parent_symbol_ids)
                 }
