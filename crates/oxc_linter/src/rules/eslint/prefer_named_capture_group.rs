@@ -71,9 +71,7 @@ declare_oxc_lint!(
 impl Rule for PreferNamedCaptureGroup {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::RegExpLiteral(_)
-            | AstKind::CallExpression(_)
-            | AstKind::NewExpression(_) => {}
+            AstKind::RegExpLiteral(_) | AstKind::CallExpression(_) | AstKind::NewExpression(_) => {}
             _ => return,
         }
 
