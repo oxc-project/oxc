@@ -70,6 +70,8 @@ fn test() {
         r"if(!(( a ))) b(); else c();",
         r"if((( !a ))) b(); else c();",
         r"function a() {return!a ? b : c}",
+        r"function a() {return!0 ? b:c}",
+        r"function a() {return!\u0061 ? b:c}",
         r"function a() {return!(( a )) ? b : c}",
         "function a() {
 return ! // comment
@@ -88,6 +90,17 @@ a) ? b : c;
 throw ! // comment
 a ? b : c;
 }",
+        "function* a() {
+yield ! // comment
+a ? b : c;
+}",
+        "function a() {return !\r a ? b : c;}",
+        "function a() {throw !\u{2028}a ? b : c;}",
+        "function a() {return !\u{2029}a ? b : c;}",
+        r"!{} ? a : b",
+        r"!function(){} ? a : b",
+        r"!class {} ? a : b",
+        r"for (!a ? x in y : z;;) {}",
         r"!a ? b : c ? d : e",
         r"!a ? b : (( c ? d : e ))",
         "a
@@ -134,6 +147,8 @@ e();
         (r"if(!(( a ))) b(); else c();", r"if((( a ))) {c();} else {b();}"),
         (r"if((( !a ))) b(); else c();", r"if((( a ))) {c();} else {b();}"),
         (r"function a() {return!a ? b : c}", r"function a() {return a ? c : b}"),
+        (r"function a() {return!0 ? b:c}", r"function a() {return 0 ? c:b}"),
+        (r"function a() {return!\u0061 ? b:c}", r"function a() {return \u0061 ? c:b}"),
         (r"function a() {return!(( a )) ? b : c}", r"function a() {return (( a )) ? c : b}"),
         (
             "function a() {
@@ -177,6 +192,23 @@ throw ( // comment
 a ? c : b);
 }",
         ),
+        (
+            "function* a() {
+yield ! // comment
+a ? b : c;
+}",
+            "function* a() {
+yield ( // comment
+a ? c : b);
+}",
+        ),
+        ("function a() {return !\r a ? b : c;}", "function a() {return (\r a ? c : b);}"),
+        ("function a() {throw !\u{2028}a ? b : c;}", "function a() {throw (\u{2028}a ? c : b);}"),
+        ("function a() {return !\u{2029}a ? b : c;}", "function a() {return (\u{2029}a ? c : b);}"),
+        (r"!{} ? a : b", r"({}) ? b : a"),
+        (r"!function(){} ? a : b", r"(function(){}) ? b : a"),
+        (r"!class {} ? a : b", r"(class {}) ? b : a"),
+        (r"for (!a ? x in y : z;;) {}", r"for (a ? z : (x in y);;) {}"),
         (r"!a ? b : c ? d : e", r"a ? c ? d : e : b"),
         (r"!a ? b : (( c ? d : e ))", r"a ? (( c ? d : e )) : b"),
         (
