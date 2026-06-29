@@ -1,6 +1,7 @@
 //! Document-level definition printers: operations, fragments, and the type system.
 
 use apollo_parser::{cst, cst::CstNode};
+
 use oxc_formatter_core::{
     Buffer,
     builders::{
@@ -13,8 +14,11 @@ use oxc_formatter_core::{
 use crate::comments::flush_trailing_inside_comments;
 
 use super::{
-    GraphqlFormatter, SeparatorKind, closing_token_start, common, common::DirectivesStyle,
-    format_with, node_text, selection, write_sequence,
+    GraphqlFormatter, SeparatorKind, common,
+    common::DirectivesStyle,
+    format_with, selection,
+    sig::{closing_token_start, node_text},
+    write_sequence,
 };
 
 pub fn write_definition(definition: &cst::Definition, f: &mut GraphqlFormatter<'_, '_>) {

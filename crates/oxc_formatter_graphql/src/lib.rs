@@ -1,7 +1,6 @@
 //! GraphQL formatter built on top of `oxc_formatter_core`.
 //!
-//! Parses with [apollo-parser](https://docs.rs/apollo-parser) (lossless CST,
-//! October 2021 GraphQL spec) and prints Prettier-compatible output.
+//! Parses with fork of [apollo-parser](https://docs.rs/apollo-parser) and prints Prettier-compatible output.
 //!
 //! ```ignore
 //! use oxc_allocator::Allocator;

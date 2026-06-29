@@ -6,7 +6,7 @@ use oxc_formatter_core::{
 ///
 /// Prettier's `graphql` language consumes only the shared layout options plus
 /// `bracketSpacing` (see `prettier/src/language-graphql/options.js`).
-/// Other Prettier options (`trailingComma`, `singleQuote`, ...) have no effect on GraphQL output.
+/// Other Prettier options have no effect on GraphQL output.
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
 pub struct GraphqlFormatOptions {
     pub indent_style: IndentStyle,

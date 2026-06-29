@@ -1,8 +1,9 @@
 use std::cell::Cell;
 
 use oxc_formatter_core::{
-    Buffer, SourceText,
+    Buffer, LINE_TERMINATORS, SourceText, arena_cow_str,
     builders::{empty_line, expand_parent, hard_line_break, line_suffix, space, text},
+    normalize_newlines,
     spec::is_suppression_marker,
     write,
 };
@@ -15,8 +16,7 @@ use crate::print::{GraphqlFormatter, format_with};
 /// GraphQL comments are always single-line (`# ...` to end of line) and are collected
 /// from the CST's trivia tokens by `format()`.
 ///
-/// `cursor` is a [`Cell`] so the API works through `&self`
-/// (mirrors `oxc_formatter_json`'s `Comments`).
+/// `cursor` is a [`Cell`] so the API works through `&self` (mirrors `oxc_formatter_json`'s `Comments`).
 pub struct Comments<'a> {
     inner: &'a [Span],
     cursor: Cell<usize>,
@@ -113,7 +113,7 @@ pub fn classify_gap(slice: &[u8]) -> Gap {
 
 /// Emit a single comment verbatim (trailing whitespace trimmed).
 /// Mirrors Prettier's `printComment`: `"#" + comment.value.trimEnd()`.
-pub fn write_single_comment(span: Span, f: &mut GraphqlFormatter<'_, '_>) {
+fn write_single_comment(span: Span, f: &mut GraphqlFormatter<'_, '_>) {
     let content = f.context().source_text().text_for(&span);
     write!(f, text(content.trim_end()));
 }
@@ -130,11 +130,7 @@ fn write_gap(gap: &[u8], f: &mut GraphqlFormatter<'_, '_>) {
 
 /// Emit comments that precede a node,
 /// preserving the source's vertical spacing (0/1/blank) between each comment and the next position.
-pub fn write_leading_comments(
-    comments: &[Span],
-    value_start: u32,
-    f: &mut GraphqlFormatter<'_, '_>,
-) {
+fn write_leading_comments(comments: &[Span], value_start: u32, f: &mut GraphqlFormatter<'_, '_>) {
     let source = f.context().source_text();
     for (i, &span) in comments.iter().enumerate() {
         write_single_comment(span, f);
@@ -183,7 +179,7 @@ pub fn write_trailing_same_line_comment<'a>(prev_end: u32, f: &mut GraphqlFormat
 /// (its width must not count toward the `fits` measurement of the preceding group)
 /// with `expand_parent()` so the enclosing container stays multi-line.
 /// `lower_bound` seeds the gap measurement for the first comment.
-pub fn write_trailing_inside_comments<'a>(
+fn write_trailing_inside_comments<'a>(
     comments: &[Span],
     lower_bound: u32,
     f: &mut GraphqlFormatter<'_, 'a>,
@@ -214,7 +210,7 @@ pub fn flush_trailing_inside_comments(
 }
 
 /// Returns `true` if `span` is an ignore marker (`# oxfmt-ignore` / `# prettier-ignore`).
-pub fn is_suppression_comment(source: SourceText<'_>, span: Span) -> bool {
+fn is_suppression_comment(source: SourceText<'_>, span: Span) -> bool {
     let content = source.text_for(&span);
     is_suppression_marker(content.strip_prefix('#').unwrap_or(content))
 }
@@ -229,7 +225,11 @@ pub fn is_suppressed_before(f: &GraphqlFormatter<'_, '_>, before: u32) -> bool {
 /// then advances the comment cursor past the span.
 pub fn write_suppressed_node(span: Span, f: &mut GraphqlFormatter<'_, '_>) {
     flush_leading_comments(span.start, f);
-    write!(f, text(f.context().source_text().text_for(&span)));
+    // The IR only supports `\n` as a line break. Normalize CRLF / CR / LS / PS to LF;
+    // the printer will re-emit the configured `LineEnding` at the final stage.
+    let raw = f.context().source_text().text_for(&span);
+    let normalized = normalize_newlines(raw, LINE_TERMINATORS);
+    write!(f, text(arena_cow_str(&normalized, f)));
     // The verbatim text already includes inside-span comments;
     // advance the cursor so they aren't re-emitted later.
     let _ = f.context().comments().take_before(span.end);
@@ -239,8 +239,9 @@ pub fn write_suppressed_node(span: Span, f: &mut GraphqlFormatter<'_, '_>) {
 mod tests {
     use super::{Gap, classify_gap};
 
-    // NOTE: source fixtures are LF-only (enforced via `.gitattributes`),
-    // so CR / CRLF endings are exercised here instead.
+    // Whitebox coverage of `classify_gap`'s line-terminator handling.
+    // End-to-end CRLF behavior of the suppress path is covered by the
+    // `tests/fixtures/graphql/crlf/` fixtures.
     #[test]
     fn classify_gap_counts_line_terminators() {
         assert_eq!(classify_gap(b" \t "), Gap::None);

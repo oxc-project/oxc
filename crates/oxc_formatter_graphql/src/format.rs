@@ -19,9 +19,7 @@ use crate::{
 /// # Errors
 /// Returns an [`OxcDiagnostic`] when the parse produces any error.
 /// apollo-parser is error-tolerant (it returns a CST even for invalid input),
-/// but a CST with errors cannot be formatted faithfully, so a single error is
-/// enough to bail out. The caller (oxfmt) decides what to do next
-/// (report, or fall back to Prettier).
+/// but a CST with errors cannot be formatted faithfully, so a single error is enough to bail out.
 pub fn format<'a>(
     allocator: &'a Allocator,
     source_text: &str,
@@ -31,6 +29,7 @@ pub fn format<'a>(
 
     let context = GraphqlFormatContext::new(options, source, comments);
     let mut state = FormatState::new(context, allocator);
+    // TODO: Use `with_capacity` for perf, like `oxc_formatter` does
     let mut buffer = VecBuffer::new(&mut state);
 
     let has_bom = source.starts_with('\u{feff}');
@@ -49,16 +48,14 @@ pub fn format<'a>(
 /// formatter's document (dispatcher path, e.g. graphql-in-js).
 ///
 /// Unlike [`format()`], this:
-/// - allocates from the shared arena in `ctx`, so the IR lives as long as the
-///   parent's document
+/// - allocates from the shared arena in `ctx`,
+///   so the IR lives as long as the parent's document
 /// - emits neither a BOM nor the trailing newline (the parent owns the layout
-///   around the embedded part, matching Prettier's `textToDoc` +
-///   `stripTrailingHardline` behavior)
+///   around the embedded part, matching Prettier's `textToDoc` + `stripTrailingHardline` behavior)
 /// - skips `propagate_expand()`, which the parent runs on the merged document
 ///
 /// # Errors
-/// Same as [`format()`]: any parse error bails out, and the caller decides
-/// what to do next (e.g. fall back to Prettier).
+/// Same as [`format()`]: any parse error bails out.
 pub fn format_to_ir<'a>(
     ctx: &EmbeddedContext<'a, '_>,
     source_text: &str,
@@ -87,8 +84,7 @@ fn parse_document<'a>(
 ) -> Result<(cst::Document, &'a str, &'a [Span]), OxcDiagnostic> {
     let source: &'a str = allocator.alloc_str(source_text);
 
-    // The fork gates these behind opt-in flags; enable both to keep parsing the
-    // graphql-js 16 syntax (executable descriptions + legacy fragment variables).
+    // Opt-in graphql-js 16 syntax
     let tree = Parser::new(source)
         .allow_executable_descriptions(true)
         .allow_legacy_fragment_variables(true)
@@ -102,7 +98,8 @@ fn parse_document<'a>(
 
     let document = tree.document();
 
-    // Collect comment trivia in document order. GraphQL comments are `# ...` line comments.
+    // Collect comment trivia in document order.
+    // GraphQL comments are `# ...` line comments.
     let comments: &'a [Span] = ArenaVec::from_iter_in(
         document
             .syntax()

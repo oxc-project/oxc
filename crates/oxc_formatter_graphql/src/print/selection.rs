@@ -1,17 +1,18 @@
 //! Selection set printers: fields, fragment spreads, inline fragments.
 
 use apollo_parser::{cst, cst::CstNode};
+
 use oxc_formatter_core::{
     Buffer,
     builders::{block_indent, group, space},
     write,
 };
 
-use crate::comments::{flush_trailing_inside_comments, write_dangling_comments};
+use crate::comments::flush_trailing_inside_comments;
 
 use super::{
-    GraphqlFormatter, SeparatorKind, closing_token_start, common, common::DirectivesStyle,
-    format_with, write_sequence,
+    GraphqlFormatter, SeparatorKind, common, common::DirectivesStyle, format_with,
+    sig::closing_token_start, write_sequence,
 };
 
 /// `{ selections... }`, always multi-line.
@@ -25,16 +26,7 @@ pub fn write_selection_set<'a>(
     write!(f, "{");
     if selections.is_empty() {
         // Grammar requires at least one selection; reachable only defensively.
-        let dangling = f.context().comments().take_before(r_curly);
-        if !dangling.is_empty() {
-            write!(
-                f,
-                block_indent(&format_with(move |f: &mut GraphqlFormatter<'_, 'a>| {
-                    write_dangling_comments(dangling, f);
-                }))
-            );
-        }
-        write!(f, "}");
+        common::write_empty_delimited(r_curly, "}", f);
         return;
     }
 

@@ -2183,7 +2183,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_formatter_graphql"
-version = "0.54.0"
+version = "0.56.0"
 dependencies = [
  "apollo-parser",
  "cow-utils",

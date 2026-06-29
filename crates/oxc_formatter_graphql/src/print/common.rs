@@ -2,20 +2,24 @@
 //! variable definitions, types, and input value definitions.
 
 use apollo_parser::{cst, cst::CstNode};
+
 use oxc_formatter_core::{
     Buffer, Format,
     builders::{
-        group, hard_line_break, indent, soft_block_indent, soft_line_break,
+        block_indent, group, hard_line_break, indent, soft_block_indent, soft_line_break,
         soft_line_break_or_space, space, text,
     },
     write,
 };
 
-use crate::comments::flush_trailing_inside_comments;
+use crate::comments::{
+    flush_leading_comments, flush_trailing_inside_comments, write_dangling_comments,
+};
 
 use super::{
-    GraphqlFormatter, SeparatorKind, closing_token_start, format_with, node_text, value,
-    write_sequence,
+    GraphqlFormatter, SeparatorKind, format_with,
+    sig::{closing_token_start, node_text},
+    string, value, write_sequence,
 };
 
 pub fn write_name(name: &cst::Name, f: &mut GraphqlFormatter<'_, '_>) {
@@ -23,7 +27,7 @@ pub fn write_name(name: &cst::Name, f: &mut GraphqlFormatter<'_, '_>) {
 }
 
 /// Whether a description string is a block string (`"""..."""`).
-pub fn is_block_string(sv: &cst::StringValue, f: &GraphqlFormatter<'_, '_>) -> bool {
+fn is_block_string(sv: &cst::StringValue, f: &GraphqlFormatter<'_, '_>) -> bool {
     node_text(f, sv.syntax()).starts_with("\"\"\"")
 }
 
@@ -31,7 +35,7 @@ pub fn is_block_string(sv: &cst::StringValue, f: &GraphqlFormatter<'_, '_>) -> b
 pub fn write_description(description: Option<cst::Description>, f: &mut GraphqlFormatter<'_, '_>) {
     let Some(description) = description else { return };
     let Some(sv) = description.string_value() else { return };
-    value::write_string_value(&sv, f);
+    string::write_string_value(&sv, f);
     write!(f, hard_line_break());
 }
 
@@ -39,14 +43,14 @@ pub fn write_description(description: Option<cst::Description>, f: &mut GraphqlF
 /// non-block descriptions are followed by a soft line (they may stay inline in an
 /// argument list), block descriptions by a hard line break.
 /// Mirrors Prettier's `printDescription`.
-pub fn write_description_input_value(
+fn write_description_input_value(
     description: Option<cst::Description>,
     f: &mut GraphqlFormatter<'_, '_>,
 ) {
     let Some(description) = description else { return };
     let Some(sv) = description.string_value() else { return };
     let is_block = is_block_string(&sv, f);
-    value::write_string_value(&sv, f);
+    string::write_string_value(&sv, f);
     if is_block {
         write!(f, hard_line_break());
     } else {
@@ -101,12 +105,33 @@ pub fn write_directives<'a>(
     }
 }
 
-pub fn write_directive(directive: &cst::Directive, f: &mut GraphqlFormatter<'_, '_>) {
+fn write_directive(directive: &cst::Directive, f: &mut GraphqlFormatter<'_, '_>) {
     write!(f, "@");
     if let Some(name) = directive.name() {
         write_name(&name, f);
     }
     write_arguments(directive.arguments(), f);
+}
+
+/// Close an empty delimited container (`[]`, `{}`, `{ }` selection set): drains any comments
+/// pending before `close_start`, emits them block-indented when present, then writes `close`.
+/// The caller has already written the opening delimiter. Sibling of [`write_paren_list`] /
+/// `write_braced_body` for the empty case.
+pub fn write_empty_delimited<'a>(
+    close_start: u32,
+    close: &'static str,
+    f: &mut GraphqlFormatter<'_, 'a>,
+) {
+    let dangling = f.context().comments().take_before(close_start);
+    if !dangling.is_empty() {
+        write!(
+            f,
+            block_indent(&format_with(move |f: &mut GraphqlFormatter<'_, 'a>| {
+                write_dangling_comments(dangling, f);
+            }))
+        );
+    }
+    write!(f, text(close));
 }
 
 /// A parenthesized, comma-soft-separated list:
@@ -195,10 +220,7 @@ pub fn write_variable(variable: &cst::Variable, f: &mut GraphqlFormatter<'_, '_>
     }
 }
 
-pub fn write_default_value(
-    default_value: Option<cst::DefaultValue>,
-    f: &mut GraphqlFormatter<'_, '_>,
-) {
+fn write_default_value(default_value: Option<cst::DefaultValue>, f: &mut GraphqlFormatter<'_, '_>) {
     let Some(default_value) = default_value else { return };
     write!(f, " = ");
     if let Some(v) = default_value.value() {
@@ -253,11 +275,13 @@ pub fn write_input_value_definition(
     write_directives(input_value.directives(), DirectivesStyle::Attached, f);
 }
 
-/// ` implements A & B`, mirroring Prettier 3.8.3's `printInterfaces`:
-/// names joined by plain `" & "` — the list NEVER breaks on line width
-/// (no group, no indent). A `line` replaces the space only when a comment sits
-/// between two names; outside any group it always prints as a newline, so the
-/// list breaks exactly at the comment position (at zero extra indentation).
+/// ` implements A & B`, mirroring Prettier 3.8.4's `printInterfaces`:
+/// names joined by plain `" & "` — the list NEVER breaks on line width (no group, no indent).
+/// TODO: We will revisit this once Prettier 3.9.x released, as it changed the behavior.
+///
+/// A `line` replaces the space only when a comment sits between two names;
+/// outside any group it always prints as a newline,
+/// so the list breaks exactly at the comment position (at zero extra indentation).
 pub fn write_implements_interfaces(
     implements: Option<cst::ImplementsInterfaces>,
     f: &mut GraphqlFormatter<'_, '_>,
@@ -269,7 +293,7 @@ pub fn write_implements_interfaces(
     }
     write!(f, " implements ");
     for (i, named) in names.iter().enumerate() {
-        let start = super::sig_start(named.syntax());
+        let start = super::sig::sig_start(named.syntax());
         if i > 0 {
             write!(f, " &");
             // Pending comments before this name = comments between the two names
@@ -281,7 +305,7 @@ pub fn write_implements_interfaces(
                 write!(f, space());
             }
         }
-        crate::comments::flush_leading_comments(start, f);
+        flush_leading_comments(start, f);
         write_named_type(named, f);
     }
 }
