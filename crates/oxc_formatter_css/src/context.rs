@@ -13,6 +13,9 @@ pub struct CssFormatContext<'a> {
     /// Inside a Less detached ruleset (`@var: { ... }`): property names keep
     /// their case (Prettier checks `parentNode.variable`).
     in_less_detached: std::cell::Cell<bool>,
+    /// Inside an ICSS rule (`:import(...)` / `:export`): property names keep
+    /// their case (Prettier's `insideIcssRuleNode`).
+    in_icss_rule: std::cell::Cell<bool>,
     /// Current block nesting depth (rules/at-rules).
     block_depth: std::cell::Cell<u32>,
     /// The source may contain css-in-js `${}` placeholder markers
@@ -35,6 +38,7 @@ impl<'a> CssFormatContext<'a> {
             source_text: SourceText::new(source_code),
             comments: Comments::new(comments),
             in_less_detached: std::cell::Cell::new(false),
+            in_icss_rule: std::cell::Cell::new(false),
             block_depth: std::cell::Cell::new(0),
             template_placeholders,
             tailwind_classes: Vec::new(),
@@ -65,6 +69,10 @@ impl<'a> CssFormatContext<'a> {
 
     pub fn in_less_detached(&self) -> &std::cell::Cell<bool> {
         &self.in_less_detached
+    }
+
+    pub fn in_icss_rule(&self) -> &std::cell::Cell<bool> {
+        &self.in_icss_rule
     }
 
     /// Returns the source text with the arena lifetime (vs the trait's borrow-elided `&str`).

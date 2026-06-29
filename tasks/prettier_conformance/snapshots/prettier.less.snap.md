@@ -1,4 +1,4 @@
-less compatibility: 39/39 (100.00%), 9 files skipped
+less compatibility: 39/39 (100.00%), 8 files skipped
 
 # Failed
 
@@ -7,7 +7,6 @@ less compatibility: 39/39 (100.00%), 9 files skipped
 
 # Skipped (parse error, TODO: should be ignored or supported)
 
-- less/case/15460.less
 - less/case/case.less
 - less/comments/in-value.less
 - less/interpolation/interpolation.less

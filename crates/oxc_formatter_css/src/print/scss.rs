@@ -123,7 +123,8 @@ pub fn write_top_level_value<'a>(
             .iter_before(value_span.end)
             .any(|c| c.span.start >= value_span.start);
         let force_hard_line = !ctx.decl_prop.is_some_and(|p| p.starts_with("--"))
-            && (groups.iter().any(|g| g.len() > 1) || has_comments);
+            && (groups.iter().enumerate().any(|(i, g)| value::comma_group_is_multi(g, i == 0))
+                || has_comments);
         value::write_value_groups(&groups, ctx, force_hard_line, true, f);
     } else {
         value::write_comma_group(elements, ctx, f);
@@ -134,7 +135,28 @@ pub fn write_top_level_value<'a>(
 /// one item per line, with a trailing comma per the `trailingComma` option.
 pub fn write_sass_map<'a>(map: &SassMap<'a>, ctx: ValueContext<'a>, f: &mut CssFormatter<'_, 'a>) {
     if map.items.is_empty() {
-        write!(f, ["(", ")"]);
+        // A map with no items may still hold comments (`(\n  // c\n)`).
+        // Keep them inside the parens, one line each, instead of leaking
+        // them past `)` as a trailing declaration comment (Prettier #18535).
+        let r_paren = to_span(map.span()).end.saturating_sub(1);
+        let tail: Vec<crate::comments::CssComment> =
+            f.context().comments().take_before(r_paren).to_vec();
+        if tail.is_empty() {
+            write!(f, ["(", ")"]);
+            return;
+        }
+        let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
+            for (i, &comment) in tail.iter().enumerate() {
+                if i == 0 || comment.inline || tail[i - 1].inline {
+                    write!(f, hard_line_break());
+                } else {
+                    // Block comments are fill items: they join when they fit.
+                    write!(f, " ");
+                }
+                crate::comments::write_single_comment(comment, f);
+            }
+        });
+        write!(f, ["(", indent(&body), hard_line_break(), ")"]);
         return;
     }
     // Maps break only in "map item" positions (`$var:` values, map item

@@ -1,0 +1,81 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+/* Verbatim-params edges: fused prelude, glued `(`, embedded comments,
+   trailing `//` before a block, quote preservation, interpolated names
+   (the `UnknownSassAtRule` statement path). */
+@a:b;
+@foo (x);
+@foo /* gap */ bar;
+.x {
+  @apply a b /* c */;
+}
+@foo bar /* c2 */ {
+  color: red;
+}
+@foo bar // c
+{
+  color: red;
+}
+@error 'single quotes survive';
+@warn 'careful with #{$x} here';
+@#{$name} param1 param2;
+@#{$mix}in foo {
+  x: 1;
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+/* Verbatim-params edges: fused prelude, glued `(`, embedded comments,
+   trailing `//` before a block, quote preservation, interpolated names
+   (the `UnknownSassAtRule` statement path). */
+@a:b;
+@foo (x);
+@foo /* gap */ bar;
+.x {
+  @apply a b /* c */;
+}
+@foo bar /* c2 */ {
+  color: red;
+}
+@foo bar // c
+{
+  color: red;
+}
+@error 'single quotes survive';
+@warn 'careful with #{$x} here';
+@#{$name} param1 param2;
+@#{$mix}in foo {
+  x: 1;
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+/* Verbatim-params edges: fused prelude, glued `(`, embedded comments,
+   trailing `//` before a block, quote preservation, interpolated names
+   (the `UnknownSassAtRule` statement path). */
+@a:b;
+@foo (x);
+@foo /* gap */ bar;
+.x {
+  @apply a b /* c */;
+}
+@foo bar /* c2 */ {
+  color: red;
+}
+@foo bar // c
+{
+  color: red;
+}
+@error 'single quotes survive';
+@warn 'careful with #{$x} here';
+@#{$name} param1 param2;
+@#{$mix}in foo {
+  x: 1;
+}
+
+===================== End =====================

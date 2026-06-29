@@ -82,7 +82,7 @@ pnpm build-dev && pnpm t
 pnpm t -u
 
 # Run conformance test for xxx-in-js and js-in-xxx
-pnpm conformance
+pnpm build-dev && pnpm conformance
 ```
 
 To manually verify the CLI behavior after building:

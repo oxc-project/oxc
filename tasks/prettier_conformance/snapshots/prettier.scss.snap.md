@@ -1,9 +1,10 @@
-scss compatibility: 85/85 (100.00%), 9 files skipped
+scss compatibility: 84/85 (98.82%), 6 files skipped
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
+| scss/map/function-argument/functional-argument.scss | 💥 | 96.00% |
 
 # Skipped (parse error, TODO: should be ignored or supported)
 
@@ -11,8 +12,5 @@ scss compatibility: 85/85 (100.00%), 9 files skipped
 - scss/case/case.scss
 - scss/comments/CRLF.scss
 - scss/function/arbitrary-arguments.scss
-- scss/interpolation/3719.scss
-- scss/interpolation/3943.scss
-- scss/math/3945.scss
 - scss/no-semicolon/url.scss
 - scss/parens/parens.scss

@@ -200,6 +200,21 @@ fn write_simple_selector<'a>(selector: &SimpleSelector<'a>, f: &mut CssFormatter
 }
 
 fn write_interpolable_ident<'a>(ident: &InterpolableIdent<'a>, f: &mut CssFormatter<'_, 'a>) {
+    // Sass interpolation reprints structurally (same as value position) so the
+    // output is internally consistent: inner spaces collapse (`#{ $b }` →
+    // `#{$b}`) and quoted string literals re-quote (`#{'x'}` → `#{"x"}`). Plain
+    // idents and Less `@{}` stay verbatim.
+    // DELIBERATE DIVERGENCE: Prettier keeps SELECTOR interpolation verbatim (it
+    // only normalizes VALUE-position interpolation), so `#{ $b }` stays
+    // `#{ $b }` there. We normalize both positions for consistency — see AGENTS.md.
+    if let InterpolableIdent::SassInterpolated(interp) = ident {
+        crate::print::value::write_sass_interpolated_ident(
+            interp,
+            crate::print::value::ValueContext::default(),
+            f,
+        );
+        return;
+    }
     let source = f.context().source_text();
     let span = to_span(ident.span());
     let raw = source.text_for(&span);
@@ -272,7 +287,19 @@ fn write_attribute_selector<'a>(attribute: &AttributeSelector<'a>, f: &mut CssFo
             AttributeSelectorValue::Str(raffia::ast::InterpolableStr::Literal(str)) => {
                 crate::print::value::write_str(str, f);
             }
-            _ => {
+            // Interpolated string (`[x="#{$v}"]`): re-quote the outer quotes per
+            // `singleQuote`, keep the `#{}` content verbatim.
+            AttributeSelectorValue::Str(istr) => {
+                let span = to_span(istr.span());
+                crate::print::value::write_requoted_verbatim(source.text_for(&span), f);
+            }
+            // `[class^=~'...']`: postcss sees a plain string after the `~`, so
+            // it re-quotes per `singleQuote` like the value-position handler.
+            AttributeSelectorValue::LessEscapedStr(escaped) => {
+                write!(f, "~");
+                crate::print::value::write_str(&escaped.str, f);
+            }
+            AttributeSelectorValue::Percentage(_) => {
                 let span = to_span(value.span());
                 write!(f, text(source.text_for(&span)));
             }
@@ -475,14 +502,29 @@ pub fn write_keyframe_selector<'a>(
 ) {
     let source = f.context().source_text();
     match selector {
-        raffia::ast::KeyframeSelector::Ident(ident) => {
-            let span = to_span(ident.span());
-            let raw = source.text_for(&span);
-            match raw.cow_to_ascii_lowercase() {
-                Cow::Borrowed(s) => write!(f, text(s)),
-                Cow::Owned(s) => write!(f, text(f.allocator().alloc_str(&s))),
+        raffia::ast::KeyframeSelector::Ident(ident) => match ident {
+            // Only `from`/`to` lowercase (Prettier's `isKeyframeAtRuleKeywords`);
+            // raffia flags anything else as a recoverable error anyway.
+            raffia::ast::InterpolableIdent::Literal(lit) => {
+                match lit.raw.cow_to_ascii_lowercase() {
+                    Cow::Borrowed(s) => write!(f, text(s)),
+                    Cow::Owned(s) => write!(f, text(f.allocator().alloc_str(&s))),
+                }
             }
-        }
+            // Interpolations reprint structurally: idents/variables keep
+            // their case, dimensions/strings get value normalization.
+            raffia::ast::InterpolableIdent::SassInterpolated(interp) => {
+                crate::print::value::write_sass_interpolated_ident(
+                    interp,
+                    crate::print::value::ValueContext::default(),
+                    f,
+                );
+            }
+            raffia::ast::InterpolableIdent::LessInterpolated(_) => {
+                let span = to_span(ident.span());
+                write!(f, text(source.text_for(&span)));
+            }
+        },
         raffia::ast::KeyframeSelector::Percentage(percentage) => {
             crate::print::value::write_number(&percentage.value, f);
             write!(f, "%");

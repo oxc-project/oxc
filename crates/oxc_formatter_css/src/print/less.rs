@@ -8,8 +8,8 @@ use oxc_formatter_core::{
 use raffia::{
     Spanned,
     ast::{
-        ComponentValue, LessCondition, LessConditions, LessMixinArgument, LessMixinCall,
-        LessMixinDefinition, LessMixinName, LessMixinParameter, LessVariableDeclaration,
+        ComponentValue, LessCondition, LessMixinArgument, LessMixinCall, LessMixinDefinition,
+        LessMixinName, LessVariableDeclaration,
     },
 };
 
@@ -28,6 +28,9 @@ pub fn write_less_variable_declaration<'a>(
     f: &mut CssFormatter<'_, 'a>,
 ) -> bool {
     let source = f.context().source_text();
+    // Prettier's `shouldPrecededBySoftline` matches `css-decl` only, never
+    // atrule-variables — see `ValueContext::no_leading_softline`.
+    let value_ctx = ValueContext { no_leading_softline: true, ..ValueContext::default() };
     write!(f, "@");
     let name_span = to_span(decl.name.name.span());
     write!(f, text(source.text_for(&name_span)));
@@ -49,7 +52,7 @@ pub fn write_less_variable_declaration<'a>(
             crate::comments::write_single_comment(comment, f);
             write!(f, oxc_formatter_core::builders::hard_line_break());
         }
-        crate::print::scss::write_top_level_value(&decl.value, ValueContext::default(), f);
+        crate::print::scss::write_top_level_value(&decl.value, value_ctx, f);
         return true;
     }
     if inline_before_colon {
@@ -68,13 +71,13 @@ pub fn write_less_variable_declaration<'a>(
             return false;
         }
         write!(f, space());
-        crate::print::scss::write_top_level_value(&decl.value, ValueContext::default(), f);
+        crate::print::scss::write_top_level_value(&decl.value, value_ctx, f);
         return true;
     }
     // postcss-less drops (block) comments between the name and the colon.
     let _ = f.context().comments().take_before(colon_end);
     write!(f, [":", space()]);
-    crate::print::scss::write_top_level_value(&decl.value, ValueContext::default(), f);
+    crate::print::scss::write_top_level_value(&decl.value, value_ctx, f);
     true
 }
 
@@ -84,56 +87,76 @@ fn write_mixin_name<'a>(name: &LessMixinName<'a>, f: &mut CssFormatter<'_, 'a>) 
     write!(f, text(source.text_for(&span)));
 }
 
-/// `.mixin(@params...) when (guard) { ... }`
+/// Raw source text with Prettier's string-level normalizations applied
+/// (`adjustNumbers(adjustStrings(...))`) — the selector-side print path for
+/// everything postcss-selector-parser receives: spacing and newlines stay
+/// verbatim and nothing ever breaks on line width.
+fn write_adjusted_verbatim<'a>(raw: &'a str, f: &mut CssFormatter<'_, 'a>) {
+    let single_quote = f.options().single_quote.value();
+    match value::adjust_numbers_and_strings(raw, single_quote) {
+        std::borrow::Cow::Borrowed(s) => write!(f, text(s)),
+        std::borrow::Cow::Owned(s) => write!(f, text(f.allocator().alloc_str(&s))),
+    }
+}
+
+/// Prelude printed verbatim from `start` to the block, then the block.
+/// A trailing `//` comment pushes `{` to the next line (selector-unknown's
+/// `lastLineHasInlineComment`).
+fn write_verbatim_prelude_rule<'a>(
+    start: u32,
+    block: &raffia::ast::SimpleBlock<'a>,
+    f: &mut CssFormatter<'_, 'a>,
+) {
+    let source = f.context().source_text();
+    let block_start = to_span(&block.span).start;
+    let raw = source.slice_range(start, block_start).trim_end();
+    let _ = f.context().comments().take_before(block_start);
+    write_adjusted_verbatim(raw, f);
+    if crate::comments::last_line_has_inline_comment(raw) {
+        write!(f, oxc_formatter_core::builders::hard_line_break());
+    } else {
+        write!(f, space());
+    }
+    write_block(block, f);
+}
+
+/// `.mixin(@params...) when (guard) { ... }` — Prettier hands the whole
+/// prelude to postcss-selector-parser (`css-rule` selector) and prints it
+/// raw apart from number/string adjustments, so parameter spacing, a space
+/// before `(`, trailing `;` separators and multi-line layouts all survive.
 pub fn write_less_mixin_definition<'a>(
     def: &LessMixinDefinition<'a>,
     f: &mut CssFormatter<'_, 'a>,
 ) {
-    write_mixin_name(&def.name, f);
-    write_mixin_parameters(&def.params, f);
-    if let Some(guard) = &def.guard {
-        write_less_guard(guard, f);
-    }
-    write!(f, space());
-    write_block(&def.block, f);
+    write_verbatim_prelude_rule(to_span(def.name.span()).start, &def.block, f);
 }
 
-fn write_mixin_parameters<'a>(
-    params: &raffia::ast::LessMixinParameters<'a>,
+/// `selector when (guard) { ... }` — a `css-rule` in Prettier: raw selector
+/// text (guard included), block, and NO trailing `;`.
+pub fn write_less_conditional_qualified_rule<'a>(
+    rule: &raffia::ast::LessConditionalQualifiedRule<'a>,
     f: &mut CssFormatter<'_, 'a>,
 ) {
-    let source = f.context().source_text();
-    write!(f, "(");
-    let separator: &str = if params.is_comma_separated { ", " } else { "; " };
-    for (i, param) in params.params.iter().enumerate() {
-        if i > 0 {
-            write!(f, text(separator));
-        }
-        match param {
-            LessMixinParameter::Named(named) => {
-                let span = to_span(named.name.span());
-                write!(f, text(source.text_for(&span)));
-                if let Some(default) = &named.value {
-                    write!(f, [":", space()]);
-                    value::write_component_value(&default.value, ValueContext::default(), f);
-                }
-            }
-            LessMixinParameter::Unnamed(unnamed) => {
-                value::write_component_value(&unnamed.value, ValueContext::default(), f);
-            }
-            LessMixinParameter::Variadic(variadic) => {
-                if let Some(name) = &variadic.name {
-                    let span = to_span(name.span());
-                    write!(f, text(source.text_for(&span)));
-                }
-                write!(f, "...");
-            }
-        }
-    }
-    write!(f, ")");
+    write_verbatim_prelude_rule(to_span(&rule.span).start, &rule.block, f);
 }
 
-/// `.mixin(args) !important` — used both as a statement and as a value.
+/// Statement-position `.mixin(args);` — a `mixin` at-rule in Prettier, whose
+/// params are re-parsed as a SELECTOR (parser-postcss.js) and printed raw:
+/// argument spacing is preserved and a long call never breaks on width.
+pub fn write_less_mixin_call_statement<'a>(call: &LessMixinCall<'a>, f: &mut CssFormatter<'_, 'a>) {
+    let source = f.context().source_text();
+    let span = to_span(&call.span);
+    let end = call.important.as_ref().map_or(span.end, |imp| to_span(&imp.span).start);
+    let raw = source.slice_range(span.start, end).trim_end();
+    let _ = f.context().comments().take_before(end);
+    write_adjusted_verbatim(raw, f);
+    if call.important.is_some() {
+        write!(f, [space(), "!important"]);
+    }
+}
+
+/// `.mixin(args) !important` in VALUE / namespace-callee position only
+/// (statement position goes through `write_less_mixin_call_statement`).
 pub fn write_less_mixin_call<'a>(call: &LessMixinCall<'a>, f: &mut CssFormatter<'_, 'a>) {
     let source = f.context().source_text();
     for child in &call.callee.children {
@@ -169,17 +192,6 @@ pub fn write_less_mixin_call<'a>(call: &LessMixinCall<'a>, f: &mut CssFormatter<
     }
     if call.important.is_some() {
         write!(f, [space(), "!important"]);
-    }
-}
-
-/// ` when (cond), (cond) and (cond)`
-pub fn write_less_guard<'a>(guard: &LessConditions<'a>, f: &mut CssFormatter<'_, 'a>) {
-    write!(f, [space(), "when", space()]);
-    for (i, condition) in guard.conditions.iter().enumerate() {
-        if i > 0 {
-            write!(f, [",", space()]);
-        }
-        write_less_condition(condition, f);
     }
 }
 

@@ -1,4 +1,4 @@
-css compatibility: 114/114 (100.00%), 27 files skipped
+css compatibility: 114/114 (100.00%), 26 files skipped
 
 # Failed
 
@@ -14,7 +14,6 @@ css compatibility: 114/114 (100.00%), 27 files skipped
 - css/atrule/supports.css
 - css/attribute/quotes.css
 - css/atword/atword.css
-- css/character-escaping/character_escaping.css
 - css/combinator/combinator.css
 - css/comments/selectors.css
 - css/fill-value/fill.css

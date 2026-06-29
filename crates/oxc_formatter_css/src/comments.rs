@@ -235,6 +235,13 @@ pub fn is_suppression_comment(source: SourceText<'_>, comment: CssComment) -> bo
     is_suppression_marker(content)
 }
 
+/// Prettier's `lastLineHasInlineComment`: does the last line of a raw
+/// prelude/selector slice carry a `//` comment? When it does, `{` drops to
+/// the next line instead of following on the same one.
+pub fn last_line_has_inline_comment(raw: &str) -> bool {
+    raw.rsplit('\n').next().unwrap_or(raw).contains("//")
+}
+
 #[cfg(test)]
 mod tests {
     use super::{Gap, classify_gap};

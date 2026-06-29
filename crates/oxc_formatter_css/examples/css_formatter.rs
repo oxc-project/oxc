@@ -1,7 +1,7 @@
 //! Format a CSS/SCSS/Less file and print the result.
 //!
 //! ```sh
-//! cargo run -p oxc_formatter_css --example css_formatter -- [filename]
+//! cargo run -p oxc_formatter_css --example css_formatter -- [--print-width N] [filename]
 //! ```
 #![expect(clippy::print_stdout, clippy::print_stderr)]
 
@@ -12,6 +12,8 @@ use oxc_formatter_css::{CssFormatOptions, CssVariant, format};
 
 fn main() {
     let mut args = pico_args::Arguments::from_env();
+    let line_width: Option<u16> = args.opt_value_from_str("--print-width").unwrap();
+    let single_quote = args.contains("--single-quote");
     let name = args.free_from_str().unwrap_or_else(|_| "test.css".to_string());
     let path = Path::new(&name);
 
@@ -24,7 +26,13 @@ fn main() {
         _ => CssVariant::Css,
     };
 
-    let options = CssFormatOptions { variant, ..CssFormatOptions::default() };
+    let mut options = CssFormatOptions { variant, ..CssFormatOptions::default() };
+    if let Some(width) = line_width {
+        options.line_width = width.try_into().unwrap();
+    }
+    if single_quote {
+        options.single_quote = true.into();
+    }
 
     let allocator = Allocator::new();
     match format(&allocator, &source_text, options, None) {

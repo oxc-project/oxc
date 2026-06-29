@@ -1,0 +1,19 @@
+// Sass interpolation in a media feature NAME (`#{$x}-width`).
+// The raffia fork parses this as a MediaFeaturePlain whose name is an
+// interpolated ident; without the fork it errors at `(#{` (the interpolation
+// was miss parsed as a bare SassInterpolation media condition).
+@mixin notes-media($condition, $breakpoint-width) {
+  @media (#{$condition}-width: ($breakpoint-width)) {
+    @content;
+  }
+
+  @media (#{$condition}-width: (2 * $breakpoint-width)) {
+    @content;
+  }
+}
+
+@media (#{$prefix}-feature: 10px) and (max-width: 600px) {
+  a {
+    color: red;
+  }
+}

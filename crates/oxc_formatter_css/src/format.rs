@@ -116,7 +116,13 @@ fn parse_stylesheet<'a>(
     tolerate_placeholders: bool,
 ) -> Result<(Stylesheet<'a>, &'a str, &'a [CssComment]), OxcDiagnostic> {
     let source_text = source_text.strip_prefix('\u{feff}').unwrap_or(source_text);
-    let source: &'a str = allocator.alloc_str(source_text);
+    // Normalize `\r\n` / lone `\r` to `\n` BEFORE parsing (like Prettier's
+    // endOfLine pre-pass): the printer slices verbatim text from the source
+    // in many places (comments, progid, custom properties, ...) and a raw
+    // `\r` reaching the core `text()` builder panics. Spans stay consistent
+    // because parse and print both use the normalized copy.
+    let source_text = oxc_formatter_core::normalize_newlines(source_text, ['\r']);
+    let source: &'a str = allocator.alloc_str(&source_text);
 
     // Front matter is not CSS: blank it out (preserving line structure so
     // spans and gaps stay aligned) and print it verbatim from `source`.

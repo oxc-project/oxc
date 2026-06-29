@@ -33,6 +33,23 @@ pub fn stmt_end(stmt: &Statement<'_>, f: &CssFormatter<'_, '_>) -> u32 {
 }
 
 /// Extends `end` over any whitespace, comments and a final `;` in the source.
+/// End of an at-rule's params region: the block start, or (without a block)
+/// the span end — extended over a trailing `;` and shrunk back so the `;`
+/// itself stays outside the region.
+pub fn params_region_end<'a>(
+    block: Option<&raffia::ast::SimpleBlock<'a>>,
+    span_end: u32,
+    f: &CssFormatter<'_, 'a>,
+) -> u32 {
+    block.map_or_else(
+        || {
+            let with_semi = end_with_semicolon(span_end, f);
+            if with_semi > span_end { with_semi - 1 } else { span_end }
+        },
+        |block| to_span(&block.span).start,
+    )
+}
+
 pub fn end_with_semicolon(end: u32, f: &CssFormatter<'_, '_>) -> u32 {
     let source = f.context().source_text();
     let bytes = source.as_bytes();
@@ -77,8 +94,11 @@ pub fn write_statement<'a>(stmt: &Statement<'a>, f: &mut CssFormatter<'_, 'a>) {
             }
         }
         Statement::LessMixinDefinition(def) => less::write_less_mixin_definition(def, f),
+        Statement::LessConditionalQualifiedRule(rule) => {
+            less::write_less_conditional_qualified_rule(rule, f);
+        }
         Statement::LessMixinCall(call) => {
-            less::write_less_mixin_call(call, f);
+            less::write_less_mixin_call_statement(call, f);
             write!(f, ";");
         }
         Statement::SassVariableDeclaration(decl) => {
@@ -87,27 +107,26 @@ pub fn write_statement<'a>(stmt: &Statement<'a>, f: &mut CssFormatter<'_, 'a>) {
         }
         Statement::SassIfAtRule(if_rule) => scss::write_sass_if_at_rule(if_rule, f),
         Statement::UnknownSassAtRule(unknown) => {
+            // Same string-params contract as the Unknown prelude in
+            // `write_at_rule`: Prettier prints unknown at-rule params
+            // verbatim.
             let source = f.context().source_text();
             write!(f, "@");
             let name_span = to_span(unknown.name.span());
             write_maybe_lowercase(source.text_for(&name_span), f);
-            if let Some(prelude) = &unknown.prelude {
-                write!(f, space());
-                match prelude {
-                    raffia::ast::UnknownAtRulePrelude::ComponentValue(value) => {
-                        value::write_component_value(value, ValueContext::default(), f);
-                    }
-                    raffia::ast::UnknownAtRulePrelude::TokenSeq(seq) => {
-                        at_rule::write_token_seq(seq, f);
-                    }
-                }
-            }
-            if let Some(block) = &unknown.block {
-                write!(f, space());
-                write_block(block, f);
-            } else {
-                write!(f, ";");
-            }
+            let region_end =
+                params_region_end(unknown.block.as_ref(), to_span(&unknown.span).end, f);
+            let prelude_start = unknown
+                .prelude
+                .as_ref()
+                .map_or(region_end, |prelude| to_span(prelude.span()).start);
+            at_rule::write_verbatim_at_rule_tail(
+                name_span.end,
+                prelude_start,
+                unknown.block.as_ref(),
+                region_end,
+                f,
+            );
         }
         Statement::KeyframeBlock(keyframe_block) => {
             for (i, sel) in keyframe_block.selectors.iter().enumerate() {
@@ -135,20 +154,17 @@ fn write_qualified_rule<'a>(rule: &QualifiedRule<'a>, f: &mut CssFormatter<'_, '
     let source = f.context().source_text();
     let sel_span = to_span(rule.selector.span());
     let block_start = to_span(rule.block.span()).start;
-    // `//` comments inside the selector break postcss-selector-parser:
-    // Prettier prints the raw selector verbatim (`selector-unknown`), and a
-    // trailing `//` comment pushes `{` to the next line.
-    let has_inline_comment = f
-        .context()
-        .comments()
-        .iter_before(block_start)
-        .any(|c| c.inline && c.span.start >= sel_span.start);
+    // Comments inside the selector (both `//` and `/* */`) make Prettier
+    // print the raw selector verbatim (`selector-unknown`) — reordering them
+    // would change which compound they annotate. A trailing `//` comment
+    // pushes `{` to the next line.
+    let has_inline_comment =
+        f.context().comments().iter_before(block_start).any(|c| c.span.start >= sel_span.start);
     if has_inline_comment {
         let raw = source.slice_range(sel_span.start, block_start).trim_end();
         let _ = f.context().comments().take_before(block_start);
         write!(f, text(raw));
-        let last_line = raw.rsplit('\n').next().unwrap_or(raw);
-        if last_line.contains("//") {
+        if crate::comments::last_line_has_inline_comment(raw) {
             write!(f, hard_line_break());
         } else {
             write!(f, space());
@@ -158,7 +174,11 @@ fn write_qualified_rule<'a>(rule: &QualifiedRule<'a>, f: &mut CssFormatter<'_, '
     }
     selector::write_selector_list(&rule.selector, selector::SelectorListStyle::Hard, f);
     write!(f, space());
+    let raw_sel = source.text_for(&sel_span);
+    let is_icss = raw_sel.starts_with(":import") || raw_sel.starts_with(":export");
+    let was = f.context().in_icss_rule().replace(is_icss);
     write_block(&rule.block, f);
+    f.context().in_icss_rule().set(was);
 }
 
 /// Mirrors Prettier's `maybeToLowerCase`: lowercase unless the identifier
@@ -191,7 +211,9 @@ fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter<'_, 'a>) {
     let source = f.context().source_text();
     let name_span = to_span(decl.name.span());
     let prop = source.text_for(&name_span);
-    if f.context().in_less_detached().get() {
+    if f.context().in_less_detached().get() || f.context().in_icss_rule().get() {
+        // Less detached rulesets (`parentNode.variable`) and ICSS rules
+        // (`insideIcssRuleNode`) keep property-name casing.
         write!(f, text(prop));
     } else {
         write_maybe_lowercase(prop, f);
@@ -240,6 +262,7 @@ fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter<'_, 'a>) {
             write!(f, text(trimmed_between));
         }
     }
+    let mut reparsed_important_start: Option<u32> = None;
     if decl.value.is_empty() {
         // Custom properties with a whitespace-only value keep it verbatim
         // (`--one-space: ;` stays as-is). Scan up to the `;` in the source.
@@ -321,6 +344,14 @@ fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter<'_, 'a>) {
             };
             let values: &[raffia::ast::ComponentValue<'a>] =
                 reparsed.as_ref().map_or(&decl.value, |d| &d.value);
+            // A custom property's `!important` lands in the REPARSED
+            // declaration (the original token-soup decl has `important:
+            // None`); remember its source offset so the tail printing below
+            // doesn't drop it. The padded copy keeps original offsets.
+            reparsed_important_start = reparsed
+                .as_ref()
+                .and_then(|d| d.important.as_ref())
+                .map(|important| to_span(important.span()).start);
 
             let ctx = ValueContext {
                 decl_prop: Some(prop_lower),
@@ -338,7 +369,11 @@ fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter<'_, 'a>) {
             let decl_end_pre = to_span(decl.span()).end;
             let semi = end_with_semicolon(decl_end_pre, f);
             let bound = if semi > decl_end_pre { semi - 1 } else { decl_end_pre };
+            // A single interpolated component is exempt — its fill-chunk fit
+            // ignores the line tail (see `is_single_sass_interpolation`).
             let has_tail = decl.important.is_none()
+                && reparsed_important_start.is_none()
+                && !value::is_single_sass_interpolation(values)
                 && f.context().comments().iter_before(bound).any(|c| c.span.start >= value_end);
             let ctx = ValueContext { tail_bound: has_tail.then_some(bound), ..ctx };
             // `prop: <values> { decls }` — a trailing nested block hugs the
@@ -371,6 +406,9 @@ fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter<'_, 'a>) {
     }
     if let Some(important) = &decl.important {
         value::flush_trailing_value_comments(to_span(important.span()).start, f);
+        write!(f, [space(), "!important"]);
+    } else if let Some(start) = reparsed_important_start {
+        value::flush_trailing_value_comments(start, f);
         write!(f, [space(), "!important"]);
     }
     // Comments between the value and the `;`. Note: the `;` position is the
