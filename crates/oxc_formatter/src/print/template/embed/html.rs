@@ -63,10 +63,6 @@ pub(super) fn format_html_doc<'a>(
         ) else {
             return false;
         };
-        // No-op today (the Prettier Doc path never carries classes), but the
-        // boundary contract is "merge at every embed site" — a Rust HTML
-        // formatter collecting `class` attributes will rely on this.
-        result.remap_tailwind_into(f.context_mut());
         let Some(html_has_multiple_root_elements) = result
             .meta
             .as_ref()
@@ -75,7 +71,11 @@ pub(super) fn format_html_doc<'a>(
         else {
             return false;
         };
-        let Some(mut ir) = result.into_single_doc() else {
+        // Remap is a no-op today (the Prettier Doc path never carries classes),
+        // but the boundary contract is "merge at every embed site".
+        // A Rust HTML formatter collecting `class` attributes will rely on this.
+        result.remap_tailwind_into(f.context_mut());
+        let Some(mut ir) = result.docs.into_iter().next() else {
             return false;
         };
 
@@ -143,8 +143,6 @@ pub(super) fn format_html_doc<'a>(
         return format_js_in_html_as_fallback(joined, &expressions, f);
     };
 
-    // See the Phase 0 note: no-op today, load-bearing once HTML is Rust.
-    result.remap_tailwind_into(f.context_mut());
     let Some(html_has_multiple_root_elements) = result
         .meta
         .as_ref()
@@ -153,7 +151,9 @@ pub(super) fn format_html_doc<'a>(
     else {
         return false;
     };
-    let Some(mut ir) = result.into_single_doc() else {
+    // See the Phase 0 note: remap is no-op today, load-bearing once `oxc_formatter_html` lands
+    result.remap_tailwind_into(f.context_mut());
+    let Some(mut ir) = result.docs.into_iter().next() else {
         return false;
     };
 

@@ -61,7 +61,7 @@ pub(super) fn format_css_doc<'a>(
             return false;
         };
         result.remap_tailwind_into(f.context_mut());
-        let Some(ir) = result.into_single_doc() else {
+        let Some(ir) = result.docs.into_iter().next() else {
             return false;
         };
 
@@ -98,7 +98,7 @@ pub(super) fn format_css_doc<'a>(
         return false;
     };
     result.remap_tailwind_into(f.context_mut());
-    let Some(ir) = result.into_single_doc() else {
+    let Some(ir) = result.docs.into_iter().next() else {
         return false;
     };
 

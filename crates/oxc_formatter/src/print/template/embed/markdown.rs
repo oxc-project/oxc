@@ -40,7 +40,7 @@ pub(super) fn try_embed_markdown<'a>(
     ) else {
         return false;
     };
-    let Some(mut ir) = result.into_single_doc() else {
+    let Some(mut ir) = result.docs.into_iter().next() else {
         return false;
     };
 

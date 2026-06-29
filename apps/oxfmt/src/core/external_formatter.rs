@@ -227,11 +227,42 @@ impl ExternalFormatter {
     /// Convert this external formatter to the `oxc_formatter::ExternalCallbacks` type.
     /// The options (including `filepath`) are captured in the closures and passed to JS on each call.
     ///
-    /// `graphql_options` / `css_options` are dual mappings of the same resolved
-    /// config for the dispatcher's Rust branches (gql-in-js / css-in-js).
+    /// `graphql_options` / `css_options` are dual mappings of the same resolved config
+    /// for the dispatcher's Rust branches (gql-in-js / css-in-js).
     ///
-    /// Actual closure assembly lives in `core::embed::{string_channel, dispatcher}`;
+    /// Actual closure assembly lives in `core::embed::{string_channel, ir_channel}`;
     /// this method just bridges the napi-held callback `Arc`s into those factories.
+    ///
+    /// NOTE: Tailwind data paths
+    /// `sort_tailwindcss_classes` is wired into THREE distinct callback slots,
+    /// because Tailwind class sorting has four legitimate paths depending on
+    /// where the classes live and how they reach printing:
+    ///
+    /// 1. Standalone JS/TS (`className` / functions / custom attributes):
+    ///    `oxc_formatter` collects classes into `FormatElement::TailwindClass`.
+    ///    When the entry document is finalized,
+    ///    the printer sorts them in one host batch via the `tailwind_callback` set by `with_tailwind` below.
+    /// 2. Standalone CSS / SCSS / LESS (`@apply` at top level):
+    ///    `oxc_formatter_css::format()` receives the sort closure directly
+    ///    (via `CssFormatOptions::sort_tailwindcss` + the host sorter on the CSS format context)
+    ///    and sorts as it prints, no embedded boundary is involved.
+    /// 3. Embedded CSS (css-in-js + Angular `@Component({ styles })`):
+    ///    `oxc_formatter_css::format_to_ir()` returns pre-sort `@apply` classes
+    ///    in `DispatchResult::tailwind_classes`.
+    ///    The JS parent re-indexes them into its own collector (`remap_tailwind_into`)
+    ///    so they ride the SAME parent batch as path 1.
+    ///    The standalone CSS sort closure is NOT invoked here.
+    /// 4. JSDoc fenced CSS (Markdown code fence in JSDoc descriptions):
+    ///    Goes through the string channel,
+    ///    `format_embedded()` returns a formatted string (not parent-integrated IR),
+    ///    so the sort must run inside that call, not via `DispatchResult` remapping.
+    ///    The `string_channel::build_embedded_callback` factory receives the sorter for this case.
+    ///
+    /// All four paths use the SAME `sort_tailwindcss_classes` napi callback;
+    /// only the wiring differs.
+    /// Moving sorting to the wrong layer (e.g. sorting inside embedded CSS instead of remapping)
+    /// would double-sort or drop classes.
+    /// `DispatchResult::remap_tailwind_into`'s printer `debug_assert` catches dropped remaps.
     pub fn to_external_callbacks(
         &self,
         format_options: &JsFormatOptions,
