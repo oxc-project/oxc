@@ -177,6 +177,18 @@ const categories: Category[] = [
     ],
     notes: {},
   },
+  {
+    name: "graphql",
+    sources: [
+      {
+        dir: join(EXTERNALS_DIR, "gitlab"),
+        ext: ".graphql",
+        excludes: [],
+      },
+    ],
+    optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
+    notes: {},
+  },
 ];
 
 // ---

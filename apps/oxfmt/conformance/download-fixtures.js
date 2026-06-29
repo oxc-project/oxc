@@ -32,6 +32,11 @@ const sources = [
     repo: "sveltejs/prettier-plugin-svelte/test/formatting/samples",
     version: `prettier-plugin-svelte@${pkg.dependencies["prettier-plugin-svelte"]}`,
   },
+  {
+    name: "gitlab",
+    repo: "gitlabhq/gitlabhq/app/assets",
+    version: "v16.9.0",
+  },
 ];
 
 await Promise.all(

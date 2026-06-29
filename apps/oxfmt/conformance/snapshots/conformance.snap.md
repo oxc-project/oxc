@@ -137,3 +137,17 @@
 ```json
 {"printWidth":120,"singleQuote":true,"htmlWhitespaceSensitivity":"ignore","bracketSameLine":true,"svelteIndentScriptAndStyle":true,"svelteSortOrder":"options-scripts-styles-markup","svelte":{"indentScriptAndStyle":true,"sortOrder":"options-scripts-styles-markup"}}
 ```
+
+## graphql
+
+### Option 1: 712/712 (100.00%)
+
+```json
+{"printWidth":80}
+```
+
+### Option 2: 712/712 (100.00%)
+
+```json
+{"printWidth":100}
+```
