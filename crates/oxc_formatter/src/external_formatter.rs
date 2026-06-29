@@ -10,23 +10,15 @@ use super::formatter::UniqueGroupIdBuilder;
 pub type EmbeddedFormatterCallback =
     Arc<dyn Fn(&str, &str) -> Result<String, String> + Send + Sync>;
 
-/// Child→parent metadata for CSS formatted as an embedded child.
-///
-/// NOTE: Belongs to the CSS formatter crate once it exists
-/// (see `refactor-oxfmt-architecture.md`); lives here until then because
-/// both the producer (oxfmt's dispatcher) and the consumer (`embed/css.rs`)
-/// can reach this crate.
-pub struct CssEmbedMeta {
-    /// How many `@prettier-placeholder-N-id` patterns survived formatting.
-    pub placeholder_count: usize,
-}
-
 /// Child→parent metadata for HTML/Angular formatted as an embedded child.
 ///
-/// NOTE: Belongs to the HTML formatter crate once it exists (same as [`CssEmbedMeta`]).
+/// NOTE: This lives here permanently, NOT in a future HTML formatter crate:
+/// the consumer is this crate's `embed/html.rs` (the JS side of html-in-js),
+/// and `oxc_formatter` must never depend on language crates. Cross-language
+/// contract fields (placeholder counts, Tailwind classes) are first-class on
+/// `DispatchResult` in `oxc_formatter_core` instead; only what is truly
+/// specific to the JS↔HTML pair stays here as `dyn Any` metadata.
 pub struct HtmlEmbedMeta {
-    /// How many `PRETTIER_HTML_PLACEHOLDER_N_0_IN_JS` patterns survived formatting.
-    pub placeholder_count: usize,
     /// Whether the parsed HTML has more than one root element.
     /// Used to decide whether to `indent` the template content.
     pub has_multiple_root_elements: Option<bool>,

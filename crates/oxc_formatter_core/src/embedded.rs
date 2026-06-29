@@ -7,8 +7,10 @@
 //! mapping a language name to a formatter implementation (or a fallback).
 //!
 //! Core only carries the shared plumbing (arena, group-id space, recursion
-//! handle) plus `dyn Any` passthroughs for language-pair specific data;
-//! it knows nothing about any concrete language.
+//! handle) and the cross-language contract fields ([`DispatchResult`]'s
+//! `tailwind_classes` / `placeholder_count`); anything truly language-pair
+//! specific crosses as a `dyn Any` passthrough. Core knows nothing about any
+//! concrete language.
 
 use std::any::Any;
 use std::sync::Arc;
@@ -55,6 +57,21 @@ pub type FormatDispatcher = Arc<
         + Sync,
 >;
 
+/// IR built by a language crate's embedded entry point (`format_to_ir`) for
+/// ONE input text. The orchestrator's dispatcher assembles one or more of
+/// these into a [`DispatchResult`].
+///
+/// Every language crate's `format_to_ir` returns this shape, so a new child
+/// language only has to fill in the fields (no per-crate tuple conventions).
+pub struct EmbeddedIr<'a> {
+    /// The formatter IR, arena-allocated alongside its elements.
+    pub ir: ArenaVec<'a, FormatElement<'a>>,
+    /// Pre-sort Tailwind classes referenced by the IR's
+    /// `FormatElement::TailwindClass` indices (0-based, local to this IR).
+    /// Empty unless the language collects classes (e.g. CSS `@apply`).
+    pub tailwind_classes: Vec<String>,
+}
+
 /// Result of a [`FormatDispatcher`] call.
 pub struct DispatchResult<'a> {
     /// One IR per input text (usually one; GraphQL returns one per quasi).
@@ -65,8 +82,13 @@ pub struct DispatchResult<'a> {
     /// The receiving parent MUST merge them into its own class space via
     /// [`Self::remap_tailwind_into`] — the printer asserts on dangling indices.
     pub tailwind_classes: Vec<String>,
+    /// How many host-substituted placeholder markers (standing in for `${}`
+    /// interpolations) survived formatting. The parent compares this against
+    /// its expression count to decide whether it can splice them back in.
+    /// `None` when the language pair doesn't use placeholders.
+    pub placeholder_count: Option<usize>,
     /// Child→parent language-specific metadata; the parent downcasts it
-    /// (e.g. placeholder survival counts for CSS/HTML).
+    /// (e.g. HTML's `has_multiple_root_elements`).
     pub meta: Option<Box<dyn Any>>,
 }
 

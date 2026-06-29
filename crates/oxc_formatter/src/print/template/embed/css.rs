@@ -4,7 +4,6 @@ use oxc_span::GetSpan;
 
 use crate::{
     ast_nodes::AstNode,
-    external_formatter::CssEmbedMeta,
     format_args,
     formatter::{FormatElement, prelude::*},
     write,
@@ -84,12 +83,7 @@ pub(super) fn format_css_doc<'a>(
     ) else {
         return false;
     };
-    let Some(placeholder_count) = result
-        .meta
-        .as_ref()
-        .and_then(|meta| meta.downcast_ref::<CssEmbedMeta>())
-        .map(|meta| meta.placeholder_count)
-    else {
+    let Some(placeholder_count) = result.placeholder_count else {
         return false;
     };
 

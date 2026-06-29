@@ -1,7 +1,7 @@
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter_core::{
-    Buffer, Document, EmbeddedContext, Format, FormatElement, FormatState, Formatted, VecBuffer,
+    Buffer, Document, EmbeddedContext, EmbeddedIr, Format, FormatState, Formatted, VecBuffer,
     builders::{empty_line, hard_line_break, text},
     write,
 };
@@ -72,11 +72,11 @@ pub fn format<'a>(
 /// - emits neither a BOM nor the trailing newline
 /// - skips `propagate_expand()`, which the parent runs on the merged document
 ///
-/// Also returns the pre-sort `@apply` Tailwind classes the IR's
-/// `TailwindClass(index)` elements refer to (empty unless
+/// The returned [`EmbeddedIr`] also carries the pre-sort `@apply` Tailwind
+/// classes the IR's `TailwindClass(index)` elements refer to (empty unless
 /// [`CssFormatOptions::sort_tailwindcss`] is on). The parent document owns
 /// the batch sort, so the caller must re-index the elements into the parent's
-/// class space (e.g. `oxc_formatter`'s CSS embed via `CssEmbedMeta`).
+/// class space (`DispatchResult::remap_tailwind_into`).
 ///
 /// # Errors
 /// Same as [`format()`].
@@ -84,7 +84,7 @@ pub fn format_to_ir<'a>(
     ctx: &EmbeddedContext<'a, '_>,
     source_text: &str,
     options: CssFormatOptions,
-) -> Result<(ArenaVec<'a, FormatElement<'a>>, Vec<String>), OxcDiagnostic> {
+) -> Result<EmbeddedIr<'a>, OxcDiagnostic> {
     let allocator = ctx.allocator;
     // The dispatcher input substitutes `${}` interpolations with
     // `@prettier-placeholder-N-id` markers, which may sit in value or
@@ -102,7 +102,7 @@ pub fn format_to_ir<'a>(
     let elements = buffer.into_vec();
     let tailwind_classes = state.context_mut().take_tailwind_classes();
 
-    Ok((elements, tailwind_classes))
+    Ok(EmbeddedIr { ir: elements, tailwind_classes })
 }
 
 /// Parse the source into an AST and collect comments, bailing out on any error.

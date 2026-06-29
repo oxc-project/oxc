@@ -140,11 +140,14 @@ pub(super) fn format_html_doc<'a>(
     };
     // See the Phase 0 note: no-op today, load-bearing once HTML is Rust.
     result.remap_tailwind_into(f.context_mut());
-    let Some((placeholder_count, html_has_multiple_root_elements)) = result
+    let Some(placeholder_count) = result.placeholder_count else {
+        return false;
+    };
+    let Some(html_has_multiple_root_elements) = result
         .meta
         .as_ref()
         .and_then(|meta| meta.downcast_ref::<HtmlEmbedMeta>())
-        .map(|meta| (meta.placeholder_count, meta.has_multiple_root_elements))
+        .map(|meta| meta.has_multiple_root_elements)
     else {
         return false;
     };

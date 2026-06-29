@@ -21,7 +21,7 @@ const NEGATIVE_INFINITY_MARKER: &str = "__NEGATIVE_INFINITY__";
 /// Handles language-specific processing:
 /// - GraphQL: converts each doc independently → one IR per doc
 /// - HTML: merges consecutive Text nodes, counts placeholders →
-///   single IR + [`HtmlEmbedMeta`]
+///   single IR + placeholder count + [`HtmlEmbedMeta`]
 ///
 /// All Doc JSONs use a uniform `[doc, metadata]` envelope from the JS side.
 pub fn to_format_elements_for_template<'a>(
@@ -68,7 +68,12 @@ pub fn to_format_elements_for_template<'a>(
                     Ok(ir)
                 })
                 .collect::<Result<Vec<_>, String>>()?;
-            Ok(DispatchResult { docs: irs, tailwind_classes: Vec::new(), meta: None })
+            Ok(DispatchResult {
+                docs: irs,
+                tailwind_classes: Vec::new(),
+                placeholder_count: None,
+                meta: None,
+            })
         }
         // NOTE: no "css" arm — css/scss/less never reach the Prettier Doc
         // path since plan Step 5-3 (the dispatcher branch is Rust-only).
@@ -90,8 +95,8 @@ pub fn to_format_elements_for_template<'a>(
             Ok(DispatchResult {
                 docs: vec![ir],
                 tailwind_classes: Vec::new(),
+                placeholder_count: Some(placeholder_count),
                 meta: Some(Box::new(HtmlEmbedMeta {
-                    placeholder_count,
                     has_multiple_root_elements: html_has_multiple_root_elements,
                 })),
             })
@@ -109,7 +114,12 @@ pub fn to_format_elements_for_template<'a>(
                 TemplateEscape::RawBacktick,
                 None,
             );
-            Ok(DispatchResult { docs: vec![ir], tailwind_classes: Vec::new(), meta: None })
+            Ok(DispatchResult {
+                docs: vec![ir],
+                tailwind_classes: Vec::new(),
+                placeholder_count: None,
+                meta: None,
+            })
         }
         _ => unreachable!("Unsupported embedded_doc language: {language}"),
     }

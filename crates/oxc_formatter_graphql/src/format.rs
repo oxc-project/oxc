@@ -2,7 +2,7 @@ use apollo_parser::{Parser, SyntaxKind, cst, cst::CstNode};
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter_core::{
-    Buffer, Document, EmbeddedContext, Format, FormatElement, FormatState, Formatted, VecBuffer,
+    Buffer, Document, EmbeddedContext, EmbeddedIr, Format, FormatState, Formatted, VecBuffer,
     builders::{hard_line_break, text},
     write,
 };
@@ -63,7 +63,7 @@ pub fn format_to_ir<'a>(
     ctx: &EmbeddedContext<'a, '_>,
     source_text: &str,
     options: GraphqlFormatOptions,
-) -> Result<ArenaVec<'a, FormatElement<'a>>, OxcDiagnostic> {
+) -> Result<EmbeddedIr<'a>, OxcDiagnostic> {
     let allocator = ctx.allocator;
     let (document, source, comments) = parse_document(allocator, source_text)?;
 
@@ -73,7 +73,8 @@ pub fn format_to_ir<'a>(
 
     write!(&mut buffer, FormatGraphqlEmbedded { document: &document });
 
-    Ok(buffer.into_vec())
+    // GraphQL never collects Tailwind classes.
+    Ok(EmbeddedIr { ir: buffer.into_vec(), tailwind_classes: Vec::new() })
 }
 
 /// Parse the source into a CST and collect comment trivia,

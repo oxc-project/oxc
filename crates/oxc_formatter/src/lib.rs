@@ -25,7 +25,7 @@ use oxc_span::SourceType;
 // or the special-purpose AST-in `format_program`.
 pub(crate) use crate::ast_nodes::{AstNode, AstNodes};
 pub use crate::external_formatter::{
-    CssEmbedMeta, EmbeddedFormatterCallback, ExternalCallbacks, HtmlEmbedMeta, TailwindCallback,
+    EmbeddedFormatterCallback, ExternalCallbacks, HtmlEmbedMeta, TailwindCallback,
 };
 // `JsFormatContext` is public solely as the type parameter of the `Formatted`
 // returned by `format` / `format_fragment`.

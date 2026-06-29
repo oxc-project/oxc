@@ -28,7 +28,7 @@ and Less `~"..."` wrappers, then emits the class list as one
 `FormatElement::TailwindClass(index)`. Sorting (order, dedup, whitespace
 collapse, `{{` skip) is the host-supplied sorter's job: `format()` takes an
 `Option<TailwindSorter>` and bakes the result into the `Document`;
-`format_to_ir()` returns `(IR, Vec<String>)` and the classes travel to the
+`format_to_ir()` returns an `EmbeddedIr` and its classes travel to the
 parent in `DispatchResult::tailwind_classes`, where the parent merges them
 with `DispatchResult::remap_tailwind_into` (a dangling index trips a printer
 debug_assert). Params containing comments fall back to the normal printers

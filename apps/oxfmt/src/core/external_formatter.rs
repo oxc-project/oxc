@@ -11,10 +11,10 @@ use tracing::{debug, debug_span};
 
 use oxc_allocator::Allocator;
 use oxc_formatter::{
-    CssEmbedMeta, EmbeddedFormatterCallback, ExternalCallbacks, JsFormatOptions, TailwindCallback,
+    EmbeddedFormatterCallback, ExternalCallbacks, JsFormatOptions, TailwindCallback,
 };
 use oxc_formatter_core::{
-    DispatchResult, EmbeddedContext, FormatContext, FormatDispatcher, Formatted,
+    DispatchResult, EmbeddedContext, EmbeddedIr, FormatContext, FormatDispatcher, Formatted,
 };
 use oxc_formatter_css::{CssFormatOptions, CssVariant};
 use oxc_formatter_graphql::GraphqlFormatOptions;
@@ -463,22 +463,22 @@ fn format_graphql_to_irs<'a>(
         .iter()
         .map(|text| {
             debug_span!("oxfmt::external::format_graphql_to_ir").in_scope(|| {
-                let mut ir = oxc_formatter_graphql::format_to_ir(ctx, text, options)
+                let mut embedded = oxc_formatter_graphql::format_to_ir(ctx, text, options)
                     .map_err(|err| err.to_string())?;
                 from_prettier_doc::escape_template_characters_in_ir(
-                    &mut ir,
+                    &mut embedded.ir,
                     ctx.allocator,
                     options.indent_width,
                 );
-                Ok(ir)
+                Ok(embedded.ir)
             })
         })
         .collect::<Result<Vec<_>, String>>()?;
-    Ok(DispatchResult { docs, tailwind_classes: Vec::new(), meta: None })
+    Ok(DispatchResult { docs, tailwind_classes: Vec::new(), placeholder_count: None, meta: None })
 }
 
 /// Format the single joined CSS text (placeholders included) via
-/// `oxc_formatter_css`, returning one IR plus [`CssEmbedMeta`]
+/// `oxc_formatter_css`, returning one IR plus the surviving placeholder count
 /// (the dispatcher contract for CSS, mirroring the Prettier Doc path).
 ///
 /// CSS-in-js uses `.raw` template values, so unlike GraphQL no template-char
@@ -497,7 +497,7 @@ fn format_css_to_irs<'a>(
         return Err(format!("CSS dispatch expects exactly one text, got {}", texts.len()));
     };
     debug_span!("oxfmt::external::format_css_to_ir").in_scope(|| {
-        let (mut ir, tailwind_classes) =
+        let EmbeddedIr { mut ir, tailwind_classes } =
             oxc_formatter_css::format_to_ir(ctx, text, options).map_err(|err| err.to_string())?;
         let placeholder_count = from_prettier_doc::merge_texts_and_count_css_placeholders(
             &mut ir,
@@ -507,7 +507,8 @@ fn format_css_to_irs<'a>(
         Ok(DispatchResult {
             docs: vec![ir],
             tailwind_classes,
-            meta: Some(Box::new(CssEmbedMeta { placeholder_count })),
+            placeholder_count: Some(placeholder_count),
+            meta: None,
         })
     })
 }

@@ -112,9 +112,9 @@ fn format_embedded(source: &str, options: CssFormatOptions) -> String {
         group_id_builder: &group_id_builder,
         dispatcher: None,
     };
-    let elements =
-        oxc_formatter_css::format_to_ir(&ctx, source, options).expect("format should succeed").0;
-    let document = Document::new(elements, Vec::new());
+    let embedded =
+        oxc_formatter_css::format_to_ir(&ctx, source, options).expect("format should succeed");
+    let document = Document::new(embedded.ir, Vec::new());
     document.propagate_expand();
     let (elements, tailwind_classes) = document.into_elements_and_tailwind_classes();
     let mut code =
