@@ -91,6 +91,9 @@ oxc_transformer = { workspace = true, optional = true }
 
 criterion2 = { workspace = true }
 
+# Only for minifier benchmark (property mangling regex)
+lazy-regex = { workspace = true, optional = true }
+
 # Only for lexer benchmark
 cow-utils = { workspace = true, optional = true }
 
@@ -123,6 +126,7 @@ compiler = [
   "dep:oxc_tasks_common",
   "dep:oxc_transformer",
   "dep:cow-utils",
+  "dep:lazy-regex",
 ]
 linter = [
   "dep:oxc_allocator",
@@ -167,4 +171,5 @@ ignored = [
   "serde",
   "serde_json",
   "cow-utils",
+  "lazy-regex",
 ]

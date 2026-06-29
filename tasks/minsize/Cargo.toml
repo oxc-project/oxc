@@ -29,6 +29,7 @@ oxc_transformer_plugins = { workspace = true }
 
 cow-utils = { workspace = true }
 flate2 = { workspace = true }
+lazy-regex = { workspace = true }
 humansize = { workspace = true }
 pico-args = { workspace = true }
 rustc-hash = { workspace = true }

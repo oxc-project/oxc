@@ -1,11 +1,11 @@
            | Oxc        | ESBuild    | Oxc        | ESBuild    |
 Original   | minified   | minified   | gzip       | gzip       | Iterations | File      
 -------------------------------------------------------------------------------------
-72.14 kB   | 23.12 kB   | 23.70 kB   | 8.35 kB    | 8.54 kB    |          2 | react.development.js 
+72.14 kB   | 22.49 kB   | 23.70 kB   | 8.21 kB    | 8.54 kB    |          2 | react.development.js 
 
-173.90 kB  | 59.40 kB   | 59.82 kB   | 19.15 kB   | 19.33 kB   |          2 | moment.js  
+173.90 kB  | 55.58 kB   | 59.82 kB   | 18.80 kB   | 19.33 kB   |          2 | moment.js  
 
-287.63 kB  | 89.25 kB   | 90.07 kB   | 30.91 kB   | 31.95 kB   |          2 | jquery.js  
+287.63 kB  | 89.08 kB   | 90.07 kB   | 30.87 kB   | 31.95 kB   |          2 | jquery.js  
 
 342.15 kB  | 116.97 kB  | 118.14 kB  | 43.18 kB   | 44.37 kB   |          2 | vue.js     
 
@@ -13,9 +13,9 @@ Original   | minified   | minified   | gzip       | gzip       | Iterations | Fi
 
 555.77 kB  | 267.40 kB  | 270.13 kB  | 88.01 kB   | 90.80 kB   |          2 | d3.js      
 
-1.01 MB    | 439.36 kB  | 458.89 kB  | 122.05 kB  | 126.71 kB  |          2 | bundle.min.js 
+1.01 MB    | 436.24 kB  | 458.89 kB  | 121.83 kB  | 126.71 kB  |          2 | bundle.min.js 
 
-1.25 MB    | 642.65 kB  | 646.76 kB  | 159.41 kB  | 163.73 kB  |          2 | three.js   
+1.25 MB    | 634.98 kB  | 646.76 kB  | 158.57 kB  | 163.73 kB  |          2 | three.js   
 
 2.14 MB    | 711.07 kB  | 724.14 kB  | 160.41 kB  | 181.07 kB  |          2 | victory.js 
 
@@ -23,5 +23,5 @@ Original   | minified   | minified   | gzip       | gzip       | Iterations | Fi
 
 6.69 MB    | 2.22 MB    | 2.31 MB    | 458.44 kB  | 488.28 kB  |          4 | antd.js    
 
-10.95 MB   | 3.33 MB    | 3.49 MB    | 853.11 kB  | 915.50 kB  |          4 | typescript.js 
+10.95 MB   | 3.32 MB    | 3.49 MB    | 851.44 kB  | 915.50 kB  |          4 | typescript.js 
 
