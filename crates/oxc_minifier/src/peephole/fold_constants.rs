@@ -474,11 +474,15 @@ impl<'a> PeepholeOptimizations {
                 left.span = left.span.merge_within(right_expr.span(), parent_span).unwrap_or(SPAN);
                 let last_quasi =
                     left.quasis.last_mut().expect("template literal must have at least one quasi");
-                let new_raw = last_quasi.value.raw.to_string()
-                    + &Self::escape_string_for_template_literal(&right_str);
-                last_quasi.value.raw = Str::from_str_in(&new_raw, ctx);
+                last_quasi.value.raw = Str::from_strs_array_in(
+                    [
+                        last_quasi.value.raw.as_str(),
+                        Self::escape_string_for_template_literal(&right_str).as_ref(),
+                    ],
+                    ctx,
+                );
                 let new_cooked = last_quasi.value.cooked.map(|cooked| {
-                    Str::from_str_in(&(cooked.as_str().to_string() + &right_str), ctx)
+                    Str::from_strs_array_in([cooked.as_str(), right_str.as_ref()], ctx)
                 });
                 last_quasi.value.cooked = new_cooked;
                 return Some(left_expr.take_in(ctx));
@@ -491,11 +495,15 @@ impl<'a> PeepholeOptimizations {
                     .quasis
                     .first_mut()
                     .expect("template literal must have at least one quasi");
-                let new_raw = Self::escape_string_for_template_literal(&left_str).into_owned()
-                    + first_quasi.value.raw.as_str();
-                first_quasi.value.raw = Str::from_str_in(&new_raw, ctx);
+                first_quasi.value.raw = Str::from_strs_array_in(
+                    [
+                        Self::escape_string_for_template_literal(&left_str).as_ref(),
+                        first_quasi.value.raw.as_str(),
+                    ],
+                    ctx,
+                );
                 let new_cooked = first_quasi.value.cooked.map(|cooked| {
-                    Str::from_str_in(&(left_str.into_owned() + cooked.as_str()), ctx)
+                    Str::from_strs_array_in([left_str.as_ref(), cooked.as_str()], ctx)
                 });
                 first_quasi.value.cooked = new_cooked;
                 return Some(right_expr.take_in(ctx));
