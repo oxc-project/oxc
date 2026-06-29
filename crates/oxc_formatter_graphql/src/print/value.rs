@@ -127,8 +127,14 @@ fn write_block_string(body: &str, f: &mut GraphqlFormatter<'_, '_>) {
 
     // Prettier: re-escape, then `lines.length === 1` → trim,
     // all-blank → drop everything.
-    let mut lines: Vec<String> =
-        cooked_lines.iter().map(|l| l.cow_replace("\"\"\"", "\\\"\"\"").into_owned()).collect();
+    // Trailing spaces/tabs are trimmed per line: Prettier's doc printer trims
+    // them at every hardline. The core printer does the same, but a line
+    // followed by a blank-line run gets its break from raw `\n` text (see
+    // `write_block_string_break`), which bypasses that trim — so trim here.
+    let mut lines: Vec<String> = cooked_lines
+        .iter()
+        .map(|l| l.trim_end_matches([' ', '\t']).cow_replace("\"\"\"", "\\\"\"\"").into_owned())
+        .collect();
     if lines.len() == 1 {
         lines[0] = lines[0].trim().to_string();
     }
