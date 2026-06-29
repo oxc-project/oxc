@@ -43,6 +43,8 @@ fn test_function_return_optimization() {
     test("function f(){if(a()){b();return;}else;}", "function f(){a() && b();}");
     test("function f(){if(a()){return;}else{return;} b();}", "function f(){ a();}");
     test("function f(){a:{return;}}", "function f(){}");
+    test("function f(){return\n1;}", "function f(){}");
+    test("function test(){return\na+b}", "function test(){}");
     test(
         "function f(){ if (x) return; if (y) return; if (z) return; w(); }",
         "function f() { x || y || z || w(); }",
