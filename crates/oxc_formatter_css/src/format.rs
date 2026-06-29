@@ -1,3 +1,5 @@
+use raffia::{ParserBuilder, ParserOptions, ast::Stylesheet};
+
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter_core::{
@@ -6,7 +8,6 @@ use oxc_formatter_core::{
     write,
 };
 use oxc_span::Span;
-use raffia::{ParserBuilder, ast::Stylesheet};
 
 use crate::{
     comments::CssComment,
@@ -17,6 +18,9 @@ use crate::{
 
 /// Host-supplied batch sorter for `@apply` Tailwind classes
 /// (one pre-sort string in, one sorted string out, index-aligned).
+///
+/// The sorter owns: ordering, dedup, whitespace collapse,
+/// and skipping `{{...}}` template interpolations (Vue/Angular templates).
 pub type TailwindSorter<'s> = &'s dyn Fn(Vec<String>) -> Vec<String>;
 
 /// Parse `source_text` as a stylesheet and build its formatter IR.
@@ -26,11 +30,9 @@ pub type TailwindSorter<'s> = &'s dyn Fn(Vec<String>) -> Vec<String>;
 /// prints them as-is.
 ///
 /// # Errors
-/// Returns an [`OxcDiagnostic`] when the parse produces any error, including
-/// recoverable ones. raffia can recover from some syntax errors, but a tree
-/// with errors cannot be formatted faithfully, so a single error is enough to
-/// bail out. The caller (oxfmt) decides what to do next
-/// (report, or fall back to Prettier).
+/// Returns an [`OxcDiagnostic`] when the parse produces any error, including recoverable ones.
+/// `raffia` can recover from some syntax errors, but a tree with errors cannot be formatted faithfully,
+/// so a single error is enough to bail out.
 pub fn format<'a>(
     allocator: &'a Allocator,
     source_text: &str,
@@ -38,6 +40,7 @@ pub fn format<'a>(
     sort_tailwind_classes: Option<TailwindSorter<'_>>,
 ) -> Result<Formatted<'a, CssFormatContext<'a>>, OxcDiagnostic> {
     let has_bom = source_text.starts_with('\u{feff}');
+
     let (stylesheet, source, comments) =
         parse_stylesheet(allocator, source_text, options, /* tolerate_placeholders */ false)?;
     let front_matter = front_matter_end(source).map(|end| &source[..end]);
@@ -45,6 +48,7 @@ pub fn format<'a>(
     let context =
         CssFormatContext::new(options, source, comments, /* template_placeholders */ false);
     let mut state = FormatState::new(context, allocator);
+    // TODO: Use `with_capacity` for perf, like `oxc_formatter` does
     let mut buffer = VecBuffer::new(&mut state);
 
     write!(&mut buffer, FormatCssRoot { stylesheet: &stylesheet, has_bom, front_matter });
@@ -74,9 +78,10 @@ pub fn format<'a>(
 ///
 /// The returned [`EmbeddedIr`] also carries the pre-sort `@apply` Tailwind
 /// classes the IR's `TailwindClass(index)` elements refer to (empty unless
-/// [`CssFormatOptions::sort_tailwindcss`] is on). The parent document owns
-/// the batch sort, so the caller must re-index the elements into the parent's
-/// class space (`DispatchResult::remap_tailwind_into`).
+/// [`CssFormatOptions::sort_tailwindcss`] is on).
+/// The parent document owns the batch sort,
+/// so the caller must re-index the elements into the parent's class space
+/// (`DispatchResult::remap_tailwind_into`).
 ///
 /// # Errors
 /// Same as [`format()`].
@@ -86,14 +91,22 @@ pub fn format_to_ir<'a>(
     options: CssFormatOptions,
 ) -> Result<EmbeddedIr<'a>, OxcDiagnostic> {
     let allocator = ctx.allocator;
-    // The dispatcher input substitutes `${}` interpolations with
-    // `@prettier-placeholder-N-id` markers, which may sit in value or
-    // selector position — tolerate them (raffia fork option).
-    let (stylesheet, source, comments) =
-        parse_stylesheet(allocator, source_text, options, /* tolerate_placeholders */ true)?;
+    // css-in-js: The dispatcher input substitutes `${}` interpolations
+    // with `@prettier-placeholder-N-id` markers, which may sit in value or selector position.
+    let allow_placeholders = true;
+    let (stylesheet, source, comments) = parse_stylesheet(
+        allocator,
+        source_text,
+        options,
+        /* tolerate_placeholders */ allow_placeholders,
+    )?;
 
-    let context =
-        CssFormatContext::new(options, source, comments, /* template_placeholders */ true);
+    let context = CssFormatContext::new(
+        options,
+        source,
+        comments,
+        /* template_placeholders */ allow_placeholders,
+    );
     let mut state = FormatState::new(context, allocator);
     let mut buffer = VecBuffer::new(&mut state);
 
@@ -107,8 +120,8 @@ pub fn format_to_ir<'a>(
 
 /// Parse the source into an AST and collect comments, bailing out on any error.
 ///
-/// Copies the source into the arena (minus any BOM, which raffia would skip
-/// anyway) so every slice taken from it carries `'a`.
+/// Copies the source into the arena (minus any BOM, which `raffia` would skip anyway)
+/// so every slice taken from it carries `'a`.
 fn parse_stylesheet<'a>(
     allocator: &'a Allocator,
     source_text: &str,
@@ -116,16 +129,17 @@ fn parse_stylesheet<'a>(
     tolerate_placeholders: bool,
 ) -> Result<(Stylesheet<'a>, &'a str, &'a [CssComment]), OxcDiagnostic> {
     let source_text = source_text.strip_prefix('\u{feff}').unwrap_or(source_text);
-    // Normalize `\r\n` / lone `\r` to `\n` BEFORE parsing (like Prettier's
-    // endOfLine pre-pass): the printer slices verbatim text from the source
-    // in many places (comments, progid, custom properties, ...) and a raw
-    // `\r` reaching the core `text()` builder panics. Spans stay consistent
-    // because parse and print both use the normalized copy.
+    // NOTE: Normalize line endings BEFORE parsing like Prettier, unlike other `oxc_formatter_xxx`.
+    // For CSS formatter, the printer slices verbatim text from the source in many places.
+    // (comments, progid, custom properties, ...etc)
+    // And a raw `\r` reaching the core `text()` builder panics.
+    // Spans stay consistent because parse and print both use the normalized copy.
     let source_text = oxc_formatter_core::normalize_newlines(source_text, ['\r']);
     let source: &'a str = allocator.alloc_str(&source_text);
 
-    // Front matter is not CSS: blank it out (preserving line structure so
-    // spans and gaps stay aligned) and print it verbatim from `source`.
+    // Front matter is not CSS:
+    // blank it out (preserving line structure so spans and gaps stay aligned)
+    // and print it verbatim from `source`.
     let parse_source: &'a str = match front_matter_end(source) {
         Some(end) => {
             let mut blanked = String::with_capacity(source.len());
@@ -141,17 +155,17 @@ fn parse_stylesheet<'a>(
     let mut comments = vec![];
     let mut parser = ParserBuilder::new(parse_source)
         .syntax(options.variant.to_raffia())
-        .options(raffia::ParserOptions {
+        .options(ParserOptions {
             tolerate_at_keyword_placeholders: tolerate_placeholders,
-            ..raffia::ParserOptions::default()
+            ..ParserOptions::default()
         })
         .comments(&mut comments)
         .build();
 
     let stylesheet = parser.parse::<Stylesheet>().map_err(|error| to_diagnostic(&error))?;
-    // Top-level declarations are recoverable AND accepted by Prettier (postcss
-    // prints them as-is) — the dominant css-in-js shape (`css`display: flex;``),
-    // so they must not bail out. Everything else recoverable still does.
+    // Top-level declarations are recoverable AND accepted by Prettier. (postcss prints them as-is)
+    // The dominant css-in-js shape (`` css`display: flex;` ``), so they must not bail out.
+    // Everything else recoverable still does.
     if let Some(error) = parser
         .recoverable_errors()
         .iter()
@@ -211,10 +225,10 @@ fn front_matter_end(source: &str) -> Option<usize> {
     None
 }
 
-/// Best-effort YAML front-matter normalization (Prettier reformats it with
-/// its YAML printer): `key: value` spacing and 2-space nesting indents.
-/// Returns `None` (→ verbatim) for any construct beyond plain mappings,
-/// sequence items and comments — e.g. block scalars, quoted keys.
+/// Best-effort YAML front-matter normalization (Prettier reformats it with its YAML printer):
+/// `key: value` spacing and 2-space nesting indents.
+/// Returns `None` (verbatim) for any construct beyond plain mappings,
+/// sequence items and comments, e.g. block scalars, quoted keys.
 fn try_format_yaml_front_matter(front_matter: &str) -> Option<String> {
     let inner = front_matter.strip_prefix("---")?.strip_suffix("---")?;
     let mut out = String::with_capacity(front_matter.len());

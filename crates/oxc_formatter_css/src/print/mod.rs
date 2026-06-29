@@ -1,15 +1,14 @@
-use oxc_formatter_core::{
-    Buffer, Format, Formatter,
-    builders::{FormatWith, empty_line, hard_line_break},
-    write,
-};
+use cow_utils::CowUtils;
 use raffia::ast::Stylesheet;
 
+use oxc_formatter_core::{
+    Buffer, Format, Formatter, arena_cow_str,
+    builders::{FormatWith, text, token},
+    write,
+};
+
 use crate::{
-    comments::{
-        Gap, classify_gap, flush_leading_comments, write_leading_comments,
-        write_trailing_same_line_comment,
-    },
+    comments::{write_gap, write_leading_comments},
     context::CssFormatContext,
 };
 
@@ -29,7 +28,7 @@ pub type CssFormatter<'buf, 'a> = Formatter<'buf, 'a, CssFormatContext<'a>>;
 impl<'a> Format<'a, CssFormatContext<'a>> for &'static str {
     #[inline]
     fn fmt(&self, f: &mut CssFormatter<'_, 'a>) {
-        write!(f, oxc_formatter_core::builders::token(self));
+        write!(f, token(self));
     }
 }
 
@@ -43,12 +42,44 @@ where
     FormatWith::new(formatter)
 }
 
+/// Collapses any whitespace run in `raw` to a single space.
+pub fn normalize_whitespace(raw: &str) -> String {
+    let mut out = String::with_capacity(raw.len());
+    let mut iter = raw.split_whitespace();
+    if let Some(first) = iter.next() {
+        out.push_str(first);
+        for word in iter {
+            out.push(' ');
+            out.push_str(word);
+        }
+    }
+    out
+}
+
+/// Mirrors Prettier's `maybeToLowerCase`.
+/// Lowercase unless the identifier contains variable/interpolation markers.
+pub fn write_maybe_lowercase<'a>(value: &'a str, f: &mut CssFormatter<'_, 'a>) {
+    if value.contains('$')
+        || value.contains('@')
+        || value.contains('#')
+        || value.starts_with('%')
+        || value.starts_with("--")
+        || value.starts_with(":--")
+        || (value.contains('(') && value.contains(')'))
+    {
+        write!(f, text(value));
+        return;
+    }
+    let lower = value.cow_to_ascii_lowercase();
+    write!(f, text(arena_cow_str(&lower, f)));
+}
+
 /// Emits the whole stylesheet: top-level statements separated by hard lines
 /// (blank lines preserved, max one), then any trailing comments.
 ///
 /// Mirrors Prettier's `css-root` + `printSequence`.
 pub fn write_stylesheet<'a>(stylesheet: &Stylesheet<'a>, f: &mut CssFormatter<'_, 'a>) {
-    write_statement_sequence(&stylesheet.statements, f);
+    statement::write_statement_sequence_bounded(&stylesheet.statements, u32::MAX, f);
 
     // Comments after the last statement (or in an otherwise empty file).
     let remaining = f.context().comments().take_remaining();
@@ -56,90 +87,9 @@ pub fn write_stylesheet<'a>(stylesheet: &Stylesheet<'a>, f: &mut CssFormatter<'_
         if !stylesheet.statements.is_empty() {
             let source = f.context().source_text();
             let prev_end = stylesheet.statements.last().map_or(0, |s| statement::stmt_end(s, f));
-            match classify_gap(source.bytes_range(prev_end, remaining[0].span.start)) {
-                Gap::None => write!(f, oxc_formatter_core::builders::space()),
-                Gap::Line => write!(f, hard_line_break()),
-                Gap::Blank => write!(f, empty_line()),
-            }
+            write_gap(source.bytes_range(prev_end, remaining[0].span.start), f);
         }
         let last_end = remaining.last().unwrap().span.end;
         write_leading_comments(remaining, last_end, f);
-    }
-}
-
-/// Emits `statements` separated by hard lines, preserving at most one blank line
-/// between consecutive statements, flushing comments at their source positions.
-///
-/// Mirrors Prettier's `printSequence`.
-pub fn write_statement_sequence<'a>(
-    statements: &[raffia::ast::Statement<'a>],
-    f: &mut CssFormatter<'_, 'a>,
-) {
-    write_statement_sequence_bounded(statements, u32::MAX, f);
-}
-
-/// Like [`write_statement_sequence`], but trailing same-line comments are
-/// only claimed when they end before `upper` (a block's closing `}`),
-/// so inline rules don't steal comments that belong to the parent.
-pub fn write_statement_sequence_bounded<'a>(
-    statements: &[raffia::ast::Statement<'a>],
-    upper: u32,
-    f: &mut CssFormatter<'_, 'a>,
-) {
-    let source = f.context().source_text();
-    for (i, stmt) in statements.iter().enumerate() {
-        let start = statement::stmt_start(stmt);
-        if i > 0 {
-            let prev_end = statement::stmt_end(&statements[i - 1], f);
-            // Trailing comment on the same line as the previous statement
-            // (but not one that sits after the NEXT statement on that line).
-            write_trailing_same_line_comment(prev_end, upper.min(start), f);
-            write!(f, hard_line_break());
-            // Preserve a single blank line. The gap considered is from the end of
-            // the previous statement to the next printed position (comment or stmt).
-            let next_start =
-                f.context().comments().peek().map_or(start, |c| c.span.start.min(start));
-            if classify_gap(source.bytes_range(prev_end, next_start)) == Gap::Blank {
-                write!(f, empty_line());
-            }
-        }
-        // `prettier-ignore` / `oxfmt-ignore`: print the statement verbatim.
-        let suppressed = f
-            .context()
-            .comments()
-            .iter_before(start)
-            .last()
-            .is_some_and(|c| crate::comments::is_suppression_comment(source, c));
-        flush_leading_comments(start, f);
-        if suppressed {
-            let end = statement::stmt_end(stmt, f);
-            // Prettier quirk: an ignored `;`-less at-rule left unclosed at EOF
-            // has no `source.end` in postcss, so `printIgnored` slices an
-            // empty string and the statement VANISHES. We reproduce this for
-            // placeholder at-rules only — there it is load-bearing (the
-            // placeholder count mismatch makes the css-in-js embed fall back
-            // to plain template printing, like Prettier) — but not for real
-            // code, where silently deleting an ignored statement is a bug.
-            let placeholder_vanishes =
-                matches!(
-                    stmt,
-                    raffia::ast::Statement::AtRule(at_rule)
-                        if at_rule.block.is_none()
-                            && at_rule.name.raw.starts_with("prettier-placeholder")
-                ) && !source.slice_range(start, end).trim_end().ends_with(';')
-                    && source[end as usize..].trim().is_empty();
-            if !placeholder_vanishes {
-                write!(f, oxc_formatter_core::builders::text(source.slice_range(start, end)));
-            }
-        } else {
-            statement::write_statement(stmt, f);
-        }
-        // Discard comments inside spans the statement printer didn't claim
-        // (e.g. inside selectors/values that are still printed verbatim),
-        // so the cursor never points before an already-printed position.
-        let _ = f.context().comments().take_before(statement::stmt_end(stmt, f));
-    }
-    if let Some(last) = statements.last() {
-        write_trailing_same_line_comment(statement::stmt_end(last, f), upper, f);
     }
 }

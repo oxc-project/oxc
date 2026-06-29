@@ -1,33 +1,50 @@
-//! Selector printing. Ports Prettier's `selector-*` cases (postcss-selector-parser)
-//! onto raffia's structured selector AST.
+//! Selector printing.
+//! Ports Prettier's `selector-*` cases (postcss-selector-parser) onto raffia's structured selector AST.
 
 use std::borrow::Cow;
 
 use cow_utils::CowUtils;
-use oxc_formatter_core::{
-    Buffer,
-    builders::{group, hard_line_break, indent, soft_line_break, soft_line_break_or_space, text},
-    write,
-};
 use raffia::{
     Spanned,
     ast::{
         AttributeSelector, AttributeSelectorMatcherKind, AttributeSelectorValue, Combinator,
         CombinatorKind, ComplexSelector, ComplexSelectorChild, CompoundSelector, InterpolableIdent,
-        NsPrefixKind, Nth, NthIndex, PseudoClassSelector, PseudoClassSelectorArgKind,
-        PseudoElementSelector, PseudoElementSelectorArgKind, SelectorList, SimpleSelector,
-        TypeSelector, WqName,
+        InterpolableStr, KeyframeSelector, NsPrefixKind, Nth, NthIndex, PseudoClassSelector,
+        PseudoClassSelectorArgKind, PseudoElementSelector, PseudoElementSelectorArgKind,
+        SelectorList, SimpleSelector, TypeSelector, WqName,
     },
 };
 
-use crate::{
-    format::to_span,
-    print::{CssFormatter, format_with, statement::write_maybe_lowercase},
+use oxc_formatter_core::{
+    Buffer, arena_cow_str,
+    builders::{group, hard_line_break, indent, soft_line_break, soft_line_break_or_space, text},
+    write,
 };
+
+use crate::{
+    TEMPLATE_PLACEHOLDER_PREFIX, comments,
+    format::to_span,
+    print::{CssFormatter, format_with, normalize_whitespace, value, write_maybe_lowercase},
+};
+
+/// Detects an ICSS rule (`:import { ... }` / `:export { ... }`)
+/// by walking the first selector's leading pseudo-class instead of scanning raw source,
+/// so leading whitespace or `:Import` casing don't fool the check.
+pub(super) fn is_icss_selector(list: &SelectorList<'_>) -> bool {
+    let Some(first) = list.selectors.first() else { return false };
+    let Some(ComplexSelectorChild::CompoundSelector(compound)) = first.children.first() else {
+        return false;
+    };
+    let Some(SimpleSelector::PseudoClass(pseudo)) = compound.children.first() else {
+        return false;
+    };
+    let InterpolableIdent::Literal(ident) = &pseudo.name else { return false };
+    matches!(ident.name.as_ref(), "import" | "export")
+}
 
 /// How a selector list separates its selectors.
 #[derive(Clone, Copy, PartialEq, Eq)]
-pub enum SelectorListStyle {
+pub(super) enum SelectorListStyle {
     /// `,` + hardline (rule selectors at any nesting level).
     Hard,
     /// `,` + line (inside `@extend`, `@custom-selector`, `@nest`, pseudo args).
@@ -35,25 +52,25 @@ pub enum SelectorListStyle {
 }
 
 /// Mirrors Prettier's `selector-root`.
-pub fn write_selector_list<'a>(
+pub(super) fn write_selector_list<'a>(
     list: &SelectorList<'a>,
     style: SelectorListStyle,
     f: &mut CssFormatter<'_, 'a>,
 ) {
-    // css-in-js `${}` placeholders (raffia fork's
-    // `tolerate_at_keyword_placeholders`): postcss-selector-parser degrades
-    // on at-words — everything from the selector containing the first
-    // placeholder onwards becomes one garbage token soup whose commas no
-    // longer split selectors. Prettier then prints it near-verbatim:
+    // css-in-js `${}` placeholders (`raffia` fork has `tolerate_at_keyword_placeholders` option):
+    // `postcss-selector-parser` degrades on at-words,
+    // everything from the selector containing the first placeholder onwards
+    // becomes one garbage token soup whose commas no longer split selectors.
+    // Prettier then prints it near-verbatim:
     // whitespace runs collapse to single spaces and the line never breaks.
     // Selectors BEFORE the first placeholder still split normally.
-    // Only the embedded entry point can contain placeholders; the gate also
-    // keeps a literal marker inside e.g. an attribute value (`[x="@prettier"]`)
-    // in a standalone file from triggering garbage mode.
+    // Only the embedded entry point can contain placeholders;
+    // the gate also keeps a literal marker inside
+    // (e.g. an attribute value (`[x="@prettier"]`)) in a standalone file from triggering garbage mode.
     let placeholder_idx = if f.context().template_placeholders() {
         let source = f.context().source_text();
         list.selectors.iter().position(|complex| {
-            source.text_for(&to_span(complex.span())).contains(crate::TEMPLATE_PLACEHOLDER_PREFIX)
+            source.text_for(&to_span(complex.span())).contains(TEMPLATE_PLACEHOLDER_PREFIX)
         })
     } else {
         None
@@ -63,20 +80,19 @@ pub fn write_selector_list<'a>(
         for (i, complex) in list.selectors.iter().enumerate() {
             if i > 0 {
                 write!(f, ",");
-                // A comment trailing the comma stays on the same line.
+                // A comment trailing the comma stays on the same line
                 let next_start = to_span(complex.span()).start;
                 if let Some(comment) = f.context().comments().peek()
                     && comment.span.end <= next_start
                 {
                     let source = f.context().source_text();
                     let prev_end = to_span(list.selectors[i - 1].span()).end;
-                    if crate::comments::classify_gap(
-                        source.bytes_range(prev_end, comment.span.start),
-                    ) == crate::comments::Gap::None
+                    if comments::classify_gap(source.bytes_range(prev_end, comment.span.start))
+                        == comments::Gap::None
                     {
                         f.context().comments().take_before(comment.span.end);
                         write!(f, " ");
-                        crate::comments::write_single_comment(comment, f);
+                        comments::write_single_comment(comment, f);
                     }
                 }
                 match style {
@@ -84,10 +100,10 @@ pub fn write_selector_list<'a>(
                     SelectorListStyle::Line => write!(f, soft_line_break_or_space()),
                 }
             }
-            // Comments on their own line between selectors.
+            // Comments on their own line between selectors
             let start = to_span(complex.span()).start;
             for &comment in f.context().comments().take_before(start) {
-                crate::comments::write_single_comment(comment, f);
+                comments::write_single_comment(comment, f);
                 write!(f, hard_line_break());
             }
             if placeholder_idx == Some(i) {
@@ -101,7 +117,7 @@ pub fn write_selector_list<'a>(
                     }
                     collapsed.push_str(word);
                 }
-                // Comments inside the chunk are part of the verbatim text.
+                // Comments inside the chunk are part of the verbatim text
                 let _ = f.context().comments().take_before(end);
                 write!(f, text(collapsed.into_str()));
                 return;
@@ -112,9 +128,12 @@ pub fn write_selector_list<'a>(
     write!(f, group(&body));
 }
 
-/// Mirrors Prettier's `selector-selector`: group, indented when long
-/// (more than 2 children).
-pub fn write_complex_selector<'a>(complex: &ComplexSelector<'a>, f: &mut CssFormatter<'_, 'a>) {
+/// Mirrors Prettier's `selector-selector`.
+/// group, indented when long (more than 2 children).
+pub(super) fn write_complex_selector<'a>(
+    complex: &ComplexSelector<'a>,
+    f: &mut CssFormatter<'_, 'a>,
+) {
     let should_indent = complex.children.len() > 2;
     let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
         for (i, child) in complex.children.iter().enumerate() {
@@ -128,6 +147,7 @@ pub fn write_complex_selector<'a>(complex: &ComplexSelector<'a>, f: &mut CssForm
             }
         }
     });
+
     if should_indent {
         write!(f, group(&indent(&body)));
     } else {
@@ -135,8 +155,8 @@ pub fn write_complex_selector<'a>(complex: &ComplexSelector<'a>, f: &mut CssForm
     }
 }
 
-/// Mirrors Prettier's `selector-combinator`:
-/// breakable line BEFORE the combinator, space after.
+/// Mirrors Prettier's `selector-combinator`.
+/// Breakable line BEFORE the combinator, space after.
 fn write_combinator(
     combinator: &Combinator,
     is_first: bool,
@@ -165,7 +185,7 @@ fn write_combinator(
     }
 }
 
-pub fn write_compound_selector<'a>(compound: &CompoundSelector<'a>, f: &mut CssFormatter<'_, 'a>) {
+fn write_compound_selector<'a>(compound: &CompoundSelector<'a>, f: &mut CssFormatter<'_, 'a>) {
     for child in &compound.children {
         write_simple_selector(child, f);
     }
@@ -200,27 +220,24 @@ fn write_simple_selector<'a>(selector: &SimpleSelector<'a>, f: &mut CssFormatter
 }
 
 fn write_interpolable_ident<'a>(ident: &InterpolableIdent<'a>, f: &mut CssFormatter<'_, 'a>) {
-    // Sass interpolation reprints structurally (same as value position) so the
-    // output is internally consistent: inner spaces collapse (`#{ $b }` →
-    // `#{$b}`) and quoted string literals re-quote (`#{'x'}` → `#{"x"}`). Plain
-    // idents and Less `@{}` stay verbatim.
-    // DELIBERATE DIVERGENCE: Prettier keeps SELECTOR interpolation verbatim (it
-    // only normalizes VALUE-position interpolation), so `#{ $b }` stays
-    // `#{ $b }` there. We normalize both positions for consistency — see AGENTS.md.
+    // Sass interpolation reprints structurally (same as value position) so the output is internally consistent:
+    // inner spaces collapse (`#{ $b }` → `#{$b}`) and quoted string literals re-quote (`#{'x'}` → `#{"x"}`).
+    // Plain idents and Less `@{}` stay verbatim.
+    //
+    // NOTE: Prettier keeps SELECTOR interpolation verbatim (it only normalizes VALUE-position interpolation),
+    // so `#{ $b }` stays `#{ $b }` there.
+    // We normalize both positions for consistency.
     if let InterpolableIdent::SassInterpolated(interp) = ident {
-        crate::print::value::write_sass_interpolated_ident(
-            interp,
-            crate::print::value::ValueContext::default(),
-            f,
-        );
+        value::write_sass_interpolated_ident(interp, value::ValueContext::default(), f);
         return;
     }
+
     let source = f.context().source_text();
     let span = to_span(ident.span());
     let raw = source.text_for(&span);
-    // Multi-line interpolations collapse to single spaces.
+    // Multi-line interpolations collapse to single spaces
     if raw.contains('\n') || raw.contains('\r') {
-        let joined = raw.split_whitespace().collect::<Vec<_>>().join(" ");
+        let joined = normalize_whitespace(raw);
         write!(f, text(f.allocator().alloc_str(&joined)));
     } else {
         write!(f, text(raw));
@@ -240,9 +257,9 @@ fn write_wq_name<'a>(name: &WqName<'a>, f: &mut CssFormatter<'_, 'a>) {
     write_interpolable_ident(&name.name, f);
 }
 
-/// Mirrors Prettier's `selector-tag`: lowercase `from`/`to` inside
-/// `@keyframes`; HTML tag names are printed as-is (adjustNumbers is a no-op
-/// for plain identifiers).
+/// Mirrors Prettier's `selector-tag`.
+/// Lowercase `from`/`to` inside `@keyframes`;
+/// HTML tag names are printed as-is (`adjustNumbers` is a no-op for plain identifiers).
 fn write_type_selector<'a>(type_selector: &TypeSelector<'a>, f: &mut CssFormatter<'_, 'a>) {
     match type_selector {
         TypeSelector::TagName(tag) => write_wq_name(&tag.name, f),
@@ -280,24 +297,25 @@ fn write_attribute_selector<'a>(attribute: &AttributeSelector<'a>, f: &mut CssFo
         match value {
             // Unquoted values get quoted (Prettier's `quoteAttributeValue`).
             AttributeSelectorValue::Ident(ident) => {
-                let quote = if f.options().single_quote.value() { "'" } else { "\"" };
+                let quote = f.options().single_quote.as_str();
                 let span = to_span(ident.span());
                 write!(f, [text(quote), text(source.text_for(&span)), text(quote)]);
             }
-            AttributeSelectorValue::Str(raffia::ast::InterpolableStr::Literal(str)) => {
-                crate::print::value::write_str(str, f);
+            AttributeSelectorValue::Str(InterpolableStr::Literal(str)) => {
+                value::write_str(str, f);
             }
-            // Interpolated string (`[x="#{$v}"]`): re-quote the outer quotes per
-            // `singleQuote`, keep the `#{}` content verbatim.
+            // Interpolated string (`[x="#{$v}"]`):
+            // re-quote the outer quotes per `singleQuote`, keep the `#{}` content verbatim.
             AttributeSelectorValue::Str(istr) => {
                 let span = to_span(istr.span());
-                crate::print::value::write_requoted_verbatim(source.text_for(&span), f);
+                value::write_requoted_verbatim(source.text_for(&span), f);
             }
-            // `[class^=~'...']`: postcss sees a plain string after the `~`, so
-            // it re-quotes per `singleQuote` like the value-position handler.
+            // `[class^=~'...']`:
+            // postcss sees a plain string after the `~`,
+            // so it re-quotes per `singleQuote` like the value-position handler.
             AttributeSelectorValue::LessEscapedStr(escaped) => {
                 write!(f, "~");
-                crate::print::value::write_str(&escaped.str, f);
+                value::write_str(&escaped.str, f);
             }
             AttributeSelectorValue::Percentage(_) => {
                 let span = to_span(value.span());
@@ -349,7 +367,7 @@ fn write_pseudo_class_arg<'a>(kind: &PseudoClassSelectorArgKind<'a>, f: &mut Css
                     write!(f, soft_line_break_or_space());
                 }
                 if let Some(combinator) = &selector.combinator {
-                    // `is_last: false` already appends the space after `>`.
+                    // `is_last: false` already appends the space after `>`
                     write_combinator(combinator, true, false, f);
                 }
                 write_complex_selector(&selector.complex_selector, f);
@@ -371,6 +389,13 @@ fn write_pseudo_class_arg<'a>(kind: &PseudoClassSelectorArgKind<'a>, f: &mut Css
         PseudoClassSelectorArgKind::Nth(nth) => write_nth(nth, f),
         // Number, LanguageRangeList, TokenSeq, LessExtendList:
         // print the source verbatim (normalized below where needed).
+        //
+        // NOTE: `raffia` provides structured AST for these (notably `LessExtendList`),
+        // so a structured printer would be feasible.
+        // They are kept verbatim because `postcss-selector-parser` tokenizes them as opaque strings
+        // and Prettier emits them raw (matching that keeps `:lang(...)`, `:extend(...)` etc.)
+        // byte-identical to Prettier output.
+        // Real-world usage is rare enough that the consistency cost is negligible.
         _ => {
             let span = to_span(kind.span());
             write!(f, text(source.text_for(&span)));
@@ -378,11 +403,12 @@ fn write_pseudo_class_arg<'a>(kind: &PseudoClassSelectorArgKind<'a>, f: &mut Css
     }
 }
 
-/// `:nth-child()` argument. postcss-selector-parser tokenizes `An+B` so that
-/// a `+` becomes a combinator (printed with one space on both sides) while a
-/// `-` stays glued inside the word; digit-led words land in
-/// `selector-unknown` and get `maybeToLowerCase`d, letter-led ones are tags
-/// and keep their case. `odd`/`even`/integers print verbatim.
+/// `:nth-child()` argument.
+/// `postcss-selector-parser` tokenizes `An+B` so that a `+` becomes a combinator (printed with one space on both sides)
+/// while a `-` stays glued inside the word;
+/// digit-led words land in `selector-unknown` and get `maybeToLowerCase`d,
+/// letter-led ones are tags and keep their case.
+/// `odd`/`even`/integers print verbatim.
 fn write_nth<'a>(nth: &Nth<'a>, f: &mut CssFormatter<'_, 'a>) {
     let source = f.context().source_text();
     let index_span = to_span(nth.index.span());
@@ -390,10 +416,7 @@ fn write_nth<'a>(nth: &Nth<'a>, f: &mut CssFormatter<'_, 'a>) {
     match &nth.index {
         NthIndex::AnPlusB(_) => {
             let normalized = normalize_an_plus_b(raw);
-            match normalized {
-                Cow::Borrowed(s) => write!(f, text(s)),
-                Cow::Owned(s) => write!(f, text(f.allocator().alloc_str(&s))),
-            }
+            write!(f, text(arena_cow_str(&normalized, f)));
         }
         NthIndex::Odd(_) | NthIndex::Even(_) | NthIndex::Integer(_) => {
             write!(f, text(raw));
@@ -403,7 +426,7 @@ fn write_nth<'a>(nth: &Nth<'a>, f: &mut CssFormatter<'_, 'a>) {
         write!(f, " ");
         let matcher_span = to_span(matcher.span());
         if let Some(selector) = &matcher.selector {
-            // The `of` keyword as written, then the selector list.
+            // The `of` keyword as written, then the selector list
             let keyword_end = to_span(selector.span()).start;
             let keyword = source.slice_range(matcher_span.start, keyword_end).trim_ascii_end();
             write!(f, [text(keyword), " "]);
@@ -414,9 +437,9 @@ fn write_nth<'a>(nth: &Nth<'a>, f: &mut CssFormatter<'_, 'a>) {
     }
 }
 
-/// Normalize an `An+B` expression: exactly one space around each `+`
-/// (none before a leading `+`), digit-led segments lowercased, all other
-/// whitespace kept as-is (a glued `-` stays glued).
+/// Normalize an `An+B` expression:
+/// exactly one space around each `+` (none before a leading `+`),
+/// digit-led segments lowercased, all other whitespace kept as-is (a glued `-` stays glued).
 fn normalize_an_plus_b(raw: &str) -> Cow<'_, str> {
     let bytes = raw.as_bytes();
     if !bytes.iter().any(|&b| b == b'+' || b.is_ascii_uppercase()) {
@@ -496,37 +519,31 @@ fn write_pseudo_element<'a>(pseudo: &PseudoElementSelector<'a>, f: &mut CssForma
 }
 
 /// Lowercase `from` / `to` keyframe selectors; keep percentages as numbers.
-pub fn write_keyframe_selector<'a>(
-    selector: &raffia::ast::KeyframeSelector<'a>,
+pub(super) fn write_keyframe_selector<'a>(
+    selector: &KeyframeSelector<'a>,
     f: &mut CssFormatter<'_, 'a>,
 ) {
     let source = f.context().source_text();
     match selector {
-        raffia::ast::KeyframeSelector::Ident(ident) => match ident {
+        KeyframeSelector::Ident(ident) => match ident {
             // Only `from`/`to` lowercase (Prettier's `isKeyframeAtRuleKeywords`);
             // raffia flags anything else as a recoverable error anyway.
-            raffia::ast::InterpolableIdent::Literal(lit) => {
-                match lit.raw.cow_to_ascii_lowercase() {
-                    Cow::Borrowed(s) => write!(f, text(s)),
-                    Cow::Owned(s) => write!(f, text(f.allocator().alloc_str(&s))),
-                }
+            InterpolableIdent::Literal(lit) => {
+                let lower = lit.raw.cow_to_ascii_lowercase();
+                write!(f, text(arena_cow_str(&lower, f)));
             }
-            // Interpolations reprint structurally: idents/variables keep
-            // their case, dimensions/strings get value normalization.
-            raffia::ast::InterpolableIdent::SassInterpolated(interp) => {
-                crate::print::value::write_sass_interpolated_ident(
-                    interp,
-                    crate::print::value::ValueContext::default(),
-                    f,
-                );
+            // Interpolations reprint structurally:
+            // idents/variables keep their case, dimensions/strings get value normalization.
+            InterpolableIdent::SassInterpolated(interp) => {
+                value::write_sass_interpolated_ident(interp, value::ValueContext::default(), f);
             }
-            raffia::ast::InterpolableIdent::LessInterpolated(_) => {
+            InterpolableIdent::LessInterpolated(_) => {
                 let span = to_span(ident.span());
                 write!(f, text(source.text_for(&span)));
             }
         },
-        raffia::ast::KeyframeSelector::Percentage(percentage) => {
-            crate::print::value::write_number(&percentage.value, f);
+        KeyframeSelector::Percentage(percentage) => {
+            value::write_number(&percentage.value, f);
             write!(f, "%");
         }
     }

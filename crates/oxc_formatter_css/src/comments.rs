@@ -126,7 +126,7 @@ pub fn write_single_comment(comment: CssComment, f: &mut CssFormatter<'_, '_>) {
 }
 
 /// Emits the formatter element that reproduces the vertical spacing implied by `gap`.
-fn write_gap(gap: &[u8], f: &mut CssFormatter<'_, '_>) {
+pub fn write_gap(gap: &[u8], f: &mut CssFormatter<'_, '_>) {
     match classify_gap(gap) {
         Gap::None => write!(f, space()),
         Gap::Line => write!(f, hard_line_break()),
@@ -148,14 +148,9 @@ pub fn write_leading_comments(
         match comments.get(i + 1) {
             // Comment followed by another comment: keep same-line pairs
             // (`*/ /*!`) together.
-            Some(next) => {
-                match classify_gap(source.bytes_range(comment.span.end, next.span.start)) {
-                    Gap::None => write!(f, space()),
-                    Gap::Line => write!(f, hard_line_break()),
-                    Gap::Blank => write!(f, empty_line()),
-                }
-            }
-            // Comment followed by the node: always on its own line.
+            Some(next) => write_gap(source.bytes_range(comment.span.end, next.span.start), f),
+            // Comment followed by the node: always on its own line (a blank
+            // line in the source is preserved, otherwise a single hardline).
             None => {
                 if classify_gap(source.bytes_range(comment.span.end, value_start)) == Gap::Blank {
                     write!(f, empty_line());

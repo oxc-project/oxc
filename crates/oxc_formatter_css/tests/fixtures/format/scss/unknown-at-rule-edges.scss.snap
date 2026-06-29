@@ -3,8 +3,10 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
 /* Verbatim-params edges: fused prelude, glued `(`, embedded comments,
-   trailing `//` before a block, quote preservation, interpolated names
-   (the `UnknownSassAtRule` statement path). */
+   trailing `//` before a block, interpolated names
+   (the `UnknownSassAtRule` statement path).
+   `@error`/`@warn` re-quote strings to the preferred quote
+   (intentional divergence from Prettier — see `at_rule.rs`). */
 @a:b;
 @foo (x);
 @foo /* gap */ bar;
@@ -18,7 +20,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 {
   color: red;
 }
-@error 'single quotes survive';
+@error 'single quotes get normalized';
 @warn 'careful with #{$x} here';
 @#{$name} param1 param2;
 @#{$mix}in foo {
@@ -30,8 +32,10 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 { printWidth: 80 }
 ------------------
 /* Verbatim-params edges: fused prelude, glued `(`, embedded comments,
-   trailing `//` before a block, quote preservation, interpolated names
-   (the `UnknownSassAtRule` statement path). */
+   trailing `//` before a block, interpolated names
+   (the `UnknownSassAtRule` statement path).
+   `@error`/`@warn` re-quote strings to the preferred quote
+   (intentional divergence from Prettier — see `at_rule.rs`). */
 @a:b;
 @foo (x);
 @foo /* gap */ bar;
@@ -45,8 +49,8 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 {
   color: red;
 }
-@error 'single quotes survive';
-@warn 'careful with #{$x} here';
+@error "single quotes get normalized";
+@warn "careful with #{$x} here";
 @#{$name} param1 param2;
 @#{$mix}in foo {
   x: 1;
@@ -56,8 +60,10 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 { printWidth: 100 }
 -------------------
 /* Verbatim-params edges: fused prelude, glued `(`, embedded comments,
-   trailing `//` before a block, quote preservation, interpolated names
-   (the `UnknownSassAtRule` statement path). */
+   trailing `//` before a block, interpolated names
+   (the `UnknownSassAtRule` statement path).
+   `@error`/`@warn` re-quote strings to the preferred quote
+   (intentional divergence from Prettier — see `at_rule.rs`). */
 @a:b;
 @foo (x);
 @foo /* gap */ bar;
@@ -71,8 +77,8 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 {
   color: red;
 }
-@error 'single quotes survive';
-@warn 'careful with #{$x} here';
+@error "single quotes get normalized";
+@warn "careful with #{$x} here";
 @#{$name} param1 param2;
 @#{$mix}in foo {
   x: 1;

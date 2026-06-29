@@ -1,20 +1,20 @@
+use std::borrow::Cow;
+
+use cow_utils::CowUtils;
+
 use oxc_formatter_core::{
     FormatOptions, IndentStyle, IndentWidth, LineEnding, LineWidth, PrinterOptions,
 };
 
 /// CSS dialect variant.
-///
-/// Mirrors Prettier's `css` / `scss` / `less` parsers.
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
 pub enum CssVariant {
     /// Prettier's `parser: css` equivalent.
     #[default]
     Css,
     /// Prettier's `parser: scss` equivalent.
-    /// `//` comments, `$var`, maps, control directives, the module system.
     Scss,
     /// Prettier's `parser: less` equivalent.
-    /// `//` comments, `@var`, mixins, guards, detached rulesets.
     Less,
 }
 
@@ -25,14 +25,6 @@ impl CssVariant {
             Self::Scss => raffia::Syntax::Scss,
             Self::Less => raffia::Syntax::Less,
         }
-    }
-
-    pub fn is_scss(self) -> bool {
-        matches!(self, Self::Scss)
-    }
-
-    pub fn is_less(self) -> bool {
-        matches!(self, Self::Less)
     }
 }
 
@@ -47,13 +39,11 @@ pub struct CssFormatOptions {
     pub line_width: LineWidth,
     pub line_ending: LineEnding,
     pub variant: CssVariant,
-    /// Prefer single quotes for strings. Mirrors Prettier's `singleQuote`.
+    // Used by: CSS, SCSS, Less
     pub single_quote: SingleQuote,
-    // Used by: SCSS (maps only)
+    // Used by: SCSS
     pub trailing_commas: TrailingCommas,
-    /// Collect `@apply` classes as `FormatElement::TailwindClass` for batch
-    /// sorting (the sort itself is host-supplied). Mirrors
-    /// `prettier-plugin-tailwindcss`'s CSS transform.
+    // Used by: CSS, SCSS, Less
     pub sort_tailwindcss: bool,
 }
 
@@ -62,6 +52,26 @@ impl CssFormatOptions {
     /// SCSS map, per [`Self::trailing_commas`].
     pub fn allow_trailing_comma(self) -> bool {
         matches!(self.trailing_commas, TrailingCommas::Always)
+    }
+
+    /// The quote byte (`b'"'` / `b'\''`) to enclose a string literal whose body is `inner`
+    /// (the content between the quotes), per Prettier's `getPreferredQuote`:
+    /// start from the configured preference (`singleQuote`) and flip to the alternate
+    /// when that reduces escapes (i.e. when the preferred quote occurs more often in `inner` than the alternate).
+    pub fn preferred_quote(&self, inner: &str) -> u8 {
+        let (preferred, alternate) =
+            if self.single_quote.value() { (b'\'', b'"') } else { (b'"', b'\'') };
+        // Count every occurrence (escaped ones included, matching `getPreferredQuote`).
+        let (mut preferred_count, mut alternate_count) = (0u32, 0u32);
+        for byte in inner.bytes() {
+            if byte == preferred {
+                preferred_count += 1;
+            } else if byte == alternate {
+                alternate_count += 1;
+            }
+        }
+
+        if preferred_count > alternate_count { alternate } else { preferred }
     }
 }
 
@@ -73,6 +83,26 @@ pub struct SingleQuote(bool);
 impl SingleQuote {
     pub fn value(self) -> bool {
         self.0
+    }
+
+    pub fn as_char(self) -> char {
+        if self.0 { '\'' } else { '"' }
+    }
+
+    pub fn as_str(self) -> &'static str {
+        if self.0 { "'" } else { "\"" }
+    }
+
+    /// Prettier's `adjustStrings` for a single token:
+    /// if `token` contains only the alternate quote and not the preferred one,
+    /// replace alternates with preferreds.
+    /// Returns the slice borrowed when no rewrite is needed.
+    pub fn requote(self, token: &str) -> Cow<'_, str> {
+        let (preferred, other) = if self.0 { ('\'', '"') } else { ('"', '\'') };
+        if !token.contains(other) || token.contains(preferred) {
+            return Cow::Borrowed(token);
+        }
+        token.cow_replace(other, preferred.encode_utf8(&mut [0; 4]))
     }
 }
 
