@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 
 use rustc_hash::FxHashMap;
+use smallvec::SmallVec;
 
 use oxc_index::IndexVec;
 use oxc_span::Span;
@@ -36,14 +37,21 @@ pub struct PrivateIdentifierReference<'a> {
     pub id: NodeId,
     pub name: Ident<'a>,
     pub span: Span,
-    pub element_ids: Vec<ElementId>,
+    /// At most 2 ids (a property/accessor resolves to 1, a method to 2 for
+    /// get/set), so kept inline to avoid a heap allocation per private reference.
+    pub element_ids: ElementIds,
 }
 
 impl<'a> PrivateIdentifierReference<'a> {
-    pub fn new(id: NodeId, name: Ident<'a>, span: Span, element_ids: Vec<ElementId>) -> Self {
+    pub fn new(id: NodeId, name: Ident<'a>, span: Span, element_ids: ElementIds) -> Self {
         Self { id, name, span, element_ids }
     }
 }
+
+/// Element ids a (private) name resolves to within a class. Bounded to 2 (a
+/// property/accessor is a single element; a method can have a getter + setter),
+/// so stored inline via `SmallVec` — no heap allocation in the common case.
+pub type ElementIds = SmallVec<[ElementId; 2]>;
 
 /// Class Table
 ///
@@ -85,8 +93,8 @@ impl<'a> ClassTable<'a> {
         class_id: ClassId,
         name: Ident<'_>,
         is_private: bool,
-    ) -> Vec<ElementId> {
-        let mut element_ids = vec![];
+    ) -> ElementIds {
+        let mut element_ids = ElementIds::new();
         for (element_id, element) in self.elements[class_id].iter_enumerated() {
             if element.name == name && element.is_private == is_private {
                 element_ids.push(element_id);
