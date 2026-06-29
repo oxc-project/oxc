@@ -31,7 +31,7 @@ impl<'a> PeepholeOptimizations {
             | Ancestor::ForOfStatementBody(_) => RemoveFlag::CONTINUE,
             _ => RemoveFlag::empty(),
         };
-        Self::remove_exit_points_in_statements(stmts, flags, ctx);
+        Self::prune_tail_exit_in_statement_list(stmts, flags, ctx);
     }
 
     fn is_removable_exit_statement(stmt: &Statement<'a>, flags: RemoveFlag) -> bool {
@@ -47,7 +47,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn remove_exit_points_in_child_statement(
+    fn prune_tail_exit_in_child_statement(
         stmt: &mut Statement<'a>,
         flags: RemoveFlag,
         ctx: &mut TraverseCtx<'a>,
@@ -57,10 +57,10 @@ impl<'a> PeepholeOptimizations {
             ctx.replace_statement(stmt, empty);
             return;
         }
-        Self::remove_exit_points_in_statement(stmt, flags, ctx);
+        Self::visit_tail_exit_contexts(stmt, flags, ctx);
     }
 
-    fn remove_exit_points_in_statements(
+    fn prune_tail_exit_in_statement_list(
         stmts: &mut ArenaVec<'a, Statement<'a>>,
         flags: RemoveFlag,
         ctx: &mut TraverseCtx<'a>,
@@ -71,37 +71,37 @@ impl<'a> PeepholeOptimizations {
                 ctx.drop_statement(&dropped);
                 return;
             }
-            Self::remove_exit_points_in_statement(last_stmt, flags, ctx);
+            Self::visit_tail_exit_contexts(last_stmt, flags, ctx);
         }
     }
 
-    fn remove_exit_points_in_statement(
+    fn visit_tail_exit_contexts(
         stmt: &mut Statement<'a>,
         flags: RemoveFlag,
         ctx: &mut TraverseCtx<'a>,
     ) {
         match stmt {
             Statement::BlockStatement(s) => {
-                Self::remove_exit_points_in_statements(&mut s.body, flags, ctx);
+                Self::prune_tail_exit_in_statement_list(&mut s.body, flags, ctx);
             }
             Statement::IfStatement(s) => {
-                Self::remove_exit_points_in_child_statement(&mut s.consequent, flags, ctx);
+                Self::prune_tail_exit_in_child_statement(&mut s.consequent, flags, ctx);
                 if let Some(alternate) = s.alternate.as_mut() {
-                    Self::remove_exit_points_in_child_statement(alternate, flags, ctx);
+                    Self::prune_tail_exit_in_child_statement(alternate, flags, ctx);
                 }
             }
             Statement::TryStatement(s) => {
                 let nested_flags = if s.finalizer.is_none() { flags } else { RemoveFlag::empty() };
-                Self::remove_exit_points_in_statements(&mut s.block.body, nested_flags, ctx);
+                Self::prune_tail_exit_in_statement_list(&mut s.block.body, nested_flags, ctx);
                 if let Some(handler) = s.handler.as_mut() {
-                    Self::remove_exit_points_in_statements(
+                    Self::prune_tail_exit_in_statement_list(
                         &mut handler.body.body,
                         nested_flags,
                         ctx,
                     );
                 }
                 if let Some(finalizer) = s.finalizer.as_mut() {
-                    Self::remove_exit_points_in_statements(
+                    Self::prune_tail_exit_in_statement_list(
                         &mut finalizer.body,
                         RemoveFlag::empty(),
                         ctx,
@@ -109,27 +109,27 @@ impl<'a> PeepholeOptimizations {
                 }
             }
             Statement::WhileStatement(s) => {
-                Self::remove_exit_points_in_child_statement(&mut s.body, RemoveFlag::CONTINUE, ctx);
+                Self::prune_tail_exit_in_child_statement(&mut s.body, RemoveFlag::CONTINUE, ctx);
             }
             Statement::ForStatement(s) => {
-                Self::remove_exit_points_in_child_statement(&mut s.body, RemoveFlag::CONTINUE, ctx);
+                Self::prune_tail_exit_in_child_statement(&mut s.body, RemoveFlag::CONTINUE, ctx);
             }
             Statement::DoWhileStatement(s) => {
                 let mut body_flags = RemoveFlag::CONTINUE;
                 if s.test.evaluate_value_to_boolean(ctx) == Some(false) {
                     body_flags |= RemoveFlag::BREAK;
                 }
-                Self::remove_exit_points_in_child_statement(&mut s.body, body_flags, ctx);
+                Self::prune_tail_exit_in_child_statement(&mut s.body, body_flags, ctx);
             }
             Statement::ForInStatement(s) => {
-                Self::remove_exit_points_in_child_statement(&mut s.body, RemoveFlag::CONTINUE, ctx);
+                Self::prune_tail_exit_in_child_statement(&mut s.body, RemoveFlag::CONTINUE, ctx);
             }
             Statement::ForOfStatement(s) => {
-                Self::remove_exit_points_in_child_statement(&mut s.body, RemoveFlag::CONTINUE, ctx);
+                Self::prune_tail_exit_in_child_statement(&mut s.body, RemoveFlag::CONTINUE, ctx);
             }
             Statement::SwitchStatement(s) => {
                 if let Some(last_case) = s.cases.last_mut() {
-                    Self::remove_exit_points_in_statements(
+                    Self::prune_tail_exit_in_statement_list(
                         &mut last_case.consequent,
                         flags | RemoveFlag::BREAK,
                         ctx,
@@ -137,7 +137,7 @@ impl<'a> PeepholeOptimizations {
                 }
             }
             Statement::LabeledStatement(s) => {
-                Self::remove_exit_points_in_child_statement(&mut s.body, flags, ctx);
+                Self::prune_tail_exit_in_child_statement(&mut s.body, flags, ctx);
             }
             _ => {}
         }
