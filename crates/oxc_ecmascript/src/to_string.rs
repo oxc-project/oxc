@@ -1,8 +1,8 @@
 use std::borrow::Cow;
 
 use oxc_ast::ast::*;
-use smallvec::SmallVec;
 use oxc_syntax::operator::UnaryOperator;
+use smallvec::SmallVec;
 
 use crate::{
     GlobalContext, ToBoolean,
