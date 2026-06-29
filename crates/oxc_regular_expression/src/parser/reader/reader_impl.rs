@@ -100,12 +100,12 @@ impl<'a> Reader<'a> {
         self.peek_nth(1)
     }
 
-    /// Returns `true` if any code point in the whole pattern equals `code_point`.
+    /// Returns `true` if any code point in the whole pattern equals `ch`.
     ///
     /// Scans the already-decoded units, so it neither allocates nor re-decodes.
     /// Used to cheaply check whether a character (e.g. `(`) is present at all.
-    pub fn contains(&self, code_point: u32) -> bool {
-        self.units.iter().any(|unit| unit.value == code_point)
+    pub fn contains(&self, ch: char) -> bool {
+        self.units.iter().any(|unit| unit.value == ch as u32)
     }
 
     /// Returns the escape kind of the current code point.
