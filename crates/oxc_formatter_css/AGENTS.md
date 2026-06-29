@@ -37,15 +37,14 @@ debug_assert). Params containing comments fall back to the normal printers
 ### Error semantics
 
 `format()` / `format_to_ir()` return `Err` on ANY parse error, including
-raffia's recoverable ones (`parser.recoverable_errors()`) — except
-`TopLevelDeclaration`, which postcss accepts (the dominant css-in-js shape).
-What oxfmt does with the `Err` differs by entry point: standalone files
-report it as a diagnostic (NO Prettier fallback), while the css-in-js
-dispatcher falls back to Prettier. Since the raffia fork (plan Step 6),
-value/selector-position `${}` placeholders parse on the Rust path, so that
-fallback is a pure safety net: what still `Err`s is garbage Prettier can't
-format either (e.g. `foo\n${a}\n${b}` bare words — Prettier's embed throws
-too and the template prints as-is).
+raffia's recoverable ones (`parser.recoverable_errors()`).
+Except `TopLevelDeclaration`, which postcss accepts (the dominant css-in-js shape).
+
+NOTHING falls back to Prettier: standalone files report the
+`Err` as a diagnostic, and a css-in-js dispatch `Err` makes the parent print
+the template as-is.
+Since the raffia fork, value/selector-position `${}` placeholders parse on the Rust path,
+so what still `Err`s is garbage Prettier's embed throws on too (e.g. `foo\n${a}\n${b}` bare words).
 
 ### Architecture notes (Prettier mapping)
 

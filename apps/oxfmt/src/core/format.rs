@@ -602,8 +602,8 @@ impl SourceFormatter {
         // and both share the same `to_core_options()` validation.
         let graphql_options = to_oxc_formatter_graphql(config)
             .expect("config was already validated when building `JsFormatOptions`");
-        // CSS-in-JS is always parsed as SCSS, mirroring Prettier's embed
-        // (`language_to_prettier_parser` maps css/scss/less to the `scss` parser).
+        // CSS-in-JS is always parsed as SCSS (Prettier's embed uses the
+        // `scss` parser for all of css/scss/less template tags).
         let css_options = to_oxc_formatter_css(config, CssVariant::Scss)
             .expect("config was already validated when building `JsFormatOptions`");
 

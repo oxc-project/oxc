@@ -45,10 +45,9 @@ NOTE: Some Tier 1 formatters can fallback to Prettier with NAPI CLI.
 e.g. `oxc_formatter_graphql` (uses `apollo-parser`) only covers the stable GraphQL spec.
 When it returns an error (e.g. draft-spec syntax that Prettier's `graphql-js` accepts), the format step retries via Prettier.
 
-`oxc_formatter_css` (uses `raffia`) is different: standalone css/scss/less files have NO parse-error fallback.
-`raffia` covers the stable grammar, and what it rejects is genuinely broken CSS or the tail of postcss's error tolerance (e.g. IE star hacks), reported as diagnostics.
+`oxc_formatter_css` (uses `raffia`) is different: NO CSS ever reaches Prettier. Standalone css/scss/less parse errors are reported as diagnostics (`raffia` covers the stable grammar; what it rejects is genuinely broken CSS or the tail of postcss's error tolerance, e.g. IE star hacks), and a css-in-js dispatch error makes the parent print the template literal as-is — the same thing Prettier does when its embed throws.
 
-Embedded languages (e.g. css-in-js) go through `src/core/external_formatter.rs`, which assembles a `FormatDispatcher` (defined in `oxc_formatter_core`) that maps each language to a Rust formatter where implemented (currently GraphQL and CSS/SCSS/Less) and to the Prettier Doc→IR path otherwise.
+Embedded languages (e.g. css-in-js) go through `src/core/external_formatter.rs`, which assembles a `FormatDispatcher` (defined in `oxc_formatter_core`) that maps each language to a Rust formatter where implemented (currently GraphQL with Prettier fallback, and CSS/SCSS/Less with none) and to the Prettier Doc→IR path otherwise.
 
 JSDoc fenced code blocks use a separate string-in/string-out channel (the `embedded_callback` in the same file, NOT the dispatcher): css/scss/less/graphql format via the Rust crates (variant derived from the fence language), unimplemented languages go to Prettier, and parse errors keep the block verbatim = no Prettier fallback, no diagnostics (it's inside a comment).
 

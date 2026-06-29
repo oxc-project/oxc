@@ -337,17 +337,17 @@ impl ExternalFormatter {
                                 );
                                 prettier_fallback(ctx, language, texts)
                             }),
-                        // Rust implementation; Prettier fallback on parse errors.
+                        // Rust implementation; NO Prettier fallback (plan Step 5-3).
                         // Since the raffia fork accepts `${}` placeholders in
-                        // value/selector position (plan Step 6), this is a pure
-                        // safety net: what still errors is garbage that
-                        // Prettier's embed cannot format either.
+                        // value/selector position, what still errors is garbage
+                        // that Prettier's embed cannot format either — `Err`
+                        // makes the parent print the template as-is, which is
+                        // exactly what Prettier does when its embed throws.
                         "css" | "scss" | "less" => {
-                            format_css_to_irs(ctx, texts, css_options).or_else(|err| {
+                            format_css_to_irs(ctx, texts, css_options).inspect_err(|err| {
                                 debug!(
-                                    "`oxc_formatter_css` failed, falling back to Prettier: {err}"
+                                    "`oxc_formatter_css` failed, template stays as-is: {err}"
                                 );
-                                prettier_fallback(ctx, language, texts)
                             })
                         }
                         // Everything else: Prettier fallback (Doc→IR path)
@@ -571,7 +571,10 @@ fn build_prettier_fallback(
 }
 
 /// Mapping from language identifiers to Prettier `parser` names.
-/// This is the single source of truth for supported embedded languages.
+/// This is the single source of truth for embedded languages that can still
+/// reach Prettier; languages fully served by a Rust crate are absent
+/// (css/scss/less since plan Step 5-3 — their dispatcher branch has no
+/// fallback and the JSDoc channel formats them in Rust, both before this map).
 ///
 /// Language identifiers come from two sources:
 /// - xxx-in-js `(Tagged)TemplateLiteral` (`embed/*.rs`)
@@ -582,7 +585,6 @@ fn build_prettier_fallback(
 /// This function is the only place that maps them to Prettier-specific parsers.
 fn language_to_prettier_parser(language: &str) -> Option<&'static str> {
     match language {
-        "css" | "scss" | "less" => Some("scss"),
         "graphql" | "gql" => Some("graphql"),
         "html" => Some("html"),
         "angular" => Some("angular"),

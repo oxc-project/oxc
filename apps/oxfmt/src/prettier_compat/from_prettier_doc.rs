@@ -4,7 +4,7 @@ use rustc_hash::FxHashMap;
 use serde_json::Value;
 
 use oxc_allocator::{Allocator, ArenaStringBuilder, ArenaVec};
-use oxc_formatter::{CssEmbedMeta, HtmlEmbedMeta};
+use oxc_formatter::HtmlEmbedMeta;
 use oxc_formatter_core::{
     Align, Condition, DedentMode, DispatchResult, FormatElement, Group, GroupId, GroupMode,
     IndentWidth, LineMode, PrintMode, Tag, TextWidth, UniqueGroupIdBuilder,
@@ -20,8 +20,8 @@ const NEGATIVE_INFINITY_MARKER: &str = "__NEGATIVE_INFINITY__";
 ///
 /// Handles language-specific processing:
 /// - GraphQL: converts each doc independently → one IR per doc
-/// - CSS, HTML: merges consecutive Text nodes, counts placeholders →
-///   single IR + [`CssEmbedMeta`] / [`HtmlEmbedMeta`]
+/// - HTML: merges consecutive Text nodes, counts placeholders →
+///   single IR + [`HtmlEmbedMeta`]
 ///
 /// All Doc JSONs use a uniform `[doc, metadata]` envelope from the JS side.
 pub fn to_format_elements_for_template<'a>(
@@ -70,27 +70,8 @@ pub fn to_format_elements_for_template<'a>(
                 .collect::<Result<Vec<_>, String>>()?;
             Ok(DispatchResult { docs: irs, tailwind_classes: Vec::new(), meta: None })
         }
-        "css" => {
-            let (mut ir, _) = convert(
-                doc_jsons.into_iter().next().expect("Doc JSON for CSS"),
-                allocator,
-                group_id_builder,
-            )?;
-            let placeholder_count = postprocess(
-                &mut ir,
-                allocator,
-                // CSS uses `.raw` values, so no template char escaping needed
-                TemplateEscape::None,
-                Some((TEMPLATE_PLACEHOLDER_PREFIX, TEMPLATE_PLACEHOLDER_SUFFIX)),
-            );
-            Ok(DispatchResult {
-                docs: vec![ir],
-                // Prettier's plugin sorts `@apply` in-place during its own
-                // formatting, so the Doc path never carries classes to remap.
-                tailwind_classes: Vec::new(),
-                meta: Some(Box::new(CssEmbedMeta { placeholder_count })),
-            })
-        }
+        // NOTE: no "css" arm — css/scss/less never reach the Prettier Doc
+        // path since plan Step 5-3 (the dispatcher branch is Rust-only).
         "html" | "angular" => {
             let (mut ir, metadata) = convert(
                 doc_jsons.into_iter().next().expect("Doc JSON for HTML"),
@@ -568,8 +549,6 @@ fn extract_group_id(
 
 #[derive(Clone, Copy)]
 enum TemplateEscape {
-    /// No escaping
-    None,
     /// Full escaping: `\` → `\\`, `` ` `` → `` \` ``, `${` → `\${`.
     Full,
     /// Raw backtick escaping: `(\\*)\`` → `$1$1\\\``.
@@ -635,7 +614,6 @@ fn postprocess<'a>(
                 sb.into_str()
             };
             let text = match escape {
-                TemplateEscape::None => text,
                 TemplateEscape::Full => escape_template_characters(text, allocator),
                 TemplateEscape::RawBacktick => escape_backticks_raw_str(text, allocator),
             };
