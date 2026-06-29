@@ -93,7 +93,7 @@ declare_oxc_lint!(
     NoUnknownProperty,
     react,
     restriction,
-    fix,
+    suggestion,
     config = NoUnknownPropertyConfig,
     version = "0.2.0",
     short_description = "Disallow usage of unknown DOM properties.",
@@ -569,7 +569,7 @@ impl Rule for NoUnknownProperty {
                             ctx.diagnostic(unknown_prop(span));
                         },
                         |prop| {
-                            ctx.diagnostic_with_fix(
+                            ctx.diagnostic_with_suggestion(
                                 unknown_prop_with_standard_name(span, prop),
                                 |fixer| fixer.replace(span, *prop),
                             );
