@@ -18,7 +18,7 @@ use oxc_cfg::{
 };
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 use oxc_span::{SourceType, Span};
-use oxc_str::{Ident, IdentHashMap};
+use oxc_str::Ident;
 use oxc_syntax::{
     node::{NodeFlags, NodeId},
     reference::{Reference, ReferenceFlags, ReferenceId},
@@ -86,9 +86,10 @@ pub struct SemanticBuilder<'a> {
     current_reference_flags: ReferenceFlags,
     /// Symbols that have been hoisted out of a scope (e.g. `var` declarations hoisted to
     /// the enclosing function scope, or Annex B function declarations hoisted to the var scope).
-    /// Keyed by the **original** scope the symbol was declared in, so that future declarations
-    /// in that scope can still detect redeclarations via `check_redeclaration`.
-    pub(crate) hoisting_variables: FxHashMap<ScopeId, IdentHashMap<'a, SymbolId>>,
+    /// Keyed by the `(original scope, name)` the symbol was declared in, so that future
+    /// declarations in that scope can still detect redeclarations via `check_redeclaration`.
+    /// A single flat map avoids allocating a per-scope inner map for every hoisting scope.
+    pub(crate) hoisting_variables: FxHashMap<(ScopeId, Ident<'a>), SymbolId>,
 
     // builders
     /// Node-id counter, current-node cursor/flags, and the node storage (full
@@ -566,12 +567,13 @@ impl<'a> SemanticBuilder<'a> {
         &self,
         scope_id: ScopeId,
         span: Span,
-        name: Ident<'_>,
+        name: Ident<'a>,
         excludes: SymbolFlags,
     ) -> Option<SymbolId> {
-        let symbol_id = self.scoping.get_binding(scope_id, name).or_else(|| {
-            self.hoisting_variables.get(&scope_id).and_then(|symbols| symbols.get(&name).copied())
-        })?;
+        let symbol_id = self
+            .scoping
+            .get_binding(scope_id, name)
+            .or_else(|| self.hoisting_variables.get(&(scope_id, name)).copied())?;
 
         let flags = self.scoping.symbol_flags(symbol_id);
 
