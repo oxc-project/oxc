@@ -9,10 +9,89 @@ use crate::{ParserConfig as Config, ParserImpl, diagnostics, lexer::Kind};
 /// Fatal parsing error.
 #[derive(Debug, Clone)]
 pub struct FatalError {
-    /// The fatal error
-    pub error: OxcDiagnostic,
+    /// The fatal error, kept lazy. The parser records a fatal error on every
+    /// `expect` failure, including the many speculative ones during
+    /// lookahead/backtracking that are discarded on `rewind`; keeping it
+    /// un-built avoids paying for a diagnostic that is never reported.
+    pub error: LazyDiagnostic,
     /// Length of `errors` at time fatal error is recorded
     pub errors_len: usize,
+}
+
+/// A fatal-error diagnostic kept in cheap, un-built form.
+///
+/// Building the `OxcDiagnostic` for an `expect` failure (two `format!` strings
+/// plus a label vec) is pure waste when the failure is speculative and gets
+/// discarded on `rewind` — on real files this is ~80-98% of parser heap
+/// allocations. The hot `expect_*` failures store their (all-`Copy`) operands
+/// here instead, and the diagnostic is built only when actually reported, via
+/// [`LazyDiagnostic::into_diagnostic`]. All operands are `&'static str` (from
+/// [`Kind::to_str`](crate::lexer::Kind::to_str)) plus `Span`, so recording a
+/// fatal error allocates nothing.
+#[derive(Debug, Clone)]
+pub enum LazyDiagnostic {
+    ExpectToken {
+        expected: &'static str,
+        found: &'static str,
+        span: Span,
+    },
+    ExpectClosingOrSeparator {
+        closing: &'static str,
+        separator: &'static str,
+        found: &'static str,
+        span: Span,
+        opening_span: Span,
+    },
+    ExpectClosing {
+        closing: &'static str,
+        found: &'static str,
+        span: Span,
+        opening_span: Span,
+    },
+    ExpectConditionalAlternative {
+        found: &'static str,
+        span: Span,
+        question_span: Span,
+    },
+    /// Already-built diagnostic for the cold error sites. Stored inline (not
+    /// boxed) so the cold path allocates no more than before; the larger enum is
+    /// only ever moved (never cloned) through the parser's checkpoint/rewind.
+    Eager(OxcDiagnostic),
+}
+
+impl LazyDiagnostic {
+    /// Build the `OxcDiagnostic`. Called only when a fatal error is reported, so
+    /// per-`expect`-failure work stays allocation-free during speculation. The
+    /// output is byte-identical to building eagerly: it replays the same
+    /// `diagnostics::` constructor with the same operands.
+    #[cold]
+    pub fn into_diagnostic(self) -> OxcDiagnostic {
+        match self {
+            LazyDiagnostic::ExpectToken { expected, found, span } => {
+                diagnostics::expect_token(expected, found, span)
+            }
+            LazyDiagnostic::ExpectClosingOrSeparator {
+                closing,
+                separator,
+                found,
+                span,
+                opening_span,
+            } => diagnostics::expect_closing_or_separator(
+                closing,
+                separator,
+                found,
+                span,
+                opening_span,
+            ),
+            LazyDiagnostic::ExpectClosing { closing, found, span, opening_span } => {
+                diagnostics::expect_closing(closing, found, span, opening_span)
+            }
+            LazyDiagnostic::ExpectConditionalAlternative { found, span, question_span } => {
+                diagnostics::expect_conditional_alternative(found, span, question_span)
+            }
+            LazyDiagnostic::Eager(error) => error,
+        }
+    }
 }
 
 impl<'a, C: Config> ParserImpl<'a, C> {
@@ -76,9 +155,17 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.errors.len() + self.lexer.errors.len()
     }
 
-    /// Advance lexer's cursor to end of file.
+    /// Record an already-built diagnostic as the fatal error (cold error sites).
     #[cold]
     pub(crate) fn set_fatal_error(&mut self, error: OxcDiagnostic) {
+        self.set_fatal_error_lazy(LazyDiagnostic::Eager(error));
+    }
+
+    /// Record a fatal error from a cheap, un-built [`LazyDiagnostic`] (the hot
+    /// speculative `expect_*` failures). Advances the lexer to end of file so the
+    /// usual `has_fatal_error()`/EOF loop guards terminate parsing, exactly like
+    /// the eager path — only the diagnostic build is deferred to report time.
+    pub(crate) fn set_fatal_error_lazy(&mut self, error: LazyDiagnostic) {
         if self.fatal_error.is_none() {
             self.lexer.advance_to_end();
             self.fatal_error = Some(FatalError { error, errors_len: self.errors.len() });
