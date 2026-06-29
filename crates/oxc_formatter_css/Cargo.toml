@@ -25,6 +25,7 @@ oxc_span = { workspace = true }
 raffia = { workspace = true }
 
 [dev-dependencies]
+insta = { workspace = true }
 oxc_formatter_core = { workspace = true, features = ["test_harness"] }
 pico-args = { workspace = true }
 

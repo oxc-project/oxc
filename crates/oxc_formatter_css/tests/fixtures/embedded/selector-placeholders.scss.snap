@@ -1,0 +1,44 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+a.@prettier-placeholder-0-id:focus,a.@prettier-placeholder-1-id:hover {
+  color: red;
+}
+.foo,   .bar    @prettier-placeholder-2-id {
+  color: blue;
+}
+& > :not(.@prettier-placeholder-3-id):not(@prettier-placeholder-4-id) {
+  display: flex;
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+a.@prettier-placeholder-0-id:focus,a.@prettier-placeholder-1-id:hover {
+  color: red;
+}
+.foo,
+.bar @prettier-placeholder-2-id {
+  color: blue;
+}
+& > :not(.@prettier-placeholder-3-id):not(@prettier-placeholder-4-id) {
+  display: flex;
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+a.@prettier-placeholder-0-id:focus,a.@prettier-placeholder-1-id:hover {
+  color: red;
+}
+.foo,
+.bar @prettier-placeholder-2-id {
+  color: blue;
+}
+& > :not(.@prettier-placeholder-3-id):not(@prettier-placeholder-4-id) {
+  display: flex;
+}
+
+===================== End =====================

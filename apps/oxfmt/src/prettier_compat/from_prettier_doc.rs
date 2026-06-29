@@ -9,6 +9,7 @@ use oxc_formatter_core::{
     Align, Condition, DedentMode, DispatchResult, FormatElement, Group, GroupId, GroupMode,
     IndentWidth, LineMode, PrintMode, Tag, TextWidth, UniqueGroupIdBuilder,
 };
+use oxc_formatter_css::{TEMPLATE_PLACEHOLDER_PREFIX, TEMPLATE_PLACEHOLDER_SUFFIX};
 
 /// Marker string used to represent `-Infinity` in JSON.
 /// JS side replaces `-Infinity` with this string before `JSON.stringify()`.
@@ -80,7 +81,7 @@ pub fn to_format_elements_for_template<'a>(
                 allocator,
                 // CSS uses `.raw` values, so no template char escaping needed
                 TemplateEscape::None,
-                Some(("@prettier-placeholder-", "-id")),
+                Some((TEMPLATE_PLACEHOLDER_PREFIX, TEMPLATE_PLACEHOLDER_SUFFIX)),
             );
             Ok(DispatchResult {
                 docs: vec![ir],
@@ -154,6 +155,74 @@ pub fn escape_template_characters_in_ir<'a>(
             }
         }
     }
+}
+
+/// Merge consecutive text-like elements (`Text` / `Token` / `Space`) of a
+/// Rust-built embedded IR and count `@prettier-placeholder-N-id` occurrences.
+///
+/// Mirrors the text-merging + placeholder-counting step of [`postprocess`]
+/// for IRs that come from `oxc_formatter_css` instead of a Prettier Doc:
+/// the parent (`embed/css.rs`) replaces placeholders per `Text` element, so a
+/// placeholder split across elements (e.g. `Token("@")` +
+/// `Text("prettier-placeholder-0-id")` from the at-rule printer) must be
+/// fused into one `Text` to be detectable. Unlike Doc-converted IRs, Rust
+/// printers also emit `Token`/`Space` elements, so those join the run too.
+pub fn merge_texts_and_count_css_placeholders<'a>(
+    ir: &mut ArenaVec<'a, FormatElement<'a>>,
+    allocator: &'a Allocator,
+    indent_width: IndentWidth,
+) -> usize {
+    fn text_like<'i>(element: &'i FormatElement<'_>) -> Option<&'i str> {
+        match element {
+            FormatElement::Text { text, .. } | FormatElement::Token { text } => Some(text),
+            FormatElement::Space => Some(" "),
+            _ => None,
+        }
+    }
+
+    let (prefix, suffix) = (TEMPLATE_PLACEHOLDER_PREFIX, TEMPLATE_PLACEHOLDER_SUFFIX);
+    let mut placeholder_count = 0;
+    let mut write = 0;
+    let mut read = 0;
+    while read < ir.len() {
+        if text_like(&ir[read]).is_some() {
+            let run_start = read;
+            read += 1;
+            while read < ir.len() && text_like(&ir[read]).is_some() {
+                read += 1;
+            }
+
+            if read - run_start == 1 {
+                // Single element: keep it (and its width) as-is.
+                // A lone `Token` (static strings only) or `Space` can never
+                // contain a placeholder, so only `Text` is worth counting.
+                if let FormatElement::Text { text, .. } = &ir[run_start] {
+                    placeholder_count += count_placeholders(text, prefix, suffix);
+                }
+                if write != run_start {
+                    ir[write] = ir[run_start].clone();
+                }
+            } else {
+                let mut sb = ArenaStringBuilder::new_in(allocator);
+                for element in &ir[run_start..read] {
+                    sb.push_str(text_like(element).unwrap());
+                }
+                let text = sb.into_str();
+                placeholder_count += count_placeholders(text, prefix, suffix);
+                let width = TextWidth::from_text(text, indent_width);
+                ir[write] = FormatElement::Text { text, width };
+            }
+            write += 1;
+        } else {
+            if write != read {
+                ir[write] = ir[read].clone();
+            }
+            write += 1;
+            read += 1;
+        }
+    }
+    ir.truncate(write);
+    placeholder_count
 }
 
 // ---

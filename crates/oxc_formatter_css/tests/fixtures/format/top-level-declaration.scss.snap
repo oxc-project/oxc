@@ -1,0 +1,33 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+display: flex;
+color: red;
+
+&:hover {
+  color: blue;
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+display: flex;
+color: red;
+
+&:hover {
+  color: blue;
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+display: flex;
+color: red;
+
+&:hover {
+  color: blue;
+}
+
+===================== End =====================

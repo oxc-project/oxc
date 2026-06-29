@@ -1,0 +1,28 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+transform: @prettier-placeholder-0-id(30px);
+transform: @prettier-placeholder-1-id (30px);
+transform: @prettier-placeholder-2-id(@prettier-placeholder-3-idpx);
+some-extra-long-property-name: @prettier-placeholder-4-id(@prettier-placeholder-5-idpx);
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+transform: @prettier-placeholder-0-id(30px);
+transform: @prettier-placeholder-1-id (30px);
+transform: @prettier-placeholder-2-id(@prettier-placeholder-3-idpx);
+some-extra-long-property-name: @prettier-placeholder-4-id
+  (@prettier-placeholder-5-idpx);
+
+-------------------
+{ printWidth: 100 }
+-------------------
+transform: @prettier-placeholder-0-id(30px);
+transform: @prettier-placeholder-1-id (30px);
+transform: @prettier-placeholder-2-id(@prettier-placeholder-3-idpx);
+some-extra-long-property-name: @prettier-placeholder-4-id(@prettier-placeholder-5-idpx);
+
+===================== End =====================

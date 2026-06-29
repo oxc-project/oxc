@@ -174,13 +174,8 @@ pub fn flush_leading_comments(value_start: u32, f: &mut CssFormatter<'_, '_>) {
 }
 
 /// If the next pending comment sits on the same line as `prev_end`,
-/// drain it and emit it as a trailing line-suffix comment.
-/// `expand_parent()` keeps the enclosing container multi-line.
-pub fn write_trailing_same_line_comment<'a>(
-    prev_end: u32,
-    upper: u32,
-    f: &mut CssFormatter<'_, 'a>,
-) {
+/// drain it and emit it as a trailing comment.
+pub fn write_trailing_same_line_comment(prev_end: u32, upper: u32, f: &mut CssFormatter<'_, '_>) {
     let Some(comment) = f.context().comments().peek() else { return };
     if comment.span.end > upper {
         return;
@@ -190,11 +185,12 @@ pub fn write_trailing_same_line_comment<'a>(
         return;
     }
     f.context().comments().take_before(comment.span.end);
-    let content = format_with(move |f: &mut CssFormatter<'_, 'a>| {
-        write!(f, space());
-        write_single_comment(comment, f);
-    });
-    write!(f, [line_suffix(&content), expand_parent()]);
+    // Plain content, NOT a line suffix: Prettier prints trailing comments as
+    // regular doc parts, so they count towards the line width during the
+    // preceding value group's fits measurement (`x: min(...); /* long */`
+    // breaks the `min(` group even when the value alone would fit).
+    write!(f, space());
+    write_single_comment(comment, f);
 }
 
 /// Emit comments that sit between the last child of a container and its closing delimiter.

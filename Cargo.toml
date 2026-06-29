@@ -227,7 +227,7 @@ pico-args = "0.5.0" # Minimal argument parser
 prettyplease = "0.2.37" # Rust code formatting
 project-root = "0.2.2" # Project root detection
 quickcheck = "1.1.0" # Property-based testing
-raffia = "0.12.3" # CSS/SCSS/Less parser
+raffia = { git = "https://github.com/leaysgur/raffia", rev = "96b45733b3b10bf5907c3ee4caed960959429001" } # CSS/SCSS/Less parser (fork of 0.12.3: adds `tolerate_at_keyword_placeholders` for css-in-js placeholders)
 rand = "0.10.0" # Random number generation
 rayon = "1.11.0" # Data parallelism
 ropey = "1.6.1" # Rope text structure
@@ -315,3 +315,4 @@ overflow-checks = true # Catch arithmetic overflow errors
 [profile.dev-no-debug-assertions]
 inherits = "dev"
 debug-assertions = false
+

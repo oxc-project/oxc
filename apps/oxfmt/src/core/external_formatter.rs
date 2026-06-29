@@ -10,9 +10,10 @@ use serde_json::Value;
 use tracing::{debug, debug_span};
 
 use oxc_formatter::{
-    EmbeddedFormatterCallback, ExternalCallbacks, JsFormatOptions, TailwindCallback,
+    CssEmbedMeta, EmbeddedFormatterCallback, ExternalCallbacks, JsFormatOptions, TailwindCallback,
 };
 use oxc_formatter_core::{DispatchResult, EmbeddedContext, FormatDispatcher};
+use oxc_formatter_css::CssFormatOptions;
 use oxc_formatter_graphql::GraphqlFormatOptions;
 
 use crate::{core::options::inject_parser, prettier_compat::from_prettier_doc};
@@ -241,13 +242,14 @@ impl ExternalFormatter {
     /// Convert this external formatter to the oxc_formatter::ExternalCallbacks type.
     /// The options (including `filepath`) are captured in the closures and passed to JS on each call.
     ///
-    /// `graphql_options` is the dual mapping of the same resolved config for the
-    /// dispatcher's Rust GraphQL branch (graphql-in-js).
+    /// `graphql_options` / `css_options` are dual mappings of the same resolved
+    /// config for the dispatcher's Rust branches (graphql-in-js / css-in-js).
     pub fn to_external_callbacks(
         &self,
         format_options: &JsFormatOptions,
         options: Value,
         graphql_options: GraphqlFormatOptions,
+        css_options: CssFormatOptions,
     ) -> ExternalCallbacks {
         let needs_embedded = !format_options.embedded_language_formatting.is_off();
         let embedded_callback: Option<EmbeddedFormatterCallback> = if needs_embedded {
@@ -283,10 +285,14 @@ impl ExternalFormatter {
             None
         };
 
+        let tailwind_enabled = format_options.sort_tailwindcss.is_some();
+
         // The dispatcher maps a language name to a formatter implementation.
         // Rust implementations replace branches one by one;
         // the rest go through the Prettier Doc→IR fallback.
         let dispatcher: Option<FormatDispatcher> = if needs_embedded {
+            // `@apply` class sorting only happens in `prettier-plugin-tailwindcss`,
+            // so css-in-js must stay on the Prettier path while it is enabled.
             let prettier_fallback =
                 build_prettier_fallback(Arc::clone(&self.format_embedded_doc), options.clone());
             Some(Arc::new(
@@ -305,6 +311,19 @@ impl ExternalFormatter {
                                 );
                                 prettier_fallback(ctx, language, texts)
                             }),
+                        // Rust implementation; Prettier fallback on parse errors.
+                        // Since the raffia fork accepts `${}` placeholders in
+                        // value/selector position (plan Step 6), this is a pure
+                        // safety net: what still errors is garbage that
+                        // Prettier's embed cannot format either.
+                        "css" | "scss" | "less" if !tailwind_enabled => {
+                            format_css_to_irs(ctx, texts, css_options).or_else(|err| {
+                                debug!(
+                                    "`oxc_formatter_css` failed, falling back to Prettier: {err}"
+                                );
+                                prettier_fallback(ctx, language, texts)
+                            })
+                        }
                         // Everything else: Prettier fallback (Doc→IR path)
                         _ => prettier_fallback(ctx, language, texts),
                     }
@@ -314,8 +333,7 @@ impl ExternalFormatter {
             None
         };
 
-        let needs_tailwind = format_options.sort_tailwindcss.is_some();
-        let tailwind_callback: Option<TailwindCallback> = if needs_tailwind {
+        let tailwind_callback: Option<TailwindCallback> = if tailwind_enabled {
             let sort_tailwindcss_classes = Arc::clone(&self.sort_tailwindcss_classes);
             Some(Arc::new(move |classes: Vec<String>| {
                 debug_span!("oxfmt::external::sort_tailwind", classes_count = classes.len())
@@ -385,6 +403,40 @@ fn format_graphql_to_irs<'a>(
         })
         .collect::<Result<Vec<_>, String>>()?;
     Ok(DispatchResult { docs, meta: None })
+}
+
+/// Format the single joined CSS text (placeholders included) via
+/// `oxc_formatter_css`, returning one IR plus [`CssEmbedMeta`]
+/// (the dispatcher contract for CSS, mirroring the Prettier Doc path).
+///
+/// CSS-in-js uses `.raw` template values, so unlike GraphQL no template-char
+/// re-escaping is needed. The parent replaces `@prettier-placeholder-N-id`
+/// per `Text` element, so consecutive `Text`s are merged first (the at-rule
+/// printer emits `@` and the name as separate elements) and the surviving
+/// placeholders counted into the meta.
+fn format_css_to_irs<'a>(
+    ctx: &EmbeddedContext<'a, '_>,
+    texts: &[&str],
+    options: CssFormatOptions,
+) -> Result<DispatchResult<'a>, String> {
+    // Unlike GraphQL's one-IR-per-quasi, the CSS embed joins quasis with
+    // placeholders into a single text before dispatching.
+    let [text] = texts else {
+        return Err(format!("CSS dispatch expects exactly one text, got {}", texts.len()));
+    };
+    debug_span!("oxfmt::external::format_css_to_ir").in_scope(|| {
+        let mut ir =
+            oxc_formatter_css::format_to_ir(ctx, text, options).map_err(|err| err.to_string())?;
+        let placeholder_count = from_prettier_doc::merge_texts_and_count_css_placeholders(
+            &mut ir,
+            ctx.allocator,
+            options.indent_width,
+        );
+        Ok(DispatchResult {
+            docs: vec![ir],
+            meta: Some(Box::new(CssEmbedMeta { placeholder_count })),
+        })
+    })
 }
 
 /// Type of the Prettier Doc→IR fallback used by the dispatcher.

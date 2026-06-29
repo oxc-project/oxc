@@ -776,6 +776,9 @@ pub fn write_comma_group<'a>(
                 _ if ctx.no_break => {
                     filler.entry(&text(" "), &content);
                 }
+                Separator::SoftBreak => {
+                    filler.entry(&soft_line_break(), &content);
+                }
                 _ => {
                     filler.entry(&soft_line_break_or_space(), &content);
                 }
@@ -830,6 +833,8 @@ enum Separator {
     Tight,
     /// Plain space, no break opportunity (word before a math operator).
     Space,
+    /// Breakable, no space when flat (placeholder glued to a paren group).
+    SoftBreak,
     /// Breakable space.
     Line,
     /// Forced line break (grid rows).
@@ -1039,6 +1044,19 @@ fn separator_between(
             let require_space = wordish(Some(curr)) || wordish(values.get(i.wrapping_sub(2)));
             return if gap_empty && !require_space { Separator::Tight } else { Separator::Line };
         }
+    }
+
+    // Prettier: an at-word placeholder glued to a paren group gets a
+    // `softline` (`${fn}(30px)` may break BEFORE the parens, keeping the
+    // paren group intact on the next line).
+    if gap_empty
+        && matches!(raw_token(prev), Some(raffia::token::Token::AtKeyword(_)))
+        && matches!(
+            curr,
+            ComponentValue::SassParenthesizedExpression(_) | ComponentValue::SassMap(_)
+        )
+    {
+        return Separator::SoftBreak;
     }
 
     // Raw token fallbacks (postcss-values would have produced operator/word
@@ -1371,13 +1389,13 @@ fn write_calc<'a>(
     };
 
     let head = format_with(move |f: &mut CssFormatter<'_, 'a>| {
-        write_component_value(&calc.left, ctx, f);
+        write_calc_operand(&calc.left, ctx, f);
         if gap_before_op {
             write!(f, " ");
         }
         write!(f, token(op_str));
         if !gap_after_op {
-            write_component_value(&calc.right, ctx, f);
+            write_calc_operand(&calc.right, ctx, f);
         }
     });
 
@@ -1385,7 +1403,7 @@ fn write_calc<'a>(
         let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
             let mut filler = f.fill();
             let right = format_with(move |f: &mut CssFormatter<'_, 'a>| {
-                write_component_value(&calc.right, ctx, f);
+                write_calc_operand(&calc.right, ctx, f);
             });
             filler.entry(&soft_line_break_or_space(), &head);
             filler.entry(&soft_line_break_or_space(), &right);
@@ -1394,6 +1412,83 @@ fn write_calc<'a>(
         write!(f, group(&indent(&body)));
     } else {
         head.fmt(f);
+    }
+}
+
+/// A calc operand, restoring ONE pair of parens from the source when present.
+///
+/// raffia folds `(a - b) * c` into nested `Calc` nodes whose spans EXCLUDE
+/// the parens, so they must be recovered from the source (postcss keeps them
+/// as a `value-paren_group` and Prettier preserves them). Only an operand
+/// position can do this safely: at the top of `calc(...)` the function's own
+/// parens are indistinguishable from a redundant pair.
+fn write_calc_operand<'a>(
+    operand: &ComponentValue<'a>,
+    ctx: ValueContext<'a>,
+    f: &mut CssFormatter<'_, 'a>,
+) {
+    let source = f.context().source_text();
+    let bytes = source.as_bytes();
+    let span = to_span(operand.span());
+
+    // The span may already contain unbalanced parens belonging to CHILD
+    // operands, whose own pairs also sit outside their spans
+    // (`(a - 1) * b` spans from `a`). Those are reprinted by the child's own
+    // `write_calc_operand` call; the operand has a pair of its OWN only when
+    // a further `(`/`)` exists beyond what the children account for.
+    let mut depth = 0i32;
+    let mut min_depth = 0i32;
+    for &b in &bytes[span.start as usize..span.end as usize] {
+        match b {
+            b'(' => depth += 1,
+            b')' => {
+                depth -= 1;
+                min_depth = min_depth.min(depth);
+            }
+            _ => {}
+        }
+    }
+    // `[need_left x '('] span [need_right x ')']` balances to zero.
+    let need_left = -min_depth;
+    let need_right = depth - min_depth;
+
+    let own_open = {
+        let mut skip = need_left;
+        bytes[..span.start as usize]
+            .iter()
+            .rev()
+            .filter(|b| !b.is_ascii_whitespace())
+            .take_while(|&&b| b == b'(')
+            .any(|_| {
+                if skip == 0 {
+                    return true;
+                }
+                skip -= 1;
+                false
+            })
+    };
+    let own_close = {
+        let mut skip = need_right;
+        bytes[span.end as usize..]
+            .iter()
+            .filter(|b| !b.is_ascii_whitespace())
+            .take_while(|&&b| b == b')')
+            .any(|_| {
+                if skip == 0 {
+                    return true;
+                }
+                skip -= 1;
+                false
+            })
+    };
+    let wrapped = own_open && own_close;
+
+    if wrapped {
+        write!(f, "(");
+    }
+    write_component_value(operand, ctx, f);
+    if wrapped {
+        write!(f, ")");
     }
 }
 
@@ -1441,6 +1536,11 @@ fn write_function<'a>(func: &Function<'a>, ctx: ValueContext<'a>, f: &mut CssFor
     let groups_ref = &groups;
     let r_paren = to_span(func.span()).end.saturating_sub(1);
     let extra_indent = ctx.after_inline_comment;
+    // `var(--baz,)`: an empty fallback is meaningful, so a source trailing
+    // comma is preserved — for `var()` ONLY (Prettier's `printTrailingComma`
+    // checks `isVarFunctionNode`; every other function drops it).
+    let has_trailing_comma = func.args.last().is_some_and(is_comma)
+        && function_name_text(func).eq_ignore_ascii_case("var");
     // Function arguments are "map item" positions (maps break).
     let ctx = ValueContext {
         map_break: true,
@@ -1475,6 +1575,9 @@ fn write_function<'a>(func: &Function<'a>, ctx: ValueContext<'a>, f: &mut CssFor
                 }
             }
             write_comma_group(group_values, ctx, f);
+        }
+        if has_trailing_comma {
+            write!(f, ",");
         }
         // Comments between the last argument and `)` wrap as fill items;
         // `//` comments stay glued to the argument (their hardline follows).

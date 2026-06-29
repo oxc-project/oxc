@@ -35,19 +35,20 @@ When working with file paths in CLI code, be aware of Windows path differences:
 
 Oxfmt utilizes different implementations depending on the file extension and filename:
 
-- Tier 1: Rust implementations using `oxc_formatter`, `oxc_formatter_json` or `oxc_formatter_graphql` found in this repository
+- Tier 1: Rust implementations using `oxc_formatter`, `oxc_formatter_json`, `oxc_formatter_graphql` or `oxc_formatter_css` found in this repository
 - Tier 2: Rust implementations using external libraries like `oxc_toml`
 - Tier 3: Delegations to Prettier via NAPI-JS calls (e.g., for Vue or Markdown)
 - Tier 4: Delegations to Prettier that require additional plugins (e.g., for Svelte)
 
 NOTE: Some Tier 1 formatters can fallback to Prettier with NAPI CLI.
+
 e.g. `oxc_formatter_graphql` (uses `apollo-parser`) only covers the stable GraphQL spec.
 When it returns an error (e.g. draft-spec syntax that Prettier's `graphql-js` accepts), the format step retries via Prettier.
 
-The same applies to embedded languages (xxx-in-js): `src/core/external_formatter.rs`
-assembles a `FormatDispatcher` (defined in `oxc_formatter_core`) that maps each
-language to a Rust formatter where implemented (currently GraphQL, with the same
-parse-error fallback) and to the Prettier Doc→IR path otherwise.
+`oxc_formatter_css` (uses `raffia`) is different: standalone css/scss/less files have NO parse-error fallback.
+`raffia` covers the stable grammar, and what it rejects is genuinely broken CSS or the tail of postcss's error tolerance (e.g. IE star hacks), reported as diagnostics.
+
+Embedded languages (e.g. css-in-js) go through `src/core/external_formatter.rs`, which assembles a `FormatDispatcher` (defined in `oxc_formatter_core`) that maps each language to a Rust formatter where implemented (currently GraphQL and CSS/SCSS/Less) and to the Prettier Doc→IR path otherwise.
 
 Consequently, managing these various formatter implementations and handling their respective options are also part of Oxfmt's responsibilities.
 

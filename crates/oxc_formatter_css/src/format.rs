@@ -29,10 +29,12 @@ pub fn format<'a>(
     options: CssFormatOptions,
 ) -> Result<Formatted<'a, CssFormatContext<'a>>, OxcDiagnostic> {
     let has_bom = source_text.starts_with('\u{feff}');
-    let (stylesheet, source, comments) = parse_stylesheet(allocator, source_text, options)?;
+    let (stylesheet, source, comments) =
+        parse_stylesheet(allocator, source_text, options, /* tolerate_placeholders */ false)?;
     let front_matter = front_matter_end(source).map(|end| &source[..end]);
 
-    let context = CssFormatContext::new(options, source, comments);
+    let context =
+        CssFormatContext::new(options, source, comments, /* template_placeholders */ false);
     let mut state = FormatState::new(context, allocator);
     let mut buffer = VecBuffer::new(&mut state);
 
@@ -63,9 +65,14 @@ pub fn format_to_ir<'a>(
     options: CssFormatOptions,
 ) -> Result<ArenaVec<'a, FormatElement<'a>>, OxcDiagnostic> {
     let allocator = ctx.allocator;
-    let (stylesheet, source, comments) = parse_stylesheet(allocator, source_text, options)?;
+    // The dispatcher input substitutes `${}` interpolations with
+    // `@prettier-placeholder-N-id` markers, which may sit in value or
+    // selector position — tolerate them (raffia fork option).
+    let (stylesheet, source, comments) =
+        parse_stylesheet(allocator, source_text, options, /* tolerate_placeholders */ true)?;
 
-    let context = CssFormatContext::new(options, source, comments);
+    let context =
+        CssFormatContext::new(options, source, comments, /* template_placeholders */ true);
     let mut state = FormatState::new(context, allocator);
     let mut buffer = VecBuffer::new(&mut state);
 
@@ -82,6 +89,7 @@ fn parse_stylesheet<'a>(
     allocator: &'a Allocator,
     source_text: &str,
     options: CssFormatOptions,
+    tolerate_placeholders: bool,
 ) -> Result<(Stylesheet<'a>, &'a str, &'a [CssComment]), OxcDiagnostic> {
     let source_text = source_text.strip_prefix('\u{feff}').unwrap_or(source_text);
     let source: &'a str = allocator.alloc_str(source_text);
@@ -103,11 +111,22 @@ fn parse_stylesheet<'a>(
     let mut comments = vec![];
     let mut parser = ParserBuilder::new(parse_source)
         .syntax(options.variant.to_raffia())
+        .options(raffia::ParserOptions {
+            tolerate_at_keyword_placeholders: tolerate_placeholders,
+            ..raffia::ParserOptions::default()
+        })
         .comments(&mut comments)
         .build();
 
     let stylesheet = parser.parse::<Stylesheet>().map_err(|error| to_diagnostic(&error))?;
-    if let Some(error) = parser.recoverable_errors().first() {
+    // Top-level declarations are recoverable AND accepted by Prettier (postcss
+    // prints them as-is) — the dominant css-in-js shape (`css`display: flex;``),
+    // so they must not bail out. Everything else recoverable still does.
+    if let Some(error) = parser
+        .recoverable_errors()
+        .iter()
+        .find(|error| !matches!(error.kind, raffia::error::ErrorKind::TopLevelDeclaration))
+    {
         return Err(to_diagnostic(error));
     }
     drop(parser);

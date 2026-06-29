@@ -1,0 +1,32 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+border:    1px     @prettier-placeholder-0-id      red;
+grid-area:       area-@prettier-placeholder-1-id;
+foo: @prettier-placeholder-2-id@prettier-placeholder-3-id       @prettier-placeholder-4-id;
+width: @prettier-placeholder-5-id@prettier-placeholder-6-id;
+border: @prettier-placeholder-7-id @prettier-placeholder-8-id solid @prettier-placeholder-9-id;
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+border: 1px @prettier-placeholder-0-id red;
+grid-area: area-@prettier-placeholder-1-id;
+foo: @prettier-placeholder-2-id@prettier-placeholder-3-id
+  @prettier-placeholder-4-id;
+width: @prettier-placeholder-5-id@prettier-placeholder-6-id;
+border: @prettier-placeholder-7-id @prettier-placeholder-8-id solid
+  @prettier-placeholder-9-id;
+
+-------------------
+{ printWidth: 100 }
+-------------------
+border: 1px @prettier-placeholder-0-id red;
+grid-area: area-@prettier-placeholder-1-id;
+foo: @prettier-placeholder-2-id@prettier-placeholder-3-id @prettier-placeholder-4-id;
+width: @prettier-placeholder-5-id@prettier-placeholder-6-id;
+border: @prettier-placeholder-7-id @prettier-placeholder-8-id solid @prettier-placeholder-9-id;
+
+===================== End =====================

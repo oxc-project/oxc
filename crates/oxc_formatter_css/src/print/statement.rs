@@ -305,6 +305,23 @@ fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter<'_, 'a>) {
             // The raw text includes any comments; drop them from the cursor.
             let _ = f.context().comments().take_before(value_end);
         } else {
+            // Custom property values come back from raffia as a raw token
+            // stream (per spec, `<declaration-value>` is any token soup), but
+            // Prettier (postcss) value-parses them like any other declaration,
+            // so `var(...)` etc. get the normal group/break layout.
+            let reparsed = if prop.starts_with("--")
+                && decl
+                    .value
+                    .iter()
+                    .all(|v| matches!(v, raffia::ast::ComponentValue::TokenWithSpan(_)))
+            {
+                reparse_custom_property_value(decl, f)
+            } else {
+                None
+            };
+            let values: &[raffia::ast::ComponentValue<'a>] =
+                reparsed.as_ref().map_or(&decl.value, |d| &d.value);
+
             let ctx = ValueContext {
                 decl_prop: Some(prop_lower),
                 // Prettier applies `removeLines` to `composes` values.
@@ -327,9 +344,9 @@ fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter<'_, 'a>) {
             // `prop: <values> { decls }` — a trailing nested block hugs the
             // declaration; leading values are space-joined flat.
             if let Some(raffia::ast::ComponentValue::SassNestingDeclaration(nesting)) =
-                decl.value.last()
+                values.last()
             {
-                for v in &decl.value[..decl.value.len() - 1] {
+                for v in &values[..values.len() - 1] {
                     value::write_component_value(v, ctx, f);
                     write!(f, space());
                 }
@@ -342,13 +359,13 @@ fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter<'_, 'a>) {
                 let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
                     write!(f, hard_line_break());
                     let inner = format_with(move |f: &mut CssFormatter<'_, 'a>| {
-                        value::write_declaration_value(&decl.value, ctx, f);
+                        value::write_declaration_value(values, ctx, f);
                     });
                     write!(f, oxc_formatter_core::builders::dedent(&inner));
                 });
                 write!(f, indent(&body));
             } else {
-                value::write_declaration_value(&decl.value, ctx, f);
+                value::write_declaration_value(values, ctx, f);
             }
         }
     }
@@ -367,6 +384,53 @@ fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter<'_, 'a>) {
             write!(f, space());
         }
     }
+}
+
+/// Re-parse a custom property's raw token-stream value as a normal
+/// declaration so the value gets the standard group/break layout.
+///
+/// The declaration is rebuilt at the same source offsets — the prefix is
+/// blanked out and the `--name` prop replaced by a same-length plain ident —
+/// so every span in the re-parsed value stays valid against the original
+/// source (Prettier pulls the same offset-preserving trick for
+/// custom-property rule blocks in `parser-postcss.js`).
+///
+/// Returns `None` (caller keeps the token stream) when the value does not
+/// parse as a plain declaration value.
+fn reparse_custom_property_value<'a>(
+    decl: &Declaration<'a>,
+    f: &CssFormatter<'_, 'a>,
+) -> Option<Declaration<'a>> {
+    let source = f.context().source_text();
+    let decl_span = to_span(decl.span());
+    let name_span = to_span(decl.name.span());
+
+    let mut padded = String::with_capacity(decl_span.end as usize);
+    for c in source.slice_range(0, name_span.start).chars() {
+        if c == '\n' || c == '\r' {
+            padded.push(c);
+        } else {
+            // One space per BYTE (not per char): spans are byte offsets, so a
+            // multi-byte char (e.g. `º` in a comment) must keep its width.
+            for _ in 0..c.len_utf8() {
+                padded.push(' ');
+            }
+        }
+    }
+    for _ in name_span.start..name_span.end {
+        padded.push('a');
+    }
+    padded.push_str(source.slice_range(name_span.end, decl_span.end));
+
+    let allocator = f.allocator();
+    let padded: &'a str = allocator.alloc_str(&padded);
+    let syntax = f.options().variant.to_raffia();
+    let mut parser = raffia::ParserBuilder::new(padded).syntax(syntax).build();
+    let reparsed = parser.parse::<Declaration>().ok()?;
+    if !parser.recoverable_errors().is_empty() {
+        return None;
+    }
+    Some(reparsed)
 }
 
 /// Prints a `--prop: { a: b; c: d }` rule-block value by re-flowing the raw

@@ -60,7 +60,7 @@
 
 ## html-in-js
 
-### Option 1: 190/191 (99.48%)
+### Option 1: 188/191 (98.43%)
 
 ```json
 {"printWidth":80}
@@ -69,8 +69,10 @@
 | File | Note |
 | :--- | :--- |
 | [externals/prettier/js/multiparser-html/issue-10691.js](diffs/html-in-js/externals__prettier__js__multiparser-html__issue-10691.js.md) | js-in-html(`<script>`)-in-js needs lot more work; Please see oxc_formatter/src/print/template/embed/html.rs |
+| [externals/webawesome/number-input/number-input.styles.ts](diffs/html-in-js/externals__webawesome__number-input__number-input.styles.ts.md) | Layout-only: Prettier's fill fit-check breaks inside `var()` args in a long `calc()`; ours breaks after the operator. See crates/oxc_formatter_css/AGENTS.md |
+| [externals/webawesome/page/page.styles.ts](diffs/html-in-js/externals__webawesome__page__page.styles.ts.md) | Layout-only: Prettier's fill fit-check breaks inside `::slotted()` after a long `:not(...)`; ours breaks inside `:not(...)`. See crates/oxc_formatter_css/AGENTS.md |
 
-### Option 2: 190/191 (99.48%)
+### Option 2: 189/191 (98.95%)
 
 ```json
 {"printWidth":100,"htmlWhitespaceSensitivity":"ignore"}
@@ -79,6 +81,7 @@
 | File | Note |
 | :--- | :--- |
 | [externals/prettier/js/multiparser-html/issue-10691.js](diffs/html-in-js/externals__prettier__js__multiparser-html__issue-10691.js.md) | js-in-html(`<script>`)-in-js needs lot more work; Please see oxc_formatter/src/print/template/embed/html.rs |
+| [externals/webawesome/page/page.styles.ts](diffs/html-in-js/externals__webawesome__page__page.styles.ts.md) | Layout-only: Prettier's fill fit-check breaks inside `::slotted()` after a long `:not(...)`; ours breaks inside `:not(...)`. See crates/oxc_formatter_css/AGENTS.md |
 
 ## angular-in-js
 

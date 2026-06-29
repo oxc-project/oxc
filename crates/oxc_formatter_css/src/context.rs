@@ -15,6 +15,9 @@ pub struct CssFormatContext<'a> {
     in_less_detached: std::cell::Cell<bool>,
     /// Current block nesting depth (rules/at-rules).
     block_depth: std::cell::Cell<u32>,
+    /// The source may contain css-in-js `${}` placeholder markers
+    /// (embedded entry point only); gates the printer's placeholder handling.
+    template_placeholders: bool,
 }
 
 impl<'a> CssFormatContext<'a> {
@@ -22,6 +25,7 @@ impl<'a> CssFormatContext<'a> {
         options: CssFormatOptions,
         source_code: &'a str,
         comments: &'a [CssComment],
+        template_placeholders: bool,
     ) -> Self {
         Self {
             options,
@@ -29,7 +33,13 @@ impl<'a> CssFormatContext<'a> {
             comments: Comments::new(comments),
             in_less_detached: std::cell::Cell::new(false),
             block_depth: std::cell::Cell::new(0),
+            template_placeholders,
         }
+    }
+
+    /// Whether the source may contain css-in-js `${}` placeholder markers.
+    pub fn template_placeholders(&self) -> bool {
+        self.template_placeholders
     }
 
     pub fn block_depth(&self) -> &std::cell::Cell<u32> {

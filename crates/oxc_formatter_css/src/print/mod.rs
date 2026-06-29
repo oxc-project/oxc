@@ -113,7 +113,24 @@ pub fn write_statement_sequence_bounded<'a>(
         flush_leading_comments(start, f);
         if suppressed {
             let end = statement::stmt_end(stmt, f);
-            write!(f, oxc_formatter_core::builders::text(source.slice_range(start, end)));
+            // Prettier quirk: an ignored `;`-less at-rule left unclosed at EOF
+            // has no `source.end` in postcss, so `printIgnored` slices an
+            // empty string and the statement VANISHES. We reproduce this for
+            // placeholder at-rules only — there it is load-bearing (the
+            // placeholder count mismatch makes the css-in-js embed fall back
+            // to plain template printing, like Prettier) — but not for real
+            // code, where silently deleting an ignored statement is a bug.
+            let placeholder_vanishes =
+                matches!(
+                    stmt,
+                    raffia::ast::Statement::AtRule(at_rule)
+                        if at_rule.block.is_none()
+                            && at_rule.name.raw.starts_with("prettier-placeholder")
+                ) && !source.slice_range(start, end).trim_end().ends_with(';')
+                    && source[end as usize..].trim().is_empty();
+            if !placeholder_vanishes {
+                write!(f, oxc_formatter_core::builders::text(source.slice_range(start, end)));
+            }
         } else {
             statement::write_statement(stmt, f);
         }

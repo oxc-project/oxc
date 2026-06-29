@@ -1,0 +1,30 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+color: @prettier-placeholder-0-id;
+/* prettier-ignore */
+@prettier-placeholder-1-id;
+/* prettier-ignore */
+@prettier-placeholder-2-id
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+color: @prettier-placeholder-0-id;
+/* prettier-ignore */
+@prettier-placeholder-1-id;
+/* prettier-ignore */
+
+
+-------------------
+{ printWidth: 100 }
+-------------------
+color: @prettier-placeholder-0-id;
+/* prettier-ignore */
+@prettier-placeholder-1-id;
+/* prettier-ignore */
+
+
+===================== End =====================

@@ -99,6 +99,10 @@ const categories: Category[] = [
     notes: {
       "externals/prettier/js/multiparser-html/issue-10691.js":
         "js-in-html(`<script>`)-in-js needs lot more work; Please see oxc_formatter/src/print/template/embed/html.rs",
+      "externals/webawesome/number-input/number-input.styles.ts":
+        "Layout-only: Prettier's fill fit-check breaks inside `var()` args in a long `calc()`; ours breaks after the operator. See crates/oxc_formatter_css/AGENTS.md",
+      "externals/webawesome/page/page.styles.ts":
+        "Layout-only: Prettier's fill fit-check breaks inside `::slotted()` after a long `:not(...)`; ours breaks inside `:not(...)`. See crates/oxc_formatter_css/AGENTS.md",
     },
   },
   {
