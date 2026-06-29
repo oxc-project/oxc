@@ -1,4 +1,4 @@
-use oxc_allocator::GetAllocator;
+use oxc_allocator::{Address, GetAllocator};
 use oxc_ast::ast::*;
 use oxc_compat::ESFeature;
 use oxc_ecmascript::{
@@ -43,6 +43,14 @@ impl<'a> GlobalContext<'a> for TraverseCtx<'a, MinifierState<'a>> {
     fn value_type_for_reference_id(&self, reference_id: ReferenceId) -> Option<ValueType> {
         self.tracked_constant_for_reference_id(reference_id).map(ConstantValue::value_type)
     }
+
+    fn cached_value_type(&self, addr: Address) -> Option<ValueType> {
+        self.state.value_type_cache.borrow().get(&addr).copied()
+    }
+
+    fn cache_value_type(&self, addr: Address, ty: ValueType) {
+        self.state.value_type_cache.borrow_mut().insert(addr, ty);
+    }
 }
 
 impl<'a> GlobalContext<'a> for &TraverseCtx<'a, MinifierState<'a>> {
@@ -60,6 +68,14 @@ impl<'a> GlobalContext<'a> for &TraverseCtx<'a, MinifierState<'a>> {
     fn value_type_for_reference_id(&self, reference_id: ReferenceId) -> Option<ValueType> {
         (*self).value_type_for_reference_id(reference_id)
     }
+
+    fn cached_value_type(&self, addr: Address) -> Option<ValueType> {
+        (*self).cached_value_type(addr)
+    }
+
+    fn cache_value_type(&self, addr: Address, ty: ValueType) {
+        (*self).cache_value_type(addr, ty);
+    }
 }
 
 impl<'a> GlobalContext<'a> for &mut TraverseCtx<'a, MinifierState<'a>> {
@@ -76,6 +92,14 @@ impl<'a> GlobalContext<'a> for &mut TraverseCtx<'a, MinifierState<'a>> {
 
     fn value_type_for_reference_id(&self, reference_id: ReferenceId) -> Option<ValueType> {
         (**self).value_type_for_reference_id(reference_id)
+    }
+
+    fn cached_value_type(&self, addr: Address) -> Option<ValueType> {
+        (**self).cached_value_type(addr)
+    }
+
+    fn cache_value_type(&self, addr: Address, ty: ValueType) {
+        (**self).cache_value_type(addr, ty);
     }
 }
 

@@ -449,6 +449,7 @@ impl<'a> PeepholeOptimizations {
 impl<'a> Traverse<'a> for PeepholeOptimizations {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         ctx.state.symbol_values.reset();
+        ctx.state.value_type_cache.get_mut().clear();
         ctx.state.proto_write_symbols.clear();
         // Any module loader (`import`, `export * from`, `export … from`) can, on a
         // cycle, evaluate a foreign module that observes a not-yet-assigned binding

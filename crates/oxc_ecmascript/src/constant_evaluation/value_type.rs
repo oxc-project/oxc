@@ -1,3 +1,4 @@
+use oxc_allocator::GetAddress;
 use oxc_ast::ast::*;
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
@@ -68,54 +69,76 @@ pub trait DetermineValueType<'a> {
 
 impl<'a> DetermineValueType<'a> for Expression<'a> {
     fn value_type(&self, ctx: &impl GlobalContext<'a>) -> ValueType {
-        match self {
-            Expression::BigIntLiteral(_) => ValueType::BigInt,
-            Expression::BooleanLiteral(_) | Expression::PrivateInExpression(_) => {
-                ValueType::Boolean
+        // Long left-associative chains (`a + a + … + a`, `a || b || …`, `a ? … : c ? … : …`)
+        // make the minifier's post-order peephole call `value_type` at every node, and each
+        // call re-walks the whole left subtree via `to_primitive`/`to_numeric` → O(n²).
+        // Memoize these chain-forming variants by node address so each is computed once
+        // (O(n) total). The cache hook is a no-op default on `GlobalContext`, so non-minifier
+        // callers keep the exact previous (uncached) behaviour.
+        if matches!(
+            self,
+            Expression::BinaryExpression(_)
+                | Expression::LogicalExpression(_)
+                | Expression::ConditionalExpression(_)
+        ) {
+            let addr = self.address();
+            if let Some(ty) = ctx.cached_value_type(addr) {
+                return ty;
             }
-            Expression::NullLiteral(_) => ValueType::Null,
-            Expression::NumericLiteral(_) => ValueType::Number,
-            Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => ValueType::String,
-            Expression::ObjectExpression(_)
-            | Expression::ArrayExpression(_)
-            | Expression::RegExpLiteral(_)
-            | Expression::FunctionExpression(_)
-            | Expression::ArrowFunctionExpression(_)
-            | Expression::ClassExpression(_) => ValueType::Object,
-            Expression::MetaProperty(meta_prop) => {
-                match (meta_prop.meta.name.as_str(), meta_prop.property.name.as_str()) {
-                    ("import", "meta") => ValueType::Object,
+            let ty = expression_value_type(self, ctx);
+            ctx.cache_value_type(addr, ty);
+            return ty;
+        }
+        expression_value_type(self, ctx)
+    }
+}
+
+fn expression_value_type<'a>(expr: &Expression<'a>, ctx: &impl GlobalContext<'a>) -> ValueType {
+    match expr {
+        Expression::BigIntLiteral(_) => ValueType::BigInt,
+        Expression::BooleanLiteral(_) | Expression::PrivateInExpression(_) => ValueType::Boolean,
+        Expression::NullLiteral(_) => ValueType::Null,
+        Expression::NumericLiteral(_) => ValueType::Number,
+        Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => ValueType::String,
+        Expression::ObjectExpression(_)
+        | Expression::ArrayExpression(_)
+        | Expression::RegExpLiteral(_)
+        | Expression::FunctionExpression(_)
+        | Expression::ArrowFunctionExpression(_)
+        | Expression::ClassExpression(_) => ValueType::Object,
+        Expression::MetaProperty(meta_prop) => {
+            match (meta_prop.meta.name.as_str(), meta_prop.property.name.as_str()) {
+                ("import", "meta") => ValueType::Object,
+                _ => ValueType::Undetermined,
+            }
+        }
+        Expression::Identifier(ident) => {
+            if ctx.is_global_reference(ident) {
+                match ident.name.as_str() {
+                    "undefined" => ValueType::Undefined,
+                    "NaN" | "Infinity" => ValueType::Number,
                     _ => ValueType::Undetermined,
                 }
+            } else {
+                ident
+                    .reference_id
+                    .get()
+                    .and_then(|reference_id| ctx.value_type_for_reference_id(reference_id))
+                    .unwrap_or(ValueType::Undetermined)
             }
-            Expression::Identifier(ident) => {
-                if ctx.is_global_reference(ident) {
-                    match ident.name.as_str() {
-                        "undefined" => ValueType::Undefined,
-                        "NaN" | "Infinity" => ValueType::Number,
-                        _ => ValueType::Undetermined,
-                    }
-                } else {
-                    ident
-                        .reference_id
-                        .get()
-                        .and_then(|reference_id| ctx.value_type_for_reference_id(reference_id))
-                        .unwrap_or(ValueType::Undetermined)
-                }
-            }
-            Expression::UnaryExpression(e) => e.value_type(ctx),
-            Expression::BinaryExpression(e) => e.value_type(ctx),
-            Expression::SequenceExpression(e) => {
-                e.expressions.last().map_or(ValueType::Undetermined, |e| e.value_type(ctx))
-            }
-            Expression::AssignmentExpression(e) => e.value_type(ctx),
-            Expression::ConditionalExpression(e) => e.value_type(ctx),
-            Expression::LogicalExpression(e) => e.value_type(ctx),
-            Expression::ParenthesizedExpression(e) => e.expression.value_type(ctx),
-            Expression::StaticMemberExpression(e) => e.value_type(ctx),
-            Expression::NewExpression(e) => e.value_type(ctx),
-            _ => ValueType::Undetermined,
         }
+        Expression::UnaryExpression(e) => e.value_type(ctx),
+        Expression::BinaryExpression(e) => e.value_type(ctx),
+        Expression::SequenceExpression(e) => {
+            e.expressions.last().map_or(ValueType::Undetermined, |e| e.value_type(ctx))
+        }
+        Expression::AssignmentExpression(e) => e.value_type(ctx),
+        Expression::ConditionalExpression(e) => e.value_type(ctx),
+        Expression::LogicalExpression(e) => e.value_type(ctx),
+        Expression::ParenthesizedExpression(e) => e.expression.value_type(ctx),
+        Expression::StaticMemberExpression(e) => e.value_type(ctx),
+        Expression::NewExpression(e) => e.value_type(ctx),
+        _ => ValueType::Undetermined,
     }
 }
 

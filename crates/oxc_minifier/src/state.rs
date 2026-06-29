@@ -1,7 +1,9 @@
-use oxc_ecmascript::constant_evaluation::ConstantValue;
+use std::cell::RefCell;
+
+use oxc_ecmascript::constant_evaluation::{ConstantValue, ValueType};
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use oxc_allocator::{Allocator, BitSet};
+use oxc_allocator::{Address, Allocator, BitSet};
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_semantic::Scoping;
 use oxc_span::SourceType;
@@ -91,6 +93,14 @@ pub struct MinifierState<'a> {
     /// Scratch buffer reused by `try_fold_concat` to build template literal
     /// quasis without allocating a fresh `String` per call.
     pub concat_scratch: String,
+
+    /// Memoizes `Expression::value_type` for chain-forming nodes
+    /// (binary/logical/conditional) keyed by node address, so the minifier's
+    /// post-order peephole doesn't recompute the whole left subtree at every node
+    /// (O(n²) on long `a + a + … + a` chains). Cleared on every AST mutation
+    /// (`record_mutation`) and at each per-pass reset, so an entry is only ever
+    /// read within a mutation-free window over an unchanged subtree.
+    pub(crate) value_type_cache: RefCell<FxHashMap<Address, ValueType>>,
 }
 
 impl<'a> MinifierState<'a> {
@@ -113,6 +123,7 @@ impl<'a> MinifierState<'a> {
             mutated: false,
             dirty: PassDirty::new(scoping.references_len(), allocator),
             concat_scratch: String::new(),
+            value_type_cache: RefCell::new(FxHashMap::default()),
         }
     }
 
@@ -126,6 +137,11 @@ impl<'a> MinifierState<'a> {
     /// Record that a typed helper mutated the AST.
     pub(crate) fn record_mutation(&mut self) {
         self.mutated = true;
+        // Any structural edit can change a cached node's value_type (operand/operator
+        // mutation) or reuse a freed slot address, so drop the memo. The O(n²) target —
+        // a long unmutated chain folded post-order — records no mutation mid-sweep, so it
+        // still benefits fully.
+        self.value_type_cache.get_mut().clear();
     }
 }
 
