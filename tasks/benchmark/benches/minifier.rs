@@ -38,7 +38,7 @@ fn bench_minifier(criterion: &mut Criterion) {
                 let mut program = transform_to_js(&allocator, source_text, source_type, path);
                 let options = MinifierOptions {
                     compress: Some(CompressOptions::smallest()),
-                    mangle: Some(MangleOptions::default()),
+                    mangle: None,
                     mangle_properties: Some(ManglePropertiesOptions {
                         mangle: Some(prop_regex.clone()),
                         mangle_quoted: true,
