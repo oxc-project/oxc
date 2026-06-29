@@ -39,7 +39,7 @@ pub(super) fn format_css_doc<'a>(
 
         let allocator = f.allocator();
         let group_id_builder = f.group_id_builder();
-        let Some(Ok(result)) = f.context().external_callbacks().dispatch_embedded(
+        let Some(Ok(mut result)) = f.context().external_callbacks().dispatch_embedded(
             allocator,
             group_id_builder,
             "css",
@@ -47,6 +47,7 @@ pub(super) fn format_css_doc<'a>(
         ) else {
             return false;
         };
+        result.remap_tailwind_into(f.context_mut());
         let Some(ir) = result.into_single_doc() else {
             return false;
         };
@@ -75,7 +76,7 @@ pub(super) fn format_css_doc<'a>(
     // Phase 2: Format via the dispatcher (IR path)
     let allocator = f.allocator();
     let group_id_builder = f.group_id_builder();
-    let Some(Ok(result)) = f.context().external_callbacks().dispatch_embedded(
+    let Some(Ok(mut result)) = f.context().external_callbacks().dispatch_embedded(
         allocator,
         group_id_builder,
         "css",
@@ -91,9 +92,6 @@ pub(super) fn format_css_doc<'a>(
     else {
         return false;
     };
-    let Some(ir) = result.into_single_doc() else {
-        return false;
-    };
 
     // Verify all placeholders survived SCSS formatting.
     // Some edge cases (e.g. `/* prettier-ignore */` before a placeholder without semicolon)
@@ -104,6 +102,11 @@ pub(super) fn format_css_doc<'a>(
     if placeholder_count != expressions.len() {
         return false;
     }
+
+    result.remap_tailwind_into(f.context_mut());
+    let Some(ir) = result.into_single_doc() else {
+        return false;
+    };
 
     // Phase 3: Replace placeholders in IR with expressions
     let indent_width = f.options().indent_width;

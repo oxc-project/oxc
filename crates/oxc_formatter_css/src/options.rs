@@ -51,6 +51,10 @@ pub struct CssFormatOptions {
     pub single_quote: SingleQuote,
     // Used by: SCSS (maps only)
     pub trailing_commas: TrailingCommas,
+    /// Collect `@apply` classes as `FormatElement::TailwindClass` for batch
+    /// sorting (the sort itself is host-supplied). Mirrors
+    /// `prettier-plugin-tailwindcss`'s CSS transform.
+    pub sort_tailwindcss: bool,
 }
 
 impl CssFormatOptions {

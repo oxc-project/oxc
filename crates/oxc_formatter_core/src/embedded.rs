@@ -60,6 +60,11 @@ pub struct DispatchResult<'a> {
     /// One IR per input text (usually one; GraphQL returns one per quasi).
     /// Each IR is arena-allocated alongside its elements.
     pub docs: Vec<ArenaVec<'a, FormatElement<'a>>>,
+    /// Pre-sort Tailwind classes referenced by the docs'
+    /// `FormatElement::TailwindClass` indices (0-based, local to this result).
+    /// The receiving parent MUST merge them into its own class space via
+    /// [`Self::remap_tailwind_into`] — the printer asserts on dangling indices.
+    pub tailwind_classes: Vec<String>,
     /// Child→parent language-specific metadata; the parent downcasts it
     /// (e.g. placeholder survival counts for CSS/HTML).
     pub meta: Option<Box<dyn Any>>,
@@ -71,21 +76,50 @@ impl<'a> DispatchResult<'a> {
     pub fn into_single_doc(self) -> Option<ArenaVec<'a, FormatElement<'a>>> {
         self.docs.into_iter().next()
     }
-}
 
-/// Collector sharing one Tailwind class index space across embedded boundaries.
-///
-/// `FormatElement::TailwindClass(usize)` holds pre-sort class strings by index;
-/// sorting happens in one batch after the entry formatter completes. Parent and
-/// child must allocate indices from the same collector to avoid collisions.
-pub trait TailwindCollector {
-    /// Register a class string, returning its index in the shared space.
-    fn add_class(&mut self, class: String) -> usize;
-}
-
-/// No-op collector for languages without Tailwind support (JSON, GraphQL, …).
-impl TailwindCollector for () {
-    fn add_class(&mut self, _class: String) -> usize {
-        0
+    /// Move the child's pre-sort Tailwind classes into the parent's class
+    /// space and shift the docs' `TailwindClass` indices to match.
+    ///
+    /// Call this once per received dispatch result (a no-op when the child
+    /// collected nothing). The entry formatter's document then sorts all
+    /// collected classes in one host-supplied batch.
+    pub fn remap_tailwind_into(&mut self, collector: &mut dyn TailwindCollector) {
+        let mut classes = std::mem::take(&mut self.tailwind_classes).into_iter();
+        let Some(first) = classes.next() else {
+            return;
+        };
+        // The collector hands out consecutive indices, so the first one is
+        // the base offset for every local index.
+        let base = collector.add_class(first);
+        for class in classes {
+            collector.add_class(class);
+        }
+        for doc in &mut self.docs {
+            for element in doc.iter_mut() {
+                if let FormatElement::TailwindClass(index) = element {
+                    *index += base;
+                }
+            }
+        }
     }
+}
+
+/// Index-space provider for batched Tailwind class sorting.
+///
+/// `FormatElement::TailwindClass(usize)` holds pre-sort class strings by
+/// index; sorting happens in one host-supplied batch when the entry
+/// formatter's document is finalized. A child formatter collects classes
+/// locally (0-based) and returns them in [`DispatchResult::tailwind_classes`];
+/// the receiving parent implements this trait on its format context and
+/// merges them with [`DispatchResult::remap_tailwind_into`].
+///
+/// NOTE: an alternative design — threading one shared collector through
+/// [`EmbeddedContext`] so children allocate parent indices directly — was
+/// considered and deferred: it needs interior mutability plumbing through
+/// every format context for no current gain. Revisit if deep embedding nests
+/// (e.g. css-in-html-in-js at plan Step 8/9) make per-boundary remapping
+/// burdensome.
+pub trait TailwindCollector {
+    /// Register a class string, returning its index in the collector's space.
+    fn add_class(&mut self, class: String) -> usize;
 }

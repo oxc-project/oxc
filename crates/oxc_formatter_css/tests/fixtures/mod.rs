@@ -92,7 +92,7 @@ impl FixtureFormatter for CssHarness {
         }
 
         let allocator = Allocator::default();
-        format(&allocator, source, options)
+        format(&allocator, source, options, None)
             .expect("format should succeed")
             .print()
             .expect("print should succeed")
@@ -113,7 +113,7 @@ fn format_embedded(source: &str, options: CssFormatOptions) -> String {
         dispatcher: None,
     };
     let elements =
-        oxc_formatter_css::format_to_ir(&ctx, source, options).expect("format should succeed");
+        oxc_formatter_css::format_to_ir(&ctx, source, options).expect("format should succeed").0;
     let document = Document::new(elements, Vec::new());
     document.propagate_expand();
     let (elements, tailwind_classes) = document.into_elements_and_tailwind_classes();
@@ -170,6 +170,9 @@ fn parse_error_is_err() {
         // (postcss-selector-parser accepts and lowercases it).
         ("a:nth-child(2N-1) { color: red; }", css),
     ] {
-        assert!(format(&allocator, source, options).is_err(), "{source:?} should fail to format");
+        assert!(
+            format(&allocator, source, options, None).is_err(),
+            "{source:?} should fail to format"
+        );
     }
 }

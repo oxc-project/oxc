@@ -55,7 +55,7 @@ pub(super) fn format_html_doc<'a>(
 
         let allocator = f.allocator();
         let group_id_builder = f.group_id_builder();
-        let Some(Ok(result)) = f.context().external_callbacks().dispatch_embedded(
+        let Some(Ok(mut result)) = f.context().external_callbacks().dispatch_embedded(
             allocator,
             group_id_builder,
             embedded_language,
@@ -63,6 +63,10 @@ pub(super) fn format_html_doc<'a>(
         ) else {
             return false;
         };
+        // No-op today (the Prettier Doc path never carries classes), but the
+        // boundary contract is "merge at every embed site" — a Rust HTML
+        // formatter collecting `class` attributes will rely on this.
+        result.remap_tailwind_into(f.context_mut());
         let Some(html_has_multiple_root_elements) = result
             .meta
             .as_ref()
@@ -115,7 +119,7 @@ pub(super) fn format_html_doc<'a>(
     // Phase 2: Format via the dispatcher (IR path)
     let allocator = f.allocator();
     let group_id_builder = f.group_id_builder();
-    let Some(Ok(result)) = f.context().external_callbacks().dispatch_embedded(
+    let Some(Ok(mut result)) = f.context().external_callbacks().dispatch_embedded(
         allocator,
         group_id_builder,
         embedded_language,
@@ -134,6 +138,8 @@ pub(super) fn format_html_doc<'a>(
         // but it also requires placeholder replacement, which is non-trivial.
         return format_js_in_html_as_fallback(joined, &expressions, f);
     };
+    // See the Phase 0 note: no-op today, load-bearing once HTML is Rust.
+    result.remap_tailwind_into(f.context_mut());
     let Some((placeholder_count, html_has_multiple_root_elements)) = result
         .meta
         .as_ref()

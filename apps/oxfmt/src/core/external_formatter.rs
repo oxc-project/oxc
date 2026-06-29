@@ -260,6 +260,8 @@ impl ExternalFormatter {
         let embedded_callback: Option<EmbeddedFormatterCallback> = if needs_embedded {
             let format_embedded = Arc::clone(&self.format_embedded);
             let options_for_embedded = options.clone();
+            let sort_tailwind =
+                tailwind_enabled.then(|| Arc::clone(&self.sort_tailwindcss_classes));
             Some(Arc::new(move |language: &str, code: &str| {
                 // Rust implementations first (JSDoc fenced code blocks).
                 // Unlike the dispatcher there is NO Prettier fallback: on `Err`
@@ -269,11 +271,18 @@ impl ExternalFormatter {
                     "graphql" | "gql" => {
                         return format_graphql_embedded(code, graphql_options);
                     }
-                    // `@apply` class sorting only happens in
-                    // `prettier-plugin-tailwindcss`, so css must stay on the
-                    // Prettier path while it is enabled.
-                    "css" | "scss" | "less" if !tailwind_enabled => {
-                        return format_css_embedded(code, language, css_options);
+                    "css" | "scss" | "less" => {
+                        // `options_for_embedded` already carries the Tailwind
+                        // plugin payload (filepath, config paths) the JS-side
+                        // sorter resolves the class order from.
+                        return match &sort_tailwind {
+                            Some(sort) => {
+                                let sorter =
+                                    |classes: Vec<String>| sort(&options_for_embedded, classes);
+                                format_css_embedded(code, language, css_options, Some(&sorter))
+                            }
+                            None => format_css_embedded(code, language, css_options, None),
+                        };
                     }
                     _ => {}
                 }
@@ -310,8 +319,6 @@ impl ExternalFormatter {
         // Rust implementations replace branches one by one;
         // the rest go through the Prettier Doc→IR fallback.
         let dispatcher: Option<FormatDispatcher> = if needs_embedded {
-            // `@apply` class sorting only happens in `prettier-plugin-tailwindcss`,
-            // so css-in-js must stay on the Prettier path while it is enabled.
             let prettier_fallback =
                 build_prettier_fallback(Arc::clone(&self.format_embedded_doc), options.clone());
             Some(Arc::new(
@@ -335,7 +342,7 @@ impl ExternalFormatter {
                         // value/selector position (plan Step 6), this is a pure
                         // safety net: what still errors is garbage that
                         // Prettier's embed cannot format either.
-                        "css" | "scss" | "less" if !tailwind_enabled => {
+                        "css" | "scss" | "less" => {
                             format_css_to_irs(ctx, texts, css_options).or_else(|err| {
                                 debug!(
                                     "`oxc_formatter_css` failed, falling back to Prettier: {err}"
@@ -413,6 +420,7 @@ fn format_css_embedded(
     code: &str,
     language: &str,
     options: CssFormatOptions,
+    sorter: Option<oxc_formatter_css::TailwindSorter<'_>>,
 ) -> Result<String, String> {
     debug_span!("oxfmt::external::format_css_embedded", language = language).in_scope(|| {
         let variant = match language {
@@ -422,8 +430,8 @@ fn format_css_embedded(
         };
         let options = CssFormatOptions { variant, ..options };
         let allocator = Allocator::default();
-        let formatted =
-            oxc_formatter_css::format(&allocator, code, options).map_err(|err| err.to_string())?;
+        let formatted = oxc_formatter_css::format(&allocator, code, options, sorter)
+            .map_err(|err| err.to_string())?;
         print_embedded_block(formatted)
     })
 }
@@ -466,7 +474,7 @@ fn format_graphql_to_irs<'a>(
             })
         })
         .collect::<Result<Vec<_>, String>>()?;
-    Ok(DispatchResult { docs, meta: None })
+    Ok(DispatchResult { docs, tailwind_classes: Vec::new(), meta: None })
 }
 
 /// Format the single joined CSS text (placeholders included) via
@@ -489,7 +497,7 @@ fn format_css_to_irs<'a>(
         return Err(format!("CSS dispatch expects exactly one text, got {}", texts.len()));
     };
     debug_span!("oxfmt::external::format_css_to_ir").in_scope(|| {
-        let mut ir =
+        let (mut ir, tailwind_classes) =
             oxc_formatter_css::format_to_ir(ctx, text, options).map_err(|err| err.to_string())?;
         let placeholder_count = from_prettier_doc::merge_texts_and_count_css_placeholders(
             &mut ir,
@@ -498,6 +506,7 @@ fn format_css_to_irs<'a>(
         );
         Ok(DispatchResult {
             docs: vec![ir],
+            tailwind_classes,
             meta: Some(Box::new(CssEmbedMeta { placeholder_count })),
         })
     })

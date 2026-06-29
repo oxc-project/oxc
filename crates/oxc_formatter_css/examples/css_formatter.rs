@@ -27,7 +27,7 @@ fn main() {
     let options = CssFormatOptions { variant, ..CssFormatOptions::default() };
 
     let allocator = Allocator::new();
-    match format(&allocator, &source_text, options) {
+    match format(&allocator, &source_text, options, None) {
         Ok(formatted) => {
             if std::env::var("DUMP_IR").is_ok() {
                 for el in formatted.document().elements() {

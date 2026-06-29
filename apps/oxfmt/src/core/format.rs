@@ -73,8 +73,8 @@ pub enum FormatStrategy {
     },
     /// For CSS/SCSS/Less files formatted by `oxc_formatter_css`.
     /// Parse errors are surfaced as diagnostics — no Prettier fallback.
-    /// `config` is retained (napi only) solely to route to Prettier up front
-    /// when it enables Tailwind class sorting (not implemented in Rust yet).
+    /// `config` is retained (napi only) to build the JS-side Tailwind class
+    /// sorter options when Tailwind sorting is enabled.
     OxcFormatterCss {
         path: Arc<Path>,
         format_options: Box<CssFormatOptions>,
@@ -494,9 +494,10 @@ impl SourceFormatter {
     /// (e.g. IE star hacks). Both the napi and pure builds report the
     /// diagnostic as-is.
     ///
-    /// When the config enables Tailwind class sorting (`@apply` sorting lives in
-    /// `prettier-plugin-tailwindcss`, not implemented in Rust yet), the napi
-    /// build routes to Prettier up front to keep the sorting behavior.
+    /// When the config enables Tailwind class sorting, the napi build passes
+    /// a JS-side sorter for the `@apply` classes the formatter collects
+    /// (the order itself comes from the Tailwind config, which only the JS
+    /// side can resolve). The pure build never collects classes.
     #[instrument(level = "debug", name = "oxfmt::format::oxc_formatter_css", skip_all)]
     fn format_by_oxc_formatter_css(
         &self,
@@ -506,25 +507,17 @@ impl SourceFormatter {
         #[cfg(feature = "napi")] config: &FormatConfig,
     ) -> Result<String, OxcDiagnostic> {
         #[cfg(feature = "napi")]
-        if config.is_tailwind_enabled() {
-            let parser_name = match format_options.variant {
-                CssVariant::Css => "css",
-                CssVariant::Scss => "scss",
-                CssVariant::Less => "less",
-            };
-            return self.format_by_external_formatter(
-                source_text,
-                path,
-                parser_name,
-                config,
-                /* supports_tailwind */ true,
-                /* supports_oxfmt */ false,
-                /* supports_svelte */ false,
-            );
-        }
+        let sorter = self.tailwind_sorter(config, path);
+        #[cfg(not(feature = "napi"))]
+        let sorter: Option<fn(Vec<String>) -> Vec<String>> = None;
 
         let allocator = self.allocator_pool.get();
-        let formatted = oxc_formatter_css::format(&allocator, source_text, format_options)?;
+        let formatted = oxc_formatter_css::format(
+            &allocator,
+            source_text,
+            format_options,
+            sorter.as_ref().map(|s| s as &dyn Fn(Vec<String>) -> Vec<String>),
+        )?;
         let printed = formatted.print().map_err(|err| {
             OxcDiagnostic::error(format!(
                 "Failed to print formatted CSS: {}\n{err}",
@@ -558,6 +551,34 @@ impl SourceFormatter {
         self
     }
 
+    /// Build the Prettier options JSON shared by the embedded callbacks and
+    /// the Tailwind sorter: resolved config + `filepath` + the Tailwind
+    /// plugin payload (which the JS-side sorter resolves the class order from).
+    fn build_external_options(config: &FormatConfig, path: &Path) -> serde_json::Value {
+        let mut external_options = to_prettier(config);
+        inject_filepath(&mut external_options, path);
+        inject_tailwind_plugin_payload(&mut external_options, config);
+        external_options
+    }
+
+    /// Build the JS-side Tailwind class sorter for `oxc_formatter_css`'s
+    /// `@apply` collection, or `None` when the config does not enable it.
+    fn tailwind_sorter(
+        &self,
+        config: &FormatConfig,
+        path: &Path,
+    ) -> Option<impl Fn(Vec<String>) -> Vec<String>> {
+        config.is_tailwind_enabled().then(|| {
+            let external_formatter = self
+                .external_formatter
+                .as_ref()
+                .expect("`external_formatter` must exist when `napi` feature is enabled");
+            let sort = std::sync::Arc::clone(&external_formatter.sort_tailwindcss_classes);
+            let external_options = Self::build_external_options(config, path);
+            move |classes: Vec<String>| sort(&external_options, classes)
+        })
+    }
+
     /// Build external callbacks for `oxc_formatter` from the NAPI external formatter.
     ///
     /// Tailwind is always considered "capable" here because `oxc_formatter`
@@ -574,9 +595,7 @@ impl SourceFormatter {
             .as_ref()
             .expect("`external_formatter` must exist when `napi` feature is enabled");
 
-        let mut external_options = to_prettier(config);
-        inject_filepath(&mut external_options, path);
-        inject_tailwind_plugin_payload(&mut external_options, config);
+        let external_options = Self::build_external_options(config, path);
 
         // Dual mapping of the same resolved config for the dispatcher's Rust branches.
         // Cannot fail here: building `JsFormatOptions` from this config already succeeded,

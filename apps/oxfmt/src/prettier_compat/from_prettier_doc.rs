@@ -68,7 +68,7 @@ pub fn to_format_elements_for_template<'a>(
                     Ok(ir)
                 })
                 .collect::<Result<Vec<_>, String>>()?;
-            Ok(DispatchResult { docs: irs, meta: None })
+            Ok(DispatchResult { docs: irs, tailwind_classes: Vec::new(), meta: None })
         }
         "css" => {
             let (mut ir, _) = convert(
@@ -85,6 +85,9 @@ pub fn to_format_elements_for_template<'a>(
             );
             Ok(DispatchResult {
                 docs: vec![ir],
+                // Prettier's plugin sorts `@apply` in-place during its own
+                // formatting, so the Doc path never carries classes to remap.
+                tailwind_classes: Vec::new(),
                 meta: Some(Box::new(CssEmbedMeta { placeholder_count })),
             })
         }
@@ -105,6 +108,7 @@ pub fn to_format_elements_for_template<'a>(
             );
             Ok(DispatchResult {
                 docs: vec![ir],
+                tailwind_classes: Vec::new(),
                 meta: Some(Box::new(HtmlEmbedMeta {
                     placeholder_count,
                     has_multiple_root_elements: html_has_multiple_root_elements,
@@ -124,7 +128,7 @@ pub fn to_format_elements_for_template<'a>(
                 TemplateEscape::RawBacktick,
                 None,
             );
-            Ok(DispatchResult { docs: vec![ir], meta: None })
+            Ok(DispatchResult { docs: vec![ir], tailwind_classes: Vec::new(), meta: None })
         }
         _ => unreachable!("Unsupported embedded_doc language: {language}"),
     }

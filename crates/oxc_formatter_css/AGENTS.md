@@ -18,6 +18,22 @@ Prettier compatible CSS/SCSS/Less formatter, using the `oxc_formatter_core` APIs
     decisions, do not invent new ones
 - Two entry points: `format()` (standalone) and `format_to_ir()` (embedded/dispatcher)
 
+### Tailwind `@apply` sorting (`CssFormatOptions::sort_tailwindcss`)
+
+Ports prettier-plugin-tailwindcss's `transformCss`: the ONLY CSS construct it
+sorts is `@apply` params (`name == "apply"`, case-sensitive). This crate only
+COLLECTS — `write_apply_prelude` (at_rule.rs) splits off the `!important` tail
+(`/\s+(?:!important|#{(['"]*)!important\1})\s*$/`, see `split_important_tail`)
+and Less `~"..."` wrappers, then emits the class list as one
+`FormatElement::TailwindClass(index)`. Sorting (order, dedup, whitespace
+collapse, `{{` skip) is the host-supplied sorter's job: `format()` takes an
+`Option<TailwindSorter>` and bakes the result into the `Document`;
+`format_to_ir()` returns `(IR, Vec<String>)` and the classes travel to the
+parent in `DispatchResult::tailwind_classes`, where the parent merges them
+with `DispatchResult::remap_tailwind_into` (a dangling index trips a printer
+debug_assert). Params containing comments fall back to the normal printers
+(sorting would corrupt them).
+
 ### Error semantics
 
 `format()` / `format_to_ir()` return `Err` on ANY parse error, including

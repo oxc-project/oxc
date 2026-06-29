@@ -40,7 +40,7 @@ fn main() {
     };
 
     match format_to_ir(&ctx, &source_text, options) {
-        Ok(elements) => {
+        Ok((elements, _tailwind_classes)) => {
             let document = Document::new(elements, Vec::new());
             document.propagate_expand();
             if std::env::var("DUMP_IR").is_ok() {

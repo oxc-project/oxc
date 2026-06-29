@@ -487,7 +487,8 @@ impl TestRunner {
 
     fn run_css_formatter(source_text: &str, format_options: CssFormatOptions) -> Option<String> {
         let allocator = Allocator::default();
-        let formatted = oxc_formatter_css::format(&allocator, source_text, format_options).ok()?;
+        let formatted =
+            oxc_formatter_css::format(&allocator, source_text, format_options, None).ok()?;
         let printed = formatted.print().ok()?;
         Some(printed.into_code())
     }

@@ -7,7 +7,8 @@
 //! use oxc_formatter_css::{CssFormatOptions, format};
 //!
 //! let allocator = Allocator::new();
-//! let formatted = format(&allocator, "a { color: red }", CssFormatOptions::default()).unwrap();
+//! let formatted =
+//!     format(&allocator, "a { color: red }", CssFormatOptions::default(), None).unwrap();
 //! let out = formatted.print().unwrap().into_code();
 //! assert_eq!(out, "a {\n  color: red;\n}\n");
 //! ```
@@ -33,6 +34,6 @@ pub const TEMPLATE_PLACEHOLDER_SUFFIX: &str = "-id";
 
 pub use crate::{
     context::CssFormatContext,
-    format::{format, format_to_ir},
+    format::{TailwindSorter, format, format_to_ir},
     options::{CssFormatOptions, CssVariant, SingleQuote, TrailingCommas},
 };

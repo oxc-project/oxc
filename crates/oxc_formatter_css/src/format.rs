@@ -15,7 +15,15 @@ use crate::{
     print::{self, CssFormatter},
 };
 
+/// Host-supplied batch sorter for `@apply` Tailwind classes
+/// (one pre-sort string in, one sorted string out, index-aligned).
+pub type TailwindSorter<'s> = &'s dyn Fn(Vec<String>) -> Vec<String>;
+
 /// Parse `source_text` as a stylesheet and build its formatter IR.
+///
+/// `sort_tailwind_classes` sorts the `@apply` classes collected when
+/// [`CssFormatOptions::sort_tailwindcss`] is on; `None` (or an unset option)
+/// prints them as-is.
 ///
 /// # Errors
 /// Returns an [`OxcDiagnostic`] when the parse produces any error, including
@@ -27,6 +35,7 @@ pub fn format<'a>(
     allocator: &'a Allocator,
     source_text: &str,
     options: CssFormatOptions,
+    sort_tailwind_classes: Option<TailwindSorter<'_>>,
 ) -> Result<Formatted<'a, CssFormatContext<'a>>, OxcDiagnostic> {
     let has_bom = source_text.starts_with('\u{feff}');
     let (stylesheet, source, comments) =
@@ -41,9 +50,15 @@ pub fn format<'a>(
     write!(&mut buffer, FormatCssRoot { stylesheet: &stylesheet, has_bom, front_matter });
 
     let elements = buffer.into_vec();
-    let context = state.into_context();
+    let mut context = state.into_context();
 
-    let ir = Document::new(elements, Vec::new());
+    let tailwind_classes = context.take_tailwind_classes();
+    let sorted_tailwind_classes = match sort_tailwind_classes {
+        Some(sorter) if !tailwind_classes.is_empty() => sorter(tailwind_classes),
+        _ => tailwind_classes,
+    };
+
+    let ir = Document::new(elements, sorted_tailwind_classes);
     ir.propagate_expand();
 
     Ok(Formatted::new(ir, context))
@@ -57,13 +72,19 @@ pub fn format<'a>(
 /// - emits neither a BOM nor the trailing newline
 /// - skips `propagate_expand()`, which the parent runs on the merged document
 ///
+/// Also returns the pre-sort `@apply` Tailwind classes the IR's
+/// `TailwindClass(index)` elements refer to (empty unless
+/// [`CssFormatOptions::sort_tailwindcss`] is on). The parent document owns
+/// the batch sort, so the caller must re-index the elements into the parent's
+/// class space (e.g. `oxc_formatter`'s CSS embed via `CssEmbedMeta`).
+///
 /// # Errors
 /// Same as [`format()`].
 pub fn format_to_ir<'a>(
     ctx: &EmbeddedContext<'a, '_>,
     source_text: &str,
     options: CssFormatOptions,
-) -> Result<ArenaVec<'a, FormatElement<'a>>, OxcDiagnostic> {
+) -> Result<(ArenaVec<'a, FormatElement<'a>>, Vec<String>), OxcDiagnostic> {
     let allocator = ctx.allocator;
     // The dispatcher input substitutes `${}` interpolations with
     // `@prettier-placeholder-N-id` markers, which may sit in value or
@@ -78,7 +99,10 @@ pub fn format_to_ir<'a>(
 
     write!(&mut buffer, FormatCssEmbedded { stylesheet: &stylesheet });
 
-    Ok(buffer.into_vec())
+    let elements = buffer.into_vec();
+    let tailwind_classes = state.context_mut().take_tailwind_classes();
+
+    Ok((elements, tailwind_classes))
 }
 
 /// Parse the source into an AST and collect comments, bailing out on any error.

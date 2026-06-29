@@ -3,7 +3,7 @@
 
 use cow_utils::CowUtils;
 use oxc_formatter_core::{
-    Buffer,
+    Buffer, FormatElement,
     builders::{empty_line, group, hard_line_break, indent, soft_line_break_or_space, space, text},
     write,
 };
@@ -60,6 +60,24 @@ pub fn write_at_rule<'a>(at_rule: &AtRule<'a>, f: &mut CssFormatter<'_, 'a>) {
         .comments()
         .peek()
         .is_some_and(|c| c.span.start >= name_span.end && c.span.end <= region_end);
+
+    // `@apply` with Tailwind sorting enabled: the class list becomes one
+    // `TailwindClass` element, sorted in a host-supplied batch after IR
+    // construction (mirrors prettier-plugin-tailwindcss's `transformCss`,
+    // which matches `name === "apply"` case-sensitively). Params containing
+    // comments are left to the normal printers — sorting would corrupt them.
+    if f.options().sort_tailwindcss
+        && at_rule.name.raw == "apply"
+        && at_rule.block.is_none()
+        && !has_params_comments
+        && let Some(prelude) = &at_rule.prelude
+    {
+        let prelude_span = to_span(prelude.span());
+        if write_apply_prelude(source.text_for(&prelude_span), f) {
+            write!(f, ";");
+            return;
+        }
+    }
     // `//` comments have their own layout rules (e.g. less `selector(...)`)
     // handled by the structural printers below.
     let has_inline_params_comment = f
@@ -177,6 +195,66 @@ pub fn write_at_rule<'a>(at_rule: &AtRule<'a>, f: &mut CssFormatter<'_, 'a>) {
     } else {
         write!(f, ";");
     }
+}
+
+/// Emits `@apply` params with the sortable class list as a single
+/// `FormatElement::TailwindClass`. Returns `false` (nothing written) when
+/// there is nothing sortable, leaving the caller on the normal path.
+///
+/// Ports prettier-plugin-tailwindcss's `transformCss` pre-processing; the
+/// sorter itself (ordering, dedup, whitespace collapse) is host-supplied:
+/// - a `!important` tail (incl. SCSS `#{!important}` interpolation forms)
+///   is kept out of the sortable part and re-attached verbatim
+/// - a Less `~"..."` / `~'...'` escaped-string wrapper is kept and only the
+///   inside is sorted (and a `!important` inside it is NOT special)
+fn write_apply_prelude<'a>(raw: &'a str, f: &mut CssFormatter<'_, 'a>) -> bool {
+    let raw = raw.trim();
+
+    let (wrapper, class_list, important_tail) =
+        if let Some(inner) = raw.strip_prefix("~\"").and_then(|r| r.strip_suffix('"')) {
+            (Some("\""), inner, None)
+        } else if let Some(inner) = raw.strip_prefix("~'").and_then(|r| r.strip_suffix('\'')) {
+            (Some("'"), inner, None)
+        } else {
+            match split_important_tail(raw) {
+                Some((classes, tail)) => (None, classes, Some(tail)),
+                None => (None, raw, None),
+            }
+        };
+
+    let class_list = class_list.trim();
+    if class_list.is_empty() {
+        return false;
+    }
+
+    write!(f, space());
+    if let Some(quote) = wrapper {
+        write!(f, "~");
+        write!(f, text(quote));
+    }
+    let index = f.context_mut().add_tailwind_class(class_list.to_string());
+    f.write_element(FormatElement::TailwindClass(index));
+    if let Some(quote) = wrapper {
+        write!(f, text(quote));
+    }
+    if let Some(tail) = important_tail {
+        write!(f, [space(), text(tail)]);
+    }
+    true
+}
+
+/// Splits off the `!important` tail the Tailwind plugin ignores when sorting:
+/// `/\s+(?:!important|#{(['"]*)!important\1})\s*$/` (whitespace before the
+/// tail is required; matching is case-sensitive like the plugin's).
+/// Returns `(class part, tail text)` when present.
+fn split_important_tail(raw: &str) -> Option<(&str, &str)> {
+    let trimmed = raw.trim_end();
+    ["!important", "#{!important}", "#{'!important'}", "#{\"!important\"}"].iter().find_map(
+        |tail| {
+            let classes = trimmed.strip_suffix(tail)?;
+            classes.ends_with(char::is_whitespace).then_some((classes, *tail))
+        },
+    )
 }
 
 /// `@prettier-placeholder-N-id` at-rule body: verbatim prelude, source-driven
@@ -1551,5 +1629,31 @@ fn write_supports_in_parens<'a>(in_parens: &SupportsInParens<'a>, f: &mut CssFor
             let func_value = raffia::ast::ComponentValue::Function(func.clone());
             value::write_component_value(&func_value, ValueContext::default(), f);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::split_important_tail;
+
+    #[test]
+    fn important_tail_forms() {
+        // Plugin regex: /\s+(?:!important|#{(['"]*)!important\1})\s*$/
+        assert_eq!(split_important_tail("p-4 flex !important"), Some(("p-4 flex ", "!important")));
+        assert_eq!(split_important_tail("p-4 #{!important}"), Some(("p-4 ", "#{!important}")));
+        assert_eq!(split_important_tail("p-4 #{'!important'}"), Some(("p-4 ", "#{'!important'}")));
+        assert_eq!(
+            split_important_tail("p-4 #{\"!important\"}"),
+            Some(("p-4 ", "#{\"!important\"}"))
+        );
+        // Trailing whitespace after the tail is fine (`\s*$`).
+        assert_eq!(split_important_tail("p-4 !important  "), Some(("p-4 ", "!important")));
+        // Whitespace BEFORE the tail is required (`\s+`).
+        assert_eq!(split_important_tail("p-4!important"), None);
+        assert_eq!(split_important_tail("!important"), None);
+        // Case-sensitive, like the plugin.
+        assert_eq!(split_important_tail("p-4 !IMPORTANT"), None);
+        // Not at the end -> not a tail.
+        assert_eq!(split_important_tail("p-4 !important flex"), None);
     }
 }
