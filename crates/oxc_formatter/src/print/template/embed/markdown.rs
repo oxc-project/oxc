@@ -40,12 +40,15 @@ pub(super) fn try_embed_markdown<'a>(
     ) else {
         return false;
     };
-    let Some(ir) = result.into_single_doc() else {
+    let Some(mut ir) = result.into_single_doc() else {
         return false;
     };
 
-    // Phase 4: Re-escape backticks in the IR (`escapeTemplateCharacters(doc, true)`)
-    // This is already handled by  oxfmt `prettier_compat/from_prettier_doc.rs`
+    // Phase 4: Re-escape backticks in the IR (`escapeTemplateCharacters(doc, true)`).
+    // Markdown uses `.raw` quasi values, so only backticks need raw-style escaping
+    // (template chars `${` / `\` are passed through verbatim).
+    // https://github.com/prettier/prettier/blob/90983f40dce5e20beea4e5618b5e0426a6a7f4f0/src/language-js/embed/markdown.js#L24
+    super::escape_backticks_raw_in_ir(&mut ir, allocator, f.options().indent_width);
 
     // Phase 5: Layout
     // https://github.com/prettier/prettier/blob/90983f40dce5e20beea4e5618b5e0426a6a7f4f0/src/language-js/embed/markdown.js#L24-L29

@@ -39,9 +39,8 @@ formatter's IR be built inside another's document (e.g. graphql-in-js):
 - Parent and child share one arena and one `GroupId` space through `EmbeddedContext`
 - A language crate's `format_to_ir` entry returns `EmbeddedIr` (IR + pre-sort
   Tailwind classes) — one shape for every child language, no per-crate tuples
-- Cross-language contract data is first-class on `DispatchResult`
-  (`tailwind_classes`, `placeholder_count`); only truly language-pair specific
-  data crosses as `dyn Any` (e.g. HTML's `has_multiple_root_elements`) —
+- Cross-language contract data is first-class on `DispatchResult` (`tailwind_classes`);
+  only truly language-pair specific data crosses as `dyn Any` (e.g. HTML's `has_multiple_root_elements`),
   core never learns concrete languages
 
 ### What belongs in core (the boundary)

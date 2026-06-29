@@ -107,19 +107,25 @@ pub(super) fn format_graphql_doc<'a>(
 
     // Phase 3: Build `ir_parts` by mapping formatted results back to original indices.
     // Use `into_iter` to take ownership and avoid cloning.
+    // The IR is re-inserted into a JS template literal built from `.cooked` values,
+    // so template-literal characters (`` ` ``, `${`, `\`) are re-escaped here
+    // for both dispatcher returned IRs and manually built comment-only IRs.
+    let allocator = f.allocator();
+    let indent_width = f.options().indent_width;
     let mut irs_iter = all_irs.into_iter();
     let mut ir_parts: Vec<Option<ArenaVec<'a, FormatElement<'a>>>> = Vec::with_capacity(num_quasis);
     for (idx, info) in infos.iter().enumerate() {
-        if format_index_map[idx].is_some() {
-            ir_parts.push(irs_iter.next());
+        let mut ir = if format_index_map[idx].is_some() {
+            irs_iter.next()
         } else if info.comments_only {
-            // Build IR for comment-only quasis manually
-            let comment_ir =
-                build_graphql_comment_ir(info.text, f.allocator(), f.options().indent_width);
-            ir_parts.push(comment_ir);
+            build_graphql_comment_ir(info.text, allocator, indent_width)
         } else {
-            ir_parts.push(None);
+            None
+        };
+        if let Some(ir) = ir.as_mut() {
+            super::escape_template_chars_in_ir(ir, allocator, indent_width);
         }
+        ir_parts.push(ir);
     }
 
     // Collect expressions via AstNode-aware iterator

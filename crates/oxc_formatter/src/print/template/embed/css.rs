@@ -14,6 +14,7 @@ use crate::{
 // Backtick is invalid SCSS (the variant the dispatcher formats as),
 // so the marker is unmistakably out-of-band.
 // NOTE: Keep these in sync with `oxc_formatter_css`'s.
+// Or pass it from the dispatcher?
 const PLACEHOLDER_PREFIX: &str = "`PLACEHOLDER-";
 const PLACEHOLDER_SUFFIX: &str = "`";
 
@@ -96,7 +97,8 @@ pub(super) fn format_css_doc<'a>(
     ) else {
         return false;
     };
-    let Some(placeholder_count) = result.placeholder_count else {
+    result.remap_tailwind_into(f.context_mut());
+    let Some(ir) = result.into_single_doc() else {
         return false;
     };
 
@@ -106,14 +108,25 @@ pub(super) fn format_css_doc<'a>(
     // In that case, fall back to regular template formatting
     // (same behavior as Prettier's `replacePlaceholders()` returning `null`).
     // https://github.com/prettier/prettier/blob/90983f40dce5e20beea4e5618b5e0426a6a7f4f0/src/language-js/embed/css.js#L42
+    //
+    // Surviving placeholders come in two forms:
+    // - typed `EmbedPlaceholder` markers (the main path)
+    // - sentinels that stayed inside verbatim `Text` because a lexical context
+    //   (string / `url()`) keeps them opaque to the CSS lexer
+    // The Phase 3 substitution below handles both kinds, so we count both here.
+    let placeholder_count: usize = ir
+        .iter()
+        .map(|el| match el {
+            FormatElement::EmbedPlaceholder(_) => 1,
+            FormatElement::Text { text, .. } => {
+                super::count_placeholders(text, PLACEHOLDER_PREFIX, PLACEHOLDER_SUFFIX)
+            }
+            _ => 0,
+        })
+        .sum();
     if placeholder_count != expressions.len() {
         return false;
     }
-
-    result.remap_tailwind_into(f.context_mut());
-    let Some(ir) = result.into_single_doc() else {
-        return false;
-    };
 
     // Phase 3: Replace each `${exprN}` placeholder with the formatted expression.
     // Two kinds survive SCSS formatting:

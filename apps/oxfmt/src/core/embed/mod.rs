@@ -4,29 +4,18 @@
 //! (`EmbeddedContext`, `FormatDispatcher`, `DispatchResult`, `TailwindCollector`);
 //! this module is its concrete counterpart owned by the orchestrator (Oxfmt).
 //!
-//! Layout:
-//! - [`postprocess`]: IR post-pass utilities shared between Doc-path and Rust-path IRs
-//! - [`routing`]: language-aware routing for embedded IRs that come from the Prettier Doc path
 //! - [`string_channel`]: string-in/string-out channel
-//!   (JSDoc fenced blocks + html-in-js fallback)
+//!   - JSDoc fenced blocks + html-in-js fallback
+//!   - Standalone string formatting that re-embeds line-by-line
 //! - [`ir_channel`]: IR-in/IR-out channel
-//!   (css/graphql Rust paths + Prettier Doc→IR fallback)
-//!
-//! [`string_channel`] and [`ir_channel`] are two intentionally separate channels:
-//! - ir_channel: IR integration into the parent's arena / `GroupId` space (template literals)
-//! - string_channel: standalone string formatting that re-embeds line-by-line
-//!   (JSDoc fenced) or substitutes placeholders back (html-in-js fallback)
-//!
-//! Errors mean different things on each channel (template-as-is vs verbatim),
-//! and the escape / re-entry rules differ — they must not be merged.
+//!   - css/graphql-in-js Rust paths + Prettier Doc→IR fallback
+//!   - IR integration into the parent's arena / `GroupId` space (template literals)
 
 use std::sync::Arc;
 
 use serde_json::Value;
 
 pub mod ir_channel;
-pub mod postprocess;
-pub mod routing;
 pub mod string_channel;
 
 // --- Cross-module callback types ---

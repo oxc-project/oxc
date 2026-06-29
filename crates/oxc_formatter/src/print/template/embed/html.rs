@@ -75,9 +75,13 @@ pub(super) fn format_html_doc<'a>(
         else {
             return false;
         };
-        let Some(ir) = result.into_single_doc() else {
+        let Some(mut ir) = result.into_single_doc() else {
             return false;
         };
+
+        // Re-escape template chars in `Text` runs:
+        // the IR is reinserted into a JS template literal built from `.cooked` values.
+        super::escape_template_chars_in_ir(&mut ir, allocator, f.options().indent_width);
 
         let content = format_once(|f| f.write_elements(ir));
         let ws_ignore = f.options().html_whitespace_sensitivity_ignore;
@@ -138,11 +142,9 @@ pub(super) fn format_html_doc<'a>(
         // but it also requires placeholder replacement, which is non-trivial.
         return format_js_in_html_as_fallback(joined, &expressions, f);
     };
+
     // See the Phase 0 note: no-op today, load-bearing once HTML is Rust.
     result.remap_tailwind_into(f.context_mut());
-    let Some(placeholder_count) = result.placeholder_count else {
-        return false;
-    };
     let Some(html_has_multiple_root_elements) = result
         .meta
         .as_ref()
@@ -151,17 +153,30 @@ pub(super) fn format_html_doc<'a>(
     else {
         return false;
     };
-    let Some(ir) = result.into_single_doc() else {
+    let Some(mut ir) = result.into_single_doc() else {
         return false;
     };
 
-    // Verify all placeholders survived HTML formatting.
+    // Re-escape template chars in `Text` runs before counting / substituting:
+    // the IR is reinserted into a JS template literal built from `.cooked` values.
+    let indent_width = f.options().indent_width;
+    super::escape_template_chars_in_ir(&mut ir, allocator, indent_width);
+
+    // Verify all placeholders survived HTML formatting
+    let placeholder_count: usize = ir
+        .iter()
+        .map(|el| match el {
+            FormatElement::Text { text, .. } => {
+                super::count_placeholders(text, PLACEHOLDER_PREFIX, PLACEHOLDER_SUFFIX)
+            }
+            _ => 0,
+        })
+        .sum();
     if placeholder_count != expressions.len() {
         return false;
     }
 
     // Phase 3: Replace placeholders in IR with expressions
-    let indent_width = f.options().indent_width;
     let format_content = format_once(move |f: &mut JsFormatter<'_, 'a>| {
         for element in ir {
             match &element {

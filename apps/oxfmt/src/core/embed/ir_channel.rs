@@ -1,15 +1,9 @@
 //! IR-in/IR-out embedded channel.
 //!
-//! Builds the `FormatDispatcher` carried by `ExternalCallbacks`: each language
-//! is mapped to a Rust formatter where available (graphql/css), otherwise to
-//! the Prettier Doc→IR fallback. Results integrate into the parent's arena /
-//! `GroupId` space via [`EmbeddedContext`].
-//!
-//! Unlike [`super::string_channel`], errors here make the parent print the
-//! template literal as-is — the same behavior as Prettier's embed when it
-//! throws. No Prettier fallback for the Rust paths (graphql/css): the forks
-//! cover what Prettier accepts, so what still errors is genuinely broken
-//! input that Prettier's embed can't format either.
+//! Builds the `FormatDispatcher` carried by `ExternalCallbacks`:
+//! each language is mapped to a Rust formatter where available,
+//! otherwise to the Prettier Doc→IR fallback.
+//! Results integrate into the parent's arena / `GroupId` space via [`EmbeddedContext`].
 
 use std::sync::Arc;
 
@@ -17,18 +11,21 @@ use serde::Deserialize;
 use serde_json::Value;
 use tracing::{debug, debug_span};
 
+use oxc_allocator::{Allocator, ArenaStringBuilder, ArenaVec};
+use oxc_formatter::HtmlEmbedMeta;
 use oxc_formatter_core::{
-    DispatchResult, EmbeddedContext, EmbeddedIr, FormatDispatcher, FormatElement,
+    DispatchResult, EmbeddedContext, EmbeddedIr, FormatDispatcher, FormatElement, IndentWidth,
+    LineMode, TextWidth, UniqueGroupIdBuilder,
 };
 use oxc_formatter_css::CssFormatOptions;
 use oxc_formatter_graphql::GraphqlFormatOptions;
 
-use crate::core::{
-    embed::{
-        FormatEmbeddedDocWithConfigCallback, language_to_prettier_parser,
-        postprocess::escape_template_characters_in_ir, routing,
+use crate::{
+    core::{
+        embed::{FormatEmbeddedDocWithConfigCallback, language_to_prettier_parser},
+        options::inject_parser,
     },
-    options::inject_parser,
+    prettier_compat::from_prettier_doc,
 };
 
 /// Build the `FormatDispatcher` installed on `ExternalCallbacks`:
@@ -45,12 +42,14 @@ pub fn build_dispatcher(
         move |ctx: &EmbeddedContext<'_, '_>, language: &str, texts: &[&str], _parent_context| {
             // Rust implementations replace branches one by one;
             match language {
+                // This is always `graphql` for now
                 "graphql" | "gql" => format_graphql_to_irs(ctx, texts, graphql_options)
                     .inspect_err(|err| {
                         debug!(
                             "`format_graphql_to_irs` failed, gql-in-xxx part stays as-is: {err}"
                         );
                     }),
+                // This is always `css` with `CssVariant:Scss` for now
                 "css" | "scss" | "less" => {
                     format_css_to_irs(ctx, texts, css_options).inspect_err(|err| {
                         debug!("`format_css_to_irs` failed, css-in-xxx part stays as-is: {err}");
@@ -66,9 +65,6 @@ pub fn build_dispatcher(
 /// Format each text as a standalone GraphQL document via `oxc_formatter_graphql`,
 /// returning one IR per text (the IR-channel contract for GraphQL).
 ///
-/// Template-literal characters in the output are re-escaped because the parent
-/// re-inserts the IR into a JS template literal built from `.cooked` values.
-///
 /// Any parse error fails the whole batch (an embedded template is all-or-nothing):
 /// `Err` makes the parent print the template as-is.
 fn format_graphql_to_irs<'a>(
@@ -80,89 +76,32 @@ fn format_graphql_to_irs<'a>(
         .iter()
         .map(|text| {
             debug_span!("oxfmt::external::format_graphql_to_ir").in_scope(|| {
-                let mut embedded = oxc_formatter_graphql::format_to_ir(ctx, text, options)
+                let embedded = oxc_formatter_graphql::format_to_ir(ctx, text, options)
                     .map_err(|err| err.to_string())?;
-                escape_template_characters_in_ir(
-                    &mut embedded.ir,
-                    ctx.allocator,
-                    options.indent_width,
-                );
                 Ok(embedded.ir)
             })
         })
         .collect::<Result<Vec<_>, String>>()?;
-    Ok(DispatchResult { docs, tailwind_classes: Vec::new(), placeholder_count: None, meta: None })
+    Ok(DispatchResult { docs, tailwind_classes: Vec::new(), meta: None })
 }
 
-/// Format the single joined CSS text (placeholders included) via
-/// `oxc_formatter_css`, returning one IR plus the surviving placeholder count
-/// (the IR-channel contract for CSS, mirroring the Prettier Doc path).
-///
-/// css-in-js uses `.raw` template values, so unlike GraphQL,
-/// no template-char re-escaping is needed.
-/// `oxc_formatter_css` emits each placeholder as a typed [`FormatElement::EmbedPlaceholder`],
-/// so the surviving count is just a structural tally (no string scan);
-/// the parent splices `${expr}` per marker.
+/// Format the single joined CSS text (placeholders included) via `oxc_formatter_css`,
+/// returning one IR per call (the IR-channel contract for CSS).
 fn format_css_to_irs<'a>(
     ctx: &EmbeddedContext<'a, '_>,
     texts: &[&str],
     options: CssFormatOptions,
 ) -> Result<DispatchResult<'a>, String> {
-    // Unlike GraphQL's one-IR-per-quasi, the CSS embed joins quasis with
-    // placeholders into a single text before dispatching.
+    // Unlike GraphQL's one-IR-per-quasi,
+    // the CSS embed joins quasis with placeholders into a single text before dispatching.
     let [text] = texts else {
         return Err(format!("CSS dispatch expects exactly one text, got {}", texts.len()));
     };
     debug_span!("oxfmt::external::format_css_to_ir").in_scope(|| {
         let EmbeddedIr { ir, tailwind_classes } =
             oxc_formatter_css::format_to_ir(ctx, text, options).map_err(|err| err.to_string())?;
-        // Surviving placeholders:
-        // - typed `EmbedPlaceholder` markers (the main path)
-        // - and sentinels that stayed embedded in verbatim `Text`
-        //   - because a lexical context (string/`url()`) doesn't tokenize them
-        // Counting both keeps the host's count == expressions check passing
-        // so it doesn't fall back to plain template formatting (the host substitutes both kinds).
-        let placeholder_count = ir
-            .iter()
-            .map(|el| match el {
-                FormatElement::EmbedPlaceholder(_) => 1,
-                FormatElement::Text { text, .. } => count_text_sentinels(text),
-                _ => 0,
-            })
-            .sum();
-        Ok(DispatchResult {
-            docs: vec![ir],
-            tailwind_classes,
-            placeholder_count: Some(placeholder_count),
-            meta: None,
-        })
+        Ok(DispatchResult { docs: vec![ir], tailwind_classes, meta: None })
     })
-}
-
-/// Counts `` `PLACEHOLDER-N` `` sentinels left inside a verbatim `Text`
-/// run (placeholders that landed in a string / `url()` the CSS lexer keeps opaque).
-/// Non-overlapping matches of `prefix <digits> suffix`.
-///
-/// NOTE: Same sentinel grammar is scanned in two sibling sites with different actions
-/// (host `oxc_formatter` splits to substitute, `oxc_formatter_css` emits);
-/// kept duplicated on purpose for now, but may revisit later.
-fn count_text_sentinels(text: &str) -> usize {
-    use oxc_formatter_css::{
-        TEMPLATE_PLACEHOLDER_PREFIX as PREFIX, TEMPLATE_PLACEHOLDER_SUFFIX as SUFFIX,
-    };
-    let mut count = 0;
-    let mut rest = text;
-    while let Some(start) = rest.find(PREFIX) {
-        let after = &rest[start + PREFIX.len()..];
-        let digits = after.bytes().take_while(u8::is_ascii_digit).count();
-        if digits > 0 && after[digits..].starts_with(SUFFIX) {
-            count += 1;
-            rest = &after[digits + SUFFIX.len()..];
-        } else {
-            rest = after;
-        }
-    }
-    count
 }
 
 /// Type of the Prettier Doc→IR fallback used inside [`build_dispatcher`].
@@ -210,7 +149,7 @@ fn build_prettier_fallback(
                     .collect::<Result<Vec<_>, _>>()
                     .map_err(|e| format!("Failed to parse Doc JSON: {e}"))?;
 
-                routing::to_format_elements_for_template(
+                to_format_elements_for_template(
                     language,
                     doc_jsons,
                     ctx.allocator,
@@ -221,4 +160,111 @@ fn build_prettier_fallback(
                 debug!("Failed to format embedded doc for parser '{parser_name}': {err}");
             })
     })
+}
+
+/// Converts parsed Prettier Doc JSON values into a [`DispatchResult`].
+///
+/// Per-language work:
+/// - HTML/Angular: structural postprocess; surfaces [`HtmlEmbedMeta`] (`htmlHasMultipleRootElements`).
+/// - Markdown: structural postprocess.
+fn to_format_elements_for_template<'a>(
+    language: &str,
+    doc_jsons: Vec<Value>,
+    allocator: &'a Allocator,
+    group_id_builder: &UniqueGroupIdBuilder,
+) -> Result<DispatchResult<'a>, String> {
+    match language {
+        "html" | "angular" => {
+            let (mut ir, metadata) = from_prettier_doc::convert_envelope(
+                doc_jsons.into_iter().next().expect("Doc JSON for HTML"),
+                allocator,
+                group_id_builder,
+            )?;
+            let html_has_multiple_root_elements =
+                metadata.get("htmlHasMultipleRootElements").and_then(Value::as_bool);
+            postprocess(&mut ir, allocator);
+            Ok(DispatchResult {
+                docs: vec![ir],
+                tailwind_classes: Vec::new(),
+                meta: Some(Box::new(HtmlEmbedMeta {
+                    has_multiple_root_elements: html_has_multiple_root_elements,
+                })),
+            })
+        }
+        "markdown" => {
+            let (mut ir, _) = from_prettier_doc::convert_envelope(
+                doc_jsons.into_iter().next().expect("Doc JSON for Markdown"),
+                allocator,
+                group_id_builder,
+            )?;
+            postprocess(&mut ir, allocator);
+            Ok(DispatchResult { docs: vec![ir], tailwind_classes: Vec::new(), meta: None })
+        }
+        // NOTE: no "css" / "graphql" arms
+        // Those languages never reach the Prettier Doc path (their dispatcher branches are Rust-only).
+        _ => unreachable!("Unsupported embedded_doc language: {language}"),
+    }
+}
+
+/// Post-process FormatElements in a single compaction pass:
+/// - strip trailing hardline (useless for embedded parts)
+/// - collapse double-hardlines `[Hard, ExpandParent, Hard, ExpandParent]` → `[Empty, ExpandParent]`
+/// - merge consecutive Text nodes (the Prettier Doc path can emit adjacent `Text`s)
+fn postprocess<'a>(ir: &mut ArenaVec<'a, FormatElement<'a>>, allocator: &'a Allocator) {
+    // Strip trailing hardline
+    if ir.len() >= 2
+        && matches!(ir[ir.len() - 1], FormatElement::ExpandParent)
+        && matches!(ir[ir.len() - 2], FormatElement::Line(LineMode::Hard))
+    {
+        let new_len = ir.len() - 2;
+        ir.truncate(new_len);
+    }
+
+    let mut write = 0;
+    let mut read = 0;
+    while read < ir.len() {
+        // Collapse double-hardline → empty line
+        if read + 3 < ir.len()
+            && matches!(ir[read], FormatElement::Line(LineMode::Hard))
+            && matches!(ir[read + 1], FormatElement::ExpandParent)
+            && matches!(ir[read + 2], FormatElement::Line(LineMode::Hard))
+            && matches!(ir[read + 3], FormatElement::ExpandParent)
+        {
+            ir[write] = FormatElement::Line(LineMode::Empty);
+            ir[write + 1] = FormatElement::ExpandParent;
+            write += 2;
+            read += 4;
+        } else if matches!(ir[read], FormatElement::Text { .. }) {
+            // Merge consecutive Text nodes
+            let run_start = read;
+            read += 1;
+            while read < ir.len() && matches!(ir[read], FormatElement::Text { .. }) {
+                read += 1;
+            }
+
+            if read - run_start == 1 {
+                if write != run_start {
+                    ir[write] = ir[run_start].clone();
+                }
+            } else {
+                let mut sb = ArenaStringBuilder::new_in(allocator);
+                for element in &ir[run_start..read] {
+                    if let FormatElement::Text { text, .. } = element {
+                        sb.push_str(text);
+                    }
+                }
+                let text = sb.into_str();
+                let width = TextWidth::from_text(text, IndentWidth::default());
+                ir[write] = FormatElement::Text { text, width };
+            }
+            write += 1;
+        } else {
+            if write != read {
+                ir[write] = ir[read].clone();
+            }
+            write += 1;
+            read += 1;
+        }
+    }
+    ir.truncate(write);
 }

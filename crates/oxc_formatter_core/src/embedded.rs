@@ -1,19 +1,18 @@
 //! Embedded-language formatting infrastructure.
 //!
-//! All formatters are peers: any formatter may act as a parent (containing
-//! embedded code) or as a child (being embedded). Only the entry formatter is
-//! called directly by the orchestrator (oxfmt); every further embedded call
-//! goes through a [`FormatDispatcher`] that the orchestrator assembles,
+//! All formatters are peers:
+//! any formatter may act as a parent (containing embedded code) or as a child (being embedded).
+//!
+//! Only the entry formatter is called directly by the orchestrator (oxfmt);
+//! every further embedded call goes through a [`FormatDispatcher`] that the orchestrator assembles,
 //! mapping a language name to a formatter implementation (or a fallback).
 //!
-//! Core only carries the shared plumbing (arena, group-id space, recursion
-//! handle) and the cross-language contract fields ([`DispatchResult`]'s
-//! `tailwind_classes` / `placeholder_count`); anything truly language-pair
-//! specific crosses as a `dyn Any` passthrough. Core knows nothing about any
-//! concrete language.
+//! Core only carries the shared plumbing (arena, group-id space, recursion handle)
+//! and the cross-language contract field ([`DispatchResult::tailwind_classes`]);
+//! anything truly language-pair specific crosses as a `dyn Any` passthrough.
+//! Core knows nothing about any concrete language.
 
-use std::any::Any;
-use std::sync::Arc;
+use std::{any::Any, sync::Arc};
 
 use oxc_allocator::{Allocator, ArenaVec};
 
@@ -82,11 +81,6 @@ pub struct DispatchResult<'a> {
     /// The receiving parent MUST merge them into its own class space via
     /// [`Self::remap_tailwind_into`] — the printer asserts on dangling indices.
     pub tailwind_classes: Vec<String>,
-    /// How many host-substituted placeholder markers (standing in for `${}`
-    /// interpolations) survived formatting. The parent compares this against
-    /// its expression count to decide whether it can splice them back in.
-    /// `None` when the language pair doesn't use placeholders.
-    pub placeholder_count: Option<usize>,
     /// Child→parent language-specific metadata; the parent downcasts it
     /// (e.g. HTML's `has_multiple_root_elements`).
     pub meta: Option<Box<dyn Any>>,
