@@ -1,3 +1,11 @@
+//! Bridge between napi-rs `ThreadsafeFunction`s and the Rust callback shapes
+//! consumed by the embedded orchestration in `core::embed`.
+//!
+//! [`ExternalFormatter`] stores the JS callbacks as `Arc<dyn Fn>`s wrapped by the private `wrap_*` helpers,
+//! exposes [`ExternalFormatter::format_file`] for the Tier 3/4 file delegations,
+//! and converts itself into `oxc_formatter::ExternalCallbacks` via [`ExternalFormatter::to_external_callbacks`]
+//! which delegates the actual embedded-callback / dispatcher / Tailwind closures to `core::embed::{string_channel, dispatcher}`.
+
 use std::sync::{Arc, RwLock};
 
 use napi::{
@@ -5,21 +13,17 @@ use napi::{
     bindgen_prelude::{FnArgs, Promise, block_on},
     threadsafe_function::ThreadsafeFunction,
 };
-use serde::Deserialize;
 use serde_json::Value;
-use tracing::{debug, debug_span};
+use tracing::debug_span;
 
-use oxc_allocator::Allocator;
-use oxc_formatter::{
-    EmbeddedFormatterCallback, ExternalCallbacks, JsFormatOptions, TailwindCallback,
-};
-use oxc_formatter_core::{
-    DispatchResult, EmbeddedContext, EmbeddedIr, FormatContext, FormatDispatcher, Formatted,
-};
-use oxc_formatter_css::{CssFormatOptions, CssVariant};
+use oxc_formatter::{ExternalCallbacks, JsFormatOptions, TailwindCallback};
+use oxc_formatter_css::CssFormatOptions;
 use oxc_formatter_graphql::GraphqlFormatOptions;
 
-use crate::{core::options::inject_parser, prettier_compat::from_prettier_doc};
+use crate::core::embed::{
+    self, FormatEmbeddedDocWithConfigCallback, FormatEmbeddedWithConfigCallback,
+    FormatFileWithConfigCallback, TailwindWithConfigCallback,
+};
 
 /// Type alias for the init external formatter callback function signature.
 /// Takes num_threads as argument; signals JS to perform any one-time setup before formatting.
@@ -125,28 +129,6 @@ impl TsfnHandles {
 /// Takes num_threads.
 type InitExternalFormatterCallback = Arc<dyn Fn(usize) -> Result<(), String> + Send + Sync>;
 
-/// Callback function type for formatting files with config.
-/// Takes (options, code) and returns formatted code or an error.
-/// The `options` Value is owned and includes `parser` and `filepath` set by the caller.
-type FormatFileWithConfigCallback =
-    Arc<dyn Fn(Value, &str) -> Result<String, String> + Send + Sync>;
-
-/// Callback function type for formatting embedded code with config.
-/// Takes (options, code) and returns formatted code or an error.
-/// The `options` Value is owned and includes `parser` set by the caller.
-type FormatEmbeddedWithConfigCallback =
-    Arc<dyn Fn(Value, &str) -> Result<String, String> + Send + Sync>;
-
-/// Callback function type for formatting embedded code via Doc IR path (batch).
-/// Takes (options, texts) and returns Doc JSON strings (one per text) or an error.
-type FormatEmbeddedDocWithConfigCallback =
-    Arc<dyn Fn(Value, &[&str]) -> Result<Vec<String>, String> + Send + Sync>;
-
-/// Internal callback type for Tailwind processing with config.
-/// Takes (options, classes) and returns sorted classes.
-/// The `filepath` is included in `options`.
-type TailwindWithConfigCallback = Arc<dyn Fn(&Value, Vec<String>) -> Vec<String> + Send + Sync>;
-
 /// External formatter that wraps a JS callback.
 #[derive(Clone)]
 pub struct ExternalFormatter {
@@ -242,11 +224,14 @@ impl ExternalFormatter {
         (self.format_file)(options, code)
     }
 
-    /// Convert this external formatter to the oxc_formatter::ExternalCallbacks type.
+    /// Convert this external formatter to the `oxc_formatter::ExternalCallbacks` type.
     /// The options (including `filepath`) are captured in the closures and passed to JS on each call.
     ///
     /// `graphql_options` / `css_options` are dual mappings of the same resolved
-    /// config for the dispatcher's Rust branches (graphql-in-js / css-in-js).
+    /// config for the dispatcher's Rust branches (gql-in-js / css-in-js).
+    ///
+    /// Actual closure assembly lives in `core::embed::{string_channel, dispatcher}`;
+    /// this method just bridges the napi-held callback `Arc`s into those factories.
     pub fn to_external_callbacks(
         &self,
         format_options: &JsFormatOptions,
@@ -257,115 +242,32 @@ impl ExternalFormatter {
         let needs_embedded = !format_options.embedded_language_formatting.is_off();
         let tailwind_enabled = format_options.sort_tailwindcss.is_some();
 
-        let embedded_callback: Option<EmbeddedFormatterCallback> = if needs_embedded {
-            let format_embedded = Arc::clone(&self.format_embedded);
-            let options_for_embedded = options.clone();
-            let sort_tailwind =
-                tailwind_enabled.then(|| Arc::clone(&self.sort_tailwindcss_classes));
-            Some(Arc::new(move |language: &str, code: &str| {
-                // Rust implementations first (JSDoc fenced code blocks).
-                // Unlike the dispatcher there is NO Prettier fallback: on `Err`
-                // the caller keeps the code verbatim, and code inside comments
-                // never gets a diagnostic.
-                match language {
-                    "graphql" | "gql" => {
-                        return format_graphql_embedded(code, graphql_options);
-                    }
-                    "css" | "scss" | "less" => {
-                        // `options_for_embedded` already carries the Tailwind
-                        // plugin payload (filepath, config paths) the JS-side
-                        // sorter resolves the class order from.
-                        return match &sort_tailwind {
-                            Some(sort) => {
-                                let sorter =
-                                    |classes: Vec<String>| sort(&options_for_embedded, classes);
-                                format_css_embedded(code, language, css_options, Some(&sorter))
-                            }
-                            None => format_css_embedded(code, language, css_options, None),
-                        };
-                    }
-                    _ => {}
-                }
-                let Some(parser_name) = language_to_prettier_parser(language) else {
-                    // NOTE: Do not return `Ok(original)` here.
-                    // We need to keep unsupported content as-is.
-                    return Err(format!("Unsupported language: {language}"));
-                };
-                debug_span!("oxfmt::external::format_embedded", parser = parser_name).in_scope(
-                    || {
-                        // `clone()` is unavoidable here,
-                        // because there may be multiple embedded sections in one JS/TS file.
-                        let mut options = options_for_embedded.clone();
-                        inject_parser(&mut options, parser_name);
-                        (format_embedded)(options, code)
-                            .map(|mut code| {
-                                // Remove trailing newline added by Prettier without allocation
-                                // For embedded code, we never want trailing newlines, regardless of options.
-                                let trimmed_len = code.trim_end().len();
-                                code.truncate(trimmed_len);
-                                code
-                            })
-                            .inspect_err(|err| {
-                                debug!("Failed to format embedded code for parser '{parser_name}': {err}");
-                            })
-                    },
-                )
-            }))
-        } else {
-            None
-        };
+        let embedded_callback = needs_embedded.then(|| {
+            embed::string_channel::build_embedded_callback(
+                Arc::clone(&self.format_embedded),
+                tailwind_enabled.then(|| Arc::clone(&self.sort_tailwindcss_classes)),
+                options.clone(),
+                graphql_options,
+                css_options,
+            )
+        });
 
-        // The dispatcher maps a language name to a formatter implementation.
-        // Rust implementations replace branches one by one;
-        // the rest go through the Prettier Doc→IR fallback.
-        let dispatcher: Option<FormatDispatcher> = if needs_embedded {
-            let prettier_fallback =
-                build_prettier_fallback(Arc::clone(&self.format_embedded_doc), options.clone());
-            Some(Arc::new(
-                move |ctx: &EmbeddedContext<'_, '_>,
-                      language: &str,
-                      texts: &[&str],
-                      _parent_context| {
-                    match language {
-                        // Rust implementation; NO Prettier fallback.
-                        // The apollo-parser fork covers everything Prettier's
-                        // graphql-js 16.12 accepts, so what still errors is
-                        // garbage that Prettier's embed cannot format either —
-                        // `Err` makes the parent print the template as-is.
-                        "graphql" | "gql" => format_graphql_to_irs(ctx, texts, graphql_options)
-                            .inspect_err(|err| {
-                                debug!(
-                                    "`oxc_formatter_graphql` failed, template stays as-is: {err}"
-                                );
-                            }),
-                        // Rust implementation; NO Prettier fallback (plan Step 5-3).
-                        // Since the raffia fork accepts `${}` placeholders in
-                        // value/selector position, what still errors is garbage
-                        // that Prettier's embed cannot format either — `Err`
-                        // makes the parent print the template as-is, which is
-                        // exactly what Prettier does when its embed throws.
-                        "css" | "scss" | "less" => format_css_to_irs(ctx, texts, css_options)
-                            .inspect_err(|err| {
-                                debug!("`oxc_formatter_css` failed, template stays as-is: {err}");
-                            }),
-                        // Everything else: Prettier fallback (Doc→IR path)
-                        _ => prettier_fallback(ctx, language, texts),
-                    }
-                },
-            ))
-        } else {
-            None
-        };
+        let dispatcher = needs_embedded.then(|| {
+            embed::ir_channel::build_dispatcher(
+                Arc::clone(&self.format_embedded_doc),
+                options.clone(),
+                graphql_options,
+                css_options,
+            )
+        });
 
-        let tailwind_callback: Option<TailwindCallback> = if tailwind_enabled {
-            let sort_tailwindcss_classes = Arc::clone(&self.sort_tailwindcss_classes);
-            Some(Arc::new(move |classes: Vec<String>| {
+        let tailwind_callback: Option<TailwindCallback> = tailwind_enabled.then(|| {
+            let sort = Arc::clone(&self.sort_tailwindcss_classes);
+            Arc::new(move |classes: Vec<String>| {
                 debug_span!("oxfmt::external::sort_tailwind", classes_count = classes.len())
-                    .in_scope(|| (sort_tailwindcss_classes)(&options, classes))
-            }))
-        } else {
-            None
-        };
+                    .in_scope(|| (sort)(&options, classes))
+            }) as TailwindCallback
+        });
 
         ExternalCallbacks::new()
             .with_embedded_formatter(embedded_callback)
@@ -393,201 +295,6 @@ impl ExternalFormatter {
             }),
             sort_tailwindcss_classes: Arc::new(|_, _| vec![]),
         }
-    }
-}
-
-// ---
-
-/// Format a JSDoc fenced code block as a standalone GraphQL document
-/// (string-in/string-out, unlike the dispatcher's IR contract).
-fn format_graphql_embedded(code: &str, options: GraphqlFormatOptions) -> Result<String, String> {
-    debug_span!("oxfmt::external::format_graphql_embedded").in_scope(|| {
-        let allocator = Allocator::default();
-        let formatted = oxc_formatter_graphql::format(&allocator, code, options)
-            .map_err(|err| err.to_string())?;
-        print_embedded_block(formatted)
-    })
-}
-
-/// Format a JSDoc fenced code block as a standalone stylesheet
-/// (string-in/string-out, unlike the dispatcher's IR contract).
-///
-/// The `options` carry the dispatcher's css-in-js variant (Scss), so the
-/// variant is re-derived from the fence language here.
-fn format_css_embedded(
-    code: &str,
-    language: &str,
-    options: CssFormatOptions,
-    sorter: Option<oxc_formatter_css::TailwindSorter<'_>>,
-) -> Result<String, String> {
-    debug_span!("oxfmt::external::format_css_embedded", language = language).in_scope(|| {
-        let variant = match language {
-            "scss" => CssVariant::Scss,
-            "less" => CssVariant::Less,
-            _ => CssVariant::Css,
-        };
-        let options = CssFormatOptions { variant, ..options };
-        let allocator = Allocator::default();
-        let formatted = oxc_formatter_css::format(&allocator, code, options, sorter)
-            .map_err(|err| err.to_string())?;
-        print_embedded_block(formatted)
-    })
-}
-
-/// Print a formatted JSDoc fenced code block to a string.
-/// The trailing newline is trimmed because the block is re-embedded
-/// line-by-line into the comment.
-fn print_embedded_block<C: FormatContext>(formatted: Formatted<'_, C>) -> Result<String, String> {
-    let printed = formatted.print().map_err(|err| err.to_string())?;
-    let mut code = printed.into_code();
-    code.truncate(code.trim_end().len());
-    Ok(code)
-}
-
-/// Format each text as a standalone GraphQL document via `oxc_formatter_graphql`,
-/// returning one IR per text (the dispatcher contract for GraphQL).
-///
-/// Template-literal characters in the output are re-escaped because the parent
-/// re-inserts the IR into a JS template literal built from `.cooked` values.
-///
-/// Any parse error fails the whole batch (an embedded template is
-/// all-or-nothing): `Err` makes the parent print the template as-is.
-fn format_graphql_to_irs<'a>(
-    ctx: &EmbeddedContext<'a, '_>,
-    texts: &[&str],
-    options: GraphqlFormatOptions,
-) -> Result<DispatchResult<'a>, String> {
-    let docs = texts
-        .iter()
-        .map(|text| {
-            debug_span!("oxfmt::external::format_graphql_to_ir").in_scope(|| {
-                let mut embedded = oxc_formatter_graphql::format_to_ir(ctx, text, options)
-                    .map_err(|err| err.to_string())?;
-                from_prettier_doc::escape_template_characters_in_ir(
-                    &mut embedded.ir,
-                    ctx.allocator,
-                    options.indent_width,
-                );
-                Ok(embedded.ir)
-            })
-        })
-        .collect::<Result<Vec<_>, String>>()?;
-    Ok(DispatchResult { docs, tailwind_classes: Vec::new(), placeholder_count: None, meta: None })
-}
-
-/// Format the single joined CSS text (placeholders included) via
-/// `oxc_formatter_css`, returning one IR plus the surviving placeholder count
-/// (the dispatcher contract for CSS, mirroring the Prettier Doc path).
-///
-/// CSS-in-js uses `.raw` template values, so unlike GraphQL no template-char
-/// re-escaping is needed. The parent replaces `@prettier-placeholder-N-id`
-/// per `Text` element, so consecutive `Text`s are merged first (the at-rule
-/// printer emits `@` and the name as separate elements) and the surviving
-/// placeholders counted into the meta.
-fn format_css_to_irs<'a>(
-    ctx: &EmbeddedContext<'a, '_>,
-    texts: &[&str],
-    options: CssFormatOptions,
-) -> Result<DispatchResult<'a>, String> {
-    // Unlike GraphQL's one-IR-per-quasi, the CSS embed joins quasis with
-    // placeholders into a single text before dispatching.
-    let [text] = texts else {
-        return Err(format!("CSS dispatch expects exactly one text, got {}", texts.len()));
-    };
-    debug_span!("oxfmt::external::format_css_to_ir").in_scope(|| {
-        let EmbeddedIr { mut ir, tailwind_classes } =
-            oxc_formatter_css::format_to_ir(ctx, text, options).map_err(|err| err.to_string())?;
-        let placeholder_count = from_prettier_doc::merge_texts_and_count_css_placeholders(
-            &mut ir,
-            ctx.allocator,
-            options.indent_width,
-        );
-        Ok(DispatchResult {
-            docs: vec![ir],
-            tailwind_classes,
-            placeholder_count: Some(placeholder_count),
-            meta: None,
-        })
-    })
-}
-
-/// Type of the Prettier Doc→IR fallback used by the dispatcher.
-/// Same shape as `FormatDispatcher` minus the `parent_context` passthrough.
-type PrettierDocFallback = Arc<
-    dyn for<'a, 'g> Fn(
-            &EmbeddedContext<'a, 'g>,
-            &str,
-            &[&str],
-        ) -> Result<DispatchResult<'a>, String>
-        + Send
-        + Sync,
->;
-
-/// Build the Prettier Doc→IR fallback for embedded languages:
-/// sends texts to JS `printToDoc()`, then converts the returned Doc JSON into formatter IR.
-fn build_prettier_fallback(
-    format_embedded_doc: FormatEmbeddedDocWithConfigCallback,
-    options: Value,
-) -> PrettierDocFallback {
-    Arc::new(move |ctx: &EmbeddedContext<'_, '_>, language: &str, texts: &[&str]| {
-        let Some(parser_name) = language_to_prettier_parser(language) else {
-            return Err(format!("Unsupported language: {language}"));
-        };
-        debug_span!("oxfmt::external::format_embedded_doc", parser = parser_name)
-            .in_scope(|| {
-                let mut options = options.clone();
-                inject_parser(&mut options, parser_name);
-                let doc_json_strs = (format_embedded_doc)(options, texts).map_err(|err| {
-                    format!("Failed to get Doc for embedded code (parser '{parser_name}'): {err}")
-                })?;
-                let doc_jsons = doc_json_strs
-                    .into_iter()
-                    .map(|s| {
-                        // Prettier's Doc can produce deeply nested arrays.
-                        // (e.g., md-in-js with `proseWrap: preserve`,
-                        // which nests each word in `[[[prev, " "], word], " "]`)
-                        // The default recursion limit of 128 is not enough for long paragraphs.
-                        // This only affects this deserialization call;
-                        // other `serde_json` usage in the codebase keeps the default limit.
-                        let mut de = serde_json::Deserializer::from_str(&s);
-                        de.disable_recursion_limit();
-                        serde_json::Value::deserialize(&mut de)
-                    })
-                    .collect::<Result<Vec<_>, _>>()
-                    .map_err(|e| format!("Failed to parse Doc JSON: {e}"))?;
-
-                from_prettier_doc::to_format_elements_for_template(
-                    language,
-                    doc_jsons,
-                    ctx.allocator,
-                    ctx.group_id_builder,
-                )
-            })
-            .inspect_err(|err| {
-                debug!("Failed to format embedded doc for parser '{parser_name}': {err}");
-            })
-    })
-}
-
-/// Mapping from language identifiers to Prettier `parser` names.
-/// This is the single source of truth for embedded languages that can still
-/// reach Prettier; languages fully served by a Rust crate are absent
-/// (css/scss/less and graphql/gql — their dispatcher branches have no
-/// fallback and the JSDoc channel formats them in Rust, both before this map).
-///
-/// Language identifiers come from two sources:
-/// - xxx-in-js `(Tagged)TemplateLiteral` (`embed/*.rs`)
-/// - JSDoc fenced code blocks (`jsdoc/mdast_serialize/`)
-///
-/// NOTE: these identifiers happen to overlap with some Prettier parser names,
-/// but `oxc_formatter` treats them as generic language names.
-/// This function is the only place that maps them to Prettier-specific parsers.
-fn language_to_prettier_parser(language: &str) -> Option<&'static str> {
-    match language {
-        "html" => Some("html"),
-        "angular" => Some("angular"),
-        "markdown" | "md" => Some("markdown"),
-        _ => None,
     }
 }
 

@@ -98,16 +98,8 @@ pub enum FileKind {
     /// by `oxc_formatter_json` with the `json-stringify` variant.
     OxcFormatterJsonPackageJson { path: Arc<Path> },
     /// GraphQL files formatted by `oxc_formatter_graphql`.
-    /// Parse errors are surfaced as diagnostics — no Prettier fallback
-    /// (the apollo-parser fork covers everything Prettier's graphql-js 16.12
-    /// accepts; what it rejects is genuinely broken GraphQL).
     OxcFormatterGraphql { path: Arc<Path> },
     /// CSS/SCSS/Less files formatted by `oxc_formatter_css`.
-    /// Parse errors are surfaced as diagnostics — no Prettier fallback
-    /// (raffia covers the stable grammar; what it rejects is genuinely broken
-    /// CSS or the tail of postcss's error tolerance, e.g. IE star hacks).
-    /// Tailwind class sorting (`@apply`) is not implemented in Rust yet, so the
-    /// format step routes to Prettier up front when the config enables it.
     OxcFormatterCss { path: Arc<Path>, variant: CssVariant },
     /// TOML files formatted by taplo (Pure Rust).
     OxfmtToml { path: Arc<Path> },

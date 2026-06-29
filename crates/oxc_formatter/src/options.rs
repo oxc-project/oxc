@@ -177,6 +177,11 @@ impl Default for JsdocOptions {
 /// Based on options from `prettier-plugin-tailwindcss`.
 ///
 /// See <https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options>
+///
+/// NOTE: The actual sorting is performed by
+/// the host(Oxfmt)-supplied sorter (`prettier-plugin-tailwindcss/sorter` on the JS side).
+/// Therefore, this struct should only contain options that are relevant to `oxc_formatter`.
+/// (e.g. `config`, `stylesheet` can be removed here)
 #[derive(Debug, Default, Clone)]
 pub struct SortTailwindcssOptions {
     /// Path to your Tailwind CSS configuration file (v3).

@@ -37,7 +37,7 @@ use super::{
 #[derive(Debug)]
 pub enum FormatStrategy {
     /// For JS/TS files formatted by oxc_formatter.
-    /// `config` is retained so embedded callbacks (e.g., CSS-in-JS) can lazily
+    /// `config` is retained so embedded callbacks (e.g., xxx-in-js) can lazily
     /// derive Prettier options at callback time.
     OxcFormatter {
         path: Arc<Path>,
@@ -62,16 +62,13 @@ pub enum FormatStrategy {
         insert_final_newline: bool,
     },
     /// For GraphQL files formatted by `oxc_formatter_graphql`.
-    /// Parse errors are surfaced as diagnostics — no Prettier fallback.
     OxcFormatterGraphql {
         path: Arc<Path>,
         format_options: Box<GraphqlFormatOptions>,
         insert_final_newline: bool,
     },
     /// For CSS/SCSS/Less files formatted by `oxc_formatter_css`.
-    /// Parse errors are surfaced as diagnostics — no Prettier fallback.
-    /// `config` is retained (napi only) to build the JS-side Tailwind class
-    /// sorter options when Tailwind sorting is enabled.
+    /// `config` is retained (napi only) to build the Tailwind class sorter options.
     OxcFormatterCss {
         path: Arc<Path>,
         format_options: Box<CssFormatOptions>,
@@ -328,7 +325,7 @@ impl SourceFormatter {
     }
 
     /// Format JS/TS source code using `oxc_formatter`.
-    /// `config` is needed to derive Prettier options for embedded callbacks (CSS-in-JS, Tailwind).
+    /// `config` is needed to derive Prettier options for embedded callbacks (xxx-in-js, Tailwind).
     #[instrument(level = "debug", name = "oxfmt::format::oxc_formatter", skip_all)]
     fn format_by_oxc_formatter(
         &self,
@@ -376,8 +373,6 @@ impl SourceFormatter {
     }
 
     /// Format JSON (and JSON-like) source using `oxc_formatter_json`.
-    ///
-    /// Parse errors are surfaced as `OxcDiagnostic` — there is no Prettier fallback.
     #[instrument(level = "debug", name = "oxfmt::format::oxc_formatter_json", skip_all)]
     fn format_by_oxc_formatter_json(
         &self,
@@ -427,12 +422,6 @@ impl SourceFormatter {
     }
 
     /// Format GraphQL source using `oxc_formatter_graphql`.
-    ///
-    /// There is NO Prettier fallback on parse errors: the apollo-parser fork
-    /// covers everything Prettier's graphql-js 16.12 accepts (conformance 100%,
-    /// 0 skipped), so what it rejects is genuinely broken GraphQL that Prettier
-    /// cannot format either. Both the napi and pure builds report the
-    /// diagnostic as-is.
     #[instrument(level = "debug", name = "oxfmt::format::oxc_formatter_graphql", skip_all)]
     fn format_by_oxc_formatter_graphql(
         &self,
@@ -453,16 +442,10 @@ impl SourceFormatter {
 
     /// Format CSS/SCSS/Less source using `oxc_formatter_css`.
     ///
-    /// There is NO Prettier fallback on parse errors: raffia
-    /// covers the stable grammar (conformance 100%), and what it rejects is
-    /// genuinely broken CSS or the tail of postcss's error tolerance
-    /// (e.g. IE star hacks). Both the napi and pure builds report the
-    /// diagnostic as-is.
-    ///
-    /// When the config enables Tailwind class sorting, the napi build passes
-    /// a JS-side sorter for the `@apply` classes the formatter collects
-    /// (the order itself comes from the Tailwind config, which only the JS
-    /// side can resolve). The pure build never collects classes.
+    /// When the config enables Tailwind class sorting,
+    /// the napi build passes a JS-side sorter for the `@apply` classes the formatter collects
+    /// (the order itself comes from the Tailwind config, which only the JS side can resolve).
+    /// The pure build never collects classes.
     #[instrument(level = "debug", name = "oxfmt::format::oxc_formatter_css", skip_all)]
     fn format_by_oxc_formatter_css(
         &self,
@@ -516,9 +499,9 @@ impl SourceFormatter {
         self
     }
 
-    /// Build the Prettier options JSON shared by the embedded callbacks and
-    /// the Tailwind sorter: resolved config + `filepath` + the Tailwind
-    /// plugin payload (which the JS-side sorter resolves the class order from).
+    /// Build the Prettier options JSON shared by the embedded callbacks and the Tailwind sorter:
+    /// resolved config + `filepath` + the Tailwind plugin payload
+    /// (which the JS-side sorter resolves the class order from).
     fn build_external_options(config: &FormatConfig, path: &Path) -> serde_json::Value {
         let mut external_options = to_prettier(config);
         inject_filepath(&mut external_options, path);
@@ -526,8 +509,8 @@ impl SourceFormatter {
         external_options
     }
 
-    /// Build the JS-side Tailwind class sorter for `oxc_formatter_css`'s
-    /// `@apply` collection, or `None` when the config does not enable it.
+    /// Build the JS-side Tailwind class sorter for `oxc_formatter_css`'s `@apply` collection,
+    /// or `None` when the config does not enable it.
     fn tailwind_sorter(
         &self,
         config: &FormatConfig,
@@ -546,9 +529,8 @@ impl SourceFormatter {
 
     /// Build external callbacks for `oxc_formatter` from the NAPI external formatter.
     ///
-    /// Tailwind is always considered "capable" here because `oxc_formatter`
-    /// embeds the sorter internally; the inject helper itself decides whether
-    /// to fire based on user config.
+    /// Tailwind is always considered "capable" here because `oxc_formatter` embeds the sorter internally;
+    /// the inject helper itself decides whether to fire based on user config.
     fn build_external_callbacks(
         &self,
         format_options: &JsFormatOptions,

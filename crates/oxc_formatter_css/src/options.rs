@@ -44,6 +44,12 @@ pub struct CssFormatOptions {
     // Used by: SCSS
     pub trailing_commas: TrailingCommas,
     // Used by: CSS, SCSS, Less
+    //
+    // NOTE: Only the activation bit lives here.
+    // The detailed Tailwind settings (config|stylesheet path, preserve-whitespace|duplicates, etc) are consumed by
+    // the host-supplied sorter (`prettier-plugin-tailwindcss/sorter` on the JS side)
+    // and travel separately via the host(Oxfmt)'s options payload, not through this struct.
+    // `oxc_formatter_css` only needs to know whether to collect `@apply` classes.
     pub sort_tailwindcss: bool,
 }
 

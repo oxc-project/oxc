@@ -40,13 +40,20 @@ Oxfmt utilizes different implementations depending on the file extension and fil
 - Tier 3: Delegations to Prettier via NAPI-JS calls (e.g., for Vue or Markdown)
 - Tier 4: Delegations to Prettier that require additional plugins (e.g., for Svelte)
 
-NOTE: Tier 1 formatters never fall back to Prettier.
+NOTE: Tier 1 formatters never fall back to Prettier, since they exist to reduce the dependency on Prettier.
 
-`oxc_formatter_css` (uses a `raffia` fork) and `oxc_formatter_graphql` (uses an `apollo-parser` fork) both cover everything the bundled Prettier can parse for their language (raffia: the stable grammar + `${}` placeholders; apollo-parser: October 2021 spec + 2025 descriptions + legacy fragment variables = graphql-js 16.12 coverage). Standalone parse errors are reported as diagnostics — what the forks reject is genuinely broken input or, for CSS, the tail of postcss's error tolerance (e.g. IE star hacks). An embedded (xxx-in-js) dispatch error makes the parent print the template literal as-is — the same thing Prettier does when its embed throws.
+`oxc_formatter_css` (uses a `raffia` fork) and `oxc_formatter_graphql` (uses an `apollo-parser` fork) both should cover everything the bundled Prettier can parse for their language.
 
-Embedded languages (e.g. css-in-js) go through `src/core/external_formatter.rs`, which assembles a `FormatDispatcher` (defined in `oxc_formatter_core`) that maps each language to a Rust formatter where implemented (currently GraphQL and CSS/SCSS/Less, both without Prettier fallback) and to the Prettier Doc→IR path otherwise.
+However, parse errors may be reported as diagnostics, what the forks reject.
+This is genuinely broken input or, for CSS, the tail of postcss's error tolerance (e.g. IE star hacks, some postcss-plugin specific syntax).
 
-JSDoc fenced code blocks use a separate string-in/string-out channel (the `embedded_callback` in the same file, NOT the dispatcher): css/scss/less/graphql format via the Rust crates (variant derived from the fence language), unimplemented languages go to Prettier, and parse errors keep the block verbatim = no Prettier fallback, no diagnostics (it's inside a comment).
+Embedded languages (e.g. css-in-js) go through `src/core/external_formatter.rs`, which assembles a `FormatDispatcher` (defined in `oxc_formatter_core`) that maps each language to a Rust formatter where implemented and to the Prettier Doc→IR path otherwise.
+
+A separate string-out channel (the `embedded_callback` in the same file, NOT the dispatcher) carries the cases that don't fit IR integration.
+Two consumers today:
+
+- JSDoc fenced code blocks
+- html-in-js fallback (`format_js_in_html_as_fallback` in `oxc_formatter/src/print/template/embed/html.rs`)
 
 Tailwind class sorting (`sortTailwindcss`) splits responsibilities: Rust collects classes (`className` etc. in JS/TS, `@apply` in CSS — incl. css-in-js and JSDoc fenced blocks) into `FormatElement::TailwindClass`, and the JS side sorts them in one batch (`sortTailwindClasses` → tailwind's `getClassOrder`, which needs the resolved Tailwind config). Across embedded boundaries the child's classes travel in `DispatchResult::tailwind_classes` and the parent merges them with `DispatchResult::remap_tailwind_into` (defined in `oxc_formatter_core`; a forgotten merge trips a printer `debug_assert` instead of silently dropping classes). No CSS goes to Prettier for this; the pure Rust build never collects (no sorter available).
 
