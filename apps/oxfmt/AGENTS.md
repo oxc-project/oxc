@@ -50,6 +50,8 @@ When it returns an error (e.g. draft-spec syntax that Prettier's `graphql-js` ac
 
 Embedded languages (e.g. css-in-js) go through `src/core/external_formatter.rs`, which assembles a `FormatDispatcher` (defined in `oxc_formatter_core`) that maps each language to a Rust formatter where implemented (currently GraphQL and CSS/SCSS/Less) and to the Prettier Doc→IR path otherwise.
 
+JSDoc fenced code blocks (` ```css ` etc.) use a separate string-in/string-out channel (the `embedded_callback` in the same file, NOT the dispatcher): css/scss/less/graphql format via the Rust crates (variant derived from the fence language), unimplemented languages go to Prettier, and parse errors keep the block verbatim — no Prettier fallback, no diagnostics (it's inside a comment). CSS stays on the Prettier path while Tailwind sorting is enabled (`@apply`).
+
 Consequently, managing these various formatter implementations and handling their respective options are also part of Oxfmt's responsibilities.
 
 ### CLI implementations

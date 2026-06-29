@@ -9,11 +9,14 @@ use serde::Deserialize;
 use serde_json::Value;
 use tracing::{debug, debug_span};
 
+use oxc_allocator::Allocator;
 use oxc_formatter::{
     CssEmbedMeta, EmbeddedFormatterCallback, ExternalCallbacks, JsFormatOptions, TailwindCallback,
 };
-use oxc_formatter_core::{DispatchResult, EmbeddedContext, FormatDispatcher};
-use oxc_formatter_css::CssFormatOptions;
+use oxc_formatter_core::{
+    DispatchResult, EmbeddedContext, FormatContext, FormatDispatcher, Formatted,
+};
+use oxc_formatter_css::{CssFormatOptions, CssVariant};
 use oxc_formatter_graphql::GraphqlFormatOptions;
 
 use crate::{core::options::inject_parser, prettier_compat::from_prettier_doc};
@@ -252,10 +255,28 @@ impl ExternalFormatter {
         css_options: CssFormatOptions,
     ) -> ExternalCallbacks {
         let needs_embedded = !format_options.embedded_language_formatting.is_off();
+        let tailwind_enabled = format_options.sort_tailwindcss.is_some();
+
         let embedded_callback: Option<EmbeddedFormatterCallback> = if needs_embedded {
             let format_embedded = Arc::clone(&self.format_embedded);
             let options_for_embedded = options.clone();
             Some(Arc::new(move |language: &str, code: &str| {
+                // Rust implementations first (JSDoc fenced code blocks).
+                // Unlike the dispatcher there is NO Prettier fallback: on `Err`
+                // the caller keeps the code verbatim, and code inside comments
+                // never gets a diagnostic.
+                match language {
+                    "graphql" | "gql" => {
+                        return format_graphql_embedded(code, graphql_options);
+                    }
+                    // `@apply` class sorting only happens in
+                    // `prettier-plugin-tailwindcss`, so css must stay on the
+                    // Prettier path while it is enabled.
+                    "css" | "scss" | "less" if !tailwind_enabled => {
+                        return format_css_embedded(code, language, css_options);
+                    }
+                    _ => {}
+                }
                 let Some(parser_name) = language_to_prettier_parser(language) else {
                     // NOTE: Do not return `Ok(original)` here.
                     // We need to keep unsupported content as-is.
@@ -284,8 +305,6 @@ impl ExternalFormatter {
         } else {
             None
         };
-
-        let tailwind_enabled = format_options.sort_tailwindcss.is_some();
 
         // The dispatcher maps a language name to a formatter implementation.
         // Rust implementations replace branches one by one;
@@ -373,6 +392,51 @@ impl ExternalFormatter {
 }
 
 // ---
+
+/// Format a JSDoc fenced code block as a standalone GraphQL document
+/// (string-in/string-out, unlike the dispatcher's IR contract).
+fn format_graphql_embedded(code: &str, options: GraphqlFormatOptions) -> Result<String, String> {
+    debug_span!("oxfmt::external::format_graphql_embedded").in_scope(|| {
+        let allocator = Allocator::default();
+        let formatted = oxc_formatter_graphql::format(&allocator, code, options)
+            .map_err(|err| err.to_string())?;
+        print_embedded_block(formatted)
+    })
+}
+
+/// Format a JSDoc fenced code block as a standalone stylesheet
+/// (string-in/string-out, unlike the dispatcher's IR contract).
+///
+/// The `options` carry the dispatcher's css-in-js variant (Scss), so the
+/// variant is re-derived from the fence language here.
+fn format_css_embedded(
+    code: &str,
+    language: &str,
+    options: CssFormatOptions,
+) -> Result<String, String> {
+    debug_span!("oxfmt::external::format_css_embedded", language = language).in_scope(|| {
+        let variant = match language {
+            "scss" => CssVariant::Scss,
+            "less" => CssVariant::Less,
+            _ => CssVariant::Css,
+        };
+        let options = CssFormatOptions { variant, ..options };
+        let allocator = Allocator::default();
+        let formatted =
+            oxc_formatter_css::format(&allocator, code, options).map_err(|err| err.to_string())?;
+        print_embedded_block(formatted)
+    })
+}
+
+/// Print a formatted JSDoc fenced code block to a string.
+/// The trailing newline is trimmed because the block is re-embedded
+/// line-by-line into the comment.
+fn print_embedded_block<C: FormatContext>(formatted: Formatted<'_, C>) -> Result<String, String> {
+    let printed = formatted.print().map_err(|err| err.to_string())?;
+    let mut code = printed.into_code();
+    code.truncate(code.trim_end().len());
+    Ok(code)
+}
 
 /// Format each text as a standalone GraphQL document via `oxc_formatter_graphql`,
 /// returning one IR per text (the dispatcher contract for GraphQL).
