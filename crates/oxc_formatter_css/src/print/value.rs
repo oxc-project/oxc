@@ -5,14 +5,14 @@
 //! - `print/parenthesized-value-group.js`
 //! - `print/misc.js`
 //!
-//! onto raffia's flat `ComponentValue` streams
+//! onto oxc-css-parser's flat `ComponentValue` streams
 //! (which mirror `postcss-values-parser` tokens,
 //! commas and solidi appear as `Delimiter` components).
 
 use std::borrow::Cow;
 
 use cow_utils::CowUtils;
-use raffia::{
+use oxc_css_parser::{
     Spanned,
     ast::{
         Calc, CalcOperatorKind, ComponentValue, Delimiter, DelimiterKind, Dimension, Function,
@@ -1374,7 +1374,7 @@ pub(super) fn write_component_value<'a>(
             write_str(&escaped.str, f);
         }
         // Less arithmetic: a flat operator fill (break after the operator), mirroring Prettier.
-        // Safe to restructure because `raffia` only ASTs a whitespace-followed
+        // Safe to restructure because `oxc-css-parser` only ASTs a whitespace-followed
         // `+`/`-` as a binary operator (see `write_less_binary_operation`).
         ComponentValue::LessBinaryOperation(op) => write_less_binary_operation(op, ctx, f),
         ComponentValue::LessParenthesizedOperation(paren) => {
@@ -1659,7 +1659,7 @@ fn write_calc<'a>(calc: &Calc<'a>, ctx: ValueContext<'a>, f: &mut CssFormatter<'
 /// Nested unparenthesized operations flatten into the SAME fill;
 /// a parenthesized sub-expression is its own nested group (it can break inside its parens).
 /// Operator spacing follows the source: `+`/`-` always have whitespace here
-/// (`raffia` only treats a whitespace-followed `+`/`-` as a binary operator,
+/// (`oxc-css-parser` only treats a whitespace-followed `+`/`-` as a binary operator,
 /// a signed value like `-@b` in a `margin` shorthand stays a separate `LessNegativeValue`, never an operand here),
 /// while `*`/`/` may be glued (`@base*2`).
 fn write_less_binary_operation<'a>(
@@ -1785,7 +1785,7 @@ fn write_less_parenthesized_operation<'a>(
 
 /// Whether a calc operand has ONE pair of source parens of its own to restore.
 ///
-/// `raffia` folds `(a - b) * c` into nested `Calc` nodes whose spans EXCLUDE the parens,
+/// `oxc-css-parser` folds `(a - b) * c` into nested `Calc` nodes whose spans EXCLUDE the parens,
 /// so they must be recovered from the source
 /// (postcss keeps them as a `value-paren_group` and Prettier preserves them).
 /// Only an operand position can do this safely:
@@ -1798,7 +1798,7 @@ fn calc_operand_has_own_parens(operand: &ComponentValue<'_>, f: &CssFormatter<'_
 
 /// Layers of source parens that belong to a function-argument group itself.
 ///
-/// `raffia` drops bare parens around argument values:
+/// `oxc-css-parser` drops bare parens around argument values:
 /// `min(((@a)), @b)` parses the first argument as just `@a`,
 /// and a `Calc` argument's span excludes its outermost source parens (`max(((a - b) / 2), 0)`).
 /// postcss keeps every pair as a `value-paren_group`, so Prettier prints them all.
@@ -1929,7 +1929,7 @@ pub(super) fn write_function<'a>(
     }
 
     let args_region = (name_span.end + 1, to_span(func.span()).end.saturating_sub(1));
-    // One argument group, with the source parens raffia dropped restored
+    // One argument group, with the source parens oxc-css-parser dropped restored
     let write_arg_group = move |group_values: &[ComponentValue<'a>],
                                 ctx: ValueContext<'a>,
                                 f: &mut CssFormatter<'_, 'a>| {
@@ -2092,7 +2092,7 @@ pub(super) fn write_url<'a>(url: &Url<'a>, f: &mut CssFormatter<'_, 'a>) {
         _ => {
             let url_span = to_span(url.span());
             let inner_start = to_span(url.name.span()).end + 1;
-            // raffia's url span may stop before trailing padding; scan to `)`
+            // oxc-css-parser's url span may stop before trailing padding; scan to `)`
             let bytes = source.as_bytes();
             let mut close = url_span.end.saturating_sub(1) as usize;
             while close < bytes.len() && bytes[close] != b')' {

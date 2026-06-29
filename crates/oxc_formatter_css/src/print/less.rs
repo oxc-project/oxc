@@ -1,6 +1,6 @@
 //! Less-specific printing: variable declarations, mixins, lookups, guards.
 
-use raffia::{
+use oxc_css_parser::{
     Spanned,
     ast::{
         ComponentValue, LessCondition, LessConditionalQualifiedRule, LessDetachedRuleset,
@@ -125,7 +125,7 @@ fn write_verbatim_prelude_rule<'a>(
 /// and prints it raw apart from number/string adjustments,
 /// so parameter spacing, a space before `(`, trailing `;` separators and multi-line layouts all survive.
 ///
-/// NOTE: `raffia` gives us a structured `LessMixinDefinition` (name + params + guard),
+/// NOTE: `oxc-css-parser` gives us a structured `LessMixinDefinition` (name + params + guard),
 /// so we COULD print this structurally and break long parameter lists on width.
 pub(super) fn write_less_mixin_definition<'a>(
     def: &LessMixinDefinition<'a>,
@@ -137,7 +137,7 @@ pub(super) fn write_less_mixin_definition<'a>(
 /// `selector when (guard) { ... }` — a `css-rule` in Prettier: raw selector
 /// text (guard included), block, and NO trailing `;`.
 ///
-/// NOTE: `raffia` structures the selector and the `when` guard,
+/// NOTE: `oxc-css-parser` structures the selector and the `when` guard,
 /// but we keep the raw source for Prettier alignment.
 pub(super) fn write_less_conditional_qualified_rule<'a>(
     rule: &LessConditionalQualifiedRule<'a>,
@@ -150,7 +150,7 @@ pub(super) fn write_less_conditional_qualified_rule<'a>(
 /// params are re-parsed as a SELECTOR (parser-postcss.js) and printed raw:
 /// argument spacing is preserved and a long call never breaks on width.
 ///
-/// NOTE: `raffia` gives a structured `LessMixinCall` with callee + args,
+/// NOTE: `oxc-css-parser` gives a structured `LessMixinCall` with callee + args,
 /// so a structured printer (argument list, width-breaking) is possible.
 /// We follow Prettier's verbatim contract so `.mixin(  @a , @b  )` etc, survive intact.
 pub(super) fn write_less_mixin_call_statement<'a>(

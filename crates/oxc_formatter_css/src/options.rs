@@ -19,11 +19,11 @@ pub enum CssVariant {
 }
 
 impl CssVariant {
-    pub(crate) fn to_raffia(self) -> raffia::Syntax {
+    pub(crate) fn to_css_syntax(self) -> oxc_css_parser::Syntax {
         match self {
-            Self::Css => raffia::Syntax::Css,
-            Self::Scss => raffia::Syntax::Scss,
-            Self::Less => raffia::Syntax::Less,
+            Self::Css => oxc_css_parser::Syntax::Css,
+            Self::Scss => oxc_css_parser::Syntax::Scss,
+            Self::Less => oxc_css_parser::Syntax::Less,
         }
     }
 }

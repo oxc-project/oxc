@@ -65,9 +65,9 @@ describe("CSS/SCSS/Less files (oxc_formatter_css)", () => {
     `);
   });
 
-  it("should report a diagnostic for input raffia rejects (no Prettier fallback)", async () => {
+  it("should report a diagnostic for input rejects (no Prettier fallback)", async () => {
     // IE star hack: postcss would tolerate it as a raw declaration,
-    // but CSS has no Prettier fallback — the parse error is surfaced as-is.
+    // but `oxc_formatter_css` does not, the parse error is surfaced as-is.
     const source = `a { *zoom: 1; color: red }`;
     const result = await format("legacy.css", source);
     expect(result.code).toBe(source);

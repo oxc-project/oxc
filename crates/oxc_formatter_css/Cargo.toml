@@ -23,7 +23,7 @@ oxc_diagnostics = { workspace = true }
 oxc_formatter_core = { workspace = true }
 oxc_span = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
-raffia = { workspace = true }
+oxc-css-parser = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true }

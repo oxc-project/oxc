@@ -1,5 +1,5 @@
 use cow_utils::CowUtils;
-use raffia::{
+use oxc_css_parser::{
     ParserBuilder, Spanned,
     ast::{ComponentValue, Declaration, InterpolableIdent, QualifiedRule, SimpleBlock, Statement},
 };
@@ -30,7 +30,7 @@ pub(super) fn stmt_start(stmt: &Statement<'_>) -> u32 {
 }
 
 /// End offset of a statement, extended over a trailing semicolon
-/// (raffia's spans exclude it; postcss's `locEnd` includes it,
+/// (oxc-css-parser's spans exclude it; postcss's `locEnd` includes it,
 /// and blank-line detection counts from after the `;`).
 pub(super) fn stmt_end(stmt: &Statement<'_>, f: &CssFormatter<'_, '_>) -> u32 {
     end_with_semicolon(to_span(stmt.span()).end, f)
@@ -381,12 +381,12 @@ pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter
             && value_text.ends_with(value_text.as_bytes()[0] as char)
             && value_text[1..value_text.len() - 1].contains("#{")
             && decl.value.len() > 1
-            // Only when raffia split ONE string apart (no gaps between parts).
+            // Only when oxc-css-parser split ONE string apart (no gaps between parts).
             && decl.value.windows(2).all(|w| {
                 to_span(w[0].span()).end == to_span(w[1].span()).start
             })
         {
-            // A string containing SCSS interpolation that `raffia` tokenized apart (`"#{".5"}"`):
+            // A string containing SCSS interpolation that `oxc-css-parser` tokenized apart (`"#{".5"}"`):
             // print the pieces glued.
             // Numbers get normalized, strings keep their quotes.
             // Interpolation among the pieces → `value-unknown`: verbatim,
@@ -409,7 +409,7 @@ pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter
             // The raw text includes any comments; drop them from the cursor.
             let _ = f.context().comments().take_before(value_end);
         } else {
-            // Custom property values come back from `raffia` as a raw token stream
+            // Custom property values come back from `oxc-css-parser` as a raw token stream
             // (per spec, `<declaration-value>` is any token soup),
             // but Prettier (postcss) value-parses them like any other declaration,
             // so `var(...)` etc. get the normal group/break layout.
@@ -534,7 +534,7 @@ fn reparse_custom_property_value<'a>(
 
     let allocator = f.allocator();
     let padded: &'a str = allocator.alloc_str(&padded);
-    let syntax = f.options().variant.to_raffia();
+    let syntax = f.options().variant.to_css_syntax();
     let mut parser = ParserBuilder::new(padded).syntax(syntax).build();
     let reparsed = parser.parse::<Declaration>().ok()?;
     if !parser.recoverable_errors().is_empty() {

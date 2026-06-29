@@ -4,7 +4,7 @@
 use std::borrow::Cow;
 
 use cow_utils::CowUtils;
-use raffia::{
+use oxc_css_parser::{
     Spanned,
     ast::{
         AtRule, AtRulePrelude, ComponentValue, CustomMediaValue, ImportPrelude, ImportPreludeHref,
@@ -75,15 +75,15 @@ pub(super) fn write_at_rule<'a>(at_rule: &AtRule<'a>, f: &mut CssFormatter<'_, '
         // Prettier's parser hands at-rule params to sub-parsers
         // only for a fixed allowlist (`parser-postcss.js`);
         // for everything else `node.params` stays a plain STRING that the printer emits verbatim.
-        // raffia's Unknown prelude mostly maps to that "everything else"
+        // oxc-css-parser's Unknown prelude mostly maps to that "everything else"
         // (`@apply`, `@tailwind`, `@custom-variant`, `@source`, …),
         // re-spacing its tokens corrupts constructs like Tailwind's `dark:bg-x` or `py-1.5`.
         // The exception: SCSS-family names parsed AS CSS
-        // (raffia: Unknown, Prettier: parseValue/parseSelector) keep the structural printers below.
+        // (oxc-css-parser: Unknown, Prettier: parseValue/parseSelector) keep the structural printers below.
         let unknown_string_params = matches!(prelude, AtRulePrelude::Unknown(_))
             && !is_value_parsed_at_rule(at_rule.name.raw);
         // NOTE: Prettier also keeps `@warn` / `@error` params as a raw string (`media-unknown`),
-        // but `raffia` parses their prelude structurally (`SassExpr`),
+        // but `oxc-css-parser` parses their prelude structurally (`SassExpr`),
         // so we route them through the normal structured printer
         // for internal consistency over Prettier byte-equality.
         if unknown_string_params {
@@ -280,7 +280,7 @@ fn split_important_tail(raw: &str) -> Option<(&str, &str)> {
 
 /// Names whose params Prettier's parser DOES hand to a sub-parser
 /// (parseValue / parseSelector / parseMediaQuery — parser-postcss.js),
-/// so a `raffia` Unknown prelude for them must keep the structural printers.
+/// so a `oxc-css-parser` Unknown prelude for them must keep the structural printers.
 ///
 /// Case-sensitivity mirrors Prettier:
 /// bare `name` comparisons for the SCSS family, lowercased for module/media rules.
@@ -384,7 +384,7 @@ fn write_commented_media_params<'a>(raw: &'a str, f: &mut CssFormatter<'_, 'a>) 
 
 /// `@import` / `@supports` params containing comments,
 /// laid out the way Prettier's value parser + fill does.
-/// (Required because `raffia` drops params-embedded comments, they only survive via this source-rebuild.)
+/// (Required because `oxc-css-parser` drops params-embedded comments, they only survive via this source-rebuild.)
 /// Separator breaks are simulated with static widths
 /// (Prettier's fill fit-checks the next item; our core fill measures only up to a hardline).
 /// `allow_commas`: comma chunks get an extra indent level for their internal wraps.
@@ -731,7 +731,7 @@ fn write_at_rule_prelude<'a>(prelude: &AtRulePrelude<'a>, f: &mut CssFormatter<'
         AtRulePrelude::CustomSelector(custom) => {
             let custom_span = to_span(custom.custom_selector.span());
             let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
-                // raffia's CustomSelector span excludes the leading `:`
+                // oxc-css-parser's CustomSelector span excludes the leading `:`
                 write!(f, ":");
                 write!(f, text(source.text_for(&custom_span)));
                 write!(f, soft_line_break_or_space());
@@ -1355,7 +1355,7 @@ fn write_import_prelude_inner<'a>(import: &ImportPrelude<'a>, f: &mut CssFormatt
     if let Some(supports) = &import.supports {
         // `@import ... supports(<cond>)`.
         // Prettier value-parses `@import` params (a token stream);
-        // we instead reprint through the `@supports` structured printers (`raffia` parses it structurally).
+        // we instead reprint through the `@supports` structured printers (`oxc-css-parser` parses it structurally).
         // Identical for real-world cases, the divergences are all edge cases absent from real CSS:
         // inherited from `write_supports_condition`
         // (uppercase props lowercase; a source-glued `not`/`and` gains a space),
@@ -1406,7 +1406,7 @@ fn write_import_href<'a>(href: &ImportPreludeHref<'a>, f: &mut CssFormatter<'_, 
 }
 
 /// Less `@import (options) href media` (e.g. `@import (reference) "x";`).
-/// raffia parses the options form as a dedicated `LessImportPrelude`,
+/// oxc-css-parser parses the options form as a dedicated `LessImportPrelude`,
 /// which otherwise falls into the verbatim catch-all and skips quote normalization.
 fn write_less_import_prelude<'a>(import: &LessImportPrelude<'a>, f: &mut CssFormatter<'_, 'a>) {
     let source = f.context().source_text();
@@ -1649,7 +1649,7 @@ fn write_supports_in_parens<'a>(in_parens: &SupportsInParens<'a>, f: &mut CssFor
             write!(f, "selector(");
             // An inline comment inside `selector(...)` forces the parens
             // open and trails the selector.
-            // raffia's span may stop at the selector; scan to the `)`.
+            // oxc-css-parser's span may stop at the selector; scan to the `)`.
             let span_end = to_span(in_parens.span()).end;
             let bytes = source.as_bytes();
             let mut scan = span_end.saturating_sub(1) as usize;

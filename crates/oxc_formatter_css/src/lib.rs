@@ -1,6 +1,6 @@
 //! CSS/SCSS/Less formatter built on top of `oxc_formatter_core`.
 //!
-//! Parses with [raffia](https://docs.rs/raffia) and prints Prettier-compatible output.
+//! Parses with [oxc-css-parser](https://docs.rs/oxc-css-parser) (raffia fork) and prints Prettier-compatible output.
 //!
 //! ```ignore
 //! use oxc_allocator::Allocator;
@@ -26,7 +26,7 @@ mod print;
 /// Backtick is invalid SCSS (the css-in-js variant),
 /// so the marker is unmistakably out-of-band, not a real `@var`/`$var` or at-rule.
 /// (Like Prettier, which uses `@prettier-placeholder-N-id`)
-/// `raffia` tokenizes it via the fork's `template_placeholder` option,
+/// `oxc-css-parser` tokenizes it via the fork's `template_placeholder` option,
 /// consuming the leading backtick as the sigil (so `format.rs` passes the affix without it).
 ///
 /// The producer-side constant lives in `oxc_formatter`'s `embed/css.rs`

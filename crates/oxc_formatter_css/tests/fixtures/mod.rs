@@ -164,7 +164,7 @@ include!(concat!(env!("OUT_DIR"), "/generated_tests.rs"));
 // ---
 
 /// Any parse error must surface as `Err` from the standalone `format()` entry,
-/// including raffia's recoverable ones (top-level declarations are invalid here
+/// including oxc-css-parser's recoverable ones (top-level declarations are invalid here
 /// too — only the embedded `format_to_ir` entry tolerates them, see
 /// `embedded/scss/top-level-declaration.scss`).
 #[test]
@@ -175,7 +175,7 @@ fn parse_error_is_err() {
     for (source, options) in [
         // Unclosed block (postcss also rejects this).
         ("a {\n  color: red;\n", css),
-        // IE star hack: postcss tolerates it, raffia does not.
+        // IE star hack: postcss tolerates it, oxc-css-parser does not.
         ("a { *zoom: 1; }", css),
         // Top-level declaration: valid only as an embedded css-in-js fragment
         // (`format_to_ir`); standalone files must reject it like Dart Sass does.
@@ -183,10 +183,10 @@ fn parse_error_is_err() {
         // css-in-js `${}` markers in value position...
         ("a { color: `PLACEHOLDER-0`; }", scss),
         // ...and in selector position stay errors in the STANDALONE entry
-        // (`format_to_ir` tolerates them via the raffia fork option;
+        // (`format_to_ir` tolerates them via the oxc-css-parser fork option;
         // see `fixtures/embedded/`).
         (".a-`PLACEHOLDER-0` {\n}", scss),
-        // `2N-1` with a glued minus is invalid An+B for raffia
+        // `2N-1` with a glued minus is invalid An+B for oxc-css-parser
         // (postcss-selector-parser accepts and lowercases it).
         ("a:nth-child(2N-1) { color: red; }", css),
     ] {

@@ -15,7 +15,7 @@ Prettier compatible CSS/SCSS/Less formatter (`oxfmt`'s Tier 1 backend), using th
 
 ### Forked parser
 
-Parses with a fork of [`raffia`](https://docs.rs/raffia), pinned via `rev` in the workspace `Cargo.toml`.
+Parses with [`oxc-css-parser`](https://crates.io/crates/oxc-css-parser), a `raffia` fork pinned via the workspace `Cargo.toml`.
 
 The fork adds:
 
@@ -31,18 +31,18 @@ The fork adds:
   - A `+`/`-` is a `LessBinaryOperation` operator only when followed by whitespace;
   - `@a -@b` is two values (`-@b` is a `LessNegativeValue` sign
   - `margin: -@a -@b` = two values, NOT `(-@a) - @b` subtraction), `@a - @b` is subtraction
-- Various bug fixes for valid CSS/SCSS/Less syntax `raffia` miss-parses or rejects
+- Various bug fixes for valid CSS/SCSS/Less syntax `oxc-css-parser` miss-parses or rejects
   - selector / at-rule / value-token coverage gaps
 
 On the other hand, Prettier operates on `postcss` + three sub-parsers (`postcss-selector-parser`, `postcss-values-parser`, `postcss-media-query-parser`) and depends on `raws` (source gaps).
 
-`raffia` parses everything structurally in one pass; source gaps are recovered by comparing span boundaries (`hasEmptyRawBefore(x)` == "no gap between spans").
+`oxc-css-parser` parses everything structurally in one pass; source gaps are recovered by comparing span boundaries (`hasEmptyRawBefore(x)` == "no gap between spans").
 
 ### Error semantics
 
 `format()` / `format_to_ir()` return `Err` whenever they cannot produce output they can stand behind:
 
-- `raffia` is error-tolerant via `parser.recoverable_errors()`, but any parse error bails out;
+- `oxc-css-parser` is error-tolerant via `parser.recoverable_errors()`, but any parse error bails out;
   - Never format a broken AST
   - Exception: `TopLevelDeclaration`, tolerated ONLY by `format_to_ir()`
     - The dominant css-in-js shape, `` css`display: flex;` ``)
@@ -53,7 +53,7 @@ On the other hand, Prettier operates on `postcss` + three sub-parsers (`postcss-
 
 ### Comments
 
-`raffia` does not attach comments to the AST;
+`oxc-css-parser` does not attach comments to the AST;
 they are collected via `ParserBuilder::comments()` into a positional cursor over `CssComment { span, inline }`
 (`inline` = `//`).
 
@@ -79,7 +79,7 @@ The configured `end_of_line` option still applies, the printer emits the chosen 
 ### css-in-js specifics
 
 `format_to_ir()` accepts SCSS-like source with `` `PLACEHOLDER-N` `` markers in place of `${}` interpolations.
-`raffia` tokenizes each as a typed `Token::Placeholder` via the fork option `template_placeholder` (`format.rs` passes the inner affix). Backtick is invalid SCSS, so the marker can never be confused with real syntax (see the `TEMPLATE_PLACEHOLDER_PREFIX` / `_SUFFIX` consts in `lib.rs`).
+`oxc-css-parser` tokenizes each as a typed `Token::Placeholder` via the fork option `template_placeholder` (`format.rs` passes the inner affix). Backtick is invalid SCSS, so the marker can never be confused with real syntax (see the `TEMPLATE_PLACEHOLDER_PREFIX` / `_SUFFIX` consts in `lib.rs`).
 
 Each parses into a typed node that the printer emits as a `FormatElement::EmbedPlaceholder(N)` marker (`print/mod.rs::write_placeholder`), plus a `Text` for any glued suffix; the JS host (`oxc_formatter/embed/css.rs`) substitutes `${exprN}` back. No output-side string protocol — the index is carried structurally.
 
@@ -95,7 +95,7 @@ the exact set of supported positions (incl. id / attribute-value / class selecto
 - Selector position: `InterpolableIdent::Placeholder`; a placeholder mid-selector still triggers "garbage mode" in `write_selector_list`
   - Emits the raw source slice with whitespace runs collapsed (sentinels split back out to `EmbedPlaceholder` via `write_text_with_placeholders`), never breaking
   - Mirrors `postcss-selector-parser` degrading on at-words
-  - A statement-position placeholder-led selector must not absorb across a newline (raffia `placeholder_starts_qualified_rule`): `${mixin}\n& > .x {}` is two statements
+  - A statement-position placeholder-led selector must not absorb across a newline (oxc-css-parser `placeholder_starts_qualified_rule`): `${mixin}\n& > .x {}` is two statements
 - String / `url()` position: the CSS lexer keeps these opaque, so a sentinel inside them stays in a verbatim `Text` (no `EmbedPlaceholder`)
   - The JS host (`oxc_formatter`) counts these and substitutes them inline through its `Text`-sentinel branch, a deliberate string-scan fallback at the edges of the typed path
 
@@ -121,7 +121,7 @@ See `write_apply_prelude` in `at_rule.rs` (collection + `!important` / Less `~".
 ### Intentionally unsupported: postcss plugin syntax
 
 These syntax that only "works" in Prettier because `postcss` parses without validation and a build-time plugin interprets it later is mostly NOT supported.
-(`postcss` is permissive with any syntax it doesn't understand, while we parse strictly with `raffia`.)
+(`postcss` is permissive with any syntax it doesn't understand, while we parse strictly with `oxc-css-parser`.)
 
 These plugins were once common but are now mostly legacy. Representative examples we do NOT support:
 
@@ -143,14 +143,14 @@ Less also rejects (matching `lessc`):
 - Value-position `@{var}` interpolation
 - Whitespace inside a Less lookup (`@config   [   option1]`)
 
-If there is high demand, we can also consider making some parts acceptable by updating the `raffia` parser side.
+If there is high demand, we can also consider making some parts acceptable by updating the `oxc-css-parser` parser side.
 
 ### Known divergences
 
 Deliberate divergences from Prettier (impact does not justify the matching cost):
 
 - Less `func(x, + 20px)` unary gluing
-  - Prettier prints `+20px`; `raffia` ASTs `, +` as a comma-left binary operation, so matching is ad-hoc for a torture-test-only shape
+  - Prettier prints `+20px`; `oxc-css-parser` ASTs `, +` as a comma-left binary operation, so matching is ad-hoc for a torture-test-only shape
 - Nested Less math in a function arg / multi-value shorthand
   - Prettier's fill fit-check breaks INSIDE the wide chunk; our core `fill` (biome semantics) breaks the SEPARATOR instead.
   - Principled fix is the shared core-fill fit-check change (needs JS-conformance impact experiment first)
@@ -161,7 +161,7 @@ Deliberate divergences from Prettier (impact does not justify the matching cost)
   - We normalize BOTH positions for output consistency
   - Prettier keeps SELECTOR interpolation verbatim
 - `@warn` / `@error` prelude strings re-quote per `singleQuote` option (`@error "x"` → `@error 'x'`)
-  - `raffia` parses them as `SassExpr`, so they go through the structured printer (see `at_rule.rs`)
+  - `oxc-css-parser` parses them as `SassExpr`, so they go through the structured printer (see `at_rule.rs`)
   - Prettier keeps them as a raw string verbatim
 - A function call directly after a `//` comment in nested-args position
   - Prettier double-indents it
@@ -225,7 +225,7 @@ pnpm --dir apps/oxfmt conformance
 
 ```sh
 cargo run -p oxc_formatter_css --example css_formatter file.css
-cargo run -p oxc_formatter_css --example parse_debug -- --syntax scss file.scss  # dump raffia AST
+cargo run -p oxc_formatter_css --example parse_debug -- --syntax scss file.scss  # dump oxc-css-parser AST
 cargo run -p oxc_formatter_css --example embedded_debug file.scss                # format_to_ir entry
 ```
 

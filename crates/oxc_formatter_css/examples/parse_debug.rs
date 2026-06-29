@@ -1,4 +1,4 @@
-//! Dump raffia's AST for a CSS/SCSS/Less snippet.
+//! Dump oxc-css-parser's AST for a CSS/SCSS/Less snippet.
 //!
 //! ```sh
 //! cargo run -p oxc_formatter_css --example parse_debug -- file.css
@@ -8,7 +8,7 @@
 
 use std::io::Read;
 
-use raffia::{ParserBuilder, Syntax, ast::Stylesheet};
+use oxc_css_parser::{ParserBuilder, Syntax, ast::Stylesheet};
 
 fn main() {
     let mut args = pico_args::Arguments::from_env();

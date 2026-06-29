@@ -4,7 +4,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 ==================== Input ====================
 // Ported from Prettier's `scss/math/3945.scss` (SCSS math/division torture test),
 // with the two top-level `width:` declarations wrapped in `.grid {}` to make it valid:
-// Prettier tolerates bare top-level declarations but we (raffia) and `format()` reject
+// Prettier tolerates bare top-level declarations but we (oxc-css-parser) and `format()` reject
 // them (as does Dart Sass), so only the embedded css-in-js entry keeps that shape.
 
 .foo {
@@ -144,7 +144,7 @@ light: #eaf0c6
 ------------------
 // Ported from Prettier's `scss/math/3945.scss` (SCSS math/division torture test),
 // with the two top-level `width:` declarations wrapped in `.grid {}` to make it valid:
-// Prettier tolerates bare top-level declarations but we (raffia) and `format()` reject
+// Prettier tolerates bare top-level declarations but we (oxc-css-parser) and `format()` reject
 // them (as does Dart Sass), so only the embedded css-in-js entry keeps that shape.
 
 .foo {
@@ -275,7 +275,7 @@ $colors: (
 -------------------
 // Ported from Prettier's `scss/math/3945.scss` (SCSS math/division torture test),
 // with the two top-level `width:` declarations wrapped in `.grid {}` to make it valid:
-// Prettier tolerates bare top-level declarations but we (raffia) and `format()` reject
+// Prettier tolerates bare top-level declarations but we (oxc-css-parser) and `format()` reject
 // them (as does Dart Sass), so only the embedded css-in-js entry keeps that shape.
 
 .foo {

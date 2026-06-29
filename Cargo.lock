@@ -1797,6 +1797,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc-css-parser"
+version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c26a7ada942216acafa6d6a10b269b23f5d9b58902ee99898c6d287b196d660c"
+dependencies = [
+ "oxc-css-parser-macro",
+ "smallvec",
+]
+
+[[package]]
+name = "oxc-css-parser-macro"
+version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b840f0d8e8f12de73ef70c0d63108499a36264e71fc3901da94030252d004c7b"
+dependencies = [
+ "heck",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "oxc-graphql-parser"
 version = "0.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2174,13 +2195,13 @@ version = "0.56.0"
 dependencies = [
  "cow-utils",
  "insta",
+ "oxc-css-parser",
  "oxc_allocator",
  "oxc_diagnostics",
  "oxc_formatter_core",
  "oxc_span",
  "phf",
  "pico-args",
- "raffia",
 ]
 
 [[package]]
@@ -3151,25 +3172,6 @@ name = "r-efi"
 version = "6.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f8dcc9c7d52a811697d2151c701e0d08956f92b0e24136cf4cf27b57a6a0d9bf"
-
-[[package]]
-name = "raffia"
-version = "0.12.3"
-source = "git+https://github.com/leaysgur/raffia?rev=54ec9688895232fb890289477164b150fcd13616#54ec9688895232fb890289477164b150fcd13616"
-dependencies = [
- "raffia_macro",
- "smallvec",
-]
-
-[[package]]
-name = "raffia_macro"
-version = "0.2.0"
-source = "git+https://github.com/leaysgur/raffia?rev=54ec9688895232fb890289477164b150fcd13616#54ec9688895232fb890289477164b150fcd13616"
-dependencies = [
- "heck",
- "quote",
- "syn",
-]
 
 [[package]]
 name = "rand"

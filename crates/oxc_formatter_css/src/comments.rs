@@ -12,7 +12,7 @@ use crate::print::{CssFormatter, format_with};
 
 /// A source comment.
 ///
-/// raffia keeps comments out of the AST; `format()` collects them through
+/// oxc-css-parser keeps comments out of the AST; `format()` collects them through
 /// `ParserBuilder::comments()` and stores their spans here.
 #[derive(Clone, Copy, Debug)]
 pub struct CssComment {

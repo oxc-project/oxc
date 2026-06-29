@@ -1,4 +1,4 @@
-use raffia::{ParserBuilder, ParserOptions, TemplatePlaceholder, ast::Stylesheet};
+use oxc_css_parser::{ParserBuilder, ParserOptions, TemplatePlaceholder, ast::Stylesheet};
 
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_diagnostics::OxcDiagnostic;
@@ -32,7 +32,7 @@ pub type TailwindSorter<'s> = &'s dyn Fn(Vec<String>) -> Vec<String>;
 ///
 /// # Errors
 /// Returns an [`OxcDiagnostic`] when the parse produces any error, including recoverable ones.
-/// `raffia` can recover from some syntax errors, but a tree with errors cannot be formatted faithfully,
+/// `oxc-css-parser` can recover from some syntax errors, but a tree with errors cannot be formatted faithfully,
 /// so a single error is enough to bail out.
 pub fn format<'a>(
     allocator: &'a Allocator,
@@ -121,7 +121,7 @@ pub fn format_to_ir<'a>(
 
 /// Parse the source into an AST and collect comments, bailing out on any error.
 ///
-/// Copies the source into the arena (minus any BOM, which `raffia` would skip anyway)
+/// Copies the source into the arena (minus any BOM, which `oxc-css-parser` would skip anyway)
 /// so every slice taken from it carries `'a`.
 fn parse_stylesheet<'a>(
     allocator: &'a Allocator,
@@ -156,12 +156,12 @@ fn parse_stylesheet<'a>(
 
     let mut comments = vec![];
     let mut parser = ParserBuilder::new(parse_source)
-        .syntax(options.variant.to_raffia())
+        .syntax(options.variant.to_css_syntax())
         .options(ParserOptions {
             // Derive the affix from the host sentinel (single source of truth),
-            // minus the leading backtick which raffia consumes as the placeholder sigil
-            // (the closing backtick `TEMPLATE_PLACEHOLDER_SUFFIX` is fixed in raffia).
-            // Only valid for SCSS; raffia asserts that.
+            // minus the leading backtick which oxc-css-parser consumes as the placeholder sigil
+            // (the closing backtick `TEMPLATE_PLACEHOLDER_SUFFIX` is fixed in oxc-css-parser).
+            // Only valid for SCSS; oxc-css-parser asserts that.
             template_placeholder: tolerate_placeholders.then_some(TemplatePlaceholder {
                 prefix: TEMPLATE_PLACEHOLDER_PREFIX
                     .strip_prefix(TEMPLATE_PLACEHOLDER_SUFFIX)
@@ -178,7 +178,7 @@ fn parse_stylesheet<'a>(
     // (they are not valid CSS/SCSS/Less); only the embedded path tolerates them.
     if let Some(error) = parser.recoverable_errors().iter().find(|error| {
         !(tolerate_placeholders
-            && matches!(error.kind, raffia::error::ErrorKind::TopLevelDeclaration))
+            && matches!(error.kind, oxc_css_parser::error::ErrorKind::TopLevelDeclaration))
     }) {
         return Err(to_diagnostic(error));
     }
@@ -187,7 +187,7 @@ fn parse_stylesheet<'a>(
     let comments: &'a [CssComment] = ArenaVec::from_iter_in(
         comments.iter().map(|c| CssComment {
             span: to_span(&c.span),
-            inline: matches!(c.kind, raffia::token::CommentKind::Line),
+            inline: matches!(c.kind, oxc_css_parser::token::CommentKind::Line),
         }),
         &allocator,
     )
@@ -196,11 +196,11 @@ fn parse_stylesheet<'a>(
     Ok((stylesheet, source, comments))
 }
 
-fn to_diagnostic(error: &raffia::error::Error) -> OxcDiagnostic {
+fn to_diagnostic(error: &oxc_css_parser::error::Error) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("Syntax error: {}", error.kind)).with_label(to_span(&error.span))
 }
 
-pub fn to_span(span: &raffia::Span) -> Span {
+pub fn to_span(span: &oxc_css_parser::Span) -> Span {
     Span::new(
         u32::try_from(span.start).unwrap_or(u32::MAX),
         u32::try_from(span.end).unwrap_or(u32::MAX),

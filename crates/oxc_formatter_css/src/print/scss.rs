@@ -1,7 +1,7 @@
 //! SCSS-specific printing: variable declarations, maps, lists,
 //! control directives, mixins/includes/functions, module system.
 
-use raffia::{
+use oxc_css_parser::{
     Spanned,
     ast::{
         ComponentValue, InterpolableStr, SassEach, SassFor, SassForBoundaryKind, SassForward,

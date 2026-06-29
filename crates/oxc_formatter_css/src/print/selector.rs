@@ -1,10 +1,10 @@
 //! Selector printing.
-//! Ports Prettier's `selector-*` cases (postcss-selector-parser) onto raffia's structured selector AST.
+//! Ports Prettier's `selector-*` cases (postcss-selector-parser) onto oxc-css-parser's structured selector AST.
 
 use std::borrow::Cow;
 
 use cow_utils::CowUtils;
-use raffia::{
+use oxc_css_parser::{
     Spanned,
     ast::{
         AttributeSelector, AttributeSelectorMatcherKind, AttributeSelectorValue, Combinator,
@@ -428,7 +428,7 @@ fn write_pseudo_class_arg<'a>(kind: &PseudoClassSelectorArgKind<'a>, f: &mut Css
         // Number, LanguageRangeList, TokenSeq, LessExtendList:
         // print the source verbatim (normalized below where needed).
         //
-        // NOTE: `raffia` provides structured AST for these (notably `LessExtendList`),
+        // NOTE: `oxc-css-parser` provides structured AST for these (notably `LessExtendList`),
         // so a structured printer would be feasible.
         // They are kept verbatim because `postcss-selector-parser` tokenizes them as opaque strings
         // and Prettier emits them raw (matching that keeps `:lang(...)`, `:extend(...)` etc.)
@@ -565,7 +565,7 @@ pub(super) fn write_keyframe_selector<'a>(
     match selector {
         KeyframeSelector::Ident(ident) => match ident {
             // Only `from`/`to` lowercase (Prettier's `isKeyframeAtRuleKeywords`);
-            // raffia flags anything else as a recoverable error anyway.
+            // oxc-css-parser flags anything else as a recoverable error anyway.
             InterpolableIdent::Literal(lit) => {
                 let lower = lit.raw.cow_to_ascii_lowercase();
                 write!(f, text(arena_cow_str(&lower, f)));

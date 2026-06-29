@@ -3,7 +3,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
 // Sass interpolation in a media feature NAME (`#{$x}-width`).
-// The raffia fork parses this as a MediaFeaturePlain whose name is an
+// The oxc-css-parser fork parses this as a MediaFeaturePlain whose name is an
 // interpolated ident; without the fork it errors at `(#{` (the interpolation
 // was miss parsed as a bare SassInterpolation media condition).
 @mixin notes-media($condition, $breakpoint-width) {
@@ -27,7 +27,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 { printWidth: 80 }
 ------------------
 // Sass interpolation in a media feature NAME (`#{$x}-width`).
-// The raffia fork parses this as a MediaFeaturePlain whose name is an
+// The oxc-css-parser fork parses this as a MediaFeaturePlain whose name is an
 // interpolated ident; without the fork it errors at `(#{` (the interpolation
 // was miss parsed as a bare SassInterpolation media condition).
 @mixin notes-media($condition, $breakpoint-width) {
@@ -50,7 +50,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 { printWidth: 100 }
 -------------------
 // Sass interpolation in a media feature NAME (`#{$x}-width`).
-// The raffia fork parses this as a MediaFeaturePlain whose name is an
+// The oxc-css-parser fork parses this as a MediaFeaturePlain whose name is an
 // interpolated ident; without the fork it errors at `(#{` (the interpolation
 // was miss parsed as a bare SassInterpolation media condition).
 @mixin notes-media($condition, $breakpoint-width) {
