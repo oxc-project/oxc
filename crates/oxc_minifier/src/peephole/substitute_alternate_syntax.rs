@@ -1,7 +1,7 @@
 use std::iter::repeat_with;
 
 use crate::generated::ancestor::Ancestor;
-use oxc_allocator::{ArenaVec, CloneIn, GetAllocator, TakeIn};
+use oxc_allocator::{ArenaStringBuilder, ArenaVec, CloneIn, GetAllocator, TakeIn};
 use oxc_ast::{ast::*, builder::NONE};
 use oxc_compat::ESFeature;
 use oxc_ecmascript::side_effects::MayHaveSideEffectsContext;
@@ -1403,9 +1403,31 @@ impl<'a> PeepholeOptimizations {
 
     pub fn substitute_template_literal(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::TemplateLiteral(t) = expr else { return };
-        let Some(val) = t.to_js_string(ctx) else { return };
-        let new_value =
-            Expression::new_string_literal(t.span(), Str::from_cow_in(&val, ctx), None, ctx);
+
+        // Fast path: a single-quasi template with no interpolations (`` `abc` ``) is
+        // already a string — reuse the cooked arena string directly, no allocation.
+        let new_value = if t.expressions.is_empty()
+            && let [quasi] = t.quasis.as_slice()
+        {
+            let Some(cooked) = quasi.value.cooked else { return };
+            Expression::new_string_literal(t.span(), cooked, None, ctx)
+        } else {
+            // Build the folded string straight into the arena instead of a transient
+            // `std::String` + copy. Bail (no change) if any part isn't stringifiable,
+            // matching the previous `TemplateLiteral::to_js_string` all-or-nothing fold.
+            let capacity =
+                t.quasis.iter().filter_map(|q| q.value.cooked).map(|c| c.len()).sum::<usize>();
+            let mut builder = ArenaStringBuilder::with_capacity_in(capacity, ctx.allocator());
+            for (i, quasi) in t.quasis.iter().enumerate() {
+                let Some(cooked) = quasi.value.cooked else { return };
+                builder.push_str(cooked.as_str());
+                if let Some(expr) = t.expressions.get(i) {
+                    let Some(val) = expr.to_js_string(ctx) else { return };
+                    builder.push_str(&val);
+                }
+            }
+            Expression::new_string_literal(t.span(), Str::from(builder), None, ctx)
+        };
         ctx.replace_expression(expr, new_value);
     }
 
