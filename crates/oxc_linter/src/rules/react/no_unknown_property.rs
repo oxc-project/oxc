@@ -93,7 +93,7 @@ declare_oxc_lint!(
     NoUnknownProperty,
     react,
     restriction,
-    pending,
+    fix,
     config = NoUnknownPropertyConfig,
     version = "0.2.0",
     short_description = "Disallow usage of unknown DOM properties.",
@@ -569,7 +569,10 @@ impl Rule for NoUnknownProperty {
                             ctx.diagnostic(unknown_prop(span));
                         },
                         |prop| {
-                            ctx.diagnostic(unknown_prop_with_standard_name(span, prop));
+                            ctx.diagnostic_with_fix(
+                                unknown_prop_with_standard_name(span, prop),
+                                |fixer| fixer.replace(span, *prop),
+                            );
                         },
                     );
             });
@@ -838,25 +841,25 @@ fn test() {
         (r#"<script precedence="high" src="foo.js" />"#, None),
     ];
 
-    // TODO: Add a fixer for this rule.
-    let _fix = vec![
-        (r#"<div class="bar"></div>;"#, r#"<div className="bar"></div>;"#, None::<()>),
-        (r#"<div for="bar"></div>;"#, r#"<div htmlFor="bar"></div>;"#, None),
-        (r#"<div accept-charset="bar"></div>;"#, r#"<div acceptCharset="bar"></div>;"#, None),
-        (r#"<div http-equiv="bar"></div>;"#, r#"<div httpEquiv="bar"></div>;"#, None),
-        (r#"<div accesskey="bar"></div>;"#, r#"<div accessKey="bar"></div>;"#, None),
-        (r#"<div onclick="bar"></div>;"#, r#"<div onClick="bar"></div>;"#, None),
-        (r#"<div onmousedown="bar"></div>;"#, r#"<div onMouseDown="bar"></div>;"#, None),
-        (r#"<div onMousedown="bar"></div>;"#, r#"<div onMouseDown="bar"></div>;"#, None),
-        (r#"<use xlink:href="bar" />;"#, r#"<use xlinkHref="bar" />;"#, None),
+    let fix = vec![
+        (r#"<div class="bar"></div>;"#, r#"<div className="bar"></div>;"#),
+        (r#"<div for="bar"></div>;"#, r#"<div htmlFor="bar"></div>;"#),
+        (r#"<div accept-charset="bar"></div>;"#, r#"<div acceptCharset="bar"></div>;"#),
+        (r#"<div http-equiv="bar"></div>;"#, r#"<div httpEquiv="bar"></div>;"#),
+        (r#"<div accesskey="bar"></div>;"#, r#"<div accessKey="bar"></div>;"#),
+        (r#"<div onclick="bar"></div>;"#, r#"<div onClick="bar"></div>;"#),
+        (r#"<div onmousedown="bar"></div>;"#, r#"<div onMouseDown="bar"></div>;"#),
+        (r#"<div onMousedown="bar"></div>;"#, r#"<div onMouseDown="bar"></div>;"#),
+        (r#"<use xlink:href="bar" />;"#, r#"<use xlinkHref="bar" />;"#),
         (
             r#"<rect clip-path="bar" transform-origin="center" />;"#,
             r#"<rect clipPath="bar" transform-origin="center" />;"#,
-            None,
         ),
-        ("<script crossorigin nomodule />", "<script crossOrigin noModule />", None),
-        ("<div crossorigin />", "<div crossOrigin />", None),
+        ("<script crossorigin nomodule />", "<script crossOrigin noModule />"),
+        ("<div crossorigin />", "<div crossOrigin />"),
     ];
 
-    Tester::new(NoUnknownProperty::NAME, NoUnknownProperty::PLUGIN, pass, fail).test_and_snapshot();
+    Tester::new(NoUnknownProperty::NAME, NoUnknownProperty::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }
