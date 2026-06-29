@@ -426,6 +426,12 @@ pub trait FormatElements {
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct TextWidth(u32);
 
+/// Every byte in `0x20..=0x7E` is a single-width ASCII character,
+/// so display width equals byte length and the text is guaranteed single-line.
+fn is_all_printable_ascii(s: &str) -> bool {
+    s.as_bytes().iter().all(|&b| matches!(b, 0x20..=0x7e))
+}
+
 impl TextWidth {
     /// Bit mask for the multiline flag (highest bit)
     const MULTILINE_MASK: u32 = 1 << 31;
@@ -468,6 +474,12 @@ impl TextWidth {
             return Self::single(0);
         }
 
+        // Excludes `\t`, `\n`, control bytes and multi-byte UTF-8,
+        // those fall through to the scan below.
+        if is_all_printable_ascii(text) {
+            return Self::single(text.len() as u32);
+        }
+
         let mut width = 0u32;
         let mut segment_start = 0;
         for (i, c) in text.char_indices() {
@@ -491,8 +503,11 @@ impl TextWidth {
 
     /// Creates width from a string known to not contain whitespace.
     /// More efficient than `from_text` when whitespace is guaranteed absent.
+    #[expect(clippy::cast_possible_truncation)]
     pub fn from_non_whitespace_str(name: &str) -> TextWidth {
-        #[expect(clippy::cast_possible_truncation)]
+        if is_all_printable_ascii(name) {
+            return Self::single(name.len() as u32);
+        }
         Self::single(name.width() as u32)
     }
 
@@ -598,5 +613,93 @@ mod tests {
         let width = TextWidth::from_text("", indent_width(2));
         debug_assert_eq!(width.value(), 0);
         debug_assert!(!width.is_multiline());
+    }
+
+    #[test]
+    fn ascii_fast_path_is_byte_identical_to_slow_path() {
+        use unicode_width::UnicodeWidthStr;
+
+        // Reference: the original `from_text` scan, without the ASCII fast path.
+        #[expect(clippy::cast_possible_truncation)]
+        fn from_text_slow(text: &str, indent_width: IndentWidth) -> TextWidth {
+            if text.is_empty() {
+                return TextWidth::single(0);
+            }
+            let mut width = 0u32;
+            let mut segment_start = 0;
+            for (i, c) in text.char_indices() {
+                match c {
+                    '\t' => {
+                        width += text[segment_start..i].width() as u32;
+                        width += u32::from(indent_width.value());
+                        segment_start = i + 1;
+                    }
+                    '\n' => {
+                        width += text[segment_start..i].width() as u32;
+                        return TextWidth::multiline(width);
+                    }
+                    _ => {}
+                }
+            }
+            width += text[segment_start..].width() as u32;
+            TextWidth::single(width)
+        }
+
+        let cases = [
+            "",
+            "abc",
+            "a b c",
+            "className",
+            "onClick",
+            "~!@#$%^&*()_+-=[]{}|;':\",./<>?",
+            " ",
+            "  leading-and-trailing  ",
+            "\t",
+            "a\tb",
+            "a\nb",
+            "a\r\nb",
+            "line1\nline2",
+            "café",
+            "日本語",
+            "🗑️ DELETE",
+            "⚠️",
+            "a\u{0b}b", // vertical tab
+            "a\u{0c}b", // form feed
+            "a\u{7f}b", // DEL
+            "\u{1f}",   // unit separator
+            "mix café \t 日 \n end",
+        ];
+        let w = indent_width(4);
+        for &s in &cases {
+            debug_assert_eq!(
+                TextWidth::from_text(s, w).0,
+                from_text_slow(s, w).0,
+                "from_text mismatch for {s:?}"
+            );
+        }
+
+        // `from_non_whitespace_str` must equal an unconditional `UnicodeWidthStr::width`.
+        let names = [
+            "",
+            "x",
+            "className",
+            "onClick",
+            "snake_case_$id123",
+            "~!@#",
+            "café",
+            "日本語",
+            "🗑️",
+            "a\u{7f}b",
+            "\u{0b}",
+        ];
+        for &n in &names {
+            #[expect(clippy::cast_possible_truncation)]
+            let expected = TextWidth::single(n.width() as u32);
+            debug_assert_eq!(
+                TextWidth::from_non_whitespace_str(n).0,
+                expected.0,
+                "from_non_whitespace_str mismatch for {n:?}"
+            );
+        }
     }
 }
