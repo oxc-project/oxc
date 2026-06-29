@@ -42,6 +42,10 @@ pub struct ConfigStoreBuilder {
     // Collect all `extends` file paths for the language server.
     // The server will tell the clients to watch for the extends files.
     pub extended_paths: Vec<PathBuf>,
+
+    // Store the merged Oxlintrc for --print-config, so rule options from
+    // extended configs are preserved.
+    merged_oxlintrc: Option<Oxlintrc>,
 }
 
 impl Default for ConfigStoreBuilder {
@@ -63,7 +67,15 @@ impl ConfigStoreBuilder {
         let overrides = OxlintOverrides::default();
         let extended_paths = Vec::new();
 
-        Self { rules, external_rules, config, categories, overrides, extended_paths }
+        Self {
+            rules,
+            external_rules,
+            config,
+            categories,
+            overrides,
+            extended_paths,
+            merged_oxlintrc: None,
+        }
     }
 
     /// Warn on all rules in all plugins and categories, including those in `nursery`.
@@ -77,7 +89,15 @@ impl ConfigStoreBuilder {
         let rules = RULES.iter().map(|rule| (rule.clone(), AllowWarnDeny::Warn)).collect();
         let external_rules = FxHashMap::default();
         let extended_paths = Vec::new();
-        Self { rules, external_rules, config, categories, overrides, extended_paths }
+        Self {
+            rules,
+            external_rules,
+            config,
+            categories,
+            overrides,
+            extended_paths,
+            merged_oxlintrc: None,
+        }
     }
 
     /// Create a [`ConfigStoreBuilder`] from a loaded or manually built [`Oxlintrc`].
@@ -258,6 +278,9 @@ impl ConfigStoreBuilder {
             categories.entry(RuleCategory::Correctness).or_insert(AllowWarnDeny::Warn);
         }
 
+        // Clone the merged oxlintrc for --print-config before consuming its fields
+        let merged_oxlintrc_for_print = oxlintrc.clone();
+
         let config = LintConfig {
             plugins,
             settings: oxlintrc.settings,
@@ -274,6 +297,7 @@ impl ConfigStoreBuilder {
             categories,
             overrides: oxlintrc.overrides,
             extended_paths,
+            merged_oxlintrc: Some(merged_oxlintrc_for_print),
         };
 
         for filter in oxlintrc.categories.filters() {
@@ -560,7 +584,10 @@ impl ConfigStoreBuilder {
     /// # Panics
     /// This function will panic if the `oxlintrc` is not valid JSON.
     pub fn resolve_final_config_file(&self, oxlintrc: Oxlintrc) -> String {
-        let mut oxlintrc = oxlintrc;
+        // Use the merged oxlintrc if available (from `from_oxlintrc`), otherwise fall back to the
+        // provided one. The merged config contains rule options from all extends, which the
+        // un-merged root config does not.
+        let mut oxlintrc = self.merged_oxlintrc.clone().unwrap_or(oxlintrc);
         let previous_rules = std::mem::take(&mut oxlintrc.rules);
 
         let rule_name_to_rule = previous_rules
