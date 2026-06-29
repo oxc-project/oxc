@@ -97,7 +97,7 @@ the exact set of supported positions (incl. id / attribute-value / class selecto
   - Mirrors `postcss-selector-parser` degrading on at-words
   - A statement-position placeholder-led selector must not absorb across a newline (raffia `placeholder_starts_qualified_rule`): `${mixin}\n& > .x {}` is two statements
 - String / `url()` position: the CSS lexer keeps these opaque, so a sentinel inside them stays in a verbatim `Text` (no `EmbedPlaceholder`)
-  - It is counted by `count_text_sentinels` (oxfmt) and substituted inline by the host's `Text`-sentinel branch, a deliberate string-scan fallback at the edges of the typed path
+  - The JS host (`oxc_formatter`) counts these and substitutes them inline through its `Text`-sentinel branch, a deliberate string-scan fallback at the edges of the typed path
 
 `tests/fixtures/embedded/scss/*-placeholders.scss` is the source of truth for which positions parse and how they print (the `embedded/` harness runs `format_to_ir` with the option on); add a fixture there when extending coverage.
 

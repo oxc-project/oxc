@@ -50,11 +50,16 @@ After changing AST shapes or the generators, regenerate with `just ast`, never h
 
 ### Embedded language formatting
 
-- Two directions: xxx-in-js (e.g. css/graphql/html in template literals) and js-in-xxx (e.g. vue/svelte)
-- xxx-in-js goes through the `FormatDispatcher` Oxfmt assembles (Rust formatter
-  per language where implemented — currently GraphQL — Prettier Doc→IR fallback otherwise);
-  js-in-xxx works by Oxfmt injecting Prettier calls through `ExternalCallbacks`
-  - This crate stays unaware of Prettier and only invokes the supplied dispatcher/callbacks
+Two directions: xxx-in-js (css/graphql/html in template literals) and js-in-xxx (vue/svelte).
+
+- xxx-in-js goes through the `FormatDispatcher` Oxfmt assembles Rust based formatter, Prettier Doc→IR fallback otherwise
+- As the JS host, this crate also owns the parent-side concerns in `print/template/embed/`:
+  - template-literal escape on returned IR,
+  - placeholder marker insertion / survival count / `${expr}` substitution,
+  - and `.raw` vs `.cooked` selection
+  - Language formatter crates stay free of these rules
+    - See `embed/mod.rs` for the shared helpers and `embed/{css,html,graphql,markdown}.rs` for each site's wiring
+- js-in-xxx works with `prettier-plugin-oxfmt` which uses `format_fragment`
 
 ## Fixing IR construction
 

@@ -35,12 +35,12 @@ When working with file paths in CLI code, be aware of Windows path differences:
 
 Oxfmt utilizes different implementations depending on the file extension and filename:
 
-- Tier 1: Rust implementations using `oxc_formatter`, `oxc_formatter_json`, `oxc_formatter_graphql` or `oxc_formatter_css` found in this repository
+- Tier 1: Rust implementations using `oxc_formatter`, `oxc_formatter_json`, etc found in this repository
 - Tier 2: Rust implementations using external libraries like `oxc_toml`
 - Tier 3: Delegations to Prettier via NAPI-JS calls (e.g., for Vue or Markdown)
 - Tier 4: Delegations to Prettier that require additional plugins (e.g., for Svelte)
 
-NOTE: Tier 1 formatters never fall back to Prettier, since they exist to reduce the dependency on Prettier.
+NOTE: Rust written formatters never fall back to Prettier, since they exist to reduce the dependency on Prettier.
 
 `oxc_formatter_css` (uses a `raffia` fork) and `oxc_formatter_graphql` (uses an `apollo-parser` fork) both should cover everything the bundled Prettier can parse for their language.
 
@@ -55,7 +55,17 @@ Two consumers today:
 - JSDoc fenced code blocks
 - html-in-js fallback (`format_js_in_html_as_fallback` in `oxc_formatter/src/print/template/embed/html.rs`)
 
-Tailwind class sorting (`sortTailwindcss`) splits responsibilities: Rust collects classes (`className` etc. in JS/TS, `@apply` in CSS — incl. css-in-js and JSDoc fenced blocks) into `FormatElement::TailwindClass`, and the JS side sorts them in one batch (`sortTailwindClasses` → tailwind's `getClassOrder`, which needs the resolved Tailwind config). Across embedded boundaries the child's classes travel in `DispatchResult::tailwind_classes` and the parent merges them with `DispatchResult::remap_tailwind_into` (defined in `oxc_formatter_core`; a forgotten merge trips a printer `debug_assert` instead of silently dropping classes). No CSS goes to Prettier for this; the pure Rust build never collects (no sorter available).
+Tailwind class sorting (`sortTailwindcss`) splits responsibilities:
+
+- Rust collects classes into `FormatElement::TailwindClass`
+  - `className` etc. in JS/TS, `@apply` in CSS — incl. css-in-js and JSDoc fenced blocks
+- and the JS side sorts them in one batch
+  - `sortTailwindClasses` → tailwind's `getClassOrder`, which needs the resolved Tailwind config
+
+Embedded boundaries carry classes through `DispatchResult::tailwind_classes`;
+each embed site calls `DispatchResult::remap_tailwind_into(collector)` before consuming `docs`.
+
+The four data paths (JS/TS top-level / standalone CSS / embedded CSS / JSDoc fenced CSS) are documented at `ExternalFormatter::to_external_callbacks`. No CSS goes to Prettier for this; the pure Rust build never collects (no sorter available).
 
 Consequently, managing these various formatter implementations and handling their respective options are also part of Oxfmt's responsibilities.
 

@@ -42,6 +42,10 @@ formatter's IR be built inside another's document (e.g. graphql-in-js):
 - Cross-language contract data is first-class on `DispatchResult` (`tailwind_classes`);
   only truly language-pair specific data crosses as `dyn Any` (e.g. HTML's `has_multiple_root_elements`),
   core never learns concrete languages
+- Consumers access `DispatchResult.docs` directly
+  (single-doc takes `docs.into_iter().next()`, multi-doc walks `docs`);
+  call `DispatchResult::remap_tailwind_into` first when the child may carry classes,
+  the printer's `debug_assert` catches a forgotten merge
 
 ### What belongs in core (the boundary)
 
