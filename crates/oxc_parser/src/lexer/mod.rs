@@ -35,6 +35,7 @@ mod typescript;
 mod unicode;
 mod whitespace;
 
+#[cfg_attr(not(feature = "benchmarking"), expect(clippy::redundant_pub_crate))]
 pub(crate) use byte_handlers::{ByteHandler, ByteHandlers, byte_handler_tables};
 pub use kind::Kind;
 pub use number::{parse_big_int, parse_float, parse_int};
