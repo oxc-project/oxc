@@ -1,6 +1,6 @@
 //! Format a CSS/SCSS/Less fragment through the embedded entry point
 //! (`format_to_ir`), the dispatcher path oxfmt uses for css-in-js.
-//! Unlike `css_formatter`, this tolerates `@prettier-placeholder-N-id`
+//! Unlike `css_formatter`, this tolerates `` `PLACEHOLDER-N` ``
 //! markers in value/selector position.
 //!
 //! ```sh

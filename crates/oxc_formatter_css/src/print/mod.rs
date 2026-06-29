@@ -1,8 +1,8 @@
 use cow_utils::CowUtils;
-use raffia::ast::Stylesheet;
+use raffia::ast::{Placeholder, Stylesheet};
 
 use oxc_formatter_core::{
-    Buffer, Format, Formatter, arena_cow_str,
+    Buffer, Format, FormatElement, Formatter, arena_cow_str,
     builders::{FormatWith, text, token},
     write,
 };
@@ -40,6 +40,17 @@ where
     T: Fn(&mut CssFormatter<'_, 'a>),
 {
     FormatWith::new(formatter)
+}
+
+/// Emits a css-in-js placeholder:
+/// the typed `EmbedPlaceholder` marker (the host substitutes `${expr}` for it)
+/// may be followed by any glued literal suffix
+/// (`@placeholder-0-idpx` -> marker + `px`), so `${x}px` reads as one value.
+fn write_placeholder<'a>(placeholder: &Placeholder<'a>, f: &mut CssFormatter<'_, 'a>) {
+    f.write_element(FormatElement::EmbedPlaceholder(placeholder.index));
+    if !placeholder.suffix.is_empty() {
+        write!(f, text(placeholder.suffix));
+    }
 }
 
 /// Collapses any whitespace run in `raw` to a single space.

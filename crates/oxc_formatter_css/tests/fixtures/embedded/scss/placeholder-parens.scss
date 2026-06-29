@@ -1,4 +1,4 @@
-transform: @prettier-placeholder-0-id(30px);
-transform: @prettier-placeholder-1-id (30px);
-transform: @prettier-placeholder-2-id(@prettier-placeholder-3-idpx);
-some-extra-long-property-name: @prettier-placeholder-4-id(@prettier-placeholder-5-idpx);
+transform: `PLACEHOLDER-0`(30px);
+transform: `PLACEHOLDER-1` (30px);
+transform: `PLACEHOLDER-2`(`PLACEHOLDER-3`px);
+some-extra-long-property-name: `PLACEHOLDER-4`(`PLACEHOLDER-5`px);

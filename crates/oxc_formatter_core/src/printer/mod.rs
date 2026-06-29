@@ -338,6 +338,16 @@ impl<'a> Printer<'a> {
                     self.print_text(Text::Text { text, width });
                 }
             }
+            FormatElement::EmbedPlaceholder(index) => {
+                // The embedding host must replace this marker before printing.
+                // If one survives, it would silently vanish from the output,
+                // so fail loudly in debug builds.
+                debug_assert!(
+                    false,
+                    "EmbedPlaceholder({index}) reached the printer — the host must \
+                     replace it with the embedded interpolation before printing",
+                );
+            }
         }
 
         Ok(())
@@ -1244,6 +1254,8 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                     return Ok(self.fits_text(Text::Text { text, width }));
                 }
             }
+            // Consumed by the host before printing; contributes no width here.
+            FormatElement::EmbedPlaceholder(_) => {}
         }
 
         Ok(Fits::Maybe)

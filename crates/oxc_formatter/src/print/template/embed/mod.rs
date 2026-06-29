@@ -197,7 +197,7 @@ fn get_angular_component_property<'a>(node: &AstNode<'a, TemplateLiteral<'a>>) -
 /// `[literal, index_str, literal, index_str, ...]`
 ///
 /// Handles both:
-/// - CSS: `@prettier-placeholder-{N}-id`
+/// - CSS: `` `PLACEHOLDER-{N}` ``
 /// - HTML: `PRETTIER_HTML_PLACEHOLDER_{N}_{C}_IN_JS`
 ///
 /// The optional `_{digits}` counter group between index and suffix is skipped when present,

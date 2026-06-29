@@ -1,4 +1,4 @@
-scss compatibility: 83/85 (97.65%), 6 files skipped
+scss compatibility: 83/85 (97.65%), 7 files skipped
 
 # Failed
 
@@ -13,5 +13,6 @@ scss compatibility: 83/85 (97.65%), 6 files skipped
 - scss/case/case.scss
 - scss/comments/CRLF.scss
 - scss/function/arbitrary-arguments.scss
+- scss/math/3945.scss
 - scss/no-semicolon/url.scss
 - scss/parens/parens.scss

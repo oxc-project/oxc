@@ -19,9 +19,14 @@ Parses with a fork of [`raffia`](https://docs.rs/raffia), pinned via `rev` in th
 
 The fork adds:
 
-- `tolerate_at_keyword_placeholders` option (for the css-in-js dispatcher)
-  - Accepts at-keywords in declaration values (`ComponentValue::TokenWithSpan`) and selectors (type/class selector idents whose `raw` INCLUDES the leading `@`)
-  - Only `format_to_ir` enables it; `format()` stays strict
+- `template_placeholder` option (for the css-in-js dispatcher)
+  - Backtick-delimited marker `` `<prefix><digits>` `` with a parameterized inner affix (`TemplatePlaceholder { prefix }`);
+  - Backtick is invalid CSS/SCSS/Sass (only Less's inline-JS delimiter), so the marker is
+    unmistakably out-of-band, not a real `@var`/`$var` or at-rule
+  - Only `format_to_ir` enables it (with the option unset a backtick is a syntax error)
+  - MUST be used with `Syntax::Scss`; css-in-js is `CssVariant::Scss`-hardcoded
+  - Tokenized as one typed `Token::Placeholder { index, suffix }` accepted in value / selector / statement / declaration-name positions
+    - Per-position layout and coverage: see "css-in-js specifics" below
 - Whitespace-sensitive Less `+`/`-` operators (matching `lessc`)
   - A `+`/`-` is a `LessBinaryOperation` operator only when followed by whitespace;
   - `@a -@b` is two values (`-@b` is a `LessNegativeValue` sign
@@ -39,7 +44,9 @@ On the other hand, Prettier operates on `postcss` + three sub-parsers (`postcss-
 
 - `raffia` is error-tolerant via `parser.recoverable_errors()`, but any parse error bails out;
   - Never format a broken AST
-  - Exception: `TopLevelDeclaration`, the dominant css-in-js shape (postcss accepts it)
+  - Exception: `TopLevelDeclaration`, tolerated ONLY by `format_to_ir()`
+    - The dominant css-in-js shape, `` css`display: flex;` ``)
+    - Standalone `format()` still rejects it as invalid CSS/SCSS/Less (Dart Sass rejects it too)
 - print-stage internal errors are also `Err`
 - The caller (oxfmt) decides what happens next
   (diagnostics for standalone files, template-as-is for embedded)
@@ -71,18 +78,28 @@ The configured `end_of_line` option still applies, the printer emits the chosen 
 
 ### css-in-js specifics
 
-`format_to_ir()` accepts SCSS-like source with `@prettier-placeholder-N-id` markers in place of `${}` interpolations.
-`raffia` parses them via the fork option `tolerate_at_keyword_placeholders` (`format_to_ir` passes `tolerate_placeholders: true`).
+`format_to_ir()` accepts SCSS-like source with `` `PLACEHOLDER-N` `` markers in place of `${}` interpolations.
+`raffia` tokenizes each as a typed `Token::Placeholder` via the fork option `template_placeholder` (`format.rs` passes the inner affix). Backtick is invalid SCSS, so the marker can never be confused with real syntax (see the `TEMPLATE_PLACEHOLDER_PREFIX` / `_SUFFIX` consts in `lib.rs`).
 
-Per-position handling:
+Each parses into a typed node that the printer emits as a `FormatElement::EmbedPlaceholder(N)` marker (`print/mod.rs::write_placeholder`), plus a `Text` for any glued suffix; the JS host (`oxc_formatter/embed/css.rs`) substitutes `${exprN}` back. No output-side string protocol — the index is carried structurally.
 
-- Statement position: parses as an at-rule (`write_placeholder_at_rule` in `at_rule.rs`)
-  - A `;`-less marker SWALLOWS the following statements into its prelude
-- Value position: `ComponentValue::TokenWithSpan`, rides existing gap-based separator rules
+Per-position layout, the non-obvious rules below;
+the exact set of supported positions (incl. id / attribute-value / class selector) is whatever the `embedded/scss/*-placeholders.scss` fixtures exercise, not this list:
+
+- Statement position: a `Statement::Placeholder` (`write_statement`) source-driven layout:
+  - The `;` is kept only when the source has one; consecutive placeholders preserve the source whitespace (`${a} ${b}` on one line, `${a}\n${b}` on two)
+  - A `;`-less placeholder opens a postcss "swallow" run: following declarations keep a source-driven `;` until a source `;` ends the run (`write_statement_sequence_bounded`)
+  - `${foo}: ${bar}` parses as a declaration whose property NAME is a placeholder
+- Value position: `ComponentValue::Placeholder`; rides existing gap-based separator rules
   - One added rule: glued to a paren group → `Separator::SoftBreak` (`${fn}(30px)` breaks BEFORE the parens)
-- Selector position: triggers "garbage mode" in `write_selector_list`
-  - Emits the raw source slice with whitespace runs collapsed, never breaking
+- Selector position: `InterpolableIdent::Placeholder`; a placeholder mid-selector still triggers "garbage mode" in `write_selector_list`
+  - Emits the raw source slice with whitespace runs collapsed (sentinels split back out to `EmbedPlaceholder` via `write_text_with_placeholders`), never breaking
   - Mirrors `postcss-selector-parser` degrading on at-words
+  - A statement-position placeholder-led selector must not absorb across a newline (raffia `placeholder_starts_qualified_rule`): `${mixin}\n& > .x {}` is two statements
+- String / `url()` position: the CSS lexer keeps these opaque, so a sentinel inside them stays in a verbatim `Text` (no `EmbedPlaceholder`)
+  - It is counted by `count_text_sentinels` (oxfmt) and substituted inline by the host's `Text`-sentinel branch, a deliberate string-scan fallback at the edges of the typed path
+
+`tests/fixtures/embedded/scss/*-placeholders.scss` is the source of truth for which positions parse and how they print (the `embedded/` harness runs `format_to_ir` with the option on); add a fixture there when extending coverage.
 
 ## Prettier mapping
 
@@ -143,9 +160,15 @@ Deliberate divergences from Prettier (impact does not justify the matching cost)
 - Selector-position Sass interpolation normalizes inner spaces (`#{ $name }` → `#{$name}`)
   - We normalize BOTH positions for output consistency
   - Prettier keeps SELECTOR interpolation verbatim
+- `@warn` / `@error` prelude strings re-quote per `singleQuote` option (`@error "x"` → `@error 'x'`)
+  - `raffia` parses them as `SassExpr`, so they go through the structured printer (see `at_rule.rs`)
+  - Prettier keeps them as a raw string verbatim
 - A function call directly after a `//` comment in nested-args position
   - Prettier double-indents it
   - We print the normal indent (prettier/prettier#19427)
+- A declaration swallowed by a `;`-less css-in-js placeholder (`${m}\ncolor: red`)
+  - We parse it structurally and FORMAT it (spacing/hex/number normalization)
+  - Prettier keeps it verbatim, postcss swallows the run as an opaque prelude string it can't format, so `color   :   red` / `#FFFFFF` survive unformatted
 
 ## Verification
 

@@ -1,4 +1,4 @@
-use raffia::{ParserBuilder, ParserOptions, ast::Stylesheet};
+use raffia::{ParserBuilder, ParserOptions, TemplatePlaceholder, ast::Stylesheet};
 
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_diagnostics::OxcDiagnostic;
@@ -10,6 +10,7 @@ use oxc_formatter_core::{
 use oxc_span::Span;
 
 use crate::{
+    TEMPLATE_PLACEHOLDER_PREFIX, TEMPLATE_PLACEHOLDER_SUFFIX,
     comments::CssComment,
     context::CssFormatContext,
     options::CssFormatOptions,
@@ -92,7 +93,7 @@ pub fn format_to_ir<'a>(
 ) -> Result<EmbeddedIr<'a>, OxcDiagnostic> {
     let allocator = ctx.allocator;
     // css-in-js: The dispatcher input substitutes `${}` interpolations
-    // with `@prettier-placeholder-N-id` markers, which may sit in value or selector position.
+    // with `` `PLACEHOLDER-N` `` markers, which may sit in value or selector position.
     let allow_placeholders = true;
     let (stylesheet, source, comments) = parse_stylesheet(
         allocator,
@@ -156,21 +157,28 @@ fn parse_stylesheet<'a>(
     let mut parser = ParserBuilder::new(parse_source)
         .syntax(options.variant.to_raffia())
         .options(ParserOptions {
-            tolerate_at_keyword_placeholders: tolerate_placeholders,
+            // Derive the affix from the host sentinel (single source of truth),
+            // minus the leading backtick which raffia consumes as the placeholder sigil
+            // (the closing backtick `TEMPLATE_PLACEHOLDER_SUFFIX` is fixed in raffia).
+            // Only valid for SCSS; raffia asserts that.
+            template_placeholder: tolerate_placeholders.then_some(TemplatePlaceholder {
+                prefix: TEMPLATE_PLACEHOLDER_PREFIX
+                    .strip_prefix(TEMPLATE_PLACEHOLDER_SUFFIX)
+                    .expect("placeholder prefix starts with a backtick"),
+            }),
             ..ParserOptions::default()
         })
         .comments(&mut comments)
         .build();
 
     let stylesheet = parser.parse::<Stylesheet>().map_err(|error| to_diagnostic(&error))?;
-    // Top-level declarations are recoverable AND accepted by Prettier. (postcss prints them as-is)
-    // The dominant css-in-js shape (`` css`display: flex;` ``), so they must not bail out.
-    // Everything else recoverable still does.
-    if let Some(error) = parser
-        .recoverable_errors()
-        .iter()
-        .find(|error| !matches!(error.kind, raffia::error::ErrorKind::TopLevelDeclaration))
-    {
+    // Top-level declarations are valid only as an embedded css-in-js fragment.
+    // A standalone file rejects them like any other recoverable error
+    // (they are not valid CSS/SCSS/Less); only the embedded path tolerates them.
+    if let Some(error) = parser.recoverable_errors().iter().find(|error| {
+        !(tolerate_placeholders
+            && matches!(error.kind, raffia::error::ErrorKind::TopLevelDeclaration))
+    }) {
         return Err(to_diagnostic(error));
     }
     drop(parser);

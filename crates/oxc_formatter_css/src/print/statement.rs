@@ -1,7 +1,7 @@
 use cow_utils::CowUtils;
 use raffia::{
     ParserBuilder, Spanned,
-    ast::{ComponentValue, Declaration, QualifiedRule, SimpleBlock, Statement},
+    ast::{ComponentValue, Declaration, InterpolableIdent, QualifiedRule, SimpleBlock, Statement},
 };
 
 use oxc_formatter_core::{
@@ -89,6 +89,12 @@ pub(super) fn write_statement_sequence_bounded<'a>(
     f: &mut CssFormatter<'_, 'a>,
 ) {
     let source = f.context().source_text();
+    // postcss "swallow": a `;`-less placeholder statement absorbs the following
+    // statements as a verbatim prelude until a source `;` ends it,
+    // so prettier does NOT add a `;` to a declaration that lands in that run
+    // (`${m}\ncolor: red` -> no `;`, but `${m}\ncolor: red;\nx: 1` -> `x: 1;`).
+    // Track that run so swallowed declarations keep a source-driven `;`.
+    let mut swallowed = false;
     for (i, stmt) in statements.iter().enumerate() {
         let start = stmt_start(stmt);
         if i > 0 {
@@ -96,13 +102,22 @@ pub(super) fn write_statement_sequence_bounded<'a>(
             // Trailing comment on the same line as the previous statement
             // (but not one that sits after the NEXT statement on that line).
             write_trailing_same_line_comment(prev_end, upper.min(start), f);
-            write!(f, hard_line_break());
-            // Preserve a single blank line. The gap considered is from the end of
-            // the previous statement to the next printed position (comment or stmt).
+            // The gap considered is from the end of the previous statement to the
+            // next printed position (comment or stmt).
             let next_start =
                 f.context().comments().peek().map_or(start, |c| c.span.start.min(start));
-            if classify_gap(source.bytes_range(prev_end, next_start)) == Gap::Blank {
-                write!(f, empty_line());
+            let gap = classify_gap(source.bytes_range(prev_end, next_start));
+            // A `;`-less css-in-js placeholder preserves the source whitespace that
+            // follows it: Prettier keeps `${a} ${b}` on one line and `${a}\n${b}` on two
+            // (postcss swallows the run as a verbatim prelude).
+            // Other statements always start on a new line.
+            if matches!(statements[i - 1], Statement::Placeholder(_)) && gap == Gap::None {
+                write!(f, space());
+            } else {
+                write!(f, hard_line_break());
+                if gap == Gap::Blank {
+                    write!(f, empty_line());
+                }
             }
         }
 
@@ -114,13 +129,26 @@ pub(super) fn write_statement_sequence_bounded<'a>(
             .is_some_and(|c| is_suppression_comment(source, c));
         flush_leading_comments(start, f);
         let end = stmt_end(stmt, f);
+        // `stmt_end` already consumes a trailing `;`,
+        // so a source `;` is present exactly when it advanced past the raw statement span.
+        let has_source_semicolon = end > to_span(stmt.span()).end;
         if is_suppressed {
-            // Divergence: Prettier deletes `;`-less ignored at-rules at EOF.
-            // See `embedded/scss/placeholder-ignore.scss`.
             write!(f, text(source.slice_range(start, end)));
+        } else if swallowed && let Statement::Declaration(decl) = stmt {
+            // Inside a swallowed run: keep the source `;` instead of forcing one
+            write_declaration(decl, f);
+            if has_source_semicolon {
+                write!(f, ";");
+            }
         } else {
             write_statement(stmt, f);
         }
+        // A `;`-less placeholder opens a swallowed run; any source `;` closes it
+        swallowed = if has_source_semicolon {
+            false
+        } else {
+            swallowed || matches!(stmt, Statement::Placeholder(_))
+        };
         // Discard comments inside spans the statement printer didn't claim
         // (e.g. inside selectors/values that are still printed verbatim),
         // so the cursor never points before an already-printed position.
@@ -137,12 +165,33 @@ pub(super) fn write_statement<'a>(stmt: &Statement<'a>, f: &mut CssFormatter<'_,
         Statement::QualifiedRule(rule) => write_qualified_rule(rule, f),
         Statement::Declaration(decl) => {
             write_declaration(decl, f);
-            // Nested declaration blocks (`background: { ... }`) get no `;`.
-            if !matches!(decl.value.last(), Some(ComponentValue::SassNestingDeclaration(_))) {
+            if matches!(decl.name, InterpolableIdent::Placeholder(_)) {
+                // A css-in-js `${foo}: ${bar}` declaration keeps the source `;`
+                // (Prettier preserves it: `${foo}: ${bar};` vs `${foo}: ${bar}`).
+                let end = to_span(decl.span()).end;
+                if end_with_semicolon(end, f) > end {
+                    write!(f, ";");
+                }
+            } else if !matches!(decl.value.last(), Some(ComponentValue::SassNestingDeclaration(_)))
+            {
+                // Nested declaration blocks (`background: { ... }`) get no `;`
                 write!(f, ";");
             }
         }
         Statement::AtRule(at_rule) => at_rule::write_at_rule(at_rule, f),
+        // A css-in-js placeholder standing in for a whole statement (`${mixin}`).
+        // The host replaces the marker with `${expr}`; no separator is added here
+        // (the statement loop and the host's template own that).
+        Statement::Placeholder(placeholder) => {
+            super::write_placeholder(placeholder, f);
+            // Preserve a trailing `;` from the source
+            // (Prettier keeps `${foo};` as `${foo};` and `${foo}` as `${foo}`):
+            // the `;` is consumed by the statement separator, so recover it from the source gap.
+            let end = to_span(placeholder.span()).end;
+            if end_with_semicolon(end, f) > end {
+                write!(f, ";");
+            }
+        }
         Statement::LessVariableDeclaration(decl) => {
             if less::write_less_variable_declaration(decl, f) {
                 write!(f, ";");
@@ -242,7 +291,11 @@ pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter
     let source = f.context().source_text();
     let name_span = to_span(decl.name.span());
     let prop = source.text_for(&name_span);
-    if f.context().in_less_detached().get() || f.context().in_icss_rule().get() {
+    if let InterpolableIdent::Placeholder(placeholder) = &decl.name {
+        // A css-in-js placeholder property name (`${foo}: ...`) is a typed marker
+        // the host replaces with `${expr}`; never lowercase it like a real property.
+        super::write_placeholder(placeholder, f);
+    } else if f.context().in_less_detached().get() || f.context().in_icss_rule().get() {
         // Less detached rulesets (`parentNode.variable`) and ICSS rules
         // (`insideIcssRuleNode`) keep property-name casing.
         write!(f, text(prop));

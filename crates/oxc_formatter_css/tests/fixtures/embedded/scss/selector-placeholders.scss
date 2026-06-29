@@ -1,9 +1,15 @@
-a.@prettier-placeholder-0-id:focus,a.@prettier-placeholder-1-id:hover {
+a.`PLACEHOLDER-0`:focus,a.`PLACEHOLDER-1`:hover {
   color: red;
 }
-.foo,   .bar    @prettier-placeholder-2-id {
+.foo,   .bar    `PLACEHOLDER-2` {
   color: blue;
 }
-& > :not(.@prettier-placeholder-3-id):not(@prettier-placeholder-4-id) {
+& > :not(.`PLACEHOLDER-3`):not(`PLACEHOLDER-4`) {
   display: flex;
+}
+#`PLACEHOLDER-5` {
+  color: red;
+}
+a[data-x=`PLACEHOLDER-6`] {
+  color: blue;
 }

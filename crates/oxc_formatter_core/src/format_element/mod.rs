@@ -92,6 +92,12 @@ pub enum FormatElement<'a> {
     /// The usize is an index into the collected tailwind classes array.
     /// During printing, this will be replaced with the sorted class name.
     TailwindClass(usize),
+
+    /// An embedded-language interpolation placeholder.
+    /// The `u32` is the host's expression index (0-based, e.g. the Nth `${expr}` of a css-in-js template).
+    /// The host that embeds this IR MUST replace the marker with the interpolation before the document is printed;
+    /// it is not meant to reach the printer (which `debug_assert`s if one survives).
+    EmbedPlaceholder(u32),
 }
 
 impl std::fmt::Debug for FormatElement<'_> {
@@ -110,6 +116,9 @@ impl std::fmt::Debug for FormatElement<'_> {
             FormatElement::Tag(tag) => fmt.debug_tuple("Tag").field(tag).finish(),
             FormatElement::TailwindClass(index) => {
                 fmt.debug_tuple("TailwindClass").field(index).finish()
+            }
+            FormatElement::EmbedPlaceholder(index) => {
+                fmt.debug_tuple("EmbedPlaceholder").field(index).finish()
             }
         }
     }
@@ -277,7 +286,8 @@ impl FormatElements for FormatElement<'_> {
             | FormatElement::LineSuffixBoundary
             | FormatElement::Space
             | FormatElement::Tag(_)
-            | FormatElement::TailwindClass(_) => false,
+            | FormatElement::TailwindClass(_)
+            | FormatElement::EmbedPlaceholder(_) => false,
         }
     }
 

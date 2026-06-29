@@ -432,6 +432,16 @@ where
                         );
                     }
                 }
+                FormatElement::EmbedPlaceholder(index) => {
+                    w!(
+                        f,
+                        [
+                            token("<embed-placeholder<"),
+                            text(f.allocator().alloc_str(&std::format!("{index}"))),
+                            token(">>"),
+                        ]
+                    );
+                }
             }
         }
 

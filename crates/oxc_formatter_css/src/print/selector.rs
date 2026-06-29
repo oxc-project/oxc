@@ -16,13 +16,13 @@ use raffia::{
 };
 
 use oxc_formatter_core::{
-    Buffer, arena_cow_str,
+    Buffer, FormatElement, arena_cow_str,
     builders::{group, hard_line_break, indent, soft_line_break, soft_line_break_or_space, text},
     write,
 };
 
 use crate::{
-    TEMPLATE_PLACEHOLDER_PREFIX, comments,
+    TEMPLATE_PLACEHOLDER_PREFIX, TEMPLATE_PLACEHOLDER_SUFFIX, comments,
     format::to_span,
     print::{CssFormatter, format_with, normalize_whitespace, value, write_maybe_lowercase},
 };
@@ -57,8 +57,7 @@ pub(super) fn write_selector_list<'a>(
     style: SelectorListStyle,
     f: &mut CssFormatter<'_, 'a>,
 ) {
-    // css-in-js `${}` placeholders (`raffia` fork has `tolerate_at_keyword_placeholders` option):
-    // `postcss-selector-parser` degrades on at-words,
+    // css-in-js `${}` placeholders: `postcss-selector-parser` degrades on at-words,
     // everything from the selector containing the first placeholder onwards
     // becomes one garbage token soup whose commas no longer split selectors.
     // Prettier then prints it near-verbatim:
@@ -119,7 +118,9 @@ pub(super) fn write_selector_list<'a>(
                 }
                 // Comments inside the chunk are part of the verbatim text
                 let _ = f.context().comments().take_before(end);
-                write!(f, text(collapsed.into_str()));
+                // The degraded chunk is printed verbatim,
+                // but the embedded placeholders must stay typed so the host can splice `${expr}` back.
+                write_text_with_placeholders(collapsed.into_str(), f);
                 return;
             }
             write_complex_selector(complex, f);
@@ -220,6 +221,12 @@ fn write_simple_selector<'a>(selector: &SimpleSelector<'a>, f: &mut CssFormatter
 }
 
 fn write_interpolable_ident<'a>(ident: &InterpolableIdent<'a>, f: &mut CssFormatter<'_, 'a>) {
+    // A css-in-js placeholder becomes a typed marker the host replaces with `${expr}`.
+    if let InterpolableIdent::Placeholder(placeholder) = ident {
+        super::write_placeholder(placeholder, f);
+        return;
+    }
+
     // Sass interpolation reprints structurally (same as value position) so the output is internally consistent:
     // inner spaces collapse (`#{ $b }` → `#{$b}`) and quoted string literals re-quote (`#{'x'}` → `#{"x"}`).
     // Plain idents and Less `@{}` stay verbatim.
@@ -241,6 +248,37 @@ fn write_interpolable_ident<'a>(ident: &InterpolableIdent<'a>, f: &mut CssFormat
         write!(f, text(f.allocator().alloc_str(&joined)));
     } else {
         write!(f, text(raw));
+    }
+}
+
+/// Emit verbatim text (e.g. selector garbage-mode source) that may embed placeholders,
+/// splitting each into a typed [`FormatElement::EmbedPlaceholder`] so the host can splice `${expr}` back.
+///
+/// Unlike the structurally-parsed positions, garbage mode prints degraded source verbatim,
+/// so the markers are recovered from the text here.
+fn write_text_with_placeholders<'a>(mut rest: &'a str, f: &mut CssFormatter<'_, 'a>) {
+    while let Some(start) = rest.find(TEMPLATE_PLACEHOLDER_PREFIX) {
+        let after_prefix = &rest[start + TEMPLATE_PLACEHOLDER_PREFIX.len()..];
+        let digits_end =
+            after_prefix.bytes().position(|b| !b.is_ascii_digit()).unwrap_or(after_prefix.len());
+        if digits_end > 0
+            && let Some(tail) = after_prefix[digits_end..].strip_prefix(TEMPLATE_PLACEHOLDER_SUFFIX)
+            && let Ok(index) = after_prefix[..digits_end].parse::<u32>()
+        {
+            if start > 0 {
+                write!(f, text(&rest[..start]));
+            }
+            f.write_element(FormatElement::EmbedPlaceholder(index));
+            rest = tail;
+        } else {
+            // Not a valid marker: emit up to and including the prefix verbatim.
+            let consumed = start + TEMPLATE_PLACEHOLDER_PREFIX.len();
+            write!(f, text(&rest[..consumed]));
+            rest = &rest[consumed..];
+        }
+    }
+    if !rest.is_empty() {
+        write!(f, text(rest));
     }
 }
 
@@ -540,6 +578,11 @@ pub(super) fn write_keyframe_selector<'a>(
             InterpolableIdent::LessInterpolated(_) => {
                 let span = to_span(ident.span());
                 write!(f, text(source.text_for(&span)));
+            }
+            // Currently, a placeholder is never a real keyframe selector,
+            // but keep the marker typed for the host if one ever lands here.
+            InterpolableIdent::Placeholder(placeholder) => {
+                super::write_placeholder(placeholder, f);
             }
         },
         KeyframeSelector::Percentage(percentage) => {

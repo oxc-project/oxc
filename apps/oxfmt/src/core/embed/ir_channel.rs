@@ -17,15 +17,16 @@ use serde::Deserialize;
 use serde_json::Value;
 use tracing::{debug, debug_span};
 
-use oxc_formatter_core::{DispatchResult, EmbeddedContext, EmbeddedIr, FormatDispatcher};
+use oxc_formatter_core::{
+    DispatchResult, EmbeddedContext, EmbeddedIr, FormatDispatcher, FormatElement,
+};
 use oxc_formatter_css::CssFormatOptions;
 use oxc_formatter_graphql::GraphqlFormatOptions;
 
 use crate::core::{
     embed::{
         FormatEmbeddedDocWithConfigCallback, language_to_prettier_parser,
-        postprocess::{escape_template_characters_in_ir, merge_texts_and_count_css_placeholders},
-        routing,
+        postprocess::escape_template_characters_in_ir, routing,
     },
     options::inject_parser,
 };
@@ -99,10 +100,9 @@ fn format_graphql_to_irs<'a>(
 ///
 /// css-in-js uses `.raw` template values, so unlike GraphQL,
 /// no template-char re-escaping is needed.
-/// The parent replaces `@prettier-placeholder-N-id` per `Text` element,
-/// so consecutive `Text`s are merged first
-/// (the at-rule printer emits `@` and the name as separate elements)
-/// and the surviving placeholders counted into the meta.
+/// `oxc_formatter_css` emits each placeholder as a typed [`FormatElement::EmbedPlaceholder`],
+/// so the surviving count is just a structural tally (no string scan);
+/// the parent splices `${expr}` per marker.
 fn format_css_to_irs<'a>(
     ctx: &EmbeddedContext<'a, '_>,
     texts: &[&str],
@@ -114,10 +114,22 @@ fn format_css_to_irs<'a>(
         return Err(format!("CSS dispatch expects exactly one text, got {}", texts.len()));
     };
     debug_span!("oxfmt::external::format_css_to_ir").in_scope(|| {
-        let EmbeddedIr { mut ir, tailwind_classes } =
+        let EmbeddedIr { ir, tailwind_classes } =
             oxc_formatter_css::format_to_ir(ctx, text, options).map_err(|err| err.to_string())?;
-        let placeholder_count =
-            merge_texts_and_count_css_placeholders(&mut ir, ctx.allocator, options.indent_width);
+        // Surviving placeholders:
+        // - typed `EmbedPlaceholder` markers (the main path)
+        // - and sentinels that stayed embedded in verbatim `Text`
+        //   - because a lexical context (string/`url()`) doesn't tokenize them
+        // Counting both keeps the host's count == expressions check passing
+        // so it doesn't fall back to plain template formatting (the host substitutes both kinds).
+        let placeholder_count = ir
+            .iter()
+            .map(|el| match el {
+                FormatElement::EmbedPlaceholder(_) => 1,
+                FormatElement::Text { text, .. } => count_text_sentinels(text),
+                _ => 0,
+            })
+            .sum();
         Ok(DispatchResult {
             docs: vec![ir],
             tailwind_classes,
@@ -125,6 +137,32 @@ fn format_css_to_irs<'a>(
             meta: None,
         })
     })
+}
+
+/// Counts `` `PLACEHOLDER-N` `` sentinels left inside a verbatim `Text`
+/// run (placeholders that landed in a string / `url()` the CSS lexer keeps opaque).
+/// Non-overlapping matches of `prefix <digits> suffix`.
+///
+/// NOTE: Same sentinel grammar is scanned in two sibling sites with different actions
+/// (host `oxc_formatter` splits to substitute, `oxc_formatter_css` emits);
+/// kept duplicated on purpose for now, but may revisit later.
+fn count_text_sentinels(text: &str) -> usize {
+    use oxc_formatter_css::{
+        TEMPLATE_PLACEHOLDER_PREFIX as PREFIX, TEMPLATE_PLACEHOLDER_SUFFIX as SUFFIX,
+    };
+    let mut count = 0;
+    let mut rest = text;
+    while let Some(start) = rest.find(PREFIX) {
+        let after = &rest[start + PREFIX.len()..];
+        let digits = after.bytes().take_while(u8::is_ascii_digit).count();
+        if digits > 0 && after[digits..].starts_with(SUFFIX) {
+            count += 1;
+            rest = &after[digits + SUFFIX.len()..];
+        } else {
+            rest = after;
+        }
+    }
+    count
 }
 
 /// Type of the Prettier Doc→IR fallback used inside [`build_dispatcher`].

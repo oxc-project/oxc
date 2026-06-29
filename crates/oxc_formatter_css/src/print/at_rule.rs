@@ -18,7 +18,7 @@ use raffia::{
 };
 
 use oxc_formatter_core::{
-    Buffer, FormatElement, SourceText, arena_cow_str,
+    Buffer, FormatElement, arena_cow_str,
     builders::{
         empty_line, group, hard_line_break, indent, soft_line_break, soft_line_break_or_space,
         space, text,
@@ -42,16 +42,6 @@ pub(super) fn write_at_rule<'a>(at_rule: &AtRule<'a>, f: &mut CssFormatter<'_, '
     write!(f, "@");
     let name_span = to_span(at_rule.name.span());
     write_maybe_lowercase(source.text_for(&name_span), f);
-
-    // css-in-js `${}` markers at statement position parse as at-rules.
-    // Prettier's `isTemplatePlaceholderNode` rules:
-    // the prelude is kept verbatim (postcss leaves params containing `@` markers as an unparsed string),
-    // the gap after the name maps to nothing/space/hardline/blank line,
-    // and the `;` is printed only when the source has one.
-    if at_rule.name.raw.starts_with("prettier-placeholder") {
-        write_placeholder_at_rule(at_rule, f);
-        return;
-    }
 
     // Comments inside the params:
     // postcss keeps them embedded in the params string / media tokens; reconstruct from the source.
@@ -286,75 +276,6 @@ fn split_important_tail(raw: &str) -> Option<(&str, &str)> {
             classes.ends_with(char::is_whitespace).then_some((classes, *tail))
         },
     )
-}
-
-/// `@prettier-placeholder-N-id` at-rule body:
-/// verbatim prelude, source-driven spacing, `;` only when the source has one.
-/// See `write_at_rule`.
-fn write_placeholder_at_rule<'a>(at_rule: &AtRule<'a>, f: &mut CssFormatter<'_, 'a>) {
-    let source = f.context().source_text();
-    if let Some(prelude) = &at_rule.prelude {
-        let name_end = to_span(at_rule.name.span()).end;
-        let prelude_span = to_span(prelude.span());
-        let bytes = source.as_bytes();
-
-        let mut pos = name_end;
-        if pos == prelude_span.start && bytes[pos as usize] == b':' {
-            // A `:` glued to the name: postcss folds it into the NAME itself
-            // and Prettier collapses any whitespace after it to one space
-            // (`${foo}:\n${bar}` joins back onto one line).
-            write!(f, ":");
-            pos += 1;
-            if pos < prelude_span.end && bytes[pos as usize].is_ascii_whitespace() {
-                write!(f, space());
-                while pos < prelude_span.end && bytes[pos as usize].is_ascii_whitespace() {
-                    pos += 1;
-                }
-            }
-        } else {
-            // A `;`-less placeholder swallows the FOLLOWING statements into its prelude,
-            // so their leading comments land in this gap;
-            // print them with source line structure instead of discarding them.
-            for &comment in &f.context().comments().take_before(prelude_span.start).to_vec() {
-                write_placeholder_gap(source, pos, comment.span.start, f);
-                comments::write_single_comment(comment, f);
-                pos = comment.span.end;
-            }
-            write_placeholder_gap(source, pos, prelude_span.start, f);
-            pos = prelude_span.start;
-        }
-
-        // The rest is verbatim; embedded newlines stay literal
-        // (both Prettier and the parent template printer treat them as `literalline`s).
-        write!(f, text(source.slice_range(pos, prelude_span.end)));
-        let _ = f.context().comments().take_before(prelude_span.end);
-    }
-
-    if at_rule.block.is_some() {
-        write_block_or_semicolon(at_rule, f);
-    } else {
-        let end = to_span(at_rule.span()).end;
-        if statement::end_with_semicolon(end, f) > end {
-            write!(f, ";");
-        }
-    }
-}
-
-/// Source-driven separator inside a placeholder at-rule (see above).
-fn write_placeholder_gap(
-    source: SourceText<'_>,
-    start: u32,
-    end: u32,
-    f: &mut CssFormatter<'_, '_>,
-) {
-    if start == end {
-        return;
-    }
-    match comments::classify_gap(source.bytes_range(start, end)) {
-        comments::Gap::None => write!(f, space()),
-        comments::Gap::Line => write!(f, hard_line_break()),
-        comments::Gap::Blank => write!(f, empty_line()),
-    }
 }
 
 /// Names whose params Prettier's parser DOES hand to a sub-parser
@@ -1516,7 +1437,14 @@ fn write_media_query_list<'a>(list: &MediaQueryList<'a>, f: &mut CssFormatter<'_
     let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
         write_media_query_list_inner(list, f);
     });
-    write!(f, group(&indent(&body)));
+    // The indent only governs the inter-query `,`-breaks; a single query never breaks internally,
+    // so dropping it avoids leaking a level into an embedded `${}` placeholder break
+    // (a media value is flat text, like Prettier).
+    if list.queries.len() > 1 {
+        write!(f, group(&indent(&body)));
+    } else {
+        write!(f, group(&body));
+    }
 }
 
 /// The query list without its own group/indent,

@@ -1,14 +1,11 @@
-//! Fixture tests for cases the Prettier conformance suite does NOT cover
-//! (discovered while wiring the crate into oxfmt — plan Step 5).
+//! Fixture tests for cases the Prettier conformance suite does NOT cover.
 //!
-//! Every `.css`/`.scss`/`.less` file under `fixtures/format/` is formatted
-//! with each option set from the nearest `options.json` and snapshotted next
-//! to it. Expected outputs were verified against `prettier@3.8.3` by hand;
-//! when adding a fixture, do the same (`npx prettier@3.8.3 --parser <v>`).
+//! Expected outputs were verified against `prettier` by hand;
+//! when adding a fixture, do the same (`npx prettier@<oxfmt-bundle-version> --parser <variant>`).
 
 use std::path::Path;
 
-use oxc_allocator::Allocator;
+use oxc_allocator::{Allocator, ArenaVec};
 use oxc_formatter_core::{
     IndentStyle, IndentWidth, LineEnding, LineWidth,
     test_support::{FixtureFormatter, OptionSet, build_fixture_snapshot},
@@ -86,7 +83,7 @@ impl FixtureFormatter for CssHarness {
 
         // Fixtures under `embedded/` exercise the dispatcher entry point
         // (`format_to_ir`, css-in-js), which tolerates
-        // `@prettier-placeholder-N-id` markers in value/selector position.
+        // `` `PLACEHOLDER-N` `` markers in value/selector position.
         if path.components().any(|c| c.as_os_str() == "embedded") {
             return format_embedded(source, options);
         }
@@ -103,7 +100,9 @@ impl FixtureFormatter for CssHarness {
 /// Format through `format_to_ir` and print the raw IR, mirroring what the
 /// oxfmt dispatcher + parent template printing do (minus `${}` substitution).
 fn format_embedded(source: &str, options: CssFormatOptions) -> String {
-    use oxc_formatter_core::{Document, EmbeddedContext, FormatOptions, Printer};
+    use oxc_formatter_core::{
+        Document, EmbeddedContext, FormatElement, FormatOptions, Printer, TextWidth,
+    };
 
     let allocator = Allocator::default();
     let group_id_builder = oxc_formatter_core::UniqueGroupIdBuilder::default();
@@ -117,6 +116,23 @@ fn format_embedded(source: &str, options: CssFormatOptions) -> String {
     let document = Document::new(embedded.ir, Vec::new());
     document.propagate_expand();
     let (elements, tailwind_classes) = document.into_elements_and_tailwind_classes();
+    // Simulate the host: replace each typed placeholder with the canonical
+    // sentinel (the real host substitutes `${expr}`; tests have no expressions).
+    // The printer `debug_assert`s on any surviving `EmbedPlaceholder`.
+    let elements = ArenaVec::from_iter_in(
+        elements.iter().map(|element| match element {
+            FormatElement::EmbedPlaceholder(index) => {
+                let text = allocator.alloc_str(&std::format!("`PLACEHOLDER-{index}`"));
+                FormatElement::Text {
+                    text,
+                    width: TextWidth::from_text(text, options.indent_width),
+                }
+            }
+            other => other.clone(),
+        }),
+        &ctx.allocator,
+    )
+    .into_arena_slice();
     let mut code =
         Printer::with_capacity(source.len(), options.as_print_options(), &tailwind_classes)
             .print(elements)
@@ -147,9 +163,10 @@ include!(concat!(env!("OUT_DIR"), "/generated_tests.rs"));
 
 // ---
 
-/// Any parse error must surface as `Err` (the oxfmt Prettier-fallback
-/// trigger), including raffia's recoverable ones — EXCEPT top-level
-/// declarations, which postcss accepts (see `top-level-declaration.scss`).
+/// Any parse error must surface as `Err` from the standalone `format()` entry,
+/// including raffia's recoverable ones (top-level declarations are invalid here
+/// too — only the embedded `format_to_ir` entry tolerates them, see
+/// `embedded/scss/top-level-declaration.scss`).
 #[test]
 fn parse_error_is_err() {
     let allocator = Allocator::default();
@@ -158,14 +175,17 @@ fn parse_error_is_err() {
     for (source, options) in [
         // Unclosed block (postcss also rejects this).
         ("a {\n  color: red;\n", css),
-        // IE star hack: postcss tolerates it, raffia does not -> fallback.
+        // IE star hack: postcss tolerates it, raffia does not.
         ("a { *zoom: 1; }", css),
+        // Top-level declaration: valid only as an embedded css-in-js fragment
+        // (`format_to_ir`); standalone files must reject it like Dart Sass does.
+        ("display: flex;", scss),
         // css-in-js `${}` markers in value position...
-        ("a { color: @prettier-placeholder-0-id; }", scss),
+        ("a { color: `PLACEHOLDER-0`; }", scss),
         // ...and in selector position stay errors in the STANDALONE entry
         // (`format_to_ir` tolerates them via the raffia fork option;
         // see `fixtures/embedded/`).
-        (".a-@prettier-placeholder-0-id {\n}", scss),
+        (".a-`PLACEHOLDER-0` {\n}", scss),
         // `2N-1` with a glued minus is invalid An+B for raffia
         // (postcss-selector-parser accepts and lowercases it).
         ("a:nth-child(2N-1) { color: red; }", css),

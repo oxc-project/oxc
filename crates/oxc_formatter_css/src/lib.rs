@@ -19,18 +19,21 @@ mod format;
 mod options;
 mod print;
 
-/// css-in-js `${}` interpolation marker prefix.
+/// css-in-js `${}` interpolation marker, opening affix.
 ///
-/// The parent (JS) formatter substitutes each interpolation with
-/// `@prettier-placeholder-N-id` before dispatching to [`format_to_ir`].
-/// This is Prettier's wire format, its embed (`replacePlaceholders`)
-/// expects exactly this shape.
+/// The parent (JS) formatter substitutes each interpolation with a
+/// backtick-delimited `` `PLACEHOLDER-N` `` marker before dispatching to [`format_to_ir`].
+/// Backtick is invalid SCSS (the css-in-js variant),
+/// so the marker is unmistakably out-of-band, not a real `@var`/`$var` or at-rule.
+/// (Like Prettier, which uses `@prettier-placeholder-N-id`)
+/// `raffia` tokenizes it via the fork's `template_placeholder` option,
+/// consuming the leading backtick as the sigil (so `format.rs` passes the affix without it).
+///
 /// The producer-side constant lives in `oxc_formatter`'s `embed/css.rs`
-/// (which doesn't depend on this crate);
-/// Orchestrator-side consumers (oxfmt) should use these.
-pub const TEMPLATE_PLACEHOLDER_PREFIX: &str = "@prettier-placeholder-";
-/// See [`TEMPLATE_PLACEHOLDER_PREFIX`].
-pub const TEMPLATE_PLACEHOLDER_SUFFIX: &str = "-id";
+/// (which doesn't depend on this crate); orchestrator-side consumers (oxfmt) should use these.
+pub const TEMPLATE_PLACEHOLDER_PREFIX: &str = "`PLACEHOLDER-";
+/// Closing affix of the css-in-js marker (the closing backtick).
+pub const TEMPLATE_PLACEHOLDER_SUFFIX: &str = "`";
 
 pub use crate::{
     context::CssFormatContext,

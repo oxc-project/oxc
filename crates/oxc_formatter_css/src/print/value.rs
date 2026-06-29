@@ -1118,7 +1118,7 @@ fn separator_between(
     // Prettier: an at-word placeholder glued to a paren group gets a `softline`
     // (`${fn}(30px)` may break BEFORE the parens, keeping the paren group intact on the next line).
     if gap_empty
-        && matches!(raw_token(prev), Some(Token::AtKeyword(_)))
+        && matches!(prev, ComponentValue::Placeholder(_))
         && matches!(
             curr,
             ComponentValue::SassParenthesizedExpression(_) | ComponentValue::SassMap(_)
@@ -1130,8 +1130,8 @@ fn separator_between(
     // Raw token fallbacks (postcss-values would have produced operator/word tokens):
     // keep gap-free neighbors tight (`10em+12em`, `-fb-url(/a/b)`).
     if gap_empty
-        && (matches!(prev, ComponentValue::TokenWithSpan(_))
-            || matches!(curr, ComponentValue::TokenWithSpan(_))
+        && (matches!(prev, ComponentValue::TokenWithSpan(_) | ComponentValue::Placeholder(_))
+            || matches!(curr, ComponentValue::TokenWithSpan(_) | ComponentValue::Placeholder(_))
             || matches!(prev, ComponentValue::Delimiter(_))
             || matches!(curr, ComponentValue::Delimiter(_)))
     {
@@ -1379,6 +1379,10 @@ pub(super) fn write_component_value<'a>(
         ComponentValue::LessBinaryOperation(op) => write_less_binary_operation(op, ctx, f),
         ComponentValue::LessParenthesizedOperation(paren) => {
             write_less_parenthesized_operation(paren, ctx, f);
+        }
+        // A css-in-js placeholder becomes a typed marker the host replaces with `${expr}`
+        ComponentValue::Placeholder(placeholder) => {
+            super::write_placeholder(placeholder, f);
         }
         // Everything else (Sass/Less constructs, interpolations, token fallbacks):
         // print the source verbatim until ported structurally.
