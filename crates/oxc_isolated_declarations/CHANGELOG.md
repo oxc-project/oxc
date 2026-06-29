@@ -4,6 +4,28 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.138.0] - 2026-06-29
+
+### 💥 BREAKING CHANGES
+
+- 94fbacb ast: [**BREAKING**] Only export `AstBuilder` and `NONE` in `builder` module (#23876) (overlookmotel)
+- 36009dd allocator: [**BREAKING**] `GetAllocator::allocator` take `&self` (#23676) (overlookmotel)
+
+### 🚀 Features
+
+- f2091b3 ast: Unify old and new `AstBuilder`s (#23875) (overlookmotel)
+
+### ⚡ Performance
+
+- 9f6ee3b isolated-declarations: Pool scope maps to avoid per-scope alloc/rehash (#23761) (Boshen)
+- b4f5b4b isolated_declarations: Remove redundant clone of formal parameter pattern (#23912) (Lawrence Lin)
+- 53d083f isolated_declarations: Use `TakeIn` not `CloneIn` (#23847) (overlookmotel)
+- d025887 isolated_declarations: Allocate AST nodes in arena directly (#23709) (overlookmotel)
+
+### 📚 Documentation
+
+- 3d61dea all: Correct capitalization in comments (#23887) (overlookmotel)
+
 ## [0.135.0] - 2026-06-08
 
 ### 🐛 Bug Fixes
