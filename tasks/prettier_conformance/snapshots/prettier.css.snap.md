@@ -1,4 +1,4 @@
-css compatibility: 114/114 (100.00%), 26 files skipped
+css compatibility: 114/114 (100.00%), 24 files skipped
 
 # Failed
 
@@ -17,8 +17,6 @@ css compatibility: 114/114 (100.00%), 26 files skipped
 - css/combinator/combinator.css
 - css/comments/selectors.css
 - css/fill-value/fill.css
-- css/front-matter/custom-parser.css
-- css/front-matter/embedded-language-formatting/yaml.css
 - css/inline-url/inline_url.css
 - css/loose/loose.css
 - css/modules/modules.css

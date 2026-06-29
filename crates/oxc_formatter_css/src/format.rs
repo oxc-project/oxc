@@ -44,7 +44,7 @@ pub fn format<'a>(
 
     let (stylesheet, source, comments) =
         parse_stylesheet(allocator, source_text, options, /* tolerate_placeholders */ false)?;
-    let front_matter = front_matter_end(source).map(|end| &source[..end]);
+    let front_matter = parse_front_matter(source);
 
     let context =
         CssFormatContext::new(options, source, comments, /* template_placeholders */ false);
@@ -141,8 +141,9 @@ fn parse_stylesheet<'a>(
     // Front matter is not CSS:
     // blank it out (preserving line structure so spans and gaps stay aligned)
     // and print it verbatim from `source`.
-    let parse_source: &'a str = match front_matter_end(source) {
-        Some(end) => {
+    let parse_source: &'a str = match parse_front_matter(source) {
+        Some(fm) => {
+            let end = fm.raw.len();
             let mut blanked = String::with_capacity(source.len());
             for c in source[..end].chars() {
                 blanked.push(if c == '\n' || c == '\r' { c } else { ' ' });
@@ -206,10 +207,24 @@ pub fn to_span(span: &raffia::Span) -> Span {
     )
 }
 
-/// Detects Prettier-style front matter (`---` / `+++` fence starting at
-/// offset 0, closed by the same fence on its own line) and returns the end
-/// offset of the closing fence.
-fn front_matter_end(source: &str) -> Option<usize> {
+/// Prettier-style front matter
+/// (`---` / `+++` fence starting at offset 0, closed by the same fence on its own line).
+///
+/// The opening fence may carry an explicit language tag (`---yaml`, `---mycustomparser`)
+/// captured in [`Self::language`] (empty if absent).
+struct FrontMatter<'a> {
+    /// The full verbatim slice from offset 0 to the end of the closing fence.
+    raw: &'a str,
+    /// The opening delimiter literal — `"---"` or `"+++"`.
+    delim: &'static str,
+    /// Explicit language tag from the opening fence's first line, trimmed.
+    /// Empty when the fence is a bare `---` / `+++`.
+    language: &'a str,
+}
+
+/// Detects [`FrontMatter`] at the start of `source`
+/// (single parse, shared by the parse-side blanking and the print-side dispatch).
+fn parse_front_matter(source: &str) -> Option<FrontMatter<'_>> {
     let delim = if source.starts_with("---") {
         "---"
     } else if source.starts_with("+++") {
@@ -217,16 +232,16 @@ fn front_matter_end(source: &str) -> Option<usize> {
     } else {
         return None;
     };
+
     let first_line_end = source.find('\n')?;
-    if !source[delim.len()..first_line_end].trim().is_empty() {
-        return None;
-    }
+    let language = source[delim.len()..first_line_end].trim();
     let mut line_start = first_line_end + 1;
     while line_start < source.len() {
         let line_end = source[line_start..].find('\n').map_or(source.len(), |i| line_start + i);
         let line = source[line_start..line_end].trim_end_matches('\r');
         if line.trim_end() == delim {
-            return Some(line_start + line.trim_end().len());
+            let raw_end = line_start + line.trim_end().len();
+            return Some(FrontMatter { raw: &source[..raw_end], delim, language });
         }
         line_start = line_end + 1;
     }
@@ -292,7 +307,7 @@ fn try_format_yaml_front_matter(front_matter: &str) -> Option<String> {
 struct FormatCssRoot<'b, 'a> {
     stylesheet: &'b Stylesheet<'a>,
     has_bom: bool,
-    front_matter: Option<&'a str>,
+    front_matter: Option<FrontMatter<'a>>,
 }
 
 impl<'a> Format<'a, CssFormatContext<'a>> for FormatCssRoot<'_, 'a> {
@@ -303,18 +318,17 @@ impl<'a> Format<'a, CssFormatContext<'a>> for FormatCssRoot<'_, 'a> {
 
         let has_content =
             !self.stylesheet.statements.is_empty() || f.context().comments().peek().is_some();
-        if let Some(front_matter) = self.front_matter {
-            // Whitespace-only front matter collapses to adjacent fences.
-            let collapsed = front_matter
-                .strip_prefix("---")
-                .and_then(|s| s.strip_suffix("---"))
-                .is_some_and(|inner| inner.trim().is_empty());
-            if collapsed {
-                write!(f, ["---", hard_line_break(), "---"]);
-            } else if let Some(formatted) = try_format_yaml_front_matter(front_matter) {
-                write!(f, text(f.allocator().alloc_str(&formatted)));
+        if let Some(fm) = &self.front_matter {
+            // YAML normalization runs only for the default `---` shape (no explicit tag);
+            // `+++` (TOML) and explicit non-default languages stay verbatim.
+            // Prettier delegates them to dedicated language printers we don't bridge for now.
+            let normalized = (fm.delim == "---" && fm.language.is_empty())
+                .then(|| try_format_yaml_front_matter(fm.raw))
+                .flatten();
+            if let Some(s) = normalized {
+                write!(f, text(f.allocator().alloc_str(&s)));
             } else {
-                write!(f, text(front_matter));
+                write!(f, text(fm.raw));
             }
             if has_content {
                 // A hardline plus a blank line (consecutive hardlines collapse).
