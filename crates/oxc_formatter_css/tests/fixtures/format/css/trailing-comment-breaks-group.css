@@ -1,0 +1,3 @@
+.a {
+  border-radius: min(calc(var(--wa-form-control-toggle-size) * 0.375), var(--wa-border-radius-s)); /* min prevents entirely circular checkbox */
+}

@@ -650,10 +650,10 @@ mod tests_slow_path_validation {
     #[cfg(feature = "napi")]
     fn resolve_for_api_rejects_invalid_value_for_external_formatter() {
         let kind = FileKind::ExternalFormatter {
-            path: Arc::from(PathBuf::from("style.css").as_path()),
-            parser_name: "css",
+            path: Arc::from(PathBuf::from("page.vue").as_path()),
+            parser_name: "vue",
             supports_tailwind: true,
-            supports_oxfmt: false,
+            supports_oxfmt: true,
             supports_svelte: false,
         };
         let err = resolve_for_api(serde_json::json!({ "printWidth": 1000 }), kind, Path::new("."))

@@ -1,0 +1,651 @@
+# externals/gitlab/stylesheets/page_bundles/labels.scss
+
+> Allowed: media-query operator spacing; Prettier can't space arithmetic ops (prettier/prettier#1811)
+
+## Option 1
+
+`````json
+{"printWidth":80}
+`````
+
+### Diff
+
+`````diff
+===================================================================
+--- prettier
++++ oxfmt
+@@ -112,9 +112,9 @@
+     }
+   }
+ }
+ 
+-@media (max-width: map-get($grid-breakpoints, md)-1) {
++@media (max-width: map-get($grid-breakpoints, md) - 1) {
+   .manage-labels-list {
+     > li:not(.empty-message):not(.no-border) .label-content {
+       flex-wrap: wrap;
+     }
+
+`````
+
+### Actual (oxfmt)
+
+`````scss
+@import "mixins_and_variables_and_functions";
+
+.labels-select-contents-create {
+  .dropdown-input {
+    margin-bottom: 4px;
+  }
+}
+
+.dropdown-menu-labels {
+  .dropdown-content {
+    max-height: 135px;
+  }
+
+  .dropdown-label-box {
+    flex: 0 0 auto;
+  }
+}
+
+.dropdown-new-label {
+  .dropdown-content {
+    max-height: initial;
+  }
+}
+
+.dropdown-label-color-input {
+  position: relative;
+  margin-bottom: 8px;
+}
+
+.color-label {
+  padding: 0 $grid-size;
+  line-height: 16px;
+  border-radius: $label-border-radius;
+  color: var(--white, $white);
+}
+
+.manage-labels-list {
+  padding: 0;
+  margin-bottom: 0;
+
+  > li:not(.empty-message):not(.no-border) .label-content {
+    display: flex;
+    justify-content: space-between;
+
+    .prioritized-labels:not(.is-not-draggable) & {
+      cursor: grab;
+
+      &:hover,
+      &:focus-within {
+        background-color: var(--blue-50, $blue-50);
+      }
+
+      &:active {
+        cursor: grabbing;
+      }
+    }
+  }
+
+  .prepend-description-left {
+    vertical-align: top;
+    line-height: 24px;
+  }
+}
+
+.prioritized-labels .add-priority,
+.other-labels .remove-priority {
+  display: none;
+}
+
+.label-subscription {
+  width: 109px;
+}
+
+.label-actions-list {
+  font-size: 0;
+  list-style: none;
+  flex-shrink: 0;
+  text-align: right;
+  padding: 0;
+  position: relative;
+  margin: 0;
+}
+
+.label-badge {
+  color: var(--gray-900, $gray-900);
+  display: inline-block;
+  font-weight: $gl-font-weight-normal;
+  padding: $gl-padding-4 $gl-padding-8;
+  border-radius: $border-radius-default;
+  font-size: $label-font-size;
+}
+
+.label-content {
+  .label-name {
+    width: 200px;
+
+    .gl-label {
+      line-height: $gl-line-height;
+    }
+  }
+
+  .label-action {
+    color: var(--gray-700, $gray-700);
+    cursor: pointer;
+
+    &:hover {
+      color: var(--blue-600, $blue-600);
+    }
+
+    &.hover-red:hover {
+      color: var(--red-500, $red-500);
+    }
+  }
+}
+
+@media (max-width: map-get($grid-breakpoints, md) - 1) {
+  .manage-labels-list {
+    > li:not(.empty-message):not(.no-border) .label-content {
+      flex-wrap: wrap;
+    }
+
+    .label-name {
+      order: 1;
+      flex-grow: 1;
+      width: auto;
+      max-width: 100%;
+    }
+
+    .label-actions-list {
+      order: 2;
+      flex-shrink: 1;
+      text-align: left;
+    }
+
+    .label-description {
+      order: 3;
+    }
+  }
+}
+
+.priority-labels-empty-state .svg-content img {
+  max-width: $priority-label-empty-state-width;
+}
+
+`````
+
+### Expected (prettier)
+
+`````scss
+@import "mixins_and_variables_and_functions";
+
+.labels-select-contents-create {
+  .dropdown-input {
+    margin-bottom: 4px;
+  }
+}
+
+.dropdown-menu-labels {
+  .dropdown-content {
+    max-height: 135px;
+  }
+
+  .dropdown-label-box {
+    flex: 0 0 auto;
+  }
+}
+
+.dropdown-new-label {
+  .dropdown-content {
+    max-height: initial;
+  }
+}
+
+.dropdown-label-color-input {
+  position: relative;
+  margin-bottom: 8px;
+}
+
+.color-label {
+  padding: 0 $grid-size;
+  line-height: 16px;
+  border-radius: $label-border-radius;
+  color: var(--white, $white);
+}
+
+.manage-labels-list {
+  padding: 0;
+  margin-bottom: 0;
+
+  > li:not(.empty-message):not(.no-border) .label-content {
+    display: flex;
+    justify-content: space-between;
+
+    .prioritized-labels:not(.is-not-draggable) & {
+      cursor: grab;
+
+      &:hover,
+      &:focus-within {
+        background-color: var(--blue-50, $blue-50);
+      }
+
+      &:active {
+        cursor: grabbing;
+      }
+    }
+  }
+
+  .prepend-description-left {
+    vertical-align: top;
+    line-height: 24px;
+  }
+}
+
+.prioritized-labels .add-priority,
+.other-labels .remove-priority {
+  display: none;
+}
+
+.label-subscription {
+  width: 109px;
+}
+
+.label-actions-list {
+  font-size: 0;
+  list-style: none;
+  flex-shrink: 0;
+  text-align: right;
+  padding: 0;
+  position: relative;
+  margin: 0;
+}
+
+.label-badge {
+  color: var(--gray-900, $gray-900);
+  display: inline-block;
+  font-weight: $gl-font-weight-normal;
+  padding: $gl-padding-4 $gl-padding-8;
+  border-radius: $border-radius-default;
+  font-size: $label-font-size;
+}
+
+.label-content {
+  .label-name {
+    width: 200px;
+
+    .gl-label {
+      line-height: $gl-line-height;
+    }
+  }
+
+  .label-action {
+    color: var(--gray-700, $gray-700);
+    cursor: pointer;
+
+    &:hover {
+      color: var(--blue-600, $blue-600);
+    }
+
+    &.hover-red:hover {
+      color: var(--red-500, $red-500);
+    }
+  }
+}
+
+@media (max-width: map-get($grid-breakpoints, md)-1) {
+  .manage-labels-list {
+    > li:not(.empty-message):not(.no-border) .label-content {
+      flex-wrap: wrap;
+    }
+
+    .label-name {
+      order: 1;
+      flex-grow: 1;
+      width: auto;
+      max-width: 100%;
+    }
+
+    .label-actions-list {
+      order: 2;
+      flex-shrink: 1;
+      text-align: left;
+    }
+
+    .label-description {
+      order: 3;
+    }
+  }
+}
+
+.priority-labels-empty-state .svg-content img {
+  max-width: $priority-label-empty-state-width;
+}
+
+`````
+
+## Option 2
+
+`````json
+{"printWidth":100}
+`````
+
+### Diff
+
+`````diff
+===================================================================
+--- prettier
++++ oxfmt
+@@ -112,9 +112,9 @@
+     }
+   }
+ }
+ 
+-@media (max-width: map-get($grid-breakpoints, md)-1) {
++@media (max-width: map-get($grid-breakpoints, md) - 1) {
+   .manage-labels-list {
+     > li:not(.empty-message):not(.no-border) .label-content {
+       flex-wrap: wrap;
+     }
+
+`````
+
+### Actual (oxfmt)
+
+`````scss
+@import "mixins_and_variables_and_functions";
+
+.labels-select-contents-create {
+  .dropdown-input {
+    margin-bottom: 4px;
+  }
+}
+
+.dropdown-menu-labels {
+  .dropdown-content {
+    max-height: 135px;
+  }
+
+  .dropdown-label-box {
+    flex: 0 0 auto;
+  }
+}
+
+.dropdown-new-label {
+  .dropdown-content {
+    max-height: initial;
+  }
+}
+
+.dropdown-label-color-input {
+  position: relative;
+  margin-bottom: 8px;
+}
+
+.color-label {
+  padding: 0 $grid-size;
+  line-height: 16px;
+  border-radius: $label-border-radius;
+  color: var(--white, $white);
+}
+
+.manage-labels-list {
+  padding: 0;
+  margin-bottom: 0;
+
+  > li:not(.empty-message):not(.no-border) .label-content {
+    display: flex;
+    justify-content: space-between;
+
+    .prioritized-labels:not(.is-not-draggable) & {
+      cursor: grab;
+
+      &:hover,
+      &:focus-within {
+        background-color: var(--blue-50, $blue-50);
+      }
+
+      &:active {
+        cursor: grabbing;
+      }
+    }
+  }
+
+  .prepend-description-left {
+    vertical-align: top;
+    line-height: 24px;
+  }
+}
+
+.prioritized-labels .add-priority,
+.other-labels .remove-priority {
+  display: none;
+}
+
+.label-subscription {
+  width: 109px;
+}
+
+.label-actions-list {
+  font-size: 0;
+  list-style: none;
+  flex-shrink: 0;
+  text-align: right;
+  padding: 0;
+  position: relative;
+  margin: 0;
+}
+
+.label-badge {
+  color: var(--gray-900, $gray-900);
+  display: inline-block;
+  font-weight: $gl-font-weight-normal;
+  padding: $gl-padding-4 $gl-padding-8;
+  border-radius: $border-radius-default;
+  font-size: $label-font-size;
+}
+
+.label-content {
+  .label-name {
+    width: 200px;
+
+    .gl-label {
+      line-height: $gl-line-height;
+    }
+  }
+
+  .label-action {
+    color: var(--gray-700, $gray-700);
+    cursor: pointer;
+
+    &:hover {
+      color: var(--blue-600, $blue-600);
+    }
+
+    &.hover-red:hover {
+      color: var(--red-500, $red-500);
+    }
+  }
+}
+
+@media (max-width: map-get($grid-breakpoints, md) - 1) {
+  .manage-labels-list {
+    > li:not(.empty-message):not(.no-border) .label-content {
+      flex-wrap: wrap;
+    }
+
+    .label-name {
+      order: 1;
+      flex-grow: 1;
+      width: auto;
+      max-width: 100%;
+    }
+
+    .label-actions-list {
+      order: 2;
+      flex-shrink: 1;
+      text-align: left;
+    }
+
+    .label-description {
+      order: 3;
+    }
+  }
+}
+
+.priority-labels-empty-state .svg-content img {
+  max-width: $priority-label-empty-state-width;
+}
+
+`````
+
+### Expected (prettier)
+
+`````scss
+@import "mixins_and_variables_and_functions";
+
+.labels-select-contents-create {
+  .dropdown-input {
+    margin-bottom: 4px;
+  }
+}
+
+.dropdown-menu-labels {
+  .dropdown-content {
+    max-height: 135px;
+  }
+
+  .dropdown-label-box {
+    flex: 0 0 auto;
+  }
+}
+
+.dropdown-new-label {
+  .dropdown-content {
+    max-height: initial;
+  }
+}
+
+.dropdown-label-color-input {
+  position: relative;
+  margin-bottom: 8px;
+}
+
+.color-label {
+  padding: 0 $grid-size;
+  line-height: 16px;
+  border-radius: $label-border-radius;
+  color: var(--white, $white);
+}
+
+.manage-labels-list {
+  padding: 0;
+  margin-bottom: 0;
+
+  > li:not(.empty-message):not(.no-border) .label-content {
+    display: flex;
+    justify-content: space-between;
+
+    .prioritized-labels:not(.is-not-draggable) & {
+      cursor: grab;
+
+      &:hover,
+      &:focus-within {
+        background-color: var(--blue-50, $blue-50);
+      }
+
+      &:active {
+        cursor: grabbing;
+      }
+    }
+  }
+
+  .prepend-description-left {
+    vertical-align: top;
+    line-height: 24px;
+  }
+}
+
+.prioritized-labels .add-priority,
+.other-labels .remove-priority {
+  display: none;
+}
+
+.label-subscription {
+  width: 109px;
+}
+
+.label-actions-list {
+  font-size: 0;
+  list-style: none;
+  flex-shrink: 0;
+  text-align: right;
+  padding: 0;
+  position: relative;
+  margin: 0;
+}
+
+.label-badge {
+  color: var(--gray-900, $gray-900);
+  display: inline-block;
+  font-weight: $gl-font-weight-normal;
+  padding: $gl-padding-4 $gl-padding-8;
+  border-radius: $border-radius-default;
+  font-size: $label-font-size;
+}
+
+.label-content {
+  .label-name {
+    width: 200px;
+
+    .gl-label {
+      line-height: $gl-line-height;
+    }
+  }
+
+  .label-action {
+    color: var(--gray-700, $gray-700);
+    cursor: pointer;
+
+    &:hover {
+      color: var(--blue-600, $blue-600);
+    }
+
+    &.hover-red:hover {
+      color: var(--red-500, $red-500);
+    }
+  }
+}
+
+@media (max-width: map-get($grid-breakpoints, md)-1) {
+  .manage-labels-list {
+    > li:not(.empty-message):not(.no-border) .label-content {
+      flex-wrap: wrap;
+    }
+
+    .label-name {
+      order: 1;
+      flex-grow: 1;
+      width: auto;
+      max-width: 100%;
+    }
+
+    .label-actions-list {
+      order: 2;
+      flex-shrink: 1;
+      text-align: left;
+    }
+
+    .label-description {
+      order: 3;
+    }
+  }
+}
+
+.priority-labels-empty-state .svg-content img {
+  max-width: $priority-label-empty-state-width;
+}
+
+`````

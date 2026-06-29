@@ -296,6 +296,17 @@ impl FormatConfig {
         matches!(self.svelte, Some(SvelteUserConfig::Bool(true) | SvelteUserConfig::Object(_)))
     }
 
+    /// Whether Tailwind class sorting is enabled by this config.
+    ///
+    /// Enabled when `sortTailwindcss` is set to `true` or an object;
+    /// disabled when unset or `false`.
+    pub fn is_tailwind_enabled(&self) -> bool {
+        matches!(
+            self.sort_tailwindcss,
+            Some(SortTailwindcssUserConfig::Bool(true) | SortTailwindcssUserConfig::Object(_))
+        )
+    }
+
     /// Resolve relative tailwind paths (`config`, `stylesheet`) to absolute paths.
     /// Otherwise, the plugin tries to resolve the Prettier's configuration file, not Oxfmt's.
     /// <https://github.com/tailwindlabs/prettier-plugin-tailwindcss/blob/125a8bc77639529a5a0c7e4e8a02174d7ed2d70b/src/config.ts#L50-L54>
