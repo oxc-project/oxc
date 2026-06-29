@@ -1,0 +1,855 @@
+# externals/gitlab/stylesheets/page_bundles/editor.scss
+
+> Allowed: media-query operator spacing; Prettier can't space arithmetic ops (prettier/prettier#1811)
+
+## Option 1
+
+`````json
+{"printWidth":80}
+`````
+
+### Diff
+
+`````diff
+===================================================================
+--- prettier
++++ oxfmt
+@@ -43,9 +43,9 @@
+     display: inline-block;
+     max-width: 250px;
+     float: left;
+ 
+-    @media (max-width: map-get($grid-breakpoints, lg)-1) {
++    @media (max-width: map-get($grid-breakpoints, lg) - 1) {
+       width: 180px;
+     }
+ 
+     @media (max-width: 1360px) {
+@@ -113,9 +113,9 @@
+         width: 100%;
+         margin-left: 0;
+       }
+ 
+-      @media (max-width: map-get($grid-breakpoints, md)-1) {
++      @media (max-width: map-get($grid-breakpoints, md) - 1) {
+         clear: both;
+       }
+     }
+   }
+@@ -137,9 +137,9 @@
+   margin: 19px 0 21px;
+   vertical-align: top;
+   display: inline-block;
+ 
+-  @media (max-width: map-get($grid-breakpoints, lg)-1) {
++  @media (max-width: map-get($grid-breakpoints, lg) - 1) {
+     display: block;
+     margin: 19px 0 12px;
+   }
+ }
+@@ -147,9 +147,9 @@
+ .template-selectors-menu {
+   display: flex;
+   vertical-align: top;
+ 
+-  @media (max-width: map-get($grid-breakpoints, lg)-1) {
++  @media (max-width: map-get($grid-breakpoints, lg) - 1) {
+     display: inline-block;
+     width: 100%;
+     padding: 0;
+     border-left: 0;
+@@ -159,9 +159,9 @@
+ .template-selector-dropdowns-wrap {
+   display: flex;
+   vertical-align: top;
+ 
+-  @media (max-width: map-get($grid-breakpoints, lg)-1) {
++  @media (max-width: map-get($grid-breakpoints, lg) - 1) {
+     display: block;
+     width: 100%;
+     margin: 0 0 16px;
+   }
+
+`````
+
+### Actual (oxfmt)
+
+`````scss
+@import "page_bundles/mixins_and_variables_and_functions";
+
+.file-editor {
+  #editor,
+  .editor {
+    border-width: 0;
+    margin: 0;
+    padding: 0;
+    position: relative;
+    width: 100%;
+    height: 500px;
+
+    .editor-loading-content {
+      height: 100%;
+      border-width: 0;
+    }
+  }
+
+  .cancel-btn {
+    color: $red-600;
+
+    &:hover {
+      color: $red-600;
+    }
+  }
+
+  .file-title {
+    @include gl-font-monospace;
+  }
+
+  .editor-ref {
+    background: var(--gray-10, $gray-10);
+    padding-right: $gl-padding;
+    border-right: 1px solid var(--border-color, $border-color);
+    display: block;
+    float: left;
+    margin-right: 10px;
+    max-width: 250px;
+  }
+
+  .new-file-name,
+  .new-file-path {
+    display: inline-block;
+    max-width: 250px;
+    float: left;
+
+    @media (max-width: map-get($grid-breakpoints, lg) - 1) {
+      width: 180px;
+    }
+
+    @media (max-width: 1360px) {
+      width: auto;
+    }
+  }
+
+  .file-buttons {
+    flex: 1;
+  }
+
+  .soft-wrap-toggle {
+    font-family: $regular-font;
+    margin-left: $gl-padding-8;
+
+    .soft-wrap {
+      display: inline-flex;
+    }
+
+    .no-wrap {
+      display: none;
+    }
+
+    &.soft-wrap-active {
+      .soft-wrap {
+        display: none;
+      }
+
+      .no-wrap {
+        display: inline-flex;
+      }
+    }
+  }
+
+  .overflow-guard {
+    border-radius: 0 0 $border-radius-default $border-radius-default;
+  }
+}
+
+@include media-breakpoint-down(md) {
+  .file-editor {
+    .file-title {
+      display: block;
+    }
+
+    .new-file-name,
+    .new-file-path {
+      max-width: none;
+      width: 100%;
+      margin-top: $gl-padding-8;
+    }
+
+    .file-buttons {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      width: 100%;
+      padding: $gl-padding-8 0 0;
+
+      .md-header-toolbar {
+        margin-left: 0;
+      }
+
+      .soft-wrap-toggle {
+        width: 100%;
+        margin-left: 0;
+      }
+
+      @media (max-width: map-get($grid-breakpoints, md) - 1) {
+        clear: both;
+      }
+    }
+  }
+}
+
+@include media-breakpoint-down(sm) {
+  .file-editor .file-buttons {
+    flex-direction: column;
+    padding: $gl-padding-8 0 0;
+
+    .md-header-toolbar {
+      margin: $gl-padding-8 0;
+    }
+  }
+}
+
+.blob-new-page-title,
+.blob-edit-page-title {
+  margin: 19px 0 21px;
+  vertical-align: top;
+  display: inline-block;
+
+  @media (max-width: map-get($grid-breakpoints, lg) - 1) {
+    display: block;
+    margin: 19px 0 12px;
+  }
+}
+
+.template-selectors-menu {
+  display: flex;
+  vertical-align: top;
+
+  @media (max-width: map-get($grid-breakpoints, lg) - 1) {
+    display: inline-block;
+    width: 100%;
+    padding: 0;
+    border-left: 0;
+  }
+}
+
+.template-selector-dropdowns-wrap {
+  display: flex;
+  vertical-align: top;
+
+  @media (max-width: map-get($grid-breakpoints, lg) - 1) {
+    display: block;
+    width: 100%;
+    margin: 0 0 16px;
+  }
+}
+
+.popover.suggest-gitlab-ci-yml {
+  z-index: $header-zindex - 1;
+}
+
+`````
+
+### Expected (prettier)
+
+`````scss
+@import "page_bundles/mixins_and_variables_and_functions";
+
+.file-editor {
+  #editor,
+  .editor {
+    border-width: 0;
+    margin: 0;
+    padding: 0;
+    position: relative;
+    width: 100%;
+    height: 500px;
+
+    .editor-loading-content {
+      height: 100%;
+      border-width: 0;
+    }
+  }
+
+  .cancel-btn {
+    color: $red-600;
+
+    &:hover {
+      color: $red-600;
+    }
+  }
+
+  .file-title {
+    @include gl-font-monospace;
+  }
+
+  .editor-ref {
+    background: var(--gray-10, $gray-10);
+    padding-right: $gl-padding;
+    border-right: 1px solid var(--border-color, $border-color);
+    display: block;
+    float: left;
+    margin-right: 10px;
+    max-width: 250px;
+  }
+
+  .new-file-name,
+  .new-file-path {
+    display: inline-block;
+    max-width: 250px;
+    float: left;
+
+    @media (max-width: map-get($grid-breakpoints, lg)-1) {
+      width: 180px;
+    }
+
+    @media (max-width: 1360px) {
+      width: auto;
+    }
+  }
+
+  .file-buttons {
+    flex: 1;
+  }
+
+  .soft-wrap-toggle {
+    font-family: $regular-font;
+    margin-left: $gl-padding-8;
+
+    .soft-wrap {
+      display: inline-flex;
+    }
+
+    .no-wrap {
+      display: none;
+    }
+
+    &.soft-wrap-active {
+      .soft-wrap {
+        display: none;
+      }
+
+      .no-wrap {
+        display: inline-flex;
+      }
+    }
+  }
+
+  .overflow-guard {
+    border-radius: 0 0 $border-radius-default $border-radius-default;
+  }
+}
+
+@include media-breakpoint-down(md) {
+  .file-editor {
+    .file-title {
+      display: block;
+    }
+
+    .new-file-name,
+    .new-file-path {
+      max-width: none;
+      width: 100%;
+      margin-top: $gl-padding-8;
+    }
+
+    .file-buttons {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      width: 100%;
+      padding: $gl-padding-8 0 0;
+
+      .md-header-toolbar {
+        margin-left: 0;
+      }
+
+      .soft-wrap-toggle {
+        width: 100%;
+        margin-left: 0;
+      }
+
+      @media (max-width: map-get($grid-breakpoints, md)-1) {
+        clear: both;
+      }
+    }
+  }
+}
+
+@include media-breakpoint-down(sm) {
+  .file-editor .file-buttons {
+    flex-direction: column;
+    padding: $gl-padding-8 0 0;
+
+    .md-header-toolbar {
+      margin: $gl-padding-8 0;
+    }
+  }
+}
+
+.blob-new-page-title,
+.blob-edit-page-title {
+  margin: 19px 0 21px;
+  vertical-align: top;
+  display: inline-block;
+
+  @media (max-width: map-get($grid-breakpoints, lg)-1) {
+    display: block;
+    margin: 19px 0 12px;
+  }
+}
+
+.template-selectors-menu {
+  display: flex;
+  vertical-align: top;
+
+  @media (max-width: map-get($grid-breakpoints, lg)-1) {
+    display: inline-block;
+    width: 100%;
+    padding: 0;
+    border-left: 0;
+  }
+}
+
+.template-selector-dropdowns-wrap {
+  display: flex;
+  vertical-align: top;
+
+  @media (max-width: map-get($grid-breakpoints, lg)-1) {
+    display: block;
+    width: 100%;
+    margin: 0 0 16px;
+  }
+}
+
+.popover.suggest-gitlab-ci-yml {
+  z-index: $header-zindex - 1;
+}
+
+`````
+
+## Option 2
+
+`````json
+{"printWidth":100}
+`````
+
+### Diff
+
+`````diff
+===================================================================
+--- prettier
++++ oxfmt
+@@ -43,9 +43,9 @@
+     display: inline-block;
+     max-width: 250px;
+     float: left;
+ 
+-    @media (max-width: map-get($grid-breakpoints, lg)-1) {
++    @media (max-width: map-get($grid-breakpoints, lg) - 1) {
+       width: 180px;
+     }
+ 
+     @media (max-width: 1360px) {
+@@ -113,9 +113,9 @@
+         width: 100%;
+         margin-left: 0;
+       }
+ 
+-      @media (max-width: map-get($grid-breakpoints, md)-1) {
++      @media (max-width: map-get($grid-breakpoints, md) - 1) {
+         clear: both;
+       }
+     }
+   }
+@@ -137,9 +137,9 @@
+   margin: 19px 0 21px;
+   vertical-align: top;
+   display: inline-block;
+ 
+-  @media (max-width: map-get($grid-breakpoints, lg)-1) {
++  @media (max-width: map-get($grid-breakpoints, lg) - 1) {
+     display: block;
+     margin: 19px 0 12px;
+   }
+ }
+@@ -147,9 +147,9 @@
+ .template-selectors-menu {
+   display: flex;
+   vertical-align: top;
+ 
+-  @media (max-width: map-get($grid-breakpoints, lg)-1) {
++  @media (max-width: map-get($grid-breakpoints, lg) - 1) {
+     display: inline-block;
+     width: 100%;
+     padding: 0;
+     border-left: 0;
+@@ -159,9 +159,9 @@
+ .template-selector-dropdowns-wrap {
+   display: flex;
+   vertical-align: top;
+ 
+-  @media (max-width: map-get($grid-breakpoints, lg)-1) {
++  @media (max-width: map-get($grid-breakpoints, lg) - 1) {
+     display: block;
+     width: 100%;
+     margin: 0 0 16px;
+   }
+
+`````
+
+### Actual (oxfmt)
+
+`````scss
+@import "page_bundles/mixins_and_variables_and_functions";
+
+.file-editor {
+  #editor,
+  .editor {
+    border-width: 0;
+    margin: 0;
+    padding: 0;
+    position: relative;
+    width: 100%;
+    height: 500px;
+
+    .editor-loading-content {
+      height: 100%;
+      border-width: 0;
+    }
+  }
+
+  .cancel-btn {
+    color: $red-600;
+
+    &:hover {
+      color: $red-600;
+    }
+  }
+
+  .file-title {
+    @include gl-font-monospace;
+  }
+
+  .editor-ref {
+    background: var(--gray-10, $gray-10);
+    padding-right: $gl-padding;
+    border-right: 1px solid var(--border-color, $border-color);
+    display: block;
+    float: left;
+    margin-right: 10px;
+    max-width: 250px;
+  }
+
+  .new-file-name,
+  .new-file-path {
+    display: inline-block;
+    max-width: 250px;
+    float: left;
+
+    @media (max-width: map-get($grid-breakpoints, lg) - 1) {
+      width: 180px;
+    }
+
+    @media (max-width: 1360px) {
+      width: auto;
+    }
+  }
+
+  .file-buttons {
+    flex: 1;
+  }
+
+  .soft-wrap-toggle {
+    font-family: $regular-font;
+    margin-left: $gl-padding-8;
+
+    .soft-wrap {
+      display: inline-flex;
+    }
+
+    .no-wrap {
+      display: none;
+    }
+
+    &.soft-wrap-active {
+      .soft-wrap {
+        display: none;
+      }
+
+      .no-wrap {
+        display: inline-flex;
+      }
+    }
+  }
+
+  .overflow-guard {
+    border-radius: 0 0 $border-radius-default $border-radius-default;
+  }
+}
+
+@include media-breakpoint-down(md) {
+  .file-editor {
+    .file-title {
+      display: block;
+    }
+
+    .new-file-name,
+    .new-file-path {
+      max-width: none;
+      width: 100%;
+      margin-top: $gl-padding-8;
+    }
+
+    .file-buttons {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      width: 100%;
+      padding: $gl-padding-8 0 0;
+
+      .md-header-toolbar {
+        margin-left: 0;
+      }
+
+      .soft-wrap-toggle {
+        width: 100%;
+        margin-left: 0;
+      }
+
+      @media (max-width: map-get($grid-breakpoints, md) - 1) {
+        clear: both;
+      }
+    }
+  }
+}
+
+@include media-breakpoint-down(sm) {
+  .file-editor .file-buttons {
+    flex-direction: column;
+    padding: $gl-padding-8 0 0;
+
+    .md-header-toolbar {
+      margin: $gl-padding-8 0;
+    }
+  }
+}
+
+.blob-new-page-title,
+.blob-edit-page-title {
+  margin: 19px 0 21px;
+  vertical-align: top;
+  display: inline-block;
+
+  @media (max-width: map-get($grid-breakpoints, lg) - 1) {
+    display: block;
+    margin: 19px 0 12px;
+  }
+}
+
+.template-selectors-menu {
+  display: flex;
+  vertical-align: top;
+
+  @media (max-width: map-get($grid-breakpoints, lg) - 1) {
+    display: inline-block;
+    width: 100%;
+    padding: 0;
+    border-left: 0;
+  }
+}
+
+.template-selector-dropdowns-wrap {
+  display: flex;
+  vertical-align: top;
+
+  @media (max-width: map-get($grid-breakpoints, lg) - 1) {
+    display: block;
+    width: 100%;
+    margin: 0 0 16px;
+  }
+}
+
+.popover.suggest-gitlab-ci-yml {
+  z-index: $header-zindex - 1;
+}
+
+`````
+
+### Expected (prettier)
+
+`````scss
+@import "page_bundles/mixins_and_variables_and_functions";
+
+.file-editor {
+  #editor,
+  .editor {
+    border-width: 0;
+    margin: 0;
+    padding: 0;
+    position: relative;
+    width: 100%;
+    height: 500px;
+
+    .editor-loading-content {
+      height: 100%;
+      border-width: 0;
+    }
+  }
+
+  .cancel-btn {
+    color: $red-600;
+
+    &:hover {
+      color: $red-600;
+    }
+  }
+
+  .file-title {
+    @include gl-font-monospace;
+  }
+
+  .editor-ref {
+    background: var(--gray-10, $gray-10);
+    padding-right: $gl-padding;
+    border-right: 1px solid var(--border-color, $border-color);
+    display: block;
+    float: left;
+    margin-right: 10px;
+    max-width: 250px;
+  }
+
+  .new-file-name,
+  .new-file-path {
+    display: inline-block;
+    max-width: 250px;
+    float: left;
+
+    @media (max-width: map-get($grid-breakpoints, lg)-1) {
+      width: 180px;
+    }
+
+    @media (max-width: 1360px) {
+      width: auto;
+    }
+  }
+
+  .file-buttons {
+    flex: 1;
+  }
+
+  .soft-wrap-toggle {
+    font-family: $regular-font;
+    margin-left: $gl-padding-8;
+
+    .soft-wrap {
+      display: inline-flex;
+    }
+
+    .no-wrap {
+      display: none;
+    }
+
+    &.soft-wrap-active {
+      .soft-wrap {
+        display: none;
+      }
+
+      .no-wrap {
+        display: inline-flex;
+      }
+    }
+  }
+
+  .overflow-guard {
+    border-radius: 0 0 $border-radius-default $border-radius-default;
+  }
+}
+
+@include media-breakpoint-down(md) {
+  .file-editor {
+    .file-title {
+      display: block;
+    }
+
+    .new-file-name,
+    .new-file-path {
+      max-width: none;
+      width: 100%;
+      margin-top: $gl-padding-8;
+    }
+
+    .file-buttons {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      width: 100%;
+      padding: $gl-padding-8 0 0;
+
+      .md-header-toolbar {
+        margin-left: 0;
+      }
+
+      .soft-wrap-toggle {
+        width: 100%;
+        margin-left: 0;
+      }
+
+      @media (max-width: map-get($grid-breakpoints, md)-1) {
+        clear: both;
+      }
+    }
+  }
+}
+
+@include media-breakpoint-down(sm) {
+  .file-editor .file-buttons {
+    flex-direction: column;
+    padding: $gl-padding-8 0 0;
+
+    .md-header-toolbar {
+      margin: $gl-padding-8 0;
+    }
+  }
+}
+
+.blob-new-page-title,
+.blob-edit-page-title {
+  margin: 19px 0 21px;
+  vertical-align: top;
+  display: inline-block;
+
+  @media (max-width: map-get($grid-breakpoints, lg)-1) {
+    display: block;
+    margin: 19px 0 12px;
+  }
+}
+
+.template-selectors-menu {
+  display: flex;
+  vertical-align: top;
+
+  @media (max-width: map-get($grid-breakpoints, lg)-1) {
+    display: inline-block;
+    width: 100%;
+    padding: 0;
+    border-left: 0;
+  }
+}
+
+.template-selector-dropdowns-wrap {
+  display: flex;
+  vertical-align: top;
+
+  @media (max-width: map-get($grid-breakpoints, lg)-1) {
+    display: block;
+    width: 100%;
+    margin: 0 0 16px;
+  }
+}
+
+.popover.suggest-gitlab-ci-yml {
+  z-index: $header-zindex - 1;
+}
+
+`````

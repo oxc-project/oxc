@@ -29,6 +29,14 @@ type Source = {
   resolveFilePath?: (name: string) => string;
 };
 
+// Shared note strings for deliberate Prettier divergences (deduped).
+const NOTE_NOT_INDENT =
+  "Allowed (layout-only): wrapped :not() selector-arg indent (prettier/prettier#16165)";
+const NOTE_LESS_MATH_FILL =
+  "Allowed (layout-only): nested Less math — Prettier's fill fit-check breaks inside the wide chunk, ours breaks the separator (biome fill). See crates/oxc_formatter_css/AGENTS.md";
+const NOTE_MQ_OP_SPACING =
+  "Allowed: media-query operator spacing; Prettier can't space arithmetic ops (prettier/prettier#1811)";
+
 const categories: Category[] = [
   {
     name: "js-in-vue",
@@ -179,15 +187,74 @@ const categories: Category[] = [
   },
   {
     name: "graphql",
+    sources: [{ dir: join(EXTERNALS_DIR, "gitlab"), ext: ".graphql" }],
+    optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
+    notes: {},
+  },
+  {
+    name: "less",
+    sources: [{ dir: join(EXTERNALS_DIR, "ng-zorro-antd"), ext: ".less" }],
+    optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
+    notes: {
+      // Wrapped :not() selector-arg indent (Prettier +4 arg / +2 paren).
+      "externals/ng-zorro-antd/components/button/style/space-compact.less": NOTE_NOT_INDENT,
+      "externals/ng-zorro-antd/components/date-picker/style/panel.less": NOTE_NOT_INDENT,
+      "externals/ng-zorro-antd/components/date-picker/style/rtl.less": NOTE_NOT_INDENT,
+      "externals/ng-zorro-antd/components/form/style/index.less": NOTE_NOT_INDENT,
+      "externals/ng-zorro-antd/components/input/style/mixin.less": NOTE_NOT_INDENT,
+      "externals/ng-zorro-antd/components/mention/style/patch.less": NOTE_NOT_INDENT,
+      "externals/ng-zorro-antd/components/radio/style/rtl.less": NOTE_NOT_INDENT,
+      "externals/ng-zorro-antd/components/select/style/status.less": NOTE_NOT_INDENT,
+      "externals/ng-zorro-antd/components/style/mixins/customize.less": NOTE_NOT_INDENT,
+      // Nested Less math: core fill fit-check semantics (biome vs Prettier).
+      "externals/ng-zorro-antd/components/style/themes/compact.less": NOTE_LESS_MATH_FILL,
+      "externals/ng-zorro-antd/components/style/themes/default.less": NOTE_LESS_MATH_FILL,
+      "externals/ng-zorro-antd/components/style/themes/variable.less": NOTE_LESS_MATH_FILL,
+      // Both divergences above.
+      "externals/ng-zorro-antd/components/table/style/index.less": [
+        NOTE_NOT_INDENT,
+        NOTE_LESS_MATH_FILL,
+      ].join("\n"),
+      "externals/ng-zorro-antd/components/table/style/rtl.less": [
+        NOTE_NOT_INDENT,
+        NOTE_LESS_MATH_FILL,
+      ].join("\n"),
+    },
+  },
+  {
+    name: "css",
     sources: [
-      {
-        dir: join(EXTERNALS_DIR, "gitlab"),
-        ext: ".graphql",
-        excludes: [],
-      },
+      { dir: join(EXTERNALS_DIR, "mantine"), ext: ".css" },
+      { dir: join(EXTERNALS_DIR, "docusaurus"), ext: ".css" },
     ],
     optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
     notes: {},
+  },
+  {
+    name: "scss",
+    sources: [
+      { dir: join(EXTERNALS_DIR, "vue-vben-admin"), ext: ".scss" },
+      { dir: join(EXTERNALS_DIR, "gitlab"), ext: ".scss" },
+    ],
+    optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
+    notes: {
+      "externals/gitlab/stylesheets/framework/diffs.scss": NOTE_MQ_OP_SPACING,
+      "externals/gitlab/stylesheets/page_bundles/editor.scss": NOTE_MQ_OP_SPACING,
+      "externals/gitlab/stylesheets/page_bundles/issuable_list.scss": NOTE_MQ_OP_SPACING,
+      "externals/gitlab/stylesheets/page_bundles/labels.scss": NOTE_MQ_OP_SPACING,
+      "externals/gitlab/stylesheets/page_bundles/environments.scss": NOTE_MQ_OP_SPACING,
+      "externals/gitlab/stylesheets/page_bundles/merge_requests.scss": NOTE_MQ_OP_SPACING,
+      "externals/gitlab/stylesheets/page_bundles/settings.scss": NOTE_MQ_OP_SPACING,
+      "externals/gitlab/stylesheets/pages/settings.scss": NOTE_MQ_OP_SPACING,
+      "externals/gitlab/stylesheets/page_bundles/projects.scss": NOTE_MQ_OP_SPACING,
+      "externals/gitlab/stylesheets/highlight/conflict_colors.scss":
+        "Allowed: Prettier drops blank lines in SCSS maps with paren values; ours preserves (prettier/prettier#16824)",
+      "externals/gitlab/stylesheets/highlight/white_base.scss": NOTE_NOT_INDENT,
+      "externals/gitlab/stylesheets/framework/sidebar.scss": [
+        NOTE_NOT_INDENT,
+        "logn-expr line-break position",
+      ].join("\n"),
+    },
   },
 ];
 
@@ -369,7 +436,9 @@ function writeReport(results: CategoryResult[]) {
           const safeName = failure.name.replaceAll("/", "__");
           const diffRelPath = `diffs/${result.name}/${safeName}.md`;
           const diffLink = `[${failure.name}](${diffRelPath})`;
-          lines.push(`| ${diffLink} | ${failure.note ?? ""} |`);
+          // Notes may be multi-line (joined constants); `<br>` keeps the table cell intact.
+          const noteCell = (failure.note ?? "").replaceAll("\n", "<br>");
+          lines.push(`| ${diffLink} | ${noteCell} |`);
         }
         lines.push("");
       }
@@ -401,7 +470,8 @@ function writeDiffFile(
     failure: { note },
   } = entries[0];
   if (note) {
-    lines.push(`> ${note}`);
+    // Multi-line notes keep the blockquote prefix on every line.
+    lines.push(`> ${note.replaceAll("\n", "\n> ")}`);
     lines.push("");
   }
 
