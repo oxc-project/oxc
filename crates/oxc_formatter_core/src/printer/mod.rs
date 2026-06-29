@@ -323,10 +323,30 @@ impl<'a> Printer<'a> {
                 stack.pop(tag.kind())?;
             }
             FormatElement::TailwindClass(index) => {
-                if let Some(text) = self.state.sorted_tailwind_classes.get(*index) {
+                let text = self.state.sorted_tailwind_classes.get(*index);
+                // A dangling index silently DELETES the class list from the
+                // output, so fail loudly in debug builds instead.
+                debug_assert!(
+                    text.is_some(),
+                    "TailwindClass index {index} out of bounds ({} classes) — \
+                     was the embedded IR remapped into the parent's class space \
+                     (`DispatchResult::remap_tailwind_into`)?",
+                    self.state.sorted_tailwind_classes.len(),
+                );
+                if let Some(text) = text {
                     let width = TextWidth::from_text(text, self.options.indent_width);
                     self.print_text(Text::Text { text, width });
                 }
+            }
+            FormatElement::EmbedPlaceholder(index) => {
+                // The embedding host must replace this marker before printing.
+                // If one survives, it would silently vanish from the output,
+                // so fail loudly in debug builds.
+                debug_assert!(
+                    false,
+                    "EmbedPlaceholder({index}) reached the printer — the host must \
+                     replace it with the embedded interpolation before printing",
+                );
             }
         }
 
@@ -1234,6 +1254,8 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                     return Ok(self.fits_text(Text::Text { text, width }));
                 }
             }
+            // Consumed by the host before printing; contributes no width here.
+            FormatElement::EmbedPlaceholder(_) => {}
         }
 
         Ok(Fits::Maybe)

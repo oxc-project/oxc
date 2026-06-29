@@ -1,0 +1,30 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+@import url("./a.css") supports(display: flex);
+@import url("./b.css") layer(base) supports(not (display: inline-grid)) print;
+@import url("./c.css") supports(font-format(woff2));
+@import "d.css" supports((display: grid) and (gap: 1rem));
+@import url("e.css") supports(display: flex) screen and (min-width: 400px);
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+@import url("./a.css") supports(display: flex);
+@import url("./b.css") layer(base) supports(not (display: inline-grid)) print;
+@import url("./c.css") supports(font-format(woff2));
+@import "d.css" supports((display: grid) and (gap: 1rem));
+@import url("e.css") supports(display: flex) screen and (min-width: 400px);
+
+-------------------
+{ printWidth: 100 }
+-------------------
+@import url("./a.css") supports(display: flex);
+@import url("./b.css") layer(base) supports(not (display: inline-grid)) print;
+@import url("./c.css") supports(font-format(woff2));
+@import "d.css" supports((display: grid) and (gap: 1rem));
+@import url("e.css") supports(display: flex) screen and (min-width: 400px);
+
+===================== End =====================

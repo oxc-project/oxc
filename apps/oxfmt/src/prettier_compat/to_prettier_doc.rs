@@ -317,6 +317,14 @@ fn convert_elements(
                 }
                 printer.last_was_hardline = false;
             }
+            FormatElement::EmbedPlaceholder(index) => {
+                // The host splices `${expr}` for each marker before the IR is finalized,
+                // so one should never reach Doc conversion.
+                return Err(format!(
+                    "Invalid formatter IR: unresolved EmbedPlaceholder({index}) reached \
+                     Prettier Doc conversion (the host must splice the interpolation first)"
+                ));
+            }
         }
     }
 

@@ -1,0 +1,30 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+border:    1px     `PLACEHOLDER-0`      red;
+grid-area:       area-`PLACEHOLDER-1`;
+foo: `PLACEHOLDER-2``PLACEHOLDER-3`       `PLACEHOLDER-4`;
+width: `PLACEHOLDER-5``PLACEHOLDER-6`;
+border: `PLACEHOLDER-7` `PLACEHOLDER-8` solid `PLACEHOLDER-9`;
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+border: 1px `PLACEHOLDER-0` red;
+grid-area: area-`PLACEHOLDER-1`;
+foo: `PLACEHOLDER-2``PLACEHOLDER-3` `PLACEHOLDER-4`;
+width: `PLACEHOLDER-5``PLACEHOLDER-6`;
+border: `PLACEHOLDER-7` `PLACEHOLDER-8` solid `PLACEHOLDER-9`;
+
+-------------------
+{ printWidth: 100 }
+-------------------
+border: 1px `PLACEHOLDER-0` red;
+grid-area: area-`PLACEHOLDER-1`;
+foo: `PLACEHOLDER-2``PLACEHOLDER-3` `PLACEHOLDER-4`;
+width: `PLACEHOLDER-5``PLACEHOLDER-6`;
+border: `PLACEHOLDER-7` `PLACEHOLDER-8` solid `PLACEHOLDER-9`;
+
+===================== End =====================

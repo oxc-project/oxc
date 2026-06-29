@@ -1,0 +1,62 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+a.`PLACEHOLDER-0`:focus,a.`PLACEHOLDER-1`:hover {
+  color: red;
+}
+.foo,   .bar    `PLACEHOLDER-2` {
+  color: blue;
+}
+& > :not(.`PLACEHOLDER-3`):not(`PLACEHOLDER-4`) {
+  display: flex;
+}
+#`PLACEHOLDER-5` {
+  color: red;
+}
+a[data-x=`PLACEHOLDER-6`] {
+  color: blue;
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+a.`PLACEHOLDER-0`:focus,a.`PLACEHOLDER-1`:hover {
+  color: red;
+}
+.foo,
+.bar `PLACEHOLDER-2` {
+  color: blue;
+}
+& > :not(.`PLACEHOLDER-3`):not(`PLACEHOLDER-4`) {
+  display: flex;
+}
+#`PLACEHOLDER-5` {
+  color: red;
+}
+a[data-x=`PLACEHOLDER-6`] {
+  color: blue;
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+a.`PLACEHOLDER-0`:focus,a.`PLACEHOLDER-1`:hover {
+  color: red;
+}
+.foo,
+.bar `PLACEHOLDER-2` {
+  color: blue;
+}
+& > :not(.`PLACEHOLDER-3`):not(`PLACEHOLDER-4`) {
+  display: flex;
+}
+#`PLACEHOLDER-5` {
+  color: red;
+}
+a[data-x=`PLACEHOLDER-6`] {
+  color: blue;
+}
+
+===================== End =====================

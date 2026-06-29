@@ -16,6 +16,10 @@ pub enum TestLanguage {
     Jsonc,
     Json5,
     JsonStringify,
+    Graphql,
+    Css,
+    Scss,
+    Less,
 }
 
 impl TestLanguage {
@@ -27,6 +31,10 @@ impl TestLanguage {
             Self::Jsonc => "jsonc",
             Self::Json5 => "json5",
             Self::JsonStringify => "json-stringify",
+            Self::Graphql => "graphql",
+            Self::Css => "css",
+            Self::Scss => "scss",
+            Self::Less => "less",
         }
     }
 
@@ -57,6 +65,10 @@ impl TestLanguage {
             ],
             // `json-stringify` runs only on the shared `json/` dir
             Self::JsonStringify => vec![base.join("json").join("json")],
+            Self::Graphql => vec![base.join("graphql")],
+            Self::Css => vec![base.join("css")],
+            Self::Scss => vec![base.join("scss")],
+            Self::Less => vec![base.join("less")],
         }
     }
 }

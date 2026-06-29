@@ -1,4 +1,4 @@
-use oxc_allocator::Allocator;
+use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::ast::*;
 use oxc_formatter_core::IndentWidth;
 
@@ -90,31 +90,42 @@ pub(super) fn format_graphql_doc<'a>(
     } else {
         let allocator = f.allocator();
         let group_id_builder = f.group_id_builder();
-        let Some(Ok(crate::external_formatter::EmbeddedDocResult::MultipleDocs(irs))) = f
-            .context()
-            .external_callbacks()
-            .format_embedded_doc(allocator, group_id_builder, "graphql", &texts_to_format)
-        else {
+        let Some(Ok(result)) = f.context().external_callbacks().dispatch_embedded(
+            allocator,
+            group_id_builder,
+            "graphql",
+            &texts_to_format,
+        ) else {
             return false;
         };
-        irs
+        // One IR per sent text is the dispatcher contract for GraphQL.
+        if result.docs.len() != texts_to_format.len() {
+            return false;
+        }
+        result.docs
     };
 
     // Phase 3: Build `ir_parts` by mapping formatted results back to original indices.
     // Use `into_iter` to take ownership and avoid cloning.
+    // The IR is re-inserted into a JS template literal built from `.cooked` values,
+    // so template-literal characters (`` ` ``, `${`, `\`) are re-escaped here
+    // for both dispatcher returned IRs and manually built comment-only IRs.
+    let allocator = f.allocator();
+    let indent_width = f.options().indent_width;
     let mut irs_iter = all_irs.into_iter();
-    let mut ir_parts: Vec<Option<Vec<FormatElement<'a>>>> = Vec::with_capacity(num_quasis);
+    let mut ir_parts: Vec<Option<ArenaVec<'a, FormatElement<'a>>>> = Vec::with_capacity(num_quasis);
     for (idx, info) in infos.iter().enumerate() {
-        if format_index_map[idx].is_some() {
-            ir_parts.push(irs_iter.next());
+        let mut ir = if format_index_map[idx].is_some() {
+            irs_iter.next()
         } else if info.comments_only {
-            // Build IR for comment-only quasis manually
-            let comment_ir =
-                build_graphql_comment_ir(info.text, f.allocator(), f.options().indent_width);
-            ir_parts.push(comment_ir);
+            build_graphql_comment_ir(info.text, allocator, indent_width)
         } else {
-            ir_parts.push(None);
+            None
+        };
+        if let Some(ir) = ir.as_mut() {
+            super::escape_template_chars_in_ir(ir, allocator, indent_width);
         }
+        ir_parts.push(ir);
     }
 
     // Collect expressions via AstNode-aware iterator
@@ -195,10 +206,10 @@ fn build_graphql_comment_ir<'a>(
     text: &str,
     allocator: &'a Allocator,
     indent_width: IndentWidth,
-) -> Option<Vec<FormatElement<'a>>> {
+) -> Option<ArenaVec<'a, FormatElement<'a>>> {
     // This comes from `.cooked`, which has normalized line terminators
     let lines: Vec<&str> = text.split('\n').map(str::trim).collect();
-    let mut parts: Vec<FormatElement<'a>> = vec![];
+    let mut parts: ArenaVec<'a, FormatElement<'a>> = ArenaVec::new_in(&allocator);
     let mut seen_comment = false;
 
     for (i, line) in lines.iter().enumerate() {

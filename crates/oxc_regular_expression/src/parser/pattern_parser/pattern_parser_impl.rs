@@ -51,11 +51,10 @@ impl<'a> PatternParser<'a> {
         // - names of named capturing groups
         //   - For `\k<a>`, `\k<a>(?<b>)` to be handled as early error in `+NamedCaptureGroups`
         //
-        // NOTE: It means that this perform 2 loops for every cases.
+        // NOTE: It means that this performs 2 loops for every case.
         // - Pros: Code is simple enough and easy to understand
         // - Cons: 1st pass is completely useless if the pattern does not contain any capturing groups
         // We may re-consider this if we need more performance rather than simplicity.
-        let checkpoint = self.reader.checkpoint();
 
         // [SS:EE] Pattern :: Disjunction
         // It is a Syntax Error if Pattern contains two or more GroupSpecifiers for which the CapturingGroupName of GroupSpecifier is the same.
@@ -64,14 +63,13 @@ impl<'a> PatternParser<'a> {
                 offsets.iter().map(|&(start, end)| self.span_factory.create(start, end)).collect(),
             )
         })?;
-        self.reader.rewind(checkpoint);
 
         // [SS:EE] Pattern :: Disjunction
         // It is a Syntax Error if CountLeftCapturingParensWithin(Pattern) ≥ 2**32 - 1.
         //
         // If this is greater than `u32::MAX`, it is memory overflow, though.
         // But I never seen such a gigantic pattern with 4,294,967,295 parens!
-        if u32::MAX == self.state.num_of_capturing_groups {
+        if self.state.num_of_capturing_groups == u32::MAX {
             return Err(diagnostics::too_may_capturing_groups(self.span_factory.create(0, 0)));
         }
 
