@@ -29,6 +29,17 @@ The core is parameterized over a consumer-supplied context so it stays language-
   - All generic over the context `C`, consumers add a `C` bound only on `impl` blocks
   - Not on struct definitions, and typically define a `type FooFormatter<…> = Formatter<…, FooContext<…>>` alias to keep lifetimes aligned
 
+### Embedded-language infrastructure (`embedded.rs`)
+
+`EmbeddedContext` / `FormatDispatcher` / `DispatchResult` / `TailwindCollector` let one
+formatter's IR be built inside another's document (e.g. graphql-in-js):
+
+- The orchestrator (oxfmt) assembles the dispatcher, mapping language names to
+  formatter implementations (or a Prettier fallback); formatter crates only invoke it
+- Parent and child share one arena and one `GroupId` space through `EmbeddedContext`
+- Language-pair specific data crosses the boundary as `dyn Any` only —
+  core never learns concrete languages
+
 ### What belongs in core (the boundary)
 
 Two layers, two admission rules. A type/fn that fits neither belongs in a consumer crate.

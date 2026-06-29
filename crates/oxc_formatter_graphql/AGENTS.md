@@ -7,6 +7,11 @@ Prettier compatible GraphQL formatter (`oxfmt`'s Tier 1 backend), using the `oxc
 - Built on `oxc_formatter_core` for the language-agnostic IR + Printer + builders + macros
   - See `crates/oxc_formatter_core/AGENTS.md` for the IR/pipeline details
 - This crate holds only the GraphQL-specific layer
+- Two entry points:
+  - `format()`: standalone files (returns a printable `Formatted`)
+  - `format_to_ir()`: embedded use via the dispatcher (graphql-in-js); allocates
+    from the shared `EmbeddedContext` arena, emits no BOM / trailing newline,
+    and leaves `propagate_expand()` to the parent document
 - Parses with [apollo-parser](https://docs.rs/apollo-parser) (rowan-based lossless CST)
   - Spec coverage: **October 2021 GraphQL spec only**
   - Prettier parses with `graphql-js`, which also accepts draft-level syntax
@@ -17,7 +22,7 @@ Prettier compatible GraphQL formatter (`oxfmt`'s Tier 1 backend), using the `oxc
 
 ### Error semantics
 
-`format()` returns `Err` whenever it cannot produce output it can stand behind:
+`format()` / `format_to_ir()` return `Err` whenever they cannot produce output they can stand behind:
 
 - apollo-parser is error-tolerant (returns a CST even for invalid input),
   but any parse error bails out; never format a broken CST

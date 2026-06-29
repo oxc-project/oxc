@@ -12,7 +12,9 @@ use crate::{
     core::{
         ExternalFormatter, JsFormatEmbeddedCb, JsFormatEmbeddedDocCb, JsFormatFileCb,
         JsSortTailwindClassesCb,
-        options::{inject_filepath, inject_tailwind_plugin_payload, to_prettier},
+        options::{
+            inject_filepath, inject_tailwind_plugin_payload, to_oxc_formatter_graphql, to_prettier,
+        },
         oxfmtrc::FormatConfig,
         resolve_for_embedded_js,
     },
@@ -125,8 +127,17 @@ fn run_full(
     inject_filepath(&mut external_options, &resolved.parent_filepath);
     inject_tailwind_plugin_payload(&mut external_options, &resolved.config);
 
-    let external_callbacks =
-        external_formatter.to_external_callbacks(&resolved.format_options, external_options);
+    // Dual mapping of the same resolved config for the dispatcher's Rust GraphQL branch.
+    // Cannot fail here: `resolve_for_embedded_js()` already built `JsFormatOptions`
+    // from this config, and both share the same `to_core_options()` validation.
+    let graphql_options = to_oxc_formatter_graphql(&resolved.config)
+        .expect("config was already validated by `resolve_for_embedded_js()`");
+
+    let external_callbacks = external_formatter.to_external_callbacks(
+        &resolved.format_options,
+        external_options,
+        graphql_options,
+    );
     let format_options = resolved.format_options;
 
     let allocator = Allocator::default();

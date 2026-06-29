@@ -24,13 +24,13 @@
 
 ## gql-in-js
 
-### Option 1: 9/9 (100.00%)
+### Option 1: 12/12 (100.00%)
 
 ```json
 {"printWidth":80}
 ```
 
-### Option 2: 9/9 (100.00%)
+### Option 2: 12/12 (100.00%)
 
 ```json
 {"printWidth":100}

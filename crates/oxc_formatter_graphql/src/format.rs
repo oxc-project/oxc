@@ -2,7 +2,7 @@ use apollo_parser::{Parser, SyntaxKind, cst, cst::CstNode};
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter_core::{
-    Buffer, Document, Format, FormatState, Formatted, VecBuffer,
+    Buffer, Document, EmbeddedContext, Format, FormatElement, FormatState, Formatted, VecBuffer,
     builders::{hard_line_break, text},
     write,
 };
@@ -27,7 +27,63 @@ pub fn format<'a>(
     source_text: &str,
     options: GraphqlFormatOptions,
 ) -> Result<Formatted<'a, GraphqlFormatContext<'a>>, OxcDiagnostic> {
-    // Copy the source into the arena so every slice taken from it carries `'a`.
+    let (document, source, comments) = parse_document(allocator, source_text)?;
+
+    let context = GraphqlFormatContext::new(options, source, comments);
+    let mut state = FormatState::new(context, allocator);
+    let mut buffer = VecBuffer::new(&mut state);
+
+    let has_bom = source.starts_with('\u{feff}');
+    write!(&mut buffer, FormatGraphqlRoot { document: &document, has_bom });
+
+    let elements = buffer.into_vec();
+    let context = state.into_context();
+
+    let ir = Document::new(elements, Vec::new());
+    ir.propagate_expand();
+
+    Ok(Formatted::new(ir, context))
+}
+
+/// Parse `source_text` and build the formatter IR for embedding into another
+/// formatter's document (dispatcher path, e.g. graphql-in-js).
+///
+/// Unlike [`format()`], this:
+/// - allocates from the shared arena in `ctx`, so the IR lives as long as the
+///   parent's document
+/// - emits neither a BOM nor the trailing newline (the parent owns the layout
+///   around the embedded part, matching Prettier's `textToDoc` +
+///   `stripTrailingHardline` behavior)
+/// - skips `propagate_expand()`, which the parent runs on the merged document
+///
+/// # Errors
+/// Same as [`format()`]: any parse error bails out, and the caller decides
+/// what to do next (e.g. fall back to Prettier).
+pub fn format_to_ir<'a>(
+    ctx: &EmbeddedContext<'a, '_>,
+    source_text: &str,
+    options: GraphqlFormatOptions,
+) -> Result<ArenaVec<'a, FormatElement<'a>>, OxcDiagnostic> {
+    let allocator = ctx.allocator;
+    let (document, source, comments) = parse_document(allocator, source_text)?;
+
+    let context = GraphqlFormatContext::new(options, source, comments);
+    let mut state = FormatState::new(context, allocator);
+    let mut buffer = VecBuffer::new(&mut state);
+
+    write!(&mut buffer, FormatGraphqlEmbedded { document: &document });
+
+    Ok(buffer.into_vec())
+}
+
+/// Parse the source into a CST and collect comment trivia,
+/// bailing out on any parse error.
+///
+/// Copies the source into the arena so every slice taken from it carries `'a`.
+fn parse_document<'a>(
+    allocator: &'a Allocator,
+    source_text: &str,
+) -> Result<(cst::Document, &'a str, &'a [Span]), OxcDiagnostic> {
     let source: &'a str = allocator.alloc_str(source_text);
 
     let tree = Parser::new(source).parse();
@@ -55,20 +111,7 @@ pub fn format<'a>(
     )
     .into_arena_slice();
 
-    let context = GraphqlFormatContext::new(options, source, comments);
-    let mut state = FormatState::new(context, allocator);
-    let mut buffer = VecBuffer::new(&mut state);
-
-    let has_bom = source.starts_with('\u{feff}');
-    write!(&mut buffer, FormatGraphqlRoot { document: &document, has_bom });
-
-    let elements = buffer.into_vec();
-    let context = state.into_context();
-
-    let ir = Document::new(elements, Vec::new());
-    ir.propagate_expand();
-
-    Ok(Formatted::new(ir, context))
+    Ok((document, source, comments))
 }
 
 /// Emits the document's definitions followed by any trailing comments,
@@ -88,5 +131,17 @@ impl<'a> Format<'a, GraphqlFormatContext<'a>> for FormatGraphqlRoot<'_> {
 
         // POSIX convention: every formatted file ends with a newline.
         write!(f, hard_line_break());
+    }
+}
+
+/// Emits the document's definitions and trailing comments only;
+/// no BOM, no final newline (the parent document owns the surrounding layout).
+struct FormatGraphqlEmbedded<'b> {
+    document: &'b cst::Document,
+}
+
+impl<'a> Format<'a, GraphqlFormatContext<'a>> for FormatGraphqlEmbedded<'_> {
+    fn fmt(&self, f: &mut GraphqlFormatter<'_, 'a>) {
+        print::write_document(self.document, f);
     }
 }

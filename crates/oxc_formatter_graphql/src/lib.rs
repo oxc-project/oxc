@@ -21,6 +21,6 @@ mod print;
 
 pub use crate::{
     context::GraphqlFormatContext,
-    format::format,
+    format::{format, format_to_ir},
     options::{BracketSpacing, GraphqlFormatOptions},
 };

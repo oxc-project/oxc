@@ -29,14 +29,18 @@ pub(super) fn try_embed_markdown<'a>(
     let has_indent = !indentation.is_empty();
     let text = if has_indent { strip_indentation(text, indentation, allocator) } else { text };
 
-    // Phase 3: Get Doc→IR from external formatter
+    // Phase 3: Get the IR from the dispatcher
     let allocator = f.allocator();
     let group_id_builder = f.group_id_builder();
-    let Some(Ok(crate::external_formatter::EmbeddedDocResult::SingleDoc(ir))) = f
-        .context()
-        .external_callbacks()
-        .format_embedded_doc(allocator, group_id_builder, "markdown", &[text])
-    else {
+    let Some(Ok(result)) = f.context().external_callbacks().dispatch_embedded(
+        allocator,
+        group_id_builder,
+        "markdown",
+        &[text],
+    ) else {
+        return false;
+    };
+    let Some(ir) = result.into_single_doc() else {
         return false;
     };
 

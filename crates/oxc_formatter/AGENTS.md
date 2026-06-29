@@ -21,7 +21,9 @@ The AST-wrapping IR primitives (`AstNode`, `Format`, `Buffer`, …) are `pub(cra
   - Drives context-dependent decisions like forced parentheses / quote style
   - The formatter knows nothing about Prettier/Vue vocabulary, callers pass wrapped source
 - `format_program`: Special-purpose AST-in entry point
-- `ExternalCallbacks` (in `external_formatter.rs`): Callbacks for embedded-doc / Tailwind formatting delegated back to the host
+- `ExternalCallbacks` (in `external_formatter.rs`): The host-supplied `FormatDispatcher`
+  (embedded-language formatting, see `oxc_formatter_core`'s `embedded` module)
+  plus string-based / Tailwind callbacks delegated back to the host
 
 ### Generated code
 
@@ -49,8 +51,10 @@ After changing AST shapes or the generators, regenerate with `just ast`, never h
 ### Embedded language formatting
 
 - Two directions: xxx-in-js (e.g. css/graphql/html in template literals) and js-in-xxx (e.g. vue/svelte)
-- Both work by Oxfmt injecting Prettier calls through `ExternalCallbacks`
-  - This crate stays unaware of Prettier and only invokes the supplied callbacks
+- xxx-in-js goes through the `FormatDispatcher` Oxfmt assembles (Rust formatter
+  per language where implemented — currently GraphQL — Prettier Doc→IR fallback otherwise);
+  js-in-xxx works by Oxfmt injecting Prettier calls through `ExternalCallbacks`
+  - This crate stays unaware of Prettier and only invokes the supplied dispatcher/callbacks
 
 ## Fixing IR construction
 

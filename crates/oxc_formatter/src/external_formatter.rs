@@ -1,50 +1,36 @@
 use std::sync::Arc;
 
 use oxc_allocator::Allocator;
+use oxc_formatter_core::{DispatchResult, EmbeddedContext, FormatDispatcher};
 
-use super::formatter::{FormatElement, UniqueGroupIdBuilder};
+use super::formatter::UniqueGroupIdBuilder;
 
 /// Callback function type for formatting embedded code.
 /// Takes (tag_name, code) and returns formatted code or an error.
 pub type EmbeddedFormatterCallback =
     Arc<dyn Fn(&str, &str) -> Result<String, String> + Send + Sync>;
 
-/// Result of formatting embedded code via the Doc→IR path.
+/// Child→parent metadata for CSS formatted as an embedded child.
 ///
-/// The variant depends on the language being formatted:
-/// - GraphQL: multiple IRs (one per quasi text)
-/// - CSS/HTML: single IR with placeholder survival count
-/// - Markdown: single IR only (no placeholders or metadata)
-pub enum EmbeddedDocResult<'a> {
-    MultipleDocs(Vec<Vec<FormatElement<'a>>>),
-    DocWithPlaceholders {
-        ir: Vec<FormatElement<'a>>,
-        /// This indicates how many placeholder patterns survived formatting.
-        placeholder_count: usize,
-        /// HTML-specific: whether the parsed HTML has more than one root element.
-        /// Used to decide whether to `indent` the template content, `None` for non-HTML languages.
-        html_has_multiple_root_elements: Option<bool>,
-    },
-    SingleDoc(Vec<FormatElement<'a>>),
+/// NOTE: Belongs to the CSS formatter crate once it exists
+/// (see `refactor-oxfmt-architecture.md`); lives here until then because
+/// both the producer (oxfmt's dispatcher) and the consumer (`embed/css.rs`)
+/// can reach this crate.
+pub struct CssEmbedMeta {
+    /// How many `@prettier-placeholder-N-id` patterns survived formatting.
+    pub placeholder_count: usize,
 }
 
-/// Callback function type for formatting embedded code via `Doc`.
+/// Child→parent metadata for HTML/Angular formatted as an embedded child.
 ///
-/// Takes (allocator, group_id_builder, language, texts) and returns [`EmbeddedDocResult`].
-/// Used for the Doc→IR path (e.g., `JS:printToDoc()` → Doc JSON → `Rust:FormatElement`).
-///
-/// The `&Allocator` allows the callback to allocate arena strings for `FormatElement::Text`.
-/// The `&UniqueGroupIdBuilder` allows the callback to create `GroupId`s for group/conditional constructs.
-pub type EmbeddedDocFormatterCallback = Arc<
-    dyn for<'a> Fn(
-            &'a Allocator,
-            &UniqueGroupIdBuilder,
-            &str,
-            &[&str],
-        ) -> Result<EmbeddedDocResult<'a>, String>
-        + Send
-        + Sync,
->;
+/// NOTE: Belongs to the HTML formatter crate once it exists (same as [`CssEmbedMeta`]).
+pub struct HtmlEmbedMeta {
+    /// How many `PRETTIER_HTML_PLACEHOLDER_N_0_IN_JS` patterns survived formatting.
+    pub placeholder_count: usize,
+    /// Whether the parsed HTML has more than one root element.
+    /// Used to decide whether to `indent` the template content.
+    pub has_multiple_root_elements: Option<bool>,
+}
 
 /// Callback function type for sorting Tailwind CSS classes.
 /// Takes classes and returns the sorted versions.
@@ -52,20 +38,21 @@ pub type TailwindCallback = Arc<dyn Fn(Vec<String>) -> Vec<String> + Send + Sync
 
 /// External callbacks for JS-side functionality.
 ///
-/// This struct holds all callbacks that delegate to external (typically JS) implementations:
+/// This struct holds all callbacks that delegate to external implementations:
 /// - Embedded language formatting (CSS, GraphQL, HTML in template literals)
+///   via the orchestrator-assembled [`FormatDispatcher`]
 /// - Tailwind CSS class sorting
 #[derive(Default)]
 pub struct ExternalCallbacks {
     embedded_formatter: Option<EmbeddedFormatterCallback>,
-    embedded_doc_formatter: Option<EmbeddedDocFormatterCallback>,
+    dispatcher: Option<FormatDispatcher>,
     tailwind: Option<TailwindCallback>,
 }
 
 impl ExternalCallbacks {
     /// Create a new `ExternalCallbacks` with no callbacks set.
     pub fn new() -> Self {
-        Self { embedded_formatter: None, embedded_doc_formatter: None, tailwind: None }
+        Self { embedded_formatter: None, dispatcher: None, tailwind: None }
     }
 
     /// Set the embedded formatter callback.
@@ -75,13 +62,10 @@ impl ExternalCallbacks {
         self
     }
 
-    /// Set the embedded Doc formatter callback (Doc→IR path).
+    /// Set the embedded-language dispatcher (IR path).
     #[must_use]
-    pub fn with_embedded_doc_formatter(
-        mut self,
-        callback: Option<EmbeddedDocFormatterCallback>,
-    ) -> Self {
-        self.embedded_doc_formatter = callback;
+    pub fn with_dispatcher(mut self, dispatcher: Option<FormatDispatcher>) -> Self {
+        self.dispatcher = dispatcher;
         self
     }
 
@@ -108,31 +92,38 @@ impl ExternalCallbacks {
         self.embedded_formatter.as_ref().map(|cb| cb(language, code))
     }
 
-    /// Format embedded code as Doc.
+    /// Format embedded code through the dispatcher (IR path).
+    ///
+    /// Builds an [`EmbeddedContext`] from the current formatting state and
+    /// invokes the dispatcher with it, so the child formatter shares this
+    /// formatter's arena and `GroupId` space (and can recurse further).
     ///
     /// # Arguments
     /// * `allocator` - The arena allocator for allocating strings in `FormatElement::Text`
     /// * `group_id_builder` - Builder for creating unique `GroupId`s
     /// * `language` - A generic language identifier (e.g., "css", "graphql", "html", "angular").
     ///   These are NOT specific to any external formatter.
-    ///   The callback implementation is responsible for mapping them to its own parser/language names.
+    ///   The dispatcher implementation is responsible for mapping them to its own parser/language names.
     /// * `texts` - The code texts to format (multiple quasis for GraphQL, single joined text for CSS/HTML)
     ///
     /// # Returns
-    /// * `Some(Ok(EmbeddedDocResult))` - The formatted Doc result, which may contain multiple IRs or placeholder counts depending on the language (see [`EmbeddedDocResult`])
+    /// * `Some(Ok(DispatchResult))` - The formatted IR(s) plus optional child→parent metadata
     /// * `Some(Err(String))` - An error message if formatting failed
-    /// * `None` - No embedded Doc formatter callback is set
-    ///
-    pub fn format_embedded_doc<'a>(
+    /// * `None` - No dispatcher is set
+    pub fn dispatch_embedded<'a>(
         &self,
         allocator: &'a Allocator,
         group_id_builder: &UniqueGroupIdBuilder,
         language: &str,
         texts: &[&str],
-    ) -> Option<Result<EmbeddedDocResult<'a>, String>> {
-        self.embedded_doc_formatter
-            .as_ref()
-            .map(|cb| cb(allocator, group_id_builder, language, texts))
+    ) -> Option<Result<DispatchResult<'a>, String>> {
+        let dispatcher = self.dispatcher.as_ref()?;
+        let ctx = EmbeddedContext {
+            allocator,
+            group_id_builder,
+            dispatcher: Some(Arc::clone(dispatcher)),
+        };
+        Some(dispatcher(&ctx, language, texts, None))
     }
 
     /// Sort Tailwind CSS classes.

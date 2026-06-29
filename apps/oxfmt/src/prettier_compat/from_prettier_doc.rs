@@ -3,11 +3,11 @@ use std::num::NonZeroU8;
 use rustc_hash::FxHashMap;
 use serde_json::Value;
 
-use oxc_allocator::{Allocator, ArenaStringBuilder};
-use oxc_formatter::EmbeddedDocResult;
+use oxc_allocator::{Allocator, ArenaStringBuilder, ArenaVec};
+use oxc_formatter::{CssEmbedMeta, HtmlEmbedMeta};
 use oxc_formatter_core::{
-    Align, Condition, DedentMode, FormatElement, Group, GroupId, GroupMode, IndentWidth, LineMode,
-    PrintMode, Tag, TextWidth, UniqueGroupIdBuilder,
+    Align, Condition, DedentMode, DispatchResult, FormatElement, Group, GroupId, GroupMode,
+    IndentWidth, LineMode, PrintMode, Tag, TextWidth, UniqueGroupIdBuilder,
 };
 
 /// Marker string used to represent `-Infinity` in JSON.
@@ -15,11 +15,12 @@ use oxc_formatter_core::{
 /// See `src-js/lib/apis.ts` for details.
 const NEGATIVE_INFINITY_MARKER: &str = "__NEGATIVE_INFINITY__";
 
-/// Converts parsed Prettier Doc JSON values into an [`EmbeddedDocResult`].
+/// Converts parsed Prettier Doc JSON values into a [`DispatchResult`].
 ///
 /// Handles language-specific processing:
-/// - GraphQL: converts each doc independently → [`EmbeddedDocResult::MultipleDocs`]
-/// - CSS, HTML: merges consecutive Text nodes, counts placeholders → [`EmbeddedDocResult::DocWithPlaceholders`]
+/// - GraphQL: converts each doc independently → one IR per doc
+/// - CSS, HTML: merges consecutive Text nodes, counts placeholders →
+///   single IR + [`CssEmbedMeta`] / [`HtmlEmbedMeta`]
 ///
 /// All Doc JSONs use a uniform `[doc, metadata]` envelope from the JS side.
 pub fn to_format_elements_for_template<'a>(
@@ -27,14 +28,14 @@ pub fn to_format_elements_for_template<'a>(
     doc_jsons: Vec<Value>,
     allocator: &'a Allocator,
     group_id_builder: &UniqueGroupIdBuilder,
-) -> Result<EmbeddedDocResult<'a>, String> {
+) -> Result<DispatchResult<'a>, String> {
     /// Unwrap `[doc, metadata]` envelope and convert doc JSON to IR.
     /// Panics on invalid envelope format (internal protocol we control on both sides).
     fn convert<'a>(
         envelope: Value,
         allocator: &'a Allocator,
         group_id_builder: &UniqueGroupIdBuilder,
-    ) -> Result<(Vec<FormatElement<'a>>, serde_json::Map<String, Value>), String> {
+    ) -> Result<(ArenaVec<'a, FormatElement<'a>>, serde_json::Map<String, Value>), String> {
         let Value::Array(mut arr) = envelope else {
             unreachable!("Doc JSON envelope must be [doc, metadata]");
         };
@@ -45,7 +46,7 @@ pub fn to_format_elements_for_template<'a>(
         let doc_json = arr.into_iter().next().expect("Doc JSON envelope must contain doc");
 
         let mut ctx = FmtCtx::new(allocator, group_id_builder);
-        let mut ir = vec![];
+        let mut ir = ArenaVec::new_in(&allocator);
         convert_doc(&doc_json, &mut ir, &mut ctx)?;
         Ok((ir, metadata))
     }
@@ -66,7 +67,7 @@ pub fn to_format_elements_for_template<'a>(
                     Ok(ir)
                 })
                 .collect::<Result<Vec<_>, String>>()?;
-            Ok(EmbeddedDocResult::MultipleDocs(irs))
+            Ok(DispatchResult { docs: irs, meta: None })
         }
         "css" => {
             let (mut ir, _) = convert(
@@ -81,10 +82,9 @@ pub fn to_format_elements_for_template<'a>(
                 TemplateEscape::None,
                 Some(("@prettier-placeholder-", "-id")),
             );
-            Ok(EmbeddedDocResult::DocWithPlaceholders {
-                ir,
-                placeholder_count,
-                html_has_multiple_root_elements: None,
+            Ok(DispatchResult {
+                docs: vec![ir],
+                meta: Some(Box::new(CssEmbedMeta { placeholder_count })),
             })
         }
         "html" | "angular" => {
@@ -102,10 +102,12 @@ pub fn to_format_elements_for_template<'a>(
                 TemplateEscape::Full,
                 Some(("PRETTIER_HTML_PLACEHOLDER_", "_IN_JS")),
             );
-            Ok(EmbeddedDocResult::DocWithPlaceholders {
-                ir,
-                placeholder_count,
-                html_has_multiple_root_elements,
+            Ok(DispatchResult {
+                docs: vec![ir],
+                meta: Some(Box::new(HtmlEmbedMeta {
+                    placeholder_count,
+                    has_multiple_root_elements: html_has_multiple_root_elements,
+                })),
             })
         }
         "markdown" => {
@@ -121,9 +123,36 @@ pub fn to_format_elements_for_template<'a>(
                 TemplateEscape::RawBacktick,
                 None,
             );
-            Ok(EmbeddedDocResult::SingleDoc(ir))
+            Ok(DispatchResult { docs: vec![ir], meta: None })
         }
         _ => unreachable!("Unsupported embedded_doc language: {language}"),
+    }
+}
+
+/// Escape template-literal characters (`` ` ``, `${`, `\`) in every `Text`
+/// element of a Rust-built embedded IR.
+///
+/// Mirrors the `TemplateEscape::Full` step of [`postprocess`] for IRs that
+/// come from a Rust formatter instead of a Prettier Doc: when the embedded
+/// output is re-inserted into a JS template literal built from `.cooked`
+/// values (e.g. graphql-in-js), these characters must be re-escaped.
+///
+/// Only top-level `Text` elements are visited; the IR produced by formatter
+/// crates is a flat tag stream (no nested element containers).
+pub fn escape_template_characters_in_ir<'a>(
+    ir: &mut [FormatElement<'a>],
+    allocator: &'a Allocator,
+    indent_width: IndentWidth,
+) {
+    for element in ir.iter_mut() {
+        if let FormatElement::Text { text, .. } = element {
+            let escaped = escape_template_characters(text, allocator);
+            // `escape_template_characters` returns the input slice when nothing needed escaping
+            if !std::ptr::eq(escaped, *text) {
+                let width = TextWidth::from_text(escaped, indent_width);
+                *element = FormatElement::Text { text: escaped, width };
+            }
+        }
     }
 }
 
@@ -149,7 +178,7 @@ impl<'a, 'b> FmtCtx<'a, 'b> {
 
 fn convert_doc<'a>(
     doc: &Value,
-    out: &mut Vec<FormatElement<'a>>,
+    out: &mut ArenaVec<'a, FormatElement<'a>>,
     ctx: &mut FmtCtx<'a, '_>,
 ) -> Result<(), String> {
     match doc {
@@ -213,7 +242,7 @@ fn convert_doc<'a>(
 
 fn convert_line<'a>(
     obj: &serde_json::Map<String, Value>,
-    out: &mut Vec<FormatElement<'a>>,
+    out: &mut ArenaVec<'a, FormatElement<'a>>,
     ctx: &FmtCtx<'a, '_>,
 ) {
     let hard = obj.get("hard").and_then(Value::as_bool).unwrap_or(false);
@@ -236,7 +265,7 @@ fn convert_line<'a>(
 
 fn convert_group<'a>(
     obj: &serde_json::Map<String, Value>,
-    out: &mut Vec<FormatElement<'a>>,
+    out: &mut ArenaVec<'a, FormatElement<'a>>,
     ctx: &mut FmtCtx<'a, '_>,
 ) -> Result<(), String> {
     if obj.contains_key("expandedStates") {
@@ -258,7 +287,7 @@ fn convert_group<'a>(
 
 fn convert_indent<'a>(
     obj: &serde_json::Map<String, Value>,
-    out: &mut Vec<FormatElement<'a>>,
+    out: &mut ArenaVec<'a, FormatElement<'a>>,
     ctx: &mut FmtCtx<'a, '_>,
 ) -> Result<(), String> {
     out.push(FormatElement::Tag(Tag::StartIndent));
@@ -271,7 +300,7 @@ fn convert_indent<'a>(
 
 fn convert_align<'a>(
     obj: &serde_json::Map<String, Value>,
-    out: &mut Vec<FormatElement<'a>>,
+    out: &mut ArenaVec<'a, FormatElement<'a>>,
     ctx: &mut FmtCtx<'a, '_>,
 ) -> Result<(), String> {
     let n = &obj["n"];
@@ -367,7 +396,7 @@ fn convert_align<'a>(
 
 fn convert_if_break<'a>(
     obj: &serde_json::Map<String, Value>,
-    out: &mut Vec<FormatElement<'a>>,
+    out: &mut ArenaVec<'a, FormatElement<'a>>,
     ctx: &mut FmtCtx<'a, '_>,
 ) -> Result<(), String> {
     let group_id_num = extract_group_id(obj, "groupId")?;
@@ -396,7 +425,7 @@ fn convert_if_break<'a>(
 
 fn convert_indent_if_break<'a>(
     obj: &serde_json::Map<String, Value>,
-    out: &mut Vec<FormatElement<'a>>,
+    out: &mut ArenaVec<'a, FormatElement<'a>>,
     ctx: &mut FmtCtx<'a, '_>,
 ) -> Result<(), String> {
     if obj.get("negate").and_then(Value::as_bool).unwrap_or(false) {
@@ -417,7 +446,7 @@ fn convert_indent_if_break<'a>(
 
 fn convert_fill<'a>(
     obj: &serde_json::Map<String, Value>,
-    out: &mut Vec<FormatElement<'a>>,
+    out: &mut ArenaVec<'a, FormatElement<'a>>,
     ctx: &mut FmtCtx<'a, '_>,
 ) -> Result<(), String> {
     out.push(FormatElement::Tag(Tag::StartFill));
@@ -434,7 +463,7 @@ fn convert_fill<'a>(
 
 fn convert_line_suffix<'a>(
     obj: &serde_json::Map<String, Value>,
-    out: &mut Vec<FormatElement<'a>>,
+    out: &mut ArenaVec<'a, FormatElement<'a>>,
     ctx: &mut FmtCtx<'a, '_>,
 ) -> Result<(), String> {
     out.push(FormatElement::Tag(Tag::StartLineSuffix));
@@ -483,7 +512,7 @@ enum TemplateEscape {
 ///
 /// Returns the placeholder count (0 when `placeholder` is `None`).
 fn postprocess<'a>(
-    ir: &mut Vec<FormatElement<'a>>,
+    ir: &mut ArenaVec<'a, FormatElement<'a>>,
     allocator: &'a Allocator,
     escape: TemplateEscape,
     placeholder: Option<(&str, &str)>,
@@ -493,7 +522,8 @@ fn postprocess<'a>(
         && matches!(ir[ir.len() - 1], FormatElement::ExpandParent)
         && matches!(ir[ir.len() - 2], FormatElement::Line(LineMode::Hard))
     {
-        ir.truncate(ir.len() - 2);
+        let new_len = ir.len() - 2;
+        ir.truncate(new_len);
     }
 
     let mut placeholder_count = 0;

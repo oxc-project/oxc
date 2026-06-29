@@ -4,7 +4,7 @@ use oxc_span::GetSpan;
 
 use crate::{
     ast_nodes::AstNode,
-    external_formatter::EmbeddedDocResult,
+    external_formatter::CssEmbedMeta,
     format_args,
     formatter::{FormatElement, prelude::*},
     write,
@@ -39,11 +39,15 @@ pub(super) fn format_css_doc<'a>(
 
         let allocator = f.allocator();
         let group_id_builder = f.group_id_builder();
-        let Some(Ok(EmbeddedDocResult::DocWithPlaceholders { ir, .. })) = f
-            .context()
-            .external_callbacks()
-            .format_embedded_doc(allocator, group_id_builder, "css", &[raw])
-        else {
+        let Some(Ok(result)) = f.context().external_callbacks().dispatch_embedded(
+            allocator,
+            group_id_builder,
+            "css",
+            &[raw],
+        ) else {
+            return false;
+        };
+        let Some(ir) = result.into_single_doc() else {
             return false;
         };
 
@@ -68,14 +72,26 @@ pub(super) fn format_css_doc<'a>(
         sb.into_str()
     };
 
-    // Phase 2: Format via the Doc→IR path
+    // Phase 2: Format via the dispatcher (IR path)
     let allocator = f.allocator();
     let group_id_builder = f.group_id_builder();
-    let Some(Ok(EmbeddedDocResult::DocWithPlaceholders { ir, placeholder_count, .. })) = f
-        .context()
-        .external_callbacks()
-        .format_embedded_doc(allocator, group_id_builder, "css", &[joined])
+    let Some(Ok(result)) = f.context().external_callbacks().dispatch_embedded(
+        allocator,
+        group_id_builder,
+        "css",
+        &[joined],
+    ) else {
+        return false;
+    };
+    let Some(placeholder_count) = result
+        .meta
+        .as_ref()
+        .and_then(|meta| meta.downcast_ref::<CssEmbedMeta>())
+        .map(|meta| meta.placeholder_count)
     else {
+        return false;
+    };
+    let Some(ir) = result.into_single_doc() else {
         return false;
     };
 

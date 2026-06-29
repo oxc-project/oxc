@@ -7,7 +7,7 @@ use oxc_syntax::line_terminator::LineTerminatorSplitter;
 
 use crate::{
     ast_nodes::AstNode,
-    external_formatter::EmbeddedDocResult,
+    external_formatter::HtmlEmbedMeta,
     format_args,
     formatter::{
         FormatElement, buffer::RemoveSoftLinesBuffer, prelude::*, trivia::FormatTrailingComments,
@@ -55,17 +55,23 @@ pub(super) fn format_html_doc<'a>(
 
         let allocator = f.allocator();
         let group_id_builder = f.group_id_builder();
-        let Some(Ok(EmbeddedDocResult::DocWithPlaceholders {
-            ir,
-            html_has_multiple_root_elements,
-            ..
-        })) = f.context().external_callbacks().format_embedded_doc(
+        let Some(Ok(result)) = f.context().external_callbacks().dispatch_embedded(
             allocator,
             group_id_builder,
             embedded_language,
             &[cooked],
-        )
+        ) else {
+            return false;
+        };
+        let Some(html_has_multiple_root_elements) = result
+            .meta
+            .as_ref()
+            .and_then(|meta| meta.downcast_ref::<HtmlEmbedMeta>())
+            .map(|meta| meta.has_multiple_root_elements)
         else {
+            return false;
+        };
+        let Some(ir) = result.into_single_doc() else {
             return false;
         };
 
@@ -106,24 +112,19 @@ pub(super) fn format_html_doc<'a>(
     let has_leading_ws = joined.starts_with(|c: char| c.is_ascii_whitespace());
     let has_trailing_ws = joined.ends_with(|c: char| c.is_ascii_whitespace());
 
-    // Phase 2: Format via the Doc->IR path
+    // Phase 2: Format via the dispatcher (IR path)
     let allocator = f.allocator();
     let group_id_builder = f.group_id_builder();
-    let Some(Ok(EmbeddedDocResult::DocWithPlaceholders {
-        ir,
-        placeholder_count,
-        html_has_multiple_root_elements,
-    })) = f.context().external_callbacks().format_embedded_doc(
+    let Some(Ok(result)) = f.context().external_callbacks().dispatch_embedded(
         allocator,
         group_id_builder,
         embedded_language,
         &[joined],
-    )
-    else {
+    ) else {
         // NOTE: If this html-in-js part contains `<script>` (= js-in-html-in-js),
         // returned Prettier's `Doc` output may contain `conditionalGroup`.
         // But currently, `oxfmt/prettier_compat/from_prettier_doc.rs` does not support this.
-        // So `format_embedded_doc()` will return `Err`.
+        // So `dispatch_embedded()` will return `Err`.
         //
         // In Prettier, `conditionalGroup` is only used by JS and YAML formatting.
         // And we want to format JS by `oxc_formatter` via oxfmt-plugin,
@@ -132,6 +133,17 @@ pub(super) fn format_html_doc<'a>(
         // Support `conditionalGroup` and convert to our `BestFitting` may be possible,
         // but it also requires placeholder replacement, which is non-trivial.
         return format_js_in_html_as_fallback(joined, &expressions, f);
+    };
+    let Some((placeholder_count, html_has_multiple_root_elements)) = result
+        .meta
+        .as_ref()
+        .and_then(|meta| meta.downcast_ref::<HtmlEmbedMeta>())
+        .map(|meta| (meta.placeholder_count, meta.has_multiple_root_elements))
+    else {
+        return false;
+    };
+    let Some(ir) = result.into_single_doc() else {
+        return false;
     };
 
     // Verify all placeholders survived HTML formatting.

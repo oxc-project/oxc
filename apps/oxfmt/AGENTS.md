@@ -44,6 +44,11 @@ NOTE: Some Tier 1 formatters can fallback to Prettier with NAPI CLI.
 e.g. `oxc_formatter_graphql` (uses `apollo-parser`) only covers the stable GraphQL spec.
 When it returns an error (e.g. draft-spec syntax that Prettier's `graphql-js` accepts), the format step retries via Prettier.
 
+The same applies to embedded languages (xxx-in-js): `src/core/external_formatter.rs`
+assembles a `FormatDispatcher` (defined in `oxc_formatter_core`) that maps each
+language to a Rust formatter where implemented (currently GraphQL, with the same
+parse-error fallback) and to the Prettier Doc→IR path otherwise.
+
 Consequently, managing these various formatter implementations and handling their respective options are also part of Oxfmt's responsibilities.
 
 ### CLI implementations

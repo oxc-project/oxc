@@ -10,9 +10,10 @@ use serde_json::Value;
 use tracing::{debug, debug_span};
 
 use oxc_formatter::{
-    EmbeddedDocFormatterCallback, EmbeddedFormatterCallback, ExternalCallbacks, JsFormatOptions,
-    TailwindCallback,
+    EmbeddedFormatterCallback, ExternalCallbacks, JsFormatOptions, TailwindCallback,
 };
+use oxc_formatter_core::{DispatchResult, EmbeddedContext, FormatDispatcher};
+use oxc_formatter_graphql::GraphqlFormatOptions;
 
 use crate::{core::options::inject_parser, prettier_compat::from_prettier_doc};
 
@@ -239,10 +240,14 @@ impl ExternalFormatter {
 
     /// Convert this external formatter to the oxc_formatter::ExternalCallbacks type.
     /// The options (including `filepath`) are captured in the closures and passed to JS on each call.
+    ///
+    /// `graphql_options` is the dual mapping of the same resolved config for the
+    /// dispatcher's Rust GraphQL branch (graphql-in-js).
     pub fn to_external_callbacks(
         &self,
         format_options: &JsFormatOptions,
         options: Value,
+        graphql_options: GraphqlFormatOptions,
     ) -> ExternalCallbacks {
         let needs_embedded = !format_options.embedded_language_formatting.is_off();
         let embedded_callback: Option<EmbeddedFormatterCallback> = if needs_embedded {
@@ -278,50 +283,33 @@ impl ExternalFormatter {
             None
         };
 
-        let embedded_doc_callback: Option<EmbeddedDocFormatterCallback> = if needs_embedded {
-            let format_embedded_doc = Arc::clone(&self.format_embedded_doc);
-            let options_for_doc = options.clone();
-            Some(Arc::new(move |allocator, group_id_builder, language: &str, texts: &[&str]| {
-                let Some(parser_name) = language_to_prettier_parser(language) else {
-                    return Err(format!("Unsupported language: {language}"));
-                };
-                debug_span!("oxfmt::external::format_embedded_doc", parser = parser_name)
-                    .in_scope(|| {
-                        let mut options = options_for_doc.clone();
-                        inject_parser(&mut options, parser_name);
-                        let doc_json_strs =
-                            (format_embedded_doc)(options, texts).map_err(|err| {
-                                format!(
-                                    "Failed to get Doc for embedded code (parser '{parser_name}'): {err}"
-                                )
-                            })?;
-                        let doc_jsons = doc_json_strs
-                            .into_iter()
-                            .map(|s| {
-                                // Prettier's Doc can produce deeply nested arrays.
-                                // (e.g., md-in-js with `proseWrap: preserve`,
-                                // which nests each word in `[[[prev, " "], word], " "]`)
-                                // The default recursion limit of 128 is not enough for long paragraphs.
-                                // This only affects this deserialization call;
-                                // other `serde_json` usage in the codebase keeps the default limit.
-                                let mut de = serde_json::Deserializer::from_str(&s);
-                                de.disable_recursion_limit();
-                                serde_json::Value::deserialize(&mut de)
-                            })
-                            .collect::<Result<Vec<_>, _>>()
-                            .map_err(|e| format!("Failed to parse Doc JSON: {e}"))?;
-
-                        from_prettier_doc::to_format_elements_for_template(
-                            language,
-                            doc_jsons,
-                            allocator,
-                            group_id_builder,
-                        )
-                    })
-                    .inspect_err(|err| {
-                        debug!("Failed to format embedded doc for parser '{parser_name}': {err}");
-                    })
-            }))
+        // The dispatcher maps a language name to a formatter implementation.
+        // Rust implementations replace branches one by one;
+        // the rest go through the Prettier Doc→IR fallback.
+        let dispatcher: Option<FormatDispatcher> = if needs_embedded {
+            let prettier_fallback =
+                build_prettier_fallback(Arc::clone(&self.format_embedded_doc), options.clone());
+            Some(Arc::new(
+                move |ctx: &EmbeddedContext<'_, '_>,
+                      language: &str,
+                      texts: &[&str],
+                      _parent_context| {
+                    match language {
+                        // Rust implementation; Prettier fallback on parse errors
+                        // (apollo-parser covers the stable spec only, while
+                        // Prettier's graphql-js also accepts draft-level syntax)
+                        "graphql" | "gql" => format_graphql_to_irs(ctx, texts, graphql_options)
+                            .or_else(|err| {
+                                debug!(
+                                    "`oxc_formatter_graphql` failed, falling back to Prettier: {err}"
+                                );
+                                prettier_fallback(ctx, language, texts)
+                            }),
+                        // Everything else: Prettier fallback (Doc→IR path)
+                        _ => prettier_fallback(ctx, language, texts),
+                    }
+                },
+            ))
         } else {
             None
         };
@@ -339,7 +327,7 @@ impl ExternalFormatter {
 
         ExternalCallbacks::new()
             .with_embedded_formatter(embedded_callback)
-            .with_embedded_doc_formatter(embedded_doc_callback)
+            .with_dispatcher(dispatcher)
             .with_tailwind(tailwind_callback)
     }
 
@@ -367,6 +355,95 @@ impl ExternalFormatter {
 }
 
 // ---
+
+/// Format each text as a standalone GraphQL document via `oxc_formatter_graphql`,
+/// returning one IR per text (the dispatcher contract for GraphQL).
+///
+/// Template-literal characters in the output are re-escaped because the parent
+/// re-inserts the IR into a JS template literal built from `.cooked` values.
+///
+/// Any parse error fails the whole batch so the caller can fall back to
+/// Prettier for all texts at once (an embedded template is all-or-nothing).
+fn format_graphql_to_irs<'a>(
+    ctx: &EmbeddedContext<'a, '_>,
+    texts: &[&str],
+    options: GraphqlFormatOptions,
+) -> Result<DispatchResult<'a>, String> {
+    let docs = texts
+        .iter()
+        .map(|text| {
+            debug_span!("oxfmt::external::format_graphql_to_ir").in_scope(|| {
+                let mut ir = oxc_formatter_graphql::format_to_ir(ctx, text, options)
+                    .map_err(|err| err.to_string())?;
+                from_prettier_doc::escape_template_characters_in_ir(
+                    &mut ir,
+                    ctx.allocator,
+                    options.indent_width,
+                );
+                Ok(ir)
+            })
+        })
+        .collect::<Result<Vec<_>, String>>()?;
+    Ok(DispatchResult { docs, meta: None })
+}
+
+/// Type of the Prettier Doc→IR fallback used by the dispatcher.
+/// Same shape as `FormatDispatcher` minus the `parent_context` passthrough.
+type PrettierDocFallback = Arc<
+    dyn for<'a, 'g> Fn(
+            &EmbeddedContext<'a, 'g>,
+            &str,
+            &[&str],
+        ) -> Result<DispatchResult<'a>, String>
+        + Send
+        + Sync,
+>;
+
+/// Build the Prettier Doc→IR fallback for embedded languages:
+/// sends texts to JS `printToDoc()`, then converts the returned Doc JSON into formatter IR.
+fn build_prettier_fallback(
+    format_embedded_doc: FormatEmbeddedDocWithConfigCallback,
+    options: Value,
+) -> PrettierDocFallback {
+    Arc::new(move |ctx: &EmbeddedContext<'_, '_>, language: &str, texts: &[&str]| {
+        let Some(parser_name) = language_to_prettier_parser(language) else {
+            return Err(format!("Unsupported language: {language}"));
+        };
+        debug_span!("oxfmt::external::format_embedded_doc", parser = parser_name)
+            .in_scope(|| {
+                let mut options = options.clone();
+                inject_parser(&mut options, parser_name);
+                let doc_json_strs = (format_embedded_doc)(options, texts).map_err(|err| {
+                    format!("Failed to get Doc for embedded code (parser '{parser_name}'): {err}")
+                })?;
+                let doc_jsons = doc_json_strs
+                    .into_iter()
+                    .map(|s| {
+                        // Prettier's Doc can produce deeply nested arrays.
+                        // (e.g., md-in-js with `proseWrap: preserve`,
+                        // which nests each word in `[[[prev, " "], word], " "]`)
+                        // The default recursion limit of 128 is not enough for long paragraphs.
+                        // This only affects this deserialization call;
+                        // other `serde_json` usage in the codebase keeps the default limit.
+                        let mut de = serde_json::Deserializer::from_str(&s);
+                        de.disable_recursion_limit();
+                        serde_json::Value::deserialize(&mut de)
+                    })
+                    .collect::<Result<Vec<_>, _>>()
+                    .map_err(|e| format!("Failed to parse Doc JSON: {e}"))?;
+
+                from_prettier_doc::to_format_elements_for_template(
+                    language,
+                    doc_jsons,
+                    ctx.allocator,
+                    ctx.group_id_builder,
+                )
+            })
+            .inspect_err(|err| {
+                debug!("Failed to format embedded doc for parser '{parser_name}': {err}");
+            })
+    })
+}
 
 /// Mapping from language identifiers to Prettier `parser` names.
 /// This is the single source of truth for supported embedded languages.
