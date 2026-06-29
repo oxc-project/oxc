@@ -145,6 +145,7 @@ oxc_traverse = { version = "0.137.0", path = "crates/oxc_traverse" } # AST trave
 # publish = false
 oxc_formatter = { path = "crates/oxc_formatter" } # Code formatting
 oxc_formatter_core = { path = "crates/oxc_formatter_core" } # Language-agnostic formatter core
+oxc_formatter_css = { path = "crates/oxc_formatter_css" } # CSS formatter
 oxc_formatter_graphql = { path = "crates/oxc_formatter_graphql" } # GraphQL formatter
 oxc_formatter_json = { path = "crates/oxc_formatter_json" } # JSON formatter
 oxc_language_server = { path = "crates/oxc_language_server", default-features = false } # Language server
@@ -226,6 +227,7 @@ pico-args = "0.5.0" # Minimal argument parser
 prettyplease = "0.2.37" # Rust code formatting
 project-root = "0.2.2" # Project root detection
 quickcheck = "1.1.0" # Property-based testing
+raffia = "0.12.3" # CSS/SCSS/Less parser
 rand = "0.10.0" # Random number generation
 rayon = "1.11.0" # Data parallelism
 ropey = "1.6.1" # Rope text structure

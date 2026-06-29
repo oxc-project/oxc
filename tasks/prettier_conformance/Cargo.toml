@@ -28,6 +28,7 @@ oxc_ast = { workspace = true, features = ["disable_old_builder"] }
 oxc_ast_visit = { workspace = true }
 oxc_formatter = { workspace = true }
 oxc_formatter_core = { workspace = true }
+oxc_formatter_css = { workspace = true }
 oxc_formatter_graphql = { workspace = true }
 oxc_formatter_json = { workspace = true }
 oxc_parser = { workspace = true }

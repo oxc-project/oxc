@@ -11,6 +11,7 @@ use oxc_formatter::{
     OperatorPosition, QuoteProperties, QuoteStyle, Semicolons, TrailingCommas,
 };
 use oxc_formatter_core::{IndentStyle, IndentWidth, LineEnding, LineWidth};
+use oxc_formatter_css::{CssFormatOptions, CssVariant};
 use oxc_formatter_graphql::GraphqlFormatOptions;
 use oxc_formatter_json::{JsonFormatOptions, JsonVariant, QuoteProps};
 use oxc_parser::Parser;
@@ -31,6 +32,7 @@ pub enum SpecOptions {
     Js(Box<JsFormatOptions>),
     Json(JsonFormatOptions),
     Graphql(GraphqlFormatOptions),
+    Css(CssFormatOptions),
 }
 
 impl SpecOptions {
@@ -39,6 +41,7 @@ impl SpecOptions {
             Self::Js(o) => o.line_width,
             Self::Json(o) => o.line_width,
             Self::Graphql(o) => o.line_width,
+            Self::Css(o) => o.line_width,
         }
     }
 }
@@ -148,6 +151,9 @@ impl VisitMut<'_> for SpecParser {
                 | TestLanguage::Json5
                 | TestLanguage::JsonStringify
                 | TestLanguage::Graphql
+                | TestLanguage::Css
+                | TestLanguage::Scss
+                | TestLanguage::Less
         );
         if is_exact_parser_language && !parsers.iter().any(|p| p == self.language.as_str()) {
             return;
@@ -170,6 +176,15 @@ impl VisitMut<'_> for SpecParser {
         };
         let mut graphql_options = GraphqlFormatOptions {
             line_width: LineWidth::try_from(80).unwrap(),
+            ..Default::default()
+        };
+        let mut css_options = CssFormatOptions {
+            line_width: LineWidth::try_from(80).unwrap(),
+            variant: match self.language {
+                TestLanguage::Scss => CssVariant::Scss,
+                TestLanguage::Less => CssVariant::Less,
+                _ => CssVariant::Css,
+            },
             ..Default::default()
         };
 
@@ -203,6 +218,7 @@ impl VisitMut<'_> for SpecParser {
                                     QuoteStyle::Double
                                 };
                                 json_options.single_quote = literal.value.into();
+                                css_options.single_quote = literal.value.into();
                             } else if name == "jsxSingleQuote" {
                                 js_options.jsx_quote_style = if literal.value {
                                     QuoteStyle::Single
@@ -218,6 +234,7 @@ impl VisitMut<'_> for SpecParser {
                                 js_options.indent_style = style;
                                 json_options.indent_style = style;
                                 graphql_options.indent_style = style;
+                                css_options.indent_style = style;
                             } else if name == "experimentalTernaries" {
                                 js_options.experimental_ternaries = literal.value;
                             } else if name == "singleAttributePerLine" {
@@ -235,12 +252,14 @@ impl VisitMut<'_> for SpecParser {
                                 js_options.line_width = width;
                                 json_options.line_width = width;
                                 graphql_options.line_width = width;
+                                css_options.line_width = width;
                             }
                             "tabWidth" => {
                                 let w = IndentWidth::try_from(literal.value as u8).unwrap();
                                 js_options.indent_width = w;
                                 json_options.indent_width = w;
                                 graphql_options.indent_width = w;
+                                css_options.indent_width = w;
                             }
                             _ => {}
                         },
@@ -255,6 +274,11 @@ impl VisitMut<'_> for SpecParser {
                                         "none" => oxc_formatter_json::TrailingCommas::Never,
                                         _ => unreachable!("Prettier's trailingComma should be 'all' | 'es5' | 'none'"),
                                     };
+                                    css_options.trailing_commas = match s {
+                                        "all" | "es5" => oxc_formatter_css::TrailingCommas::Always,
+                                        "none" => oxc_formatter_css::TrailingCommas::Never,
+                                        _ => unreachable!("Prettier's trailingComma should be 'all' | 'es5' | 'none'"),
+                                    };
                                 }
                                 "endOfLine" => {
                                     // TODO: change `unwrap_or_default` to `unwrap`
@@ -262,6 +286,7 @@ impl VisitMut<'_> for SpecParser {
                                     js_options.line_ending = ending;
                                     json_options.line_ending = ending;
                                     graphql_options.line_ending = ending;
+                                    css_options.line_ending = ending;
                                 }
                                 "quoteProps" => {
                                     // TODO: change `unwrap_or_default` to `unwrap`
@@ -334,6 +359,9 @@ impl VisitMut<'_> for SpecParser {
             | TestLanguage::Json5
             | TestLanguage::JsonStringify => SpecOptions::Json(json_options),
             TestLanguage::Graphql => SpecOptions::Graphql(graphql_options),
+            TestLanguage::Css | TestLanguage::Scss | TestLanguage::Less => {
+                SpecOptions::Css(css_options)
+            }
             TestLanguage::Js | TestLanguage::Ts => SpecOptions::Js(Box::new(js_options)),
         };
         self.calls.push((options, snapshot_options));

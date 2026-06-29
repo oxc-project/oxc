@@ -17,6 +17,7 @@ use walkdir::WalkDir;
 
 use oxc_allocator::Allocator;
 use oxc_formatter::JsFormatOptions;
+use oxc_formatter_css::CssFormatOptions;
 use oxc_formatter_graphql::GraphqlFormatOptions;
 use oxc_formatter_json::JsonFormatOptions;
 use oxc_span::SourceType;
@@ -247,7 +248,7 @@ impl TestRunner {
                     !options.experimental_operator_position.is_start()
                         && !options.experimental_ternaries
                 }
-                SpecOptions::Json(_) | SpecOptions::Graphql(_) => true,
+                SpecOptions::Json(_) | SpecOptions::Graphql(_) | SpecOptions::Css(_) => true,
             })
             .collect::<Vec<_>>();
 
@@ -448,6 +449,7 @@ impl TestRunner {
             SpecOptions::Js(opts) => Self::run_js_formatter(path, source_text, *opts),
             SpecOptions::Json(opts) => Self::run_json_formatter(source_text, opts),
             SpecOptions::Graphql(opts) => Self::run_graphql_formatter(source_text, opts),
+            SpecOptions::Css(opts) => Self::run_css_formatter(source_text, opts),
         }
     }
 
@@ -479,6 +481,13 @@ impl TestRunner {
         let allocator = Allocator::default();
         let formatted =
             oxc_formatter_graphql::format(&allocator, source_text, format_options).ok()?;
+        let printed = formatted.print().ok()?;
+        Some(printed.into_code())
+    }
+
+    fn run_css_formatter(source_text: &str, format_options: CssFormatOptions) -> Option<String> {
+        let allocator = Allocator::default();
+        let formatted = oxc_formatter_css::format(&allocator, source_text, format_options).ok()?;
         let printed = formatted.print().ok()?;
         Some(printed.into_code())
     }
