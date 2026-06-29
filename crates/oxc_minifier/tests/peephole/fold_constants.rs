@@ -1105,6 +1105,46 @@ fn test_fold_array_length() {
 }
 
 #[test]
+fn test_fold_object_prop_access() {
+    // Can fold
+    fold("x = ({foo: 'foo'}).foo", "x = 'foo'");
+    fold("x = ({foo: 1})['foo']", "x = 1");
+    fold("x = ({foo: 1, bar: 2}).bar", "x = 2");
+    fold("x = ({'foo': 1}).foo", "x = 1");
+    // Duplicate keys: last wins
+    fold("x = ({foo: 1, foo: 2}).foo", "x = 2");
+    // Computed key with literal
+    fold("x = ({['foo']: 1}).foo", "x = 1");
+
+    // Cannot fold
+    fold_same("x = ({}).foo");
+    fold_same("x = ({foo: 1}).bar");
+    fold_same("x = ({__proto__: null}).foo");
+    fold_same("x = ({get foo() { return 1 }}).foo");
+    fold_same("x = ({set foo(v) {}}).foo");
+    fold_same("x = ({foo() {}}).foo");
+    // Later getter overrides earlier data property
+    fold_same("x = ({foo: 1, get foo() { return 2 }}).foo");
+    fold_same("x = ({...a, foo: 1}).foo");
+    fold_same("x = ({foo: 1, ...a}).foo");
+    // Optional chaining on a non-nullish object literal is folded by fold_chain_expr
+    fold("x = ({foo: 1})?.foo", "x = 1");
+    // Skip when in callee position to preserve `this` binding
+    fold_same("({foo: 1, bar: function() { return this.foo }}).bar()");
+    // Computed access in callee position normalizes to dotted but should not fold
+    fold("({foo: function() {}})['foo']()", "({ foo: function() {} }).foo()");
+    // `new` always sets `this` to the new instance, so folding is safe
+    fold("new ({foo: function() {}}).foo()", "new function() {}()");
+    // Arrow functions bind `this` lexically, so folding is safe even in callee position
+    fold("({foo: () => 1}).foo()", "1");
+    // Template literal keys are treated like string keys
+    fold("x = ({[`foo`]: 1}).foo", "x = 1");
+    // Numeric keys are not folded
+    fold("x = ({[2]: 1})[2]", "x = ({ 2: 1 })[2]");
+    fold_same("x = ({1: 'a'})[1]");
+}
+
+#[test]
 fn test_fold_string_length() {
     // Can fold basic strings.
     fold("x = ''.length", "x = 0");
