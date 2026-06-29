@@ -1717,6 +1717,7 @@ version = "0.0.0"
 dependencies = [
  "cow-utils",
  "criterion2",
+ "lazy-regex",
  "oxc",
  "oxc_allocator",
  "oxc_ast",
@@ -2193,6 +2194,7 @@ dependencies = [
  "cow-utils",
  "flate2",
  "humansize",
+ "lazy-regex",
  "oxc_allocator",
  "oxc_ast",
  "oxc_codegen",
