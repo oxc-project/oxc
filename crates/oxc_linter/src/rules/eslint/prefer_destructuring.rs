@@ -9,9 +9,12 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{Rule, TupleRuleConfig},
+};
 
 fn prefer_object_destructuring(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use Object destructuring.")
@@ -26,27 +29,125 @@ fn prefer_array_destructuring(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Clone, JsonSchema, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase", default)]
-struct Config {
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+struct PreferDestructuringTargetConfig {
     array: bool,
     object: bool,
 }
 
-impl Default for Config {
+impl Default for PreferDestructuringTargetConfig {
     fn default() -> Self {
         Self { array: true, object: true }
     }
 }
 
+impl PreferDestructuringTargetConfig {
+    fn disabled() -> Self {
+        Self { array: false, object: false }
+    }
+}
+
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct PreferDestructuringTargetOption {
+    array: Option<bool>,
+    object: Option<bool>,
+}
+
+impl PreferDestructuringTargetOption {
+    fn enabled_by_default() -> Self {
+        Self { array: Some(true), object: Some(true) }
+    }
+
+    fn into_config(self) -> PreferDestructuringTargetConfig {
+        PreferDestructuringTargetConfig {
+            array: self.array.unwrap_or(false),
+            object: self.object.unwrap_or(false),
+        }
+    }
+}
+
+#[derive(Debug, Clone, JsonSchema, Deserialize, Serialize)]
+#[serde(rename_all = "PascalCase", deny_unknown_fields)]
+struct PreferDestructuringAssignmentConfig {
+    variable_declarator: Option<PreferDestructuringTargetOption>,
+    assignment_expression: Option<PreferDestructuringTargetOption>,
+}
+
+impl PreferDestructuringAssignmentConfig {
+    fn into_configs(self) -> (PreferDestructuringTargetConfig, PreferDestructuringTargetConfig) {
+        let variable_declarator = self.variable_declarator.map_or_else(
+            PreferDestructuringTargetConfig::disabled,
+            PreferDestructuringTargetOption::into_config,
+        );
+        let assignment_expression = self.assignment_expression.map_or_else(
+            PreferDestructuringTargetConfig::disabled,
+            PreferDestructuringTargetOption::into_config,
+        );
+
+        (variable_declarator, assignment_expression)
+    }
+}
+
+#[derive(Debug, Clone, JsonSchema, Deserialize, Serialize)]
+#[serde(untagged)]
+enum PreferDestructuringOption {
+    Target(PreferDestructuringTargetOption),
+    Assignment(PreferDestructuringAssignmentConfig),
+}
+
+impl Default for PreferDestructuringOption {
+    fn default() -> Self {
+        Self::Target(PreferDestructuringTargetOption::enabled_by_default())
+    }
+}
+
+impl PreferDestructuringOption {
+    fn into_configs(self) -> (PreferDestructuringTargetConfig, PreferDestructuringTargetConfig) {
+        match self {
+            Self::Target(config) => {
+                let config = config.into_config();
+                (config.clone(), config)
+            }
+            Self::Assignment(config) => config.into_configs(),
+        }
+    }
+}
+
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+struct PreferDestructuringRenamedPropertiesConfig {
+    enforce_for_renamed_properties: bool,
+}
+
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
+#[serde(default)]
+struct PreferDestructuringConfig(
+    PreferDestructuringOption,
+    PreferDestructuringRenamedPropertiesConfig,
+);
+
+impl PreferDestructuringConfig {
+    fn into_rule(self) -> PreferDestructuring {
+        let (variable_declarator, assignment_expression) = self.0.into_configs();
+
+        PreferDestructuring {
+            variable_declarator,
+            assignment_expression,
+            enforce_for_renamed_properties: self.1.enforce_for_renamed_properties,
+        }
+    }
+}
+
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct PreferDestructuring {
     /// Configuration for destructuring in variable declarations, configured for arrays and objects independently.
     #[serde(rename = "VariableDeclarator")]
-    variable_declarator: Config,
+    variable_declarator: PreferDestructuringTargetConfig,
     /// Configuration for destructuring in assignment expressions, configured for arrays and objects independently.
     #[serde(rename = "AssignmentExpression")]
-    assignment_expression: Config,
+    assignment_expression: PreferDestructuringTargetConfig,
     /// Determines whether the object destructuring rule applies to renamed variables.
     enforce_for_renamed_properties: bool,
 }
@@ -89,50 +190,15 @@ declare_oxc_lint!(
     eslint,
     style,
     conditional_fix,
-    config = PreferDestructuring,
+    config = PreferDestructuringConfig,
     version = "1.10.0",
+    short_description = "Require destructuring from arrays and/or objects.",
 );
 
 impl Rule for PreferDestructuring {
-    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
-        let (variable_declarator, assignment_expression) = if let Some(obj) = value.get(0) {
-            let array = obj.get("array").and_then(Value::as_bool);
-            let object = obj.get("object").and_then(Value::as_bool);
-            if array.is_some() || object.is_some() {
-                (
-                    Config { array: array.unwrap_or(false), object: object.unwrap_or(false) },
-                    Config { array: array.unwrap_or(false), object: object.unwrap_or(false) },
-                )
-            } else {
-                let var_config = obj.get("VariableDeclarator").and_then(Value::as_object).map_or(
-                    Config { array: false, object: false },
-                    |conf| Config {
-                        array: conf.get("array").and_then(Value::as_bool).unwrap_or(false),
-                        object: conf.get("object").and_then(Value::as_bool).unwrap_or(false),
-                    },
-                );
-                let assign_config = obj
-                    .get("AssignmentExpression")
-                    .and_then(Value::as_object)
-                    .map_or(Config { array: false, object: false }, |conf| Config {
-                        array: conf.get("array").and_then(Value::as_bool).unwrap_or(false),
-                        object: conf.get("object").and_then(Value::as_bool).unwrap_or(false),
-                    });
-                (var_config, assign_config)
-            }
-        } else {
-            (Config::default(), Config::default())
-        };
-
-        Ok(Self {
-            variable_declarator,
-            assignment_expression,
-            enforce_for_renamed_properties: value
-                .get(1)
-                .and_then(|v| v.get("enforceForRenamedProperties"))
-                .and_then(Value::as_bool)
-                .unwrap_or(false),
-        })
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<TupleRuleConfig<PreferDestructuringConfig>>(value)
+            .map(|config| config.into_inner().into_rule())
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -164,20 +230,7 @@ impl Rule for PreferDestructuring {
                                 && get_target_name(&assign_expr.left)
                                     .is_some_and(|v| v == string_literal.value)
                             {
-                                ctx.diagnostic_with_fix(
-                                    prefer_object_destructuring(assign_expr.span),
-                                    |fixer| {
-                                        generate_fix(
-                                            &fixer,
-                                            string_literal.span.shrink(1),
-                                            get_object_span_without_redundant_parentheses(
-                                                &comp_expr.object,
-                                            ),
-                                            assign_expr.span,
-                                            true,
-                                        )
-                                    },
-                                );
+                                ctx.diagnostic(prefer_object_destructuring(assign_expr.span));
                             }
                         }
                     }
@@ -186,21 +239,7 @@ impl Rule for PreferDestructuring {
                             && get_target_name(&assign_expr.left)
                                 .is_some_and(|name| name == static_expr.property.name.as_str()) =>
                     {
-                        // Safe autofix for assignments: foo = object.foo; -> ({ foo } = object);
-                        ctx.diagnostic_with_fix(
-                            prefer_object_destructuring(assign_expr.span),
-                            |fixer| {
-                                generate_fix(
-                                    &fixer,
-                                    static_expr.property.span,
-                                    get_object_span_without_redundant_parentheses(
-                                        &static_expr.object,
-                                    ),
-                                    assign_expr.span,
-                                    true,
-                                )
-                            },
-                        );
+                        ctx.diagnostic(prefer_object_destructuring(assign_expr.span));
                     }
                     _ => {}
                 }
@@ -254,7 +293,6 @@ impl Rule for PreferDestructuring {
                                                     &comp_expr.object,
                                                 ),
                                                 declarator.span(),
-                                                false,
                                             )
                                         },
                                     );
@@ -278,7 +316,6 @@ impl Rule for PreferDestructuring {
                                                 &static_expr.object,
                                             ),
                                             declarator.span(),
-                                            false,
                                         )
                                     },
                                 );
@@ -325,22 +362,16 @@ fn get_object_span_without_redundant_parentheses(object: &Expression) -> Span {
     }
 }
 
-/// Generate the fix for object destructuring.
-/// `is_assignment` determines whether to wrap in parentheses for assignment expressions.
+/// Generate the fix for object destructuring in a variable declaration.
 fn generate_fix(
     fixer: &crate::fixer::RuleFixer<'_, '_>,
     prop_span: Span,
     object_span: Span,
     replacement_span: Span,
-    is_assignment: bool,
 ) -> crate::fixer::RuleFix {
     let prop = fixer.source_range(prop_span);
     let object_text = fixer.source_range(object_span);
-    let replacement = if is_assignment {
-        format!("({{ {prop} }} = {object_text})")
-    } else {
-        format!("{{{prop}}} = {object_text}")
-    };
+    let replacement = format!("{{{prop}}} = {object_text}");
     fixer.replace(replacement_span, replacement)
 }
 
@@ -708,7 +739,8 @@ fn test() {
         ),
         ("var foo = object.foo, /* comment */ a;", "var {foo} = object, /* comment */ a;", None),
         ("var foo = object['foo'];", "var {foo} = object;", None),
-        ("foo = object.foo;", "({ foo } = object);", None),
+        ("foo = object.foo;", "foo = object.foo;", None),
+        ("foo = object['foo'];", "foo = object['foo'];", None),
     ];
 
     Tester::new(PreferDestructuring::NAME, PreferDestructuring::PLUGIN, pass, fail)

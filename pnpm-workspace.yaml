@@ -8,21 +8,21 @@ packages:
   - tasks/compat_data
 
 catalog:
-  "@emnapi/core": 1.10.0
-  "@emnapi/runtime": 1.10.0
-  "@arethetypeswrong/core": 0.18.2
-  "@napi-rs/cli": 3.7.0
-  "@napi-rs/wasm-runtime": 1.1.4
+  "@emnapi/core": 1.11.1
+  "@emnapi/runtime": 1.11.1
+  "@arethetypeswrong/core": 0.18.4
+  "@napi-rs/cli": 3.7.2
+  "@napi-rs/wasm-runtime": 1.1.6
   "@types/node": 24.1.0
   cross-env: ^10.1.0
-  degit: 3.3.2
-  eslint: 10.4.0
+  degit: 3.4.7
+  eslint: 10.5.0
   json-schema-to-typescript: ^15.0.4
   publint: 0.3.21
-  rolldown: 1.1.0
-  tsdown: 0.22.2
-  vite-plus: 0.1.24
-  vitest: 4.1.7
+  rolldown: 1.1.3
+  tsdown: 0.22.3
+  vite-plus: 0.2.1
+  vitest: 4.1.9
 
 overrides:
   rolldown: "catalog:"
@@ -35,6 +35,7 @@ allowBuilds:
 
 verifyDepsBeforeRun: install
 minimumReleaseAgeExclude:
+  - "@napi-rs/*"
   - "@oxc-parser/*"
   - "@oxc-project/*"
   - "@oxfmt/*"

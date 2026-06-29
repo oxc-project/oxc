@@ -984,7 +984,10 @@ impl Gen for ImportDeclaration<'_> {
                         let local_name = p.get_binding_identifier_name(&spec.local);
                         let imported_name = get_module_export_name(&spec.imported, p);
                         if imported_name != local_name {
-                            p.print_str(" as ");
+                            p.print_soft_space();
+                            p.print_space_before_identifier();
+                            p.print_str("as");
+                            p.print_soft_space();
                             spec.local.print(p, ctx);
                         }
                     }
@@ -1055,7 +1058,12 @@ impl Gen for ExportNamedDeclaration<'_> {
         p.add_source_mapping(self.span);
         p.print_str("export");
         if let Some(decl) = &self.declaration {
-            p.print_hard_space();
+            // A decorated class starts with `@`, so no space is needed after `export`.
+            if matches!(decl, Declaration::ClassDeclaration(c) if !c.decorators.is_empty()) {
+                p.print_soft_space();
+            } else {
+                p.print_hard_space();
+            }
             match decl {
                 Declaration::VariableDeclaration(decl) => decl.print(p, ctx),
                 Declaration::FunctionDeclaration(decl) => decl.print(p, ctx),
@@ -1151,7 +1159,10 @@ impl Gen for ExportSpecifier<'_> {
         let local_name = get_module_export_name(&self.local, p);
         let exported_name = get_module_export_name(&self.exported, p);
         if local_name != exported_name {
-            p.print_str(" as ");
+            p.print_soft_space();
+            p.print_space_before_identifier();
+            p.print_str("as");
+            p.print_soft_space();
             if let Some(comments) = p.get_comments(self.exported.span().start) {
                 p.print_comments(&comments);
                 p.print_soft_space();
@@ -1179,15 +1190,15 @@ impl Gen for ExportAllDeclaration<'_> {
         p.add_source_mapping(self.span);
         p.print_str("export");
         if self.export_kind.is_type() {
-            p.print_str(" type ");
-        } else {
-            p.print_soft_space();
+            p.print_str(" type");
         }
+        p.print_soft_space();
         p.print_ascii_byte(b'*');
 
         if let Some(exported) = &self.exported {
             p.print_soft_space();
-            p.print_str("as ");
+            p.print_str("as");
+            p.print_soft_space();
             exported.print(p, ctx);
             p.print_hard_space();
         } else {
@@ -2023,6 +2034,14 @@ impl GenExpr for AssignmentExpression<'_> {
             if !cjs_module_lexer::try_print_exports_computed_target(p, &self.left, ctx) {
                 self.left.print(p, ctx);
             }
+            // `a! = b`: keep a separator so the non-null `!` doesn't glue to `=` as `!=`.
+            if p.options.minify
+                && self.operator == AssignmentOperator::Assign
+                && p.prev_op == Some(Operator::Unary(UnaryOperator::LogicalNot))
+                && p.prev_op_end == p.code_len()
+            {
+                p.print_hard_space();
+            }
             p.print_soft_space();
             p.print_str(self.operator.as_str());
             p.print_soft_space();
@@ -2035,11 +2054,12 @@ impl Gen for AssignmentTarget<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             match_simple_assignment_target!(Self) => {
-                self.to_simple_assignment_target().print_expr(
-                    p,
-                    Precedence::Comma,
-                    Context::empty(),
-                );
+                let precedence = match self {
+                    Self::TSAsExpression(_) | Self::TSSatisfiesExpression(_) => Precedence::Compare,
+                    Self::TSTypeAssertion(_) => Precedence::Prefix,
+                    _ => Precedence::Comma,
+                };
+                self.to_simple_assignment_target().print_expr(p, precedence, Context::empty());
             }
             match_assignment_target_pattern!(Self) => {
                 self.to_assignment_target_pattern().print(p, ctx);
@@ -2385,7 +2405,14 @@ impl GenExpr for TSAsExpression<'_> {
 
         p.wrap(wrap, |p| {
             self.expression.print_expr(p, Precedence::Exponentiation, ctx);
-            p.print_str(" as ");
+            p.print_soft_space();
+            p.print_space_before_identifier();
+            p.print_str("as");
+            if type_starts_with_non_identifier(&self.type_annotation) {
+                p.print_soft_space();
+            } else {
+                p.print_hard_space();
+            }
             self.type_annotation.print(p, ctx);
         });
     }
@@ -2397,7 +2424,14 @@ impl GenExpr for TSSatisfiesExpression<'_> {
 
         p.wrap(wrap, |p| {
             self.expression.print_expr(p, Precedence::Exponentiation, ctx);
-            p.print_str(" satisfies ");
+            p.print_soft_space();
+            p.print_space_before_identifier();
+            p.print_str("satisfies");
+            if type_starts_with_non_identifier(&self.type_annotation) {
+                p.print_soft_space();
+            } else {
+                p.print_hard_space();
+            }
             self.type_annotation.print(p, ctx);
         });
     }
@@ -2407,9 +2441,9 @@ impl GenExpr for TSNonNullExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, _precedence: Precedence, ctx: Context) {
         self.expression.print_expr(p, Precedence::Postfix, ctx);
         p.print_ascii_byte(b'!');
-        if p.options.minify {
-            p.print_hard_space();
-        }
+        // Remember the `!` so a following `=` doesn't retokenize as `!=`/`!==`.
+        p.prev_op = Some(Operator::Unary(UnaryOperator::LogicalNot));
+        p.prev_op_end = p.code().len();
     }
 }
 
@@ -2482,14 +2516,18 @@ impl Gen for Class<'_> {
                 type_parameters.print(p, ctx);
             }
             if let Some(super_class) = self.super_class.as_ref() {
-                p.print_str(" extends ");
+                p.print_soft_space();
+                p.print_space_before_identifier();
+                p.print_str("extends ");
                 super_class.print_expr(p, Precedence::Postfix, Context::empty());
                 if let Some(super_type_parameters) = &self.super_type_arguments {
                     super_type_parameters.print(p, ctx);
                 }
             }
             if !self.implements.is_empty() {
-                p.print_str(" implements ");
+                p.print_soft_space();
+                p.print_space_before_identifier();
+                p.print_str("implements ");
                 p.print_list(&self.implements, ctx);
             }
             p.print_soft_space();
@@ -2952,6 +2990,8 @@ impl Gen for AccessorProperty<'_> {
         if self.computed {
             p.print_soft_space();
             p.print_ascii_byte(b'[');
+        } else if matches!(self.key, PropertyKey::PrivateIdentifier(_)) {
+            p.print_soft_space();
         } else {
             p.print_hard_space();
         }
@@ -3318,6 +3358,33 @@ impl Gen for TSIntersectionType<'_> {
     }
 }
 
+/// Whether `ty` prints starting with a non-identifier byte, so a preceding keyword
+/// (`as`, `extends`, `keyof`, ...) needs no separating space when minifying.
+/// Conservative: only types that unconditionally start with punctuation are listed,
+/// so the worst case is keeping an unnecessary space, never dropping a required one.
+fn type_starts_with_non_identifier(ty: &TSType) -> bool {
+    match ty {
+        TSType::TSTupleType(_)
+        | TSType::TSTypeLiteral(_)
+        | TSType::TSMappedType(_)
+        | TSType::TSFunctionType(_)
+        | TSType::TSParenthesizedType(_)
+        | TSType::TSTemplateLiteralType(_) => true,
+        TSType::TSArrayType(arr) => {
+            parenthesize_check_type_of_postfix_type(&arr.element_type)
+                || type_starts_with_non_identifier(&arr.element_type)
+        }
+        TSType::TSLiteralType(lit) => {
+            matches!(&lit.literal, TSLiteral::TemplateLiteral(_) | TSLiteral::StringLiteral(_))
+        }
+        TSType::TSUnionType(u) => u.types.first().is_some_and(type_starts_with_non_identifier),
+        TSType::TSIntersectionType(i) => {
+            i.types.first().is_some_and(type_starts_with_non_identifier)
+        }
+        _ => false,
+    }
+}
+
 impl Gen for TSConditionalType<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.wrap(
@@ -3333,21 +3400,31 @@ impl Gen for TSConditionalType<'_> {
         );
         p.print_soft_space();
         p.print_space_before_identifier();
-        p.print_str("extends ");
-        p.wrap(matches!(self.extends_type, TSType::TSConditionalType(_)), |p| {
+        p.print_str("extends");
+        let extends_wrapped = matches!(self.extends_type, TSType::TSConditionalType(_));
+        if extends_wrapped || type_starts_with_non_identifier(&self.extends_type) {
+            p.print_soft_space();
+        } else {
+            p.print_hard_space();
+        }
+        p.wrap(extends_wrapped, |p| {
             self.extends_type.print(p, ctx);
         });
         p.print_soft_space();
-        // Avoid merging into `??` when the extends type ends with `?` (postfix
-        // JSDoc nullable, e.g. `A extends C? ? D : E`).
+        // Avoid `??` when the extends type ends with a postfix nullable `?`.
         if p.last_byte() == Some(b'?') {
             p.print_hard_space();
         }
-        p.print_str("?");
-        p.print_soft_space();
+        p.print_ascii_byte(b'?');
+        // Avoid `??` when the true branch starts with a prefix nullable `?`.
+        if matches!(&self.true_type, TSType::JSDocNullableType(t) if !t.postfix) {
+            p.print_hard_space();
+        } else {
+            p.print_soft_space();
+        }
         self.true_type.print(p, ctx);
         p.print_soft_space();
-        p.print_str(":");
+        p.print_ascii_byte(b':');
         p.print_soft_space();
         self.false_type.print(p, ctx);
     }
@@ -3376,10 +3453,13 @@ impl Gen for TSMappedType<'_> {
         p.print_ascii_byte(b'{');
         p.print_soft_space();
         match self.readonly {
-            Some(TSMappedTypeModifierOperator::True) => p.print_str("readonly "),
-            Some(TSMappedTypeModifierOperator::Plus) => p.print_str("+readonly "),
-            Some(TSMappedTypeModifierOperator::Minus) => p.print_str("-readonly "),
+            Some(TSMappedTypeModifierOperator::True) => p.print_str("readonly"),
+            Some(TSMappedTypeModifierOperator::Plus) => p.print_str("+readonly"),
+            Some(TSMappedTypeModifierOperator::Minus) => p.print_str("-readonly"),
             None => {}
+        }
+        if self.readonly.is_some() {
+            p.print_soft_space();
         }
         p.print_ascii_byte(b'[');
         self.key.print(p, ctx);
@@ -3417,20 +3497,22 @@ impl Gen for TSQualifiedName<'_> {
 impl Gen for TSTypeOperator<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_str(self.operator.to_str());
-        p.print_hard_space();
-        p.wrap(
-            matches!(
-                &self.type_annotation,
-                TSType::TSUnionType(_)
-                    | TSType::TSIntersectionType(_)
-                    | TSType::TSFunctionType(_)
-                    | TSType::TSConstructorType(_)
-                    | TSType::TSConditionalType(_)
-            ),
-            |p| {
-                self.type_annotation.print(p, ctx);
-            },
+        let wrap = matches!(
+            &self.type_annotation,
+            TSType::TSUnionType(_)
+                | TSType::TSIntersectionType(_)
+                | TSType::TSFunctionType(_)
+                | TSType::TSConstructorType(_)
+                | TSType::TSConditionalType(_)
         );
+        if wrap || type_starts_with_non_identifier(&self.type_annotation) {
+            p.print_soft_space();
+        } else {
+            p.print_hard_space();
+        }
+        p.wrap(wrap, |p| {
+            self.type_annotation.print(p, ctx);
+        });
     }
 }
 
@@ -3567,7 +3649,12 @@ impl Gen for TSTypeParameter<'_> {
         }
         self.name.print(p, ctx);
         if let Some(constraint) = &self.constraint {
-            p.print_str(" extends ");
+            p.print_str(" extends");
+            if type_starts_with_non_identifier(constraint) {
+                p.print_soft_space();
+            } else {
+                p.print_hard_space();
+            }
             constraint.print(p, ctx);
         }
         if let Some(default) = &self.default {
@@ -3929,6 +4016,42 @@ impl Gen for TSModuleBlock<'_> {
     }
 }
 
+/// At the top of a type alias body, a bare `intrinsic` reference is parsed as the
+/// `intrinsic` keyword (e.g. `type T = intrinsic`), whereas `(intrinsic)` is a reference to a
+/// type named `intrinsic` (per TypeScript, the two differ). With `preserve_parens: false` the
+/// parser drops the `TSParenthesizedType` wrapper, so codegen must re-add parentheses around the
+/// whole alias body whenever its leftmost-printed type is a bare `intrinsic` reference. Otherwise
+/// the output re-parses as the keyword, or fails to parse before `|`, `&`, `extends`, or `[]`.
+///
+/// The leftmost type is followed through the wrapper nodes that print a child type first, so e.g.
+/// `(intrinsic)[]`, `(intrinsic)["x"]`, `(intrinsic) | T`, `(intrinsic) & T`, and
+/// `(intrinsic) extends T ? ...` are all handled.
+///
+/// See <https://github.com/oxc-project/oxc/issues/22216>.
+fn is_leftmost_intrinsic_reference(ty: &TSType) -> bool {
+    match ty {
+        TSType::TSTypeReference(reference) => {
+            reference.type_arguments.is_none()
+                && matches!(
+                    &reference.type_name,
+                    TSTypeName::IdentifierReference(ident) if ident.name == "intrinsic"
+                )
+        }
+        TSType::TSArrayType(array) => is_leftmost_intrinsic_reference(&array.element_type),
+        TSType::TSIndexedAccessType(access) => is_leftmost_intrinsic_reference(&access.object_type),
+        TSType::TSUnionType(union) => {
+            union.types.first().is_some_and(is_leftmost_intrinsic_reference)
+        }
+        TSType::TSIntersectionType(intersection) => {
+            intersection.types.first().is_some_and(is_leftmost_intrinsic_reference)
+        }
+        TSType::TSConditionalType(conditional) => {
+            is_leftmost_intrinsic_reference(&conditional.check_type)
+        }
+        _ => false,
+    }
+}
+
 impl Gen for TSTypeAliasDeclaration<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         if self.declare {
@@ -3943,7 +4066,12 @@ impl Gen for TSTypeAliasDeclaration<'_> {
         p.print_soft_space();
         p.print_ascii_byte(b'=');
         p.print_soft_space();
-        self.type_annotation.print(p, ctx);
+        // A leftmost bare `intrinsic` reference in the alias body must keep parentheses,
+        // otherwise it re-parses as the `intrinsic` keyword. See `is_leftmost_intrinsic_reference`.
+        let needs_parens = is_leftmost_intrinsic_reference(&self.type_annotation);
+        p.wrap(needs_parens, |p| {
+            self.type_annotation.print(p, ctx);
+        });
     }
 }
 
@@ -3960,7 +4088,9 @@ impl Gen for TSInterfaceDeclaration<'_> {
             type_parameters.print(p, ctx);
         }
         if !self.extends.is_empty() {
-            p.print_str(" extends ");
+            p.print_soft_space();
+            p.print_space_before_identifier();
+            p.print_str("extends ");
             p.print_list(&self.extends, ctx);
         }
         p.print_soft_space();
@@ -3996,7 +4126,7 @@ impl Gen for TSEnumDeclaration<'_> {
         }
         p.print_str("enum ");
         self.id.print(p, ctx);
-        p.print_space_before_identifier();
+        p.print_soft_space();
         self.body.print(p, ctx);
     }
 }

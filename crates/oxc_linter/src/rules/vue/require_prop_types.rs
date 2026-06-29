@@ -22,7 +22,7 @@ pub struct RequirePropTypes;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule enforces that a props statement contains type definition.
+    /// This rule enforces that a props statement contains a type definition.
     ///
     /// ### Why is this bad?
     ///
@@ -60,7 +60,8 @@ declare_oxc_lint!(
     RequirePropTypes,
     vue,
     style,
-    version = "next",
+    version = "1.69.0",
+    short_description = "This rule enforces that a props statement contains a type definition.",
 );
 
 impl Rule for RequirePropTypes {

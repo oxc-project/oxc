@@ -116,12 +116,7 @@ impl<'a> Expression<'a> {
 
     /// Determines whether the given expr is a `void 0`
     pub fn is_void_0(&self) -> bool {
-        match self {
-            Self::UnaryExpression(expr) if expr.operator == UnaryOperator::Void => {
-                matches!(&expr.argument, Self::NumericLiteral(lit) if lit.value == 0.0)
-            }
-            _ => false,
-        }
+        matches!(self, Self::UnaryExpression(expr) if expr.operator == UnaryOperator::Void && expr.argument.is_number_0())
     }
 
     /// Returns `true` for [numeric literals](NumericLiteral)
@@ -1284,10 +1279,7 @@ impl<'a> BindingPattern<'a> {
         }
     }
 
-    fn append_binding_identifiers<'b>(
-        &'b self,
-        idents: &mut std::vec::Vec<&'b BindingIdentifier<'a>>,
-    ) {
+    fn append_binding_identifiers<'b>(&'b self, idents: &mut Vec<&'b BindingIdentifier<'a>>) {
         match self {
             Self::BindingIdentifier(ident) => idents.push(ident),
             Self::AssignmentPattern(assign) => assign.left.append_binding_identifiers(idents),
@@ -1319,13 +1311,13 @@ impl<'a> BindingPattern<'a> {
     /// - `let {} = obj` would return `[]`
     /// - `let {a, b} = obj` would return `[a, b]`
     /// - `let {a = 1, b: c} = obj` would return `[a, c]`
-    pub fn get_binding_identifiers(&self) -> std::vec::Vec<&BindingIdentifier<'a>> {
+    pub fn get_binding_identifiers(&self) -> Vec<&BindingIdentifier<'a>> {
         let mut idents = vec![];
         self.append_binding_identifiers(&mut idents);
         idents
     }
 
-    fn append_symbol_ids(&self, symbol_ids: &mut std::vec::Vec<SymbolId>) {
+    fn append_symbol_ids(&self, symbol_ids: &mut Vec<SymbolId>) {
         match self {
             Self::BindingIdentifier(ident) => {
                 symbol_ids.push(ident.symbol_id());
@@ -1351,7 +1343,7 @@ impl<'a> BindingPattern<'a> {
     }
 
     /// Returns the [`SymbolId`]s of the bound identifiers in this binding pattern.
-    pub fn get_symbol_ids(&self) -> std::vec::Vec<SymbolId> {
+    pub fn get_symbol_ids(&self) -> Vec<SymbolId> {
         let mut symbol_ids = vec![];
         self.append_symbol_ids(&mut symbol_ids);
         symbol_ids

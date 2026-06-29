@@ -137,6 +137,7 @@ declare_oxc_lint!(
     pending,
     config = NoReturnWrap,
     version = "0.15.14",
+    short_description = "Prevents unnecessary wrapping of return values in promises with `Promise.resolve` or `Promise.reject`.",
 );
 
 impl Rule for NoReturnWrap {

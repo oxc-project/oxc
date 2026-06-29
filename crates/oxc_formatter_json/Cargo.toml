@@ -1,6 +1,6 @@
 [package]
 name = "oxc_formatter_json"
-version = "0.53.0"
+version = "0.56.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -17,19 +17,25 @@ description.workspace = true
 workspace = true
 
 [dependencies]
+dragonbox_ecma = { workspace = true }
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
 oxc_diagnostics = { workspace = true }
 oxc_formatter_core = { workspace = true }
 oxc_parser = { workspace = true }
 oxc_span = { workspace = true }
-oxc_syntax = { workspace = true, features = ["to_js_string"] }
+oxc_syntax = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true }
 oxc_formatter_core = { workspace = true, features = ["test_harness"] }
 oxc_tasks_common = { workspace = true }
 pico-args = { workspace = true }
+
+# Catch usage of old `AstBuilder` APIs in tests, without affecting downstream consumers.
+# If we enabled `disable_old_builder` feature in main dependency, feature unification would
+# cause it to be activated for `oxc_ast` for the user too.
+oxc_ast = { workspace = true, features = ["disable_old_builder"] }
 
 [build-dependencies]
 oxc_formatter_core = { workspace = true, features = ["test_harness"] }

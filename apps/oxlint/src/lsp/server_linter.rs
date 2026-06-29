@@ -2,7 +2,6 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, OnceLock};
 
 use ignore::gitignore::Gitignore;
-use oxc_data_structures::rope::Rope;
 use rustc_hash::{FxHashMap, FxHashSet};
 use tower_lsp_server::ls_types::{
     CodeActionContext, CodeActionTriggerKind, DiagnosticOptions, DiagnosticServerCapabilities,
@@ -25,7 +24,7 @@ use oxc_linter::{
 
 use oxc_language_server::{
     Capabilities, ConcurrentHashMap, DiagnosticMode, DiagnosticResult, TextDocument, Tool,
-    ToolBuilder, ToolRestartChanges,
+    ToolBuilder, ToolRestartChanges, utils::normalize_user_config_path_to_watch_pattern,
 };
 
 use crate::{
@@ -460,7 +459,7 @@ impl Tool for ServerLinter {
             Some("") | None => {
                 config_file_names().into_iter().map(|name| format!("**/{name}")).collect()
             }
-            Some(v) => vec![v.to_string()],
+            Some(v) => vec![normalize_user_config_path_to_watch_pattern(v)],
         };
 
         for path in &self.extended_paths {
@@ -797,8 +796,6 @@ impl ServerLinter {
             &read_to_string(path).map_err(|e| format!("Failed to read file: {e}"))?
         };
 
-        let rope = &Rope::from_str(source_text);
-
         let mut fs = LspFileSystem::default();
         fs.add_file(path.to_path_buf(), Arc::from(source_text));
 
@@ -811,7 +808,6 @@ impl ServerLinter {
                             message,
                             uri,
                             source_text,
-                            rope,
                             self.rules_customization.as_ref(),
                         )
                     })
@@ -829,12 +825,7 @@ impl ServerLinter {
         if let Some(severity) = self.unused_directives_severity
             && let Some(directives) = self.runner.directives_coordinator().get(path)
         {
-            messages.extend(create_unused_directives_report(
-                &directives,
-                severity,
-                source_text,
-                rope,
-            ));
+            messages.extend(create_unused_directives_report(&directives, severity, source_text));
         }
 
         // Clear any stale directives because they are no longer needed.

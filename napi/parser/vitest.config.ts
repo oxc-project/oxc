@@ -1,7 +1,7 @@
 import { configDefaults, defineConfig } from "vitest/config";
 
 const { env, platform } = process;
-const isEnabled = (envValue) => envValue === "true" || envValue === "1";
+const isEnabled = (envValue: string | undefined) => envValue === "true" || envValue === "1";
 
 const runLazyTests = isEnabled(env.RUN_LAZY_TESTS);
 let runRawTests =
@@ -24,7 +24,7 @@ export default defineConfig({
       expand: false,
     },
     exclude,
-    reporters: process.env.CI ? ["dot"] : ["default"],
+    reporters: process.env.CI ? ["minimal"] : ["default"],
   },
   plugins: [
     // Enable Codspeed plugin in CI only

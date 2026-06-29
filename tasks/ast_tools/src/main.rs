@@ -261,6 +261,7 @@ const GENERATORS: &[&(dyn Generator + Sync)] = &[
     &generators::AssertLayouts,
     &generators::AstKindGenerator,
     &generators::AstBuilderGenerator,
+    &generators::BuilderMethodsGenerator,
     &generators::GetIdGenerator,
     &generators::VisitGenerator,
     &generators::ScopesCollectorGenerator,

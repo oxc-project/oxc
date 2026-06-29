@@ -1,6 +1,6 @@
 [package]
 name = "oxc"
-version = "0.134.0"
+version = "0.137.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -43,6 +43,12 @@ oxc_syntax = { workspace = true }
 oxc_transformer = { workspace = true, optional = true }
 oxc_transformer_plugins = { workspace = true, optional = true }
 
+[dev-dependencies]
+# Catch usage of old `AstBuilder` APIs in tests, without affecting downstream consumers.
+# If we enabled `disable_old_builder` feature in main dependency, feature unification would
+# cause it to be activated for `oxc_ast` for the user too.
+oxc_ast = { workspace = true, features = ["disable_old_builder"] }
+
 [features]
 default = ["regular_expression"]
 
@@ -59,6 +65,8 @@ full = [
 
 semantic = ["oxc_semantic"]
 transformer = ["oxc_transformer", "oxc_transformer_plugins"]
+# Experimental React Compiler pass; off by default (pulls the heavy `oxc_react_compiler` dep).
+react_compiler = ["transformer", "oxc_transformer/react_compiler"]
 minifier = ["oxc_mangler", "oxc_minifier"]
 codegen = ["oxc_codegen", "oxc_codegen/sourcemap"]
 mangler = ["oxc_mangler"]

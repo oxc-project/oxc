@@ -11,7 +11,7 @@ use oxc_formatter::{
     OperatorPosition, QuoteProperties, QuoteStyle, Semicolons, TrailingCommas,
 };
 use oxc_formatter_core::{IndentStyle, IndentWidth, LineEnding, LineWidth};
-use oxc_formatter_json::{JsonFormatOptions, JsonVariant};
+use oxc_formatter_json::{JsonFormatOptions, JsonVariant, QuoteProps};
 use oxc_parser::Parser;
 use oxc_span::{GetSpan, SourceType};
 
@@ -67,7 +67,7 @@ impl SpecParser {
         }
 
         let mut ret = Parser::new(&allocator, &spec_content, source_type).parse();
-        assert!(ret.errors.is_empty());
+        assert!(ret.diagnostics.is_empty());
         self.visit_program(&mut ret.program);
     }
 }
@@ -134,13 +134,19 @@ impl VisitMut<'_> for SpecParser {
             return;
         }
 
-        // The `json` / `jsonc` languages each accept only their own parser's calls.
+        // NOTE: The JSON-family languages each accept only their own parser's calls
+        // (the parser name is exactly `TestLanguage::as_str()`).
         // A single `format.test.js` may list several parsers (e.g. `with-comment/`),
-        // so we filter per-language; `json5` / `json-stringify` stay out of scope.
-        match self.language {
-            TestLanguage::Json if !parsers.iter().any(|p| p == "json") => return,
-            TestLanguage::Jsonc if !parsers.iter().any(|p| p == "jsonc") => return,
-            _ => {}
+        // so we filter per-language.
+        let is_json_family = matches!(
+            self.language,
+            TestLanguage::Json
+                | TestLanguage::Jsonc
+                | TestLanguage::Json5
+                | TestLanguage::JsonStringify
+        );
+        if is_json_family && !parsers.iter().any(|p| p == self.language.as_str()) {
+            return;
         }
 
         let mut js_options = JsFormatOptions {
@@ -148,14 +154,14 @@ impl VisitMut<'_> for SpecParser {
             line_width: LineWidth::try_from(80).unwrap(),
             ..Default::default()
         };
-        // The variant follows the language: `Json` -> `json`, `Jsonc` -> `jsonc`.
-        let variant = match self.language {
-            TestLanguage::Jsonc => JsonVariant::Jsonc,
-            _ => JsonVariant::Json,
-        };
         let mut json_options = JsonFormatOptions {
             line_width: LineWidth::try_from(80).unwrap(),
-            variant,
+            variant: match self.language {
+                TestLanguage::Jsonc => JsonVariant::Jsonc,
+                TestLanguage::Json5 => JsonVariant::Json5,
+                TestLanguage::JsonStringify => JsonVariant::JsonStringify,
+                _ => JsonVariant::Json,
+            },
             ..Default::default()
         };
 
@@ -187,6 +193,7 @@ impl VisitMut<'_> for SpecParser {
                                 } else {
                                     QuoteStyle::Double
                                 };
+                                json_options.single_quote = literal.value.into();
                             } else if name == "jsxSingleQuote" {
                                 js_options.jsx_quote_style = if literal.value {
                                     QuoteStyle::Single
@@ -247,6 +254,11 @@ impl VisitMut<'_> for SpecParser {
                                     // TODO: change `unwrap_or_default` to `unwrap`
                                     js_options.quote_properties =
                                         QuoteProperties::from_str(s).unwrap_or_default();
+                                    json_options.quote_props = match s {
+                                        "consistent" => QuoteProps::Consistent,
+                                        "preserve" => QuoteProps::Preserve,
+                                        _ => QuoteProps::AsNeeded,
+                                    };
                                 }
                                 "objectWrap" => {
                                     // TODO: change `unwrap_or_default` to `unwrap`
@@ -304,7 +316,10 @@ impl VisitMut<'_> for SpecParser {
         snapshot_options.sort_by(|a, b| a.0.cmp(&b.0));
 
         let options = match self.language {
-            TestLanguage::Json | TestLanguage::Jsonc => SpecOptions::Json(json_options),
+            TestLanguage::Json
+            | TestLanguage::Jsonc
+            | TestLanguage::Json5
+            | TestLanguage::JsonStringify => SpecOptions::Json(json_options),
             TestLanguage::Js | TestLanguage::Ts => SpecOptions::Js(Box::new(js_options)),
         };
         self.calls.push((options, snapshot_options));

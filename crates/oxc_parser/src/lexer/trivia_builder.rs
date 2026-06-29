@@ -1,5 +1,5 @@
 use memchr::memchr_iter;
-use oxc_allocator::{Allocator, Vec as ArenaVec};
+use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::ast::{Comment, CommentContent, CommentKind, CommentPosition};
 use oxc_span::Span;
 
@@ -38,7 +38,7 @@ pub struct TriviaBuilder<'a> {
 impl<'a> TriviaBuilder<'a> {
     pub fn new_in(allocator: &'a Allocator) -> Self {
         Self {
-            comments: ArenaVec::new_in(allocator),
+            comments: ArenaVec::new_in(&allocator),
             irregular_whitespaces: vec![],
             processed: 0,
             saw_newline: true,
@@ -72,6 +72,14 @@ impl<'a> TriviaBuilder<'a> {
     }
 
     pub fn add_irregular_whitespace(&mut self, start: u32, end: u32) {
+        // The irregular whitespaces array is ordered; only add if not added before, to avoid
+        // duplicates when the parser looks ahead (e.g. `peek_token`) and rewinds, then re-lexes the
+        // same whitespace. Same approach as `add_comment`.
+        if let Some(last) = self.irregular_whitespaces.last()
+            && start <= last.start
+        {
+            return;
+        }
         self.irregular_whitespaces.push(Span::new(start, end));
     }
 
@@ -142,8 +150,8 @@ impl<'a> TriviaBuilder<'a> {
     /// let x = 5;
     /// ```
     ///
-    /// 2. It does not immediately follow an `=` [`Kind::Eq`] or `(` [`Kind::LParen`]
-    ///    token.
+    /// 2. It does not immediately follow an `=` [`Kind::Eq`], `(` [`Kind::LParen`]
+    ///    or `:` [`Kind::Colon`] token.
     ///
     /// ```javascript
     /// let y = // This should not be treated as trailing (follows `=`)
@@ -152,9 +160,16 @@ impl<'a> TriviaBuilder<'a> {
     /// function foo( // This should not be treated as trailing (follows `(`)
     ///     param
     /// ) {}
+    ///
+    /// let z = cond ? a : // This should not be treated as trailing (follows `:`)
+    ///     b;
     /// ```
+    ///
+    /// Treating a comment after `:` as trailing drops it (it anchors to the
+    /// previous token rather than the following operand), which breaks codegen
+    /// idempotency once a transform emits `? consequent : // comment\nalternate`.
     fn should_be_treated_as_trailing_comment(&self) -> bool {
-        !self.saw_newline && !matches!(self.previous_kind, Kind::Eq | Kind::LParen)
+        !self.saw_newline && !matches!(self.previous_kind, Kind::Eq | Kind::LParen | Kind::Colon)
     }
 
     fn should_stay_leading(comment: &Comment) -> bool {
@@ -398,7 +413,7 @@ mod test {
         let allocator = Allocator::default();
         let source_type = SourceType::default();
         let ret = Parser::new(&allocator, source_text, source_type).parse();
-        assert!(ret.errors.is_empty());
+        assert!(ret.diagnostics.is_empty());
         ret.program.comments.iter().copied().collect::<Vec<_>>()
     }
 
@@ -659,6 +674,23 @@ function bar() {}";
                 content: CommentContent::None,
             },
         ];
+        assert_eq!(comments, expected);
+    }
+
+    #[test]
+    fn leading_comments_after_colon() {
+        // A line comment right after a conditional `:` anchors to the following
+        // alternate (leading), not the previous token — otherwise it is dropped.
+        let source_text = "v = cond ? a : // Leading comment\nb;";
+        let comments = get_comments(source_text);
+        let expected = vec![Comment {
+            span: Span::new(15, 33),
+            kind: CommentKind::Line,
+            position: CommentPosition::Leading,
+            attached_to: 34,
+            newlines: CommentNewlines::Trailing,
+            content: CommentContent::None,
+        }];
         assert_eq!(comments, expected);
     }
 

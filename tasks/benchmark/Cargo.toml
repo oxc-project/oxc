@@ -54,6 +54,11 @@ harness = false
 name = "pipeline"
 harness = false
 
+[[bench]]
+name = "react_compiler"
+harness = false
+required-features = ["react_compiler"]
+
 # Only run in CI
 [[bench]]
 name = "parser_napi"
@@ -63,8 +68,9 @@ bench = false
 # All `oxc_*` dependencies optional as on CI we build each benchmark separately
 # with only the crates it needs, to speed up the builds
 [dependencies]
+oxc = { workspace = true, optional = true, features = ["full"] }
 oxc_allocator = { workspace = true, optional = true }
-oxc_ast = { workspace = true, optional = true, features = ["serialize"] }
+oxc_ast = { workspace = true, optional = true, features = ["disable_old_builder", "serialize"] }
 oxc_ast_visit = { workspace = true, optional = true, features = ["serialize"] }
 oxc_codegen = { workspace = true, optional = true, features = ["sourcemap"] }
 oxc_estree_tokens = { workspace = true, optional = true }
@@ -77,6 +83,7 @@ oxc_parser = { workspace = true, features = [
   "benchmarking",
   "regular_expression",
 ], optional = true }
+oxc_react_compiler = { workspace = true, optional = true }
 oxc_semantic = { workspace = true, optional = true }
 oxc_span = { workspace = true, optional = true, features = ["schemars", "serialize"] }
 oxc_tasks_common = { workspace = true, optional = true }
@@ -100,6 +107,7 @@ codspeed_napi = ["criterion2/codspeed", "dep:serde", "dep:serde_json"]
 # "compiler" feature includes: lexer, parser, transformer, semantic, minifier, codegen, formatter
 # "linter" feature includes: linter
 compiler = [
+  "dep:oxc",
   "dep:oxc_allocator",
   "dep:oxc_ast",
   "dep:oxc_ast_visit",
@@ -125,12 +133,21 @@ linter = [
   "dep:oxc_tasks_common",
   "oxc_semantic/cfg",
 ]
+react_compiler = [
+  "dep:oxc_allocator",
+  "dep:oxc_parser",
+  "dep:oxc_react_compiler",
+  "dep:oxc_semantic",
+  "dep:oxc_span",
+  "dep:oxc_tasks_common",
+]
 
 [dev-dependencies]
 rustc-hash = { workspace = true }
 
 [package.metadata.cargo-shear]
 ignored = [
+  "oxc",
   "oxc_allocator",
   "oxc_ast",
   "oxc_ast_visit",
@@ -142,6 +159,7 @@ ignored = [
   "oxc_mangler",
   "oxc_minifier",
   "oxc_parser",
+  "oxc_react_compiler",
   "oxc_semantic",
   "oxc_span",
   "oxc_tasks_common",

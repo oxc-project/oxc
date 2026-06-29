@@ -595,6 +595,49 @@ pub fn get_parent_component<'a, 'b>(
     ctx.nodes().ancestors(node.id()).find(|node| is_es5_component(node) || is_es6_component(node))
 }
 
+pub fn function_count_before_lifecycle_component(
+    node: &AstNode,
+    ctx: &LintContext,
+    lifecycle_method_name: &str,
+) -> Option<usize> {
+    let mut function_count = 0;
+    let mut in_lifecycle = false;
+
+    for ancestor in ctx.nodes().ancestors(node.id()).skip(1) {
+        if !in_lifecycle {
+            if is_lifecycle_component_method(ancestor, lifecycle_method_name) {
+                in_lifecycle = true;
+            } else if matches!(
+                ancestor.kind(),
+                AstKind::Function(_) | AstKind::ArrowFunctionExpression(_)
+            ) {
+                function_count += 1;
+            }
+        }
+
+        if in_lifecycle && (is_es5_component(ancestor) || is_es6_component(ancestor)) {
+            return Some(function_count);
+        }
+    }
+
+    None
+}
+
+fn is_lifecycle_component_method(node: &AstNode, lifecycle_method_name: &str) -> bool {
+    match node.kind() {
+        AstKind::ObjectProperty(prop) => {
+            prop.key.static_name().is_some_and(|key| key == lifecycle_method_name)
+        }
+        AstKind::MethodDefinition(method) => {
+            method.key.static_name().is_some_and(|name| name == lifecycle_method_name)
+        }
+        AstKind::PropertyDefinition(prop) => {
+            prop.key.static_name().is_some_and(|name| name == lifecycle_method_name)
+        }
+        _ => false,
+    }
+}
+
 fn get_jsx_mem_expr_name<'a>(jsx_mem_expr: &JSXMemberExpression) -> Cow<'a, str> {
     let prefix = match &jsx_mem_expr.object {
         JSXMemberExpressionObject::IdentifierReference(id) => Cow::Borrowed(id.name.as_str()),
@@ -927,7 +970,7 @@ mod test {
     use super::*;
 
     use oxc_allocator::Allocator;
-    use oxc_ast::AstBuilder;
+    use oxc_ast::{ast::IdentifierName, builder::AstBuilder};
     use oxc_span::Span;
 
     #[test]
@@ -957,33 +1000,38 @@ mod test {
         let ast = AstBuilder::new(&alloc);
 
         // Identifier: useState
-        let use_state = ast.expression_identifier(Span::default(), "useState");
+        let use_state = Expression::new_identifier(Span::default(), "useState", &ast);
         assert!(is_react_hook(&use_state));
 
         // Identifier: use
-        let just_use = ast.expression_identifier(Span::default(), "use");
+        let just_use = Expression::new_identifier(Span::default(), "use", &ast);
         assert!(is_react_hook(&just_use));
 
         // Identifier: userError, should not be considered a hook despite starting with "use"
-        let user_error = ast.expression_identifier(Span::default(), "userError");
+        let user_error = Expression::new_identifier(Span::default(), "userError", &ast);
         assert!(!is_react_hook(&user_error));
 
         // Identifier that's not a hook
-        let not_hook = ast.expression_identifier(Span::default(), "notAHook");
+        let not_hook = Expression::new_identifier(Span::default(), "notAHook", &ast);
         assert!(!is_react_hook(&not_hook));
 
         // Static member: React.useEffect -> valid
-        let react_obj = ast.expression_identifier(Span::default(), "React");
-        let prop = ast.identifier_name(Span::default(), "useEffect");
+        let react_obj = Expression::new_identifier(Span::default(), "React", &ast);
+        let prop = IdentifierName::new(Span::default(), "useEffect", &ast);
         let react_use_effect =
-            ast.member_expression_static(Span::default(), react_obj, prop, false).into();
+            Expression::new_static_member_expression(Span::default(), react_obj, prop, false, &ast);
         assert!(is_react_hook(&react_use_effect));
 
         // Static member: react.useEffect -> invalid because namespace isn't PascalCase
-        let react_lower = ast.expression_identifier(Span::default(), "react");
-        let prop2 = ast.identifier_name(Span::default(), "useEffect");
-        let react_lower_use_effect =
-            ast.member_expression_static(Span::default(), react_lower, prop2, false).into();
+        let react_lower = Expression::new_identifier(Span::default(), "react", &ast);
+        let prop2 = IdentifierName::new(Span::default(), "useEffect", &ast);
+        let react_lower_use_effect = Expression::new_static_member_expression(
+            Span::default(),
+            react_lower,
+            prop2,
+            false,
+            &ast,
+        );
         assert!(!is_react_hook(&react_lower_use_effect));
     }
 
@@ -1027,9 +1075,9 @@ mod test {
             let allocator = Allocator::default();
             let source_type = SourceType::jsx();
             let parser_ret = Parser::new(&allocator, source, source_type).parse();
-            assert!(parser_ret.errors.is_empty(), "Parse error in: {source}");
+            assert!(parser_ret.diagnostics.is_empty(), "Parse error in: {source}");
             let semantic =
-                SemanticBuilder::new().build(allocator.alloc(parser_ret.program)).semantic;
+                SemanticBuilder::new_linter().build(allocator.alloc(parser_ret.program)).semantic;
 
             let found = semantic.nodes().iter().any(|node| is_es5_component(node));
             assert_eq!(found, expected, "Failed for: {source}");
@@ -1057,10 +1105,10 @@ mod test {
         for (source, expected) in cases {
             let allocator = Allocator::default();
             let parser_ret = Parser::new(&allocator, source, SourceType::tsx()).parse();
-            assert!(parser_ret.errors.is_empty(), "Parse error in: {source}");
+            assert!(parser_ret.diagnostics.is_empty(), "Parse error in: {source}");
 
             let semantic =
-                SemanticBuilder::new().build(allocator.alloc(parser_ret.program)).semantic;
+                SemanticBuilder::new_linter().build(allocator.alloc(parser_ret.program)).semantic;
             let found = semantic.nodes().iter().find_map(|node| {
                 if let super::AstKind::JSXOpeningElement(opening) = node.kind() {
                     Some(get_jsx_element_name(&opening.name).into_owned())
@@ -1122,9 +1170,9 @@ mod test {
             let allocator = Allocator::default();
             let source_type = SourceType::tsx();
             let parser_ret = Parser::new(&allocator, source, source_type).parse();
-            assert!(parser_ret.errors.is_empty(), "Parse error in: {source}");
+            assert!(parser_ret.diagnostics.is_empty(), "Parse error in: {source}");
             let semantic =
-                SemanticBuilder::new().build(allocator.alloc(parser_ret.program)).semantic;
+                SemanticBuilder::new_linter().build(allocator.alloc(parser_ret.program)).semantic;
 
             let found = semantic.nodes().iter().any(|node| is_es6_component(node));
             assert_eq!(found, expected, "Failed for: {source}");

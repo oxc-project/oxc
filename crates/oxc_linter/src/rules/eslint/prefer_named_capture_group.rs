@@ -65,10 +65,16 @@ declare_oxc_lint!(
     eslint,
     style,
     version = "1.68.0",
+    short_description = "Enforces the use of named capture groups in regular expressions.",
 );
 
 impl Rule for PreferNamedCaptureGroup {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        match node.kind() {
+            AstKind::RegExpLiteral(_) | AstKind::CallExpression(_) | AstKind::NewExpression(_) => {}
+            _ => return,
+        }
+
         run_on_regex_node(node, ctx, |pattern, _span| {
             check_pattern(pattern, ctx, None);
         });
@@ -78,7 +84,6 @@ impl Rule for PreferNamedCaptureGroup {
             AstKind::NewExpression(expr) => (&expr.callee, &expr.arguments),
             _ => return,
         };
-
         if is_regexp_callee(callee, ctx) {
             check_static_arguments(arguments.first(), arguments.get(1), ctx);
         }

@@ -1,7 +1,4 @@
-use oxc_ast::{
-    AstKind,
-    ast::{CallExpression, Expression},
-};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -11,9 +8,8 @@ use serde::{Deserialize, Serialize};
 use crate::{
     AstNode,
     context::{ContextHost, LintContext},
-    module_record::ImportImportName,
     rule::{DefaultRuleConfig, Rule},
-    utils::{definitely_returns_in_all_codepaths, is_vue_component_options_object},
+    utils::{definitely_returns_in_all_codepaths, get_computed_getter_context},
 };
 
 fn return_in_computed_property_diagnostic(span: Span) -> OxcDiagnostic {
@@ -82,6 +78,7 @@ declare_oxc_lint!(
     correctness,
     config = ReturnInComputedProperty,
     version = "1.63.0",
+    short_description = "Enforce that a `return` statement is present in every computed property.",
 );
 
 impl Rule for ReturnInComputedProperty {
@@ -107,7 +104,7 @@ impl Rule for ReturnInComputedProperty {
             _ => return,
         };
 
-        if !is_vue_computed_getter(node, ctx) {
+        if get_computed_getter_context(node, ctx).is_none() {
             return;
         }
 
@@ -115,105 +112,6 @@ impl Rule for ReturnInComputedProperty {
             ctx.diagnostic(return_in_computed_property_diagnostic(span));
         }
     }
-}
-
-fn is_vue_computed_getter(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
-    let nodes = ctx.nodes();
-    let parent = nodes.parent_node(node.id());
-
-    let AstKind::ObjectProperty(prop) = parent.kind() else {
-        // `computed(() => {...})` / `computed(function() {...})` —
-        // the function is the direct argument of a `computed(...)` call.
-        return matches!(
-            parent.kind(),
-            AstKind::CallExpression(call) if is_vue_computed_call(call, ctx)
-        );
-    };
-
-    // `set` accessors are setters — they don't need to return.
-    if prop.key.is_specific_static_name("set") {
-        return false;
-    }
-
-    let opts_node = nodes.parent_node(parent.id());
-    if !matches!(opts_node.kind(), AstKind::ObjectExpression(_)) {
-        return false;
-    }
-    let outer = nodes.parent_node(opts_node.id());
-
-    // Case A: `computed: { foo() {...} }` or `computed: { foo: function() {...} }`
-    //   function -> ObjectProperty(foo) -> ObjectExpression(computed body)
-    //            -> ObjectProperty(computed) [outer]
-    if let AstKind::ObjectProperty(outer_prop) = outer.kind()
-        && outer_prop.key.is_specific_static_name("computed")
-    {
-        return is_under_vue_root(outer, ctx);
-    }
-
-    // The remaining cases assume `prop` is the `get` accessor of a get/set object.
-    if !prop.key.is_specific_static_name("get") {
-        return false;
-    }
-
-    // Case B: `computed: { foo: { get() {...} } }`
-    //   get() -> ObjectProperty(get) -> ObjectExpression(get/set obj)
-    //         -> ObjectProperty(foo) [outer]
-    //         -> ObjectExpression(computed body)
-    //         -> ObjectProperty(computed)
-    if let AstKind::ObjectProperty(_) = outer.kind() {
-        let computed_body = nodes.parent_node(outer.id());
-        if !matches!(computed_body.kind(), AstKind::ObjectExpression(_)) {
-            return false;
-        }
-        let computed_prop = nodes.parent_node(computed_body.id());
-        if let AstKind::ObjectProperty(cp) = computed_prop.kind()
-            && cp.key.is_specific_static_name("computed")
-        {
-            return is_under_vue_root(computed_prop, ctx);
-        }
-        return false;
-    }
-
-    // Case C: `computed({ get() {...}, set() {} })`
-    //   get() -> ObjectProperty(get) -> ObjectExpression(get/set obj)
-    //         -> CallExpression(computed) [outer]
-    if let AstKind::CallExpression(call) = outer.kind() {
-        return is_vue_computed_call(call, ctx);
-    }
-
-    false
-}
-
-fn is_under_vue_root(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
-    ctx.nodes().ancestors(node.id()).any(|a| is_vue_component_options_object(a, ctx))
-}
-
-fn is_vue_computed_call(call: &CallExpression<'_>, ctx: &LintContext<'_>) -> bool {
-    let Expression::Identifier(ident) = call.callee.get_inner_expression() else {
-        return false;
-    };
-    if ident.name != "computed" {
-        return false;
-    }
-
-    let scoping = ctx.scoping();
-    let Some(symbol_id) = scoping.get_reference(ident.reference_id()).symbol_id() else {
-        return false;
-    };
-
-    ctx.module_record().import_entries.iter().any(|entry| {
-        if entry.module_request.name() != "vue" {
-            return false;
-        }
-        let imported_name = match &entry.import_name {
-            ImportImportName::Name(name_span) => name_span.name(),
-            _ => return false,
-        };
-        if imported_name != "computed" {
-            return false;
-        }
-        scoping.get_root_binding(entry.local_name.name().into()) == Some(symbol_id)
-    })
 }
 
 #[test]

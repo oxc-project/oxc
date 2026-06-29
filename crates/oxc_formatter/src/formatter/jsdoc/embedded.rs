@@ -21,7 +21,7 @@ fn parse_and_build<'a>(
     options: JsFormatOptions,
 ) -> Option<String> {
     let ret = parse_for_format(allocator, source_text, source_type);
-    if ret.panicked || !ret.errors.is_empty() {
+    if ret.panicked || !ret.diagnostics.is_empty() {
         return None;
     }
     let mut code =

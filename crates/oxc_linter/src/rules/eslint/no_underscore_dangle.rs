@@ -113,6 +113,7 @@ declare_oxc_lint!(
     suspicious,
     config = NoUnderscoreDangle,
     version = "1.62.0",
+    short_description = "Disallows dangling underscores in identifiers.",
 );
 
 impl Rule for NoUnderscoreDangle {
@@ -125,15 +126,21 @@ impl Rule for NoUnderscoreDangle {
             AstKind::StaticMemberExpression(expr) => self.check_member(ctx, expr),
             AstKind::PrivateFieldExpression(expr) => self.check_private_member(ctx, expr),
             AstKind::BindingIdentifier(ident) => self.check_binding(ctx, node.id(), ident),
-            AstKind::MethodDefinition(_) | AstKind::ObjectProperty(_)
-                if !self.enforce_in_method_names => {}
-            AstKind::PropertyDefinition(_) if !self.enforce_in_class_fields => {}
-            AstKind::Function(func) if func.r#type == FunctionType::FunctionExpression => {}
-            _ => {
-                if let Some((name, span)) = get_identifier(node) {
-                    self.report(ctx, span, name);
+            AstKind::Function(func) if func.r#type != FunctionType::FunctionExpression => {
+                if let Some(id) = &func.id {
+                    self.report(ctx, id.span, id.name.as_str());
                 }
             }
+            AstKind::MethodDefinition(m) if self.enforce_in_method_names => {
+                self.check_property_key(ctx, &m.key);
+            }
+            AstKind::ObjectProperty(o) if self.enforce_in_method_names && o.method => {
+                self.check_property_key(ctx, &o.key);
+            }
+            AstKind::PropertyDefinition(p) if self.enforce_in_class_fields => {
+                self.check_property_key(ctx, &p.key);
+            }
+            _ => {}
         }
     }
 }
@@ -157,6 +164,12 @@ impl NoUnderscoreDangle {
             return;
         }
         ctx.diagnostic(no_underscore_dangle_diagnostic(span, name));
+    }
+
+    fn check_property_key(&self, ctx: &LintContext, key: &PropertyKey) {
+        if let Some((name, span)) = property_key_name_span(key) {
+            self.report(ctx, span, name);
+        }
     }
 
     fn check_member(&self, ctx: &LintContext, expr: &StaticMemberExpression) {
@@ -240,16 +253,6 @@ fn binding_context(ctx: &LintContext, id: NodeId) -> BindingContext {
         }
     }
     BindingContext::NotInteresting
-}
-
-fn get_identifier<'a>(node: &AstNode<'a>) -> Option<(&'a str, Span)> {
-    match node.kind() {
-        AstKind::Function(f) => f.id.as_ref().map(|id| (id.name.as_str(), id.span)),
-        AstKind::MethodDefinition(m) => property_key_name_span(&m.key),
-        AstKind::PropertyDefinition(p) => property_key_name_span(&p.key),
-        AstKind::ObjectProperty(o) if o.method => property_key_name_span(&o.key),
-        _ => None,
-    }
 }
 
 fn has_dangling_underscore(name: &str) -> bool {

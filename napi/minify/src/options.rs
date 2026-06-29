@@ -98,7 +98,7 @@ pub struct CompressOptions {
     ///
     /// @default 'esnext'
     ///
-    /// @see [esbuild#target](https://esbuild.github.io/api/#target)
+    /// @see [oxc#target](https://oxc.rs/docs/guide/usage/transformer/lowering#target)
     pub target: Option<Either<String, Vec<String>>>,
 
     /// Pass true to discard calls to `console.*`.

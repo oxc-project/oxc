@@ -13,6 +13,8 @@ use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
+use crate::rule::DefaultRuleConfig;
+
 fn restricted_jest_method(method_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Use of `{method_name}` is not allowed")).with_label(span)
 }
@@ -56,8 +58,8 @@ test('plays video', () => {
 ";
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
-pub struct NoRestrictedJestMethodsConfig {
+#[serde(rename_all = "camelCase", default)]
+pub struct NoRestrictedTestMethodsConfig {
     /// A mapping of restricted Jest method names to custom messages - or
     /// `null`, for a generic message.
     #[schemars(schema_with = "object_with_nullable_string_schema")]
@@ -65,17 +67,12 @@ pub struct NoRestrictedJestMethodsConfig {
     pub restricted_methods: FxHashMap<String, Option<CompactStr>>,
 }
 
-impl NoRestrictedJestMethodsConfig {
-    #[expect(clippy::unnecessary_wraps)]
+impl NoRestrictedTestMethodsConfig {
     pub fn from_configuration(value: &serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let restricted_methods = value
-            .get(0)
-            .and_then(serde_json::Value::as_object)
-            .map(Self::compile_restricted_methods)
-            .unwrap_or_default();
-
-        Ok(NoRestrictedJestMethodsConfig { restricted_methods })
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value.clone())
+            .map(DefaultRuleConfig::into_inner)
     }
+
     pub fn run<'a>(&self, possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
         let node = possible_jest_node.node;
         let AstKind::CallExpression(call_expr) = node.kind() else {
@@ -122,14 +119,5 @@ impl NoRestrictedJestMethodsConfig {
 
     fn get_message(&self, name: &str) -> Option<CompactStr> {
         self.restricted_methods.get(name).cloned().flatten()
-    }
-
-    pub fn compile_restricted_methods(
-        matchers: &serde_json::Map<String, serde_json::Value>,
-    ) -> FxHashMap<String, Option<CompactStr>> {
-        matchers
-            .iter()
-            .map(|(key, value)| (String::from(key), value.as_str().map(CompactStr::from)))
-            .collect()
     }
 }

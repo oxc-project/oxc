@@ -268,6 +268,7 @@ declare_oxc_lint!(
     fix,
     config = Curly,
     version = "0.15.13",
+    short_description = "Enforce consistent brace style for all control statements.",
 );
 
 impl Rule for Curly {
@@ -425,7 +426,11 @@ fn apply_rule_fix<'a>(
     let fixed = if should_have_braces {
         format!("{{{source}}}")
     } else {
-        let mut trimmed = source.trim_matches(|c| c == '{' || c == '}').to_string();
+        let mut trimmed = source
+            .strip_prefix('{')
+            .and_then(|s| s.strip_suffix('}'))
+            .unwrap_or(source)
+            .to_string();
         if is_do_while {
             trimmed.insert(0, ' ');
         }
@@ -2074,6 +2079,8 @@ fn test() {
             None,
         ),
         ("if(I){if(t)s}þ", "if(I){if(t){s}}þ", None),
+        ("if (foo) {while(bar){}}", "if (foo) while(bar){}", Some(serde_json::json!(["multi"]))),
+        ("if (foo) {if(bar){}}", "if (foo) if(bar){}", Some(serde_json::json!(["multi"]))),
     ];
     Tester::new(Curly::NAME, Curly::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
 }

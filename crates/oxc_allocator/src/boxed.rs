@@ -17,7 +17,7 @@ use oxc_estree::{ESTree, Serializer as ESTreeSerializer};
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer as SerdeSerializer};
 
-use crate::Allocator;
+use crate::GetAllocator;
 
 /// A `Box` without [`Drop`], which stores its data in the arena allocator.
 ///
@@ -41,26 +41,40 @@ impl<T: ?Sized> Box<'_, T> {
         assert!(!std::mem::needs_drop::<T>(), "Cannot create a Box<T> where T is a Drop type");
 }
 
-impl<T> Box<'_, T> {
-    /// Put a `value` into a memory arena and get back a [`Box`] with ownership
-    /// to the allocation.
+impl<'alloc, T> Box<'alloc, T> {
+    /// Allocate `value` into the memory arena, and receive a [`Box`] which owns the value.
     ///
     /// # Examples
+    ///
     /// ```
     /// use oxc_allocator::{Allocator, Box};
     ///
     /// let arena = Allocator::default();
+    /// let arena = &arena;
     /// let in_arena: Box<i32> = Box::new_in(5, &arena);
+    /// ```
+    ///
+    /// The `Box` cannot outlive the `Allocator`. This fails to compile:
+    ///
+    /// ```compile_fail
+    /// use oxc_allocator::{Allocator, Box};
+    ///
+    /// let boxed = {
+    ///     let allocator = Allocator::default();
+    ///     let allocator = &allocator;
+    ///     Box::new_in(5, &allocator)
+    /// };
+    /// assert_eq!(*boxed, 5);
     /// ```
     //
     // `#[inline(always)]` because this is a hot path and `Allocator::alloc` is a very small function.
     // We always want it to be inlined.
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    pub fn new_in(value: T, allocator: &Allocator) -> Self {
+    pub fn new_in<A: GetAllocator<'alloc>>(value: T, allocator: &A) -> Self {
         const { Self::ASSERT_T_IS_NOT_DROP };
 
-        Self(NonNull::from(allocator.alloc(value)), PhantomData)
+        Self(NonNull::from(allocator.allocator().alloc(value)), PhantomData)
     }
 
     /// Create a fake [`Box`] with a dangling pointer.
@@ -82,6 +96,7 @@ impl<T> Box<'_, T> {
     /// use oxc_allocator::{Allocator, Box};
     ///
     /// let arena = Allocator::default();
+    /// let arena = &arena;
     ///
     /// // Put `5` into the arena and on the heap.
     /// let boxed: Box<i32> = Box::new_in(5, &arena);
@@ -116,6 +131,7 @@ impl<T: ?Sized> Box<'_, T> {
     /// use oxc_allocator::{Allocator, Box};
     ///
     /// let allocator = Allocator::new();
+    /// let allocator = &allocator;
     /// let boxed = Box::new_in(123_u64, &allocator);
     /// let ptr = Box::as_non_null(&boxed);
     /// ```
@@ -171,37 +187,37 @@ impl<T> Box<'static, [T]> {
     }
 }
 
-impl<'a, T> Box<'a, [T]> {
-    /// Convert a boxed slice [`Box<[T]>`] into slice [`&'a [T]`].
+impl<'alloc, T> Box<'alloc, [T]> {
+    /// Convert a boxed slice [`Box<[T]>`] into slice [`&'alloc [T]`].
     ///
     /// The returned slice has the same lifetime as the allocator.
     //
     // `#[inline(always)]` because this is a no-op. `Box<[T]>` and `&[T]` have the same layout.
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    pub fn into_arena_slice(self) -> &'a [T] {
+    pub fn into_arena_slice(self) -> &'alloc [T] {
         let r = self.as_ref();
         // Extend lifetime of reference to lifetime of the allocator.
         // SAFETY: `self` is consumed by this method, so there cannot be any mutable references to it.
-        // The reference lives until the allocator is dropped or reset (`'a` lifetime).
+        // The reference lives until the allocator is dropped or reset (`'alloc` lifetime).
         // Don't need `mem::forget(self)` here, because `Box` does not implement `Drop`.
-        unsafe { mem::transmute::<&[T], &'a [T]>(r) }
+        unsafe { mem::transmute::<&[T], &'alloc [T]>(r) }
     }
 
-    /// Convert a boxed slice [`Box<[T]>`] into mutable slice [`&'a mut [T]`].
+    /// Convert a boxed slice [`Box<[T]>`] into mutable slice [`&'alloc mut [T]`].
     ///
     /// The returned slice has the same lifetime as the allocator.
     //
     // `#[inline(always)]` because this is a no-op. `Box<[T]>` and `&mut [T]` have the same layout.
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    pub fn into_arena_slice_mut(mut self) -> &'a mut [T] {
+    pub fn into_arena_slice_mut(mut self) -> &'alloc mut [T] {
         let r = self.as_mut();
         // Extend lifetime of reference to lifetime of the allocator.
         // SAFETY: `self` is consumed by this method, so there cannot be any other references to it.
-        // The reference lives until the allocator is dropped or reset (`'a` lifetime).
+        // The reference lives until the allocator is dropped or reset (`'alloc` lifetime).
         // Don't need `mem::forget(self)` here, because `Box` does not implement `Drop`.
-        unsafe { mem::transmute::<&mut [T], &'a mut [T]>(r) }
+        unsafe { mem::transmute::<&mut [T], &'alloc mut [T]>(r) }
     }
 }
 
@@ -295,6 +311,7 @@ mod test {
     #[test]
     fn box_deref_mut() {
         let allocator = Allocator::default();
+        let allocator = &allocator;
         let mut b = Box::new_in("x", &allocator);
         let b = &mut *b;
         *b = allocator.alloc("v");
@@ -312,6 +329,7 @@ mod test {
     #[test]
     fn boxed_slice_into_arena_slice() {
         let allocator = Allocator::default();
+        let allocator = &allocator;
         let v = Vec::from_iter_in([1, 2, 3], &allocator);
         let b = v.into_boxed_slice();
         let slice = b.into_arena_slice();
@@ -321,6 +339,7 @@ mod test {
     #[test]
     fn boxed_slice_into_arena_slice_mut() {
         let allocator = Allocator::default();
+        let allocator = &allocator;
         let v = Vec::from_iter_in([10, 20, 30], &allocator);
         let b = v.into_boxed_slice();
         let slice = b.into_arena_slice_mut();
@@ -331,6 +350,7 @@ mod test {
     #[test]
     fn box_debug() {
         let allocator = Allocator::default();
+        let allocator = &allocator;
         let b = Box::new_in("x", &allocator);
         let b = format!("{b:?}");
         assert_eq!(b, "\"x\"");
@@ -345,6 +365,7 @@ mod test {
         }
 
         let allocator = Allocator::default();
+        let allocator = &allocator;
         let a = Box::new_in("x", &allocator);
         let b = Box::new_in("x", &allocator);
 
@@ -355,6 +376,7 @@ mod test {
     #[test]
     fn box_serialize() {
         let allocator = Allocator::default();
+        let allocator = &allocator;
         let b = Box::new_in("x", &allocator);
         let s = serde_json::to_string(&b).unwrap();
         assert_eq!(s, r#""x""#);
@@ -363,12 +385,13 @@ mod test {
     #[cfg(feature = "serialize")]
     #[test]
     fn box_serialize_estree() {
-        use oxc_estree::{CompactTSSerializer, ESTree};
+        use oxc_estree::{CompactSerializer, ESTree};
 
         let allocator = Allocator::default();
+        let allocator = &allocator;
         let b = Box::new_in("x", &allocator);
 
-        let mut serializer = CompactTSSerializer::default();
+        let mut serializer = CompactSerializer::default();
         b.serialize(&mut serializer);
         let s = serializer.into_string();
         assert_eq!(s, r#""x""#);

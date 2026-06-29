@@ -620,14 +620,13 @@ impl ConfigStoreBuilder {
         // Use alias if provided.
         // Otherwise use package name if the specifier is not relative, and normalize it.
         let plugin_name = if let Some(alias_name) = alias {
-            // Check that the alias is valid - does not start with `eslint-plugin-` etc
+            // Check that the alias is valid - does not start with common plugin package prefixes.
             if !is_normal_plugin_name(alias_name) {
                 return Err(ConfigBuilderError::PluginLoadFailed {
                     plugin_specifier: plugin_specifier.to_string(),
                     error: format!(
                         "Plugin alias '{alias_name}' is not valid. \
-                         Must not start with 'eslint-plugin-', or be of form '@scope/eslint-plugin' \
-                         or '@scope/eslint-plugin-name'."
+                         Strip plugin package prefixes, e.g. use 'foo' or '@scope/foo'."
                     ),
                 });
             }

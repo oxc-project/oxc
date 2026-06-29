@@ -1,8 +1,10 @@
 //! ES2022: Class Properties
 //! Transform of class property declarations (instance or static properties).
 
-use oxc_ast::{NONE, ast::*};
+use oxc_allocator::{ArenaBox, ArenaVec};
+use oxc_ast::{ast::*, builder::NONE};
 use oxc_span::{SPAN, Span};
+use oxc_str::static_ident;
 use oxc_syntax::reference::ReferenceFlags;
 
 use crate::{
@@ -31,7 +33,7 @@ impl<'a> ClassProperties<'a> {
 
         let span = prop.span;
         let init_expr = if let PropertyKey::PrivateIdentifier(ident) = &mut prop.key {
-            let value = value.unwrap_or_else(|| ctx.ast.void_0(SPAN));
+            let value = value.unwrap_or_else(|| Expression::new_void_0(SPAN, ctx));
             self.create_private_instance_init_assignment(ident, value, span, ctx)
         } else {
             let value = match value {
@@ -45,11 +47,11 @@ impl<'a> ClassProperties<'a> {
                 {
                     return;
                 }
-                None => ctx.ast.void_0(SPAN),
+                None => Expression::new_void_0(SPAN, ctx),
             };
 
             // Convert to assignment or `_defineProperty` call, depending on `loose` option
-            let this = ctx.ast.expression_this(SPAN);
+            let this = Expression::new_this_expression(SPAN, ctx);
             self.create_init_assignment(prop, value, this, false, ctx)
         };
         instance_inits.push(init_expr);
@@ -67,7 +69,7 @@ impl<'a> ClassProperties<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         if self.private_fields_as_properties {
-            let this = ctx.ast.expression_this(SPAN);
+            let this = Expression::new_this_expression(SPAN, ctx);
             self.create_private_init_assignment_loose(ident, value, this, span, ctx)
         } else {
             self.create_private_instance_init_assignment_not_loose(ident, value, ctx)
@@ -83,11 +85,14 @@ impl<'a> ClassProperties<'a> {
     ) -> Expression<'a> {
         let private_props = self.current_class().private_props.as_ref().unwrap();
         let prop = &private_props[&ident.name];
-        let arguments = ctx.ast.vec_from_array([
-            Argument::from(ctx.ast.expression_this(SPAN)),
-            Argument::from(prop.binding.create_read_expression(ctx)),
-            Argument::from(value),
-        ]);
+        let arguments = ArenaVec::from_array_in(
+            [
+                Argument::new_this_expression(SPAN, ctx),
+                Argument::from(prop.binding.create_read_expression(ctx)),
+                Argument::from(value),
+            ],
+            ctx,
+        );
         helper_call_expr(Helper::ClassPrivateFieldInitSpec, arguments, ctx)
     }
 }
@@ -111,7 +116,7 @@ impl<'a> ClassProperties<'a> {
 
         let span = prop.span;
         if let PropertyKey::PrivateIdentifier(ident) = &mut prop.key {
-            let value = value.unwrap_or_else(|| ctx.ast.void_0(SPAN));
+            let value = value.unwrap_or_else(|| Expression::new_void_0(SPAN, ctx));
             self.insert_private_static_init_assignment(ident, value, span, ctx);
         } else {
             let value = match value {
@@ -125,7 +130,7 @@ impl<'a> ClassProperties<'a> {
                 {
                     return self.extract_computed_key(prop, ctx);
                 }
-                None => ctx.ast.void_0(SPAN),
+                None => Expression::new_void_0(SPAN, ctx),
             };
 
             // Convert to assignment or `_defineProperty` call, depending on `loose` option
@@ -204,16 +209,18 @@ impl<'a> ClassProperties<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         // `_prop = {_: value}`
-        let property = ctx.ast.object_property_kind_object_property(
+        let property = ObjectPropertyKind::new_object_property(
             SPAN,
             PropertyKind::Init,
-            PropertyKey::StaticIdentifier(ctx.ast.alloc(create_underscore_ident_name(ctx))),
+            PropertyKey::StaticIdentifier(ArenaBox::new_in(create_underscore_ident_name(ctx), ctx)),
             value,
             false,
             false,
             false,
+            ctx,
         );
-        let obj = ctx.ast.expression_object(SPAN, ctx.ast.vec1(property));
+        let obj =
+            Expression::new_object_expression(SPAN, ArenaVec::from_value_in(property, ctx), ctx);
 
         // Insert after class
         let class_details = self.current_class();
@@ -273,7 +280,13 @@ impl<'a> ClassProperties<'a> {
                     return self
                         .create_init_assignment_not_loose(prop, value, assignee, is_static, ctx);
                 }
-                ctx.ast.member_expression_static(SPAN, assignee, ident.as_ref().clone(), false)
+                MemberExpression::new_static_member_expression(
+                    SPAN,
+                    assignee,
+                    ident.as_ref().clone(),
+                    false,
+                    ctx,
+                )
             }
             PropertyKey::StringLiteral(str_lit) if needs_define(&str_lit.value) => {
                 return self
@@ -286,7 +299,7 @@ impl<'a> ClassProperties<'a> {
                 // No temp var is created for these.
                 // TODO: Any other possible static key types?
                 let key = self.create_computed_key_temp_var_if_required(key, is_static, ctx);
-                ctx.ast.member_expression_computed(SPAN, assignee, key, false)
+                MemberExpression::new_computed_member_expression(SPAN, assignee, key, false, ctx)
             }
             PropertyKey::PrivateIdentifier(_) => {
                 // Handled in `convert_instance_property` and `convert_static_property`
@@ -294,11 +307,12 @@ impl<'a> ClassProperties<'a> {
             }
         };
 
-        ctx.ast.expression_assignment(
+        Expression::new_assignment_expression(
             prop.span,
             AssignmentOperator::Assign,
             AssignmentTarget::from(left),
             value,
+            ctx,
         )
     }
 
@@ -313,7 +327,7 @@ impl<'a> ClassProperties<'a> {
     ) -> Expression<'a> {
         let key = match &mut prop.key {
             PropertyKey::StaticIdentifier(ident) => {
-                ctx.ast.expression_string_literal(ident.span, ident.name, None)
+                Expression::new_string_literal(ident.span, ident.name, None, ctx)
             }
             key @ match_expression!(PropertyKey) => {
                 let key = key.to_expression_mut();
@@ -329,11 +343,10 @@ impl<'a> ClassProperties<'a> {
             }
         };
 
-        let arguments = ctx.ast.vec_from_array([
-            Argument::from(assignee),
-            Argument::from(key),
-            Argument::from(value),
-        ]);
+        let arguments = ArenaVec::from_array_in(
+            [Argument::from(assignee), Argument::from(key), Argument::from(value)],
+            ctx,
+        );
         helper_call_expr(Helper::DefineProperty, arguments, ctx)
     }
 
@@ -347,46 +360,54 @@ impl<'a> ClassProperties<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         // `Object.defineProperty`
-        let object_name = ctx.ast.ident("Object");
+        let object_name = static_ident!("Object");
         let object_symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), object_name);
         let object =
             ctx.create_ident_expr(SPAN, object_name, object_symbol_id, ReferenceFlags::Read);
-        let property = ctx.ast.identifier_name(SPAN, "defineProperty");
-        let callee =
-            Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false));
+        let property = IdentifierName::new(SPAN, "defineProperty", ctx);
+        let callee = Expression::new_static_member_expression(SPAN, object, property, false, ctx);
 
         // `{writable: true, value: <value>}`
-        let prop_def = ctx.ast.expression_object(
+        let prop_def = Expression::new_object_expression(
             SPAN,
-            ctx.ast.vec_from_array([
-                ctx.ast.object_property_kind_object_property(
-                    SPAN,
-                    PropertyKind::Init,
-                    ctx.ast.property_key_static_identifier(SPAN, Str::from("writable")),
-                    ctx.ast.expression_boolean_literal(SPAN, true),
-                    false,
-                    false,
-                    false,
-                ),
-                ctx.ast.object_property_kind_object_property(
-                    SPAN,
-                    PropertyKind::Init,
-                    ctx.ast.property_key_static_identifier(SPAN, Str::from("value")),
-                    value,
-                    false,
-                    false,
-                    false,
-                ),
-            ]),
+            ArenaVec::from_array_in(
+                [
+                    ObjectPropertyKind::new_object_property(
+                        SPAN,
+                        PropertyKind::Init,
+                        PropertyKey::new_static_identifier(SPAN, "writable", ctx),
+                        Expression::new_boolean_literal(SPAN, true, ctx),
+                        false,
+                        false,
+                        false,
+                        ctx,
+                    ),
+                    ObjectPropertyKind::new_object_property(
+                        SPAN,
+                        PropertyKind::Init,
+                        PropertyKey::new_static_identifier(SPAN, "value", ctx),
+                        value,
+                        false,
+                        false,
+                        false,
+                        ctx,
+                    ),
+                ],
+                ctx,
+            ),
+            ctx,
         );
 
         let private_props = self.current_class().private_props.as_ref().unwrap();
         let prop_binding = &private_props[&ident.name].binding;
-        let arguments = ctx.ast.vec_from_array([
-            Argument::from(assignee),
-            Argument::from(prop_binding.create_read_expression(ctx)),
-            Argument::from(prop_def),
-        ]);
-        ctx.ast.expression_call(span, callee, NONE, arguments, false)
+        let arguments = ArenaVec::from_array_in(
+            [
+                Argument::from(assignee),
+                Argument::from(prop_binding.create_read_expression(ctx)),
+                Argument::from(prop_def),
+            ],
+            ctx,
+        );
+        Expression::new_call_expression(span, callee, NONE, arguments, false, ctx)
     }
 }

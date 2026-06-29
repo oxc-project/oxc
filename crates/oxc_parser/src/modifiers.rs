@@ -568,16 +568,23 @@ impl<C: Config> ParserImpl<'_, C> {
                 return None;
             }
             self.bump_any();
-        } else if
-        // we're at the start of a static block
-        (stop_on_start_of_class_static_block
-            && kind == Kind::Static
-            && self.lexer.peek_token().kind() == Kind::LCurly)
-            // we may be at the start of a static block
-            || (kind == Kind::Static && seen_modifier_kinds.contains(ModifierKind::Static))
+        } else if kind == Kind::Static {
+            // ClassStaticBlock : `static { ClassStaticBlockBody }`   e.g. `static { x = 1; }`
+            // member named `static`                                  e.g. `static() {}`, `static = 1`, `static;`
+            // repeated `static`                                      e.g. `static static x`
+            //
+            // Peek once and reuse it — `peek_token` is not cached, so checking `== LCurly` separately
+            // from the peek inside `next_token_can_follow_modifier` re-lexed this token twice.
+            let next_kind = self.lexer.peek_token().kind();
+            if (stop_on_start_of_class_static_block && next_kind == Kind::LCurly)
+                || seen_modifier_kinds.contains(ModifierKind::Static)
+                || !Self::can_follow_modifier(next_kind)
+            {
+                return None;
+            }
+            self.bump_any();
+        } else if !self.parse_any_contextual_modifier() {
             // next token is not a modifier
-            || (!self.parse_any_contextual_modifier())
-        {
             return None;
         }
         Some(self.modifier(kind, span_start))
@@ -805,6 +812,21 @@ impl<C: Config> ParserImpl<'_, C> {
         if modifiers.kinds().has_any_not_in(allowed) {
             // Invalid modifiers are rare, so handle this case in `#[cold]` function.
             // Also `#[inline(never)]` to help `verify_modifiers` to get inlined.
+            // Non-generic, so the heavy collect + sort code (including the sort implementation)
+            // is compiled only once, rather than once per `report` instantiation
+            // (caller closure `F` × parser `Config` = ~39 copies).
+            #[cold]
+            #[inline(never)]
+            fn collect_disallowed(modifiers: &Modifiers, allowed: ModifierKinds) -> Vec<Modifier> {
+                // Sort modifiers to produce errors in source code order
+                let mut disallowed_modifiers = modifiers
+                    .iter()
+                    .filter(|modifier| !allowed.contains(modifier.kind))
+                    .collect::<Vec<_>>();
+                disallowed_modifiers.sort_unstable_by_key(|modifier| modifier.span_start);
+                disallowed_modifiers
+            }
+
             #[cold]
             #[inline(never)]
             fn report<C: Config, F>(
@@ -816,12 +838,7 @@ impl<C: Config> ParserImpl<'_, C> {
             ) where
                 F: Fn(&Modifier, Option<ModifierKinds>) -> OxcDiagnostic,
             {
-                // Sort modifiers to produce errors in source code order
-                let mut disallowed_modifiers = modifiers
-                    .iter()
-                    .filter(|modifier| !allowed.contains(modifier.kind))
-                    .collect::<Vec<_>>();
-                disallowed_modifiers.sort_unstable_by_key(|modifier| modifier.span_start);
+                let disallowed_modifiers = collect_disallowed(modifiers, allowed);
 
                 debug_assert!(!disallowed_modifiers.is_empty());
 

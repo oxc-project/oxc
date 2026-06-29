@@ -1,4 +1,4 @@
-use oxc_allocator::{Box, Vec};
+use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::ast::*;
 use oxc_ecmascript::PropName;
 use oxc_span::{GetSpan, Span};
@@ -11,7 +11,7 @@ use crate::{
 
 use super::FunctionKind;
 
-type ImplementsWithKeywordSpan<'a> = (Span, Vec<'a, TSClassImplements<'a>>);
+type ImplementsWithKeywordSpan<'a> = (Span, ArenaVec<'a, TSClassImplements<'a>>);
 
 /// Section 15.7 Class Definitions
 impl<'a, C: Config> ParserImpl<'a, C> {
@@ -21,7 +21,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         start_span: u32,
         stmt_ctx: StatementContext,
         modifiers: &Modifiers,
-        decorators: Vec<'a, Decorator<'a>>,
+        decorators: ArenaVec<'a, Decorator<'a>>,
     ) -> Statement<'a> {
         let decl = self.parse_class_declaration(start_span, modifiers, decorators);
         if stmt_ctx.is_single_statement() {
@@ -38,8 +38,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         start_span: u32,
         modifiers: &Modifiers,
-        decorators: Vec<'a, Decorator<'a>>,
-    ) -> Box<'a, Class<'a>> {
+        decorators: ArenaVec<'a, Decorator<'a>>,
+    ) -> ArenaBox<'a, Class<'a>> {
         self.parse_class(start_span, ClassType::ClassDeclaration, modifiers, decorators)
     }
 
@@ -50,7 +50,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         span: u32,
         modifiers: &Modifiers,
-        decorators: Vec<'a, Decorator<'a>>,
+        decorators: ArenaVec<'a, Decorator<'a>>,
     ) -> Expression<'a> {
         let class = self.parse_class(span, ClassType::ClassExpression, modifiers, decorators);
         Expression::ClassExpression(class)
@@ -61,8 +61,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         start_span: u32,
         r#type: ClassType,
         modifiers: &Modifiers,
-        decorators: Vec<'a, Decorator<'a>>,
-    ) -> Box<'a, Class<'a>> {
+        decorators: ArenaVec<'a, Decorator<'a>>,
+    ) -> ArenaBox<'a, Class<'a>> {
         self.bump_any(); // advance `class`
 
         // Move span start to decorator position if this is a class expression.
@@ -81,8 +81,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         } else {
             None
         };
+        // A class name may not be a reserved type name, but only in TypeScript
+        // (`class string {}` is valid JavaScript).
+        if self.is_ts
+            && let Some(id) = &id
+        {
+            self.check_reserved_type_name(id, "Class");
+        }
 
-        let type_parameters = if self.is_ts { self.parse_ts_type_parameters() } else { None };
+        let type_parameters =
+            if self.is_ts { self.parse_ts_type_parameters_with_variance() } else { None };
         let (extends, implements) = self.parse_heritage_clause();
         let mut super_class = None;
         let mut super_type_parameters = None;
@@ -105,7 +113,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             diagnostics::modifier_cannot_be_used_here,
         );
 
-        self.ast.alloc_class(
+        Class::boxed(
             self.end_span(start_span),
             r#type,
             decorators,
@@ -113,18 +121,20 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             type_parameters,
             super_class,
             super_type_parameters,
-            implements.map_or_else(|| self.ast.vec(), |(_, implements)| implements),
+            implements.map_or_else(|| ArenaVec::new_in(self), |(_, implements)| implements),
             body,
             modifiers.contains_abstract(),
             modifiers.contains_declare(),
+            self,
         )
     }
 
     pub(crate) fn parse_heritage_clause(
         &mut self,
-    ) -> (Option<Vec<'a, TSInterfaceHeritage<'a>>>, Option<ImplementsWithKeywordSpan<'a>>) {
+    ) -> (Option<ArenaVec<'a, TSInterfaceHeritage<'a>>>, Option<ImplementsWithKeywordSpan<'a>>)
+    {
         let mut extends = None;
-        let mut implements: Option<(Span, Vec<'a, TSClassImplements<'a>>)> = None;
+        let mut implements: Option<(Span, ArenaVec<'a, TSClassImplements<'a>>)> = None;
 
         loop {
             match self.cur_kind() {
@@ -167,10 +177,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// `ClassHeritage`
     /// extends `LeftHandSideExpression`[?Yield, ?Await]
-    fn parse_extends_clause(&mut self) -> Vec<'a, TSInterfaceHeritage<'a>> {
+    fn parse_extends_clause(&mut self) -> ArenaVec<'a, TSInterfaceHeritage<'a>> {
         self.bump_any(); // bump `extends`
 
-        let mut extends = self.ast.vec_with_capacity(1);
+        let mut extends = ArenaVec::with_capacity_in(1, self);
         loop {
             let span = self.start_span();
             let mut extend = self.parse_lhs_expression_or_higher();
@@ -186,10 +196,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 type_argument = self.try_parse_type_arguments();
             }
 
-            extends.push(self.ast.ts_interface_heritage(
+            extends.push(TSInterfaceHeritage::new(
                 self.end_span(span),
                 extend,
                 type_argument,
+                self,
             ));
 
             if !self.eat(Kind::Comma) {
@@ -200,7 +211,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         extends
     }
 
-    fn parse_class_body(&mut self) -> Box<'a, ClassBody<'a>> {
+    fn parse_class_body(&mut self) -> ArenaBox<'a, ClassBody<'a>> {
         let span = self.start_span();
         let class_elements = self.parse_normal_list_breakable(Kind::LCurly, Kind::RCurly, |p| {
             // Skip empty class element `;`
@@ -212,7 +223,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
             Some(Self::parse_class_element(p))
         });
-        self.ast.alloc_class_body(self.end_span(span), class_elements)
+        ClassBody::boxed(self.end_span(span), class_elements, self)
     }
 
     fn parse_class_element(&mut self) -> ClassElement<'a> {
@@ -376,7 +387,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Context::Yield | Context::Return,
             Self::parse_block,
         );
-        self.ast.class_element_static_block(self.end_span(span), block.unbox().body)
+        ClassElement::new_static_block(self.end_span(span), block.unbox().body, self)
     }
 
     /// <https://github.com/tc39/proposal-decorators>
@@ -385,9 +396,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         span: u32,
         key: PropertyKey<'a>,
         computed: bool,
-        definite: bool,
+        definite: Option<u32>,
         modifiers: &Modifiers,
-        decorators: Vec<'a, Decorator<'a>>,
+        decorators: ArenaVec<'a, Decorator<'a>>,
     ) -> ClassElement<'a> {
         let type_annotation = if self.is_ts { self.parse_ts_type_annotation() } else { None };
         // `new.target` is allowed in a class accessor field initializer.
@@ -414,15 +425,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             true,
             diagnostics::accessor_modifier,
         );
-        if definite
+        if let Some(definite_token_start) = definite
             && ((self.ctx.has_ambient() && !modifiers.contains(ModifierKind::Declare))
                 || r#type.is_abstract())
         {
-            self.error(diagnostics::definite_assignment_assertion_not_permitted(
-                self.end_span(span),
-            ));
+            self.error(diagnostics::definite_assignment_assertion_not_permitted(Span::sized(
+                definite_token_start,
+                1,
+            )));
         }
-        self.ast.class_element_accessor_property(
+        ClassElement::new_accessor_property(
             self.end_span(span),
             r#type,
             decorators,
@@ -432,8 +444,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             computed,
             modifiers.contains(ModifierKind::Static),
             modifiers.contains(ModifierKind::Override),
-            definite,
+            definite.is_some(),
             modifiers.accessibility(),
+            self,
         )
     }
 
@@ -443,7 +456,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         r#type: MethodDefinitionType,
         kind: MethodDefinitionKind,
         modifiers: &Modifiers,
-        decorators: Vec<'a, Decorator<'a>>,
+        decorators: ArenaVec<'a, Decorator<'a>>,
     ) -> ClassElement<'a> {
         let (name, computed) = self.parse_class_element_name(modifiers);
         let value = self.parse_method(
@@ -451,7 +464,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             false,
             FunctionKind::ClassMethod,
         );
-        let method_definition = self.ast.alloc_method_definition(
+        let method_definition = MethodDefinition::boxed(
             self.end_span(span),
             r#type,
             decorators,
@@ -463,6 +476,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             modifiers.contains(ModifierKind::Override),
             false,
             modifiers.accessibility(),
+            self,
         );
         self.check_method_definition_accessor(&method_definition);
         self.verify_modifiers(
@@ -480,7 +494,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         r#type: MethodDefinitionType,
         name: PropertyKey<'a>,
         modifiers: &Modifiers,
-        decorators: Vec<'a, Decorator<'a>>,
+        decorators: ArenaVec<'a, Decorator<'a>>,
     ) -> ClassElement<'a> {
         if let Some(modifier) = modifiers.get(ModifierKind::Declare) {
             self.error(diagnostics::declare_constructor(modifier.span()));
@@ -491,7 +505,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             false,
             FunctionKind::Constructor,
         );
-        let method_definition = self.ast.alloc_method_definition(
+        let method_definition = MethodDefinition::boxed(
             self.end_span(span),
             r#type,
             decorators,
@@ -503,6 +517,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             modifiers.contains(ModifierKind::Override),
             false,
             modifiers.accessibility(),
+            self,
         );
         self.check_method_definition_constructor(&method_definition);
         ClassElement::MethodDefinition(method_definition)
@@ -528,7 +543,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         span: u32,
         r#type: MethodDefinitionType,
         modifiers: &Modifiers,
-        decorators: Vec<'a, Decorator<'a>>,
+        decorators: ArenaVec<'a, Decorator<'a>>,
     ) -> ClassElement<'a> {
         let generator = self.eat(Kind::Star);
         let (name, computed) = self.parse_class_element_name(modifiers);
@@ -577,9 +592,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             );
         }
 
-        let definite = self.eat(Kind::Bang);
+        let is_definite = self.eat(Kind::Bang);
+        let definite = is_definite.then_some(self.prev_token_end - 1);
 
-        if definite && let Some(optional_span) = optional_span {
+        if is_definite && let Some(optional_span) = optional_span {
             self.error(diagnostics::optional_definite_property(optional_span.expand_right(1)));
         }
 
@@ -615,14 +631,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         computed: bool,
         optional: bool,
         modifiers: &Modifiers,
-        decorators: Vec<'a, Decorator<'a>>,
+        decorators: ArenaVec<'a, Decorator<'a>>,
     ) -> ClassElement<'a> {
         let value = self.parse_method(
             modifiers.contains(ModifierKind::Async),
             generator,
             FunctionKind::ClassMethod,
         );
-        let method_definition = self.ast.alloc_method_definition(
+        let method_definition = MethodDefinition::boxed(
             self.end_span(span),
             r#type,
             decorators,
@@ -634,6 +650,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             modifiers.contains(ModifierKind::Override),
             optional,
             modifiers.accessibility(),
+            self,
         );
         self.check_method_definition_method(&method_definition);
         ClassElement::MethodDefinition(method_definition)
@@ -645,9 +662,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         name: PropertyKey<'a>,
         computed: bool,
         optional_span: Option<Span>,
-        definite: bool,
+        definite: Option<u32>,
         modifiers: &Modifiers,
-        decorators: Vec<'a, Decorator<'a>>,
+        decorators: ArenaVec<'a, Decorator<'a>>,
     ) -> ClassElement<'a> {
         let type_annotation = if self.is_ts { self.parse_ts_type_annotation() } else { None };
         // Initializer[+In, ?Yield, ?Await]opt
@@ -702,12 +719,17 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 initializer.span(),
             ));
         }
-        if definite && (self.ctx.has_ambient() || r#abstract) {
-            self.error(diagnostics::definite_assignment_assertion_not_permitted(
-                self.end_span(span),
-            ));
+        if let Some(definite_token_start) = definite {
+            let definite_span = Span::sized(definite_token_start, 1);
+            if initializer.is_some() {
+                self.error(diagnostics::variable_declarator_definite(definite_span));
+            } else if type_annotation.is_none() {
+                self.error(diagnostics::variable_declarator_definite_type_assertion(definite_span));
+            } else if self.ctx.has_ambient() || r#static || r#abstract {
+                self.error(diagnostics::definite_assignment_assertion_not_permitted(definite_span));
+            }
         }
-        self.ast.class_element_property_definition(
+        ClassElement::new_property_definition(
             self.end_span(span),
             r#type,
             decorators,
@@ -719,9 +741,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             modifiers.contains(ModifierKind::Declare),
             modifiers.contains(ModifierKind::Override),
             optional_span.is_some(),
-            definite,
+            definite.is_some(),
             modifiers.contains(ModifierKind::Readonly),
             modifiers.accessibility(),
+            self,
         )
     }
 

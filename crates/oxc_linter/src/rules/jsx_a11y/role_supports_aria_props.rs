@@ -1,7 +1,7 @@
 use cow_utils::CowUtils;
 use oxc_ast::{
     AstKind,
-    ast::{JSXAttributeItem, JSXOpeningElement},
+    ast::{JSXAttributeItem, JSXAttributeValue, JSXExpression, JSXOpeningElement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -56,6 +56,7 @@ declare_oxc_lint!(
     jsx_a11y,
     correctness,
     version = "0.2.0",
+    short_description = "Enforce that elements only contain `aria-*` properties supported by their explicit or implicit role.",
 );
 
 fn default(span: Span, attr_name: &str, role: &str) -> OxcDiagnostic {
@@ -95,6 +96,7 @@ impl Rule for RoleSupportsAriaProps {
                     let name = get_jsx_attribute_name(&attr.name);
                     let name = name.cow_to_ascii_lowercase();
                     if is_valid_aria_property(&name)
+                        && attr.value.as_ref().is_none_or(|value| !is_nullish_value(value))
                         && !is_valid_aria_property_for_role(role_value, &name)
                     {
                         ctx.diagnostic(if is_implicit {
@@ -107,6 +109,15 @@ impl Rule for RoleSupportsAriaProps {
             }
         }
     }
+}
+
+fn is_nullish_value(value: &JSXAttributeValue) -> bool {
+    matches!(
+        value,
+        JSXAttributeValue::ExpressionContainer(container)
+            if matches!(container.expression, JSXExpression::NullLiteral(_))
+                || container.expression.is_undefined()
+    )
 }
 
 /// ref: <https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/v6.9.0/src/util/getImplicitRole.js>
@@ -1621,9 +1632,8 @@ fn test() {
         (r#"<input type="tel" aria-disabled />"#, None, None),
         (r#"<input type="url" aria-disabled />"#, None, None),
         (r"<input aria-disabled />", None, None),
-        // TODO: This should pass, but it doesn't. Because the current code does not determine if the attribute value is null, undefined, etc.
-        //(r#"<h2 role="presentation" aria-level={null} />"#, None, None),
-        //(r#"<h2 role="presentation" aria-level={undefined} />"#, None, None),
+        (r#"<h2 role="presentation" aria-level={null} />"#, None, None),
+        (r#"<h2 role="presentation" aria-level={undefined} />"#, None, None),
         (r"<button aria-pressed />", None, None),
         (r"<form aria-hidden />", None, None),
         (r"<h1 aria-hidden />", None, None),

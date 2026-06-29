@@ -12,7 +12,7 @@ use crate::{
     },
 };
 
-fn exceeded_max_depth(current: usize, max: usize, span: Span) -> OxcDiagnostic {
+fn exceeded_max_depth(current: u32, max: u32, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Enforces a maximum depth to nested describe calls.")
         .with_help(format!("Too many nested describe calls ({current}) - maximum allowed is {max}"))
         .with_label(span)
@@ -108,7 +108,7 @@ describe('foo', function () {
 #[schemars(default)]
 pub struct MaxNestedDescribeConfig {
     /// Maximum allowed depth of nested describe calls.
-    pub max: usize,
+    pub max: u32,
 }
 
 impl Default for MaxNestedDescribeConfig {
@@ -118,6 +118,7 @@ impl Default for MaxNestedDescribeConfig {
 }
 
 impl MaxNestedDescribeConfig {
+    #[expect(clippy::cast_possible_truncation)] // the depth of `describe` can't be over u32::MAX, because the source code is already limited by u32::MAX.
     pub fn run_once(&self, ctx: &LintContext) {
         let mut describe_call_spans = collect_possible_jest_call_node(ctx)
             .into_iter()
@@ -146,7 +147,7 @@ impl MaxNestedDescribeConfig {
             }
             active_describes.push(span);
 
-            let current_depth = active_describes.len();
+            let current_depth = active_describes.len() as u32;
             if current_depth > self.max {
                 ctx.diagnostic(exceeded_max_depth(current_depth, self.max, span));
             }

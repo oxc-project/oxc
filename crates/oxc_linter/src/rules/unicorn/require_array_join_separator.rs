@@ -46,6 +46,7 @@ declare_oxc_lint!(
     style,
     conditional_fix,
     version = "0.0.19",
+    short_description = "Enforce using the separator argument with `Array#join()`.",
 );
 
 fn is_array_prototype_property(member_expr: &MemberExpression, property: &str) -> bool {

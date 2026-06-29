@@ -51,6 +51,7 @@ declare_oxc_lint!(
     jsdoc,
     style,
     version = "1.65.0",
+    short_description = "Requires a description for `@throws` tags.",
 );
 
 impl Rule for RequireThrowsDescription {

@@ -603,7 +603,71 @@ impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
             return self.arguments.iter().any(|e| e.may_have_side_effects(ctx));
         }
 
-        true
+        if object.name != "Object" {
+            return true;
+        }
+
+        // `Object` static methods that run no user code but whose purity depends on
+        // their arguments.
+        match name {
+            // Introspection methods (`keys`, `getOwnPropertyDescriptor`, ...) are pure
+            // except that a `Proxy` target makes them fire observable traps, and a
+            // `null`/`undefined` target makes them throw. They introspect their first
+            // argument via internal methods a Proxy can trap (`[[OwnPropertyKeys]]`,
+            // `[[GetOwnProperty]]`, `[[GetPrototypeOf]]`, `[[IsExtensible]]`) but,
+            // unlike `Object.values`/`entries`, never invoke `[[Get]]`, so they run no
+            // getter on a plain object. Side-effect-free only when the target is
+            // provably neither a Proxy nor nullish.
+            "getOwnPropertyDescriptor"
+            | "getOwnPropertyDescriptors"
+            | "getOwnPropertyNames"
+            | "getOwnPropertySymbols"
+            | "getPrototypeOf"
+            | "hasOwn"
+            | "isExtensible"
+            | "isFrozen"
+            | "isSealed"
+            | "keys" => {
+                // An argument with its own side effects (e.g. inline `new Proxy(...)`) — keep.
+                if self.arguments.iter().any(|e| e.may_have_side_effects(ctx)) {
+                    return true;
+                }
+                // Missing or spread target → `undefined` receiver → `ToObject` throws.
+                let Some(arg) = self.arguments.first().and_then(Argument::as_expression) else {
+                    return true;
+                };
+                let value_type = arg.value_type(ctx);
+                // `null`/`undefined` → `ToObject` throws a TypeError; keep the call.
+                if value_type.is_null_or_undefined() {
+                    return true;
+                }
+                // With property reads assumed pure, the Proxy-trap concern is waived.
+                if ctx.property_read_side_effects() == PropertyReadSideEffects::None {
+                    return false;
+                }
+                // Otherwise pure only when the target is a determined, non-Proxy value (a
+                // literal object/array, or a primitive `ToObject` wraps without user code).
+                // An undetermined value could be a Proxy whose trap is observable.
+                value_type.is_undetermined()
+            }
+            // `Object.create(proto)` allocates an object with prototype `proto`; it runs
+            // no user code and is pure when `proto` is provably an object or `null`
+            // (otherwise it throws a TypeError) and there is no `properties` argument
+            // (which would be read via `[[OwnPropertyKeys]]`/`[[Get]]`).
+            "create" => {
+                if self.arguments.iter().any(|e| e.may_have_side_effects(ctx)) {
+                    return true;
+                }
+                if self.arguments.len() == 1
+                    && let Some(arg) = self.arguments[0].as_expression()
+                    && matches!(arg.value_type(ctx), ValueType::Object | ValueType::Null)
+                {
+                    return false;
+                }
+                true
+            }
+            _ => true,
+        }
     }
 }
 

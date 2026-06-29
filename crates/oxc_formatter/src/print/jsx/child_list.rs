@@ -1,4 +1,4 @@
-use oxc_allocator::{Allocator, TakeIn, Vec as ArenaVec};
+use oxc_allocator::{Allocator, ArenaVec, TakeIn};
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
@@ -558,7 +558,7 @@ struct MultilineBuilder<'a> {
 
 impl<'a> MultilineBuilder<'a> {
     fn new(layout: MultilineLayout, allocator: &'a Allocator) -> Self {
-        Self { layout, result: ArenaVec::new_in(allocator) }
+        Self { layout, result: ArenaVec::new_in(&allocator) }
     }
 
     /// Formats an element that does not require a separator
@@ -596,7 +596,7 @@ impl<'a> MultilineBuilder<'a> {
         separator: Option<&dyn Format<'a, JsFormatContext<'a>>>,
         f: &mut JsFormatter<'_, 'a>,
     ) {
-        let elements = std::mem::replace(&mut self.result, ArenaVec::new_in(f.allocator()));
+        let elements = std::mem::replace(&mut self.result, ArenaVec::new_in(f));
 
         self.result = {
             let mut buffer = VecBuffer::new_with_vec(f.state_mut(), elements);
@@ -649,8 +649,7 @@ pub struct FormatMultilineChildren<'a> {
 impl<'a> Format<'a, JsFormatContext<'a>> for FormatMultilineChildren<'a> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let format_inner = format_with(|f| {
-            if let Some(elements) = f.intern_vec(self.elements.borrow_mut().take_in(f.allocator()))
-            {
+            if let Some(elements) = f.intern_vec(self.elements.borrow_mut().take_in(f)) {
                 match self.layout {
                     MultilineLayout::Fill => f.write_elements([
                         FormatElement::Tag(Tag::StartFill),
@@ -702,7 +701,7 @@ struct FlatBuilder<'a> {
 
 impl<'a> FlatBuilder<'a> {
     fn new(disabled: bool, allocator: &'a Allocator) -> Self {
-        Self { result: ArenaVec::new_in(allocator), disabled }
+        Self { result: ArenaVec::new_in(&allocator), disabled }
     }
 
     fn write(
@@ -714,7 +713,7 @@ impl<'a> FlatBuilder<'a> {
             return;
         }
 
-        let result = std::mem::replace(&mut self.result, ArenaVec::new_in(f.allocator()));
+        let result = std::mem::replace(&mut self.result, ArenaVec::new_in(f));
 
         self.result = {
             let elements = result;
@@ -747,7 +746,7 @@ pub struct FormatFlatChildren<'a> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for FormatFlatChildren<'a> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if let Some(elements) = f.intern_vec(self.elements.borrow_mut().take_in(f.allocator())) {
+        if let Some(elements) = f.intern_vec(self.elements.borrow_mut().take_in(f)) {
             f.write_element(elements);
         }
     }

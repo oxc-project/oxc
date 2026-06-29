@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use oxc_allocator::Vec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::{
     AstKind,
     ast::{Argument, Expression, IdentifierReference, RegExpFlags, TemplateLiteral},
@@ -156,6 +156,7 @@ declare_oxc_lint!(
     pending,
     config = RequireUnicodeRegexp,
     version = "1.63.0",
+    short_description = "Enforce the use of `u` or `v` flag on regular expressions.",
 );
 
 impl Rule for RequireUnicodeRegexp {
@@ -219,7 +220,7 @@ impl RequireUnicodeRegexp {
 }
 
 fn extract_regex_flags<'a>(
-    args: &'a Vec<'a, Argument<'a>>,
+    args: &'a ArenaVec<'a, Argument<'a>>,
     ctx: &LintContext<'a>,
 ) -> Option<RegExpFlags> {
     if args.iter().any(oxc_ast::ast::Argument::is_spread) {

@@ -90,6 +90,7 @@ declare_oxc_lint!(
     dangerous_suggestion,
     config = NoExtraneousClass,
     version = "0.7.0",
+    short_description = "Disallow classes used as namespaces.",
 );
 
 fn empty_class_diagnostic(span: Span, has_decorators: bool) -> OxcDiagnostic {

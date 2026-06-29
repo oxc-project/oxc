@@ -7,7 +7,7 @@ use std::{
     sync::Arc,
 };
 
-use oxc_allocator::Box as ArenaBox;
+use oxc_allocator::ArenaBox;
 use oxc_diagnostics::{OxcDiagnostic, Severity};
 use oxc_parser::Token;
 use oxc_semantic::Semantic;
@@ -184,7 +184,7 @@ impl<'a> ContextHost<'a> {
         options: LintOptions,
         config: Arc<LintConfig>,
     ) -> Self {
-        const DIAGNOSTICS_INITIAL_CAPACITY: usize = 512;
+        const DIAGNOSTICS_INITIAL_CAPACITY: usize = 16;
 
         assert!(
             !sub_hosts.is_empty(),

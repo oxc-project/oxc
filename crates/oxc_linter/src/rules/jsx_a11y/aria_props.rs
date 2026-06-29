@@ -5,8 +5,11 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    AstNode, context::LintContext, globals::is_valid_aria_property, rule::Rule,
-    utils::get_jsx_attribute_name,
+    AstNode,
+    context::LintContext,
+    globals::is_valid_aria_property,
+    rule::Rule,
+    utils::{get_jsx_attribute_name, starts_with_ignore_case},
 };
 
 fn aria_props_diagnostic(span: Span, prop_name: &str, suggestion: Option<&str>) -> OxcDiagnostic {
@@ -53,24 +56,33 @@ declare_oxc_lint!(
     correctness,
     conditional_fix,
     version = "0.0.22",
+    short_description = "Enforces that elements do not use invalid ARIA attributes.",
 );
 
 impl Rule for AriaProps {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::JSXAttribute(attr) = node.kind() {
-            let name = get_jsx_attribute_name(&attr.name);
-            let name = name.cow_to_ascii_lowercase();
-            if name.starts_with("aria-") && !is_valid_aria_property(&name) {
-                let suggestion = get_common_aria_prop_typo(&name);
-                let diagnostic = aria_props_diagnostic(attr.span, &name, suggestion);
+        let AstKind::JSXAttribute(attr) = node.kind() else {
+            return;
+        };
+        let name = get_jsx_attribute_name(&attr.name);
+        // Only `aria-*` attributes can be diagnosed here. Check the prefix without
+        // allocating so the common non-ARIA attribute (including camelCase names like
+        // `className`/`onClick`, which would otherwise allocate a lowercased copy)
+        // short-circuits before the lowercasing.
+        if !starts_with_ignore_case(&name, "aria-") {
+            return;
+        }
+        let name = name.cow_to_ascii_lowercase();
+        if !is_valid_aria_property(&name) {
+            let suggestion = get_common_aria_prop_typo(&name);
+            let diagnostic = aria_props_diagnostic(attr.span, &name, suggestion);
 
-                if let Some(suggestion) = suggestion {
-                    ctx.diagnostic_with_fix(diagnostic, |fixer| {
-                        fixer.replace(attr.name.span(), suggestion)
-                    });
-                } else {
-                    ctx.diagnostic(diagnostic);
-                }
+            if let Some(suggestion) = suggestion {
+                ctx.diagnostic_with_fix(diagnostic, |fixer| {
+                    fixer.replace(attr.name.span(), suggestion)
+                });
+            } else {
+                ctx.diagnostic(diagnostic);
             }
         }
     }

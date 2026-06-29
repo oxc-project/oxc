@@ -75,68 +75,22 @@ impl Generator for AstBuilderGenerator {
 
             //!@@line_break
             #![allow(unused_imports)]
-            #![expect(
-                clippy::default_trait_access,
-                clippy::unused_self,
-            )]
+            #![expect(deprecated, clippy::default_trait_access, clippy::unused_self)]
 
             ///@@line_break
             use std::cell::Cell;
 
             ///@@line_break
-            use oxc_allocator::{Allocator, Box, IntoIn, Vec};
+            use oxc_allocator::{Allocator, ArenaBox, ArenaVec, GetAllocator, IntoIn};
+            use oxc_str::{Ident, Str};
             use oxc_syntax::{scope::ScopeId, symbol::SymbolId, reference::ReferenceId};
 
             ///@@line_break
-            use oxc_str::{Ident, Str};
-
-            ///@@line_break
-            use crate::{AstBuilder, ast::*};
+            use crate::{ast::*, builder::AstBuilder};
 
             ///@@line_break
             impl<'a> AstBuilder<'a> {
                 #fns
-            }
-
-            ///@@line_break
-            /// Escape special characters for template element raw value.
-            ///
-            /// Escapes: backticks, `${`, backslashes, and carriage returns.
-            fn escape_template_element_raw<'a>(raw: &str, ast: AstBuilder<'a>) -> Str<'a> {
-                let bytes = raw.as_bytes();
-                // Calculate size needed for escaped string
-                let mut extra_bytes = 0usize;
-                for i in 0..bytes.len() {
-                    extra_bytes += match bytes[i] {
-                        b'\\' | b'`' | b'\r' => 1,
-                        b'$' if bytes.get(i + 1) == Some(&b'{') => 1,
-                        _ => 0,
-                    };
-                }
-                if extra_bytes == 0 {
-                    return ast.str(raw);
-                }
-                // Allocate directly in arena
-                let len = bytes.len() + extra_bytes;
-                let layout = std::alloc::Layout::array::<u8>(len).unwrap();
-                let ptr = ast.allocator.alloc_layout(layout);
-                // SAFETY: `ptr` points to `len` bytes of valid memory allocated by the arena.
-                // Input is valid UTF-8, we only escape ASCII bytes, so output is also valid UTF-8.
-                #[expect(clippy::undocumented_unsafe_blocks)]
-                unsafe {
-                    let escaped = std::slice::from_raw_parts_mut(ptr.as_ptr(), len);
-                    let mut j = 0;
-                    for i in 0..bytes.len() {
-                        match bytes[i] {
-                            b'\\' => { *escaped.get_unchecked_mut(j) = b'\\'; *escaped.get_unchecked_mut(j + 1) = b'\\'; j += 2; }
-                            b'`' => { *escaped.get_unchecked_mut(j) = b'\\'; *escaped.get_unchecked_mut(j + 1) = b'`'; j += 2; }
-                            b'$' if bytes.get(i + 1) == Some(&b'{') => { *escaped.get_unchecked_mut(j) = b'\\'; *escaped.get_unchecked_mut(j + 1) = b'$'; j += 2; }
-                            b'\r' => { *escaped.get_unchecked_mut(j) = b'\\'; *escaped.get_unchecked_mut(j + 1) = b'r'; j += 2; }
-                            b => { *escaped.get_unchecked_mut(j) = b; j += 1; }
-                        }
-                    }
-                    Str::from(std::str::from_utf8_unchecked(escaped))
-                }
             }
         };
 
@@ -161,9 +115,9 @@ struct Param<'d> {
     is_node_id: bool,
     /// * `None` if param is not generic.
     /// * `Some(GenericType::Into)` if is generic and uses `Into`
-    ///   e.g. `name: A where A: Into<Str<'a>>`.
+    ///   e.g. `name: S1 where S1: Into<Str<'a>>`.
     /// * `Some(GenericType::IntoIn)` if is generic and uses `IntoIn`
-    ///   e.g. `type_annotation: T1 where T1: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>`.
+    ///   e.g. `type_annotation: T1 where T1: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>`.
     generic_type: Option<GenericType>,
 }
 
@@ -303,32 +257,14 @@ fn generate_builder_methods_for_struct_impl(
 
     let params_docs = generate_doc_comment_for_params(params);
 
-    // Special case for TemplateElement: add `escape_raw` parameter
-    let (extra_params, body) = if struct_name == "TemplateElement" {
-        let extra_params = quote! { , escape_raw: bool };
-        let body = quote! {
-            let value = if escape_raw {
-                TemplateElementValue {
-                    raw: escape_template_element_raw(value.raw.as_str(), self),
-                    cooked: value.cooked,
-                }
-            } else {
-                value
-            };
-            #struct_ident { #fields }
-        };
-        (extra_params, body)
-    } else {
-        (quote! {}, quote! { #struct_ident { #fields } })
-    };
-
     let method = quote! {
         ///@@line_break
         #fn_docs
         #params_docs
+        #[deprecated(note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043")]
         #[inline]
-        pub fn #fn_name #generic_params (self, #fn_params #extra_params) -> #struct_ty #where_clause {
-            #body
+        pub fn #fn_name #generic_params (self, #fn_params) -> #struct_ty #where_clause {
+            #struct_ident { #fields }
         }
     };
 
@@ -347,12 +283,13 @@ fn generate_builder_methods_for_struct_impl(
         ///@@line_break
         #[doc = #alloc_doc1]
         #[doc = ""]
-        #[doc = " Returns a [`Box`] containing the newly-allocated node."]
+        #[doc = " Returns a [`Box`](ArenaBox) containing the newly-allocated node."]
         #[doc = #alloc_doc2]
         #params_docs
+        #[deprecated(note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043")]
         #[inline]
-        pub fn #alloc_fn_name #generic_params (self, #fn_params) -> Box<'a, #struct_ty> #where_clause {
-            Box::new_in(self.#fn_name(#(#args),*), self.allocator)
+        pub fn #alloc_fn_name #generic_params (self, #fn_params) -> ArenaBox<'a, #struct_ty> #where_clause {
+            ArenaBox::new_in(self.#fn_name(#(#args),*), &self)
         }
     }
 }
@@ -364,8 +301,8 @@ fn generate_builder_methods_for_struct_impl(
 /// ```
 /// //        ↓↓↓↓ generic params
 /// pub fn foo<T1>(self, span: Span, type_parameters: T1) -> Foo<'a>
-///     where T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>> {}
-/// //  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ where clause
+///     where T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>> {}
+/// //  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ where clause
 /// ```
 fn get_struct_params<'s>(
     struct_def: &'s StructDef,
@@ -409,7 +346,7 @@ fn get_struct_params<'s>(
                     if matches!(primitive_def.name(), "Str" | "Ident") =>
                 {
                     str_generic_count += 1;
-                    Some((format_ident!("A{str_generic_count}"), GenericType::Into))
+                    Some((format_ident!("S{str_generic_count}"), GenericType::Into))
                 }
                 TypeDef::Box(_) => {
                     generic_count += 1;
@@ -461,11 +398,11 @@ fn get_struct_params<'s>(
 
 /// Get function params and fields for a struct builder method.
 ///
-/// Omit default fields from function params if `include_default_fields == true`.
+/// Omit default fields from function params if `include_default_fields == false`.
 ///
 /// ```
-/// //         ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ function params
-/// pub fn foo(span: Span, bar: Bar<'a>) -> Foo<'a> {
+/// //               ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ function params
+/// pub fn foo(self, span: Span, bar: Bar<'a>) -> Foo<'a> {
 ///     Bar { span, bar }
 /// //        ^^^^^^^^^ fields
 /// }
@@ -498,7 +435,7 @@ fn get_struct_fn_params_and_fields(
         let field = match param.generic_type {
             Some(GenericType::Into) => quote!( #param_ident: #param_ident.into() ),
             Some(GenericType::IntoIn) => {
-                quote!( #param_ident: #param_ident.into_in(self.allocator) )
+                quote!( #param_ident: #param_ident.into_in(self.allocator()) )
             }
             None => quote!( #param_ident ),
         };
@@ -643,6 +580,7 @@ fn generate_builder_method_for_enum_variant_impl(
         ///@@line_break
         #fn_docs
         #params_docs
+        #[deprecated(note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043")]
         #[inline]
         pub fn #fn_name #generic_params(self, #(#fn_params),*) -> #enum_ty #where_clause {
             #enum_ident::#variant_ident(self.#inner_builder_name(#(#args),*))

@@ -87,9 +87,6 @@ pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
         AstKind::MethodDefinition(method) => {
             ts::check_method_definition(method, ctx);
         }
-        AstKind::ObjectProperty(prop) => {
-            ts::check_object_property(prop, ctx);
-        }
         AstKind::Super(sup) => js::check_super(sup, ctx),
 
         AstKind::FormalParameters(params) => {
@@ -107,12 +104,10 @@ pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
             js::check_variable_declarator_redeclaration(decl, ctx);
         }
         AstKind::TSTypeAnnotation(annot) => ts::check_ts_type_annotation(annot, ctx),
-        AstKind::TSInterfaceDeclaration(decl) => ts::check_ts_interface_declaration(decl, ctx),
-        AstKind::TSTypeParameter(param) => ts::check_ts_type_parameter(param, ctx),
+        AstKind::TSTypePredicate(predicate) => ts::check_ts_type_predicate(predicate, ctx),
         AstKind::TSModuleDeclaration(decl) => ts::check_ts_module_declaration(decl, ctx),
         AstKind::TSGlobalDeclaration(decl) => ts::check_ts_global_declaration(decl, ctx),
         AstKind::TSEnumDeclaration(decl) => ts::check_ts_enum_declaration(decl, ctx),
-        AstKind::TSTypeAliasDeclaration(decl) => ts::check_ts_type_alias_declaration(decl, ctx),
         AstKind::TSInferType(infer_type) => ts::check_ts_infer_type(infer_type, ctx),
         _ => {}
     }

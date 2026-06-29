@@ -223,9 +223,9 @@ impl Oxc {
             preserve_parens: parser_options.preserve_parens,
             allow_v8_intrinsics: parser_options.allow_v8_intrinsics,
         };
-        let ParserReturn { program, errors, module_record, .. } =
+        let ParserReturn { program, diagnostics, module_record, .. } =
             Parser::new(allocator, source_text, source_type).with_options(parser_options).parse();
-        self.diagnostics.extend(errors);
+        self.diagnostics.extend(diagnostics);
         (program, module_record)
     }
 
@@ -236,7 +236,7 @@ impl Oxc {
         parser_options: &OxcParserOptions,
         control_flow_options: &OxcControlFlowOptions,
     ) -> oxc::semantic::Semantic<'a> {
-        let mut semantic_builder = SemanticBuilder::new_compiler();
+        let mut semantic_builder = SemanticBuilder::new_compiler().with_build_nodes(true);
         if run_options.transform {
             // Estimate transformer will triple scopes, symbols, references
             semantic_builder = semantic_builder.with_excess_capacity(2.0).with_enum_eval(true);
@@ -245,7 +245,7 @@ impl Oxc {
             .with_check_syntax_error(parser_options.semantic_errors)
             .with_cfg(run_options.cfg)
             .build(program);
-        self.diagnostics.extend(semantic_ret.errors);
+        self.diagnostics.extend(semantic_ret.diagnostics);
 
         self.control_flow_graph = semantic_ret.semantic.cfg().map_or_else(String::default, |cfg| {
             cfg.debug_dot(DebugDotContext::new(
@@ -270,10 +270,10 @@ impl Oxc {
             .map(|o| IsolatedDeclarationsOptions { strip_internal: o.strip_internal })
             .unwrap_or_default();
         let ret = IsolatedDeclarations::new(allocator, id_options).build(program);
-        if ret.errors.is_empty() {
+        if ret.diagnostics.is_empty() {
             self.codegen(path, &ret.program, None, run_options, codegen_options);
         } else {
-            self.diagnostics.extend(ret.errors);
+            self.diagnostics.extend(ret.diagnostics);
             self.codegen_text = String::new();
             self.codegen_sourcemap_text = None;
         }
@@ -308,7 +308,7 @@ impl Oxc {
         options.typescript.optimize_const_enums = transform_options.optimize_const_enums;
         let result =
             Transformer::new(allocator, path, &options).build_with_scoping(scoping, program);
-        self.diagnostics.extend(result.errors);
+        self.diagnostics.extend(result.diagnostics);
         result.scoping
     }
 
@@ -360,7 +360,7 @@ impl Oxc {
         self.ir = format!("{:#?}", program.body);
         let mut comments = convert_utf8_to_utf16(source_text, program, module_record, &mut []);
 
-        self.ast_json = if source_type.is_javascript() {
+        if source_type.is_javascript() {
             // Add hashbang to start of comments
             if let Some(hashbang) = &program.hashbang {
                 comments.insert(
@@ -373,11 +373,10 @@ impl Oxc {
                     },
                 );
             }
+        }
 
-            program.to_pretty_estree_js_json_with_fixes(false)
-        } else {
-            program.to_pretty_estree_ts_json_with_fixes(false)
-        };
+        let include_ts_fields = !source_type.is_javascript();
+        self.ast_json = program.to_pretty_estree_json_with_fixes(include_ts_fields, false);
         self.comments = comments;
     }
 
@@ -393,8 +392,7 @@ impl Oxc {
         // Only lint if there are no syntax errors
         if run_options.lint && self.diagnostics.is_empty() {
             let mut external_plugin_store = ExternalPluginStore::default();
-            let semantic_ret =
-                SemanticBuilder::new().with_cfg(true).with_class_table(true).build(program);
+            let semantic_ret = SemanticBuilder::new_linter().build(program);
             let semantic = semantic_ret.semantic;
             let lint_config = if let Some(config) = &linter_options.config {
                 let oxlintrc = Oxlintrc::from_string(config).unwrap_or_default();

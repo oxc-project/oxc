@@ -1,4 +1,4 @@
-use oxc_allocator::Vec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
@@ -40,7 +40,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, SwitchStatement<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Vec<'a, SwitchCase<'a>>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, SwitchCase<'a>>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         f.join_nodes_with_hardline().entries(self);
     }

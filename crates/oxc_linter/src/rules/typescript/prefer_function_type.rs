@@ -87,6 +87,7 @@ declare_oxc_lint!(
     style,
     conditional_fix,
     version = "0.2.11",
+    short_description = "Enforce using function types instead of interfaces with call signatures.",
 );
 
 fn has_one_super_type(decl: &TSInterfaceDeclaration) -> bool {
@@ -289,7 +290,7 @@ impl Rule for PreferFunctionType {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::TSInterfaceDeclaration(decl) => {
-                let body: &oxc_allocator::Vec<'_, TSSignature<'_>> = &decl.body.body;
+                let body = &decl.body.body;
 
                 if !has_one_super_type(decl) && body.len() == 1 {
                     check_member(&body[0], node, ctx);

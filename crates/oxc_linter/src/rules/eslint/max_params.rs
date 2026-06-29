@@ -31,7 +31,7 @@ pub struct MaxParams(Box<MaxParamsConfig>);
 pub struct MaxParamsConfig {
     /// Maximum number of parameters allowed in function definitions.
     #[serde(alias = "maximum")]
-    max: usize,
+    max: u32,
     /// This option controls when to count a `this` parameter.
     ///
     /// - "always": always count `this`
@@ -71,18 +71,6 @@ impl Default for MaxParamsConfig {
     }
 }
 
-#[cfg(feature = "ruledocs")]
-impl MaxParams {
-    #[expect(clippy::unnecessary_wraps)]
-    pub fn config_schema(
-        r#gen: &mut schemars::r#gen::SchemaGenerator,
-    ) -> Option<schemars::schema::Schema> {
-        let mut schema = r#gen.subschema_for::<MaxParamsConfig>();
-        crate::utils::number_as_object_schema(r#gen, &mut schema, None);
-        Some(schema)
-    }
-}
-
 impl MaxParamsConfig {
     fn count_this(&self) -> CountThis {
         self.count_this.unwrap_or(if self.count_void_this {
@@ -91,6 +79,14 @@ impl MaxParamsConfig {
             CountThis::ExceptVoid
         })
     }
+}
+
+#[derive(Debug, JsonSchema, Deserialize)]
+#[serde(untagged)]
+#[expect(unused)]
+enum MaxParamsConfigEnum {
+    Number(u32),
+    Object(MaxParamsConfig),
 }
 
 impl MaxParams {
@@ -102,8 +98,9 @@ impl MaxParams {
         }
     }
 
-    fn ts_function_type_param_count(&self, function: &TSFunctionType) -> usize {
-        let mut real_len = function.params.items.len();
+    #[expect(clippy::cast_possible_truncation)] // the length of parameters can't be over u32::MAX, because the source code is already limited by u32::MAX.
+    fn ts_function_type_param_count(&self, function: &TSFunctionType) -> u32 {
+        let mut real_len = function.params.items.len() as u32;
         if let Some(this_params) = &function.this_param {
             let is_void_this = this_params
                 .type_annotation
@@ -161,8 +158,9 @@ declare_oxc_lint!(
     MaxParams,
     eslint,
     style,
-    config = MaxParamsConfig,
+    config = MaxParamsConfigEnum,
     version = "0.2.14",
+    short_description = "Enforce a maximum number of parameters in function definitions which by default is three.",
 );
 
 impl Rule for MaxParams {
@@ -171,7 +169,7 @@ impl Rule for MaxParams {
             .get(0)
             .and_then(Value::as_number)
             .and_then(serde_json::Number::as_u64)
-            .and_then(|v| usize::try_from(v).ok())
+            .and_then(|v| u32::try_from(v).ok())
         {
             Ok(Self(Box::new(MaxParamsConfig { max, ..MaxParamsConfig::default() })))
         } else {
@@ -180,6 +178,7 @@ impl Rule for MaxParams {
         }
     }
 
+    #[expect(clippy::cast_possible_truncation)] // the length of parameters can't be over u32::MAX, because the source code is already limited by u32::MAX.
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::Function(function) => {
@@ -187,7 +186,7 @@ impl Rule for MaxParams {
                     return;
                 }
                 let params = &function.params;
-                let mut real_len = params.items.len();
+                let mut real_len = params.items.len() as u32;
                 if let Some(this_params) = &function.this_param {
                     let is_void_this = this_params
                         .type_annotation
@@ -218,7 +217,7 @@ impl Rule for MaxParams {
                 }
             }
             AstKind::ArrowFunctionExpression(function)
-                if function.params.items.len() > self.max =>
+                if function.params.items.len() as u32 > self.max =>
             {
                 let error_msg = format!(
                     "Arrow function has too many parameters ({}). Maximum allowed is {}.",

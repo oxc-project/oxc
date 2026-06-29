@@ -4,6 +4,28 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.137.0] - 2026-06-18
+
+### 💥 BREAKING CHANGES
+
+- 7a76cd3 estree: [**BREAKING**] Make whether to include TS fields a runtime option (#23574) (overlookmotel)
+- e7b6b68 estree: [**BREAKING**] `ESTree` config use methods not consts (#23573) (overlookmotel)
+
+## [0.135.0] - 2026-06-08
+
+### 💥 BREAKING CHANGES
+
+- 4c35362 ast: [**BREAKING**] Add `AstBuilder::template_element_escape_raw` and `template_element_escape_raw_with_lone_surrogates` methods (#23047) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 4e44969 ast: Fix UB in `escape_template_element_raw` (#23052) (overlookmotel)
+- 786d96f codegen: Give `TSTypeAssertion` unary precedence (#23002) (Boshen)
+
+### ⚡ Performance
+
+- 1f9d8eb ast: `AstBuilder::template_element_escape_raw` avoid allocation if no escape required (#23053) (overlookmotel)
+
 ## [0.134.0] - 2026-06-01
 
 ### 🚀 Features

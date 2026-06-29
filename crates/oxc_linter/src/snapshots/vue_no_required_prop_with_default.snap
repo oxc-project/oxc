@@ -214,3 +214,12 @@ source: crates/oxc_linter/src/tester.rs
  7 │                           });
    ╰────
   help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.
+
+  ⚠ vue(no-required-prop-with-default): Prop "name" should be optional.
+   ╭─[no_required_prop_with_default.tsx:4:25]
+ 3 │                       type TestPropType = {
+ 4 │                         name: string
+   ·                         ────────────
+ 5 │                         age?: number
+   ╰────
+  help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.

@@ -88,6 +88,7 @@ declare_oxc_lint!(
     pending,
     config = NoDeprecatedModelDefinition,
     version = "1.63.0",
+    short_description = "Disallow deprecated `model` definition (in Vue.js 3.0.0+).",
 );
 
 impl Rule for NoDeprecatedModelDefinition {

@@ -18,6 +18,7 @@ doctest = false
 
 [dependencies]
 oxc_allocator = { workspace = true }
+oxc_ast = { workspace = true, features = ["disable_old_builder"] }
 oxc_codegen = { workspace = true, features = ["sourcemap"] }
 oxc_minifier = { workspace = true }
 oxc_parser = { workspace = true }
@@ -32,3 +33,7 @@ humansize = { workspace = true }
 pico-args = { workspace = true }
 rustc-hash = { workspace = true }
 similar-asserts = { workspace = true }
+
+# `oxc_ast` is a feature-only dependency, to enable its `disable_old_builder` feature
+[package.metadata.cargo-shear]
+ignored = ["oxc_ast"]

@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use oxc_allocator::Vec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 use oxc_syntax::identifier::ZWNBSP;
@@ -45,10 +45,12 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Program<'a>> {
     }
 }
 
-pub(super) struct FormatStatementsWithImports<'a, 'b>(pub &'b AstNode<'a, Vec<'a, Statement<'a>>>);
+pub(super) struct FormatStatementsWithImports<'a, 'b>(
+    pub &'b AstNode<'a, ArenaVec<'a, Statement<'a>>>,
+);
 
 impl<'a> Deref for FormatStatementsWithImports<'a, '_> {
-    type Target = AstNode<'a, Vec<'a, Statement<'a>>>;
+    type Target = AstNode<'a, ArenaVec<'a, Statement<'a>>>;
     fn deref(&self) -> &Self::Target {
         self.0
     }
@@ -172,7 +174,7 @@ fn is_import_suppressed(stmt: &AstNode<'_, Statement<'_>>, f: &JsFormatter<'_, '
     comments.is_suppressed(span.start) || comments.has_trailing_suppression_comment(span.end)
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Vec<'a, Directive<'a>>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, Directive<'a>>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let Some(last_directive) = self.last() else {
             // No directives, no extra new line

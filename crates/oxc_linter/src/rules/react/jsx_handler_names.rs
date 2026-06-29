@@ -12,7 +12,10 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_str::CompactStr;
-use schemars::JsonSchema;
+use schemars::{
+    JsonSchema, SchemaGenerator,
+    schema::{Schema, SchemaObject, SubschemaValidation},
+};
 use serde_json::Value;
 
 fn bad_handler_name_diagnostic(
@@ -53,22 +56,56 @@ fn bad_handler_prop_name_diagnostic(
 pub struct JsxHandlerNames(Box<JsxHandlerNamesConfig>);
 
 #[derive(Debug, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct JsxHandlerNamesConfig {
     /// Whether to check for inline functions in JSX attributes.
+    #[serde(rename = "checkInlineFunction")]
     check_inline_functions: bool,
     /// Whether to check for local variables in JSX attributes.
     check_local_variables: bool,
     /// Event handler prop prefixes to check against.
+    #[serde(rename = "eventHandlerPropPrefix")]
+    #[schemars(with = "HandlerPrefix")]
     event_handler_prop_prefixes: CompactStr,
     /// Event handler prefixes to check against.
+    #[serde(rename = "eventHandlerPrefix")]
+    #[schemars(with = "HandlerPrefix")]
     event_handler_prefixes: CompactStr,
     /// Component names to ignore when checking for event handler prefixes.
     ignore_component_names: Vec<CompactStr>,
     /// Compiled regex for event handler prefixes.
+    #[schemars(skip)]
     event_handler_regex: Option<Regex>,
     /// Compiled regex for event handler prop prefixes.
+    #[schemars(skip)]
     event_handler_prop_regex: Option<Regex>,
+}
+
+#[derive(Debug)]
+struct HandlerPrefix;
+
+impl JsonSchema for HandlerPrefix {
+    fn schema_name() -> String {
+        "HandlerPrefix".to_string()
+    }
+
+    fn json_schema(r#gen: &mut SchemaGenerator) -> Schema {
+        let mut false_schema = <bool as JsonSchema>::json_schema(r#gen).into_object();
+        false_schema.const_value = Some(serde_json::Value::Bool(false));
+
+        SchemaObject {
+            subschemas: Some(Box::new(SubschemaValidation {
+                any_of: Some(vec![<String as JsonSchema>::json_schema(r#gen), false_schema.into()]),
+                ..Default::default()
+            })),
+            ..Default::default()
+        }
+        .into()
+    }
+
+    fn is_referenceable() -> bool {
+        false
+    }
 }
 
 impl std::ops::Deref for JsxHandlerNames {
@@ -106,6 +143,7 @@ declare_oxc_lint!(
     style,
     config = JsxHandlerNamesConfig,
     version = "1.13.0",
+    short_description = "Ensures that any component or prop methods used to handle events are correctly prefixed.",
 );
 
 fn build_event_handler_regex(handler_prefix: &str, handler_prop_prefix: &str) -> Option<Regex> {

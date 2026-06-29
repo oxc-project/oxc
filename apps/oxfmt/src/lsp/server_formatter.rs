@@ -4,12 +4,12 @@ use std::{
 };
 
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
-use tower_lsp_server::ls_types::{Pattern, Position, Range, ServerCapabilities, TextEdit, Uri};
+use tower_lsp_server::ls_types::{Pattern, Range, ServerCapabilities, TextEdit, Uri};
 use tracing::{debug, error, warn};
 
-use oxc_data_structures::rope::{Rope, get_line_column};
 use oxc_language_server::{
     Capabilities, LanguageId, TextDocument, Tool, ToolBuilder, ToolRestartChanges,
+    offset_to_position, utils::normalize_user_config_path_to_watch_pattern,
 };
 
 use crate::core::{
@@ -169,7 +169,7 @@ impl Tool for ServerFormatter {
 
         let mut patterns: Vec<Pattern> =
             if let Some(config_path) = options.config_path.as_ref().filter(|s| !s.is_empty()) {
-                vec![config_path.clone()]
+                vec![normalize_user_config_path_to_watch_pattern(config_path)]
             } else {
                 // Watch for config files in all subdirectories (nested config support)
                 config_discovery()
@@ -249,15 +249,11 @@ impl Tool for ServerFormatter {
                 }
 
                 let (start, end, replacement) = compute_minimal_text_edit(source_text, &code);
-                let rope = Rope::from(source_text);
-                let (start_line, start_character) = get_line_column(&rope, start, source_text);
-                let (end_line, end_character) = get_line_column(&rope, end, source_text);
+                let start_position = offset_to_position(source_text, start);
+                let end_position = offset_to_position(source_text, end);
 
                 Ok(vec![TextEdit::new(
-                    Range::new(
-                        Position::new(start_line, start_character),
-                        Position::new(end_line, end_character),
-                    ),
+                    Range::new(start_position, end_position),
                     replacement.to_string(),
                 )])
             }
@@ -441,6 +437,8 @@ fn deserialize_lsp_options(value: serde_json::Value) -> LSPFormatOptions {
 }
 
 /// Returns the minimal text edit (start, end, replacement) to transform `source_text` into `formatted_text`
+///
+/// Respects EOL characters as a whole edit. Appending `\r` before `\n` is invalid and should be treated as a single edit replacing `\n` with `\r\n`.
 #[expect(clippy::cast_possible_truncation)]
 fn compute_minimal_text_edit<'a>(
     source_text: &str,
@@ -465,10 +463,25 @@ fn compute_minimal_text_edit<'a>(
     let src_len = src_bytes.len();
     let fmt_len = fmt_bytes.len();
 
-    while suffix_byte < src_len - prefix_byte
-        && suffix_byte < fmt_len - prefix_byte
-        && src_bytes[src_len - 1 - suffix_byte] == fmt_bytes[fmt_len - 1 - suffix_byte]
-    {
+    while suffix_byte < src_len - prefix_byte && suffix_byte < fmt_len - prefix_byte {
+        let src_idx = src_len - 1 - suffix_byte;
+        let fmt_idx = fmt_len - 1 - suffix_byte;
+
+        // Prevents appending `\r` to a line ending in `\n`, instead we want to replace `\n` with `\r\n` in this case,
+        // aligning how LSP text documents are represented (line / column editing, instead of bytes).
+        if src_bytes[src_idx] == b'\n' && fmt_bytes[fmt_idx] == b'\n' {
+            let src_has_cr = src_idx > 0 && src_bytes[src_idx - 1] == b'\r';
+            let fmt_has_cr = fmt_idx > 0 && fmt_bytes[fmt_idx - 1] == b'\r';
+
+            if src_has_cr != fmt_has_cr {
+                break;
+            }
+        }
+
+        if src_bytes[src_idx] != fmt_bytes[fmt_idx] {
+            break;
+        }
+
         suffix_byte += 1;
     }
 
@@ -515,6 +528,7 @@ mod tests_builder {
 #[cfg(test)]
 mod tests {
     use super::compute_minimal_text_edit;
+    use oxc_language_server::offset_to_position;
 
     #[test]
     #[should_panic(expected = "assertion failed")]
@@ -578,6 +592,20 @@ mod tests {
     }
 
     #[test]
+    fn test_lsp_edit_range_ignores_unicode_line_separators() {
+        let src = "a\u{2028}b\u{2029}c \nnext";
+        let formatted = "a\u{2028}b\u{2029}c\nnext";
+        let (start, end, replacement) = compute_minimal_text_edit(src, formatted);
+
+        let start_position = offset_to_position(src, start);
+        let end_position = offset_to_position(src, end);
+
+        assert_eq!((start_position.line, start_position.character), (0, 5));
+        assert_eq!((end_position.line, end_position.character), (0, 6));
+        assert_eq!(replacement, "");
+    }
+
+    #[test]
     fn test_append() {
         let src = "a".repeat(100);
         let mut formatted = src.clone();
@@ -595,5 +623,24 @@ mod tests {
 
         let (start, end, replacement) = compute_minimal_text_edit(&src, &formatted);
         assert_eq!((start, end, replacement), (0, 0, "b"));
+    }
+
+    #[test]
+    #[expect(clippy::cast_possible_truncation)]
+    fn test_replacing_line_breaks() {
+        let src_lf = "line1\nline2\nline3";
+        let src_crlf = "line1\r\nline2\r\nline3";
+
+        // from LF to CRLF
+        {
+            let (start, end, replacement) = compute_minimal_text_edit(src_lf, src_crlf);
+            assert_eq!((start, end, replacement), (5, src_lf.len() as u32 - 5, "\r\nline2\r\n"));
+        }
+
+        // from CRLF to LF
+        {
+            let (start, end, replacement) = compute_minimal_text_edit(src_crlf, src_lf);
+            assert_eq!((start, end, replacement), (5, src_crlf.len() as u32 - 5, "\nline2\n"));
+        }
     }
 }

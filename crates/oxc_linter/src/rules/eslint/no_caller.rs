@@ -73,6 +73,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     version = "0.0.3",
+    short_description = "Disallow the use of `arguments.caller` or `arguments.callee`.",
 );
 
 impl Rule for NoCaller {

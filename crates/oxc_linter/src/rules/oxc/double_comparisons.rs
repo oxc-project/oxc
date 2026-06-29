@@ -45,6 +45,7 @@ declare_oxc_lint!(
     correctness,
     suggestion,
     version = "0.0.22",
+    short_description = "This rule checks for double comparisons in logical expressions.",
 );
 
 impl Rule for DoubleComparisons {

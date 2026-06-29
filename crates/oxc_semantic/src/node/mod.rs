@@ -1,6 +1,10 @@
+mod ancestry;
 mod nodes;
+mod store;
 
+pub use ancestry::{Ancestry, AncestryStack};
 pub use nodes::AstNodes;
+pub use store::{AstNodeStore, AstNodeStoreKind};
 
 use oxc_allocator::{Address, GetAddress};
 use oxc_ast::AstKind;

@@ -799,7 +799,9 @@ fn test_whitespace() {
     test_minify("x + y--", "x+y--;");
     test_minify("x - y--", "x-y--;");
 
-    test_minify("x-- > y", "x-- >y;");
+    // `-->` is only an HTML close comment at the start of a line, and `x--` always
+    // has an operand before it, so no space is needed.
+    test_minify("x-- > y", "x-->y;");
     test_minify("x < !--y", "x<! --y;");
     test_minify("x > !--y", "x>!--y;");
     test_minify("!--y", "!--y;");

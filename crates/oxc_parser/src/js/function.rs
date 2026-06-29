@@ -1,4 +1,4 @@
-use oxc_allocator::{Box, Vec};
+use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 
@@ -28,7 +28,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
     }
 
-    pub(crate) fn parse_function_body(&mut self) -> Box<'a, FunctionBody<'a>> {
+    pub(crate) fn parse_function_body(&mut self) -> ArenaBox<'a, FunctionBody<'a>> {
         let span = self.start_span();
         let opening_span = self.cur_token().span();
         self.expect(Kind::LCurly);
@@ -39,14 +39,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         });
 
         self.expect_closing(Kind::RCurly, opening_span);
-        self.ast.alloc_function_body(self.end_span(span), directives, statements)
+        FunctionBody::boxed(self.end_span(span), directives, statements, self)
     }
 
     pub(crate) fn parse_formal_parameters(
         &mut self,
         func_kind: FunctionKind,
         params_kind: FormalParameterKind,
-    ) -> (Option<TSThisParameter<'a>>, Box<'a, FormalParameters<'a>>) {
+    ) -> (Option<TSThisParameter<'a>>, ArenaBox<'a, FormalParameters<'a>>) {
         let span = self.start_span();
         let opening_span = self.cur_token().span();
         self.expect(Kind::LParen);
@@ -61,7 +61,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.expect(Kind::RParen);
 
         let formal_parameters =
-            self.ast.alloc_formal_parameters(self.end_span(span), params_kind, list, rest);
+            FormalParameters::boxed(self.end_span(span), params_kind, list, rest, self);
         (this_param, formal_parameters)
     }
 
@@ -69,10 +69,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         func_kind: FunctionKind,
         opening_span: Span,
-    ) -> (oxc_allocator::Vec<'a, FormalParameter<'a>>, Option<Box<'a, FormalParameterRest<'a>>>)
-    {
-        let mut list = self.ast.vec();
-        let mut rest: Option<Box<'a, FormalParameterRest<'a>>> = None;
+    ) -> (ArenaVec<'a, FormalParameter<'a>>, Option<ArenaBox<'a, FormalParameterRest<'a>>>) {
+        let mut list = ArenaVec::new_in(self);
+        let mut rest: Option<ArenaBox<'a, FormalParameterRest<'a>>> = None;
         let mut first = true;
 
         loop {
@@ -136,11 +135,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     }
                 }
 
-                rest = Some(self.ast.alloc_formal_parameter_rest(
+                rest = Some(FormalParameterRest::boxed(
                     self.end_span(span),
                     decorators,
                     rest_element,
                     type_annotation,
+                    self,
                 ));
             } else {
                 list.push(self.parse_formal_parameter_with_decorators(func_kind, span, decorators));
@@ -154,7 +154,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         func_kind: FunctionKind,
         span: u32,
-        decorators: Vec<'a, Decorator<'a>>,
+        decorators: ArenaVec<'a, Decorator<'a>>,
     ) -> FormalParameter<'a> {
         let modifiers = self.parse_modifiers(false, false);
         if self.is_ts {
@@ -202,15 +202,22 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             None
         };
 
-        if (modifiers.contains_accessibility()
+        let is_parameter_property = modifiers.contains_accessibility()
             || modifiers.contains_readonly()
-            || modifiers.contains_override())
-            && !pattern.is_binding_identifier()
-        {
-            self.error(diagnostics::parameter_property_cannot_be_binding_pattern(Span::new(
-                span,
-                self.prev_token_end,
-            )));
+            || modifiers.contains_override();
+        if is_parameter_property {
+            if let Some(ident) = pattern.get_binding_identifier() {
+                if func_kind == FunctionKind::Constructor && ident.name == "constructor" {
+                    self.error(diagnostics::constructor_cannot_be_parameter_property_name(
+                        ident.span,
+                    ));
+                }
+            } else {
+                self.error(diagnostics::parameter_property_cannot_be_binding_pattern(Span::new(
+                    span,
+                    self.prev_token_end,
+                )));
+            }
         }
 
         let are_decorators_allowed =
@@ -221,7 +228,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
             }
         }
-        self.ast.formal_parameter(
+        FormalParameter::new(
             self.end_span(span),
             decorators,
             pattern,
@@ -231,6 +238,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             modifiers.accessibility(),
             modifiers.contains_readonly(),
             modifiers.contains_override(),
+            self,
         )
     }
 
@@ -243,7 +251,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         func_kind: FunctionKind,
         param_kind: FormalParameterKind,
         modifiers: &Modifiers,
-    ) -> Box<'a, Function<'a>> {
+    ) -> ArenaBox<'a, Function<'a>> {
         let ctx = self.ctx;
         // `new.target` is allowed in a function's parameters and body (but not arrow
         // functions, which are parsed via `parse_function_body` directly).
@@ -324,7 +332,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             diagnostics::modifier_cannot_be_used_here,
         );
 
-        self.ast.alloc_function(
+        Function::boxed(
             self.end_span(span),
             function_type,
             id,
@@ -336,6 +344,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             params,
             return_type,
             body,
+            self,
         )
     }
 
@@ -371,7 +380,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         span: u32,
         r#async: bool,
         func_kind: FunctionKind,
-    ) -> Box<'a, Function<'a>> {
+    ) -> ArenaBox<'a, Function<'a>> {
         self.expect(Kind::Function);
         let generator = self.eat(Kind::Star);
         let id = self.parse_function_id(func_kind, r#async, generator);
@@ -393,7 +402,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         start_span: u32,
         func_kind: FunctionKind,
         modifiers: &Modifiers,
-    ) -> Box<'a, Function<'a>> {
+    ) -> ArenaBox<'a, Function<'a>> {
         let r#async = modifiers.contains(ModifierKind::Async);
         self.expect(Kind::Function);
         let generator = self.eat(Kind::Star);
@@ -441,7 +450,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         r#async: bool,
         generator: bool,
         func_kind: FunctionKind,
-    ) -> Box<'a, Function<'a>> {
+    ) -> ArenaBox<'a, Function<'a>> {
         let span = self.start_span();
         self.parse_function(
             span,
@@ -489,7 +498,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
         }
 
-        self.ast.expression_yield(self.end_span(span), delegate, argument)
+        Expression::new_yield_expression(self.end_span(span), delegate, argument, self)
     }
 
     // id: None - for AnonymousDefaultExportedFunctionDeclaration
@@ -508,7 +517,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.check_identifier(kind, ctx);
 
             let (span, name) = self.parse_identifier_kind(Kind::Ident);
-            Some(self.ast.binding_identifier(span, name))
+            Some(BindingIdentifier::new(span, name, self))
         } else {
             if func_kind.is_id_required() {
                 match self.cur_kind() {

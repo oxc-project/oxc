@@ -201,7 +201,7 @@ fn is_current_node_ambient_binding(symbol_id: Option<SymbolId>, ctx: &SemanticBu
         && ctx.scoping.symbol_flags(symbol_id).contains(SymbolFlags::Ambient)
     {
         true
-    } else if let AstKind::BindingIdentifier(id) = ctx.nodes.kind(ctx.current_node_id)
+    } else if let AstKind::BindingIdentifier(id) = ctx.ancestry().current_kind()
         && let Some(symbol_id) = id.symbol_id.get()
     {
         ctx.scoping.symbol_flags(symbol_id).contains(SymbolFlags::Ambient)
@@ -235,18 +235,17 @@ pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder
                     .is_some_and(|func| matches!(func.r#type, FunctionType::TSDeclareFunction))
             };
 
-            let parent = ctx.nodes.parent_node(ctx.current_node_id);
-            let parent_id = parent.id();
-            let is_ok = match parent.kind() {
+            // Walk up the ancestor stack: `ancestors.next()` yields the parent,
+            // then the grandparent, and so on.
+            let mut ancestors = ctx.ancestry().ancestor_kinds();
+            let parent = ancestors.next().unwrap();
+            let is_ok = match parent {
                 AstKind::Function(func) => matches!(func.r#type, FunctionType::TSDeclareFunction),
                 AstKind::FormalParameter(_) | AstKind::FormalParameterRest(_) => {
-                    is_declare_function(&ctx.nodes.parent_kind(parent_id))
+                    is_declare_function(&ancestors.next().unwrap())
                 }
-                AstKind::BindingRestElement(_) => {
-                    let grand_parent = ctx.nodes.parent_node(parent_id);
-                    let grand_parent_id = grand_parent.id();
-                    is_declare_function(&ctx.nodes.parent_kind(grand_parent_id))
-                }
+                // `nth(1)` skips the `FormalParameter*` grandparent to reach the function.
+                AstKind::BindingRestElement(_) => is_declare_function(&ancestors.nth(1).unwrap()),
                 _ => false,
             };
 
@@ -257,7 +256,7 @@ pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder
         "let" if !ctx.strict_mode() => {
             // LexicalDeclaration : LetOrConst BindingList ;
             // * It is a Syntax Error if the BoundNames of BindingList contains "let".
-            for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
+            for node_kind in ctx.ancestry().ancestor_kinds() {
                 match node_kind {
                     AstKind::VariableDeclarator(decl) => {
                         if decl.kind.is_lexical() {
@@ -286,7 +285,7 @@ pub fn check_identifier_reference(ident: &IdentifierReference, ctx: &SemanticBui
     //  Static Semantics: AssignmentTargetType
     //  1. If this IdentifierReference is contained in strict mode code and StringValue of Identifier is "eval" or "arguments", return invalid.
     if matches!(ident.name.as_str(), "arguments" | "eval") && ctx.strict_mode() {
-        for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
+        for node_kind in ctx.ancestry().ancestor_kinds() {
             match node_kind {
                 // Only check for actual assignment contexts, not member expression access
                 AstKind::ObjectAssignmentTarget(_)
@@ -322,8 +321,8 @@ pub fn check_identifier_reference(ident: &IdentifierReference, ctx: &SemanticBui
     //   It is a Syntax Error if ContainsArguments of ClassStaticBlockStatementList is true.
 
     if ident.name == "arguments" {
-        let mut previous_node_address = ctx.nodes.get_node(ctx.current_node_id).address();
-        for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
+        let mut previous_node_address = ctx.ancestry().current_address();
+        for node_kind in ctx.ancestry().ancestor_kinds() {
             match node_kind {
                 AstKind::Function(_) => break,
                 AstKind::PropertyDefinition(prop)
@@ -501,7 +500,7 @@ pub fn check_directive(directive: &Directive, ctx: &SemanticBuilder<'_>) {
         return;
     }
 
-    if matches!(ctx.nodes.kind(ctx.scoping.get_node_id(ctx.current_scope_id)),
+    if matches!(ctx.ancestry().find_kind_by_node_id(ctx.scoping.get_node_id(ctx.current_scope_id)),
         AstKind::Function(Function { params, .. })
         | AstKind::ArrowFunctionExpression(ArrowFunctionExpression { params, .. })
         if !params.is_simple_parameter_list())
@@ -538,7 +537,7 @@ pub fn check_module_declaration(decl: &ModuleDeclarationKind, ctx: &SemanticBuil
             ctx.error(diagnostics::module_code(text, span));
         }
         ModuleKind::Module => {
-            if matches!(ctx.nodes.parent_kind(ctx.current_node_id), AstKind::Program(_)) {
+            if matches!(ctx.ancestry().parent_kind(), AstKind::Program(_)) {
                 return;
             }
             ctx.error(diagnostics::top_level(text, span));
@@ -590,7 +589,7 @@ pub fn check_function_declaration_in_labeled_statement<'a>(
             ctx.error(diagnostics::function_declaration_strict(decl.span));
         } else {
             // skip(1) for `LabeledStatement`
-            for kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
+            for kind in ctx.ancestry().ancestor_kinds() {
                 match kind {
                     // Nested labeled statement
                     AstKind::LabeledStatement(_) => {}
@@ -658,7 +657,7 @@ pub fn is_function_decl_part_of_if_statement(
     // A function declaration whose parent is an `IfStatement` can only be
     // either that `IfStatement`'s `consequent` or `alternate`
     // (can't be `test` because that's an expression)
-    matches!(builder.nodes.parent_kind(builder.current_node_id), AstKind::IfStatement(_))
+    matches!(builder.ancestry().parent_kind(), AstKind::IfStatement(_))
 }
 
 // It is a Syntax Error if the LexicallyDeclaredNames of StatementList contains any duplicate entries,
@@ -734,10 +733,14 @@ fn check_redeclared_function(
             // (A clash with a `var`/`let`/`class` of the same name is a separate rule, reported elsewhere.)
             // This branch is only reached for function redeclarations in a sloppy-mode block,
             // which are extremely rare, so the linear scan's high cost does not really matter.
+            // Annex B.3.3 is JavaScript-only; TypeScript allows these (overloads/merging).
+            if ctx.source_type.is_typescript() {
+                return;
+            }
             let previous_declarations = &redeclarations[..redeclarations.len() - 1];
             let Some(culprit) = previous_declarations
                 .iter()
-                .find(|decl| ctx.async_or_generator_function_node_ids.contains(&decl.declaration))
+                .find(|decl| decl.flags.contains(SymbolFlags::AsyncOrGeneratorFunction))
             else {
                 // No `async`/generator function among the previous declarations - allowed by B.3.3.
                 return;
@@ -775,7 +778,7 @@ pub fn check_break_statement(stmt: &BreakStatement, ctx: &SemanticBuilder<'_>) {
     // It is a Syntax Error if this BreakStatement is not nested, directly or indirectly (but not crossing function or static initialization block boundaries), within an IterationStatement or a SwitchStatement.
 
     let mut available_labels: Option<Vec<&str>> = None;
-    for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
+    for node_kind in ctx.ancestry().ancestor_kinds() {
         match node_kind {
             AstKind::Program(_) => {
                 return stmt.label.as_ref().map_or_else(
@@ -818,7 +821,7 @@ pub fn check_continue_statement(stmt: &ContinueStatement, ctx: &SemanticBuilder<
     // It is a Syntax Error if this ContinueStatement is not nested, directly or indirectly (but not crossing function or static initialization block boundaries), within an IterationStatement.
 
     let mut available_labels: Option<Vec<&str>> = None;
-    for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
+    for node_kind in ctx.ancestry().ancestor_kinds() {
         match node_kind {
             AstKind::Program(_) => {
                 return stmt.label.as_ref().map_or_else(
@@ -867,7 +870,7 @@ pub fn check_continue_statement(stmt: &ContinueStatement, ctx: &SemanticBuilder<
 
 fn collect_label_names<'a>(ctx: &'_ SemanticBuilder<'a>) -> Vec<&'a str> {
     let mut labels = Vec::new();
-    for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
+    for node_kind in ctx.ancestry().ancestor_kinds() {
         if let AstKind::LabeledStatement(labeled_statement) = node_kind {
             labels.push(labeled_statement.label.name.as_str());
         } else if matches!(node_kind, AstKind::Function(_) | AstKind::StaticBlock(_)) {
@@ -878,7 +881,7 @@ fn collect_label_names<'a>(ctx: &'_ SemanticBuilder<'a>) -> Vec<&'a str> {
 }
 
 pub fn check_labeled_statement(stmt: &LabeledStatement, ctx: &SemanticBuilder<'_>) {
-    for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
+    for node_kind in ctx.ancestry().ancestor_kinds() {
         match node_kind {
             // label cannot cross boundary on function or static block
             AstKind::Function(_)
@@ -941,10 +944,7 @@ pub fn check_class(class: &Class, ctx: &SemanticBuilder<'_>) {
 
     if class.is_declaration()
         && class.id.is_none()
-        && !matches!(
-            ctx.nodes.parent_kind(ctx.current_node_id),
-            AstKind::ExportDefaultDeclaration(_)
-        )
+        && !matches!(ctx.ancestry().parent_kind(), AstKind::ExportDefaultDeclaration(_))
     {
         let start = class.span.start;
         ctx.error(diagnostics::require_class_name(Span::sized(start, 5)));
@@ -973,7 +973,7 @@ pub fn check_class(class: &Class, ctx: &SemanticBuilder<'_>) {
 
 pub fn check_super(sup: &Super, ctx: &SemanticBuilder<'_>) {
     // `Some` for `super()`, `None` for `super.foo` / `super.bar()` etc
-    let super_call_span = match ctx.nodes.parent_kind(ctx.current_node_id) {
+    let super_call_span = match ctx.ancestry().parent_kind() {
         AstKind::CallExpression(expr) => Some(expr.span),
         AstKind::NewExpression(expr) => Some(expr.span),
         _ => None,
@@ -1009,14 +1009,15 @@ pub fn check_super(sup: &Super, ctx: &SemanticBuilder<'_>) {
             // So when visiting `super` in `class Outer { method() { class Inner extends super.foo {} } }`,
             // `ctx.class_table_builder.current_class_id` is `Outer` class, not `Inner`.
 
-            let search_start_node_id = if let Some(previous_scope_id) = previous_scope_id {
-                ctx.scoping.get_node_id(previous_scope_id)
-            } else {
-                ctx.current_node_id
-            };
-            let mut previous_node_address = ctx.nodes.kind(search_start_node_id).address();
+            // Walk up the ancestors, starting either from the previously reached
+            // class's node, or from the current node (`super`) itself.
+            let start = previous_scope_id
+                .map(|previous_scope_id| ctx.scoping.get_node_id(previous_scope_id));
+            let mut kinds_from = ctx.ancestry().ancestor_kinds_from(start);
+            // First kind is the start node itself; remaining kinds are its ancestors.
+            let mut previous_node_address = kinds_from.next().unwrap().address();
 
-            for ancestor_kind in ctx.nodes.ancestor_kinds(search_start_node_id) {
+            for ancestor_kind in kinds_from {
                 match ancestor_kind {
                     AstKind::PropertyDefinition(prop) => {
                         if prop
@@ -1144,9 +1145,11 @@ pub fn check_super(sup: &Super, ctx: &SemanticBuilder<'_>) {
         // `super()` is only legal if in a class constructor.
         // If function is anywhere else, both `super()` and `super.foo` are illegal.
         let func_node_id = ctx.scoping.get_node_id(scope_id);
-        let func_address = ctx.nodes.kind(func_node_id).address();
+        // Walk up from the function node: first is the function, second its parent.
+        let mut func_kinds = ctx.ancestry().ancestor_kinds_from(Some(func_node_id));
+        let func_address = func_kinds.next().unwrap().address();
 
-        match ctx.nodes.parent_kind(func_node_id) {
+        match func_kinds.next().unwrap() {
             AstKind::ObjectProperty(prop) => {
                 // Function's parent is an `ObjectProperty`.
                 // Check the function is a method/getter/setter, not a normal property.
@@ -1197,7 +1200,8 @@ pub fn check_super(sup: &Super, ctx: &SemanticBuilder<'_>) {
                         }
 
                         let class_node_id = ctx.class_table_builder.classes.get_node_id(class_id);
-                        let class = ctx.nodes.kind(class_node_id).as_class().unwrap();
+                        let class =
+                            ctx.ancestry().find_kind_by_node_id(class_node_id).as_class().unwrap();
                         if class.super_class.is_none() {
                             ctx.error(diagnostics::super_without_derived_class(
                                 sup.span, class.span,
@@ -1231,7 +1235,7 @@ fn get_class_details(
         return (None, ClassId::new(0)); // Dummy class ID
     };
     let node_id = ctx.class_table_builder.classes.get_node_id(class_id);
-    let class = ctx.nodes.kind(node_id).as_class().unwrap();
+    let class = ctx.ancestry().find_kind_by_node_id(node_id).as_class().unwrap();
     let scope_id = class.scope_id();
     (Some(scope_id), class_id)
 }
@@ -1290,7 +1294,7 @@ pub fn check_unary_expression(unary_expr: &UnaryExpression, ctx: &SemanticBuilde
 }
 
 fn is_in_formal_parameters(ctx: &SemanticBuilder<'_>) -> bool {
-    for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
+    for node_kind in ctx.ancestry().ancestor_kinds() {
         match node_kind {
             AstKind::FormalParameter(_) => return true,
             AstKind::Program(_) | AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {

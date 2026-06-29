@@ -15,15 +15,28 @@ fn deprecated_function(deprecated: &str, new: &str, span: Span) -> OxcDiagnostic
 }
 
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(default, deny_unknown_fields)]
 pub struct JestConfig {
     /// The version of Jest being used.
-    version: String,
+    version: usize,
 }
 
 impl Default for JestConfig {
     fn default() -> Self {
-        Self { version: "29".to_string() }
+        Self { version: 29 }
+    }
+}
+
+#[derive(Debug, Deserialize, JsonSchema)]
+#[serde(default, deny_unknown_fields)]
+pub struct JestConfigJson {
+    /// The version of Jest being used.
+    version: &'static str,
+}
+
+impl Default for JestConfigJson {
+    fn default() -> Self {
+        Self { version: "29" }
     }
 }
 
@@ -37,6 +50,7 @@ pub struct NoDeprecatedFunctionsConfig {
     /// Deprecated config, it will be removed in future versions.
     /// Use please instead { "settings": { "jest": {"version": 29 } } } in `Oxlint config file`.
     /// Beware the value from the config have higher priority than the rule config.
+    #[schemars(with = "JestConfigJson")]
     jest: JestConfig,
 }
 
@@ -101,6 +115,7 @@ declare_oxc_lint!(
     fix,
     config = NoDeprecatedFunctionsConfig,
     version = "0.0.18",
+    short_description = "Disallow Jest functions that have been deprecated, renamed, or replaced.",
 );
 
 fn deprecated_functions_map(deprecated_fn: &str) -> Option<(usize, &'static str)> {
@@ -130,7 +145,7 @@ impl Rule for NoDeprecatedFunctions {
         let major: Vec<&str> = version.split('.').collect();
 
         Ok(Self(Box::new(NoDeprecatedFunctionsConfig {
-            jest: JestConfig { version: major[0].to_string() },
+            jest: JestConfig { version: major[0].parse().unwrap_or(29) },
         })))
     }
 
@@ -151,7 +166,7 @@ impl Rule for NoDeprecatedFunctions {
         let jest_version_num: usize = if let Some(jest_version) = ctx.settings().jest.version {
             jest_version
         } else {
-            self.jest.version.parse().unwrap_or(29)
+            self.jest.version
         };
 
         if let Some((base_version, replacement)) = deprecated_functions_map(&node_name)

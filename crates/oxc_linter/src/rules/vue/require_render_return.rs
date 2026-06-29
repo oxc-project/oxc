@@ -60,6 +60,7 @@ declare_oxc_lint!(
     vue,
     correctness,
     version = "1.67.0",
+    short_description = "Enforce that a `render` function always returns a value.",
 );
 
 impl Rule for RequireRenderReturn {

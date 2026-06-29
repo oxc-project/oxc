@@ -1,5 +1,5 @@
-use oxc_allocator::Allocator;
-use oxc_ast::AstBuilder;
+use oxc_allocator::{Allocator, ArenaVec};
+use oxc_ast::{ast::*, builder::AstBuilder};
 use oxc_codegen::{Codegen, CodegenOptions, IndentChar};
 use oxc_span::SPAN;
 
@@ -52,6 +52,12 @@ fn module_decl() {
     test_minify("export default 5", "export default 5;");
     test_minify("export default foo", "export default foo;");
     test_minify("export default function(){}", "export default function(){}");
+
+    // `as` next to a string export/import name needs no space.
+    test_minify("export { foo as \"name\" }", "export{foo as\"name\"};");
+    test_minify("import { \"y\" as z } from \"m\"", "import{\"y\"as z}from\"m\";");
+    test_minify("export * as \"ns\" from \"m\"", "export*as\"ns\" from\"m\";");
+    test_minify("export { foo as bar }", "export{foo as bar};");
 }
 
 #[test]
@@ -759,6 +765,24 @@ fn string() {
 }
 
 #[test]
+fn print_string() {
+    fn print(value: &str, options: CodegenOptions) -> String {
+        let mut codegen = Codegen::new().with_options(options);
+        codegen.print_string(value);
+        codegen.into_source_text()
+    }
+
+    assert_eq!(print("hello \"world\"", CodegenOptions::default()), r#""hello \"world\"""#);
+    assert_eq!(
+        print("hello 'world'", CodegenOptions { single_quote: true, ..Default::default() }),
+        r"'hello \'world\''"
+    );
+    assert_eq!(print("line\n\u{00a0}🦄", CodegenOptions::default()), "\"line\\n\\xA0🦄\"");
+    assert_eq!(print("\"\"''", CodegenOptions::minify()), r#""\"\"''""#);
+    assert_eq!(print("\"\"''${", CodegenOptions::minify()), r#""\"\"''${""#);
+}
+
+#[test]
 fn v8_intrinsics() {
     let parse_opts = oxc_parser::ParseOptions {
         allow_v8_intrinsics: true,
@@ -824,34 +848,37 @@ fn indentation() {
 
 #[test]
 fn template_literal_escape_when_building_ast() {
-    use oxc_ast::ast::TemplateElementValue;
-
     let allocator = Allocator::default();
     let ast = AstBuilder::new(&allocator);
 
     // Create a template literal with special characters that need escaping:
     // backtick, ${, and backslash
-    // Pass escape_raw: true to automatically escape the raw field
+    // Use `template_element_escape_raw` to automatically escape the raw field
     let cooked = "hello`world${foo}\\bar";
-    let value = TemplateElementValue { raw: ast.str(cooked), cooked: Some(ast.str(cooked)) };
-    let element = ast.template_element(SPAN, value, true, true); // escape_raw: true
-    let quasis = ast.vec1(element);
-    let template_literal = ast.template_literal(SPAN, quasis, ast.vec());
+    let value = TemplateElementValue {
+        raw: Str::from_str_in(cooked, &ast),
+        cooked: Some(Str::from_str_in(cooked, &ast)),
+    };
+    let element = TemplateElement::new_escape_raw(SPAN, value, true, &ast);
+    let quasis = ArenaVec::from_value_in(element, &ast);
+    let template_literal = TemplateLiteral::new(SPAN, quasis, ArenaVec::new_in(&ast), &ast);
 
-    let expr = ast.expression_template_literal(
+    let expr = Expression::new_template_literal(
         SPAN,
         template_literal.quasis,
         template_literal.expressions,
+        &ast,
     );
-    let stmt = ast.statement_expression(SPAN, expr);
-    let program = ast.program(
+    let stmt = Statement::new_expression_statement(SPAN, expr, &ast);
+    let program = Program::new(
         SPAN,
         oxc_span::SourceType::mjs(),
         "",
-        ast.vec(),
+        ArenaVec::new_in(&ast),
         None,
-        ast.vec(),
-        ast.vec1(stmt),
+        ArenaVec::new_in(&ast),
+        ArenaVec::from_value_in(stmt, &ast),
+        &ast,
     );
 
     let result = Codegen::new().build(&program).code;

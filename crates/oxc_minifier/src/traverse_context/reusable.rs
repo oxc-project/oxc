@@ -24,9 +24,9 @@ impl<'a, State> ReusableTraverseCtx<'a, State> {
         Self(TraverseCtx::new(state, scoping, allocator))
     }
 
-    /// Get a reference to the user state.
-    pub fn state(&self) -> &State {
-        &self.0.state
+    /// Get a mutable reference to the user state.
+    pub fn state_mut(&mut self) -> &mut State {
+        &mut self.0.state
     }
 }
 
