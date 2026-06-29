@@ -496,7 +496,10 @@ fn try_fold_math_variadic<'a>(
     if !ctx.is_global_expr("Math", object) {
         return None;
     }
-    let mut numbers = Vec::new();
+    // Collect the (transient) operand values in the arena instead of the system
+    // heap: this runs once per constant-foldable `Math.min/max/imul(...)` call, so
+    // a `Vec` here is a system allocation on a hot minifier path.
+    let mut numbers = ArenaVec::new_in(ctx);
     for arg in args {
         let expr = arg.as_expression()?;
         let value = expr.get_side_free_number_value(ctx)?;
