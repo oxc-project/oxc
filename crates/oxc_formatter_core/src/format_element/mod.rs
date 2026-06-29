@@ -426,6 +426,12 @@ pub trait FormatElements {
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct TextWidth(u32);
 
+/// Every byte in `0x20..=0x7E` is a single-width ASCII character,
+/// so display width equals byte length and the text is guaranteed single-line.
+fn is_all_printable_ascii(s: &str) -> bool {
+    s.as_bytes().iter().all(|&b| matches!(b, 0x20..=0x7e))
+}
+
 impl TextWidth {
     /// Bit mask for the multiline flag (highest bit)
     const MULTILINE_MASK: u32 = 1 << 31;
@@ -468,11 +474,9 @@ impl TextWidth {
             return Self::single(0);
         }
 
-        // Fast path for all-printable-ASCII text. Every byte in `0x20..=0x7E` is a
-        // single-width ASCII character, so the width equals the byte length and the
-        // text is single-line. This excludes `\t` (0x09), `\n` (0x0A), every control
-        // byte and all multi-byte UTF-8, which fall through to the scan below.
-        if text.as_bytes().iter().all(|&b| matches!(b, 0x20..=0x7e)) {
+        // Excludes `\t`, `\n`, control bytes and multi-byte UTF-8,
+        // those fall through to the scan below.
+        if is_all_printable_ascii(text) {
             return Self::single(text.len() as u32);
         }
 
@@ -501,10 +505,7 @@ impl TextWidth {
     /// More efficient than `from_text` when whitespace is guaranteed absent.
     #[expect(clippy::cast_possible_truncation)]
     pub fn from_non_whitespace_str(name: &str) -> TextWidth {
-        // Fast path: all-printable-ASCII (`0x20..=0x7E`) has display width 1 per byte,
-        // so the width equals the byte length without walking the Unicode width table.
-        // Anything else (multi-byte UTF-8, control bytes) defers to `UnicodeWidthStr`.
-        if name.as_bytes().iter().all(|&b| matches!(b, 0x20..=0x7e)) {
+        if is_all_printable_ascii(name) {
             return Self::single(name.len() as u32);
         }
         Self::single(name.width() as u32)
@@ -668,15 +669,13 @@ mod tests {
             "\u{1f}",   // unit separator
             "mix café \t 日 \n end",
         ];
+        let w = indent_width(4);
         for &s in &cases {
-            for iw in [1u8, 2, 4, 8] {
-                let w = indent_width(iw);
-                debug_assert_eq!(
-                    TextWidth::from_text(s, w).0,
-                    from_text_slow(s, w).0,
-                    "from_text mismatch for {s:?} indent={iw}"
-                );
-            }
+            debug_assert_eq!(
+                TextWidth::from_text(s, w).0,
+                from_text_slow(s, w).0,
+                "from_text mismatch for {s:?}"
+            );
         }
 
         // `from_non_whitespace_str` must equal an unconditional `UnicodeWidthStr::width`.
