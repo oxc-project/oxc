@@ -54,7 +54,8 @@ impl<'a> PatternParser<'a> {
         // NOTE: It means that this performs 2 loops for every case.
         // - Pros: Code is simple enough and easy to understand
         // - Cons: 1st pass is completely useless if the pattern does not contain any capturing groups
-        //
+        // We may re-consider this if we need more performance rather than simplicity.
+
         // [SS:EE] Pattern :: Disjunction
         // It is a Syntax Error if Pattern contains two or more GroupSpecifiers for which the CapturingGroupName of GroupSpecifier is the same.
         self.state.initialize_with_parsing(&mut self.reader).map_err(|offsets| {
