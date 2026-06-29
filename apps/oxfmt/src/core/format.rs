@@ -5,6 +5,7 @@ use tracing::instrument;
 use oxc_allocator::AllocatorPool;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter::JsFormatOptions;
+use oxc_formatter_graphql::GraphqlFormatOptions;
 use oxc_formatter_json::{JsonFormatOptions, JsonVariant};
 use oxc_span::SourceType;
 use oxc_toml::Options as TomlFormatterOptions;
@@ -15,7 +16,10 @@ use super::options::{
     inject_tailwind_plugin_payload, to_prettier,
 };
 use super::{
-    options::{to_oxc_formatter, to_oxc_formatter_json, to_oxc_toml, to_sort_package_json},
+    options::{
+        to_oxc_formatter, to_oxc_formatter_graphql, to_oxc_formatter_json, to_oxc_toml,
+        to_sort_package_json,
+    },
     oxfmtrc::FormatConfig,
     support::FileKind,
 };
@@ -54,6 +58,16 @@ pub enum FormatStrategy {
         sort_package_json: Option<sort_package_json::SortOptions>,
         insert_final_newline: bool,
     },
+    /// For GraphQL files formatted by `oxc_formatter_graphql`.
+    /// `config` is retained (napi only) so the format step can fall back to Prettier
+    /// when the Rust parser rejects the input (e.g. draft-spec syntax).
+    OxcFormatterGraphql {
+        path: Arc<Path>,
+        format_options: Box<GraphqlFormatOptions>,
+        #[cfg(feature = "napi")]
+        config: Box<FormatConfig>,
+        insert_final_newline: bool,
+    },
     /// For TOML files.
     OxfmtToml { path: Arc<Path>, toml_options: TomlFormatterOptions, insert_final_newline: bool },
     /// For non-JS files formatted by external formatter (Prettier).
@@ -82,6 +96,7 @@ impl FormatStrategy {
             Self::OxcFormatter { path, .. }
             | Self::OxcFormatterJson { path, .. }
             | Self::OxcFormatterJsonPackageJson { path, .. }
+            | Self::OxcFormatterGraphql { path, .. }
             | Self::OxfmtToml { path, .. } => path,
             #[cfg(feature = "napi")]
             Self::ExternalFormatter { path, .. } => path,
@@ -127,6 +142,13 @@ impl FormatStrategy {
                     JsonVariant::JsonStringify,
                 )?),
                 sort_package_json: to_sort_package_json(&config),
+                insert_final_newline,
+            },
+            FileKind::OxcFormatterGraphql { path } => Self::OxcFormatterGraphql {
+                path,
+                format_options: Box::new(to_oxc_formatter_graphql(&config)?),
+                #[cfg(feature = "napi")]
+                config: Box::new(config),
                 insert_final_newline,
             },
             FileKind::OxfmtToml { path } => {
@@ -222,6 +244,22 @@ impl SourceFormatter {
                     &path,
                     *format_options,
                     sort_package_json.as_ref(),
+                ),
+                insert_final_newline,
+            ),
+            FormatStrategy::OxcFormatterGraphql {
+                path,
+                format_options,
+                #[cfg(feature = "napi")]
+                config,
+                insert_final_newline,
+            } => (
+                self.format_by_oxc_formatter_graphql(
+                    source_text,
+                    &path,
+                    *format_options,
+                    #[cfg(feature = "napi")]
+                    &config,
                 ),
                 insert_final_newline,
             ),
@@ -365,6 +403,49 @@ impl SourceFormatter {
         };
 
         self.format_by_oxc_formatter_json(&source_text, path, format_options)
+    }
+
+    /// Format GraphQL source using `oxc_formatter_graphql`.
+    ///
+    /// apollo-parser covers the stable GraphQL spec only, while Prettier (graphql-js)
+    /// also accepts draft-level syntax. So when the Rust formatter returns `Err`
+    /// (parse error or internal failure), the napi build falls back to Prettier;
+    /// if Prettier also fails, its error is reported.
+    /// The pure Rust build has no fallback and reports the diagnostic as-is.
+    #[instrument(level = "debug", name = "oxfmt::format::oxc_formatter_graphql", skip_all)]
+    fn format_by_oxc_formatter_graphql(
+        &self,
+        source_text: &str,
+        path: &Path,
+        format_options: GraphqlFormatOptions,
+        #[cfg(feature = "napi")] config: &FormatConfig,
+    ) -> Result<String, OxcDiagnostic> {
+        let result = (|| -> Result<String, OxcDiagnostic> {
+            let allocator = self.allocator_pool.get();
+            let formatted = oxc_formatter_graphql::format(&allocator, source_text, format_options)?;
+            let printed = formatted.print().map_err(|err| {
+                OxcDiagnostic::error(format!(
+                    "Failed to print formatted GraphQL: {}\n{err}",
+                    path.display()
+                ))
+            })?;
+            Ok(printed.into_code())
+        })();
+
+        #[cfg(feature = "napi")]
+        let result = result.or_else(|_| {
+            self.format_by_external_formatter(
+                source_text,
+                path,
+                "graphql",
+                config,
+                /* supports_tailwind */ false,
+                /* supports_oxfmt */ false,
+                /* supports_svelte */ false,
+            )
+        });
+
+        result
     }
 
     /// Format TOML file using `oxc_toml`.

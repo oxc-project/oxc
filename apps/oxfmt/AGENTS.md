@@ -6,7 +6,7 @@ The `oxfmt` implemented under this directory serves several purposes.
 
 - Pure Rust CLI
   - Minimum feature set, CLI usage only, no LSP, no Stdin support
-  - Formats JS/TS, JSON and TOML files, no xxx-in-js support
+  - Formats JS/TS, JSON, GraphQL and TOML files, no xxx-in-js support
   - Entry point: `main()` in `src/main.rs`
   - Build with `cargo build --no-default-features`
 - JS/Rust hybrid CLI using `napi-rs`
@@ -35,10 +35,14 @@ When working with file paths in CLI code, be aware of Windows path differences:
 
 Oxfmt utilizes different implementations depending on the file extension and filename:
 
-- Tier 1: Rust implementations using `oxc_formatter` or `oxc_formatter_json` found in this repository
+- Tier 1: Rust implementations using `oxc_formatter`, `oxc_formatter_json` or `oxc_formatter_graphql` found in this repository
 - Tier 2: Rust implementations using external libraries like `oxc_toml`
 - Tier 3: Delegations to Prettier via NAPI-JS calls (e.g., for Vue or Markdown)
 - Tier 4: Delegations to Prettier that require additional plugins (e.g., for Svelte)
+
+NOTE: Some Tier 1 formatters can fallback to Prettier with NAPI CLI.
+e.g. `oxc_formatter_graphql` (uses `apollo-parser`) only covers the stable GraphQL spec.
+When it returns an error (e.g. draft-spec syntax that Prettier's `graphql-js` accepts), the format step retries via Prettier.
 
 Consequently, managing these various formatter implementations and handling their respective options are also part of Oxfmt's responsibilities.
 
