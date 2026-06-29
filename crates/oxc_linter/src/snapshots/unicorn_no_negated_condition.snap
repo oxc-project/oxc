@@ -81,8 +81,116 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ unicorn(no-negated-condition): Unexpected negated condition.
    ╭─[no_negated_condition.tsx:1:21]
+ 1 │ function a() {return!0 ? b:c}
+   ·                     ──
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:21]
+ 1 │ function a() {return!\u0061 ? b:c}
+   ·                     ───────
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:21]
  1 │ function a() {return!(( a )) ? b : c}
    ·                     ────────
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:2:8]
+ 1 │     function a() {
+ 2 │ ╭─▶ return ! // comment
+ 3 │ ╰─▶ a ? b : c;
+ 4 │     }
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:2:9]
+ 1 │     function a() {
+ 2 │ ╭─▶ return (! // ReturnStatement argument is parenthesized
+ 3 │ ╰─▶ a ? b : c);
+ 4 │     }
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:3:1]
+ 2 │     return (
+ 3 │ ╭─▶ ! // UnaryExpression argument is parenthesized
+ 4 │ ╰─▶ a) ? b : c;
+ 5 │     }
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:2:7]
+ 1 │     function a() {
+ 2 │ ╭─▶ throw ! // comment
+ 3 │ ╰─▶ a ? b : c;
+ 4 │     }
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:2:7]
+ 1 │     function* a() {
+ 2 │ ╭─▶ yield ! // comment
+ 3 │ ╰─▶ a ? b : c;
+ 4 │     }
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:22]
+ 1 │ function a() {return ! a ? b : c;}
+   ·                      ────
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:21]
+ 1 │ function a() {throw ! a ? b : c;}
+   ·                     ───
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:22]
+ 1 │ function a() {return ! a ? b : c;}
+   ·                      ───
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:1]
+ 1 │ !{} ? a : b
+   · ───
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:1]
+ 1 │ !function(){} ? a : b
+   · ─────────────
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:1]
+ 1 │ !class {} ? a : b
+   · ─────────
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:6]
+ 1 │ for (!a ? x in y : z;;) {}
+   ·      ──
    ╰────
   help: Remove the negation operator and switch the consequent and alternate branches.
 
@@ -101,9 +209,58 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the negation operator and switch the consequent and alternate branches.
 
   ⚠ unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:2:1]
+ 1 │ a
+ 2 │ ![] ? b : c
+   · ───
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:2:1]
+ 1 │ a
+ 2 │ !+b ? c : d
+   · ───
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:2:1]
+ 1 │ a
+ 2 │ !(b) ? c : d
+   · ────
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:2:1]
+ 1 │ a
+ 2 │ !b ? c : d
+   · ──
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:5]
+ 1 │ if (!a)
+   ·     ──
+ 2 │ b()
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ unicorn(no-negated-condition): Unexpected negated condition.
    ╭─[no_negated_condition.tsx:1:4]
  1 │ if(!a) b(); else c()
    ·    ──
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:2:4]
+ 1 │ function fn() {
+ 2 │ if(!a) b(); else return
+   ·    ──
+ 3 │ }
    ╰────
   help: Remove the negation operator and switch the consequent and alternate branches.
 
@@ -125,5 +282,32 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_negated_condition.tsx:1:2]
  1 │ (!!a) ? b() : c();
    ·  ───
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:2:7]
+ 1 │ function fn() {
+ 2 │ return!a !== b ? c : d
+   ·       ────────
+ 3 │ return((!((a)) != b)) ? c : d
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:3:9]
+ 2 │ return!a !== b ? c : d
+ 3 │ return((!((a)) != b)) ? c : d
+   ·         ───────────
+ 4 │ }
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:3:12]
+ 2 │ b();
+ 3 │ } else if (!c) {
+   ·            ──
+ 4 │ d();
    ╰────
   help: Remove the negation operator and switch the consequent and alternate branches.

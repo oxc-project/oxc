@@ -56,7 +56,7 @@
 //! 2. Applies indentation based on container type (block, soft, none)
 //! 3. Preserves comment relationships and spacing
 //! 4. Advances cursor for processed comments
-use oxc_allocator::StringBuilder;
+use oxc_allocator::ArenaStringBuilder;
 use oxc_ast::{Comment, CommentContent, CommentKind};
 use oxc_span::Span;
 use oxc_syntax::line_terminator::LineTerminatorSplitter;
@@ -478,7 +478,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for Comment {
                     }
                 } else {
                     // Normalize line endings `\r\n` to `\n`
-                    let mut string = StringBuilder::with_capacity_in(content.len(), f.allocator());
+                    let mut string =
+                        ArenaStringBuilder::with_capacity_in(content.len(), f.allocator());
                     // `unwrap` is safe because `content` contains at least one line.
                     string.push_str(lines.next().unwrap().trim_end());
 

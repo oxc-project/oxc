@@ -1,7 +1,7 @@
 use std::iter;
 
 use crate::{CompressOptionsUnused, TraverseCtx, generated::ancestor::Ancestor};
-use oxc_allocator::{TakeIn, Vec};
+use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::ast::*;
 use oxc_compat::ESFeature;
 use oxc_ecmascript::{
@@ -203,11 +203,12 @@ impl<'a> PeepholeOptimizations {
                                 return false;
                             }
 
-                            let new_expr = ctx.ast.expression_logical(
+                            let new_expr = Expression::new_logical_expression(
                                 *logical_span,
                                 new_left_hand_expr.take_in(ctx),
                                 LogicalOperator::Coalesce,
                                 logical_right.take_in(ctx),
+                                ctx,
                             );
                             ctx.replace_expression(e, new_expr);
                             return false;
@@ -279,8 +280,9 @@ impl<'a> PeepholeOptimizations {
             return false;
         }
 
-        let mut expressions = ctx.ast.vec_from_iter(
+        let mut expressions = ArenaVec::from_iter_in(
             array_expr.elements.drain(..).map(ArrayExpressionElement::into_expression),
+            ctx,
         );
         if expressions.is_empty() {
             return true;
@@ -291,7 +293,7 @@ impl<'a> PeepholeOptimizations {
         }
 
         let span = array_expr.span;
-        let new_expr = ctx.ast.expression_sequence(span, expressions);
+        let new_expr = Expression::new_sequence_expression(span, expressions, ctx);
         ctx.replace_expression(e, new_expr);
         false
     }
@@ -308,7 +310,7 @@ impl<'a> PeepholeOptimizations {
                 ctx.replace_expression(e, folded);
                 return false;
             }
-            let folded = ctx.ast.expression_sequence(new_expr.span, exprs);
+            let folded = Expression::new_sequence_expression(new_expr.span, exprs, ctx);
             ctx.replace_expression(e, folded);
             return false;
         }
@@ -327,8 +329,8 @@ impl<'a> PeepholeOptimizations {
             return false;
         }
 
-        let mut transformed_elements = ctx.ast.vec();
-        let mut pending_to_string_required_exprs = ctx.ast.vec();
+        let mut transformed_elements = ArenaVec::new_in(ctx);
+        let mut pending_to_string_required_exprs = ArenaVec::new_in(ctx);
 
         for mut e in temp_lit.expressions.drain(..) {
             if e.to_primitive(ctx).is_symbol() != Some(false) {
@@ -342,25 +344,28 @@ impl<'a> PeepholeOptimizations {
                 if !pending_to_string_required_exprs.is_empty() {
                     // flush pending to string required expressions
                     let expressions =
-                        ctx.ast.vec_from_iter(pending_to_string_required_exprs.drain(..));
-                    let mut quasis = ctx.ast.vec_from_iter(
+                        ArenaVec::from_iter_in(pending_to_string_required_exprs.drain(..), ctx);
+                    let mut quasis = ArenaVec::from_iter_in(
                         iter::repeat_with(|| {
-                            ctx.ast.template_element(
+                            TemplateElement::new(
                                 e.span(),
                                 TemplateElementValue { raw: "".into(), cooked: Some("".into()) },
                                 false,
+                                ctx,
                             )
                         })
                         .take(expressions.len() + 1),
+                        ctx,
                     );
                     quasis
                         .last_mut()
                         .expect("template literal must have at least one quasi")
                         .tail = true;
-                    transformed_elements.push(ctx.ast.expression_template_literal(
+                    transformed_elements.push(Expression::new_template_literal(
                         e.span(),
                         quasis,
                         expressions,
+                        ctx,
                     ));
                 }
                 transformed_elements.push(e);
@@ -368,22 +373,26 @@ impl<'a> PeepholeOptimizations {
         }
 
         if !pending_to_string_required_exprs.is_empty() {
-            let expressions = ctx.ast.vec_from_iter(pending_to_string_required_exprs.drain(..));
-            let mut quasis = ctx.ast.vec_from_iter(
+            let expressions =
+                ArenaVec::from_iter_in(pending_to_string_required_exprs.drain(..), ctx);
+            let mut quasis = ArenaVec::from_iter_in(
                 iter::repeat_with(|| {
-                    ctx.ast.template_element(
+                    TemplateElement::new(
                         temp_lit.span,
                         TemplateElementValue { raw: "".into(), cooked: Some("".into()) },
                         false,
+                        ctx,
                     )
                 })
                 .take(expressions.len() + 1),
+                ctx,
             );
             quasis.last_mut().expect("template literal must have at least one quasi").tail = true;
-            transformed_elements.push(ctx.ast.expression_template_literal(
+            transformed_elements.push(Expression::new_template_literal(
                 temp_lit.span,
                 quasis,
                 expressions,
+                ctx,
             ));
         }
 
@@ -395,7 +404,8 @@ impl<'a> PeepholeOptimizations {
             return false;
         }
 
-        let new_expr = ctx.ast.expression_sequence(temp_lit.span, transformed_elements);
+        let new_expr =
+            Expression::new_sequence_expression(temp_lit.span, transformed_elements, ctx);
         ctx.replace_expression(e, new_expr);
         false
     }
@@ -417,8 +427,8 @@ impl<'a> PeepholeOptimizations {
                 .any(|property| property.may_have_side_effects(ctx));
         }
 
-        let mut transformed_elements = ctx.ast.vec();
-        let mut pending_spread_elements = ctx.ast.vec();
+        let mut transformed_elements = ArenaVec::new_in(ctx);
+        let mut pending_spread_elements = ArenaVec::new_in(ctx);
 
         for prop in object_expr.properties.drain(..) {
             match prop {
@@ -428,9 +438,12 @@ impl<'a> PeepholeOptimizations {
                 ObjectPropertyKind::ObjectProperty(prop) => {
                     if !pending_spread_elements.is_empty() {
                         // flush pending spread elements
-                        transformed_elements
-                            .push(ctx.ast.expression_object(prop.span(), pending_spread_elements));
-                        pending_spread_elements = ctx.ast.vec();
+                        transformed_elements.push(Expression::new_object_expression(
+                            prop.span(),
+                            pending_spread_elements,
+                            ctx,
+                        ));
+                        pending_spread_elements = ArenaVec::new_in(ctx);
                     }
 
                     let ObjectProperty { key, mut value, .. } = prop.unbox();
@@ -464,8 +477,11 @@ impl<'a> PeepholeOptimizations {
         }
 
         if !pending_spread_elements.is_empty() {
-            transformed_elements
-                .push(ctx.ast.expression_object(object_expr.span, pending_spread_elements));
+            transformed_elements.push(Expression::new_object_expression(
+                object_expr.span,
+                pending_spread_elements,
+                ctx,
+            ));
         }
 
         if transformed_elements.is_empty() {
@@ -476,7 +492,8 @@ impl<'a> PeepholeOptimizations {
             return false;
         }
 
-        let new_expr = ctx.ast.expression_sequence(object_expr.span, transformed_elements);
+        let new_expr =
+            Expression::new_sequence_expression(object_expr.span, transformed_elements, ctx);
         ctx.replace_expression(e, new_expr);
         false
     }
@@ -561,12 +578,13 @@ impl<'a> PeepholeOptimizations {
                         false
                     }
                     (false, false) => {
-                        let new_expr = ctx.ast.expression_sequence(
+                        let new_expr = Expression::new_sequence_expression(
                             binary_expr.span,
-                            ctx.ast.vec_from_array([
-                                binary_expr.left.take_in(ctx),
-                                binary_expr.right.take_in(ctx),
-                            ]),
+                            ArenaVec::from_array_in(
+                                [binary_expr.left.take_in(ctx), binary_expr.right.take_in(ctx)],
+                                ctx,
+                            ),
+                            ctx,
                         );
                         ctx.replace_expression(e, new_expr);
                         false
@@ -596,7 +614,7 @@ impl<'a> PeepholeOptimizations {
                 && !binary_expr.left.is_specific_string_literal("")
             {
                 let left_span = binary_expr.left.span();
-                let new_left = ctx.ast.expression_string_literal(left_span, "", None);
+                let new_left = Expression::new_string_literal(left_span, "", None, ctx);
                 ctx.replace_expression(&mut binary_expr.left, new_left);
             }
 
@@ -617,7 +635,7 @@ impl<'a> PeepholeOptimizations {
                 && !binary_expr.right.is_specific_string_literal("")
             {
                 let right_span = binary_expr.right.span();
-                let new_right = ctx.ast.expression_string_literal(right_span, "", None);
+                let new_right = Expression::new_string_literal(right_span, "", None, ctx);
                 ctx.replace_expression(&mut binary_expr.right, new_right);
             }
             return true;
@@ -651,7 +669,7 @@ impl<'a> PeepholeOptimizations {
                 ctx.replace_expression(e, new_expr);
                 return false;
             }
-            let new_expr = ctx.ast.expression_sequence(call_expr.span, exprs);
+            let new_expr = Expression::new_sequence_expression(call_expr.span, exprs, ctx);
             ctx.replace_expression(e, new_expr);
             return false;
         }
@@ -660,19 +678,20 @@ impl<'a> PeepholeOptimizations {
     }
 
     pub fn fold_arguments_into_needed_expressions(
-        args: &mut Vec<'a, Argument<'a>>,
+        args: &mut ArenaVec<'a, Argument<'a>>,
         ctx: &mut TraverseCtx<'a>,
-    ) -> Vec<'a, Expression<'a>> {
+    ) -> ArenaVec<'a, Expression<'a>> {
         // `args.drain(..)` would silently move owned `Argument`s out and the
         // filter would drop any whose inner expression `remove_unused_expression`
         // collapsed to nothing — leaking references in the dropped subtree.
         // Use a manual loop so we can `drop_expression` before discarding.
-        let mut out: Vec<'a, Expression<'a>> = ctx.ast.vec_with_capacity(args.len());
+        let mut out: ArenaVec<'a, Expression<'a>> = ArenaVec::with_capacity_in(args.len(), ctx);
         for arg in args.drain(..) {
             let mut expr = match arg {
-                Argument::SpreadElement(e) => ctx.ast.expression_array(
+                Argument::SpreadElement(e) => Expression::new_array_expression(
                     e.span,
-                    ctx.ast.vec1(ArrayExpressionElement::SpreadElement(e)),
+                    ArenaVec::from_value_in(ArrayExpressionElement::SpreadElement(e), ctx),
+                    ctx,
                 ),
                 match_expression!(Argument) => arg.into_expression(),
             };
@@ -850,7 +869,7 @@ impl<'a> PeepholeOptimizations {
                 return true;
             }
             let span = c.span;
-            let new_expr = ctx.ast.expression_sequence(span, exprs);
+            let new_expr = Expression::new_sequence_expression(span, exprs, ctx);
             ctx.replace_expression(e, new_expr);
         }
         false
@@ -859,7 +878,7 @@ impl<'a> PeepholeOptimizations {
     pub fn remove_unused_class(
         c: &mut Class<'a>,
         ctx: &mut TraverseCtx<'a>,
-    ) -> Option<Vec<'a, Expression<'a>>> {
+    ) -> Option<ArenaVec<'a, Expression<'a>>> {
         // TypeError `class C extends (() => {}) {}`
         if c.super_class
             .as_ref()
@@ -894,7 +913,7 @@ impl<'a> PeepholeOptimizations {
         }
 
         // Otherwise extract the expressions.
-        let mut exprs = ctx.ast.vec();
+        let mut exprs = ArenaVec::new_in(ctx);
 
         if let Some(e) = &mut c.super_class
             && e.may_have_side_effects(ctx)

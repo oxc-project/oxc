@@ -1,0 +1,20 @@
+// A map whose only content is a comment keeps the comment INSIDE the parens,
+// one per line — it must not leak past `)` (Prettier#18535, fixed on main;
+// 3.8.4 misprints it as `$map: () // comment`).
+$inline: (
+  // comment
+);
+$block: (
+  /* block */
+);
+$multi: (
+  // a
+  // b
+);
+// Regression guards: a truly empty map stays `()`, and a map WITH items still
+// renders its leading comment normally.
+$empty: ();
+$with-items: (
+  // comment
+  a: 1,
+);

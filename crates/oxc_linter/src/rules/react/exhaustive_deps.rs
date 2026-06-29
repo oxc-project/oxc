@@ -293,6 +293,10 @@ impl Rule for ExhaustiveDeps {
             return;
         };
 
+        let Some(callback_index) = self.get_reactive_hook_callback_index(hook_name) else {
+            return;
+        };
+
         let component_scope_id = {
             match get_enclosing_function(node, ctx).map(oxc_semantic::AstNode::kind) {
                 Some(AstKind::Function(func)) => func.scope_id(),
@@ -303,9 +307,6 @@ impl Rule for ExhaustiveDeps {
             }
         };
 
-        let Some(callback_index) = self.get_reactive_hook_callback_index(hook_name) else {
-            return;
-        };
         let callback_node = call_expr.arguments.get(callback_index);
         let dependencies_node = call_expr.arguments.get(callback_index + 1);
 
@@ -1114,7 +1115,7 @@ fn is_stable_value<'a, 'b>(
                 return true;
             }
 
-            let Expression::CallExpression(init_expr) = &init else {
+            let Expression::CallExpression(init_expr) = init.get_inner_expression() else {
                 return false;
             };
 
@@ -1603,10 +1604,10 @@ fn is_inside_effect_cleanup(stack: &[AstType]) -> bool {
 
 mod fix {
     use super::Name;
-    use oxc_allocator::{Allocator, CloneIn};
+    use oxc_allocator::{Allocator, ArenaVec, CloneIn};
     use oxc_ast::{
-        AstBuilder,
         ast::{ArrayExpression, Expression},
+        builder::AstBuilder,
     };
     use oxc_span::{GetSpan, SPAN};
     use oxc_str::Str;
@@ -1624,19 +1625,23 @@ mod fix {
         let mut codegen = fixer.codegen();
 
         let alloc = Allocator::default();
-        let ast_builder = AstBuilder::new(&alloc);
+        let alloc = &alloc;
+        let ast_builder = AstBuilder::new(alloc);
 
-        let mut vec = deps.elements.clone_in(&alloc);
+        let mut vec = deps.elements.clone_in(alloc);
 
         for name in names {
             vec.push(
-                ast_builder
-                    .expression_identifier(SPAN, Str::from_cow_in(&name.name, &alloc))
-                    .into(),
+                Expression::new_identifier(
+                    SPAN,
+                    Str::from_cow_in(&name.name, &alloc),
+                    &ast_builder,
+                )
+                .into(),
             );
         }
 
-        codegen.print_expression(&ast_builder.expression_array(SPAN, vec));
+        codegen.print_expression(&Expression::new_array_expression(SPAN, vec, &ast_builder));
         fixer.replace(deps.span, codegen.into_source_text())
     }
 
@@ -1656,10 +1661,11 @@ mod fix {
             .filter(|el| (*el).span() != dependency.span)
             .map(|el| el.clone_in(&alloc));
 
-        codegen.print_expression(&Expression::ArrayExpression(ast_builder.alloc_array_expression(
+        codegen.print_expression(&Expression::new_array_expression(
             deps.span,
-            oxc_allocator::Vec::from_iter_in(new_deps, &alloc),
-        )));
+            ArenaVec::from_iter_in(new_deps, &ast_builder),
+            &ast_builder,
+        ));
         fixer.replace(deps.span, codegen.into_source_text())
     }
 }
@@ -2864,6 +2870,19 @@ const Component = ({ filter }) => {
 
     return <div>test</div>;
 };",
+        r"const Component = () => {
+          const setRef = React.useRef<(value: string) => void | null>(
+            null,
+          ) as React.MutableRefObject<(value: string) => void | null>;
+
+          React.useEffect(() => {
+            if (setRef.current) {
+              console.log(setRef.current);
+            }
+          }, []);
+
+          return <div>test</div>;
+        };",
     ];
 
     let fail = vec![

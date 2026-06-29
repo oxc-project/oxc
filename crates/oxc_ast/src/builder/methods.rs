@@ -1,74 +1,61 @@
+// These methods are all deprecated, but they call each other internally
+#![expect(deprecated)]
+
 use std::{alloc::Layout, borrow::Cow, mem::MaybeUninit, slice, str};
 
-use oxc_allocator::{Allocator, Box, FromIn, GetAllocator, IntoIn, Vec};
+use oxc_allocator::{ArenaBox, ArenaVec, FromIn, IntoIn};
 use oxc_span::{SPAN, Span};
 use oxc_str::{Ident, Str};
 use oxc_syntax::{number::NumberBase, operator::UnaryOperator, scope::ScopeId};
 
 use crate::ast::*;
 
-/// Type that can be used in any AST builder method call which requires an `IntoIn<'a, Anything<'a>>`.
-/// Pass `NONE` instead of `None::<Anything<'a>>`.
-#[expect(clippy::upper_case_acronyms)]
-pub struct NONE;
-
-impl<'a, T> FromIn<'a, NONE> for Option<Box<'a, T>> {
-    fn from_in(_: NONE, _: &'a Allocator) -> Self {
-        None
-    }
-}
-
-/// AST builder for creating AST nodes.
-#[derive(Clone, Copy)]
-pub struct AstBuilder<'a> {
-    /// The memory allocator used to allocate AST nodes in the arena.
-    pub allocator: &'a Allocator,
-}
-
-impl<'a> GetAllocator<'a> for AstBuilder<'a> {
-    #[inline]
-    fn allocator(&self) -> &'a Allocator {
-        self.allocator
-    }
-}
+use super::{AstBuilder, NONE};
 
 impl<'a> AstBuilder<'a> {
-    /// Create a new AST builder that will allocate nodes in the given allocator.
-    #[inline]
-    pub fn new(allocator: &'a Allocator) -> Self {
-        Self { allocator }
-    }
-
     /// Move a value into the memory arena.
+    #[deprecated(note = "Use `ArenaBox::new_in` instead")]
     #[inline]
-    pub fn alloc<T>(self, value: T) -> Box<'a, T> {
-        Box::new_in(value, self.allocator)
+    pub fn alloc<T>(self, value: T) -> ArenaBox<'a, T> {
+        ArenaBox::new_in(value, &self)
     }
 
     /// Create a new empty [`Vec`] that stores its elements in the memory arena.
+    ///
+    /// [`Vec`]: ArenaVec
+    #[deprecated(note = "Use `ArenaVec::new_in` instead")]
     #[inline]
-    pub fn vec<T>(self) -> Vec<'a, T> {
-        Vec::new_in(self.allocator)
+    pub fn vec<T>(self) -> ArenaVec<'a, T> {
+        ArenaVec::new_in(&self)
     }
 
     /// Create a new empty [`Vec`] that stores its elements in the memory arena.
     /// Enough memory will be pre-allocated to store at least `capacity`
     /// elements.
+    ///
+    /// [`Vec`]: ArenaVec
+    #[deprecated(note = "Use `ArenaVec::with_capacity_in` instead")]
     #[inline]
-    pub fn vec_with_capacity<T>(self, capacity: usize) -> Vec<'a, T> {
-        Vec::with_capacity_in(capacity, self.allocator)
+    pub fn vec_with_capacity<T>(self, capacity: usize) -> ArenaVec<'a, T> {
+        ArenaVec::with_capacity_in(capacity, &self)
     }
 
     /// Create a new arena-allocated [`Vec`] initialized with a single element.
+    ///
+    /// [`Vec`]: ArenaVec
+    #[deprecated(note = "Use `ArenaVec::from_value_in` instead")]
     #[inline]
-    pub fn vec1<T>(self, value: T) -> Vec<'a, T> {
-        self.vec_from_array([value])
+    pub fn vec1<T>(self, value: T) -> ArenaVec<'a, T> {
+        ArenaVec::from_value_in(value, &self)
     }
 
     /// Collect an iterator into a new arena-allocated [`Vec`].
+    ///
+    /// [`Vec`]: ArenaVec
+    #[deprecated(note = "Use `ArenaVec::from_iter_in` instead")]
     #[inline]
-    pub fn vec_from_iter<T, I: IntoIterator<Item = T>>(self, iter: I) -> Vec<'a, T> {
-        Vec::from_iter_in(iter, self.allocator)
+    pub fn vec_from_iter<T, I: IntoIterator<Item = T>>(self, iter: I) -> ArenaVec<'a, T> {
+        ArenaVec::from_iter_in(iter, &self)
     }
 
     /// Create [`Vec`] from a fixed-size array.
@@ -76,21 +63,26 @@ impl<'a> AstBuilder<'a> {
     /// This is preferable to `vec_from_iter` where source is an array, as size is statically known,
     /// and compiler is more likely to construct the values directly in arena, rather than constructing
     /// on stack and then copying to arena.
+    ///
+    /// [`Vec`]: ArenaVec
+    #[deprecated(note = "Use `ArenaVec::from_array_in` instead")]
     #[inline]
-    pub fn vec_from_array<T, const N: usize>(self, array: [T; N]) -> Vec<'a, T> {
-        Vec::from_array_in(array, self.allocator)
+    pub fn vec_from_array<T, const N: usize>(self, array: [T; N]) -> ArenaVec<'a, T> {
+        ArenaVec::from_array_in(array, &self)
     }
 
     /// Allocate an [`Ident`] from a string slice.
+    #[deprecated(note = "Use `Ident::from_in` instead")]
     #[inline]
     pub fn ident(self, value: &str) -> Ident<'a> {
         Ident::from_in(value, self.allocator)
     }
 
     /// Allocate an [`Ident`] from an array of string slices.
+    #[deprecated(note = "Use `Ident::from_strs_array_in` instead")]
     #[inline]
     pub fn ident_from_strs_array<const N: usize>(self, strings: [&str; N]) -> Ident<'a> {
-        Ident::from_strs_array_in(strings, self.allocator)
+        Ident::from_strs_array_in(strings, &self)
     }
 
     /// Convert a [`Cow<'a, str>`] to an [`Ident<'a>`].
@@ -99,21 +91,24 @@ impl<'a> AstBuilder<'a> {
     /// without allocating a new one.
     ///
     /// If the `Cow` is owned, allocates the string into arena to generate a new `Ident`.
+    #[deprecated(note = "Use `Ident::from_cow_in` instead")]
     #[inline]
     pub fn ident_from_cow(self, value: &Cow<'a, str>) -> Ident<'a> {
-        Ident::from_cow_in(value, self.allocator)
+        Ident::from_cow_in(value, &self)
     }
 
     /// Allocate a [`Str`] from a string slice.
+    #[deprecated(note = "Use `Str::from_in` instead")]
     #[inline]
     pub fn str(self, value: &str) -> Str<'a> {
         Str::from_in(value, self.allocator)
     }
 
     /// Allocate a [`Str`] from an array of string slices.
+    #[deprecated(note = "Use `Str::from_strs_array_in` instead")]
     #[inline]
     pub fn str_from_strs_array<const N: usize>(self, strings: [&str; N]) -> Str<'a> {
-        Str::from_strs_array_in(strings, self.allocator)
+        Str::from_strs_array_in(strings, &self)
     }
 
     /// Convert a [`Cow<'a, str>`] to a [`Str<'a>`].
@@ -122,34 +117,36 @@ impl<'a> AstBuilder<'a> {
     /// without allocating a new one.
     ///
     /// If the `Cow` is owned, allocates the string into arena to generate a new `Str`.
+    #[deprecated(note = "Use `Str::from_cow_in` instead")]
     #[inline]
     pub fn str_from_cow(self, value: &Cow<'a, str>) -> Str<'a> {
-        Str::from_cow_in(value, self.allocator)
+        Str::from_cow_in(value, &self)
     }
 
     /// `0`
+    #[deprecated(note = "Use `Expression::new_number_0` instead")]
     #[inline]
     pub fn number_0(self) -> Expression<'a> {
         self.expression_numeric_literal(SPAN, 0.0, None, NumberBase::Decimal)
     }
 
     /// `void 0`
+    #[deprecated(note = "Use `Expression::new_void_0` instead")]
     #[inline]
     pub fn void_0(self, span: Span) -> Expression<'a> {
         let num = self.number_0();
-        Expression::UnaryExpression(self.alloc(self.unary_expression(
-            span,
-            UnaryOperator::Void,
-            num,
-        )))
+        Expression::UnaryExpression(self.alloc_unary_expression(span, UnaryOperator::Void, num))
     }
+
     /// `NaN`
+    #[deprecated(note = "Use `Expression::new_nan` instead")]
     #[inline]
     pub fn nan(self, span: Span) -> Expression<'a> {
         self.expression_numeric_literal(span, f64::NAN, None, NumberBase::Decimal)
     }
 
     /// `"use strict"` directive
+    #[deprecated(note = "Use `Directive::new_use_strict` instead")]
     #[inline]
     pub fn use_strict_directive(self) -> Directive<'a> {
         let use_strict = Str::from("use strict");
@@ -160,6 +157,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Create a [`FormalParameter`] with no type annotations, modifiers,
     /// decorators, or initializer.
+    #[deprecated(note = "Use `FormalParameter::new_plain` instead")]
     #[inline]
     pub fn plain_formal_parameter(
         self,
@@ -171,6 +169,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Create a [`Function`] with no "extras".
     /// i.e. no decorators, type annotations, accessibility modifiers, etc.
+    #[deprecated(note = "Use `Function::boxed_plain_with_scope_id` instead")]
     #[inline]
     pub fn alloc_plain_function_with_scope_id(
         self,
@@ -180,7 +179,7 @@ impl<'a> AstBuilder<'a> {
         params: FormalParameters<'a>,
         body: FunctionBody<'a>,
         scope_id: ScopeId,
-    ) -> Box<'a, Function<'a>> {
+    ) -> ArenaBox<'a, Function<'a>> {
         self.alloc_function_with_scope_id_and_pure_and_pife(
             span,
             r#type,
@@ -200,6 +199,7 @@ impl<'a> AstBuilder<'a> {
     }
 
     /// Build a [`Function`] with `scope_id`.
+    #[deprecated(note = "Use `Function::boxed_with_scope_id` instead")]
     #[inline]
     pub fn alloc_function_with_scope_id<T1, T2, T3, T4, T5>(
         self,
@@ -215,13 +215,13 @@ impl<'a> AstBuilder<'a> {
         return_type: T4,
         body: T5,
         scope_id: ScopeId,
-    ) -> Box<'a, Function<'a>>
+    ) -> ArenaBox<'a, Function<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
-        T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
+        T5: IntoIn<'a, Option<ArenaBox<'a, FunctionBody<'a>>>>,
     {
         self.alloc_function_with_scope_id_and_pure_and_pife(
             span,
@@ -244,39 +244,41 @@ impl<'a> AstBuilder<'a> {
     /* ---------- Modules ---------- */
 
     /// Create an empty [`ExportNamedDeclaration`] with no modifiers
+    #[deprecated(note = "Use `ExportNamedDeclaration::boxed_plain_declaration` instead")]
     #[inline]
     pub fn plain_export_named_declaration_declaration(
         self,
         span: Span,
         declaration: Declaration<'a>,
-    ) -> Box<'a, ExportNamedDeclaration<'a>> {
-        self.alloc(self.export_named_declaration(
+    ) -> ArenaBox<'a, ExportNamedDeclaration<'a>> {
+        self.alloc_export_named_declaration(
             span,
             Some(declaration),
             self.vec(),
             None,
             ImportOrExportKind::Value,
             NONE,
-        ))
+        )
     }
 
     /// Create an [`ExportNamedDeclaration`] with no modifiers that contains a
     /// set of [exported symbol names](ExportSpecifier).
+    #[deprecated(note = "Use `ExportNamedDeclaration::boxed_plain` instead")]
     #[inline]
     pub fn plain_export_named_declaration(
         self,
         span: Span,
-        specifiers: Vec<'a, ExportSpecifier<'a>>,
+        specifiers: ArenaVec<'a, ExportSpecifier<'a>>,
         source: Option<StringLiteral<'a>>,
-    ) -> Box<'a, ExportNamedDeclaration<'a>> {
-        self.alloc(self.export_named_declaration(
+    ) -> ArenaBox<'a, ExportNamedDeclaration<'a>> {
+        self.alloc_export_named_declaration(
             span,
             None,
             specifiers,
             source,
             ImportOrExportKind::Value,
             NONE,
-        ))
+        )
     }
 
     /* ---------- Template literals ---------- */
@@ -285,6 +287,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// Like [`AstBuilder::template_element`], but escapes backticks, `${`, backslashes, and carriage
     /// returns in `value.raw` first.
+    #[deprecated(note = "Use `TemplateElement::new_escape_raw` instead")]
     #[inline]
     pub fn template_element_escape_raw(
         self,
@@ -300,6 +303,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// Like [`AstBuilder::template_element_with_lone_surrogates`], but escapes backticks, `${`,
     /// backslashes, and carriage returns in `value.raw` first.
+    #[deprecated(note = "Use `TemplateElement::new_escape_raw_with_lone_surrogates` instead")]
     #[inline]
     pub fn template_element_escape_raw_with_lone_surrogates(
         self,

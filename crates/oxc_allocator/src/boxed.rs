@@ -17,7 +17,7 @@ use oxc_estree::{ESTree, Serializer as ESTreeSerializer};
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer as SerdeSerializer};
 
-use crate::Allocator;
+use crate::GetAllocator;
 
 /// A `Box` without [`Drop`], which stores its data in the arena allocator.
 ///
@@ -50,6 +50,7 @@ impl<'alloc, T> Box<'alloc, T> {
     /// use oxc_allocator::{Allocator, Box};
     ///
     /// let arena = Allocator::default();
+    /// let arena = &arena;
     /// let in_arena: Box<i32> = Box::new_in(5, &arena);
     /// ```
     ///
@@ -60,6 +61,7 @@ impl<'alloc, T> Box<'alloc, T> {
     ///
     /// let boxed = {
     ///     let allocator = Allocator::default();
+    ///     let allocator = &allocator;
     ///     Box::new_in(5, &allocator)
     /// };
     /// assert_eq!(*boxed, 5);
@@ -69,10 +71,10 @@ impl<'alloc, T> Box<'alloc, T> {
     // We always want it to be inlined.
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    pub fn new_in(value: T, allocator: &'alloc Allocator) -> Self {
+    pub fn new_in<A: GetAllocator<'alloc>>(value: T, allocator: &A) -> Self {
         const { Self::ASSERT_T_IS_NOT_DROP };
 
-        Self(NonNull::from(allocator.alloc(value)), PhantomData)
+        Self(NonNull::from(allocator.allocator().alloc(value)), PhantomData)
     }
 
     /// Create a fake [`Box`] with a dangling pointer.
@@ -94,6 +96,7 @@ impl<'alloc, T> Box<'alloc, T> {
     /// use oxc_allocator::{Allocator, Box};
     ///
     /// let arena = Allocator::default();
+    /// let arena = &arena;
     ///
     /// // Put `5` into the arena and on the heap.
     /// let boxed: Box<i32> = Box::new_in(5, &arena);
@@ -128,6 +131,7 @@ impl<T: ?Sized> Box<'_, T> {
     /// use oxc_allocator::{Allocator, Box};
     ///
     /// let allocator = Allocator::new();
+    /// let allocator = &allocator;
     /// let boxed = Box::new_in(123_u64, &allocator);
     /// let ptr = Box::as_non_null(&boxed);
     /// ```
@@ -307,6 +311,7 @@ mod test {
     #[test]
     fn box_deref_mut() {
         let allocator = Allocator::default();
+        let allocator = &allocator;
         let mut b = Box::new_in("x", &allocator);
         let b = &mut *b;
         *b = allocator.alloc("v");
@@ -324,6 +329,7 @@ mod test {
     #[test]
     fn boxed_slice_into_arena_slice() {
         let allocator = Allocator::default();
+        let allocator = &allocator;
         let v = Vec::from_iter_in([1, 2, 3], &allocator);
         let b = v.into_boxed_slice();
         let slice = b.into_arena_slice();
@@ -333,6 +339,7 @@ mod test {
     #[test]
     fn boxed_slice_into_arena_slice_mut() {
         let allocator = Allocator::default();
+        let allocator = &allocator;
         let v = Vec::from_iter_in([10, 20, 30], &allocator);
         let b = v.into_boxed_slice();
         let slice = b.into_arena_slice_mut();
@@ -343,6 +350,7 @@ mod test {
     #[test]
     fn box_debug() {
         let allocator = Allocator::default();
+        let allocator = &allocator;
         let b = Box::new_in("x", &allocator);
         let b = format!("{b:?}");
         assert_eq!(b, "\"x\"");
@@ -357,6 +365,7 @@ mod test {
         }
 
         let allocator = Allocator::default();
+        let allocator = &allocator;
         let a = Box::new_in("x", &allocator);
         let b = Box::new_in("x", &allocator);
 
@@ -367,6 +376,7 @@ mod test {
     #[test]
     fn box_serialize() {
         let allocator = Allocator::default();
+        let allocator = &allocator;
         let b = Box::new_in("x", &allocator);
         let s = serde_json::to_string(&b).unwrap();
         assert_eq!(s, r#""x""#);
@@ -378,6 +388,7 @@ mod test {
         use oxc_estree::{CompactSerializer, ESTree};
 
         let allocator = Allocator::default();
+        let allocator = &allocator;
         let b = Box::new_in("x", &allocator);
 
         let mut serializer = CompactSerializer::default();

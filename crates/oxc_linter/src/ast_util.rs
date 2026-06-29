@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use rustc_hash::FxHashSet;
 
-use oxc_allocator::GetAddress;
+use oxc_allocator::{ArenaVec, GetAddress};
 use oxc_ast::{
     AstKind,
     ast::{BindingIdentifier, *},
@@ -296,9 +296,7 @@ pub fn get_symbol_id_of_variable(
     semantic.scoping().get_reference(ident.reference_id()).symbol_id()
 }
 
-pub fn extract_regex_flags<'a>(
-    args: &'a oxc_allocator::Vec<'a, Argument<'a>>,
-) -> Option<RegExpFlags> {
+pub fn extract_regex_flags<'a>(args: &'a ArenaVec<'a, Argument<'a>>) -> Option<RegExpFlags> {
     if args.len() <= 1 {
         return Some(RegExpFlags::empty());
     }

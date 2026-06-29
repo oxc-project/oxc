@@ -1,0 +1,5 @@
+.a {
+  width: calc((100% - 1px) / 2);
+  height: calc((100% - (var(--slides-per-page) - 1) * var(--slide-gap)) / var(--slides-per-page));
+  padding: calc(var(--wa-form-control-padding-block) - ((1lh - 1em) / 2)) var(--wa-form-control-padding-inline);
+}

@@ -1,0 +1,18 @@
+// Sass interpolation normalization in selectors.
+// - Quoted string literals inside `#{...}` re-quote to double quotes
+//   (`#{'x'}` -> `#{"x"}`), matching Prettier.
+// - Inner spaces collapse (`#{ $name }` -> `#{$name}`) for consistency with
+//   value-position interpolation. This DELIBERATELY DIVERGES from Prettier,
+//   which keeps selector interpolation verbatim (`#{ $name }`). See AGENTS.md.
+
+.foo[data-level='#{$level}'] {
+  fill: red;
+}
+
+#{'.text-#{$index}'} {
+  color: red;
+}
+
+.text #{ $name } {
+  font-weight: bold;
+}

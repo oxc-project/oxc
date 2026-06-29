@@ -29,6 +29,24 @@ The core is parameterized over a consumer-supplied context so it stays language-
   - All generic over the context `C`, consumers add a `C` bound only on `impl` blocks
   - Not on struct definitions, and typically define a `type FooFormatter<…> = Formatter<…, FooContext<…>>` alias to keep lifetimes aligned
 
+### Embedded-language infrastructure (`embedded.rs`)
+
+`EmbeddedContext` / `FormatDispatcher` / `DispatchResult` / `TailwindCollector` let one
+formatter's IR be built inside another's document (e.g. graphql-in-js):
+
+- The orchestrator (oxfmt) assembles the dispatcher, mapping language names to
+  formatter implementations (or a Prettier fallback); formatter crates only invoke it
+- Parent and child share one arena and one `GroupId` space through `EmbeddedContext`
+- A language crate's `format_to_ir` entry returns `EmbeddedIr` (IR + pre-sort
+  Tailwind classes) — one shape for every child language, no per-crate tuples
+- Cross-language contract data is first-class on `DispatchResult` (`tailwind_classes`);
+  only truly language-pair specific data crosses as `dyn Any` (e.g. HTML's `has_multiple_root_elements`),
+  core never learns concrete languages
+- Consumers access `DispatchResult.docs` directly
+  (single-doc takes `docs.into_iter().next()`, multi-doc walks `docs`);
+  call `DispatchResult::remap_tailwind_into` first when the child may carry classes,
+  the printer's `debug_assert` catches a forgotten merge
+
 ### What belongs in core (the boundary)
 
 Two layers, two admission rules. A type/fn that fits neither belongs in a consumer crate.

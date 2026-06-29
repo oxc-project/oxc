@@ -63,8 +63,11 @@ use std::{
 use rustc_hash::FxHasher;
 use serde::Deserialize;
 
-use oxc_allocator::{TakeIn, Vec as ArenaVec};
-use oxc_ast::{AstBuilder, NONE, ast::*};
+use oxc_allocator::{ArenaVec, TakeIn};
+use oxc_ast::{
+    ast::*,
+    builder::{AstBuilder, NONE},
+};
 use oxc_data_structures::{inline_string::InlineString, slice_iter::SliceIter};
 use oxc_semantic::SymbolId;
 use oxc_span::SPAN;
@@ -372,7 +375,7 @@ impl<'a> StyledComponents<'a> {
         }
 
         if self.options.minify {
-            minify_template_literal(&mut tagged.quasi, ctx.ast);
+            minify_template_literal(&mut tagged.quasi, &ctx.ast);
         }
 
         if self.options.transpile_template_literals {
@@ -413,18 +416,19 @@ impl<'a> StyledComponents<'a> {
             ..
         } = expr.take_in(ctx);
 
-        let quasis_elements = ctx.ast.vec_from_iter(quasis.into_iter().map(|quasi| {
-            ArrayExpressionElement::from(ctx.ast.expression_string_literal(
-                quasi.span,
-                quasi.value.raw,
-                None,
-            ))
-        }));
+        let quasis_elements = ArenaVec::from_iter_in(
+            quasis.into_iter().map(|quasi| {
+                ArrayExpressionElement::new_string_literal(quasi.span, quasi.value.raw, None, ctx)
+            }),
+            ctx,
+        );
 
-        let quasis = Argument::from(ctx.ast.expression_array(quasi_span, quasis_elements));
-        let arguments =
-            ctx.ast.vec_from_iter(once(quasis).chain(expressions.into_iter().map(Argument::from)));
-        ctx.ast.expression_call(span, tag, type_arguments, arguments, false)
+        let quasis = Argument::new_array_expression(quasi_span, quasis_elements, ctx);
+        let arguments = ArenaVec::from_iter_in(
+            once(quasis).chain(expressions.into_iter().map(Argument::from)),
+            ctx,
+        );
+        Expression::new_call_expression(span, tag, type_arguments, arguments, false, ctx)
     }
 
     /// Add `displayName` and `componentId` to `withConfig({})`
@@ -449,17 +453,18 @@ impl<'a> StyledComponents<'a> {
                 self.add_properties(&mut object.properties, ctx);
             }
         } else if self.is_styled(expr, ctx) {
-            let mut properties = ctx.ast.vec_with_capacity(
+            let mut properties = ArenaVec::with_capacity_in(
                 usize::from(self.options.display_name) + usize::from(self.options.ssr),
+                ctx,
             );
             self.add_properties(&mut properties, ctx);
-            let object = ctx.ast.alloc_object_expression(SPAN, properties);
-            let arguments = ctx.ast.vec1(Argument::ObjectExpression(object));
+            let object = ObjectExpression::boxed(SPAN, properties, ctx);
+            let arguments = ArenaVec::from_value_in(Argument::ObjectExpression(object), ctx);
             let object = expr.take_in(ctx);
-            let property = ctx.ast.identifier_name(SPAN, "withConfig");
+            let property = IdentifierName::new(SPAN, "withConfig", ctx);
             let callee =
-                Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false));
-            let call = ctx.ast.expression_call(SPAN, callee, NONE, arguments, false);
+                Expression::new_static_member_expression(SPAN, object, property, false, ctx);
+            let call = Expression::new_call_expression(SPAN, callee, NONE, arguments, false, ctx);
             *expr = call;
         } else {
             return false;
@@ -630,7 +635,7 @@ impl<'a> StyledComponents<'a> {
         let mut buffer = itoa::Buffer::new();
         let count = buffer.format(self.component_count);
         self.component_count += 1;
-        ctx.ast.str_from_strs_array([prefix, count])
+        Str::from_strs_array_in([prefix, count], ctx)
     }
 
     /// Generates a unique file hash based on the source path or source code.
@@ -685,7 +690,7 @@ impl<'a> StyledComponents<'a> {
                     file_stem
                 };
 
-            ctx.ast.str(block_name)
+            Str::from_str_in(block_name, ctx)
         }))
     }
 
@@ -701,7 +706,7 @@ impl<'a> StyledComponents<'a> {
             if block_name == component_name {
                 component_name
             } else {
-                ctx.ast.str_from_strs_array([&block_name, "__", &component_name])
+                Str::from_strs_array_in([&block_name, "__", &component_name], ctx)
             }
         } else {
             block_name
@@ -802,9 +807,9 @@ impl<'a> StyledComponents<'a> {
         value: Str<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> ObjectPropertyKind<'a> {
-        let key = ctx.ast.property_key_static_identifier(SPAN, key);
-        let value = ctx.ast.expression_string_literal(SPAN, value, None);
-        ctx.ast.object_property_kind_object_property(
+        let key = PropertyKey::new_static_identifier(SPAN, key, ctx);
+        let value = Expression::new_string_literal(SPAN, value, None, ctx);
+        ObjectPropertyKind::new_object_property(
             SPAN,
             PropertyKind::Init,
             key,
@@ -812,6 +817,7 @@ impl<'a> StyledComponents<'a> {
             false,
             false,
             false,
+            ctx,
         )
     }
 }
@@ -868,7 +874,7 @@ fn is_valid_styled_component_source(source: &str) -> bool {
 /// quasis = ["width:", "px;color:red;height:100px;"]
 /// expressions = [width]
 /// ```
-fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a>) {
+fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: &AstBuilder<'a>) {
     const NOT_IN_STRING: u8 = 0;
     /// `Span` used as a sentinel indicating quasi should be removed.
     /// Source text is limited to max `u32::MAX` bytes, so it's impossible for a `TemplateElement`
@@ -955,7 +961,7 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                 // Set `raw` for previous quasi to `output`
                 // SAFETY: Output is all picked from the original `raw` values and is guaranteed to be valid UTF-8.
                 let output_str = unsafe { std::str::from_utf8_unchecked(&output) };
-                quasis[quasi_index - 1].value.raw = ast.str(output_str);
+                quasis[quasi_index - 1].value.raw = Str::from_str_in(output_str, ast);
                 output.clear();
                 is_first_output = false;
             }
@@ -1097,7 +1103,7 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
     // Update last quasi.
     // SAFETY: Output is all picked from the original `raw` values and is guaranteed to be valid UTF-8.
     let output_str = unsafe { std::str::from_utf8_unchecked(&output) };
-    quasis.last_mut().unwrap().value.raw = ast.str(output_str);
+    quasis.last_mut().unwrap().value.raw = Str::from_str_in(output_str, ast);
 
     // Remove quasis that are marked for removal, and the expressions following them.
     // TODO: Remove scopes, symbols, and references for removed `Expression`s.
@@ -1145,24 +1151,32 @@ fn insert_space_if_required(output: &mut Vec<u8>, is_first_output: bool) {
 mod tests {
     use super::*;
     use oxc_allocator::Allocator;
-    use oxc_ast::{AstBuilder, ast::TemplateElementValue};
+    use oxc_ast::{ast::TemplateElementValue, builder::AstBuilder};
     use oxc_span::SPAN;
 
     fn minify_raw(input: &str) -> String {
         let allocator = Allocator::default();
         let ast = AstBuilder::new(&allocator);
 
-        let mut lit = ast.template_literal(
+        let mut lit = TemplateLiteral::new(
             SPAN,
-            ast.vec1(ast.template_element(
-                SPAN,
-                TemplateElementValue { raw: ast.str(input), cooked: Some(ast.str(input)) },
-                true,
-            )),
-            ast.vec(),
+            ArenaVec::from_value_in(
+                TemplateElement::new(
+                    SPAN,
+                    TemplateElementValue {
+                        raw: Str::from_str_in(input, &ast),
+                        cooked: Some(Str::from_str_in(input, &ast)),
+                    },
+                    true,
+                    &ast,
+                ),
+                &ast,
+            ),
+            ArenaVec::new_in(&ast),
+            &ast,
         );
 
-        minify_template_literal(&mut lit, ast);
+        minify_template_literal(&mut lit, &ast);
 
         assert!(lit.quasis.len() == 1);
 

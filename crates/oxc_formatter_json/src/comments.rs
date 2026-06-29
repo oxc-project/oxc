@@ -1,6 +1,6 @@
 use std::cell::Cell;
 
-use oxc_allocator::StringBuilder;
+use oxc_allocator::ArenaStringBuilder;
 use oxc_ast::Comment;
 use oxc_formatter_core::{
     Buffer, Format, LINE_TERMINATORS, SourceText, arena_cow_str,
@@ -96,7 +96,7 @@ pub fn write_single_comment(comment: &Comment, f: &mut JsonFormatter<'_, '_>) {
         }
     } else {
         // Normalize line endings (`\r\n` → `\n`) but otherwise preserve the body.
-        let mut builder = StringBuilder::with_capacity_in(content.len(), f.allocator());
+        let mut builder = ArenaStringBuilder::with_capacity_in(content.len(), f.allocator());
         // `unwrap` is safe because `content` contains at least one line.
         builder.push_str(lines.next().unwrap().trim_end());
         for line in lines {

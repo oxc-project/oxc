@@ -1,4 +1,4 @@
-use oxc_allocator::Vec as OxcVec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::{
     AstKind,
     ast::{Argument, Expression, Statement, VariableDeclarationKind},
@@ -185,7 +185,7 @@ impl RequireHookConfig {
 
     fn check_block_body<'a>(
         &self,
-        statements: &'a OxcVec<'a, Statement<'_>>,
+        statements: &'a ArenaVec<'a, Statement<'_>>,
         ctx: &LintContext<'a>,
     ) {
         for stmt in statements {
