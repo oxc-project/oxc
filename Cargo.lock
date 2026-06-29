@@ -30,16 +30,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2a4385e2e34eb35d6b3efe798b9eb88096925d87726c0798709bf56d9ed84af3"
 
 [[package]]
-name = "apollo-parser"
-version = "0.8.6"
-source = "git+https://github.com/leaysgur/apollo-rs?rev=64bbb246a146575d583c3c17c18c46454cec62ae#64bbb246a146575d583c3c17c18c46454cec62ae"
-dependencies = [
- "memchr",
- "rowan",
- "thiserror",
-]
-
-[[package]]
 name = "approx"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1807,6 +1797,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc-graphql-parser"
+version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7ff384edd4b618b5144b758ed42d03afa22c6aa0c263621fd8476b5990523c1f"
+dependencies = [
+ "memchr",
+ "rowan",
+ "thiserror",
+]
+
+[[package]]
 name = "oxc-miette"
 version = "3.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2186,9 +2187,9 @@ dependencies = [
 name = "oxc_formatter_graphql"
 version = "0.56.0"
 dependencies = [
- "apollo-parser",
  "cow-utils",
  "insta",
+ "oxc-graphql-parser",
  "oxc_allocator",
  "oxc_diagnostics",
  "oxc_formatter_core",

@@ -1,4 +1,3 @@
-use apollo_parser::{Parser, SyntaxKind, cst, cst::CstNode};
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter_core::{
@@ -6,6 +5,7 @@ use oxc_formatter_core::{
     builders::{hard_line_break, text},
     write,
 };
+use oxc_graphql_parser::{Parser, SyntaxKind, cst, cst::CstNode};
 use oxc_span::Span;
 
 use crate::{
@@ -18,7 +18,7 @@ use crate::{
 ///
 /// # Errors
 /// Returns an [`OxcDiagnostic`] when the parse produces any error.
-/// apollo-parser is error-tolerant (it returns a CST even for invalid input),
+/// oxc-graphql-parser is error-tolerant (it returns a CST even for invalid input),
 /// but a CST with errors cannot be formatted faithfully, so a single error is enough to bail out.
 pub fn format<'a>(
     allocator: &'a Allocator,
@@ -104,7 +104,7 @@ fn parse_document<'a>(
         document
             .syntax()
             .descendants_with_tokens()
-            .filter_map(apollo_parser::SyntaxElement::into_token)
+            .filter_map(oxc_graphql_parser::SyntaxElement::into_token)
             .filter(|t| t.kind() == SyntaxKind::COMMENT)
             .map(|t| {
                 let range = t.text_range();

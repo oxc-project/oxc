@@ -2,12 +2,12 @@
 //!
 //! Prettier prints `StringValue` from graphql-js's *cooked* `node.value`
 //! (escapes decoded, block strings dedented), then re-encodes it.
-//! `apollo-parser` hands us the raw source, so this module reimplements both the
+//! `oxc-graphql-parser` hands us the raw source, so this module reimplements both the
 //! cooking (GraphQL spec string/block-string value algorithms)
 //! and Prettier's re-encoding (`"`/`\` escaped, newline as `\n`, `"""` as `\"""`).
 
-use apollo_parser::{cst, cst::CstNode};
 use cow_utils::CowUtils;
+use oxc_graphql_parser::{cst, cst::CstNode};
 
 use oxc_formatter_core::{
     Buffer,

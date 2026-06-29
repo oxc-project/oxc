@@ -89,7 +89,7 @@ include!(concat!(env!("OUT_DIR"), "/generated_tests.rs"));
 // ---
 
 /// Any parse error must surface as `Err` (the oxfmt fallback trigger),
-/// even though apollo-parser itself is error-tolerant.
+/// even though oxc-graphql-parser itself is error-tolerant.
 #[test]
 fn parse_error_is_err() {
     let allocator = Allocator::default();
@@ -98,7 +98,7 @@ fn parse_error_is_err() {
         "",
         "# comments-only",
         // Draft-spec syntax that Prettier main (graphql-js 17) accepts
-        // but the apollo-parser fork does not (yet): fragment spread arguments.
+        // but oxc-graphql-parser does not (yet): fragment spread arguments.
         "fragment F on T { ...G(x: 1) }",
     ] {
         assert!(

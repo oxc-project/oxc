@@ -19,8 +19,8 @@ Prettier compatible GraphQL formatter (`oxfmt`'s Tier 1 backend), using the `oxc
 Prettier uses `graphql-js`, which is also the reference implementation of the GraphQL specification.
 This means it is not locked to a specific GraphQL version and can parse a wide range of syntaxes, including draft syntax.
 
-On the other hand, `apollo-parser`, which we selected, strictly follows its versioning and currently only supports syntax up to Oct2021.
-Therefore, we have forked it and added some support ourselves, pinned via `rev` in the workspace `Cargo.toml`.
+On the other hand, `apollo-parser`, the upstream we selected, strictly follows its versioning and currently only supports syntax up to Oct2021.
+Therefore, we forked it as [`oxc-graphql-parser`](https://crates.io/crates/oxc-graphql-parser) and added some support ourselves, pinned via the workspace `Cargo.toml`.
 
 The fork adds, behind opt-in parser flags, what Prettier(v3.8.4)'s graphql-js v16.x also accepts:
 
@@ -33,7 +33,7 @@ For Prettier(v3.9)'s graphql-js v17.x syntax support, see the Roadmap below.
 
 `format()` / `format_to_ir()` return `Err` whenever they cannot produce output they can stand behind:
 
-- apollo-parser is error-tolerant (returns a CST even for invalid input),
+- oxc-graphql-parser is error-tolerant (returns a CST even for invalid input),
   but any parse error bails out; never format a broken CST
 - print-stage internal errors are also `Err`
 - The caller (oxfmt) decides what happens next
@@ -46,13 +46,13 @@ Prettier collects them from the token stream and attaches leading/trailing/dangl
 
 This crate instead collects `COMMENT` trivia tokens from the CST into a positional cursor (`src/comments.rs`, mirrors `oxc_formatter_json`) and flushes them at sequence items, closing delimiters, and document tail.
 
-`apollo-parser` attaches pending trivia to whichever node is open when the next significant token is consumed, so node ranges may start at a preceding comment.
+`oxc-graphql-parser` attaches pending trivia to whichever node is open when the next significant token is consumed, so node ranges may start at a preceding comment.
 All layout decisions use significant-token positions (`sig_start` / `sig_end` in `src/print/mod.rs`), never `text_range()` directly.
 
 ### Strings
 
 Prettier prints `StringValue` from `graphql-js`'s _cooked_ value and re-encodes it.
-`apollo-parser` hands us raw source, so `src/print/value.rs` reimplements:
+`oxc-graphql-parser` hands us raw source, so `src/print/value.rs` reimplements:
 
 - the GraphQL spec `BlockStringValue` algorithm (dedent + blank-line trimming)
 - escape decoding for regular strings (incl. surrogate pairs)
@@ -153,7 +153,7 @@ The guiding axis is Prettier compatibility, not spec compliance:
 match the syntax that the graphql-js version Prettier depends on can format
 (Prettier stable = graphql-js 16, Prettier main = graphql-js 17).
 
-Directive applications like `@oneOf` / `@defer` need no work. `apollo-parser` 0.8.6 already parses them.
+Directive applications like `@oneOf` / `@defer` need no work. `oxc-graphql-parser` (apollo-parser 0.8.6 base) already parses them.
 
 These are in Prettier's unreleased changelog (main has them, next stable will).
 

@@ -2,7 +2,7 @@
 //!
 //! `StringValue` cooking and re-encoding lives in the sibling [`super::string`] module.
 
-use apollo_parser::{cst, cst::CstNode};
+use oxc_graphql_parser::{cst, cst::CstNode};
 
 use oxc_formatter_core::{
     Buffer, FormatContext,

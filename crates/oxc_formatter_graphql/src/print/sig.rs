@@ -1,11 +1,11 @@
-//! CST position utilities over apollo-parser's lossless tree.
+//! CST position utilities over oxc-graphql-parser's lossless tree.
 //!
-//! `apollo-parser` attaches pending trivia (whitespace, comments, insignificant commas)
+//! `oxc-graphql-parser` attaches pending trivia (whitespace, comments, insignificant commas)
 //! to whichever node is open when the next significant token is consumed,
 //! so a node's raw `text_range()` may start or end on trivia.
 //! Every layout decision therefore uses significant-token positions computed here.
 
-use apollo_parser::{SyntaxKind, SyntaxNode, SyntaxToken};
+use oxc_graphql_parser::{SyntaxKind, SyntaxNode, SyntaxToken};
 
 use oxc_span::Span;
 
@@ -18,7 +18,7 @@ fn is_trivia(kind: SyntaxKind) -> bool {
 
 /// Start offset of the first significant (non-trivia) token within `node`.
 ///
-/// apollo-parser attaches pending trivia to the node that is open when the next
+/// oxc-graphql-parser attaches pending trivia to the node that is open when the next
 /// significant token is consumed, so `node.text_range().start()` may point at a
 /// comment that logically precedes the node. All layout decisions use significant
 /// token positions instead.

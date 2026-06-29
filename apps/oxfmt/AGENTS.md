@@ -42,7 +42,7 @@ Oxfmt utilizes different implementations depending on the file extension and fil
 
 NOTE: Rust written formatters never fall back to Prettier, since they exist to reduce the dependency on Prettier.
 
-`oxc_formatter_css` (uses a `raffia` fork) and `oxc_formatter_graphql` (uses an `apollo-parser` fork) both should cover everything the bundled Prettier can parse for their language.
+`oxc_formatter_css` (uses a `raffia` fork) and `oxc_formatter_graphql` (uses `oxc-graphql-parser`, an `apollo-parser` fork) both should cover everything the bundled Prettier can parse for their language.
 
 However, parse errors may be reported as diagnostics, what the forks reject.
 This is genuinely broken input or, for CSS, the tail of postcss's error tolerance (e.g. IE star hacks, some postcss-plugin specific syntax).

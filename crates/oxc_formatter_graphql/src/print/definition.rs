@@ -1,6 +1,6 @@
 //! Document-level definition printers: operations, fragments, and the type system.
 
-use apollo_parser::{cst, cst::CstNode};
+use oxc_graphql_parser::{cst, cst::CstNode};
 
 use oxc_formatter_core::{
     Buffer,

@@ -1,4 +1,4 @@
-use apollo_parser::{cst, cst::CstNode};
+use oxc_graphql_parser::{cst, cst::CstNode};
 
 use oxc_formatter_core::{
     Buffer, Format, Formatter,
@@ -128,7 +128,7 @@ where
 pub fn write_document(document: &cst::Document, f: &mut GraphqlFormatter<'_, '_>) {
     let defs: Vec<cst::Definition> = document.definitions().collect();
     if defs.is_empty() {
-        // Defensive: apollo-parser errors on empty/comments-only documents,
+        // Defensive: oxc-graphql-parser errors on empty/comments-only documents,
         // so this branch is unreachable on the normal path.
         let remaining = f.context().comments().take_remaining();
         write_dangling_comments(remaining, f);

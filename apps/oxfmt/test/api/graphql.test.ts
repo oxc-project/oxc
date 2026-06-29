@@ -42,8 +42,6 @@ describe("GraphQL files (oxc_formatter_graphql)", () => {
   });
 
   it("should format legacy fragment variables and descriptions in Rust", async () => {
-    // Formerly Prettier-fallback territory; the apollo-parser fork
-    // now covers everything Prettier's graphql-js 16.12 accepts.
     const source = `"Frag description" fragment F("var description" $x: Int) on T { f(arg: $x) }`;
     const result = await format("draft.graphql", source);
     expect(result.errors).toHaveLength(0);

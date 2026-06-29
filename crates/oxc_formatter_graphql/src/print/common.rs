@@ -1,7 +1,7 @@
 //! Shared printers: names, descriptions, directives, argument lists,
 //! variable definitions, types, and input value definitions.
 
-use apollo_parser::{cst, cst::CstNode};
+use oxc_graphql_parser::{cst, cst::CstNode};
 
 use oxc_formatter_core::{
     Buffer, Format,

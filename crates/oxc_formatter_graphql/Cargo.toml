@@ -17,7 +17,7 @@ description.workspace = true
 workspace = true
 
 [dependencies]
-apollo-parser = { workspace = true }
+oxc-graphql-parser = { workspace = true }
 cow-utils = { workspace = true }
 oxc_allocator = { workspace = true }
 oxc_diagnostics = { workspace = true }
