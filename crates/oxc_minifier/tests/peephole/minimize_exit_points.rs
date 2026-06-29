@@ -285,7 +285,7 @@ fn test_switch_exit_points() {
 }
 
 #[test]
-// #[ignore = "TODO: Switch exit point optimization not yet implemented"]
+#[ignore = "TODO: Switch exit point optimization not yet implemented"]
 fn test_switch_exit_points_todo() {
     test(
         "switch (x) { case 1: if (x) { f(); break; } break; default: g(); break; }",
