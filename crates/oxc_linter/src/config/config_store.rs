@@ -13,6 +13,7 @@ use crate::{
 
 use super::{
     GlobSet, LintConfig, LintPlugins, OxlintEnv, OxlintGlobals, categories::OxlintCategories,
+    settings::OxlintSettings,
 };
 
 // TODO: support `categories` et. al. in overrides.
@@ -49,6 +50,7 @@ pub struct ResolvedOxlintOverride {
     pub env: Option<OxlintEnv>,
     pub globals: Option<OxlintGlobals>,
     pub plugins: Option<LintPlugins>,
+    pub settings: Option<OxlintSettings>,
     pub rules: ResolvedOxlintOverrideRules,
 }
 
@@ -154,7 +156,7 @@ impl Config {
         let mut env = self.base.config.env.clone();
         let mut globals = self.base.config.globals.clone();
         let mut plugins = self.base.config.plugins;
-        let settings = self.base.config.settings.clone();
+        let mut settings = self.base.config.settings.clone();
 
         for override_config in overrides_to_apply.clone() {
             if let Some(override_plugins) = override_config.plugins {
@@ -242,6 +244,10 @@ impl Config {
 
             if let Some(override_globals) = &override_config.globals {
                 override_globals.override_globals(&mut globals);
+            }
+
+            if let Some(override_settings) = &override_config.settings {
+                override_settings.override_settings(&mut settings);
             }
         }
 
@@ -478,6 +484,7 @@ mod test {
             exclude_files: GlobSet::default(),
             plugins: None,
             globals: None,
+            settings: None,
             rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
         }]);
         let store = ConfigStore::new(
@@ -516,6 +523,7 @@ mod test {
                     | LintPlugins::JSX_A11Y,
             ),
             globals: None,
+            settings: None,
             rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
         }]);
         let store = ConfigStore::new(
@@ -547,6 +555,7 @@ mod test {
             exclude_files: GlobSet::default(),
             plugins: None,
             globals: None,
+            settings: None,
             rules: ResolvedOxlintOverrideRules {
                 builtin_rules: vec![(
                     RuleEnum::TypescriptNoExplicitAny(TypescriptNoExplicitAny::default()),
@@ -585,6 +594,7 @@ mod test {
             exclude_files: GlobSet::default(),
             plugins: None,
             globals: None,
+            settings: None,
             rules: ResolvedOxlintOverrideRules {
                 builtin_rules: vec![(
                     RuleEnum::EslintNoUnusedVars(EslintNoUnusedVars::default()),
@@ -621,6 +631,7 @@ mod test {
             files: GlobSet::new(vec!["src/**/*.{ts,tsx}"]),
             plugins: None,
             globals: None,
+            settings: None,
             rules: ResolvedOxlintOverrideRules {
                 builtin_rules: vec![
                     (
@@ -664,6 +675,7 @@ mod test {
                 files: GlobSet::new(vec!["*.ts"]),
                 plugins: None,
                 globals: None,
+                settings: None,
                 rules: ResolvedOxlintOverrideRules {
                     builtin_rules: vec![
                         (RuleEnum::EslintCurly(EslintCurly::default()), AllowWarnDeny::Warn),
@@ -681,6 +693,7 @@ mod test {
                 files: GlobSet::new(vec!["*.tsx"]),
                 plugins: None,
                 globals: None,
+                settings: None,
                 rules: ResolvedOxlintOverrideRules {
                     builtin_rules: vec![(
                         RuleEnum::EslintNoUnusedVars(EslintNoUnusedVars::default()),
@@ -714,6 +727,7 @@ mod test {
             files: GlobSet::new(vec!["*.ts"]),
             plugins: None,
             globals: None,
+            settings: None,
             rules: ResolvedOxlintOverrideRules {
                 builtin_rules: vec![(
                     RuleEnum::TypescriptNoExplicitAny(TypescriptNoExplicitAny::default()),
@@ -749,6 +763,7 @@ mod test {
             exclude_files: GlobSet::default(),
             plugins: None,
             globals: None,
+            settings: None,
             rules: ResolvedOxlintOverrideRules {
                 builtin_rules: vec![(
                     RuleEnum::TypescriptNoExplicitAny(TypescriptNoExplicitAny::default()),
@@ -790,6 +805,7 @@ mod test {
                 exclude_files: GlobSet::default(),
                 plugins: Some(LintPlugins::REACT),
                 globals: None,
+                settings: None,
                 rules: ResolvedOxlintOverrideRules {
                     builtin_rules: vec![],
                     external_rules: vec![],
@@ -801,6 +817,7 @@ mod test {
                 exclude_files: GlobSet::default(),
                 plugins: Some(LintPlugins::TYPESCRIPT),
                 globals: None,
+                settings: None,
                 rules: ResolvedOxlintOverrideRules {
                     builtin_rules: vec![],
                     external_rules: vec![],
@@ -838,6 +855,7 @@ mod test {
             exclude_files: GlobSet::default(),
             plugins: None,
             globals: None,
+            settings: None,
             rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
         }]);
 
@@ -862,6 +880,7 @@ mod test {
             env: Some(from_json!({ "es2024": false })),
             plugins: None,
             globals: None,
+            settings: None,
             rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
         }]);
 
@@ -886,6 +905,7 @@ mod test {
             env: None,
             plugins: None,
             globals: Some(from_json!({ "React": "readonly", "Secret": "writable" })),
+            settings: None,
             rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
         }]);
 
@@ -925,6 +945,7 @@ mod test {
             env: None,
             plugins: None,
             globals: None,
+            settings: None,
             rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
         }]);
 
@@ -963,6 +984,7 @@ mod test {
             env: None,
             plugins: None,
             globals: Some(from_json!({ "React": "off", "Secret": "off" })),
+            settings: None,
             rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
         }]);
 
@@ -977,6 +999,173 @@ mod test {
         let app = store.resolve("App.tsx".as_ref()).config;
         assert!(!app.globals.is_enabled("React"));
         assert!(!app.globals.is_enabled("Secret"));
+    }
+
+    #[test]
+    fn test_add_settings() {
+        let base_config = LintConfig { plugins: LintPlugins::ESLINT, ..Default::default() };
+
+        let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
+            files: GlobSet::new(vec!["*.tsx"]),
+            exclude_files: GlobSet::default(),
+            env: None,
+            plugins: None,
+            globals: None,
+            settings: Some(from_json!({ "react": { "version": "18.2.0" } })),
+            rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
+        }]);
+
+        let store = ConfigStore::new(
+            Config::new(vec![], vec![], OxlintCategories::default(), base_config, overrides),
+            FxHashMap::default(),
+            ExternalPluginStore::default(),
+        );
+        assert!(store.base.base.config.settings.react.version.is_none());
+
+        let app = store.resolve("App.tsx".as_ref()).config;
+        let version = app.settings.react.version.as_ref().unwrap();
+        assert_eq!(version.major(), 18);
+        assert_eq!(version.minor(), 2);
+    }
+
+    #[test]
+    fn test_settings_not_applied_to_non_matching_file() {
+        let base_config = LintConfig {
+            plugins: LintPlugins::ESLINT,
+            settings: from_json!({ "react": { "version": "17.0.0" } }),
+            ..Default::default()
+        };
+
+        let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
+            files: GlobSet::new(vec!["*.tsx"]),
+            exclude_files: GlobSet::default(),
+            env: None,
+            plugins: None,
+            globals: None,
+            settings: Some(from_json!({ "react": { "version": "19.0.0" } })),
+            rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
+        }]);
+
+        let store = ConfigStore::new(
+            Config::new(vec![], vec![], OxlintCategories::default(), base_config, overrides),
+            FxHashMap::default(),
+            ExternalPluginStore::default(),
+        );
+
+        // `*.js` does not match the `*.tsx` override, so no override applies and the
+        // root settings are kept untouched.
+        let app = store.resolve("App.js".as_ref()).config;
+        assert_eq!(app.settings.react.version.as_ref().unwrap().major(), 17);
+    }
+
+    #[test]
+    fn test_deep_merge_settings() {
+        let base_config = LintConfig {
+            plugins: LintPlugins::ESLINT,
+            settings: from_json!({
+                "react": {
+                    "version": "17.0.0",
+                    "componentWrapperFunctions": ["observer"]
+                }
+            }),
+            ..Default::default()
+        };
+
+        let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
+            files: GlobSet::new(vec!["*.tsx"]),
+            exclude_files: GlobSet::default(),
+            env: None,
+            plugins: None,
+            globals: None,
+            settings: Some(from_json!({ "react": { "version": "19.0.0" } })),
+            rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
+        }]);
+
+        let store = ConfigStore::new(
+            Config::new(vec![], vec![], OxlintCategories::default(), base_config, overrides),
+            FxHashMap::default(),
+            ExternalPluginStore::default(),
+        );
+
+        let app = store.resolve("App.tsx".as_ref()).config;
+        // The override wins on the conflicting `version` key.
+        assert_eq!(app.settings.react.version.as_ref().unwrap().major(), 19);
+        // The `react` object is deep-merged, so the root-only `componentWrapperFunctions`
+        // is preserved rather than dropped by a wholesale object replacement.
+        assert!(app.settings.react.is_component_wrapper_function("observer"));
+    }
+
+    #[test]
+    fn test_deep_merge_settings_combines_nested_keys() {
+        let base_config = LintConfig {
+            plugins: LintPlugins::ESLINT,
+            settings: from_json!({ "react": { "version": "17.0.0" } }),
+            ..Default::default()
+        };
+
+        let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
+            files: GlobSet::new(vec!["*.tsx"]),
+            exclude_files: GlobSet::default(),
+            env: None,
+            plugins: None,
+            globals: None,
+            settings: Some(from_json!({ "react": { "componentWrapperFunctions": ["observer"] } })),
+            rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
+        }]);
+
+        let store = ConfigStore::new(
+            Config::new(vec![], vec![], OxlintCategories::default(), base_config, overrides),
+            FxHashMap::default(),
+            ExternalPluginStore::default(),
+        );
+
+        // The `react` objects are combined: the root-only `version` and the override-only
+        // `componentWrapperFunctions` both end up present.
+        let app = store.resolve("App.tsx".as_ref()).config;
+        assert_eq!(app.settings.react.version.as_ref().unwrap().major(), 17);
+        assert!(app.settings.react.is_component_wrapper_function("observer"));
+    }
+
+    #[test]
+    fn test_later_matching_override_settings_win() {
+        let base_config = LintConfig { plugins: LintPlugins::ESLINT, ..Default::default() };
+
+        let overrides = ResolvedOxlintOverrides::new(vec![
+            ResolvedOxlintOverride {
+                files: GlobSet::new(vec!["*.tsx"]),
+                exclude_files: GlobSet::default(),
+                env: None,
+                plugins: None,
+                globals: None,
+                settings: Some(from_json!({ "react": { "version": "18.0.0" } })),
+                rules: ResolvedOxlintOverrideRules {
+                    builtin_rules: vec![],
+                    external_rules: vec![],
+                },
+            },
+            ResolvedOxlintOverride {
+                files: GlobSet::new(vec!["*.tsx"]),
+                exclude_files: GlobSet::default(),
+                env: None,
+                plugins: None,
+                globals: None,
+                settings: Some(from_json!({ "react": { "version": "19.0.0" } })),
+                rules: ResolvedOxlintOverrideRules {
+                    builtin_rules: vec![],
+                    external_rules: vec![],
+                },
+            },
+        ]);
+
+        let store = ConfigStore::new(
+            Config::new(vec![], vec![], OxlintCategories::default(), base_config, overrides),
+            FxHashMap::default(),
+            ExternalPluginStore::default(),
+        );
+
+        // Both overrides match `*.tsx`; the later one wins the conflict.
+        let app = store.resolve("App.tsx".as_ref()).config;
+        assert_eq!(app.settings.react.version.as_ref().unwrap().major(), 19);
     }
 
     #[test]
@@ -1008,6 +1197,7 @@ mod test {
                 exclude_files: GlobSet::default(),
                 plugins: Some(LintPlugins::TYPESCRIPT),
                 globals: None,
+                settings: None,
                 rules: ResolvedOxlintOverrideRules {
                     builtin_rules: vec![],
                     external_rules: vec![],
@@ -1020,6 +1210,7 @@ mod test {
                 exclude_files: GlobSet::default(),
                 plugins: Some(LintPlugins::REACT),
                 globals: None,
+                settings: None,
                 rules: ResolvedOxlintOverrideRules {
                     builtin_rules: vec![(
                         RuleEnum::ReactJsxFilenameExtension(ReactJsxFilenameExtension::default()),
@@ -1035,6 +1226,7 @@ mod test {
                 exclude_files: GlobSet::default(),
                 plugins: Some(LintPlugins::UNICORN),
                 globals: None,
+                settings: None,
                 rules: ResolvedOxlintOverrideRules {
                     builtin_rules: vec![],
                     external_rules: vec![],
@@ -1097,6 +1289,7 @@ mod test {
             exclude_files: GlobSet::default(),
             plugins: Some(LintPlugins::REACT),
             globals: None,
+            settings: None,
             rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
         }]);
 
@@ -1131,6 +1324,7 @@ mod test {
             exclude_files: GlobSet::default(),
             plugins: None,
             globals: None,
+            settings: None,
             rules: ResolvedOxlintOverrideRules {
                 builtin_rules: vec![(
                     RuleEnum::EslintNoUnusedVars(override_rule),
@@ -1211,6 +1405,7 @@ mod test {
             exclude_files: GlobSet::default(),
             plugins: Some(LintPlugins::TYPESCRIPT),
             globals: None,
+            settings: None,
             rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
         }]);
 
@@ -1329,6 +1524,7 @@ mod test {
                 globals: None,
                 plugins: None,
                 // Override redefines the same rule with options B and severity error
+                settings: None,
                 rules: ResolvedOxlintOverrideRules {
                     builtin_rules: vec![],
                     external_rules: vec![(
@@ -1579,6 +1775,7 @@ mod test {
             exclude_files: GlobSet::default(),
             plugins: Some(LintPlugins::IMPORT),
             globals: None,
+            settings: None,
             rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
         }]);
 
