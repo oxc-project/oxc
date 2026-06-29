@@ -17,6 +17,7 @@ use walkdir::WalkDir;
 
 use oxc_allocator::Allocator;
 use oxc_formatter::JsFormatOptions;
+use oxc_formatter_graphql::GraphqlFormatOptions;
 use oxc_formatter_json::JsonFormatOptions;
 use oxc_span::SourceType;
 
@@ -246,7 +247,7 @@ impl TestRunner {
                     !options.experimental_operator_position.is_start()
                         && !options.experimental_ternaries
                 }
-                SpecOptions::Json(_) => true,
+                SpecOptions::Json(_) | SpecOptions::Graphql(_) => true,
             })
             .collect::<Vec<_>>();
 
@@ -436,7 +437,8 @@ impl TestRunner {
         input
     }
 
-    /// Dispatches by language: JS/TS via `oxc_formatter`, JSON via `oxc_formatter_json`.
+    /// Dispatches by language: JS/TS via `oxc_formatter`, JSON via `oxc_formatter_json`,
+    /// GraphQL via `oxc_formatter_graphql`.
     fn run_formatter(
         path: &Path,
         source_text: &str,
@@ -445,6 +447,7 @@ impl TestRunner {
         match format_options {
             SpecOptions::Js(opts) => Self::run_js_formatter(path, source_text, *opts),
             SpecOptions::Json(opts) => Self::run_json_formatter(source_text, opts),
+            SpecOptions::Graphql(opts) => Self::run_graphql_formatter(source_text, opts),
         }
     }
 
@@ -465,6 +468,17 @@ impl TestRunner {
     fn run_json_formatter(source_text: &str, format_options: JsonFormatOptions) -> Option<String> {
         let allocator = Allocator::default();
         let formatted = oxc_formatter_json::format(&allocator, source_text, format_options).ok()?;
+        let printed = formatted.print().ok()?;
+        Some(printed.into_code())
+    }
+
+    fn run_graphql_formatter(
+        source_text: &str,
+        format_options: GraphqlFormatOptions,
+    ) -> Option<String> {
+        let allocator = Allocator::default();
+        let formatted =
+            oxc_formatter_graphql::format(&allocator, source_text, format_options).ok()?;
         let printed = formatted.print().ok()?;
         Some(printed.into_code())
     }

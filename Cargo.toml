@@ -145,6 +145,7 @@ oxc_traverse = { version = "0.137.0", path = "crates/oxc_traverse" } # AST trave
 # publish = false
 oxc_formatter = { path = "crates/oxc_formatter" } # Code formatting
 oxc_formatter_core = { path = "crates/oxc_formatter_core" } # Language-agnostic formatter core
+oxc_formatter_graphql = { path = "crates/oxc_formatter_graphql" } # GraphQL formatter
 oxc_formatter_json = { path = "crates/oxc_formatter_json" } # JSON formatter
 oxc_language_server = { path = "crates/oxc_language_server", default-features = false } # Language server
 oxc_linter = { path = "crates/oxc_linter" } # Linting engine
@@ -179,6 +180,7 @@ oxc_sourcemap = "8.0.2" # Source map generation
 
 #
 allocator-api2 = "=0.2.21" # Allocator trait
+apollo-parser = "0.8.6" # GraphQL parser (lossless CST)
 base64 = "0.22.1" # Base64 encoding
 bitflags = "2.10.0" # Bitflag types
 bpaf = "0.9.20" # CLI parser

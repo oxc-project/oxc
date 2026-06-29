@@ -1,0 +1,14 @@
+query (
+  $a: Int,
+  ,
+  $b: Int,
+) {
+  f(x: 1, y: 2,) { a, b, c }
+  list(v: [1, 2, 3,])
+}
+
+type T {
+  a: String
+  ,
+  b: String
+}

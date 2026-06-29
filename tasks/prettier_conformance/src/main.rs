@@ -21,6 +21,7 @@ fn main() {
         TestLanguage::Jsonc,
         TestLanguage::Json5,
         TestLanguage::JsonStringify,
+        TestLanguage::Graphql,
     ] {
         TestRunner::new(TestRunnerOptions { language, debug, filter: filter.clone() }).run();
     }

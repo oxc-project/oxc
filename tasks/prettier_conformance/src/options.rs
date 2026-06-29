@@ -16,6 +16,7 @@ pub enum TestLanguage {
     Jsonc,
     Json5,
     JsonStringify,
+    Graphql,
 }
 
 impl TestLanguage {
@@ -27,6 +28,7 @@ impl TestLanguage {
             Self::Jsonc => "jsonc",
             Self::Json5 => "json5",
             Self::JsonStringify => "json-stringify",
+            Self::Graphql => "graphql",
         }
     }
 
@@ -57,6 +59,7 @@ impl TestLanguage {
             ],
             // `json-stringify` runs only on the shared `json/` dir
             Self::JsonStringify => vec![base.join("json").join("json")],
+            Self::Graphql => vec![base.join("graphql")],
         }
     }
 }
