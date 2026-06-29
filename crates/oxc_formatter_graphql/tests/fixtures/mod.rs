@@ -97,8 +97,9 @@ fn parse_error_is_err() {
         "query {{{",
         "",
         "# comments-only",
-        // Draft-spec syntax that Prettier (graphql-js) accepts but apollo-parser does not.
-        "fragment F($x: Int) on T { f }",
+        // Draft-spec syntax that Prettier main (graphql-js 17) accepts
+        // but the apollo-parser fork does not (yet): fragment spread arguments.
+        "fragment F on T { ...G(x: 1) }",
     ] {
         assert!(
             format(&allocator, source, GraphqlFormatOptions::default()).is_err(),

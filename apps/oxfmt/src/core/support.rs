@@ -98,9 +98,9 @@ pub enum FileKind {
     /// by `oxc_formatter_json` with the `json-stringify` variant.
     OxcFormatterJsonPackageJson { path: Arc<Path> },
     /// GraphQL files formatted by `oxc_formatter_graphql`.
-    /// On parse error, the format step falls back to Prettier (`napi` feature only):
-    /// apollo-parser covers the stable spec, while Prettier (graphql-js) also
-    /// accepts draft-level syntax.
+    /// Parse errors are surfaced as diagnostics — no Prettier fallback
+    /// (the apollo-parser fork covers everything Prettier's graphql-js 16.12
+    /// accepts; what it rejects is genuinely broken GraphQL).
     OxcFormatterGraphql { path: Arc<Path> },
     /// CSS/SCSS/Less files formatted by `oxc_formatter_css`.
     /// Parse errors are surfaced as diagnostics — no Prettier fallback

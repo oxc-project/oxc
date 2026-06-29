@@ -12,11 +12,23 @@ Prettier compatible GraphQL formatter (`oxfmt`'s Tier 1 backend), using the `oxc
   - `format_to_ir()`: embedded use via the dispatcher (graphql-in-js); allocates
     from the shared `EmbeddedContext` arena, emits no BOM / trailing newline,
     and leaves `propagate_expand()` to the parent document
-- Parses with [apollo-parser](https://docs.rs/apollo-parser) (rowan-based lossless CST)
-  - Spec coverage: **October 2021 GraphQL spec only**
-  - Prettier parses with `graphql-js`, which also accepts draft-level syntax
-    (e.g. experimental fragment arguments, directives on directive definitions)
-  - Such input makes `format()` return `Err`; `oxfmt` then falls back to Prettier (napi build)
+- Parses with a [fork of apollo-parser](https://github.com/leaysgur/apollo-rs)
+  (rowan-based lossless CST), pinned via `rev` in the workspace `Cargo.toml`
+  - Base: 0.8.6 (October 2021 spec). The fork adds, behind **opt-in** parser
+    flags, what Prettier's graphql-js 16.12 also accepts: **executable
+    descriptions** on operation / fragment / variable definitions
+    (Sep2025 spec, graphql-spec #1170) and **legacy fragment variables**
+    (`fragment F($x: Int) on T`). Both default to off; `format.rs` enables them
+    explicitly via `allow_executable_descriptions` /
+    `allow_legacy_fragment_variables` on `Parser`
+  - NOT covered by the fork (graphql-js 17 syntax): fragment spread arguments
+    (`...F(x: 1)`), directives on directive definitions, directive extensions.
+    Prettier 3.8.4 (stable) also rejects these, but Prettier main already
+    handles directives-on-directives (#19171) and fragment arguments (#19297) —
+    see the Roadmap below; following main here is future work
+  - Remaining parse errors make `format()` return `Err`; there is NO Prettier
+    fallback (oxfmt reports a diagnostic for standalone files, and an embedded
+    dispatch error makes the parent print the template as-is)
 - The canonical reference is Prettier's `src/language-graphql/printer-graphql.js`
   — port its layout decisions, do not invent new ones
 
@@ -27,7 +39,8 @@ Prettier compatible GraphQL formatter (`oxfmt`'s Tier 1 backend), using the `oxc
 - apollo-parser is error-tolerant (returns a CST even for invalid input),
   but any parse error bails out; never format a broken CST
 - print-stage internal errors are also `Err`
-- The caller (oxfmt) decides what happens next (report, or Prettier fallback)
+- The caller (oxfmt) decides what happens next
+  (diagnostics for standalone files, template-as-is for embedded)
 
 ### Comments
 
@@ -58,6 +71,36 @@ the printer collapses consecutive line breaks, so they are emitted as raw `\n` t
   Counting raw newlines would over-report when tokens (e.g. the `&` between two `implements` comments, or an insignificant comma) sit on their own line.
 - A cooked `\r` escape in a string value is re-emitted as `\r`
   (Prettier emits a raw CR byte, which the core `text()` builder forbids; the string VALUE is identical).
+- Known divergence: a trailing comment on the same line as a description
+  (`"desc" # comment`) moves to the next flush point (Prettier keeps it inline).
+  Pre-existing behavior of the positional comment cursor, affects type-system
+  descriptions too; no conformance test covers this shape.
+
+## Roadmap / TODO (graphql-js 17 / Prettier main)
+
+The guiding axis is **Prettier compatibility, not spec compliance**: match the
+syntax that the graphql-js version Prettier depends on can format
+(Prettier stable = graphql-js 16, Prettier main = graphql-js 17). Directive
+applications like `@oneOf` / `@defer` need no work — apollo-parser 0.8.6 already
+parses them.
+
+These are in Prettier's unreleased changelog (main has them, next stable will).
+Spec ratification is 2026+ at the earliest (RFC #1206 etc. still in flux).
+
+- **Prettier [#18582](https://github.com/prettier/prettier/blob/main/changelog_unreleased/graphql/18582.md)**:
+  allow `implements` lists to break. We currently implement **never break**
+  (see `tests/fixtures/format/implements-width.graphql`), so this is a layout
+  divergence that will become incompatible — not a new-syntax item, lands sooner.
+- **Prettier [#19171](https://github.com/prettier/prettier/blob/main/changelog_unreleased/graphql/19171.md)**:
+  directives on directive definitions (`directive @a @b on QUERY`) + `extend
+directive`. graphql-js 17 graduated this to default (no option).
+- **Prettier [#19297](https://github.com/prettier/prettier/blob/main/changelog_unreleased/graphql/19297.md)**:
+  fragment arguments (`...F(size: $size)`). graphql-js 17 still gates it behind
+  `experimentalFragmentArguments`; it replaces the v16 `allowLegacyFragmentVariables`
+  (definition-side, parser-only), which v17 removed.
+
+Adding any of these to the fork needs new grammar in apollo-parser (unlike
+`@oneOf`, these are genuinely new syntax).
 
 ## Verification
 
@@ -75,7 +118,9 @@ covering what the Prettier conformance suite does not:
 string escape re-encoding (incl. the `\r` divergence), empty `[]` / `{}` values,
 the full set of type-system extensions, insignificant-comma trivia,
 trailing comments at various positions,
-and width-overflowing `implements` lists (which never break).
+width-overflowing `implements` lists (which never break),
+and executable descriptions + legacy fragment variables
+(comment / blank-line / width edges beyond the conformance fixtures).
 `build.rs` auto-generates a test case from every `.graphql` file using the core
 `test_support` harness. Unit tests in `tests/fixtures/mod.rs` cover parse-error
 `Err` semantics and BOM preservation; `src/comments.rs` has `classify_gap` tests

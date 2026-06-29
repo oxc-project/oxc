@@ -111,8 +111,8 @@ describe("JSDoc", () => {
     // Parse errors inside comments are NOT diagnostics and do NOT fall back
     // to Prettier: the block stays as-is.
     // - css: genuinely broken
-    // - graphql: draft-spec syntax (fragment variable definitions) that
-    //   apollo-parser rejects
+    // - graphql: draft-spec syntax (fragment spread arguments, graphql-js 17)
+    //   that the apollo-parser fork does not cover yet
     const source = `
 /**
  * \`\`\`css
@@ -120,7 +120,7 @@ describe("JSDoc", () => {
  * \`\`\`
  *
  * \`\`\`graphql
- * fragment F($x: Int) on T { f }
+ * fragment F on T { ...G(x: 1) }
  * \`\`\`
  */
 `.trim();

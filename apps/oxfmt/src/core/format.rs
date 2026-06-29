@@ -62,13 +62,10 @@ pub enum FormatStrategy {
         insert_final_newline: bool,
     },
     /// For GraphQL files formatted by `oxc_formatter_graphql`.
-    /// `config` is retained (napi only) so the format step can fall back to Prettier
-    /// when the Rust parser rejects the input (e.g. draft-spec syntax).
+    /// Parse errors are surfaced as diagnostics — no Prettier fallback.
     OxcFormatterGraphql {
         path: Arc<Path>,
         format_options: Box<GraphqlFormatOptions>,
-        #[cfg(feature = "napi")]
-        config: Box<FormatConfig>,
         insert_final_newline: bool,
     },
     /// For CSS/SCSS/Less files formatted by `oxc_formatter_css`.
@@ -162,8 +159,6 @@ impl FormatStrategy {
             FileKind::OxcFormatterGraphql { path } => Self::OxcFormatterGraphql {
                 path,
                 format_options: Box::new(to_oxc_formatter_graphql(&config)?),
-                #[cfg(feature = "napi")]
-                config: Box::new(config),
                 insert_final_newline,
             },
             FileKind::OxcFormatterCss { path, variant } => Self::OxcFormatterCss {
@@ -269,20 +264,8 @@ impl SourceFormatter {
                 ),
                 insert_final_newline,
             ),
-            FormatStrategy::OxcFormatterGraphql {
-                path,
-                format_options,
-                #[cfg(feature = "napi")]
-                config,
-                insert_final_newline,
-            } => (
-                self.format_by_oxc_formatter_graphql(
-                    source_text,
-                    &path,
-                    *format_options,
-                    #[cfg(feature = "napi")]
-                    &config,
-                ),
+            FormatStrategy::OxcFormatterGraphql { path, format_options, insert_final_newline } => (
+                self.format_by_oxc_formatter_graphql(source_text, &path, *format_options),
                 insert_final_newline,
             ),
             FormatStrategy::OxcFormatterCss {
@@ -445,50 +428,32 @@ impl SourceFormatter {
 
     /// Format GraphQL source using `oxc_formatter_graphql`.
     ///
-    /// apollo-parser covers the stable GraphQL spec only, while Prettier (graphql-js)
-    /// also accepts draft-level syntax. So when the Rust formatter returns `Err`
-    /// (parse error or internal failure), the napi build falls back to Prettier;
-    /// if Prettier also fails, its error is reported.
-    /// The pure Rust build has no fallback and reports the diagnostic as-is.
+    /// There is NO Prettier fallback on parse errors: the apollo-parser fork
+    /// covers everything Prettier's graphql-js 16.12 accepts (conformance 100%,
+    /// 0 skipped), so what it rejects is genuinely broken GraphQL that Prettier
+    /// cannot format either. Both the napi and pure builds report the
+    /// diagnostic as-is.
     #[instrument(level = "debug", name = "oxfmt::format::oxc_formatter_graphql", skip_all)]
     fn format_by_oxc_formatter_graphql(
         &self,
         source_text: &str,
         path: &Path,
         format_options: GraphqlFormatOptions,
-        #[cfg(feature = "napi")] config: &FormatConfig,
     ) -> Result<String, OxcDiagnostic> {
-        let result = (|| -> Result<String, OxcDiagnostic> {
-            let allocator = self.allocator_pool.get();
-            let formatted = oxc_formatter_graphql::format(&allocator, source_text, format_options)?;
-            let printed = formatted.print().map_err(|err| {
-                OxcDiagnostic::error(format!(
-                    "Failed to print formatted GraphQL: {}\n{err}",
-                    path.display()
-                ))
-            })?;
-            Ok(printed.into_code())
-        })();
-
-        #[cfg(feature = "napi")]
-        let result = result.or_else(|_| {
-            self.format_by_external_formatter(
-                source_text,
-                path,
-                "graphql",
-                config,
-                /* supports_tailwind */ false,
-                /* supports_oxfmt */ false,
-                /* supports_svelte */ false,
-            )
-        });
-
-        result
+        let allocator = self.allocator_pool.get();
+        let formatted = oxc_formatter_graphql::format(&allocator, source_text, format_options)?;
+        let printed = formatted.print().map_err(|err| {
+            OxcDiagnostic::error(format!(
+                "Failed to print formatted GraphQL: {}\n{err}",
+                path.display()
+            ))
+        })?;
+        Ok(printed.into_code())
     }
 
     /// Format CSS/SCSS/Less source using `oxc_formatter_css`.
     ///
-    /// Unlike GraphQL, there is NO Prettier fallback on parse errors: raffia
+    /// There is NO Prettier fallback on parse errors: raffia
     /// covers the stable grammar (conformance 100%), and what it rejects is
     /// genuinely broken CSS or the tail of postcss's error tolerance
     /// (e.g. IE star hacks). Both the napi and pure builds report the

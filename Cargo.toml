@@ -181,7 +181,7 @@ oxc_sourcemap = "8.0.2" # Source map generation
 
 #
 allocator-api2 = "=0.2.21" # Allocator trait
-apollo-parser = "0.8.6" # GraphQL parser (lossless CST)
+apollo-parser = { git = "https://github.com/leaysgur/apollo-rs", rev = "64bbb246a146575d583c3c17c18c46454cec62ae" } # GraphQL parser (lossless CST; fork of 0.8.6: adds opt-in 2025 descriptions + legacy fragment variables)
 base64 = "0.22.1" # Base64 encoding
 bitflags = "2.10.0" # Bitflag types
 bpaf = "0.9.20" # CLI parser

@@ -19,9 +19,9 @@ const NEGATIVE_INFINITY_MARKER: &str = "__NEGATIVE_INFINITY__";
 /// Converts parsed Prettier Doc JSON values into a [`DispatchResult`].
 ///
 /// Handles language-specific processing:
-/// - GraphQL: converts each doc independently → one IR per doc
 /// - HTML: merges consecutive Text nodes, counts placeholders →
 ///   single IR + placeholder count + [`HtmlEmbedMeta`]
+/// - Markdown: single doc with raw-backtick escaping
 ///
 /// All Doc JSONs use a uniform `[doc, metadata]` envelope from the JS side.
 pub fn to_format_elements_for_template<'a>(
@@ -53,30 +53,8 @@ pub fn to_format_elements_for_template<'a>(
     }
 
     match language {
-        "graphql" => {
-            let irs = doc_jsons
-                .into_iter()
-                .map(|envelope| {
-                    let (mut ir, _) = convert(envelope, allocator, group_id_builder)?;
-                    postprocess(
-                        &mut ir,
-                        allocator,
-                        // GraphQL uses `.cooked` values, so template chars need escaping
-                        TemplateEscape::Full,
-                        None,
-                    );
-                    Ok(ir)
-                })
-                .collect::<Result<Vec<_>, String>>()?;
-            Ok(DispatchResult {
-                docs: irs,
-                tailwind_classes: Vec::new(),
-                placeholder_count: None,
-                meta: None,
-            })
-        }
-        // NOTE: no "css" arm — css/scss/less never reach the Prettier Doc
-        // path since plan Step 5-3 (the dispatcher branch is Rust-only).
+        // NOTE: no "css" / "graphql" arms — those languages never reach the
+        // Prettier Doc path (their dispatcher branches are Rust-only).
         "html" | "angular" => {
             let (mut ir, metadata) = convert(
                 doc_jsons.into_iter().next().expect("Doc JSON for HTML"),

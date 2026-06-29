@@ -87,7 +87,12 @@ fn parse_document<'a>(
 ) -> Result<(cst::Document, &'a str, &'a [Span]), OxcDiagnostic> {
     let source: &'a str = allocator.alloc_str(source_text);
 
-    let tree = Parser::new(source).parse();
+    // The fork gates these behind opt-in flags; enable both to keep parsing the
+    // graphql-js 16 syntax (executable descriptions + legacy fragment variables).
+    let tree = Parser::new(source)
+        .allow_executable_descriptions(true)
+        .allow_legacy_fragment_variables(true)
+        .parse();
     if let Some(error) = tree.errors().next() {
         let start = u32::try_from(error.index()).unwrap_or(0);
         let len = u32::try_from(error.data().len()).unwrap_or(0);

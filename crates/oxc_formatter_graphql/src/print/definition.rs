@@ -115,6 +115,8 @@ fn write_operation_definition(
     operation: &cst::OperationDefinition,
     f: &mut GraphqlFormatter<'_, '_>,
 ) {
+    common::write_description(operation.description(), f);
+
     let has_operation = operation.operation_type().is_some();
     let has_name = operation.name().is_some();
 
@@ -142,12 +144,15 @@ fn write_operation_definition(
 }
 
 fn write_fragment_definition(fragment: &cst::FragmentDefinition, f: &mut GraphqlFormatter<'_, '_>) {
+    common::write_description(fragment.description(), f);
     write!(f, "fragment ");
     if let Some(fragment_name) = fragment.fragment_name()
         && let Some(name) = fragment_name.name()
     {
         common::write_name(&name, f);
     }
+    // Legacy fragment variables (graphql-js `allowLegacyFragmentVariables`).
+    common::write_variable_definitions(fragment.variable_definitions(), f);
     if let Some(type_condition) = fragment.type_condition()
         && let Some(named) = type_condition.named_type()
     {

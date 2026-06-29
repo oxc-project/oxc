@@ -176,6 +176,7 @@ fn write_variable_definition(
     variable_definition: &cst::VariableDefinition,
     f: &mut GraphqlFormatter<'_, '_>,
 ) {
+    write_description(variable_definition.description(), f);
     if let Some(variable) = variable_definition.variable() {
         write_variable(&variable, f);
     }

@@ -327,15 +327,16 @@ impl ExternalFormatter {
                       texts: &[&str],
                       _parent_context| {
                     match language {
-                        // Rust implementation; Prettier fallback on parse errors
-                        // (apollo-parser covers the stable spec only, while
-                        // Prettier's graphql-js also accepts draft-level syntax)
+                        // Rust implementation; NO Prettier fallback.
+                        // The apollo-parser fork covers everything Prettier's
+                        // graphql-js 16.12 accepts, so what still errors is
+                        // garbage that Prettier's embed cannot format either —
+                        // `Err` makes the parent print the template as-is.
                         "graphql" | "gql" => format_graphql_to_irs(ctx, texts, graphql_options)
-                            .or_else(|err| {
+                            .inspect_err(|err| {
                                 debug!(
-                                    "`oxc_formatter_graphql` failed, falling back to Prettier: {err}"
+                                    "`oxc_formatter_graphql` failed, template stays as-is: {err}"
                                 );
-                                prettier_fallback(ctx, language, texts)
                             }),
                         // Rust implementation; NO Prettier fallback (plan Step 5-3).
                         // Since the raffia fork accepts `${}` placeholders in
@@ -343,13 +344,10 @@ impl ExternalFormatter {
                         // that Prettier's embed cannot format either — `Err`
                         // makes the parent print the template as-is, which is
                         // exactly what Prettier does when its embed throws.
-                        "css" | "scss" | "less" => {
-                            format_css_to_irs(ctx, texts, css_options).inspect_err(|err| {
-                                debug!(
-                                    "`oxc_formatter_css` failed, template stays as-is: {err}"
-                                );
-                            })
-                        }
+                        "css" | "scss" | "less" => format_css_to_irs(ctx, texts, css_options)
+                            .inspect_err(|err| {
+                                debug!("`oxc_formatter_css` failed, template stays as-is: {err}");
+                            }),
                         // Everything else: Prettier fallback (Doc→IR path)
                         _ => prettier_fallback(ctx, language, texts),
                     }
@@ -452,8 +450,8 @@ fn print_embedded_block<C: FormatContext>(formatted: Formatted<'_, C>) -> Result
 /// Template-literal characters in the output are re-escaped because the parent
 /// re-inserts the IR into a JS template literal built from `.cooked` values.
 ///
-/// Any parse error fails the whole batch so the caller can fall back to
-/// Prettier for all texts at once (an embedded template is all-or-nothing).
+/// Any parse error fails the whole batch (an embedded template is
+/// all-or-nothing): `Err` makes the parent print the template as-is.
 fn format_graphql_to_irs<'a>(
     ctx: &EmbeddedContext<'a, '_>,
     texts: &[&str],
@@ -574,7 +572,7 @@ fn build_prettier_fallback(
 /// Mapping from language identifiers to Prettier `parser` names.
 /// This is the single source of truth for embedded languages that can still
 /// reach Prettier; languages fully served by a Rust crate are absent
-/// (css/scss/less since plan Step 5-3 — their dispatcher branch has no
+/// (css/scss/less and graphql/gql — their dispatcher branches have no
 /// fallback and the JSDoc channel formats them in Rust, both before this map).
 ///
 /// Language identifiers come from two sources:
@@ -586,7 +584,6 @@ fn build_prettier_fallback(
 /// This function is the only place that maps them to Prettier-specific parsers.
 fn language_to_prettier_parser(language: &str) -> Option<&'static str> {
     match language {
-        "graphql" | "gql" => Some("graphql"),
         "html" => Some("html"),
         "angular" => Some("angular"),
         "markdown" | "md" => Some("markdown"),
