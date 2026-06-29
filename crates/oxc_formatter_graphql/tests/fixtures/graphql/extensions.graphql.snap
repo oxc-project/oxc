@@ -1,0 +1,84 @@
+---
+source: crates/oxc_formatter_graphql/tests/fixtures/mod.rs
+---
+==================== Input ====================
+extend scalar Date @directive
+
+extend type User implements Node @directive {
+  field: String
+}
+
+extend interface Node @directive
+
+extend union Result = A | B
+
+extend enum Role {
+  EXTRA
+}
+
+extend input Filter {
+  extra: String
+}
+
+extend schema @directive
+
+extend schema {
+  mutation: Mutation
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+extend scalar Date @directive
+
+extend type User implements Node @directive {
+  field: String
+}
+
+extend interface Node @directive
+
+extend union Result = A | B
+
+extend enum Role {
+  EXTRA
+}
+
+extend input Filter {
+  extra: String
+}
+
+extend schema @directive
+
+extend schema {
+  mutation: Mutation
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+extend scalar Date @directive
+
+extend type User implements Node @directive {
+  field: String
+}
+
+extend interface Node @directive
+
+extend union Result = A | B
+
+extend enum Role {
+  EXTRA
+}
+
+extend input Filter {
+  extra: String
+}
+
+extend schema @directive
+
+extend schema {
+  mutation: Mutation
+}
+
+===================== End =====================

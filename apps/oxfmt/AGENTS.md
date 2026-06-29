@@ -6,7 +6,7 @@ The `oxfmt` implemented under this directory serves several purposes.
 
 - Pure Rust CLI
   - Minimum feature set, CLI usage only, no LSP, no Stdin support
-  - Formats JS/TS, JSON and TOML files, no xxx-in-js support
+  - Formats JS/TS, JSON, GraphQL and TOML files, no xxx-in-js support
   - Entry point: `main()` in `src/main.rs`
   - Build with `cargo build --no-default-features`
 - JS/Rust hybrid CLI using `napi-rs`
@@ -35,10 +35,37 @@ When working with file paths in CLI code, be aware of Windows path differences:
 
 Oxfmt utilizes different implementations depending on the file extension and filename:
 
-- Tier 1: Rust implementations using `oxc_formatter` or `oxc_formatter_json` found in this repository
+- Tier 1: Rust implementations using `oxc_formatter`, `oxc_formatter_json`, etc found in this repository
 - Tier 2: Rust implementations using external libraries like `oxc_toml`
 - Tier 3: Delegations to Prettier via NAPI-JS calls (e.g., for Vue or Markdown)
 - Tier 4: Delegations to Prettier that require additional plugins (e.g., for Svelte)
+
+NOTE: Rust written formatters never fall back to Prettier, since they exist to reduce the dependency on Prettier.
+
+`oxc_formatter_css` (uses `oxc-css-parser`, a `raffia` fork) and `oxc_formatter_graphql` (uses `oxc-graphql-parser`, an `apollo-parser` fork) both should cover everything the bundled Prettier can parse for their language.
+
+However, parse errors may be reported as diagnostics, what the forks reject.
+This is genuinely broken input or, for CSS, the tail of postcss's error tolerance (e.g. IE star hacks, some postcss-plugin specific syntax).
+
+Embedded languages (e.g. css-in-js) go through `src/core/external_formatter.rs`, which assembles a `FormatDispatcher` (defined in `oxc_formatter_core`) that maps each language to a Rust formatter where implemented and to the Prettier Doc→IR path otherwise.
+
+A separate string-out channel (the `embedded_callback` in the same file, NOT the dispatcher) carries the cases that don't fit IR integration.
+Two consumers today:
+
+- JSDoc fenced code blocks
+- html-in-js fallback (`format_js_in_html_as_fallback` in `oxc_formatter/src/print/template/embed/html.rs`)
+
+Tailwind class sorting (`sortTailwindcss`) splits responsibilities:
+
+- Rust collects classes into `FormatElement::TailwindClass`
+  - `className` etc. in JS/TS, `@apply` in CSS — incl. css-in-js and JSDoc fenced blocks
+- and the JS side sorts them in one batch
+  - `sortTailwindClasses` → tailwind's `getClassOrder`, which needs the resolved Tailwind config
+
+Embedded boundaries carry classes through `DispatchResult::tailwind_classes`;
+each embed site calls `DispatchResult::remap_tailwind_into(collector)` before consuming `docs`.
+
+The four data paths (JS/TS top-level / standalone CSS / embedded CSS / JSDoc fenced CSS) are documented at `ExternalFormatter::to_external_callbacks`. No CSS goes to Prettier for this; the pure Rust build never collects (no sorter available).
 
 Consequently, managing these various formatter implementations and handling their respective options are also part of Oxfmt's responsibilities.
 
@@ -72,7 +99,7 @@ pnpm build-dev && pnpm t
 pnpm t -u
 
 # Run conformance test for xxx-in-js and js-in-xxx
-pnpm conformance
+pnpm build-dev && pnpm conformance
 ```
 
 To manually verify the CLI behavior after building:

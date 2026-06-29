@@ -1245,4 +1245,67 @@ describe("Tailwind CSS Sorting in CSS (@apply)", () => {
     expect(result.code).toContain("@apply flex p-4;");
     expect(result.errors).toStrictEqual([]);
   });
+
+  // The cases below mirror prettier-plugin-tailwindcss's `transformCss`;
+  // every expected output was verified against prettier@3.8.3 + the plugin.
+  it("should keep a !important tail unsorted", async () => {
+    const input = `.y { @apply p-4 flex !important; }`;
+
+    const result = await format("test.css", input, { sortTailwindcss: {} });
+
+    expect(result.code).toContain("@apply flex p-4 !important;");
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  it("should keep a SCSS #{!important} interpolation tail unsorted", async () => {
+    const input = `.s { @apply p-4 flex #{!important}; }`;
+
+    const result = await format("test.scss", input, { sortTailwindcss: {} });
+
+    expect(result.code).toContain("@apply flex p-4 #{!important};");
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  it('should sort inside a Less ~"..." escaped-string wrapper', async () => {
+    const input = `.z { @apply ~"p-4 flex"; }`;
+
+    const result = await format("test.less", input, { sortTailwindcss: {} });
+
+    expect(result.code).toContain('@apply ~"flex p-4";');
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  it("should dedup and collapse whitespace via the sorter", async () => {
+    const input = `.d { @apply  p-4   flex  p-4; }`;
+
+    const result = await format("test.css", input, { sortTailwindcss: {} });
+
+    expect(result.code).toContain("@apply flex p-4;");
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  it("should sort @apply inside css-in-js template literals", async () => {
+    const input = ["const A = styled.div`", "  @apply p-4 flex;", "  color: red;", "`;"].join("\n");
+
+    const result = await format("test.ts", input, { sortTailwindcss: {} });
+
+    expect(result.code).toContain("@apply flex p-4;");
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  it("should sort @apply in fenced css blocks in JSDoc", async () => {
+    const input = [
+      "/**",
+      " * ```css",
+      " * .c { @apply p-4 flex; }",
+      " * ```",
+      " */",
+      "export const C = 1;",
+    ].join("\n");
+
+    const result = await format("test.ts", input, { sortTailwindcss: {}, jsdoc: {} });
+
+    expect(result.code).toContain("@apply flex p-4;");
+    expect(result.errors).toStrictEqual([]);
+  });
 });
