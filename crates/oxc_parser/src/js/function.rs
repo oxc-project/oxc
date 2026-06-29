@@ -5,6 +5,7 @@ use oxc_span::{GetSpan, Span};
 use super::FunctionKind;
 use crate::{
     Context, ParserConfig as Config, ParserImpl, StatementContext, diagnostics,
+    error_handler::LazyDiagnostic,
     lexer::Kind,
     modifiers::{ModifierKind, ModifierKinds, Modifiers},
 };
@@ -88,14 +89,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             } else {
                 let comma_span = self.cur_token().span();
                 if kind != Kind::Comma {
-                    let error = diagnostics::expect_closing_or_separator(
-                        Kind::RParen.to_str(),
-                        Kind::Comma.to_str(),
-                        kind.to_str(),
-                        comma_span,
+                    self.set_fatal_error_lazy(LazyDiagnostic::ExpectClosingOrSeparator {
+                        closing: Kind::RParen.to_str(),
+                        separator: Kind::Comma.to_str(),
+                        found: kind.to_str(),
+                        span: comma_span,
                         opening_span,
-                    );
-                    self.set_fatal_error(error);
+                    });
                     break;
                 }
                 self.bump_any();
