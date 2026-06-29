@@ -254,7 +254,7 @@ fn generate_output(
         use std::cell::Cell;
 
         ///@@line_break
-        use oxc_allocator::Vec;
+        use oxc_allocator::ArenaVec;
         use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
         ///@@line_break

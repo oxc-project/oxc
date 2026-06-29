@@ -7,8 +7,8 @@
 
 use std::path::Path;
 
-use oxc_allocator::{Allocator, TakeIn, Vec as ArenaVec};
-use oxc_ast::{AstBuilder, ast::*};
+use oxc_allocator::{Allocator, ArenaVec, TakeIn};
+use oxc_ast::{ast::*, builder::AstBuilder};
 use oxc_diagnostics::Diagnostics;
 #[cfg(feature = "react_compiler")]
 use oxc_react_compiler::{PluginOptions, transform as react_compiler_transform};
@@ -190,7 +190,7 @@ impl<'a> Transformer<'a> {
             x1_jsx: Jsx::new(
                 self.jsx,
                 self.env.es2018.object_rest_spread,
-                ast_builder,
+                &ast_builder,
                 program.source_type,
             ),
             x2_es2026: ES2026::new(self.env.es2026),
@@ -646,7 +646,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
                     continue;
                 };
                 let expression = Some(expr_stmt.expression.take_in(ctx));
-                *stmt = ctx.ast.statement_return(SPAN, expression);
+                *stmt = Statement::new_return_statement(SPAN, expression, ctx);
                 return;
             }
             unreachable!("At least one statement should be expression statement")

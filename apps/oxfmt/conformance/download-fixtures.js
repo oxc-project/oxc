@@ -12,25 +12,52 @@ const externalsDir = join(import.meta.dirname, "fixtures", "externals");
 const cwd = join(import.meta.dirname, "..");
 
 const sources = [
+  // xxx-in-js
   {
     name: "prettier",
     repo: "prettier/prettier/tests/format",
     version: pkg.dependencies.prettier,
   },
+  // js-in-vue
   {
     name: "vue-vben-admin",
     repo: "vbenjs/vue-vben-admin/packages",
     version: "v5.6.0",
   },
+  // html-in-js
   {
     name: "webawesome",
     repo: "shoelace-style/webawesome/packages/webawesome/src/components",
     version: "v3.6.0",
   },
+  // svelte
   {
     name: "plugin-svelte",
     repo: "sveltejs/prettier-plugin-svelte/test/formatting/samples",
     version: `prettier-plugin-svelte@${pkg.dependencies["prettier-plugin-svelte"]}`,
+  },
+  // graphql
+  {
+    name: "gitlab",
+    repo: "gitlabhq/gitlabhq/app/assets",
+    version: "v16.9.0",
+  },
+  // less
+  {
+    name: "ng-zorro-antd",
+    repo: "NG-ZORRO/ng-zorro-antd",
+    version: "21.3.1",
+  },
+  // css (css modules)
+  {
+    name: "mantine",
+    repo: "mantinedev/mantine/packages/@mantine",
+    version: "9.3.2",
+  },
+  {
+    name: "docusaurus",
+    repo: "facebook/docusaurus/packages/docusaurus-theme-classic/src",
+    version: "v3.9.2",
   },
 ];
 

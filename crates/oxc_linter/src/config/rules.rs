@@ -214,7 +214,10 @@ impl OxlintRules {
                                     .or_insert((options_id, severity));
                             }
                             Err(e) => {
-                                errors.push(OverrideRulesError::ExternalRuleLookup(e));
+                                let error = OverrideRulesError::ExternalRuleLookup(e);
+                                if !errors.contains(&error) {
+                                    errors.push(error);
+                                }
                             }
                         }
                     }

@@ -49,13 +49,14 @@ use std::borrow::Cow;
 use std::mem;
 
 use oxc_allocator::{
-    Address, Box as ArenaBox, CloneIn, GetAddress, TakeIn, UnstableAddress, Vec as ArenaVec,
+    Address, ArenaBox, ArenaVec, CloneIn, GetAddress, GetAllocator, TakeIn, UnstableAddress,
 };
-use oxc_ast::{NONE, ast::*};
+use oxc_ast::{ast::*, builder::NONE};
 use oxc_ast_visit::{Visit, VisitMut};
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::SPAN;
+use oxc_str::static_ident;
 use oxc_syntax::operator::AssignmentOperator;
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, ast_operations::get_var_name_from_node};
 use rustc_hash::FxHashMap;
@@ -239,7 +240,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecorator<'a> {
 
         if let Some(decorations) = self.get_all_decorators_of_class_method(method, ctx) {
             // We emit `null` here to indicate to `_decorate` that it can invoke `Object.getOwnPropertyDescriptor` directly.
-            let descriptor = ctx.ast.expression_null_literal(SPAN);
+            let descriptor = Expression::new_null_literal(SPAN, ctx);
             self.handle_decorated_class_element(
                 method.r#static,
                 &mut method.key,
@@ -264,7 +265,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecorator<'a> {
             Self::convert_decorators_to_array_expression(prop.decorators.drain(..), ctx);
 
         // We emit `void 0` here to indicate to `_decorate` that it can invoke `Object.defineProperty` directly.
-        let descriptor = ctx.ast.void_0(SPAN);
+        let descriptor = Expression::new_void_0(SPAN, ctx);
         self.handle_decorated_class_element(
             prop.r#static,
             &mut prop.key,
@@ -287,7 +288,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecorator<'a> {
         let decorations =
             Self::convert_decorators_to_array_expression(accessor.decorators.drain(..), ctx);
         // We emit `null` here to indicate to `_decorate` that it can invoke `Object.getOwnPropertyDescriptor` directly.
-        let descriptor = ctx.ast.expression_null_literal(SPAN);
+        let descriptor = Expression::new_null_literal(SPAN, ctx);
         self.handle_decorated_class_element(
             accessor.r#static,
             &mut accessor.key,
@@ -344,7 +345,7 @@ impl<'a> LegacyDecorator<'a> {
         };
 
         let class_scope_id = class.scope_id();
-        let mut new_body = ctx.ast.vec_with_capacity(class.body.body.len() * 3);
+        let mut new_body = ArenaVec::with_capacity_in(class.body.body.len() * 3, ctx);
 
         for element in class.body.body.drain(..) {
             let ClassElement::AccessorProperty(accessor) = element else {
@@ -361,7 +362,7 @@ impl<'a> LegacyDecorator<'a> {
             let computed = accessor.computed;
 
             // Transfer decorators to the getter so legacy decorator transform can process them.
-            let decorators = std::mem::replace(&mut accessor.decorators, ctx.ast.vec());
+            let decorators = std::mem::replace(&mut accessor.decorators, ArenaVec::new_in(ctx));
             // Transfer the type annotation to the getter's return type so that
             // `emitDecoratorMetadata` can derive `design:type` from it. Without this,
             // the lowered getter is untyped and `design:type` falls through to `Object`.
@@ -386,7 +387,7 @@ impl<'a> LegacyDecorator<'a> {
                 let getter_key = PropertyKey::from(assignment);
                 let setter_key = PropertyKey::from(reference);
                 let storage_name =
-                    ctx.ast.str_from_strs_array(["_", &key_name, "_computed_accessor_storage"]);
+                    Str::from_strs_array_in(["_", &key_name, "_computed_accessor_storage"], ctx);
                 (storage_name, getter_key, setter_key)
             } else {
                 // Use `name()` to get the raw property name, avoiding `get_var_name_from_node`
@@ -396,9 +397,9 @@ impl<'a> LegacyDecorator<'a> {
                     .name()
                     .unwrap_or_else(|| Cow::Owned(get_var_name_from_node(&accessor.key)));
                 let storage_name =
-                    ctx.ast.str_from_strs_array(["_", &key_name, "_accessor_storage"]);
-                let getter_key = accessor.key.clone_in(ctx.ast.allocator);
-                let setter_key = accessor.key.clone_in(ctx.ast.allocator);
+                    Str::from_strs_array_in(["_", &key_name, "_accessor_storage"], ctx);
+                let getter_key = accessor.key.clone_in(ctx.ast.allocator());
+                let setter_key = accessor.key.clone_in(ctx.ast.allocator());
                 (storage_name, getter_key, setter_key)
             };
 
@@ -406,11 +407,11 @@ impl<'a> LegacyDecorator<'a> {
             let object_binding = if is_static { static_class_binding.as_ref() } else { None };
 
             // 1. Private backing field: `#<name>_accessor_storage = <value>`
-            new_body.push(ctx.ast.class_element_property_definition(
+            new_body.push(ClassElement::new_property_definition(
                 SPAN,
                 PropertyDefinitionType::PropertyDefinition,
-                ctx.ast.vec(),
-                ctx.ast.property_key_private_identifier(SPAN, storage_name),
+                ArenaVec::new_in(ctx),
+                PropertyKey::new_private_identifier(SPAN, storage_name, ctx),
                 NONE,
                 accessor.value.take(),
                 false,
@@ -421,6 +422,7 @@ impl<'a> LegacyDecorator<'a> {
                 false,
                 false,
                 None,
+                ctx,
             ));
 
             // 2. Getter: `get <name>() { return <object>.#<name>_accessor_storage; }`
@@ -439,7 +441,7 @@ impl<'a> LegacyDecorator<'a> {
 
             // 3. Setter: `set <name>(value) { <object>.#<name>_accessor_storage = value; }`
             new_body.push(Self::create_accessor_method(
-                ctx.ast.vec(),
+                ArenaVec::new_in(ctx),
                 setter_key,
                 MethodDefinitionKind::Set,
                 computed,
@@ -490,34 +492,36 @@ impl<'a> LegacyDecorator<'a> {
             if let Some(binding) = object_binding {
                 binding.create_read_expression(ctx)
             } else {
-                ctx.ast.expression_this(SPAN)
+                Expression::new_this_expression(SPAN, ctx)
             }
         };
 
         let (params, body_stmt) = if is_getter {
-            let params = ctx.ast.alloc_formal_parameters(
+            let params = FormalParameters::boxed(
                 SPAN,
                 FormalParameterKind::FormalParameter,
-                ctx.ast.vec(),
+                ArenaVec::new_in(ctx),
                 NONE,
+                ctx,
             );
-            let field_expr = Expression::from(ctx.ast.member_expression_private_field_expression(
+            let field_expr = Expression::new_private_field_expression(
                 SPAN,
                 create_object(ctx),
-                ctx.ast.private_identifier(SPAN, storage_name),
+                PrivateIdentifier::new(SPAN, storage_name, ctx),
                 false,
-            ));
-            let stmt = ctx.ast.statement_return(SPAN, Some(field_expr));
+                ctx,
+            );
+            let stmt = Statement::new_return_statement(SPAN, Some(field_expr), ctx);
             (params, stmt)
         } else {
             let value_binding = ctx.generate_binding(
-                Str::from("value").into(),
+                static_ident!("value"),
                 scope_id,
                 SymbolFlags::FunctionScopedVariable,
             );
-            let param = ctx.ast.formal_parameter(
+            let param = FormalParameter::new(
                 SPAN,
-                ctx.ast.vec(),
+                ArenaVec::new_in(ctx),
                 value_binding.create_binding_pattern(ctx),
                 NONE,
                 NONE,
@@ -525,27 +529,29 @@ impl<'a> LegacyDecorator<'a> {
                 None,
                 false,
                 false,
+                ctx,
             );
-            let params = ctx.ast.alloc_formal_parameters(
+            let params = FormalParameters::boxed(
                 SPAN,
                 FormalParameterKind::FormalParameter,
-                ctx.ast.vec1(param),
+                ArenaVec::from_value_in(param, ctx),
                 NONE,
+                ctx,
             );
-            let assign = ctx.ast.expression_assignment(
+            let assign = Expression::new_assignment_expression(
                 SPAN,
                 AssignmentOperator::Assign,
-                AssignmentTarget::from(SimpleAssignmentTarget::from(
-                    ctx.ast.member_expression_private_field_expression(
-                        SPAN,
-                        create_object(ctx),
-                        ctx.ast.private_identifier(SPAN, storage_name),
-                        false,
-                    ),
-                )),
+                AssignmentTarget::new_private_field_expression(
+                    SPAN,
+                    create_object(ctx),
+                    PrivateIdentifier::new(SPAN, storage_name, ctx),
+                    false,
+                    ctx,
+                ),
                 value_binding.create_read_expression(ctx),
+                ctx,
             );
-            let stmt = ctx.ast.statement_expression(SPAN, assign);
+            let stmt = Statement::new_expression_statement(SPAN, assign, ctx);
             (params, stmt)
         };
 
@@ -555,7 +561,7 @@ impl<'a> LegacyDecorator<'a> {
             kind,
             params,
             return_type,
-            ctx.ast.vec1(body_stmt),
+            ArenaVec::from_value_in(body_stmt, ctx),
             computed,
             is_static,
             scope_id,
@@ -929,19 +935,20 @@ impl<'a> LegacyDecorator<'a> {
 
                 if has_static_field_or_block {
                     // `_Class = this`;
-                    let class_alias_with_this_assignment = ctx.ast.statement_expression(
+                    let class_alias_with_this_assignment = Statement::new_expression_statement(
                         SPAN,
                         create_assignment(
                             class_alias_binding,
-                            ctx.ast.expression_this(SPAN),
+                            Expression::new_this_expression(SPAN, ctx),
                             SPAN,
                             ctx,
                         ),
+                        ctx,
                     );
-                    let body = ctx.ast.vec1(class_alias_with_this_assignment);
+                    let body = ArenaVec::from_value_in(class_alias_with_this_assignment, ctx);
                     let scope_id = ctx.create_child_scope_of_current(ScopeFlags::ClassStaticBlock);
                     let element =
-                        ctx.ast.class_element_static_block_with_scope_id(SPAN, body, scope_id);
+                        ClassElement::new_static_block_with_scope_id(SPAN, body, scope_id, ctx);
                     Some(element)
                 } else {
                     None
@@ -1001,19 +1008,21 @@ impl<'a> LegacyDecorator<'a> {
             alias_binding,
             ctx,
         );
-        let declarator = ctx.ast.variable_declarator(
+        let declarator = VariableDeclarator::new(
             SPAN,
             VariableDeclarationKind::Let,
             binding.create_binding_pattern(ctx),
             NONE,
             Some(initializer),
             false,
+            ctx,
         );
-        let var_declaration = ctx.ast.declaration_variable(
+        let var_declaration = Declaration::new_variable_declaration(
             span,
             VariableDeclarationKind::Let,
-            ctx.ast.vec1(declarator),
+            ArenaVec::from_value_in(declarator, ctx),
             false,
+            ctx,
         );
         Statement::from(var_declaration)
     }
@@ -1106,16 +1115,19 @@ impl<'a> LegacyDecorator<'a> {
         };
 
         // `Class = _decorate(decorations, Class)`
-        let arguments = ctx.ast.vec_from_array([
-            Argument::from(decorations),
-            Argument::from(class_binding.create_read_expression(ctx)),
-        ]);
+        let arguments = ArenaVec::from_array_in(
+            [
+                Argument::from(decorations),
+                Argument::from(class_binding.create_read_expression(ctx)),
+            ],
+            ctx,
+        );
         let helper = helper_call_expr(Helper::Decorate, arguments, ctx);
         let operator = AssignmentOperator::Assign;
         let left = class_binding.create_write_target(ctx);
         let right = Self::get_class_initializer(helper, class_alias_binding, ctx);
-        let assignment = ctx.ast.expression_assignment(SPAN, operator, left, right);
-        ctx.ast.statement_expression(SPAN, assignment)
+        let assignment = Expression::new_assignment_expression(SPAN, operator, left, right, ctx);
+        Statement::new_expression_statement(SPAN, assignment, ctx)
     }
 
     /// Insert all decorations into a static block of a class because there is a
@@ -1148,8 +1160,9 @@ impl<'a> LegacyDecorator<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let scope_id = ctx.create_child_scope(class.scope_id(), ScopeFlags::ClassStaticBlock);
-        let decorations = ctx.ast.vec_from_iter(decorations);
-        let element = ctx.ast.class_element_static_block_with_scope_id(SPAN, decorations, scope_id);
+        let decorations = ArenaVec::from_iter_in(decorations, ctx);
+        let element =
+            ClassElement::new_static_block_with_scope_id(SPAN, decorations, scope_id, ctx);
         class.body.body.push(element);
     }
 
@@ -1167,15 +1180,17 @@ impl<'a> LegacyDecorator<'a> {
             }
             decorations.extend(param.decorators.drain(..).map(|decorator| {
                 // (index, decorator)
-                let index = ctx.ast.expression_numeric_literal(
+                let index = Expression::new_numeric_literal(
                     SPAN,
                     index as f64,
                     None,
                     NumberBase::Decimal,
+                    ctx,
                 );
-                let arguments = ctx
-                    .ast
-                    .vec_from_array([Argument::from(index), Argument::from(decorator.expression)]);
+                let arguments = ArenaVec::from_array_in(
+                    [Argument::from(index), Argument::from(decorator.expression)],
+                    ctx,
+                );
                 // _decorateParam(index, decorator)
                 ArrayExpressionElement::from(helper_call_expr(
                     Helper::DecorateParam,
@@ -1199,10 +1214,11 @@ impl<'a> LegacyDecorator<'a> {
         decorators_iter: impl Iterator<Item = Decorator<'a>>,
         ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let decorations = ctx.ast.vec_from_iter(
+        let decorations = ArenaVec::from_iter_in(
             decorators_iter.map(|decorator| ArrayExpressionElement::from(decorator.expression)),
+            ctx,
         );
-        ctx.ast.expression_array(SPAN, decorations)
+        Expression::new_array_expression(SPAN, decorations, ctx)
     }
 
     /// Get all decorators of a class method.
@@ -1248,7 +1264,7 @@ impl<'a> LegacyDecorator<'a> {
             return None;
         }
 
-        let mut decorations = ctx.ast.vec_with_capacity(method_decoration_count);
+        let mut decorations = ArenaVec::with_capacity_in(method_decoration_count, ctx);
 
         // Method decorators should always be injected before all other decorators
         decorations.extend(
@@ -1279,7 +1295,7 @@ impl<'a> LegacyDecorator<'a> {
             }
         }
 
-        Some(ctx.ast.expression_array(SPAN, decorations))
+        Some(Expression::new_array_expression(SPAN, decorations, ctx))
     }
 
     /// * class_alias_binding is `Some`: `Class = _Class = expr`
@@ -1291,7 +1307,7 @@ impl<'a> LegacyDecorator<'a> {
     ) -> Expression<'a> {
         if let Some(class_alias_binding) = class_alias_binding {
             let left = class_alias_binding.create_write_target(ctx);
-            ctx.ast.expression_assignment(SPAN, AssignmentOperator::Assign, left, expr)
+            Expression::new_assignment_expression(SPAN, AssignmentOperator::Assign, left, expr, ctx)
         } else {
             expr
         }
@@ -1347,22 +1363,24 @@ impl<'a> LegacyDecorator<'a> {
     ) -> Expression<'a> {
         match key {
             PropertyKey::StaticIdentifier(ident) => {
-                ctx.ast.expression_string_literal(SPAN, ident.name, None)
+                Expression::new_string_literal(SPAN, ident.name, None, ctx)
             }
             // Legacy decorators do not support private key
-            PropertyKey::PrivateIdentifier(_) => ctx.ast.expression_string_literal(SPAN, "", None),
+            PropertyKey::PrivateIdentifier(_) => {
+                Expression::new_string_literal(SPAN, "", None, ctx)
+            }
             // Copiable literals
             PropertyKey::NumericLiteral(literal) => {
-                Expression::NumericLiteral(ctx.ast.alloc(literal.clone()))
+                Expression::NumericLiteral(literal.clone_in(ctx.allocator()))
             }
             PropertyKey::StringLiteral(literal) => {
-                Expression::StringLiteral(ctx.ast.alloc(literal.clone()))
+                Expression::StringLiteral(literal.clone_in(ctx.allocator()))
             }
             PropertyKey::TemplateLiteral(literal) if literal.expressions.is_empty() => {
-                let quasis = ctx.ast.vec_from_iter(literal.quasis.iter().cloned());
-                ctx.ast.expression_template_literal(SPAN, quasis, ctx.ast.vec())
+                let quasis = literal.quasis.clone_in(ctx.allocator());
+                Expression::new_template_literal(SPAN, quasis, ArenaVec::new_in(ctx), ctx)
             }
-            PropertyKey::NullLiteral(_) => ctx.ast.expression_null_literal(SPAN),
+            PropertyKey::NullLiteral(_) => Expression::new_null_literal(SPAN, ctx),
             _ => {
                 // ```ts
                 // Input:
@@ -1382,7 +1400,8 @@ impl<'a> LegacyDecorator<'a> {
                 let operator = AssignmentOperator::Assign;
                 let left = binding.create_write_target(ctx);
                 let right = key.to_expression_mut().take_in(ctx);
-                let key_expr = ctx.ast.expression_assignment(SPAN, operator, left, right);
+                let key_expr =
+                    Expression::new_assignment_expression(SPAN, operator, left, right, ctx);
                 *key = PropertyKey::from(key_expr);
                 binding.create_read_expression(ctx)
             }
@@ -1399,14 +1418,17 @@ impl<'a> LegacyDecorator<'a> {
         descriptor: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
-        let arguments = ctx.ast.vec_from_array([
-            Argument::from(decorations),
-            Argument::from(prefix),
-            Argument::from(name),
-            Argument::from(descriptor),
-        ]);
+        let arguments = ArenaVec::from_array_in(
+            [
+                Argument::from(decorations),
+                Argument::from(prefix),
+                Argument::from(name),
+                Argument::from(descriptor),
+            ],
+            ctx,
+        );
         let helper = helper_call_expr(Helper::Decorate, arguments, ctx);
-        ctx.ast.statement_expression(SPAN, helper)
+        Statement::new_expression_statement(SPAN, helper, ctx)
     }
 
     /// `export default Class`
@@ -1414,11 +1436,13 @@ impl<'a> LegacyDecorator<'a> {
         class_binding: &BoundIdentifier<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
-        let export_default_class_reference = ctx.ast.module_declaration_export_default_declaration(
+        let export_default_class_reference = ModuleDeclaration::new_export_default_declaration(
             SPAN,
-            ExportDefaultDeclarationKind::Identifier(
-                ctx.ast.alloc(class_binding.create_read_reference(ctx)),
-            ),
+            ExportDefaultDeclarationKind::Identifier(ArenaBox::new_in(
+                class_binding.create_read_reference(ctx),
+                ctx,
+            )),
+            ctx,
         );
         Statement::from(export_default_class_reference)
     }
@@ -1430,11 +1454,12 @@ impl<'a> LegacyDecorator<'a> {
     ) -> Statement<'a> {
         let kind = ImportOrExportKind::Value;
         let local = ModuleExportName::IdentifierReference(class_binding.create_read_reference(ctx));
-        let exported = ctx.ast.module_export_name_identifier_name(SPAN, class_binding.name);
-        let specifiers = ctx.ast.vec1(ctx.ast.export_specifier(SPAN, local, exported, kind));
-        let export_class_reference = ctx
-            .ast
-            .module_declaration_export_named_declaration(SPAN, None, specifiers, None, kind, NONE);
+        let exported = ModuleExportName::new_identifier_name(SPAN, class_binding.name, ctx);
+        let specifiers =
+            ArenaVec::from_value_in(ExportSpecifier::new(SPAN, local, exported, kind, ctx), ctx);
+        let export_class_reference = ModuleDeclaration::new_export_named_declaration(
+            SPAN, None, specifiers, None, kind, NONE, ctx,
+        );
         Statement::from(export_class_reference)
     }
 }

@@ -1,0 +1,69 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// Sass interpolation normalization in selectors.
+// - Quoted string literals inside `#{...}` re-quote to double quotes
+//   (`#{'x'}` -> `#{"x"}`), matching Prettier.
+// - Inner spaces collapse (`#{ $name }` -> `#{$name}`) for consistency with
+//   value-position interpolation. This DELIBERATELY DIVERGES from Prettier,
+//   which keeps selector interpolation verbatim (`#{ $name }`). See AGENTS.md.
+
+.foo[data-level='#{$level}'] {
+  fill: red;
+}
+
+#{'.text-#{$index}'} {
+  color: red;
+}
+
+.text #{ $name } {
+  font-weight: bold;
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// Sass interpolation normalization in selectors.
+// - Quoted string literals inside `#{...}` re-quote to double quotes
+//   (`#{'x'}` -> `#{"x"}`), matching Prettier.
+// - Inner spaces collapse (`#{ $name }` -> `#{$name}`) for consistency with
+//   value-position interpolation. This DELIBERATELY DIVERGES from Prettier,
+//   which keeps selector interpolation verbatim (`#{ $name }`). See AGENTS.md.
+
+.foo[data-level="#{$level}"] {
+  fill: red;
+}
+
+#{".text-#{$index}"} {
+  color: red;
+}
+
+.text #{$name} {
+  font-weight: bold;
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// Sass interpolation normalization in selectors.
+// - Quoted string literals inside `#{...}` re-quote to double quotes
+//   (`#{'x'}` -> `#{"x"}`), matching Prettier.
+// - Inner spaces collapse (`#{ $name }` -> `#{$name}`) for consistency with
+//   value-position interpolation. This DELIBERATELY DIVERGES from Prettier,
+//   which keeps selector interpolation verbatim (`#{ $name }`). See AGENTS.md.
+
+.foo[data-level="#{$level}"] {
+  fill: red;
+}
+
+#{".text-#{$index}"} {
+  color: red;
+}
+
+.text #{$name} {
+  font-weight: bold;
+}
+
+===================== End =====================

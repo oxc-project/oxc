@@ -2,7 +2,7 @@
 
 use std::borrow::Cow;
 
-use oxc_allocator::{Allocator, GetAllocator, Vec as ArenaVec};
+use oxc_allocator::{Allocator, ArenaVec, GetAllocator};
 
 use crate::{
     Argument, Arguments, Buffer, FormatContext, FormatElement, FormatState, VecBuffer,

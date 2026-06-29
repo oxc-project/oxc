@@ -1,0 +1,11 @@
+/* A custom property's `!important` lives in the re-parsed declaration
+   (the original is a raw token soup with `important: None`) — it must
+   survive printing. */
+html {
+  margin-right: 0px !important;
+  --removed-body-scroll-bar-size: 0px !important;
+  ---zoom: 95 !important;
+  --a: var(--b) !important;
+  --x: 0px  !IMPORTANT;
+  --y: calc(1px + 2px) !important /* c */;
+}

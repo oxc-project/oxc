@@ -17,7 +17,7 @@ description.workspace = true
 workspace = true
 
 [lib]
-doctest = false
+doctest = true
 
 [dependencies]
 oxc_allocator = { workspace = true }
@@ -34,6 +34,7 @@ bitflags = { workspace = true }
 
 [features]
 default = []
+disable_old_builder = []
 serialize = [
   "oxc_allocator/serialize",
   "oxc_span/serialize",

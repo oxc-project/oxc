@@ -1,5 +1,6 @@
 use std::borrow::Cow;
 
+use convert_case::{Case, Casing};
 use indexmap::{IndexMap, IndexSet};
 use phf::{Set as PhfSet, phf_set};
 use proc_macro2::{Span, TokenStream};
@@ -102,6 +103,31 @@ pub fn upper_case_first(s: &str) -> Cow<'_, str> {
     } else {
         Cow::Owned(first_char.to_uppercase().chain(chars).collect::<String>())
     }
+}
+
+/// Convert type name to snake case.
+///
+/// e.g. `ExpressionStatement` -> `expression_statement`.
+///
+/// Fixup `convert_case`'s output which inserts underscores between letters and digits.
+/// e.g. `v_8_intrinsic_expression` -> `v8_intrinsic_expression`.
+pub fn snake_case(s: &str) -> String {
+    let s = s.to_case(Case::Snake);
+    let bytes = s.as_bytes();
+    let mut result = String::with_capacity(s.len());
+    for (i, &byte) in bytes.iter().enumerate() {
+        // Skip underscores between a letter and a digit
+        if byte == b'_'
+            && i > 0
+            && i + 1 < bytes.len()
+            && bytes[i - 1].is_ascii_alphabetic()
+            && bytes[i + 1].is_ascii_digit()
+        {
+            continue;
+        }
+        result.push(byte as char);
+    }
+    result
 }
 
 /// Macro to `format!` arguments, and wrap the formatted string in a `Cow::Owned`.

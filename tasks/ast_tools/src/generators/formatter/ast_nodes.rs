@@ -104,7 +104,7 @@ impl Generator for FormatterAstNodesGenerator {
         let output = quote! {
             use std::mem::transmute;
             ///@@line_break
-            use oxc_allocator::Vec;
+            use oxc_allocator::ArenaVec;
             use oxc_ast::ast::*;
             use oxc_span::GetSpan;
             use oxc_str::Ident;

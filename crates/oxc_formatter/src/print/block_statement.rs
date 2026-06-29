@@ -1,4 +1,4 @@
-use oxc_allocator::Vec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 
 use super::FormatWrite;
@@ -9,7 +9,7 @@ use crate::{
     write,
 };
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Vec<'a, Statement<'a>>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, Statement<'a>>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         f.join_nodes_with_hardline().entries(
             self.iter().filter(|stmt| !matches!(stmt.as_ref(), Statement::EmptyStatement(_))),

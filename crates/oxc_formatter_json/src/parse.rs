@@ -1,4 +1,4 @@
-use oxc_allocator::{Allocator, Vec as ArenaVec};
+use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::{
     Comment,
     ast::{Expression, Statement},
@@ -88,9 +88,9 @@ pub fn parse_json<'a>(
     // This is needed so neither the returned expression reference
     // nor the comments slice borrow from the local `program`.
     let comments =
-        std::mem::replace(&mut program.comments, ArenaVec::new_in(allocator)).into_arena_slice();
+        std::mem::replace(&mut program.comments, ArenaVec::new_in(&allocator)).into_arena_slice();
     let body: &'a [Statement<'a>] =
-        std::mem::replace(&mut program.body, ArenaVec::new_in(allocator)).into_arena_slice();
+        std::mem::replace(&mut program.body, ArenaVec::new_in(&allocator)).into_arena_slice();
 
     // The wrap source guarantees exactly one top-level `ExpressionStatement`
     let stmt = body.first().ok_or_else(|| OxcDiagnostic::error("Empty JSON source"))?;
@@ -148,7 +148,7 @@ fn try_parse_comments_only<'a>(
 
     let mut program = ret.program;
     let comments =
-        std::mem::replace(&mut program.comments, ArenaVec::new_in(allocator)).into_arena_slice();
+        std::mem::replace(&mut program.comments, ArenaVec::new_in(&allocator)).into_arena_slice();
 
     Some(ParsedJson { expression: None, comments, wrapped_source: bare_source, source_offset: 0 })
 }

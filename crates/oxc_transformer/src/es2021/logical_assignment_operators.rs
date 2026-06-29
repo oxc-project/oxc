@@ -126,9 +126,11 @@ impl<'a> LogicalAssignmentOperators {
         let span = assignment_expr.span;
         let assign_op = AssignmentOperator::Assign;
         let right = assignment_expr.right.take_in(ctx);
-        let right = ctx.ast.expression_assignment(SPAN, assign_op, assign_target, right);
+        let right =
+            Expression::new_assignment_expression(SPAN, assign_op, assign_target, right, ctx);
 
-        let logical_expr = ctx.ast.expression_logical(span, left_expr, operator, right);
+        let logical_expr =
+            Expression::new_logical_expression(span, left_expr, operator, right, ctx);
 
         *expr = logical_expr;
     }
@@ -137,10 +139,12 @@ impl<'a> LogicalAssignmentOperators {
         ident: &IdentifierReference<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> (Expression<'a>, AssignmentTarget<'a>) {
-        let reference = ctx.scoping_mut().get_reference_mut(ident.reference_id());
+        let reference_id = ident.reference_id();
+        let reference = ctx.scoping_mut().get_reference_mut(reference_id);
         *reference.flags_mut() = ReferenceFlags::Read;
         let symbol_id = reference.symbol_id();
-        let left_expr = Expression::Identifier(ctx.alloc(ident.clone()));
+        let left_expr =
+            Expression::new_identifier_with_reference_id(ident.span, ident.name, reference_id, ctx);
 
         let ident = ctx.create_ident_reference(SPAN, ident.name, symbol_id, ReferenceFlags::Write);
         let assign_target = AssignmentTarget::AssignmentTargetIdentifier(ctx.alloc(ident));
@@ -156,18 +160,20 @@ impl<'a> LogicalAssignmentOperators {
         let object = static_expr.object.take_in(ctx);
         let (object, object_ref) = duplicate_expression(object, true, ctx);
 
-        let left_expr = Expression::from(ctx.ast.member_expression_static(
+        let left_expr = Expression::new_static_member_expression(
             static_expr.span,
             object,
             static_expr.property.clone(),
             false,
-        ));
+            ctx,
+        );
 
-        let assign_expr = ctx.ast.member_expression_static(
+        let assign_expr = MemberExpression::new_static_member_expression(
             static_expr.span,
             object_ref,
             static_expr.property.clone(),
             false,
+            ctx,
         );
         let assign_target = AssignmentTarget::from(assign_expr);
 
@@ -186,19 +192,21 @@ impl<'a> LogicalAssignmentOperators {
         let expression = computed_expr.expression.take_in(ctx);
         let (expression, expression_ref) = duplicate_expression(expression, true, ctx);
 
-        let left_expr = Expression::from(ctx.ast.member_expression_computed(
+        let left_expr = Expression::new_computed_member_expression(
             computed_expr.span,
             object,
             expression,
             false,
-        ));
+            ctx,
+        );
 
-        let assign_target = AssignmentTarget::from(ctx.ast.member_expression_computed(
+        let assign_target = AssignmentTarget::new_computed_member_expression(
             computed_expr.span,
             object_ref,
             expression_ref,
             false,
-        ));
+            ctx,
+        );
 
         (left_expr, assign_target)
     }

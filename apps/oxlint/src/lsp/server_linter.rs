@@ -24,7 +24,7 @@ use oxc_linter::{
 
 use oxc_language_server::{
     Capabilities, ConcurrentHashMap, DiagnosticMode, DiagnosticResult, TextDocument, Tool,
-    ToolBuilder, ToolRestartChanges,
+    ToolBuilder, ToolRestartChanges, utils::normalize_user_config_path_to_watch_pattern,
 };
 
 use crate::{
@@ -459,7 +459,7 @@ impl Tool for ServerLinter {
             Some("") | None => {
                 config_file_names().into_iter().map(|name| format!("**/{name}")).collect()
             }
-            Some(v) => vec![v.to_string()],
+            Some(v) => vec![normalize_user_config_path_to_watch_pattern(v)],
         };
 
         for path in &self.extended_paths {

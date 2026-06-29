@@ -1,5 +1,7 @@
 //! Specialized comparison traits
 
+use oxc_allocator::{ArenaBox, ArenaVec};
+
 /// This trait works similarly to [PartialEq] but it gives the liberty of checking the equality of the
 /// content loosely.
 ///
@@ -94,21 +96,21 @@ impl<T: ContentEq> ContentEq for Option<T> {
     }
 }
 
-/// Blanket implementation for [oxc_allocator::Box] types
-impl<T: ContentEq> ContentEq for oxc_allocator::Box<'_, T> {
+/// Blanket implementation for [`Box`](ArenaBox) types
+impl<T: ContentEq> ContentEq for ArenaBox<'_, T> {
     #[inline]
     fn content_eq(&self, other: &Self) -> bool {
         self.as_ref().content_eq(other.as_ref())
     }
 }
 
-/// Blanket implementation for [oxc_allocator::Vec] types
+/// Blanket implementation for [`Vec`](ArenaVec) types.
 ///
 /// # Warning
 /// This implementation is slow compared to [PartialEq] for native types which are [Copy] (e.g. `u32`).
 /// Prefer comparing the 2 vectors using `==` if they contain such native types (e.g. `Vec<u32>`).
 /// <https://godbolt.org/z/54on5sMWc>
-impl<T: ContentEq> ContentEq for oxc_allocator::Vec<'_, T> {
+impl<T: ContentEq> ContentEq for ArenaVec<'_, T> {
     #[inline]
     fn content_eq(&self, other: &Self) -> bool {
         if self.len() == other.len() {

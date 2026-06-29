@@ -3,7 +3,7 @@
 
 use std::cell::Cell;
 
-use oxc_allocator::TakeIn;
+use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::ast::*;
 use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_semantic::{ScopeFlags, ScopeId};
@@ -97,10 +97,13 @@ impl<'a> ClassProperties<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let brand = self.classes_stack.last().bindings.brand.as_ref().unwrap();
-        let arguments = ctx.ast.vec_from_array([
-            Argument::from(ctx.ast.expression_this(SPAN)),
-            Argument::from(brand.create_read_expression(ctx)),
-        ]);
+        let arguments = ArenaVec::from_array_in(
+            [
+                Argument::new_this_expression(SPAN, ctx),
+                Argument::from(brand.create_read_expression(ctx)),
+            ],
+            ctx,
+        );
         helper_call_expr(Helper::ClassPrivateMethodInitSpec, arguments, ctx)
     }
 }

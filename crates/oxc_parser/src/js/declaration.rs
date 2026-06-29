@@ -1,4 +1,4 @@
-use oxc_allocator::Box;
+use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 
@@ -64,7 +64,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if stmt_ctx.is_single_statement() {
             self.error(diagnostics::lexical_declaration_single_statement(decl.span));
         }
-        Statement::VariableDeclaration(self.alloc(decl))
+        Statement::VariableDeclaration(decl)
     }
 
     pub(crate) fn get_variable_declaration_kind(&self) -> VariableDeclarationKind {
@@ -82,8 +82,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         kind: VariableDeclarationKind,
         decl_parent: VariableDeclarationParent,
         declare: bool,
-    ) -> Box<'a, VariableDeclaration<'a>> {
-        let mut declarations = self.ast.vec();
+    ) -> ArenaBox<'a, VariableDeclaration<'a>> {
+        let mut declarations = ArenaVec::new_in(self);
         loop {
             let declaration = self.parse_variable_declarator(decl_parent, kind);
             declarations.push(declaration);
@@ -95,7 +95,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if matches!(decl_parent, VariableDeclarationParent::Statement) {
             self.asi();
         }
-        self.ast.alloc_variable_declaration(self.end_span(start_span), kind, declarations, declare)
+        VariableDeclaration::boxed(self.end_span(start_span), kind, declarations, declare, self)
     }
 
     fn parse_variable_declarator(
@@ -132,13 +132,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // `const foo /* #__PURE__ */ = bar()` - pure comment before `=` cannot be applied
         self.lexer.trivia_builder.mark_current_pure_comment_not_applied();
         let init = self.eat(Kind::Eq).then(|| self.parse_assignment_expression_or_higher());
-        let decl = self.ast.variable_declarator(
+        let decl = VariableDeclarator::new(
             self.end_span(span),
             kind,
             id,
             type_annotation,
             init,
             definite.is_some(),
+            self,
         );
         if self.ctx.has_ambient()
             && let Some(init) = &decl.init
@@ -182,7 +183,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_using_declaration(
         &mut self,
         statement_ctx: StatementContext,
-    ) -> VariableDeclaration<'a> {
+    ) -> ArenaBox<'a, VariableDeclaration<'a>> {
         let span = self.start_span();
 
         let is_await = self.eat(Kind::Await);
@@ -203,7 +204,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
 
         // BindingList[?In, ?Yield, ?Await, ~Pattern]
-        let mut declarations = self.ast.vec();
+        let mut declarations = ArenaVec::new_in(self);
         loop {
             let decl_parent = if matches!(statement_ctx, StatementContext::For) {
                 VariableDeclarationParent::For
@@ -224,6 +225,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
         }
 
-        self.ast.variable_declaration(self.end_span(span), kind, declarations, false)
+        VariableDeclaration::boxed(self.end_span(span), kind, declarations, false, self)
     }
 }

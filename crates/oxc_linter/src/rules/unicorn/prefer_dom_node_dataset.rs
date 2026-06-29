@@ -1,13 +1,12 @@
 use cow_utils::CowUtils;
-use oxc_allocator::Allocator;
 use oxc_ast::{
-    AstBuilder, AstKind,
+    AstKind,
     ast::{Argument, CallExpression, Expression},
 };
 use oxc_codegen::CodegenOptions;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, SPAN, Span};
+use oxc_span::{GetSpan, Span};
 use oxc_syntax::identifier::is_identifier_name;
 
 use crate::{
@@ -269,9 +268,7 @@ fn expression_uses_optional_chain(expr: &Expression) -> bool {
 
 fn to_string_literal_text(fixer: RuleFixer, text: &str) -> String {
     let mut codegen = fixer.codegen().with_options(CodegenOptions::default());
-    let alloc = Allocator::default();
-    let ast = AstBuilder::new(&alloc);
-    codegen.print_expression(&ast.expression_string_literal(SPAN, ast.str(text), None));
+    codegen.print_string(text);
     codegen.into_source_text()
 }
 

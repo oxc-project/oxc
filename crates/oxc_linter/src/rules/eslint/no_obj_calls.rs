@@ -1,3 +1,4 @@
+use oxc_allocator::ArenaBox;
 use oxc_ast::{
     AstKind,
     ast::{Expression, IdentifierReference, MemberExpression, match_member_expression},
@@ -77,7 +78,7 @@ fn global_this_member<'a>(expr: &'a MemberExpression<'_>) -> Option<&'a str> {
 }
 
 fn resolve_global_binding<'a, 'b: 'a>(
-    ident: &'a oxc_allocator::Box<'a, IdentifierReference<'a>>,
+    ident: &'a ArenaBox<'a, IdentifierReference<'a>>,
     scope_id: ScopeId,
     ctx: &LintContext<'a>,
 ) -> Option<&'a str> {

@@ -123,6 +123,14 @@ impl std::fmt::Debug for JsFormatContext<'_> {
     }
 }
 
+/// Lets embedded children's classes merge into this context's index space
+/// (`DispatchResult::remap_tailwind_into` at each embed site).
+impl oxc_formatter_core::TailwindCollector for JsFormatContext<'_> {
+    fn add_class(&mut self, class: String) -> usize {
+        self.add_tailwind_class(class)
+    }
+}
+
 impl oxc_formatter_core::FormatContext for JsFormatContext<'_> {
     type Options = JsFormatOptions;
 

@@ -90,11 +90,20 @@ pub(super) fn update_template_depth(line: &str, mut depth: u32) -> u32 {
     depth
 }
 
-/// Try to format JS/TS/JSX code using the formatter.
-/// Returns `Some(formatted)` on success, `None` if parsing fails.
-/// The `print_width` is the available width for the formatted code.
-/// Uses the parent `format_options` to ensure consistent formatting behavior.
-pub(super) fn format_embedded_js(
+/// Format a JS/TS/JSX snippet extracted from a JSDoc comment.
+///
+/// For now, this is JSDoc-specific helper, NOT a generic embedded-language formatter.
+/// JSDoc snippets are standalone comment fragments rather than parent-integrated IR,
+/// so they go through `format_program` directly (no orchestrator round trip)
+/// and return a string for line-by-line splicing into the surrounding comment.
+///
+/// JSDoc-specific behaviour (inline comments below give the full rationale):
+/// - object-literal wrap for `{`-leading snippets
+/// - TSX → JSX fallback (TSX first so TS generics aren't miss-parsed)
+/// - `sort_imports` / `sort_tailwindcss` are disabled (top-level concerns)
+///
+/// Returns `None` on parse failure, the pass-through gate every caller uses.
+pub(super) fn format_jsdoc_js_snippet(
     code: &str,
     print_width: usize,
     format_options: &JsFormatOptions,
@@ -103,10 +112,6 @@ pub(super) fn format_embedded_js(
     let width = u16::try_from(print_width).unwrap_or(80).clamp(1, 320);
     let line_width = LineWidth::try_from(width).unwrap();
 
-    // Null out sort_imports/sort_tailwindcss — they're top-level concerns irrelevant
-    // to embedded code, and their Vec fields make cloning expensive.
-    // Inherit indent_style from parent so embedded code uses tabs when useTabs=true,
-    // matching upstream prettier-plugin-jsdoc behavior.
     let base_options = JsFormatOptions {
         line_width,
         jsdoc: None,
