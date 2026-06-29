@@ -10,13 +10,13 @@
 
 use oxc_allocator::{Allocator, TakeIn};
 use oxc_ast::{
-    AstBuilder,
     ast::{
         AssignmentTargetPropertyIdentifier, AssignmentTargetPropertyProperty, BinaryExpression,
         BinaryOperator, CallExpression, Comment, ComputedMemberExpression, Expression,
-        JSXAttributeName, NewExpression, Program, PropertyKey, StaticMemberExpression,
-        StringLiteral, TemplateLiteral, WithStatement,
+        IdentifierName, JSXAttributeName, NewExpression, Program, PropertyKey,
+        StaticMemberExpression, StringLiteral, TemplateLiteral, WithStatement,
     },
+    builder::AstBuilder,
 };
 use oxc_ast_visit::{
     Visit, VisitMut,
@@ -29,7 +29,7 @@ use oxc_ast_visit::{
     walk_mut,
 };
 use oxc_mangler::base54;
-use oxc_str::CompactStr;
+use oxc_str::{CompactStr, Ident, Str};
 use rustc_hash::{FxHashMap, FxHashSet};
 
 /// Property names that are always reserved regardless of the user's regex.
@@ -481,7 +481,7 @@ impl<'a> PropertyRewriter<'a, '_> {
     /// Rename an in-place string literal (used for the `in`-LHS and wrapped computed keys).
     fn rename_string_literal(&self, lit: &mut StringLiteral<'a>) {
         if let Some(new_name) = self.map.get(lit.value.as_str()) {
-            lit.value = self.ast.str(new_name.as_str());
+            lit.value = Str::from_str_in(new_name.as_str(), &self.ast);
         }
     }
 
@@ -493,7 +493,7 @@ impl<'a> PropertyRewriter<'a, '_> {
             && let Some(cooked) = quasi.value.cooked
             && let Some(new_name) = self.map.get(cooked.as_str())
         {
-            let new_str = self.ast.str(new_name.as_str());
+            let new_str = Str::from_str_in(new_name.as_str(), &self.ast);
             quasi.value.cooked = Some(new_str);
             quasi.value.raw = new_str;
         }
@@ -527,8 +527,11 @@ impl<'a> PropertyRewriter<'a, '_> {
     fn rewrite_string_key(&self, key: &mut PropertyKey<'a>, computed: &mut bool) -> bool {
         if let PropertyKey::StringLiteral(lit) = key {
             if let Some(new_name) = self.map.get(lit.value.as_str()) {
-                let ident =
-                    self.ast.alloc_identifier_name(lit.span, self.ast.ident(new_name.as_str()));
+                let ident = IdentifierName::boxed(
+                    lit.span,
+                    Ident::from_str_in(new_name.as_str(), &self.ast),
+                    &self.ast,
+                );
                 *key = PropertyKey::StaticIdentifier(ident);
                 *computed = false;
             }
@@ -554,7 +557,7 @@ impl<'a> VisitMut<'a> for PropertyRewriter<'a, '_> {
         if !self.rename_annotated_only
             && let Some(new_name) = self.map.get(it.property.name.as_str())
         {
-            it.property.name = self.ast.ident(new_name.as_str());
+            it.property.name = Ident::from_str_in(new_name.as_str(), &self.ast);
         }
         walk_mut::walk_static_member_expression(self, it);
     }
@@ -569,12 +572,17 @@ impl<'a> VisitMut<'a> for PropertyRewriter<'a, '_> {
             && let Expression::StringLiteral(lit) = &member.expression
             && let Some(new_name) = self.map.get(lit.value.as_str())
         {
-            let property = self.ast.identifier_name(lit.span, self.ast.ident(new_name.as_str()));
-            let new_member = self.ast.alloc_static_member_expression(
+            let property = IdentifierName::new(
+                lit.span,
+                Ident::from_str_in(new_name.as_str(), &self.ast),
+                &self.ast,
+            );
+            let new_member = StaticMemberExpression::boxed(
                 member.span,
-                member.object.take_in(&self.ast.allocator),
+                member.object.take_in(&self.ast),
                 property,
                 member.optional,
+                &self.ast,
             );
             *it = Expression::StaticMemberExpression(new_member);
         }
@@ -594,7 +602,7 @@ impl<'a> VisitMut<'a> for PropertyRewriter<'a, '_> {
             && let PropertyKey::StaticIdentifier(ident) = it
             && let Some(new_name) = self.map.get(ident.name.as_str())
         {
-            ident.name = self.ast.ident(new_name.as_str());
+            ident.name = Ident::from_str_in(new_name.as_str(), &self.ast);
         }
         walk_mut::walk_property_key(self, it);
     }
@@ -660,7 +668,7 @@ impl<'a> VisitMut<'a> for PropertyRewriter<'a, '_> {
         if self.key_annotated.contains(&it.span.start)
             && let Some(new_name) = self.map.get(it.value.as_str())
         {
-            it.value = self.ast.str(new_name.as_str());
+            it.value = Str::from_str_in(new_name.as_str(), &self.ast);
             // Drop the now-stale raw text so codegen re-serializes from `value`.
             it.raw = None;
         }
@@ -676,7 +684,7 @@ impl<'a> VisitMut<'a> for PropertyRewriter<'a, '_> {
             && let Some(cooked) = quasi.value.cooked
             && let Some(new_name) = self.map.get(cooked.as_str())
         {
-            let new_str = self.ast.str(new_name.as_str());
+            let new_str = Str::from_str_in(new_name.as_str(), &self.ast);
             quasi.value.cooked = Some(new_str);
             quasi.value.raw = new_str;
         }
