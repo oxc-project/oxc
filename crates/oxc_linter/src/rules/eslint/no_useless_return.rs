@@ -1,7 +1,8 @@
 use oxc_allocator::ArenaVec;
 use oxc_ast::AstKind;
 use oxc_cfg::{
-    EdgeType, ErrorEdgeKind, InstructionKind,
+    BasicBlock, BlockNodeId, ControlFlowGraph, EdgeType, ErrorEdgeKind, InstructionKind,
+    ReturnInstructionKind,
     graph::{Direction, visit::EdgeRef},
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -241,24 +242,32 @@ impl NoUselessReturn {
                 EdgeType::Normal | EdgeType::Jump | EdgeType::Error(ErrorEdgeKind::Explicit)
             );
 
-            if dominated {
-                let target = edge.target();
-                let target_block = cfg.basic_block(target);
+            if matches!(edge.weight(), EdgeType::Unreachable)
+                && Self::unreachable_continuation_has_meaningful_code(edge.target(), cfg)
+            {
+                return true;
+            }
 
-                if target_block.is_unreachable() {
-                    continue;
-                }
+            if !dominated {
+                continue;
+            }
 
-                let has_meaningful_code = target_block.instructions().iter().any(|instr| {
-                    !matches!(
-                        instr.kind,
-                        InstructionKind::ImplicitReturn | InstructionKind::Unreachable
-                    )
-                });
+            let target = edge.target();
+            let target_block = cfg.basic_block(target);
 
-                if has_meaningful_code {
-                    return true;
-                }
+            if target_block.is_unreachable() {
+                continue;
+            }
+
+            let has_meaningful_code = target_block.instructions().iter().any(|instr| {
+                !matches!(
+                    instr.kind,
+                    InstructionKind::ImplicitReturn | InstructionKind::Unreachable
+                )
+            });
+
+            if has_meaningful_code {
+                return true;
             }
         }
 
@@ -273,6 +282,97 @@ impl NoUselessReturn {
     ) -> bool {
         statements.last().is_some_and(|last| last.span().contains_inclusive(span))
     }
+
+    fn unreachable_continuation_has_meaningful_code(
+        start: BlockNodeId,
+        cfg: &ControlFlowGraph,
+    ) -> bool {
+        let graph = cfg.graph();
+        let mut stack = vec![ContinuationBlock { id: start, in_finalizer: false }];
+        let mut seen = vec![[false; 2]; graph.node_count()];
+
+        while let Some(block) = stack.pop() {
+            let block_id = block.id;
+            let seen_index = usize::from(block.in_finalizer);
+            if seen[block_id.index()][seen_index] {
+                continue;
+            }
+            seen[block_id.index()][seen_index] = true;
+
+            match Self::block_continuation_state(cfg.basic_block(block_id), block.in_finalizer) {
+                ContinuationState::Meaningful => return true,
+                ContinuationState::Terminal => continue,
+                ContinuationState::Passthrough => {}
+            }
+
+            // A `finally` body still runs if the `return;` is removed, so its own
+            // statements are not code made reachable by the removal. Follow the
+            // finalizer path and resume normal detection after the `Join` edge.
+            stack.extend(graph.edges_directed(block_id, Direction::Outgoing).filter_map(|edge| {
+                match edge.weight() {
+                    EdgeType::Normal
+                    | EdgeType::Jump
+                    | EdgeType::Backedge
+                    | EdgeType::Unreachable => Some(ContinuationBlock {
+                        id: edge.target(),
+                        in_finalizer: block.in_finalizer,
+                    }),
+                    EdgeType::Finalize => {
+                        Some(ContinuationBlock { id: edge.target(), in_finalizer: true })
+                    }
+                    EdgeType::Join => {
+                        Some(ContinuationBlock { id: edge.target(), in_finalizer: false })
+                    }
+                    EdgeType::NewFunction | EdgeType::Error(_) => None,
+                }
+            }));
+        }
+
+        false
+    }
+
+    fn block_continuation_state(block: &BasicBlock, in_finalizer: bool) -> ContinuationState {
+        for instruction in block.instructions() {
+            match instruction.kind {
+                InstructionKind::Statement
+                | InstructionKind::Condition
+                | InstructionKind::Iteration(_) => {
+                    if !in_finalizer {
+                        return ContinuationState::Meaningful;
+                    }
+                }
+                InstructionKind::Throw
+                | InstructionKind::Return(ReturnInstructionKind::NotImplicitUndefined) => {
+                    return if in_finalizer {
+                        ContinuationState::Terminal
+                    } else {
+                        ContinuationState::Meaningful
+                    };
+                }
+                InstructionKind::Break(_)
+                | InstructionKind::Continue(_)
+                | InstructionKind::ImplicitReturn
+                | InstructionKind::Return(ReturnInstructionKind::ImplicitUndefined) => {
+                    return ContinuationState::Terminal;
+                }
+                InstructionKind::Unreachable => {}
+            }
+        }
+
+        ContinuationState::Passthrough
+    }
+}
+
+#[derive(Clone, Copy)]
+struct ContinuationBlock {
+    id: BlockNodeId,
+    in_finalizer: bool,
+}
+
+enum ContinuationState {
+    Meaningful,
+    Terminal,
+    Passthrough,
 }
 
 #[test]
@@ -334,6 +434,43 @@ fn test() {
                     }
                 default:
                     doSomethingElse();
+            }
+        }
+        ",
+        // return skips statements after the containing branch in the same switch case
+        "
+        const changeStep = () => {
+            switch (direction) {
+                case DIRECTION.BACKWARD:
+                    if (step === STEPS.Step1) {
+                        setIsFlowShown(false);
+                        return;
+                    }
+                    setStep(1);
+                    break;
+                case DIRECTION.FORWARD:
+                    if (step === STEPS.Step5) {
+                        setIsFlowShown(false);
+                        return;
+                    }
+                    setStep(2);
+                    break;
+            }
+        }
+        ",
+        "
+        function foo() {
+            switch (bar) {
+                case 1:
+                    try {
+                        if (a) {
+                            return;
+                        }
+                    } finally {
+                        cleanup();
+                    }
+                    setStep(1);
+                    break;
             }
         }
         ",
