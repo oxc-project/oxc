@@ -309,6 +309,18 @@ function Component(props) {
             }",
             None,
         ),
+        // Components/hooks must not bail out due to generics, so ensure TS type
+        // parameters aren't collected as value bindings.
+        // https://github.com/oxc-project/oxc/issues/23611
+        (
+            "
+function Select<T extends string>(props: { value: T; onChange: (value: T) => void }) {
+  const handleChange = (value: T) => props.onChange(value);
+  return <button onClick={() => handleChange(props.value)}>{props.value}</button>;
+}
+",
+            Some(json!([{ "reportAllBailouts": true }])),
+        ),
     ];
 
     let fail = vec![
