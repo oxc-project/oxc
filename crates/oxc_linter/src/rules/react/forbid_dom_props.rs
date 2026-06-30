@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::JSXAttributeValue};
+use oxc_ast::{
+    AstKind,
+    ast::{JSXAttributeValue, JSXExpression},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -197,11 +200,7 @@ impl Rule for ForbidDomProps {
 
                     let mut prop_value = None;
                     if let Some(disallowed_values) = &options.disallowed_values {
-                        prop_value = attr
-                            .value
-                            .as_ref()
-                            .and_then(JSXAttributeValue::as_string_literal)
-                            .map(|str_lit| str_lit.value.as_str());
+                        prop_value = attr.value.as_ref().and_then(static_jsx_string_value);
 
                         if prop_value
                             .is_none_or(|prop_value| !disallowed_values.contains(prop_value))
@@ -223,6 +222,20 @@ impl Rule for ForbidDomProps {
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_jsx() && !self.forbid.is_empty()
+    }
+}
+
+fn static_jsx_string_value<'a>(value: &'a JSXAttributeValue<'a>) -> Option<&'a str> {
+    match value {
+        JSXAttributeValue::StringLiteral(str_lit) => Some(str_lit.value.as_str()),
+        JSXAttributeValue::ExpressionContainer(container) => match &container.expression {
+            JSXExpression::StringLiteral(str_lit) => Some(str_lit.value.as_str()),
+            JSXExpression::TemplateLiteral(template_lit) => {
+                template_lit.single_quasi().map(|quasi| quasi.as_str())
+            }
+            _ => None,
+        },
+        _ => None,
     }
 }
 
@@ -348,6 +361,16 @@ fn test() {
         (
             r#"
                     const First = (props) => (
+                      <div someProp={`some${value}`} />
+                    );
+                  "#,
+            Some(
+                serde_json::json!([ { "forbid": [ { "propName": "someProp", "disallowedValues": ["someValue"], }, ], }, ]),
+            ),
+        ),
+        (
+            r#"
+                    const First = (props) => (
                       <div someProp="someValue" />
                     );
                   "#,
@@ -411,6 +434,26 @@ fn test() {
             r#"
                     const First = (props) => (
                       <div someProp="someValue" />
+                    );
+                  "#,
+            Some(
+                serde_json::json!([ { "forbid": [ { "propName": "someProp", "disallowedValues": ["someValue"], }, ], }, ]),
+            ),
+        ),
+        (
+            r#"
+                    const First = (props) => (
+                      <div someProp={"someValue"} />
+                    );
+                  "#,
+            Some(
+                serde_json::json!([ { "forbid": [ { "propName": "someProp", "disallowedValues": ["someValue"], }, ], }, ]),
+            ),
+        ),
+        (
+            r#"
+                    const First = (props) => (
+                      <div someProp={`someValue`} />
                     );
                   "#,
             Some(
