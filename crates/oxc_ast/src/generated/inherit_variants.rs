@@ -4,6 +4,8 @@
 // Some `TryFrom` impls have a single non-shared variant left for the catch-all arm
 #![expect(clippy::match_wildcard_for_single_variants)]
 
+use std::ptr::NonNull;
+
 use crate::ast::*;
 
 impl<'a> Expression<'a> {
@@ -36,7 +38,7 @@ impl<'a> Expression<'a> {
         if self.is_member_expression() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &*std::ptr::from_ref(self).cast::<MemberExpression>() })
+            Some(unsafe { NonNull::from_ref(self).cast::<MemberExpression>().as_ref() })
         } else {
             None
         }
@@ -51,7 +53,7 @@ impl<'a> Expression<'a> {
         if self.is_member_expression() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &mut *std::ptr::from_mut(self).cast::<MemberExpression>() })
+            Some(unsafe { NonNull::from_mut(self).cast::<MemberExpression>().as_mut() })
         } else {
             None
         }
@@ -91,7 +93,7 @@ impl<'a> MemberExpression<'a> {
     pub fn as_expression(&self) -> &Expression<'a> {
         // SAFETY: Transmute is safe because discriminants + types are identical between
         // `parent` and `child` for the shared variants
-        unsafe { &*std::ptr::from_ref(self).cast::<Expression>() }
+        unsafe { NonNull::from_ref(self).cast::<Expression>().as_ref() }
     }
 }
 
@@ -207,7 +209,7 @@ impl<'a> ArrayExpressionElement<'a> {
         if self.is_expression() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &*std::ptr::from_ref(self).cast::<Expression>() })
+            Some(unsafe { NonNull::from_ref(self).cast::<Expression>().as_ref() })
         } else {
             None
         }
@@ -222,7 +224,7 @@ impl<'a> ArrayExpressionElement<'a> {
         if self.is_expression() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &mut *std::ptr::from_mut(self).cast::<Expression>() })
+            Some(unsafe { NonNull::from_mut(self).cast::<Expression>().as_mut() })
         } else {
             None
         }
@@ -262,7 +264,7 @@ impl<'a> Expression<'a> {
     pub fn as_array_expression_element(&self) -> &ArrayExpressionElement<'a> {
         // SAFETY: Transmute is safe because discriminants + types are identical between
         // `parent` and `child` for the shared variants
-        unsafe { &*std::ptr::from_ref(self).cast::<ArrayExpressionElement>() }
+        unsafe { NonNull::from_ref(self).cast::<ArrayExpressionElement>().as_ref() }
     }
 }
 
@@ -456,7 +458,7 @@ impl<'a> ArrayExpressionElement<'a> {
         if self.is_member_expression() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &*std::ptr::from_ref(self).cast::<MemberExpression>() })
+            Some(unsafe { NonNull::from_ref(self).cast::<MemberExpression>().as_ref() })
         } else {
             None
         }
@@ -471,7 +473,7 @@ impl<'a> ArrayExpressionElement<'a> {
         if self.is_member_expression() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &mut *std::ptr::from_mut(self).cast::<MemberExpression>() })
+            Some(unsafe { NonNull::from_mut(self).cast::<MemberExpression>().as_mut() })
         } else {
             None
         }
@@ -511,7 +513,7 @@ impl<'a> MemberExpression<'a> {
     pub fn as_array_expression_element(&self) -> &ArrayExpressionElement<'a> {
         // SAFETY: Transmute is safe because discriminants + types are identical between
         // `parent` and `child` for the shared variants
-        unsafe { &*std::ptr::from_ref(self).cast::<ArrayExpressionElement>() }
+        unsafe { NonNull::from_ref(self).cast::<ArrayExpressionElement>().as_ref() }
     }
 }
 
@@ -631,7 +633,7 @@ impl<'a> PropertyKey<'a> {
         if self.is_expression() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &*std::ptr::from_ref(self).cast::<Expression>() })
+            Some(unsafe { NonNull::from_ref(self).cast::<Expression>().as_ref() })
         } else {
             None
         }
@@ -646,7 +648,7 @@ impl<'a> PropertyKey<'a> {
         if self.is_expression() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &mut *std::ptr::from_mut(self).cast::<Expression>() })
+            Some(unsafe { NonNull::from_mut(self).cast::<Expression>().as_mut() })
         } else {
             None
         }
@@ -686,7 +688,7 @@ impl<'a> Expression<'a> {
     pub fn as_property_key(&self) -> &PropertyKey<'a> {
         // SAFETY: Transmute is safe because discriminants + types are identical between
         // `parent` and `child` for the shared variants
-        unsafe { &*std::ptr::from_ref(self).cast::<PropertyKey>() }
+        unsafe { NonNull::from_ref(self).cast::<PropertyKey>().as_ref() }
     }
 }
 
@@ -836,7 +838,7 @@ impl<'a> PropertyKey<'a> {
         if self.is_member_expression() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &*std::ptr::from_ref(self).cast::<MemberExpression>() })
+            Some(unsafe { NonNull::from_ref(self).cast::<MemberExpression>().as_ref() })
         } else {
             None
         }
@@ -851,7 +853,7 @@ impl<'a> PropertyKey<'a> {
         if self.is_member_expression() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &mut *std::ptr::from_mut(self).cast::<MemberExpression>() })
+            Some(unsafe { NonNull::from_mut(self).cast::<MemberExpression>().as_mut() })
         } else {
             None
         }
@@ -891,7 +893,7 @@ impl<'a> MemberExpression<'a> {
     pub fn as_property_key(&self) -> &PropertyKey<'a> {
         // SAFETY: Transmute is safe because discriminants + types are identical between
         // `parent` and `child` for the shared variants
-        unsafe { &*std::ptr::from_ref(self).cast::<PropertyKey>() }
+        unsafe { NonNull::from_ref(self).cast::<PropertyKey>().as_ref() }
     }
 }
 
@@ -1007,7 +1009,7 @@ impl<'a> Argument<'a> {
         if self.is_expression() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &*std::ptr::from_ref(self).cast::<Expression>() })
+            Some(unsafe { NonNull::from_ref(self).cast::<Expression>().as_ref() })
         } else {
             None
         }
@@ -1022,7 +1024,7 @@ impl<'a> Argument<'a> {
         if self.is_expression() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &mut *std::ptr::from_mut(self).cast::<Expression>() })
+            Some(unsafe { NonNull::from_mut(self).cast::<Expression>().as_mut() })
         } else {
             None
         }
@@ -1062,7 +1064,7 @@ impl<'a> Expression<'a> {
     pub fn as_argument(&self) -> &Argument<'a> {
         // SAFETY: Transmute is safe because discriminants + types are identical between
         // `parent` and `child` for the shared variants
-        unsafe { &*std::ptr::from_ref(self).cast::<Argument>() }
+        unsafe { NonNull::from_ref(self).cast::<Argument>().as_ref() }
     }
 }
 
@@ -1210,7 +1212,7 @@ impl<'a> Argument<'a> {
         if self.is_member_expression() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &*std::ptr::from_ref(self).cast::<MemberExpression>() })
+            Some(unsafe { NonNull::from_ref(self).cast::<MemberExpression>().as_ref() })
         } else {
             None
         }
@@ -1225,7 +1227,7 @@ impl<'a> Argument<'a> {
         if self.is_member_expression() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &mut *std::ptr::from_mut(self).cast::<MemberExpression>() })
+            Some(unsafe { NonNull::from_mut(self).cast::<MemberExpression>().as_mut() })
         } else {
             None
         }
@@ -1265,7 +1267,7 @@ impl<'a> MemberExpression<'a> {
     pub fn as_argument(&self) -> &Argument<'a> {
         // SAFETY: Transmute is safe because discriminants + types are identical between
         // `parent` and `child` for the shared variants
-        unsafe { &*std::ptr::from_ref(self).cast::<Argument>() }
+        unsafe { NonNull::from_ref(self).cast::<Argument>().as_ref() }
     }
 }
 
@@ -1340,7 +1342,7 @@ impl<'a> AssignmentTarget<'a> {
         if self.is_simple_assignment_target() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &*std::ptr::from_ref(self).cast::<SimpleAssignmentTarget>() })
+            Some(unsafe { NonNull::from_ref(self).cast::<SimpleAssignmentTarget>().as_ref() })
         } else {
             None
         }
@@ -1355,7 +1357,7 @@ impl<'a> AssignmentTarget<'a> {
         if self.is_simple_assignment_target() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &mut *std::ptr::from_mut(self).cast::<SimpleAssignmentTarget>() })
+            Some(unsafe { NonNull::from_mut(self).cast::<SimpleAssignmentTarget>().as_mut() })
         } else {
             None
         }
@@ -1395,7 +1397,7 @@ impl<'a> SimpleAssignmentTarget<'a> {
     pub fn as_assignment_target(&self) -> &AssignmentTarget<'a> {
         // SAFETY: Transmute is safe because discriminants + types are identical between
         // `parent` and `child` for the shared variants
-        unsafe { &*std::ptr::from_ref(self).cast::<AssignmentTarget>() }
+        unsafe { NonNull::from_ref(self).cast::<AssignmentTarget>().as_ref() }
     }
 }
 
@@ -1497,7 +1499,7 @@ impl<'a> AssignmentTarget<'a> {
         if self.is_member_expression() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &*std::ptr::from_ref(self).cast::<MemberExpression>() })
+            Some(unsafe { NonNull::from_ref(self).cast::<MemberExpression>().as_ref() })
         } else {
             None
         }
@@ -1512,7 +1514,7 @@ impl<'a> AssignmentTarget<'a> {
         if self.is_member_expression() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &mut *std::ptr::from_mut(self).cast::<MemberExpression>() })
+            Some(unsafe { NonNull::from_mut(self).cast::<MemberExpression>().as_mut() })
         } else {
             None
         }
@@ -1552,7 +1554,7 @@ impl<'a> MemberExpression<'a> {
     pub fn as_assignment_target(&self) -> &AssignmentTarget<'a> {
         // SAFETY: Transmute is safe because discriminants + types are identical between
         // `parent` and `child` for the shared variants
-        unsafe { &*std::ptr::from_ref(self).cast::<AssignmentTarget>() }
+        unsafe { NonNull::from_ref(self).cast::<AssignmentTarget>().as_ref() }
     }
 }
 
@@ -1627,7 +1629,7 @@ impl<'a> AssignmentTarget<'a> {
         if self.is_assignment_target_pattern() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &*std::ptr::from_ref(self).cast::<AssignmentTargetPattern>() })
+            Some(unsafe { NonNull::from_ref(self).cast::<AssignmentTargetPattern>().as_ref() })
         } else {
             None
         }
@@ -1642,7 +1644,7 @@ impl<'a> AssignmentTarget<'a> {
         if self.is_assignment_target_pattern() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &mut *std::ptr::from_mut(self).cast::<AssignmentTargetPattern>() })
+            Some(unsafe { NonNull::from_mut(self).cast::<AssignmentTargetPattern>().as_mut() })
         } else {
             None
         }
@@ -1682,7 +1684,7 @@ impl<'a> AssignmentTargetPattern<'a> {
     pub fn as_assignment_target(&self) -> &AssignmentTarget<'a> {
         // SAFETY: Transmute is safe because discriminants + types are identical between
         // `parent` and `child` for the shared variants
-        unsafe { &*std::ptr::from_ref(self).cast::<AssignmentTarget>() }
+        unsafe { NonNull::from_ref(self).cast::<AssignmentTarget>().as_ref() }
     }
 }
 
@@ -1756,7 +1758,7 @@ impl<'a> SimpleAssignmentTarget<'a> {
         if self.is_member_expression() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &*std::ptr::from_ref(self).cast::<MemberExpression>() })
+            Some(unsafe { NonNull::from_ref(self).cast::<MemberExpression>().as_ref() })
         } else {
             None
         }
@@ -1771,7 +1773,7 @@ impl<'a> SimpleAssignmentTarget<'a> {
         if self.is_member_expression() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &mut *std::ptr::from_mut(self).cast::<MemberExpression>() })
+            Some(unsafe { NonNull::from_mut(self).cast::<MemberExpression>().as_mut() })
         } else {
             None
         }
@@ -1811,7 +1813,7 @@ impl<'a> MemberExpression<'a> {
     pub fn as_simple_assignment_target(&self) -> &SimpleAssignmentTarget<'a> {
         // SAFETY: Transmute is safe because discriminants + types are identical between
         // `parent` and `child` for the shared variants
-        unsafe { &*std::ptr::from_ref(self).cast::<SimpleAssignmentTarget>() }
+        unsafe { NonNull::from_ref(self).cast::<SimpleAssignmentTarget>().as_ref() }
     }
 }
 
@@ -1898,7 +1900,7 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
         if self.is_assignment_target() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &*std::ptr::from_ref(self).cast::<AssignmentTarget>() })
+            Some(unsafe { NonNull::from_ref(self).cast::<AssignmentTarget>().as_ref() })
         } else {
             None
         }
@@ -1913,7 +1915,7 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
         if self.is_assignment_target() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &mut *std::ptr::from_mut(self).cast::<AssignmentTarget>() })
+            Some(unsafe { NonNull::from_mut(self).cast::<AssignmentTarget>().as_mut() })
         } else {
             None
         }
@@ -1953,7 +1955,7 @@ impl<'a> AssignmentTarget<'a> {
     pub fn as_assignment_target_maybe_default(&self) -> &AssignmentTargetMaybeDefault<'a> {
         // SAFETY: Transmute is safe because discriminants + types are identical between
         // `parent` and `child` for the shared variants
-        unsafe { &*std::ptr::from_ref(self).cast::<AssignmentTargetMaybeDefault>() }
+        unsafe { NonNull::from_ref(self).cast::<AssignmentTargetMaybeDefault>().as_ref() }
     }
 }
 
@@ -2078,7 +2080,7 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
         if self.is_simple_assignment_target() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &*std::ptr::from_ref(self).cast::<SimpleAssignmentTarget>() })
+            Some(unsafe { NonNull::from_ref(self).cast::<SimpleAssignmentTarget>().as_ref() })
         } else {
             None
         }
@@ -2093,7 +2095,7 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
         if self.is_simple_assignment_target() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &mut *std::ptr::from_mut(self).cast::<SimpleAssignmentTarget>() })
+            Some(unsafe { NonNull::from_mut(self).cast::<SimpleAssignmentTarget>().as_mut() })
         } else {
             None
         }
@@ -2133,7 +2135,7 @@ impl<'a> SimpleAssignmentTarget<'a> {
     pub fn as_assignment_target_maybe_default(&self) -> &AssignmentTargetMaybeDefault<'a> {
         // SAFETY: Transmute is safe because discriminants + types are identical between
         // `parent` and `child` for the shared variants
-        unsafe { &*std::ptr::from_ref(self).cast::<AssignmentTargetMaybeDefault>() }
+        unsafe { NonNull::from_ref(self).cast::<AssignmentTargetMaybeDefault>().as_ref() }
     }
 }
 
@@ -2243,7 +2245,7 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
         if self.is_member_expression() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &*std::ptr::from_ref(self).cast::<MemberExpression>() })
+            Some(unsafe { NonNull::from_ref(self).cast::<MemberExpression>().as_ref() })
         } else {
             None
         }
@@ -2258,7 +2260,7 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
         if self.is_member_expression() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &mut *std::ptr::from_mut(self).cast::<MemberExpression>() })
+            Some(unsafe { NonNull::from_mut(self).cast::<MemberExpression>().as_mut() })
         } else {
             None
         }
@@ -2298,7 +2300,7 @@ impl<'a> MemberExpression<'a> {
     pub fn as_assignment_target_maybe_default(&self) -> &AssignmentTargetMaybeDefault<'a> {
         // SAFETY: Transmute is safe because discriminants + types are identical between
         // `parent` and `child` for the shared variants
-        unsafe { &*std::ptr::from_ref(self).cast::<AssignmentTargetMaybeDefault>() }
+        unsafe { NonNull::from_ref(self).cast::<AssignmentTargetMaybeDefault>().as_ref() }
     }
 }
 
@@ -2373,7 +2375,7 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
         if self.is_assignment_target_pattern() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &*std::ptr::from_ref(self).cast::<AssignmentTargetPattern>() })
+            Some(unsafe { NonNull::from_ref(self).cast::<AssignmentTargetPattern>().as_ref() })
         } else {
             None
         }
@@ -2388,7 +2390,7 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
         if self.is_assignment_target_pattern() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &mut *std::ptr::from_mut(self).cast::<AssignmentTargetPattern>() })
+            Some(unsafe { NonNull::from_mut(self).cast::<AssignmentTargetPattern>().as_mut() })
         } else {
             None
         }
@@ -2428,7 +2430,7 @@ impl<'a> AssignmentTargetPattern<'a> {
     pub fn as_assignment_target_maybe_default(&self) -> &AssignmentTargetMaybeDefault<'a> {
         // SAFETY: Transmute is safe because discriminants + types are identical between
         // `parent` and `child` for the shared variants
-        unsafe { &*std::ptr::from_ref(self).cast::<AssignmentTargetMaybeDefault>() }
+        unsafe { NonNull::from_ref(self).cast::<AssignmentTargetMaybeDefault>().as_ref() }
     }
 }
 
@@ -2502,7 +2504,7 @@ impl<'a> ChainElement<'a> {
         if self.is_member_expression() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &*std::ptr::from_ref(self).cast::<MemberExpression>() })
+            Some(unsafe { NonNull::from_ref(self).cast::<MemberExpression>().as_ref() })
         } else {
             None
         }
@@ -2517,7 +2519,7 @@ impl<'a> ChainElement<'a> {
         if self.is_member_expression() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &mut *std::ptr::from_mut(self).cast::<MemberExpression>() })
+            Some(unsafe { NonNull::from_mut(self).cast::<MemberExpression>().as_mut() })
         } else {
             None
         }
@@ -2557,7 +2559,7 @@ impl<'a> MemberExpression<'a> {
     pub fn as_chain_element(&self) -> &ChainElement<'a> {
         // SAFETY: Transmute is safe because discriminants + types are identical between
         // `parent` and `child` for the shared variants
-        unsafe { &*std::ptr::from_ref(self).cast::<ChainElement>() }
+        unsafe { NonNull::from_ref(self).cast::<ChainElement>().as_ref() }
     }
 }
 
@@ -2639,7 +2641,7 @@ impl<'a> Statement<'a> {
         if self.is_declaration() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &*std::ptr::from_ref(self).cast::<Declaration>() })
+            Some(unsafe { NonNull::from_ref(self).cast::<Declaration>().as_ref() })
         } else {
             None
         }
@@ -2654,7 +2656,7 @@ impl<'a> Statement<'a> {
         if self.is_declaration() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &mut *std::ptr::from_mut(self).cast::<Declaration>() })
+            Some(unsafe { NonNull::from_mut(self).cast::<Declaration>().as_mut() })
         } else {
             None
         }
@@ -2694,7 +2696,7 @@ impl<'a> Declaration<'a> {
     pub fn as_statement(&self) -> &Statement<'a> {
         // SAFETY: Transmute is safe because discriminants + types are identical between
         // `parent` and `child` for the shared variants
-        unsafe { &*std::ptr::from_ref(self).cast::<Statement>() }
+        unsafe { NonNull::from_ref(self).cast::<Statement>().as_ref() }
     }
 }
 
@@ -2779,7 +2781,7 @@ impl<'a> Statement<'a> {
         if self.is_module_declaration() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &*std::ptr::from_ref(self).cast::<ModuleDeclaration>() })
+            Some(unsafe { NonNull::from_ref(self).cast::<ModuleDeclaration>().as_ref() })
         } else {
             None
         }
@@ -2794,7 +2796,7 @@ impl<'a> Statement<'a> {
         if self.is_module_declaration() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &mut *std::ptr::from_mut(self).cast::<ModuleDeclaration>() })
+            Some(unsafe { NonNull::from_mut(self).cast::<ModuleDeclaration>().as_mut() })
         } else {
             None
         }
@@ -2834,7 +2836,7 @@ impl<'a> ModuleDeclaration<'a> {
     pub fn as_statement(&self) -> &Statement<'a> {
         // SAFETY: Transmute is safe because discriminants + types are identical between
         // `parent` and `child` for the shared variants
-        unsafe { &*std::ptr::from_ref(self).cast::<Statement>() }
+        unsafe { NonNull::from_ref(self).cast::<Statement>().as_ref() }
     }
 }
 
@@ -2958,7 +2960,7 @@ impl<'a> ForStatementInit<'a> {
         if self.is_expression() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &*std::ptr::from_ref(self).cast::<Expression>() })
+            Some(unsafe { NonNull::from_ref(self).cast::<Expression>().as_ref() })
         } else {
             None
         }
@@ -2973,7 +2975,7 @@ impl<'a> ForStatementInit<'a> {
         if self.is_expression() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &mut *std::ptr::from_mut(self).cast::<Expression>() })
+            Some(unsafe { NonNull::from_mut(self).cast::<Expression>().as_mut() })
         } else {
             None
         }
@@ -3013,7 +3015,7 @@ impl<'a> Expression<'a> {
     pub fn as_for_statement_init(&self) -> &ForStatementInit<'a> {
         // SAFETY: Transmute is safe because discriminants + types are identical between
         // `parent` and `child` for the shared variants
-        unsafe { &*std::ptr::from_ref(self).cast::<ForStatementInit>() }
+        unsafe { NonNull::from_ref(self).cast::<ForStatementInit>().as_ref() }
     }
 }
 
@@ -3181,7 +3183,7 @@ impl<'a> ForStatementInit<'a> {
         if self.is_member_expression() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &*std::ptr::from_ref(self).cast::<MemberExpression>() })
+            Some(unsafe { NonNull::from_ref(self).cast::<MemberExpression>().as_ref() })
         } else {
             None
         }
@@ -3196,7 +3198,7 @@ impl<'a> ForStatementInit<'a> {
         if self.is_member_expression() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &mut *std::ptr::from_mut(self).cast::<MemberExpression>() })
+            Some(unsafe { NonNull::from_mut(self).cast::<MemberExpression>().as_mut() })
         } else {
             None
         }
@@ -3236,7 +3238,7 @@ impl<'a> MemberExpression<'a> {
     pub fn as_for_statement_init(&self) -> &ForStatementInit<'a> {
         // SAFETY: Transmute is safe because discriminants + types are identical between
         // `parent` and `child` for the shared variants
-        unsafe { &*std::ptr::from_ref(self).cast::<ForStatementInit>() }
+        unsafe { NonNull::from_ref(self).cast::<ForStatementInit>().as_ref() }
     }
 }
 
@@ -3323,7 +3325,7 @@ impl<'a> ForStatementLeft<'a> {
         if self.is_assignment_target() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &*std::ptr::from_ref(self).cast::<AssignmentTarget>() })
+            Some(unsafe { NonNull::from_ref(self).cast::<AssignmentTarget>().as_ref() })
         } else {
             None
         }
@@ -3338,7 +3340,7 @@ impl<'a> ForStatementLeft<'a> {
         if self.is_assignment_target() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &mut *std::ptr::from_mut(self).cast::<AssignmentTarget>() })
+            Some(unsafe { NonNull::from_mut(self).cast::<AssignmentTarget>().as_mut() })
         } else {
             None
         }
@@ -3378,7 +3380,7 @@ impl<'a> AssignmentTarget<'a> {
     pub fn as_for_statement_left(&self) -> &ForStatementLeft<'a> {
         // SAFETY: Transmute is safe because discriminants + types are identical between
         // `parent` and `child` for the shared variants
-        unsafe { &*std::ptr::from_ref(self).cast::<ForStatementLeft>() }
+        unsafe { NonNull::from_ref(self).cast::<ForStatementLeft>().as_ref() }
     }
 }
 
@@ -3495,7 +3497,7 @@ impl<'a> ForStatementLeft<'a> {
         if self.is_simple_assignment_target() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &*std::ptr::from_ref(self).cast::<SimpleAssignmentTarget>() })
+            Some(unsafe { NonNull::from_ref(self).cast::<SimpleAssignmentTarget>().as_ref() })
         } else {
             None
         }
@@ -3510,7 +3512,7 @@ impl<'a> ForStatementLeft<'a> {
         if self.is_simple_assignment_target() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &mut *std::ptr::from_mut(self).cast::<SimpleAssignmentTarget>() })
+            Some(unsafe { NonNull::from_mut(self).cast::<SimpleAssignmentTarget>().as_mut() })
         } else {
             None
         }
@@ -3550,7 +3552,7 @@ impl<'a> SimpleAssignmentTarget<'a> {
     pub fn as_for_statement_left(&self) -> &ForStatementLeft<'a> {
         // SAFETY: Transmute is safe because discriminants + types are identical between
         // `parent` and `child` for the shared variants
-        unsafe { &*std::ptr::from_ref(self).cast::<ForStatementLeft>() }
+        unsafe { NonNull::from_ref(self).cast::<ForStatementLeft>().as_ref() }
     }
 }
 
@@ -3652,7 +3654,7 @@ impl<'a> ForStatementLeft<'a> {
         if self.is_member_expression() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &*std::ptr::from_ref(self).cast::<MemberExpression>() })
+            Some(unsafe { NonNull::from_ref(self).cast::<MemberExpression>().as_ref() })
         } else {
             None
         }
@@ -3667,7 +3669,7 @@ impl<'a> ForStatementLeft<'a> {
         if self.is_member_expression() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &mut *std::ptr::from_mut(self).cast::<MemberExpression>() })
+            Some(unsafe { NonNull::from_mut(self).cast::<MemberExpression>().as_mut() })
         } else {
             None
         }
@@ -3707,7 +3709,7 @@ impl<'a> MemberExpression<'a> {
     pub fn as_for_statement_left(&self) -> &ForStatementLeft<'a> {
         // SAFETY: Transmute is safe because discriminants + types are identical between
         // `parent` and `child` for the shared variants
-        unsafe { &*std::ptr::from_ref(self).cast::<ForStatementLeft>() }
+        unsafe { NonNull::from_ref(self).cast::<ForStatementLeft>().as_ref() }
     }
 }
 
@@ -3782,7 +3784,7 @@ impl<'a> ForStatementLeft<'a> {
         if self.is_assignment_target_pattern() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &*std::ptr::from_ref(self).cast::<AssignmentTargetPattern>() })
+            Some(unsafe { NonNull::from_ref(self).cast::<AssignmentTargetPattern>().as_ref() })
         } else {
             None
         }
@@ -3797,7 +3799,7 @@ impl<'a> ForStatementLeft<'a> {
         if self.is_assignment_target_pattern() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &mut *std::ptr::from_mut(self).cast::<AssignmentTargetPattern>() })
+            Some(unsafe { NonNull::from_mut(self).cast::<AssignmentTargetPattern>().as_mut() })
         } else {
             None
         }
@@ -3837,7 +3839,7 @@ impl<'a> AssignmentTargetPattern<'a> {
     pub fn as_for_statement_left(&self) -> &ForStatementLeft<'a> {
         // SAFETY: Transmute is safe because discriminants + types are identical between
         // `parent` and `child` for the shared variants
-        unsafe { &*std::ptr::from_ref(self).cast::<ForStatementLeft>() }
+        unsafe { NonNull::from_ref(self).cast::<ForStatementLeft>().as_ref() }
     }
 }
 
@@ -3951,7 +3953,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
         if self.is_expression() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &*std::ptr::from_ref(self).cast::<Expression>() })
+            Some(unsafe { NonNull::from_ref(self).cast::<Expression>().as_ref() })
         } else {
             None
         }
@@ -3966,7 +3968,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
         if self.is_expression() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &mut *std::ptr::from_mut(self).cast::<Expression>() })
+            Some(unsafe { NonNull::from_mut(self).cast::<Expression>().as_mut() })
         } else {
             None
         }
@@ -4006,7 +4008,7 @@ impl<'a> Expression<'a> {
     pub fn as_export_default_declaration_kind(&self) -> &ExportDefaultDeclarationKind<'a> {
         // SAFETY: Transmute is safe because discriminants + types are identical between
         // `parent` and `child` for the shared variants
-        unsafe { &*std::ptr::from_ref(self).cast::<ExportDefaultDeclarationKind>() }
+        unsafe { NonNull::from_ref(self).cast::<ExportDefaultDeclarationKind>().as_ref() }
     }
 }
 
@@ -4224,7 +4226,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
         if self.is_member_expression() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &*std::ptr::from_ref(self).cast::<MemberExpression>() })
+            Some(unsafe { NonNull::from_ref(self).cast::<MemberExpression>().as_ref() })
         } else {
             None
         }
@@ -4239,7 +4241,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
         if self.is_member_expression() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &mut *std::ptr::from_mut(self).cast::<MemberExpression>() })
+            Some(unsafe { NonNull::from_mut(self).cast::<MemberExpression>().as_mut() })
         } else {
             None
         }
@@ -4279,7 +4281,7 @@ impl<'a> MemberExpression<'a> {
     pub fn as_export_default_declaration_kind(&self) -> &ExportDefaultDeclarationKind<'a> {
         // SAFETY: Transmute is safe because discriminants + types are identical between
         // `parent` and `child` for the shared variants
-        unsafe { &*std::ptr::from_ref(self).cast::<ExportDefaultDeclarationKind>() }
+        unsafe { NonNull::from_ref(self).cast::<ExportDefaultDeclarationKind>().as_ref() }
     }
 }
 
@@ -4399,7 +4401,7 @@ impl<'a> JSXExpression<'a> {
         if self.is_expression() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &*std::ptr::from_ref(self).cast::<Expression>() })
+            Some(unsafe { NonNull::from_ref(self).cast::<Expression>().as_ref() })
         } else {
             None
         }
@@ -4414,7 +4416,7 @@ impl<'a> JSXExpression<'a> {
         if self.is_expression() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &mut *std::ptr::from_mut(self).cast::<Expression>() })
+            Some(unsafe { NonNull::from_mut(self).cast::<Expression>().as_mut() })
         } else {
             None
         }
@@ -4454,7 +4456,7 @@ impl<'a> Expression<'a> {
     pub fn as_jsx_expression(&self) -> &JSXExpression<'a> {
         // SAFETY: Transmute is safe because discriminants + types are identical between
         // `parent` and `child` for the shared variants
-        unsafe { &*std::ptr::from_ref(self).cast::<JSXExpression>() }
+        unsafe { NonNull::from_ref(self).cast::<JSXExpression>().as_ref() }
     }
 }
 
@@ -4608,7 +4610,7 @@ impl<'a> JSXExpression<'a> {
         if self.is_member_expression() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &*std::ptr::from_ref(self).cast::<MemberExpression>() })
+            Some(unsafe { NonNull::from_ref(self).cast::<MemberExpression>().as_ref() })
         } else {
             None
         }
@@ -4623,7 +4625,7 @@ impl<'a> JSXExpression<'a> {
         if self.is_member_expression() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &mut *std::ptr::from_mut(self).cast::<MemberExpression>() })
+            Some(unsafe { NonNull::from_mut(self).cast::<MemberExpression>().as_mut() })
         } else {
             None
         }
@@ -4663,7 +4665,7 @@ impl<'a> MemberExpression<'a> {
     pub fn as_jsx_expression(&self) -> &JSXExpression<'a> {
         // SAFETY: Transmute is safe because discriminants + types are identical between
         // `parent` and `child` for the shared variants
-        unsafe { &*std::ptr::from_ref(self).cast::<JSXExpression>() }
+        unsafe { NonNull::from_ref(self).cast::<JSXExpression>().as_ref() }
     }
 }
 
@@ -4773,7 +4775,7 @@ impl<'a> TSTupleElement<'a> {
         if self.is_ts_type() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &*std::ptr::from_ref(self).cast::<TSType>() })
+            Some(unsafe { NonNull::from_ref(self).cast::<TSType>().as_ref() })
         } else {
             None
         }
@@ -4788,7 +4790,7 @@ impl<'a> TSTupleElement<'a> {
         if self.is_ts_type() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &mut *std::ptr::from_mut(self).cast::<TSType>() })
+            Some(unsafe { NonNull::from_mut(self).cast::<TSType>().as_mut() })
         } else {
             None
         }
@@ -4828,7 +4830,7 @@ impl<'a> TSType<'a> {
     pub fn as_ts_tuple_element(&self) -> &TSTupleElement<'a> {
         // SAFETY: Transmute is safe because discriminants + types are identical between
         // `parent` and `child` for the shared variants
-        unsafe { &*std::ptr::from_ref(self).cast::<TSTupleElement>() }
+        unsafe { NonNull::from_ref(self).cast::<TSTupleElement>().as_ref() }
     }
 }
 
@@ -4962,7 +4964,7 @@ impl<'a> TSTypeQueryExprName<'a> {
         if self.is_ts_type_name() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &*std::ptr::from_ref(self).cast::<TSTypeName>() })
+            Some(unsafe { NonNull::from_ref(self).cast::<TSTypeName>().as_ref() })
         } else {
             None
         }
@@ -4977,7 +4979,7 @@ impl<'a> TSTypeQueryExprName<'a> {
         if self.is_ts_type_name() {
             // SAFETY: Transmute is safe because discriminants + types are identical between
             // `parent` and `child` for the shared variants
-            Some(unsafe { &mut *std::ptr::from_mut(self).cast::<TSTypeName>() })
+            Some(unsafe { NonNull::from_mut(self).cast::<TSTypeName>().as_mut() })
         } else {
             None
         }
@@ -5017,7 +5019,7 @@ impl<'a> TSTypeName<'a> {
     pub fn as_ts_type_query_expr_name(&self) -> &TSTypeQueryExprName<'a> {
         // SAFETY: Transmute is safe because discriminants + types are identical between
         // `parent` and `child` for the shared variants
-        unsafe { &*std::ptr::from_ref(self).cast::<TSTypeQueryExprName>() }
+        unsafe { NonNull::from_ref(self).cast::<TSTypeQueryExprName>().as_ref() }
     }
 }
 

@@ -62,6 +62,9 @@ fn generate_inherit_variants(schema: &Schema) -> Output {
         #![expect(clippy::match_wildcard_for_single_variants)]
 
         ///@@line_break
+        use std::ptr::NonNull;
+
+        ///@@line_break
         use crate::ast::*;
 
         ///@@line_break
@@ -334,7 +337,7 @@ fn generate_conversions(parent: &EnumDef, child: &EnumDef, schema: &Schema) -> T
                 if self.#is_fn() {
                     ///@ SAFETY: Transmute is safe because discriminants + types are identical between
                     ///@ `parent` and `child` for the shared variants
-                    Some(unsafe { &*std::ptr::from_ref(self).cast::<#child_ident>() })
+                    Some(unsafe { NonNull::from_ref(self).cast::<#child_ident>().as_ref() })
                 } else {
                     None
                 }
@@ -350,7 +353,7 @@ fn generate_conversions(parent: &EnumDef, child: &EnumDef, schema: &Schema) -> T
                 if self.#is_fn() {
                     ///@ SAFETY: Transmute is safe because discriminants + types are identical between
                     ///@ `parent` and `child` for the shared variants
-                    Some(unsafe { &mut *std::ptr::from_mut(self).cast::<#child_ident>() })
+                    Some(unsafe { NonNull::from_mut(self).cast::<#child_ident>().as_mut() })
                 } else {
                     None
                 }
@@ -393,7 +396,7 @@ fn generate_conversions(parent: &EnumDef, child: &EnumDef, schema: &Schema) -> T
             pub fn #as_reverse_fn(&self) -> &#parent_ident<'a> {
                 ///@ SAFETY: Transmute is safe because discriminants + types are identical between
                 ///@ `parent` and `child` for the shared variants
-                unsafe { &*std::ptr::from_ref(self).cast::<#parent_ident>() }
+                unsafe { NonNull::from_ref(self).cast::<#parent_ident>().as_ref() }
             }
         }
 
