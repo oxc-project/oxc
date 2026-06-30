@@ -283,12 +283,8 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
         })
     });
 
-    let inherits_match_arms = enum_def.inherits_types(schema).map(|inherits_type| {
-        let inherits_type = inherits_type.as_enum().unwrap();
-        let inherits_inner_type = inherits_type
-            .maybe_inner_type(schema)
-            .map_or_else(|| inherits_type.ident(), TypeDef::ident);
-
+    let inherits_match_arms = enum_def.inherits_enums(schema).map(|inherits_type| {
+        let inherits_ident = inherits_type.ident();
         let inherits_snake_name = inherits_type.snake_name();
         let match_ident = format_ident!("match_{inherits_snake_name}");
 
@@ -296,7 +292,7 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
         let match_arm = quote! {
             it @ #match_ident!(#enum_ident) => {
                 let inner = it.#to_fn_ident();
-                allocator.alloc(AstNode::<'a, #inherits_inner_type> {
+                allocator.alloc(AstNode::<'a, #inherits_ident> {
                     inner,
                     parent,
                     allocator,

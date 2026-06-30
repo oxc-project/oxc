@@ -103,9 +103,9 @@ impl EnumDef {
         AllVariantsIter::new(self, schema)
     }
 
-    /// Get own enum variants (not including inherited).
-    pub fn inherits_types<'s>(&'s self, schema: &'s Schema) -> impl Iterator<Item = &'s TypeDef> {
-        self.inherits.iter().map(|&type_id| &schema.types[type_id])
+    /// Get iterator over enums this enum inherits from directly.
+    pub fn inherits_enums<'s>(&'s self, schema: &'s Schema) -> impl Iterator<Item = &'s EnumDef> {
+        self.inherits.iter().map(|&type_id| schema.enum_def(type_id))
     }
 
     /// Get whether all variants are fieldless.
