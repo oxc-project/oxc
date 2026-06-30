@@ -1,25 +1,25 @@
 use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
 
-use react_compiler_diagnostics::CompilerDiagnostic;
-use react_compiler_diagnostics::CompilerError;
-use react_compiler_diagnostics::CompilerErrorDetail;
-use react_compiler_diagnostics::ErrorCategory;
+use crate::react_compiler_diagnostics::CompilerDiagnostic;
+use crate::react_compiler_diagnostics::CompilerError;
+use crate::react_compiler_diagnostics::CompilerErrorDetail;
+use crate::react_compiler_diagnostics::ErrorCategory;
 
-use crate::default_module_type_provider::default_module_type_provider;
-use crate::environment_config::EnvironmentConfig;
-use crate::globals::Global;
-use crate::globals::GlobalRegistry;
-use crate::globals::{self};
-use crate::object_shape::BUILT_IN_MIXED_READONLY_ID;
-use crate::object_shape::FunctionSignature;
-use crate::object_shape::HookKind;
-use crate::object_shape::HookSignatureBuilder;
-use crate::object_shape::ShapeRegistry;
-use crate::object_shape::add_hook;
-use crate::object_shape::default_mutating_hook;
-use crate::object_shape::default_nonmutating_hook;
-use crate::*;
+use crate::react_compiler_hir::default_module_type_provider::default_module_type_provider;
+use crate::react_compiler_hir::environment_config::EnvironmentConfig;
+use crate::react_compiler_hir::globals::Global;
+use crate::react_compiler_hir::globals::GlobalRegistry;
+use crate::react_compiler_hir::globals::{self};
+use crate::react_compiler_hir::object_shape::BUILT_IN_MIXED_READONLY_ID;
+use crate::react_compiler_hir::object_shape::FunctionSignature;
+use crate::react_compiler_hir::object_shape::HookKind;
+use crate::react_compiler_hir::object_shape::HookSignatureBuilder;
+use crate::react_compiler_hir::object_shape::ShapeRegistry;
+use crate::react_compiler_hir::object_shape::add_hook;
+use crate::react_compiler_hir::object_shape::default_mutating_hook;
+use crate::react_compiler_hir::object_shape::default_nonmutating_hook;
+use crate::react_compiler_hir::*;
 
 /// A variable rename from lowering: the binding at `declaration_start` position
 /// was renamed from `original` to `renamed`.
@@ -142,9 +142,7 @@ impl Environment {
                 continue;
             }
             let return_type = if hook.transitive_mixed_data {
-                Type::Object {
-                    shape_id: Some(BUILT_IN_MIXED_READONLY_ID.to_string()),
-                }
+                Type::Object { shape_id: Some(BUILT_IN_MIXED_READONLY_ID.to_string()) }
             } else {
                 Type::Poly
             };
@@ -167,10 +165,8 @@ impl Environment {
         let mut module_types: FxHashMap<String, Option<Global>> = FxHashMap::default();
         if config.enable_custom_type_definition_for_reanimated {
             let reanimated_module_type = globals::get_reanimated_module_type(&mut shapes);
-            module_types.insert(
-                "react-native-reanimated".to_string(),
-                Some(reanimated_module_type),
-            );
+            module_types
+                .insert("react-native-reanimated".to_string(), Some(reanimated_module_type));
         }
 
         Self {
@@ -391,11 +387,11 @@ impl Environment {
         let old = std::mem::take(&mut self.errors);
         for detail in old.details {
             let is_invariant = match &detail {
-                react_compiler_diagnostics::CompilerErrorOrDiagnostic::Diagnostic(d) => {
-                    d.category == react_compiler_diagnostics::ErrorCategory::Invariant
+                crate::react_compiler_diagnostics::CompilerErrorOrDiagnostic::Diagnostic(d) => {
+                    d.category == crate::react_compiler_diagnostics::ErrorCategory::Invariant
                 }
-                react_compiler_diagnostics::CompilerErrorOrDiagnostic::ErrorDetail(d) => {
-                    d.category == react_compiler_diagnostics::ErrorCategory::Invariant
+                crate::react_compiler_diagnostics::CompilerErrorOrDiagnostic::ErrorDetail(d) => {
+                    d.category == crate::react_compiler_diagnostics::ErrorCategory::Invariant
                 }
             };
             if is_invariant {
@@ -412,11 +408,11 @@ impl Environment {
     /// In TS, Todo errors throw immediately via CompilerError.throwTodo().
     pub fn has_todo_errors(&self) -> bool {
         self.errors.details.iter().any(|d| match d {
-            react_compiler_diagnostics::CompilerErrorOrDiagnostic::Diagnostic(d) => {
-                d.category == react_compiler_diagnostics::ErrorCategory::Todo
+            crate::react_compiler_diagnostics::CompilerErrorOrDiagnostic::Diagnostic(d) => {
+                d.category == crate::react_compiler_diagnostics::ErrorCategory::Todo
             }
-            react_compiler_diagnostics::CompilerErrorOrDiagnostic::ErrorDetail(d) => {
-                d.category == react_compiler_diagnostics::ErrorCategory::Todo
+            crate::react_compiler_diagnostics::CompilerErrorOrDiagnostic::ErrorDetail(d) => {
+                d.category == crate::react_compiler_diagnostics::ErrorCategory::Todo
             }
         })
     }
@@ -429,13 +425,13 @@ impl Environment {
         let old = std::mem::take(&mut self.errors);
         for detail in old.details {
             let is_thrown = match &detail {
-                react_compiler_diagnostics::CompilerErrorOrDiagnostic::Diagnostic(d) => {
-                    d.category == react_compiler_diagnostics::ErrorCategory::Invariant
-                        || d.category == react_compiler_diagnostics::ErrorCategory::Todo
+                crate::react_compiler_diagnostics::CompilerErrorOrDiagnostic::Diagnostic(d) => {
+                    d.category == crate::react_compiler_diagnostics::ErrorCategory::Invariant
+                        || d.category == crate::react_compiler_diagnostics::ErrorCategory::Todo
                 }
-                react_compiler_diagnostics::CompilerErrorOrDiagnostic::ErrorDetail(d) => {
-                    d.category == react_compiler_diagnostics::ErrorCategory::Invariant
-                        || d.category == react_compiler_diagnostics::ErrorCategory::Todo
+                crate::react_compiler_diagnostics::CompilerErrorOrDiagnostic::ErrorDetail(d) => {
+                    d.category == crate::react_compiler_diagnostics::ErrorCategory::Invariant
+                        || d.category == crate::react_compiler_diagnostics::ErrorCategory::Todo
                 }
             };
             if is_thrown {
@@ -483,17 +479,9 @@ impl Environment {
                 if let Some(ty) = self.globals.get(name) {
                     return Ok(Some(ty.clone()));
                 }
-                if is_hook_name(name) {
-                    Ok(Some(self.get_custom_hook_type()))
-                } else {
-                    Ok(None)
-                }
+                if is_hook_name(name) { Ok(Some(self.get_custom_hook_type())) } else { Ok(None) }
             }
-            NonLocalBinding::ImportSpecifier {
-                name,
-                module,
-                imported,
-            } => {
+            NonLocalBinding::ImportSpecifier { name, module, imported } => {
                 if self.is_known_react_module(module) {
                     if let Some(ty) = self.globals.get(imported) {
                         return Ok(Some(ty.clone()));
@@ -575,11 +563,8 @@ impl Environment {
                     if let Some(imported_type) = imported_type {
                         // Validate hook-name vs hook-type consistency for module name
                         let expect_hook = is_hook_name(module);
-                        let is_hook = self
-                            .get_hook_kind_for_type(&imported_type)
-                            .ok()
-                            .flatten()
-                            .is_some();
+                        let is_hook =
+                            self.get_hook_kind_for_type(&imported_type).ok().flatten().is_some();
                         if expect_hook != is_hook {
                             self.record_error(
                                 CompilerErrorDetail::new(
@@ -598,11 +583,7 @@ impl Environment {
                     }
                 }
 
-                if is_hook_name(name) {
-                    Ok(Some(self.get_custom_hook_type()))
-                } else {
-                    Ok(None)
-                }
+                if is_hook_name(name) { Ok(Some(self.get_custom_hook_type())) } else { Ok(None) }
             }
         }
     }
@@ -649,10 +630,7 @@ impl Environment {
             let shape = self.shapes.get(shape_id).ok_or_else(|| {
                 CompilerDiagnostic::new(
                     ErrorCategory::Invariant,
-                    format!(
-                        "[HIR] Forget internal error: cannot resolve shape {}",
-                        shape_id
-                    ),
+                    format!("[HIR] Forget internal error: cannot resolve shape {}", shape_id),
                     None,
                 )
             })?;
@@ -690,10 +668,7 @@ impl Environment {
             let shape = self.shapes.get(shape_id).ok_or_else(|| {
                 CompilerDiagnostic::new(
                     ErrorCategory::Invariant,
-                    format!(
-                        "[HIR] Forget internal error: cannot resolve shape {}",
-                        shape_id
-                    ),
+                    format!("[HIR] Forget internal error: cannot resolve shape {}", shape_id),
                     None,
                 )
             })?;
@@ -716,10 +691,7 @@ impl Environment {
             let shape = self.shapes.get(shape_id).ok_or_else(|| {
                 CompilerDiagnostic::new(
                     ErrorCategory::Invariant,
-                    format!(
-                        "[HIR] Forget internal error: cannot resolve shape {}",
-                        shape_id
-                    ),
+                    format!("[HIR] Forget internal error: cannot resolve shape {}", shape_id),
                     None,
                 )
             })?;
@@ -742,10 +714,7 @@ impl Environment {
             let shape = self.shapes.get(shape_id).ok_or_else(|| {
                 CompilerDiagnostic::new(
                     ErrorCategory::Invariant,
-                    format!(
-                        "[HIR] Forget internal error: cannot resolve shape {}",
-                        shape_id
-                    ),
+                    format!("[HIR] Forget internal error: cannot resolve shape {}", shape_id),
                     None,
                 )
             })?;
@@ -760,9 +729,7 @@ impl Environment {
         &self,
         ty: &Type,
     ) -> Result<Option<&HookKind>, CompilerDiagnostic> {
-        Ok(self
-            .get_function_signature(ty)?
-            .and_then(|sig| sig.hook_kind.as_ref()))
+        Ok(self.get_function_signature(ty)?.and_then(|sig| sig.hook_kind.as_ref()))
     }
 
     /// Resolve the module type provider for a given module name.
@@ -793,15 +760,11 @@ impl Environment {
             );
             // Store errors for later reporting when the import is actually used
             for err in type_errors {
-                self.module_type_errors
-                    .entry(module_name.to_string())
-                    .or_default()
-                    .push(err);
+                self.module_type_errors.entry(module_name.to_string()).or_default().push(err);
             }
             ty
         });
-        self.module_types
-            .insert(module_name.to_string(), module_type.clone());
+        self.module_types.insert(module_name.to_string(), module_type.clone());
         module_type
     }
 
@@ -888,11 +851,7 @@ impl Environment {
         // Strip leading '_' and trailing digits (Babel's generateUid behavior)
         let stripped = camel.trim_start_matches('_');
         let stripped = stripped.trim_end_matches(|c: char| c.is_ascii_digit());
-        let uid_base = if stripped.is_empty() {
-            "temp"
-        } else {
-            stripped
-        };
+        let uid_base = if stripped.is_empty() { "temp" } else { stripped };
 
         // Lazily build the set of known names from existing identifiers.
         // This approximates Babel's hasBinding/hasGlobal/hasReference checks.
@@ -909,11 +868,8 @@ impl Environment {
         // Find a name that doesn't collide, matching Babel's generateUid loop
         let mut i = 1u32;
         let uid = loop {
-            let candidate = if i == 1 {
-                format!("_{}", uid_base)
-            } else {
-                format!("_{}{}", uid_base, i)
-            };
+            let candidate =
+                if i == 1 { format!("_{}", uid_base) } else { format!("_{}{}", uid_base, i) };
             i += 1;
             if !self.uid_known_names.as_ref().unwrap().contains(&candidate) {
                 break candidate;
@@ -944,8 +900,7 @@ impl Environment {
     /// Record an outlined function (extracted during outlineFunctions or outlineJSX).
     /// Corresponds to TS `env.outlineFunction(fn, type)`.
     pub fn outline_function(&mut self, func: HirFunction, fn_type: Option<ReactFunctionType>) {
-        self.outlined_functions
-            .push(OutlinedFunctionEntry { func, fn_type });
+        self.outlined_functions.push(OutlinedFunctionEntry { func, fn_type });
     }
 
     /// Get the outlined functions accumulated during compilation.
@@ -1014,10 +969,7 @@ impl Environment {
     /// Looks up the identifier's type and checks its function signature.
     pub fn has_no_alias_signature(&self, identifier_id: IdentifierId) -> bool {
         let ty = &self.types[self.identifiers[identifier_id.0 as usize].type_.0 as usize];
-        self.get_function_signature(ty)
-            .ok()
-            .flatten()
-            .map_or(false, |sig| sig.no_alias)
+        self.get_function_signature(ty).ok().flatten().map_or(false, |sig| sig.no_alias)
     }
 
     /// Get the hook kind for an identifier, if its type represents a hook.
@@ -1095,16 +1047,12 @@ mod tests {
     #[test]
     fn test_get_property_type_array() {
         let mut env = Environment::new();
-        let array_type = Type::Object {
-            shape_id: Some("BuiltInArray".to_string()),
-        };
+        let array_type = Type::Object { shape_id: Some("BuiltInArray".to_string()) };
         let map_type = env.get_property_type(&array_type, "map").unwrap();
         assert!(map_type.is_some());
         let push_type = env.get_property_type(&array_type, "push").unwrap();
         assert!(push_type.is_some());
-        let nonexistent = env
-            .get_property_type(&array_type, "nonExistentMethod")
-            .unwrap();
+        let nonexistent = env.get_property_type(&array_type, "nonExistentMethod").unwrap();
         assert!(nonexistent.is_none());
     }
 
@@ -1123,9 +1071,7 @@ mod tests {
     fn test_get_global_declaration() {
         let mut env = Environment::new();
         // Global binding
-        let binding = NonLocalBinding::Global {
-            name: "Math".to_string(),
-        };
+        let binding = NonLocalBinding::Global { name: "Math".to_string() };
         let result = env.get_global_declaration(&binding, None).unwrap();
         assert!(result.is_some());
 
@@ -1139,16 +1085,12 @@ mod tests {
         assert!(result.is_some());
 
         // Unknown global
-        let binding = NonLocalBinding::Global {
-            name: "unknownThing".to_string(),
-        };
+        let binding = NonLocalBinding::Global { name: "unknownThing".to_string() };
         let result = env.get_global_declaration(&binding, None).unwrap();
         assert!(result.is_none());
 
         // Hook-like name gets default hook type
-        let binding = NonLocalBinding::Global {
-            name: "useCustom".to_string(),
-        };
+        let binding = NonLocalBinding::Global { name: "useCustom".to_string() };
         let result = env.get_global_declaration(&binding, None).unwrap();
         assert!(result.is_some());
     }

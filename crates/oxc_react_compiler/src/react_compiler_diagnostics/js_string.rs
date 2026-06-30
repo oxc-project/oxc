@@ -253,10 +253,7 @@ mod tests {
 
     #[test]
     fn as_ref_views_match_well_formedness() {
-        assert!(matches!(
-            JsString::from("plain").as_ref(),
-            JsStringRef::Utf8("plain")
-        ));
+        assert!(matches!(JsString::from("plain").as_ref(), JsStringRef::Utf8("plain")));
         assert!(matches!(
             JsString::from_code_units(vec![0xD83E]).as_ref(),
             JsStringRef::Wtf16(&[0xD83E])
@@ -304,10 +301,7 @@ mod tests {
         assert_eq!(js.as_str(), Some(input));
 
         let truncated = "__SURROGATE_D8";
-        assert_eq!(
-            JsString::from_marker_string(truncated).as_str(),
-            Some(truncated)
-        );
+        assert_eq!(JsString::from_marker_string(truncated).as_str(), Some(truncated));
 
         let mixed = "a\u{20AC}__SURROGATE_D83E__b\u{20AC}";
         let js = JsString::from_marker_string(mixed);

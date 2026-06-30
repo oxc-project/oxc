@@ -13,10 +13,10 @@
 
 use rustc_hash::FxHashSet;
 
-use react_compiler_hir::environment::{Environment, OutputMode};
-use react_compiler_hir::object_shape::HookKind;
-use react_compiler_hir::visitors;
-use react_compiler_hir::{
+use crate::react_compiler_hir::environment::{Environment, OutputMode};
+use crate::react_compiler_hir::object_shape::HookKind;
+use crate::react_compiler_hir::visitors;
+use crate::react_compiler_hir::{
     ArrayPatternElement, BlockId, BlockKind, HirFunction, IdentifierId, InstructionKind,
     InstructionValue, ObjectPropertyOrSpread, Pattern,
 };
@@ -32,13 +32,11 @@ pub fn dead_code_elimination(func: &mut HirFunction, env: &Environment) {
 
     // Phase 2: Prune / sweep unreferenced identifiers and instructions
     // Collect instructions to rewrite (two-phase: collect then apply to avoid borrow conflicts)
-    let mut instructions_to_rewrite: Vec<react_compiler_hir::InstructionId> = Vec::new();
+    let mut instructions_to_rewrite: Vec<crate::react_compiler_hir::InstructionId> = Vec::new();
 
     for (_block_id, block) in &mut func.body.blocks {
         // Remove unused phi nodes
-        block
-            .phis
-            .retain(|phi| is_id_or_name_used(&state, &env.identifiers, phi.place.identifier));
+        block.phis.retain(|phi| is_id_or_name_used(&state, &env.identifiers, phi.place.identifier));
 
         // Remove instructions with unused lvalues
         block.instructions.retain(|instr_id| {
@@ -62,8 +60,7 @@ pub fn dead_code_elimination(func: &mut HirFunction, env: &Environment) {
     }
 
     // Remove unused context variables
-    func.context
-        .retain(|ctx_var| is_id_or_name_used(&state, &env.identifiers, ctx_var.identifier));
+    func.context.retain(|ctx_var| is_id_or_name_used(&state, &env.identifiers, ctx_var.identifier));
 }
 
 /// State for tracking referenced identifiers during mark phase.
@@ -76,10 +73,7 @@ struct State {
 
 impl State {
     fn new() -> Self {
-        State {
-            identifiers: FxHashSet::default(),
-            named: FxHashSet::default(),
-        }
+        State { identifiers: FxHashSet::default(), named: FxHashSet::default() }
     }
 
     fn count(&self) -> usize {
@@ -90,7 +84,7 @@ impl State {
 /// Mark an identifier as being referenced (not dead code).
 fn reference(
     state: &mut State,
-    identifiers: &[react_compiler_hir::Identifier],
+    identifiers: &[crate::react_compiler_hir::Identifier],
     identifier_id: IdentifierId,
 ) {
     state.identifiers.insert(identifier_id);
@@ -104,18 +98,14 @@ fn reference(
 /// Checks both the specific SSA id and (for named identifiers) any usage of that name.
 fn is_id_or_name_used(
     state: &State,
-    identifiers: &[react_compiler_hir::Identifier],
+    identifiers: &[crate::react_compiler_hir::Identifier],
     identifier_id: IdentifierId,
 ) -> bool {
     if state.identifiers.contains(&identifier_id) {
         return true;
     }
     let ident = &identifiers[identifier_id.0 as usize];
-    if let Some(ref name) = ident.name {
-        state.named.contains(name.value())
-    } else {
-        false
-    }
+    if let Some(ref name) = ident.name { state.named.contains(name.value()) } else { false }
 }
 
 /// Check if this specific SSA id is used.
@@ -199,7 +189,7 @@ fn find_referenced_identifiers(func: &HirFunction, env: &Environment) -> State {
 /// Rewrite a retained instruction (destructuring cleanup, StoreLocal -> DeclareLocal).
 fn rewrite_instruction(
     func: &mut HirFunction,
-    instr_id: react_compiler_hir::InstructionId,
+    instr_id: crate::react_compiler_hir::InstructionId,
     state: &State,
     env: &Environment,
 ) {
@@ -240,9 +230,7 @@ fn rewrite_instruction(
                         match prop {
                             ObjectPropertyOrSpread::Property(p) => {
                                 if is_id_or_name_used(state, &env.identifiers, p.place.identifier) {
-                                    next_properties
-                                        .get_or_insert_with(Vec::new)
-                                        .push(prop.clone());
+                                    next_properties.get_or_insert_with(Vec::new).push(prop.clone());
                                 }
                             }
                             ObjectPropertyOrSpread::Spread(s) => {
@@ -260,12 +248,7 @@ fn rewrite_instruction(
                 }
             }
         }
-        InstructionValue::StoreLocal {
-            lvalue,
-            type_annotation,
-            loc,
-            ..
-        } => {
+        InstructionValue::StoreLocal { lvalue, type_annotation, loc, .. } => {
             if lvalue.kind != InstructionKind::Reassign
                 && !is_id_used(state, lvalue.place.identifier)
             {

@@ -12,16 +12,16 @@
 
 use rustc_hash::FxHashMap;
 
-use react_compiler_diagnostics::{
+use crate::react_compiler_diagnostics::{
     CompilerDiagnostic, CompilerDiagnosticDetail, ErrorCategory, GENERATED_SOURCE,
 };
-use react_compiler_hir::{BlockId, HirFunction, Instruction, InstructionValue, Terminal};
-use react_compiler_lowering::{
+use crate::react_compiler_hir::{BlockId, HirFunction, Instruction, InstructionValue, Terminal};
+use crate::react_compiler_lowering::{
     get_reverse_postordered_blocks, mark_instruction_ids, remove_dead_do_while_statements,
     remove_unnecessary_try_catch, remove_unreachable_for_updates,
 };
 
-use crate::merge_consecutive_blocks::merge_consecutive_blocks;
+use crate::react_compiler_optimization::merge_consecutive_blocks::merge_consecutive_blocks;
 
 /// Prune `MaybeThrow` terminals for blocks that cannot throw, then clean up the CFG.
 pub fn prune_maybe_throws(
@@ -74,10 +74,7 @@ pub fn prune_maybe_throws(
 
             for (phi_idx, updates) in phi_updates {
                 for (old_pred, new_pred) in updates {
-                    let operand = block.phis[phi_idx]
-                        .operands
-                        .shift_remove(&old_pred)
-                        .unwrap();
+                    let operand = block.phis[phi_idx].operands.shift_remove(&old_pred).unwrap();
                     block.phis[phi_idx].operands.insert(new_pred, operand);
                 }
             }
@@ -114,11 +111,7 @@ fn prune_maybe_throws_impl(func: &mut HirFunction) -> Option<FxHashMap<BlockId, 
         }
     }
 
-    if terminal_mapping.is_empty() {
-        None
-    } else {
-        Some(terminal_mapping)
-    }
+    if terminal_mapping.is_empty() { None } else { Some(terminal_mapping) }
 }
 
 fn instruction_may_throw(instr: &Instruction) -> bool {

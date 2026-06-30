@@ -10,18 +10,20 @@
 
 use rustc_hash::FxHashSet;
 
-use react_compiler_hir::{
+use crate::react_compiler_hir::{
     BlockId, ReactiveFunction, ReactiveStatement, ReactiveTerminal, ReactiveTerminalStatement,
     ReactiveTerminalTargetKind, environment::Environment,
 };
 
-use crate::visitors::{ReactiveFunctionTransform, Transformed, transform_reactive_function};
+use crate::react_compiler_reactive_scopes::visitors::{
+    ReactiveFunctionTransform, Transformed, transform_reactive_function,
+};
 
 /// Prune unused labels from a reactive function.
 pub fn prune_unused_labels(
     func: &mut ReactiveFunction,
     env: &Environment,
-) -> Result<(), react_compiler_diagnostics::CompilerError> {
+) -> Result<(), crate::react_compiler_diagnostics::CompilerError> {
     let mut transform = Transform { env };
     let mut labels: FxHashSet<BlockId> = FxHashSet::default();
     transform_reactive_function(func, &mut transform, &mut labels)
@@ -42,7 +44,8 @@ impl<'a> ReactiveFunctionTransform for Transform<'a> {
         &mut self,
         stmt: &mut ReactiveTerminalStatement,
         state: &mut FxHashSet<BlockId>,
-    ) -> Result<Transformed<ReactiveStatement>, react_compiler_diagnostics::CompilerError> {
+    ) -> Result<Transformed<ReactiveStatement>, crate::react_compiler_diagnostics::CompilerError>
+    {
         // Traverse children first
         self.traverse_terminal(stmt, state)?;
 
@@ -64,10 +67,8 @@ impl<'a> ReactiveFunctionTransform for Transform<'a> {
         }
 
         // Is this terminal reachable via a break/continue to its label?
-        let is_reachable_label = stmt
-            .label
-            .as_ref()
-            .map_or(false, |label| state.contains(&label.id));
+        let is_reachable_label =
+            stmt.label.as_ref().map_or(false, |label| state.contains(&label.id));
 
         if let ReactiveTerminal::Label { block, .. } = &mut stmt.terminal {
             if !is_reachable_label {

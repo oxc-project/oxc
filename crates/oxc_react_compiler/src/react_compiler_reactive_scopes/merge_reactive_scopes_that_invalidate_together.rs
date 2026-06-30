@@ -10,8 +10,8 @@
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use react_compiler_diagnostics::CompilerError;
-use react_compiler_hir::{
+use crate::react_compiler_diagnostics::CompilerError;
+use crate::react_compiler_hir::{
     DeclarationId, DependencyPathEntry, EvaluationOrder, InstructionKind, InstructionValue, Place,
     ReactiveBlock, ReactiveFunction, ReactiveScopeBlock, ReactiveScopeDependency,
     ReactiveStatement, ReactiveValue, ScopeId, Type,
@@ -19,7 +19,7 @@ use react_compiler_hir::{
     object_shape::{BUILT_IN_ARRAY_ID, BUILT_IN_FUNCTION_ID, BUILT_IN_JSX_ID, BUILT_IN_OBJECT_ID},
 };
 
-use crate::visitors::{
+use crate::react_compiler_reactive_scopes::visitors::{
     ReactiveFunctionTransform, ReactiveFunctionVisitor, Transformed, transform_reactive_function,
     visit_reactive_function,
 };
@@ -40,11 +40,7 @@ pub fn merge_reactive_scopes_that_invalidate_together(
     visit_reactive_function(func, &visitor, &mut last_usage);
 
     // Pass 2+3: merge scopes
-    let mut transform = MergeTransform {
-        env,
-        last_usage,
-        temporaries: FxHashMap::default(),
-    };
+    let mut transform = MergeTransform { env, last_usage, temporaries: FxHashMap::default() };
     let mut state: Option<Vec<ReactiveScopeDependency>> = None;
     transform_reactive_function(func, &mut transform, &mut state)
 }
@@ -269,9 +265,8 @@ impl<'a> MergeTransform<'a> {
                                 EvaluationOrder(current_range_end.0.max(next_range_end.0));
 
                             // Merge declarations from next into current
-                            let next_decls = self.env.scopes[next_scope_id.0 as usize]
-                                .declarations
-                                .clone();
+                            let next_decls =
+                                self.env.scopes[next_scope_id.0 as usize].declarations.clone();
                             for (key, value) in next_decls {
                                 let current_decls =
                                     &mut self.env.scopes[current_scope_id.0 as usize].declarations;
@@ -352,8 +347,8 @@ impl<'a> MergeTransform<'a> {
             let mut merged_scope = match &all_stmts[entry.from] {
                 ReactiveStatement::Scope(s) => s.clone(),
                 _ => {
-                    return Err(react_compiler_diagnostics::CompilerDiagnostic::new(
-                        react_compiler_diagnostics::ErrorCategory::Invariant,
+                    return Err(crate::react_compiler_diagnostics::CompilerDiagnostic::new(
+                        crate::react_compiler_diagnostics::ErrorCategory::Invariant,
                         "MergeConsecutiveScopes: Expected scope at starting index",
                         None,
                     )
@@ -366,9 +361,7 @@ impl<'a> MergeTransform<'a> {
                 index += 1;
                 match stmt {
                     ReactiveStatement::Scope(inner_scope) => {
-                        merged_scope
-                            .instructions
-                            .extend(inner_scope.instructions.clone());
+                        merged_scope.instructions.extend(inner_scope.instructions.clone());
                         self.env.scopes[merged_scope.scope.0 as usize]
                             .merged
                             .push(inner_scope.scope);
@@ -402,16 +395,14 @@ fn update_scope_declarations(
     env: &mut Environment,
 ) {
     let range_end = env.scopes[scope_id.0 as usize].range.end;
-    env.scopes[scope_id.0 as usize]
-        .declarations
-        .retain(|(_id, decl)| {
-            let decl_declaration_id = env.identifiers[decl.identifier.0 as usize].declaration_id;
-            match last_usage.get(&decl_declaration_id) {
-                Some(last_used_at) => *last_used_at >= range_end,
-                // If not tracked, keep the declaration (conservative)
-                None => true,
-            }
-        });
+    env.scopes[scope_id.0 as usize].declarations.retain(|(_id, decl)| {
+        let decl_declaration_id = env.identifiers[decl.identifier.0 as usize].declaration_id;
+        match last_usage.get(&decl_declaration_id) {
+            Some(last_used_at) => *last_used_at >= range_end,
+            // If not tracked, keep the declaration (conservative)
+            None => true,
+        }
+    });
 }
 
 /// Returns whether all lvalues are last used at or before the given scope.

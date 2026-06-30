@@ -15,16 +15,16 @@
 //!
 //! Ported from TypeScript `src/HIR/MergeOverlappingReactiveScopesHIR.ts`.
 
-use std::cmp;
 use rustc_hash::FxHashMap;
+use std::cmp;
 
-use react_compiler_hir::environment::Environment;
-use react_compiler_hir::visitors;
-use react_compiler_hir::visitors::{each_instruction_lvalue_ids, each_terminal_operand_ids};
-use react_compiler_hir::{
+use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_hir::visitors;
+use crate::react_compiler_hir::visitors::{each_instruction_lvalue_ids, each_terminal_operand_ids};
+use crate::react_compiler_hir::{
     EvaluationOrder, HirFunction, IdentifierId, InstructionValue, ScopeId, Type,
 };
-use react_compiler_utils::DisjointSet;
+use crate::react_compiler_utils::DisjointSet;
 
 // =============================================================================
 // ScopeInfo
@@ -76,11 +76,7 @@ fn get_place_scope(
     identifier_id: IdentifierId,
 ) -> Option<ScopeId> {
     let scope_id = env.identifiers[identifier_id.0 as usize].scope?;
-    if is_scope_active(env, scope_id, id) {
-        Some(scope_id)
-    } else {
-        None
-    }
+    if is_scope_active(env, scope_id, id) { Some(scope_id) } else { None }
 }
 
 /// Check if a place is mutable at the given instruction.
@@ -107,10 +103,7 @@ fn collect_scope_info(func: &HirFunction, env: &Environment) -> ScopeInfo {
         place_scopes.insert(identifier_id, scope_id);
         let range = &env.scopes[scope_id.0 as usize].range;
         if range.start != range.end {
-            scope_starts_map
-                .entry(range.start)
-                .or_default()
-                .push(scope_id);
+            scope_starts_map.entry(range.start).or_default().push(scope_id);
             scope_ends_map.entry(range.end).or_default().push(scope_id);
         }
     };
@@ -155,23 +148,15 @@ fn collect_scope_info(func: &HirFunction, env: &Environment) -> ScopeInfo {
     }
 
     // Convert to sorted vecs (descending by id for pop-from-end)
-    let mut scope_starts: Vec<ScopeStartEntry> = scope_starts_map
-        .into_iter()
-        .map(|(id, scopes)| ScopeStartEntry { id, scopes })
-        .collect();
+    let mut scope_starts: Vec<ScopeStartEntry> =
+        scope_starts_map.into_iter().map(|(id, scopes)| ScopeStartEntry { id, scopes }).collect();
     scope_starts.sort_by(|a, b| b.id.cmp(&a.id));
 
-    let mut scope_ends: Vec<ScopeEndEntry> = scope_ends_map
-        .into_iter()
-        .map(|(id, scopes)| ScopeEndEntry { id, scopes })
-        .collect();
+    let mut scope_ends: Vec<ScopeEndEntry> =
+        scope_ends_map.into_iter().map(|(id, scopes)| ScopeEndEntry { id, scopes }).collect();
     scope_ends.sort_by(|a, b| b.id.cmp(&a.id));
 
-    ScopeInfo {
-        scope_starts,
-        scope_ends,
-        place_scopes,
-    }
+    ScopeInfo { scope_starts, scope_ends, place_scopes }
 }
 
 // =============================================================================
@@ -275,10 +260,8 @@ fn get_overlapping_reactive_scopes(
     env: &Environment,
     mut scope_info: ScopeInfo,
 ) -> DisjointSet<ScopeId> {
-    let mut state = TraversalState {
-        joined: DisjointSet::<ScopeId>::new(),
-        active_scopes: Vec::new(),
-    };
+    let mut state =
+        TraversalState { joined: DisjointSet::<ScopeId>::new(), active_scopes: Vec::new() };
 
     for (_block_id, block) in &func.body.blocks {
         for &instr_id in &block.instructions {
@@ -348,7 +331,7 @@ pub fn merge_overlapping_reactive_scopes_hir(func: &mut HirFunction, env: &mut E
     // When scope.range is updated, ALL identifiers referencing that range object
     // automatically see the new values. We use MutableRangeId to identify which
     // identifiers share the same logical range as a root scope.
-    let mut original_root_range_ids: FxHashMap<ScopeId, react_compiler_hir::MutableRangeId> =
+    let mut original_root_range_ids: FxHashMap<ScopeId, crate::react_compiler_hir::MutableRangeId> =
         FxHashMap::default();
     for (_, root_id) in &scope_groups {
         if !original_root_range_ids.contains_key(root_id) {
@@ -400,7 +383,7 @@ pub fn merge_overlapping_reactive_scopes_hir(func: &mut HirFunction, env: &mut E
 /// Collect operand IdentifierIds with their types from an instruction value.
 /// Used to check for Primitive type on FunctionExpression/ObjectMethod operands.
 fn each_instruction_operand_ids_with_types(
-    instr: &react_compiler_hir::Instruction,
+    instr: &crate::react_compiler_hir::Instruction,
     env: &Environment,
 ) -> Vec<(IdentifierId, Type)> {
     visitors::each_instruction_operand(instr, env)

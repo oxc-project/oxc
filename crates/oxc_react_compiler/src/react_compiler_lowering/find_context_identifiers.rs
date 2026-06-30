@@ -7,20 +7,20 @@
 use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
 
-use react_compiler_ast::expressions::*;
-use react_compiler_ast::patterns::*;
-use react_compiler_ast::scope::*;
-use react_compiler_ast::statements::FunctionDeclaration;
-use react_compiler_ast::visitor::AstWalker;
-use react_compiler_ast::visitor::Visitor;
-use react_compiler_diagnostics::CompilerError;
-use react_compiler_diagnostics::CompilerErrorDetail;
-use react_compiler_diagnostics::ErrorCategory;
-use react_compiler_diagnostics::Position;
-use react_compiler_diagnostics::SourceLocation;
-use react_compiler_hir::environment::Environment;
+use crate::react_compiler_ast::expressions::*;
+use crate::react_compiler_ast::patterns::*;
+use crate::react_compiler_ast::scope::*;
+use crate::react_compiler_ast::statements::FunctionDeclaration;
+use crate::react_compiler_ast::visitor::AstWalker;
+use crate::react_compiler_ast::visitor::Visitor;
+use crate::react_compiler_diagnostics::CompilerError;
+use crate::react_compiler_diagnostics::CompilerErrorDetail;
+use crate::react_compiler_diagnostics::ErrorCategory;
+use crate::react_compiler_diagnostics::Position;
+use crate::react_compiler_diagnostics::SourceLocation;
+use crate::react_compiler_hir::environment::Environment;
 
-use crate::FunctionNode;
+use crate::react_compiler_lowering::FunctionNode;
 
 #[derive(Default)]
 struct BindingInfo {
@@ -124,7 +124,7 @@ impl<'ast> Visitor<'ast> for ContextIdentifierVisitor<'_> {
 
     fn enter_jsx_identifier(
         &mut self,
-        node: &'ast react_compiler_ast::jsx::JSXIdentifier,
+        node: &'ast crate::react_compiler_ast::jsx::JSXIdentifier,
         _scope_stack: &[ScopeId],
     ) {
         self.check_captured_reference(node.base.start, node.base.node_id);
@@ -135,10 +135,7 @@ impl<'ast> Visitor<'ast> for ContextIdentifierVisitor<'_> {
         node: &'ast AssignmentExpression,
         scope_stack: &[ScopeId],
     ) {
-        let current_scope = scope_stack
-            .last()
-            .copied()
-            .unwrap_or(self.scope_info.program_scope);
+        let current_scope = scope_stack.last().copied().unwrap_or(self.scope_info.program_scope);
         if self.error.is_none() {
             if let Err(error) = walk_lval_for_reassignment(self, &node.left, current_scope) {
                 self.error = Some(error);
@@ -148,10 +145,8 @@ impl<'ast> Visitor<'ast> for ContextIdentifierVisitor<'_> {
 
     fn enter_update_expression(&mut self, node: &'ast UpdateExpression, scope_stack: &[ScopeId]) {
         if let Expression::Identifier(ident) = node.argument.as_ref() {
-            let current_scope = scope_stack
-                .last()
-                .copied()
-                .unwrap_or(self.scope_info.program_scope);
+            let current_scope =
+                scope_stack.last().copied().unwrap_or(self.scope_info.program_scope);
             self.handle_reassignment_identifier(&ident.name, current_scope);
         }
     }
@@ -234,23 +229,15 @@ fn walk_lval_for_reassignment(
     Ok(())
 }
 
-fn convert_loc(loc: &react_compiler_ast::common::SourceLocation) -> SourceLocation {
+fn convert_loc(loc: &crate::react_compiler_ast::common::SourceLocation) -> SourceLocation {
     SourceLocation {
-        start: Position {
-            line: loc.start.line,
-            column: loc.start.column,
-            index: loc.start.index,
-        },
-        end: Position {
-            line: loc.end.line,
-            column: loc.end.column,
-            index: loc.end.index,
-        },
+        start: Position { line: loc.start.line, column: loc.start.column, index: loc.start.index },
+        end: Position { line: loc.end.line, column: loc.end.column, index: loc.end.index },
     }
 }
 
 fn convert_opt_loc(
-    loc: &Option<react_compiler_ast::common::SourceLocation>,
+    loc: &Option<crate::react_compiler_ast::common::SourceLocation>,
 ) -> Option<SourceLocation> {
     loc.as_ref().map(convert_loc)
 }
@@ -337,11 +324,10 @@ pub fn find_context_identifiers(
     func: &FunctionNode<'_>,
     scope_info: &ScopeInfo,
     env: &mut Environment,
-    identifier_locs: &crate::identifier_loc_index::IdentifierLocIndex,
+    identifier_locs: &crate::react_compiler_lowering::identifier_loc_index::IdentifierLocIndex,
 ) -> Result<FxHashSet<BindingId>, CompilerError> {
-    let func_scope = scope_info
-        .resolve_scope_for_node(func.node_id())
-        .unwrap_or(scope_info.program_scope);
+    let func_scope =
+        scope_info.resolve_scope_for_node(func.node_id()).unwrap_or(scope_info.program_scope);
 
     let mut visitor = ContextIdentifierVisitor {
         scope_info,
@@ -423,11 +409,8 @@ pub fn find_context_identifiers(
                         )
                         && is_captured_by_function(scope_info, binding.scope, scope_id)
                     {
-                        visitor
-                            .binding_info
-                            .get_mut(&binding_id)
-                            .unwrap()
-                            .referenced_by_inner_fn = true;
+                        visitor.binding_info.get_mut(&binding_id).unwrap().referenced_by_inner_fn =
+                            true;
                         break;
                     }
                 }

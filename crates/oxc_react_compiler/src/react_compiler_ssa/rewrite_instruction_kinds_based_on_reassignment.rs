@@ -17,15 +17,15 @@
 
 use rustc_hash::FxHashMap;
 
-use react_compiler_diagnostics::{
+use crate::react_compiler_diagnostics::{
     CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, ErrorCategory, SourceLocation,
 };
-use react_compiler_hir::visitors::each_pattern_operand;
-use react_compiler_hir::{
+use crate::react_compiler_hir::visitors::each_pattern_operand;
+use crate::react_compiler_hir::{
     BlockKind, DeclarationId, HirFunction, InstructionKind, InstructionValue, ParamPattern, Place,
 };
 
-use react_compiler_hir::environment::Environment;
+use crate::react_compiler_hir::environment::Environment;
 
 /// Create an invariant CompilerError (matches TS CompilerError.invariant).
 /// When a loc is provided, creates a CompilerDiagnostic with an error detail item
@@ -77,10 +77,7 @@ fn format_place(place: &Place, env: &Environment) -> String {
         None => String::new(),
     };
     let mutable_range = if ident.mutable_range.end.0 > ident.mutable_range.start.0 + 1 {
-        format!(
-            "[{}:{}]",
-            ident.mutable_range.start.0, ident.mutable_range.end.0
-        )
+        format!("[{}:{}]", ident.mutable_range.start.0, ident.mutable_range.end.0)
     } else {
         String::new()
     };
@@ -99,10 +96,7 @@ fn format_place(place: &Place, env: &Environment) -> String {
 /// In Rust, we track instruction indices and apply changes in a second pass.
 enum DeclarationLoc {
     /// An LValue from DeclareLocal or StoreLocal — identified by (block_index, instr_index_in_block)
-    Instruction {
-        block_index: usize,
-        instr_local_index: usize,
-    },
+    Instruction { block_index: usize, instr_local_index: usize },
     /// A parameter or context variable (seeded as Let, may be upgraded to Let on reassignment — already Let)
     ParamOrContext,
 }
@@ -168,10 +162,7 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
                     }
                     declarations.insert(
                         decl_id,
-                        DeclarationLoc::Instruction {
-                            block_index,
-                            instr_local_index: local_idx,
-                        },
+                        DeclarationLoc::Instruction { block_index, instr_local_index: local_idx },
                     );
                 }
                 InstructionValue::StoreLocal { lvalue, .. } => {
@@ -307,10 +298,7 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
                         ));
                     };
                     match existing {
-                        DeclarationLoc::Instruction {
-                            block_index: bi,
-                            instr_local_index: ili,
-                        } => {
+                        DeclarationLoc::Instruction { block_index: bi, instr_local_index: ili } => {
                             let_locs.push((*bi, *ili));
                         }
                         DeclarationLoc::ParamOrContext => {

@@ -13,9 +13,9 @@
 
 use rustc_hash::FxHashMap;
 
-use react_compiler_hir::environment::Environment;
-use react_compiler_hir::object_shape::HookKind;
-use react_compiler_hir::{
+use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_hir::object_shape::HookKind;
+use crate::react_compiler_hir::{
     FunctionId, HirFunction, IdentifierId, IdentifierName, Instruction, InstructionValue,
     JsxAttribute, JsxTag, PlaceOrSpread,
 };
@@ -89,11 +89,8 @@ fn apply_name_hints_to_instructions(
     update_map: &FxHashMap<FunctionId, &String>,
 ) {
     for instr in instructions.iter_mut() {
-        if let InstructionValue::FunctionExpression {
-            lowered_func,
-            name_hint,
-            ..
-        } = &mut instr.value
+        if let InstructionValue::FunctionExpression { lowered_func, name_hint, .. } =
+            &mut instr.value
         {
             if let Some(new_name) = update_map.get(&lowered_func.func) {
                 *name_hint = Some((*new_name).clone());
@@ -142,16 +139,12 @@ fn name_anonymous_functions_impl(func: &HirFunction, env: &Environment) -> Vec<N
                         functions.insert(lvalue_id, node_idx);
                     }
                 }
-                InstructionValue::PropertyLoad {
-                    object, property, ..
-                } => {
+                InstructionValue::PropertyLoad { object, property, .. } => {
                     if let Some(object_name) = names.get(&object.identifier) {
                         names.insert(lvalue_id, format!("{}.{}", object_name, property));
                     }
                 }
-                InstructionValue::FunctionExpression {
-                    name, lowered_func, ..
-                } => {
+                InstructionValue::FunctionExpression { name, lowered_func, .. } => {
                     let inner_func = &env.functions[lowered_func.func.0 as usize];
                     let inner = name_anonymous_functions_impl(inner_func, env);
                     let node = Node {
@@ -168,16 +161,8 @@ fn name_anonymous_functions_impl(func: &HirFunction, env: &Environment) -> Vec<N
                         functions.insert(lvalue_id, idx);
                     }
                 }
-                InstructionValue::StoreContext {
-                    lvalue: store_lvalue,
-                    value,
-                    ..
-                }
-                | InstructionValue::StoreLocal {
-                    lvalue: store_lvalue,
-                    value,
-                    ..
-                } => {
+                InstructionValue::StoreContext { lvalue: store_lvalue, value, .. }
+                | InstructionValue::StoreLocal { lvalue: store_lvalue, value, .. } => {
                     if let Some(&node_idx) = functions.get(&value.identifier) {
                         let node = &mut nodes[node_idx];
                         let var_ident = &env.identifiers[store_lvalue.place.identifier.0 as usize];
@@ -215,10 +200,7 @@ fn name_anonymous_functions_impl(func: &HirFunction, env: &Environment) -> Vec<N
                     for attr in props {
                         match attr {
                             JsxAttribute::SpreadAttribute { .. } => continue,
-                            JsxAttribute::Attribute {
-                                name: attr_name,
-                                place,
-                            } => {
+                            JsxAttribute::Attribute { name: attr_name, place } => {
                                 if let Some(&node_idx) = functions.get(&place.identifier) {
                                     let node = &mut nodes[node_idx];
                                     if node.generated_name.is_none() {
@@ -268,16 +250,10 @@ fn handle_call(
         if *hk != HookKind::Custom {
             hk.to_string()
         } else {
-            names
-                .get(&callee_id)
-                .cloned()
-                .unwrap_or_else(|| "(anonymous)".to_string())
+            names.get(&callee_id).cloned().unwrap_or_else(|| "(anonymous)".to_string())
         }
     } else {
-        names
-            .get(&callee_id)
-            .cloned()
-            .unwrap_or_else(|| "(anonymous)".to_string())
+        names.get(&callee_id).cloned().unwrap_or_else(|| "(anonymous)".to_string())
     };
 
     // Count how many args are tracked functions

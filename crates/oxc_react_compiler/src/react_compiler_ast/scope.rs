@@ -1,6 +1,6 @@
 use rustc_hash::FxHashMap;
 
-use react_compiler_utils::FxIndexMap;
+use crate::react_compiler_utils::FxIndexMap;
 use serde::Serialize;
 
 /// Identifies a scope in the scope table. Copy-able, used as an index.
@@ -128,19 +128,11 @@ pub struct ScopeInfo {
     /// Maps an identifier reference's node-ID to the binding it resolves to.
     /// Only present for identifiers that resolve to a binding (not globals).
     /// Uses FxIndexMap to preserve insertion order.
-    #[serde(
-        default,
-        skip_serializing_if = "FxIndexMap::is_empty",
-        rename = "refNodeIdToBinding"
-    )]
+    #[serde(default, skip_serializing_if = "FxIndexMap::is_empty", rename = "refNodeIdToBinding")]
     pub ref_node_id_to_binding: FxIndexMap<u32, BindingId>,
 
     /// Maps a scope-creating AST node's node-ID to the scope it creates.
-    #[serde(
-        default,
-        skip_serializing_if = "FxHashMap::is_empty",
-        rename = "nodeIdToScope"
-    )]
+    #[serde(default, skip_serializing_if = "FxHashMap::is_empty", rename = "nodeIdToScope")]
     pub node_id_to_scope: FxHashMap<u32, ScopeId>,
 
     /// The program-level (module) scope. Always scopes[0].
@@ -196,8 +188,7 @@ impl ScopeInfo {
     /// Returns None if node_id is None or if the identifier doesn't resolve to
     /// a binding (i.e., it's a global/unresolved reference).
     pub fn resolve_reference_for_node(&self, node_id: Option<u32>) -> Option<&BindingData> {
-        self.resolve_reference_id_for_node(node_id)
-            .map(|id| &self.bindings[id.0 as usize])
+        self.resolve_reference_id_for_node(node_id).map(|id| &self.bindings[id.0 as usize])
     }
 
     /// Find a binding by name within the descendants of a given scope.
@@ -263,10 +254,7 @@ impl ScopeInfo {
 
     /// Get all bindings declared in a scope (for hoisting iteration).
     pub fn scope_bindings(&self, scope_id: ScopeId) -> impl Iterator<Item = &BindingData> {
-        self.scopes[scope_id.0 as usize]
-            .bindings
-            .values()
-            .map(|id| &self.bindings[id.0 as usize])
+        self.scopes[scope_id.0 as usize].bindings.values().map(|id| &self.bindings[id.0 as usize])
     }
 
     /// Get bindings from a scope AND its direct child block scopes.
@@ -291,9 +279,7 @@ impl ScopeInfo {
                 }
             }
         }
-        binding_ids
-            .into_iter()
-            .map(|id| &self.bindings[id.0 as usize])
+        binding_ids.into_iter().map(|id| &self.bindings[id.0 as usize])
     }
 
     /// Find a block scope by matching variable names declared within it.

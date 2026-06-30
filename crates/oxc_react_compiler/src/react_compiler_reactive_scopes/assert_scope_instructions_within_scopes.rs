@@ -10,11 +10,15 @@
 
 use rustc_hash::FxHashSet;
 
-use react_compiler_diagnostics::{CompilerDiagnostic, ErrorCategory};
-use react_compiler_hir::environment::Environment;
-use react_compiler_hir::{EvaluationOrder, Place, ReactiveFunction, ReactiveScopeBlock, ScopeId};
+use crate::react_compiler_diagnostics::{CompilerDiagnostic, ErrorCategory};
+use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_hir::{
+    EvaluationOrder, Place, ReactiveFunction, ReactiveScopeBlock, ScopeId,
+};
 
-use crate::visitors::{ReactiveFunctionVisitor, visit_reactive_function};
+use crate::react_compiler_reactive_scopes::visitors::{
+    ReactiveFunctionVisitor, visit_reactive_function,
+};
 
 /// Assert that scope instructions are within their scopes.
 /// Two-pass visitor:
@@ -31,11 +35,8 @@ pub fn assert_scope_instructions_within_scopes(
 
     // Pass 2: Check instructions against scopes
     let check_visitor = CheckInstructionsAgainstScopesVisitor { env };
-    let mut check_state = CheckState {
-        existing_scopes,
-        active_scopes: FxHashSet::default(),
-        error: None,
-    };
+    let mut check_state =
+        CheckState { existing_scopes, active_scopes: FxHashSet::default(), error: None };
     visit_reactive_function(func, &check_visitor, &mut check_state);
     if let Some(err) = check_state.error {
         return Err(err);

@@ -8,14 +8,14 @@
 //! Analogous to TS `Pipeline.ts` (`compileFn` → `run` → `runWithEnvironment`).
 //! Currently runs BuildHIR (lowering) and PruneMaybeThrows.
 
-use react_compiler_utils::FxIndexMap;
-use react_compiler_ast::scope::ScopeInfo;
-use react_compiler_diagnostics::CompilerError;
-use react_compiler_hir::ReactFunctionType;
-use react_compiler_hir::environment::Environment;
-use react_compiler_hir::environment::OutputMode;
-use react_compiler_hir::environment_config::EnvironmentConfig;
-use react_compiler_lowering::FunctionNode;
+use crate::react_compiler_ast::scope::ScopeInfo;
+use crate::react_compiler_diagnostics::CompilerError;
+use crate::react_compiler_hir::ReactFunctionType;
+use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_hir::environment::OutputMode;
+use crate::react_compiler_hir::environment_config::EnvironmentConfig;
+use crate::react_compiler_lowering::FunctionNode;
+use crate::react_compiler_utils::FxIndexMap;
 
 use super::compile_result::CodegenFunction;
 use super::compile_result::CompilerErrorDetailInfo;
@@ -26,7 +26,7 @@ use super::compile_result::LoggerSourceLocation;
 use super::compile_result::OutlinedFunction;
 use super::imports::ProgramContext;
 use super::plugin_options::CompilerOutputMode;
-use crate::debug_print;
+use crate::react_compiler::debug_print;
 
 /// Run the compilation pipeline on a single function.
 ///
@@ -59,7 +59,7 @@ pub fn compile_fn(
     env.reference_node_ids = scope_info.ref_node_id_to_binding.keys().copied().collect();
 
     context.timing.start("lower");
-    let mut hir = react_compiler_lowering::lower(func, fn_name, scope_info, &mut env)?;
+    let mut hir = crate::react_compiler_lowering::lower(func, fn_name, scope_info, &mut env)?;
     context.timing.stop();
 
     // Copy renames from lowering to context (keep on env for codegen to apply to type annotations)
@@ -83,7 +83,7 @@ pub fn compile_fn(
     }
 
     context.timing.start("PruneMaybeThrows");
-    react_compiler_optimization::prune_maybe_throws(&mut hir, &mut env.functions)?;
+    crate::react_compiler_optimization::prune_maybe_throws(&mut hir, &mut env.functions)?;
     context.timing.stop();
 
     if context.debug_enabled {
@@ -94,17 +94,14 @@ pub fn compile_fn(
     }
 
     context.timing.start("ValidateContextVariableLValues");
-    react_compiler_validation::validate_context_variable_lvalues(&hir, &mut env)?;
+    crate::react_compiler_validation::validate_context_variable_lvalues(&hir, &mut env)?;
     if context.debug_enabled {
-        context.log_debug(DebugLogEntry::new(
-            "ValidateContextVariableLValues",
-            "ok".to_string(),
-        ));
+        context.log_debug(DebugLogEntry::new("ValidateContextVariableLValues", "ok".to_string()));
     }
     context.timing.stop();
 
     context.timing.start("ValidateUseMemo");
-    let void_memo_errors = react_compiler_validation::validate_use_memo(&hir, &mut env);
+    let void_memo_errors = crate::react_compiler_validation::validate_use_memo(&hir, &mut env);
     log_errors_as_events(&void_memo_errors, context);
     if context.debug_enabled {
         context.log_debug(DebugLogEntry::new("ValidateUseMemo", "ok".to_string()));
@@ -112,7 +109,7 @@ pub fn compile_fn(
     context.timing.stop();
 
     context.timing.start("DropManualMemoization");
-    react_compiler_optimization::drop_manual_memoization(&mut hir, &mut env)?;
+    crate::react_compiler_optimization::drop_manual_memoization(&mut hir, &mut env)?;
     context.timing.stop();
 
     if context.debug_enabled {
@@ -122,18 +119,14 @@ pub fn compile_fn(
         context.timing.stop();
     }
 
-    context
-        .timing
-        .start("InlineImmediatelyInvokedFunctionExpressions");
-    react_compiler_optimization::inline_immediately_invoked_function_expressions(
+    context.timing.start("InlineImmediatelyInvokedFunctionExpressions");
+    crate::react_compiler_optimization::inline_immediately_invoked_function_expressions(
         &mut hir, &mut env,
     );
     context.timing.stop();
 
     if context.debug_enabled {
-        context
-            .timing
-            .start("debug_print:InlineImmediatelyInvokedFunctionExpressions");
+        context.timing.start("debug_print:InlineImmediatelyInvokedFunctionExpressions");
         let debug_inline_iifes = debug_print::debug_hir(&hir, &env);
         context.log_debug(DebugLogEntry::new(
             "InlineImmediatelyInvokedFunctionExpressions",
@@ -143,7 +136,7 @@ pub fn compile_fn(
     }
 
     context.timing.start("MergeConsecutiveBlocks");
-    react_compiler_optimization::merge_consecutive_blocks::merge_consecutive_blocks(
+    crate::react_compiler_optimization::merge_consecutive_blocks::merge_consecutive_blocks(
         &mut hir,
         &mut env.functions,
     );
@@ -158,24 +151,18 @@ pub fn compile_fn(
 
     // TODO: port assertConsistentIdentifiers
     if context.debug_enabled {
-        context.log_debug(DebugLogEntry::new(
-            "AssertConsistentIdentifiers",
-            "ok".to_string(),
-        ));
+        context.log_debug(DebugLogEntry::new("AssertConsistentIdentifiers", "ok".to_string()));
     }
     // TODO: port assertTerminalSuccessorsExist
     if context.debug_enabled {
-        context.log_debug(DebugLogEntry::new(
-            "AssertTerminalSuccessorsExist",
-            "ok".to_string(),
-        ));
+        context.log_debug(DebugLogEntry::new("AssertTerminalSuccessorsExist", "ok".to_string()));
     }
 
     context.timing.start("EnterSSA");
-    react_compiler_ssa::enter_ssa(&mut hir, &mut env).map_err(|diag| {
+    crate::react_compiler_ssa::enter_ssa(&mut hir, &mut env).map_err(|diag| {
         let loc = diag.primary_location().cloned();
         let mut err = CompilerError::new();
-        err.push_error_detail(react_compiler_diagnostics::CompilerErrorDetail {
+        err.push_error_detail(crate::react_compiler_diagnostics::CompilerErrorDetail {
             category: diag.category,
             reason: diag.reason,
             description: diag.description,
@@ -194,29 +181,23 @@ pub fn compile_fn(
     }
 
     context.timing.start("EliminateRedundantPhi");
-    react_compiler_ssa::eliminate_redundant_phi(&mut hir, &mut env);
+    crate::react_compiler_ssa::eliminate_redundant_phi(&mut hir, &mut env);
     context.timing.stop();
 
     if context.debug_enabled {
         context.timing.start("debug_print:EliminateRedundantPhi");
         let debug_eliminate_phi = debug_print::debug_hir(&hir, &env);
-        context.log_debug(DebugLogEntry::new(
-            "EliminateRedundantPhi",
-            debug_eliminate_phi,
-        ));
+        context.log_debug(DebugLogEntry::new("EliminateRedundantPhi", debug_eliminate_phi));
         context.timing.stop();
     }
 
     // TODO: port assertConsistentIdentifiers
     if context.debug_enabled {
-        context.log_debug(DebugLogEntry::new(
-            "AssertConsistentIdentifiers",
-            "ok".to_string(),
-        ));
+        context.log_debug(DebugLogEntry::new("AssertConsistentIdentifiers", "ok".to_string()));
     }
 
     context.timing.start("ConstantPropagation");
-    react_compiler_optimization::constant_propagation(&mut hir, &mut env);
+    crate::react_compiler_optimization::constant_propagation(&mut hir, &mut env);
     context.timing.stop();
 
     if context.debug_enabled {
@@ -227,7 +208,7 @@ pub fn compile_fn(
     }
 
     context.timing.start("InferTypes");
-    react_compiler_typeinference::infer_types(&mut hir, &mut env)?;
+    crate::react_compiler_typeinference::infer_types(&mut hir, &mut env)?;
     context.timing.stop();
 
     if context.debug_enabled {
@@ -240,7 +221,7 @@ pub fn compile_fn(
     if env.enable_validations() {
         if env.config.validate_hooks_usage {
             context.timing.start("ValidateHooksUsage");
-            react_compiler_validation::validate_hooks_usage(&hir, &mut env)?;
+            crate::react_compiler_validation::validate_hooks_usage(&hir, &mut env)?;
             if context.debug_enabled {
                 context.log_debug(DebugLogEntry::new("ValidateHooksUsage", "ok".to_string()));
             }
@@ -249,35 +230,30 @@ pub fn compile_fn(
 
         if env.config.validate_no_capitalized_calls.is_some() {
             context.timing.start("ValidateNoCapitalizedCalls");
-            react_compiler_validation::validate_no_capitalized_calls(&hir, &mut env)?;
+            crate::react_compiler_validation::validate_no_capitalized_calls(&hir, &mut env)?;
             if context.debug_enabled {
-                context.log_debug(DebugLogEntry::new(
-                    "ValidateNoCapitalizedCalls",
-                    "ok".to_string(),
-                ));
+                context
+                    .log_debug(DebugLogEntry::new("ValidateNoCapitalizedCalls", "ok".to_string()));
             }
             context.timing.stop();
         }
     }
 
     context.timing.start("OptimizePropsMethodCalls");
-    react_compiler_optimization::optimize_props_method_calls(&mut hir, &env);
+    crate::react_compiler_optimization::optimize_props_method_calls(&mut hir, &env);
     context.timing.stop();
 
     if context.debug_enabled {
         context.timing.start("debug_print:OptimizePropsMethodCalls");
         let debug_optimize_props = debug_print::debug_hir(&hir, &env);
-        context.log_debug(DebugLogEntry::new(
-            "OptimizePropsMethodCalls",
-            debug_optimize_props,
-        ));
+        context.log_debug(DebugLogEntry::new("OptimizePropsMethodCalls", debug_optimize_props));
         context.timing.stop();
     }
 
     context.timing.start("AnalyseFunctions");
     let mut inner_logs: Vec<String> = Vec::new();
     let debug_inner = context.debug_enabled;
-    let analyse_result = react_compiler_inference::analyse_functions(
+    let analyse_result = crate::react_compiler_inference::analyse_functions(
         &mut hir,
         &mut env,
         &mut |inner_func, inner_env| {
@@ -304,32 +280,24 @@ pub fn compile_fn(
     if context.debug_enabled {
         context.timing.start("debug_print:AnalyseFunctions");
         let debug_analyse_functions = debug_print::debug_hir(&hir, &env);
-        context.log_debug(DebugLogEntry::new(
-            "AnalyseFunctions",
-            debug_analyse_functions,
-        ));
+        context.log_debug(DebugLogEntry::new("AnalyseFunctions", debug_analyse_functions));
         context.timing.stop();
     }
 
     context.timing.start("InferMutationAliasingEffects");
-    react_compiler_inference::infer_mutation_aliasing_effects(&mut hir, &mut env, false)?;
+    crate::react_compiler_inference::infer_mutation_aliasing_effects(&mut hir, &mut env, false)?;
     context.timing.stop();
 
     if context.debug_enabled {
-        context
-            .timing
-            .start("debug_print:InferMutationAliasingEffects");
+        context.timing.start("debug_print:InferMutationAliasingEffects");
         let debug_infer_effects = debug_print::debug_hir(&hir, &env);
-        context.log_debug(DebugLogEntry::new(
-            "InferMutationAliasingEffects",
-            debug_infer_effects,
-        ));
+        context.log_debug(DebugLogEntry::new("InferMutationAliasingEffects", debug_infer_effects));
         context.timing.stop();
     }
 
     if env.output_mode == OutputMode::Ssr {
         context.timing.start("OptimizeForSSR");
-        react_compiler_optimization::optimize_for_ssr(&mut hir, &env);
+        crate::react_compiler_optimization::optimize_for_ssr(&mut hir, &env);
         context.timing.stop();
 
         if context.debug_enabled {
@@ -341,7 +309,7 @@ pub fn compile_fn(
     }
 
     context.timing.start("DeadCodeElimination");
-    react_compiler_optimization::dead_code_elimination(&mut hir, &env);
+    crate::react_compiler_optimization::dead_code_elimination(&mut hir, &env);
     context.timing.stop();
 
     if context.debug_enabled {
@@ -352,7 +320,7 @@ pub fn compile_fn(
     }
 
     context.timing.start("PruneMaybeThrows2");
-    react_compiler_optimization::prune_maybe_throws(&mut hir, &mut env.functions)?;
+    crate::react_compiler_optimization::prune_maybe_throws(&mut hir, &mut env.functions)?;
     context.timing.stop();
 
     if context.debug_enabled {
@@ -363,26 +331,21 @@ pub fn compile_fn(
     }
 
     context.timing.start("InferMutationAliasingRanges");
-    react_compiler_inference::infer_mutation_aliasing_ranges(&mut hir, &mut env, false)?;
+    crate::react_compiler_inference::infer_mutation_aliasing_ranges(&mut hir, &mut env, false)?;
     context.timing.stop();
 
     if context.debug_enabled {
-        context
-            .timing
-            .start("debug_print:InferMutationAliasingRanges");
+        context.timing.start("debug_print:InferMutationAliasingRanges");
         let debug_infer_ranges = debug_print::debug_hir(&hir, &env);
-        context.log_debug(DebugLogEntry::new(
-            "InferMutationAliasingRanges",
-            debug_infer_ranges,
-        ));
+        context.log_debug(DebugLogEntry::new("InferMutationAliasingRanges", debug_infer_ranges));
         context.timing.stop();
     }
 
     if env.enable_validations() {
-        context
-            .timing
-            .start("ValidateLocalsNotReassignedAfterRender");
-        react_compiler_validation::validate_locals_not_reassigned_after_render(&hir, &mut env);
+        context.timing.start("ValidateLocalsNotReassignedAfterRender");
+        crate::react_compiler_validation::validate_locals_not_reassigned_after_render(
+            &hir, &mut env,
+        );
         if context.debug_enabled {
             context.log_debug(DebugLogEntry::new(
                 "ValidateLocalsNotReassignedAfterRender",
@@ -393,24 +356,20 @@ pub fn compile_fn(
 
         if env.config.validate_ref_access_during_render {
             context.timing.start("ValidateNoRefAccessInRender");
-            react_compiler_validation::validate_no_ref_access_in_render(&hir, &mut env);
+            crate::react_compiler_validation::validate_no_ref_access_in_render(&hir, &mut env);
             if context.debug_enabled {
-                context.log_debug(DebugLogEntry::new(
-                    "ValidateNoRefAccessInRender",
-                    "ok".to_string(),
-                ));
+                context
+                    .log_debug(DebugLogEntry::new("ValidateNoRefAccessInRender", "ok".to_string()));
             }
             context.timing.stop();
         }
 
         if env.config.validate_no_set_state_in_render {
             context.timing.start("ValidateNoSetStateInRender");
-            react_compiler_validation::validate_no_set_state_in_render(&hir, &mut env)?;
+            crate::react_compiler_validation::validate_no_set_state_in_render(&hir, &mut env)?;
             if context.debug_enabled {
-                context.log_debug(DebugLogEntry::new(
-                    "ValidateNoSetStateInRender",
-                    "ok".to_string(),
-                ));
+                context
+                    .log_debug(DebugLogEntry::new("ValidateNoSetStateInRender", "ok".to_string()));
             }
             context.timing.stop();
         }
@@ -418,11 +377,9 @@ pub fn compile_fn(
         if env.config.validate_no_derived_computations_in_effects_exp
             && env.output_mode == OutputMode::Lint
         {
-            context
-                .timing
-                .start("ValidateNoDerivedComputationsInEffects");
+            context.timing.start("ValidateNoDerivedComputationsInEffects");
             let errors =
-                react_compiler_validation::validate_no_derived_computations_in_effects_exp(
+                crate::react_compiler_validation::validate_no_derived_computations_in_effects_exp(
                     &hir, &env,
                 )?;
             log_errors_as_events(&errors, context);
@@ -434,10 +391,10 @@ pub fn compile_fn(
             }
             context.timing.stop();
         } else if env.config.validate_no_derived_computations_in_effects {
-            context
-                .timing
-                .start("ValidateNoDerivedComputationsInEffects");
-            react_compiler_validation::validate_no_derived_computations_in_effects(&hir, &mut env)?;
+            context.timing.start("ValidateNoDerivedComputationsInEffects");
+            crate::react_compiler_validation::validate_no_derived_computations_in_effects(
+                &hir, &mut env,
+            )?;
             if context.debug_enabled {
                 context.log_debug(DebugLogEntry::new(
                     "ValidateNoDerivedComputationsInEffects",
@@ -449,34 +406,31 @@ pub fn compile_fn(
 
         if env.config.validate_no_set_state_in_effects && env.output_mode == OutputMode::Lint {
             context.timing.start("ValidateNoSetStateInEffects");
-            let errors = react_compiler_validation::validate_no_set_state_in_effects(&hir, &env)?;
+            let errors =
+                crate::react_compiler_validation::validate_no_set_state_in_effects(&hir, &env)?;
             log_errors_as_events(&errors, context);
             if context.debug_enabled {
-                context.log_debug(DebugLogEntry::new(
-                    "ValidateNoSetStateInEffects",
-                    "ok".to_string(),
-                ));
+                context
+                    .log_debug(DebugLogEntry::new("ValidateNoSetStateInEffects", "ok".to_string()));
             }
             context.timing.stop();
         }
 
         if env.config.validate_no_jsx_in_try_statements && env.output_mode == OutputMode::Lint {
             context.timing.start("ValidateNoJSXInTryStatement");
-            let errors = react_compiler_validation::validate_no_jsx_in_try_statement(&hir);
+            let errors = crate::react_compiler_validation::validate_no_jsx_in_try_statement(&hir);
             log_errors_as_events(&errors, context);
             if context.debug_enabled {
-                context.log_debug(DebugLogEntry::new(
-                    "ValidateNoJSXInTryStatement",
-                    "ok".to_string(),
-                ));
+                context
+                    .log_debug(DebugLogEntry::new("ValidateNoJSXInTryStatement", "ok".to_string()));
             }
             context.timing.stop();
         }
 
-        context
-            .timing
-            .start("ValidateNoFreezingKnownMutableFunctions");
-        react_compiler_validation::validate_no_freezing_known_mutable_functions(&hir, &mut env);
+        context.timing.start("ValidateNoFreezingKnownMutableFunctions");
+        crate::react_compiler_validation::validate_no_freezing_known_mutable_functions(
+            &hir, &mut env,
+        );
         if context.debug_enabled {
             context.log_debug(DebugLogEntry::new(
                 "ValidateNoFreezingKnownMutableFunctions",
@@ -487,41 +441,32 @@ pub fn compile_fn(
     }
 
     context.timing.start("InferReactivePlaces");
-    react_compiler_inference::infer_reactive_places(&mut hir, &mut env)?;
+    crate::react_compiler_inference::infer_reactive_places(&mut hir, &mut env)?;
     context.timing.stop();
 
     if context.debug_enabled {
         context.timing.start("debug_print:InferReactivePlaces");
         let debug_reactive_places = debug_print::debug_hir(&hir, &env);
-        context.log_debug(DebugLogEntry::new(
-            "InferReactivePlaces",
-            debug_reactive_places,
-        ));
+        context.log_debug(DebugLogEntry::new("InferReactivePlaces", debug_reactive_places));
         context.timing.stop();
     }
 
     if env.enable_validations() {
         context.timing.start("ValidateExhaustiveDependencies");
-        react_compiler_validation::validate_exhaustive_dependencies(&mut hir, &mut env)?;
+        crate::react_compiler_validation::validate_exhaustive_dependencies(&mut hir, &mut env)?;
         if context.debug_enabled {
-            context.log_debug(DebugLogEntry::new(
-                "ValidateExhaustiveDependencies",
-                "ok".to_string(),
-            ));
+            context
+                .log_debug(DebugLogEntry::new("ValidateExhaustiveDependencies", "ok".to_string()));
         }
         context.timing.stop();
     }
 
-    context
-        .timing
-        .start("RewriteInstructionKindsBasedOnReassignment");
-    react_compiler_ssa::rewrite_instruction_kinds_based_on_reassignment(&mut hir, &env)?;
+    context.timing.start("RewriteInstructionKindsBasedOnReassignment");
+    crate::react_compiler_ssa::rewrite_instruction_kinds_based_on_reassignment(&mut hir, &env)?;
     context.timing.stop();
 
     if context.debug_enabled {
-        context
-            .timing
-            .start("debug_print:RewriteInstructionKindsBasedOnReassignment");
+        context.timing.start("debug_print:RewriteInstructionKindsBasedOnReassignment");
         let debug_rewrite = debug_print::debug_hir(&hir, &env);
         context.log_debug(DebugLogEntry::new(
             "RewriteInstructionKindsBasedOnReassignment",
@@ -535,79 +480,64 @@ pub fn compile_fn(
         && env.output_mode == OutputMode::Lint
     {
         context.timing.start("ValidateStaticComponents");
-        let errors = react_compiler_validation::validate_static_components(&hir);
+        let errors = crate::react_compiler_validation::validate_static_components(&hir);
         log_errors_as_events(&errors, context);
         if context.debug_enabled {
-            context.log_debug(DebugLogEntry::new(
-                "ValidateStaticComponents",
-                "ok".to_string(),
-            ));
+            context.log_debug(DebugLogEntry::new("ValidateStaticComponents", "ok".to_string()));
         }
         context.timing.stop();
     }
 
     if env.enable_memoization() {
         context.timing.start("InferReactiveScopeVariables");
-        react_compiler_inference::infer_reactive_scope_variables(&mut hir, &mut env)?;
+        crate::react_compiler_inference::infer_reactive_scope_variables(&mut hir, &mut env)?;
         context.timing.stop();
 
         if context.debug_enabled {
-            context
-                .timing
-                .start("debug_print:InferReactiveScopeVariables");
+            context.timing.start("debug_print:InferReactiveScopeVariables");
             let debug_infer_scopes = debug_print::debug_hir(&hir, &env);
-            context.log_debug(DebugLogEntry::new(
-                "InferReactiveScopeVariables",
-                debug_infer_scopes,
-            ));
+            context
+                .log_debug(DebugLogEntry::new("InferReactiveScopeVariables", debug_infer_scopes));
             context.timing.stop();
         }
     }
 
-    context
-        .timing
-        .start("MemoizeFbtAndMacroOperandsInSameScope");
+    context.timing.start("MemoizeFbtAndMacroOperandsInSameScope");
     let fbt_operands =
-        react_compiler_inference::memoize_fbt_and_macro_operands_in_same_scope(&hir, &mut env);
+        crate::react_compiler_inference::memoize_fbt_and_macro_operands_in_same_scope(
+            &hir, &mut env,
+        );
     context.timing.stop();
 
     if context.debug_enabled {
-        context
-            .timing
-            .start("debug_print:MemoizeFbtAndMacroOperandsInSameScope");
+        context.timing.start("debug_print:MemoizeFbtAndMacroOperandsInSameScope");
         let debug_fbt = debug_print::debug_hir(&hir, &env);
-        context.log_debug(DebugLogEntry::new(
-            "MemoizeFbtAndMacroOperandsInSameScope",
-            debug_fbt,
-        ));
+        context.log_debug(DebugLogEntry::new("MemoizeFbtAndMacroOperandsInSameScope", debug_fbt));
         context.timing.stop();
     }
 
     if env.config.enable_jsx_outlining {
         context.timing.start("OutlineJsx");
-        react_compiler_optimization::outline_jsx(&mut hir, &mut env);
+        crate::react_compiler_optimization::outline_jsx(&mut hir, &mut env);
         context.timing.stop();
     }
 
     if env.config.enable_name_anonymous_functions {
         context.timing.start("NameAnonymousFunctions");
-        react_compiler_optimization::name_anonymous_functions(&mut hir, &mut env);
+        crate::react_compiler_optimization::name_anonymous_functions(&mut hir, &mut env);
         context.timing.stop();
 
         if context.debug_enabled {
             context.timing.start("debug_print:NameAnonymousFunctions");
             let debug_name_anon = debug_print::debug_hir(&hir, &env);
-            context.log_debug(DebugLogEntry::new(
-                "NameAnonymousFunctions",
-                debug_name_anon,
-            ));
+            context.log_debug(DebugLogEntry::new("NameAnonymousFunctions", debug_name_anon));
             context.timing.stop();
         }
     }
 
     if env.config.enable_function_outlining {
         context.timing.start("OutlineFunctions");
-        react_compiler_optimization::outline_functions(&mut hir, &mut env, &fbt_operands);
+        crate::react_compiler_optimization::outline_functions(&mut hir, &mut env, &fbt_operands);
         context.timing.stop();
 
         if context.debug_enabled {
@@ -619,7 +549,7 @@ pub fn compile_fn(
     }
 
     context.timing.start("AlignMethodCallScopes");
-    react_compiler_inference::align_method_call_scopes(&mut hir, &mut env);
+    crate::react_compiler_inference::align_method_call_scopes(&mut hir, &mut env);
     context.timing.stop();
 
     if context.debug_enabled {
@@ -630,41 +560,33 @@ pub fn compile_fn(
     }
 
     context.timing.start("AlignObjectMethodScopes");
-    react_compiler_inference::align_object_method_scopes(&mut hir, &mut env);
+    crate::react_compiler_inference::align_object_method_scopes(&mut hir, &mut env);
     context.timing.stop();
 
     if context.debug_enabled {
         context.timing.start("debug_print:AlignObjectMethodScopes");
         let debug_align_obj = debug_print::debug_hir(&hir, &env);
-        context.log_debug(DebugLogEntry::new(
-            "AlignObjectMethodScopes",
-            debug_align_obj,
-        ));
+        context.log_debug(DebugLogEntry::new("AlignObjectMethodScopes", debug_align_obj));
         context.timing.stop();
     }
 
     context.timing.start("PruneUnusedLabelsHIR");
-    react_compiler_optimization::prune_unused_labels_hir(&mut hir);
+    crate::react_compiler_optimization::prune_unused_labels_hir(&mut hir);
     context.timing.stop();
 
     if context.debug_enabled {
         context.timing.start("debug_print:PruneUnusedLabelsHIR");
         let debug_prune_labels = debug_print::debug_hir(&hir, &env);
-        context.log_debug(DebugLogEntry::new(
-            "PruneUnusedLabelsHIR",
-            debug_prune_labels,
-        ));
+        context.log_debug(DebugLogEntry::new("PruneUnusedLabelsHIR", debug_prune_labels));
         context.timing.stop();
     }
 
     context.timing.start("AlignReactiveScopesToBlockScopesHIR");
-    react_compiler_inference::align_reactive_scopes_to_block_scopes_hir(&mut hir, &mut env);
+    crate::react_compiler_inference::align_reactive_scopes_to_block_scopes_hir(&mut hir, &mut env);
     context.timing.stop();
 
     if context.debug_enabled {
-        context
-            .timing
-            .start("debug_print:AlignReactiveScopesToBlockScopesHIR");
+        context.timing.start("debug_print:AlignReactiveScopesToBlockScopesHIR");
         let debug_align_block_scopes = debug_print::debug_hir(&hir, &env);
         context.log_debug(DebugLogEntry::new(
             "AlignReactiveScopesToBlockScopesHIR",
@@ -674,13 +596,11 @@ pub fn compile_fn(
     }
 
     context.timing.start("MergeOverlappingReactiveScopesHIR");
-    react_compiler_inference::merge_overlapping_reactive_scopes_hir(&mut hir, &mut env);
+    crate::react_compiler_inference::merge_overlapping_reactive_scopes_hir(&mut hir, &mut env);
     context.timing.stop();
 
     if context.debug_enabled {
-        context
-            .timing
-            .start("debug_print:MergeOverlappingReactiveScopesHIR");
+        context.timing.start("debug_print:MergeOverlappingReactiveScopesHIR");
         let debug_merge_overlapping = debug_print::debug_hir(&hir, &env);
         context.log_debug(DebugLogEntry::new(
             "MergeOverlappingReactiveScopesHIR",
@@ -691,20 +611,15 @@ pub fn compile_fn(
 
     // TODO: port assertValidBlockNesting
     if context.debug_enabled {
-        context.log_debug(DebugLogEntry::new(
-            "AssertValidBlockNesting",
-            "ok".to_string(),
-        ));
+        context.log_debug(DebugLogEntry::new("AssertValidBlockNesting", "ok".to_string()));
     }
 
     context.timing.start("BuildReactiveScopeTerminalsHIR");
-    react_compiler_inference::build_reactive_scope_terminals_hir(&mut hir, &mut env);
+    crate::react_compiler_inference::build_reactive_scope_terminals_hir(&mut hir, &mut env);
     context.timing.stop();
 
     if context.debug_enabled {
-        context
-            .timing
-            .start("debug_print:BuildReactiveScopeTerminalsHIR");
+        context.timing.start("debug_print:BuildReactiveScopeTerminalsHIR");
         let debug_build_scope_terminals = debug_print::debug_hir(&hir, &env);
         context.log_debug(DebugLogEntry::new(
             "BuildReactiveScopeTerminalsHIR",
@@ -715,85 +630,66 @@ pub fn compile_fn(
 
     // TODO: port assertValidBlockNesting
     if context.debug_enabled {
-        context.log_debug(DebugLogEntry::new(
-            "AssertValidBlockNesting",
-            "ok".to_string(),
-        ));
+        context.log_debug(DebugLogEntry::new("AssertValidBlockNesting", "ok".to_string()));
     }
 
     context.timing.start("FlattenReactiveLoopsHIR");
-    react_compiler_inference::flatten_reactive_loops_hir(&mut hir);
+    crate::react_compiler_inference::flatten_reactive_loops_hir(&mut hir);
     context.timing.stop();
 
     if context.debug_enabled {
         context.timing.start("debug_print:FlattenReactiveLoopsHIR");
         let debug_flatten_loops = debug_print::debug_hir(&hir, &env);
-        context.log_debug(DebugLogEntry::new(
-            "FlattenReactiveLoopsHIR",
-            debug_flatten_loops,
-        ));
+        context.log_debug(DebugLogEntry::new("FlattenReactiveLoopsHIR", debug_flatten_loops));
         context.timing.stop();
     }
 
     context.timing.start("FlattenScopesWithHooksOrUseHIR");
-    react_compiler_inference::flatten_scopes_with_hooks_or_use_hir(&mut hir, &env)?;
+    crate::react_compiler_inference::flatten_scopes_with_hooks_or_use_hir(&mut hir, &env)?;
     context.timing.stop();
 
     if context.debug_enabled {
-        context
-            .timing
-            .start("debug_print:FlattenScopesWithHooksOrUseHIR");
+        context.timing.start("debug_print:FlattenScopesWithHooksOrUseHIR");
         let debug_flatten_hooks = debug_print::debug_hir(&hir, &env);
-        context.log_debug(DebugLogEntry::new(
-            "FlattenScopesWithHooksOrUseHIR",
-            debug_flatten_hooks,
-        ));
+        context
+            .log_debug(DebugLogEntry::new("FlattenScopesWithHooksOrUseHIR", debug_flatten_hooks));
         context.timing.stop();
     }
 
     // TODO: port assertTerminalSuccessorsExist
     if context.debug_enabled {
-        context.log_debug(DebugLogEntry::new(
-            "AssertTerminalSuccessorsExist",
-            "ok".to_string(),
-        ));
+        context.log_debug(DebugLogEntry::new("AssertTerminalSuccessorsExist", "ok".to_string()));
     }
     // TODO: port assertTerminalPredsExist
     if context.debug_enabled {
-        context.log_debug(DebugLogEntry::new(
-            "AssertTerminalPredsExist",
-            "ok".to_string(),
-        ));
+        context.log_debug(DebugLogEntry::new("AssertTerminalPredsExist", "ok".to_string()));
     }
 
     context.timing.start("PropagateScopeDependenciesHIR");
-    react_compiler_inference::propagate_scope_dependencies_hir(&mut hir, &mut env);
+    crate::react_compiler_inference::propagate_scope_dependencies_hir(&mut hir, &mut env);
     context.timing.stop();
 
     if context.debug_enabled {
-        context
-            .timing
-            .start("debug_print:PropagateScopeDependenciesHIR");
+        context.timing.start("debug_print:PropagateScopeDependenciesHIR");
         let debug_propagate_deps = debug_print::debug_hir(&hir, &env);
-        context.log_debug(DebugLogEntry::new(
-            "PropagateScopeDependenciesHIR",
-            debug_propagate_deps,
-        ));
+        context
+            .log_debug(DebugLogEntry::new("PropagateScopeDependenciesHIR", debug_propagate_deps));
         context.timing.stop();
     }
 
     context.timing.start("BuildReactiveFunction");
-    let mut reactive_fn = react_compiler_reactive_scopes::build_reactive_function(&hir, &env)?;
+    let mut reactive_fn =
+        crate::react_compiler_reactive_scopes::build_reactive_function(&hir, &env)?;
     context.timing.stop();
 
-    let hir_formatter = |fmt: &mut react_compiler_hir::print::PrintFormatter,
-                         func: &react_compiler_hir::HirFunction| {
+    let hir_formatter = |fmt: &mut crate::react_compiler_hir::print::PrintFormatter,
+                         func: &crate::react_compiler_hir::HirFunction| {
         debug_print::format_hir_function_into(fmt, func);
     };
 
     if context.debug_enabled {
         context.timing.start("debug_print:BuildReactiveFunction");
-        let debug_reactive = react_compiler_reactive_scopes::print_reactive_function::debug_reactive_function_with_formatter(
+        let debug_reactive = crate::react_compiler_reactive_scopes::print_reactive_function::debug_reactive_function_with_formatter(
             &reactive_fn, &env, Some(&hir_formatter),
         );
         context.log_debug(DebugLogEntry::new("BuildReactiveFunction", debug_reactive));
@@ -801,48 +697,43 @@ pub fn compile_fn(
     }
 
     context.timing.start("AssertWellFormedBreakTargets");
-    react_compiler_reactive_scopes::assert_well_formed_break_targets(&reactive_fn, &env);
+    crate::react_compiler_reactive_scopes::assert_well_formed_break_targets(&reactive_fn, &env);
     if context.debug_enabled {
-        context.log_debug(DebugLogEntry::new(
-            "AssertWellFormedBreakTargets",
-            "ok".to_string(),
-        ));
+        context.log_debug(DebugLogEntry::new("AssertWellFormedBreakTargets", "ok".to_string()));
     }
     context.timing.stop();
 
     context.timing.start("PruneUnusedLabels");
-    react_compiler_reactive_scopes::prune_unused_labels(&mut reactive_fn, &env)?;
+    crate::react_compiler_reactive_scopes::prune_unused_labels(&mut reactive_fn, &env)?;
     context.timing.stop();
 
     if context.debug_enabled {
         context.timing.start("debug_print:PruneUnusedLabels");
-        let debug_prune_labels_reactive = react_compiler_reactive_scopes::print_reactive_function::debug_reactive_function_with_formatter(
+        let debug_prune_labels_reactive = crate::react_compiler_reactive_scopes::print_reactive_function::debug_reactive_function_with_formatter(
             &reactive_fn, &env, Some(&hir_formatter),
         );
-        context.log_debug(DebugLogEntry::new(
-            "PruneUnusedLabels",
-            debug_prune_labels_reactive,
-        ));
+        context.log_debug(DebugLogEntry::new("PruneUnusedLabels", debug_prune_labels_reactive));
         context.timing.stop();
     }
 
     context.timing.start("AssertScopeInstructionsWithinScopes");
-    react_compiler_reactive_scopes::assert_scope_instructions_within_scopes(&reactive_fn, &env)?;
+    crate::react_compiler_reactive_scopes::assert_scope_instructions_within_scopes(
+        &reactive_fn,
+        &env,
+    )?;
     if context.debug_enabled {
-        context.log_debug(DebugLogEntry::new(
-            "AssertScopeInstructionsWithinScopes",
-            "ok".to_string(),
-        ));
+        context
+            .log_debug(DebugLogEntry::new("AssertScopeInstructionsWithinScopes", "ok".to_string()));
     }
     context.timing.stop();
 
     context.timing.start("PruneNonEscapingScopes");
-    react_compiler_reactive_scopes::prune_non_escaping_scopes(&mut reactive_fn, &mut env)?;
+    crate::react_compiler_reactive_scopes::prune_non_escaping_scopes(&mut reactive_fn, &mut env)?;
     context.timing.stop();
 
     if context.debug_enabled {
         context.timing.start("debug_print:PruneNonEscapingScopes");
-        let debug = react_compiler_reactive_scopes::print_reactive_function::debug_reactive_function_with_formatter(
+        let debug = crate::react_compiler_reactive_scopes::print_reactive_function::debug_reactive_function_with_formatter(
             &reactive_fn, &env, Some(&hir_formatter),
         );
         context.log_debug(DebugLogEntry::new("PruneNonEscapingScopes", debug));
@@ -850,14 +741,15 @@ pub fn compile_fn(
     }
 
     context.timing.start("PruneNonReactiveDependencies");
-    react_compiler_reactive_scopes::prune_non_reactive_dependencies(&mut reactive_fn, &mut env);
+    crate::react_compiler_reactive_scopes::prune_non_reactive_dependencies(
+        &mut reactive_fn,
+        &mut env,
+    );
     context.timing.stop();
 
     if context.debug_enabled {
-        context
-            .timing
-            .start("debug_print:PruneNonReactiveDependencies");
-        let debug_prune_non_reactive = react_compiler_reactive_scopes::print_reactive_function::debug_reactive_function_with_formatter(
+        context.timing.start("debug_print:PruneNonReactiveDependencies");
+        let debug_prune_non_reactive = crate::react_compiler_reactive_scopes::print_reactive_function::debug_reactive_function_with_formatter(
             &reactive_fn, &env, Some(&hir_formatter),
         );
         context.log_debug(DebugLogEntry::new(
@@ -868,69 +760,58 @@ pub fn compile_fn(
     }
 
     context.timing.start("PruneUnusedScopes");
-    react_compiler_reactive_scopes::prune_unused_scopes(&mut reactive_fn, &env)?;
+    crate::react_compiler_reactive_scopes::prune_unused_scopes(&mut reactive_fn, &env)?;
     context.timing.stop();
 
     if context.debug_enabled {
         context.timing.start("debug_print:PruneUnusedScopes");
-        let debug_prune_unused_scopes = react_compiler_reactive_scopes::print_reactive_function::debug_reactive_function_with_formatter(
+        let debug_prune_unused_scopes = crate::react_compiler_reactive_scopes::print_reactive_function::debug_reactive_function_with_formatter(
             &reactive_fn, &env, Some(&hir_formatter),
         );
-        context.log_debug(DebugLogEntry::new(
-            "PruneUnusedScopes",
-            debug_prune_unused_scopes,
-        ));
+        context.log_debug(DebugLogEntry::new("PruneUnusedScopes", debug_prune_unused_scopes));
         context.timing.stop();
     }
 
-    context
-        .timing
-        .start("MergeReactiveScopesThatInvalidateTogether");
-    react_compiler_reactive_scopes::merge_reactive_scopes_that_invalidate_together(
+    context.timing.start("MergeReactiveScopesThatInvalidateTogether");
+    crate::react_compiler_reactive_scopes::merge_reactive_scopes_that_invalidate_together(
         &mut reactive_fn,
         &mut env,
     )?;
     context.timing.stop();
 
     if context.debug_enabled {
-        context
-            .timing
-            .start("debug_print:MergeReactiveScopesThatInvalidateTogether");
-        let debug = react_compiler_reactive_scopes::print_reactive_function::debug_reactive_function_with_formatter(
+        context.timing.start("debug_print:MergeReactiveScopesThatInvalidateTogether");
+        let debug = crate::react_compiler_reactive_scopes::print_reactive_function::debug_reactive_function_with_formatter(
             &reactive_fn, &env, Some(&hir_formatter),
         );
-        context.log_debug(DebugLogEntry::new(
-            "MergeReactiveScopesThatInvalidateTogether",
-            debug,
-        ));
+        context.log_debug(DebugLogEntry::new("MergeReactiveScopesThatInvalidateTogether", debug));
         context.timing.stop();
     }
 
     context.timing.start("PruneAlwaysInvalidatingScopes");
-    react_compiler_reactive_scopes::prune_always_invalidating_scopes(&mut reactive_fn, &env)?;
+    crate::react_compiler_reactive_scopes::prune_always_invalidating_scopes(
+        &mut reactive_fn,
+        &env,
+    )?;
     context.timing.stop();
 
     if context.debug_enabled {
-        context
-            .timing
-            .start("debug_print:PruneAlwaysInvalidatingScopes");
-        let debug_prune_always_inv = react_compiler_reactive_scopes::print_reactive_function::debug_reactive_function_with_formatter(
+        context.timing.start("debug_print:PruneAlwaysInvalidatingScopes");
+        let debug_prune_always_inv = crate::react_compiler_reactive_scopes::print_reactive_function::debug_reactive_function_with_formatter(
             &reactive_fn, &env, Some(&hir_formatter),
         );
-        context.log_debug(DebugLogEntry::new(
-            "PruneAlwaysInvalidatingScopes",
-            debug_prune_always_inv,
-        ));
+        context
+            .log_debug(DebugLogEntry::new("PruneAlwaysInvalidatingScopes", debug_prune_always_inv));
         context.timing.stop();
     }
 
     context.timing.start("PropagateEarlyReturns");
-    react_compiler_reactive_scopes::propagate_early_returns(&mut reactive_fn, &mut env);
+    crate::react_compiler_reactive_scopes::propagate_early_returns(&mut reactive_fn, &mut env);
     context.timing.stop();
 
     if context.debug_enabled {
         context.timing.start("debug_print:PropagateEarlyReturns");
-        let debug = react_compiler_reactive_scopes::print_reactive_function::debug_reactive_function_with_formatter(
+        let debug = crate::react_compiler_reactive_scopes::print_reactive_function::debug_reactive_function_with_formatter(
             &reactive_fn, &env, Some(&hir_formatter),
         );
         context.log_debug(DebugLogEntry::new("PropagateEarlyReturns", debug));
@@ -938,64 +819,54 @@ pub fn compile_fn(
     }
 
     context.timing.start("PruneUnusedLValues");
-    react_compiler_reactive_scopes::prune_unused_lvalues(&mut reactive_fn, &env);
+    crate::react_compiler_reactive_scopes::prune_unused_lvalues(&mut reactive_fn, &env);
     context.timing.stop();
 
     if context.debug_enabled {
         context.timing.start("debug_print:PruneUnusedLValues");
-        let debug_prune_lvalues = react_compiler_reactive_scopes::print_reactive_function::debug_reactive_function_with_formatter(
+        let debug_prune_lvalues = crate::react_compiler_reactive_scopes::print_reactive_function::debug_reactive_function_with_formatter(
             &reactive_fn, &env, Some(&hir_formatter),
         );
-        context.log_debug(DebugLogEntry::new(
-            "PruneUnusedLValues",
-            debug_prune_lvalues,
-        ));
+        context.log_debug(DebugLogEntry::new("PruneUnusedLValues", debug_prune_lvalues));
         context.timing.stop();
     }
 
     context.timing.start("PromoteUsedTemporaries");
-    react_compiler_reactive_scopes::promote_used_temporaries(&mut reactive_fn, &mut env);
+    crate::react_compiler_reactive_scopes::promote_used_temporaries(&mut reactive_fn, &mut env);
     context.timing.stop();
 
     if context.debug_enabled {
         context.timing.start("debug_print:PromoteUsedTemporaries");
-        let debug = react_compiler_reactive_scopes::print_reactive_function::debug_reactive_function_with_formatter(
+        let debug = crate::react_compiler_reactive_scopes::print_reactive_function::debug_reactive_function_with_formatter(
             &reactive_fn, &env, Some(&hir_formatter),
         );
         context.log_debug(DebugLogEntry::new("PromoteUsedTemporaries", debug));
         context.timing.stop();
     }
 
-    context
-        .timing
-        .start("ExtractScopeDeclarationsFromDestructuring");
-    react_compiler_reactive_scopes::extract_scope_declarations_from_destructuring(
+    context.timing.start("ExtractScopeDeclarationsFromDestructuring");
+    crate::react_compiler_reactive_scopes::extract_scope_declarations_from_destructuring(
         &mut reactive_fn,
         &mut env,
     )?;
     context.timing.stop();
 
     if context.debug_enabled {
-        context
-            .timing
-            .start("debug_print:ExtractScopeDeclarationsFromDestructuring");
-        let debug = react_compiler_reactive_scopes::print_reactive_function::debug_reactive_function_with_formatter(
+        context.timing.start("debug_print:ExtractScopeDeclarationsFromDestructuring");
+        let debug = crate::react_compiler_reactive_scopes::print_reactive_function::debug_reactive_function_with_formatter(
             &reactive_fn, &env, Some(&hir_formatter),
         );
-        context.log_debug(DebugLogEntry::new(
-            "ExtractScopeDeclarationsFromDestructuring",
-            debug,
-        ));
+        context.log_debug(DebugLogEntry::new("ExtractScopeDeclarationsFromDestructuring", debug));
         context.timing.stop();
     }
 
     context.timing.start("StabilizeBlockIds");
-    react_compiler_reactive_scopes::stabilize_block_ids(&mut reactive_fn, &mut env);
+    crate::react_compiler_reactive_scopes::stabilize_block_ids(&mut reactive_fn, &mut env);
     context.timing.stop();
 
     if context.debug_enabled {
         context.timing.start("debug_print:StabilizeBlockIds");
-        let debug_stabilize = react_compiler_reactive_scopes::print_reactive_function::debug_reactive_function_with_formatter(
+        let debug_stabilize = crate::react_compiler_reactive_scopes::print_reactive_function::debug_reactive_function_with_formatter(
             &reactive_fn, &env, Some(&hir_formatter),
         );
         context.log_debug(DebugLogEntry::new("StabilizeBlockIds", debug_stabilize));
@@ -1004,7 +875,7 @@ pub fn compile_fn(
 
     context.timing.start("RenameVariables");
     let unique_identifiers =
-        react_compiler_reactive_scopes::rename_variables(&mut reactive_fn, &mut env);
+        crate::react_compiler_reactive_scopes::rename_variables(&mut reactive_fn, &mut env);
     context.timing.stop();
 
     for name in &unique_identifiers {
@@ -1013,7 +884,7 @@ pub fn compile_fn(
 
     if context.debug_enabled {
         context.timing.start("debug_print:RenameVariables");
-        let debug = react_compiler_reactive_scopes::print_reactive_function::debug_reactive_function_with_formatter(
+        let debug = crate::react_compiler_reactive_scopes::print_reactive_function::debug_reactive_function_with_formatter(
             &reactive_fn, &env, Some(&hir_formatter),
         );
         context.log_debug(DebugLogEntry::new("RenameVariables", debug));
@@ -1021,12 +892,12 @@ pub fn compile_fn(
     }
 
     context.timing.start("PruneHoistedContexts");
-    react_compiler_reactive_scopes::prune_hoisted_contexts(&mut reactive_fn, &mut env)?;
+    crate::react_compiler_reactive_scopes::prune_hoisted_contexts(&mut reactive_fn, &mut env)?;
     context.timing.stop();
 
     if context.debug_enabled {
         context.timing.start("debug_print:PruneHoistedContexts");
-        let debug = react_compiler_reactive_scopes::print_reactive_function::debug_reactive_function_with_formatter(
+        let debug = crate::react_compiler_reactive_scopes::print_reactive_function::debug_reactive_function_with_formatter(
             &reactive_fn, &env, Some(&hir_formatter),
         );
         context.log_debug(DebugLogEntry::new("PruneHoistedContexts", debug));
@@ -1037,7 +908,10 @@ pub fn compile_fn(
         || env.config.validate_preserve_existing_memoization_guarantees
     {
         context.timing.start("ValidatePreservedManualMemoization");
-        react_compiler_validation::validate_preserved_manual_memoization(&reactive_fn, &mut env);
+        crate::react_compiler_validation::validate_preserved_manual_memoization(
+            &reactive_fn,
+            &mut env,
+        );
         if context.debug_enabled {
             context.log_debug(DebugLogEntry::new(
                 "ValidatePreservedManualMemoization",
@@ -1048,7 +922,7 @@ pub fn compile_fn(
     }
 
     context.timing.start("codegen");
-    let codegen_result = react_compiler_reactive_scopes::codegen_function(
+    let codegen_result = crate::react_compiler_reactive_scopes::codegen_function(
         &reactive_fn,
         &mut env,
         unique_identifiers,
@@ -1074,8 +948,8 @@ pub fn compile_fn(
     // Simulate unexpected exception for testing (matches TS Pipeline.ts)
     if env.config.throw_unknown_exception_testonly {
         let mut err = CompilerError::new();
-        err.push_error_detail(react_compiler_diagnostics::CompilerErrorDetail {
-            category: react_compiler_diagnostics::ErrorCategory::Invariant,
+        err.push_error_detail(crate::react_compiler_diagnostics::CompilerErrorDetail {
+            category: crate::react_compiler_diagnostics::ErrorCategory::Invariant,
             reason: "unexpected error".to_string(),
             description: None,
             loc: None,
@@ -1129,20 +1003,15 @@ pub fn compile_fn(
                 context,
             ) {
                 Ok(compiled) => {
-                    compiled_outlined.push(OutlinedFunction {
-                        func: compiled,
-                        fn_type: Some(fn_type),
-                    });
+                    compiled_outlined
+                        .push(OutlinedFunction { func: compiled, fn_type: Some(fn_type) });
                 }
                 Err(_err) => {
                     // If re-compilation fails, skip the outlined function
                 }
             }
         } else {
-            compiled_outlined.push(OutlinedFunction {
-                func: outlined_codegen,
-                fn_type: o.fn_type,
-            });
+            compiled_outlined.push(OutlinedFunction { func: outlined_codegen, fn_type: o.fn_type });
         }
     }
 
@@ -1190,14 +1059,14 @@ pub fn compile_outlined_fn(
     };
 
     // Build a FunctionDeclaration from the codegen output
-    let mut outlined_decl = react_compiler_ast::statements::FunctionDeclaration {
-        base: react_compiler_ast::common::BaseNode::typed("FunctionDeclaration"),
+    let mut outlined_decl = crate::react_compiler_ast::statements::FunctionDeclaration {
+        base: crate::react_compiler_ast::common::BaseNode::typed("FunctionDeclaration"),
         id: codegen_fn.id.take(),
         params: std::mem::take(&mut codegen_fn.params),
         body: std::mem::replace(
             &mut codegen_fn.body,
-            react_compiler_ast::statements::BlockStatement {
-                base: react_compiler_ast::common::BaseNode::typed("BlockStatement"),
+            crate::react_compiler_ast::statements::BlockStatement {
+                base: crate::react_compiler_ast::common::BaseNode::typed("BlockStatement"),
                 body: Vec::new(),
                 directives: Vec::new(),
             },
@@ -1215,8 +1084,10 @@ pub fn compile_outlined_fn(
     // Build scope info by assigning fake positions to all identifiers
     let scope_info = build_outlined_scope_info(&mut outlined_decl);
 
-    let func_node = react_compiler_lowering::FunctionNode::FunctionDeclaration(&outlined_decl);
-    let mut hir = react_compiler_lowering::lower(&func_node, fn_name, &scope_info, &mut env)?;
+    let func_node =
+        crate::react_compiler_lowering::FunctionNode::FunctionDeclaration(&outlined_decl);
+    let mut hir =
+        crate::react_compiler_lowering::lower(&func_node, fn_name, &scope_info, &mut env)?;
 
     if env.has_invariant_errors() {
         return Err(env.take_invariant_errors());
@@ -1228,11 +1099,11 @@ pub fn compile_outlined_fn(
 /// Build a ScopeInfo for an outlined function declaration by assigning unique
 /// fake positions to all Identifier nodes and building the binding/reference maps.
 fn build_outlined_scope_info(
-    func: &mut react_compiler_ast::statements::FunctionDeclaration,
-) -> react_compiler_ast::scope::ScopeInfo {
+    func: &mut crate::react_compiler_ast::statements::FunctionDeclaration,
+) -> crate::react_compiler_ast::scope::ScopeInfo {
     use rustc_hash::FxHashMap;
 
-    use react_compiler_ast::scope::*;
+    use crate::react_compiler_ast::scope::*;
 
     let mut pos: u32 = 1; // reserve 0 for the function itself
     func.base.start = Some(0);
@@ -1242,33 +1113,32 @@ fn build_outlined_scope_info(
     let mut ref_to_binding: FxIndexMap<u32, BindingId> = FxIndexMap::default();
 
     // Helper to add a binding
-    let _add_binding =
-        |name: &str,
-         kind: BindingKind,
-         p: u32,
-         fn_bindings: &mut FxHashMap<String, BindingId>,
-         bindings_list: &mut Vec<BindingData>,
-         ref_to_binding: &mut FxIndexMap<u32, BindingId>| {
-            if fn_bindings.contains_key(name) {
-                // Already exists, just add reference
-                let bid = fn_bindings[name];
-                ref_to_binding.insert(p, bid);
-                return;
-            }
-            let binding_id = BindingId(bindings_list.len() as u32);
-            fn_bindings.insert(name.to_string(), binding_id);
-            bindings_list.push(BindingData {
-                id: binding_id,
-                name: name.to_string(),
-                kind,
-                scope: ScopeId(1),
-                declaration_type: "VariableDeclarator".to_string(),
-                declaration_start: Some(p),
-                declaration_node_id: None,
-                import: None,
-            });
-            ref_to_binding.insert(p, binding_id);
-        };
+    let _add_binding = |name: &str,
+                        kind: BindingKind,
+                        p: u32,
+                        fn_bindings: &mut FxHashMap<String, BindingId>,
+                        bindings_list: &mut Vec<BindingData>,
+                        ref_to_binding: &mut FxIndexMap<u32, BindingId>| {
+        if fn_bindings.contains_key(name) {
+            // Already exists, just add reference
+            let bid = fn_bindings[name];
+            ref_to_binding.insert(p, bid);
+            return;
+        }
+        let binding_id = BindingId(bindings_list.len() as u32);
+        fn_bindings.insert(name.to_string(), binding_id);
+        bindings_list.push(BindingData {
+            id: binding_id,
+            name: name.to_string(),
+            kind,
+            scope: ScopeId(1),
+            declaration_type: "VariableDeclarator".to_string(),
+            declaration_start: Some(p),
+            declaration_node_id: None,
+            import: None,
+        });
+        ref_to_binding.insert(p, binding_id);
+    };
 
     // Process params - add as Param bindings
     for param in &mut func.params {
@@ -1329,15 +1199,15 @@ fn build_outlined_scope_info(
 
 /// Assign positions to identifiers in a pattern and register as bindings.
 fn outlined_assign_pattern_positions(
-    pattern: &mut react_compiler_ast::patterns::PatternLike,
+    pattern: &mut crate::react_compiler_ast::patterns::PatternLike,
     pos: &mut u32,
-    kind: react_compiler_ast::scope::BindingKind,
-    fn_bindings: &mut rustc_hash::FxHashMap<String, react_compiler_ast::scope::BindingId>,
-    bindings_list: &mut Vec<react_compiler_ast::scope::BindingData>,
-    ref_to_binding: &mut FxIndexMap<u32, react_compiler_ast::scope::BindingId>,
+    kind: crate::react_compiler_ast::scope::BindingKind,
+    fn_bindings: &mut rustc_hash::FxHashMap<String, crate::react_compiler_ast::scope::BindingId>,
+    bindings_list: &mut Vec<crate::react_compiler_ast::scope::BindingData>,
+    ref_to_binding: &mut FxIndexMap<u32, crate::react_compiler_ast::scope::BindingId>,
 ) {
-    use react_compiler_ast::patterns::PatternLike;
-    use react_compiler_ast::scope::*;
+    use crate::react_compiler_ast::patterns::PatternLike;
+    use crate::react_compiler_ast::scope::*;
 
     match pattern {
         PatternLike::Identifier(id) => {
@@ -1368,7 +1238,7 @@ fn outlined_assign_pattern_positions(
         PatternLike::ObjectPattern(obj) => {
             for prop in &mut obj.properties {
                 match prop {
-                    react_compiler_ast::patterns::ObjectPatternProperty::ObjectProperty(
+                    crate::react_compiler_ast::patterns::ObjectPatternProperty::ObjectProperty(
                         p_inner,
                     ) => {
                         outlined_assign_pattern_positions(
@@ -1380,7 +1250,7 @@ fn outlined_assign_pattern_positions(
                             ref_to_binding,
                         );
                     }
-                    react_compiler_ast::patterns::ObjectPatternProperty::RestElement(r) => {
+                    crate::react_compiler_ast::patterns::ObjectPatternProperty::RestElement(r) => {
                         outlined_assign_pattern_positions(
                             &mut r.argument,
                             pos,
@@ -1431,13 +1301,13 @@ fn outlined_assign_pattern_positions(
 
 /// Assign positions to identifiers in a statement body.
 fn outlined_assign_stmt_positions(
-    stmt: &mut react_compiler_ast::statements::Statement,
+    stmt: &mut crate::react_compiler_ast::statements::Statement,
     pos: &mut u32,
-    fn_bindings: &mut rustc_hash::FxHashMap<String, react_compiler_ast::scope::BindingId>,
-    bindings_list: &mut Vec<react_compiler_ast::scope::BindingData>,
-    ref_to_binding: &mut FxIndexMap<u32, react_compiler_ast::scope::BindingId>,
+    fn_bindings: &mut rustc_hash::FxHashMap<String, crate::react_compiler_ast::scope::BindingId>,
+    bindings_list: &mut Vec<crate::react_compiler_ast::scope::BindingData>,
+    ref_to_binding: &mut FxIndexMap<u32, crate::react_compiler_ast::scope::BindingId>,
 ) {
-    use react_compiler_ast::statements::Statement;
+    use crate::react_compiler_ast::statements::Statement;
 
     match stmt {
         Statement::VariableDeclaration(decl) => {
@@ -1450,7 +1320,7 @@ fn outlined_assign_stmt_positions(
                 outlined_assign_pattern_positions(
                     &mut declarator.id,
                     pos,
-                    react_compiler_ast::scope::BindingKind::Let,
+                    crate::react_compiler_ast::scope::BindingKind::Let,
                     fn_bindings,
                     bindings_list,
                     ref_to_binding,
@@ -1476,12 +1346,12 @@ fn outlined_assign_stmt_positions(
 
 /// Assign positions to identifiers in an expression.
 fn outlined_assign_expr_positions(
-    expr: &mut react_compiler_ast::expressions::Expression,
+    expr: &mut crate::react_compiler_ast::expressions::Expression,
     pos: &mut u32,
-    fn_bindings: &rustc_hash::FxHashMap<String, react_compiler_ast::scope::BindingId>,
-    ref_to_binding: &mut FxIndexMap<u32, react_compiler_ast::scope::BindingId>,
+    fn_bindings: &rustc_hash::FxHashMap<String, crate::react_compiler_ast::scope::BindingId>,
+    ref_to_binding: &mut FxIndexMap<u32, crate::react_compiler_ast::scope::BindingId>,
 ) {
-    use react_compiler_ast::expressions::*;
+    use crate::react_compiler_ast::expressions::*;
 
     match expr {
         Expression::Identifier(id) => {
@@ -1503,7 +1373,7 @@ fn outlined_assign_expr_positions(
             );
             for attr in &mut jsx.opening_element.attributes {
                 match attr {
-                    react_compiler_ast::jsx::JSXAttributeItem::JSXAttribute(a) => {
+                    crate::react_compiler_ast::jsx::JSXAttributeItem::JSXAttribute(a) => {
                         if let Some(val) = &mut a.value {
                             outlined_assign_jsx_val_positions(
                                 val,
@@ -1513,7 +1383,7 @@ fn outlined_assign_expr_positions(
                             );
                         }
                     }
-                    react_compiler_ast::jsx::JSXAttributeItem::JSXSpreadAttribute(s) => {
+                    crate::react_compiler_ast::jsx::JSXAttributeItem::JSXSpreadAttribute(s) => {
                         outlined_assign_expr_positions(
                             &mut s.argument,
                             pos,
@@ -1537,13 +1407,13 @@ fn outlined_assign_expr_positions(
 }
 
 fn outlined_assign_jsx_name_positions(
-    name: &mut react_compiler_ast::jsx::JSXElementName,
+    name: &mut crate::react_compiler_ast::jsx::JSXElementName,
     pos: &mut u32,
-    fn_bindings: &rustc_hash::FxHashMap<String, react_compiler_ast::scope::BindingId>,
-    ref_to_binding: &mut FxIndexMap<u32, react_compiler_ast::scope::BindingId>,
+    fn_bindings: &rustc_hash::FxHashMap<String, crate::react_compiler_ast::scope::BindingId>,
+    ref_to_binding: &mut FxIndexMap<u32, crate::react_compiler_ast::scope::BindingId>,
 ) {
     match name {
-        react_compiler_ast::jsx::JSXElementName::JSXIdentifier(id) => {
+        crate::react_compiler_ast::jsx::JSXElementName::JSXIdentifier(id) => {
             let p = *pos;
             *pos += 1;
             id.base.start = Some(p);
@@ -1552,7 +1422,7 @@ fn outlined_assign_jsx_name_positions(
                 ref_to_binding.insert(p, bid);
             }
         }
-        react_compiler_ast::jsx::JSXElementName::JSXMemberExpression(m) => {
+        crate::react_compiler_ast::jsx::JSXElementName::JSXMemberExpression(m) => {
             outlined_assign_jsx_member_positions(m, pos, fn_bindings, ref_to_binding);
         }
         _ => {}
@@ -1560,13 +1430,13 @@ fn outlined_assign_jsx_name_positions(
 }
 
 fn outlined_assign_jsx_member_positions(
-    member: &mut react_compiler_ast::jsx::JSXMemberExpression,
+    member: &mut crate::react_compiler_ast::jsx::JSXMemberExpression,
     pos: &mut u32,
-    fn_bindings: &rustc_hash::FxHashMap<String, react_compiler_ast::scope::BindingId>,
-    ref_to_binding: &mut FxIndexMap<u32, react_compiler_ast::scope::BindingId>,
+    fn_bindings: &rustc_hash::FxHashMap<String, crate::react_compiler_ast::scope::BindingId>,
+    ref_to_binding: &mut FxIndexMap<u32, crate::react_compiler_ast::scope::BindingId>,
 ) {
     match &mut *member.object {
-        react_compiler_ast::jsx::JSXMemberExprObject::JSXIdentifier(id) => {
+        crate::react_compiler_ast::jsx::JSXMemberExprObject::JSXIdentifier(id) => {
             let p = *pos;
             *pos += 1;
             id.base.start = Some(p);
@@ -1575,30 +1445,31 @@ fn outlined_assign_jsx_member_positions(
                 ref_to_binding.insert(p, bid);
             }
         }
-        react_compiler_ast::jsx::JSXMemberExprObject::JSXMemberExpression(inner) => {
+        crate::react_compiler_ast::jsx::JSXMemberExprObject::JSXMemberExpression(inner) => {
             outlined_assign_jsx_member_positions(inner, pos, fn_bindings, ref_to_binding);
         }
     }
 }
 
 fn outlined_assign_jsx_val_positions(
-    val: &mut react_compiler_ast::jsx::JSXAttributeValue,
+    val: &mut crate::react_compiler_ast::jsx::JSXAttributeValue,
     pos: &mut u32,
-    fn_bindings: &rustc_hash::FxHashMap<String, react_compiler_ast::scope::BindingId>,
-    ref_to_binding: &mut FxIndexMap<u32, react_compiler_ast::scope::BindingId>,
+    fn_bindings: &rustc_hash::FxHashMap<String, crate::react_compiler_ast::scope::BindingId>,
+    ref_to_binding: &mut FxIndexMap<u32, crate::react_compiler_ast::scope::BindingId>,
 ) {
     match val {
-        react_compiler_ast::jsx::JSXAttributeValue::JSXExpressionContainer(c) => {
-            if let react_compiler_ast::jsx::JSXExpressionContainerExpr::Expression(e) =
+        crate::react_compiler_ast::jsx::JSXAttributeValue::JSXExpressionContainer(c) => {
+            if let crate::react_compiler_ast::jsx::JSXExpressionContainerExpr::Expression(e) =
                 &mut c.expression
             {
                 outlined_assign_expr_positions(e, pos, fn_bindings, ref_to_binding);
             }
         }
-        react_compiler_ast::jsx::JSXAttributeValue::JSXElement(el) => {
-            let mut expr = react_compiler_ast::expressions::Expression::JSXElement(el.clone());
+        crate::react_compiler_ast::jsx::JSXAttributeValue::JSXElement(el) => {
+            let mut expr =
+                crate::react_compiler_ast::expressions::Expression::JSXElement(el.clone());
             outlined_assign_expr_positions(&mut expr, pos, fn_bindings, ref_to_binding);
-            if let react_compiler_ast::expressions::Expression::JSXElement(new_el) = expr {
+            if let crate::react_compiler_ast::expressions::Expression::JSXElement(new_el) = expr {
                 **el = *new_el;
             }
         }
@@ -1607,28 +1478,29 @@ fn outlined_assign_jsx_val_positions(
 }
 
 fn outlined_assign_jsx_child_positions(
-    child: &mut react_compiler_ast::jsx::JSXChild,
+    child: &mut crate::react_compiler_ast::jsx::JSXChild,
     pos: &mut u32,
-    fn_bindings: &rustc_hash::FxHashMap<String, react_compiler_ast::scope::BindingId>,
-    ref_to_binding: &mut FxIndexMap<u32, react_compiler_ast::scope::BindingId>,
+    fn_bindings: &rustc_hash::FxHashMap<String, crate::react_compiler_ast::scope::BindingId>,
+    ref_to_binding: &mut FxIndexMap<u32, crate::react_compiler_ast::scope::BindingId>,
 ) {
     match child {
-        react_compiler_ast::jsx::JSXChild::JSXExpressionContainer(c) => {
-            if let react_compiler_ast::jsx::JSXExpressionContainerExpr::Expression(e) =
+        crate::react_compiler_ast::jsx::JSXChild::JSXExpressionContainer(c) => {
+            if let crate::react_compiler_ast::jsx::JSXExpressionContainerExpr::Expression(e) =
                 &mut c.expression
             {
                 outlined_assign_expr_positions(e, pos, fn_bindings, ref_to_binding);
             }
         }
-        react_compiler_ast::jsx::JSXChild::JSXElement(el) => {
-            let mut expr =
-                react_compiler_ast::expressions::Expression::JSXElement(Box::new(*el.clone()));
+        crate::react_compiler_ast::jsx::JSXChild::JSXElement(el) => {
+            let mut expr = crate::react_compiler_ast::expressions::Expression::JSXElement(
+                Box::new(*el.clone()),
+            );
             outlined_assign_expr_positions(&mut expr, pos, fn_bindings, ref_to_binding);
-            if let react_compiler_ast::expressions::Expression::JSXElement(new_el) = expr {
+            if let crate::react_compiler_ast::expressions::Expression::JSXElement(new_el) = expr {
                 **el = *new_el;
             }
         }
-        react_compiler_ast::jsx::JSXChild::JSXFragment(frag) => {
+        crate::react_compiler_ast::jsx::JSXChild::JSXFragment(frag) => {
             for inner in &mut frag.children {
                 outlined_assign_jsx_child_positions(inner, pos, fn_bindings, ref_to_binding);
             }
@@ -1643,25 +1515,25 @@ fn outlined_assign_jsx_child_positions(
 /// This is extracted from `compile_fn` to allow reuse for outlined functions.
 /// Returns the compiled CodegenFunction on success.
 fn run_pipeline_passes(
-    hir: &mut react_compiler_hir::HirFunction,
+    hir: &mut crate::react_compiler_hir::HirFunction,
     env: &mut Environment,
     context: &mut ProgramContext,
 ) -> Result<CodegenFunction, CompilerError> {
-    react_compiler_optimization::prune_maybe_throws(hir, &mut env.functions)?;
+    crate::react_compiler_optimization::prune_maybe_throws(hir, &mut env.functions)?;
 
-    react_compiler_optimization::drop_manual_memoization(hir, env)?;
+    crate::react_compiler_optimization::drop_manual_memoization(hir, env)?;
 
-    react_compiler_optimization::inline_immediately_invoked_function_expressions(hir, env);
+    crate::react_compiler_optimization::inline_immediately_invoked_function_expressions(hir, env);
 
-    react_compiler_optimization::merge_consecutive_blocks::merge_consecutive_blocks(
+    crate::react_compiler_optimization::merge_consecutive_blocks::merge_consecutive_blocks(
         hir,
         &mut env.functions,
     );
 
-    react_compiler_ssa::enter_ssa(hir, env).map_err(|diag| {
+    crate::react_compiler_ssa::enter_ssa(hir, env).map_err(|diag| {
         let loc = diag.primary_location().cloned();
         let mut err = CompilerError::new();
-        err.push_error_detail(react_compiler_diagnostics::CompilerErrorDetail {
+        err.push_error_detail(crate::react_compiler_diagnostics::CompilerErrorDetail {
             category: diag.category,
             reason: diag.reason,
             description: diag.description,
@@ -1671,129 +1543,136 @@ fn run_pipeline_passes(
         err
     })?;
 
-    react_compiler_ssa::eliminate_redundant_phi(hir, env);
+    crate::react_compiler_ssa::eliminate_redundant_phi(hir, env);
 
-    react_compiler_optimization::constant_propagation(hir, env);
+    crate::react_compiler_optimization::constant_propagation(hir, env);
 
-    react_compiler_typeinference::infer_types(hir, env)?;
+    crate::react_compiler_typeinference::infer_types(hir, env)?;
 
     if env.enable_validations() {
         if env.config.validate_hooks_usage {
-            react_compiler_validation::validate_hooks_usage(hir, env)?;
+            crate::react_compiler_validation::validate_hooks_usage(hir, env)?;
         }
     }
 
-    react_compiler_optimization::optimize_props_method_calls(hir, env);
+    crate::react_compiler_optimization::optimize_props_method_calls(hir, env);
 
-    react_compiler_inference::analyse_functions(hir, env, &mut |_inner_func, _inner_env| {})?;
+    crate::react_compiler_inference::analyse_functions(
+        hir,
+        env,
+        &mut |_inner_func, _inner_env| {},
+    )?;
 
     if env.has_invariant_errors() {
         return Err(env.take_invariant_errors());
     }
 
-    react_compiler_inference::infer_mutation_aliasing_effects(hir, env, false)?;
+    crate::react_compiler_inference::infer_mutation_aliasing_effects(hir, env, false)?;
 
     if env.output_mode == OutputMode::Ssr {
-        react_compiler_optimization::optimize_for_ssr(hir, env);
+        crate::react_compiler_optimization::optimize_for_ssr(hir, env);
     }
 
-    react_compiler_optimization::dead_code_elimination(hir, env);
+    crate::react_compiler_optimization::dead_code_elimination(hir, env);
 
-    react_compiler_optimization::prune_maybe_throws(hir, &mut env.functions)?;
+    crate::react_compiler_optimization::prune_maybe_throws(hir, &mut env.functions)?;
 
-    react_compiler_inference::infer_mutation_aliasing_ranges(hir, env, false)?;
+    crate::react_compiler_inference::infer_mutation_aliasing_ranges(hir, env, false)?;
 
     if env.enable_validations() {
-        react_compiler_validation::validate_locals_not_reassigned_after_render(hir, env);
+        crate::react_compiler_validation::validate_locals_not_reassigned_after_render(hir, env);
 
         if env.config.validate_ref_access_during_render {
-            react_compiler_validation::validate_no_ref_access_in_render(hir, env);
+            crate::react_compiler_validation::validate_no_ref_access_in_render(hir, env);
         }
 
         if env.config.validate_no_set_state_in_render {
-            react_compiler_validation::validate_no_set_state_in_render(hir, env)?;
+            crate::react_compiler_validation::validate_no_set_state_in_render(hir, env)?;
         }
 
-        react_compiler_validation::validate_no_freezing_known_mutable_functions(hir, env);
+        crate::react_compiler_validation::validate_no_freezing_known_mutable_functions(hir, env);
     }
 
-    react_compiler_inference::infer_reactive_places(hir, env)?;
+    crate::react_compiler_inference::infer_reactive_places(hir, env)?;
 
     if env.enable_validations() {
-        react_compiler_validation::validate_exhaustive_dependencies(hir, env)?;
+        crate::react_compiler_validation::validate_exhaustive_dependencies(hir, env)?;
     }
 
-    react_compiler_ssa::rewrite_instruction_kinds_based_on_reassignment(hir, env)?;
+    crate::react_compiler_ssa::rewrite_instruction_kinds_based_on_reassignment(hir, env)?;
 
     if env.enable_memoization() {
-        react_compiler_inference::infer_reactive_scope_variables(hir, env)?;
+        crate::react_compiler_inference::infer_reactive_scope_variables(hir, env)?;
     }
 
     let fbt_operands =
-        react_compiler_inference::memoize_fbt_and_macro_operands_in_same_scope(hir, env);
+        crate::react_compiler_inference::memoize_fbt_and_macro_operands_in_same_scope(hir, env);
 
     // Don't run outline_jsx on outlined functions (they're already outlined)
 
     if env.config.enable_name_anonymous_functions {
-        react_compiler_optimization::name_anonymous_functions(hir, env);
+        crate::react_compiler_optimization::name_anonymous_functions(hir, env);
     }
 
     if env.config.enable_function_outlining {
-        react_compiler_optimization::outline_functions(hir, env, &fbt_operands);
+        crate::react_compiler_optimization::outline_functions(hir, env, &fbt_operands);
     }
 
-    react_compiler_inference::align_method_call_scopes(hir, env);
-    react_compiler_inference::align_object_method_scopes(hir, env);
+    crate::react_compiler_inference::align_method_call_scopes(hir, env);
+    crate::react_compiler_inference::align_object_method_scopes(hir, env);
 
-    react_compiler_optimization::prune_unused_labels_hir(hir);
+    crate::react_compiler_optimization::prune_unused_labels_hir(hir);
 
-    react_compiler_inference::align_reactive_scopes_to_block_scopes_hir(hir, env);
-    react_compiler_inference::merge_overlapping_reactive_scopes_hir(hir, env);
+    crate::react_compiler_inference::align_reactive_scopes_to_block_scopes_hir(hir, env);
+    crate::react_compiler_inference::merge_overlapping_reactive_scopes_hir(hir, env);
 
-    react_compiler_inference::build_reactive_scope_terminals_hir(hir, env);
-    react_compiler_inference::flatten_reactive_loops_hir(hir);
-    react_compiler_inference::flatten_scopes_with_hooks_or_use_hir(hir, env)?;
-    react_compiler_inference::propagate_scope_dependencies_hir(hir, env);
-    let mut reactive_fn = react_compiler_reactive_scopes::build_reactive_function(hir, env)?;
+    crate::react_compiler_inference::build_reactive_scope_terminals_hir(hir, env);
+    crate::react_compiler_inference::flatten_reactive_loops_hir(hir);
+    crate::react_compiler_inference::flatten_scopes_with_hooks_or_use_hir(hir, env)?;
+    crate::react_compiler_inference::propagate_scope_dependencies_hir(hir, env);
+    let mut reactive_fn = crate::react_compiler_reactive_scopes::build_reactive_function(hir, env)?;
 
-    react_compiler_reactive_scopes::assert_well_formed_break_targets(&reactive_fn, env);
+    crate::react_compiler_reactive_scopes::assert_well_formed_break_targets(&reactive_fn, env);
 
-    react_compiler_reactive_scopes::prune_unused_labels(&mut reactive_fn, env)?;
+    crate::react_compiler_reactive_scopes::prune_unused_labels(&mut reactive_fn, env)?;
 
-    react_compiler_reactive_scopes::assert_scope_instructions_within_scopes(&reactive_fn, env)?;
+    crate::react_compiler_reactive_scopes::assert_scope_instructions_within_scopes(
+        &reactive_fn,
+        env,
+    )?;
 
-    react_compiler_reactive_scopes::prune_non_escaping_scopes(&mut reactive_fn, env)?;
-    react_compiler_reactive_scopes::prune_non_reactive_dependencies(&mut reactive_fn, env);
-    react_compiler_reactive_scopes::prune_unused_scopes(&mut reactive_fn, env)?;
-    react_compiler_reactive_scopes::merge_reactive_scopes_that_invalidate_together(
+    crate::react_compiler_reactive_scopes::prune_non_escaping_scopes(&mut reactive_fn, env)?;
+    crate::react_compiler_reactive_scopes::prune_non_reactive_dependencies(&mut reactive_fn, env);
+    crate::react_compiler_reactive_scopes::prune_unused_scopes(&mut reactive_fn, env)?;
+    crate::react_compiler_reactive_scopes::merge_reactive_scopes_that_invalidate_together(
         &mut reactive_fn,
         env,
     )?;
-    react_compiler_reactive_scopes::prune_always_invalidating_scopes(&mut reactive_fn, env)?;
-    react_compiler_reactive_scopes::propagate_early_returns(&mut reactive_fn, env);
-    react_compiler_reactive_scopes::prune_unused_lvalues(&mut reactive_fn, env);
-    react_compiler_reactive_scopes::promote_used_temporaries(&mut reactive_fn, env);
-    react_compiler_reactive_scopes::extract_scope_declarations_from_destructuring(
+    crate::react_compiler_reactive_scopes::prune_always_invalidating_scopes(&mut reactive_fn, env)?;
+    crate::react_compiler_reactive_scopes::propagate_early_returns(&mut reactive_fn, env);
+    crate::react_compiler_reactive_scopes::prune_unused_lvalues(&mut reactive_fn, env);
+    crate::react_compiler_reactive_scopes::promote_used_temporaries(&mut reactive_fn, env);
+    crate::react_compiler_reactive_scopes::extract_scope_declarations_from_destructuring(
         &mut reactive_fn,
         env,
     )?;
-    react_compiler_reactive_scopes::stabilize_block_ids(&mut reactive_fn, env);
+    crate::react_compiler_reactive_scopes::stabilize_block_ids(&mut reactive_fn, env);
 
     let unique_identifiers =
-        react_compiler_reactive_scopes::rename_variables(&mut reactive_fn, env);
+        crate::react_compiler_reactive_scopes::rename_variables(&mut reactive_fn, env);
     for name in &unique_identifiers {
         context.add_new_reference(name.clone());
     }
 
-    react_compiler_reactive_scopes::prune_hoisted_contexts(&mut reactive_fn, env)?;
+    crate::react_compiler_reactive_scopes::prune_hoisted_contexts(&mut reactive_fn, env)?;
 
     if env.config.enable_preserve_existing_memoization_guarantees
         || env.config.validate_preserve_existing_memoization_guarantees
     {
-        react_compiler_validation::validate_preserved_manual_memoization(&reactive_fn, env);
+        crate::react_compiler_validation::validate_preserved_manual_memoization(&reactive_fn, env);
     }
 
-    let codegen_result = react_compiler_reactive_scopes::codegen_function(
+    let codegen_result = crate::react_compiler_reactive_scopes::codegen_function(
         &reactive_fn,
         env,
         unique_identifiers,
@@ -1846,13 +1725,14 @@ fn log_errors_as_events(errors: &CompilerError, context: &mut ProgramContext) {
     let source_filename = context.source_filename();
     for detail in &errors.details {
         let detail_info = match detail {
-            react_compiler_diagnostics::CompilerErrorOrDiagnostic::Diagnostic(d) => {
+            crate::react_compiler_diagnostics::CompilerErrorOrDiagnostic::Diagnostic(d) => {
                 let items: Option<Vec<CompilerErrorItemInfo>> = {
                     let v: Vec<CompilerErrorItemInfo> = d
                         .details
                         .iter()
-                        .map(|item| match item {
-                            react_compiler_diagnostics::CompilerDiagnosticDetail::Error {
+                        .map(|item| {
+                            match item {
+                            crate::react_compiler_diagnostics::CompilerDiagnosticDetail::Error {
                                 loc,
                                 message,
                                 identifier_name,
@@ -1874,13 +1754,14 @@ fn log_errors_as_events(errors: &CompilerError, context: &mut ProgramContext) {
                                 }),
                                 message: message.clone(),
                             },
-                            react_compiler_diagnostics::CompilerDiagnosticDetail::Hint {
+                            crate::react_compiler_diagnostics::CompilerDiagnosticDetail::Hint {
                                 message,
                             } => CompilerErrorItemInfo {
                                 kind: "hint".to_string(),
                                 loc: None,
                                 message: Some(message.clone()),
                             },
+                        }
                         })
                         .collect();
                     if v.is_empty() { None } else { Some(v) }
@@ -1895,7 +1776,7 @@ fn log_errors_as_events(errors: &CompilerError, context: &mut ProgramContext) {
                     loc: None,
                 }
             }
-            react_compiler_diagnostics::CompilerErrorOrDiagnostic::ErrorDetail(d) => {
+            crate::react_compiler_diagnostics::CompilerErrorOrDiagnostic::ErrorDetail(d) => {
                 CompilerErrorDetailInfo {
                     category: format!("{:?}", d.category),
                     reason: d.reason.clone(),

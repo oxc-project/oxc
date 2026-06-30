@@ -15,29 +15,29 @@
 use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
 
-use react_compiler_diagnostics::CompilerDiagnostic;
-use react_compiler_diagnostics::CompilerDiagnosticDetail;
-use react_compiler_diagnostics::ErrorCategory;
-use react_compiler_hir::ArrayElement;
-use react_compiler_hir::DependencyPathEntry;
-use react_compiler_hir::Effect;
-use react_compiler_hir::EvaluationOrder;
-use react_compiler_hir::HirFunction;
-use react_compiler_hir::IdentifierId;
-use react_compiler_hir::IdentifierName;
-use react_compiler_hir::Instruction;
-use react_compiler_hir::InstructionId;
-use react_compiler_hir::InstructionValue;
-use react_compiler_hir::ManualMemoDependency;
-use react_compiler_hir::ManualMemoDependencyRoot;
-use react_compiler_hir::NonLocalBinding;
-use react_compiler_hir::Place;
-use react_compiler_hir::PlaceOrSpread;
-use react_compiler_hir::PropertyLiteral;
-use react_compiler_hir::SourceLocation;
-use react_compiler_hir::environment::Environment;
-use react_compiler_lowering::create_temporary_place;
-use react_compiler_lowering::mark_instruction_ids;
+use crate::react_compiler_diagnostics::CompilerDiagnostic;
+use crate::react_compiler_diagnostics::CompilerDiagnosticDetail;
+use crate::react_compiler_diagnostics::ErrorCategory;
+use crate::react_compiler_hir::ArrayElement;
+use crate::react_compiler_hir::DependencyPathEntry;
+use crate::react_compiler_hir::Effect;
+use crate::react_compiler_hir::EvaluationOrder;
+use crate::react_compiler_hir::HirFunction;
+use crate::react_compiler_hir::IdentifierId;
+use crate::react_compiler_hir::IdentifierName;
+use crate::react_compiler_hir::Instruction;
+use crate::react_compiler_hir::InstructionId;
+use crate::react_compiler_hir::InstructionValue;
+use crate::react_compiler_hir::ManualMemoDependency;
+use crate::react_compiler_hir::ManualMemoDependencyRoot;
+use crate::react_compiler_hir::NonLocalBinding;
+use crate::react_compiler_hir::Place;
+use crate::react_compiler_hir::PlaceOrSpread;
+use crate::react_compiler_hir::PropertyLiteral;
+use crate::react_compiler_hir::SourceLocation;
+use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_lowering::create_temporary_place;
+use crate::react_compiler_lowering::mark_instruction_ids;
 
 // =============================================================================
 // Types
@@ -117,12 +117,8 @@ pub fn drop_manual_memoization(
 
     // Collect all block instruction lists up front to avoid borrowing func immutably
     // while needing to mutate it
-    let all_block_instructions: Vec<Vec<InstructionId>> = func
-        .body
-        .blocks
-        .values()
-        .map(|block| block.instructions.clone())
-        .collect();
+    let all_block_instructions: Vec<Vec<InstructionId>> =
+        func.body.blocks.values().map(|block| block.instructions.clone()).collect();
 
     for block_instructions in &all_block_instructions {
         for &instr_id in block_instructions {
@@ -212,11 +208,7 @@ fn process_manual_memo_call(
         return;
     };
 
-    let ExtractedMemoArgs {
-        fn_place,
-        deps_list,
-        deps_loc,
-    } = memo_details;
+    let ExtractedMemoArgs { fn_place, deps_list, deps_loc } = memo_details;
 
     let loc = func.instructions[instr_id.0 as usize].value.loc().cloned();
 
@@ -293,10 +285,7 @@ fn collect_temporaries(
                 if name == "useMemo" {
                     sidemap.manual_memos.insert(
                         lvalue_id,
-                        ManualMemoCallee {
-                            kind: ManualMemoKind::UseMemo,
-                            load_instr_id: instr_id,
-                        },
+                        ManualMemoCallee { kind: ManualMemoKind::UseMemo, load_instr_id: instr_id },
                     );
                     detected = true;
                 } else if name == "useCallback" {
@@ -314,9 +303,7 @@ fn collect_temporaries(
                 sidemap.react.insert(lvalue_id);
             }
         }
-        InstructionValue::PropertyLoad {
-            object, property, ..
-        } => {
+        InstructionValue::PropertyLoad { object, property, .. } => {
             if sidemap.react.contains(&object.identifier) {
                 if let PropertyLiteral::String(prop_name) = property {
                     if prop_name == "useMemo" {
@@ -350,13 +337,9 @@ fn collect_temporaries(
                 .collect();
 
             if let Some(deps) = all_places {
-                sidemap.maybe_deps_lists.insert(
-                    lvalue_id,
-                    MaybeDepsListInfo {
-                        loc: instr.value.loc().cloned(),
-                        deps,
-                    },
-                );
+                sidemap
+                    .maybe_deps_lists
+                    .insert(lvalue_id, MaybeDepsListInfo { loc: instr.value.loc().cloned(), deps });
             }
         }
         _ => {}
@@ -370,9 +353,7 @@ fn collect_temporaries(
         // matching the TS behavior where collectMaybeMemoDependencies inserts into
         // maybeDeps directly for StoreLocal's target variable.
         if let InstructionValue::StoreLocal { lvalue, .. } = &instr.value {
-            sidemap
-                .maybe_deps
-                .insert(lvalue.place.identifier, dep.clone());
+            sidemap.maybe_deps.insert(lvalue.place.identifier, dep.clone());
         }
         sidemap.maybe_deps.insert(lvalue_id, dep);
     }
@@ -392,18 +373,11 @@ pub fn collect_maybe_memo_dependencies(
 ) -> Option<ManualMemoDependency> {
     match value {
         InstructionValue::LoadGlobal { binding, loc, .. } => Some(ManualMemoDependency {
-            root: ManualMemoDependencyRoot::Global {
-                identifier_name: binding.name().to_string(),
-            },
+            root: ManualMemoDependencyRoot::Global { identifier_name: binding.name().to_string() },
             path: vec![],
             loc: loc.clone(),
         }),
-        InstructionValue::PropertyLoad {
-            object,
-            property,
-            loc,
-            ..
-        } => {
+        InstructionValue::PropertyLoad { object, property, loc, .. } => {
             if let Some(object_dep) = maybe_deps.get(&object.identifier) {
                 Some(ManualMemoDependency {
                     root: object_dep.root.clone(),
@@ -441,9 +415,7 @@ pub fn collect_maybe_memo_dependencies(
                 None
             }
         }
-        InstructionValue::StoreLocal {
-            lvalue, value: val, ..
-        } => {
+        InstructionValue::StoreLocal { lvalue, value: val, .. } => {
             // Value blocks rely on StoreLocal to populate their return value.
             // We need to track these as optional property chains are valid in
             // source depslists
@@ -474,11 +446,7 @@ fn get_manual_memoization_replacement(
 ) -> InstructionValue {
     if kind == ManualMemoKind::UseMemo {
         // Replace with Call fn() - invoke the memo function directly
-        InstructionValue::CallExpression {
-            callee: fn_place.clone(),
-            args: vec![],
-            loc,
-        }
+        InstructionValue::CallExpression { callee: fn_place.clone(), args: vec![], loc }
     } else {
         // Replace with LoadLocal fn - just reference the function
         InstructionValue::LoadLocal {
@@ -578,11 +546,7 @@ fn extract_manual_memoization_args(
     // Get the second arg (deps list), if present
     let deps_list_place = args.get(1);
     if deps_list_place.is_none() {
-        return Some(ExtractedMemoArgs {
-            fn_place,
-            deps_list: None,
-            deps_loc: None,
-        });
+        return Some(ExtractedMemoArgs { fn_place, deps_list: None, deps_loc: None });
     }
 
     let deps_list_id = match deps_list_place {
@@ -650,27 +614,17 @@ fn extract_manual_memoization_args(
 // =============================================================================
 
 fn find_optional_places(func: &HirFunction) -> Result<FxHashSet<IdentifierId>, CompilerDiagnostic> {
-    use react_compiler_hir::Terminal;
+    use crate::react_compiler_hir::Terminal;
 
     let mut optionals = FxHashSet::default();
     for block in func.body.blocks.values() {
-        if let Terminal::Optional {
-            optional: true,
-            test,
-            fallthrough,
-            ..
-        } = &block.terminal
-        {
+        if let Terminal::Optional { optional: true, test, fallthrough, .. } = &block.terminal {
             let optional_fallthrough = *fallthrough;
             let mut test_block_id = *test;
             loop {
                 let test_block = &func.body.blocks[&test_block_id];
                 match &test_block.terminal {
-                    Terminal::Branch {
-                        consequent,
-                        fallthrough,
-                        ..
-                    } => {
+                    Terminal::Branch { consequent, fallthrough, .. } => {
                         if *fallthrough == optional_fallthrough {
                             // Found it
                             let consequent_block = &func.body.blocks[consequent];
@@ -733,14 +687,8 @@ fn is_known_react_module(module: &str) -> bool {
 fn get_hook_detection_name(binding: &NonLocalBinding) -> Option<&str> {
     match binding {
         NonLocalBinding::Global { name } => Some(name.as_str()),
-        NonLocalBinding::ImportSpecifier {
-            imported, module, ..
-        } => {
-            if is_known_react_module(module) {
-                Some(imported.as_str())
-            } else {
-                None
-            }
+        NonLocalBinding::ImportSpecifier { imported, module, .. } => {
+            if is_known_react_module(module) { Some(imported.as_str()) } else { None }
         }
         NonLocalBinding::ImportDefault { name, module }
         | NonLocalBinding::ImportNamespace { name, module } => {

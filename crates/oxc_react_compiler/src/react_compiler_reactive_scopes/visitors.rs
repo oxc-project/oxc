@@ -7,8 +7,8 @@
 //!
 //! Corresponds to `src/ReactiveScopes/visitors.ts` in the TypeScript compiler.
 
-use react_compiler_diagnostics::CompilerError;
-use react_compiler_hir::{
+use crate::react_compiler_diagnostics::CompilerError;
+use crate::react_compiler_hir::{
     EvaluationOrder, FunctionId, InstructionValue, ParamPattern, Place, PrunedReactiveScopeBlock,
     ReactiveBlock, ReactiveFunction, ReactiveInstruction, ReactiveScopeBlock, ReactiveStatement,
     ReactiveTerminal, ReactiveTerminalStatement, ReactiveValue, environment::Environment,
@@ -58,7 +58,7 @@ pub trait ReactiveFunctionVisitor {
             let block = &inner_func.body.blocks[&block_id];
             let instr_ids: Vec<_> = block.instructions.clone();
             let terminal_operands: Vec<Place> =
-                react_compiler_hir::visitors::each_terminal_operand(&block.terminal);
+                crate::react_compiler_hir::visitors::each_terminal_operand(&block.terminal);
             let terminal_id = block.terminal.evaluation_order();
 
             for instr_id in &instr_ids {
@@ -101,21 +101,13 @@ pub trait ReactiveFunctionVisitor {
                 self.visit_value(id, left, state);
                 self.visit_value(id, right, state);
             }
-            ReactiveValue::ConditionalExpression {
-                test,
-                consequent,
-                alternate,
-                ..
-            } => {
+            ReactiveValue::ConditionalExpression { test, consequent, alternate, .. } => {
                 self.visit_value(id, test, state);
                 self.visit_value(id, consequent, state);
                 self.visit_value(id, alternate, state);
             }
             ReactiveValue::SequenceExpression {
-                instructions,
-                id: seq_id,
-                value: inner,
-                ..
+                instructions, id: seq_id, value: inner, ..
             } => {
                 for instr in instructions {
                     self.visit_instruction(instr, state);
@@ -123,7 +115,7 @@ pub trait ReactiveFunctionVisitor {
                 self.visit_value(*seq_id, inner, state);
             }
             ReactiveValue::Instruction(instr_value) => {
-                let operands = react_compiler_hir::visitors::each_instruction_value_operand(
+                let operands = crate::react_compiler_hir::visitors::each_instruction_value_operand(
                     instr_value,
                     self.env(),
                 );
@@ -146,7 +138,7 @@ pub trait ReactiveFunctionVisitor {
         }
         // Visit value-level lvalues (TS: eachInstructionValueLValue)
         if let ReactiveValue::Instruction(iv) = &instruction.value {
-            for place in react_compiler_hir::visitors::each_instruction_value_lvalue(iv) {
+            for place in crate::react_compiler_hir::visitors::each_instruction_value_lvalue(iv) {
                 self.visit_lvalue(instruction.id, &place, state);
             }
         }
@@ -169,14 +161,7 @@ pub trait ReactiveFunctionVisitor {
             ReactiveTerminal::Throw { value, id, .. } => {
                 self.visit_place(*id, value, state);
             }
-            ReactiveTerminal::For {
-                init,
-                test,
-                update,
-                loop_block,
-                id,
-                ..
-            } => {
+            ReactiveTerminal::For { init, test, update, loop_block, id, .. } => {
                 self.visit_value(*id, init, state);
                 self.visit_value(*id, test, state);
                 self.visit_block(loop_block, state);
@@ -184,60 +169,31 @@ pub trait ReactiveFunctionVisitor {
                     self.visit_value(*id, update, state);
                 }
             }
-            ReactiveTerminal::ForOf {
-                init,
-                test,
-                loop_block,
-                id,
-                ..
-            } => {
+            ReactiveTerminal::ForOf { init, test, loop_block, id, .. } => {
                 self.visit_value(*id, init, state);
                 self.visit_value(*id, test, state);
                 self.visit_block(loop_block, state);
             }
-            ReactiveTerminal::ForIn {
-                init,
-                loop_block,
-                id,
-                ..
-            } => {
+            ReactiveTerminal::ForIn { init, loop_block, id, .. } => {
                 self.visit_value(*id, init, state);
                 self.visit_block(loop_block, state);
             }
-            ReactiveTerminal::DoWhile {
-                loop_block,
-                test,
-                id,
-                ..
-            } => {
+            ReactiveTerminal::DoWhile { loop_block, test, id, .. } => {
                 self.visit_block(loop_block, state);
                 self.visit_value(*id, test, state);
             }
-            ReactiveTerminal::While {
-                test,
-                loop_block,
-                id,
-                ..
-            } => {
+            ReactiveTerminal::While { test, loop_block, id, .. } => {
                 self.visit_value(*id, test, state);
                 self.visit_block(loop_block, state);
             }
-            ReactiveTerminal::If {
-                test,
-                consequent,
-                alternate,
-                id,
-                ..
-            } => {
+            ReactiveTerminal::If { test, consequent, alternate, id, .. } => {
                 self.visit_place(*id, test, state);
                 self.visit_block(consequent, state);
                 if let Some(alt) = alternate {
                     self.visit_block(alt, state);
                 }
             }
-            ReactiveTerminal::Switch {
-                test, cases, id, ..
-            } => {
+            ReactiveTerminal::Switch { test, cases, id, .. } => {
                 self.visit_place(*id, test, state);
                 for case in cases {
                     if let Some(t) = &case.test {
@@ -251,13 +207,7 @@ pub trait ReactiveFunctionVisitor {
             ReactiveTerminal::Label { block, .. } => {
                 self.visit_block(block, state);
             }
-            ReactiveTerminal::Try {
-                block,
-                handler_binding,
-                handler,
-                id,
-                ..
-            } => {
+            ReactiveTerminal::Try { block, handler_binding, handler, id, .. } => {
                 self.visit_block(block, state);
                 if let Some(binding) = handler_binding {
                     self.visit_place(*id, binding, state);
@@ -415,12 +365,7 @@ pub trait ReactiveFunctionTransform {
                     **right = new_value;
                 }
             }
-            ReactiveValue::ConditionalExpression {
-                test,
-                consequent,
-                alternate,
-                ..
-            } => {
+            ReactiveValue::ConditionalExpression { test, consequent, alternate, .. } => {
                 let next_test = self.transform_value(id, test, state)?;
                 if let TransformedValue::Replace(new_value) = next_test {
                     **test = new_value;
@@ -435,10 +380,7 @@ pub trait ReactiveFunctionTransform {
                 }
             }
             ReactiveValue::SequenceExpression {
-                instructions,
-                id: seq_id,
-                value: inner,
-                ..
+                instructions, id: seq_id, value: inner, ..
             } => {
                 let seq_id = *seq_id;
                 for instr in instructions.iter_mut() {
@@ -452,7 +394,7 @@ pub trait ReactiveFunctionTransform {
             ReactiveValue::Instruction(instr_value) => {
                 // Collect operands before visiting to avoid borrow conflict
                 // (self.env() borrows self immutably, self.visit_place() needs &mut self).
-                let operands = react_compiler_hir::visitors::each_instruction_value_operand(
+                let operands = crate::react_compiler_hir::visitors::each_instruction_value_operand(
                     instr_value,
                     self.env(),
                 );
@@ -494,7 +436,7 @@ pub trait ReactiveFunctionTransform {
         }
         // Visit value-level lvalues (TS: eachInstructionValueLValue)
         if let ReactiveValue::Instruction(iv) = &instruction.value {
-            for place in react_compiler_hir::visitors::each_instruction_value_lvalue(iv) {
+            for place in crate::react_compiler_hir::visitors::each_instruction_value_lvalue(iv) {
                 self.visit_lvalue(instruction.id, &place, state)?;
             }
         }
@@ -529,14 +471,7 @@ pub trait ReactiveFunctionTransform {
             ReactiveTerminal::Throw { value, id, .. } => {
                 self.visit_place(*id, value, state)?;
             }
-            ReactiveTerminal::For {
-                init,
-                test,
-                update,
-                loop_block,
-                id,
-                ..
-            } => {
+            ReactiveTerminal::For { init, test, update, loop_block, id, .. } => {
                 let id = *id;
                 let next_init = self.transform_value(id, init, state)?;
                 if let TransformedValue::Replace(new_value) = next_init {
@@ -554,13 +489,7 @@ pub trait ReactiveFunctionTransform {
                 }
                 self.visit_block(loop_block, state)?;
             }
-            ReactiveTerminal::ForOf {
-                init,
-                test,
-                loop_block,
-                id,
-                ..
-            } => {
+            ReactiveTerminal::ForOf { init, test, loop_block, id, .. } => {
                 let id = *id;
                 let next_init = self.transform_value(id, init, state)?;
                 if let TransformedValue::Replace(new_value) = next_init {
@@ -572,12 +501,7 @@ pub trait ReactiveFunctionTransform {
                 }
                 self.visit_block(loop_block, state)?;
             }
-            ReactiveTerminal::ForIn {
-                init,
-                loop_block,
-                id,
-                ..
-            } => {
+            ReactiveTerminal::ForIn { init, loop_block, id, .. } => {
                 let id = *id;
                 let next_init = self.transform_value(id, init, state)?;
                 if let TransformedValue::Replace(new_value) = next_init {
@@ -585,12 +509,7 @@ pub trait ReactiveFunctionTransform {
                 }
                 self.visit_block(loop_block, state)?;
             }
-            ReactiveTerminal::DoWhile {
-                loop_block,
-                test,
-                id,
-                ..
-            } => {
+            ReactiveTerminal::DoWhile { loop_block, test, id, .. } => {
                 let id = *id;
                 self.visit_block(loop_block, state)?;
                 let next_test = self.transform_value(id, test, state)?;
@@ -598,12 +517,7 @@ pub trait ReactiveFunctionTransform {
                     *test = new_value;
                 }
             }
-            ReactiveTerminal::While {
-                test,
-                loop_block,
-                id,
-                ..
-            } => {
+            ReactiveTerminal::While { test, loop_block, id, .. } => {
                 let id = *id;
                 let next_test = self.transform_value(id, test, state)?;
                 if let TransformedValue::Replace(new_value) = next_test {
@@ -611,22 +525,14 @@ pub trait ReactiveFunctionTransform {
                 }
                 self.visit_block(loop_block, state)?;
             }
-            ReactiveTerminal::If {
-                test,
-                consequent,
-                alternate,
-                id,
-                ..
-            } => {
+            ReactiveTerminal::If { test, consequent, alternate, id, .. } => {
                 self.visit_place(*id, test, state)?;
                 self.visit_block(consequent, state)?;
                 if let Some(alt) = alternate {
                     self.visit_block(alt, state)?;
                 }
             }
-            ReactiveTerminal::Switch {
-                test, cases, id, ..
-            } => {
+            ReactiveTerminal::Switch { test, cases, id, .. } => {
                 let id = *id;
                 self.visit_place(id, test, state)?;
                 for case in cases.iter_mut() {
@@ -641,13 +547,7 @@ pub trait ReactiveFunctionTransform {
             ReactiveTerminal::Label { block, .. } => {
                 self.visit_block(block, state)?;
             }
-            ReactiveTerminal::Try {
-                block,
-                handler_binding,
-                handler,
-                id,
-                ..
-            } => {
+            ReactiveTerminal::Try { block, handler_binding, handler, id, .. } => {
                 let id = *id;
                 self.visit_block(block, state)?;
                 if let Some(binding) = handler_binding {
@@ -751,7 +651,7 @@ pub trait ReactiveFunctionTransform {
                     id: EvaluationOrder(0),
                     lvalue: None,
                     value: ReactiveValue::Instruction(
-                        react_compiler_hir::InstructionValue::Debugger { loc: None },
+                        crate::react_compiler_hir::InstructionValue::Debugger { loc: None },
                     ),
                     effects: None,
                     loc: None,

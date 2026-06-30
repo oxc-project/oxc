@@ -19,10 +19,10 @@
 
 use rustc_hash::FxHashMap;
 
-use react_compiler_hir::environment::Environment;
-use react_compiler_hir::object_shape::HookKind;
-use react_compiler_hir::visitors::{each_instruction_value_operand, each_terminal_operand};
-use react_compiler_hir::{
+use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_hir::object_shape::HookKind;
+use crate::react_compiler_hir::visitors::{each_instruction_value_operand, each_terminal_operand};
+use crate::react_compiler_hir::{
     ArrayPatternElement, HirFunction, IdentifierId, InstructionValue, PlaceOrSpread,
     PrimitiveValue, is_set_state_type, is_start_transition_type,
 };
@@ -52,7 +52,7 @@ pub fn optimize_for_ssr(func: &mut HirFunction, env: &Environment) {
                 InstructionValue::Destructure { value, lvalue, .. } => {
                     if inlined_state.contains_key(&env.identifiers[value.identifier.0 as usize].id)
                     {
-                        if let react_compiler_hir::Pattern::Array(arr) = &lvalue.pattern {
+                        if let crate::react_compiler_hir::Pattern::Array(arr) = &lvalue.pattern {
                             if !arr.items.is_empty() {
                                 if let ArrayPatternElement::Place(_) = &arr.items[0] {
                                     // Allow destructuring of inlined states
@@ -63,11 +63,7 @@ pub fn optimize_for_ssr(func: &mut HirFunction, env: &Environment) {
                     }
                 }
                 InstructionValue::MethodCall { property, args, .. }
-                | InstructionValue::CallExpression {
-                    callee: property,
-                    args,
-                    ..
-                } => {
+                | InstructionValue::CallExpression { callee: property, args, .. } => {
                     // Determine callee based on instruction kind
                     let callee_id = property.identifier;
                     let hook_kind = get_hook_kind(env, callee_id);
@@ -116,9 +112,9 @@ pub fn optimize_for_ssr(func: &mut HirFunction, env: &Environment) {
                                         .type_
                                         .0
                                         as usize];
-                                    if react_compiler_hir::is_primitive_type(arg_type)
-                                        || react_compiler_hir::is_plain_object_type(arg_type)
-                                        || react_compiler_hir::is_array_type(arg_type)
+                                    if crate::react_compiler_hir::is_primitive_type(arg_type)
+                                        || crate::react_compiler_hir::is_plain_object_type(arg_type)
+                                        || crate::react_compiler_hir::is_array_type(arg_type)
                                     {
                                         let lvalue_id =
                                             env.identifiers[instr.lvalue.identifier.0 as usize].id;
@@ -169,20 +165,16 @@ pub fn optimize_for_ssr(func: &mut HirFunction, env: &Environment) {
         for &instr_id in &block.instructions {
             let instr = &mut func.instructions[instr_id.0 as usize];
             match &instr.value {
-                InstructionValue::FunctionExpression {
-                    lowered_func, loc, ..
-                } => {
+                InstructionValue::FunctionExpression { lowered_func, loc, .. } => {
                     let inner_func = &env.functions[lowered_func.func.0 as usize];
                     if has_known_non_render_call(inner_func, env) {
                         let loc = *loc;
-                        instr.value = InstructionValue::Primitive {
-                            value: PrimitiveValue::Undefined,
-                            loc,
-                        };
+                        instr.value =
+                            InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc };
                     }
                 }
                 InstructionValue::JsxExpression { tag, .. } => {
-                    if let react_compiler_hir::JsxTag::Builtin(builtin) = tag {
+                    if let crate::react_compiler_hir::JsxTag::Builtin(builtin) = tag {
                         // Only optimize non-custom-element builtin tags
                         if !builtin.name.contains('-') {
                             let tag_name = builtin.name.clone();
@@ -190,11 +182,12 @@ pub fn optimize_for_ssr(func: &mut HirFunction, env: &Environment) {
                             if let InstructionValue::JsxExpression { props, .. } = &mut instr.value
                             {
                                 props.retain(|prop| match prop {
-                                    react_compiler_hir::JsxAttribute::SpreadAttribute {
+                                    crate::react_compiler_hir::JsxAttribute::SpreadAttribute {
                                         ..
                                     } => true,
-                                    react_compiler_hir::JsxAttribute::Attribute {
-                                        name, ..
+                                    crate::react_compiler_hir::JsxAttribute::Attribute {
+                                        name,
+                                        ..
                                     } => !is_known_event_handler(&tag_name, name) && name != "ref",
                                 });
                             }
@@ -205,13 +198,13 @@ pub fn optimize_for_ssr(func: &mut HirFunction, env: &Environment) {
                     let value_id = env.identifiers[value.identifier.0 as usize].id;
                     if inlined_state.contains_key(&value_id) {
                         // Invariant: destructuring pattern must be ArrayPattern with at least one Identifier item
-                        if let react_compiler_hir::Pattern::Array(arr) = &lvalue.pattern {
+                        if let crate::react_compiler_hir::Pattern::Array(arr) = &lvalue.pattern {
                             if !arr.items.is_empty() {
                                 if let ArrayPatternElement::Place(first_place) = &arr.items[0] {
                                     let loc = *loc;
                                     let kind = lvalue.kind;
                                     let store = InstructionValue::StoreLocal {
-                                        lvalue: react_compiler_hir::LValue {
+                                        lvalue: crate::react_compiler_hir::LValue {
                                             place: first_place.clone(),
                                             kind,
                                         },
@@ -225,18 +218,8 @@ pub fn optimize_for_ssr(func: &mut HirFunction, env: &Environment) {
                         }
                     }
                 }
-                InstructionValue::MethodCall {
-                    property,
-                    args,
-                    loc,
-                    ..
-                }
-                | InstructionValue::CallExpression {
-                    callee: property,
-                    args,
-                    loc,
-                    ..
-                } => {
+                InstructionValue::MethodCall { property, args, loc, .. }
+                | InstructionValue::CallExpression { callee: property, args, loc, .. } => {
                     let callee_id = property.identifier;
                     let hook_kind = get_hook_kind(env, callee_id);
                     match hook_kind {
@@ -244,10 +227,8 @@ pub fn optimize_for_ssr(func: &mut HirFunction, env: &Environment) {
                             if args.len() == 1 {
                                 if let PlaceOrSpread::Place(arg) = &args[0] {
                                     let loc = *loc;
-                                    instr.value = InstructionValue::LoadLocal {
-                                        place: arg.clone(),
-                                        loc,
-                                    };
+                                    instr.value =
+                                        InstructionValue::LoadLocal { place: arg.clone(), loc };
                                 }
                             }
                         }
@@ -298,14 +279,14 @@ pub fn optimize_for_ssr(func: &mut HirFunction, env: &Environment) {
 enum InlinedStateReplacement {
     /// Replace with `LoadLocal { place }` — used for useState and useReducer(reducer, initialArg)
     LoadLocal {
-        place: react_compiler_hir::Place,
-        loc: Option<react_compiler_hir::SourceLocation>,
+        place: crate::react_compiler_hir::Place,
+        loc: Option<crate::react_compiler_hir::SourceLocation>,
     },
     /// Replace with `CallExpression { callee, args: [arg] }` — used for useReducer(reducer, initialArg, init)
     CallExpression {
-        callee: react_compiler_hir::Place,
-        arg: react_compiler_hir::Place,
-        loc: Option<react_compiler_hir::SourceLocation>,
+        callee: crate::react_compiler_hir::Place,
+        arg: crate::react_compiler_hir::Place,
+        loc: Option<crate::react_compiler_hir::SourceLocation>,
     },
 }
 
@@ -344,8 +325,5 @@ fn is_known_event_handler(_tag: &str, prop: &str) -> bool {
 
 /// Get the hook kind for an identifier, if its type represents a hook.
 fn get_hook_kind(env: &Environment, identifier_id: IdentifierId) -> Option<HookKind> {
-    env.get_hook_kind_for_id(identifier_id)
-        .ok()
-        .flatten()
-        .cloned()
+    env.get_hook_kind_for_id(identifier_id).ok().flatten().cloned()
 }

@@ -65,9 +65,7 @@ impl RawNode {
             #[serde(rename = "type")]
             type_name: Option<String>,
         }
-        from_json_str_unbounded::<TypeProbe>(self.0.get())
-            .ok()
-            .and_then(|p| p.type_name)
+        from_json_str_unbounded::<TypeProbe>(self.0.get()).ok().and_then(|p| p.type_name)
     }
 }
 
@@ -98,11 +96,7 @@ pub struct SourceLocation {
     pub end: Position,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub filename: Option<String>,
-    #[serde(
-        default,
-        skip_serializing_if = "Option::is_none",
-        rename = "identifierName"
-    )]
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "identifierName")]
     pub identifier_name: Option<String>,
 }
 
@@ -145,23 +139,11 @@ pub struct BaseNode {
     pub range: Option<(u32, u32)>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub extra: Option<RawNode>,
-    #[serde(
-        default,
-        skip_serializing_if = "Option::is_none",
-        rename = "leadingComments"
-    )]
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "leadingComments")]
     pub leading_comments: Option<Vec<Comment>>,
-    #[serde(
-        default,
-        skip_serializing_if = "Option::is_none",
-        rename = "innerComments"
-    )]
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "innerComments")]
     pub inner_comments: Option<Vec<Comment>>,
-    #[serde(
-        default,
-        skip_serializing_if = "Option::is_none",
-        rename = "trailingComments"
-    )]
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "trailingComments")]
     pub trailing_comments: Option<Vec<Comment>>,
     #[serde(default, skip_serializing_if = "Option::is_none", rename = "_nodeId")]
     pub node_id: Option<u32>,
@@ -172,9 +154,6 @@ impl BaseNode {
     /// Use this when creating AST nodes for code generation to ensure the
     /// `"type"` field is present in serialized output.
     pub fn typed(type_name: &str) -> Self {
-        Self {
-            node_type: Some(type_name.to_string()),
-            ..Default::default()
-        }
+        Self { node_type: Some(type_name.to_string()), ..Default::default() }
     }
 }

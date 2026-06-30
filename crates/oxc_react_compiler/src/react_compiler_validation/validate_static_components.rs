@@ -11,10 +11,10 @@
 
 use rustc_hash::FxHashMap;
 
-use react_compiler_diagnostics::{
+use crate::react_compiler_diagnostics::{
     CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, ErrorCategory, SourceLocation,
 };
-use react_compiler_hir::{HirFunction, IdentifierId, InstructionValue, JsxTag};
+use crate::react_compiler_hir::{HirFunction, IdentifierId, InstructionValue, JsxTag};
 
 /// Validates that components used in JSX are not dynamically created during render.
 ///
@@ -54,9 +54,7 @@ pub fn validate_static_components(func: &HirFunction) -> CompilerError {
                         known_dynamic_components.insert(lvalue_id, *loc);
                     }
                 }
-                InstructionValue::StoreLocal {
-                    lvalue, value: val, ..
-                } => {
+                InstructionValue::StoreLocal { lvalue, value: val, .. } => {
                     if let Some(loc) = known_dynamic_components.get(&val.identifier) {
                         let loc = *loc;
                         known_dynamic_components.insert(lvalue_id, loc);

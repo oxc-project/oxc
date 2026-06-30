@@ -15,13 +15,13 @@
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use react_compiler_hir::visitors;
-use react_compiler_hir::{
+use crate::react_compiler_hir::visitors;
+use crate::react_compiler_hir::{
     AliasingEffect, BlockId, BlockKind, Effect, GENERATED_SOURCE, HirFunction, Instruction,
     InstructionId, InstructionValue, Place, Terminal,
 };
-use react_compiler_lowering::mark_predecessors;
-use react_compiler_ssa::enter_ssa::placeholder_function;
+use crate::react_compiler_lowering::mark_predecessors;
+use crate::react_compiler_ssa::enter_ssa::placeholder_function;
 
 /// Merge consecutive blocks in the function's CFG, including inner functions.
 pub fn merge_consecutive_blocks(func: &mut HirFunction, functions: &mut [HirFunction]) {
@@ -131,10 +131,7 @@ pub fn merge_consecutive_blocks(func: &mut HirFunction, functions: &mut [HirFunc
                     loc: GENERATED_SOURCE,
                 },
                 loc: GENERATED_SOURCE,
-                effects: Some(vec![AliasingEffect::Alias {
-                    from: operand,
-                    into: lvalue,
-                }]),
+                effects: Some(vec![AliasingEffect::Alias { from: operand, into: lvalue }]),
             };
             let instr_id = InstructionId(func.instructions.len() as u32);
             func.instructions.push(instr);
@@ -191,9 +188,7 @@ struct MergedBlocks {
 
 impl MergedBlocks {
     fn new() -> Self {
-        Self {
-            map: FxHashMap::default(),
-        }
+        Self { map: FxHashMap::default() }
     }
 
     /// Record that `block` was merged into `into`.

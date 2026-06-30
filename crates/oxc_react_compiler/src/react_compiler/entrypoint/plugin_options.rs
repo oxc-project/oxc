@@ -1,4 +1,4 @@
-use react_compiler_hir::environment_config::EnvironmentConfig;
+use crate::react_compiler_hir::environment_config::EnvironmentConfig;
 use serde::Serialize;
 
 /// Target configuration for the compiler

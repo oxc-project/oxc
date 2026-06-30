@@ -1,13 +1,13 @@
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use react_compiler_diagnostics::{
+use crate::react_compiler_diagnostics::{
     CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, ErrorCategory, SourceLocation,
 };
-use react_compiler_hir::environment::Environment;
-use react_compiler_hir::visitors::{
+use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_hir::visitors::{
     each_instruction_value_operand_with_functions, each_terminal_operand,
 };
-use react_compiler_hir::{
+use crate::react_compiler_hir::{
     FunctionId, HirFunction, IdentifierId, InstructionValue, ParamPattern, Place, PlaceOrSpread,
     ReturnVariant, Terminal,
 };
@@ -66,26 +66,21 @@ fn validate_use_memo_impl(
                         react.insert(lvalue.identifier);
                     }
                 }
-                InstructionValue::PropertyLoad {
-                    object, property, ..
-                } => {
+                InstructionValue::PropertyLoad { object, property, .. } => {
                     if react.contains(&object.identifier) {
-                        if let react_compiler_hir::PropertyLiteral::String(prop_name) = property {
+                        if let crate::react_compiler_hir::PropertyLiteral::String(prop_name) =
+                            property
+                        {
                             if prop_name == "useMemo" {
                                 use_memos.insert(lvalue.identifier);
                             }
                         }
                     }
                 }
-                InstructionValue::FunctionExpression {
-                    lowered_func, loc, ..
-                } => {
+                InstructionValue::FunctionExpression { lowered_func, loc, .. } => {
                     func_exprs.insert(
                         lvalue.identifier,
-                        FuncExprInfo {
-                            func_id: lowered_func.func,
-                            loc: *loc,
-                        },
+                        FuncExprInfo { func_id: lowered_func.func, loc: *loc },
                     );
                 }
                 InstructionValue::CallExpression { callee, args, .. } => {
@@ -286,10 +281,7 @@ fn validate_no_context_variable_assignment(func: &HirFunction, errors: &mut Comp
 fn has_non_void_return(func: &HirFunction) -> bool {
     for (_block_id, block) in &func.body.blocks {
         if let Terminal::Return { return_variant, .. } = &block.terminal {
-            if matches!(
-                return_variant,
-                ReturnVariant::Explicit | ReturnVariant::Implicit
-            ) {
+            if matches!(return_variant, ReturnVariant::Explicit | ReturnVariant::Implicit) {
                 return true;
             }
         }
@@ -312,8 +304,5 @@ fn each_instruction_value_operand_ids(
 /// Collect all operand IdentifierIds from a Terminal.
 /// Thin wrapper around canonical `each_terminal_operand` that maps to ids.
 fn each_terminal_operand_ids(terminal: &Terminal) -> Vec<IdentifierId> {
-    each_terminal_operand(terminal)
-        .into_iter()
-        .map(|p| p.identifier)
-        .collect()
+    each_terminal_operand(terminal).into_iter().map(|p| p.identifier).collect()
 }

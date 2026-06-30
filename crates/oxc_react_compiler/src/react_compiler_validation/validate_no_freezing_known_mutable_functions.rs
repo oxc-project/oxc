@@ -7,12 +7,12 @@
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use react_compiler_diagnostics::{
+use crate::react_compiler_diagnostics::{
     CompilerDiagnostic, CompilerDiagnosticDetail, ErrorCategory, SourceLocation,
 };
-use react_compiler_hir::environment::Environment;
-use react_compiler_hir::visitors::{each_instruction_value_operand, each_terminal_operand};
-use react_compiler_hir::{
+use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_hir::visitors::{each_instruction_value_operand, each_terminal_operand};
+use crate::react_compiler_hir::{
     AliasingEffect, Effect, HirFunction, Identifier, IdentifierId, IdentifierName,
     InstructionValue, Place, Type,
 };
@@ -83,11 +83,8 @@ fn check_no_freezing_known_mutable_functions(
                 InstructionValue::FunctionExpression { lowered_func, .. } => {
                     let inner_function = &functions[lowered_func.func.0 as usize];
                     if let Some(ref aliasing_effects) = inner_function.aliasing_effects {
-                        let context_ids: FxHashSet<IdentifierId> = inner_function
-                            .context
-                            .iter()
-                            .map(|place| place.identifier)
-                            .collect();
+                        let context_ids: FxHashSet<IdentifierId> =
+                            inner_function.context.iter().map(|place| place.identifier).collect();
 
                         'effects: for effect in aliasing_effects {
                             match effect {
@@ -218,5 +215,5 @@ fn is_ref_or_ref_like_mutable_type(
     types: &[Type],
 ) -> bool {
     let identifier = &identifiers[identifier_id.0 as usize];
-    react_compiler_hir::is_ref_or_ref_like_mutable_type(&types[identifier.type_.0 as usize])
+    crate::react_compiler_hir::is_ref_or_ref_like_mutable_type(&types[identifier.type_.0 as usize])
 }

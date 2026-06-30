@@ -13,13 +13,15 @@
 
 use rustc_hash::FxHashSet;
 
-use react_compiler_hir::{
+use crate::react_compiler_hir::{
     IdentifierId, InstructionValue, PrunedReactiveScopeBlock, ReactiveFunction,
     ReactiveInstruction, ReactiveScopeBlock, ReactiveStatement, ReactiveValue,
     environment::Environment,
 };
 
-use crate::visitors::{ReactiveFunctionTransform, Transformed, transform_reactive_function};
+use crate::react_compiler_reactive_scopes::visitors::{
+    ReactiveFunctionTransform, Transformed, transform_reactive_function,
+};
 
 /// Prunes scopes that always invalidate because they depend on unmemoized
 /// always-invalidating values.
@@ -27,7 +29,7 @@ use crate::visitors::{ReactiveFunctionTransform, Transformed, transform_reactive
 pub fn prune_always_invalidating_scopes(
     func: &mut ReactiveFunction,
     env: &Environment,
-) -> Result<(), react_compiler_diagnostics::CompilerError> {
+) -> Result<(), crate::react_compiler_diagnostics::CompilerError> {
     let mut transform = Transform {
         env,
         always_invalidating_values: FxHashSet::default(),
@@ -54,7 +56,8 @@ impl<'a> ReactiveFunctionTransform for Transform<'a> {
         &mut self,
         instruction: &mut ReactiveInstruction,
         within_scope: &mut bool,
-    ) -> Result<Transformed<ReactiveStatement>, react_compiler_diagnostics::CompilerError> {
+    ) -> Result<Transformed<ReactiveStatement>, crate::react_compiler_diagnostics::CompilerError>
+    {
         self.visit_instruction(instruction, within_scope)?;
 
         let lvalue = &instruction.lvalue;
@@ -78,12 +81,8 @@ impl<'a> ReactiveFunctionTransform for Transform<'a> {
                 lvalue: store_lvalue,
                 ..
             }) => {
-                if self
-                    .always_invalidating_values
-                    .contains(&store_value.identifier)
-                {
-                    self.always_invalidating_values
-                        .insert(store_lvalue.place.identifier);
+                if self.always_invalidating_values.contains(&store_value.identifier) {
+                    self.always_invalidating_values.insert(store_lvalue.place.identifier);
                 }
                 if self.unmemoized_values.contains(&store_value.identifier) {
                     self.unmemoized_values.insert(store_lvalue.place.identifier);
@@ -108,7 +107,8 @@ impl<'a> ReactiveFunctionTransform for Transform<'a> {
         &mut self,
         scope: &mut ReactiveScopeBlock,
         _within_scope: &mut bool,
-    ) -> Result<Transformed<ReactiveStatement>, react_compiler_diagnostics::CompilerError> {
+    ) -> Result<Transformed<ReactiveStatement>, crate::react_compiler_diagnostics::CompilerError>
+    {
         let mut within_scope = true;
         self.visit_scope(scope, &mut within_scope)?;
 
@@ -119,11 +119,8 @@ impl<'a> ReactiveFunctionTransform for Transform<'a> {
             if self.unmemoized_values.contains(&dep.identifier) {
                 // This scope depends on an always-invalidating value, prune it
                 // Propagate always-invalidating and unmemoized to declarations/reassignments
-                let decl_ids: Vec<IdentifierId> = scope_data
-                    .declarations
-                    .iter()
-                    .map(|(_, decl)| decl.identifier)
-                    .collect();
+                let decl_ids: Vec<IdentifierId> =
+                    scope_data.declarations.iter().map(|(_, decl)| decl.identifier).collect();
                 let reassign_ids: Vec<IdentifierId> = scope_data.reassignments.clone();
 
                 for id in &decl_ids {

@@ -10,13 +10,15 @@
 
 use rustc_hash::FxHashSet;
 
-use react_compiler_hir::{
+use crate::react_compiler_hir::{
     DeclarationId, IdentifierId, IdentifierName, InstructionKind, InstructionValue, LValue,
     ParamPattern, Place, ReactiveFunction, ReactiveInstruction, ReactiveScopeBlock,
     ReactiveStatement, ReactiveValue, environment::Environment, visitors,
 };
 
-use crate::visitors::{ReactiveFunctionTransform, Transformed, transform_reactive_function};
+use crate::react_compiler_reactive_scopes::visitors::{
+    ReactiveFunctionTransform, Transformed, transform_reactive_function,
+};
 
 // =============================================================================
 // Public entry point
@@ -28,7 +30,7 @@ use crate::visitors::{ReactiveFunctionTransform, Transformed, transform_reactive
 pub fn extract_scope_declarations_from_destructuring(
     func: &mut ReactiveFunction,
     env: &mut Environment,
-) -> Result<(), react_compiler_diagnostics::CompilerError> {
+) -> Result<(), crate::react_compiler_diagnostics::CompilerError> {
     let mut declared: FxHashSet<DeclarationId> = FxHashSet::default();
     for param in &func.params {
         let place = match param {
@@ -62,7 +64,7 @@ impl<'a> ReactiveFunctionTransform for Transform<'a> {
         &mut self,
         scope: &mut ReactiveScopeBlock,
         state: &mut ExtractState,
-    ) -> Result<(), react_compiler_diagnostics::CompilerError> {
+    ) -> Result<(), crate::react_compiler_diagnostics::CompilerError> {
         let scope_data = &self.env.scopes[scope.scope.0 as usize];
         let decl_ids: Vec<DeclarationId> = scope_data
             .declarations
@@ -82,7 +84,8 @@ impl<'a> ReactiveFunctionTransform for Transform<'a> {
         &mut self,
         instruction: &mut ReactiveInstruction,
         state: &mut ExtractState,
-    ) -> Result<Transformed<ReactiveStatement>, react_compiler_diagnostics::CompilerError> {
+    ) -> Result<Transformed<ReactiveStatement>, crate::react_compiler_diagnostics::CompilerError>
+    {
         self.visit_instruction(instruction, state)?;
 
         let mut extra_instructions: Option<Vec<ReactiveInstruction>> = None;
@@ -150,10 +153,7 @@ impl<'a> ReactiveFunctionTransform for Transform<'a> {
                         id: instruction.id,
                         lvalue: None,
                         value: ReactiveValue::Instruction(InstructionValue::StoreLocal {
-                            lvalue: LValue {
-                                kind: InstructionKind::Reassign,
-                                place: original,
-                            },
+                            lvalue: LValue { kind: InstructionKind::Reassign, place: original },
                             value: temporary,
                             type_annotation: None,
                             loc: destr_loc.clone(),

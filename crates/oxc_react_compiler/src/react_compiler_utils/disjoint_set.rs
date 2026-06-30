@@ -10,7 +10,7 @@
 use rustc_hash::FxHashSet;
 use std::hash::Hash;
 
-use crate::FxIndexMap;
+use crate::react_compiler_utils::FxIndexMap;
 
 /// A Union-Find data structure for grouping items into disjoint sets.
 ///
@@ -22,9 +22,7 @@ pub struct DisjointSet<K: Copy + Eq + Hash> {
 
 impl<K: Copy + Eq + Hash> DisjointSet<K> {
     pub fn new() -> Self {
-        DisjointSet {
-            entries: FxIndexMap::default(),
-        }
+        DisjointSet { entries: FxIndexMap::default() }
     }
 
     /// Updates the graph to reflect that the given items form a set,

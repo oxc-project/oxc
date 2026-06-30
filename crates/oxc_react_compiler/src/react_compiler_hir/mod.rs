@@ -9,13 +9,13 @@ pub mod reactive;
 pub mod type_config;
 pub mod visitors;
 
-use react_compiler_utils::FxIndexMap;
-use react_compiler_utils::FxIndexSet;
-pub use react_compiler_diagnostics::CompilerDiagnostic;
-pub use react_compiler_diagnostics::ErrorCategory;
-pub use react_compiler_diagnostics::GENERATED_SOURCE;
-pub use react_compiler_diagnostics::Position;
-pub use react_compiler_diagnostics::SourceLocation;
+pub use crate::react_compiler_diagnostics::CompilerDiagnostic;
+pub use crate::react_compiler_diagnostics::ErrorCategory;
+pub use crate::react_compiler_diagnostics::GENERATED_SOURCE;
+pub use crate::react_compiler_diagnostics::Position;
+pub use crate::react_compiler_diagnostics::SourceLocation;
+use crate::react_compiler_utils::FxIndexMap;
+use crate::react_compiler_utils::FxIndexSet;
 pub use reactive::*;
 
 // =============================================================================
@@ -115,11 +115,7 @@ pub fn format_js_number(n: f64) -> String {
         return "NaN".to_string();
     }
     if n.is_infinite() {
-        return if n > 0.0 {
-            "Infinity".to_string()
-        } else {
-            "-Infinity".to_string()
-        };
+        return if n > 0.0 { "Infinity".to_string() } else { "-Infinity".to_string() };
     }
     if n == 0.0 {
         return "0".to_string();
@@ -785,7 +781,7 @@ pub enum InstructionValue {
     UnsupportedNode {
         node_type: Option<String>,
         /// The original AST node, preserved verbatim so codegen can re-emit it.
-        original_node: Option<react_compiler_ast::OriginalNode>,
+        original_node: Option<crate::react_compiler_ast::OriginalNode>,
         loc: Option<SourceLocation>,
     },
 }
@@ -850,7 +846,7 @@ pub enum PrimitiveValue {
     Undefined,
     Boolean(bool),
     Number(FloatValue),
-    String(react_compiler_diagnostics::JsString),
+    String(crate::react_compiler_diagnostics::JsString),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -1226,52 +1222,21 @@ pub enum BindingKind {
 
 #[derive(Debug, Clone)]
 pub enum VariableBinding {
-    Identifier {
-        identifier: IdentifierId,
-        binding_kind: BindingKind,
-    },
-    Global {
-        name: String,
-    },
-    ImportDefault {
-        name: String,
-        module: String,
-    },
-    ImportSpecifier {
-        name: String,
-        module: String,
-        imported: String,
-    },
-    ImportNamespace {
-        name: String,
-        module: String,
-    },
-    ModuleLocal {
-        name: String,
-    },
+    Identifier { identifier: IdentifierId, binding_kind: BindingKind },
+    Global { name: String },
+    ImportDefault { name: String, module: String },
+    ImportSpecifier { name: String, module: String, imported: String },
+    ImportNamespace { name: String, module: String },
+    ModuleLocal { name: String },
 }
 
 #[derive(Debug, Clone)]
 pub enum NonLocalBinding {
-    ImportDefault {
-        name: String,
-        module: String,
-    },
-    ImportSpecifier {
-        name: String,
-        module: String,
-        imported: String,
-    },
-    ImportNamespace {
-        name: String,
-        module: String,
-    },
-    ModuleLocal {
-        name: String,
-    },
-    Global {
-        name: String,
-    },
+    ImportDefault { name: String, module: String },
+    ImportSpecifier { name: String, module: String, imported: String },
+    ImportNamespace { name: String, module: String },
+    ModuleLocal { name: String },
+    Global { name: String },
 }
 
 impl NonLocalBinding {
@@ -1294,26 +1259,12 @@ impl NonLocalBinding {
 #[derive(Debug, Clone)]
 pub enum Type {
     Primitive,
-    Function {
-        shape_id: Option<String>,
-        return_type: Box<Type>,
-        is_constructor: bool,
-    },
-    Object {
-        shape_id: Option<String>,
-    },
-    TypeVar {
-        id: TypeId,
-    },
+    Function { shape_id: Option<String>, return_type: Box<Type>, is_constructor: bool },
+    Object { shape_id: Option<String> },
+    TypeVar { id: TypeId },
     Poly,
-    Phi {
-        operands: Vec<Type>,
-    },
-    Property {
-        object_type: Box<Type>,
-        object_name: String,
-        property_name: PropertyNameKind,
-    },
+    Phi { operands: Vec<Type> },
+    Property { object_type: Box<Type>, object_name: String, property_name: PropertyNameKind },
     ObjectMethod,
 }
 
@@ -1379,9 +1330,9 @@ pub struct ReactiveScopeEarlyReturn {
 // Aliasing effects (runtime types, from AliasingEffects.ts)
 // =============================================================================
 
-use crate::object_shape::FunctionSignature;
-use crate::type_config::ValueKind;
-use crate::type_config::ValueReason;
+use crate::react_compiler_hir::object_shape::FunctionSignature;
+use crate::react_compiler_hir::type_config::ValueKind;
+use crate::react_compiler_hir::type_config::ValueReason;
 
 /// Reason for a mutation, used for generating hints (e.g. rename to "Ref").
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1396,10 +1347,7 @@ pub enum AliasingEffect {
     /// Marks the given value and its direct aliases as frozen.
     Freeze { value: Place, reason: ValueReason },
     /// Mutate the value and any direct aliases.
-    Mutate {
-        value: Place,
-        reason: Option<MutationReason>,
-    },
+    Mutate { value: Place, reason: Option<MutationReason> },
     /// Mutate the value conditionally (only if mutable).
     MutateConditionally { value: Place },
     /// Mutate the value and transitive captures.
@@ -1415,11 +1363,7 @@ pub enum AliasingEffect {
     /// Direct assignment: `into = from`.
     Assign { from: Place, into: Place },
     /// Creates a value of the given kind at the given place.
-    Create {
-        into: Place,
-        value: ValueKind,
-        reason: ValueReason,
-    },
+    Create { into: Place, value: ValueKind, reason: ValueReason },
     /// Creates a new value with the same kind as the source.
     CreateFrom { from: Place, into: Place },
     /// Immutable data flow (escape analysis only, no mutable range influence).
@@ -1435,26 +1379,13 @@ pub enum AliasingEffect {
         loc: Option<SourceLocation>,
     },
     /// Function expression creation with captures.
-    CreateFunction {
-        captures: Vec<Place>,
-        function_id: FunctionId,
-        into: Place,
-    },
+    CreateFunction { captures: Vec<Place>, function_id: FunctionId, into: Place },
     /// Mutation of a value known to be frozen (error).
-    MutateFrozen {
-        place: Place,
-        error: CompilerDiagnostic,
-    },
+    MutateFrozen { place: Place, error: CompilerDiagnostic },
     /// Mutation of a global value (error).
-    MutateGlobal {
-        place: Place,
-        error: CompilerDiagnostic,
-    },
+    MutateGlobal { place: Place, error: CompilerDiagnostic },
     /// Side-effect not safe during render.
-    Impure {
-        place: Place,
-        error: CompilerDiagnostic,
-    },
+    Impure { place: Place, error: CompilerDiagnostic },
     /// Value is accessed during render.
     Render { place: Place },
 }
@@ -1483,14 +1414,14 @@ pub struct AliasingSignature {
 // Type helper functions (ported from HIR.ts)
 // =============================================================================
 
-use crate::object_shape::BUILT_IN_ARRAY_ID;
-use crate::object_shape::BUILT_IN_JSX_ID;
-use crate::object_shape::BUILT_IN_MAP_ID;
-use crate::object_shape::BUILT_IN_PROPS_ID;
-use crate::object_shape::BUILT_IN_REF_VALUE_ID;
-use crate::object_shape::BUILT_IN_SET_ID;
-use crate::object_shape::BUILT_IN_USE_OPERATOR_ID;
-use crate::object_shape::BUILT_IN_USE_REF_ID;
+use crate::react_compiler_hir::object_shape::BUILT_IN_ARRAY_ID;
+use crate::react_compiler_hir::object_shape::BUILT_IN_JSX_ID;
+use crate::react_compiler_hir::object_shape::BUILT_IN_MAP_ID;
+use crate::react_compiler_hir::object_shape::BUILT_IN_PROPS_ID;
+use crate::react_compiler_hir::object_shape::BUILT_IN_REF_VALUE_ID;
+use crate::react_compiler_hir::object_shape::BUILT_IN_SET_ID;
+use crate::react_compiler_hir::object_shape::BUILT_IN_USE_OPERATOR_ID;
+use crate::react_compiler_hir::object_shape::BUILT_IN_USE_REF_ID;
 
 /// Returns true if the type (looked up via identifier) is primitive.
 pub fn is_primitive_type(ty: &Type) -> bool {
@@ -1601,10 +1532,7 @@ mod tests {
         // Scientific notation for large numbers (>= 1e21)
         assert_eq!(format_js_number(1e21), "1e+21");
         assert_eq!(format_js_number(1.5e21), "1.5e+21");
-        assert_eq!(
-            format_js_number(2.18739127891275e22),
-            "2.18739127891275e+22"
-        );
+        assert_eq!(format_js_number(2.18739127891275e22), "2.18739127891275e+22");
         assert_eq!(format_js_number(1e100), "1e+100");
         assert_eq!(format_js_number(-1e21), "-1e+21");
         assert_eq!(format_js_number(-1e100), "-1e+100");

@@ -6,8 +6,8 @@
  */
 use rustc_hash::FxHashMap;
 
-use crate::environment::Environment;
-use crate::{
+use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_hir::{
     ArrayElement, ArrayPatternElement, BasicBlock, BlockId, HirFunction, IdentifierId, Instruction,
     InstructionKind, InstructionValue, JsxAttribute, JsxTag, ManualMemoDependencyRoot,
     ObjectPropertyKey, ObjectPropertyOrSpread, Pattern, Place, PlaceOrSpread, ScopeId, Terminal,
@@ -187,12 +187,7 @@ pub fn each_instruction_value_operand_with_functions(
             result.push(left.clone());
             result.push(right.clone());
         }
-        InstructionValue::MethodCall {
-            receiver,
-            property,
-            args,
-            ..
-        } => {
+        InstructionValue::MethodCall { receiver, property, args, .. } => {
             result.push(receiver.clone());
             result.push(property.clone());
             result.extend(each_call_argument(args));
@@ -206,9 +201,7 @@ pub fn each_instruction_value_operand_with_functions(
         InstructionValue::StoreLocal { value: val, .. } => {
             result.push(val.clone());
         }
-        InstructionValue::StoreContext {
-            lvalue, value: val, ..
-        } => {
+        InstructionValue::StoreContext { lvalue, value: val, .. } => {
             result.push(lvalue.place.clone());
             result.push(val.clone());
         }
@@ -224,30 +217,19 @@ pub fn each_instruction_value_operand_with_functions(
         InstructionValue::PropertyDelete { object, .. } => {
             result.push(object.clone());
         }
-        InstructionValue::PropertyStore {
-            object, value: val, ..
-        } => {
+        InstructionValue::PropertyStore { object, value: val, .. } => {
             result.push(object.clone());
             result.push(val.clone());
         }
-        InstructionValue::ComputedLoad {
-            object, property, ..
-        } => {
+        InstructionValue::ComputedLoad { object, property, .. } => {
             result.push(object.clone());
             result.push(property.clone());
         }
-        InstructionValue::ComputedDelete {
-            object, property, ..
-        } => {
+        InstructionValue::ComputedDelete { object, property, .. } => {
             result.push(object.clone());
             result.push(property.clone());
         }
-        InstructionValue::ComputedStore {
-            object,
-            property,
-            value: val,
-            ..
-        } => {
+        InstructionValue::ComputedStore { object, property, value: val, .. } => {
             result.push(object.clone());
             result.push(property.clone());
             result.push(val.clone());
@@ -255,12 +237,7 @@ pub fn each_instruction_value_operand_with_functions(
         InstructionValue::UnaryExpression { value: val, .. } => {
             result.push(val.clone());
         }
-        InstructionValue::JsxExpression {
-            tag,
-            props,
-            children,
-            ..
-        } => {
+        InstructionValue::JsxExpression { tag, props, children, .. } => {
             if let JsxTag::Place(place) = tag {
                 result.push(place.clone());
             }
@@ -340,11 +317,7 @@ pub fn each_instruction_value_operand_with_functions(
         InstructionValue::GetIterator { collection, .. } => {
             result.push(collection.clone());
         }
-        InstructionValue::IteratorNext {
-            iterator,
-            collection,
-            ..
-        } => {
+        InstructionValue::IteratorNext { iterator, collection, .. } => {
             result.push(iterator.clone());
             result.push(collection.clone());
         }
@@ -461,19 +434,11 @@ pub fn each_terminal_successor(terminal: &Terminal) -> Vec<BlockId> {
         Terminal::Goto { block, .. } => {
             result.push(*block);
         }
-        Terminal::If {
-            consequent,
-            alternate,
-            ..
-        } => {
+        Terminal::If { consequent, alternate, .. } => {
             result.push(*consequent);
             result.push(*alternate);
         }
-        Terminal::Branch {
-            consequent,
-            alternate,
-            ..
-        } => {
+        Terminal::Branch { consequent, alternate, .. } => {
             result.push(*consequent);
             result.push(*alternate);
         }
@@ -510,11 +475,7 @@ pub fn each_terminal_successor(terminal: &Terminal) -> Vec<BlockId> {
         Terminal::Sequence { block, .. } => {
             result.push(*block);
         }
-        Terminal::MaybeThrow {
-            continuation,
-            handler,
-            ..
-        } => {
+        Terminal::MaybeThrow { continuation, handler, .. } => {
             result.push(*continuation);
             if let Some(handler) = handler {
                 result.push(*handler);
@@ -553,9 +514,7 @@ pub fn each_terminal_operand(terminal: &Terminal) -> Vec<Place> {
         Terminal::Return { value, .. } | Terminal::Throw { value, .. } => {
             result.push(value.clone());
         }
-        Terminal::Try {
-            handler_binding, ..
-        } => {
+        Terminal::Try { handler_binding, .. } => {
             if let Some(binding) = handler_binding {
                 result.push(binding.clone());
             }
@@ -636,30 +595,19 @@ pub fn map_instruction_value_operands(
         InstructionValue::PropertyDelete { object, .. } => {
             *object = f(object.clone());
         }
-        InstructionValue::PropertyStore {
-            object, value: val, ..
-        } => {
+        InstructionValue::PropertyStore { object, value: val, .. } => {
             *object = f(object.clone());
             *val = f(val.clone());
         }
-        InstructionValue::ComputedLoad {
-            object, property, ..
-        } => {
+        InstructionValue::ComputedLoad { object, property, .. } => {
             *object = f(object.clone());
             *property = f(property.clone());
         }
-        InstructionValue::ComputedDelete {
-            object, property, ..
-        } => {
+        InstructionValue::ComputedDelete { object, property, .. } => {
             *object = f(object.clone());
             *property = f(property.clone());
         }
-        InstructionValue::ComputedStore {
-            object,
-            property,
-            value: val,
-            ..
-        } => {
+        InstructionValue::ComputedStore { object, property, value: val, .. } => {
             *object = f(object.clone());
             *property = f(property.clone());
             *val = f(val.clone());
@@ -673,9 +621,7 @@ pub fn map_instruction_value_operands(
         InstructionValue::StoreLocal { value: val, .. } => {
             *val = f(val.clone());
         }
-        InstructionValue::StoreContext {
-            lvalue, value: val, ..
-        } => {
+        InstructionValue::StoreContext { lvalue, value: val, .. } => {
             lvalue.place = f(lvalue.place.clone());
             *val = f(val.clone());
         }
@@ -690,12 +636,7 @@ pub fn map_instruction_value_operands(
             *callee = f(callee.clone());
             map_call_arguments(args, f);
         }
-        InstructionValue::MethodCall {
-            receiver,
-            property,
-            args,
-            ..
-        } => {
+        InstructionValue::MethodCall { receiver, property, args, .. } => {
             *receiver = f(receiver.clone());
             *property = f(property.clone());
             map_call_arguments(args, f);
@@ -703,12 +644,7 @@ pub fn map_instruction_value_operands(
         InstructionValue::UnaryExpression { value: val, .. } => {
             *val = f(val.clone());
         }
-        InstructionValue::JsxExpression {
-            tag,
-            props,
-            children,
-            ..
-        } => {
+        InstructionValue::JsxExpression { tag, props, children, .. } => {
             if let JsxTag::Place(place) = tag {
                 *place = f(place.clone());
             }
@@ -779,11 +715,7 @@ pub fn map_instruction_value_operands(
         InstructionValue::GetIterator { collection, .. } => {
             *collection = f(collection.clone());
         }
-        InstructionValue::IteratorNext {
-            iterator,
-            collection,
-            ..
-        } => {
+        InstructionValue::IteratorNext { iterator, collection, .. } => {
             *iterator = f(iterator.clone());
             *collection = f(collection.clone());
         }
@@ -876,82 +808,47 @@ pub fn map_terminal_successors(terminal: &mut Terminal, f: &mut impl FnMut(Block
         Terminal::Goto { block, .. } => {
             *block = f(*block);
         }
-        Terminal::If {
-            consequent,
-            alternate,
-            fallthrough,
-            ..
-        } => {
+        Terminal::If { consequent, alternate, fallthrough, .. } => {
             *consequent = f(*consequent);
             *alternate = f(*alternate);
             *fallthrough = f(*fallthrough);
         }
-        Terminal::Branch {
-            consequent,
-            alternate,
-            fallthrough,
-            ..
-        } => {
+        Terminal::Branch { consequent, alternate, fallthrough, .. } => {
             *consequent = f(*consequent);
             *alternate = f(*alternate);
             *fallthrough = f(*fallthrough);
         }
-        Terminal::Switch {
-            cases, fallthrough, ..
-        } => {
+        Terminal::Switch { cases, fallthrough, .. } => {
             for case in cases.iter_mut() {
                 case.block = f(case.block);
             }
             *fallthrough = f(*fallthrough);
         }
-        Terminal::Logical {
-            test, fallthrough, ..
-        } => {
+        Terminal::Logical { test, fallthrough, .. } => {
             *test = f(*test);
             *fallthrough = f(*fallthrough);
         }
-        Terminal::Ternary {
-            test, fallthrough, ..
-        } => {
+        Terminal::Ternary { test, fallthrough, .. } => {
             *test = f(*test);
             *fallthrough = f(*fallthrough);
         }
-        Terminal::Optional {
-            test, fallthrough, ..
-        } => {
+        Terminal::Optional { test, fallthrough, .. } => {
             *test = f(*test);
             *fallthrough = f(*fallthrough);
         }
         Terminal::Return { .. } => {}
         Terminal::Throw { .. } => {}
-        Terminal::DoWhile {
-            loop_block,
-            test,
-            fallthrough,
-            ..
-        } => {
+        Terminal::DoWhile { loop_block, test, fallthrough, .. } => {
             *loop_block = f(*loop_block);
             *test = f(*test);
             *fallthrough = f(*fallthrough);
         }
-        Terminal::While {
-            test,
-            loop_block,
-            fallthrough,
-            ..
-        } => {
+        Terminal::While { test, loop_block, fallthrough, .. } => {
             *test = f(*test);
             *loop_block = f(*loop_block);
             *fallthrough = f(*fallthrough);
         }
-        Terminal::For {
-            init,
-            test,
-            update,
-            loop_block,
-            fallthrough,
-            ..
-        } => {
+        Terminal::For { init, test, update, loop_block, fallthrough, .. } => {
             *init = f(*init);
             *test = f(*test);
             if let Some(update) = update {
@@ -960,66 +857,38 @@ pub fn map_terminal_successors(terminal: &mut Terminal, f: &mut impl FnMut(Block
             *loop_block = f(*loop_block);
             *fallthrough = f(*fallthrough);
         }
-        Terminal::ForOf {
-            init,
-            test,
-            loop_block,
-            fallthrough,
-            ..
-        } => {
+        Terminal::ForOf { init, test, loop_block, fallthrough, .. } => {
             *init = f(*init);
             *test = f(*test);
             *loop_block = f(*loop_block);
             *fallthrough = f(*fallthrough);
         }
-        Terminal::ForIn {
-            init,
-            loop_block,
-            fallthrough,
-            ..
-        } => {
+        Terminal::ForIn { init, loop_block, fallthrough, .. } => {
             *init = f(*init);
             *loop_block = f(*loop_block);
             *fallthrough = f(*fallthrough);
         }
-        Terminal::Label {
-            block, fallthrough, ..
-        } => {
+        Terminal::Label { block, fallthrough, .. } => {
             *block = f(*block);
             *fallthrough = f(*fallthrough);
         }
-        Terminal::Sequence {
-            block, fallthrough, ..
-        } => {
+        Terminal::Sequence { block, fallthrough, .. } => {
             *block = f(*block);
             *fallthrough = f(*fallthrough);
         }
-        Terminal::MaybeThrow {
-            continuation,
-            handler,
-            ..
-        } => {
+        Terminal::MaybeThrow { continuation, handler, .. } => {
             *continuation = f(*continuation);
             if let Some(handler) = handler {
                 *handler = f(*handler);
             }
         }
-        Terminal::Try {
-            block,
-            handler,
-            fallthrough,
-            ..
-        } => {
+        Terminal::Try { block, handler, fallthrough, .. } => {
             *block = f(*block);
             *handler = f(*handler);
             *fallthrough = f(*fallthrough);
         }
-        Terminal::Scope {
-            block, fallthrough, ..
-        }
-        | Terminal::PrunedScope {
-            block, fallthrough, ..
-        } => {
+        Terminal::Scope { block, fallthrough, .. }
+        | Terminal::PrunedScope { block, fallthrough, .. } => {
             *block = f(*block);
             *fallthrough = f(*fallthrough);
         }
@@ -1048,9 +917,7 @@ pub fn map_terminal_operands(terminal: &mut Terminal, f: &mut impl FnMut(Place) 
         Terminal::Return { value, .. } | Terminal::Throw { value, .. } => {
             *value = f(value.clone());
         }
-        Terminal::Try {
-            handler_binding, ..
-        } => {
+        Terminal::Try { handler_binding, .. } => {
             if let Some(binding) = handler_binding {
                 *binding = f(binding.clone());
             }
@@ -1085,75 +952,40 @@ pub fn each_terminal_all_successors(terminal: &Terminal) -> Vec<BlockId> {
         Terminal::Goto { block, .. } => {
             result.push(*block);
         }
-        Terminal::If {
-            consequent,
-            alternate,
-            fallthrough,
-            ..
-        } => {
+        Terminal::If { consequent, alternate, fallthrough, .. } => {
             result.push(*consequent);
             result.push(*alternate);
             result.push(*fallthrough);
         }
-        Terminal::Branch {
-            consequent,
-            alternate,
-            fallthrough,
-            ..
-        } => {
+        Terminal::Branch { consequent, alternate, fallthrough, .. } => {
             result.push(*consequent);
             result.push(*alternate);
             result.push(*fallthrough);
         }
-        Terminal::Switch {
-            cases, fallthrough, ..
-        } => {
+        Terminal::Switch { cases, fallthrough, .. } => {
             for case in cases {
                 result.push(case.block);
             }
             result.push(*fallthrough);
         }
-        Terminal::Logical {
-            test, fallthrough, ..
-        }
-        | Terminal::Ternary {
-            test, fallthrough, ..
-        }
-        | Terminal::Optional {
-            test, fallthrough, ..
-        } => {
+        Terminal::Logical { test, fallthrough, .. }
+        | Terminal::Ternary { test, fallthrough, .. }
+        | Terminal::Optional { test, fallthrough, .. } => {
             result.push(*test);
             result.push(*fallthrough);
         }
         Terminal::Return { .. } | Terminal::Throw { .. } => {}
-        Terminal::DoWhile {
-            loop_block,
-            test,
-            fallthrough,
-            ..
-        } => {
+        Terminal::DoWhile { loop_block, test, fallthrough, .. } => {
             result.push(*loop_block);
             result.push(*test);
             result.push(*fallthrough);
         }
-        Terminal::While {
-            test,
-            loop_block,
-            fallthrough,
-            ..
-        } => {
+        Terminal::While { test, loop_block, fallthrough, .. } => {
             result.push(*test);
             result.push(*loop_block);
             result.push(*fallthrough);
         }
-        Terminal::For {
-            init,
-            test,
-            update,
-            loop_block,
-            fallthrough,
-            ..
-        } => {
+        Terminal::For { init, test, update, loop_block, fallthrough, .. } => {
             result.push(*init);
             result.push(*test);
             if let Some(update) = update {
@@ -1162,63 +994,35 @@ pub fn each_terminal_all_successors(terminal: &Terminal) -> Vec<BlockId> {
             result.push(*loop_block);
             result.push(*fallthrough);
         }
-        Terminal::ForOf {
-            init,
-            test,
-            loop_block,
-            fallthrough,
-            ..
-        } => {
+        Terminal::ForOf { init, test, loop_block, fallthrough, .. } => {
             result.push(*init);
             result.push(*test);
             result.push(*loop_block);
             result.push(*fallthrough);
         }
-        Terminal::ForIn {
-            init,
-            loop_block,
-            fallthrough,
-            ..
-        } => {
+        Terminal::ForIn { init, loop_block, fallthrough, .. } => {
             result.push(*init);
             result.push(*loop_block);
             result.push(*fallthrough);
         }
-        Terminal::Label {
-            block, fallthrough, ..
-        }
-        | Terminal::Sequence {
-            block, fallthrough, ..
-        } => {
+        Terminal::Label { block, fallthrough, .. }
+        | Terminal::Sequence { block, fallthrough, .. } => {
             result.push(*block);
             result.push(*fallthrough);
         }
-        Terminal::MaybeThrow {
-            continuation,
-            handler,
-            ..
-        } => {
+        Terminal::MaybeThrow { continuation, handler, .. } => {
             result.push(*continuation);
             if let Some(handler) = handler {
                 result.push(*handler);
             }
         }
-        Terminal::Try {
-            block,
-            handler,
-            fallthrough,
-            ..
-        } => {
+        Terminal::Try { block, handler, fallthrough, .. } => {
             result.push(*block);
             result.push(*handler);
             result.push(*fallthrough);
         }
-        Terminal::Scope {
-            block, fallthrough, ..
-        }
-        | Terminal::PrunedScope {
-            block, fallthrough, ..
-        } => {
+        Terminal::Scope { block, fallthrough, .. }
+        | Terminal::PrunedScope { block, fallthrough, .. } => {
             result.push(*block);
             result.push(*fallthrough);
         }
@@ -1276,15 +1080,8 @@ pub fn terminal_has_fallthrough(terminal: &Terminal) -> bool {
 /// Block info entry for ScopeBlockTraversal.
 #[derive(Debug, Clone)]
 pub enum ScopeBlockInfo {
-    Begin {
-        scope: ScopeId,
-        pruned: bool,
-        fallthrough: BlockId,
-    },
-    End {
-        scope: ScopeId,
-        pruned: bool,
-    },
+    Begin { scope: ScopeId, pruned: bool, fallthrough: BlockId },
+    End { scope: ScopeId, pruned: bool },
 }
 
 /// Helper struct for traversing scope blocks in HIR-form.
@@ -1298,10 +1095,7 @@ pub struct ScopeBlockTraversal {
 
 impl ScopeBlockTraversal {
     pub fn new() -> Self {
-        ScopeBlockTraversal {
-            active_scopes: Vec::new(),
-            block_infos: FxHashMap::default(),
-        }
+        ScopeBlockTraversal { active_scopes: Vec::new(), block_infos: FxHashMap::default() }
     }
 
     /// Record scope information for a block's terminal.
@@ -1325,12 +1119,7 @@ impl ScopeBlockTraversal {
         }
 
         match &block.terminal {
-            Terminal::Scope {
-                block: scope_block,
-                fallthrough,
-                scope,
-                ..
-            } => {
+            Terminal::Scope { block: scope_block, fallthrough, scope, .. } => {
                 assert!(
                     !self.block_infos.contains_key(scope_block)
                         && !self.block_infos.contains_key(fallthrough),
@@ -1344,20 +1133,10 @@ impl ScopeBlockTraversal {
                         fallthrough: *fallthrough,
                     },
                 );
-                self.block_infos.insert(
-                    *fallthrough,
-                    ScopeBlockInfo::End {
-                        scope: *scope,
-                        pruned: false,
-                    },
-                );
+                self.block_infos
+                    .insert(*fallthrough, ScopeBlockInfo::End { scope: *scope, pruned: false });
             }
-            Terminal::PrunedScope {
-                block: scope_block,
-                fallthrough,
-                scope,
-                ..
-            } => {
+            Terminal::PrunedScope { block: scope_block, fallthrough, scope, .. } => {
                 assert!(
                     !self.block_infos.contains_key(scope_block)
                         && !self.block_infos.contains_key(fallthrough),
@@ -1371,13 +1150,8 @@ impl ScopeBlockTraversal {
                         fallthrough: *fallthrough,
                     },
                 );
-                self.block_infos.insert(
-                    *fallthrough,
-                    ScopeBlockInfo::End {
-                        scope: *scope,
-                        pruned: true,
-                    },
-                );
+                self.block_infos
+                    .insert(*fallthrough, ScopeBlockInfo::End { scope: *scope, pruned: true });
             }
             _ => {}
         }
@@ -1408,19 +1182,13 @@ impl Default for ScopeBlockTraversal {
 /// Collect all lvalue IdentifierIds from an instruction.
 /// Convenience wrapper around `each_instruction_lvalue` that maps to ids.
 pub fn each_instruction_lvalue_ids(instr: &Instruction) -> Vec<IdentifierId> {
-    each_instruction_lvalue(instr)
-        .into_iter()
-        .map(|p| p.identifier)
-        .collect()
+    each_instruction_lvalue(instr).into_iter().map(|p| p.identifier).collect()
 }
 
 /// Collect all operand IdentifierIds from an instruction.
 /// Convenience wrapper around `each_instruction_operand` that maps to ids.
 pub fn each_instruction_operand_ids(instr: &Instruction, env: &Environment) -> Vec<IdentifierId> {
-    each_instruction_operand(instr, env)
-        .into_iter()
-        .map(|p| p.identifier)
-        .collect()
+    each_instruction_operand(instr, env).into_iter().map(|p| p.identifier).collect()
 }
 
 /// Collect all operand IdentifierIds from an instruction value.
@@ -1429,28 +1197,19 @@ pub fn each_instruction_value_operand_ids(
     value: &InstructionValue,
     env: &Environment,
 ) -> Vec<IdentifierId> {
-    each_instruction_value_operand(value, env)
-        .into_iter()
-        .map(|p| p.identifier)
-        .collect()
+    each_instruction_value_operand(value, env).into_iter().map(|p| p.identifier).collect()
 }
 
 /// Collect all operand IdentifierIds from a terminal.
 /// Convenience wrapper around `each_terminal_operand` that maps to ids.
 pub fn each_terminal_operand_ids(terminal: &Terminal) -> Vec<IdentifierId> {
-    each_terminal_operand(terminal)
-        .into_iter()
-        .map(|p| p.identifier)
-        .collect()
+    each_terminal_operand(terminal).into_iter().map(|p| p.identifier).collect()
 }
 
 /// Collect all IdentifierIds from a pattern.
 /// Convenience wrapper around `each_pattern_operand` that maps to ids.
 pub fn each_pattern_operand_ids(pattern: &Pattern) -> Vec<IdentifierId> {
-    each_pattern_operand(pattern)
-        .into_iter()
-        .map(|p| p.identifier)
-        .collect()
+    each_pattern_operand(pattern).into_iter().map(|p| p.identifier).collect()
 }
 
 // =============================================================================
@@ -1486,27 +1245,16 @@ pub fn for_each_instruction_value_operand_mut(
         | InstructionValue::PropertyDelete { object, .. } => {
             f(object);
         }
-        InstructionValue::PropertyStore {
-            object, value: val, ..
-        } => {
+        InstructionValue::PropertyStore { object, value: val, .. } => {
             f(object);
             f(val);
         }
-        InstructionValue::ComputedLoad {
-            object, property, ..
-        }
-        | InstructionValue::ComputedDelete {
-            object, property, ..
-        } => {
+        InstructionValue::ComputedLoad { object, property, .. }
+        | InstructionValue::ComputedDelete { object, property, .. } => {
             f(object);
             f(property);
         }
-        InstructionValue::ComputedStore {
-            object,
-            property,
-            value: val,
-            ..
-        } => {
+        InstructionValue::ComputedStore { object, property, value: val, .. } => {
             f(object);
             f(property);
             f(val);
@@ -1518,9 +1266,7 @@ pub fn for_each_instruction_value_operand_mut(
         InstructionValue::StoreLocal { value: val, .. } => {
             f(val);
         }
-        InstructionValue::StoreContext {
-            lvalue, value: val, ..
-        } => {
+        InstructionValue::StoreContext { lvalue, value: val, .. } => {
             f(&mut lvalue.place);
             f(val);
         }
@@ -1535,12 +1281,7 @@ pub fn for_each_instruction_value_operand_mut(
             f(callee);
             for_each_call_argument_mut(args, f);
         }
-        InstructionValue::MethodCall {
-            receiver,
-            property,
-            args,
-            ..
-        } => {
+        InstructionValue::MethodCall { receiver, property, args, .. } => {
             f(receiver);
             f(property);
             for_each_call_argument_mut(args, f);
@@ -1548,12 +1289,7 @@ pub fn for_each_instruction_value_operand_mut(
         InstructionValue::UnaryExpression { value: val, .. } => {
             f(val);
         }
-        InstructionValue::JsxExpression {
-            tag,
-            props,
-            children,
-            ..
-        } => {
+        InstructionValue::JsxExpression { tag, props, children, .. } => {
             if let JsxTag::Place(place) = tag {
                 f(place);
             }
@@ -1621,11 +1357,7 @@ pub fn for_each_instruction_value_operand_mut(
         InstructionValue::GetIterator { collection, .. } => {
             f(collection);
         }
-        InstructionValue::IteratorNext {
-            iterator,
-            collection,
-            ..
-        } => {
+        InstructionValue::IteratorNext { iterator, collection, .. } => {
             f(iterator);
             f(collection);
         }
@@ -1753,9 +1485,7 @@ pub fn for_each_terminal_operand_mut(terminal: &mut Terminal, f: &mut impl FnMut
         Terminal::Return { value, .. } | Terminal::Throw { value, .. } => {
             f(value);
         }
-        Terminal::Try {
-            handler_binding, ..
-        } => {
+        Terminal::Try { handler_binding, .. } => {
             if let Some(binding) = handler_binding {
                 f(binding);
             }

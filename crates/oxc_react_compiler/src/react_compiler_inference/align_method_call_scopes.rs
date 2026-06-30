@@ -11,9 +11,11 @@
 
 use rustc_hash::FxHashMap;
 
-use react_compiler_hir::environment::Environment;
-use react_compiler_hir::{EvaluationOrder, HirFunction, IdentifierId, InstructionValue, ScopeId};
-use react_compiler_utils::DisjointSet;
+use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_hir::{
+    EvaluationOrder, HirFunction, IdentifierId, InstructionValue, ScopeId,
+};
+use crate::react_compiler_utils::DisjointSet;
 
 // =============================================================================
 // Public API
@@ -63,7 +65,7 @@ pub fn align_method_call_scopes(func: &mut HirFunction, env: &mut Environment) {
                     let func_id = lowered_func.func;
                     let mut inner_func = std::mem::replace(
                         &mut env.functions[func_id.0 as usize],
-                        react_compiler_ssa::enter_ssa::placeholder_function(),
+                        crate::react_compiler_ssa::enter_ssa::placeholder_function(),
                     );
                     align_method_call_scopes(&mut inner_func, env);
                     env.functions[func_id.0 as usize] = inner_func;
@@ -76,7 +78,8 @@ pub fn align_method_call_scopes(func: &mut HirFunction, env: &mut Environment) {
     // Phase 2: Merge scope ranges for unioned scopes.
     // Use a FxHashMap to accumulate min/max across all scopes mapping to the same root,
     // matching TS behavior where root.range is updated in-place during iteration.
-    let mut range_updates: FxHashMap<ScopeId, (EvaluationOrder, EvaluationOrder)> = FxHashMap::default();
+    let mut range_updates: FxHashMap<ScopeId, (EvaluationOrder, EvaluationOrder)> =
+        FxHashMap::default();
 
     merged_scopes.for_each(|scope_id, root_id| {
         if scope_id == root_id {
@@ -85,21 +88,21 @@ pub fn align_method_call_scopes(func: &mut HirFunction, env: &mut Environment) {
         let scope_range = env.scopes[scope_id.0 as usize].range.clone();
         let root_range = env.scopes[root_id.0 as usize].range.clone();
 
-        let entry = range_updates
-            .entry(root_id)
-            .or_insert_with(|| (root_range.start, root_range.end));
+        let entry =
+            range_updates.entry(root_id).or_insert_with(|| (root_range.start, root_range.end));
         entry.0 = EvaluationOrder(std::cmp::min(entry.0.0, scope_range.start.0));
         entry.1 = EvaluationOrder(std::cmp::max(entry.1.0, scope_range.end.0));
     });
 
     // Save original scope range IDs before updating
-    let original_range_ids: FxHashMap<ScopeId, react_compiler_hir::MutableRangeId> = range_updates
-        .keys()
-        .map(|&root_id| {
-            let range_id = env.scopes[root_id.0 as usize].range.id;
-            (root_id, range_id)
-        })
-        .collect();
+    let original_range_ids: FxHashMap<ScopeId, crate::react_compiler_hir::MutableRangeId> =
+        range_updates
+            .keys()
+            .map(|&root_id| {
+                let range_id = env.scopes[root_id.0 as usize].range.id;
+                (root_id, range_id)
+            })
+            .collect();
 
     for (root_id, (new_start, new_end)) in &range_updates {
         env.scopes[root_id.0 as usize].range.start = *new_start;

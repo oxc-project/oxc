@@ -9,11 +9,11 @@
 
 use rustc_hash::FxHashSet;
 
-use react_compiler_diagnostics::{
+use crate::react_compiler_diagnostics::{
     CompilerDiagnostic, CompilerDiagnosticDetail, ErrorCategory, SourceLocation,
 };
-use react_compiler_hir::environment::Environment;
-use react_compiler_hir::{
+use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_hir::{
     BasicBlock, BlockId, EvaluationOrder, GotoVariant, HirFunction, InstructionValue, Place,
     PrunedReactiveScopeBlock, ReactiveBlock, ReactiveFunction, ReactiveInstruction, ReactiveLabel,
     ReactiveScopeBlock, ReactiveStatement, ReactiveSwitchCase, ReactiveTerminal,
@@ -26,11 +26,7 @@ pub fn build_reactive_function(
     env: &Environment,
 ) -> Result<ReactiveFunction, CompilerDiagnostic> {
     let mut ctx = Context::new(hir);
-    let mut driver = Driver {
-        cx: &mut ctx,
-        hir,
-        env,
-    };
+    let mut driver = Driver { cx: &mut ctx, hir, env };
 
     let entry_block_id = hir.body.entry;
     let mut body = Vec::new();
@@ -181,10 +177,7 @@ impl<'a> Context<'a> {
         if self.scheduled.contains(&continue_block) {
             return Err(CompilerDiagnostic::new(
                 ErrorCategory::Invariant,
-                format!(
-                    "Continue block is already scheduled: bb{}",
-                    continue_block.0
-                ),
+                format!("Continue block is already scheduled: bb{}", continue_block.0),
                 None,
             ));
         }
@@ -207,10 +200,7 @@ impl<'a> Context<'a> {
     }
 
     fn unschedule(&mut self, schedule_id: u32) -> Result<(), CompilerDiagnostic> {
-        let last = self
-            .control_flow_stack
-            .pop()
-            .expect("Can only unschedule the last target");
+        let last = self.control_flow_stack.pop().expect("Can only unschedule the last target");
         if last.id() != schedule_id {
             return Err(CompilerDiagnostic::new(
                 ErrorCategory::Invariant,
@@ -219,13 +209,7 @@ impl<'a> Context<'a> {
             ));
         }
         match &last {
-            ControlFlowTarget::Loop {
-                block,
-                continue_block,
-                loop_block,
-                owns_loop,
-                ..
-            } => {
+            ControlFlowTarget::Loop { block, continue_block, loop_block, owns_loop, .. } => {
                 // TS: always removes block from scheduled for loops
                 // (ownsBlock is boolean, so `!== null` is always true)
                 self.scheduled.remove(block);
@@ -288,11 +272,7 @@ impl<'a> Context<'a> {
         let mut has_preceding_loop = false;
         for i in (0..self.control_flow_stack.len()).rev() {
             let target = &self.control_flow_stack[i];
-            if let ControlFlowTarget::Loop {
-                block: fallthrough_block,
-                continue_block,
-                ..
-            } = target
+            if let ControlFlowTarget::Loop { block: fallthrough_block, continue_block, .. } = target
             {
                 if *continue_block == block {
                     let kind = if has_preceding_loop {
@@ -369,14 +349,7 @@ impl<'a, 'b> Driver<'a, 'b> {
             let mut next_block: Option<BlockId> = None;
 
             match &terminal {
-                Terminal::If {
-                    test,
-                    consequent,
-                    alternate,
-                    fallthrough,
-                    id,
-                    loc,
-                } => {
+                Terminal::If { test, consequent, alternate, fallthrough, id, loc } => {
                     // TS: reachable(fallthrough) && !isScheduled(fallthrough)
                     let fallthrough_id =
                         if self.cx.reachable(*fallthrough) && !self.cx.is_scheduled(*fallthrough) {
@@ -385,11 +358,8 @@ impl<'a, 'b> Driver<'a, 'b> {
                             None
                         };
                     // TS: alternate !== fallthrough ? alternate : null
-                    let alternate_id = if *alternate != *fallthrough {
-                        Some(*alternate)
-                    } else {
-                        None
-                    };
+                    let alternate_id =
+                        if *alternate != *fallthrough { Some(*alternate) } else { None };
 
                     if let Some(ft) = fallthrough_id {
                         schedule_ids.push(self.cx.schedule(ft, "if")?);
@@ -434,22 +404,13 @@ impl<'a, 'b> Driver<'a, 'b> {
                             id: *id,
                             loc: *loc,
                         },
-                        label: fallthrough_id.map(|ft| ReactiveLabel {
-                            id: ft,
-                            implicit: false,
-                        }),
+                        label: fallthrough_id.map(|ft| ReactiveLabel { id: ft, implicit: false }),
                     }));
 
                     next_block = fallthrough_id;
                 }
 
-                Terminal::Switch {
-                    test,
-                    cases,
-                    fallthrough,
-                    id,
-                    loc,
-                } => {
+                Terminal::Switch { test, cases, fallthrough, id, loc } => {
                     // TS: reachable(fallthrough) && !isScheduled(fallthrough)
                     let fallthrough_id =
                         if self.cx.reachable(*fallthrough) && !self.cx.is_scheduled(*fallthrough) {
@@ -499,27 +460,15 @@ impl<'a, 'b> Driver<'a, 'b> {
                             id: *id,
                             loc: *loc,
                         },
-                        label: fallthrough_id.map(|ft| ReactiveLabel {
-                            id: ft,
-                            implicit: false,
-                        }),
+                        label: fallthrough_id.map(|ft| ReactiveLabel { id: ft, implicit: false }),
                     }));
 
                     next_block = fallthrough_id;
                 }
 
-                Terminal::DoWhile {
-                    loop_block,
-                    test,
-                    fallthrough,
-                    id,
-                    loc,
-                } => {
-                    let fallthrough_id = if !self.cx.is_scheduled(*fallthrough) {
-                        Some(*fallthrough)
-                    } else {
-                        None
-                    };
+                Terminal::DoWhile { loop_block, test, fallthrough, id, loc } => {
+                    let fallthrough_id =
+                        if !self.cx.is_scheduled(*fallthrough) { Some(*fallthrough) } else { None };
                     let loop_id =
                         if !self.cx.is_scheduled(*loop_block) && *loop_block != *fallthrough {
                             Some(*loop_block)
@@ -552,22 +501,13 @@ impl<'a, 'b> Driver<'a, 'b> {
                             id: *id,
                             loc: *loc,
                         },
-                        label: fallthrough_id.map(|ft| ReactiveLabel {
-                            id: ft,
-                            implicit: false,
-                        }),
+                        label: fallthrough_id.map(|ft| ReactiveLabel { id: ft, implicit: false }),
                     }));
 
                     next_block = fallthrough_id;
                 }
 
-                Terminal::While {
-                    test,
-                    loop_block,
-                    fallthrough,
-                    id,
-                    loc,
-                } => {
+                Terminal::While { test, loop_block, fallthrough, id, loc } => {
                     // TS: reachable(fallthrough) && !isScheduled(fallthrough)
                     let fallthrough_id =
                         if self.cx.reachable(*fallthrough) && !self.cx.is_scheduled(*fallthrough) {
@@ -608,24 +548,13 @@ impl<'a, 'b> Driver<'a, 'b> {
                             id: *id,
                             loc: *loc,
                         },
-                        label: fallthrough_id.map(|ft| ReactiveLabel {
-                            id: ft,
-                            implicit: false,
-                        }),
+                        label: fallthrough_id.map(|ft| ReactiveLabel { id: ft, implicit: false }),
                     }));
 
                     next_block = fallthrough_id;
                 }
 
-                Terminal::For {
-                    init,
-                    test,
-                    update,
-                    loop_block,
-                    fallthrough,
-                    id,
-                    loc,
-                } => {
+                Terminal::For { init, test, update, loop_block, fallthrough, id, loc } => {
                     let loop_id =
                         if !self.cx.is_scheduled(*loop_block) && *loop_block != *fallthrough {
                             Some(*loop_block)
@@ -633,11 +562,8 @@ impl<'a, 'b> Driver<'a, 'b> {
                             None
                         };
 
-                    let fallthrough_id = if !self.cx.is_scheduled(*fallthrough) {
-                        Some(*fallthrough)
-                    } else {
-                        None
-                    };
+                    let fallthrough_id =
+                        if !self.cx.is_scheduled(*fallthrough) { Some(*fallthrough) } else { None };
 
                     // Continue block is update (if present) or test
                     let continue_block = update.unwrap_or(*test);
@@ -677,23 +603,13 @@ impl<'a, 'b> Driver<'a, 'b> {
                             id: *id,
                             loc: *loc,
                         },
-                        label: fallthrough_id.map(|ft| ReactiveLabel {
-                            id: ft,
-                            implicit: false,
-                        }),
+                        label: fallthrough_id.map(|ft| ReactiveLabel { id: ft, implicit: false }),
                     }));
 
                     next_block = fallthrough_id;
                 }
 
-                Terminal::ForOf {
-                    init,
-                    test,
-                    loop_block,
-                    fallthrough,
-                    id,
-                    loc,
-                } => {
+                Terminal::ForOf { init, test, loop_block, fallthrough, id, loc } => {
                     let loop_id =
                         if !self.cx.is_scheduled(*loop_block) && *loop_block != *fallthrough {
                             Some(*loop_block)
@@ -701,11 +617,8 @@ impl<'a, 'b> Driver<'a, 'b> {
                             None
                         };
 
-                    let fallthrough_id = if !self.cx.is_scheduled(*fallthrough) {
-                        Some(*fallthrough)
-                    } else {
-                        None
-                    };
+                    let fallthrough_id =
+                        if !self.cx.is_scheduled(*fallthrough) { Some(*fallthrough) } else { None };
 
                     // TS: scheduleLoop(fallthrough, init, loop)
                     schedule_ids.push(self.cx.schedule_loop(
@@ -739,22 +652,13 @@ impl<'a, 'b> Driver<'a, 'b> {
                             id: *id,
                             loc: *loc,
                         },
-                        label: fallthrough_id.map(|ft| ReactiveLabel {
-                            id: ft,
-                            implicit: false,
-                        }),
+                        label: fallthrough_id.map(|ft| ReactiveLabel { id: ft, implicit: false }),
                     }));
 
                     next_block = fallthrough_id;
                 }
 
-                Terminal::ForIn {
-                    init,
-                    loop_block,
-                    fallthrough,
-                    id,
-                    loc,
-                } => {
+                Terminal::ForIn { init, loop_block, fallthrough, id, loc } => {
                     let loop_id =
                         if !self.cx.is_scheduled(*loop_block) && *loop_block != *fallthrough {
                             Some(*loop_block)
@@ -762,11 +666,8 @@ impl<'a, 'b> Driver<'a, 'b> {
                             None
                         };
 
-                    let fallthrough_id = if !self.cx.is_scheduled(*fallthrough) {
-                        Some(*fallthrough)
-                    } else {
-                        None
-                    };
+                    let fallthrough_id =
+                        if !self.cx.is_scheduled(*fallthrough) { Some(*fallthrough) } else { None };
 
                     schedule_ids.push(self.cx.schedule_loop(
                         *fallthrough,
@@ -795,21 +696,13 @@ impl<'a, 'b> Driver<'a, 'b> {
                             id: *id,
                             loc: *loc,
                         },
-                        label: fallthrough_id.map(|ft| ReactiveLabel {
-                            id: ft,
-                            implicit: false,
-                        }),
+                        label: fallthrough_id.map(|ft| ReactiveLabel { id: ft, implicit: false }),
                     }));
 
                     next_block = fallthrough_id;
                 }
 
-                Terminal::Label {
-                    block: label_block,
-                    fallthrough,
-                    id,
-                    loc,
-                } => {
+                Terminal::Label { block: label_block, fallthrough, id, loc } => {
                     // TS: reachable(fallthrough) && !isScheduled(fallthrough)
                     let fallthrough_id =
                         if self.cx.reachable(*fallthrough) && !self.cx.is_scheduled(*fallthrough) {
@@ -832,15 +725,8 @@ impl<'a, 'b> Driver<'a, 'b> {
 
                     self.cx.unschedule_all(&schedule_ids)?;
                     block_value.push(ReactiveStatement::Terminal(ReactiveTerminalStatement {
-                        terminal: ReactiveTerminal::Label {
-                            block: label_body,
-                            id: *id,
-                            loc: *loc,
-                        },
-                        label: fallthrough_id.map(|ft| ReactiveLabel {
-                            id: ft,
-                            implicit: false,
-                        }),
+                        terminal: ReactiveTerminal::Label { block: label_body, id: *id, loc: *loc },
+                        label: fallthrough_id.map(|ft| ReactiveLabel { id: ft, implicit: false }),
                     }));
 
                     next_block = fallthrough_id;
@@ -857,11 +743,8 @@ impl<'a, 'b> Driver<'a, 'b> {
                         | Terminal::Logical { fallthrough, .. } => *fallthrough,
                         _ => unreachable!(),
                     };
-                    let fallthrough_id = if !self.cx.is_scheduled(fallthrough) {
-                        Some(fallthrough)
-                    } else {
-                        None
-                    };
+                    let fallthrough_id =
+                        if !self.cx.is_scheduled(fallthrough) { Some(fallthrough) } else { None };
                     if let Some(ft) = fallthrough_id {
                         schedule_ids.push(self.cx.schedule(ft, "if")?);
                     }
@@ -879,12 +762,7 @@ impl<'a, 'b> Driver<'a, 'b> {
                     next_block = fallthrough_id;
                 }
 
-                Terminal::Goto {
-                    block: goto_block,
-                    variant,
-                    id,
-                    loc,
-                } => {
+                Terminal::Goto { block: goto_block, variant, id, loc } => {
                     match variant {
                         GotoVariant::Break => {
                             if let Some(stmt) = self.visit_break(*goto_block, *id, *loc)? {
@@ -938,26 +816,15 @@ impl<'a, 'b> Driver<'a, 'b> {
                             id: *id,
                             loc: *loc,
                         },
-                        label: fallthrough_id.map(|ft| ReactiveLabel {
-                            id: ft,
-                            implicit: false,
-                        }),
+                        label: fallthrough_id.map(|ft| ReactiveLabel { id: ft, implicit: false }),
                     }));
 
                     next_block = fallthrough_id;
                 }
 
-                Terminal::Scope {
-                    fallthrough,
-                    block: scope_block,
-                    scope,
-                    ..
-                } => {
-                    let fallthrough_id = if !self.cx.is_scheduled(*fallthrough) {
-                        Some(*fallthrough)
-                    } else {
-                        None
-                    };
+                Terminal::Scope { fallthrough, block: scope_block, scope, .. } => {
+                    let fallthrough_id =
+                        if !self.cx.is_scheduled(*fallthrough) { Some(*fallthrough) } else { None };
                     if let Some(ft) = fallthrough_id {
                         schedule_ids.push(self.cx.schedule(ft, "if")?);
                         self.cx.scope_fallthroughs.insert(ft);
@@ -981,17 +848,9 @@ impl<'a, 'b> Driver<'a, 'b> {
                     next_block = fallthrough_id;
                 }
 
-                Terminal::PrunedScope {
-                    fallthrough,
-                    block: scope_block,
-                    scope,
-                    ..
-                } => {
-                    let fallthrough_id = if !self.cx.is_scheduled(*fallthrough) {
-                        Some(*fallthrough)
-                    } else {
-                        None
-                    };
+                Terminal::PrunedScope { fallthrough, block: scope_block, scope, .. } => {
+                    let fallthrough_id =
+                        if !self.cx.is_scheduled(*fallthrough) { Some(*fallthrough) } else { None };
                     if let Some(ft) = fallthrough_id {
                         schedule_ids.push(self.cx.schedule(ft, "if")?);
                         self.cx.scope_fallthroughs.insert(ft);
@@ -1049,14 +908,7 @@ impl<'a, 'b> Driver<'a, 'b> {
                     ));
                 }
 
-                Terminal::Branch {
-                    test,
-                    consequent,
-                    alternate,
-                    id,
-                    loc,
-                    ..
-                } => {
+                Terminal::Branch { test, consequent, alternate, id, loc, .. } => {
                     let consequent_block = if self.cx.is_scheduled(*consequent) {
                         if let Some(stmt) = self.visit_break(*consequent, *id, *loc)? {
                             vec![stmt]
@@ -1126,9 +978,7 @@ impl<'a, 'b> Driver<'a, 'b> {
         }
 
         match &terminal {
-            Terminal::Branch {
-                test, id: term_id, ..
-            } => {
+            Terminal::Branch { test, id: term_id, .. } => {
                 if instructions.is_empty() {
                     Ok(ValueBlockResult {
                         block: block_id_val,
@@ -1231,17 +1081,14 @@ impl<'a, 'b> Driver<'a, 'b> {
         let test = self.visit_value_block(test_block_id, loc, None)?;
         let test_block = &self.hir.body.blocks[&test.block];
         match &test_block.terminal {
-            Terminal::Branch {
-                consequent,
-                alternate,
-                loc: branch_loc,
-                ..
-            } => Ok(TestBlockResult {
-                test,
-                consequent: *consequent,
-                alternate: *alternate,
-                branch_loc: *branch_loc,
-            }),
+            Terminal::Branch { consequent, alternate, loc: branch_loc, .. } => {
+                Ok(TestBlockResult {
+                    test,
+                    consequent: *consequent,
+                    alternate: *alternate,
+                    branch_loc: *branch_loc,
+                })
+            }
             other => Err(CompilerDiagnostic::new(
                 ErrorCategory::Invariant,
                 format!(
@@ -1259,12 +1106,7 @@ impl<'a, 'b> Driver<'a, 'b> {
         terminal: &Terminal,
     ) -> Result<ValueTerminalResult, CompilerDiagnostic> {
         match terminal {
-            Terminal::Sequence {
-                block,
-                fallthrough,
-                id,
-                loc,
-            } => {
+            Terminal::Sequence { block, fallthrough, id, loc } => {
                 let block_result = self.visit_value_block(*block, *loc, Some(*fallthrough))?;
                 Ok(ValueTerminalResult {
                     value: block_result.value,
@@ -1273,13 +1115,7 @@ impl<'a, 'b> Driver<'a, 'b> {
                     id: *id,
                 })
             }
-            Terminal::Optional {
-                optional,
-                test,
-                fallthrough,
-                id,
-                loc,
-            } => {
+            Terminal::Optional { optional, test, fallthrough, id, loc } => {
                 let test_result = self.visit_test_block(*test, *loc, "optional")?;
                 let consequent =
                     self.visit_value_block(test_result.consequent, *loc, Some(*fallthrough))?;
@@ -1307,13 +1143,7 @@ impl<'a, 'b> Driver<'a, 'b> {
                     id: *id,
                 })
             }
-            Terminal::Logical {
-                operator,
-                test,
-                fallthrough,
-                id,
-                loc,
-            } => {
+            Terminal::Logical { operator, test, fallthrough, id, loc } => {
                 let test_result = self.visit_test_block(*test, *loc, "logical")?;
                 let left_final =
                     self.visit_value_block(test_result.consequent, *loc, Some(*fallthrough))?;
@@ -1343,12 +1173,7 @@ impl<'a, 'b> Driver<'a, 'b> {
                     id: *id,
                 })
             }
-            Terminal::Ternary {
-                test,
-                fallthrough,
-                id,
-                loc,
-            } => {
+            Terminal::Ternary { test, fallthrough, id, loc } => {
                 let test_result = self.visit_test_block(*test, *loc, "ternary")?;
                 let consequent =
                     self.visit_value_block(test_result.consequent, *loc, Some(*fallthrough))?;
@@ -1386,13 +1211,11 @@ impl<'a, 'b> Driver<'a, 'b> {
 
     fn extract_value_block_result(
         &self,
-        instructions: &[react_compiler_hir::InstructionId],
+        instructions: &[crate::react_compiler_hir::InstructionId],
         block_id: BlockId,
         loc: Option<SourceLocation>,
     ) -> ValueBlockResult {
-        let last_id = instructions
-            .last()
-            .expect("Expected non-empty instructions");
+        let last_id = instructions.last().expect("Expected non-empty instructions");
         let last_instr = &self.hir.instructions[last_id.0 as usize];
 
         let remaining: Vec<ReactiveInstruction> = instructions[..instructions.len() - 1]
@@ -1412,11 +1235,7 @@ impl<'a, 'b> Driver<'a, 'b> {
         // If the last instruction is a StoreLocal to a temporary (unnamed identifier),
         // convert it to a LoadLocal of the value being stored, matching the TS behavior.
         let (value, place) = match &last_instr.value {
-            InstructionValue::StoreLocal {
-                lvalue,
-                value: store_value,
-                ..
-            } => {
+            InstructionValue::StoreLocal { lvalue, value: store_value, .. } => {
                 let ident = &self.env.identifiers[lvalue.place.identifier.0 as usize];
                 if ident.name.is_none() {
                     (
@@ -1433,20 +1252,12 @@ impl<'a, 'b> Driver<'a, 'b> {
                     )
                 }
             }
-            _ => (
-                ReactiveValue::Instruction(last_instr.value.clone()),
-                last_instr.lvalue.clone(),
-            ),
+            _ => (ReactiveValue::Instruction(last_instr.value.clone()), last_instr.lvalue.clone()),
         };
         let id = last_instr.id;
 
         if remaining.is_empty() {
-            ValueBlockResult {
-                block: block_id,
-                place,
-                value,
-                id,
-            }
+            ValueBlockResult { block: block_id, place, value, id }
         } else {
             ValueBlockResult {
                 block: block_id,
@@ -1464,7 +1275,7 @@ impl<'a, 'b> Driver<'a, 'b> {
 
     fn wrap_with_sequence(
         &self,
-        instructions: &[react_compiler_hir::InstructionId],
+        instructions: &[crate::react_compiler_hir::InstructionId],
         continuation: ValueBlockResult,
         loc: Option<SourceLocation>,
     ) -> ValueBlockResult {
@@ -1519,11 +1330,7 @@ impl<'a, 'b> Driver<'a, 'b> {
         // Flatten nested SequenceExpressions
         loop {
             match inner_value {
-                ReactiveValue::SequenceExpression {
-                    instructions: seq_instrs,
-                    value,
-                    ..
-                } => {
+                ReactiveValue::SequenceExpression { instructions: seq_instrs, value, .. } => {
                     instructions.extend(seq_instrs);
                     inner_value = *value;
                 }
@@ -1554,7 +1361,7 @@ impl<'a, 'b> Driver<'a, 'b> {
             instructions,
             id: result.id,
             value: Box::new(ReactiveValue::Instruction(InstructionValue::Primitive {
-                value: react_compiler_hir::PrimitiveValue::Undefined,
+                value: crate::react_compiler_hir::PrimitiveValue::Undefined,
                 loc,
             })),
             loc,
@@ -1578,17 +1385,10 @@ impl<'a, 'b> Driver<'a, 'b> {
             }
             return Ok(None);
         }
-        Ok(Some(ReactiveStatement::Terminal(
-            ReactiveTerminalStatement {
-                terminal: ReactiveTerminal::Break {
-                    target: target_block,
-                    id,
-                    target_kind,
-                    loc,
-                },
-                label: None,
-            },
-        )))
+        Ok(Some(ReactiveStatement::Terminal(ReactiveTerminalStatement {
+            terminal: ReactiveTerminal::Break { target: target_block, id, target_kind, loc },
+            label: None,
+        })))
     }
 
     fn visit_continue(
@@ -1609,12 +1409,7 @@ impl<'a, 'b> Driver<'a, 'b> {
         };
 
         Ok(ReactiveStatement::Terminal(ReactiveTerminalStatement {
-            terminal: ReactiveTerminal::Continue {
-                target: target_block,
-                id,
-                target_kind,
-                loc,
-            },
+            terminal: ReactiveTerminal::Continue { target: target_block, id, target_kind, loc },
             label: None,
         }))
     }

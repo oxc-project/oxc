@@ -26,9 +26,9 @@
 //!
 //! Analogous to TS `ReactiveScopes/FlattenScopesWithHooksOrUseHIR.ts`.
 
-use react_compiler_diagnostics::{CompilerDiagnostic, ErrorCategory};
-use react_compiler_hir::environment::Environment;
-use react_compiler_hir::{BlockId, HirFunction, InstructionValue, Terminal, Type};
+use crate::react_compiler_diagnostics::{CompilerDiagnostic, ErrorCategory};
+use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_hir::{BlockId, HirFunction, InstructionValue, Terminal, Type};
 
 /// Flattens reactive scopes that contain hook calls or `use()` calls.
 ///
@@ -77,10 +77,7 @@ pub fn flatten_scopes_with_hooks_or_use_hir(
 
         // Track scope terminals
         if let Terminal::Scope { fallthrough, .. } = &block.terminal {
-            active_scopes.push(ActiveScope {
-                block: *block_id,
-                fallthrough: *fallthrough,
-            });
+            active_scopes.push(ActiveScope { block: *block_id, fallthrough: *fallthrough });
         }
     }
 
@@ -90,13 +87,9 @@ pub fn flatten_scopes_with_hooks_or_use_hir(
         let terminal = &block.terminal;
 
         let (scope_block, fallthrough, eval_id, loc, scope) = match terminal {
-            Terminal::Scope {
-                block,
-                fallthrough,
-                id,
-                loc,
-                scope,
-            } => (*block, *fallthrough, *id, *loc, *scope),
+            Terminal::Scope { block, fallthrough, id, loc, scope } => {
+                (*block, *fallthrough, *id, *loc, *scope)
+            }
             _ => {
                 return Err(CompilerDiagnostic::new(
                     ErrorCategory::Invariant,
@@ -114,20 +107,9 @@ pub fn flatten_scopes_with_hooks_or_use_hir(
         {
             // This was a scope just for a hook call, which doesn't need memoization.
             // Flatten it away. We rely on PruneUnusedLabels to do the actual flattening.
-            Terminal::Label {
-                block: scope_block,
-                fallthrough,
-                id: eval_id,
-                loc,
-            }
+            Terminal::Label { block: scope_block, fallthrough, id: eval_id, loc }
         } else {
-            Terminal::PrunedScope {
-                block: scope_block,
-                fallthrough,
-                scope,
-                id: eval_id,
-                loc,
-            }
+            Terminal::PrunedScope { block: scope_block, fallthrough, scope, id: eval_id, loc }
         };
 
         let block_mut = func.body.blocks.get_mut(&id).unwrap();
@@ -142,5 +124,6 @@ struct ActiveScope {
 }
 
 fn is_hook_or_use(env: &Environment, ty: &Type) -> Result<bool, CompilerDiagnostic> {
-    Ok(env.get_hook_kind_for_type(ty)?.is_some() || react_compiler_hir::is_use_operator_type(ty))
+    Ok(env.get_hook_kind_for_type(ty)?.is_some()
+        || crate::react_compiler_hir::is_use_operator_type(ty))
 }

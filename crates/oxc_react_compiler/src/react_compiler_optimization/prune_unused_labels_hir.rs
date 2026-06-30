@@ -11,7 +11,7 @@
 //!
 //! Analogous to TS `PruneUnusedLabelsHIR.ts`.
 
-use react_compiler_hir::{BlockId, BlockKind, GotoVariant, HirFunction, Terminal};
+use crate::react_compiler_hir::{BlockId, BlockKind, GotoVariant, HirFunction, Terminal};
 use rustc_hash::FxHashMap;
 
 pub fn prune_unused_labels_hir(func: &mut HirFunction) {
@@ -20,19 +20,12 @@ pub fn prune_unused_labels_hir(func: &mut HirFunction) {
     let mut merged: Vec<(BlockId, BlockId, BlockId)> = Vec::new(); // (label, next, fallthrough)
 
     for (&block_id, block) in &func.body.blocks {
-        if let Terminal::Label {
-            block: next_id,
-            fallthrough: fallthrough_id,
-            ..
-        } = &block.terminal
+        if let Terminal::Label { block: next_id, fallthrough: fallthrough_id, .. } = &block.terminal
         {
             let next = &func.body.blocks[next_id];
             let fallthrough = &func.body.blocks[fallthrough_id];
-            if let Terminal::Goto {
-                block: goto_target,
-                variant: GotoVariant::Break,
-                ..
-            } = &next.terminal
+            if let Terminal::Goto { block: goto_target, variant: GotoVariant::Break, .. } =
+                &next.terminal
             {
                 if goto_target == fallthrough_id
                     && next.kind == BlockKind::Block
@@ -48,10 +41,7 @@ pub fn prune_unused_labels_hir(func: &mut HirFunction) {
     let mut rewrites: FxHashMap<BlockId, BlockId> = FxHashMap::default();
 
     for (original_label_id, next_id, fallthrough_id) in &merged {
-        let label_id = rewrites
-            .get(original_label_id)
-            .copied()
-            .unwrap_or(*original_label_id);
+        let label_id = rewrites.get(original_label_id).copied().unwrap_or(*original_label_id);
 
         // Validate: no phis in next or fallthrough
         let next_phis_empty = func.body.blocks[next_id].phis.is_empty();

@@ -11,12 +11,12 @@
 
 use rustc_hash::FxHashSet;
 
-use react_compiler_hir::{
+use crate::react_compiler_hir::{
     DeclarationId, EvaluationOrder, Place, ReactiveFunction, ReactiveInstruction,
     ReactiveStatement, ReactiveValue, environment::Environment,
 };
 
-use crate::visitors::{self, ReactiveFunctionVisitor};
+use crate::react_compiler_reactive_scopes::visitors::{self, ReactiveFunctionVisitor};
 
 /// Nulls out lvalues for unnamed temporaries that are never used.
 /// TS: `pruneUnusedLValues`
@@ -127,11 +127,7 @@ fn null_unused_in_value(
     unused: &FxHashSet<DeclarationId>,
 ) {
     match value {
-        ReactiveValue::SequenceExpression {
-            instructions,
-            value: inner,
-            ..
-        } => {
+        ReactiveValue::SequenceExpression { instructions, value: inner, .. } => {
             for instr in instructions.iter_mut() {
                 null_unused_in_instruction(instr, env, unused);
             }
@@ -141,12 +137,7 @@ fn null_unused_in_value(
             null_unused_in_value(left, env, unused);
             null_unused_in_value(right, env, unused);
         }
-        ReactiveValue::ConditionalExpression {
-            test,
-            consequent,
-            alternate,
-            ..
-        } => {
+        ReactiveValue::ConditionalExpression { test, consequent, alternate, .. } => {
             null_unused_in_value(test, env, unused);
             null_unused_in_value(consequent, env, unused);
             null_unused_in_value(alternate, env, unused);
@@ -159,21 +150,15 @@ fn null_unused_in_value(
 }
 
 fn null_unused_in_terminal(
-    terminal: &mut react_compiler_hir::ReactiveTerminal,
+    terminal: &mut crate::react_compiler_hir::ReactiveTerminal,
     env: &Environment,
     unused: &FxHashSet<DeclarationId>,
 ) {
-    use react_compiler_hir::ReactiveTerminal;
+    use crate::react_compiler_hir::ReactiveTerminal;
     match terminal {
         ReactiveTerminal::Break { .. } | ReactiveTerminal::Continue { .. } => {}
         ReactiveTerminal::Return { .. } | ReactiveTerminal::Throw { .. } => {}
-        ReactiveTerminal::For {
-            init,
-            test,
-            update,
-            loop_block,
-            ..
-        } => {
+        ReactiveTerminal::For { init, test, update, loop_block, .. } => {
             null_unused_in_value(init, env, unused);
             null_unused_in_value(test, env, unused);
             null_unused_lvalues(loop_block, env, unused);
@@ -181,39 +166,24 @@ fn null_unused_in_terminal(
                 null_unused_in_value(update, env, unused);
             }
         }
-        ReactiveTerminal::ForOf {
-            init,
-            test,
-            loop_block,
-            ..
-        } => {
+        ReactiveTerminal::ForOf { init, test, loop_block, .. } => {
             null_unused_in_value(init, env, unused);
             null_unused_in_value(test, env, unused);
             null_unused_lvalues(loop_block, env, unused);
         }
-        ReactiveTerminal::ForIn {
-            init, loop_block, ..
-        } => {
+        ReactiveTerminal::ForIn { init, loop_block, .. } => {
             null_unused_in_value(init, env, unused);
             null_unused_lvalues(loop_block, env, unused);
         }
-        ReactiveTerminal::DoWhile {
-            loop_block, test, ..
-        } => {
+        ReactiveTerminal::DoWhile { loop_block, test, .. } => {
             null_unused_lvalues(loop_block, env, unused);
             null_unused_in_value(test, env, unused);
         }
-        ReactiveTerminal::While {
-            test, loop_block, ..
-        } => {
+        ReactiveTerminal::While { test, loop_block, .. } => {
             null_unused_in_value(test, env, unused);
             null_unused_lvalues(loop_block, env, unused);
         }
-        ReactiveTerminal::If {
-            consequent,
-            alternate,
-            ..
-        } => {
+        ReactiveTerminal::If { consequent, alternate, .. } => {
             null_unused_lvalues(consequent, env, unused);
             if let Some(alt) = alternate {
                 null_unused_lvalues(alt, env, unused);

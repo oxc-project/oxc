@@ -16,19 +16,19 @@
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use react_compiler_diagnostics::{CompilerDiagnostic, ErrorCategory};
-use react_compiler_hir::dominator::post_dominator_frontier;
-use react_compiler_hir::environment::Environment;
-use react_compiler_hir::object_shape::HookKind;
-use react_compiler_hir::visitors;
-use react_compiler_hir::{
+use crate::react_compiler_diagnostics::{CompilerDiagnostic, ErrorCategory};
+use crate::react_compiler_hir::dominator::post_dominator_frontier;
+use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_hir::object_shape::HookKind;
+use crate::react_compiler_hir::visitors;
+use crate::react_compiler_hir::{
     BlockId, Effect, FunctionId, HirFunction, IdentifierId, InstructionValue, ParamPattern,
     Terminal, Type,
 };
 
-use react_compiler_utils::DisjointSet;
+use crate::react_compiler_utils::DisjointSet;
 
-use crate::infer_reactive_scope_variables::find_disjoint_mutable_values;
+use crate::react_compiler_inference::infer_reactive_scope_variables::find_disjoint_mutable_values;
 
 // =============================================================================
 // Public API
@@ -55,7 +55,7 @@ pub fn infer_reactive_places(
     }
 
     // Compute control dominators
-    let post_dominators = react_compiler_hir::dominator::compute_post_dominator_tree(
+    let post_dominators = crate::react_compiler_hir::dominator::compute_post_dominator_tree(
         func,
         env.next_block_id().0,
         false,
@@ -241,11 +241,7 @@ struct ReactivityMap<'a> {
 
 impl<'a> ReactivityMap<'a> {
     fn new(aliased_identifiers: &'a mut DisjointSet<IdentifierId>) -> Self {
-        ReactivityMap {
-            has_changes: false,
-            reactive: FxHashSet::default(),
-            aliased_identifiers,
-        }
+        ReactivityMap { has_changes: false, reactive: FxHashSet::default(), aliased_identifiers }
     }
 
     fn is_reactive(&mut self, id: IdentifierId) -> bool {
@@ -278,12 +274,14 @@ struct StableSidemap {
 
 impl StableSidemap {
     fn new() -> Self {
-        StableSidemap {
-            map: FxHashMap::default(),
-        }
+        StableSidemap { map: FxHashMap::default() }
     }
 
-    fn handle_instruction(&mut self, instr: &react_compiler_hir::Instruction, env: &Environment) {
+    fn handle_instruction(
+        &mut self,
+        instr: &crate::react_compiler_hir::Instruction,
+        env: &Environment,
+    ) {
         let lvalue_id = instr.lvalue.identifier;
         let value = &instr.value;
 
@@ -343,9 +341,7 @@ impl StableSidemap {
                     }
                 }
             }
-            InstructionValue::StoreLocal {
-                lvalue, value: val, ..
-            } => {
+            InstructionValue::StoreLocal { lvalue, value: val, .. } => {
                 if let Some(&entry) = self.map.get(&val.identifier) {
                     self.map.insert(lvalue_id, entry);
                     self.map.insert(lvalue.place.identifier, entry);
@@ -372,7 +368,7 @@ impl StableSidemap {
 fn is_reactive_controlled_block(
     block_id: BlockId,
     func: &HirFunction,
-    post_dominators: &react_compiler_hir::dominator::PostDominator,
+    post_dominators: &crate::react_compiler_hir::dominator::PostDominator,
     reactive_map: &mut ReactivityMap,
 ) -> bool {
     let frontier = post_dominator_frontier(func, post_dominators, block_id);
@@ -406,7 +402,7 @@ fn is_reactive_controlled_block(
 // Type helpers (ported from HIR.ts)
 // =============================================================================
 
-use react_compiler_hir::is_use_operator_type;
+use crate::react_compiler_hir::is_use_operator_type;
 
 fn get_hook_kind_for_type<'a>(
     env: &'a Environment,
@@ -417,9 +413,7 @@ fn get_hook_kind_for_type<'a>(
 
 fn is_stable_type(ty: &Type) -> bool {
     match ty {
-        Type::Function {
-            shape_id: Some(id), ..
-        } => {
+        Type::Function { shape_id: Some(id), .. } => {
             matches!(
                 id.as_str(),
                 "BuiltInSetState"
@@ -579,7 +573,7 @@ fn apply_reactive_flags_replay(
 
         // 2b. Instructions
         let block = func.body.blocks.get(block_id).unwrap();
-        let instr_ids: Vec<react_compiler_hir::InstructionId> = block.instructions.clone();
+        let instr_ids: Vec<crate::react_compiler_hir::InstructionId> = block.instructions.clone();
 
         for instr_id in &instr_ids {
             let instr = &func.instructions[instr_id.0 as usize];
@@ -602,10 +596,7 @@ fn apply_reactive_flags_replay(
                 InstructionValue::CallExpression { callee, .. } => {
                     let callee_ty =
                         &env.types[env.identifiers[callee.identifier.0 as usize].type_.0 as usize];
-                    if get_hook_kind_for_type(env, callee_ty)
-                        .ok()
-                        .flatten()
-                        .is_some()
+                    if get_hook_kind_for_type(env, callee_ty).ok().flatten().is_some()
                         || is_use_operator_type(callee_ty)
                     {
                         has_reactive_input = true;
@@ -614,10 +605,7 @@ fn apply_reactive_flags_replay(
                 InstructionValue::MethodCall { property, .. } => {
                     let property_ty = &env.types
                         [env.identifiers[property.identifier.0 as usize].type_.0 as usize];
-                    if get_hook_kind_for_type(env, property_ty)
-                        .ok()
-                        .flatten()
-                        .is_some()
+                    if get_hook_kind_for_type(env, property_ty).ok().flatten().is_some()
                         || is_use_operator_type(property_ty)
                     {
                         has_reactive_input = true;

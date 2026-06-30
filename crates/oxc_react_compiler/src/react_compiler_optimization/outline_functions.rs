@@ -13,11 +13,11 @@
 
 use rustc_hash::FxHashSet;
 
-use react_compiler_hir::environment::Environment;
-use react_compiler_hir::{
+use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_hir::{
     FunctionId, HirFunction, IdentifierId, InstructionValue, NonLocalBinding,
 };
-use react_compiler_ssa::enter_ssa::placeholder_function;
+use crate::react_compiler_ssa::enter_ssa::placeholder_function;
 
 /// Outline anonymous function expressions that have no captured context variables.
 ///
@@ -33,10 +33,7 @@ pub fn outline_functions(
         /// Recurse into an inner function (FunctionExpression or ObjectMethod)
         Recurse(FunctionId),
         /// Recurse then outline a FunctionExpression
-        RecurseAndOutline {
-            instr_idx: usize,
-            function_id: FunctionId,
-        },
+        RecurseAndOutline { instr_idx: usize, function_id: FunctionId },
     }
 
     let mut actions: Vec<Action> = Vec::new();
@@ -88,10 +85,7 @@ pub fn outline_functions(
                 outline_functions(&mut inner_func, env, fbt_operands);
                 env.functions[function_id.0 as usize] = inner_func;
             }
-            Action::RecurseAndOutline {
-                instr_idx,
-                function_id,
-            } => {
+            Action::RecurseAndOutline { instr_idx, function_id } => {
                 // First recurse into the inner function (depth-first)
                 let mut inner_func = std::mem::replace(
                     &mut env.functions[function_id.0 as usize],
@@ -117,9 +111,7 @@ pub fn outline_functions(
                 // Replace the instruction value with LoadGlobal
                 let loc = func.instructions[instr_idx].value.loc().cloned();
                 func.instructions[instr_idx].value = InstructionValue::LoadGlobal {
-                    binding: NonLocalBinding::Global {
-                        name: generated_name,
-                    },
+                    binding: NonLocalBinding::Global { name: generated_name },
                     loc,
                 };
             }

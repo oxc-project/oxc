@@ -9,10 +9,14 @@
 
 use rustc_hash::FxHashSet;
 
-use react_compiler_diagnostics::{CompilerDiagnostic, CompilerDiagnosticDetail, ErrorCategory};
-use react_compiler_hir::dominator::compute_unconditional_blocks;
-use react_compiler_hir::environment::Environment;
-use react_compiler_hir::{BlockId, HirFunction, Identifier, IdentifierId, InstructionValue, Type};
+use crate::react_compiler_diagnostics::{
+    CompilerDiagnostic, CompilerDiagnosticDetail, ErrorCategory,
+};
+use crate::react_compiler_hir::dominator::compute_unconditional_blocks;
+use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_hir::{
+    BlockId, HirFunction, Identifier, IdentifierId, InstructionValue, Type,
+};
 
 pub fn validate_no_set_state_in_render(
     func: &HirFunction,
@@ -42,7 +46,7 @@ fn is_set_state_id(
 ) -> bool {
     let ident = &identifiers[identifier_id.0 as usize];
     let ty = &types[ident.type_.0 as usize];
-    react_compiler_hir::is_set_state_type(ty)
+    crate::react_compiler_hir::is_set_state_type(ty)
 }
 
 fn validate_impl(

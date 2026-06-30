@@ -7,11 +7,11 @@
 //!
 //! Produces output identical to the TS `printDebugReactiveFunction`.
 //! Delegates shared formatting (Places, Identifiers, Scopes, Types,
-//! InstructionValues, Effects, Errors) to `react_compiler_hir::print::PrintFormatter`.
+//! InstructionValues, Effects, Errors) to `crate::react_compiler_hir::print::PrintFormatter`.
 
-use react_compiler_hir::environment::Environment;
-use react_compiler_hir::print::{self, PrintFormatter};
-use react_compiler_hir::{
+use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_hir::print::{self, PrintFormatter};
+use crate::react_compiler_hir::{
     HirFunction, ParamPattern, ReactiveBlock, ReactiveFunction, ReactiveInstruction,
     ReactiveStatement, ReactiveTerminal, ReactiveTerminalStatement, ReactiveValue,
 };
@@ -28,10 +28,7 @@ pub struct DebugPrinter<'a> {
 
 impl<'a> DebugPrinter<'a> {
     pub fn new(env: &'a Environment) -> Self {
-        Self {
-            fmt: PrintFormatter::new(env),
-            hir_formatter: None,
-        }
+        Self { fmt: PrintFormatter::new(env), hir_formatter: None }
     }
 
     // =========================================================================
@@ -56,8 +53,7 @@ impl<'a> DebugPrinter<'a> {
         ));
         self.fmt.line(&format!("generator: {}", func.generator));
         self.fmt.line(&format!("is_async: {}", func.is_async));
-        self.fmt
-            .line(&format!("loc: {}", print::format_loc(&func.loc)));
+        self.fmt.line(&format!("loc: {}", print::format_loc(&func.loc)));
 
         // params
         self.fmt.line("params:");
@@ -167,15 +163,13 @@ impl<'a> DebugPrinter<'a> {
                 self.fmt.line("effects:");
                 self.fmt.indent();
                 for (i, eff) in effects.iter().enumerate() {
-                    self.fmt
-                        .line(&format!("[{}] {}", i, self.fmt.format_effect(eff)));
+                    self.fmt.line(&format!("[{}] {}", i, self.fmt.format_effect(eff)));
                 }
                 self.fmt.dedent();
             }
             None => self.fmt.line("effects: null"),
         }
-        self.fmt
-            .line(&format!("loc: {}", print::format_loc(&instr.loc)));
+        self.fmt.line(&format!("loc: {}", print::format_loc(&instr.loc)));
     }
 
     // =========================================================================
@@ -201,12 +195,7 @@ impl<'a> DebugPrinter<'a> {
                         .map(|cb| cb.as_ref() as &dyn Fn(&mut PrintFormatter, &HirFunction)),
                 );
             }
-            ReactiveValue::LogicalExpression {
-                operator,
-                left,
-                right,
-                loc,
-            } => {
+            ReactiveValue::LogicalExpression { operator, left, right, loc } => {
                 self.fmt.line("LogicalExpression {");
                 self.fmt.indent();
                 self.fmt.line(&format!("operator: \"{}\"", operator));
@@ -222,12 +211,7 @@ impl<'a> DebugPrinter<'a> {
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            ReactiveValue::ConditionalExpression {
-                test,
-                consequent,
-                alternate,
-                loc,
-            } => {
+            ReactiveValue::ConditionalExpression { test, consequent, alternate, loc } => {
                 self.fmt.line("ConditionalExpression {");
                 self.fmt.indent();
                 self.fmt.line("test:");
@@ -246,12 +230,7 @@ impl<'a> DebugPrinter<'a> {
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            ReactiveValue::SequenceExpression {
-                instructions,
-                id,
-                value,
-                loc,
-            } => {
+            ReactiveValue::SequenceExpression { instructions, id, value, loc } => {
                 self.fmt.line("SequenceExpression {");
                 self.fmt.indent();
                 self.fmt.line("instructions:");
@@ -272,12 +251,7 @@ impl<'a> DebugPrinter<'a> {
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            ReactiveValue::OptionalExpression {
-                id,
-                value,
-                optional,
-                loc,
-            } => {
+            ReactiveValue::OptionalExpression { id, value, optional, loc } => {
                 self.fmt.line("OptionalExpression {");
                 self.fmt.indent();
                 self.fmt.line(&format!("id: {}", id.0));
@@ -315,12 +289,7 @@ impl<'a> DebugPrinter<'a> {
 
     fn format_reactive_terminal(&mut self, terminal: &ReactiveTerminal) {
         match terminal {
-            ReactiveTerminal::Break {
-                target,
-                id,
-                target_kind,
-                loc,
-            } => {
+            ReactiveTerminal::Break { target, id, target_kind, loc } => {
                 self.fmt.line("Break {");
                 self.fmt.indent();
                 self.fmt.line(&format!("target: bb{}", target.0));
@@ -330,12 +299,7 @@ impl<'a> DebugPrinter<'a> {
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            ReactiveTerminal::Continue {
-                target,
-                id,
-                target_kind,
-                loc,
-            } => {
+            ReactiveTerminal::Continue { target, id, target_kind, loc } => {
                 self.fmt.line("Continue {");
                 self.fmt.indent();
                 self.fmt.line(&format!("target: bb{}", target.0));
@@ -363,12 +327,7 @@ impl<'a> DebugPrinter<'a> {
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            ReactiveTerminal::Switch {
-                test,
-                cases,
-                id,
-                loc,
-            } => {
+            ReactiveTerminal::Switch { test, cases, id, loc } => {
                 self.fmt.line("Switch {");
                 self.fmt.indent();
                 self.fmt.format_place_field("test", test);
@@ -403,12 +362,7 @@ impl<'a> DebugPrinter<'a> {
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            ReactiveTerminal::DoWhile {
-                loop_block,
-                test,
-                id,
-                loc,
-            } => {
+            ReactiveTerminal::DoWhile { loop_block, test, id, loc } => {
                 self.fmt.line("DoWhile {");
                 self.fmt.indent();
                 self.fmt.line("loop:");
@@ -424,12 +378,7 @@ impl<'a> DebugPrinter<'a> {
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            ReactiveTerminal::While {
-                test,
-                loop_block,
-                id,
-                loc,
-            } => {
+            ReactiveTerminal::While { test, loop_block, id, loc } => {
                 self.fmt.line("While {");
                 self.fmt.indent();
                 self.fmt.line("test:");
@@ -445,14 +394,7 @@ impl<'a> DebugPrinter<'a> {
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            ReactiveTerminal::For {
-                init,
-                test,
-                update,
-                loop_block,
-                id,
-                loc,
-            } => {
+            ReactiveTerminal::For { init, test, update, loop_block, id, loc } => {
                 self.fmt.line("For {");
                 self.fmt.indent();
                 self.fmt.line("init:");
@@ -481,13 +423,7 @@ impl<'a> DebugPrinter<'a> {
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            ReactiveTerminal::ForOf {
-                init,
-                test,
-                loop_block,
-                id,
-                loc,
-            } => {
+            ReactiveTerminal::ForOf { init, test, loop_block, id, loc } => {
                 self.fmt.line("ForOf {");
                 self.fmt.indent();
                 self.fmt.line("init:");
@@ -507,12 +443,7 @@ impl<'a> DebugPrinter<'a> {
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            ReactiveTerminal::ForIn {
-                init,
-                loop_block,
-                id,
-                loc,
-            } => {
+            ReactiveTerminal::ForIn { init, loop_block, id, loc } => {
                 self.fmt.line("ForIn {");
                 self.fmt.indent();
                 self.fmt.line("init:");
@@ -528,13 +459,7 @@ impl<'a> DebugPrinter<'a> {
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            ReactiveTerminal::If {
-                test,
-                consequent,
-                alternate,
-                id,
-                loc,
-            } => {
+            ReactiveTerminal::If { test, consequent, alternate, id, loc } => {
                 self.fmt.line("If {");
                 self.fmt.indent();
                 self.fmt.format_place_field("test", test);
@@ -568,13 +493,7 @@ impl<'a> DebugPrinter<'a> {
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            ReactiveTerminal::Try {
-                block,
-                handler_binding,
-                handler,
-                id,
-                loc,
-            } => {
+            ReactiveTerminal::Try { block, handler_binding, handler, id, loc } => {
                 self.fmt.line("Try {");
                 self.fmt.indent();
                 self.fmt.line("block:");

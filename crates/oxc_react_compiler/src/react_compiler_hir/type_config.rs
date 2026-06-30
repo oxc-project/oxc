@@ -8,9 +8,9 @@
 //! These are the JSON-serializable config types used by `moduleTypeProvider`
 //! and `installTypeConfig` to describe module/function/hook types.
 
-use react_compiler_utils::FxIndexMap;
+use crate::react_compiler_utils::FxIndexMap;
 
-use crate::Effect;
+use crate::react_compiler_hir::Effect;
 
 /// Mirrors TS `ValueKind` enum for use in config.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]

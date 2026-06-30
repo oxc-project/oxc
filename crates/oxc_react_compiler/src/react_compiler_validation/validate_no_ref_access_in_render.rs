@@ -1,15 +1,15 @@
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use react_compiler_diagnostics::{
+use crate::react_compiler_diagnostics::{
     CompilerDiagnostic, CompilerDiagnosticDetail, ErrorCategory, SourceLocation,
 };
-use react_compiler_hir::environment::Environment;
-use react_compiler_hir::object_shape::HookKind;
-use react_compiler_hir::visitors::{
+use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_hir::object_shape::HookKind;
+use crate::react_compiler_hir::visitors::{
     each_instruction_value_operand as canonical_each_instruction_value_operand,
     each_pattern_operand, each_terminal_operand,
 };
-use react_compiler_hir::{
+use crate::react_compiler_hir::{
     AliasingEffect, BlockId, HirFunction, Identifier, IdentifierId, InstructionValue, Place,
     PrimitiveValue, PropertyLiteral, Terminal, Type, UnaryOperator,
 };
@@ -41,20 +41,10 @@ fn next_ref_id() -> RefId {
 enum RefAccessType {
     None,
     Nullable,
-    Guard {
-        ref_id: RefId,
-    },
-    Ref {
-        ref_id: RefId,
-    },
-    RefValue {
-        loc: Option<SourceLocation>,
-        ref_id: Option<RefId>,
-    },
-    Structure {
-        value: Option<Box<RefAccessRefType>>,
-        fn_type: Option<RefFnType>,
-    },
+    Guard { ref_id: RefId },
+    Ref { ref_id: RefId },
+    RefValue { loc: Option<SourceLocation>, ref_id: Option<RefId> },
+    Structure { value: Option<Box<RefAccessRefType>>, fn_type: Option<RefFnType> },
 }
 
 impl PartialEq for RefAccessType {
@@ -68,14 +58,8 @@ impl PartialEq for RefAccessType {
                 a == b
             }
             (
-                RefAccessType::Structure {
-                    value: a_val,
-                    fn_type: a_fn,
-                },
-                RefAccessType::Structure {
-                    value: b_val,
-                    fn_type: b_fn,
-                },
+                RefAccessType::Structure { value: a_val, fn_type: a_fn },
+                RefAccessType::Structure { value: b_val, fn_type: b_fn },
             ) => a_val == b_val && a_fn == b_fn,
             _ => false,
         }
@@ -89,17 +73,9 @@ impl PartialEq for RefAccessType {
 /// loc only.
 #[derive(Debug, Clone)]
 enum RefAccessRefType {
-    Ref {
-        ref_id: RefId,
-    },
-    RefValue {
-        loc: Option<SourceLocation>,
-        ref_id: Option<RefId>,
-    },
-    Structure {
-        value: Option<Box<RefAccessRefType>>,
-        fn_type: Option<RefFnType>,
-    },
+    Ref { ref_id: RefId },
+    RefValue { loc: Option<SourceLocation>, ref_id: Option<RefId> },
+    Structure { value: Option<Box<RefAccessRefType>>, fn_type: Option<RefFnType> },
 }
 
 impl PartialEq for RefAccessRefType {
@@ -111,14 +87,8 @@ impl PartialEq for RefAccessRefType {
                 RefAccessRefType::RefValue { loc: b, .. },
             ) => a == b,
             (
-                RefAccessRefType::Structure {
-                    value: a_val,
-                    fn_type: a_fn,
-                },
-                RefAccessRefType::Structure {
-                    value: b_val,
-                    fn_type: b_fn,
-                },
+                RefAccessRefType::Structure { value: a_val, fn_type: a_fn },
+                RefAccessRefType::Structure { value: b_val, fn_type: b_fn },
             ) => a_val == b_val && a_fn == b_fn,
             _ => false,
         }
@@ -136,14 +106,12 @@ impl RefAccessType {
     fn to_ref_type(&self) -> Option<RefAccessRefType> {
         match self {
             RefAccessType::Ref { ref_id } => Some(RefAccessRefType::Ref { ref_id: *ref_id }),
-            RefAccessType::RefValue { loc, ref_id } => Some(RefAccessRefType::RefValue {
-                loc: *loc,
-                ref_id: *ref_id,
-            }),
-            RefAccessType::Structure { value, fn_type } => Some(RefAccessRefType::Structure {
-                value: value.clone(),
-                fn_type: fn_type.clone(),
-            }),
+            RefAccessType::RefValue { loc, ref_id } => {
+                Some(RefAccessRefType::RefValue { loc: *loc, ref_id: *ref_id })
+            }
+            RefAccessType::Structure { value, fn_type } => {
+                Some(RefAccessRefType::Structure { value: value.clone(), fn_type: fn_type.clone() })
+            }
             _ => None,
         }
     }
@@ -152,14 +120,12 @@ impl RefAccessType {
     fn from_ref_type(ref_type: &RefAccessRefType) -> Self {
         match ref_type {
             RefAccessRefType::Ref { ref_id } => RefAccessType::Ref { ref_id: *ref_id },
-            RefAccessRefType::RefValue { loc, ref_id } => RefAccessType::RefValue {
-                loc: *loc,
-                ref_id: *ref_id,
-            },
-            RefAccessRefType::Structure { value, fn_type } => RefAccessType::Structure {
-                value: value.clone(),
-                fn_type: fn_type.clone(),
-            },
+            RefAccessRefType::RefValue { loc, ref_id } => {
+                RefAccessType::RefValue { loc: *loc, ref_id: *ref_id }
+            }
+            RefAccessRefType::Structure { value, fn_type } => {
+                RefAccessType::Structure { value: value.clone(), fn_type: fn_type.clone() }
+            }
         }
     }
 }
@@ -175,43 +141,24 @@ fn join_ref_access_ref_types(a: &RefAccessRefType, b: &RefAccessRefType) -> RefA
             if a_id == b_id {
                 a.clone()
             } else {
-                RefAccessRefType::RefValue {
-                    loc: None,
-                    ref_id: None,
-                }
+                RefAccessRefType::RefValue { loc: None, ref_id: None }
             }
         }
-        (RefAccessRefType::RefValue { .. }, _) => RefAccessRefType::RefValue {
-            loc: None,
-            ref_id: None,
-        },
-        (_, RefAccessRefType::RefValue { .. }) => RefAccessRefType::RefValue {
-            loc: None,
-            ref_id: None,
-        },
+        (RefAccessRefType::RefValue { .. }, _) => {
+            RefAccessRefType::RefValue { loc: None, ref_id: None }
+        }
+        (_, RefAccessRefType::RefValue { .. }) => {
+            RefAccessRefType::RefValue { loc: None, ref_id: None }
+        }
         (RefAccessRefType::Ref { ref_id: a_id }, RefAccessRefType::Ref { ref_id: b_id }) => {
-            if a_id == b_id {
-                a.clone()
-            } else {
-                RefAccessRefType::Ref {
-                    ref_id: next_ref_id(),
-                }
-            }
+            if a_id == b_id { a.clone() } else { RefAccessRefType::Ref { ref_id: next_ref_id() } }
         }
         (RefAccessRefType::Ref { .. }, _) | (_, RefAccessRefType::Ref { .. }) => {
-            RefAccessRefType::Ref {
-                ref_id: next_ref_id(),
-            }
+            RefAccessRefType::Ref { ref_id: next_ref_id() }
         }
         (
-            RefAccessRefType::Structure {
-                value: a_value,
-                fn_type: a_fn,
-            },
-            RefAccessRefType::Structure {
-                value: b_value,
-                fn_type: b_fn,
-            },
+            RefAccessRefType::Structure { value: a_value, fn_type: a_fn },
+            RefAccessRefType::Structure { value: b_value, fn_type: b_fn },
         ) => {
             let fn_type = match (a_fn, b_fn) {
                 (None, other) | (other, None) => other.clone(),
@@ -238,11 +185,7 @@ fn join_ref_access_types(a: &RefAccessType, b: &RefAccessType) -> RefAccessType 
     match (a, b) {
         (RefAccessType::None, other) | (other, RefAccessType::None) => other.clone(),
         (RefAccessType::Guard { ref_id: a_id }, RefAccessType::Guard { ref_id: b_id }) => {
-            if a_id == b_id {
-                a.clone()
-            } else {
-                RefAccessType::None
-            }
+            if a_id == b_id { a.clone() } else { RefAccessType::None }
         }
         (RefAccessType::Guard { .. }, RefAccessType::Nullable)
         | (RefAccessType::Nullable, RefAccessType::Guard { .. }) => RefAccessType::None,
@@ -261,9 +204,7 @@ fn join_ref_access_types(a: &RefAccessType, b: &RefAccessType) -> RefAccessType 
 }
 
 fn join_ref_access_types_many(types: &[RefAccessType]) -> RefAccessType {
-    types
-        .iter()
-        .fold(RefAccessType::None, |acc, t| join_ref_access_types(&acc, t))
+    types.iter().fold(RefAccessType::None, |acc, t| join_ref_access_types(&acc, t))
 }
 
 // --- Env ---
@@ -276,11 +217,7 @@ struct Env {
 
 impl Env {
     fn new() -> Self {
-        Self {
-            changed: false,
-            data: FxHashMap::default(),
-            temporaries: FxHashMap::default(),
-        }
+        Self { changed: false, data: FxHashMap::default(), temporaries: FxHashMap::default() }
     }
 
     fn define(&mut self, key: IdentifierId, value: Place) {
@@ -296,20 +233,12 @@ impl Env {
     }
 
     fn get(&self, key: IdentifierId) -> Option<&RefAccessType> {
-        let operand_id = self
-            .temporaries
-            .get(&key)
-            .map(|p| p.identifier)
-            .unwrap_or(key);
+        let operand_id = self.temporaries.get(&key).map(|p| p.identifier).unwrap_or(key);
         self.data.get(&operand_id)
     }
 
     fn set(&mut self, key: IdentifierId, value: RefAccessType) {
-        let operand_id = self
-            .temporaries
-            .get(&key)
-            .map(|p| p.identifier)
-            .unwrap_or(key);
+        let operand_id = self.temporaries.get(&key).map(|p| p.identifier).unwrap_or(key);
         let current = self.data.get(&operand_id);
         let widened_value = join_ref_access_types(&value, current.unwrap_or(&RefAccessType::None));
         if current.is_none() && widened_value == RefAccessType::None {
@@ -326,15 +255,10 @@ impl Env {
 fn ref_type_of_type(id: IdentifierId, identifiers: &[Identifier], types: &[Type]) -> RefAccessType {
     let identifier = &identifiers[id.0 as usize];
     let ty = &types[identifier.type_.0 as usize];
-    if react_compiler_hir::is_ref_value_type(ty) {
-        RefAccessType::RefValue {
-            loc: None,
-            ref_id: None,
-        }
-    } else if react_compiler_hir::is_use_ref_type(ty) {
-        RefAccessType::Ref {
-            ref_id: next_ref_id(),
-        }
+    if crate::react_compiler_hir::is_ref_value_type(ty) {
+        RefAccessType::RefValue { loc: None, ref_id: None }
+    } else if crate::react_compiler_hir::is_use_ref_type(ty) {
+        RefAccessType::Ref { ref_id: next_ref_id() }
     } else {
         RefAccessType::None
     }
@@ -342,19 +266,19 @@ fn ref_type_of_type(id: IdentifierId, identifiers: &[Identifier], types: &[Type]
 
 fn is_ref_type(id: IdentifierId, identifiers: &[Identifier], types: &[Type]) -> bool {
     let identifier = &identifiers[id.0 as usize];
-    react_compiler_hir::is_use_ref_type(&types[identifier.type_.0 as usize])
+    crate::react_compiler_hir::is_use_ref_type(&types[identifier.type_.0 as usize])
 }
 
 fn is_ref_value_type(id: IdentifierId, identifiers: &[Identifier], types: &[Type]) -> bool {
     let identifier = &identifiers[id.0 as usize];
-    react_compiler_hir::is_ref_value_type(&types[identifier.type_.0 as usize])
+    crate::react_compiler_hir::is_ref_value_type(&types[identifier.type_.0 as usize])
 }
 
 fn destructure(ty: &RefAccessType) -> RefAccessType {
     match ty {
-        RefAccessType::Structure {
-            value: Some(inner), ..
-        } => destructure(&RefAccessType::from_ref_type(inner)),
+        RefAccessType::Structure { value: Some(inner), .. } => {
+            destructure(&RefAccessType::from_ref_type(inner))
+        }
         other => other.clone(),
     }
 }
@@ -403,10 +327,7 @@ fn validate_no_ref_value_access(errors: &mut Vec<CompilerDiagnostic>, env: &Env,
                     }),
                 );
             }
-            RefAccessType::Structure {
-                fn_type: Some(fn_type),
-                ..
-            } if fn_type.read_ref_effect => {
+            RefAccessType::Structure { fn_type: Some(fn_type), .. } if fn_type.read_ref_effect => {
                 errors.push(
                     CompilerDiagnostic::new(
                         ErrorCategory::Refs,
@@ -456,10 +377,7 @@ fn validate_no_ref_passed_to_function(
                     }),
                 );
             }
-            RefAccessType::Structure {
-                fn_type: Some(fn_type),
-                ..
-            } if fn_type.read_ref_effect => {
+            RefAccessType::Structure { fn_type: Some(fn_type), .. } if fn_type.read_ref_effect => {
                 errors.push(
                     CompilerDiagnostic::new(
                         ErrorCategory::Refs,
@@ -515,10 +433,7 @@ fn validate_no_ref_update(
 }
 
 fn guard_check(errors: &mut Vec<CompilerDiagnostic>, operand: &Place, env: &Env) {
-    if matches!(
-        env.get(operand.identifier),
-        Some(RefAccessType::Guard { .. })
-    ) {
+    if matches!(env.get(operand.identifier), Some(RefAccessType::Guard { .. })) {
         errors.push(
             CompilerDiagnostic::new(
                 ErrorCategory::Refs,
@@ -581,9 +496,7 @@ fn collect_temporaries_sidemap(
                     env.define(instr.lvalue.identifier, temp.clone());
                     env.define(lvalue.place.identifier, temp);
                 }
-                InstructionValue::PropertyLoad {
-                    object, property, ..
-                } => {
+                InstructionValue::PropertyLoad { object, property, .. } => {
                     if is_ref_type(object.identifier, identifiers, types)
                         && *property == PropertyLiteral::String("current".to_string())
                     {
@@ -616,13 +529,10 @@ fn validate_no_ref_access_in_render_impl(
     // Process params
     for param in &func.params {
         let place = match param {
-            react_compiler_hir::ParamPattern::Place(p) => p,
-            react_compiler_hir::ParamPattern::Spread(s) => &s.place,
+            crate::react_compiler_hir::ParamPattern::Place(p) => p,
+            crate::react_compiler_hir::ParamPattern::Spread(s) => &s.place,
         };
-        ref_env.set(
-            place.identifier,
-            ref_type_of_type(place.identifier, identifiers, types),
-        );
+        ref_env.set(place.identifier, ref_type_of_type(place.identifier, identifiers, types));
     }
 
     // Collect identifiers that are interpolated as JSX children
@@ -631,10 +541,7 @@ fn validate_no_ref_access_in_render_impl(
         for &instr_id in &block.instructions {
             let instr = &func.instructions[instr_id.0 as usize];
             match &instr.value {
-                InstructionValue::JsxExpression {
-                    children: Some(children),
-                    ..
-                } => {
+                InstructionValue::JsxExpression { children: Some(children), .. } => {
                     for child in children {
                         interpolated_as_jsx.insert(child.identifier);
                     }
@@ -667,10 +574,7 @@ fn validate_no_ref_access_in_render_impl(
                     .operands
                     .values()
                     .map(|operand| {
-                        ref_env
-                            .get(operand.identifier)
-                            .cloned()
-                            .unwrap_or(RefAccessType::None)
+                        ref_env.get(operand.identifier).cloned().unwrap_or(RefAccessType::None)
                     })
                     .collect();
                 ref_env.set(phi.place.identifier, join_ref_access_types_many(&phi_types));
@@ -687,15 +591,13 @@ fn validate_no_ref_access_in_render_impl(
                             validate_no_direct_ref_value_access(errors, operand, ref_env);
                         }
                     }
-                    InstructionValue::ComputedLoad {
-                        object, property, ..
-                    } => {
+                    InstructionValue::ComputedLoad { object, property, .. } => {
                         validate_no_direct_ref_value_access(errors, property, ref_env);
                         let obj_type = ref_env.get(object.identifier).cloned();
                         let lookup_type = match &obj_type {
-                            Some(RefAccessType::Structure {
-                                value: Some(value), ..
-                            }) => Some(RefAccessType::from_ref_type(value)),
+                            Some(RefAccessType::Structure { value: Some(value), .. }) => {
+                                Some(RefAccessType::from_ref_type(value))
+                            }
                             Some(RefAccessType::Ref { ref_id }) => Some(RefAccessType::RefValue {
                                 loc: instr.loc,
                                 ref_id: Some(*ref_id),
@@ -712,9 +614,9 @@ fn validate_no_ref_access_in_render_impl(
                     InstructionValue::PropertyLoad { object, .. } => {
                         let obj_type = ref_env.get(object.identifier).cloned();
                         let lookup_type = match &obj_type {
-                            Some(RefAccessType::Structure {
-                                value: Some(value), ..
-                            }) => Some(RefAccessType::from_ref_type(value)),
+                            Some(RefAccessType::Structure { value: Some(value), .. }) => {
+                                Some(RefAccessType::from_ref_type(value))
+                            }
                             Some(RefAccessType::Ref { ref_id }) => Some(RefAccessType::RefValue {
                                 loc: instr.loc,
                                 ref_id: Some(*ref_id),
@@ -763,9 +665,9 @@ fn validate_no_ref_access_in_render_impl(
                     InstructionValue::Destructure { value, lvalue, .. } => {
                         let obj_type = ref_env.get(value.identifier).cloned();
                         let lookup_type = match &obj_type {
-                            Some(RefAccessType::Structure {
-                                value: Some(value), ..
-                            }) => Some(RefAccessType::from_ref_type(value)),
+                            Some(RefAccessType::Structure { value: Some(value), .. }) => {
+                                Some(RefAccessType::from_ref_type(value))
+                            }
                             _ => None,
                         };
                         ref_env.set(
@@ -813,18 +715,14 @@ fn validate_no_ref_access_in_render_impl(
                         );
                     }
                     InstructionValue::MethodCall { property, .. }
-                    | InstructionValue::CallExpression {
-                        callee: property, ..
-                    } => {
+                    | InstructionValue::CallExpression { callee: property, .. } => {
                         let callee = property;
                         let mut return_type = RefAccessType::None;
                         let fn_type = ref_env.get(callee.identifier).cloned();
                         let mut did_error = false;
 
-                        if let Some(RefAccessType::Structure {
-                            fn_type: Some(fn_ty),
-                            ..
-                        }) = &fn_type
+                        if let Some(RefAccessType::Structure { fn_type: Some(fn_ty), .. }) =
+                            &fn_type
                         {
                             return_type = *fn_ty.return_type.clone();
                             if fn_ty.read_ref_effect {
@@ -890,7 +788,8 @@ fn validate_no_ref_access_in_render_impl(
                                      * use the effects to determine what validation to apply.
                                      * Track visited id:kind pairs to avoid duplicate errors.
                                      */
-                                    let mut visited_effects: FxHashSet<String> = FxHashSet::default();
+                                    let mut visited_effects: FxHashSet<String> =
+                                        FxHashSet::default();
                                     for effect in effects {
                                         let (place, validation) = match effect {
                                             AliasingEffect::Freeze { value, .. } => {
@@ -1071,14 +970,10 @@ fn validate_no_ref_access_in_render_impl(
                             ref_env.set(instr.lvalue.identifier, RefAccessType::Nullable);
                         }
                     }
-                    InstructionValue::UnaryExpression {
-                        operator, value, ..
-                    } => {
+                    InstructionValue::UnaryExpression { operator, value, .. } => {
                         if *operator == UnaryOperator::Not {
-                            if let Some(RefAccessType::RefValue {
-                                ref_id: Some(ref_id),
-                                ..
-                            }) = ref_env.get(value.identifier).cloned().as_ref()
+                            if let Some(RefAccessType::RefValue { ref_id: Some(ref_id), .. }) =
+                                ref_env.get(value.identifier).cloned().as_ref()
                             {
                                 /*
                                  * Record an error suggesting the `if (ref.current == null)` pattern,
@@ -1120,14 +1015,10 @@ fn validate_no_ref_access_in_render_impl(
                         let mut nullish = false;
                         let mut found_ref_id: Option<RefId> = None;
 
-                        if let Some(RefAccessType::RefValue {
-                            ref_id: Some(id), ..
-                        }) = &left_type
-                        {
+                        if let Some(RefAccessType::RefValue { ref_id: Some(id), .. }) = &left_type {
                             found_ref_id = Some(*id);
-                        } else if let Some(RefAccessType::RefValue {
-                            ref_id: Some(id), ..
-                        }) = &right_type
+                        } else if let Some(RefAccessType::RefValue { ref_id: Some(id), .. }) =
+                            &right_type
                         {
                             found_ref_id = Some(*id);
                         }
@@ -1179,9 +1070,7 @@ fn validate_no_ref_access_in_render_impl(
                         instr.lvalue.identifier,
                         join_ref_access_types(
                             &existing,
-                            &RefAccessType::Ref {
-                                ref_id: next_ref_id(),
-                            },
+                            &RefAccessType::Ref { ref_id: next_ref_id() },
                         ),
                     );
                 }
@@ -1199,20 +1088,14 @@ fn validate_no_ref_access_in_render_impl(
                         instr.lvalue.identifier,
                         join_ref_access_types(
                             &existing,
-                            &RefAccessType::RefValue {
-                                loc: instr.loc,
-                                ref_id: None,
-                            },
+                            &RefAccessType::RefValue { loc: instr.loc, ref_id: None },
                         ),
                     );
                 }
             }
 
             // Check if terminal is an `if` — push safe block for guard
-            if let Terminal::If {
-                test, fallthrough, ..
-            } = &block.terminal
-            {
+            if let Terminal::If { test, fallthrough, .. } = &block.terminal {
                 if let Some(RefAccessType::Guard { ref_id }) = ref_env.get(test.identifier) {
                     if !safe_blocks.iter().any(|(_, r)| r == ref_id) {
                         safe_blocks.push((*fallthrough, *ref_id));
@@ -1245,7 +1128,7 @@ fn validate_no_ref_access_in_render_impl(
 
     if ref_env.has_changed() {
         errors.push(CompilerDiagnostic::new(
-            react_compiler_diagnostics::ErrorCategory::Invariant,
+            crate::react_compiler_diagnostics::ErrorCategory::Invariant,
             "Ref type environment did not converge",
             None,
         ));

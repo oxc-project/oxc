@@ -11,9 +11,9 @@
 //!
 //! Corresponds to the reactive types in `HIR.ts`.
 
-use react_compiler_diagnostics::SourceLocation;
+use crate::react_compiler_diagnostics::SourceLocation;
 
-use crate::{
+use crate::react_compiler_hir::{
     AliasingEffect, BlockId, EvaluationOrder, InstructionValue, LogicalOperator, ParamPattern,
     Place, ScopeId,
 };

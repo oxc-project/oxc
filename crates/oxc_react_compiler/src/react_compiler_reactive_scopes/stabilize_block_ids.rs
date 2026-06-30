@@ -12,13 +12,13 @@
 
 use rustc_hash::FxHashMap;
 
-use react_compiler_utils::FxIndexSet;
-use react_compiler_hir::{
+use crate::react_compiler_hir::{
     BlockId, ReactiveFunction, ReactiveScopeBlock, ReactiveTerminal, ReactiveTerminalStatement,
     environment::Environment,
 };
+use crate::react_compiler_utils::FxIndexSet;
 
-use crate::visitors::{
+use crate::react_compiler_reactive_scopes::visitors::{
     ReactiveFunctionTransform, ReactiveFunctionVisitor, transform_reactive_function,
     visit_reactive_function,
 };
@@ -101,7 +101,7 @@ impl<'a> ReactiveFunctionTransform for RewriteBlockIds<'a> {
         &mut self,
         scope: &mut ReactiveScopeBlock,
         state: &mut Self::State,
-    ) -> Result<(), react_compiler_diagnostics::CompilerError> {
+    ) -> Result<(), crate::react_compiler_diagnostics::CompilerError> {
         let scope_data = &mut self.env.scopes[scope.scope.0 as usize];
         if let Some(ref mut early_return) = scope_data.early_return_value {
             early_return.label = get_or_insert_mapping(state, early_return.label);
@@ -113,7 +113,7 @@ impl<'a> ReactiveFunctionTransform for RewriteBlockIds<'a> {
         &mut self,
         stmt: &mut ReactiveTerminalStatement,
         state: &mut Self::State,
-    ) -> Result<(), react_compiler_diagnostics::CompilerError> {
+    ) -> Result<(), crate::react_compiler_diagnostics::CompilerError> {
         if let Some(ref mut label) = stmt.label {
             label.id = get_or_insert_mapping(state, label.id);
         }

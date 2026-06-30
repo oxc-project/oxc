@@ -1,10 +1,12 @@
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use react_compiler_utils::FxIndexMap;
-use react_compiler_diagnostics::{CompilerDiagnostic, CompilerDiagnosticDetail, ErrorCategory};
-use react_compiler_hir::environment::Environment;
-use react_compiler_hir::visitors;
-use react_compiler_hir::*;
+use crate::react_compiler_diagnostics::{
+    CompilerDiagnostic, CompilerDiagnosticDetail, ErrorCategory,
+};
+use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_hir::visitors;
+use crate::react_compiler_hir::*;
+use crate::react_compiler_utils::FxIndexMap;
 
 // =============================================================================
 // SSABuilder
@@ -51,18 +53,13 @@ impl SSABuilder {
 
     fn define_function(&mut self, func: &HirFunction) {
         for (id, block) in &func.body.blocks {
-            self.block_preds
-                .insert(*id, block.preds.iter().copied().collect());
+            self.block_preds.insert(*id, block.preds.iter().copied().collect());
         }
     }
 
     fn state_mut(&mut self) -> &mut State {
-        let current = self
-            .current
-            .expect("we need to be in a block to access state!");
-        self.states
-            .get_mut(&current)
-            .expect("state not found for current block")
+        let current = self.current.expect("we need to be in a block to access state!");
+        self.states.get_mut(&current).expect("state not found for current block")
     }
 
     fn make_id(&mut self, old_id: IdentifierId, env: &mut Environment) -> IdentifierId {
@@ -182,10 +179,7 @@ impl SSABuilder {
                 loc: old_place.loc,
             };
             let state = self.states.get_mut(&block_id).unwrap();
-            state.incomplete_phis.push(IncompletePhi {
-                old_place: old_place.clone(),
-                new_place,
-            });
+            state.incomplete_phis.push(IncompletePhi { old_place: old_place.clone(), new_place });
             state.defs.insert(old_place.identifier, new_id);
             return new_id;
         }
@@ -193,20 +187,12 @@ impl SSABuilder {
         if preds.len() == 1 {
             let pred = preds[0];
             let new_id = self.get_id_at(old_place, pred, env);
-            self.states
-                .get_mut(&block_id)
-                .unwrap()
-                .defs
-                .insert(old_place.identifier, new_id);
+            self.states.get_mut(&block_id).unwrap().defs.insert(old_place.identifier, new_id);
             return new_id;
         }
 
         let new_id = self.make_id(old_place.identifier, env);
-        self.states
-            .get_mut(&block_id)
-            .unwrap()
-            .defs
-            .insert(old_place.identifier, new_id);
+        self.states.get_mut(&block_id).unwrap().defs.insert(old_place.identifier, new_id);
         let new_place = Place {
             identifier: new_id,
             effect: old_place.effect,
@@ -240,22 +226,14 @@ impl SSABuilder {
             );
         }
 
-        let phi = Phi {
-            place: new_place.clone(),
-            operands: pred_defs,
-        };
+        let phi = Phi { place: new_place.clone(), operands: pred_defs };
 
         self.pending_phis.entry(block_id).or_default().push(phi);
     }
 
     fn fix_incomplete_phis(&mut self, block_id: BlockId, env: &mut Environment) {
-        let incomplete_phis: Vec<IncompletePhi> = self
-            .states
-            .get_mut(&block_id)
-            .unwrap()
-            .incomplete_phis
-            .drain(..)
-            .collect();
+        let incomplete_phis: Vec<IncompletePhi> =
+            self.states.get_mut(&block_id).unwrap().incomplete_phis.drain(..).collect();
         for phi in &incomplete_phis {
             self.add_phi(block_id, &phi.old_place, &phi.new_place, env);
         }
@@ -263,13 +241,8 @@ impl SSABuilder {
 
     fn start_block(&mut self, block_id: BlockId) {
         self.current = Some(block_id);
-        self.states.insert(
-            block_id,
-            State {
-                defs: FxHashMap::default(),
-                incomplete_phis: Vec::new(),
-            },
-        );
+        self.states
+            .insert(block_id, State { defs: FxHashMap::default(), incomplete_phis: Vec::new() });
     }
 }
 
@@ -350,13 +323,8 @@ fn enter_ssa_impl(
         }
 
         // Process instructions
-        let instruction_ids: Vec<InstructionId> = func
-            .body
-            .blocks
-            .get(&block_id)
-            .unwrap()
-            .instructions
-            .clone();
+        let instruction_ids: Vec<InstructionId> =
+            func.body.blocks.get(&block_id).unwrap().instructions.clone();
 
         for instr_id in &instruction_ids {
             let instr_idx = instr_id.0 as usize;
@@ -375,10 +343,8 @@ fn enter_ssa_impl(
             // Map context places for function expressions before other operands
             if let Some(fid) = func_expr_id {
                 let context = std::mem::take(&mut env.functions[fid.0 as usize].context);
-                env.functions[fid.0 as usize].context = context
-                    .into_iter()
-                    .map(|place| builder.get_place(&place, env))
-                    .collect();
+                env.functions[fid.0 as usize].context =
+                    context.into_iter().map(|place| builder.get_place(&place, env)).collect();
             }
 
             // Map non-context operands
@@ -478,11 +444,8 @@ fn enter_ssa_impl(
         let terminal_ref = &func.body.blocks.get(&block_id).unwrap().terminal;
         let successors = visitors::each_terminal_successor(terminal_ref);
         for output_id in successors {
-            let output_preds_len = builder
-                .block_preds
-                .get(&output_id)
-                .map(|p| p.len() as u32)
-                .unwrap_or(0);
+            let output_preds_len =
+                builder.block_preds.get(&output_id).map(|p| p.len() as u32).unwrap_or(0);
 
             let count = if builder.unsealed_preds.contains_key(&output_id) {
                 builder.unsealed_preds[&output_id] - 1
@@ -518,10 +481,7 @@ pub fn placeholder_function() -> HirFunction {
             loc: None,
         },
         context: Vec::new(),
-        body: HIR {
-            entry: BlockId(0),
-            blocks: FxIndexMap::default(),
-        },
+        body: HIR { entry: BlockId(0), blocks: FxIndexMap::default() },
         instructions: Vec::new(),
         generator: false,
         is_async: false,

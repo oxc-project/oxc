@@ -7,12 +7,14 @@
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use react_compiler_diagnostics::{CompilerDiagnostic, CompilerDiagnosticDetail, ErrorCategory};
-use react_compiler_hir::environment::Environment;
-use react_compiler_hir::visitors::{
+use crate::react_compiler_diagnostics::{
+    CompilerDiagnostic, CompilerDiagnosticDetail, ErrorCategory,
+};
+use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_hir::visitors::{
     each_instruction_lvalue_ids, each_instruction_value_operand, each_terminal_operand,
 };
-use react_compiler_hir::{
+use crate::react_compiler_hir::{
     Effect, HirFunction, Identifier, IdentifierId, IdentifierName, InstructionValue, Place, Type,
 };
 
@@ -55,10 +57,7 @@ pub fn validate_locals_not_reassigned_after_render(func: &HirFunction, env: &mut
             )
             .with_detail(CompilerDiagnosticDetail::Error {
                 loc: reassignment_place.loc,
-                message: Some(format!(
-                    "Cannot reassign {} after render completes",
-                    variable_name
-                )),
+                message: Some(format!("Cannot reassign {} after render completes", variable_name)),
                 identifier_name: None,
             }),
         );
@@ -221,9 +220,7 @@ fn get_context_reassignment(
                                 each_instruction_value_operand(&instr.value, env)
                             }
                         }
-                        InstructionValue::MethodCall {
-                            receiver, property, ..
-                        } => {
+                        InstructionValue::MethodCall { receiver, property, .. } => {
                             if env.has_no_alias_signature(property.identifier) {
                                 vec![receiver.clone(), property.clone()]
                             } else {

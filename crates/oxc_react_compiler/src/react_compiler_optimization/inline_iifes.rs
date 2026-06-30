@@ -40,21 +40,21 @@
 //!
 //! Analogous to TS `Inference/InlineImmediatelyInvokedFunctionExpressions.ts`.
 
-use react_compiler_utils::FxIndexSet;
+use crate::react_compiler_utils::FxIndexSet;
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use react_compiler_hir::environment::Environment;
-use react_compiler_hir::visitors;
-use react_compiler_hir::{
+use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_hir::visitors;
+use crate::react_compiler_hir::{
     BasicBlock, BlockId, BlockKind, EvaluationOrder, FunctionId, GENERATED_SOURCE, GotoVariant,
     HirFunction, IdentifierId, IdentifierName, Instruction, InstructionId, InstructionKind,
     InstructionValue, LValue, Place, Terminal,
 };
-use react_compiler_lowering::{
+use crate::react_compiler_lowering::{
     create_temporary_place, get_reverse_postordered_blocks, mark_instruction_ids, mark_predecessors,
 };
 
-use crate::merge_consecutive_blocks::merge_consecutive_blocks;
+use crate::react_compiler_optimization::merge_consecutive_blocks::merge_consecutive_blocks;
 
 /// Inline immediately invoked function expressions into the enclosing function's
 /// control flow graph.
@@ -144,18 +144,11 @@ pub fn inline_immediately_invoked_function_expressions(
                         preds: FxIndexSet::default(),
                         terminal: continuation_terminal,
                     };
-                    func.body
-                        .blocks
-                        .insert(continuation_block_id, continuation_block);
+                    func.body.blocks.insert(continuation_block_id, continuation_block);
 
                     // Trim the original block to contain instructions up to (but not including)
                     // the IIFE
-                    func.body
-                        .blocks
-                        .get_mut(&block_id)
-                        .unwrap()
-                        .instructions
-                        .truncate(ii);
+                    func.body.blocks.get_mut(&block_id).unwrap().instructions.truncate(ii);
 
                     let has_single_return =
                         has_single_exit_return_terminal(&env.functions[inner_func_id.0 as usize]);
@@ -188,12 +181,8 @@ pub fn inline_immediately_invoked_function_expressions(
                             }
                             inner_block.preds.clear();
 
-                            if let Terminal::Return {
-                                value,
-                                id: ret_id,
-                                loc: ret_loc,
-                                ..
-                            } = &inner_block.terminal
+                            if let Terminal::Return { value, id: ret_id, loc: ret_loc, .. } =
+                                &inner_block.terminal
                             {
                                 // Replace return with LoadLocal + goto
                                 let load_instr = Instruction {
@@ -343,22 +332,14 @@ fn rewrite_block(
     return_target: BlockId,
     return_value: &Place,
 ) {
-    if let Terminal::Return {
-        value,
-        loc: ret_loc,
-        ..
-    } = &block.terminal
-    {
+    if let Terminal::Return { value, loc: ret_loc, .. } = &block.terminal {
         let store_lvalue = create_temporary_place(env, ret_loc.clone());
         let store_instr = Instruction {
             id: EvaluationOrder(0),
             loc: ret_loc.clone(),
             lvalue: store_lvalue,
             value: InstructionValue::StoreLocal {
-                lvalue: LValue {
-                    kind: InstructionKind::Reassign,
-                    place: return_value.clone(),
-                },
+                lvalue: LValue { kind: InstructionKind::Reassign, place: return_value.clone() },
                 value: value.clone(),
                 type_annotation: None,
                 loc: ret_loc.clone(),
@@ -392,10 +373,7 @@ fn declare_temporary(
         loc: GENERATED_SOURCE,
         lvalue: declare_lvalue,
         value: InstructionValue::DeclareLocal {
-            lvalue: LValue {
-                place: result.clone(),
-                kind: InstructionKind::Let,
-            },
+            lvalue: LValue { place: result.clone(), kind: InstructionKind::Let },
             type_annotation: None,
             loc: result.loc.clone(),
         },
@@ -403,12 +381,7 @@ fn declare_temporary(
     };
     let instr_id = InstructionId(func.instructions.len() as u32);
     func.instructions.push(declare_instr);
-    func.body
-        .blocks
-        .get_mut(&block_id)
-        .unwrap()
-        .instructions
-        .push(instr_id);
+    func.body.blocks.get_mut(&block_id).unwrap().instructions.push(instr_id);
 }
 
 /// Promote a temporary identifier to a named identifier.

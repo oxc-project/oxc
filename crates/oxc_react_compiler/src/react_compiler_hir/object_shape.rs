@@ -10,9 +10,11 @@
 
 use rustc_hash::FxHashMap;
 
-use crate::Effect;
-use crate::Type;
-use crate::type_config::{AliasingEffectConfig, AliasingSignatureConfig, ValueKind, ValueReason};
+use crate::react_compiler_hir::Effect;
+use crate::react_compiler_hir::Type;
+use crate::react_compiler_hir::type_config::{
+    AliasingEffectConfig, AliasingSignatureConfig, ValueKind, ValueReason,
+};
 
 // =============================================================================
 // Shape ID constants (matching TS ObjectShape.ts)
@@ -139,24 +141,16 @@ pub struct ShapeRegistry {
 impl ShapeRegistry {
     /// Create an empty builder-mode registry.
     pub fn new() -> Self {
-        Self {
-            base: None,
-            entries: FxHashMap::default(),
-        }
+        Self { base: None, entries: FxHashMap::default() }
     }
 
     /// Create an overlay-mode registry backed by a static base.
     pub fn with_base(base: &'static FxHashMap<String, ObjectShape>) -> Self {
-        Self {
-            base: Some(base),
-            entries: FxHashMap::default(),
-        }
+        Self { base: Some(base), entries: FxHashMap::default() }
     }
 
     pub fn get(&self, key: &str) -> Option<&ObjectShape> {
-        self.entries
-            .get(key)
-            .or_else(|| self.base.and_then(|b| b.get(key)))
+        self.entries.get(key).or_else(|| self.base.and_then(|b| b.get(key)))
     }
 
     pub fn insert(&mut self, key: String, value: ObjectShape) {
@@ -166,20 +160,14 @@ impl ShapeRegistry {
     /// Consume the registry and return the inner FxHashMap.
     /// Only valid in builder mode (no base).
     pub fn into_inner(self) -> FxHashMap<String, ObjectShape> {
-        debug_assert!(
-            self.base.is_none(),
-            "into_inner() called on overlay-mode ShapeRegistry"
-        );
+        debug_assert!(self.base.is_none(), "into_inner() called on overlay-mode ShapeRegistry");
         self.entries
     }
 }
 
 impl Clone for ShapeRegistry {
     fn clone(&self) -> Self {
-        Self {
-            base: self.base,
-            entries: self.entries.clone(),
-        }
+        Self { base: self.base, entries: self.entries.clone() }
     }
 }
 
@@ -231,11 +219,7 @@ pub fn add_function(
             aliasing: sig.aliasing,
         }),
     );
-    Type::Function {
-        shape_id: Some(shape_id),
-        return_type: Box::new(return_type),
-        is_constructor,
-    }
+    Type::Function { shape_id: Some(shape_id), return_type: Box::new(return_type), is_constructor }
 }
 
 /// Add a hook to a ShapeRegistry.
@@ -279,9 +263,7 @@ pub fn add_object(
 ) -> Type {
     let shape_id = id.map(|s| s.to_string()).unwrap_or_else(next_anon_id);
     add_shape(registry, &shape_id, properties, None);
-    Type::Object {
-        shape_id: Some(shape_id),
-    }
+    Type::Object { shape_id: Some(shape_id) }
 }
 
 fn add_shape(
@@ -290,10 +272,7 @@ fn add_shape(
     properties: Vec<(String, Type)>,
     function_type: Option<FunctionSignature>,
 ) {
-    let shape = ObjectShape {
-        properties: properties.into_iter().collect(),
-        function_type,
-    };
+    let shape = ObjectShape { properties: properties.into_iter().collect(), function_type };
     // Note: TS has an invariant that the id doesn't already exist. We use
     // insert which overwrites. In practice duplicates don't occur for built-in
     // shapes, and for user configs we want last-write-wins behavior.

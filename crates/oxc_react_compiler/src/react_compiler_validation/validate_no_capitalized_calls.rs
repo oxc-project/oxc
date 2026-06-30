@@ -1,8 +1,8 @@
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use react_compiler_diagnostics::{CompilerError, CompilerErrorDetail, ErrorCategory};
-use react_compiler_hir::environment::Environment;
-use react_compiler_hir::{HirFunction, IdentifierId, InstructionValue, PropertyLiteral};
+use crate::react_compiler_diagnostics::{CompilerError, CompilerErrorDetail, ErrorCategory};
+use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_hir::{HirFunction, IdentifierId, InstructionValue, PropertyLiteral};
 
 /// Validates that capitalized functions are not called directly (they should be rendered as JSX).
 ///

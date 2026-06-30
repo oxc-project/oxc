@@ -1,20 +1,20 @@
-use react_compiler_utils::FxIndexMap;
-use react_compiler_utils::FxIndexSet;
-use react_compiler_ast::scope::BindingId;
-use react_compiler_ast::scope::ImportBindingKind;
-use react_compiler_ast::scope::ScopeId;
-use react_compiler_ast::scope::ScopeInfo;
-use react_compiler_diagnostics::CompilerDiagnostic;
-use react_compiler_diagnostics::CompilerDiagnosticDetail;
-use react_compiler_diagnostics::CompilerError;
-use react_compiler_diagnostics::CompilerErrorDetail;
-use react_compiler_diagnostics::ErrorCategory;
-use react_compiler_hir::environment::Environment;
-use react_compiler_hir::visitors::each_terminal_successor;
-use react_compiler_hir::visitors::terminal_fallthrough;
-use react_compiler_hir::*;
+use crate::react_compiler_ast::scope::BindingId;
+use crate::react_compiler_ast::scope::ImportBindingKind;
+use crate::react_compiler_ast::scope::ScopeId;
+use crate::react_compiler_ast::scope::ScopeInfo;
+use crate::react_compiler_diagnostics::CompilerDiagnostic;
+use crate::react_compiler_diagnostics::CompilerDiagnosticDetail;
+use crate::react_compiler_diagnostics::CompilerError;
+use crate::react_compiler_diagnostics::CompilerErrorDetail;
+use crate::react_compiler_diagnostics::ErrorCategory;
+use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_hir::visitors::each_terminal_successor;
+use crate::react_compiler_hir::visitors::terminal_fallthrough;
+use crate::react_compiler_hir::*;
+use crate::react_compiler_utils::FxIndexMap;
+use crate::react_compiler_utils::FxIndexSet;
 
-use crate::identifier_loc_index::IdentifierLocIndex;
+use crate::react_compiler_lowering::identifier_loc_index::IdentifierLocIndex;
 
 // ---------------------------------------------------------------------------
 // Reserved word check (matches TS isReservedWord)
@@ -83,19 +83,9 @@ pub(crate) fn reserved_identifier_diagnostic(name: &str) -> CompilerDiagnostic {
 // ---------------------------------------------------------------------------
 
 enum Scope {
-    Loop {
-        label: Option<String>,
-        continue_block: BlockId,
-        break_block: BlockId,
-    },
-    Label {
-        label: String,
-        break_block: BlockId,
-    },
-    Switch {
-        label: Option<String>,
-        break_block: BlockId,
-    },
+    Loop { label: Option<String>, continue_block: BlockId, break_block: BlockId },
+    Label { label: String, break_block: BlockId },
+    Switch { label: Option<String>, break_block: BlockId },
 }
 
 impl Scope {
@@ -127,11 +117,7 @@ pub struct WipBlock {
 }
 
 fn new_block(id: BlockId, kind: BlockKind) -> WipBlock {
-    WipBlock {
-        id,
-        kind,
-        instructions: Vec::new(),
-    }
+    WipBlock { id, kind, instructions: Vec::new() }
 }
 
 // ---------------------------------------------------------------------------
@@ -265,18 +251,14 @@ impl<'a> HirBuilder<'a> {
 
     /// Look up the source location of an identifier by its node_id.
     pub fn get_identifier_loc(&self, node_id: u32) -> Option<SourceLocation> {
-        self.identifier_locs
-            .get(&node_id)
-            .map(|entry| entry.loc.clone())
+        self.identifier_locs.get(&node_id).map(|entry| entry.loc.clone())
     }
 
     /// Check whether a reference at the given byte offset corresponds to a
     /// JSXIdentifier. Scans the node_id-keyed index for an entry whose stored
     /// `start` matches the offset.
     pub fn is_jsx_identifier_at_pos(&self, offset: u32) -> bool {
-        self.identifier_locs
-            .values()
-            .any(|entry| entry.start == offset && entry.is_jsx)
+        self.identifier_locs.values().any(|entry| entry.start == offset && entry.is_jsx)
     }
 
     /// Access the function scope (the scope of the function being compiled).
@@ -390,10 +372,8 @@ impl<'a> HirBuilder<'a> {
         // next_block_kind is None, meaning this is the final terminate() call.
         // It will never be read or completed because build() consumes self
         // immediately after, and no further operations should occur on the builder.
-        let wip = std::mem::replace(
-            &mut self.current,
-            new_block(BlockId(u32::MAX), BlockKind::Block),
-        );
+        let wip =
+            std::mem::replace(&mut self.current, new_block(BlockId(u32::MAX), BlockKind::Block));
         let block_id = wip.id;
 
         self.completed.insert(
@@ -558,22 +538,11 @@ impl<'a> HirBuilder<'a> {
         break_block: BlockId,
         f: impl FnOnce(&mut Self) -> Result<T, CompilerDiagnostic>,
     ) -> Result<T, CompilerDiagnostic> {
-        self.scopes.push(Scope::Loop {
-            label: label.clone(),
-            continue_block,
-            break_block,
-        });
+        self.scopes.push(Scope::Loop { label: label.clone(), continue_block, break_block });
         let value = f(self)?;
-        let last = self
-            .scopes
-            .pop()
-            .expect("Mismatched loop scope: stack empty");
+        let last = self.scopes.pop().expect("Mismatched loop scope: stack empty");
         match &last {
-            Scope::Loop {
-                label: l,
-                continue_block: c,
-                break_block: b,
-            } => {
+            Scope::Loop { label: l, continue_block: c, break_block: b } => {
                 assert!(
                     *l == label && *c == continue_block && *b == break_block,
                     "Mismatched loop scope"
@@ -597,20 +566,11 @@ impl<'a> HirBuilder<'a> {
         break_block: BlockId,
         f: impl FnOnce(&mut Self) -> Result<T, CompilerDiagnostic>,
     ) -> Result<T, CompilerDiagnostic> {
-        self.scopes.push(Scope::Label {
-            label: label.clone(),
-            break_block,
-        });
+        self.scopes.push(Scope::Label { label: label.clone(), break_block });
         let value = f(self)?;
-        let last = self
-            .scopes
-            .pop()
-            .expect("Mismatched label scope: stack empty");
+        let last = self.scopes.pop().expect("Mismatched label scope: stack empty");
         match &last {
-            Scope::Label {
-                label: l,
-                break_block: b,
-            } => {
+            Scope::Label { label: l, break_block: b } => {
                 assert!(*l == label && *b == break_block, "Mismatched label scope");
             }
             _ => {
@@ -631,20 +591,11 @@ impl<'a> HirBuilder<'a> {
         break_block: BlockId,
         f: impl FnOnce(&mut Self) -> Result<T, CompilerDiagnostic>,
     ) -> Result<T, CompilerDiagnostic> {
-        self.scopes.push(Scope::Switch {
-            label: label.clone(),
-            break_block,
-        });
+        self.scopes.push(Scope::Switch { label: label.clone(), break_block });
         let value = f(self)?;
-        let last = self
-            .scopes
-            .pop()
-            .expect("Mismatched switch scope: stack empty");
+        let last = self.scopes.pop().expect("Mismatched switch scope: stack empty");
         match &last {
-            Scope::Switch {
-                label: l,
-                break_block: b,
-            } => {
+            Scope::Switch { label: l, break_block: b } => {
                 assert!(*l == label && *b == break_block, "Mismatched switch scope");
             }
             _ => {
@@ -684,11 +635,7 @@ impl<'a> HirBuilder<'a> {
     pub fn lookup_continue(&self, label: Option<&str>) -> Result<BlockId, CompilerDiagnostic> {
         for scope in self.scopes.iter().rev() {
             match scope {
-                Scope::Loop {
-                    label: scope_label,
-                    continue_block,
-                    ..
-                } => {
+                Scope::Loop { label: scope_label, continue_block, .. } => {
                     if label.is_none() || label == scope_label.as_deref() {
                         return Ok(*continue_block);
                     }
@@ -739,9 +686,8 @@ impl<'a> HirBuilder<'a> {
     /// This is used for checking if fbt/fbs JSX tags are local bindings
     /// (which is not supported).
     pub fn has_local_binding(&self, name: &str) -> bool {
-        if let Some(binding) = self
-            .scope_info
-            .find_binding_in_descendants(name, self.component_scope)
+        if let Some(binding) =
+            self.scope_info.find_binding_in_descendants(name, self.component_scope)
         {
             return binding.scope != self.scope_info.program_scope;
         }
@@ -766,18 +712,10 @@ impl<'a> HirBuilder<'a> {
     pub fn build(
         mut self,
     ) -> Result<
-        (
-            HIR,
-            Vec<Instruction>,
-            FxIndexMap<String, BindingId>,
-            FxIndexMap<BindingId, IdentifierId>,
-        ),
+        (HIR, Vec<Instruction>, FxIndexMap<String, BindingId>, FxIndexMap<BindingId, IdentifierId>),
         CompilerError,
     > {
-        let mut hir = HIR {
-            blocks: std::mem::take(&mut self.completed),
-            entry: self.entry,
-        };
+        let mut hir = HIR { blocks: std::mem::take(&mut self.completed), entry: self.entry };
 
         let mut instructions = std::mem::take(&mut self.instruction_table);
 
@@ -916,13 +854,11 @@ impl<'a> HirBuilder<'a> {
         if candidate != name {
             let binding = &self.scope_info.bindings[binding_id.0 as usize];
             if let Some(decl_start) = binding.declaration_start {
-                self.env
-                    .renames
-                    .push(react_compiler_hir::environment::BindingRename {
-                        original: name.to_string(),
-                        renamed: candidate.clone(),
-                        declaration_start: decl_start,
-                    });
+                self.env.renames.push(crate::react_compiler_hir::environment::BindingRename {
+                    original: name.to_string(),
+                    renamed: candidate.clone(),
+                    declaration_start: decl_start,
+                });
             }
         }
 
@@ -934,9 +870,7 @@ impl<'a> HirBuilder<'a> {
         // This matches TS behavior where Babel's resolveBinding returns the
         // binding identifier's original loc (the declaration site).
         let binding = &self.scope_info.bindings[binding_id.0 as usize];
-        let decl_loc = binding
-            .declaration_node_id
-            .and_then(|nid| self.get_identifier_loc(nid));
+        let decl_loc = binding.declaration_node_id.and_then(|nid| self.get_identifier_loc(nid));
         if let Some(ref dl) = decl_loc {
             self.env.identifiers[id.0 as usize].loc = Some(dl.clone());
         } else if let Some(ref loc) = loc {
@@ -979,9 +913,7 @@ impl<'a> HirBuilder<'a> {
         match binding_data {
             None => {
                 // No binding found: this is a global
-                Ok(VariableBinding::Global {
-                    name: name.to_string(),
-                })
+                Ok(VariableBinding::Global { name: name.to_string() })
             }
             Some(binding) => {
                 // Treat type-only declarations as globals so the compiler
@@ -996,9 +928,7 @@ impl<'a> HirBuilder<'a> {
                         | "TSEnumDeclaration"
                         | "TSModuleDeclaration"
                 ) {
-                    return Ok(VariableBinding::Global {
-                        name: name.to_string(),
-                    });
+                    return Ok(VariableBinding::Global { name: name.to_string() });
                 }
                 if binding.scope == self.scope_info.program_scope {
                     // Module-level binding: check import info
@@ -1021,22 +951,16 @@ impl<'a> HirBuilder<'a> {
                                 module: import_info.source.clone(),
                             },
                         },
-                        None => VariableBinding::ModuleLocal {
-                            name: name.to_string(),
-                        },
+                        None => VariableBinding::ModuleLocal { name: name.to_string() },
                     })
                 } else if !self.is_scope_within_compiled_function(binding.scope) {
-                    Ok(VariableBinding::ModuleLocal {
-                        name: name.to_string(),
-                    })
+                    Ok(VariableBinding::ModuleLocal { name: name.to_string() })
                 } else {
                     let binding_id = binding.id;
-                    let binding_kind = crate::convert_binding_kind(&binding.kind);
+                    let binding_kind =
+                        crate::react_compiler_lowering::convert_binding_kind(&binding.kind);
                     let identifier_id = self.resolve_binding_with_loc(name, binding_id, loc)?;
-                    Ok(VariableBinding::Identifier {
-                        identifier: identifier_id,
-                        binding_kind,
-                    })
+                    Ok(VariableBinding::Identifier { identifier: identifier_id, binding_kind })
                 }
             }
         }
@@ -1196,15 +1120,7 @@ pub fn get_reverse_postordered_blocks(
             visit(hir, ft, false, visited, used, used_fallthroughs, postorder);
         }
         for successor in successors {
-            visit(
-                hir,
-                successor,
-                is_used,
-                visited,
-                used,
-                used_fallthroughs,
-                postorder,
-            );
+            visit(hir, successor, is_used, visited, used, used_fallthroughs, postorder);
         }
 
         if !was_visited {
@@ -1212,15 +1128,7 @@ pub fn get_reverse_postordered_blocks(
         }
     }
 
-    visit(
-        hir,
-        hir.entry,
-        true,
-        &mut visited,
-        &mut used,
-        &mut used_fallthroughs,
-        &mut postorder,
-    );
+    visit(hir, hir.entry, true, &mut visited, &mut used, &mut used_fallthroughs, &mut postorder);
 
     let mut blocks = FxIndexMap::default();
     for block_id in postorder.into_iter().rev() {
@@ -1275,24 +1183,12 @@ pub fn remove_dead_do_while_statements(hir: &mut HIR) {
             false
         };
         if should_replace {
-            if let Terminal::DoWhile {
-                loop_block,
-                id,
-                loc,
-                ..
-            } = std::mem::replace(
+            if let Terminal::DoWhile { loop_block, id, loc, .. } = std::mem::replace(
                 &mut block.terminal,
-                Terminal::Unreachable {
-                    id: EvaluationOrder(0),
-                    loc: None,
-                },
+                Terminal::Unreachable { id: EvaluationOrder(0), loc: None },
             ) {
-                block.terminal = Terminal::Goto {
-                    block: loop_block,
-                    variant: GotoVariant::Break,
-                    id,
-                    loc,
-                };
+                block.terminal =
+                    Terminal::Goto { block: loop_block, variant: GotoVariant::Break, id, loc };
             }
         }
     }
@@ -1311,13 +1207,8 @@ pub fn remove_unnecessary_try_catch(hir: &mut HIR) {
         .blocks
         .iter()
         .filter_map(|(&block_id, block)| {
-            if let Terminal::Try {
-                block: try_block,
-                handler,
-                fallthrough,
-                loc,
-                ..
-            } = &block.terminal
+            if let Terminal::Try { block: try_block, handler, fallthrough, loc, .. } =
+                &block.terminal
             {
                 if !block_ids.contains(handler) {
                     return Some((block_id, *try_block, *handler, *fallthrough, loc.clone()));
@@ -1422,10 +1313,5 @@ pub fn create_temporary_place(env: &mut Environment, loc: Option<SourceLocation>
     let id = env.next_identifier_id();
     // Update the loc on the allocated identifier
     env.identifiers[id.0 as usize].loc = loc;
-    Place {
-        identifier: id,
-        reactive: false,
-        effect: Effect::Unknown,
-        loc: None,
-    }
+    Place { identifier: id, reactive: false, effect: Effect::Unknown, loc: None }
 }

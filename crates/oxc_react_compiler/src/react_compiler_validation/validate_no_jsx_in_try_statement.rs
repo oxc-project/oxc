@@ -15,10 +15,10 @@
 //!
 //! Port of ValidateNoJSXInTryStatement.ts.
 
-use react_compiler_diagnostics::{
+use crate::react_compiler_diagnostics::{
     CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, ErrorCategory,
 };
-use react_compiler_hir::{BlockId, HirFunction, InstructionValue, Terminal};
+use crate::react_compiler_hir::{BlockId, HirFunction, InstructionValue, Terminal};
 
 pub fn validate_no_jsx_in_try_statement(func: &HirFunction) -> CompilerError {
     let mut active_try_blocks: Vec<BlockId> = Vec::new();

@@ -1,8 +1,8 @@
-use react_compiler_ast::File;
-use react_compiler_ast::declarations::{Declaration, ExportDefaultDecl};
-use react_compiler_ast::expressions::Expression;
-use react_compiler_ast::statements::Statement;
-use react_compiler_lowering::FunctionNode;
+use crate::react_compiler_ast::File;
+use crate::react_compiler_ast::declarations::{Declaration, ExportDefaultDecl};
+use crate::react_compiler_ast::expressions::Expression;
+use crate::react_compiler_ast::statements::Statement;
+use crate::react_compiler_lowering::FunctionNode;
 
 /// Count the number of top-level functions in an AST file.
 ///
@@ -70,21 +70,14 @@ fn count_functions_in_statement(stmt: &Statement) -> usize {
         },
         // Expression statements with function expressions (uncommon but possible)
         Statement::ExpressionStatement(expr_stmt) => {
-            if is_function_expression(&expr_stmt.expression) {
-                1
-            } else {
-                0
-            }
+            if is_function_expression(&expr_stmt.expression) { 1 } else { 0 }
         }
         _ => 0,
     }
 }
 
 fn is_function_expression(expr: &Expression) -> bool {
-    matches!(
-        expr,
-        Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_)
-    )
+    matches!(expr, Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_))
 }
 
 /// Extract the nth top-level function from an AST file as a `FunctionNode`.
@@ -112,7 +105,7 @@ pub fn extract_function(
                             Expression::FunctionExpression(func) => {
                                 if index == function_index {
                                     let name = match &declarator.id {
-                                        react_compiler_ast::patterns::PatternLike::Identifier(
+                                        crate::react_compiler_ast::patterns::PatternLike::Identifier(
                                             ident,
                                         ) => Some(ident.name.as_str()),
                                         _ => func.id.as_ref().map(|id| id.name.as_str()),
@@ -124,7 +117,7 @@ pub fn extract_function(
                             Expression::ArrowFunctionExpression(arrow) => {
                                 if index == function_index {
                                     let name = match &declarator.id {
-                                        react_compiler_ast::patterns::PatternLike::Identifier(
+                                        crate::react_compiler_ast::patterns::PatternLike::Identifier(
                                             ident,
                                         ) => Some(ident.name.as_str()),
                                         _ => None,
@@ -158,7 +151,7 @@ pub fn extract_function(
                                         Expression::FunctionExpression(func) => {
                                             if index == function_index {
                                                 let name = match &declarator.id {
-                                                    react_compiler_ast::patterns::PatternLike::Identifier(ident) => Some(ident.name.as_str()),
+                                                    crate::react_compiler_ast::patterns::PatternLike::Identifier(ident) => Some(ident.name.as_str()),
                                                     _ => func.id.as_ref().map(|id| id.name.as_str()),
                                                 };
                                                 return Some((
@@ -171,7 +164,7 @@ pub fn extract_function(
                                         Expression::ArrowFunctionExpression(arrow) => {
                                             if index == function_index {
                                                 let name = match &declarator.id {
-                                                    react_compiler_ast::patterns::PatternLike::Identifier(ident) => Some(ident.name.as_str()),
+                                                    crate::react_compiler_ast::patterns::PatternLike::Identifier(ident) => Some(ident.name.as_str()),
                                                     _ => None,
                                                 };
                                                 return Some((

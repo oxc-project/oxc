@@ -3,22 +3,22 @@ pub mod find_context_identifiers;
 pub mod hir_builder;
 pub mod identifier_loc_index;
 
-use react_compiler_ast::expressions::ArrowFunctionExpression;
-use react_compiler_ast::expressions::FunctionExpression;
-use react_compiler_ast::statements::FunctionDeclaration;
-use react_compiler_hir::BindingKind;
+use crate::react_compiler_ast::expressions::ArrowFunctionExpression;
+use crate::react_compiler_ast::expressions::FunctionExpression;
+use crate::react_compiler_ast::statements::FunctionDeclaration;
+use crate::react_compiler_hir::BindingKind;
 
 /// Convert AST binding kind to HIR binding kind.
-pub fn convert_binding_kind(kind: &react_compiler_ast::scope::BindingKind) -> BindingKind {
+pub fn convert_binding_kind(kind: &crate::react_compiler_ast::scope::BindingKind) -> BindingKind {
     match kind {
-        react_compiler_ast::scope::BindingKind::Var => BindingKind::Var,
-        react_compiler_ast::scope::BindingKind::Let => BindingKind::Let,
-        react_compiler_ast::scope::BindingKind::Const => BindingKind::Const,
-        react_compiler_ast::scope::BindingKind::Param => BindingKind::Param,
-        react_compiler_ast::scope::BindingKind::Module => BindingKind::Module,
-        react_compiler_ast::scope::BindingKind::Hoisted => BindingKind::Hoisted,
-        react_compiler_ast::scope::BindingKind::Local => BindingKind::Local,
-        react_compiler_ast::scope::BindingKind::Unknown => BindingKind::Unknown,
+        crate::react_compiler_ast::scope::BindingKind::Var => BindingKind::Var,
+        crate::react_compiler_ast::scope::BindingKind::Let => BindingKind::Let,
+        crate::react_compiler_ast::scope::BindingKind::Const => BindingKind::Const,
+        crate::react_compiler_ast::scope::BindingKind::Param => BindingKind::Param,
+        crate::react_compiler_ast::scope::BindingKind::Module => BindingKind::Module,
+        crate::react_compiler_ast::scope::BindingKind::Hoisted => BindingKind::Hoisted,
+        crate::react_compiler_ast::scope::BindingKind::Local => BindingKind::Local,
+        crate::react_compiler_ast::scope::BindingKind::Unknown => BindingKind::Unknown,
     }
 }
 
@@ -44,10 +44,10 @@ impl<'a> FunctionNode<'a> {
 // The main lower() function - delegates to build_hir
 pub use build_hir::lower;
 // Re-export post-build helper functions used by optimization passes
+pub use crate::react_compiler_hir::visitors::each_terminal_successor;
+pub use crate::react_compiler_hir::visitors::terminal_fallthrough;
 pub use hir_builder::{
     create_temporary_place, get_reverse_postordered_blocks, mark_instruction_ids,
     mark_predecessors, remove_dead_do_while_statements, remove_unnecessary_try_catch,
     remove_unreachable_for_updates,
 };
-pub use react_compiler_hir::visitors::each_terminal_successor;
-pub use react_compiler_hir::visitors::terminal_fallthrough;

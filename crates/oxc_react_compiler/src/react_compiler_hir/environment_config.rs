@@ -7,13 +7,13 @@
 //!
 //! Contains feature flags and custom hook definitions that control compiler behavior.
 
-use react_compiler_utils::FxIndexMap;
+use crate::react_compiler_utils::FxIndexMap;
 use rustc_hash::FxHashMap;
 
 use serde::Serialize;
 
-use crate::Effect;
-use crate::type_config::{TypeConfig, ValueKind};
+use crate::react_compiler_hir::Effect;
+use crate::react_compiler_hir::type_config::{TypeConfig, ValueKind};
 
 /// External function reference (source module + import name).
 /// Corresponds to TS `ExternalFunction`.

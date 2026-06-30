@@ -15,9 +15,9 @@
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use react_compiler_hir::environment::Environment;
-use react_compiler_hir::visitors;
-use react_compiler_hir::{
+use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_hir::visitors;
+use crate::react_compiler_hir::{
     HirFunction, IdentifierId, InstructionValue, JsxTag, PrimitiveValue, PropertyLiteral, ScopeId,
 };
 
@@ -38,17 +38,11 @@ struct MacroDefinition {
 }
 
 fn shallow_macro() -> MacroDefinition {
-    MacroDefinition {
-        level: InlineLevel::Shallow,
-        properties: None,
-    }
+    MacroDefinition { level: InlineLevel::Shallow, properties: None }
 }
 
 fn transitive_macro() -> MacroDefinition {
-    MacroDefinition {
-        level: InlineLevel::Transitive,
-        properties: None,
-    }
+    MacroDefinition { level: InlineLevel::Transitive, properties: None }
 }
 
 fn fbt_macro() -> MacroDefinition {
@@ -57,10 +51,7 @@ fn fbt_macro() -> MacroDefinition {
     // fbt.enum gets FBT_MACRO (recursive/transitive)
     // We'll fill this in after construction since it's self-referential.
     // Instead, we use a special marker and handle it in property lookup.
-    let mut fbt = MacroDefinition {
-        level: InlineLevel::Transitive,
-        properties: Some(props),
-    };
+    let mut fbt = MacroDefinition { level: InlineLevel::Transitive, properties: Some(props) };
     // Add "enum" as a recursive reference (same as FBT_MACRO)
     // Since we can't do self-referential structs, we clone the structure.
     let enum_macro = MacroDefinition {
@@ -73,10 +64,7 @@ fn fbt_macro() -> MacroDefinition {
             p
         }),
     };
-    fbt.properties
-        .as_mut()
-        .unwrap()
-        .insert("enum".to_string(), enum_macro);
+    fbt.properties.as_mut().unwrap().insert("enum".to_string(), enum_macro);
     fbt
 }
 
@@ -130,10 +118,7 @@ fn populate_macro_tags(
             let lvalue_id = instr.lvalue.identifier;
 
             match &instr.value {
-                InstructionValue::Primitive {
-                    value: PrimitiveValue::String(s),
-                    ..
-                } => {
+                InstructionValue::Primitive { value: PrimitiveValue::String(s), .. } => {
                     if let Some(macro_def) = s.as_str().and_then(|utf8| macro_kinds.get(utf8)) {
                         // We don't distinguish between tag names and strings, so record
                         // all `fbt` string literals in case they are used as a jsx tag.
@@ -146,9 +131,7 @@ fn populate_macro_tags(
                         macro_tags.insert(lvalue_id, macro_def.clone());
                     }
                 }
-                InstructionValue::PropertyLoad {
-                    object, property, ..
-                } => {
+                InstructionValue::PropertyLoad { object, property, .. } => {
                     if let PropertyLiteral::String(prop_name) = property {
                         if let Some(macro_def) = macro_tags.get(&object.identifier).cloned() {
                             let property_macro = if let Some(ref props) = macro_def.properties {
@@ -208,9 +191,7 @@ fn merge_macro_arguments(
                 }
 
                 InstructionValue::CallExpression { callee, .. }
-                | InstructionValue::MethodCall {
-                    property: callee, ..
-                } => {
+                | InstructionValue::MethodCall { property: callee, .. } => {
                     let scope_id = match env.identifiers[lvalue_id.0 as usize].scope {
                         Some(s) => s,
                         None => continue,

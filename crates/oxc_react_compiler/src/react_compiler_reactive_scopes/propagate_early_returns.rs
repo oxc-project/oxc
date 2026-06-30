@@ -10,7 +10,7 @@
 //!
 //! Corresponds to `src/ReactiveScopes/PropagateEarlyReturns.ts`.
 
-use react_compiler_hir::{
+use crate::react_compiler_hir::{
     BlockId, Effect, EvaluationOrder, IdentifierId, IdentifierName, InstructionKind,
     InstructionValue, LValue, NonLocalBinding, Place, PlaceOrSpread, PrimitiveValue,
     PropertyLiteral, ReactiveFunction, ReactiveInstruction, ReactiveLabel, ReactiveScopeBlock,
@@ -18,7 +18,9 @@ use react_compiler_hir::{
     ReactiveTerminalStatement, ReactiveTerminalTargetKind, ReactiveValue, environment::Environment,
 };
 
-use crate::visitors::{ReactiveFunctionTransform, Transformed, transform_reactive_function};
+use crate::react_compiler_reactive_scopes::visitors::{
+    ReactiveFunctionTransform, Transformed, transform_reactive_function,
+};
 
 /// The sentinel string used to detect early returns.
 /// TS: `EARLY_RETURN_SENTINEL` from CodegenReactiveFunction.
@@ -32,10 +34,7 @@ const EARLY_RETURN_SENTINEL: &str = "react.early_return_sentinel";
 /// TS: `propagateEarlyReturns`
 pub fn propagate_early_returns(func: &mut ReactiveFunction, env: &mut Environment) {
     let mut transform = Transform { env };
-    let mut state = State {
-        within_reactive_scope: false,
-        early_return_value: None,
-    };
+    let mut state = State { within_reactive_scope: false, early_return_value: None };
     // The TS version doesn't produce errors from this pass, so we ignore the Result.
     let _ = transform_reactive_function(func, &mut transform, &mut state);
 }
@@ -47,7 +46,7 @@ pub fn propagate_early_returns(func: &mut ReactiveFunction, env: &mut Environmen
 #[derive(Debug, Clone)]
 struct EarlyReturnInfo {
     value: IdentifierId,
-    loc: Option<react_compiler_diagnostics::SourceLocation>,
+    loc: Option<crate::react_compiler_diagnostics::SourceLocation>,
     label: BlockId,
 }
 
@@ -77,14 +76,11 @@ impl<'a> ReactiveFunctionTransform for Transform<'a> {
         &mut self,
         scope_block: &mut ReactiveScopeBlock,
         parent_state: &mut State,
-    ) -> Result<(), react_compiler_diagnostics::CompilerError> {
+    ) -> Result<(), crate::react_compiler_diagnostics::CompilerError> {
         let scope_id = scope_block.scope;
 
         // Exit early if an earlier pass has already created an early return
-        if self.env.scopes[scope_id.0 as usize]
-            .early_return_value
-            .is_some()
-        {
+        if self.env.scopes[scope_id.0 as usize].early_return_value.is_some() {
             return Ok(());
         }
 
@@ -112,7 +108,8 @@ impl<'a> ReactiveFunctionTransform for Transform<'a> {
         &mut self,
         stmt: &mut ReactiveTerminalStatement,
         state: &mut State,
-    ) -> Result<Transformed<ReactiveStatement>, react_compiler_diagnostics::CompilerError> {
+    ) -> Result<Transformed<ReactiveStatement>, crate::react_compiler_diagnostics::CompilerError>
+    {
         if state.within_reactive_scope {
             if let ReactiveTerminal::Return { value, .. } = &stmt.terminal {
                 let loc = value.loc;
@@ -124,11 +121,7 @@ impl<'a> ReactiveFunctionTransform for Transform<'a> {
                     let identifier_id = create_temporary_place_id(self.env, loc);
                     promote_temporary(self.env, identifier_id);
                     let label = self.env.next_block_id();
-                    EarlyReturnInfo {
-                        value: identifier_id,
-                        loc,
-                        label,
-                    }
+                    EarlyReturnInfo { value: identifier_id, loc, label }
                 };
 
                 state.early_return_value = Some(early_return_value.clone());
@@ -199,10 +192,7 @@ fn apply_early_return_to_scope(
     // Add the early return identifier as a scope declaration
     env.scopes[scope_id.0 as usize].declarations.push((
         early_return.value,
-        ReactiveScopeDeclaration {
-            identifier: early_return.value,
-            scope: scope_id,
-        },
+        ReactiveScopeDeclaration { identifier: early_return.value, scope: scope_id },
     ));
 
     // Create temporary places for the sentinel initialization
@@ -224,9 +214,7 @@ fn apply_early_return_to_scope(
                 loc: None, // GeneratedSource
             }),
             value: ReactiveValue::Instruction(InstructionValue::LoadGlobal {
-                binding: NonLocalBinding::Global {
-                    name: "Symbol".to_string(),
-                },
+                binding: NonLocalBinding::Global { name: "Symbol".to_string() },
                 loc,
             }),
             effects: None,
@@ -331,10 +319,7 @@ fn apply_early_return_to_scope(
         }),
         // Label terminal wrapping the original instructions
         ReactiveStatement::Terminal(ReactiveTerminalStatement {
-            label: Some(ReactiveLabel {
-                id: early_return.label,
-                implicit: false,
-            }),
+            label: Some(ReactiveLabel { id: early_return.label, implicit: false }),
             terminal: ReactiveTerminal::Label {
                 block: original_instructions,
                 id: EvaluationOrder(0),
@@ -350,7 +335,7 @@ fn apply_early_return_to_scope(
 
 fn create_temporary_place_id(
     env: &mut Environment,
-    loc: Option<react_compiler_diagnostics::SourceLocation>,
+    loc: Option<crate::react_compiler_diagnostics::SourceLocation>,
 ) -> IdentifierId {
     let id = env.next_identifier_id();
     env.identifiers[id.0 as usize].loc = loc;

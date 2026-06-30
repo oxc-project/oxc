@@ -1,9 +1,9 @@
 use serde::Serialize;
 
-use crate::common::BaseNode;
-use crate::common::RawNode;
-use crate::expressions::Expression;
-use crate::literals::StringLiteral;
+use crate::react_compiler_ast::common::BaseNode;
+use crate::react_compiler_ast::common::RawNode;
+use crate::react_compiler_ast::expressions::Expression;
+use crate::react_compiler_ast::literals::StringLiteral;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct JSXElement {
@@ -14,11 +14,7 @@ pub struct JSXElement {
     #[serde(rename = "closingElement")]
     pub closing_element: Option<JSXClosingElement>,
     pub children: Vec<JSXChild>,
-    #[serde(
-        rename = "selfClosing",
-        default,
-        skip_serializing_if = "Option::is_none"
-    )]
+    #[serde(rename = "selfClosing", default, skip_serializing_if = "Option::is_none")]
     pub self_closing: Option<bool>,
 }
 
@@ -41,11 +37,7 @@ pub struct JSXOpeningElement {
     pub attributes: Vec<JSXAttributeItem>,
     #[serde(rename = "selfClosing")]
     pub self_closing: bool,
-    #[serde(
-        default,
-        skip_serializing_if = "Option::is_none",
-        rename = "typeParameters"
-    )]
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "typeParameters")]
     pub type_parameters: Option<RawNode>,
 }
 

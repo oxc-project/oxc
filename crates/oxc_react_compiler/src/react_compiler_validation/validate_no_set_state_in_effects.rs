@@ -14,12 +14,12 @@
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use react_compiler_diagnostics::{
+use crate::react_compiler_diagnostics::{
     CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, ErrorCategory,
 };
-use react_compiler_hir::dominator::{compute_post_dominator_tree, post_dominator_frontier};
-use react_compiler_hir::environment::Environment;
-use react_compiler_hir::{
+use crate::react_compiler_hir::dominator::{compute_post_dominator_tree, post_dominator_frontier};
+use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_hir::{
     BlockId, HirFunction, Identifier, IdentifierId, IdentifierName, InstructionValue,
     PlaceOrSpread, PropertyLiteral, SourceLocation, Terminal, Type, is_ref_value_type,
     is_set_state_type, is_use_effect_event_type, is_use_effect_hook_type,
@@ -167,9 +167,7 @@ fn get_identifier_name_with_loc(
         if start_idx < code.len() && end_idx <= code.len() && start_idx < end_idx {
             let slice = &code[start_idx..end_idx];
             if !slice.is_empty()
-                && slice
-                    .chars()
-                    .all(|c| c.is_alphanumeric() || c == '_' || c == '$')
+                && slice.chars().all(|c| c.is_alphanumeric() || c == '_' || c == '$')
             {
                 return Some(slice.to_string());
             }
@@ -245,30 +243,30 @@ fn push_error(errors: &mut CompilerError, info: &SetStateInfo, enable_verbose: b
 
 /// Recursively collect all Place identifiers from a destructure pattern.
 fn collect_destructure_places(
-    pattern: &react_compiler_hir::Pattern,
+    pattern: &crate::react_compiler_hir::Pattern,
     ref_derived_values: &mut FxHashSet<IdentifierId>,
 ) {
     match pattern {
-        react_compiler_hir::Pattern::Array(arr) => {
+        crate::react_compiler_hir::Pattern::Array(arr) => {
             for item in &arr.items {
                 match item {
-                    react_compiler_hir::ArrayPatternElement::Place(p) => {
+                    crate::react_compiler_hir::ArrayPatternElement::Place(p) => {
                         ref_derived_values.insert(p.identifier);
                     }
-                    react_compiler_hir::ArrayPatternElement::Spread(s) => {
+                    crate::react_compiler_hir::ArrayPatternElement::Spread(s) => {
                         ref_derived_values.insert(s.place.identifier);
                     }
-                    react_compiler_hir::ArrayPatternElement::Hole => {}
+                    crate::react_compiler_hir::ArrayPatternElement::Hole => {}
                 }
             }
         }
-        react_compiler_hir::Pattern::Object(obj) => {
+        crate::react_compiler_hir::Pattern::Object(obj) => {
             for prop in &obj.properties {
                 match prop {
-                    react_compiler_hir::ObjectPropertyOrSpread::Property(p) => {
+                    crate::react_compiler_hir::ObjectPropertyOrSpread::Property(p) => {
                         ref_derived_values.insert(p.place.identifier);
                     }
-                    react_compiler_hir::ObjectPropertyOrSpread::Spread(s) => {
+                    crate::react_compiler_hir::ObjectPropertyOrSpread::Spread(s) => {
                         ref_derived_values.insert(s.place.identifier);
                     }
                 }
@@ -406,10 +404,7 @@ fn get_set_state_call(
                     }
                 }
 
-                if let InstructionValue::PropertyLoad {
-                    object, property, ..
-                } = &instr.value
-                {
+                if let InstructionValue::PropertyLoad { object, property, .. } = &instr.value {
                     if *property == PropertyLiteral::String("current".to_string()) {
                         let obj_ident = &identifiers[object.identifier.0 as usize];
                         let obj_ty = &types[obj_ident.type_.0 as usize];
@@ -436,10 +431,7 @@ fn get_set_state_call(
     };
 
     let is_ref_controlled_block = |block_id: BlockId| -> bool {
-        ref_controlled_blocks
-            .get(&block_id)
-            .copied()
-            .unwrap_or(false)
+        ref_controlled_blocks.get(&block_id).copied().unwrap_or(false)
     };
 
     // Reset and redo: second pass with control dominator info available
@@ -502,10 +494,7 @@ fn get_set_state_call(
                 }
 
                 // Special case: PropertyLoad of .current on ref/refValue
-                if let InstructionValue::PropertyLoad {
-                    object, property, ..
-                } = &instr.value
-                {
+                if let InstructionValue::PropertyLoad { object, property, .. } = &instr.value {
                     if *property == PropertyLiteral::String("current".to_string()) {
                         let obj_ident = &identifiers[object.identifier.0 as usize];
                         let obj_ty = &types[obj_ident.type_.0 as usize];

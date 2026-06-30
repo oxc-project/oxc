@@ -25,19 +25,19 @@
 use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
 
-use react_compiler_hir::BlockId;
-use react_compiler_hir::BlockKind;
-use react_compiler_hir::EvaluationOrder;
-use react_compiler_hir::HirFunction;
-use react_compiler_hir::IdentifierId;
-use react_compiler_hir::MutableRange;
-use react_compiler_hir::ScopeId;
-use react_compiler_hir::Terminal;
-use react_compiler_hir::environment::Environment;
-use react_compiler_hir::visitors;
-use react_compiler_hir::visitors::each_instruction_lvalue_ids;
-use react_compiler_hir::visitors::each_instruction_value_operand_ids;
-use react_compiler_hir::visitors::each_terminal_operand_ids;
+use crate::react_compiler_hir::BlockId;
+use crate::react_compiler_hir::BlockKind;
+use crate::react_compiler_hir::EvaluationOrder;
+use crate::react_compiler_hir::HirFunction;
+use crate::react_compiler_hir::IdentifierId;
+use crate::react_compiler_hir::MutableRange;
+use crate::react_compiler_hir::ScopeId;
+use crate::react_compiler_hir::Terminal;
+use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_hir::visitors;
+use crate::react_compiler_hir::visitors::each_instruction_lvalue_ids;
+use crate::react_compiler_hir::visitors::each_instruction_value_operand_ids;
+use crate::react_compiler_hir::visitors::each_terminal_operand_ids;
 
 // =============================================================================
 // ValueBlockNode — stores the valueRange for scope alignment in value blocks
@@ -128,7 +128,7 @@ pub fn align_reactive_scopes_to_block_scopes_hir(func: &mut HirFunction, env: &m
 
         // Visit instruction lvalues and operands
         let block = func.body.blocks.get(&block_id).unwrap();
-        let instr_ids: Vec<react_compiler_hir::InstructionId> =
+        let instr_ids: Vec<crate::react_compiler_hir::InstructionId> =
             block.instructions.iter().copied().collect();
         for &instr_id in &instr_ids {
             let instr = &func.instructions[instr_id.0 as usize];
@@ -136,26 +136,12 @@ pub fn align_reactive_scopes_to_block_scopes_hir(func: &mut HirFunction, env: &m
 
             let lvalue_ids = each_instruction_lvalue_ids(instr);
             for lvalue_id in lvalue_ids {
-                record_place_id(
-                    eval_order,
-                    lvalue_id,
-                    &node,
-                    env,
-                    &mut active_scopes,
-                    &mut seen,
-                );
+                record_place_id(eval_order, lvalue_id, &node, env, &mut active_scopes, &mut seen);
             }
 
             let operand_ids = each_instruction_value_operand_ids(&instr.value, env);
             for operand_id in operand_ids {
-                record_place_id(
-                    eval_order,
-                    operand_id,
-                    &node,
-                    env,
-                    &mut active_scopes,
-                    &mut seen,
-                );
+                record_place_id(eval_order, operand_id, &node, env, &mut active_scopes, &mut seen);
             }
         }
 
@@ -215,9 +201,8 @@ pub fn align_reactive_scopes_to_block_scopes_hir(func: &mut HirFunction, env: &m
             }
         } else if let Some(goto_block) = is_goto {
             // Handle goto to label
-            let start_pos = active_block_fallthrough_ranges
-                .iter()
-                .position(|r| r.fallthrough == goto_block);
+            let start_pos =
+                active_block_fallthrough_ranges.iter().position(|r| r.fallthrough == goto_block);
             let top_idx = if active_block_fallthrough_ranges.is_empty() {
                 None
             } else {
@@ -308,11 +293,7 @@ fn record_place_id(
     let scope_id = match env.identifiers[identifier_id.0 as usize].scope {
         Some(scope_id) => {
             let scope = &env.scopes[scope_id.0 as usize];
-            if id >= scope.range.start && id < scope.range.end {
-                Some(scope_id)
-            } else {
-                None
-            }
+            if id >= scope.range.start && id < scope.range.end { Some(scope_id) } else { None }
         }
         None => None,
     };

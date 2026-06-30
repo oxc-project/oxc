@@ -1,11 +1,11 @@
 use serde::Serialize;
 use serde::Serializer;
 
-use crate::common::BaseNode;
-use crate::common::RawNode;
-use crate::expressions::Expression;
-use crate::expressions::Identifier;
-use crate::patterns::PatternLike;
+use crate::react_compiler_ast::common::BaseNode;
+use crate::react_compiler_ast::common::RawNode;
+use crate::react_compiler_ast::expressions::Expression;
+use crate::react_compiler_ast::expressions::Identifier;
+use crate::react_compiler_ast::patterns::PatternLike;
 
 fn is_false(v: &bool) -> bool {
     !v
@@ -38,31 +38,33 @@ pub enum Statement {
     FunctionDeclaration(FunctionDeclaration),
     ClassDeclaration(ClassDeclaration),
     // Import/export declarations
-    ImportDeclaration(crate::declarations::ImportDeclaration),
-    ExportNamedDeclaration(crate::declarations::ExportNamedDeclaration),
-    ExportDefaultDeclaration(crate::declarations::ExportDefaultDeclaration),
-    ExportAllDeclaration(crate::declarations::ExportAllDeclaration),
+    ImportDeclaration(crate::react_compiler_ast::declarations::ImportDeclaration),
+    ExportNamedDeclaration(crate::react_compiler_ast::declarations::ExportNamedDeclaration),
+    ExportDefaultDeclaration(crate::react_compiler_ast::declarations::ExportDefaultDeclaration),
+    ExportAllDeclaration(crate::react_compiler_ast::declarations::ExportAllDeclaration),
     // TypeScript declarations
-    TSTypeAliasDeclaration(crate::declarations::TSTypeAliasDeclaration),
-    TSInterfaceDeclaration(crate::declarations::TSInterfaceDeclaration),
-    TSEnumDeclaration(crate::declarations::TSEnumDeclaration),
-    TSModuleDeclaration(crate::declarations::TSModuleDeclaration),
-    TSDeclareFunction(crate::declarations::TSDeclareFunction),
+    TSTypeAliasDeclaration(crate::react_compiler_ast::declarations::TSTypeAliasDeclaration),
+    TSInterfaceDeclaration(crate::react_compiler_ast::declarations::TSInterfaceDeclaration),
+    TSEnumDeclaration(crate::react_compiler_ast::declarations::TSEnumDeclaration),
+    TSModuleDeclaration(crate::react_compiler_ast::declarations::TSModuleDeclaration),
+    TSDeclareFunction(crate::react_compiler_ast::declarations::TSDeclareFunction),
     // Flow declarations
-    TypeAlias(crate::declarations::TypeAlias),
-    OpaqueType(crate::declarations::OpaqueType),
-    InterfaceDeclaration(crate::declarations::InterfaceDeclaration),
-    DeclareVariable(crate::declarations::DeclareVariable),
-    DeclareFunction(crate::declarations::DeclareFunction),
-    DeclareClass(crate::declarations::DeclareClass),
-    DeclareModule(crate::declarations::DeclareModule),
-    DeclareModuleExports(crate::declarations::DeclareModuleExports),
-    DeclareExportDeclaration(crate::declarations::DeclareExportDeclaration),
-    DeclareExportAllDeclaration(crate::declarations::DeclareExportAllDeclaration),
-    DeclareInterface(crate::declarations::DeclareInterface),
-    DeclareTypeAlias(crate::declarations::DeclareTypeAlias),
-    DeclareOpaqueType(crate::declarations::DeclareOpaqueType),
-    EnumDeclaration(crate::declarations::EnumDeclaration),
+    TypeAlias(crate::react_compiler_ast::declarations::TypeAlias),
+    OpaqueType(crate::react_compiler_ast::declarations::OpaqueType),
+    InterfaceDeclaration(crate::react_compiler_ast::declarations::InterfaceDeclaration),
+    DeclareVariable(crate::react_compiler_ast::declarations::DeclareVariable),
+    DeclareFunction(crate::react_compiler_ast::declarations::DeclareFunction),
+    DeclareClass(crate::react_compiler_ast::declarations::DeclareClass),
+    DeclareModule(crate::react_compiler_ast::declarations::DeclareModule),
+    DeclareModuleExports(crate::react_compiler_ast::declarations::DeclareModuleExports),
+    DeclareExportDeclaration(crate::react_compiler_ast::declarations::DeclareExportDeclaration),
+    DeclareExportAllDeclaration(
+        crate::react_compiler_ast::declarations::DeclareExportAllDeclaration,
+    ),
+    DeclareInterface(crate::react_compiler_ast::declarations::DeclareInterface),
+    DeclareTypeAlias(crate::react_compiler_ast::declarations::DeclareTypeAlias),
+    DeclareOpaqueType(crate::react_compiler_ast::declarations::DeclareOpaqueType),
+    EnumDeclaration(crate::react_compiler_ast::declarations::EnumDeclaration),
     /// Catch-all for statement `type`s the typed AST does not model, e.g. the
     /// TypeScript module-interop statements `import x = require(...)`,
     /// `export = x`, and `export as namespace X`. Carries the complete raw
@@ -97,8 +99,10 @@ impl UnknownStatement {
             Some(_) => {
                 // Parsing into BaseNode reads only the fields BaseNode declares,
                 // not the whole (arbitrarily large) unknown subtree.
-                let base = crate::common::from_json_str_unbounded::<BaseNode>(raw.get())
-                    .map_err(|err| format!("failed to read unknown statement base: {err}"))?;
+                let base = crate::react_compiler_ast::common::from_json_str_unbounded::<BaseNode>(
+                    raw.get(),
+                )
+                .map_err(|err| format!("failed to read unknown statement base: {err}"))?;
                 Ok(Self { raw, base })
             }
             None => Err("unknown statement is missing a string `type` field".to_string()),
@@ -126,7 +130,8 @@ impl UnknownStatement {
             self.raw = saved;
             return Err("unknown statement mutation removed the string `type` field".to_string());
         }
-        match crate::common::from_json_str_unbounded::<BaseNode>(self.raw.get()) {
+        match crate::react_compiler_ast::common::from_json_str_unbounded::<BaseNode>(self.raw.get())
+        {
             Ok(base) => {
                 self.base = base;
                 Ok(result)
@@ -384,33 +389,17 @@ pub struct FunctionDeclaration {
     pub is_async: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub declare: Option<bool>,
-    #[serde(
-        default,
-        skip_serializing_if = "Option::is_none",
-        rename = "returnType"
-    )]
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "returnType")]
     pub return_type: Option<RawNode>,
-    #[serde(
-        default,
-        skip_serializing_if = "Option::is_none",
-        rename = "typeParameters"
-    )]
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "typeParameters")]
     pub type_parameters: Option<RawNode>,
     #[serde(default, skip_serializing_if = "Option::is_none", rename = "predicate")]
     pub predicate: Option<RawNode>,
     /// Set by the Hermes parser for Flow `component Foo(...) { ... }` syntax
-    #[serde(
-        default,
-        skip_serializing_if = "is_false",
-        rename = "__componentDeclaration"
-    )]
+    #[serde(default, skip_serializing_if = "is_false", rename = "__componentDeclaration")]
     pub component_declaration: bool,
     /// Set by the Hermes parser for Flow `hook useFoo(...) { ... }` syntax
-    #[serde(
-        default,
-        skip_serializing_if = "is_false",
-        rename = "__hookDeclaration"
-    )]
+    #[serde(default, skip_serializing_if = "is_false", rename = "__hookDeclaration")]
     pub hook_declaration: bool,
 }
 
@@ -421,30 +410,18 @@ pub struct ClassDeclaration {
     pub id: Option<Identifier>,
     #[serde(rename = "superClass")]
     pub super_class: Option<Box<Expression>>,
-    pub body: crate::expressions::ClassBody,
+    pub body: crate::react_compiler_ast::expressions::ClassBody,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub decorators: Option<Vec<RawNode>>,
     #[serde(default, skip_serializing_if = "Option::is_none", rename = "abstract")]
     pub is_abstract: Option<bool>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub declare: Option<bool>,
-    #[serde(
-        default,
-        skip_serializing_if = "Option::is_none",
-        rename = "implements"
-    )]
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "implements")]
     pub implements: Option<Vec<RawNode>>,
-    #[serde(
-        default,
-        skip_serializing_if = "Option::is_none",
-        rename = "superTypeParameters"
-    )]
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "superTypeParameters")]
     pub super_type_parameters: Option<RawNode>,
-    #[serde(
-        default,
-        skip_serializing_if = "Option::is_none",
-        rename = "typeParameters"
-    )]
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "typeParameters")]
     pub type_parameters: Option<RawNode>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub mixins: Option<Vec<RawNode>>,

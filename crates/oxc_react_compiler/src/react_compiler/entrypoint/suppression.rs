@@ -4,8 +4,8 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
-use react_compiler_ast::common::{Comment, CommentData};
-use react_compiler_diagnostics::{
+use crate::react_compiler_ast::common::{Comment, CommentData};
+use crate::react_compiler_diagnostics::{
     CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, CompilerSuggestion,
     CompilerSuggestionOperation, ErrorCategory,
 };
@@ -38,16 +38,12 @@ fn comment_data(comment: &Comment) -> &CommentData {
 /// Check if a comment value matches `eslint-disable-next-line <rule>` for any rule in `rule_names`.
 fn matches_eslint_disable_next_line(value: &str, rule_names: &[String]) -> bool {
     if let Some(rest) = value.strip_prefix("eslint-disable-next-line ") {
-        return rule_names
-            .iter()
-            .any(|name| rest.starts_with(name.as_str()));
+        return rule_names.iter().any(|name| rest.starts_with(name.as_str()));
     }
     // Also check with leading space (comment values often have leading whitespace)
     let trimmed = value.trim_start();
     if let Some(rest) = trimmed.strip_prefix("eslint-disable-next-line ") {
-        return rule_names
-            .iter()
-            .any(|name| rest.starts_with(name.as_str()));
+        return rule_names.iter().any(|name| rest.starts_with(name.as_str()));
     }
     false
 }
@@ -55,15 +51,11 @@ fn matches_eslint_disable_next_line(value: &str, rule_names: &[String]) -> bool 
 /// Check if a comment value matches `eslint-disable <rule>` for any rule in `rule_names`.
 fn matches_eslint_disable(value: &str, rule_names: &[String]) -> bool {
     if let Some(rest) = value.strip_prefix("eslint-disable ") {
-        return rule_names
-            .iter()
-            .any(|name| rest.starts_with(name.as_str()));
+        return rule_names.iter().any(|name| rest.starts_with(name.as_str()));
     }
     let trimmed = value.trim_start();
     if let Some(rest) = trimmed.strip_prefix("eslint-disable ") {
-        return rule_names
-            .iter()
-            .any(|name| rest.starts_with(name.as_str()));
+        return rule_names.iter().any(|name| rest.starts_with(name.as_str()));
     }
     false
 }
@@ -71,15 +63,11 @@ fn matches_eslint_disable(value: &str, rule_names: &[String]) -> bool {
 /// Check if a comment value matches `eslint-enable <rule>` for any rule in `rule_names`.
 fn matches_eslint_enable(value: &str, rule_names: &[String]) -> bool {
     if let Some(rest) = value.strip_prefix("eslint-enable ") {
-        return rule_names
-            .iter()
-            .any(|name| rest.starts_with(name.as_str()));
+        return rule_names.iter().any(|name| rest.starts_with(name.as_str()));
     }
     let trimmed = value.trim_start();
     if let Some(rest) = trimmed.strip_prefix("eslint-enable ") {
-        return rule_names
-            .iter()
-            .any(|name| rest.starts_with(name.as_str()));
+        return rule_names.iter().any(|name| rest.starts_with(name.as_str()));
     }
     false
 }
@@ -98,9 +86,7 @@ fn matches_flow_suppression(value: &str) -> bool {
     let after_kind = if after_dollar_flow.starts_with("FixMe") {
         // Skip "FixMe" + any word characters
         let rest = &after_dollar_flow["FixMe".len()..];
-        let word_end = rest
-            .find(|c: char| !c.is_alphanumeric() && c != '_')
-            .unwrap_or(rest.len());
+        let word_end = rest.find(|c: char| !c.is_alphanumeric() && c != '_').unwrap_or(rest.len());
         &rest[word_end..]
     } else if after_dollar_flow.starts_with("ExpectedError") {
         &after_dollar_flow["ExpectedError".len()..]
@@ -234,21 +220,16 @@ pub fn filter_suppressions_that_affect_function(
 
 /// Convert suppression ranges to a CompilerError.
 pub fn suppressions_to_compiler_error(suppressions: &[SuppressionRange]) -> CompilerError {
-    assert!(
-        !suppressions.is_empty(),
-        "Expected at least one suppression comment source range"
-    );
+    assert!(!suppressions.is_empty(), "Expected at least one suppression comment source range");
 
     let mut error = CompilerError::new();
 
     for suppression in suppressions {
-        let (disable_start, disable_end) = match (
-            suppression.disable_comment.start,
-            suppression.disable_comment.end,
-        ) {
-            (Some(s), Some(e)) => (s, e),
-            _ => continue,
-        };
+        let (disable_start, disable_end) =
+            match (suppression.disable_comment.start, suppression.disable_comment.end) {
+                (Some(s), Some(e)) => (s, e),
+                _ => continue,
+            };
 
         let (reason, suggestion) = match suppression.source {
             SuppressionSource::Eslint => (
@@ -278,13 +259,13 @@ pub fn suppressions_to_compiler_error(suppressions: &[SuppressionRange]) -> Comp
 
         // Add error detail with location info
         let loc = suppression.disable_comment.loc.as_ref().map(|l| {
-            react_compiler_diagnostics::SourceLocation {
-                start: react_compiler_diagnostics::Position {
+            crate::react_compiler_diagnostics::SourceLocation {
+                start: crate::react_compiler_diagnostics::Position {
                     line: l.start.line,
                     column: l.start.column,
                     index: l.start.index,
                 },
-                end: react_compiler_diagnostics::Position {
+                end: crate::react_compiler_diagnostics::Position {
                     line: l.end.line,
                     column: l.end.column,
                     index: l.end.index,

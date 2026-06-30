@@ -6,28 +6,28 @@
  */
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use react_compiler_ast::common::BaseNode;
-use react_compiler_ast::declarations::{
+use crate::react_compiler_ast::common::BaseNode;
+use crate::react_compiler_ast::declarations::{
     ImportDeclaration, ImportKind, ImportSpecifier, ImportSpecifierData, ModuleExportName,
 };
-use react_compiler_ast::expressions::{CallExpression, Expression, Identifier};
-use react_compiler_ast::literals::StringLiteral;
-use react_compiler_ast::patterns::{
+use crate::react_compiler_ast::expressions::{CallExpression, Expression, Identifier};
+use crate::react_compiler_ast::literals::StringLiteral;
+use crate::react_compiler_ast::patterns::{
     ObjectPattern, ObjectPatternProp, ObjectPatternProperty, PatternLike,
 };
-use react_compiler_ast::scope::ScopeInfo;
-use react_compiler_ast::statements::{
+use crate::react_compiler_ast::scope::ScopeInfo;
+use crate::react_compiler_ast::statements::{
     Statement, VariableDeclaration, VariableDeclarationKind, VariableDeclarator,
 };
-use react_compiler_ast::{Program, SourceType};
-use react_compiler_diagnostics::{
+use crate::react_compiler_ast::{Program, SourceType};
+use crate::react_compiler_diagnostics::{
     CompilerError, CompilerErrorDetail, ErrorCategory, Position, SourceLocation,
 };
 
 use super::compile_result::{DebugLogEntry, LoggerEvent, OrderedLogItem};
 use super::plugin_options::{CompilerTarget, PluginOptions};
 use super::suppression::SuppressionRange;
-use crate::timing::TimingData;
+use crate::react_compiler::timing::TimingData;
 
 /// An import specifier tracked by ProgramContext.
 /// Corresponds to NonLocalImportSpecifier in the TS compiler.
@@ -63,7 +63,7 @@ pub struct ProgramContext {
     pub hook_guard_name: Option<String>,
 
     // Variable renames from lowering, to be applied back to the Babel AST
-    pub renames: Vec<react_compiler_hir::environment::BindingRename>,
+    pub renames: Vec<crate::react_compiler_hir::environment::BindingRename>,
 
     /// Timing data for profiling. Accumulates across all function compilations.
     pub timing: TimingData,
@@ -242,9 +242,7 @@ impl ProgramContext {
 
     /// Log a compilation event.
     pub fn log_event(&mut self, event: LoggerEvent) {
-        self.ordered_log.push(OrderedLogItem::Event {
-            event: event.clone(),
-        });
+        self.ordered_log.push(OrderedLogItem::Event { event: event.clone() });
         self.events.push(event);
     }
 
@@ -279,12 +277,7 @@ pub fn validate_restricted_imports(
 
     for stmt in &program.body {
         if let Statement::ImportDeclaration(import) = stmt {
-            if import
-                .source
-                .value
-                .as_str()
-                .is_some_and(|v| restricted.contains(v))
-            {
+            if import.source.value.as_str().is_some_and(|v| restricted.contains(v)) {
                 let mut detail = CompilerErrorDetail::new(
                     ErrorCategory::Todo,
                     "Bailing out due to blocklisted import",
@@ -307,11 +300,7 @@ pub fn validate_restricted_imports(
         }
     }
 
-    if error.has_any_errors() {
-        Some(error)
-    } else {
-        None
-    }
+    if error.has_any_errors() { Some(error) } else { None }
 }
 
 /// Insert import declarations into the program body.
@@ -351,10 +340,8 @@ pub fn add_imports_to_program(program: &mut Program, context: &ProgramContext) {
             sorted
         };
 
-        let import_specifiers: Vec<ImportSpecifier> = sorted_imports
-            .iter()
-            .map(|spec| make_import_specifier(spec))
-            .collect();
+        let import_specifiers: Vec<ImportSpecifier> =
+            sorted_imports.iter().map(|spec| make_import_specifier(spec)).collect();
 
         // If an existing import of this module exists, merge into it
         if let Some(&idx) = existing_import_indices.get(module_name.as_str()) {
@@ -474,14 +461,8 @@ fn make_import_specifier(spec: &NonLocalImportSpecifier) -> ImportSpecifier {
 ///   - `import type { Foo } from 'module'` (type import)
 ///   - `import typeof { Foo } from 'module'` (typeof import)
 fn is_non_namespaced_import(import: &ImportDeclaration) -> bool {
-    import
-        .specifiers
-        .iter()
-        .all(|s| matches!(s, ImportSpecifier::ImportSpecifier(_)))
-        && import
-            .import_kind
-            .as_ref()
-            .map_or(true, |k| matches!(k, ImportKind::Value))
+    import.specifiers.iter().all(|s| matches!(s, ImportSpecifier::ImportSpecifier(_)))
+        && import.import_kind.as_ref().map_or(true, |k| matches!(k, ImportKind::Value))
 }
 
 /// Check if a name follows the React hook naming convention (use[A-Z0-9]...).
@@ -491,9 +472,7 @@ fn is_hook_name(name: &str) -> bool {
         && bytes[0] == b'u'
         && bytes[1] == b's'
         && bytes[2] == b'e'
-        && bytes
-            .get(3)
-            .map_or(false, |c| c.is_ascii_uppercase() || c.is_ascii_digit())
+        && bytes.get(3).map_or(false, |c| c.is_ascii_uppercase() || c.is_ascii_digit())
 }
 
 /// Get the runtime module name based on the compiler target.

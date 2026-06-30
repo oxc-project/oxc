@@ -16,16 +16,16 @@
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use react_compiler_utils::FxIndexMap;
+use crate::react_compiler_utils::FxIndexMap;
 
-use react_compiler_diagnostics::{CompilerDiagnostic, ErrorCategory};
-use react_compiler_hir::environment::Environment;
-use react_compiler_hir::type_config::{ValueKind, ValueReason};
-use react_compiler_hir::visitors::{
+use crate::react_compiler_diagnostics::{CompilerDiagnostic, ErrorCategory};
+use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_hir::type_config::{ValueKind, ValueReason};
+use crate::react_compiler_hir::visitors::{
     each_instruction_value_lvalue, for_each_instruction_value_lvalue_mut,
     for_each_instruction_value_operand_mut, for_each_terminal_operand_mut,
 };
-use react_compiler_hir::{
+use crate::react_compiler_hir::{
     AliasingEffect, BlockId, Effect, EvaluationOrder, FunctionId, HirFunction, IdentifierId,
     InstructionValue, MutationReason, Place, SourceLocation, is_jsx_type, is_primitive_type,
 };
@@ -112,14 +112,11 @@ struct AliasingState {
 
 impl AliasingState {
     fn new() -> Self {
-        AliasingState {
-            nodes: FxIndexMap::default(),
-        }
+        AliasingState { nodes: FxIndexMap::default() }
     }
 
     fn create(&mut self, place: &Place, value: NodeValue) {
-        self.nodes
-            .insert(place.identifier, Node::new(place.identifier, value));
+        self.nodes.insert(place.identifier, Node::new(place.identifier, value));
     }
 
     fn create_from(&mut self, index: usize, from: &Place, into: &Place) {
@@ -128,11 +125,7 @@ impl AliasingState {
         let into_id = into.identifier;
         // Add forward edge from -> into on the from node
         if let Some(from_node) = self.nodes.get_mut(&from_id) {
-            from_node.edges.push(Edge {
-                index,
-                node: into_id,
-                kind: EdgeKind::Alias,
-            });
+            from_node.edges.push(Edge { index, node: into_id, kind: EdgeKind::Alias });
         }
         // Add created_from on the into node
         if let Some(to_node) = self.nodes.get_mut(&into_id) {
@@ -151,12 +144,7 @@ impl AliasingState {
             node: into_id,
             kind: EdgeKind::Capture,
         });
-        self.nodes
-            .get_mut(&into_id)
-            .unwrap()
-            .captures
-            .entry(from_id)
-            .or_insert(index);
+        self.nodes.get_mut(&into_id).unwrap().captures.entry(from_id).or_insert(index);
     }
 
     fn assign(&mut self, index: usize, from: &Place, into: &Place) {
@@ -170,12 +158,7 @@ impl AliasingState {
             node: into_id,
             kind: EdgeKind::Alias,
         });
-        self.nodes
-            .get_mut(&into_id)
-            .unwrap()
-            .aliases
-            .entry(from_id)
-            .or_insert(index);
+        self.nodes.get_mut(&into_id).unwrap().aliases.entry(from_id).or_insert(index);
     }
 
     fn maybe_alias(&mut self, index: usize, from: &Place, into: &Place) {
@@ -189,12 +172,7 @@ impl AliasingState {
             node: into_id,
             kind: EdgeKind::MaybeAlias,
         });
-        self.nodes
-            .get_mut(&into_id)
-            .unwrap()
-            .maybe_aliases
-            .entry(from_id)
-            .or_insert(index);
+        self.nodes.get_mut(&into_id).unwrap().maybe_aliases.entry(from_id).or_insert(index);
     }
 
     fn render(&self, index: usize, start: IdentifierId, env: &mut Environment) {
@@ -304,32 +282,20 @@ impl AliasingState {
             if entry.transitive {
                 match &node.transitive {
                     None => {
-                        node.transitive = Some(MutationInfo {
-                            kind: entry.kind,
-                            loc,
-                        });
+                        node.transitive = Some(MutationInfo { kind: entry.kind, loc });
                     }
                     Some(existing) if existing.kind < entry.kind => {
-                        node.transitive = Some(MutationInfo {
-                            kind: entry.kind,
-                            loc,
-                        });
+                        node.transitive = Some(MutationInfo { kind: entry.kind, loc });
                     }
                     _ => {}
                 }
             } else {
                 match &node.local {
                     None => {
-                        node.local = Some(MutationInfo {
-                            kind: entry.kind,
-                            loc,
-                        });
+                        node.local = Some(MutationInfo { kind: entry.kind, loc });
                     }
                     Some(existing) if existing.kind < entry.kind => {
-                        node.local = Some(MutationInfo {
-                            kind: entry.kind,
-                            loc,
-                        });
+                        node.local = Some(MutationInfo { kind: entry.kind, loc });
                     }
                     _ => {}
                 }
@@ -500,8 +466,8 @@ pub fn infer_mutation_aliasing_ranges(
     // Create nodes for params, context vars, and return
     for param in &func.params {
         let place = match param {
-            react_compiler_hir::ParamPattern::Place(p) => p,
-            react_compiler_hir::ParamPattern::Spread(s) => &s.place,
+            crate::react_compiler_hir::ParamPattern::Place(p) => p,
+            crate::react_compiler_hir::ParamPattern::Spread(s) => &s.place,
         };
         state.create(place, NodeValue::Object);
     }
@@ -523,14 +489,11 @@ pub fn infer_mutation_aliasing_ranges(
             state.create(&phi.place, NodeValue::Phi);
             for (&pred, operand) in &phi.operands {
                 if !seen_blocks.contains(&pred) {
-                    pending_phis
-                        .entry(pred)
-                        .or_insert_with(Vec::new)
-                        .push(PendingPhiOperand {
-                            from: operand.clone(),
-                            into: phi.place.clone(),
-                            index: index,
-                        });
+                    pending_phis.entry(pred).or_insert_with(Vec::new).push(PendingPhiOperand {
+                        from: operand.clone(),
+                        into: phi.place.clone(),
+                        index,
+                    });
                     index += 1;
                 } else {
                     state.assign(index, operand, &phi.place);
@@ -554,15 +517,8 @@ pub fn infer_mutation_aliasing_ranges(
                     AliasingEffect::Create { into, .. } => {
                         state.create(into, NodeValue::Object);
                     }
-                    AliasingEffect::CreateFunction {
-                        into, function_id, ..
-                    } => {
-                        state.create(
-                            into,
-                            NodeValue::Function {
-                                function_id: *function_id,
-                            },
-                        );
+                    AliasingEffect::CreateFunction { into, function_id, .. } => {
+                        state.create(into, NodeValue::Function { function_id: *function_id });
                     }
                     AliasingEffect::CreateFrom { from, into } => {
                         state.create_from(index, from, into);
@@ -592,7 +548,7 @@ pub fn infer_mutation_aliasing_ranges(
                         let is_transitive_conditional =
                             matches!(effect, AliasingEffect::MutateTransitiveConditionally { .. });
                         mutations.push(PendingMutation {
-                            index: index,
+                            index,
                             id: instr_eval_order,
                             transitive: true,
                             kind: if is_transitive_conditional {
@@ -607,7 +563,7 @@ pub fn infer_mutation_aliasing_ranges(
                     }
                     AliasingEffect::Mutate { value, reason } => {
                         mutations.push(PendingMutation {
-                            index: index,
+                            index,
                             id: instr_eval_order,
                             transitive: false,
                             kind: MutationKind::Definite,
@@ -618,7 +574,7 @@ pub fn infer_mutation_aliasing_ranges(
                     }
                     AliasingEffect::MutateConditionally { value } => {
                         mutations.push(PendingMutation {
-                            index: index,
+                            index,
                             id: instr_eval_order,
                             transitive: false,
                             kind: MutationKind::Conditional,
@@ -643,10 +599,7 @@ pub fn infer_mutation_aliasing_ranges(
                         function_effects.push(effect.clone());
                     }
                     AliasingEffect::Render { place } => {
-                        renders.push(PendingRender {
-                            index: index,
-                            place: place.clone(),
-                        });
+                        renders.push(PendingRender { index, place: place.clone() });
                         index += 1;
                         function_effects.push(effect.clone());
                     }
@@ -666,15 +619,15 @@ pub fn infer_mutation_aliasing_ranges(
 
         // Handle return terminal
         let terminal = &block.terminal;
-        if let react_compiler_hir::Terminal::Return { value, .. } = terminal {
+        if let crate::react_compiler_hir::Terminal::Return { value, .. } = terminal {
             state.assign(index, value, &func.returns);
             index += 1;
         }
 
         // Handle terminal effects (MaybeThrow and Return)
         let terminal_effects = match terminal {
-            react_compiler_hir::Terminal::MaybeThrow { effects, .. }
-            | react_compiler_hir::Terminal::Return { effects, .. } => effects.clone(),
+            crate::react_compiler_hir::Terminal::MaybeThrow { effects, .. }
+            | crate::react_compiler_hir::Terminal::Return { effects, .. } => effects.clone(),
             _ => None,
         };
         if let Some(effects) = terminal_effects {
@@ -725,8 +678,8 @@ pub fn infer_mutation_aliasing_ranges(
     }
     for param in &func.params {
         let place = match param {
-            react_compiler_hir::ParamPattern::Place(p) => p,
-            react_compiler_hir::ParamPattern::Spread(s) => &s.place,
+            crate::react_compiler_hir::ParamPattern::Place(p) => p,
+            crate::react_compiler_hir::ParamPattern::Spread(s) => &s.place,
         };
         collect_param_effects(&state, place, &mut function_effects);
     }
@@ -737,8 +690,8 @@ pub fn infer_mutation_aliasing_ranges(
     let mut captured_params: FxHashSet<IdentifierId> = FxHashSet::default();
     for param in &func.params {
         let place = match param {
-            react_compiler_hir::ParamPattern::Place(p) => p,
-            react_compiler_hir::ParamPattern::Spread(s) => &s.place,
+            crate::react_compiler_hir::ParamPattern::Place(p) => p,
+            crate::react_compiler_hir::ParamPattern::Spread(s) => &s.place,
         };
         if let Some(node) = state.nodes.get(&place.identifier) {
             if node.local.is_some() || node.transitive.is_some() {
@@ -757,8 +710,8 @@ pub fn infer_mutation_aliasing_ranges(
     // Now mutate the effects on params/context in place
     for param in &mut func.params {
         let place = match param {
-            react_compiler_hir::ParamPattern::Place(p) => p,
-            react_compiler_hir::ParamPattern::Spread(s) => &mut s.place,
+            crate::react_compiler_hir::ParamPattern::Place(p) => p,
+            crate::react_compiler_hir::ParamPattern::Spread(s) => &mut s.place,
         };
         if captured_params.contains(&place.identifier) {
             place.effect = Effect::Capture;
@@ -789,17 +742,13 @@ pub fn infer_mutation_aliasing_ranges(
                     .map(|id| func.instructions[id.0 as usize].id)
                     .unwrap_or_else(|| block.terminal.evaluation_order());
 
-                let is_mutated_after_creation = env.identifiers[phi.place.identifier.0 as usize]
-                    .mutable_range
-                    .end
-                    > first_instr_id;
+                let is_mutated_after_creation =
+                    env.identifiers[phi.place.identifier.0 as usize].mutable_range.end
+                        > first_instr_id;
 
                 (
                     phi.place.identifier,
-                    phi.operands
-                        .values()
-                        .map(|o| o.identifier)
-                        .collect::<Vec<_>>(),
+                    phi.operands.values().map(|o| o.identifier).collect::<Vec<_>>(),
                     is_mutated_after_creation,
                     first_instr_id,
                 )
@@ -814,11 +763,8 @@ pub fn infer_mutation_aliasing_ranges(
                 if phi.place.identifier == *phi_id {
                     phi.place.effect = Effect::Store;
                     for operand in phi.operands.values_mut() {
-                        operand.effect = if *is_mutated_after_creation {
-                            Effect::Capture
-                        } else {
-                            Effect::Read
-                        };
+                        operand.effect =
+                            if *is_mutated_after_creation { Effect::Capture } else { Effect::Read };
                     }
                     break;
                 }
@@ -901,10 +847,9 @@ pub fn infer_mutation_aliasing_ranges(
                     | AliasingEffect::Capture { from, into }
                     | AliasingEffect::CreateFrom { from, into }
                     | AliasingEffect::MaybeAlias { from, into } => {
-                        let is_mutated_or_reassigned = env.identifiers[into.identifier.0 as usize]
-                            .mutable_range
-                            .end
-                            > eval_order;
+                        let is_mutated_or_reassigned =
+                            env.identifiers[into.identifier.0 as usize].mutable_range.end
+                                > eval_order;
                         if is_mutated_or_reassigned {
                             operand_effects.insert(from.identifier, Effect::Capture);
                             operand_effects.insert(into.identifier, Effect::Store);
@@ -967,9 +912,8 @@ pub fn infer_mutation_aliasing_ranges(
                     if ident.mutable_range.end > eval_order
                         && ident.mutable_range.start == EvaluationOrder(0)
                     {
-                        env.identifiers[place.identifier.0 as usize]
-                            .mutable_range
-                            .start = eval_order;
+                        env.identifiers[place.identifier.0 as usize].mutable_range.start =
+                            eval_order;
                     }
                     // Apply effect
                     if let Some(&effect) = operand_effects.get(&place.identifier) {
@@ -1022,12 +966,8 @@ pub fn infer_mutation_aliasing_ranges(
         // Set terminal operand effects
         let block = func.body.blocks.get_mut(&block_id).unwrap();
         match &mut block.terminal {
-            react_compiler_hir::Terminal::Return { value, .. } => {
-                value.effect = if is_function_expression {
-                    Effect::Read
-                } else {
-                    Effect::Freeze
-                };
+            crate::react_compiler_hir::Terminal::Return { value, .. } => {
+                value.effect = if is_function_expression { Effect::Read } else { Effect::Freeze };
             }
             terminal => {
                 for_each_terminal_operand_mut(terminal, &mut |place| {
@@ -1061,8 +1001,8 @@ pub fn infer_mutation_aliasing_ranges(
     let mut tracked: Vec<Place> = Vec::new();
     for param in &func.params {
         let place = match param {
-            react_compiler_hir::ParamPattern::Place(p) => p.clone(),
-            react_compiler_hir::ParamPattern::Spread(s) => s.place.clone(),
+            crate::react_compiler_hir::ParamPattern::Place(p) => p.clone(),
+            crate::react_compiler_hir::ParamPattern::Spread(s) => s.place.clone(),
         };
         tracked.push(place);
     }
@@ -1105,15 +1045,11 @@ pub fn infer_mutation_aliasing_ranges(
 
             if from_node.last_mutated == mutation_index {
                 if into.identifier == returns_identifier_id {
-                    function_effects.push(AliasingEffect::Alias {
-                        from: from.clone(),
-                        into: into.clone(),
-                    });
+                    function_effects
+                        .push(AliasingEffect::Alias { from: from.clone(), into: into.clone() });
                 } else {
-                    function_effects.push(AliasingEffect::Capture {
-                        from: from.clone(),
-                        into: into.clone(),
-                    });
+                    function_effects
+                        .push(AliasingEffect::Capture { from: from.clone(), into: into.clone() });
                 }
             }
         }
@@ -1140,18 +1076,12 @@ fn collect_param_effects(
         match local.kind {
             MutationKind::Conditional => {
                 function_effects.push(AliasingEffect::MutateConditionally {
-                    value: Place {
-                        loc: local.loc,
-                        ..place.clone()
-                    },
+                    value: Place { loc: local.loc, ..place.clone() },
                 });
             }
             MutationKind::Definite => {
                 function_effects.push(AliasingEffect::Mutate {
-                    value: Place {
-                        loc: local.loc,
-                        ..place.clone()
-                    },
+                    value: Place { loc: local.loc, ..place.clone() },
                     reason: node.mutation_reason.clone(),
                 });
             }
@@ -1163,18 +1093,12 @@ fn collect_param_effects(
         match transitive.kind {
             MutationKind::Conditional => {
                 function_effects.push(AliasingEffect::MutateTransitiveConditionally {
-                    value: Place {
-                        loc: transitive.loc,
-                        ..place.clone()
-                    },
+                    value: Place { loc: transitive.loc, ..place.clone() },
                 });
             }
             MutationKind::Definite => {
                 function_effects.push(AliasingEffect::MutateTransitive {
-                    value: Place {
-                        loc: transitive.loc,
-                        ..place.clone()
-                    },
+                    value: Place { loc: transitive.loc, ..place.clone() },
                 });
             }
             MutationKind::None => {}

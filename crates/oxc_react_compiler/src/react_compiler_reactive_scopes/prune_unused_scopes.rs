@@ -7,12 +7,14 @@
 //!
 //! Corresponds to `src/ReactiveScopes/PruneUnusedScopes.ts`.
 
-use react_compiler_hir::{
+use crate::react_compiler_hir::{
     PrunedReactiveScopeBlock, ReactiveFunction, ReactiveScopeBlock, ReactiveStatement,
     ReactiveTerminal, ReactiveTerminalStatement, environment::Environment,
 };
 
-use crate::visitors::{ReactiveFunctionTransform, Transformed, transform_reactive_function};
+use crate::react_compiler_reactive_scopes::visitors::{
+    ReactiveFunctionTransform, Transformed, transform_reactive_function,
+};
 
 struct State {
     has_return_statement: bool,
@@ -23,11 +25,9 @@ struct State {
 pub fn prune_unused_scopes(
     func: &mut ReactiveFunction,
     env: &Environment,
-) -> Result<(), react_compiler_diagnostics::CompilerError> {
+) -> Result<(), crate::react_compiler_diagnostics::CompilerError> {
     let mut transform = Transform { env };
-    let mut state = State {
-        has_return_statement: false,
-    };
+    let mut state = State { has_return_statement: false };
     transform_reactive_function(func, &mut transform, &mut state)
 }
 
@@ -46,7 +46,7 @@ impl<'a> ReactiveFunctionTransform for Transform<'a> {
         &mut self,
         stmt: &mut ReactiveTerminalStatement,
         state: &mut State,
-    ) -> Result<(), react_compiler_diagnostics::CompilerError> {
+    ) -> Result<(), crate::react_compiler_diagnostics::CompilerError> {
         self.traverse_terminal(stmt, state)?;
         if matches!(stmt.terminal, ReactiveTerminal::Return { .. }) {
             state.has_return_statement = true;
@@ -58,10 +58,9 @@ impl<'a> ReactiveFunctionTransform for Transform<'a> {
         &mut self,
         scope: &mut ReactiveScopeBlock,
         _state: &mut State,
-    ) -> Result<Transformed<ReactiveStatement>, react_compiler_diagnostics::CompilerError> {
-        let mut scope_state = State {
-            has_return_statement: false,
-        };
+    ) -> Result<Transformed<ReactiveStatement>, crate::react_compiler_diagnostics::CompilerError>
+    {
+        let mut scope_state = State { has_return_statement: false };
         self.visit_scope(scope, &mut scope_state)?;
 
         let scope_id = scope.scope;
@@ -72,12 +71,10 @@ impl<'a> ReactiveFunctionTransform for Transform<'a> {
             && (scope_data.declarations.is_empty() || !has_own_declaration(scope_data, scope_id))
         {
             // Replace with pruned scope
-            Ok(Transformed::Replace(ReactiveStatement::PrunedScope(
-                PrunedReactiveScopeBlock {
-                    scope: scope.scope,
-                    instructions: std::mem::take(&mut scope.instructions),
-                },
-            )))
+            Ok(Transformed::Replace(ReactiveStatement::PrunedScope(PrunedReactiveScopeBlock {
+                scope: scope.scope,
+                instructions: std::mem::take(&mut scope.instructions),
+            })))
         } else {
             Ok(Transformed::Keep)
         }
@@ -88,8 +85,8 @@ impl<'a> ReactiveFunctionTransform for Transform<'a> {
 /// Returns false if all declarations are propagated from nested scopes.
 /// TS: `hasOwnDeclaration`
 fn has_own_declaration(
-    scope_data: &react_compiler_hir::ReactiveScope,
-    scope_id: react_compiler_hir::ScopeId,
+    scope_data: &crate::react_compiler_hir::ReactiveScope,
+    scope_id: crate::react_compiler_hir::ScopeId,
 ) -> bool {
     for (_, decl) in &scope_data.declarations {
         if decl.scope == scope_id {

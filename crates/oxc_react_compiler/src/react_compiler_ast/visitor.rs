@@ -4,14 +4,14 @@
 //! and an [`AstWalker`] that traverses the AST while tracking the active scope
 //! via the scope tree's `node_to_scope` map.
 
-use crate::Program;
-use crate::declarations::*;
-use crate::expressions::*;
-use crate::jsx::*;
-use crate::patterns::*;
-use crate::scope::ScopeId;
-use crate::scope::ScopeInfo;
-use crate::statements::*;
+use crate::react_compiler_ast::Program;
+use crate::react_compiler_ast::declarations::*;
+use crate::react_compiler_ast::expressions::*;
+use crate::react_compiler_ast::jsx::*;
+use crate::react_compiler_ast::patterns::*;
+use crate::react_compiler_ast::scope::ScopeId;
+use crate::react_compiler_ast::scope::ScopeInfo;
+use crate::react_compiler_ast::statements::*;
 
 /// Trait for visiting Babel AST nodes. All methods default to no-ops.
 /// Override specific methods to intercept nodes of interest.
@@ -70,7 +70,7 @@ pub trait Visitor<'ast> {
     }
     fn enter_class_declaration(
         &mut self,
-        _node: &'ast crate::statements::ClassDeclaration,
+        _node: &'ast crate::react_compiler_ast::statements::ClassDeclaration,
         _scope_stack: &[ScopeId],
     ) {
     }
@@ -138,20 +138,12 @@ pub struct AstWalker<'a> {
 
 impl<'a> AstWalker<'a> {
     pub fn new(scope_info: &'a ScopeInfo) -> Self {
-        AstWalker {
-            scope_info,
-            scope_stack: Vec::new(),
-            loop_expression_depth: 0,
-        }
+        AstWalker { scope_info, scope_stack: Vec::new(), loop_expression_depth: 0 }
     }
 
     /// Create a walker with an initial scope already on the stack.
     pub fn with_initial_scope(scope_info: &'a ScopeInfo, initial_scope: ScopeId) -> Self {
-        AstWalker {
-            scope_info,
-            scope_stack: vec![initial_scope],
-            loop_expression_depth: 0,
-        }
+        AstWalker { scope_info, scope_stack: vec![initial_scope], loop_expression_depth: 0 }
     }
 
     pub fn scope_stack(&self) -> &[ScopeId] {
@@ -1348,16 +1340,16 @@ pub fn walk_expression_mut(v: &mut impl MutVisitor, expr: &mut Expression) -> Vi
 
 fn walk_jsx_mut(
     v: &mut impl MutVisitor,
-    attrs: &mut [crate::jsx::JSXAttributeItem],
-    children: &mut [crate::jsx::JSXChild],
+    attrs: &mut [crate::react_compiler_ast::jsx::JSXAttributeItem],
+    children: &mut [crate::react_compiler_ast::jsx::JSXChild],
 ) -> VisitResult {
     for attr in attrs.iter_mut() {
         match attr {
-            crate::jsx::JSXAttributeItem::JSXAttribute(a) => {
+            crate::react_compiler_ast::jsx::JSXAttributeItem::JSXAttribute(a) => {
                 if let Some(ref mut val) = a.value {
                     match val {
-                        crate::jsx::JSXAttributeValue::JSXExpressionContainer(c) => {
-                            if let crate::jsx::JSXExpressionContainerExpr::Expression(ref mut e) =
+                        crate::react_compiler_ast::jsx::JSXAttributeValue::JSXExpressionContainer(c) => {
+                            if let crate::react_compiler_ast::jsx::JSXExpressionContainerExpr::Expression(ref mut e) =
                                 c.expression
                             {
                                 if walk_expression_mut(v, e).is_stop() {
@@ -1369,7 +1361,7 @@ fn walk_jsx_mut(
                     }
                 }
             }
-            crate::jsx::JSXAttributeItem::JSXSpreadAttribute(s) => {
+            crate::react_compiler_ast::jsx::JSXAttributeItem::JSXSpreadAttribute(s) => {
                 if walk_expression_mut(v, &mut s.argument).is_stop() {
                     return VisitResult::Stop;
                 }
@@ -1381,29 +1373,31 @@ fn walk_jsx_mut(
 
 fn walk_jsx_children_mut(
     v: &mut impl MutVisitor,
-    children: &mut [crate::jsx::JSXChild],
+    children: &mut [crate::react_compiler_ast::jsx::JSXChild],
 ) -> VisitResult {
     for child in children.iter_mut() {
         match child {
-            crate::jsx::JSXChild::JSXElement(el) => {
+            crate::react_compiler_ast::jsx::JSXChild::JSXElement(el) => {
                 if walk_jsx_mut(v, &mut el.opening_element.attributes, &mut el.children).is_stop() {
                     return VisitResult::Stop;
                 }
             }
-            crate::jsx::JSXChild::JSXFragment(f) => {
+            crate::react_compiler_ast::jsx::JSXChild::JSXFragment(f) => {
                 if walk_jsx_children_mut(v, &mut f.children).is_stop() {
                     return VisitResult::Stop;
                 }
             }
-            crate::jsx::JSXChild::JSXExpressionContainer(c) => {
-                if let crate::jsx::JSXExpressionContainerExpr::Expression(ref mut e) = c.expression
+            crate::react_compiler_ast::jsx::JSXChild::JSXExpressionContainer(c) => {
+                if let crate::react_compiler_ast::jsx::JSXExpressionContainerExpr::Expression(
+                    ref mut e,
+                ) = c.expression
                 {
                     if walk_expression_mut(v, e).is_stop() {
                         return VisitResult::Stop;
                     }
                 }
             }
-            crate::jsx::JSXChild::JSXSpreadChild(s) => {
+            crate::react_compiler_ast::jsx::JSXChild::JSXSpreadChild(s) => {
                 if walk_expression_mut(v, &mut s.expression).is_stop() {
                     return VisitResult::Stop;
                 }

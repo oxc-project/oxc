@@ -11,22 +11,22 @@
 use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
 
-use react_compiler_hir::DeclarationId;
-use react_compiler_hir::EvaluationOrder;
-use react_compiler_hir::FunctionId;
-use react_compiler_hir::IdentifierName;
-use react_compiler_hir::InstructionValue;
-use react_compiler_hir::ParamPattern;
-use react_compiler_hir::Place;
-use react_compiler_hir::PrunedReactiveScopeBlock;
-use react_compiler_hir::ReactiveBlock;
-use react_compiler_hir::ReactiveFunction;
-use react_compiler_hir::ReactiveScopeBlock;
-use react_compiler_hir::ReactiveValue;
-use react_compiler_hir::environment::Environment;
+use crate::react_compiler_hir::DeclarationId;
+use crate::react_compiler_hir::EvaluationOrder;
+use crate::react_compiler_hir::FunctionId;
+use crate::react_compiler_hir::IdentifierName;
+use crate::react_compiler_hir::InstructionValue;
+use crate::react_compiler_hir::ParamPattern;
+use crate::react_compiler_hir::Place;
+use crate::react_compiler_hir::PrunedReactiveScopeBlock;
+use crate::react_compiler_hir::ReactiveBlock;
+use crate::react_compiler_hir::ReactiveFunction;
+use crate::react_compiler_hir::ReactiveScopeBlock;
+use crate::react_compiler_hir::ReactiveValue;
+use crate::react_compiler_hir::environment::Environment;
 
-use crate::visitors::ReactiveFunctionVisitor;
-use crate::visitors::{self};
+use crate::react_compiler_reactive_scopes::visitors::ReactiveFunctionVisitor;
+use crate::react_compiler_reactive_scopes::visitors::{self};
 
 // =============================================================================
 // Scopes
@@ -51,7 +51,7 @@ impl Scopes {
 
     fn visit_identifier(
         &mut self,
-        identifier_id: react_compiler_hir::IdentifierId,
+        identifier_id: crate::react_compiler_hir::IdentifierId,
         env: &Environment,
     ) {
         let identifier = &env.identifiers[identifier_id.0 as usize];
@@ -97,10 +97,7 @@ impl Scopes {
 
         let identifier_name = IdentifierName::Named(name.clone());
         self.seen.insert(declaration_id, identifier_name);
-        self.stack
-            .last_mut()
-            .unwrap()
-            .insert(name.clone(), declaration_id);
+        self.stack.last_mut().unwrap().insert(name.clone(), declaration_id);
         self.names.insert(name);
     }
 
@@ -169,11 +166,8 @@ impl ReactiveFunctionVisitor for Visitor<'_> {
     /// TS: `visitScope(scope, state) { for (const [_, decl] of scope.scope.declarations) state.visit(decl.identifier); this.traverseScope(scope, state) }`
     fn visit_scope(&self, scope: &ReactiveScopeBlock, state: &mut Scopes) {
         let scope_data = &self.env.scopes[scope.scope.0 as usize];
-        let decl_ids: Vec<react_compiler_hir::IdentifierId> = scope_data
-            .declarations
-            .iter()
-            .map(|(_, d)| d.identifier)
-            .collect();
+        let decl_ids: Vec<crate::react_compiler_hir::IdentifierId> =
+            scope_data.declarations.iter().map(|(_, d)| d.identifier).collect();
         for id in decl_ids {
             state.visit_identifier(id, self.env);
         }
@@ -223,11 +217,7 @@ fn rename_variables_with_parent(
     if let Some(parent) = parent_names {
         scopes.enter();
         for name in parent {
-            scopes
-                .stack
-                .last_mut()
-                .unwrap()
-                .insert(name.clone(), DeclarationId(u32::MAX));
+            scopes.stack.last_mut().unwrap().insert(name.clone(), DeclarationId(u32::MAX));
             scopes.names.insert(name.clone());
         }
     }
@@ -273,26 +263,34 @@ fn collect_referenced_globals(block: &ReactiveBlock, env: &Environment) -> FxHas
     globals
 }
 
-fn collect_globals_block(block: &ReactiveBlock, globals: &mut FxHashSet<String>, env: &Environment) {
+fn collect_globals_block(
+    block: &ReactiveBlock,
+    globals: &mut FxHashSet<String>,
+    env: &Environment,
+) {
     for stmt in block {
         match stmt {
-            react_compiler_hir::ReactiveStatement::Instruction(instr) => {
+            crate::react_compiler_hir::ReactiveStatement::Instruction(instr) => {
                 collect_globals_value(&instr.value, globals, env);
             }
-            react_compiler_hir::ReactiveStatement::Scope(scope) => {
+            crate::react_compiler_hir::ReactiveStatement::Scope(scope) => {
                 collect_globals_block(&scope.instructions, globals, env);
             }
-            react_compiler_hir::ReactiveStatement::PrunedScope(scope) => {
+            crate::react_compiler_hir::ReactiveStatement::PrunedScope(scope) => {
                 collect_globals_block(&scope.instructions, globals, env);
             }
-            react_compiler_hir::ReactiveStatement::Terminal(terminal) => {
+            crate::react_compiler_hir::ReactiveStatement::Terminal(terminal) => {
                 collect_globals_terminal(terminal, globals, env);
             }
         }
     }
 }
 
-fn collect_globals_value(value: &ReactiveValue, globals: &mut FxHashSet<String>, env: &Environment) {
+fn collect_globals_value(
+    value: &ReactiveValue,
+    globals: &mut FxHashSet<String>,
+    env: &Environment,
+) {
     match value {
         ReactiveValue::Instruction(iv) => {
             if let InstructionValue::LoadGlobal { binding, .. } = iv {
@@ -307,22 +305,13 @@ fn collect_globals_value(value: &ReactiveValue, globals: &mut FxHashSet<String>,
                 _ => {}
             }
         }
-        ReactiveValue::SequenceExpression {
-            instructions,
-            value: inner,
-            ..
-        } => {
+        ReactiveValue::SequenceExpression { instructions, value: inner, .. } => {
             for instr in instructions {
                 collect_globals_value(&instr.value, globals, env);
             }
             collect_globals_value(inner, globals, env);
         }
-        ReactiveValue::ConditionalExpression {
-            test,
-            consequent,
-            alternate,
-            ..
-        } => {
+        ReactiveValue::ConditionalExpression { test, consequent, alternate, .. } => {
             collect_globals_value(test, globals, env);
             collect_globals_value(consequent, globals, env);
             collect_globals_value(alternate, globals, env);
@@ -366,21 +355,17 @@ fn collect_globals_hir_function(
 }
 
 fn collect_globals_terminal(
-    stmt: &react_compiler_hir::ReactiveTerminalStatement,
+    stmt: &crate::react_compiler_hir::ReactiveTerminalStatement,
     globals: &mut FxHashSet<String>,
     env: &Environment,
 ) {
     match &stmt.terminal {
-        react_compiler_hir::ReactiveTerminal::Break { .. }
-        | react_compiler_hir::ReactiveTerminal::Continue { .. } => {}
-        react_compiler_hir::ReactiveTerminal::Return { .. }
-        | react_compiler_hir::ReactiveTerminal::Throw { .. } => {}
-        react_compiler_hir::ReactiveTerminal::For {
-            init,
-            test,
-            update,
-            loop_block,
-            ..
+        crate::react_compiler_hir::ReactiveTerminal::Break { .. }
+        | crate::react_compiler_hir::ReactiveTerminal::Continue { .. } => {}
+        crate::react_compiler_hir::ReactiveTerminal::Return { .. }
+        | crate::react_compiler_hir::ReactiveTerminal::Throw { .. } => {}
+        crate::react_compiler_hir::ReactiveTerminal::For {
+            init, test, update, loop_block, ..
         } => {
             collect_globals_value(init, globals, env);
             collect_globals_value(test, globals, env);
@@ -389,55 +374,40 @@ fn collect_globals_terminal(
                 collect_globals_value(update, globals, env);
             }
         }
-        react_compiler_hir::ReactiveTerminal::ForOf {
-            init,
-            test,
-            loop_block,
-            ..
-        } => {
+        crate::react_compiler_hir::ReactiveTerminal::ForOf { init, test, loop_block, .. } => {
             collect_globals_value(init, globals, env);
             collect_globals_value(test, globals, env);
             collect_globals_block(loop_block, globals, env);
         }
-        react_compiler_hir::ReactiveTerminal::ForIn {
-            init, loop_block, ..
-        } => {
+        crate::react_compiler_hir::ReactiveTerminal::ForIn { init, loop_block, .. } => {
             collect_globals_value(init, globals, env);
             collect_globals_block(loop_block, globals, env);
         }
-        react_compiler_hir::ReactiveTerminal::DoWhile {
-            loop_block, test, ..
-        } => {
+        crate::react_compiler_hir::ReactiveTerminal::DoWhile { loop_block, test, .. } => {
             collect_globals_block(loop_block, globals, env);
             collect_globals_value(test, globals, env);
         }
-        react_compiler_hir::ReactiveTerminal::While {
-            test, loop_block, ..
-        } => {
+        crate::react_compiler_hir::ReactiveTerminal::While { test, loop_block, .. } => {
             collect_globals_value(test, globals, env);
             collect_globals_block(loop_block, globals, env);
         }
-        react_compiler_hir::ReactiveTerminal::If {
-            consequent,
-            alternate,
-            ..
-        } => {
+        crate::react_compiler_hir::ReactiveTerminal::If { consequent, alternate, .. } => {
             collect_globals_block(consequent, globals, env);
             if let Some(alt) = alternate {
                 collect_globals_block(alt, globals, env);
             }
         }
-        react_compiler_hir::ReactiveTerminal::Switch { cases, .. } => {
+        crate::react_compiler_hir::ReactiveTerminal::Switch { cases, .. } => {
             for case in cases {
                 if let Some(block) = &case.block {
                     collect_globals_block(block, globals, env);
                 }
             }
         }
-        react_compiler_hir::ReactiveTerminal::Label { block, .. } => {
+        crate::react_compiler_hir::ReactiveTerminal::Label { block, .. } => {
             collect_globals_block(block, globals, env);
         }
-        react_compiler_hir::ReactiveTerminal::Try { block, handler, .. } => {
+        crate::react_compiler_hir::ReactiveTerminal::Try { block, handler, .. } => {
             collect_globals_block(block, globals, env);
             collect_globals_block(handler, globals, env);
         }

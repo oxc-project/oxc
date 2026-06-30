@@ -10,17 +10,17 @@
 //!
 //! Port of ValidateNoDerivedComputationsInEffects_exp.ts.
 
-use react_compiler_utils::{FxIndexMap, FxIndexSet};
+use crate::react_compiler_utils::{FxIndexMap, FxIndexSet};
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use react_compiler_diagnostics::{
+use crate::react_compiler_diagnostics::{
     CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, CompilerErrorDetail, ErrorCategory,
 };
-use react_compiler_hir::environment::Environment;
-use react_compiler_hir::visitors::{
+use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_hir::visitors::{
     each_instruction_lvalue_ids, each_instruction_operand as canonical_each_instruction_operand,
 };
-use react_compiler_hir::{
+use crate::react_compiler_hir::{
     ArrayElement, BlockId, Effect, EvaluationOrder, FunctionId, HirFunction, Identifier,
     IdentifierId, IdentifierName, InstructionValue, ParamPattern, PlaceOrSpread, ReactFunctionType,
     ReturnVariant, SourceLocation, Type, is_set_state_type, is_use_effect_hook_type,
@@ -85,9 +85,7 @@ fn get_identifier_name_with_loc(
             if let (Some(start), Some(end)) = (byte_start, byte_end) {
                 let slice = &code[start..end];
                 if !slice.is_empty()
-                    && slice
-                        .chars()
-                        .all(|c| c.is_alphanumeric() || c == '_' || c == '$')
+                    && slice.chars().all(|c| c.is_alphanumeric() || c == '_' || c == '$')
                 {
                     return Some(slice.to_string());
                 }
@@ -157,12 +155,7 @@ impl LocKey {
                 end_line: loc.end.line,
                 end_col: loc.end.column,
             },
-            None => LocKey {
-                start_line: 0,
-                start_col: 0,
-                end_line: 0,
-                end_col: 0,
-            },
+            None => LocKey { start_line: 0, start_col: 0, end_line: 0, end_col: 0 },
         }
     }
 }
@@ -176,11 +169,7 @@ struct DerivationCache {
 
 impl DerivationCache {
     fn new() -> Self {
-        DerivationCache {
-            has_changes: false,
-            cache: FxHashMap::default(),
-            previous_cache: None,
-        }
+        DerivationCache { has_changes: false, cache: FxHashMap::default(), previous_cache: None }
     }
 
     fn take_snapshot(&mut self) {
@@ -319,7 +308,7 @@ fn get_root_set_state(
 }
 
 fn maybe_record_set_state_for_instr(
-    instr: &react_compiler_hir::Instruction,
+    instr: &crate::react_compiler_hir::Instruction,
     env: &Environment,
     set_state_loads: &mut FxHashMap<IdentifierId, Option<IdentifierId>>,
     set_state_usages: &mut FxHashMap<IdentifierId, FxHashSet<LocKey>>,
@@ -366,9 +355,7 @@ fn is_mutable_at(
     eval_order: EvaluationOrder,
     identifier_id: IdentifierId,
 ) -> bool {
-    env.identifiers[identifier_id.0 as usize]
-        .mutable_range
-        .contains(eval_order)
+    env.identifiers[identifier_id.0 as usize].mutable_range.contains(eval_order)
 }
 
 pub fn validate_no_derived_computations_in_effects_exp(
@@ -457,21 +444,14 @@ pub fn validate_no_derived_computations_in_effects_exp(
         .collect();
 
     for (_key, effect_func_id, dep_elements) in &effects_cache {
-        validate_effect(
-            *effect_func_id,
-            dep_elements,
-            &mut context,
-            func,
-            env,
-            &mut errors,
-        );
+        validate_effect(*effect_func_id, dep_elements, &mut context, func, env, &mut errors);
     }
 
     Ok(errors)
 }
 
 fn record_phi_derivations(
-    block: &react_compiler_hir::BasicBlock,
+    block: &crate::react_compiler_hir::BasicBlock,
     context: &mut ValidationContext,
     env: &Environment,
 ) {
@@ -502,7 +482,7 @@ fn record_phi_derivations(
 }
 
 fn record_instruction_derivations(
-    instr: &react_compiler_hir::Instruction,
+    instr: &crate::react_compiler_hir::Instruction,
     context: &mut ValidationContext,
     is_first_pass: bool,
     _outer_func: &HirFunction,
@@ -548,22 +528,16 @@ fn record_instruction_derivations(
             let callee_type = &types[identifiers[callee.identifier.0 as usize].type_.0 as usize];
             if is_use_effect_hook_type(callee_type) && args.len() == 2 {
                 if let (
-                    react_compiler_hir::PlaceOrSpread::Place(arg0),
-                    react_compiler_hir::PlaceOrSpread::Place(arg1),
+                    crate::react_compiler_hir::PlaceOrSpread::Place(arg0),
+                    crate::react_compiler_hir::PlaceOrSpread::Place(arg1),
                 ) = (&args[0], &args[1])
                 {
                     let effect_function = context.functions.get(&arg0.identifier).copied();
-                    let deps = context
-                        .candidate_dependencies
-                        .get(&arg1.identifier)
-                        .cloned();
+                    let deps = context.candidate_dependencies.get(&arg1.identifier).cloned();
                     if let (Some(effect_func_id), Some(dep_elements)) = (effect_function, deps) {
                         context.effects_cache.insert(
                             arg0.identifier,
-                            EffectMetadata {
-                                effect_func_id,
-                                dep_elements,
-                            },
+                            EffectMetadata { effect_func_id, dep_elements },
                         );
                     }
                 }
@@ -587,22 +561,16 @@ fn record_instruction_derivations(
             let prop_type = &types[identifiers[property.identifier.0 as usize].type_.0 as usize];
             if is_use_effect_hook_type(prop_type) && args.len() == 2 {
                 if let (
-                    react_compiler_hir::PlaceOrSpread::Place(arg0),
-                    react_compiler_hir::PlaceOrSpread::Place(arg1),
+                    crate::react_compiler_hir::PlaceOrSpread::Place(arg0),
+                    crate::react_compiler_hir::PlaceOrSpread::Place(arg1),
                 ) = (&args[0], &args[1])
                 {
                     let effect_function = context.functions.get(&arg0.identifier).copied();
-                    let deps = context
-                        .candidate_dependencies
-                        .get(&arg1.identifier)
-                        .cloned();
+                    let deps = context.candidate_dependencies.get(&arg1.identifier).cloned();
                     if let (Some(effect_func_id), Some(dep_elements)) = (effect_function, deps) {
                         context.effects_cache.insert(
                             arg0.identifier,
-                            EffectMetadata {
-                                effect_func_id,
-                                dep_elements,
-                            },
+                            EffectMetadata { effect_func_id, dep_elements },
                         );
                     }
                 }
@@ -626,16 +594,13 @@ fn record_instruction_derivations(
             let dep_elements: Vec<DepElement> = elements
                 .iter()
                 .filter_map(|el| match el {
-                    ArrayElement::Place(p) => Some(DepElement {
-                        identifier: p.identifier,
-                        loc: p.loc,
-                    }),
+                    ArrayElement::Place(p) => {
+                        Some(DepElement { identifier: p.identifier, loc: p.loc })
+                    }
                     _ => None,
                 })
                 .collect();
-            context
-                .candidate_dependencies
-                .insert(lvalue_id, dep_elements);
+            context.candidate_dependencies.insert(lvalue_id, dep_elements);
         }
         _ => {}
     }
@@ -717,7 +682,7 @@ struct OperandWithEffect {
 /// Collects operand (IdentifierId, loc) pairs from an instruction.
 /// Thin wrapper around canonical `each_instruction_operand` that maps Places to (id, loc) pairs.
 fn each_instruction_operand(
-    instr: &react_compiler_hir::Instruction,
+    instr: &crate::react_compiler_hir::Instruction,
     env: &Environment,
 ) -> Vec<(IdentifierId, Option<SourceLocation>)> {
     canonical_each_instruction_operand(instr, env)
@@ -729,15 +694,12 @@ fn each_instruction_operand(
 /// Collects operands with their effects.
 /// Thin wrapper around canonical `each_instruction_operand` that maps Places to OperandWithEffect.
 fn each_instruction_operand_with_effect(
-    instr: &react_compiler_hir::Instruction,
+    instr: &crate::react_compiler_hir::Instruction,
     env: &Environment,
 ) -> Vec<OperandWithEffect> {
     canonical_each_instruction_operand(instr, env)
         .into_iter()
-        .map(|place| OperandWithEffect {
-            id: place.identifier,
-            effect: place.effect,
-        })
+        .map(|place| OperandWithEffect { id: place.identifier, effect: place.effect })
         .collect()
 }
 
@@ -820,11 +782,7 @@ fn render_tree(
     let prefix = format!(
         "{}{}",
         indent,
-        if is_last {
-            "\u{2514}\u{2500}\u{2500} "
-        } else {
-            "\u{251c}\u{2500}\u{2500} "
-        }
+        if is_last { "\u{2514}\u{2500}\u{2500} " } else { "\u{251c}\u{2500}\u{2500} " }
     );
     let child_indent = format!("{}{}", indent, if is_last { "    " } else { "\u{2502}   " });
 
@@ -905,15 +863,13 @@ fn validate_effect(
     }
 
     let mut effect_derived_set_state_calls: Vec<DerivedSetStateCall> = Vec::new();
-    let mut effect_set_state_usages: FxHashMap<IdentifierId, FxHashSet<LocKey>> = FxHashMap::default();
+    let mut effect_set_state_usages: FxHashMap<IdentifierId, FxHashSet<LocKey>> =
+        FxHashMap::default();
 
     // Consider setStates in the effect's dependency array as being part of effectSetStateUsages
     for dep in dependencies {
-        let root = get_root_set_state(
-            dep.identifier,
-            &context.set_state_loads,
-            &mut FxHashSet::default(),
-        );
+        let root =
+            get_root_set_state(dep.identifier, &context.set_state_loads, &mut FxHashSet::default());
         if let Some(root_id) = root {
             let mut set = FxHashSet::default();
             set.insert(LocKey::from_loc(&dep.loc));
@@ -926,7 +882,7 @@ fn validate_effect(
 
     for (_block_id, block) in &effect_function.body.blocks {
         // Check for return -> cleanup function
-        if let react_compiler_hir::Terminal::Return {
+        if let crate::react_compiler_hir::Terminal::Return {
             value,
             return_variant: ReturnVariant::Explicit,
             ..
@@ -981,7 +937,7 @@ fn validate_effect(
                     let callee_type =
                         &types[identifiers[callee.identifier.0 as usize].type_.0 as usize];
                     if is_set_state_type(callee_type) && args.len() == 1 {
-                        if let react_compiler_hir::PlaceOrSpread::Place(arg0) = &args[0] {
+                        if let crate::react_compiler_hir::PlaceOrSpread::Place(arg0) = &args[0] {
                             let callee_metadata =
                                 context.derivation_cache.cache.get(&callee.identifier);
 
@@ -1049,15 +1005,10 @@ fn validate_effect(
             &mut FxHashSet::default(),
         );
         if let Some(root_id) = root_set_state_call {
-            let effect_usage_count = effect_set_state_usages
-                .get(&root_id)
-                .map(|s| s.len())
-                .unwrap_or(0);
-            let total_usage_count = context
-                .set_state_usages
-                .get(&root_id)
-                .map(|s| s.len())
-                .unwrap_or(0);
+            let effect_usage_count =
+                effect_set_state_usages.get(&root_id).map(|s| s.len()).unwrap_or(0);
+            let total_usage_count =
+                context.set_state_usages.get(&root_id).map(|s| s.len()).unwrap_or(0);
             if effect_set_state_usages.contains_key(&root_id)
                 && context.set_state_usages.contains_key(&root_id)
                 && effect_usage_count == total_usage_count - 1
@@ -1065,8 +1016,7 @@ fn validate_effect(
                 let mut props_set: FxIndexSet<String> = FxIndexSet::default();
                 let mut state_set: FxIndexSet<String> = FxIndexSet::default();
 
-                let mut root_nodes_map: FxIndexMap<String, TreeNode> =
-                    FxIndexMap::default();
+                let mut root_nodes_map: FxIndexMap<String, TreeNode> = FxIndexMap::default();
                 for id in &derived.source_ids {
                     let nodes = build_tree_node(*id, context, &FxHashSet::default());
                     for node in nodes {
@@ -1093,10 +1043,7 @@ fn validate_effect(
 
                 // Check cleanup function dependencies
                 let should_skip = if let Some(ref cleanup_deps) = cleanup_function_deps {
-                    derived
-                        .source_ids
-                        .iter()
-                        .any(|dep| cleanup_deps.contains(dep))
+                    derived.source_ids.iter().any(|dep| cleanup_deps.contains(dep))
                 } else {
                     false
                 };
@@ -1366,19 +1313,19 @@ fn validate_effect_non_exp(
         }
 
         match &block.terminal {
-            react_compiler_hir::Terminal::Return { value, .. }
-            | react_compiler_hir::Terminal::Throw { value, .. } => {
+            crate::react_compiler_hir::Terminal::Return { value, .. }
+            | crate::react_compiler_hir::Terminal::Throw { value, .. } => {
                 if dep_values.contains_key(&value.identifier) {
                     return Vec::new();
                 }
             }
-            react_compiler_hir::Terminal::If { test, .. }
-            | react_compiler_hir::Terminal::Branch { test, .. } => {
+            crate::react_compiler_hir::Terminal::If { test, .. }
+            | crate::react_compiler_hir::Terminal::Branch { test, .. } => {
                 if dep_values.contains_key(&test.identifier) {
                     return Vec::new();
                 }
             }
-            react_compiler_hir::Terminal::Switch { test, .. } => {
+            crate::react_compiler_hir::Terminal::Switch { test, .. } => {
                 if dep_values.contains_key(&test.identifier) {
                     return Vec::new();
                 }
@@ -1414,9 +1361,7 @@ fn validate_effect_non_exp(
 /// for resolving function expression context captures.
 fn non_exp_value_operands(value: &InstructionValue) -> Vec<IdentifierId> {
     match value {
-        InstructionValue::ComputedLoad {
-            object, property, ..
-        } => {
+        InstructionValue::ComputedLoad { object, property, .. } => {
             vec![object.identifier, property.identifier]
         }
         InstructionValue::PropertyLoad { object, .. } => vec![object.identifier],
@@ -1436,12 +1381,7 @@ fn non_exp_value_operands(value: &InstructionValue) -> Vec<IdentifierId> {
             }
             op_ids
         }
-        InstructionValue::MethodCall {
-            receiver,
-            property,
-            args,
-            ..
-        } => {
+        InstructionValue::MethodCall { receiver, property, args, .. } => {
             let mut op_ids = vec![receiver.identifier, property.identifier];
             for a in args {
                 match a {

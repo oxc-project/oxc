@@ -9,12 +9,14 @@
 
 use rustc_hash::FxHashSet;
 
-use react_compiler_hir::{
+use crate::react_compiler_hir::{
     BlockId, ReactiveFunction, ReactiveTerminal, ReactiveTerminalStatement,
     environment::Environment,
 };
 
-use crate::visitors::{ReactiveFunctionVisitor, visit_reactive_function};
+use crate::react_compiler_reactive_scopes::visitors::{
+    ReactiveFunctionVisitor, visit_reactive_function,
+};
 
 /// Assert that all break/continue targets reference existent labels.
 pub fn assert_well_formed_break_targets(func: &ReactiveFunction, env: &Environment) {
@@ -34,7 +36,11 @@ impl<'a> ReactiveFunctionVisitor for Visitor<'a> {
         self.env
     }
 
-    fn visit_terminal(&self, stmt: &ReactiveTerminalStatement, seen_labels: &mut FxHashSet<BlockId>) {
+    fn visit_terminal(
+        &self,
+        stmt: &ReactiveTerminalStatement,
+        seen_labels: &mut FxHashSet<BlockId>,
+    ) {
         if let Some(label) = &stmt.label {
             seen_labels.insert(label.id);
         }

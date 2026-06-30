@@ -29,12 +29,7 @@ pub struct TimingData {
 impl TimingData {
     /// Create a new TimingData. If `enabled` is false, all operations are no-ops.
     pub fn new(enabled: bool) -> Self {
-        Self {
-            enabled,
-            entries: Vec::new(),
-            current_name: None,
-            current_start: None,
-        }
+        Self { enabled, entries: Vec::new(), current_name: None, current_start: None }
     }
 
     /// Start timing a named phase. Stops any currently running phase first.
@@ -66,10 +61,7 @@ impl TimingData {
         self.stop();
         self.entries
             .into_iter()
-            .map(|(name, duration)| TimingEntry {
-                name,
-                duration_us: duration.as_micros() as u64,
-            })
+            .map(|(name, duration)| TimingEntry { name, duration_us: duration.as_micros() as u64 })
             .collect()
     }
 }

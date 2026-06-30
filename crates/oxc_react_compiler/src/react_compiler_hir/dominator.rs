@@ -11,10 +11,10 @@
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use react_compiler_diagnostics::{CompilerDiagnostic, ErrorCategory};
+use crate::react_compiler_diagnostics::{CompilerDiagnostic, ErrorCategory};
 
-use crate::visitors::each_terminal_successor;
-use crate::{BlockId, HirFunction, Terminal};
+use crate::react_compiler_hir::visitors::each_terminal_successor;
+use crate::react_compiler_hir::{BlockId, HirFunction, Terminal};
 
 // =============================================================================
 // Public types
@@ -31,15 +31,8 @@ impl PostDominator {
     /// Returns the immediate post-dominator of the given block, or None if
     /// the block post-dominates itself (i.e., it is the exit node).
     pub fn get(&self, id: BlockId) -> Option<BlockId> {
-        let dominator = self
-            .nodes
-            .get(&id)
-            .expect("Unknown node in post-dominator tree");
-        if *dominator == id {
-            None
-        } else {
-            Some(*dominator)
-        }
+        let dominator = self.nodes.get(&id).expect("Unknown node in post-dominator tree");
+        if *dominator == id { None } else { Some(*dominator) }
     }
 }
 
@@ -94,10 +87,7 @@ pub fn compute_post_dominator_tree(
         }
     }
 
-    Ok(PostDominator {
-        exit: graph.entry,
-        nodes,
-    })
+    Ok(PostDominator { exit: graph.entry, nodes })
 }
 
 /// Build the reverse graph from the HIR function.
@@ -117,12 +107,7 @@ fn build_reverse_graph(
     // Create exit node
     raw_nodes.insert(
         exit_id,
-        Node {
-            id: exit_id,
-            index: 0,
-            preds: FxHashSet::default(),
-            succs: FxHashSet::default(),
-        },
+        Node { id: exit_id, index: 0, preds: FxHashSet::default(), succs: FxHashSet::default() },
     );
 
     for (id, block) in &func.body.blocks {
@@ -138,15 +123,7 @@ fn build_reverse_graph(
             raw_nodes.get_mut(&exit_id).unwrap().succs.insert(*id);
         }
 
-        raw_nodes.insert(
-            *id,
-            Node {
-                id: *id,
-                index: 0,
-                preds: preds_set,
-                succs: succs_set,
-            },
-        );
+        raw_nodes.insert(*id, Node { id: *id, index: 0, preds: preds_set, succs: succs_set });
     }
 
     // DFS from exit to compute RPO
@@ -166,11 +143,7 @@ fn build_reverse_graph(
         nodes.push(node);
     }
 
-    Graph {
-        entry: exit_id,
-        nodes,
-        node_index,
-    }
+    Graph { entry: exit_id, nodes, node_index }
 }
 
 fn dfs_postorder(

@@ -8,18 +8,18 @@
 //! Outlines JSX expressions in callbacks into separate component functions.
 //! This pass is conditional on `env.config.enable_jsx_outlining` (defaults to false).
 
-use react_compiler_utils::FxIndexSet;
+use crate::react_compiler_utils::FxIndexSet;
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use react_compiler_utils::FxIndexMap;
-use react_compiler_hir::environment::Environment;
-use react_compiler_hir::{
+use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_hir::{
     BasicBlock, BlockId, BlockKind, EvaluationOrder, FunctionId, HIR, HirFunction, IdentifierId,
     IdentifierName, Instruction, InstructionId, InstructionKind, InstructionValue, JsxAttribute,
     JsxTag, LValuePattern, NonLocalBinding, ObjectPattern, ObjectProperty, ObjectPropertyKey,
     ObjectPropertyOrSpread, ObjectPropertyType, ParamPattern, Pattern, Place, ReactFunctionType,
     ReturnVariant, Terminal,
 };
+use crate::react_compiler_utils::FxIndexMap;
 
 /// Outline JSX expressions in inner functions into separate outlined components.
 ///
@@ -97,15 +97,10 @@ fn outline_jsx_impl(
 
             match &instr.value {
                 InstructionValue::LoadGlobal { .. } => {
-                    actions.push(InstrAction::LoadGlobal {
-                        lvalue_id,
-                        instr_idx: iid.0 as usize,
-                    });
+                    actions.push(InstrAction::LoadGlobal { lvalue_id, instr_idx: iid.0 as usize });
                 }
                 InstructionValue::FunctionExpression { lowered_func, .. } => {
-                    actions.push(InstrAction::FunctionExpr {
-                        func_id: lowered_func.func,
-                    });
+                    actions.push(InstrAction::FunctionExpr { func_id: lowered_func.func });
                 }
                 InstructionValue::JsxExpression { children, .. } => {
                     let child_ids = children
@@ -128,26 +123,18 @@ fn outline_jsx_impl(
         // Second pass: process actions
         for action in actions {
             match action {
-                InstrAction::LoadGlobal {
-                    lvalue_id,
-                    instr_idx,
-                } => {
+                InstrAction::LoadGlobal { lvalue_id, instr_idx } => {
                     globals.insert(lvalue_id, instr_idx);
                 }
                 InstrAction::FunctionExpr { func_id } => {
                     let mut inner_func = std::mem::replace(
                         &mut env.functions[func_id.0 as usize],
-                        react_compiler_ssa::enter_ssa::placeholder_function(),
+                        crate::react_compiler_ssa::enter_ssa::placeholder_function(),
                     );
                     outline_jsx_impl(&mut inner_func, env, outlined_fns);
                     env.functions[func_id.0 as usize] = inner_func;
                 }
-                InstrAction::JsxExpr {
-                    lvalue_id,
-                    instr_idx,
-                    eval_order,
-                    child_ids,
-                } => {
+                InstrAction::JsxExpr { lvalue_id, instr_idx, eval_order, child_ids } => {
                     if !children_ids.contains(&lvalue_id) {
                         process_and_outline_jsx(
                             func,
@@ -255,10 +242,7 @@ fn process_jsx_group(
     let mut outlined_fn = outlined_fn;
     outlined_fn.id = Some(outlined_tag);
 
-    Some(OutlinedResult {
-        instrs: new_instrs,
-        func: outlined_fn,
-    })
+    Some(OutlinedResult { instrs: new_instrs, func: outlined_fn })
 }
 
 fn collect_props(
@@ -285,10 +269,7 @@ fn collect_props(
 
     for info in jsx_group {
         let instr = &func.instructions[info.instr_idx];
-        if let InstructionValue::JsxExpression {
-            props, children, ..
-        } = &instr.value
-        {
+        if let InstructionValue::JsxExpression { props, children, .. } = &instr.value {
             for attr in props {
                 match attr {
                     JsxAttribute::SpreadAttribute { .. } => return None,
@@ -344,10 +325,7 @@ fn emit_outlined_jsx(
 ) -> Option<Vec<Instruction>> {
     let props: Vec<JsxAttribute> = outlined_props
         .iter()
-        .map(|p| JsxAttribute::Attribute {
-            name: p.new_name.clone(),
-            place: p.place.clone(),
-        })
+        .map(|p| JsxAttribute::Attribute { name: p.new_name.clone(), place: p.place.clone() })
         .collect();
 
     // Create LoadGlobal for the outlined component
@@ -359,7 +337,7 @@ fn emit_outlined_jsx(
 
     let load_place = Place {
         identifier: load_id,
-        effect: react_compiler_hir::Effect::Unknown,
+        effect: crate::react_compiler_hir::Effect::Unknown,
         reactive: false,
         loc: None,
     };
@@ -368,9 +346,7 @@ fn emit_outlined_jsx(
         id: EvaluationOrder(0),
         lvalue: load_place.clone(),
         value: InstructionValue::LoadGlobal {
-            binding: NonLocalBinding::ModuleLocal {
-                name: outlined_tag.to_string(),
-            },
+            binding: NonLocalBinding::ModuleLocal { name: outlined_tag.to_string() },
             loc: None,
         },
         loc: None,
@@ -414,7 +390,7 @@ fn emit_outlined_fn(
         Some(IdentifierName::Promoted(format!("#t{}", decl_id.0)));
     let props_obj = Place {
         identifier: props_obj_id,
-        effect: react_compiler_hir::Effect::Unknown,
+        effect: crate::react_compiler_hir::Effect::Unknown,
         reactive: false,
         loc: None,
     };
@@ -450,7 +426,7 @@ fn emit_outlined_fn(
     let returns_id = env.next_identifier_id();
     let returns_place = Place {
         identifier: returns_id,
-        effect: react_compiler_hir::Effect::Unknown,
+        effect: crate::react_compiler_hir::Effect::Unknown,
         reactive: false,
         loc: None,
     };
@@ -481,10 +457,7 @@ fn emit_outlined_fn(
         return_type_annotation: None,
         returns: returns_place,
         context: Vec::new(),
-        body: HIR {
-            entry: BlockId(0),
-            blocks,
-        },
+        body: HIR { entry: BlockId(0), blocks },
         instructions: instr_table,
         generator: false,
         is_async: false,
@@ -609,7 +582,7 @@ fn create_old_to_new_props_mapping(
 
         let new_place = Place {
             identifier: new_id,
-            effect: react_compiler_hir::Effect::Unknown,
+            effect: crate::react_compiler_hir::Effect::Unknown,
             reactive: false,
             loc: None,
         };
@@ -635,9 +608,7 @@ fn emit_destructure_props(
     let mut properties = Vec::new();
     for prop in old_to_new_props.values() {
         properties.push(ObjectPropertyOrSpread::Property(ObjectProperty {
-            key: ObjectPropertyKey::String {
-                name: prop.new_name.clone(),
-            },
+            key: ObjectPropertyKey::String { name: prop.new_name.clone() },
             property_type: ObjectPropertyType::Property,
             place: prop.place.clone(),
         }));
@@ -646,7 +617,7 @@ fn emit_destructure_props(
     let lvalue_id = env.next_identifier_id();
     let lvalue = Place {
         identifier: lvalue_id,
-        effect: react_compiler_hir::Effect::Unknown,
+        effect: crate::react_compiler_hir::Effect::Unknown,
         reactive: false,
         loc: None,
     };
@@ -656,10 +627,7 @@ fn emit_destructure_props(
         lvalue,
         value: InstructionValue::Destructure {
             lvalue: LValuePattern {
-                pattern: Pattern::Object(ObjectPattern {
-                    properties,
-                    loc: None,
-                }),
+                pattern: Pattern::Object(ObjectPattern { properties, loc: None }),
                 kind: InstructionKind::Let,
             },
             value: props_obj.clone(),

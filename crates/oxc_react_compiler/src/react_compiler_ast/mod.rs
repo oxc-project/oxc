@@ -11,10 +11,10 @@ pub mod visitor;
 
 use serde::Serialize;
 
-use crate::common::{BaseNode, Comment};
-use crate::expressions::Expression;
-use crate::patterns::PatternLike;
-use crate::statements::{Directive, Statement};
+use crate::react_compiler_ast::common::{BaseNode, Comment};
+use crate::react_compiler_ast::expressions::Expression;
+use crate::react_compiler_ast::patterns::PatternLike;
+use crate::react_compiler_ast::statements::{Directive, Statement};
 
 /// An original source AST node preserved verbatim for re-emission when the
 /// compiler bails on a construct it does not model (`UnsupportedNode`).
@@ -54,11 +54,7 @@ pub struct Program {
     pub source_type: SourceType,
     #[serde(default)]
     pub interpreter: Option<InterpreterDirective>,
-    #[serde(
-        rename = "sourceFile",
-        default,
-        skip_serializing_if = "Option::is_none"
-    )]
+    #[serde(rename = "sourceFile", default, skip_serializing_if = "Option::is_none")]
     pub source_file: Option<String>,
 }
 

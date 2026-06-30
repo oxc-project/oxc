@@ -11,7 +11,7 @@
 //!
 //! Analogous to TS `ReactiveScopes/FlattenReactiveLoopsHIR.ts`.
 
-use react_compiler_hir::{BlockId, HirFunction, Terminal};
+use crate::react_compiler_hir::{BlockId, HirFunction, Terminal};
 
 /// Flattens reactive scopes that are inside loops by converting `Scope` terminals
 /// to `PrunedScope` terminals.
@@ -36,13 +36,7 @@ pub fn flatten_reactive_loops_hir(func: &mut HirFunction) {
             | Terminal::While { fallthrough, .. } => {
                 active_loops.push(*fallthrough);
             }
-            Terminal::Scope {
-                block,
-                fallthrough,
-                scope,
-                id,
-                loc,
-            } => {
+            Terminal::Scope { block, fallthrough, scope, id, loc } => {
                 if !active_loops.is_empty() {
                     let new_terminal = Terminal::PrunedScope {
                         block: *block,

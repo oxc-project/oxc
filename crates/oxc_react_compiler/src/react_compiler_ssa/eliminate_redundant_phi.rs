@@ -1,10 +1,10 @@
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use react_compiler_hir::environment::Environment;
-use react_compiler_hir::visitors;
-use react_compiler_hir::*;
+use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_hir::visitors;
+use crate::react_compiler_hir::*;
 
-use crate::enter_ssa::placeholder_function;
+use crate::react_compiler_ssa::enter_ssa::placeholder_function;
 
 // =============================================================================
 // Helper: rewrite_place

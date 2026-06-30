@@ -10,14 +10,16 @@
 
 use rustc_hash::FxHashMap;
 
-use react_compiler_diagnostics::{CompilerError, CompilerErrorDetail, ErrorCategory};
-use react_compiler_hir::{
+use crate::react_compiler_diagnostics::{CompilerError, CompilerErrorDetail, ErrorCategory};
+use crate::react_compiler_hir::{
     EvaluationOrder, IdentifierId, InstructionKind, InstructionValue, Place, ReactiveFunction,
     ReactiveInstruction, ReactiveScopeBlock, ReactiveStatement, ReactiveValue,
     environment::Environment,
 };
 
-use crate::visitors::{ReactiveFunctionTransform, Transformed, transform_reactive_function};
+use crate::react_compiler_reactive_scopes::visitors::{
+    ReactiveFunctionTransform, Transformed, transform_reactive_function,
+};
 
 // =============================================================================
 // Public entry point
@@ -31,10 +33,7 @@ pub fn prune_hoisted_contexts(
     env: &Environment,
 ) -> Result<(), CompilerError> {
     let mut transform = Transform { env };
-    let mut state = VisitorState {
-        active_scopes: Vec::new(),
-        uninitialized: FxHashMap::default(),
-    };
+    let mut state = VisitorState { active_scopes: Vec::new(), uninitialized: FxHashMap::default() };
     transform_reactive_function(func, &mut transform, &mut state)
 }
 
@@ -86,9 +85,7 @@ impl<'a> ReactiveFunctionTransform for Transform<'a> {
 
         // Add declared but not initialized variables
         for (_, decl) in &scope_data.declarations {
-            state
-                .uninitialized
-                .insert(decl.identifier, UninitializedKind::UnknownKind);
+            state.uninitialized.insert(decl.identifier, UninitializedKind::UnknownKind);
         }
 
         state.active_scopes.push(decl_ids);

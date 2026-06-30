@@ -1,51 +1,43 @@
 use rustc_hash::FxHashSet;
 
-use react_compiler_utils::FxIndexMap;
-use react_compiler_utils::FxIndexSet;
-use react_compiler_ast::scope::BindingId;
-use react_compiler_ast::scope::BindingKind as AstBindingKind;
-use react_compiler_ast::scope::ScopeId;
-use react_compiler_ast::scope::ScopeInfo;
-use react_compiler_ast::scope::ScopeKind;
-use react_compiler_diagnostics::CompilerDiagnostic;
-use react_compiler_diagnostics::CompilerDiagnosticDetail;
-use react_compiler_diagnostics::CompilerError;
-use react_compiler_diagnostics::CompilerErrorDetail;
-use react_compiler_diagnostics::ErrorCategory;
-use react_compiler_hir::environment::Environment;
-use react_compiler_hir::*;
+use crate::react_compiler_ast::scope::BindingId;
+use crate::react_compiler_ast::scope::BindingKind as AstBindingKind;
+use crate::react_compiler_ast::scope::ScopeId;
+use crate::react_compiler_ast::scope::ScopeInfo;
+use crate::react_compiler_ast::scope::ScopeKind;
+use crate::react_compiler_diagnostics::CompilerDiagnostic;
+use crate::react_compiler_diagnostics::CompilerDiagnosticDetail;
+use crate::react_compiler_diagnostics::CompilerError;
+use crate::react_compiler_diagnostics::CompilerErrorDetail;
+use crate::react_compiler_diagnostics::ErrorCategory;
+use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_hir::*;
+use crate::react_compiler_utils::FxIndexMap;
+use crate::react_compiler_utils::FxIndexSet;
 
-use crate::FunctionNode;
-use crate::find_context_identifiers::find_context_identifiers;
-use crate::hir_builder::HirBuilder;
-use crate::hir_builder::is_always_reserved_word;
-use crate::hir_builder::reserved_identifier_diagnostic;
-use crate::identifier_loc_index::IdentifierLocIndex;
-use crate::identifier_loc_index::build_identifier_loc_index;
+use crate::react_compiler_lowering::FunctionNode;
+use crate::react_compiler_lowering::find_context_identifiers::find_context_identifiers;
+use crate::react_compiler_lowering::hir_builder::HirBuilder;
+use crate::react_compiler_lowering::hir_builder::is_always_reserved_word;
+use crate::react_compiler_lowering::hir_builder::reserved_identifier_diagnostic;
+use crate::react_compiler_lowering::identifier_loc_index::IdentifierLocIndex;
+use crate::react_compiler_lowering::identifier_loc_index::build_identifier_loc_index;
 
 // =============================================================================
 // Source location conversion
 // =============================================================================
 
 /// Convert an AST SourceLocation to an HIR SourceLocation.
-fn convert_loc(loc: &react_compiler_ast::common::SourceLocation) -> SourceLocation {
+fn convert_loc(loc: &crate::react_compiler_ast::common::SourceLocation) -> SourceLocation {
     SourceLocation {
-        start: Position {
-            line: loc.start.line,
-            column: loc.start.column,
-            index: loc.start.index,
-        },
-        end: Position {
-            line: loc.end.line,
-            column: loc.end.column,
-            index: loc.end.index,
-        },
+        start: Position { line: loc.start.line, column: loc.start.column, index: loc.start.index },
+        end: Position { line: loc.end.line, column: loc.end.column, index: loc.end.index },
     }
 }
 
 /// Convert an optional AST SourceLocation to an optional HIR SourceLocation.
 fn convert_opt_loc(
-    loc: &Option<react_compiler_ast::common::SourceLocation>,
+    loc: &Option<crate::react_compiler_ast::common::SourceLocation>,
 ) -> Option<SourceLocation> {
     loc.as_ref().map(convert_loc)
 }
@@ -54,39 +46,33 @@ fn convert_opt_loc(
 /// `original_node`. Should ONLY be called on error/bail paths — never eagerly
 /// before deciding to create an `UnsupportedNode`.
 ///
-/// [`OriginalNode`]: react_compiler_ast::OriginalNode
+/// [`OriginalNode`]: crate::react_compiler_ast::OriginalNode
 fn original_expression(
-    expr: &react_compiler_ast::expressions::Expression,
-) -> Option<react_compiler_ast::OriginalNode> {
-    Some(react_compiler_ast::OriginalNode::Expression(Box::new(
-        expr.clone(),
-    )))
+    expr: &crate::react_compiler_ast::expressions::Expression,
+) -> Option<crate::react_compiler_ast::OriginalNode> {
+    Some(crate::react_compiler_ast::OriginalNode::Expression(Box::new(expr.clone())))
 }
 
-/// Wrap a statement as an [`OriginalNode`](react_compiler_ast::OriginalNode)
+/// Wrap a statement as an [`OriginalNode`](crate::react_compiler_ast::OriginalNode)
 /// for `UnsupportedNode`'s `original_node`.
 fn original_statement(
-    stmt: &react_compiler_ast::statements::Statement,
-) -> Option<react_compiler_ast::OriginalNode> {
-    Some(react_compiler_ast::OriginalNode::Statement(Box::new(
-        stmt.clone(),
-    )))
+    stmt: &crate::react_compiler_ast::statements::Statement,
+) -> Option<crate::react_compiler_ast::OriginalNode> {
+    Some(crate::react_compiler_ast::OriginalNode::Statement(Box::new(stmt.clone())))
 }
 
-/// Wrap a pattern as an [`OriginalNode`](react_compiler_ast::OriginalNode) for
+/// Wrap a pattern as an [`OriginalNode`](crate::react_compiler_ast::OriginalNode) for
 /// `UnsupportedNode`'s `original_node`.
 fn original_pattern(
-    pat: &react_compiler_ast::patterns::PatternLike,
-) -> Option<react_compiler_ast::OriginalNode> {
-    Some(react_compiler_ast::OriginalNode::Pattern(Box::new(
-        pat.clone(),
-    )))
+    pat: &crate::react_compiler_ast::patterns::PatternLike,
+) -> Option<crate::react_compiler_ast::OriginalNode> {
+    Some(crate::react_compiler_ast::OriginalNode::Pattern(Box::new(pat.clone())))
 }
 
 fn pattern_like_loc(
-    pattern: &react_compiler_ast::patterns::PatternLike,
-) -> Option<react_compiler_ast::common::SourceLocation> {
-    use react_compiler_ast::patterns::PatternLike;
+    pattern: &crate::react_compiler_ast::patterns::PatternLike,
+) -> Option<crate::react_compiler_ast::common::SourceLocation> {
+    use crate::react_compiler_ast::patterns::PatternLike;
     match pattern {
         PatternLike::Identifier(id) => id.base.loc.clone(),
         PatternLike::ObjectPattern(p) => p.base.loc.clone(),
@@ -103,8 +89,10 @@ fn pattern_like_loc(
 }
 
 /// Extract the HIR SourceLocation from an Expression AST node.
-fn expression_loc(expr: &react_compiler_ast::expressions::Expression) -> Option<SourceLocation> {
-    use react_compiler_ast::expressions::Expression;
+fn expression_loc(
+    expr: &crate::react_compiler_ast::expressions::Expression,
+) -> Option<SourceLocation> {
+    use crate::react_compiler_ast::expressions::Expression;
     let loc = match expr {
         Expression::Identifier(e) => e.base.loc.clone(),
         Expression::StringLiteral(e) => e.base.loc.clone(),
@@ -215,8 +203,8 @@ fn validate_ts_this_parameters_in_function_range(
 }
 
 /// Get the Babel-style type name of an Expression node (e.g. "Identifier", "NumericLiteral").
-fn expression_type_name(expr: &react_compiler_ast::expressions::Expression) -> &'static str {
-    use react_compiler_ast::expressions::Expression;
+fn expression_type_name(expr: &crate::react_compiler_ast::expressions::Expression) -> &'static str {
+    use crate::react_compiler_ast::expressions::Expression;
     match expr {
         Expression::Identifier(_) => "Identifier",
         Expression::StringLiteral(_) => "StringLiteral",
@@ -271,7 +259,7 @@ fn expression_type_name(expr: &react_compiler_ast::expressions::Expression) -> &
 /// or { "type": "TypeAnnotation", "typeAnnotation": { "type": "GenericTypeAnnotation", ... } }
 /// We extract the inner typeAnnotation's `type` field name.
 fn extract_type_annotation_name(
-    type_annotation: &Option<react_compiler_ast::common::RawNode>,
+    type_annotation: &Option<crate::react_compiler_ast::common::RawNode>,
 ) -> Option<String> {
     let val = type_annotation.as_ref()?.parse_value();
     // Navigate: typeAnnotation.typeAnnotation.type
@@ -286,12 +274,7 @@ fn extract_type_annotation_name(
 
 fn build_temporary_place(builder: &mut HirBuilder, loc: Option<SourceLocation>) -> Place {
     let id = builder.make_temporary(loc.clone());
-    Place {
-        identifier: id,
-        reactive: false,
-        effect: Effect::Unknown,
-        loc,
-    }
+    Place { identifier: id, reactive: false, effect: Effect::Unknown, loc }
 }
 
 /// Promote a temporary identifier to a named identifier (for destructuring).
@@ -328,7 +311,7 @@ fn lower_value_to_temporary(
 
 fn lower_expression_to_temporary(
     builder: &mut HirBuilder,
-    expr: &react_compiler_ast::expressions::Expression,
+    expr: &crate::react_compiler_ast::expressions::Expression,
 ) -> Result<Place, CompilerError> {
     let value = lower_expression(builder, expr)?;
     Ok(lower_value_to_temporary(builder, value)?)
@@ -338,8 +321,10 @@ fn lower_expression_to_temporary(
 // Operator conversion
 // =============================================================================
 
-fn convert_binary_operator(op: &react_compiler_ast::operators::BinaryOperator) -> BinaryOperator {
-    use react_compiler_ast::operators::BinaryOperator as AstOp;
+fn convert_binary_operator(
+    op: &crate::react_compiler_ast::operators::BinaryOperator,
+) -> BinaryOperator {
+    use crate::react_compiler_ast::operators::BinaryOperator as AstOp;
     match op {
         AstOp::Add => BinaryOperator::Add,
         AstOp::Sub => BinaryOperator::Subtract,
@@ -369,8 +354,10 @@ fn convert_binary_operator(op: &react_compiler_ast::operators::BinaryOperator) -
     }
 }
 
-fn convert_unary_operator(op: &react_compiler_ast::operators::UnaryOperator) -> UnaryOperator {
-    use react_compiler_ast::operators::UnaryOperator as AstOp;
+fn convert_unary_operator(
+    op: &crate::react_compiler_ast::operators::UnaryOperator,
+) -> UnaryOperator {
+    use crate::react_compiler_ast::operators::UnaryOperator as AstOp;
     match op {
         AstOp::Neg => UnaryOperator::Minus,
         AstOp::Plus => UnaryOperator::Plus,
@@ -399,12 +386,9 @@ fn lower_identifier(
 ) -> Result<Place, CompilerError> {
     let binding = builder.resolve_identifier(name, start, loc.clone(), node_id)?;
     match binding {
-        VariableBinding::Identifier { identifier, .. } => Ok(Place {
-            identifier,
-            effect: Effect::Unknown,
-            reactive: false,
-            loc,
-        }),
+        VariableBinding::Identifier { identifier, .. } => {
+            Ok(Place { identifier, effect: Effect::Unknown, reactive: false, loc })
+        }
         _ => {
             if let VariableBinding::Global { ref name } = binding {
                 if name == "eval" {
@@ -424,25 +408,17 @@ fn lower_identifier(
                 VariableBinding::ImportDefault { name, module } => {
                     NonLocalBinding::ImportDefault { name, module }
                 }
-                VariableBinding::ImportSpecifier {
-                    name,
-                    module,
-                    imported,
-                } => NonLocalBinding::ImportSpecifier {
-                    name,
-                    module,
-                    imported,
-                },
+                VariableBinding::ImportSpecifier { name, module, imported } => {
+                    NonLocalBinding::ImportSpecifier { name, module, imported }
+                }
                 VariableBinding::ImportNamespace { name, module } => {
                     NonLocalBinding::ImportNamespace { name, module }
                 }
                 VariableBinding::ModuleLocal { name } => NonLocalBinding::ModuleLocal { name },
                 VariableBinding::Identifier { .. } => unreachable!(),
             };
-            let instr_value = InstructionValue::LoadGlobal {
-                binding: non_local_binding,
-                loc: loc.clone(),
-            };
+            let instr_value =
+                InstructionValue::LoadGlobal { binding: non_local_binding, loc: loc.clone() };
             Ok(lower_value_to_temporary(builder, instr_value)?)
         }
     }
@@ -454,9 +430,9 @@ fn lower_identifier(
 
 fn lower_arguments(
     builder: &mut HirBuilder,
-    args: &[react_compiler_ast::expressions::Expression],
+    args: &[crate::react_compiler_ast::expressions::Expression],
 ) -> Result<Vec<PlaceOrSpread>, CompilerError> {
-    use react_compiler_ast::expressions::Expression;
+    use crate::react_compiler_ast::expressions::Expression;
     let mut result = Vec::new();
     for arg in args {
         match arg {
@@ -473,10 +449,16 @@ fn lower_arguments(
     Ok(result)
 }
 
-fn convert_update_operator(op: &react_compiler_ast::operators::UpdateOperator) -> UpdateOperator {
+fn convert_update_operator(
+    op: &crate::react_compiler_ast::operators::UpdateOperator,
+) -> UpdateOperator {
     match op {
-        react_compiler_ast::operators::UpdateOperator::Increment => UpdateOperator::Increment,
-        react_compiler_ast::operators::UpdateOperator::Decrement => UpdateOperator::Decrement,
+        crate::react_compiler_ast::operators::UpdateOperator::Increment => {
+            UpdateOperator::Increment
+        }
+        crate::react_compiler_ast::operators::UpdateOperator::Decrement => {
+            UpdateOperator::Decrement
+        }
     }
 }
 
@@ -497,18 +479,18 @@ struct LoweredMemberExpression {
 
 fn lower_member_expression(
     builder: &mut HirBuilder,
-    member: &react_compiler_ast::expressions::MemberExpression,
+    member: &crate::react_compiler_ast::expressions::MemberExpression,
 ) -> Result<LoweredMemberExpression, CompilerError> {
     Ok(lower_member_expression_impl(builder, member, None)?)
 }
 
 fn lower_member_expression_with_object(
     builder: &mut HirBuilder,
-    member: &react_compiler_ast::expressions::OptionalMemberExpression,
+    member: &crate::react_compiler_ast::expressions::OptionalMemberExpression,
     lowered_object: Place,
 ) -> Result<LoweredMemberExpression, CompilerError> {
     // OptionalMemberExpression has the same shape as MemberExpression for property access
-    use react_compiler_ast::expressions::Expression;
+    use crate::react_compiler_ast::expressions::Expression;
     let loc = convert_opt_loc(&member.base.loc);
     let object = lowered_object;
 
@@ -535,7 +517,7 @@ fn lower_member_expression_with_object(
                     value: InstructionValue::UnsupportedNode {
                         node_type: Some("OptionalMemberExpression".to_string()),
                         original_node: original_expression(
-                            &react_compiler_ast::expressions::Expression::OptionalMemberExpression(
+                            &crate::react_compiler_ast::expressions::Expression::OptionalMemberExpression(
                                 member.clone(),
                             ),
                         ),
@@ -574,20 +556,16 @@ fn lower_member_expression_with_object(
             property: property.clone(),
             loc,
         };
-        Ok(LoweredMemberExpression {
-            object,
-            property: MemberProperty::Computed(property),
-            value,
-        })
+        Ok(LoweredMemberExpression { object, property: MemberProperty::Computed(property), value })
     }
 }
 
 fn lower_member_expression_impl(
     builder: &mut HirBuilder,
-    member: &react_compiler_ast::expressions::MemberExpression,
+    member: &crate::react_compiler_ast::expressions::MemberExpression,
     lowered_object: Option<Place>,
 ) -> Result<LoweredMemberExpression, CompilerError> {
-    use react_compiler_ast::expressions::Expression;
+    use crate::react_compiler_ast::expressions::Expression;
     let loc = convert_opt_loc(&member.base.loc);
     let object = match lowered_object {
         Some(obj) => obj,
@@ -618,7 +596,7 @@ fn lower_member_expression_impl(
                     value: InstructionValue::UnsupportedNode {
                         node_type: Some("MemberExpression".to_string()),
                         original_node: original_expression(
-                            &react_compiler_ast::expressions::Expression::MemberExpression(
+                            &crate::react_compiler_ast::expressions::Expression::MemberExpression(
                                 member.clone(),
                             ),
                         ),
@@ -659,11 +637,7 @@ fn lower_member_expression_impl(
             property: property.clone(),
             loc,
         };
-        Ok(LoweredMemberExpression {
-            object,
-            property: MemberProperty::Computed(property),
-            value,
-        })
+        Ok(LoweredMemberExpression { object, property: MemberProperty::Computed(property), value })
     }
 }
 
@@ -673,9 +647,9 @@ fn lower_member_expression_impl(
 
 fn lower_expression(
     builder: &mut HirBuilder,
-    expr: &react_compiler_ast::expressions::Expression,
+    expr: &crate::react_compiler_ast::expressions::Expression,
 ) -> Result<InstructionValue, CompilerError> {
-    use react_compiler_ast::expressions::Expression;
+    use crate::react_compiler_ast::expressions::Expression;
 
     match expr {
         Expression::Identifier(ident) => {
@@ -692,17 +666,11 @@ fn lower_expression(
         }
         Expression::NullLiteral(lit) => {
             let loc = convert_opt_loc(&lit.base.loc);
-            Ok(InstructionValue::Primitive {
-                value: PrimitiveValue::Null,
-                loc,
-            })
+            Ok(InstructionValue::Primitive { value: PrimitiveValue::Null, loc })
         }
         Expression::BooleanLiteral(lit) => {
             let loc = convert_opt_loc(&lit.base.loc);
-            Ok(InstructionValue::Primitive {
-                value: PrimitiveValue::Boolean(lit.value),
-                loc,
-            })
+            Ok(InstructionValue::Primitive { value: PrimitiveValue::Boolean(lit.value), loc })
         }
         Expression::NumericLiteral(lit) => {
             let loc = convert_opt_loc(&lit.base.loc);
@@ -723,7 +691,7 @@ fn lower_expression(
             // Check for pipeline operator before lowering operands
             if matches!(
                 bin.operator,
-                react_compiler_ast::operators::BinaryOperator::Pipeline
+                crate::react_compiler_ast::operators::BinaryOperator::Pipeline
             ) {
                 builder.record_error(CompilerErrorDetail {
                     category: ErrorCategory::Todo,
@@ -741,17 +709,12 @@ fn lower_expression(
             let left = lower_expression_to_temporary(builder, &bin.left)?;
             let right = lower_expression_to_temporary(builder, &bin.right)?;
             let operator = convert_binary_operator(&bin.operator);
-            Ok(InstructionValue::BinaryExpression {
-                operator,
-                left,
-                right,
-                loc,
-            })
+            Ok(InstructionValue::BinaryExpression { operator, left, right, loc })
         }
         Expression::UnaryExpression(unary) => {
             let loc = convert_opt_loc(&unary.base.loc);
             match &unary.operator {
-                react_compiler_ast::operators::UnaryOperator::Delete => {
+                crate::react_compiler_ast::operators::UnaryOperator::Delete => {
                     // Delete can be on member expressions or identifiers
                     let loc = convert_opt_loc(&unary.base.loc);
                     match &*unary.argument {
@@ -784,11 +747,7 @@ fn lower_expression(
                             } else {
                                 let property =
                                     lower_expression_to_temporary(builder, &member.property)?;
-                                Ok(InstructionValue::ComputedDelete {
-                                    object,
-                                    property,
-                                    loc,
-                                })
+                                Ok(InstructionValue::ComputedDelete { object, property, loc })
                             }
                         }
                         _ => {
@@ -808,7 +767,7 @@ fn lower_expression(
                         }
                     }
                 }
-                react_compiler_ast::operators::UnaryOperator::Throw => {
+                crate::react_compiler_ast::operators::UnaryOperator::Throw => {
                     // throw as unary operator (Babel-specific)
                     let loc = convert_opt_loc(&unary.base.loc);
                     builder.record_error(CompilerErrorDetail {
@@ -827,11 +786,7 @@ fn lower_expression(
                 op => {
                     let value = lower_expression_to_temporary(builder, &unary.argument)?;
                     let operator = convert_unary_operator(op);
-                    Ok(InstructionValue::UnaryExpression {
-                        operator,
-                        value,
-                        loc,
-                    })
+                    Ok(InstructionValue::UnaryExpression { operator, value, loc })
                 }
             }
         }
@@ -842,12 +797,7 @@ fn lower_expression(
                 let lowered = lower_member_expression(builder, member)?;
                 let property = lower_value_to_temporary(builder, lowered.value)?;
                 let args = lower_arguments(builder, &call.arguments)?;
-                Ok(InstructionValue::MethodCall {
-                    receiver: lowered.object,
-                    property,
-                    args,
-                    loc,
-                })
+                Ok(InstructionValue::MethodCall { receiver: lowered.object, property, args, loc })
             } else {
                 let callee = lower_expression_to_temporary(builder, &call.callee)?;
                 let args = lower_arguments(builder, &call.arguments)?;
@@ -879,10 +829,7 @@ fn lower_expression(
                 lower_value_to_temporary(
                     builder,
                     InstructionValue::StoreLocal {
-                        lvalue: LValue {
-                            kind: InstructionKind::Const,
-                            place: place.clone(),
-                        },
+                        lvalue: LValue { kind: InstructionKind::Const, place: place.clone() },
                         value: left_place.clone(),
                         type_annotation: None,
                         loc: left_place.loc.clone(),
@@ -903,10 +850,7 @@ fn lower_expression(
                 lower_value_to_temporary(
                     builder,
                     InstructionValue::StoreLocal {
-                        lvalue: LValue {
-                            kind: InstructionKind::Const,
-                            place: place.clone(),
-                        },
+                        lvalue: LValue { kind: InstructionKind::Const, place: place.clone() },
                         value: right,
                         type_annotation: None,
                         loc: right_loc.clone(),
@@ -921,9 +865,9 @@ fn lower_expression(
             });
 
             let hir_op = match expr.operator {
-                react_compiler_ast::operators::LogicalOperator::And => LogicalOperator::And,
-                react_compiler_ast::operators::LogicalOperator::Or => LogicalOperator::Or,
-                react_compiler_ast::operators::LogicalOperator::NullishCoalescing => {
+                crate::react_compiler_ast::operators::LogicalOperator::And => LogicalOperator::And,
+                crate::react_compiler_ast::operators::LogicalOperator::Or => LogicalOperator::Or,
+                crate::react_compiler_ast::operators::LogicalOperator::NullishCoalescing => {
                     LogicalOperator::NullishCoalescing
                 }
             };
@@ -944,10 +888,7 @@ fn lower_expression(
             builder.push(Instruction {
                 id: EvaluationOrder(0),
                 lvalue: left_place.clone(),
-                value: InstructionValue::LoadLocal {
-                    place: left_value,
-                    loc: loc.clone(),
-                },
+                value: InstructionValue::LoadLocal { place: left_value, loc: loc.clone() },
                 effects: None,
                 loc: loc.clone(),
             });
@@ -964,20 +905,17 @@ fn lower_expression(
                 continuation_block,
             );
 
-            Ok(InstructionValue::LoadLocal {
-                place: place.clone(),
-                loc: place.loc.clone(),
-            })
+            Ok(InstructionValue::LoadLocal { place: place.clone(), loc: place.loc.clone() })
         }
         Expression::UpdateExpression(update) => {
             let loc = convert_opt_loc(&update.base.loc);
             match update.argument.as_ref() {
                 Expression::MemberExpression(member) => {
                     let binary_op = match &update.operator {
-                        react_compiler_ast::operators::UpdateOperator::Increment => {
+                        crate::react_compiler_ast::operators::UpdateOperator::Increment => {
                             BinaryOperator::Add
                         }
-                        react_compiler_ast::operators::UpdateOperator::Decrement => {
+                        crate::react_compiler_ast::operators::UpdateOperator::Decrement => {
                             BinaryOperator::Subtract
                         }
                     };
@@ -1031,11 +969,7 @@ fn lower_expression(
                     };
 
                     // Return previous for postfix, newValuePlace for prefix
-                    let result_place = if update.prefix {
-                        new_value_place
-                    } else {
-                        prev_value
-                    };
+                    let result_place = if update.prefix { new_value_place } else { prev_value };
                     Ok(InstructionValue::LoadLocal {
                         place: result_place.clone(),
                         loc: result_place.loc.clone(),
@@ -1164,10 +1098,7 @@ fn lower_expression(
                 lower_value_to_temporary(
                     builder,
                     InstructionValue::StoreLocal {
-                        lvalue: LValue {
-                            kind: InstructionKind::Const,
-                            place: place.clone(),
-                        },
+                        lvalue: LValue { kind: InstructionKind::Const, place: place.clone() },
                         value: consequent,
                         type_annotation: None,
                         loc: loc.clone(),
@@ -1188,10 +1119,7 @@ fn lower_expression(
                 lower_value_to_temporary(
                     builder,
                     InstructionValue::StoreLocal {
-                        lvalue: LValue {
-                            kind: InstructionKind::Const,
-                            place: place.clone(),
-                        },
+                        lvalue: LValue { kind: InstructionKind::Const, place: place.clone() },
                         value: alternate,
                         type_annotation: None,
                         loc: loc.clone(),
@@ -1229,19 +1157,16 @@ fn lower_expression(
                 continuation_block,
             );
 
-            Ok(InstructionValue::LoadLocal {
-                place: place.clone(),
-                loc: place.loc.clone(),
-            })
+            Ok(InstructionValue::LoadLocal { place: place.clone(), loc: place.loc.clone() })
         }
         Expression::AssignmentExpression(expr) => {
-            use react_compiler_ast::operators::AssignmentOperator;
+            use crate::react_compiler_ast::operators::AssignmentOperator;
             let loc = convert_opt_loc(&expr.base.loc);
 
             if matches!(expr.operator, AssignmentOperator::Assign) {
                 // Simple `=` assignment
                 match &*expr.left {
-                    react_compiler_ast::patterns::PatternLike::Identifier(ident) => {
+                    crate::react_compiler_ast::patterns::PatternLike::Identifier(ident) => {
                         // Handle simple identifier assignment directly
                         let start = ident.base.start.unwrap_or(0);
                         let right = lower_expression_to_temporary(builder, &expr.right)?;
@@ -1253,10 +1178,7 @@ fn lower_expression(
                             ident.base.node_id,
                         )?;
                         match binding {
-                            VariableBinding::Identifier {
-                                identifier,
-                                binding_kind,
-                            } => {
+                            VariableBinding::Identifier { identifier, binding_kind } => {
                                 // Check for const reassignment
                                 if binding_kind == BindingKind::Const {
                                     builder.record_error(CompilerErrorDetail {
@@ -1340,7 +1262,7 @@ fn lower_expression(
                             }
                         }
                     }
-                    react_compiler_ast::patterns::PatternLike::MemberExpression(member) => {
+                    crate::react_compiler_ast::patterns::PatternLike::MemberExpression(member) => {
                         // Member expression assignment: a.b = value or a[b] = value
                         let right = lower_expression_to_temporary(builder, &expr.right)?;
                         let left_loc = convert_opt_loc(&member.base.loc);
@@ -1348,10 +1270,12 @@ fn lower_expression(
                         let temp = if !member.computed
                             || matches!(
                                 &*member.property,
-                                react_compiler_ast::expressions::Expression::NumericLiteral(_)
+                                crate::react_compiler_ast::expressions::Expression::NumericLiteral(
+                                    _
+                                )
                             ) {
                             match &*member.property {
-                                react_compiler_ast::expressions::Expression::Identifier(
+                                crate::react_compiler_ast::expressions::Expression::Identifier(
                                     prop_id,
                                 ) => lower_value_to_temporary(
                                     builder,
@@ -1362,7 +1286,7 @@ fn lower_expression(
                                         loc: left_loc,
                                     },
                                 )?,
-                                react_compiler_ast::expressions::Expression::NumericLiteral(
+                                crate::react_compiler_ast::expressions::Expression::NumericLiteral(
                                     num,
                                 ) => lower_value_to_temporary(
                                     builder,
@@ -1479,11 +1403,13 @@ fn lower_expression(
                 };
 
                 match &*expr.left {
-                    react_compiler_ast::patterns::PatternLike::Identifier(ident) => {
+                    crate::react_compiler_ast::patterns::PatternLike::Identifier(ident) => {
                         let start = ident.base.start.unwrap_or(0);
                         let left_place = lower_expression_to_temporary(
                             builder,
-                            &react_compiler_ast::expressions::Expression::Identifier(ident.clone()),
+                            &crate::react_compiler_ast::expressions::Expression::Identifier(
+                                ident.clone(),
+                            ),
                         )?;
                         let right = lower_expression_to_temporary(builder, &expr.right)?;
                         let binary_place = lower_value_to_temporary(
@@ -1561,7 +1487,7 @@ fn lower_expression(
                             }
                         }
                     }
-                    react_compiler_ast::patterns::PatternLike::MemberExpression(member) => {
+                    crate::react_compiler_ast::patterns::PatternLike::MemberExpression(member) => {
                         // a.b += right: read, compute, store
                         // Match TS behavior: return the PropertyStore/ComputedStore value
                         // directly (let the caller lower it to a temporary)
@@ -1652,10 +1578,7 @@ fn lower_expression(
                     lower_value_to_temporary(
                         builder,
                         InstructionValue::StoreLocal {
-                            lvalue: LValue {
-                                kind: InstructionKind::Const,
-                                place: place.clone(),
-                            },
+                            lvalue: LValue { kind: InstructionKind::Const, place: place.clone() },
                             value: last,
                             type_annotation: None,
                             loc: loc.clone(),
@@ -1686,17 +1609,15 @@ fn lower_expression(
             expr,
             FunctionExpressionType::ArrowFunctionExpression,
         )?),
-        Expression::FunctionExpression(_) => Ok(lower_function_to_value(
-            builder,
-            expr,
-            FunctionExpressionType::FunctionExpression,
-        )?),
+        Expression::FunctionExpression(_) => {
+            Ok(lower_function_to_value(builder, expr, FunctionExpressionType::FunctionExpression)?)
+        }
         Expression::ObjectExpression(obj) => {
             let loc = convert_opt_loc(&obj.base.loc);
             let mut properties: Vec<ObjectPropertyOrSpread> = Vec::new();
             for prop in &obj.properties {
                 match prop {
-                    react_compiler_ast::expressions::ObjectExpressionProperty::ObjectProperty(
+                    crate::react_compiler_ast::expressions::ObjectExpressionProperty::ObjectProperty(
                         p,
                     ) => {
                         let key = lower_object_property_key(builder, &p.key, p.computed)?;
@@ -1711,13 +1632,13 @@ fn lower_expression(
                             place: value,
                         }));
                     }
-                    react_compiler_ast::expressions::ObjectExpressionProperty::SpreadElement(
+                    crate::react_compiler_ast::expressions::ObjectExpressionProperty::SpreadElement(
                         spread,
                     ) => {
                         let place = lower_expression_to_temporary(builder, &spread.argument)?;
                         properties.push(ObjectPropertyOrSpread::Spread(SpreadPattern { place }));
                     }
-                    react_compiler_ast::expressions::ObjectExpressionProperty::ObjectMethod(
+                    crate::react_compiler_ast::expressions::ObjectExpressionProperty::ObjectMethod(
                         method,
                     ) => {
                         if let Some(prop) = lower_object_method(builder, method)? {
@@ -1764,16 +1685,9 @@ fn lower_expression(
             let quasis: Vec<TemplateQuasi> = tmpl
                 .quasis
                 .iter()
-                .map(|q| TemplateQuasi {
-                    raw: q.value.raw.clone(),
-                    cooked: q.value.cooked.clone(),
-                })
+                .map(|q| TemplateQuasi { raw: q.value.raw.clone(), cooked: q.value.cooked.clone() })
                 .collect();
-            Ok(InstructionValue::TemplateLiteral {
-                subexprs,
-                quasis,
-                loc,
-            })
+            Ok(InstructionValue::TemplateLiteral { subexprs, quasis, loc })
         }
         Expression::TaggedTemplateExpression(tagged) => {
             let loc = convert_opt_loc(&tagged.base.loc);
@@ -1817,17 +1731,9 @@ fn lower_expression(
                 .quasi
                 .quasis
                 .iter()
-                .map(|q| TemplateQuasi {
-                    raw: q.value.raw.clone(),
-                    cooked: q.value.cooked.clone(),
-                })
+                .map(|q| TemplateQuasi { raw: q.value.raw.clone(), cooked: q.value.cooked.clone() })
                 .collect();
-            Ok(InstructionValue::TaggedTemplateExpression {
-                tag,
-                quasis,
-                subexprs,
-                loc,
-            })
+            Ok(InstructionValue::TaggedTemplateExpression { tag, quasis, subexprs, loc })
         }
         Expression::AwaitExpression(await_expr) => {
             let loc = convert_opt_loc(&await_expr.base.loc);
@@ -1960,10 +1866,8 @@ fn lower_expression(
         Expression::JSXElement(jsx_element) => {
             let loc = convert_opt_loc(&jsx_element.base.loc);
             let opening_loc = convert_opt_loc(&jsx_element.opening_element.base.loc);
-            let closing_loc = jsx_element
-                .closing_element
-                .as_ref()
-                .and_then(|c| convert_opt_loc(&c.base.loc));
+            let closing_loc =
+                jsx_element.closing_element.as_ref().and_then(|c| convert_opt_loc(&c.base.loc));
 
             // Lower the tag name
             let tag = lower_jsx_element_name(builder, &jsx_element.opening_element.name)?;
@@ -1971,9 +1875,9 @@ fn lower_expression(
             // Lower attributes (props)
             let mut props: Vec<JsxAttribute> = Vec::new();
             for attr_item in &jsx_element.opening_element.attributes {
-                use react_compiler_ast::jsx::JSXAttributeItem;
-                use react_compiler_ast::jsx::JSXAttributeName;
-                use react_compiler_ast::jsx::JSXAttributeValue;
+                use crate::react_compiler_ast::jsx::JSXAttributeItem;
+                use crate::react_compiler_ast::jsx::JSXAttributeName;
+                use crate::react_compiler_ast::jsx::JSXAttributeValue;
                 match attr_item {
                     JSXAttributeItem::JSXSpreadAttribute(spread) => {
                         let argument = lower_expression_to_temporary(builder, &spread.argument)?;
@@ -2016,7 +1920,7 @@ fn lower_expression(
                                 )?
                             }
                             Some(JSXAttributeValue::JSXExpressionContainer(container)) => {
-                                use react_compiler_ast::jsx::JSXExpressionContainerExpr;
+                                use crate::react_compiler_ast::jsx::JSXExpressionContainerExpr;
                                 match &container.expression {
                                     JSXExpressionContainerExpr::JSXEmptyExpression(_) => {
                                         // Empty expression container - skip this attribute
@@ -2030,7 +1934,7 @@ fn lower_expression(
                             Some(JSXAttributeValue::JSXElement(el)) => {
                                 let val = lower_expression(
                                     builder,
-                                    &react_compiler_ast::expressions::Expression::JSXElement(
+                                    &crate::react_compiler_ast::expressions::Expression::JSXElement(
                                         el.clone(),
                                     ),
                                 )?;
@@ -2039,7 +1943,7 @@ fn lower_expression(
                             Some(JSXAttributeValue::JSXFragment(frag)) => {
                                 let val = lower_expression(
                                     builder,
-                                    &react_compiler_ast::expressions::Expression::JSXFragment(
+                                    &crate::react_compiler_ast::expressions::Expression::JSXFragment(
                                         frag.clone(),
                                     ),
                                 )?;
@@ -2058,10 +1962,7 @@ fn lower_expression(
                             }
                         };
 
-                        props.push(JsxAttribute::Attribute {
-                            name: prop_name,
-                            place: value,
-                        });
+                        props.push(JsxAttribute::Attribute { name: prop_name, place: value });
                     }
                 }
             }
@@ -2077,7 +1978,7 @@ fn lower_expression(
                     _ => "fbt".to_string(),
                 };
                 // Get the opening element's name identifier and check if it's a local binding
-                if let react_compiler_ast::jsx::JSXElementName::JSXIdentifier(jsx_id) =
+                if let crate::react_compiler_ast::jsx::JSXElementName::JSXIdentifier(jsx_id) =
                     &jsx_element.opening_element.name
                 {
                     let id_loc = convert_opt_loc(&jsx_id.base.loc);
@@ -2123,13 +2024,11 @@ fn lower_expression(
                     &mut pronoun_locs,
                 );
 
-                for (name, locations) in [
-                    ("enum", &enum_locs),
-                    ("plural", &plural_locs),
-                    ("pronoun", &pronoun_locs),
-                ] {
+                for (name, locations) in
+                    [("enum", &enum_locs), ("plural", &plural_locs), ("pronoun", &pronoun_locs)]
+                {
                     if locations.len() > 1 {
-                        use react_compiler_diagnostics::CompilerDiagnosticDetail;
+                        use crate::react_compiler_diagnostics::CompilerDiagnosticDetail;
                         let details: Vec<CompilerDiagnosticDetail> = locations
                             .iter()
                             .map(|loc| CompilerDiagnosticDetail::Error {
@@ -2141,7 +2040,7 @@ fn lower_expression(
                                 identifier_name: None,
                             })
                             .collect();
-                        let mut diag = react_compiler_diagnostics::CompilerDiagnostic::new(
+                        let mut diag = crate::react_compiler_diagnostics::CompilerDiagnostic::new(
                             ErrorCategory::Todo,
                             "Support duplicate fbt tags",
                             Some(format!(
@@ -2178,11 +2077,7 @@ fn lower_expression(
             Ok(InstructionValue::JsxExpression {
                 tag,
                 props,
-                children: if children.is_empty() {
-                    None
-                } else {
-                    Some(children)
-                },
+                children: if children.is_empty() { None } else { Some(children) },
                 loc,
                 opening_loc,
                 closing_loc,
@@ -2274,9 +2169,7 @@ fn lower_expression(
             let value = lower_expression_to_temporary(builder, &tc.expression)?;
             let annotation_value = tc.type_annotation.parse_value();
             // Flow TypeCastExpression: typeAnnotation is a TypeAnnotation node wrapping the actual type
-            let inner_type = annotation_value
-                .get("typeAnnotation")
-                .unwrap_or(&annotation_value);
+            let inner_type = annotation_value.get("typeAnnotation").unwrap_or(&annotation_value);
             let type_ = lower_type_annotation(inner_type, builder);
             let type_annotation_name = get_type_annotation_name(inner_type);
             Ok(InstructionValue::TypeCastExpression {
@@ -2322,10 +2215,10 @@ fn lower_expression(
 /// share the same name but are declared in different scopes (e.g., `const x`
 /// inside an if-branch and `const x` after it).
 fn is_binding_in_block_direct_statements(
-    binding: &react_compiler_ast::scope::BindingData,
-    stmts: &[react_compiler_ast::statements::Statement],
+    binding: &crate::react_compiler_ast::scope::BindingData,
+    stmts: &[crate::react_compiler_ast::statements::Statement],
 ) -> bool {
-    use react_compiler_ast::statements::Statement;
+    use crate::react_compiler_ast::statements::Statement;
     let decl_start = match binding.declaration_start {
         Some(pos) => pos,
         None => return false,
@@ -2360,22 +2253,25 @@ fn is_binding_in_block_direct_statements(
 }
 
 #[allow(dead_code)]
-fn pattern_declares_name(pattern: &react_compiler_ast::patterns::PatternLike, name: &str) -> bool {
-    use react_compiler_ast::patterns::PatternLike;
+fn pattern_declares_name(
+    pattern: &crate::react_compiler_ast::patterns::PatternLike,
+    name: &str,
+) -> bool {
+    use crate::react_compiler_ast::patterns::PatternLike;
     match pattern {
         PatternLike::Identifier(id) => id.name == name,
         PatternLike::ObjectPattern(op) => op.properties.iter().any(|prop| match prop {
-            react_compiler_ast::patterns::ObjectPatternProperty::ObjectProperty(p) => {
+            crate::react_compiler_ast::patterns::ObjectPatternProperty::ObjectProperty(p) => {
                 pattern_declares_name(&p.value, name)
             }
-            react_compiler_ast::patterns::ObjectPatternProperty::RestElement(r) => {
+            crate::react_compiler_ast::patterns::ObjectPatternProperty::RestElement(r) => {
                 pattern_declares_name(&r.argument, name)
             }
         }),
-        PatternLike::ArrayPattern(ap) => ap.elements.iter().any(|el| {
-            el.as_ref()
-                .map_or(false, |e| pattern_declares_name(e, name))
-        }),
+        PatternLike::ArrayPattern(ap) => ap
+            .elements
+            .iter()
+            .any(|el| el.as_ref().map_or(false, |e| pattern_declares_name(e, name))),
         PatternLike::AssignmentPattern(ap) => pattern_declares_name(&ap.left, name),
         PatternLike::RestElement(r) => pattern_declares_name(&r.argument, name),
         PatternLike::MemberExpression(_) => false,
@@ -2391,8 +2287,8 @@ fn pattern_declares_name(pattern: &react_compiler_ast::patterns::PatternLike, na
 // Statement position helpers
 // =============================================================================
 
-fn statement_start(stmt: &react_compiler_ast::statements::Statement) -> Option<u32> {
-    use react_compiler_ast::statements::Statement;
+fn statement_start(stmt: &crate::react_compiler_ast::statements::Statement) -> Option<u32> {
+    use crate::react_compiler_ast::statements::Statement;
     match stmt {
         Statement::BlockStatement(s) => s.base.start,
         Statement::ReturnStatement(s) => s.base.start,
@@ -2442,8 +2338,8 @@ fn statement_start(stmt: &react_compiler_ast::statements::Statement) -> Option<u
     }
 }
 
-fn statement_end(stmt: &react_compiler_ast::statements::Statement) -> Option<u32> {
-    use react_compiler_ast::statements::Statement;
+fn statement_end(stmt: &crate::react_compiler_ast::statements::Statement) -> Option<u32> {
+    use crate::react_compiler_ast::statements::Statement;
     match stmt {
         Statement::BlockStatement(s) => s.base.end,
         Statement::ReturnStatement(s) => s.base.end,
@@ -2494,8 +2390,10 @@ fn statement_end(stmt: &react_compiler_ast::statements::Statement) -> Option<u32
 }
 
 /// Extract the HIR SourceLocation from a Statement AST node.
-fn statement_loc(stmt: &react_compiler_ast::statements::Statement) -> Option<SourceLocation> {
-    use react_compiler_ast::statements::Statement;
+fn statement_loc(
+    stmt: &crate::react_compiler_ast::statements::Statement,
+) -> Option<SourceLocation> {
+    use crate::react_compiler_ast::statements::Statement;
     let loc = match stmt {
         Statement::BlockStatement(s) => s.base.loc.clone(),
         Statement::ReturnStatement(s) => s.base.loc.clone(),
@@ -2548,17 +2446,15 @@ fn statement_loc(stmt: &react_compiler_ast::statements::Statement) -> Option<Sou
 
 /// Collect binding names from a pattern that are declared in the given scope.
 fn collect_binding_names_from_pattern(
-    pattern: &react_compiler_ast::patterns::PatternLike,
-    scope_id: react_compiler_ast::scope::ScopeId,
+    pattern: &crate::react_compiler_ast::patterns::PatternLike,
+    scope_id: crate::react_compiler_ast::scope::ScopeId,
     scope_info: &ScopeInfo,
     out: &mut FxHashSet<BindingId>,
 ) {
-    use react_compiler_ast::patterns::PatternLike;
+    use crate::react_compiler_ast::patterns::PatternLike;
     match pattern {
         PatternLike::Identifier(id) => {
-            if let Some(&binding_id) = scope_info.scopes[scope_id.0 as usize]
-                .bindings
-                .get(&id.name)
+            if let Some(&binding_id) = scope_info.scopes[scope_id.0 as usize].bindings.get(&id.name)
             {
                 out.insert(binding_id);
             }
@@ -2566,10 +2462,12 @@ fn collect_binding_names_from_pattern(
         PatternLike::ObjectPattern(obj) => {
             for prop in &obj.properties {
                 match prop {
-                    react_compiler_ast::patterns::ObjectPatternProperty::ObjectProperty(p) => {
+                    crate::react_compiler_ast::patterns::ObjectPatternProperty::ObjectProperty(
+                        p,
+                    ) => {
                         collect_binding_names_from_pattern(&p.value, scope_id, scope_info, out);
                     }
-                    react_compiler_ast::patterns::ObjectPatternProperty::RestElement(r) => {
+                    crate::react_compiler_ast::patterns::ObjectPatternProperty::RestElement(r) => {
                         collect_binding_names_from_pattern(&r.argument, scope_id, scope_info, out);
                     }
                 }
@@ -2607,8 +2505,8 @@ fn collect_binding_names_from_pattern(
 /// block-scoped bindings and emits DeclareContext instructions to hoist them.
 fn lower_block_statement(
     builder: &mut HirBuilder,
-    block: &react_compiler_ast::statements::BlockStatement,
-    parent_scope: Option<react_compiler_ast::scope::ScopeId>,
+    block: &crate::react_compiler_ast::statements::BlockStatement,
+    parent_scope: Option<crate::react_compiler_ast::scope::ScopeId>,
 ) -> Result<(), CompilerError> {
     let _ = lower_block_statement_inner(builder, block, None, parent_scope);
     Ok(())
@@ -2616,8 +2514,8 @@ fn lower_block_statement(
 
 fn lower_block_statement_with_scope(
     builder: &mut HirBuilder,
-    block: &react_compiler_ast::statements::BlockStatement,
-    scope_override: react_compiler_ast::scope::ScopeId,
+    block: &crate::react_compiler_ast::statements::BlockStatement,
+    scope_override: crate::react_compiler_ast::scope::ScopeId,
 ) -> Result<(), CompilerError> {
     let _ = lower_block_statement_inner(builder, block, Some(scope_override), None);
     Ok(())
@@ -2625,19 +2523,17 @@ fn lower_block_statement_with_scope(
 
 fn lower_block_statement_inner(
     builder: &mut HirBuilder,
-    block: &react_compiler_ast::statements::BlockStatement,
-    scope_override: Option<react_compiler_ast::scope::ScopeId>,
-    parent_scope: Option<react_compiler_ast::scope::ScopeId>,
+    block: &crate::react_compiler_ast::statements::BlockStatement,
+    scope_override: Option<crate::react_compiler_ast::scope::ScopeId>,
+    parent_scope: Option<crate::react_compiler_ast::scope::ScopeId>,
 ) -> Result<(), CompilerDiagnostic> {
-    use react_compiler_ast::scope::BindingKind as AstBindingKind;
-    use react_compiler_ast::statements::Statement;
+    use crate::react_compiler_ast::scope::BindingKind as AstBindingKind;
+    use crate::react_compiler_ast::statements::Statement;
 
     // Look up the block's scope to identify hoistable bindings.
     // Use the scope override if provided (for function body blocks that share the function's scope).
     let block_scope_id = scope_override.or_else(|| {
-        let found = builder
-            .scope_info()
-            .resolve_scope_for_node(block.base.node_id);
+        let found = builder.scope_info().resolve_scope_for_node(block.base.node_id);
         if found.is_some() {
             return found;
         }
@@ -2647,7 +2543,8 @@ fn lower_block_statement_inner(
         for stmt in &block.body {
             if let Statement::VariableDeclaration(vd) = stmt {
                 for d in &vd.declarations {
-                    if let react_compiler_ast::patterns::PatternLike::Identifier(id) = &d.id {
+                    if let crate::react_compiler_ast::patterns::PatternLike::Identifier(id) = &d.id
+                    {
                         decl_names.push(id.name.as_str());
                     }
                 }
@@ -2658,11 +2555,9 @@ fn lower_block_statement_inner(
         }
         let search_parent = parent_scope.unwrap_or_else(|| builder.function_scope());
         let found =
-            builder
-                .scope_info()
-                .find_block_scope_by_bindings(&decl_names, search_parent, |sid| {
-                    builder.is_synthetic_scope_claimed(sid)
-                });
+            builder.scope_info().find_block_scope_by_bindings(&decl_names, search_parent, |sid| {
+                builder.is_synthetic_scope_claimed(sid)
+            });
         if let Some(sid) = found {
             builder.claim_synthetic_scope(sid);
         }
@@ -2691,37 +2586,31 @@ fn lower_block_statement_inner(
     // branch) should NOT be hoisted at the parent level — they'll be handled when
     // that nested block is recursively lowered. This prevents DeclareContext from
     // being emitted before an `if` terminal for variables declared within the branch.
-    let hoistable: Vec<(
-        BindingId,
-        String,
-        AstBindingKind,
-        String,
-        Option<u32>,
-        Option<u32>,
-    )> = builder
-        .scope_info()
-        .scope_bindings_with_children(scope_id)
-        .filter(|b| {
-            !matches!(b.kind, AstBindingKind::Param | AstBindingKind::Module)
-                && b.declaration_type != "FunctionExpression"
-                && b.declaration_type != "TypeAlias"
-                && b.declaration_type != "OpaqueType"
-                && b.declaration_type != "InterfaceDeclaration"
-                && b.declaration_type != "TSTypeAliasDeclaration"
-                && b.declaration_type != "TSInterfaceDeclaration"
-                && b.declaration_type != "TSEnumDeclaration"
-        })
-        .map(|b| {
-            (
-                b.id,
-                b.name.clone(),
-                b.kind.clone(),
-                b.declaration_type.clone(),
-                b.declaration_start,
-                b.declaration_node_id,
-            )
-        })
-        .collect();
+    let hoistable: Vec<(BindingId, String, AstBindingKind, String, Option<u32>, Option<u32>)> =
+        builder
+            .scope_info()
+            .scope_bindings_with_children(scope_id)
+            .filter(|b| {
+                !matches!(b.kind, AstBindingKind::Param | AstBindingKind::Module)
+                    && b.declaration_type != "FunctionExpression"
+                    && b.declaration_type != "TypeAlias"
+                    && b.declaration_type != "OpaqueType"
+                    && b.declaration_type != "InterfaceDeclaration"
+                    && b.declaration_type != "TSTypeAliasDeclaration"
+                    && b.declaration_type != "TSInterfaceDeclaration"
+                    && b.declaration_type != "TSEnumDeclaration"
+            })
+            .map(|b| {
+                (
+                    b.id,
+                    b.name.clone(),
+                    b.kind.clone(),
+                    b.declaration_type.clone(),
+                    b.declaration_start,
+                    b.declaration_node_id,
+                )
+            })
+            .collect();
 
     if hoistable.is_empty() {
         // No hoistable bindings, just lower statements normally
@@ -2756,10 +2645,7 @@ fn lower_block_statement_inner(
                         && matches!(scope_info.scopes[sid.0 as usize].kind, ScopeKind::Function)
                 })
                 .filter_map(|(&pos, _)| {
-                    scope_info
-                        .node_to_scope_end
-                        .get(&pos)
-                        .map(|&end| (pos, end))
+                    scope_info.node_to_scope_end.get(&pos).map(|&end| (pos, end))
                 })
                 .collect()
         };
@@ -2862,10 +2748,7 @@ fn lower_block_statement_inner(
                 let (hoist_ref_pos, hoist_ref_nid) = if is_hoisted_kind {
                     (first_ref_pos, first_ref_nid)
                 } else {
-                    *refs_in_nested_fn
-                        .iter()
-                        .min_by_key(|(pos, _)| *pos)
-                        .unwrap()
+                    *refs_in_nested_fn.iter().min_by_key(|(pos, _)| *pos).unwrap()
                 };
                 will_hoist.push(HoistInfo {
                     binding_id: *binding_id,
@@ -2883,10 +2766,7 @@ fn lower_block_statement_inner(
 
         // Emit DeclareContext for hoisted bindings
         for info in &will_hoist {
-            if builder
-                .environment()
-                .is_hoisted_identifier(info.binding_id.0)
-            {
+            if builder.environment().is_hoisted_identifier(info.binding_id.0) {
                 continue;
             }
 
@@ -2927,10 +2807,7 @@ fn lower_block_statement_inner(
             };
 
             // Look up the reference location for the DeclareContext instruction.
-            let ref_loc = builder
-                .identifier_locs()
-                .get(&info.first_ref_nid)
-                .map(|e| e.loc.clone());
+            let ref_loc = builder.identifier_locs().get(&info.first_ref_nid).map(|e| e.loc.clone());
             let identifier = builder.resolve_binding(&info.name, info.binding_id)?;
             let place = Place {
                 effect: Effect::Unknown,
@@ -2941,16 +2818,11 @@ fn lower_block_statement_inner(
             lower_value_to_temporary(
                 builder,
                 InstructionValue::DeclareContext {
-                    lvalue: LValue {
-                        kind: hoist_kind,
-                        place,
-                    },
+                    lvalue: LValue { kind: hoist_kind, place },
                     loc: ref_loc,
                 },
             )?;
-            builder
-                .environment_mut()
-                .add_hoisted_identifier(info.binding_id.0);
+            builder.environment_mut().add_hoisted_identifier(info.binding_id.0);
             // Hoisted identifiers also become context identifiers (matching TS addHoistedIdentifier)
             builder.add_context_identifier(info.binding_id);
         }
@@ -2960,9 +2832,8 @@ fn lower_block_statement_inner(
         match body_stmt {
             Statement::FunctionDeclaration(func) => {
                 if let Some(id) = &func.id {
-                    if let Some(&binding_id) = builder.scope_info().scopes[scope_id.0 as usize]
-                        .bindings
-                        .get(&id.name)
+                    if let Some(&binding_id) =
+                        builder.scope_info().scopes[scope_id.0 as usize].bindings.get(&id.name)
                     {
                         declared.insert(binding_id);
                     }
@@ -2980,9 +2851,8 @@ fn lower_block_statement_inner(
             }
             Statement::ClassDeclaration(cls) => {
                 if let Some(id) = &cls.id {
-                    if let Some(&binding_id) = builder.scope_info().scopes[scope_id.0 as usize]
-                        .bindings
-                        .get(&id.name)
+                    if let Some(&binding_id) =
+                        builder.scope_info().scopes[scope_id.0 as usize].bindings.get(&id.name)
                     {
                         declared.insert(binding_id);
                     }
@@ -3006,11 +2876,11 @@ fn lower_block_statement_inner(
 
 fn lower_statement(
     builder: &mut HirBuilder,
-    stmt: &react_compiler_ast::statements::Statement,
+    stmt: &crate::react_compiler_ast::statements::Statement,
     label: Option<&str>,
-    parent_scope: Option<react_compiler_ast::scope::ScopeId>,
+    parent_scope: Option<crate::react_compiler_ast::scope::ScopeId>,
 ) -> Result<(), CompilerDiagnostic> {
-    use react_compiler_ast::statements::Statement;
+    use crate::react_compiler_ast::statements::Statement;
 
     match stmt {
         Statement::EmptyStatement(_) => {
@@ -3029,10 +2899,8 @@ fn lower_statement(
             let value = if let Some(arg) = &ret.argument {
                 lower_expression_to_temporary(builder, arg)?
             } else {
-                let undefined_value = InstructionValue::Primitive {
-                    value: PrimitiveValue::Undefined,
-                    loc: None,
-                };
+                let undefined_value =
+                    InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc: None };
                 lower_value_to_temporary(builder, undefined_value)?
             };
             let fallthrough = builder.reserve(BlockKind::Block);
@@ -3065,11 +2933,7 @@ fn lower_statement(
 
             let fallthrough = builder.reserve(BlockKind::Block);
             builder.terminate_with_continuation(
-                Terminal::Throw {
-                    value,
-                    id: EvaluationOrder(0),
-                    loc,
-                },
+                Terminal::Throw { value, id: EvaluationOrder(0), loc },
                 fallthrough,
             );
         }
@@ -3077,8 +2941,8 @@ fn lower_statement(
             lower_block_statement(builder, block, parent_scope)?;
         }
         Statement::VariableDeclaration(var_decl) => {
-            use react_compiler_ast::patterns::PatternLike;
-            use react_compiler_ast::statements::VariableDeclarationKind;
+            use crate::react_compiler_ast::patterns::PatternLike;
+            use crate::react_compiler_ast::statements::VariableDeclarationKind;
             if matches!(var_decl.kind, VariableDeclarationKind::Var) {
                 builder.record_error(CompilerErrorDetail {
                     reason: "(BuildHIR::lowerStatement) Handle var kinds in VariableDeclaration"
@@ -3123,16 +2987,15 @@ fn lower_statement(
                             .scope_info()
                             .find_binding_id_in_descendants(&id.name, builder.function_scope())
                         {
-                            let binding_kind = crate::convert_binding_kind(&binding_data.kind);
+                            let binding_kind = crate::react_compiler_lowering::convert_binding_kind(
+                                &binding_data.kind,
+                            );
                             let identifier = builder.resolve_binding_with_loc(
                                 &id.name,
                                 binding_id,
                                 id_loc.clone(),
                             )?;
-                            binding = VariableBinding::Identifier {
-                                identifier,
-                                binding_kind,
-                            };
+                            binding = VariableBinding::Identifier { identifier, binding_kind };
                         }
                     }
                     match binding {
@@ -3164,10 +3027,7 @@ fn lower_statement(
                                 lower_value_to_temporary(
                                     builder,
                                     InstructionValue::DeclareContext {
-                                        lvalue: LValue {
-                                            kind: InstructionKind::Let,
-                                            place,
-                                        },
+                                        lvalue: LValue { kind: InstructionKind::Let, place },
                                         loc: id_loc,
                                     },
                                 )?;
@@ -3306,12 +3166,12 @@ fn lower_statement(
                     }
                     Some(init) => {
                         match init.as_ref() {
-                            react_compiler_ast::statements::ForInit::VariableDeclaration(var_decl) => {
+                            crate::react_compiler_ast::statements::ForInit::VariableDeclaration(var_decl) => {
                                 let init_loc = convert_opt_loc(&var_decl.base.loc);
                                 lower_statement(builder, &Statement::VariableDeclaration(var_decl.clone()), None, parent_scope)?;
                                 init_loc
                             }
-                            react_compiler_ast::statements::ForInit::Expression(expr) => {
+                            crate::react_compiler_ast::statements::ForInit::Expression(expr) => {
                                 let init_loc = expression_loc(expr);
                                 builder.record_error(CompilerErrorDetail {
                                     category: ErrorCategory::Todo,
@@ -3573,23 +3433,22 @@ fn lower_statement(
 
             // Lower the init: NextPropertyOf + assignment
             let left_loc = match for_in.left.as_ref() {
-                react_compiler_ast::statements::ForInOfLeft::VariableDeclaration(var_decl) => {
-                    convert_opt_loc(&var_decl.base.loc).or(loc.clone())
-                }
-                react_compiler_ast::statements::ForInOfLeft::Pattern(pat) => {
+                crate::react_compiler_ast::statements::ForInOfLeft::VariableDeclaration(
+                    var_decl,
+                ) => convert_opt_loc(&var_decl.base.loc).or(loc.clone()),
+                crate::react_compiler_ast::statements::ForInOfLeft::Pattern(pat) => {
                     pattern_like_hir_loc(pat).or(loc.clone())
                 }
             };
             let next_property = lower_value_to_temporary(
                 builder,
-                InstructionValue::NextPropertyOf {
-                    value,
-                    loc: left_loc.clone(),
-                },
+                InstructionValue::NextPropertyOf { value, loc: left_loc.clone() },
             )?;
 
             let assign_result = match for_in.left.as_ref() {
-                react_compiler_ast::statements::ForInOfLeft::VariableDeclaration(var_decl) => {
+                crate::react_compiler_ast::statements::ForInOfLeft::VariableDeclaration(
+                    var_decl,
+                ) => {
                     if var_decl.declarations.len() != 1 {
                         builder.record_error(CompilerErrorDetail {
                             category: ErrorCategory::Invariant,
@@ -3615,23 +3474,22 @@ fn lower_statement(
                         None
                     }
                 }
-                react_compiler_ast::statements::ForInOfLeft::Pattern(pattern) => lower_assignment(
-                    builder,
-                    left_loc.clone(),
-                    InstructionKind::Reassign,
-                    pattern,
-                    next_property.clone(),
-                    AssignmentStyle::Assignment,
-                )?,
+                crate::react_compiler_ast::statements::ForInOfLeft::Pattern(pattern) => {
+                    lower_assignment(
+                        builder,
+                        left_loc.clone(),
+                        InstructionKind::Reassign,
+                        pattern,
+                        next_property.clone(),
+                        AssignmentStyle::Assignment,
+                    )?
+                }
             };
             // Use the assign result (StoreLocal temp) as the test, matching TS behavior
             let test_value = assign_result.unwrap_or(next_property);
             let test = lower_value_to_temporary(
                 builder,
-                InstructionValue::LoadLocal {
-                    place: test_value,
-                    loc: left_loc.clone(),
-                },
+                InstructionValue::LoadLocal { place: test_value, loc: left_loc.clone() },
             )?;
             builder.terminate_with_continuation(
                 Terminal::Branch {
@@ -3699,10 +3557,7 @@ fn lower_statement(
             // Init block: GetIterator, goto test
             let iterator = lower_value_to_temporary(
                 builder,
-                InstructionValue::GetIterator {
-                    collection: value.clone(),
-                    loc: value.loc.clone(),
-                },
+                InstructionValue::GetIterator { collection: value.clone(), loc: value.loc.clone() },
             )?;
             builder.terminate_with_continuation(
                 Terminal::Goto {
@@ -3716,10 +3571,10 @@ fn lower_statement(
 
             // Test block: IteratorNext, assign, branch
             let left_loc = match for_of.left.as_ref() {
-                react_compiler_ast::statements::ForInOfLeft::VariableDeclaration(var_decl) => {
-                    convert_opt_loc(&var_decl.base.loc).or(loc.clone())
-                }
-                react_compiler_ast::statements::ForInOfLeft::Pattern(pat) => {
+                crate::react_compiler_ast::statements::ForInOfLeft::VariableDeclaration(
+                    var_decl,
+                ) => convert_opt_loc(&var_decl.base.loc).or(loc.clone()),
+                crate::react_compiler_ast::statements::ForInOfLeft::Pattern(pat) => {
                     pattern_like_hir_loc(pat).or(loc.clone())
                 }
             };
@@ -3733,7 +3588,9 @@ fn lower_statement(
             )?;
 
             let assign_result = match for_of.left.as_ref() {
-                react_compiler_ast::statements::ForInOfLeft::VariableDeclaration(var_decl) => {
+                crate::react_compiler_ast::statements::ForInOfLeft::VariableDeclaration(
+                    var_decl,
+                ) => {
                     if var_decl.declarations.len() != 1 {
                         builder.record_error(CompilerErrorDetail {
                             category: ErrorCategory::Invariant,
@@ -3759,23 +3616,22 @@ fn lower_statement(
                         None
                     }
                 }
-                react_compiler_ast::statements::ForInOfLeft::Pattern(pattern) => lower_assignment(
-                    builder,
-                    left_loc.clone(),
-                    InstructionKind::Reassign,
-                    pattern,
-                    advance_iterator.clone(),
-                    AssignmentStyle::Assignment,
-                )?,
+                crate::react_compiler_ast::statements::ForInOfLeft::Pattern(pattern) => {
+                    lower_assignment(
+                        builder,
+                        left_loc.clone(),
+                        InstructionKind::Reassign,
+                        pattern,
+                        advance_iterator.clone(),
+                        AssignmentStyle::Assignment,
+                    )?
+                }
             };
             // Use the assign result (StoreLocal temp) as the test, matching TS behavior
             let test_value = assign_result.unwrap_or(advance_iterator);
             let test = lower_value_to_temporary(
                 builder,
-                InstructionValue::LoadLocal {
-                    place: test_value,
-                    loc: left_loc.clone(),
-                },
+                InstructionValue::LoadLocal { place: test_value, loc: left_loc.clone() },
             )?;
             builder.terminate_with_continuation(
                 Terminal::Branch {
@@ -3849,10 +3705,7 @@ fn lower_statement(
 
             // If no default case, add one that jumps to continuation
             if !has_default {
-                cases.push(Case {
-                    test: None,
-                    block: continuation_id,
-                });
+                cases.push(Case { test: None, block: continuation_id });
             }
 
             let test = lower_expression_to_temporary(builder, &switch_stmt.discriminant)?;
@@ -3899,96 +3752,95 @@ fn lower_statement(
             }
 
             // Set up handler binding if catch has a param
-            let handler_binding_info: Option<(Place, react_compiler_ast::patterns::PatternLike)> =
-                if let Some(param) = &handler_clause.param {
-                    // Check for destructuring in catch clause params.
-                    // Match TS behavior: Babel doesn't register destructured catch bindings
-                    // in its scope, so resolveIdentifier fails and records an invariant error.
-                    let is_destructuring = matches!(
-                        param,
-                        react_compiler_ast::patterns::PatternLike::ObjectPattern(_)
-                            | react_compiler_ast::patterns::PatternLike::ArrayPattern(_)
-                    );
-                    if is_destructuring {
-                        // Iterate the pattern to find all identifier locs for error reporting
-                        fn collect_identifier_locs(
-                            pat: &react_compiler_ast::patterns::PatternLike,
-                            locs: &mut Vec<Option<SourceLocation>>,
-                        ) {
-                            match pat {
-                                react_compiler_ast::patterns::PatternLike::Identifier(id) => {
-                                    locs.push(convert_opt_loc(&id.base.loc));
-                                }
-                                react_compiler_ast::patterns::PatternLike::ObjectPattern(obj) => {
-                                    for prop in &obj.properties {
-                                        match prop {
-                                            react_compiler_ast::patterns::ObjectPatternProperty::ObjectProperty(p) => {
+            let handler_binding_info: Option<(
+                Place,
+                crate::react_compiler_ast::patterns::PatternLike,
+            )> = if let Some(param) = &handler_clause.param {
+                // Check for destructuring in catch clause params.
+                // Match TS behavior: Babel doesn't register destructured catch bindings
+                // in its scope, so resolveIdentifier fails and records an invariant error.
+                let is_destructuring = matches!(
+                    param,
+                    crate::react_compiler_ast::patterns::PatternLike::ObjectPattern(_)
+                        | crate::react_compiler_ast::patterns::PatternLike::ArrayPattern(_)
+                );
+                if is_destructuring {
+                    // Iterate the pattern to find all identifier locs for error reporting
+                    fn collect_identifier_locs(
+                        pat: &crate::react_compiler_ast::patterns::PatternLike,
+                        locs: &mut Vec<Option<SourceLocation>>,
+                    ) {
+                        match pat {
+                            crate::react_compiler_ast::patterns::PatternLike::Identifier(id) => {
+                                locs.push(convert_opt_loc(&id.base.loc));
+                            }
+                            crate::react_compiler_ast::patterns::PatternLike::ObjectPattern(
+                                obj,
+                            ) => {
+                                for prop in &obj.properties {
+                                    match prop {
+                                            crate::react_compiler_ast::patterns::ObjectPatternProperty::ObjectProperty(p) => {
                                                 collect_identifier_locs(&p.value, locs);
                                             }
-                                            react_compiler_ast::patterns::ObjectPatternProperty::RestElement(r) => {
+                                            crate::react_compiler_ast::patterns::ObjectPatternProperty::RestElement(r) => {
                                                 collect_identifier_locs(&r.argument, locs);
                                             }
                                         }
-                                    }
                                 }
-                                react_compiler_ast::patterns::PatternLike::ArrayPattern(arr) => {
-                                    for elem in &arr.elements {
-                                        if let Some(e) = elem {
-                                            collect_identifier_locs(e, locs);
-                                        }
-                                    }
-                                }
-                                _ => {}
                             }
+                            crate::react_compiler_ast::patterns::PatternLike::ArrayPattern(arr) => {
+                                for elem in &arr.elements {
+                                    if let Some(e) = elem {
+                                        collect_identifier_locs(e, locs);
+                                    }
+                                }
+                            }
+                            _ => {}
                         }
-                        let mut id_locs = Vec::new();
-                        collect_identifier_locs(param, &mut id_locs);
-                        for id_loc in id_locs {
-                            builder.record_error(CompilerErrorDetail {
+                    }
+                    let mut id_locs = Vec::new();
+                    collect_identifier_locs(param, &mut id_locs);
+                    for id_loc in id_locs {
+                        builder.record_error(CompilerErrorDetail {
                                 reason: "(BuildHIR::lowerAssignment) Could not find binding for declaration.".to_string(),
                                 category: ErrorCategory::Invariant,
                                 loc: id_loc,
                                 description: None,
                                 suggestions: None,
                             })?;
-                        }
-                        None
-                    } else {
-                        let param_loc = convert_opt_loc(&pattern_like_loc(param));
-                        let id = builder.make_temporary(param_loc.clone());
-                        promote_temporary(builder, id);
-                        let place = Place {
-                            identifier: id,
-                            effect: Effect::Unknown,
-                            reactive: false,
-                            loc: param_loc.clone(),
-                        };
-                        // Emit DeclareLocal for the catch binding
-                        lower_value_to_temporary(
-                            builder,
-                            InstructionValue::DeclareLocal {
-                                lvalue: LValue {
-                                    kind: InstructionKind::Catch,
-                                    place: place.clone(),
-                                },
-                                type_annotation: None,
-                                loc: param_loc,
-                            },
-                        )?;
-                        Some((place, param.clone()))
                     }
-                } else {
                     None
-                };
+                } else {
+                    let param_loc = convert_opt_loc(&pattern_like_loc(param));
+                    let id = builder.make_temporary(param_loc.clone());
+                    promote_temporary(builder, id);
+                    let place = Place {
+                        identifier: id,
+                        effect: Effect::Unknown,
+                        reactive: false,
+                        loc: param_loc.clone(),
+                    };
+                    // Emit DeclareLocal for the catch binding
+                    lower_value_to_temporary(
+                        builder,
+                        InstructionValue::DeclareLocal {
+                            lvalue: LValue { kind: InstructionKind::Catch, place: place.clone() },
+                            type_annotation: None,
+                            loc: param_loc,
+                        },
+                    )?;
+                    Some((place, param.clone()))
+                }
+            } else {
+                None
+            };
 
             // Create the handler (catch) block
             let handler_binding_for_block = handler_binding_info.clone();
             let handler_loc = convert_opt_loc(&handler_clause.base.loc);
             // Use the catch param's loc for the assignment, matching TS: handlerBinding.path.node.loc
-            let handler_param_loc = handler_clause
-                .param
-                .as_ref()
-                .and_then(|p| convert_opt_loc(&pattern_like_loc(p)));
+            let handler_param_loc =
+                handler_clause.param.as_ref().and_then(|p| convert_opt_loc(&pattern_like_loc(p)));
             let handler_block = builder.try_enter(BlockKind::Catch, |builder, _block_id| {
                 if let Some((ref place, ref pattern)) = handler_binding_for_block {
                     lower_assignment(
@@ -4188,7 +4040,7 @@ fn lower_statement(
         Statement::TSEnumDeclaration(e) => {
             let loc = convert_opt_loc(&e.base.loc);
             let original_node = original_statement(
-                &react_compiler_ast::statements::Statement::TSEnumDeclaration(e.clone()),
+                &crate::react_compiler_ast::statements::Statement::TSEnumDeclaration(e.clone()),
             );
             lower_value_to_temporary(
                 builder,
@@ -4202,7 +4054,7 @@ fn lower_statement(
         Statement::EnumDeclaration(e) => {
             let loc = convert_opt_loc(&e.base.loc);
             let original_node = original_statement(
-                &react_compiler_ast::statements::Statement::EnumDeclaration(e.clone()),
+                &crate::react_compiler_ast::statements::Statement::EnumDeclaration(e.clone()),
             );
             lower_value_to_temporary(
                 builder,
@@ -4250,7 +4102,7 @@ fn lower_statement(
                 InstructionValue::UnsupportedNode {
                     node_type: Some(node_type),
                     original_node: original_statement(
-                        &react_compiler_ast::statements::Statement::Unknown(unknown.clone()),
+                        &crate::react_compiler_ast::statements::Statement::Unknown(unknown.clone()),
                     ),
                     loc,
                 },
@@ -4265,8 +4117,8 @@ fn lower_statement(
 // =============================================================================
 
 enum FunctionBody<'a> {
-    Block(&'a react_compiler_ast::statements::BlockStatement),
-    Expression(&'a react_compiler_ast::expressions::Expression),
+    Block(&'a crate::react_compiler_ast::statements::BlockStatement),
+    Expression(&'a crate::react_compiler_ast::expressions::Expression),
 }
 
 /// Main entry point: lower a function AST node into HIR.
@@ -4307,10 +4159,10 @@ pub fn lower(
         ),
         FunctionNode::ArrowFunctionExpression(arrow) => {
             let body = match arrow.body.as_ref() {
-                react_compiler_ast::expressions::ArrowFunctionBody::BlockStatement(block) => {
-                    FunctionBody::Block(block)
-                }
-                react_compiler_ast::expressions::ArrowFunctionBody::Expression(expr) => {
+                crate::react_compiler_ast::expressions::ArrowFunctionBody::BlockStatement(
+                    block,
+                ) => FunctionBody::Block(block),
+                crate::react_compiler_ast::expressions::ArrowFunctionBody::Expression(expr) => {
                     FunctionBody::Expression(expr)
                 }
             };
@@ -4327,9 +4179,8 @@ pub fn lower(
         }
     };
 
-    let scope_id = scope_info
-        .resolve_scope_for_node(func.node_id())
-        .unwrap_or(scope_info.program_scope);
+    let scope_id =
+        scope_info.resolve_scope_for_node(func.node_id()).unwrap_or(scope_info.program_scope);
 
     validate_ts_this_parameters_in_function_range(scope_info, start, end)?;
 
@@ -4340,8 +4191,10 @@ pub fn lower(
     let context_identifiers = find_context_identifiers(func, scope_info, env, &identifier_locs)?;
 
     // For top-level functions, context is empty (no captured refs)
-    let context_map: FxIndexMap<react_compiler_ast::scope::BindingId, Option<SourceLocation>> =
-        FxIndexMap::default();
+    let context_map: FxIndexMap<
+        crate::react_compiler_ast::scope::BindingId,
+        Option<SourceLocation>,
+    > = FxIndexMap::default();
 
     let (hir_func, _used_names, _child_bindings) = lower_inner(
         params,
@@ -4390,25 +4243,17 @@ fn lower_identifier_for_assignment(
 ) -> Result<Option<IdentifierForAssignment>, CompilerError> {
     let mut binding = builder.resolve_identifier(name, start, ident_loc.clone(), node_id)?;
     if !matches!(binding, VariableBinding::Identifier { .. }) && kind != InstructionKind::Reassign {
-        if let Some((binding_id, binding_data)) = builder
-            .scope_info()
-            .find_binding_id_in_descendants(name, builder.function_scope())
+        if let Some((binding_id, binding_data)) =
+            builder.scope_info().find_binding_id_in_descendants(name, builder.function_scope())
         {
-            let bk = crate::convert_binding_kind(&binding_data.kind);
+            let bk = crate::react_compiler_lowering::convert_binding_kind(&binding_data.kind);
             let identifier =
                 builder.resolve_binding_with_loc(name, binding_id, ident_loc.clone())?;
-            binding = VariableBinding::Identifier {
-                identifier,
-                binding_kind: bk,
-            };
+            binding = VariableBinding::Identifier { identifier, binding_kind: bk };
         }
     }
     match binding {
-        VariableBinding::Identifier {
-            identifier,
-            binding_kind,
-            ..
-        } => {
+        VariableBinding::Identifier { identifier, binding_kind, .. } => {
             // Set the identifier's loc from the declaration site (not for reassignments,
             // which should keep the original declaration loc)
             if kind != InstructionKind::Reassign {
@@ -4448,9 +4293,7 @@ fn lower_identifier_for_assignment(
         _ => {
             // Import bindings can't be assigned to
             if kind == InstructionKind::Reassign {
-                Ok(Some(IdentifierForAssignment::Global {
-                    name: name.to_string(),
-                }))
+                Ok(Some(IdentifierForAssignment::Global { name: name.to_string() }))
             } else {
                 builder.record_error(CompilerErrorDetail {
                     reason: "Could not find binding for declaration".to_string(),
@@ -4469,11 +4312,11 @@ fn lower_assignment(
     builder: &mut HirBuilder,
     loc: Option<SourceLocation>,
     kind: InstructionKind,
-    target: &react_compiler_ast::patterns::PatternLike,
+    target: &crate::react_compiler_ast::patterns::PatternLike,
     value: Place,
     assignment_style: AssignmentStyle,
 ) -> Result<Option<Place>, CompilerError> {
-    use react_compiler_ast::patterns::PatternLike;
+    use crate::react_compiler_ast::patterns::PatternLike;
 
     match target {
         PatternLike::Identifier(id) => {
@@ -4583,10 +4426,10 @@ fn lower_assignment(
             let temp = if !member.computed
                 || matches!(
                     &*member.property,
-                    react_compiler_ast::expressions::Expression::NumericLiteral(_)
+                    crate::react_compiler_ast::expressions::Expression::NumericLiteral(_)
                 ) {
                 match &*member.property {
-                    react_compiler_ast::expressions::Expression::Identifier(prop_id) => {
+                    crate::react_compiler_ast::expressions::Expression::Identifier(prop_id) => {
                         lower_value_to_temporary(
                             builder,
                             InstructionValue::PropertyStore {
@@ -4597,7 +4440,7 @@ fn lower_assignment(
                             },
                         )?
                     }
-                    react_compiler_ast::expressions::Expression::NumericLiteral(num) => {
+                    crate::react_compiler_ast::expressions::Expression::NumericLiteral(num) => {
                         lower_value_to_temporary(
                             builder,
                             InstructionValue::PropertyStore {
@@ -4631,7 +4474,7 @@ fn lower_assignment(
             } else {
                 if matches!(
                     &*member.property,
-                    react_compiler_ast::expressions::Expression::PrivateName(_)
+                    crate::react_compiler_ast::expressions::Expression::PrivateName(_)
                 ) {
                     builder.record_error(CompilerErrorDetail {
                         reason: "(BuildHIR::lowerAssignment) Expected private name to appear as a non-computed property".to_string(),
@@ -4744,9 +4587,7 @@ fn lower_assignment(
                                             );
                                             promote_temporary(builder, temp.identifier);
                                             items.push(ArrayPatternElement::Spread(
-                                                SpreadPattern {
-                                                    place: temp.clone(),
-                                                },
+                                                SpreadPattern { place: temp.clone() },
                                             ));
                                             followups.push((temp, &rest.argument));
                                         }
@@ -4858,7 +4699,7 @@ fn lower_assignment(
 
             // Compute forceTemporaries for ObjectPattern
             let force_temporaries = if kind == InstructionKind::Reassign {
-                use react_compiler_ast::patterns::ObjectPatternProperty;
+                use crate::react_compiler_ast::patterns::ObjectPatternProperty;
                 let mut found = false;
                 for prop in &pattern.properties {
                     match prop {
@@ -4897,57 +4738,54 @@ fn lower_assignment(
 
             for prop in &pattern.properties {
                 match prop {
-                    react_compiler_ast::patterns::ObjectPatternProperty::RestElement(rest) => {
-                        match &*rest.argument {
-                            PatternLike::Identifier(id) => {
-                                let start = id.base.start.unwrap_or(0);
-                                let is_context =
-                                    builder.is_context_identifier(&id.name, start, id.base.node_id);
-                                let can_use_direct = !force_temporaries
-                                    && (matches!(assignment_style, AssignmentStyle::Assignment)
-                                        || !is_context);
-                                if can_use_direct {
-                                    match lower_identifier_for_assignment(
-                                        builder,
-                                        convert_opt_loc(&rest.base.loc),
-                                        convert_opt_loc(&id.base.loc),
-                                        kind,
-                                        &id.name,
-                                        start,
-                                        id.base.node_id,
-                                    )? {
-                                        Some(IdentifierForAssignment::Place(place)) => {
-                                            properties.push(ObjectPropertyOrSpread::Spread(
-                                                SpreadPattern { place },
-                                            ));
-                                        }
-                                        Some(IdentifierForAssignment::Global { .. }) => {
-                                            builder.record_error(CompilerErrorDetail {
+                    crate::react_compiler_ast::patterns::ObjectPatternProperty::RestElement(
+                        rest,
+                    ) => match &*rest.argument {
+                        PatternLike::Identifier(id) => {
+                            let start = id.base.start.unwrap_or(0);
+                            let is_context =
+                                builder.is_context_identifier(&id.name, start, id.base.node_id);
+                            let can_use_direct = !force_temporaries
+                                && (matches!(assignment_style, AssignmentStyle::Assignment)
+                                    || !is_context);
+                            if can_use_direct {
+                                match lower_identifier_for_assignment(
+                                    builder,
+                                    convert_opt_loc(&rest.base.loc),
+                                    convert_opt_loc(&id.base.loc),
+                                    kind,
+                                    &id.name,
+                                    start,
+                                    id.base.node_id,
+                                )? {
+                                    Some(IdentifierForAssignment::Place(place)) => {
+                                        properties.push(ObjectPropertyOrSpread::Spread(
+                                            SpreadPattern { place },
+                                        ));
+                                    }
+                                    Some(IdentifierForAssignment::Global { .. }) => {
+                                        builder.record_error(CompilerErrorDetail {
                                                 reason: "Expected reassignment of globals to enable forceTemporaries".to_string(),
                                                 category: ErrorCategory::Todo,
                                                 loc: convert_opt_loc(&rest.base.loc),
                                                 description: None,
                                                 suggestions: None,
                                             })?;
-                                        }
-                                        None => {}
                                     }
-                                } else {
-                                    let temp = build_temporary_place(
-                                        builder,
-                                        convert_opt_loc(&rest.base.loc),
-                                    );
-                                    promote_temporary(builder, temp.identifier);
-                                    properties.push(ObjectPropertyOrSpread::Spread(
-                                        SpreadPattern {
-                                            place: temp.clone(),
-                                        },
-                                    ));
-                                    followups.push((temp, &rest.argument));
+                                    None => {}
                                 }
+                            } else {
+                                let temp =
+                                    build_temporary_place(builder, convert_opt_loc(&rest.base.loc));
+                                promote_temporary(builder, temp.identifier);
+                                properties.push(ObjectPropertyOrSpread::Spread(SpreadPattern {
+                                    place: temp.clone(),
+                                }));
+                                followups.push((temp, &rest.argument));
                             }
-                            _ => {
-                                builder.record_error(CompilerErrorDetail {
+                        }
+                        _ => {
+                            builder.record_error(CompilerErrorDetail {
                                     reason: format!("(BuildHIR::lowerAssignment) Handle {} rest element in ObjectPattern",
                                         match &*rest.argument {
                                             PatternLike::ObjectPattern(_) => "ObjectPattern",
@@ -4961,10 +4799,9 @@ fn lower_assignment(
                                     description: None,
                                     suggestions: None,
                                 })?;
-                            }
                         }
-                    }
-                    react_compiler_ast::patterns::ObjectPatternProperty::ObjectProperty(
+                    },
+                    crate::react_compiler_ast::patterns::ObjectPatternProperty::ObjectProperty(
                         obj_prop,
                     ) => {
                         if obj_prop.computed {
@@ -5094,10 +4931,7 @@ fn lower_assignment(
                 lower_value_to_temporary(
                     builder,
                     InstructionValue::StoreLocal {
-                        lvalue: LValue {
-                            place: temp.clone(),
-                            kind: InstructionKind::Const,
-                        },
+                        lvalue: LValue { place: temp.clone(), kind: InstructionKind::Const },
                         value: default_value,
                         type_annotation: None,
                         loc: pat_loc.clone(),
@@ -5116,10 +4950,7 @@ fn lower_assignment(
                 lower_value_to_temporary(
                     builder,
                     InstructionValue::StoreLocal {
-                        lvalue: LValue {
-                            place: temp.clone(),
-                            kind: InstructionKind::Const,
-                        },
+                        lvalue: LValue { place: temp.clone(), kind: InstructionKind::Const },
                         value: value.clone(),
                         type_annotation: None,
                         loc: pat_loc.clone(),
@@ -5174,26 +5005,12 @@ fn lower_assignment(
             );
 
             // Recursively assign the resolved value to the left pattern
-            Ok(lower_assignment(
-                builder,
-                pat_loc,
-                kind,
-                &pattern.left,
-                temp,
-                assignment_style,
-            )?)
+            Ok(lower_assignment(builder, pat_loc, kind, &pattern.left, temp, assignment_style)?)
         }
 
         PatternLike::RestElement(rest) => {
             // Delegate to the argument pattern
-            Ok(lower_assignment(
-                builder,
-                loc,
-                kind,
-                &rest.argument,
-                value,
-                assignment_style,
-            )?)
+            Ok(lower_assignment(builder, loc, kind, &rest.argument, value, assignment_style)?)
         }
 
         // TS assignment-target wrappers (e.g. `(x as T) = ...`) and the Flow
@@ -5211,19 +5028,18 @@ fn lower_assignment(
 }
 
 /// Helper to extract HIR loc from a PatternLike (converts AST loc)
-fn pattern_like_hir_loc(pat: &react_compiler_ast::patterns::PatternLike) -> Option<SourceLocation> {
+fn pattern_like_hir_loc(
+    pat: &crate::react_compiler_ast::patterns::PatternLike,
+) -> Option<SourceLocation> {
     convert_opt_loc(&pattern_like_loc(pat))
 }
 
 fn lower_optional_member_expression(
     builder: &mut HirBuilder,
-    expr: &react_compiler_ast::expressions::OptionalMemberExpression,
+    expr: &crate::react_compiler_ast::expressions::OptionalMemberExpression,
 ) -> Result<InstructionValue, CompilerError> {
     let place = lower_optional_member_expression_impl(builder, expr, None)?.1;
-    Ok(InstructionValue::LoadLocal {
-        loc: place.loc.clone(),
-        place,
-    })
+    Ok(InstructionValue::LoadLocal { loc: place.loc.clone(), place })
 }
 
 /// Returns (object, value_place) pair.
@@ -5231,10 +5047,10 @@ fn lower_optional_member_expression(
 /// via LoadLocal for the top-level call.
 fn lower_optional_member_expression_impl(
     builder: &mut HirBuilder,
-    expr: &react_compiler_ast::expressions::OptionalMemberExpression,
+    expr: &crate::react_compiler_ast::expressions::OptionalMemberExpression,
     parent_alternate: Option<BlockId>,
 ) -> Result<(Place, Place), CompilerError> {
-    use react_compiler_ast::expressions::Expression;
+    use crate::react_compiler_ast::expressions::Expression;
     let optional = expr.optional;
     let loc = convert_opt_loc(&expr.base.loc);
     let place = build_temporary_place(builder, loc.clone());
@@ -5250,18 +5066,12 @@ fn lower_optional_member_expression_impl(
         builder.try_enter(BlockKind::Value, |builder, _block_id| {
             let temp = lower_value_to_temporary(
                 builder,
-                InstructionValue::Primitive {
-                    value: PrimitiveValue::Undefined,
-                    loc: loc.clone(),
-                },
+                InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc: loc.clone() },
             )?;
             lower_value_to_temporary(
                 builder,
                 InstructionValue::StoreLocal {
-                    lvalue: LValue {
-                        kind: InstructionKind::Const,
-                        place: place.clone(),
-                    },
+                    lvalue: LValue { kind: InstructionKind::Const, place: place.clone() },
                     value: temp,
                     type_annotation: None,
                     loc: loc.clone(),
@@ -5314,10 +5124,7 @@ fn lower_optional_member_expression_impl(
         lower_value_to_temporary(
             builder,
             InstructionValue::StoreLocal {
-                lvalue: LValue {
-                    kind: InstructionKind::Const,
-                    place: place.clone(),
-                },
+                lvalue: LValue { kind: InstructionKind::Const, place: place.clone() },
                 value: temp,
                 type_annotation: None,
                 loc: loc.clone(),
@@ -5347,17 +5154,17 @@ fn lower_optional_member_expression_impl(
 
 fn lower_optional_call_expression(
     builder: &mut HirBuilder,
-    expr: &react_compiler_ast::expressions::OptionalCallExpression,
+    expr: &crate::react_compiler_ast::expressions::OptionalCallExpression,
 ) -> Result<InstructionValue, CompilerError> {
     Ok(lower_optional_call_expression_impl(builder, expr, None)?)
 }
 
 fn lower_optional_call_expression_impl(
     builder: &mut HirBuilder,
-    expr: &react_compiler_ast::expressions::OptionalCallExpression,
+    expr: &crate::react_compiler_ast::expressions::OptionalCallExpression,
     parent_alternate: Option<BlockId>,
 ) -> Result<InstructionValue, CompilerError> {
-    use react_compiler_ast::expressions::Expression;
+    use crate::react_compiler_ast::expressions::Expression;
     let optional = expr.optional;
     let loc = convert_opt_loc(&expr.base.loc);
     let place = build_temporary_place(builder, loc.clone());
@@ -5372,18 +5179,12 @@ fn lower_optional_call_expression_impl(
         builder.try_enter(BlockKind::Value, |builder, _block_id| {
             let temp = lower_value_to_temporary(
                 builder,
-                InstructionValue::Primitive {
-                    value: PrimitiveValue::Undefined,
-                    loc: loc.clone(),
-                },
+                InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc: loc.clone() },
             )?;
             lower_value_to_temporary(
                 builder,
                 InstructionValue::StoreLocal {
-                    lvalue: LValue {
-                        kind: InstructionKind::Const,
-                        place: place.clone(),
-                    },
+                    lvalue: LValue { kind: InstructionKind::Const, place: place.clone() },
                     value: temp,
                     type_annotation: None,
                     loc: loc.clone(),
@@ -5412,17 +5213,12 @@ fn lower_optional_call_expression_impl(
                 let value =
                     lower_optional_call_expression_impl(builder, opt_call, Some(alternate))?;
                 let value_place = lower_value_to_temporary(builder, value)?;
-                callee_info = Some(CalleeInfo::CallExpression {
-                    callee: value_place,
-                });
+                callee_info = Some(CalleeInfo::CallExpression { callee: value_place });
             }
             Expression::OptionalMemberExpression(opt_member) => {
                 let (obj, value) =
                     lower_optional_member_expression_impl(builder, opt_member, Some(alternate))?;
-                callee_info = Some(CalleeInfo::MethodCall {
-                    receiver: obj,
-                    property: value,
-                });
+                callee_info = Some(CalleeInfo::MethodCall { receiver: obj, property: value });
             }
             Expression::MemberExpression(member) => {
                 let lowered = lower_member_expression(builder, member)?;
@@ -5434,9 +5230,7 @@ fn lower_optional_call_expression_impl(
             }
             other => {
                 let callee_place = lower_expression_to_temporary(builder, other)?;
-                callee_info = Some(CalleeInfo::CallExpression {
-                    callee: callee_place,
-                });
+                callee_info = Some(CalleeInfo::CallExpression { callee: callee_place });
             }
         }
 
@@ -5493,10 +5287,7 @@ fn lower_optional_call_expression_impl(
         lower_value_to_temporary(
             builder,
             InstructionValue::StoreLocal {
-                lvalue: LValue {
-                    kind: InstructionKind::Const,
-                    place: place.clone(),
-                },
+                lvalue: LValue { kind: InstructionKind::Const, place: place.clone() },
                 value: temp,
                 type_annotation: None,
                 loc: loc.clone(),
@@ -5521,18 +5312,15 @@ fn lower_optional_call_expression_impl(
         continuation_block,
     );
 
-    Ok(InstructionValue::LoadLocal {
-        place: place.clone(),
-        loc: place.loc,
-    })
+    Ok(InstructionValue::LoadLocal { place: place.clone(), loc: place.loc })
 }
 
 fn lower_function_to_value(
     builder: &mut HirBuilder,
-    expr: &react_compiler_ast::expressions::Expression,
+    expr: &crate::react_compiler_ast::expressions::Expression,
     expr_type: FunctionExpressionType,
 ) -> Result<InstructionValue, CompilerDiagnostic> {
-    use react_compiler_ast::expressions::Expression;
+    use crate::react_compiler_ast::expressions::Expression;
     let loc = match expr {
         Expression::ArrowFunctionExpression(arrow) => convert_opt_loc(&arrow.base.loc),
         Expression::FunctionExpression(func) => convert_opt_loc(&func.base.loc),
@@ -5543,30 +5331,24 @@ fn lower_function_to_value(
         _ => None,
     };
     let lowered_func = lower_function(builder, expr)?;
-    Ok(InstructionValue::FunctionExpression {
-        name,
-        name_hint: None,
-        lowered_func,
-        expr_type,
-        loc,
-    })
+    Ok(InstructionValue::FunctionExpression { name, name_hint: None, lowered_func, expr_type, loc })
 }
 
 fn lower_function(
     builder: &mut HirBuilder,
-    expr: &react_compiler_ast::expressions::Expression,
+    expr: &crate::react_compiler_ast::expressions::Expression,
 ) -> Result<LoweredFunction, CompilerDiagnostic> {
-    use react_compiler_ast::expressions::Expression;
+    use crate::react_compiler_ast::expressions::Expression;
 
     // Extract function parts from the AST node
     let (params, body, id, generator, is_async, func_start, func_end, func_loc, func_node_id) =
         match expr {
             Expression::ArrowFunctionExpression(arrow) => {
                 let body = match arrow.body.as_ref() {
-                    react_compiler_ast::expressions::ArrowFunctionBody::BlockStatement(block) => {
-                        FunctionBody::Block(block)
-                    }
-                    react_compiler_ast::expressions::ArrowFunctionBody::Expression(expr) => {
+                    crate::react_compiler_ast::expressions::ArrowFunctionBody::BlockStatement(
+                        block,
+                    ) => FunctionBody::Block(block),
+                    crate::react_compiler_ast::expressions::ArrowFunctionBody::Expression(expr) => {
                         FunctionBody::Expression(expr)
                     }
                 };
@@ -5612,12 +5394,12 @@ fn lower_function(
         } else {
             let parent = builder.function_scope();
             let scope_info = builder.scope_info();
-            let mapped: rustc_hash::FxHashSet<react_compiler_ast::scope::ScopeId> =
+            let mapped: rustc_hash::FxHashSet<crate::react_compiler_ast::scope::ScopeId> =
                 scope_info.node_id_to_scope.values().copied().collect();
             let param_names: Vec<String> = params
                 .iter()
                 .filter_map(|p| {
-                    if let react_compiler_ast::patterns::PatternLike::Identifier(id) = p {
+                    if let crate::react_compiler_ast::patterns::PatternLike::Identifier(id) = p {
                         Some(id.name.clone())
                     } else {
                         None
@@ -5630,7 +5412,7 @@ fn lower_function(
             while changed {
                 changed = false;
                 for (i, scope) in scope_info.scopes.iter().enumerate() {
-                    let sid = react_compiler_ast::scope::ScopeId(i as u32);
+                    let sid = crate::react_compiler_ast::scope::ScopeId(i as u32);
                     if let Some(p) = scope.parent {
                         if descendants.contains(&p) && !descendants.contains(&sid) {
                             descendants.insert(sid);
@@ -5641,7 +5423,7 @@ fn lower_function(
             }
             let mut found = scope_info.program_scope;
             for (i, scope) in scope_info.scopes.iter().enumerate() {
-                let sid = react_compiler_ast::scope::ScopeId(i as u32);
+                let sid = crate::react_compiler_ast::scope::ScopeId(i as u32);
                 if let Some(p) = scope.parent {
                     if descendants.contains(&p)
                         && matches!(scope.kind, ScopeKind::Function)
@@ -5649,9 +5431,8 @@ fn lower_function(
                         && !builder.is_synthetic_scope_claimed(sid)
                     {
                         if !param_names.is_empty() {
-                            let all_match = param_names
-                                .iter()
-                                .all(|name| scope.bindings.contains_key(name));
+                            let all_match =
+                                param_names.iter().all(|name| scope.bindings.contains_key(name));
                             if !all_match {
                                 continue;
                             }
@@ -5691,7 +5472,10 @@ fn lower_function(
         ident_locs,
         ref_override.as_ref(),
     );
-    let merged_context: FxIndexMap<react_compiler_ast::scope::BindingId, Option<SourceLocation>> = {
+    let merged_context: FxIndexMap<
+        crate::react_compiler_ast::scope::BindingId,
+        Option<SourceLocation>,
+    > = {
         let parent_context = builder.context().clone();
         let mut merged = parent_context;
         for (k, v) in captured_context {
@@ -5731,7 +5515,7 @@ fn lower_function(
 /// Lower a function declaration statement to a FunctionExpression + StoreLocal.
 fn lower_function_declaration(
     builder: &mut HirBuilder,
-    func_decl: &react_compiler_ast::statements::FunctionDeclaration,
+    func_decl: &crate::react_compiler_ast::statements::FunctionDeclaration,
 ) -> Result<(), CompilerError> {
     let loc = convert_opt_loc(&func_decl.base.loc);
     let func_start = func_decl.base.start.unwrap_or(0);
@@ -5763,7 +5547,10 @@ fn lower_function_declaration(
         ident_locs,
         None,
     );
-    let merged_context: FxIndexMap<react_compiler_ast::scope::BindingId, Option<SourceLocation>> = {
+    let merged_context: FxIndexMap<
+        crate::react_compiler_ast::scope::BindingId,
+        Option<SourceLocation>,
+    > = {
         let parent_context = builder.context().clone();
         let mut merged = parent_context;
         for (k, v) in captured_context {
@@ -5826,15 +5613,12 @@ fn lower_function_declaration(
             let binding = match scope_binding {
                 Some(binding_id) => {
                     is_context = builder.is_context_binding(binding_id);
-                    let binding_kind = crate::convert_binding_kind(
+                    let binding_kind = crate::react_compiler_lowering::convert_binding_kind(
                         &builder.scope_info().bindings[binding_id.0 as usize].kind,
                     );
                     let identifier =
                         builder.resolve_binding_with_loc(name, binding_id, ident_loc.clone())?;
-                    VariableBinding::Identifier {
-                        identifier,
-                        binding_kind,
-                    }
+                    VariableBinding::Identifier { identifier, binding_kind }
                 }
                 None => {
                     let mut binding = builder.resolve_identifier(
@@ -5892,10 +5676,7 @@ fn lower_function_declaration(
                         lower_value_to_temporary(
                             builder,
                             InstructionValue::StoreContext {
-                                lvalue: LValue {
-                                    kind: InstructionKind::Function,
-                                    place,
-                                },
+                                lvalue: LValue { kind: InstructionKind::Function, place },
                                 value: fn_place,
                                 loc,
                             },
@@ -5904,10 +5685,7 @@ fn lower_function_declaration(
                         lower_value_to_temporary(
                             builder,
                             InstructionValue::StoreLocal {
-                                lvalue: LValue {
-                                    kind: InstructionKind::Function,
-                                    place,
-                                },
+                                lvalue: LValue { kind: InstructionKind::Function, place },
                                 value: fn_place,
                                 type_annotation: None,
                                 loc,
@@ -5936,7 +5714,7 @@ fn lower_function_declaration(
 /// Lower a function expression used as an object method.
 fn lower_function_for_object_method(
     builder: &mut HirBuilder,
-    method: &react_compiler_ast::expressions::ObjectMethod,
+    method: &crate::react_compiler_ast::expressions::ObjectMethod,
 ) -> Result<LoweredFunction, CompilerError> {
     let func_start = method.base.start.unwrap_or(0);
     let func_end = method.base.end.unwrap_or(0);
@@ -5964,7 +5742,10 @@ fn lower_function_for_object_method(
         ident_locs,
         None,
     );
-    let merged_context: FxIndexMap<react_compiler_ast::scope::BindingId, Option<SourceLocation>> = {
+    let merged_context: FxIndexMap<
+        crate::react_compiler_ast::scope::BindingId,
+        Option<SourceLocation>,
+    > = {
         let parent_context = builder.context().clone();
         let mut merged = parent_context;
         for (k, v) in captured_context {
@@ -6003,7 +5784,7 @@ fn lower_function_for_object_method(
 /// Internal helper: lower a function given its extracted parts.
 /// Used by both the top-level `lower()` and nested `lower_function()`.
 fn lower_inner(
-    params: &[react_compiler_ast::patterns::PatternLike],
+    params: &[crate::react_compiler_ast::patterns::PatternLike],
     body: FunctionBody<'_>,
     id: Option<&str>,
     generator: bool,
@@ -6011,19 +5792,19 @@ fn lower_inner(
     loc: Option<SourceLocation>,
     scope_info: &ScopeInfo,
     env: &mut Environment,
-    parent_bindings: Option<FxIndexMap<react_compiler_ast::scope::BindingId, IdentifierId>>,
-    parent_used_names: Option<FxIndexMap<String, react_compiler_ast::scope::BindingId>>,
-    context_map: FxIndexMap<react_compiler_ast::scope::BindingId, Option<SourceLocation>>,
-    function_scope: react_compiler_ast::scope::ScopeId,
-    component_scope: react_compiler_ast::scope::ScopeId,
-    context_identifiers: &FxHashSet<react_compiler_ast::scope::BindingId>,
+    parent_bindings: Option<FxIndexMap<crate::react_compiler_ast::scope::BindingId, IdentifierId>>,
+    parent_used_names: Option<FxIndexMap<String, crate::react_compiler_ast::scope::BindingId>>,
+    context_map: FxIndexMap<crate::react_compiler_ast::scope::BindingId, Option<SourceLocation>>,
+    function_scope: crate::react_compiler_ast::scope::ScopeId,
+    component_scope: crate::react_compiler_ast::scope::ScopeId,
+    context_identifiers: &FxHashSet<crate::react_compiler_ast::scope::BindingId>,
     is_top_level: bool,
     identifier_locs: &IdentifierLocIndex,
 ) -> Result<
     (
         HirFunction,
-        FxIndexMap<String, react_compiler_ast::scope::BindingId>,
-        FxIndexMap<react_compiler_ast::scope::BindingId, IdentifierId>,
+        FxIndexMap<String, crate::react_compiler_ast::scope::BindingId>,
+        FxIndexMap<crate::react_compiler_ast::scope::BindingId, IdentifierId>,
     ),
     CompilerError,
 > {
@@ -6059,11 +5840,9 @@ fn lower_inner(
     let mut hir_params: Vec<ParamPattern> = Vec::new();
     for param in params {
         match param {
-            react_compiler_ast::patterns::PatternLike::Identifier(ident) => {
+            crate::react_compiler_ast::patterns::PatternLike::Identifier(ident) => {
                 if is_always_reserved_word(&ident.name) {
-                    return Err(CompilerError::from(reserved_identifier_diagnostic(
-                        &ident.name,
-                    )));
+                    return Err(CompilerError::from(reserved_identifier_diagnostic(&ident.name)));
                 }
                 let start = ident.base.start.unwrap_or(0);
                 let param_loc = convert_opt_loc(&ident.base.loc);
@@ -6081,16 +5860,15 @@ fn lower_inner(
                         .scope_info()
                         .find_binding_id_in_descendants(&ident.name, builder.function_scope())
                     {
-                        let binding_kind = crate::convert_binding_kind(&binding_data.kind);
+                        let binding_kind = crate::react_compiler_lowering::convert_binding_kind(
+                            &binding_data.kind,
+                        );
                         let identifier = builder.resolve_binding_with_loc(
                             &ident.name,
                             binding_id,
                             param_loc.clone(),
                         )?;
-                        binding = VariableBinding::Identifier {
-                            identifier,
-                            binding_kind,
-                        };
+                        binding = VariableBinding::Identifier { identifier, binding_kind };
                     }
                 }
                 match binding {
@@ -6125,13 +5903,11 @@ fn lower_inner(
                     }
                 }
             }
-            react_compiler_ast::patterns::PatternLike::RestElement(rest) => {
+            crate::react_compiler_ast::patterns::PatternLike::RestElement(rest) => {
                 let rest_loc = convert_opt_loc(&rest.base.loc);
                 // Create a temporary place for the spread param
                 let place = build_temporary_place(&mut builder, rest_loc.clone());
-                hir_params.push(ParamPattern::Spread(SpreadPattern {
-                    place: place.clone(),
-                }));
+                hir_params.push(ParamPattern::Spread(SpreadPattern { place: place.clone() }));
                 // Delegate the assignment of the rest argument
                 lower_assignment(
                     &mut builder,
@@ -6142,9 +5918,9 @@ fn lower_inner(
                     AssignmentStyle::Assignment,
                 )?;
             }
-            react_compiler_ast::patterns::PatternLike::ObjectPattern(_)
-            | react_compiler_ast::patterns::PatternLike::ArrayPattern(_)
-            | react_compiler_ast::patterns::PatternLike::AssignmentPattern(_) => {
+            crate::react_compiler_ast::patterns::PatternLike::ObjectPattern(_)
+            | crate::react_compiler_ast::patterns::PatternLike::ArrayPattern(_)
+            | crate::react_compiler_ast::patterns::PatternLike::AssignmentPattern(_) => {
                 let param_loc = convert_opt_loc(&pattern_like_loc(param));
                 let place = build_temporary_place(&mut builder, param_loc.clone());
                 promote_temporary(&mut builder, place.identifier);
@@ -6158,7 +5934,7 @@ fn lower_inner(
                     AssignmentStyle::Assignment,
                 )?;
             }
-            react_compiler_ast::patterns::PatternLike::MemberExpression(member) => {
+            crate::react_compiler_ast::patterns::PatternLike::MemberExpression(member) => {
                 builder.record_diagnostic(
                     CompilerDiagnostic::new(
                         ErrorCategory::Todo,
@@ -6172,11 +5948,11 @@ fn lower_inner(
                     }),
                 );
             }
-            react_compiler_ast::patterns::PatternLike::TSAsExpression(_)
-            | react_compiler_ast::patterns::PatternLike::TSSatisfiesExpression(_)
-            | react_compiler_ast::patterns::PatternLike::TSNonNullExpression(_)
-            | react_compiler_ast::patterns::PatternLike::TSTypeAssertion(_)
-            | react_compiler_ast::patterns::PatternLike::TypeCastExpression(_) => {}
+            crate::react_compiler_ast::patterns::PatternLike::TSAsExpression(_)
+            | crate::react_compiler_ast::patterns::PatternLike::TSSatisfiesExpression(_)
+            | crate::react_compiler_ast::patterns::PatternLike::TSNonNullExpression(_)
+            | crate::react_compiler_ast::patterns::PatternLike::TSTypeAssertion(_)
+            | crate::react_compiler_ast::patterns::PatternLike::TypeCastExpression(_) => {}
         }
     }
 
@@ -6198,11 +5974,7 @@ fn lower_inner(
             );
         }
         FunctionBody::Block(block) => {
-            directives = block
-                .directives
-                .iter()
-                .map(|d| d.value.value.clone())
-                .collect();
+            directives = block.directives.iter().map(|d| d.value.value.clone()).collect();
             // Use lower_block_statement_with_scope to get hoisting support for the function body.
             // Pass the function scope since in Babel, a function body BlockStatement shares
             // the function's scope (node_to_scope maps the function node, not the block).
@@ -6211,10 +5983,8 @@ fn lower_inner(
     }
 
     // Emit final Return(Void, undefined)
-    let undefined_value = InstructionValue::Primitive {
-        value: PrimitiveValue::Undefined,
-        loc: None,
-    };
+    let undefined_value =
+        InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc: None };
     let return_value = lower_value_to_temporary(&mut builder, undefined_value)?;
     builder.terminate(
         Terminal::Return {
@@ -6231,18 +6001,15 @@ fn lower_inner(
     let (hir_body, instructions, used_names, child_bindings) = builder.build()?;
 
     // Create the returns place
-    let returns = crate::hir_builder::create_temporary_place(env, loc.clone());
+    let returns =
+        crate::react_compiler_lowering::hir_builder::create_temporary_place(env, loc.clone());
 
     Ok((
         HirFunction {
             loc,
             id: id.map(|s| s.to_string()),
             name_hint: None,
-            fn_type: if is_top_level {
-                env.fn_type
-            } else {
-                ReactFunctionType::Other
-            },
+            fn_type: if is_top_level { env.fn_type } else { ReactFunctionType::Other },
             params: hir_params,
             return_type_annotation: None,
             returns,
@@ -6261,9 +6028,9 @@ fn lower_inner(
 
 fn lower_jsx_element_name(
     builder: &mut HirBuilder,
-    name: &react_compiler_ast::jsx::JSXElementName,
+    name: &crate::react_compiler_ast::jsx::JSXElementName,
 ) -> Result<JsxTag, CompilerError> {
-    use react_compiler_ast::jsx::JSXElementName;
+    use crate::react_compiler_ast::jsx::JSXElementName;
     match name {
         JSXElementName::JSXIdentifier(id) => {
             let tag = &id.name;
@@ -6281,10 +6048,7 @@ fn lower_jsx_element_name(
                 Ok(JsxTag::Place(temp))
             } else {
                 // Builtin HTML tag
-                Ok(JsxTag::Builtin(BuiltinTag {
-                    name: tag.clone(),
-                    loc,
-                }))
+                Ok(JsxTag::Builtin(BuiltinTag { name: tag.clone(), loc }))
             }
         }
         JSXElementName::JSXMemberExpression(member) => {
@@ -6320,9 +6084,9 @@ fn lower_jsx_element_name(
 
 fn lower_jsx_member_expression(
     builder: &mut HirBuilder,
-    expr: &react_compiler_ast::jsx::JSXMemberExpression,
+    expr: &crate::react_compiler_ast::jsx::JSXMemberExpression,
 ) -> Result<Place, CompilerError> {
-    use react_compiler_ast::jsx::JSXMemberExprObject;
+    use crate::react_compiler_ast::jsx::JSXMemberExprObject;
     // Use the full member expression's loc for instruction locs (matching TS: exprPath.node.loc)
     let expr_loc = convert_opt_loc(&expr.base.loc);
     let object = match &*expr.object {
@@ -6332,15 +6096,9 @@ fn lower_jsx_member_expression(
             // Use identifier's own loc for the place, but member expression's loc for the instruction
             let place = lower_identifier(builder, &id.name, start, id_loc, id.base.node_id)?;
             let load_value = if builder.is_context_identifier(&id.name, start, id.base.node_id) {
-                InstructionValue::LoadContext {
-                    place,
-                    loc: expr_loc.clone(),
-                }
+                InstructionValue::LoadContext { place, loc: expr_loc.clone() }
             } else {
-                InstructionValue::LoadLocal {
-                    place,
-                    loc: expr_loc.clone(),
-                }
+                InstructionValue::LoadLocal { place, loc: expr_loc.clone() }
             };
             lower_value_to_temporary(builder, load_value)?
         }
@@ -6359,10 +6117,10 @@ fn lower_jsx_member_expression(
 
 fn lower_jsx_element(
     builder: &mut HirBuilder,
-    child: &react_compiler_ast::jsx::JSXChild,
+    child: &crate::react_compiler_ast::jsx::JSXChild,
 ) -> Result<Option<Place>, CompilerError> {
-    use react_compiler_ast::jsx::JSXChild;
-    use react_compiler_ast::jsx::JSXExpressionContainerExpr;
+    use crate::react_compiler_ast::jsx::JSXChild;
+    use crate::react_compiler_ast::jsx::JSXExpressionContainerExpr;
     match child {
         JSXChild::JSXText(text) => {
             // FBT whitespace normalization differs from standard JSX.
@@ -6388,14 +6146,14 @@ fn lower_jsx_element(
         JSXChild::JSXElement(element) => {
             let value = lower_expression(
                 builder,
-                &react_compiler_ast::expressions::Expression::JSXElement(element.clone()),
+                &crate::react_compiler_ast::expressions::Expression::JSXElement(element.clone()),
             )?;
             Ok(Some(lower_value_to_temporary(builder, value)?))
         }
         JSXChild::JSXFragment(fragment) => {
             let value = lower_expression(
                 builder,
-                &react_compiler_ast::expressions::Expression::JSXFragment(fragment.clone()),
+                &crate::react_compiler_ast::expressions::Expression::JSXFragment(fragment.clone()),
             )?;
             Ok(Some(lower_value_to_temporary(builder, value)?))
         }
@@ -6405,10 +6163,9 @@ fn lower_jsx_element(
                 Ok(Some(lower_expression_to_temporary(builder, expr)?))
             }
         },
-        JSXChild::JSXSpreadChild(spread) => Ok(Some(lower_expression_to_temporary(
-            builder,
-            &spread.expression,
-        )?)),
+        JSXChild::JSXSpreadChild(spread) => {
+            Ok(Some(lower_expression_to_temporary(builder, &spread.expression)?))
+        }
     }
 }
 
@@ -6488,9 +6245,9 @@ fn trim_jsx_text(original: &str) -> Option<String> {
 
 fn lower_object_method(
     builder: &mut HirBuilder,
-    method: &react_compiler_ast::expressions::ObjectMethod,
+    method: &crate::react_compiler_ast::expressions::ObjectMethod,
 ) -> Result<Option<ObjectProperty>, CompilerError> {
-    use react_compiler_ast::expressions::ObjectMethodKind;
+    use crate::react_compiler_ast::expressions::ObjectMethodKind;
     if !matches!(method.kind, ObjectMethodKind::Method) {
         let kind_str = match method.kind {
             ObjectMethodKind::Get => "get",
@@ -6509,46 +6266,36 @@ fn lower_object_method(
         })?;
         return Ok(None);
     }
-    let key = lower_object_property_key(builder, &method.key, method.computed)?.unwrap_or(
-        ObjectPropertyKey::String {
-            name: String::new(),
-        },
-    );
+    let key = lower_object_property_key(builder, &method.key, method.computed)?
+        .unwrap_or(ObjectPropertyKey::String { name: String::new() });
 
     let lowered_func = lower_function_for_object_method(builder, method)?;
 
     let loc = convert_opt_loc(&method.base.loc);
-    let method_value = InstructionValue::ObjectMethod {
-        loc: loc.clone(),
-        lowered_func,
-    };
+    let method_value = InstructionValue::ObjectMethod { loc: loc.clone(), lowered_func };
     let method_place = lower_value_to_temporary(builder, method_value)?;
 
-    Ok(Some(ObjectProperty {
-        key,
-        property_type: ObjectPropertyType::Method,
-        place: method_place,
-    }))
+    Ok(Some(ObjectProperty { key, property_type: ObjectPropertyType::Method, place: method_place }))
 }
 
 fn lower_object_property_key(
     builder: &mut HirBuilder,
-    key: &react_compiler_ast::expressions::Expression,
+    key: &crate::react_compiler_ast::expressions::Expression,
     computed: bool,
 ) -> Result<Option<ObjectPropertyKey>, CompilerError> {
-    use react_compiler_ast::expressions::Expression;
+    use crate::react_compiler_ast::expressions::Expression;
     match key {
         // Property keys stay String-typed; the marker wire form preserves the
         // pre-JsString behavior for pathological surrogate keys end to end.
-        Expression::StringLiteral(lit) => Ok(Some(ObjectPropertyKey::String {
-            name: lit.value.to_marker_string(),
-        })),
-        Expression::Identifier(ident) if !computed => Ok(Some(ObjectPropertyKey::Identifier {
-            name: ident.name.clone(),
-        })),
-        Expression::NumericLiteral(lit) if !computed => Ok(Some(ObjectPropertyKey::Identifier {
-            name: lit.value.to_string(),
-        })),
+        Expression::StringLiteral(lit) => {
+            Ok(Some(ObjectPropertyKey::String { name: lit.value.to_marker_string() }))
+        }
+        Expression::Identifier(ident) if !computed => {
+            Ok(Some(ObjectPropertyKey::Identifier { name: ident.name.clone() }))
+        }
+        Expression::NumericLiteral(lit) if !computed => {
+            Ok(Some(ObjectPropertyKey::Identifier { name: lit.value.to_string() }))
+        }
         _ if computed => {
             let place = lower_expression_to_temporary(builder, key)?;
             Ok(Some(ObjectPropertyKey::Computed { name: place }))
@@ -6572,7 +6319,7 @@ fn lower_object_property_key(
 
 fn lower_reorderable_expression(
     builder: &mut HirBuilder,
-    expr: &react_compiler_ast::expressions::Expression,
+    expr: &crate::react_compiler_ast::expressions::Expression,
 ) -> Result<Place, CompilerError> {
     if !is_reorderable_expression(builder, expr, true) {
         builder.record_error(CompilerErrorDetail {
@@ -6591,15 +6338,13 @@ fn lower_reorderable_expression(
 
 fn is_reorderable_expression(
     builder: &HirBuilder,
-    expr: &react_compiler_ast::expressions::Expression,
+    expr: &crate::react_compiler_ast::expressions::Expression,
     allow_local_identifiers: bool,
 ) -> bool {
-    use react_compiler_ast::expressions::Expression;
+    use crate::react_compiler_ast::expressions::Expression;
     match expr {
         Expression::Identifier(ident) => {
-            let binding = builder
-                .scope_info()
-                .resolve_reference_for_node(ident.base.node_id);
+            let binding = builder.scope_info().resolve_reference_for_node(ident.base.node_id);
             match binding {
                 None => {
                     // global, safe to reorder
@@ -6622,11 +6367,9 @@ fn is_reorderable_expression(
         | Expression::BooleanLiteral(_)
         | Expression::BigIntLiteral(_) => true,
         Expression::UnaryExpression(unary) => {
-            use react_compiler_ast::operators::UnaryOperator;
-            matches!(
-                unary.operator,
-                UnaryOperator::Not | UnaryOperator::Plus | UnaryOperator::Neg
-            ) && is_reorderable_expression(builder, &unary.argument, allow_local_identifiers)
+            use crate::react_compiler_ast::operators::UnaryOperator;
+            matches!(unary.operator, UnaryOperator::Not | UnaryOperator::Plus | UnaryOperator::Neg)
+                && is_reorderable_expression(builder, &unary.argument, allow_local_identifiers)
         }
         Expression::LogicalExpression(logical) => {
             is_reorderable_expression(builder, &logical.left, allow_local_identifiers)
@@ -6646,7 +6389,7 @@ fn is_reorderable_expression(
             })
         }
         Expression::ObjectExpression(obj) => obj.properties.iter().all(|prop| match prop {
-            react_compiler_ast::expressions::ObjectExpressionProperty::ObjectProperty(p) => {
+            crate::react_compiler_ast::expressions::ObjectExpressionProperty::ObjectProperty(p) => {
                 !p.computed && is_reorderable_expression(builder, &p.value, allow_local_identifiers)
             }
             _ => false,
@@ -6658,10 +6401,7 @@ fn is_reorderable_expression(
                 inner = m.object.as_ref();
             }
             if let Expression::Identifier(ident) = inner {
-                match builder
-                    .scope_info()
-                    .resolve_reference_for_node(ident.base.node_id)
-                {
+                match builder.scope_info().resolve_reference_for_node(ident.base.node_id) {
                     None => true, // global
                     Some(binding) => {
                         // Module-scope bindings (ModuleLocal, imports) are safe to reorder
@@ -6673,7 +6413,7 @@ fn is_reorderable_expression(
             }
         }
         Expression::ArrowFunctionExpression(arrow) => {
-            use react_compiler_ast::expressions::ArrowFunctionBody;
+            use crate::react_compiler_ast::expressions::ArrowFunctionBody;
             match arrow.body.as_ref() {
                 ArrowFunctionBody::BlockStatement(block) => block.body.is_empty(),
                 ArrowFunctionBody::Expression(body_expr) => {
@@ -6724,9 +6464,7 @@ fn is_reorderable_expression(
 /// Extract the type name from a type annotation serde_json::Value.
 /// Returns the "type" field value, e.g. "TSTypeReference", "GenericTypeAnnotation".
 fn get_type_annotation_name(val: &serde_json::Value) -> Option<String> {
-    val.get("type")
-        .and_then(|v| v.as_str())
-        .map(|s| s.to_string())
+    val.get("type").and_then(|v| v.as_str()).map(|s| s.to_string())
 }
 
 /// Lower a type annotation JSON value to an HIR Type.
@@ -6742,9 +6480,7 @@ fn lower_type_annotation(val: &serde_json::Value, builder: &mut HirBuilder) -> T
             if let Some(id) = val.get("id") {
                 if id.get("type").and_then(|v| v.as_str()) == Some("Identifier") {
                     if id.get("name").and_then(|v| v.as_str()) == Some("Array") {
-                        return Type::Object {
-                            shape_id: Some("BuiltInArray".to_string()),
-                        };
+                        return Type::Object { shape_id: Some("BuiltInArray".to_string()) };
                     }
                 }
             }
@@ -6754,17 +6490,15 @@ fn lower_type_annotation(val: &serde_json::Value, builder: &mut HirBuilder) -> T
             if let Some(type_name_val) = val.get("typeName") {
                 if type_name_val.get("type").and_then(|v| v.as_str()) == Some("Identifier") {
                     if type_name_val.get("name").and_then(|v| v.as_str()) == Some("Array") {
-                        return Type::Object {
-                            shape_id: Some("BuiltInArray".to_string()),
-                        };
+                        return Type::Object { shape_id: Some("BuiltInArray".to_string()) };
                     }
                 }
             }
             builder.make_type()
         }
-        "ArrayTypeAnnotation" | "TSArrayType" => Type::Object {
-            shape_id: Some("BuiltInArray".to_string()),
-        },
+        "ArrayTypeAnnotation" | "TSArrayType" => {
+            Type::Object { shape_id: Some("BuiltInArray".to_string()) }
+        }
         "BooleanLiteralTypeAnnotation"
         | "BooleanTypeAnnotation"
         | "NullLiteralTypeAnnotation"
@@ -6791,13 +6525,13 @@ fn lower_type_annotation(val: &serde_json::Value, builder: &mut HirBuilder) -> T
 /// and the component scope. These are "free variables" that become the function's `context`.
 fn gather_captured_context(
     scope_info: &ScopeInfo,
-    function_scope: react_compiler_ast::scope::ScopeId,
-    component_scope: react_compiler_ast::scope::ScopeId,
+    function_scope: crate::react_compiler_ast::scope::ScopeId,
+    component_scope: crate::react_compiler_ast::scope::ScopeId,
     func_start: u32,
     func_end: u32,
     identifier_locs: &IdentifierLocIndex,
     ref_node_ids_override: Option<&FxIndexSet<u32>>,
-) -> FxIndexMap<react_compiler_ast::scope::BindingId, Option<SourceLocation>> {
+) -> FxIndexMap<crate::react_compiler_ast::scope::BindingId, Option<SourceLocation>> {
     let parent_scope = scope_info.scopes[function_scope.0 as usize].parent;
     let pure_scopes = match parent_scope {
         Some(parent) => capture_scopes(scope_info, parent, component_scope),
@@ -6809,7 +6543,7 @@ fn gather_captured_context(
     // ref_node_id_to_binding iteration order, matching the behavior the TS compiler
     // gets from Babel's position-ordered traversal.
     let mut captured: rustc_hash::FxHashMap<
-        react_compiler_ast::scope::BindingId,
+        crate::react_compiler_ast::scope::BindingId,
         (u32, Option<SourceLocation>), // (min_position, loc)
     > = rustc_hash::FxHashMap::default();
 
@@ -6888,17 +6622,14 @@ fn gather_captured_context(
     let mut sorted: Vec<_> = captured.into_iter().collect();
     sorted.sort_by_key(|(_, (pos, _))| *pos);
 
-    sorted
-        .into_iter()
-        .map(|(bid, (_, loc))| (bid, loc))
-        .collect()
+    sorted.into_iter().map(|(bid, (_, loc))| (bid, loc)).collect()
 }
 
 fn capture_scopes(
     scope_info: &ScopeInfo,
-    from: react_compiler_ast::scope::ScopeId,
-    to: react_compiler_ast::scope::ScopeId,
-) -> FxIndexSet<react_compiler_ast::scope::ScopeId> {
+    from: crate::react_compiler_ast::scope::ScopeId,
+    to: crate::react_compiler_ast::scope::ScopeId,
+) -> FxIndexSet<crate::react_compiler_ast::scope::ScopeId> {
     let mut result = FxIndexSet::default();
     let mut current = Some(from);
     while let Some(scope_id) = current {
@@ -6923,13 +6654,13 @@ pub enum AssignmentStyle {
 /// Collect locations of fbt:enum, fbt:plural, fbt:pronoun sub-tags
 /// within the children of an fbt/fbs JSX element.
 fn collect_fbt_sub_tags(
-    children: &[react_compiler_ast::jsx::JSXChild],
+    children: &[crate::react_compiler_ast::jsx::JSXChild],
     tag_name: &str,
     enum_locs: &mut Vec<Option<SourceLocation>>,
     plural_locs: &mut Vec<Option<SourceLocation>>,
     pronoun_locs: &mut Vec<Option<SourceLocation>>,
 ) {
-    use react_compiler_ast::jsx::JSXChild;
+    use crate::react_compiler_ast::jsx::JSXChild;
     for child in children {
         match child {
             JSXChild::JSXElement(el) => {
@@ -6951,8 +6682,9 @@ fn collect_fbt_sub_tags(
                 );
             }
             JSXChild::JSXExpressionContainer(container) => {
-                if let react_compiler_ast::jsx::JSXExpressionContainerExpr::Expression(expr) =
-                    &container.expression
+                if let crate::react_compiler_ast::jsx::JSXExpressionContainerExpr::Expression(
+                    expr,
+                ) = &container.expression
                 {
                     collect_fbt_sub_tags_from_expr(
                         expr,
@@ -6969,13 +6701,13 @@ fn collect_fbt_sub_tags(
 }
 
 fn collect_fbt_sub_tags_from_element(
-    el: &react_compiler_ast::jsx::JSXElement,
+    el: &crate::react_compiler_ast::jsx::JSXElement,
     tag_name: &str,
     enum_locs: &mut Vec<Option<SourceLocation>>,
     plural_locs: &mut Vec<Option<SourceLocation>>,
     pronoun_locs: &mut Vec<Option<SourceLocation>>,
 ) {
-    use react_compiler_ast::jsx::JSXElementName;
+    use crate::react_compiler_ast::jsx::JSXElementName;
     if let JSXElementName::JSXNamespacedName(ns) = &el.opening_element.name {
         if ns.namespace.name == tag_name {
             let loc = convert_opt_loc(&ns.base.loc);
@@ -6990,14 +6722,15 @@ fn collect_fbt_sub_tags_from_element(
     collect_fbt_sub_tags(&el.children, tag_name, enum_locs, plural_locs, pronoun_locs);
     // Also traverse JSX attributes (matching TS expr.traverse which visits all nodes)
     for attr in &el.opening_element.attributes {
-        if let react_compiler_ast::jsx::JSXAttributeItem::JSXAttribute(a) = attr {
+        if let crate::react_compiler_ast::jsx::JSXAttributeItem::JSXAttribute(a) = attr {
             if let Some(val) = &a.value {
-                if let react_compiler_ast::jsx::JSXAttributeValue::JSXExpressionContainer(
+                if let crate::react_compiler_ast::jsx::JSXAttributeValue::JSXExpressionContainer(
                     container,
                 ) = val
                 {
-                    if let react_compiler_ast::jsx::JSXExpressionContainerExpr::Expression(expr) =
-                        &container.expression
+                    if let crate::react_compiler_ast::jsx::JSXExpressionContainerExpr::Expression(
+                        expr,
+                    ) = &container.expression
                     {
                         collect_fbt_sub_tags_from_expr(
                             expr,
@@ -7007,7 +6740,10 @@ fn collect_fbt_sub_tags_from_element(
                             pronoun_locs,
                         );
                     }
-                } else if let react_compiler_ast::jsx::JSXAttributeValue::JSXElement(nested) = val {
+                } else if let crate::react_compiler_ast::jsx::JSXAttributeValue::JSXElement(
+                    nested,
+                ) = val
+                {
                     collect_fbt_sub_tags_from_element(
                         nested,
                         tag_name,
@@ -7022,25 +6758,19 @@ fn collect_fbt_sub_tags_from_element(
 }
 
 fn collect_fbt_sub_tags_from_expr(
-    expr: &react_compiler_ast::expressions::Expression,
+    expr: &crate::react_compiler_ast::expressions::Expression,
     tag_name: &str,
     enum_locs: &mut Vec<Option<SourceLocation>>,
     plural_locs: &mut Vec<Option<SourceLocation>>,
     pronoun_locs: &mut Vec<Option<SourceLocation>>,
 ) {
-    use react_compiler_ast::expressions::Expression;
+    use crate::react_compiler_ast::expressions::Expression;
     match expr {
         Expression::JSXElement(el) => {
             collect_fbt_sub_tags_from_element(el, tag_name, enum_locs, plural_locs, pronoun_locs);
         }
         Expression::JSXFragment(frag) => {
-            collect_fbt_sub_tags(
-                &frag.children,
-                tag_name,
-                enum_locs,
-                plural_locs,
-                pronoun_locs,
-            );
+            collect_fbt_sub_tags(&frag.children, tag_name, enum_locs, plural_locs, pronoun_locs);
         }
         Expression::ConditionalExpression(cond) => {
             collect_fbt_sub_tags_from_expr(
@@ -7084,7 +6814,7 @@ fn collect_fbt_sub_tags_from_expr(
             );
         }
         Expression::ArrowFunctionExpression(arrow) => match arrow.body.as_ref() {
-            react_compiler_ast::expressions::ArrowFunctionBody::Expression(body_expr) => {
+            crate::react_compiler_ast::expressions::ArrowFunctionBody::Expression(body_expr) => {
                 collect_fbt_sub_tags_from_expr(
                     body_expr,
                     tag_name,
@@ -7093,7 +6823,7 @@ fn collect_fbt_sub_tags_from_expr(
                     pronoun_locs,
                 );
             }
-            react_compiler_ast::expressions::ArrowFunctionBody::BlockStatement(block) => {
+            crate::react_compiler_ast::expressions::ArrowFunctionBody::BlockStatement(block) => {
                 collect_fbt_sub_tags_from_stmts(
                     &block.body,
                     tag_name,
@@ -7113,19 +6843,20 @@ fn collect_fbt_sub_tags_from_expr(
 }
 
 fn collect_fbt_sub_tags_from_stmts(
-    stmts: &[react_compiler_ast::statements::Statement],
+    stmts: &[crate::react_compiler_ast::statements::Statement],
     tag_name: &str,
     enum_locs: &mut Vec<Option<SourceLocation>>,
     plural_locs: &mut Vec<Option<SourceLocation>>,
     pronoun_locs: &mut Vec<Option<SourceLocation>>,
 ) {
     for stmt in stmts {
-        if let react_compiler_ast::statements::Statement::ReturnStatement(ret) = stmt {
+        if let crate::react_compiler_ast::statements::Statement::ReturnStatement(ret) = stmt {
             if let Some(arg) = &ret.argument {
                 collect_fbt_sub_tags_from_expr(arg, tag_name, enum_locs, plural_locs, pronoun_locs);
             }
-        } else if let react_compiler_ast::statements::Statement::ExpressionStatement(expr_stmt) =
-            stmt
+        } else if let crate::react_compiler_ast::statements::Statement::ExpressionStatement(
+            expr_stmt,
+        ) = stmt
         {
             collect_fbt_sub_tags_from_expr(
                 &expr_stmt.expression,
@@ -7154,10 +6885,10 @@ fn collect_identifier_node_ids_from_body(body: &FunctionBody) -> FxIndexSet<u32>
 }
 
 fn collect_identifier_node_ids_from_stmt(
-    stmt: &react_compiler_ast::statements::Statement,
+    stmt: &crate::react_compiler_ast::statements::Statement,
     positions: &mut FxIndexSet<u32>,
 ) {
-    use react_compiler_ast::statements::Statement;
+    use crate::react_compiler_ast::statements::Statement;
     match stmt {
         Statement::ExpressionStatement(s) => {
             collect_identifier_node_ids_from_expr(&s.expression, positions)
@@ -7194,10 +6925,10 @@ fn collect_identifier_node_ids_from_stmt(
 }
 
 fn collect_identifier_node_ids_from_expr(
-    expr: &react_compiler_ast::expressions::Expression,
+    expr: &crate::react_compiler_ast::expressions::Expression,
     positions: &mut FxIndexSet<u32>,
 ) {
-    use react_compiler_ast::expressions::Expression;
+    use crate::react_compiler_ast::expressions::Expression;
     match expr {
         Expression::Identifier(id) => {
             if let Some(nid) = id.base.node_id {
@@ -7253,17 +6984,17 @@ fn collect_identifier_node_ids_from_expr(
             collect_identifier_node_ids_from_expr(&e.expression, positions);
         }
         Expression::ArrowFunctionExpression(arrow) => match arrow.body.as_ref() {
-            react_compiler_ast::expressions::ArrowFunctionBody::BlockStatement(block) => {
+            crate::react_compiler_ast::expressions::ArrowFunctionBody::BlockStatement(block) => {
                 for stmt in &block.body {
                     collect_identifier_node_ids_from_stmt(stmt, positions);
                 }
             }
-            react_compiler_ast::expressions::ArrowFunctionBody::Expression(e) => {
+            crate::react_compiler_ast::expressions::ArrowFunctionBody::Expression(e) => {
                 collect_identifier_node_ids_from_expr(e, positions);
             }
         },
         Expression::JSXElement(el) => {
-            if let react_compiler_ast::jsx::JSXElementName::JSXIdentifier(id) =
+            if let crate::react_compiler_ast::jsx::JSXElementName::JSXIdentifier(id) =
                 &el.opening_element.name
             {
                 if let Some(nid) = id.base.node_id {
@@ -7272,11 +7003,11 @@ fn collect_identifier_node_ids_from_expr(
             }
             for attr in &el.opening_element.attributes {
                 match attr {
-                    react_compiler_ast::jsx::JSXAttributeItem::JSXAttribute(a) => {
+                    crate::react_compiler_ast::jsx::JSXAttributeItem::JSXAttribute(a) => {
                         if let Some(val) = &a.value {
                             match val {
-                                react_compiler_ast::jsx::JSXAttributeValue::JSXExpressionContainer(c) => {
-                                    if let react_compiler_ast::jsx::JSXExpressionContainerExpr::Expression(e) = &c.expression {
+                                crate::react_compiler_ast::jsx::JSXAttributeValue::JSXExpressionContainer(c) => {
+                                    if let crate::react_compiler_ast::jsx::JSXExpressionContainerExpr::Expression(e) = &c.expression {
                                         collect_identifier_node_ids_from_expr(e, positions);
                                     }
                                 }
@@ -7284,27 +7015,27 @@ fn collect_identifier_node_ids_from_expr(
                             }
                         }
                     }
-                    react_compiler_ast::jsx::JSXAttributeItem::JSXSpreadAttribute(a) => {
+                    crate::react_compiler_ast::jsx::JSXAttributeItem::JSXSpreadAttribute(a) => {
                         collect_identifier_node_ids_from_expr(&a.argument, positions);
                     }
                 }
             }
             for child in &el.children {
                 match child {
-                    react_compiler_ast::jsx::JSXChild::JSXExpressionContainer(c) => {
-                        if let react_compiler_ast::jsx::JSXExpressionContainerExpr::Expression(e) =
+                    crate::react_compiler_ast::jsx::JSXChild::JSXExpressionContainer(c) => {
+                        if let crate::react_compiler_ast::jsx::JSXExpressionContainerExpr::Expression(e) =
                             &c.expression
                         {
                             collect_identifier_node_ids_from_expr(e, positions);
                         }
                     }
-                    react_compiler_ast::jsx::JSXChild::JSXElement(child_el) => {
+                    crate::react_compiler_ast::jsx::JSXChild::JSXElement(child_el) => {
                         collect_identifier_node_ids_from_expr(
                             &Expression::JSXElement(child_el.clone()),
                             positions,
                         );
                     }
-                    react_compiler_ast::jsx::JSXChild::JSXSpreadChild(s) => {
+                    crate::react_compiler_ast::jsx::JSXChild::JSXSpreadChild(s) => {
                         collect_identifier_node_ids_from_expr(&s.expression, positions);
                     }
                     _ => {}
@@ -7314,14 +7045,14 @@ fn collect_identifier_node_ids_from_expr(
         Expression::JSXFragment(frag) => {
             for child in &frag.children {
                 match child {
-                    react_compiler_ast::jsx::JSXChild::JSXExpressionContainer(c) => {
-                        if let react_compiler_ast::jsx::JSXExpressionContainerExpr::Expression(e) =
+                    crate::react_compiler_ast::jsx::JSXChild::JSXExpressionContainer(c) => {
+                        if let crate::react_compiler_ast::jsx::JSXExpressionContainerExpr::Expression(e) =
                             &c.expression
                         {
                             collect_identifier_node_ids_from_expr(e, positions);
                         }
                     }
-                    react_compiler_ast::jsx::JSXChild::JSXElement(child_el) => {
+                    crate::react_compiler_ast::jsx::JSXChild::JSXElement(child_el) => {
                         collect_identifier_node_ids_from_expr(
                             &Expression::JSXElement(child_el.clone()),
                             positions,
@@ -7341,12 +7072,12 @@ fn collect_identifier_node_ids_from_expr(
         Expression::ObjectExpression(obj) => {
             for prop in &obj.properties {
                 match prop {
-                    react_compiler_ast::expressions::ObjectExpressionProperty::ObjectProperty(
+                    crate::react_compiler_ast::expressions::ObjectExpressionProperty::ObjectProperty(
                         p,
                     ) => {
                         collect_identifier_node_ids_from_expr(&p.value, positions);
                     }
-                    react_compiler_ast::expressions::ObjectExpressionProperty::SpreadElement(s) => {
+                    crate::react_compiler_ast::expressions::ObjectExpressionProperty::SpreadElement(s) => {
                         collect_identifier_node_ids_from_expr(&s.argument, positions);
                     }
                     _ => {}

@@ -183,16 +183,13 @@ impl CompilerDiagnostic {
 
     /// Create a diagnostic from a CompilerErrorDetail.
     pub fn from_detail(detail: CompilerErrorDetail) -> Self {
-        Self::new(
-            detail.category,
-            detail.reason.clone(),
-            detail.description.clone(),
+        Self::new(detail.category, detail.reason.clone(), detail.description.clone()).with_detail(
+            CompilerDiagnosticDetail::Error {
+                loc: detail.loc,
+                message: Some(detail.reason),
+                identifier_name: None,
+            },
         )
-        .with_detail(CompilerDiagnosticDetail::Error {
-            loc: detail.loc,
-            message: Some(detail.reason),
-            identifier_name: None,
-        })
     }
 
     pub fn primary_location(&self) -> Option<&SourceLocation> {
@@ -215,13 +212,7 @@ pub struct CompilerErrorDetail {
 
 impl CompilerErrorDetail {
     pub fn new(category: ErrorCategory, reason: impl Into<String>) -> Self {
-        Self {
-            category,
-            reason: reason.into(),
-            description: None,
-            loc: None,
-            suggestions: None,
-        }
+        Self { category, reason: reason.into(), description: None, loc: None, suggestions: None }
     }
 
     pub fn with_description(mut self, description: impl Into<String>) -> Self {
@@ -282,30 +273,23 @@ impl CompilerErrorOrDiagnostic {
 
 impl CompilerError {
     pub fn new() -> Self {
-        Self {
-            details: Vec::new(),
-            is_thrown: true,
-        }
+        Self { details: Vec::new(), is_thrown: true }
     }
 
     pub fn push_diagnostic(&mut self, diagnostic: CompilerDiagnostic) {
         if diagnostic.severity() != ErrorSeverity::Off {
-            self.details
-                .push(CompilerErrorOrDiagnostic::Diagnostic(diagnostic));
+            self.details.push(CompilerErrorOrDiagnostic::Diagnostic(diagnostic));
         }
     }
 
     pub fn push_error_detail(&mut self, detail: CompilerErrorDetail) {
         if detail.severity() != ErrorSeverity::Off {
-            self.details
-                .push(CompilerErrorOrDiagnostic::ErrorDetail(detail));
+            self.details.push(CompilerErrorOrDiagnostic::ErrorDetail(detail));
         }
     }
 
     pub fn has_errors(&self) -> bool {
-        self.details
-            .iter()
-            .any(|d| d.severity() == ErrorSeverity::Error)
+        self.details.iter().any(|d| d.severity() == ErrorSeverity::Error)
     }
 
     pub fn has_any_errors(&self) -> bool {

@@ -7,17 +7,17 @@
 
 use rustc_hash::FxHashMap;
 
-use react_compiler_ast::expressions::*;
-use react_compiler_ast::jsx::JSXIdentifier;
-use react_compiler_ast::jsx::JSXOpeningElement;
-use react_compiler_ast::scope::ScopeId;
-use react_compiler_ast::scope::ScopeInfo;
-use react_compiler_ast::statements::FunctionDeclaration;
-use react_compiler_ast::visitor::AstWalker;
-use react_compiler_ast::visitor::Visitor;
-use react_compiler_hir::SourceLocation;
+use crate::react_compiler_ast::expressions::*;
+use crate::react_compiler_ast::jsx::JSXIdentifier;
+use crate::react_compiler_ast::jsx::JSXOpeningElement;
+use crate::react_compiler_ast::scope::ScopeId;
+use crate::react_compiler_ast::scope::ScopeInfo;
+use crate::react_compiler_ast::statements::FunctionDeclaration;
+use crate::react_compiler_ast::visitor::AstWalker;
+use crate::react_compiler_ast::visitor::Visitor;
+use crate::react_compiler_hir::SourceLocation;
 
-use crate::FunctionNode;
+use crate::react_compiler_lowering::FunctionNode;
 
 /// Source location and whether the identifier is a JSXIdentifier.
 pub struct IdentifierLocEntry {
@@ -53,14 +53,14 @@ struct IdentifierLocVisitor {
     current_opening_element_loc: Option<SourceLocation>,
 }
 
-fn convert_loc(loc: &react_compiler_ast::common::SourceLocation) -> SourceLocation {
+fn convert_loc(loc: &crate::react_compiler_ast::common::SourceLocation) -> SourceLocation {
     SourceLocation {
-        start: react_compiler_hir::Position {
+        start: crate::react_compiler_hir::Position {
             line: loc.start.line,
             column: loc.start.column,
             index: loc.start.index,
         },
-        end: react_compiler_hir::Position {
+        end: crate::react_compiler_hir::Position {
             line: loc.end.line,
             column: loc.end.column,
             index: loc.end.index,
@@ -148,15 +148,12 @@ impl IdentifierLocVisitor {
         let start = loc.get("start")?.as_object()?;
         let end = loc.get("end")?.as_object()?;
         Some(SourceLocation {
-            start: react_compiler_hir::Position {
+            start: crate::react_compiler_hir::Position {
                 line: start.get("line")?.as_u64()? as u32,
                 column: start.get("column")?.as_u64()? as u32,
-                index: start
-                    .get("index")
-                    .and_then(|i| i.as_u64())
-                    .map(|i| i as u32),
+                index: start.get("index").and_then(|i| i.as_u64()).map(|i| i as u32),
             },
-            end: react_compiler_hir::Position {
+            end: crate::react_compiler_hir::Position {
                 line: end.get("line")?.as_u64()? as u32,
                 column: end.get("column")?.as_u64()? as u32,
                 index: end.get("index").and_then(|i| i.as_u64()).map(|i| i as u32),
@@ -229,7 +226,7 @@ impl<'ast> Visitor<'ast> for IdentifierLocVisitor {
 
     fn enter_class_declaration(
         &mut self,
-        node: &'ast react_compiler_ast::statements::ClassDeclaration,
+        node: &'ast crate::react_compiler_ast::statements::ClassDeclaration,
         _scope_stack: &[ScopeId],
     ) {
         if let Some(id) = &node.id {
@@ -245,7 +242,7 @@ impl<'ast> Visitor<'ast> for IdentifierLocVisitor {
 
     fn enter_class_expression(
         &mut self,
-        node: &'ast react_compiler_ast::expressions::ClassExpression,
+        node: &'ast crate::react_compiler_ast::expressions::ClassExpression,
         _scope_stack: &[ScopeId],
     ) {
         if let Some(id) = &node.id {
@@ -263,14 +260,11 @@ pub fn build_identifier_loc_index(
     func: &FunctionNode<'_>,
     scope_info: &ScopeInfo,
 ) -> IdentifierLocIndex {
-    let func_scope = scope_info
-        .resolve_scope_for_node(func.node_id())
-        .unwrap_or(scope_info.program_scope);
+    let func_scope =
+        scope_info.resolve_scope_for_node(func.node_id()).unwrap_or(scope_info.program_scope);
 
-    let mut visitor = IdentifierLocVisitor {
-        index: FxHashMap::default(),
-        current_opening_element_loc: None,
-    };
+    let mut visitor =
+        IdentifierLocVisitor { index: FxHashMap::default(), current_opening_element_loc: None };
     let mut walker = AstWalker::with_initial_scope(scope_info, func_scope);
 
     // Visit the top-level function's own name identifier (if any),

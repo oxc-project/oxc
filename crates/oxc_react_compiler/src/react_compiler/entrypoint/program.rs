@@ -17,32 +17,32 @@
 use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
 
-use react_compiler_ast::File;
-use react_compiler_ast::Program;
-use react_compiler_ast::common::BaseNode;
-use react_compiler_ast::declarations::Declaration;
-use react_compiler_ast::declarations::ExportDefaultDecl;
-use react_compiler_ast::declarations::ExportDefaultDeclaration;
-use react_compiler_ast::declarations::ImportSpecifier;
-use react_compiler_ast::declarations::ModuleExportName;
-use react_compiler_ast::expressions::*;
-use react_compiler_ast::patterns::PatternLike;
-use react_compiler_ast::scope::ScopeId;
-use react_compiler_ast::scope::ScopeInfo;
-use react_compiler_ast::statements::*;
-use react_compiler_ast::visitor::AstWalker;
-use react_compiler_ast::visitor::MutVisitor;
-use react_compiler_ast::visitor::VisitResult;
-use react_compiler_ast::visitor::Visitor;
-use react_compiler_ast::visitor::walk_program_mut;
-use react_compiler_diagnostics::CompilerError;
-use react_compiler_diagnostics::CompilerErrorDetail;
-use react_compiler_diagnostics::CompilerErrorOrDiagnostic;
-use react_compiler_diagnostics::ErrorCategory;
-use react_compiler_diagnostics::SourceLocation;
-use react_compiler_hir::ReactFunctionType;
-use react_compiler_hir::environment_config::EnvironmentConfig;
-use react_compiler_lowering::FunctionNode;
+use crate::react_compiler_ast::File;
+use crate::react_compiler_ast::Program;
+use crate::react_compiler_ast::common::BaseNode;
+use crate::react_compiler_ast::declarations::Declaration;
+use crate::react_compiler_ast::declarations::ExportDefaultDecl;
+use crate::react_compiler_ast::declarations::ExportDefaultDeclaration;
+use crate::react_compiler_ast::declarations::ImportSpecifier;
+use crate::react_compiler_ast::declarations::ModuleExportName;
+use crate::react_compiler_ast::expressions::*;
+use crate::react_compiler_ast::patterns::PatternLike;
+use crate::react_compiler_ast::scope::ScopeId;
+use crate::react_compiler_ast::scope::ScopeInfo;
+use crate::react_compiler_ast::statements::*;
+use crate::react_compiler_ast::visitor::AstWalker;
+use crate::react_compiler_ast::visitor::MutVisitor;
+use crate::react_compiler_ast::visitor::VisitResult;
+use crate::react_compiler_ast::visitor::Visitor;
+use crate::react_compiler_ast::visitor::walk_program_mut;
+use crate::react_compiler_diagnostics::CompilerError;
+use crate::react_compiler_diagnostics::CompilerErrorDetail;
+use crate::react_compiler_diagnostics::CompilerErrorOrDiagnostic;
+use crate::react_compiler_diagnostics::ErrorCategory;
+use crate::react_compiler_diagnostics::SourceLocation;
+use crate::react_compiler_hir::ReactFunctionType;
+use crate::react_compiler_hir::environment_config::EnvironmentConfig;
+use crate::react_compiler_lowering::FunctionNode;
 
 use super::compile_result::BindingRenameInfo;
 use super::compile_result::CodegenFunction;
@@ -96,7 +96,7 @@ struct CompileSource<'a> {
     fn_name: Option<String>,
     fn_loc: Option<SourceLocation>,
     /// Original AST source location (with index and filename) for logger events.
-    fn_ast_loc: Option<react_compiler_ast::common::SourceLocation>,
+    fn_ast_loc: Option<crate::react_compiler_ast::common::SourceLocation>,
     fn_start: Option<u32>,
     fn_end: Option<u32>,
     fn_node_id: Option<u32>,
@@ -125,9 +125,7 @@ fn try_find_directive_enabling_memoization<'a>(
     opts: &PluginOptions,
 ) -> Result<Option<&'a Directive>, CompilerError> {
     // Check standard opt-in directives
-    let opt_in = directives
-        .iter()
-        .find(|d| OPT_IN_DIRECTIVES.contains(&d.value.value.as_str()));
+    let opt_in = directives.iter().find(|d| OPT_IN_DIRECTIVES.contains(&d.value.value.as_str()));
     if let Some(directive) = opt_in {
         return Ok(Some(directive));
     }
@@ -146,13 +144,9 @@ fn find_directive_disabling_memoization<'a>(
     opts: &PluginOptions,
 ) -> Option<&'a Directive> {
     if let Some(ref custom_directives) = opts.custom_opt_out_directives {
-        directives
-            .iter()
-            .find(|d| custom_directives.contains(&d.value.value))
+        directives.iter().find(|d| custom_directives.contains(&d.value.value))
     } else {
-        directives
-            .iter()
-            .find(|d| OPT_OUT_DIRECTIVES.contains(&d.value.value.as_str()))
+        directives.iter().find(|d| OPT_OUT_DIRECTIVES.contains(&d.value.value.as_str()))
     }
 }
 
@@ -208,10 +202,7 @@ fn find_directives_dynamic_gating<'a>(
             ErrorCategory::Gating,
             "Multiple dynamic gating directives found",
         )
-        .with_description(format!(
-            "Expected a single directive but found [{}]",
-            names.join(", ")
-        ));
+        .with_description(format!("Expected a single directive but found [{}]", names.join(", ")));
         detail.loc = matches[0].0.base.loc.as_ref().map(convert_loc);
         err.push_error_detail(detail);
         return Err(err);
@@ -318,16 +309,12 @@ fn is_hook_name(s: &str) -> bool {
         && bytes[0] == b'u'
         && bytes[1] == b's'
         && bytes[2] == b'e'
-        && bytes
-            .get(3)
-            .map_or(false, |c| c.is_ascii_uppercase() || c.is_ascii_digit())
+        && bytes.get(3).map_or(false, |c| c.is_ascii_uppercase() || c.is_ascii_digit())
 }
 
 /// Check if a name looks like a React component (starts with uppercase letter).
 fn is_component_name(name: &str) -> bool {
-    name.chars()
-        .next()
-        .map_or(false, |c| c.is_ascii_uppercase())
+    name.chars().next().map_or(false, |c| c.is_ascii_uppercase())
 }
 
 /// Check if an expression is a hook call (identifier with hook name, or
@@ -345,10 +332,7 @@ fn expr_is_hook(expr: &Expression) -> bool {
             }
             // Object must be a PascalCase identifier
             if let Expression::Identifier(obj) = member.object.as_ref() {
-                obj.name
-                    .chars()
-                    .next()
-                    .map_or(false, |c| c.is_ascii_uppercase())
+                obj.name.chars().next().map_or(false, |c| c.is_ascii_uppercase())
             } else {
                 false
             }
@@ -691,10 +675,9 @@ fn calls_hooks_or_creates_jsx_in_expr(expr: &Expression) -> bool {
         Expression::AssignmentExpression(assign) => {
             calls_hooks_or_creates_jsx_in_expr(&assign.right)
         }
-        Expression::SequenceExpression(seq) => seq
-            .expressions
-            .iter()
-            .any(|e| calls_hooks_or_creates_jsx_in_expr(e)),
+        Expression::SequenceExpression(seq) => {
+            seq.expressions.iter().any(|e| calls_hooks_or_creates_jsx_in_expr(e))
+        }
         Expression::UnaryExpression(unary) => calls_hooks_or_creates_jsx_in_expr(&unary.argument),
         Expression::UpdateExpression(update) => {
             calls_hooks_or_creates_jsx_in_expr(&update.argument)
@@ -717,20 +700,15 @@ fn calls_hooks_or_creates_jsx_in_expr(expr: &Expression) -> bool {
             .map_or(false, |arg| calls_hooks_or_creates_jsx_in_expr(arg)),
         Expression::TaggedTemplateExpression(tagged) => {
             calls_hooks_or_creates_jsx_in_expr(&tagged.tag)
-                || tagged
-                    .quasi
-                    .expressions
-                    .iter()
-                    .any(|e| calls_hooks_or_creates_jsx_in_expr(e))
+                || tagged.quasi.expressions.iter().any(|e| calls_hooks_or_creates_jsx_in_expr(e))
         }
-        Expression::TemplateLiteral(tl) => tl
-            .expressions
+        Expression::TemplateLiteral(tl) => {
+            tl.expressions.iter().any(|e| calls_hooks_or_creates_jsx_in_expr(e))
+        }
+        Expression::ArrayExpression(arr) => arr
+            .elements
             .iter()
-            .any(|e| calls_hooks_or_creates_jsx_in_expr(e)),
-        Expression::ArrayExpression(arr) => arr.elements.iter().any(|e| {
-            e.as_ref()
-                .map_or(false, |e| calls_hooks_or_creates_jsx_in_expr(e))
-        }),
+            .any(|e| e.as_ref().map_or(false, |e| calls_hooks_or_creates_jsx_in_expr(e))),
         Expression::ObjectExpression(obj) => obj.properties.iter().any(|prop| match prop {
             ObjectExpressionProperty::ObjectProperty(p) => {
                 calls_hooks_or_creates_jsx_in_expr(&p.value)
@@ -789,11 +767,9 @@ fn calls_hooks_or_creates_jsx_in_expr(expr: &Expression) -> bool {
 /// Babel's traverse skips ArrowFunctionExpression, FunctionExpression, FunctionDeclaration
 /// but recurses into class methods).
 fn calls_hooks_or_creates_jsx_in_class_body(
-    body: &react_compiler_ast::expressions::ClassBody,
+    body: &crate::react_compiler_ast::expressions::ClassBody,
 ) -> bool {
-    body.body
-        .iter()
-        .any(|member| calls_hooks_or_creates_jsx_in_json(&member.parse_value()))
+    body.body.iter().any(|member| calls_hooks_or_creates_jsx_in_json(&member.parse_value()))
 }
 
 fn calls_hooks_or_creates_jsx_in_json(value: &serde_json::Value) -> bool {
@@ -840,10 +816,7 @@ fn json_expr_is_hook(callee: &serde_json::Value) -> bool {
                 }
             } else if node_type == "MemberExpression" {
                 // Check for PascalCase.useHook pattern (non-computed)
-                let computed = obj
-                    .get("computed")
-                    .and_then(|v| v.as_bool())
-                    .unwrap_or(false);
+                let computed = obj.get("computed").and_then(|v| v.as_bool()).unwrap_or(false);
                 if computed {
                     return false;
                 }
@@ -905,17 +878,17 @@ fn calls_hooks_or_creates_jsx_in_pattern(pattern: &PatternLike) -> bool {
                 || calls_hooks_or_creates_jsx_in_pattern(&assign.left)
         }
         PatternLike::ObjectPattern(obj) => obj.properties.iter().any(|prop| match prop {
-            react_compiler_ast::patterns::ObjectPatternProperty::ObjectProperty(p) => {
+            crate::react_compiler_ast::patterns::ObjectPatternProperty::ObjectProperty(p) => {
                 calls_hooks_or_creates_jsx_in_pattern(&p.value)
             }
-            react_compiler_ast::patterns::ObjectPatternProperty::RestElement(rest) => {
+            crate::react_compiler_ast::patterns::ObjectPatternProperty::RestElement(rest) => {
                 calls_hooks_or_creates_jsx_in_pattern(&rest.argument)
             }
         }),
-        PatternLike::ArrayPattern(arr) => arr.elements.iter().any(|elem| {
-            elem.as_ref()
-                .map_or(false, |e| calls_hooks_or_creates_jsx_in_pattern(e))
-        }),
+        PatternLike::ArrayPattern(arr) => arr
+            .elements
+            .iter()
+            .any(|elem| elem.as_ref().map_or(false, |e| calls_hooks_or_creates_jsx_in_pattern(e))),
         PatternLike::RestElement(rest) => calls_hooks_or_creates_jsx_in_pattern(&rest.argument),
         PatternLike::Identifier(_)
         | PatternLike::MemberExpression(_)
@@ -1124,11 +1097,7 @@ fn get_component_or_hook_like(
             let is_component = calls_hooks_or_creates_jsx(params, body)
                 && is_valid_component_params(params)
                 && !returns_non_node_fn(params, body);
-            return if is_component {
-                Some(ReactFunctionType::Component)
-            } else {
-                None
-            };
+            return if is_component { Some(ReactFunctionType::Component) } else { None };
         } else if is_hook_name(fn_name) {
             // Hooks have hook invocations or JSX, but can take any # of arguments
             return if calls_hooks_or_creates_jsx(params, body) {
@@ -1185,14 +1154,14 @@ fn get_callee_name_if_react_api(callee: &Expression) -> Option<&str> {
 // -----------------------------------------------------------------------
 
 /// Convert an AST SourceLocation to a diagnostics SourceLocation
-fn convert_loc(loc: &react_compiler_ast::common::SourceLocation) -> SourceLocation {
+fn convert_loc(loc: &crate::react_compiler_ast::common::SourceLocation) -> SourceLocation {
     SourceLocation {
-        start: react_compiler_diagnostics::Position {
+        start: crate::react_compiler_diagnostics::Position {
             line: loc.start.line,
             column: loc.start.column,
             index: loc.start.index,
         },
-        end: react_compiler_diagnostics::Position {
+        end: crate::react_compiler_diagnostics::Position {
             line: loc.end.line,
             column: loc.end.column,
             index: loc.end.index,
@@ -1210,14 +1179,14 @@ fn base_node_loc(base: &BaseNode) -> Option<SourceLocation> {
 
 /// Convert CompilerDiagnostic details into serializable CompilerErrorItemInfo items.
 fn diagnostic_details_to_items(
-    d: &react_compiler_diagnostics::CompilerDiagnostic,
+    d: &crate::react_compiler_diagnostics::CompilerDiagnostic,
     filename: Option<&str>,
 ) -> Option<Vec<CompilerErrorItemInfo>> {
     let items: Vec<CompilerErrorItemInfo> = d
         .details
         .iter()
         .map(|item| match item {
-            react_compiler_diagnostics::CompilerDiagnosticDetail::Error {
+            crate::react_compiler_diagnostics::CompilerDiagnosticDetail::Error {
                 loc,
                 message,
                 identifier_name,
@@ -1230,7 +1199,7 @@ fn diagnostic_details_to_items(
                 }),
                 message: message.clone(),
             },
-            react_compiler_diagnostics::CompilerDiagnosticDetail::Hint { message } => {
+            crate::react_compiler_diagnostics::CompilerDiagnosticDetail::Hint { message } => {
                 CompilerErrorItemInfo {
                     kind: "hint".to_string(),
                     loc: None,
@@ -1244,7 +1213,7 @@ fn diagnostic_details_to_items(
 
 /// Convert an optional AST SourceLocation to a LoggerSourceLocation with filename.
 fn to_logger_loc(
-    ast_loc: Option<&react_compiler_ast::common::SourceLocation>,
+    ast_loc: Option<&crate::react_compiler_ast::common::SourceLocation>,
     filename: Option<&str>,
 ) -> Option<LoggerSourceLocation> {
     ast_loc.map(|loc| LoggerSourceLocation {
@@ -1253,11 +1222,7 @@ fn to_logger_loc(
             column: loc.start.column,
             index: loc.start.index,
         },
-        end: LoggerPosition {
-            line: loc.end.line,
-            column: loc.end.column,
-            index: loc.end.index,
-        },
+        end: LoggerPosition { line: loc.end.line, column: loc.end.column, index: loc.end.index },
         filename: filename.map(|s| s.to_string()),
         identifier_name: loc.identifier_name.clone(),
     })
@@ -1271,11 +1236,7 @@ fn diag_loc_to_logger_loc(loc: &SourceLocation, filename: Option<&str>) -> Logge
             column: loc.start.column,
             index: loc.start.index,
         },
-        end: LoggerPosition {
-            line: loc.end.line,
-            column: loc.end.column,
-            index: loc.end.index,
-        },
+        end: LoggerPosition { line: loc.end.line, column: loc.end.column, index: loc.end.index },
         filename: filename.map(|s| s.to_string()),
         identifier_name: None,
     }
@@ -1283,23 +1244,23 @@ fn diag_loc_to_logger_loc(loc: &SourceLocation, filename: Option<&str>) -> Logge
 
 /// Convert diagnostic suggestions to logger suggestion infos.
 fn suggestions_to_logger(
-    suggestions: &Option<Vec<react_compiler_diagnostics::CompilerSuggestion>>,
+    suggestions: &Option<Vec<crate::react_compiler_diagnostics::CompilerSuggestion>>,
 ) -> Option<Vec<LoggerSuggestionInfo>> {
     suggestions.as_ref().map(|suggestions| {
         suggestions
             .iter()
             .map(|s| {
                 let op = match s.op {
-                    react_compiler_diagnostics::CompilerSuggestionOperation::InsertBefore => {
+                    crate::react_compiler_diagnostics::CompilerSuggestionOperation::InsertBefore => {
                         LoggerSuggestionOp::InsertBefore
                     }
-                    react_compiler_diagnostics::CompilerSuggestionOperation::InsertAfter => {
+                    crate::react_compiler_diagnostics::CompilerSuggestionOperation::InsertAfter => {
                         LoggerSuggestionOp::InsertAfter
                     }
-                    react_compiler_diagnostics::CompilerSuggestionOperation::Remove => {
+                    crate::react_compiler_diagnostics::CompilerSuggestionOperation::Remove => {
                         LoggerSuggestionOp::Remove
                     }
-                    react_compiler_diagnostics::CompilerSuggestionOperation::Replace => {
+                    crate::react_compiler_diagnostics::CompilerSuggestionOperation::Replace => {
                         LoggerSuggestionOp::Replace
                     }
                 };
@@ -1317,7 +1278,7 @@ fn suggestions_to_logger(
 /// Log an error as LoggerEvent(s) directly onto the ProgramContext.
 fn log_error(
     err: &CompilerError,
-    fn_ast_loc: Option<&react_compiler_ast::common::SourceLocation>,
+    fn_ast_loc: Option<&crate::react_compiler_ast::common::SourceLocation>,
     context: &mut ProgramContext,
 ) {
     // Use the filename from the AST node's loc (set by parser's sourceFilename option),
@@ -1361,10 +1322,7 @@ fn log_error(
                 severity: format!("{:?}", d.logged_severity()),
                 suggestions: suggestions_to_logger(&d.suggestions),
                 details: None,
-                loc: d
-                    .loc
-                    .as_ref()
-                    .map(|l| diag_loc_to_logger_loc(l, source_filename)),
+                loc: d.loc.as_ref().map(|l| diag_loc_to_logger_loc(l, source_filename)),
             },
         };
         // Use CompileErrorWithLoc when fn_loc is present to match TS field ordering
@@ -1374,10 +1332,7 @@ fn log_error(
                 detail: detail_info,
             });
         } else {
-            context.log_event(LoggerEvent::CompileError {
-                fn_loc: None,
-                detail: detail_info,
-            });
+            context.log_event(LoggerEvent::CompileError { fn_loc: None, detail: detail_info });
         }
     }
 }
@@ -1387,7 +1342,7 @@ fn log_error(
 /// otherwise returns None (error was logged only).
 fn handle_error(
     err: &CompilerError,
-    fn_ast_loc: Option<&react_compiler_ast::common::SourceLocation>,
+    fn_ast_loc: Option<&crate::react_compiler_ast::common::SourceLocation>,
     context: &mut ProgramContext,
 ) -> Option<CompileResult> {
     // Log the error
@@ -1428,13 +1383,12 @@ fn handle_error(
         // shim can use it directly instead of calling formatCompilerError().
         if error_info.raw_message.is_none() {
             if let Some(ref source) = context.code {
-                error_info.formatted_message = Some(
-                    react_compiler_diagnostics::code_frame::format_compiler_error(
+                error_info.formatted_message =
+                    Some(crate::react_compiler_diagnostics::code_frame::format_compiler_error(
                         err,
                         source,
                         source_fn.as_deref(),
-                    ),
-                );
+                    ));
             }
         }
 
@@ -1481,13 +1435,7 @@ fn compiler_error_to_info(err: &CompilerError, filename: Option<&str>) -> Compil
         .map(|d| (d.reason.clone(), d.description.clone()))
         .unwrap_or_else(|| ("Unknown error".to_string(), None));
 
-    CompilerErrorInfo {
-        reason,
-        description,
-        details,
-        raw_message: None,
-        formatted_message: None,
-    }
+    CompilerErrorInfo { reason, description, details, raw_message: None, formatted_message: None }
 }
 
 // -----------------------------------------------------------------------
@@ -1568,10 +1516,8 @@ fn process_fn(
             // (not accumulated via env.record_error) and have all non-Invariant details.
             // Matches TS tryCompileFunction() catch block behavior.
             if err.is_thrown && err.is_all_non_invariant() {
-                let source_filename = source
-                    .fn_ast_loc
-                    .as_ref()
-                    .and_then(|loc| loc.filename.as_deref());
+                let source_filename =
+                    source.fn_ast_loc.as_ref().and_then(|loc| loc.filename.as_deref());
                 context.log_event(LoggerEvent::CompileUnexpectedThrow {
                     fn_loc: to_logger_loc(source.fn_ast_loc.as_ref(), source_filename),
                     data: err.to_string_for_event(),
@@ -1593,10 +1539,8 @@ fn process_fn(
             // Check opt-out
             if !context.opts.ignore_use_no_forget && opt_out.is_some() {
                 let opt_out_value = &opt_out.unwrap().value.value;
-                let source_filename = source
-                    .fn_ast_loc
-                    .as_ref()
-                    .and_then(|loc| loc.filename.as_deref());
+                let source_filename =
+                    source.fn_ast_loc.as_ref().and_then(|loc| loc.filename.as_deref());
                 context.log_event(LoggerEvent::CompileSkip {
                     fn_loc: to_logger_loc(source.fn_ast_loc.as_ref(), source_filename),
                     reason: format!("Skipped due to '{}' directive.", opt_out_value),
@@ -1609,10 +1553,8 @@ fn process_fn(
             }
 
             // Log success with memo stats from CodegenFunction
-            let source_filename = source
-                .fn_ast_loc
-                .as_ref()
-                .and_then(|loc| loc.filename.as_deref());
+            let source_filename =
+                source.fn_ast_loc.as_ref().and_then(|loc| loc.filename.as_deref());
             context.log_event(LoggerEvent::CompileSuccess {
                 fn_loc: to_logger_loc(source.fn_ast_loc.as_ref(), source_filename),
                 fn_name: codegen_fn.id.as_ref().map(|id| id.name.clone()),
@@ -1937,11 +1879,7 @@ impl<'a, 'ast> Visitor<'ast> for FunctionDiscoveryVisitor<'a, 'ast> {
     }
 
     fn leave_call_expression(&mut self, _node: &'ast CallExpression, _scope_stack: &[ScopeId]) {
-        let was_react_api = self
-            .parent_callee_stack
-            .pop()
-            .and_then(|name| name)
-            .is_some();
+        let was_react_api = self.parent_callee_stack.pop().and_then(|name| name).is_some();
         // After a forwardRef/memo call finishes, clear the declarator name.
         // The name is only valid within the call's arguments — if a function
         // inside consumed it via .take(), great; if not, it shouldn't leak
@@ -2008,7 +1946,7 @@ impl<'a, 'ast> Visitor<'ast> for FunctionDiscoveryVisitor<'a, 'ast> {
 
     fn enter_object_method(
         &mut self,
-        _node: &'ast react_compiler_ast::expressions::ObjectMethod,
+        _node: &'ast crate::react_compiler_ast::expressions::ObjectMethod,
         _scope_stack: &[ScopeId],
     ) {
         self.skip_body = false;
@@ -2155,7 +2093,7 @@ fn stmt_references_identifier_at_top_level(stmt: &Statement, name: &str) -> bool
             } else {
                 // export { Name } - check specifiers
                 export.specifiers.iter().any(|s| {
-                    if let react_compiler_ast::declarations::ExportSpecifier::ExportSpecifier(
+                    if let crate::react_compiler_ast::declarations::ExportSpecifier::ExportSpecifier(
                         spec,
                     ) = s
                     {
@@ -2170,9 +2108,7 @@ fn stmt_references_identifier_at_top_level(stmt: &Statement, name: &str) -> bool
             }
         }
         Statement::VariableDeclaration(var_decl) => var_decl.declarations.iter().any(|d| {
-            d.init
-                .as_ref()
-                .map_or(false, |e| expr_references_identifier_at_top_level(e, name))
+            d.init.as_ref().map_or(false, |e| expr_references_identifier_at_top_level(e, name))
         }),
         Statement::ExpressionStatement(expr_stmt) => {
             expr_references_identifier_at_top_level(&expr_stmt.expression, name)
@@ -2201,12 +2137,11 @@ fn raw_node_references_identifier(value: &serde_json::Value, name: &str) -> bool
             {
                 return true;
             }
-            map.values()
-                .any(|v| raw_node_references_identifier(v, name))
+            map.values().any(|v| raw_node_references_identifier(v, name))
         }
-        serde_json::Value::Array(items) => items
-            .iter()
-            .any(|v| raw_node_references_identifier(v, name)),
+        serde_json::Value::Array(items) => {
+            items.iter().any(|v| raw_node_references_identifier(v, name))
+        }
         _ => false,
     }
 }
@@ -2217,10 +2152,7 @@ fn expr_references_identifier_at_top_level(expr: &Expression, name: &str) -> boo
         Expression::Identifier(id) => id.name == name,
         Expression::CallExpression(call) => {
             expr_references_identifier_at_top_level(&call.callee, name)
-                || call
-                    .arguments
-                    .iter()
-                    .any(|a| expr_references_identifier_at_top_level(a, name))
+                || call.arguments.iter().any(|a| expr_references_identifier_at_top_level(a, name))
         }
         Expression::MemberExpression(member) => {
             expr_references_identifier_at_top_level(&member.object, name)
@@ -2657,9 +2589,8 @@ fn apply_compiled_functions(
         }
 
         if let Some(ref gating_config) = compiled.gating {
-            let is_ref_before_decl = compiled
-                .fn_node_id
-                .map_or(false, |nid| referenced_before_decl.contains(&nid));
+            let is_ref_before_decl =
+                compiled.fn_node_id.map_or(false, |nid| referenced_before_decl.contains(&nid));
 
             if is_ref_before_decl && compiled.original_kind == OriginalFnKind::FunctionDeclaration {
                 // Use the hoisted function declaration gating pattern
@@ -2710,16 +2641,12 @@ fn apply_compiled_functions(
     }
 
     // Register the memo cache import and rename useMemoCache references.
-    let needs_memo_import = compiled_fns
-        .iter()
-        .any(|cf| cf.codegen_fn.memo_slots_used > 0);
+    let needs_memo_import = compiled_fns.iter().any(|cf| cf.codegen_fn.memo_slots_used > 0);
     if needs_memo_import {
         let import_spec = context.add_memo_cache_import();
         let local_name = import_spec.name;
-        let mut visitor = RenameIdentifierVisitor {
-            old_name: "useMemoCache",
-            new_name: &local_name,
-        };
+        let mut visitor =
+            RenameIdentifierVisitor { old_name: "useMemoCache", new_name: &local_name };
         walk_program_mut(&mut visitor, program);
     }
 
@@ -2815,10 +2742,7 @@ fn apply_gated_function_conditional(
         }
     }
 
-    let mut visitor = ReplaceWithGatedVisitor {
-        node_id,
-        gating_expression: &gating_expression,
-    };
+    let mut visitor = ReplaceWithGatedVisitor { node_id, gating_expression: &gating_expression };
     walk_program_mut(&mut visitor, program);
 
     // If this was an export default function with a name, insert `export default Name;` after
@@ -3096,7 +3020,7 @@ fn apply_gated_function_hoisted(
 
         if is_rest {
             new_params.push(PatternLike::RestElement(
-                react_compiler_ast::patterns::RestElement {
+                crate::react_compiler_ast::patterns::RestElement {
                     base: BaseNode::typed("RestElement"),
                     argument: Box::new(PatternLike::Identifier(Identifier {
                         base: BaseNode::typed("Identifier"),
@@ -3243,9 +3167,7 @@ fn apply_gated_function_hoisted(
     program.body.insert(fn_idx + 1, dispatcher_fn);
 
     // Insert optimized function before the original
-    program
-        .body
-        .insert(fn_idx, Statement::FunctionDeclaration(compiled_fn_decl));
+    program.body.insert(fn_idx, Statement::FunctionDeclaration(compiled_fn_decl));
 
     // Insert gating result before the optimized function
     program.body.insert(fn_idx, gating_result_stmt);
@@ -3260,10 +3182,7 @@ fn insert_after_fn_recursive(
     new_stmt: Statement,
 ) -> bool {
     // Check this level first
-    if let Some(pos) = stmts
-        .iter()
-        .position(|s| stmt_has_fn_with_node_id(s, node_id))
-    {
+    if let Some(pos) = stmts.iter().position(|s| stmt_has_fn_with_node_id(s, node_id)) {
         stmts.insert(pos + 1, new_stmt);
         return true;
     }
@@ -3360,15 +3279,11 @@ fn insert_after_fn_in_stmt(stmt: &mut Statement, node_id: u32, new_stmt: &Statem
 }
 
 fn insert_after_fn_in_block(
-    block: &mut react_compiler_ast::statements::BlockStatement,
+    block: &mut crate::react_compiler_ast::statements::BlockStatement,
     node_id: u32,
     new_stmt: &Statement,
 ) -> bool {
-    if let Some(pos) = block
-        .body
-        .iter()
-        .position(|s| stmt_has_fn_with_node_id(s, node_id))
-    {
+    if let Some(pos) = block.body.iter().position(|s| stmt_has_fn_with_node_id(s, node_id)) {
         block.body.insert(pos + 1, new_stmt.clone());
         return true;
     }
@@ -3381,21 +3296,21 @@ fn insert_after_fn_in_block(
 }
 
 fn insert_after_fn_in_expr(
-    expr: &mut react_compiler_ast::expressions::Expression,
+    expr: &mut crate::react_compiler_ast::expressions::Expression,
     node_id: u32,
     new_stmt: &Statement,
 ) -> bool {
-    use react_compiler_ast::expressions::Expression;
+    use crate::react_compiler_ast::expressions::Expression;
     match expr {
         Expression::ObjectExpression(obj) => {
             for prop in &mut obj.properties {
                 match prop {
-                    react_compiler_ast::expressions::ObjectExpressionProperty::ObjectMethod(m) => {
+                    crate::react_compiler_ast::expressions::ObjectExpressionProperty::ObjectMethod(m) => {
                         if insert_after_fn_in_block(&mut m.body, node_id, new_stmt) {
                             return true;
                         }
                     }
-                    react_compiler_ast::expressions::ObjectExpressionProperty::ObjectProperty(
+                    crate::react_compiler_ast::expressions::ObjectExpressionProperty::ObjectProperty(
                         p,
                     ) => {
                         if insert_after_fn_in_expr(&mut p.value, node_id, new_stmt) {
@@ -3416,10 +3331,10 @@ fn insert_after_fn_in_expr(
             false
         }
         Expression::ArrowFunctionExpression(arrow) => match arrow.body.as_mut() {
-            react_compiler_ast::expressions::ArrowFunctionBody::BlockStatement(block) => {
+            crate::react_compiler_ast::expressions::ArrowFunctionBody::BlockStatement(block) => {
                 insert_after_fn_in_block(block, node_id, new_stmt)
             }
-            react_compiler_ast::expressions::ArrowFunctionBody::Expression(e) => {
+            crate::react_compiler_ast::expressions::ArrowFunctionBody::Expression(e) => {
                 insert_after_fn_in_expr(e, node_id, new_stmt)
             }
         },
@@ -3501,10 +3416,9 @@ fn stmt_has_fn_with_node_id(stmt: &Statement, node_id: u32) -> bool {
             expr_has_fn_with_node_id(&expr_stmt.expression, node_id)
         }
         // Recurse into block-containing statements
-        Statement::BlockStatement(block) => block
-            .body
-            .iter()
-            .any(|s| stmt_has_fn_with_node_id(s, node_id)),
+        Statement::BlockStatement(block) => {
+            block.body.iter().any(|s| stmt_has_fn_with_node_id(s, node_id))
+        }
         Statement::IfStatement(if_stmt) => {
             expr_has_fn_with_node_id(&if_stmt.test, node_id)
                 || stmt_has_fn_with_node_id(&if_stmt.consequent, node_id)
@@ -3514,27 +3428,19 @@ fn stmt_has_fn_with_node_id(stmt: &Statement, node_id: u32) -> bool {
                     .map_or(false, |alt| stmt_has_fn_with_node_id(alt, node_id))
         }
         Statement::TryStatement(try_stmt) => {
-            try_stmt
-                .block
-                .body
-                .iter()
-                .any(|s| stmt_has_fn_with_node_id(s, node_id))
+            try_stmt.block.body.iter().any(|s| stmt_has_fn_with_node_id(s, node_id))
                 || try_stmt.handler.as_ref().map_or(false, |h| {
-                    h.body
-                        .body
-                        .iter()
-                        .any(|s| stmt_has_fn_with_node_id(s, node_id))
+                    h.body.body.iter().any(|s| stmt_has_fn_with_node_id(s, node_id))
                 })
-                || try_stmt.finalizer.as_ref().map_or(false, |f| {
-                    f.body.iter().any(|s| stmt_has_fn_with_node_id(s, node_id))
-                })
+                || try_stmt
+                    .finalizer
+                    .as_ref()
+                    .map_or(false, |f| f.body.iter().any(|s| stmt_has_fn_with_node_id(s, node_id)))
         }
         Statement::SwitchStatement(switch_stmt) => {
             expr_has_fn_with_node_id(&switch_stmt.discriminant, node_id)
                 || switch_stmt.cases.iter().any(|case| {
-                    case.consequent
-                        .iter()
-                        .any(|s| stmt_has_fn_with_node_id(s, node_id))
+                    case.consequent.iter().any(|s| stmt_has_fn_with_node_id(s, node_id))
                 })
         }
         Statement::LabeledStatement(labeled) => stmt_has_fn_with_node_id(&labeled.body, node_id),
@@ -3543,9 +3449,7 @@ fn stmt_has_fn_with_node_id(stmt: &Statement, node_id: u32) -> bool {
                 match init.as_ref() {
                     ForInit::VariableDeclaration(var_decl) => {
                         if var_decl.declarations.iter().any(|d| {
-                            d.init
-                                .as_ref()
-                                .map_or(false, |e| expr_has_fn_with_node_id(e, node_id))
+                            d.init.as_ref().map_or(false, |e| expr_has_fn_with_node_id(e, node_id))
                         }) {
                             return true;
                         }
@@ -3557,18 +3461,10 @@ fn stmt_has_fn_with_node_id(stmt: &Statement, node_id: u32) -> bool {
                     }
                 }
             }
-            if for_stmt
-                .test
-                .as_ref()
-                .map_or(false, |t| expr_has_fn_with_node_id(t, node_id))
-            {
+            if for_stmt.test.as_ref().map_or(false, |t| expr_has_fn_with_node_id(t, node_id)) {
                 return true;
             }
-            if for_stmt
-                .update
-                .as_ref()
-                .map_or(false, |u| expr_has_fn_with_node_id(u, node_id))
-            {
+            if for_stmt.update.as_ref().map_or(false, |u| expr_has_fn_with_node_id(u, node_id)) {
                 return true;
             }
             stmt_has_fn_with_node_id(&for_stmt.body, node_id)
@@ -3593,10 +3489,9 @@ fn stmt_has_fn_with_node_id(stmt: &Statement, node_id: u32) -> bool {
             expr_has_fn_with_node_id(&with_stmt.object, node_id)
                 || stmt_has_fn_with_node_id(&with_stmt.body, node_id)
         }
-        Statement::ReturnStatement(ret) => ret
-            .argument
-            .as_ref()
-            .map_or(false, |arg| expr_has_fn_with_node_id(arg, node_id)),
+        Statement::ReturnStatement(ret) => {
+            ret.argument.as_ref().map_or(false, |arg| expr_has_fn_with_node_id(arg, node_id))
+        }
         Statement::ThrowStatement(throw_stmt) => {
             expr_has_fn_with_node_id(&throw_stmt.argument, node_id)
         }
@@ -3610,10 +3505,9 @@ fn expr_has_fn_with_node_id(expr: &Expression, node_id: u32) -> bool {
         Expression::FunctionExpression(f) => f.base.node_id == Some(node_id),
         Expression::ArrowFunctionExpression(f) => f.base.node_id == Some(node_id),
         // Check for forwardRef/memo wrappers: the inner function
-        Expression::CallExpression(call) => call
-            .arguments
-            .iter()
-            .any(|arg| expr_has_fn_with_node_id(arg, node_id)),
+        Expression::CallExpression(call) => {
+            call.arguments.iter().any(|arg| expr_has_fn_with_node_id(arg, node_id))
+        }
         _ => false,
     }
 }
@@ -3782,22 +3676,18 @@ pub fn compile_program(mut file: File, scope: ScopeInfo, options: PluginOptions)
     let restricted_imports = options.environment.validate_blocklisted_imports.clone();
 
     // Determine if we should check for eslint suppressions
-    let validate_exhaustive = options
-        .environment
-        .validate_exhaustive_memoization_dependencies;
+    let validate_exhaustive = options.environment.validate_exhaustive_memoization_dependencies;
     let validate_hooks = options.environment.validate_hooks_usage;
 
-    let eslint_rules: Option<Vec<String>> = if validate_exhaustive && validate_hooks {
-        // Don't check for ESLint suppressions if both validations are enabled
-        None
-    } else {
-        Some(options.eslint_suppression_rules.clone().unwrap_or_else(|| {
-            DEFAULT_ESLINT_SUPPRESSIONS
-                .iter()
-                .map(|s| s.to_string())
-                .collect()
-        }))
-    };
+    let eslint_rules: Option<Vec<String>> =
+        if validate_exhaustive && validate_hooks {
+            // Don't check for ESLint suppressions if both validations are enabled
+            None
+        } else {
+            Some(options.eslint_suppression_rules.clone().unwrap_or_else(|| {
+                DEFAULT_ESLINT_SUPPRESSIONS.iter().map(|s| s.to_string()).collect()
+            }))
+        };
 
     // Find program-level suppressions from comments
     let suppressions = find_program_suppressions(
@@ -3823,18 +3713,20 @@ pub fn compile_program(mut file: File, scope: ScopeInfo, options: PluginOptions)
     // Extract the source filename from the AST (set by parser's sourceFilename option).
     // This is the bare filename (e.g., "foo.ts") without path prefixes, which the TS
     // compiler uses in logger event source locations.
-    let source_filename = program
-        .base
-        .loc
-        .as_ref()
-        .and_then(|loc| loc.filename.clone())
-        .or_else(|| {
+    let source_filename =
+        program.base.loc.as_ref().and_then(|loc| loc.filename.clone()).or_else(|| {
             // Fallback: try the first statement's loc
             program.body.first().and_then(|stmt| {
                 let base = match stmt {
-                    react_compiler_ast::statements::Statement::ExpressionStatement(s) => &s.base,
-                    react_compiler_ast::statements::Statement::VariableDeclaration(s) => &s.base,
-                    react_compiler_ast::statements::Statement::FunctionDeclaration(s) => &s.base,
+                    crate::react_compiler_ast::statements::Statement::ExpressionStatement(s) => {
+                        &s.base
+                    }
+                    crate::react_compiler_ast::statements::Statement::VariableDeclaration(s) => {
+                        &s.base
+                    }
+                    crate::react_compiler_ast::statements::Statement::FunctionDeclaration(s) => {
+                        &s.base
+                    }
                     _ => return None,
                 };
                 base.loc.as_ref().and_then(|loc| loc.filename.clone())
@@ -3913,11 +3805,7 @@ pub fn compile_program(mut file: File, scope: ScopeInfo, options: PluginOptions)
     for source in &queue {
         match process_fn(source, &scope, output_mode, &env_config, &mut context) {
             Ok(Some(codegen_fn)) => {
-                compiled_fns.push(CompiledFunction {
-                    kind: source.kind,
-                    source,
-                    codegen_fn,
-                });
+                compiled_fns.push(CompiledFunction { kind: source.kind, source, codegen_fn });
             }
             Ok(None) => {
                 // Function was skipped or lint-only
@@ -4041,7 +3929,7 @@ pub fn compile_program(mut file: File, scope: ScopeInfo, options: PluginOptions)
 
 /// Convert internal BindingRename structs to the serializable BindingRenameInfo format.
 fn convert_renames(
-    renames: &[react_compiler_hir::environment::BindingRename],
+    renames: &[crate::react_compiler_hir::environment::BindingRename],
 ) -> Vec<BindingRenameInfo> {
     renames
         .iter()
@@ -4160,7 +4048,7 @@ mod tests {
             base: BaseNode::default(),
             body: vec![],
             directives: vec![],
-            source_type: react_compiler_ast::SourceType::Module,
+            source_type: crate::react_compiler_ast::SourceType::Module,
             interpreter: None,
             source_file: None,
         };

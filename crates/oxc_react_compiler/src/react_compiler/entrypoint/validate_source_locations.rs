@@ -13,20 +13,20 @@
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use react_compiler_ast::common::SourceLocation as AstSourceLocation;
-use react_compiler_ast::expressions::{
+use crate::react_compiler_ast::common::SourceLocation as AstSourceLocation;
+use crate::react_compiler_ast::expressions::{
     ArrowFunctionBody, ArrowFunctionExpression, Expression, FunctionExpression,
     ObjectExpressionProperty,
 };
-use react_compiler_ast::patterns::PatternLike;
-use react_compiler_ast::statements::{ForInOfLeft, ForInit, Statement, VariableDeclaration};
-use react_compiler_diagnostics::{
+use crate::react_compiler_ast::patterns::PatternLike;
+use crate::react_compiler_ast::statements::{ForInOfLeft, ForInit, Statement, VariableDeclaration};
+use crate::react_compiler_diagnostics::{
     CompilerDiagnostic, CompilerDiagnosticDetail, ErrorCategory, Position as DiagPosition,
     SourceLocation as DiagSourceLocation,
 };
-use react_compiler_hir::environment::Environment;
-use react_compiler_lowering::FunctionNode;
-use react_compiler_reactive_scopes::codegen_reactive_function::CodegenFunction;
+use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_lowering::FunctionNode;
+use crate::react_compiler_reactive_scopes::codegen_reactive_function::CodegenFunction;
 
 /// Validate that important source locations are preserved in the generated AST.
 pub fn validate_source_locations(
@@ -46,9 +46,7 @@ pub fn validate_source_locations(
 
     // Step 3: Validate that all important locations are preserved
     let strict_node_types: FxHashSet<&str> =
-        ["VariableDeclaration", "VariableDeclarator", "Identifier"]
-            .into_iter()
-            .collect();
+        ["VariableDeclaration", "VariableDeclarator", "Identifier"].into_iter().collect();
 
     // Sort entries by source position to match TS output order
     // (JS Map preserves insertion order, which is AST traversal order = source order)
@@ -107,10 +105,7 @@ struct ImportantLocation {
 // ---- Location key ----
 
 fn location_key(loc: &AstSourceLocation) -> String {
-    format!(
-        "{}:{}-{}:{}",
-        loc.start.line, loc.start.column, loc.end.line, loc.end.column
-    )
+    format!("{}:{}-{}:{}", loc.start.line, loc.start.column, loc.end.line, loc.end.column)
 }
 
 // ---- AST to diagnostics SourceLocation conversion ----
@@ -122,11 +117,7 @@ fn ast_to_diag_loc(loc: &AstSourceLocation) -> DiagSourceLocation {
             column: loc.start.column,
             index: loc.start.index,
         },
-        end: DiagPosition {
-            line: loc.end.line,
-            column: loc.end.column,
-            index: loc.end.index,
-        },
+        end: DiagPosition { line: loc.end.line, column: loc.end.column, index: loc.end.index },
     }
 }
 
@@ -303,14 +294,7 @@ fn record_important(
         } else {
             let mut node_types = FxHashSet::default();
             node_types.insert(node_type);
-            locations.insert(
-                key.clone(),
-                ImportantLocation {
-                    key,
-                    loc: loc.clone(),
-                    node_types,
-                },
-            );
+            locations.insert(key.clone(), ImportantLocation { key, loc: loc.clone(), node_types });
         }
     }
 }
@@ -712,7 +696,9 @@ fn collect_original_pattern(
         PatternLike::ObjectPattern(op) => {
             for prop in &op.properties {
                 match prop {
-                    react_compiler_ast::patterns::ObjectPatternProperty::ObjectProperty(p) => {
+                    crate::react_compiler_ast::patterns::ObjectPatternProperty::ObjectProperty(
+                        p,
+                    ) => {
                         if p.computed {
                             collect_original_expression(&p.key, locations);
                         } else if let Expression::Identifier(id) = p.key.as_ref() {
@@ -720,7 +706,7 @@ fn collect_original_pattern(
                         }
                         collect_original_pattern(&p.value, locations);
                     }
-                    react_compiler_ast::patterns::ObjectPatternProperty::RestElement(r) => {
+                    crate::react_compiler_ast::patterns::ObjectPatternProperty::RestElement(r) => {
                         collect_original_pattern(&r.argument, locations);
                     }
                 }
@@ -866,14 +852,14 @@ fn record_generated(
 ) {
     if let Some(loc) = loc {
         let key = location_key(loc);
-        locations
-            .entry(key)
-            .or_default()
-            .insert(type_name.to_string());
+        locations.entry(key).or_default().insert(type_name.to_string());
     }
 }
 
-fn collect_generated_statement(stmt: &Statement, locations: &mut FxHashMap<String, FxHashSet<String>>) {
+fn collect_generated_statement(
+    stmt: &Statement,
+    locations: &mut FxHashMap<String, FxHashSet<String>>,
+) {
     // Record this statement's location
     let type_name = statement_type_name(stmt);
     record_generated(type_name, statement_loc(stmt), locations);
@@ -1203,12 +1189,14 @@ fn collect_generated_pattern(
             record_generated("ObjectPattern", &op.base.loc, locations);
             for prop in &op.properties {
                 match prop {
-                    react_compiler_ast::patterns::ObjectPatternProperty::ObjectProperty(p) => {
+                    crate::react_compiler_ast::patterns::ObjectPatternProperty::ObjectProperty(
+                        p,
+                    ) => {
                         record_generated("ObjectProperty", &p.base.loc, locations);
                         collect_generated_expression(&p.key, locations);
                         collect_generated_pattern(&p.value, locations);
                     }
-                    react_compiler_ast::patterns::ObjectPatternProperty::RestElement(r) => {
+                    crate::react_compiler_ast::patterns::ObjectPatternProperty::RestElement(r) => {
                         record_generated("RestElement", &r.base.loc, locations);
                         collect_generated_pattern(&r.argument, locations);
                     }

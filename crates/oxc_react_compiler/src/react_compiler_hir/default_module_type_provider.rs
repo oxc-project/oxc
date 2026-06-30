@@ -7,10 +7,10 @@
 //!
 //! Provides hardcoded type overrides for known-incompatible third-party libraries.
 
-use react_compiler_utils::FxIndexMap;
+use crate::react_compiler_utils::FxIndexMap;
 
-use crate::Effect;
-use crate::type_config::{
+use crate::react_compiler_hir::Effect;
+use crate::react_compiler_hir::type_config::{
     BuiltInTypeRef, FunctionTypeConfig, HookTypeConfig, ObjectTypeConfig, TypeConfig,
     TypeReferenceConfig, ValueKind,
 };

@@ -4,7 +4,9 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
-use crate::{CompilerDiagnosticDetail, CompilerError, CompilerErrorOrDiagnostic};
+use crate::react_compiler_diagnostics::{
+    CompilerDiagnosticDetail, CompilerError, CompilerErrorOrDiagnostic,
+};
 
 const CODEFRAME_LINES_ABOVE: u32 = 2;
 const CODEFRAME_LINES_BELOW: u32 = 3;
@@ -115,10 +117,8 @@ fn get_marker_lines(
                 marker_lines.push((start_line, MarkerEntry::WholeLine));
             }
         } else {
-            marker_lines.push((
-                start_line,
-                MarkerEntry::Range(start_column, end_column - start_column),
-            ));
+            marker_lines
+                .push((start_line, MarkerEntry::Range(start_column, end_column - start_column)));
         }
     }
 
@@ -220,11 +220,7 @@ pub fn code_frame_columns(
 
         if let Some(marker_entry) = has_marker {
             // This is a marked line
-            let line_content = if line.is_empty() {
-                String::new()
-            } else {
-                format!(" {}", line)
-            };
+            let line_content = if line.is_empty() { String::new() } else { format!(" {}", line) };
 
             let marker_line_str = match marker_entry {
                 MarkerEntry::Range(col, len) => {
@@ -238,10 +234,8 @@ pub fn code_frame_columns(
                         byte_end
                     };
                     let prefix = &line[..safe_end];
-                    let marker_spacing: String = prefix
-                        .chars()
-                        .map(|c| if c == '\t' { '\t' } else { ' ' })
-                        .collect();
+                    let marker_spacing: String =
+                        prefix.chars().map(|c| if c == '\t' { '\t' } else { ' ' }).collect();
                     let number_of_markers = if *len == 0 { 1 } else { *len };
                     let carets = "^".repeat(number_of_markers);
                     let gutter_spaces = gutter.replace(|c: char| c.is_ascii_digit(), " ");
@@ -259,11 +253,7 @@ pub fn code_frame_columns(
             frame_parts.push(format!(">{}{}{}", gutter, line_content, marker_line_str));
         } else {
             // Non-marked line
-            let line_content = if line.is_empty() {
-                String::new()
-            } else {
-                format!(" {}", line)
-            };
+            let line_content = if line.is_empty() { String::new() } else { format!(" {}", line) };
             frame_parts.push(format!(" {}{}", gutter, line_content));
         }
     }
@@ -318,7 +308,7 @@ pub fn print_code_frame(
     parts.join("\n")
 }
 
-use crate::format_category_heading;
+use crate::react_compiler_diagnostics::format_category_heading;
 
 /// Format a CompilerError into a message string matching the TS compiler's
 /// CompilerError.printErrorMessage() / formatCompilerError() format.
@@ -327,20 +317,14 @@ use crate::format_category_heading;
 /// The filename parameter is the source filename (e.g., "foo.ts") used in
 /// location displays.
 pub fn format_compiler_error(err: &CompilerError, source: &str, filename: Option<&str>) -> String {
-    let detail_messages: Vec<String> = err
-        .details
-        .iter()
-        .map(|d| format_error_detail(d, source, filename))
-        .collect();
+    let detail_messages: Vec<String> =
+        err.details.iter().map(|d| format_error_detail(d, source, filename)).collect();
 
     let count = err.details.len();
     let plural = if count == 1 { "" } else { "s" };
     let header = format!("Found {} error{}:\n\n", count, plural);
 
-    let trimmed: Vec<String> = detail_messages
-        .iter()
-        .map(|m| m.trim().to_string())
-        .collect();
+    let trimmed: Vec<String> = detail_messages.iter().map(|m| m.trim().to_string()).collect();
     format!("{}{}", header, trimmed.join("\n\n"))
 }
 
@@ -406,10 +390,7 @@ fn format_error_detail(
                     );
                     buffer.push("\n\n".to_string());
                     if let Some(fname) = filename {
-                        buffer.push(format!(
-                            "{}:{}:{}\n",
-                            fname, loc.start.line, loc.start.column
-                        ));
+                        buffer.push(format!("{}:{}:{}\n", fname, loc.start.line, loc.start.column));
                     }
                     buffer.push(frame);
                     buffer.push("\n\n".to_string());
@@ -425,10 +406,7 @@ fn format_error_detail(
                 );
                 buffer.push("\n\n".to_string());
                 if let Some(fname) = filename {
-                    buffer.push(format!(
-                        "{}:{}:{}\n",
-                        fname, loc.start.line, loc.start.column
-                    ));
+                    buffer.push(format!("{}:{}:{}\n", fname, loc.start.line, loc.start.column));
                 }
                 buffer.push(frame);
                 buffer.push("\n\n".to_string());

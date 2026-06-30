@@ -11,26 +11,26 @@
 //!
 //! Ported from TypeScript `src/HIR/BuildReactiveScopeTerminalsHIR.ts`.
 
-use react_compiler_utils::FxIndexSet;
+use crate::react_compiler_utils::FxIndexSet;
 use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
 
-use react_compiler_utils::FxIndexMap;
-use react_compiler_hir::BasicBlock;
-use react_compiler_hir::BlockId;
-use react_compiler_hir::EvaluationOrder;
-use react_compiler_hir::GotoVariant;
-use react_compiler_hir::HirFunction;
-use react_compiler_hir::IdentifierId;
-use react_compiler_hir::ScopeId;
-use react_compiler_hir::Terminal;
-use react_compiler_hir::environment::Environment;
-use react_compiler_hir::visitors::each_instruction_lvalue_ids;
-use react_compiler_hir::visitors::each_instruction_operand_ids;
-use react_compiler_hir::visitors::each_terminal_operand_ids;
-use react_compiler_lowering::get_reverse_postordered_blocks;
-use react_compiler_lowering::mark_instruction_ids;
-use react_compiler_lowering::mark_predecessors;
+use crate::react_compiler_hir::BasicBlock;
+use crate::react_compiler_hir::BlockId;
+use crate::react_compiler_hir::EvaluationOrder;
+use crate::react_compiler_hir::GotoVariant;
+use crate::react_compiler_hir::HirFunction;
+use crate::react_compiler_hir::IdentifierId;
+use crate::react_compiler_hir::ScopeId;
+use crate::react_compiler_hir::Terminal;
+use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_hir::visitors::each_instruction_lvalue_ids;
+use crate::react_compiler_hir::visitors::each_instruction_operand_ids;
+use crate::react_compiler_hir::visitors::each_terminal_operand_ids;
+use crate::react_compiler_lowering::get_reverse_postordered_blocks;
+use crate::react_compiler_lowering::mark_instruction_ids;
+use crate::react_compiler_lowering::mark_predecessors;
+use crate::react_compiler_utils::FxIndexMap;
 
 // =============================================================================
 // getScopes
@@ -134,20 +134,14 @@ fn collect_scope_rewrites(func: &HirFunction, env: &mut Environment) -> Vec<Term
             let parent_end = env.scopes[maybe_parent.0 as usize].range.end;
             let disjoint = curr_start >= parent_end;
             let nested = curr_end <= parent_end;
-            assert!(
-                disjoint || nested,
-                "Invalid nesting in program blocks or scopes"
-            );
+            assert!(disjoint || nested, "Invalid nesting in program blocks or scopes");
             if disjoint {
                 // Exit this scope
-                let fallthrough_id = *fallthroughs
-                    .get(&maybe_parent)
-                    .expect("Expected scope to exist");
+                let fallthrough_id =
+                    *fallthroughs.get(&maybe_parent).expect("Expected scope to exist");
                 let end_instr_id = env.scopes[maybe_parent.0 as usize].range.end;
-                rewrites.push(TerminalRewriteInfo::EndScope {
-                    instr_id: end_instr_id,
-                    fallthrough_id,
-                });
+                rewrites
+                    .push(TerminalRewriteInfo::EndScope { instr_id: end_instr_id, fallthrough_id });
                 active_items.truncate(j);
             } else {
                 break;
@@ -172,10 +166,7 @@ fn collect_scope_rewrites(func: &HirFunction, env: &mut Environment) -> Vec<Term
     while let Some(curr) = active_items.pop() {
         let fallthrough_id = *fallthroughs.get(&curr).expect("Expected scope to exist");
         let end_instr_id = env.scopes[curr.0 as usize].range.end;
-        rewrites.push(TerminalRewriteInfo::EndScope {
-            instr_id: end_instr_id,
-            fallthrough_id,
-        });
+        rewrites.push(TerminalRewriteInfo::EndScope { instr_id: end_instr_id, fallthrough_id });
     }
 
     rewrites
@@ -199,22 +190,16 @@ fn handle_rewrite(
     context: &mut RewriteContext,
 ) {
     let terminal: Terminal = match terminal_info {
-        TerminalRewriteInfo::StartScope {
-            block_id,
-            fallthrough_id,
-            instr_id,
-            scope_id,
-        } => Terminal::Scope {
-            fallthrough: *fallthrough_id,
-            block: *block_id,
-            scope: *scope_id,
-            id: *instr_id,
-            loc: None,
-        },
-        TerminalRewriteInfo::EndScope {
-            instr_id,
-            fallthrough_id,
-        } => Terminal::Goto {
+        TerminalRewriteInfo::StartScope { block_id, fallthrough_id, instr_id, scope_id } => {
+            Terminal::Scope {
+                fallthrough: *fallthrough_id,
+                block: *block_id,
+                scope: *scope_id,
+                id: *instr_id,
+                loc: None,
+            }
+        }
+        TerminalRewriteInfo::EndScope { instr_id, fallthrough_id } => Terminal::Goto {
             variant: GotoVariant::Break,
             block: *fallthrough_id,
             id: *instr_id,
@@ -234,11 +219,7 @@ fn handle_rewrite(
         instructions: source_block.instructions[context.instr_slice_idx..idx].to_vec(),
         preds,
         // Only the first rewrite should reuse source block phis
-        phis: if context.rewrites.is_empty() {
-            source_block.phis.clone()
-        } else {
-            Vec::new()
-        },
+        phis: if context.rewrites.is_empty() { source_block.phis.clone() } else { Vec::new() },
         terminal,
     });
 
@@ -333,9 +314,7 @@ pub fn build_reactive_scope_terminals_hir(func: &mut HirFunction, env: &mut Envi
                 .operands
                 .keys()
                 .filter_map(|original_id| {
-                    rewritten_final_blocks
-                        .get(original_id)
-                        .map(|new_id| (*original_id, *new_id))
+                    rewritten_final_blocks.get(original_id).map(|new_id| (*original_id, *new_id))
                 })
                 .collect();
             for (old_id, new_id) in updates {
@@ -375,23 +354,13 @@ fn fix_scope_and_identifier_ranges(func: &HirFunction, env: &mut Environment) {
     // reference as scope.range see the update automatically. We simulate
     // this by only syncing identifiers whose mutableRange matches the
     // scope's pre-update range.
-    let original_scope_ranges: Vec<react_compiler_hir::MutableRange> =
+    let original_scope_ranges: Vec<crate::react_compiler_hir::MutableRange> =
         env.scopes.iter().map(|s| s.range.clone()).collect();
 
     for (_block_id, block) in &func.body.blocks {
         match &block.terminal {
-            Terminal::Scope {
-                fallthrough,
-                scope,
-                id,
-                ..
-            }
-            | Terminal::PrunedScope {
-                fallthrough,
-                scope,
-                id,
-                ..
-            } => {
+            Terminal::Scope { fallthrough, scope, id, .. }
+            | Terminal::PrunedScope { fallthrough, scope, id, .. } => {
                 let fallthrough_block = func.body.blocks.get(fallthrough).unwrap();
                 let first_id = if !fallthrough_block.instructions.is_empty() {
                     func.instructions[fallthrough_block.instructions[0].0 as usize].id

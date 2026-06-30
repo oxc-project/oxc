@@ -17,14 +17,14 @@
 
 use rustc_hash::FxHashMap;
 
-use react_compiler_diagnostics::{CompilerDiagnostic, ErrorCategory};
-use react_compiler_hir::environment::Environment;
-use react_compiler_hir::visitors;
-use react_compiler_hir::{
+use crate::react_compiler_diagnostics::{CompilerDiagnostic, ErrorCategory};
+use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_hir::visitors;
+use crate::react_compiler_hir::{
     DeclarationId, EvaluationOrder, HirFunction, IdentifierId, InstructionValue, Pattern, Position,
     SourceLocation,
 };
-use react_compiler_utils::DisjointSet;
+use crate::react_compiler_utils::DisjointSet;
 
 // =============================================================================
 // Public API
@@ -48,9 +48,7 @@ pub fn infer_reactive_scope_variables(
     let mut scopes: FxHashMap<IdentifierId, ScopeState> = FxHashMap::default();
 
     scope_identifiers.for_each(|identifier_id, group_id| {
-        let ident_range = env.identifiers[identifier_id.0 as usize]
-            .mutable_range
-            .clone();
+        let ident_range = env.identifiers[identifier_id.0 as usize].mutable_range.clone();
         let ident_loc = env.identifiers[identifier_id.0 as usize].loc;
 
         let state = scopes.entry(group_id).or_insert_with(|| {
@@ -58,10 +56,7 @@ pub fn infer_reactive_scope_variables(
             // Initialize scope range from the first member
             let scope = &mut env.scopes[scope_id.0 as usize];
             scope.range = ident_range.clone();
-            ScopeState {
-                scope_id,
-                loc: ident_loc,
-            }
+            ScopeState { scope_id, loc: ident_loc }
         });
 
         // Update scope range
@@ -138,7 +133,7 @@ pub fn infer_reactive_scope_variables(
 }
 
 struct ScopeState {
-    scope_id: react_compiler_hir::ScopeId,
+    scope_id: crate::react_compiler_hir::ScopeId,
     loc: Option<SourceLocation>,
 }
 
@@ -237,10 +232,7 @@ fn may_allocate(value: &InstructionValue, lvalue_type_is_primitive: bool) -> boo
 /// Collect all Place identifiers from a destructure pattern.
 /// Corresponds to TS `eachPatternOperand`.
 fn each_pattern_operand(pattern: &Pattern) -> Vec<IdentifierId> {
-    visitors::each_pattern_operand(pattern)
-        .into_iter()
-        .map(|p| p.identifier)
-        .collect()
+    visitors::each_pattern_operand(pattern).into_iter().map(|p| p.identifier).collect()
 }
 
 /// Collect all operand identifiers from an instruction value.
@@ -249,10 +241,7 @@ fn each_instruction_value_operand(
     value: &InstructionValue,
     env: &Environment,
 ) -> Vec<IdentifierId> {
-    visitors::each_instruction_value_operand(value, env)
-        .into_iter()
-        .map(|p| p.identifier)
-        .collect()
+    visitors::each_instruction_value_operand(value, env).into_iter().map(|p| p.identifier).collect()
 }
 
 // =============================================================================
@@ -284,8 +273,8 @@ pub(crate) fn find_disjoint_mutable_values(
                 .map(|iid| func.instructions[iid.0 as usize].id)
                 .unwrap_or(block.terminal.evaluation_order());
 
-            let is_phi_mutated_after_creation = phi_range.start.0 + 1 != phi_range.end.0
-                && phi_range.end > first_instr_id;
+            let is_phi_mutated_after_creation =
+                phi_range.start.0 + 1 != phi_range.end.0 && phi_range.end > first_instr_id;
             // A phi operand defined at or after the phi's block is a loop
             // back-edge: the variable is reassigned within the loop (eg a
             // counter `a++` or `a = a + 1`). The reassignment must count as
@@ -298,9 +287,7 @@ pub(crate) fn find_disjoint_mutable_values(
             // compared at the top of the scope).
             let is_loop_carried_reassignment = !is_phi_mutated_after_creation
                 && phi.operands.iter().any(|(_pred_id, operand)| {
-                    env.identifiers[operand.identifier.0 as usize]
-                        .mutable_range
-                        .start
+                    env.identifiers[operand.identifier.0 as usize].mutable_range.start
                         >= first_instr_id
                 });
             if is_phi_mutated_after_creation || is_loop_carried_reassignment {
@@ -327,7 +314,8 @@ pub(crate) fn find_disjoint_mutable_values(
             let lvalue_id = instr.lvalue.identifier;
             let lvalue_range = &env.identifiers[lvalue_id.0 as usize].mutable_range;
             let lvalue_type = &env.types[env.identifiers[lvalue_id.0 as usize].type_.0 as usize];
-            let lvalue_type_is_primitive = react_compiler_hir::is_primitive_type(lvalue_type);
+            let lvalue_type_is_primitive =
+                crate::react_compiler_hir::is_primitive_type(lvalue_type);
 
             if lvalue_range.end.0 > lvalue_range.start.0 + 1
                 || may_allocate(&instr.value, lvalue_type_is_primitive)

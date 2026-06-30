@@ -11,11 +11,11 @@
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use react_compiler_diagnostics::{
+use crate::react_compiler_diagnostics::{
     CompilerDiagnostic, CompilerDiagnosticDetail, ErrorCategory, SourceLocation,
 };
-use react_compiler_hir::environment::Environment;
-use react_compiler_hir::{
+use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_hir::{
     DeclarationId, DependencyPathEntry, Identifier, IdentifierId, IdentifierName, InstructionKind,
     InstructionValue, ManualMemoDependency, ManualMemoDependencyRoot, Place, ReactiveBlock,
     ReactiveFunction, ReactiveInstruction, ReactiveScopeBlock, ReactiveStatement, ReactiveValue,
@@ -94,16 +94,12 @@ fn visit_statement(stmt: &ReactiveStatement, state: &mut VisitorState) {
 }
 
 fn visit_terminal(
-    terminal: &react_compiler_hir::ReactiveTerminalStatement,
+    terminal: &crate::react_compiler_hir::ReactiveTerminalStatement,
     state: &mut VisitorState,
 ) {
-    use react_compiler_hir::ReactiveTerminal;
+    use crate::react_compiler_hir::ReactiveTerminal;
     match &terminal.terminal {
-        ReactiveTerminal::If {
-            consequent,
-            alternate,
-            ..
-        } => {
+        ReactiveTerminal::If { consequent, alternate, .. } => {
             visit_block(consequent, state);
             if let Some(alt) = alternate {
                 visit_block(alt, state);
@@ -171,7 +167,7 @@ fn visit_scope(scope_block: &ReactiveScopeBlock, state: &mut VisitorState) {
 }
 
 fn visit_pruned_scope(
-    pruned: &react_compiler_hir::PrunedReactiveScopeBlock,
+    pruned: &crate::react_compiler_hir::PrunedReactiveScopeBlock,
     state: &mut VisitorState,
 ) {
     visit_block(&pruned.instructions, state);
@@ -352,12 +348,7 @@ fn record_temporaries(instr: &ReactiveInstruction, state: &mut VisitorState) {
     if let Some(ref lvalue) = instr.lvalue {
         let lv_ident = &state.env.identifiers[lvalue.identifier.0 as usize];
         if is_named(lv_ident) && state.manual_memo_state.is_some() {
-            state
-                .manual_memo_state
-                .as_mut()
-                .unwrap()
-                .decls
-                .insert(lv_ident.declaration_id);
+            state.manual_memo_state.as_mut().unwrap().decls.insert(lv_ident.declaration_id);
         }
     }
 
@@ -384,11 +375,7 @@ fn record_temporaries(instr: &ReactiveInstruction, state: &mut VisitorState) {
 /// TS: `recordDepsInValue`
 fn record_deps_in_value(value: &ReactiveValue, state: &mut VisitorState) {
     match value {
-        ReactiveValue::SequenceExpression {
-            instructions,
-            value,
-            ..
-        } => {
+        ReactiveValue::SequenceExpression { instructions, value, .. } => {
             for instr in instructions {
                 visit_instruction(instr, state);
             }
@@ -397,12 +384,7 @@ fn record_deps_in_value(value: &ReactiveValue, state: &mut VisitorState) {
         ReactiveValue::OptionalExpression { value: inner, .. } => {
             record_deps_in_value(inner, state);
         }
-        ReactiveValue::ConditionalExpression {
-            test,
-            consequent,
-            alternate,
-            ..
-        } => {
+        ReactiveValue::ConditionalExpression { test, consequent, alternate, .. } => {
             record_deps_in_value(test, state);
             record_deps_in_value(consequent, state);
             record_deps_in_value(alternate, state);
@@ -483,29 +465,29 @@ fn start_memoize_operands(deps: &Option<Vec<ManualMemoDependency>>) -> Vec<Place
 }
 
 /// Get lvalue places from a Destructure pattern.
-fn destructure_lvalue_places(pattern: &react_compiler_hir::Pattern) -> Vec<&Place> {
+fn destructure_lvalue_places(pattern: &crate::react_compiler_hir::Pattern) -> Vec<&Place> {
     let mut result = Vec::new();
     match pattern {
-        react_compiler_hir::Pattern::Array(arr) => {
+        crate::react_compiler_hir::Pattern::Array(arr) => {
             for item in &arr.items {
                 match item {
-                    react_compiler_hir::ArrayPatternElement::Place(place) => {
+                    crate::react_compiler_hir::ArrayPatternElement::Place(place) => {
                         result.push(place);
                     }
-                    react_compiler_hir::ArrayPatternElement::Spread(spread) => {
+                    crate::react_compiler_hir::ArrayPatternElement::Spread(spread) => {
                         result.push(&spread.place);
                     }
-                    react_compiler_hir::ArrayPatternElement::Hole => {}
+                    crate::react_compiler_hir::ArrayPatternElement::Hole => {}
                 }
             }
         }
-        react_compiler_hir::Pattern::Object(obj) => {
+        crate::react_compiler_hir::Pattern::Object(obj) => {
             for entry in &obj.properties {
                 match entry {
-                    react_compiler_hir::ObjectPropertyOrSpread::Property(prop) => {
+                    crate::react_compiler_hir::ObjectPropertyOrSpread::Property(prop) => {
                         result.push(&prop.place);
                     }
-                    react_compiler_hir::ObjectPropertyOrSpread::Spread(spread) => {
+                    crate::react_compiler_hir::ObjectPropertyOrSpread::Spread(spread) => {
                         result.push(&spread.place);
                     }
                 }
@@ -522,11 +504,7 @@ fn is_unmemoized(
     identifiers: &[Identifier],
 ) -> bool {
     let ident = &identifiers[id.0 as usize];
-    if let Some(scope_id) = ident.scope {
-        !completed_scopes.contains(&scope_id)
-    } else {
-        false
-    }
+    if let Some(scope_id) = ident.scope { !completed_scopes.contains(&scope_id) } else { false }
 }
 
 // =============================================================================
@@ -576,15 +554,16 @@ fn compare_deps(
         && (source.path.len() == inferred.path.len()
             || (inferred.path.len() >= source.path.len()
                 && !inferred.path.iter().any(|t| {
-                    t.property == react_compiler_hir::PropertyLiteral::String("current".to_string())
+                    t.property
+                        == crate::react_compiler_hir::PropertyLiteral::String("current".to_string())
                 })))
     {
         CompareDependencyResult::Ok
     } else if is_subpath {
         if source.path.iter().any(|t| {
-            t.property == react_compiler_hir::PropertyLiteral::String("current".to_string())
+            t.property == crate::react_compiler_hir::PropertyLiteral::String("current".to_string())
         }) || inferred.path.iter().any(|t| {
-            t.property == react_compiler_hir::PropertyLiteral::String("current".to_string())
+            t.property == crate::react_compiler_hir::PropertyLiteral::String("current".to_string())
         }) {
             CompareDependencyResult::RefAccessDifference
         } else {
@@ -599,26 +578,22 @@ fn compare_deps(
 fn pretty_print_scope_dependency(
     dep_id: IdentifierId,
     dep_path: &[DependencyPathEntry],
-    identifiers: &[react_compiler_hir::Identifier],
+    identifiers: &[crate::react_compiler_hir::Identifier],
 ) -> String {
     let ident = &identifiers[dep_id.0 as usize];
     let root_str = match &ident.name {
-        Some(react_compiler_hir::IdentifierName::Named(n)) => n.clone(),
-        Some(react_compiler_hir::IdentifierName::Promoted(n)) => n.clone(),
+        Some(crate::react_compiler_hir::IdentifierName::Named(n)) => n.clone(),
+        Some(crate::react_compiler_hir::IdentifierName::Promoted(n)) => n.clone(),
         None => "[unnamed]".to_string(),
     };
     let path_str: String = dep_path
         .iter()
         .map(|entry| {
             let prop = match &entry.property {
-                react_compiler_hir::PropertyLiteral::String(s) => s.clone(),
-                react_compiler_hir::PropertyLiteral::Number(n) => format!("{}", n),
+                crate::react_compiler_hir::PropertyLiteral::String(s) => s.clone(),
+                crate::react_compiler_hir::PropertyLiteral::Number(n) => format!("{}", n),
             };
-            if entry.optional {
-                format!("?.{}", prop)
-            } else {
-                format!(".{}", prop)
-            }
+            if entry.optional { format!("?.{}", prop) } else { format!(".{}", prop) }
         })
         .collect();
     format!("{}{}", root_str, path_str)
@@ -627,15 +602,15 @@ fn pretty_print_scope_dependency(
 /// Pretty-print a manual memo dependency for error messages.
 fn print_manual_memo_dependency(
     dep: &ManualMemoDependency,
-    identifiers: &[react_compiler_hir::Identifier],
+    identifiers: &[crate::react_compiler_hir::Identifier],
     with_optional: bool,
 ) -> String {
     let root_str = match &dep.root {
         ManualMemoDependencyRoot::NamedLocal { value, .. } => {
             let ident = &identifiers[value.identifier.0 as usize];
             match &ident.name {
-                Some(react_compiler_hir::IdentifierName::Named(n)) => n.clone(),
-                Some(react_compiler_hir::IdentifierName::Promoted(n)) => n.clone(),
+                Some(crate::react_compiler_hir::IdentifierName::Named(n)) => n.clone(),
+                Some(crate::react_compiler_hir::IdentifierName::Promoted(n)) => n.clone(),
                 None => "[unnamed]".to_string(),
             }
         }
@@ -646,8 +621,8 @@ fn print_manual_memo_dependency(
         .iter()
         .map(|entry| {
             let prop = match &entry.property {
-                react_compiler_hir::PropertyLiteral::String(s) => s.clone(),
-                react_compiler_hir::PropertyLiteral::Number(n) => format!("{}", n),
+                crate::react_compiler_hir::PropertyLiteral::String(s) => s.clone(),
+                crate::react_compiler_hir::PropertyLiteral::Number(n) => format!("{}", n),
             };
             if with_optional && entry.optional {
                 format!("?.{}", prop)
@@ -685,11 +660,7 @@ fn validate_inferred_dep(
     let normalized_dep = if let Some(temp) = temporaries.get(&dep_id) {
         let mut path = temp.path.clone();
         path.extend_from_slice(dep_path);
-        ManualMemoDependency {
-            root: temp.root.clone(),
-            path,
-            loc: temp.loc,
-        }
+        ManualMemoDependency { root: temp.root.clone(), path, loc: temp.loc }
     } else {
         let ident = &env.identifiers[dep_id.0 as usize];
         // TS: CompilerError.invariant(dep.identifier.name?.kind === 'named', ...)
@@ -700,7 +671,7 @@ fn validate_inferred_dep(
             root: ManualMemoDependencyRoot::NamedLocal {
                 value: Place {
                     identifier: dep_id,
-                    effect: react_compiler_hir::Effect::Read,
+                    effect: crate::react_compiler_hir::Effect::Read,
                     reactive: false,
                     loc: ident.loc,
                 },

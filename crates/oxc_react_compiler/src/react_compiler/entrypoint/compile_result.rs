@@ -1,12 +1,12 @@
-use react_compiler_ast::File;
-use react_compiler_ast::expressions::Identifier as AstIdentifier;
-use react_compiler_ast::patterns::PatternLike;
-use react_compiler_ast::statements::BlockStatement;
-use react_compiler_diagnostics::SourceLocation;
-use react_compiler_hir::ReactFunctionType;
+use crate::react_compiler_ast::File;
+use crate::react_compiler_ast::expressions::Identifier as AstIdentifier;
+use crate::react_compiler_ast::patterns::PatternLike;
+use crate::react_compiler_ast::statements::BlockStatement;
+use crate::react_compiler_diagnostics::SourceLocation;
+use crate::react_compiler_hir::ReactFunctionType;
 use serde::Serialize;
 
-use crate::timing::TimingEntry;
+use crate::react_compiler::timing::TimingEntry;
 
 /// Source location with index and filename fields for logger event serialization.
 /// Matches the Babel SourceLocation format that the TS compiler emits in logger events.
@@ -42,11 +42,7 @@ impl LoggerSourceLocation {
                 column: loc.start.column,
                 index: start_index,
             },
-            end: LoggerPosition {
-                line: loc.end.line,
-                column: loc.end.column,
-                index: end_index,
-            },
+            end: LoggerPosition { line: loc.end.line, column: loc.end.column, index: end_index },
             filename: filename.map(|s| s.to_string()),
             identifier_name: None,
         }
@@ -55,16 +51,8 @@ impl LoggerSourceLocation {
     /// Create from a diagnostics SourceLocation without index or filename.
     pub fn from_loc_simple(loc: &SourceLocation) -> Self {
         Self {
-            start: LoggerPosition {
-                line: loc.start.line,
-                column: loc.start.column,
-                index: None,
-            },
-            end: LoggerPosition {
-                line: loc.end.line,
-                column: loc.end.column,
-                index: None,
-            },
+            start: LoggerPosition { line: loc.start.line, column: loc.start.column, index: None },
+            end: LoggerPosition { line: loc.end.line, column: loc.end.column, index: None },
             filename: None,
             identifier_name: None,
         }
@@ -209,11 +197,7 @@ pub struct DebugLogEntry {
 
 impl DebugLogEntry {
     pub fn new(name: impl Into<String>, value: impl Into<String>) -> Self {
-        Self {
-            kind: "debug",
-            name: name.into(),
-            value: value.into(),
-        }
+        Self { kind: "debug", name: name.into(), value: value.into() }
     }
 }
 

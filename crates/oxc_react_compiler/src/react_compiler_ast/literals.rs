@@ -1,7 +1,7 @@
-use react_compiler_diagnostics::JsString;
+use crate::react_compiler_diagnostics::JsString;
 use serde::Serialize;
 
-use crate::common::BaseNode;
+use crate::react_compiler_ast::common::BaseNode;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct StringLiteral {

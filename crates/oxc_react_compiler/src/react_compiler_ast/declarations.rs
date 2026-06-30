@@ -1,18 +1,18 @@
 use serde::Serialize;
 
-use crate::common::BaseNode;
-use crate::common::RawNode;
-use crate::expressions::Expression;
-use crate::expressions::Identifier;
-use crate::literals::StringLiteral;
+use crate::react_compiler_ast::common::BaseNode;
+use crate::react_compiler_ast::common::RawNode;
+use crate::react_compiler_ast::expressions::Expression;
+use crate::react_compiler_ast::expressions::Identifier;
+use crate::react_compiler_ast::literals::StringLiteral;
 
 /// Union of Declaration types that can appear in export declarations
 #[derive(Debug, Clone, Serialize)]
 #[serde(tag = "type")]
 pub enum Declaration {
-    FunctionDeclaration(crate::statements::FunctionDeclaration),
-    ClassDeclaration(crate::statements::ClassDeclaration),
-    VariableDeclaration(crate::statements::VariableDeclaration),
+    FunctionDeclaration(crate::react_compiler_ast::statements::FunctionDeclaration),
+    ClassDeclaration(crate::react_compiler_ast::statements::ClassDeclaration),
+    VariableDeclaration(crate::react_compiler_ast::statements::VariableDeclaration),
     TSTypeAliasDeclaration(TSTypeAliasDeclaration),
     TSInterfaceDeclaration(TSInterfaceDeclaration),
     TSEnumDeclaration(TSEnumDeclaration),
@@ -28,8 +28,8 @@ pub enum Declaration {
 #[derive(Debug, Clone, Serialize)]
 #[serde(tag = "type")]
 pub enum ExportDefaultDecl {
-    FunctionDeclaration(crate::statements::FunctionDeclaration),
-    ClassDeclaration(crate::statements::ClassDeclaration),
+    FunctionDeclaration(crate::react_compiler_ast::statements::FunctionDeclaration),
+    ClassDeclaration(crate::react_compiler_ast::statements::ClassDeclaration),
     EnumDeclaration(EnumDeclaration),
     #[serde(untagged)]
     Expression(Box<Expression>),
@@ -41,11 +41,7 @@ pub struct ImportDeclaration {
     pub base: BaseNode,
     pub specifiers: Vec<ImportSpecifier>,
     pub source: StringLiteral,
-    #[serde(
-        default,
-        skip_serializing_if = "Option::is_none",
-        rename = "importKind"
-    )]
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "importKind")]
     pub import_kind: Option<ImportKind>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub assertions: Option<Vec<ImportAttribute>>,
@@ -145,11 +141,7 @@ pub struct ExportSpecifierData {
     pub base: BaseNode,
     pub local: ModuleExportName,
     pub exported: ModuleExportName,
-    #[serde(
-        default,
-        skip_serializing_if = "Option::is_none",
-        rename = "exportKind"
-    )]
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "exportKind")]
     pub export_kind: Option<ExportKind>,
 }
 
@@ -172,11 +164,7 @@ pub struct ExportDefaultDeclaration {
     #[serde(flatten)]
     pub base: BaseNode,
     pub declaration: Box<ExportDefaultDecl>,
-    #[serde(
-        default,
-        skip_serializing_if = "Option::is_none",
-        rename = "exportKind"
-    )]
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "exportKind")]
     pub export_kind: Option<ExportKind>,
 }
 
@@ -185,11 +173,7 @@ pub struct ExportAllDeclaration {
     #[serde(flatten)]
     pub base: BaseNode,
     pub source: StringLiteral,
-    #[serde(
-        default,
-        skip_serializing_if = "Option::is_none",
-        rename = "exportKind"
-    )]
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "exportKind")]
     pub export_kind: Option<ExportKind>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub assertions: Option<Vec<ImportAttribute>>,
@@ -205,11 +189,7 @@ pub struct TSTypeAliasDeclaration {
     pub id: Identifier,
     #[serde(rename = "typeAnnotation")]
     pub type_annotation: RawNode,
-    #[serde(
-        default,
-        skip_serializing_if = "Option::is_none",
-        rename = "typeParameters"
-    )]
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "typeParameters")]
     pub type_parameters: Option<RawNode>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub declare: Option<bool>,
@@ -221,11 +201,7 @@ pub struct TSInterfaceDeclaration {
     pub base: BaseNode,
     pub id: Identifier,
     pub body: RawNode,
-    #[serde(
-        default,
-        skip_serializing_if = "Option::is_none",
-        rename = "typeParameters"
-    )]
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "typeParameters")]
     pub type_parameters: Option<RawNode>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub extends: Option<Vec<RawNode>>,
@@ -269,17 +245,9 @@ pub struct TSDeclareFunction {
     pub declare: Option<bool>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub generator: Option<bool>,
-    #[serde(
-        default,
-        skip_serializing_if = "Option::is_none",
-        rename = "returnType"
-    )]
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "returnType")]
     pub return_type: Option<RawNode>,
-    #[serde(
-        default,
-        skip_serializing_if = "Option::is_none",
-        rename = "typeParameters"
-    )]
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "typeParameters")]
     pub type_parameters: Option<RawNode>,
 }
 
@@ -302,11 +270,7 @@ pub struct OpaqueType {
     #[serde(rename = "supertype")]
     pub supertype: Option<RawNode>,
     pub impltype: RawNode,
-    #[serde(
-        default,
-        skip_serializing_if = "Option::is_none",
-        rename = "typeParameters"
-    )]
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "typeParameters")]
     pub type_parameters: Option<RawNode>,
 }
 
@@ -316,11 +280,7 @@ pub struct InterfaceDeclaration {
     pub base: BaseNode,
     pub id: Identifier,
     pub body: RawNode,
-    #[serde(
-        default,
-        skip_serializing_if = "Option::is_none",
-        rename = "typeParameters"
-    )]
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "typeParameters")]
     pub type_parameters: Option<RawNode>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub extends: Option<Vec<RawNode>>,
@@ -352,11 +312,7 @@ pub struct DeclareClass {
     pub base: BaseNode,
     pub id: Identifier,
     pub body: RawNode,
-    #[serde(
-        default,
-        skip_serializing_if = "Option::is_none",
-        rename = "typeParameters"
-    )]
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "typeParameters")]
     pub type_parameters: Option<RawNode>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub extends: Option<Vec<RawNode>>,
@@ -411,11 +367,7 @@ pub struct DeclareInterface {
     pub base: BaseNode,
     pub id: Identifier,
     pub body: RawNode,
-    #[serde(
-        default,
-        skip_serializing_if = "Option::is_none",
-        rename = "typeParameters"
-    )]
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "typeParameters")]
     pub type_parameters: Option<RawNode>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub extends: Option<Vec<RawNode>>,
@@ -431,11 +383,7 @@ pub struct DeclareTypeAlias {
     pub base: BaseNode,
     pub id: Identifier,
     pub right: RawNode,
-    #[serde(
-        default,
-        skip_serializing_if = "Option::is_none",
-        rename = "typeParameters"
-    )]
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "typeParameters")]
     pub type_parameters: Option<RawNode>,
 }
 
@@ -448,11 +396,7 @@ pub struct DeclareOpaqueType {
     pub supertype: Option<RawNode>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub impltype: Option<RawNode>,
-    #[serde(
-        default,
-        skip_serializing_if = "Option::is_none",
-        rename = "typeParameters"
-    )]
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "typeParameters")]
     pub type_parameters: Option<RawNode>,
 }
 

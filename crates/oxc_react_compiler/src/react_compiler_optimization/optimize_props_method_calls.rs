@@ -13,8 +13,8 @@
 //!
 //! Analogous to TS `Optimization/OptimizePropsMethodCalls.ts`.
 
-use react_compiler_hir::environment::Environment;
-use react_compiler_hir::{HirFunction, InstructionValue, is_props_type};
+use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_hir::{HirFunction, InstructionValue, is_props_type};
 
 pub fn optimize_props_method_calls(func: &mut HirFunction, env: &Environment) {
     for (_block_id, block) in &func.body.blocks {
@@ -36,17 +36,9 @@ pub fn optimize_props_method_calls(func: &mut HirFunction, env: &Environment) {
                 let old =
                     std::mem::replace(&mut instr.value, InstructionValue::Debugger { loc: None });
                 match old {
-                    InstructionValue::MethodCall {
-                        property,
-                        args,
-                        loc,
-                        ..
-                    } => {
-                        instr.value = InstructionValue::CallExpression {
-                            callee: property,
-                            args,
-                            loc,
-                        };
+                    InstructionValue::MethodCall { property, args, loc, .. } => {
+                        instr.value =
+                            InstructionValue::CallExpression { callee: property, args, loc };
                     }
                     _ => unreachable!(),
                 }

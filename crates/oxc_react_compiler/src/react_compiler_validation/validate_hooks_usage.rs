@@ -12,18 +12,18 @@
 
 use rustc_hash::FxHashMap;
 
-use react_compiler_utils::FxIndexMap;
-use react_compiler_diagnostics::{
+use crate::react_compiler_diagnostics::{
     CompilerDiagnostic, CompilerError, CompilerErrorDetail, ErrorCategory, SourceLocation,
 };
-use react_compiler_hir::dominator::compute_unconditional_blocks;
-use react_compiler_hir::environment::{Environment, is_hook_name};
-use react_compiler_hir::object_shape::HookKind;
-use react_compiler_hir::visitors::{each_pattern_operand, each_terminal_operand};
-use react_compiler_hir::{
+use crate::react_compiler_hir::dominator::compute_unconditional_blocks;
+use crate::react_compiler_hir::environment::{Environment, is_hook_name};
+use crate::react_compiler_hir::object_shape::HookKind;
+use crate::react_compiler_hir::visitors::{each_pattern_operand, each_terminal_operand};
+use crate::react_compiler_hir::{
     FunctionId, HirFunction, Identifier, IdentifierId, InstructionValue, ParamPattern, Place,
     PropertyLiteral, Type, visitors,
 };
+use crate::react_compiler_utils::FxIndexMap;
 
 /// Value classification for hook validation.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -66,11 +66,7 @@ fn get_kind_for_place(
 
 fn ident_is_hook_name(identifier_id: IdentifierId, identifiers: &[Identifier]) -> bool {
     let ident = &identifiers[identifier_id.0 as usize];
-    if let Some(ref name) = ident.name {
-        is_hook_name(name.value())
-    } else {
-        false
-    }
+    if let Some(ref name) = ident.name { is_hook_name(name.value()) } else { false }
 }
 
 fn get_hook_kind_for_id<'a>(
@@ -197,7 +193,7 @@ fn record_dynamic_hook_usage_error(
 pub fn validate_hooks_usage(
     func: &HirFunction,
     env: &mut Environment,
-) -> Result<(), react_compiler_diagnostics::CompilerDiagnostic> {
+) -> Result<(), crate::react_compiler_diagnostics::CompilerDiagnostic> {
     let unconditional_blocks = compute_unconditional_blocks(func, env.next_block_id().0)?;
     let mut errors_by_loc: FxIndexMap<SourceLocation, CompilerErrorDetail> = FxIndexMap::default();
     let mut value_kinds: FxHashMap<IdentifierId, Kind> = FxHashMap::default();
@@ -266,9 +262,7 @@ pub fn validate_hooks_usage(
                         get_kind_for_place(&instr.lvalue, &value_kinds, &env.identifiers);
                     value_kinds.insert(lvalue_id, join_kinds(lvalue_kind, kind));
                 }
-                InstructionValue::PropertyLoad {
-                    object, property, ..
-                } => {
+                InstructionValue::PropertyLoad { object, property, .. } => {
                     let object_kind = get_kind_for_place(object, &value_kinds, &env.identifiers);
                     let is_hook_property = match property {
                         PropertyLiteral::String(s) => is_hook_name(s),
@@ -318,18 +312,13 @@ pub fn validate_hooks_usage(
                     // Visit all operands except callee
                     for arg in args {
                         let place = match arg {
-                            react_compiler_hir::PlaceOrSpread::Place(p) => p,
-                            react_compiler_hir::PlaceOrSpread::Spread(s) => &s.place,
+                            crate::react_compiler_hir::PlaceOrSpread::Place(p) => p,
+                            crate::react_compiler_hir::PlaceOrSpread::Spread(s) => &s.place,
                         };
                         visit_place(place, &value_kinds, &mut errors_by_loc, env)?;
                     }
                 }
-                InstructionValue::MethodCall {
-                    receiver,
-                    property,
-                    args,
-                    ..
-                } => {
+                InstructionValue::MethodCall { receiver, property, args, .. } => {
                     let callee_kind = get_kind_for_place(property, &value_kinds, &env.identifiers);
                     let is_hook_callee =
                         callee_kind == Kind::KnownHook || callee_kind == Kind::PotentialHook;
@@ -347,8 +336,8 @@ pub fn validate_hooks_usage(
                     visit_place(receiver, &value_kinds, &mut errors_by_loc, env)?;
                     for arg in args {
                         let place = match arg {
-                            react_compiler_hir::PlaceOrSpread::Place(p) => p,
-                            react_compiler_hir::PlaceOrSpread::Spread(s) => &s.place,
+                            crate::react_compiler_hir::PlaceOrSpread::Place(p) => p,
+                            crate::react_compiler_hir::PlaceOrSpread::Spread(s) => &s.place,
                         };
                         visit_place(place, &value_kinds, &mut errors_by_loc, env)?;
                     }

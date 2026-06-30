@@ -1,7 +1,7 @@
-use react_compiler_diagnostics::CompilerError;
-use react_compiler_hir::environment::Environment;
-use react_compiler_hir::print::{self, PrintFormatter};
-use react_compiler_hir::{
+use crate::react_compiler_diagnostics::CompilerError;
+use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_hir::print::{self, PrintFormatter};
+use crate::react_compiler_hir::{
     BasicBlock, BlockId, HirFunction, Instruction, ParamPattern, Place, Terminal,
 };
 
@@ -15,9 +15,7 @@ struct DebugPrinter<'a> {
 
 impl<'a> DebugPrinter<'a> {
     fn new(env: &'a Environment) -> Self {
-        Self {
-            fmt: PrintFormatter::new(env),
-        }
+        Self { fmt: PrintFormatter::new(env) }
     }
 
     // =========================================================================
@@ -43,8 +41,7 @@ impl<'a> DebugPrinter<'a> {
         self.fmt.line(&format!("fn_type: {:?}", func.fn_type));
         self.fmt.line(&format!("generator: {}", func.generator));
         self.fmt.line(&format!("is_async: {}", func.is_async));
-        self.fmt
-            .line(&format!("loc: {}", print::format_loc(&func.loc)));
+        self.fmt.line(&format!("loc: {}", print::format_loc(&func.loc)));
 
         // params
         self.fmt.line("params:");
@@ -84,8 +81,7 @@ impl<'a> DebugPrinter<'a> {
                 self.fmt.line("aliasingEffects:");
                 self.fmt.indent();
                 for (i, eff) in effects.iter().enumerate() {
-                    self.fmt
-                        .line(&format!("[{}] {}", i, self.fmt.format_effect(eff)));
+                    self.fmt.line(&format!("[{}] {}", i, self.fmt.format_effect(eff)));
                 }
                 self.fmt.dedent();
             }
@@ -129,8 +125,7 @@ impl<'a> DebugPrinter<'a> {
         block: &BasicBlock,
         instructions: &[Instruction],
     ) {
-        self.fmt
-            .line(&format!("bb{} ({}):", block_id.0, block.kind));
+        self.fmt.line(&format!("bb{} ({}):", block_id.0, block.kind));
         self.fmt.indent();
 
         // preds
@@ -167,7 +162,7 @@ impl<'a> DebugPrinter<'a> {
     // Phi
     // =========================================================================
 
-    fn format_phi(&mut self, phi: &react_compiler_hir::Phi) {
+    fn format_phi(&mut self, phi: &crate::react_compiler_hir::Phi) {
         self.fmt.line("Phi {");
         self.fmt.indent();
         self.fmt.format_place_field("place", &phi.place);
@@ -226,15 +221,13 @@ impl<'a> DebugPrinter<'a> {
                 self.fmt.line("effects:");
                 self.fmt.indent();
                 for (i, eff) in effects.iter().enumerate() {
-                    self.fmt
-                        .line(&format!("[{}] {}", i, self.fmt.format_effect(eff)));
+                    self.fmt.line(&format!("[{}] {}", i, self.fmt.format_effect(eff)));
                 }
                 self.fmt.dedent();
             }
             None => self.fmt.line("effects: null"),
         }
-        self.fmt
-            .line(&format!("loc: {}", print::format_loc(&instr.loc)));
+        self.fmt.line(&format!("loc: {}", print::format_loc(&instr.loc)));
         self.fmt.dedent();
         self.fmt.line("}");
     }
@@ -245,14 +238,7 @@ impl<'a> DebugPrinter<'a> {
 
     fn format_terminal(&mut self, terminal: &Terminal) {
         match terminal {
-            Terminal::If {
-                test,
-                consequent,
-                alternate,
-                fallthrough,
-                id,
-                loc,
-            } => {
+            Terminal::If { test, consequent, alternate, fallthrough, id, loc } => {
                 self.fmt.line("If {");
                 self.fmt.indent();
                 self.fmt.line(&format!("id: {}", id.0));
@@ -264,14 +250,7 @@ impl<'a> DebugPrinter<'a> {
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            Terminal::Branch {
-                test,
-                consequent,
-                alternate,
-                fallthrough,
-                id,
-                loc,
-            } => {
+            Terminal::Branch { test, consequent, alternate, fallthrough, id, loc } => {
                 self.fmt.line("Branch {");
                 self.fmt.indent();
                 self.fmt.line(&format!("id: {}", id.0));
@@ -283,13 +262,7 @@ impl<'a> DebugPrinter<'a> {
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            Terminal::Logical {
-                operator,
-                test,
-                fallthrough,
-                id,
-                loc,
-            } => {
+            Terminal::Logical { operator, test, fallthrough, id, loc } => {
                 self.fmt.line("Logical {");
                 self.fmt.indent();
                 self.fmt.line(&format!("id: {}", id.0));
@@ -300,12 +273,7 @@ impl<'a> DebugPrinter<'a> {
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            Terminal::Ternary {
-                test,
-                fallthrough,
-                id,
-                loc,
-            } => {
+            Terminal::Ternary { test, fallthrough, id, loc } => {
                 self.fmt.line("Ternary {");
                 self.fmt.indent();
                 self.fmt.line(&format!("id: {}", id.0));
@@ -315,13 +283,7 @@ impl<'a> DebugPrinter<'a> {
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            Terminal::Optional {
-                optional,
-                test,
-                fallthrough,
-                id,
-                loc,
-            } => {
+            Terminal::Optional { optional, test, fallthrough, id, loc } => {
                 self.fmt.line("Optional {");
                 self.fmt.indent();
                 self.fmt.line(&format!("id: {}", id.0));
@@ -341,26 +303,18 @@ impl<'a> DebugPrinter<'a> {
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            Terminal::Return {
-                value,
-                return_variant,
-                id,
-                loc,
-                effects,
-            } => {
+            Terminal::Return { value, return_variant, id, loc, effects } => {
                 self.fmt.line("Return {");
                 self.fmt.indent();
                 self.fmt.line(&format!("id: {}", id.0));
-                self.fmt
-                    .line(&format!("returnVariant: {:?}", return_variant));
+                self.fmt.line(&format!("returnVariant: {:?}", return_variant));
                 self.fmt.format_place_field("value", value);
                 match effects {
                     Some(e) => {
                         self.fmt.line("effects:");
                         self.fmt.indent();
                         for (i, eff) in e.iter().enumerate() {
-                            self.fmt
-                                .line(&format!("[{}] {}", i, self.fmt.format_effect(eff)));
+                            self.fmt.line(&format!("[{}] {}", i, self.fmt.format_effect(eff)));
                         }
                         self.fmt.dedent();
                     }
@@ -370,12 +324,7 @@ impl<'a> DebugPrinter<'a> {
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            Terminal::Goto {
-                block,
-                variant,
-                id,
-                loc,
-            } => {
+            Terminal::Goto { block, variant, id, loc } => {
                 self.fmt.line("Goto {");
                 self.fmt.indent();
                 self.fmt.line(&format!("id: {}", id.0));
@@ -385,13 +334,7 @@ impl<'a> DebugPrinter<'a> {
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            Terminal::Switch {
-                test,
-                cases,
-                fallthrough,
-                id,
-                loc,
-            } => {
+            Terminal::Switch { test, cases, fallthrough, id, loc } => {
                 self.fmt.line("Switch {");
                 self.fmt.indent();
                 self.fmt.line(&format!("id: {}", id.0));
@@ -420,13 +363,7 @@ impl<'a> DebugPrinter<'a> {
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            Terminal::DoWhile {
-                loop_block,
-                test,
-                fallthrough,
-                id,
-                loc,
-            } => {
+            Terminal::DoWhile { loop_block, test, fallthrough, id, loc } => {
                 self.fmt.line("DoWhile {");
                 self.fmt.indent();
                 self.fmt.line(&format!("id: {}", id.0));
@@ -437,13 +374,7 @@ impl<'a> DebugPrinter<'a> {
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            Terminal::While {
-                test,
-                loop_block,
-                fallthrough,
-                id,
-                loc,
-            } => {
+            Terminal::While { test, loop_block, fallthrough, id, loc } => {
                 self.fmt.line("While {");
                 self.fmt.indent();
                 self.fmt.line(&format!("id: {}", id.0));
@@ -454,15 +385,7 @@ impl<'a> DebugPrinter<'a> {
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            Terminal::For {
-                init,
-                test,
-                update,
-                loop_block,
-                fallthrough,
-                id,
-                loc,
-            } => {
+            Terminal::For { init, test, update, loop_block, fallthrough, id, loc } => {
                 self.fmt.line("For {");
                 self.fmt.indent();
                 self.fmt.line(&format!("id: {}", id.0));
@@ -481,14 +404,7 @@ impl<'a> DebugPrinter<'a> {
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            Terminal::ForOf {
-                init,
-                test,
-                loop_block,
-                fallthrough,
-                id,
-                loc,
-            } => {
+            Terminal::ForOf { init, test, loop_block, fallthrough, id, loc } => {
                 self.fmt.line("ForOf {");
                 self.fmt.indent();
                 self.fmt.line(&format!("id: {}", id.0));
@@ -500,13 +416,7 @@ impl<'a> DebugPrinter<'a> {
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            Terminal::ForIn {
-                init,
-                loop_block,
-                fallthrough,
-                id,
-                loc,
-            } => {
+            Terminal::ForIn { init, loop_block, fallthrough, id, loc } => {
                 self.fmt.line("ForIn {");
                 self.fmt.indent();
                 self.fmt.line(&format!("id: {}", id.0));
@@ -517,12 +427,7 @@ impl<'a> DebugPrinter<'a> {
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            Terminal::Label {
-                block,
-                fallthrough,
-                id,
-                loc,
-            } => {
+            Terminal::Label { block, fallthrough, id, loc } => {
                 self.fmt.line("Label {");
                 self.fmt.indent();
                 self.fmt.line(&format!("id: {}", id.0));
@@ -532,12 +437,7 @@ impl<'a> DebugPrinter<'a> {
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            Terminal::Sequence {
-                block,
-                fallthrough,
-                id,
-                loc,
-            } => {
+            Terminal::Sequence { block, fallthrough, id, loc } => {
                 self.fmt.line("Sequence {");
                 self.fmt.indent();
                 self.fmt.line(&format!("id: {}", id.0));
@@ -561,18 +461,11 @@ impl<'a> DebugPrinter<'a> {
                     print::format_loc(loc)
                 ));
             }
-            Terminal::MaybeThrow {
-                continuation,
-                handler,
-                id,
-                loc,
-                effects,
-            } => {
+            Terminal::MaybeThrow { continuation, handler, id, loc, effects } => {
                 self.fmt.line("MaybeThrow {");
                 self.fmt.indent();
                 self.fmt.line(&format!("id: {}", id.0));
-                self.fmt
-                    .line(&format!("continuation: bb{}", continuation.0));
+                self.fmt.line(&format!("continuation: bb{}", continuation.0));
                 self.fmt.line(&format!(
                     "handler: {}",
                     match handler {
@@ -585,8 +478,7 @@ impl<'a> DebugPrinter<'a> {
                         self.fmt.line("effects:");
                         self.fmt.indent();
                         for (i, eff) in e.iter().enumerate() {
-                            self.fmt
-                                .line(&format!("[{}] {}", i, self.fmt.format_effect(eff)));
+                            self.fmt.line(&format!("[{}] {}", i, self.fmt.format_effect(eff)));
                         }
                         self.fmt.dedent();
                     }
@@ -596,13 +488,7 @@ impl<'a> DebugPrinter<'a> {
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            Terminal::Scope {
-                fallthrough,
-                block,
-                scope,
-                id,
-                loc,
-            } => {
+            Terminal::Scope { fallthrough, block, scope, id, loc } => {
                 self.fmt.line("Scope {");
                 self.fmt.indent();
                 self.fmt.line(&format!("id: {}", id.0));
@@ -613,13 +499,7 @@ impl<'a> DebugPrinter<'a> {
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            Terminal::PrunedScope {
-                fallthrough,
-                block,
-                scope,
-                id,
-                loc,
-            } => {
+            Terminal::PrunedScope { fallthrough, block, scope, id, loc } => {
                 self.fmt.line("PrunedScope {");
                 self.fmt.indent();
                 self.fmt.line(&format!("id: {}", id.0));
@@ -630,14 +510,7 @@ impl<'a> DebugPrinter<'a> {
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            Terminal::Try {
-                block,
-                handler_binding,
-                handler,
-                fallthrough,
-                id,
-                loc,
-            } => {
+            Terminal::Try { block, handler_binding, handler, fallthrough, id, loc } => {
                 self.fmt.line("Try {");
                 self.fmt.indent();
                 self.fmt.line(&format!("id: {}", id.0));

@@ -8,12 +8,12 @@
 //
 // Ported from `Entrypoint/Gating.ts`.
 
-use react_compiler_ast::common::BaseNode;
-use react_compiler_ast::expressions::*;
-use react_compiler_ast::patterns::PatternLike;
-use react_compiler_ast::statements::*;
-use react_compiler_diagnostics::CompilerDiagnostic;
-use react_compiler_diagnostics::ErrorCategory;
+use crate::react_compiler_ast::common::BaseNode;
+use crate::react_compiler_ast::expressions::*;
+use crate::react_compiler_ast::patterns::PatternLike;
+use crate::react_compiler_ast::statements::*;
+use crate::react_compiler_diagnostics::CompilerDiagnostic;
+use crate::react_compiler_diagnostics::ErrorCategory;
 
 use super::imports::ProgramContext;
 use super::plugin_options::GatingConfig;
@@ -49,7 +49,7 @@ pub struct GatingRewrite {
 /// but batched: all rewrites are collected first, then applied in reverse
 /// index order to maintain validity of earlier indices.
 pub fn apply_gating_rewrites(
-    program: &mut react_compiler_ast::Program,
+    program: &mut crate::react_compiler_ast::Program,
     mut rewrites: Vec<GatingRewrite>,
     context: &mut ProgramContext,
 ) -> Result<(), CompilerDiagnostic> {
@@ -134,10 +134,10 @@ pub fn apply_gating_rewrites(
                         declare: None,
                     });
                     let re_export = Statement::ExportDefaultDeclaration(
-                        react_compiler_ast::declarations::ExportDefaultDeclaration {
+                        crate::react_compiler_ast::declarations::ExportDefaultDeclaration {
                             base: BaseNode::default(),
                             declaration: Box::new(
-                                react_compiler_ast::declarations::ExportDefaultDecl::Expression(
+                                crate::react_compiler_ast::declarations::ExportDefaultDecl::Expression(
                                     Box::new(Expression::Identifier(make_identifier(&fn_name))),
                                 ),
                             ),
@@ -151,10 +151,10 @@ pub fn apply_gating_rewrites(
                     // Anonymous export default or arrow: replace the declaration content
                     // with the conditional expression
                     let export_default = Statement::ExportDefaultDeclaration(
-                        react_compiler_ast::declarations::ExportDefaultDeclaration {
+                        crate::react_compiler_ast::declarations::ExportDefaultDeclaration {
                             base: BaseNode::default(),
                             declaration: Box::new(
-                                react_compiler_ast::declarations::ExportDefaultDecl::Expression(
+                                crate::react_compiler_ast::declarations::ExportDefaultDecl::Expression(
                                     Box::new(gating_expression),
                                 ),
                             ),
@@ -200,8 +200,9 @@ fn insert_additional_function_declaration(
         Statement::FunctionDeclaration(fd) => fd.clone(),
         Statement::ExportNamedDeclaration(end) => {
             if let Some(decl) = &end.declaration {
-                if let react_compiler_ast::declarations::Declaration::FunctionDeclaration(fd) =
-                    decl.as_ref()
+                if let crate::react_compiler_ast::declarations::Declaration::FunctionDeclaration(
+                    fd,
+                ) = decl.as_ref()
                 {
                     fd.clone()
                 } else {
@@ -266,7 +267,7 @@ fn insert_additional_function_declaration(
         match param {
             PatternLike::RestElement(_) => {
                 new_params.push(PatternLike::RestElement(
-                    react_compiler_ast::patterns::RestElement {
+                    crate::react_compiler_ast::patterns::RestElement {
                         base: BaseNode::default(),
                         argument: Box::new(PatternLike::Identifier(make_identifier(&arg_name))),
                         type_annotation: None,
@@ -303,9 +304,7 @@ fn insert_additional_function_declaration(
             base: BaseNode::default(),
             body: vec![Statement::IfStatement(IfStatement {
                 base: BaseNode::default(),
-                test: Box::new(Expression::Identifier(make_identifier(
-                    &gating_condition_name,
-                ))),
+                test: Box::new(Expression::Identifier(make_identifier(&gating_condition_name))),
                 consequent: Box::new(Statement::ReturnStatement(ReturnStatement {
                     base: BaseNode::default(),
                     argument: Some(Box::new(Expression::CallExpression(CallExpression {
@@ -466,7 +465,7 @@ fn get_fn_decl_name(stmt: &Statement) -> Option<String> {
 fn get_fn_decl_name_from_export_default(stmt: &Statement) -> Option<String> {
     match stmt {
         Statement::ExportDefaultDeclaration(ed) => match ed.declaration.as_ref() {
-            react_compiler_ast::declarations::ExportDefaultDecl::FunctionDeclaration(fd) => {
+            crate::react_compiler_ast::declarations::ExportDefaultDecl::FunctionDeclaration(fd) => {
                 fd.id.as_ref().map(|id| id.name.clone())
             }
             _ => None,
@@ -498,10 +497,10 @@ fn extract_function_node_from_stmt(
             )),
         },
         Statement::ExportDefaultDeclaration(ed) => match ed.declaration.as_ref() {
-            react_compiler_ast::declarations::ExportDefaultDecl::FunctionDeclaration(fd) => {
+            crate::react_compiler_ast::declarations::ExportDefaultDecl::FunctionDeclaration(fd) => {
                 Ok(CompiledFunctionNode::FunctionDeclaration(fd.clone()))
             }
-            react_compiler_ast::declarations::ExportDefaultDecl::Expression(expr) => {
+            crate::react_compiler_ast::declarations::ExportDefaultDecl::Expression(expr) => {
                 match expr.as_ref() {
                     Expression::ArrowFunctionExpression(arrow) => {
                         Ok(CompiledFunctionNode::ArrowFunctionExpression(arrow.clone()))
@@ -562,8 +561,9 @@ fn rename_fn_decl_at(
         }
         Statement::ExportNamedDeclaration(end) => {
             if let Some(decl) = &mut end.declaration {
-                if let react_compiler_ast::declarations::Declaration::FunctionDeclaration(fd) =
-                    decl.as_mut()
+                if let crate::react_compiler_ast::declarations::Declaration::FunctionDeclaration(
+                    fd,
+                ) = decl.as_mut()
                 {
                     fd.id = Some(make_identifier(new_name));
                 }
