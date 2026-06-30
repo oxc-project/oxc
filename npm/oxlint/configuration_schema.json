@@ -17427,11 +17427,95 @@
     "ReactCompilerConfig": {
       "type": "object",
       "properties": {
+        "capitalizedCalls": {
+          "description": "Capitalized functions are reserved for components and must be invoked as\nJSX (`validate_no_capitalized_calls`).",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Capitalized functions are reserved for components and must be invoked as\nJSX (`validate_no_capitalized_calls`)."
+        },
+        "derivedComputationsInEffect": {
+          "description": "Effects may not recompute values that could be derived during render\n(emitted as the `EffectDerivationsOfState` category;\n`validate_no_derived_computations_in_effects`).",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Effects may not recompute values that could be derived during render\n(emitted as the `EffectDerivationsOfState` category;\n`validate_no_derived_computations_in_effects`)."
+        },
+        "errorBoundaries": {
+          "description": "JSX may not be constructed inside `try`/`catch`\n(`validate_no_jsx_in_try_statements`).",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "JSX may not be constructed inside `try`/`catch`\n(`validate_no_jsx_in_try_statements`)."
+        },
+        "hooks": {
+          "description": "Hooks must be called unconditionally and in a consistent order\n(`validate_hooks_usage`).",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Hooks must be called unconditionally and in a consistent order\n(`validate_hooks_usage`)."
+        },
+        "immutability": {
+          "description": "Values that are known to be mutable (props, state) may not be mutated —\nthe `Immutability` category. Emitted by the core mutation/aliasing\ninference pass and by `validate_locals_not_reassigned_after_render`,\nneither of which the compiler exposes a flag for.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Values that are known to be mutable (props, state) may not be mutated —\nthe `Immutability` category. Emitted by the core mutation/aliasing\ninference pass and by `validate_locals_not_reassigned_after_render`,\nneither of which the compiler exposes a flag for."
+        },
+        "memoDependencies": {
+          "description": "Memoization dependency arrays (`useMemo`/`useCallback`/`useEffect`) must\nbe exhaustive — the `MemoDependencies` category, equivalent to ESLint's\n`react-hooks/exhaustive-deps` (`validate_exhaustive_memoization_dependencies`).",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Memoization dependency arrays (`useMemo`/`useCallback`/`useEffect`) must\nbe exhaustive — the `MemoDependencies` category, equivalent to ESLint's\n`react-hooks/exhaustive-deps` (`validate_exhaustive_memoization_dependencies`)."
+        },
+        "preserveManualMemo": {
+          "description": "Manual `useMemo`/`useCallback` memoization must be preservable by the\ncompiler — the `PreserveManualMemo` category. `eslint-plugin-react-compiler`\nships this off by default; set to `false` to match\n(`enable_preserve_existing_memoization_guarantees` +\n`validate_preserve_existing_memoization_guarantees`).\n\nNOTE: the memoization validations are coupled. Disabling this alone\n*reclassifies* rather than removes — the compiler still bails on those\nsites and re-reports them under `MemoDependencies` (and a few under\n`Purity`). To silence the family, also set `memoDependencies: false`\n(and `purity: false` if those remain).",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Manual `useMemo`/`useCallback` memoization must be preservable by the\ncompiler — the `PreserveManualMemo` category. `eslint-plugin-react-compiler`\nships this off by default; set to `false` to match\n(`enable_preserve_existing_memoization_guarantees` +\n`validate_preserve_existing_memoization_guarantees`).\n\nNOTE: the memoization validations are coupled. Disabling this alone\n*reclassifies* rather than removes — the compiler still bails on those\nsites and re-reports them under `MemoDependencies` (and a few under\n`Purity`). To silence the family, also set `memoDependencies: false`\n(and `purity: false` if those remain)."
+        },
+        "purity": {
+          "description": "Known-impure functions (e.g. `Math.random`, `Date.now`) may not be\ncalled during render (`validate_no_impure_functions_in_render`).",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Known-impure functions (e.g. `Math.random`, `Date.now`) may not be\ncalled during render (`validate_no_impure_functions_in_render`)."
+        },
+        "refs": {
+          "description": "Refs may not be read or written during render\n(`validate_ref_access_during_render`).",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Refs may not be read or written during render\n(`validate_ref_access_during_render`)."
+        },
         "reportAllBailouts": {
           "description": "Also report compiler bail-outs — places where React Compiler skipped a\ncomponent or hook (for example because of unsupported syntax) without\nfinding a rule violation. These do not indicate incorrect code, only\ncode that the compiler declined to optimize.",
           "default": false,
           "type": "boolean",
           "markdownDescription": "Also report compiler bail-outs — places where React Compiler skipped a\ncomponent or hook (for example because of unsupported syntax) without\nfinding a rule violation. These do not indicate incorrect code, only\ncode that the compiler declined to optimize."
+        },
+        "setStateInEffect": {
+          "description": "`setState` may not be called unconditionally inside an effect\n(`validate_no_set_state_in_effects`).",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "`setState` may not be called unconditionally inside an effect\n(`validate_no_set_state_in_effects`)."
+        },
+        "setStateInRender": {
+          "description": "`setState` may not be called during render\n(`validate_no_set_state_in_render`).",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "`setState` may not be called during render\n(`validate_no_set_state_in_render`)."
+        },
+        "staticComponents": {
+          "description": "Components must be statically defined (`validate_static_components`).",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Components must be statically defined (`validate_static_components`)."
+        },
+        "useMemo": {
+          "description": "`useMemo`/`useCallback` callbacks must be well-formed — the `UseMemo`\ncategory (callbacks taking parameters, being async/generator, or\nreassigning outer variables). Distinct from `voidUseMemo`, which covers\ncallbacks that return nothing. Emitted by `drop_manual_memoization` and\nthe non-void part of `validate_use_memo`, neither gated by a flag.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "`useMemo`/`useCallback` callbacks must be well-formed — the `UseMemo`\ncategory (callbacks taking parameters, being async/generator, or\nreassigning outer variables). Distinct from `voidUseMemo`, which covers\ncallbacks that return nothing. Emitted by `drop_manual_memoization` and\nthe non-void part of `validate_use_memo`, neither gated by a flag."
+        },
+        "voidUseMemo": {
+          "description": "`useMemo` callbacks must return a value (`validate_no_void_use_memo`).",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "`useMemo` callbacks must return a value (`validate_no_void_use_memo`)."
         }
       },
       "additionalProperties": false

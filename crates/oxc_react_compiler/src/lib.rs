@@ -1,5 +1,6 @@
 use oxc_allocator::ArenaVec;
 
+pub mod category;
 pub mod convert_ast;
 pub mod convert_ast_reverse;
 pub mod convert_scope;
@@ -8,10 +9,11 @@ pub mod prefilter;
 
 use convert_ast::convert_program;
 use convert_scope::convert_scope_info;
-use diagnostics::compile_result_to_diagnostics;
+use diagnostics::{compile_result_to_categorized_diagnostics, compile_result_to_diagnostics};
 use prefilter::{has_react_like_functions, has_resource_management_declarations};
-use react_compiler::entrypoint::compile_result::LoggerEvent;
+use react_compiler::entrypoint::compile_result::{CompileResult, LoggerEvent};
 
+pub use category::{ReactCompilerCategory, ReactCompilerDiagnostic};
 // Re-exported so integrations needn't depend on the upstream `react_compiler` crates.
 pub use react_compiler::entrypoint::plugin_options::{
     CompilerTarget, DynamicGatingConfig, GatingConfig, PluginOptions,
@@ -61,8 +63,36 @@ pub struct TransformResult<'a> {
 }
 
 pub struct LintResult {
-    /// Errors and warnings produced by the compile.
-    pub diagnostics: oxc_diagnostics::Diagnostics,
+    /// Errors and warnings produced by the compile, each paired with its
+    /// [`ReactCompilerCategory`].
+    pub diagnostics: Vec<ReactCompilerDiagnostic>,
+}
+
+/// Run the compiler over a pre-parsed program, returning the raw upstream
+/// [`CompileResult`]. Returns `None` for files the compiler declines to look at
+/// (no React-like functions, or unsupported `using` declarations). Shared by
+/// [`transform`] and [`lint`] so they agree on what gets compiled.
+fn run_compiler(program: &oxc_ast::ast::Program, options: PluginOptions) -> Option<CompileResult> {
+    let source_text = program.source_text;
+
+    // Skip files with no React-like functions, unless the mode compiles everything.
+    if !matches!(options.compilation_mode.as_str(), "all" | "annotation")
+        && !has_react_like_functions(program)
+    {
+        return None;
+    }
+
+    // `using`/`await using` disposal semantics aren't preserved yet — skip the file.
+    if has_resource_management_declarations(program) {
+        return None;
+    }
+
+    let semantic =
+        oxc_semantic::SemanticBuilder::new().with_build_nodes(true).build(program).semantic;
+
+    let file = convert_program(program, source_text);
+    let scope_info = convert_scope_info(&semantic, program);
+    Some(react_compiler::entrypoint::program::compile_program(file, scope_info, options))
 }
 
 /// Run the React Compiler on a pre-parsed program, building the semantic model
@@ -77,24 +107,9 @@ pub fn transform<'a>(
 ) -> TransformResult<'a> {
     let source_text = program.source_text;
 
-    // Skip files with no React-like functions, unless the mode compiles everything.
-    if !matches!(options.compilation_mode.as_str(), "all" | "annotation")
-        && !has_react_like_functions(program)
-    {
+    let Some(result) = run_compiler(program, options) else {
         return TransformResult::default();
-    }
-
-    // `using`/`await using` disposal semantics aren't preserved yet — skip the file.
-    if has_resource_management_declarations(program) {
-        return TransformResult::default();
-    }
-
-    let semantic =
-        oxc_semantic::SemanticBuilder::new().with_build_nodes(true).build(program).semantic;
-
-    let file = convert_program(program, source_text);
-    let scope_info = convert_scope_info(&semantic, program);
-    let result = react_compiler::entrypoint::program::compile_program(file, scope_info, options);
+    };
 
     let diagnostics = compile_result_to_diagnostics(&result);
     let (program_ast, events) = match result {
@@ -168,10 +183,10 @@ pub fn lint(program: &oxc_ast::ast::Program, options: PluginOptions) -> LintResu
     let mut opts = options;
     opts.no_emit = true;
 
-    // `no_emit` yields `program: None`; a local arena for the conversion suffices.
-    let allocator = oxc_allocator::Allocator::default();
-    let result = transform(program, &allocator, opts);
-    LintResult { diagnostics: result.diagnostics }
+    let diagnostics = run_compiler(program, opts)
+        .map(|result| compile_result_to_categorized_diagnostics(&result))
+        .unwrap_or_default();
+    LintResult { diagnostics }
 }
 
 /// Convenience wrapper — parses source text, runs semantic analysis, then lints.
