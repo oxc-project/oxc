@@ -2,9 +2,9 @@
 source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
-/* A custom property's `!important` lives in the re-parsed declaration
-   (the original is a raw token soup with `important: None`) — it must
-   survive printing. */
+/* `!important` on a custom property must survive printing
+   (the value parses as a normal `<declaration-value>` so the trailing
+   `!important` lands on the declaration itself). */
 html {
   margin-right: 0px !important;
   --removed-body-scroll-bar-size: 0px !important;
@@ -18,9 +18,9 @@ html {
 ------------------
 { printWidth: 80 }
 ------------------
-/* A custom property's `!important` lives in the re-parsed declaration
-   (the original is a raw token soup with `important: None`) — it must
-   survive printing. */
+/* `!important` on a custom property must survive printing
+   (the value parses as a normal `<declaration-value>` so the trailing
+   `!important` lands on the declaration itself). */
 html {
   margin-right: 0px !important;
   --removed-body-scroll-bar-size: 0px !important;
@@ -33,9 +33,9 @@ html {
 -------------------
 { printWidth: 100 }
 -------------------
-/* A custom property's `!important` lives in the re-parsed declaration
-   (the original is a raw token soup with `important: None`) — it must
-   survive printing. */
+/* `!important` on a custom property must survive printing
+   (the value parses as a normal `<declaration-value>` so the trailing
+   `!important` lands on the declaration itself). */
 html {
   margin-right: 0px !important;
   --removed-body-scroll-bar-size: 0px !important;

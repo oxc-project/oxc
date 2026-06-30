@@ -167,6 +167,7 @@ fn parse_stylesheet<'a>(
                     .strip_prefix(TEMPLATE_PLACEHOLDER_SUFFIX)
                     .expect("placeholder prefix starts with a backtick"),
             }),
+            try_parsing_value_in_custom_property: true,
             ..ParserOptions::default()
         })
         .comments(&mut comments)
