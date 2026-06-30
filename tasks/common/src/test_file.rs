@@ -1,8 +1,11 @@
-use std::fmt;
+use std::{fmt, thread, time::Duration};
 
 use oxc_span::SourceType;
 
 use crate::{project_root, request::agent};
+
+const DOWNLOAD_ATTEMPTS: usize = 3;
+const DOWNLOAD_RETRY_DELAY: Duration = Duration::from_secs(1);
 
 pub struct TestFiles {
     files: Vec<TestFile>,
@@ -132,21 +135,56 @@ impl TestFile {
             Ok((filename.to_string(), code))
         } else {
             println!("[{filename}] - Downloading [{lib}] to [{}]", file.display());
-            match agent().get(lib).call() {
-                Ok(mut response) => {
-                    let mut reader = response.body_mut().as_reader();
+            let agent = agent();
+            for attempt in 1..=DOWNLOAD_ATTEMPTS {
+                match agent.get(lib).call() {
+                    Ok(mut response) => {
+                        let mut reader = response.body_mut().as_reader();
 
-                    let _drop = std::fs::remove_file(&file);
-                    let mut writer = std::fs::File::create(&file).map_err(err_to_string)?;
-                    std::io::copy(&mut reader, &mut writer).map_err(err_to_string)?;
-
-                    std::fs::read_to_string(&file)
-                        .map_err(err_to_string)
-                        .map(|code| (filename.to_string(), code))
+                        let _drop = std::fs::remove_file(&file);
+                        let mut writer = std::fs::File::create(&file).map_err(err_to_string)?;
+                        if let Err(e) = std::io::copy(&mut reader, &mut writer) {
+                            let _drop = std::fs::remove_file(&file);
+                            let err = err_to_string(e);
+                            if attempt == DOWNLOAD_ATTEMPTS {
+                                return Err(err);
+                            }
+                            println!(
+                                "[{filename}] - Download failed (attempt {attempt}/{DOWNLOAD_ATTEMPTS}): {err}; retrying"
+                            );
+                        } else {
+                            return std::fs::read_to_string(&file)
+                                .map_err(err_to_string)
+                                .map(|code| (filename.to_string(), code));
+                        }
+                    }
+                    Err(e) => {
+                        let err = err_to_string(&e);
+                        if attempt == DOWNLOAD_ATTEMPTS || !is_retryable_download_error(&e) {
+                            return Err(err);
+                        }
+                        println!(
+                            "[{filename}] - Download failed (attempt {attempt}/{DOWNLOAD_ATTEMPTS}): {err}; retrying"
+                        );
+                    }
                 }
-                Err(e) => Err(format!("{e:?}")),
+                thread::sleep(DOWNLOAD_RETRY_DELAY);
             }
+
+            unreachable!("download loop should return on the final attempt")
         }
+    }
+}
+
+fn is_retryable_download_error(e: &ureq::Error) -> bool {
+    match e {
+        ureq::Error::StatusCode(code) => matches!(*code, 408 | 429 | 500..=599),
+        ureq::Error::Protocol(_)
+        | ureq::Error::Io(_)
+        | ureq::Error::Timeout(_)
+        | ureq::Error::HostNotFound
+        | ureq::Error::ConnectionFailed => true,
+        _ => false,
     }
 }
 
