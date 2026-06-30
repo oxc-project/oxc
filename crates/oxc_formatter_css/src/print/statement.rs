@@ -95,7 +95,9 @@ pub(super) fn write_statement_sequence_bounded<'a>(
     // (`${m}\ncolor: red` -> no `;`, but `${m}\ncolor: red;\nx: 1` -> `x: 1;`).
     // Track that run so swallowed declarations keep a source-driven `;`.
     let mut swallowed = false;
-    for (i, stmt) in statements.iter().enumerate() {
+    let mut i = 0;
+    while i < statements.len() {
+        let stmt = &statements[i];
         let start = stmt_start(stmt);
         if i > 0 {
             let prev_end = stmt_end(&statements[i - 1], f);
@@ -131,7 +133,27 @@ pub(super) fn write_statement_sequence_bounded<'a>(
         let end = stmt_end(stmt, f);
         // `stmt_end` already consumes a trailing `;`,
         // so a source `;` is present exactly when it advanced past the raw statement span.
-        let has_source_semicolon = end > to_span(stmt.span()).end;
+        let raw_end = to_span(stmt.span()).end;
+        let has_source_semicolon = end > raw_end;
+        // A leading css-in-js placeholder can parse as its own statement even when it
+        // is actually the first piece of a selector (`${Component}:hover &`). If the
+        // source has no gap before the following rule, preserve that attachment.
+        if !is_suppressed
+            && !has_source_semicolon
+            && let Statement::Placeholder(placeholder) = stmt
+            && let Some(next_stmt @ Statement::QualifiedRule(rule)) = statements.get(i + 1)
+        {
+            let next_start = stmt_start(next_stmt);
+            let has_intervening_comment =
+                f.context().comments().peek().is_some_and(|c| c.span.start < next_start);
+            if source.bytes_range(raw_end, next_start).is_empty() && !has_intervening_comment {
+                super::write_placeholder(placeholder, f);
+                write_qualified_rule(rule, f);
+                let _ = f.context().comments().take_before(stmt_end(next_stmt, f));
+                i += 2;
+                continue;
+            }
+        }
         if is_suppressed {
             write!(f, text(source.slice_range(start, end)));
         } else if swallowed && let Statement::Declaration(decl) = stmt {
@@ -153,6 +175,7 @@ pub(super) fn write_statement_sequence_bounded<'a>(
         // (e.g. inside selectors/values that are still printed verbatim),
         // so the cursor never points before an already-printed position.
         let _ = f.context().comments().take_before(end);
+        i += 1;
     }
     if let Some(last) = statements.last() {
         write_trailing_same_line_comment(stmt_end(last, f), upper, f);

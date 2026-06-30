@@ -17,6 +17,15 @@ a.`PLACEHOLDER-0`:focus,a.`PLACEHOLDER-1`:hover {
 a[data-x=`PLACEHOLDER-6`] {
   color: blue;
 }
+`PLACEHOLDER-7`:hover &,
+`PLACEHOLDER-8`:focus-within &,
+`PLACEHOLDER-9`:after {
+  color: red;
+}
+`PLACEHOLDER-10`:after,
+`PLACEHOLDER-11`:hover & {
+  color: blue;
+}
 
 ==================== Output ====================
 ------------------
@@ -38,6 +47,14 @@ a.`PLACEHOLDER-0`:focus,a.`PLACEHOLDER-1`:hover {
 a[data-x=`PLACEHOLDER-6`] {
   color: blue;
 }
+`PLACEHOLDER-7`:hover &,
+`PLACEHOLDER-8`:focus-within &, `PLACEHOLDER-9`:after {
+  color: red;
+}
+`PLACEHOLDER-10`:after,
+`PLACEHOLDER-11`:hover & {
+  color: blue;
+}
 
 -------------------
 { printWidth: 100 }
@@ -56,6 +73,14 @@ a.`PLACEHOLDER-0`:focus,a.`PLACEHOLDER-1`:hover {
   color: red;
 }
 a[data-x=`PLACEHOLDER-6`] {
+  color: blue;
+}
+`PLACEHOLDER-7`:hover &,
+`PLACEHOLDER-8`:focus-within &, `PLACEHOLDER-9`:after {
+  color: red;
+}
+`PLACEHOLDER-10`:after,
+`PLACEHOLDER-11`:hover & {
   color: blue;
 }
 
