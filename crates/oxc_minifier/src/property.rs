@@ -118,8 +118,10 @@ fn eligible(opts: &ManglePropertiesOptions, name: &str) -> bool {
 
 /// Assign final mangled names.
 ///
-/// `candidates` are eligible unquoted names; `reserved` are program-wide reservations.
-/// Returns the old -> new map and mutates the shared `cache`.
+/// `classes` is the collect pass's classification of every distinct property name: the
+/// `Candidate` entries are mangled, the `Reserved` entries are program-wide reservations
+/// that the generated names must avoid. Returns the old -> new map and mutates the shared
+/// `cache`.
 ///
 /// The iteration order is deterministic (sorted) so that a shared cache reproduces
 /// the same names across builds, and the produced names are pairwise disjoint and
@@ -134,12 +136,19 @@ fn eligible(opts: &ManglePropertiesOptions, name: &str) -> bool {
 /// entries (the user explicitly pinned them); those are marked occupied up front so
 /// they can never be handed to another candidate.
 fn assign(
-    candidates: &FxHashSet<CompactStr>,
-    reserved: &FxHashSet<CompactStr>,
+    classes: &FxHashMap<CompactStr, Class>,
     cache: &mut PropertyMangleCache,
 ) -> FxHashMap<CompactStr, CompactStr> {
+    // `Reserved` already won over `Candidate` during collect, so the `Candidate` keys are exactly
+    // the names to mangle (no candidate/reserved set difference needed). A name is reserved iff
+    // it is classified `Reserved`; `CompactStr: Borrow<str>` lets the base54 `&str` probe directly.
+    let is_reserved = |name: &str| matches!(classes.get(name), Some(Class::Reserved));
+
     // Deterministic order so a shared cache is reproducible.
-    let mut names: Vec<&CompactStr> = candidates.difference(reserved).collect();
+    let mut names: Vec<&CompactStr> = classes
+        .iter()
+        .filter_map(|(name, class)| (*class == Class::Candidate).then_some(name))
+        .collect();
     names.sort_unstable();
 
     // Candidates the user pinned as Reserved keep their original spelling, so those
@@ -168,7 +177,7 @@ fn assign(
             Some(CacheValue::Reserved) => {}
             // Honor the cached name only if it doesn't collide with anything occupied.
             Some(CacheValue::Name(n))
-                if !reserved.contains(n.as_str())
+                if !is_reserved(n.as_str())
                     && !is_always_reserved(n)
                     && !kept.contains(n)
                     && !claimed.contains(n) =>
@@ -185,7 +194,7 @@ fn assign(
                     let candidate = candidate.as_str();
                     // Test the `&str` view against every set, allocating a `CompactStr` only
                     // once a name survives (discarded names on collision cost nothing).
-                    if !reserved.contains(candidate)
+                    if !is_reserved(candidate)
                         && !is_always_reserved(candidate)
                         && !kept.contains(candidate)
                         && !claimed.contains(candidate)
@@ -203,21 +212,44 @@ fn assign(
     map
 }
 
+/// How a distinct property name was classified during the collect pass.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Class {
+    /// Eligible, and only ever seen in a mangle-able (unquoted) position: mangle it.
+    Candidate,
+    /// Must never be mangled — seen in a quoted/computed key, the LHS of `'x' in obj`,
+    /// a JSX attribute, or an assignment-target shorthand (or it failed eligibility).
+    /// `Reserved` always wins: a name seen in any reserve-position stays `Reserved`
+    /// even if it was also seen unquoted.
+    Reserved,
+}
+
 /// The result of the read-only collect pass over the original (pre-compress) program.
 ///
-/// `candidates` are eligible names seen unquoted (mangle these); `reserved` are names
-/// seen in a position that must keep its spelling (quoted/computed keys, the LHS string
-/// of `'x' in obj`, JSX attribute names, assignment-target shorthands). `bail` is set when
-/// the program contains `with` or a direct `eval` / `Function` constructor, which makes
-/// property mangling unsafe for the whole program.
+/// `names` classifies every distinct property name seen exactly once (see [`Class`]).
+/// Folding the candidate/reserved split into one map keeps the per-occurrence hot path
+/// to a single hash lookup (a property name repeats many times in a real bundle), instead
+/// of probing two separate sets. `bail` is set when the program contains `with` or a direct
+/// `eval` / `Function` constructor, which makes property mangling unsafe for the whole program.
 #[derive(Default)]
 pub struct PropertyCollectState {
-    /// Eligible names seen unquoted.
-    pub candidates: FxHashSet<CompactStr>,
-    /// Names that must never be mangled (quoted/computed/in-LHS/JSX-attr/assignment-target).
-    pub reserved: FxHashSet<CompactStr>,
+    /// Every distinct property name, classified once. `Reserved` wins over `Candidate`.
+    pub names: FxHashMap<CompactStr, Class>,
     /// `with` or direct `eval` / `Function` present anywhere => disable mangling.
     pub bail: bool,
+}
+
+#[cfg(test)]
+impl PropertyCollectState {
+    /// Whether `name` was classified as a mangle candidate.
+    fn is_candidate(&self, name: &str) -> bool {
+        matches!(self.names.get(name), Some(Class::Candidate))
+    }
+
+    /// Whether `name` was classified as reserved (never mangled).
+    fn is_reserved(&self, name: &str) -> bool {
+        matches!(self.names.get(name), Some(Class::Reserved))
+    }
 }
 
 /// Read-only visitor that classifies every property-bearing position in the program.
@@ -235,19 +267,16 @@ impl<'o> PropertyCollector<'o> {
 
     /// An unquoted occurrence: mangle it if eligible, otherwise it is reserved program-wide.
     fn candidate(&mut self, name: &str) {
-        // A property name repeats many times in a real bundle. Once it has been classified into
-        // either set the decision is fixed, so short-circuit before re-running `eligible` (which
-        // evaluates the mangle/reserve REGEXES) and before re-allocating a `CompactStr`. This
-        // turns per-occurrence regex work into per-distinct-name work. `CompactStr: Borrow<str>`,
-        // so the lookups take the `&str` directly with no allocation.
-        if self.state.candidates.contains(name) || self.state.reserved.contains(name) {
+        // A property name repeats many times in a real bundle. Once it has been classified the
+        // decision is fixed, so a single `contains_key` short-circuits before re-running
+        // `eligible` (which evaluates the mangle/reserve REGEXES) and before re-allocating a
+        // `CompactStr`. This turns per-occurrence regex work into per-distinct-name work.
+        // `CompactStr: Borrow<str>`, so the lookup takes the `&str` directly with no allocation.
+        if self.state.names.contains_key(name) {
             return;
         }
-        if eligible(self.opts, name) {
-            self.state.candidates.insert(CompactStr::from(name));
-        } else {
-            self.state.reserved.insert(CompactStr::from(name));
-        }
+        let class = if eligible(self.opts, name) { Class::Candidate } else { Class::Reserved };
+        self.state.names.insert(CompactStr::from(name), class);
     }
 
     /// A quoted/computed/never-mangle occurrence.
@@ -265,8 +294,12 @@ impl<'o> PropertyCollector<'o> {
 
     /// Reserve a name program-wide, regardless of `mangle_quoted`.
     fn reserve(&mut self, name: &str) {
-        if !self.state.reserved.contains(name) {
-            self.state.reserved.insert(CompactStr::from(name));
+        // `Reserved` wins: overwrite an existing `Candidate` (downgrade) or `Reserved` (no-op)
+        // with one `get_mut`, allocating a `CompactStr` only for a name not yet seen.
+        if let Some(class) = self.state.names.get_mut(name) {
+            *class = Class::Reserved;
+        } else {
+            self.state.names.insert(CompactStr::from(name), Class::Reserved);
         }
     }
 
@@ -760,7 +793,7 @@ impl PropertyMangler {
         if self.state.bail || self.key_annotated.is_empty() {
             return;
         }
-        let map = assign(&self.state.candidates, &self.state.reserved, &mut self.opts.cache);
+        let map = assign(&self.state.names, &mut self.opts.cache);
         if map.is_empty() {
             self.map = Some(map);
             return;
@@ -792,7 +825,7 @@ impl PropertyMangler {
         // `map` is already assigned if `rename_annotated_literals` ran; otherwise assign now.
         let map = match self.map.take() {
             Some(map) => map,
-            None => assign(&self.state.candidates, &self.state.reserved, &mut self.opts.cache),
+            None => assign(&self.state.names, &mut self.opts.cache),
         };
         if map.is_empty() {
             return self.opts.cache;
@@ -830,6 +863,19 @@ mod tests {
         ManglePropertiesOptions { mangle_quoted: true, ..opts(re) }
     }
 
+    /// Build a classification map the way collect would: `reserved` wins, so it is inserted
+    /// first and `candidates` only fill the names not already reserved.
+    fn classes(candidates: &[&str], reserved: &[&str]) -> FxHashMap<CompactStr, Class> {
+        let mut map = FxHashMap::default();
+        for name in reserved {
+            map.insert(CompactStr::from(*name), Class::Reserved);
+        }
+        for name in candidates {
+            map.entry(CompactStr::from(*name)).or_insert(Class::Candidate);
+        }
+        map
+    }
+
     #[test]
     fn eligibility() {
         let o = opts("^_");
@@ -845,12 +891,10 @@ mod tests {
 
     #[test]
     fn assignment_is_deterministic_and_disjoint() {
-        let cands: FxHashSet<CompactStr> =
-            ["_a", "_b"].iter().map(|s| CompactStr::from(*s)).collect();
-        let reserved = FxHashSet::default();
+        let cands = classes(&["_a", "_b"], &[]);
         let mut cache = PropertyMangleCache::default();
-        let m1 = assign(&cands, &reserved, &mut cache);
-        let m2 = assign(&cands, &reserved, &mut PropertyMangleCache::default());
+        let m1 = assign(&cands, &mut cache);
+        let m2 = assign(&cands, &mut PropertyMangleCache::default());
         assert_eq!(m1, m2); // deterministic
         let names: FxHashSet<_> = m1.values().collect();
         assert_eq!(names.len(), m1.len()); // no two map to the same name
@@ -858,20 +902,19 @@ mod tests {
 
     #[test]
     fn cache_reuse_and_reserved() {
-        let cands: FxHashSet<CompactStr> = std::iter::once(CompactStr::from("_a")).collect();
+        let cands = classes(&["_a"], &[]);
         let mut cache = PropertyMangleCache::default();
         cache.map.insert("_a".into(), CacheValue::Name("Z".into()));
-        let m = assign(&cands, &FxHashSet::default(), &mut cache);
+        let m = assign(&cands, &mut cache);
         assert_eq!(m[&CompactStr::from("_a")].as_str(), "Z"); // honors cache
     }
 
     #[test]
     fn cache_collision_is_remangled_not_corrupted() {
-        let cands: FxHashSet<CompactStr> = std::iter::once(CompactStr::from("_a")).collect();
-        let reserved: FxHashSet<CompactStr> = std::iter::once(CompactStr::from("b")).collect();
+        let cands = classes(&["_a"], &["b"]);
         let mut cache = PropertyMangleCache::default();
         cache.map.insert("_a".into(), CacheValue::Name("b".into())); // collides with reserved `b`
-        let m = assign(&cands, &reserved, &mut cache);
+        let m = assign(&cands, &mut cache);
         // The cached name `b` collides with a reservation, so `_a` is regenerated a fresh
         // valid name instead of being kept/skipped. It must be mapped, and never to `b`.
         let out = &m[&CompactStr::from("_a")];
@@ -884,12 +927,10 @@ mod tests {
     fn generation_collision_does_not_corrupt() {
         // `e` is cached to `Name("b")`, but `b` is reserved -> `e` must be regenerated.
         // `_x` has no cache entry -> it is generated fresh. Neither output may collide.
-        let cands: FxHashSet<CompactStr> =
-            ["_x", "e"].iter().map(|s| CompactStr::from(*s)).collect();
-        let reserved: FxHashSet<CompactStr> = std::iter::once(CompactStr::from("b")).collect();
+        let cands = classes(&["_x", "e"], &["b"]);
         let mut cache = PropertyMangleCache::default();
         cache.map.insert("e".into(), CacheValue::Name("b".into()));
-        let m = assign(&cands, &reserved, &mut cache);
+        let m = assign(&cands, &mut cache);
         let x_out = m.get(&CompactStr::from("_x"));
         let e_out = m.get(&CompactStr::from("e"));
         assert!(x_out.is_some());
@@ -907,13 +948,11 @@ mod tests {
         // `_a` is cached to `_z`, but `_z` is itself a candidate cached to `q`.
         // `q` is reserved, so `_z` is regenerated; `_a`'s cached `_z` must NOT be reused
         // as `_z`'s own (now different) output, and the two outputs must be distinct.
-        let cands: FxHashSet<CompactStr> =
-            ["_a", "_z"].iter().map(|s| CompactStr::from(*s)).collect();
-        let reserved: FxHashSet<CompactStr> = std::iter::once(CompactStr::from("q")).collect();
+        let cands = classes(&["_a", "_z"], &["q"]);
         let mut cache = PropertyMangleCache::default();
         cache.map.insert("_a".into(), CacheValue::Name("_z".into()));
         cache.map.insert("_z".into(), CacheValue::Name("q".into()));
-        let m = assign(&cands, &reserved, &mut cache);
+        let m = assign(&cands, &mut cache);
         let a_out = &m[&CompactStr::from("_a")];
         let z_out = &m[&CompactStr::from("_z")];
         assert_ne!(a_out, z_out); // the two outputs are distinct
@@ -934,10 +973,10 @@ mod tests {
     fn collect_classifies() {
         let alloc = oxc_allocator::Allocator::default();
         let s = collect_src(&alloc, &opts("^_"), "a._x; b['_y']; ({ _z: 1, q: 2 });");
-        assert!(s.candidates.contains("_x")); // unquoted member
-        assert!(s.reserved.contains("_y")); // quoted member (mangle_quoted off)
-        assert!(s.candidates.contains("_z")); // identifier key matching regex
-        assert!(s.reserved.contains("q")); // identifier key not matching => reserved
+        assert!(s.is_candidate("_x")); // unquoted member
+        assert!(s.is_reserved("_y")); // quoted member (mangle_quoted off)
+        assert!(s.is_candidate("_z")); // identifier key matching regex
+        assert!(s.is_reserved("q")); // identifier key not matching => reserved
         assert!(!s.bail);
     }
 
@@ -952,8 +991,8 @@ mod tests {
     fn collect_reserves_in_operator_and_assignment_target() {
         let alloc = oxc_allocator::Allocator::default();
         let s = collect_src(&alloc, &opts("^_"), "'_x' in o; ({ _y } = o);");
-        assert!(s.reserved.contains("_x")); // `in` LHS (mangle_quoted off)
-        assert!(s.reserved.contains("_y")); // assignment-target shorthand
+        assert!(s.is_reserved("_x")); // `in` LHS (mangle_quoted off)
+        assert!(s.is_reserved("_y")); // assignment-target shorthand
     }
 
     #[test]
@@ -966,12 +1005,12 @@ mod tests {
              a[c ? '_u' : d];",
         );
         for name in ["_x", "_y", "_z", "_w", "_v", "_u"] {
-            assert!(s.candidates.contains(name), "{name} should be a candidate");
-            assert!(!s.reserved.contains(name), "{name} should not be reserved");
+            assert!(s.is_candidate(name), "{name} should be a candidate");
+            assert!(!s.is_reserved(name), "{name} should not be reserved");
         }
         // The assignment-target shorthand is still reserved regardless of mangle_quoted.
         let s2 = collect_src(&alloc, &opts_quoted("^_"), "({ _k } = o);");
-        assert!(s2.reserved.contains("_k"));
+        assert!(s2.is_reserved("_k"));
     }
 
     #[test]
@@ -985,13 +1024,13 @@ mod tests {
             "a[`_x`]; `_v` in o; ({ [`_z`]: 1 }); ({ [(q, `_w`)]: 1 }); a[c ? `_u` : d];",
         );
         for name in ["_x", "_v", "_z", "_w", "_u"] {
-            assert!(s.reserved.contains(name), "{name} should be reserved");
-            assert!(!s.candidates.contains(name), "{name} should not be a candidate");
+            assert!(s.is_reserved(name), "{name} should be reserved");
+            assert!(!s.is_candidate(name), "{name} should not be a candidate");
         }
         // A template WITH a substitution is not a statically-known key: neither classified.
         let s2 = collect_src(&alloc, &opts("^_"), "a[`_d${y}`];");
-        assert!(!s2.reserved.contains("_d"));
-        assert!(!s2.candidates.contains("_d"));
+        assert!(!s2.is_reserved("_d"));
+        assert!(!s2.is_candidate("_d"));
     }
 
     #[test]
@@ -1005,8 +1044,8 @@ mod tests {
             "a[`_x`]; `_v` in o; ({ [`_z`]: 1 }); a[c ? `_u` : d];",
         );
         for name in ["_x", "_v", "_z", "_u"] {
-            assert!(s.candidates.contains(name), "{name} should be a candidate");
-            assert!(!s.reserved.contains(name), "{name} should not be reserved");
+            assert!(s.is_candidate(name), "{name} should be a candidate");
+            assert!(!s.is_reserved(name), "{name} should not be reserved");
         }
     }
 
@@ -1024,14 +1063,14 @@ mod tests {
              /* @__KEY__ */ 'notMangled';",
         );
         // Annotated and regex-matching => candidate.
-        assert!(s.candidates.contains("_mangleThis"));
-        assert!(s.candidates.contains("_mangleThis2"));
-        assert!(s.candidates.contains("_mangleHash"));
+        assert!(s.is_candidate("_mangleThis"));
+        assert!(s.is_candidate("_mangleThis2"));
+        assert!(s.is_candidate("_mangleHash"));
         // No `@`/`#` => not an annotation => plain argument string, not a candidate.
-        assert!(!s.candidates.contains("_doNotMangleThis"));
-        assert!(!s.reserved.contains("_doNotMangleThis"));
+        assert!(!s.is_candidate("_doNotMangleThis"));
+        assert!(!s.is_reserved("_doNotMangleThis"));
         // Annotated but regex does not match => not a candidate (eligibility still gates).
-        assert!(!s.candidates.contains("notMangled"));
+        assert!(!s.is_candidate("notMangled"));
     }
 
     #[test]
@@ -1044,7 +1083,7 @@ mod tests {
             "foo('_keep'); x[foo('_keep2')]; ({ [foo('_keep3')]: x });",
         );
         for name in ["_keep", "_keep2", "_keep3"] {
-            assert!(!s.candidates.contains(name), "{name} must not be a candidate");
+            assert!(!s.is_candidate(name), "{name} must not be a candidate");
         }
     }
 }
