@@ -21,13 +21,12 @@
 /// ```ignore
 /// inherit_variants! {
 ///     #[ast]
-///     enum Statement<'a> {
-///         pub enum Statement<'a> {
-///             BlockStatement(Box<'a, BlockStatement<'a>>) = 0,
-///             BreakStatement(Box<'a, BreakStatement<'a>>) = 1,
-///             @inherit Declaration
-///             @inherit ModuleDeclaration
-///         }
+///     pub enum Statement<'a> {
+///         BlockStatement(Box<'a, BlockStatement<'a>>) = 0,
+///         BreakStatement(Box<'a, BreakStatement<'a>>) = 1,
+///
+///         @inherit Declaration
+///         @inherit ModuleDeclaration
 ///     }
 /// }
 /// ```
@@ -36,21 +35,19 @@
 ///
 /// ```ignore
 /// #[ast]
-/// enum Statement<'a> {
-///     pub enum Statement<'a> {
-///         BlockStatement(Box<'a, BlockStatement<'a>>) = 0,
-///         BreakStatement(Box<'a, BreakStatement<'a>>) = 1,
+/// pub enum Statement<'a> {
+///     BlockStatement(Box<'a, BlockStatement<'a>>) = 0,
+///     BreakStatement(Box<'a, BreakStatement<'a>>) = 1,
 ///
-///         // Inherited from `Declaration`
-///         VariableDeclaration(Box<'a, VariableDeclaration<'a>>) = 32,
-///         FunctionDeclaration(Box<'a, Function<'a>>) = 33,
-///         // ...and many more
+///     // Inherited from `Declaration`
+///     VariableDeclaration(Box<'a, VariableDeclaration<'a>>) = 32,
+///     FunctionDeclaration(Box<'a, Function<'a>>) = 33,
+///     // ...and many more
 ///
-///         // Inherited from `ModuleDeclaration`
-///         ImportDeclaration(Box<'a, ImportDeclaration<'a>>) = 64,
-///         ExportAllDeclaration(Box<'a, ExportAllDeclaration<'a>>) = 65,
-///         // ...and many more
-///     }
+///     // Inherited from `ModuleDeclaration`
+///     ImportDeclaration(Box<'a, ImportDeclaration<'a>>) = 64,
+///     ExportAllDeclaration(Box<'a, ExportAllDeclaration<'a>>) = 65,
+///     // ...and many more
 /// }
 ///
 /// shared_enum_variants!(

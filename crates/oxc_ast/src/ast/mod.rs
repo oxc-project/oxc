@@ -15,6 +15,7 @@
 //! Instead of nested enums:
 //!
 //! ```ignore
+//! #[ast]
 //! pub enum Expression<'a> {
 //!     BooleanLiteral(Box<'a, BooleanLiteral>),
 //!     NullLiteral(Box<'a, NullLiteral>),
@@ -22,6 +23,7 @@
 //!     MemberExpression(MemberExpression<'a>),
 //! }
 //!
+//! #[ast]
 //! pub enum MemberExpression<'a> {
 //!     ComputedMemberExpression(Box<'a, ComputedMemberExpression<'a>>),
 //!     StaticMemberExpression(Box<'a, StaticMemberExpression<'a>>),
@@ -33,7 +35,7 @@
 //!
 //! ```ignore
 //! inherit_variants! {
-//! #[repr(C, u8)]
+//! #[ast]
 //! pub enum Expression<'a> {
 //!     BooleanLiteral(Box<'a, BooleanLiteral>) = 0,
 //!     NullLiteral(Box<'a, NullLiteral>) = 1,
@@ -42,7 +44,7 @@
 //! }
 //! }
 //!
-//! #[repr(C, u8)]
+//! #[ast]
 //! pub enum MemberExpression<'a> {
 //!     ComputedMemberExpression(Box<'a, ComputedMemberExpression<'a>>) = 48,
 //!     StaticMemberExpression(Box<'a, StaticMemberExpression<'a>>) = 49,
@@ -53,7 +55,7 @@
 //! `inherit_variants!` macro expands `Expression` to:
 //!
 //! ```ignore
-//! #[repr(C, u8)]
+//! #[ast]
 //! pub enum Expression<'a> {
 //!     BooleanLiteral(Box<'a, BooleanLiteral>) = 0,
 //!     NullLiteral(Box<'a, NullLiteral>) = 1,
