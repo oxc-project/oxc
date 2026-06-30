@@ -11,6 +11,7 @@
 //! This generator produces, for each such `Parent` / `Child` pair:
 //!
 //! * Methods on `Parent`: `is_child`, `into_child`, `as_child`, `as_child_mut`, `to_child`, `to_child_mut`
+//! * Methods on `Child`: `as_parent`
 //! * `impl TryFrom<Parent> for Child`
 //! * `impl From<Child> for Parent`
 //!
@@ -260,6 +261,7 @@ fn generate_match_macro(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
 /// where `parent` inherits all of `child`'s variants.
 fn generate_conversions(parent: &EnumDef, child: &EnumDef, schema: &Schema) -> TokenStream {
     let parent_ident = parent.ident();
+    let parent_snake = parent.snake_name();
     let child_ident = child.ident();
     let child_snake = child.snake_name();
 
@@ -272,6 +274,7 @@ fn generate_conversions(parent: &EnumDef, child: &EnumDef, schema: &Schema) -> T
     let as_mut_fn = format_ident!("as_{child_snake}_mut");
     let to_fn = format_ident!("to_{child_snake}");
     let to_mut_fn = format_ident!("to_{child_snake}_mut");
+    let as_reverse_fn = format_ident!("as_{parent_snake}");
 
     let parent_name = parent.name();
     let child_name = child.name();
@@ -291,6 +294,10 @@ fn generate_conversions(parent: &EnumDef, child: &EnumDef, schema: &Schema) -> T
     );
     let as_doc2 = format!(" [`&{parent_name}`]: {parent_name}");
     let as_doc3 = format!(" [`&{child_name}`]: {child_name}");
+
+    let as_reverse_doc = format!(
+        " Convert {child_article} [`&{child_name}`] to {parent_article} [`&{parent_name}`]."
+    );
 
     let as_mut_doc1 = format!(
         " Convert {parent_article} [`&mut {parent_name}`] to {child_article} [`&mut {child_name}`]."
@@ -373,6 +380,20 @@ fn generate_conversions(parent: &EnumDef, child: &EnumDef, schema: &Schema) -> T
             #[inline]
             pub fn #to_mut_fn(&mut self) -> &mut #child_ident<'a> {
                 self.#as_mut_fn().unwrap()
+            }
+        }
+
+        ///@@line_break
+        impl<'a> #child_ident<'a> {
+            #[doc = #as_reverse_doc]
+            ///
+            #[doc = #as_doc3]
+            #[doc = #as_doc2]
+            #[inline]
+            pub fn #as_reverse_fn(&self) -> &#parent_ident<'a> {
+                ///@ SAFETY: Transmute is safe because discriminants + types are identical between
+                ///@ `parent` and `child` for the shared variants
+                unsafe { &*std::ptr::from_ref(self).cast::<#parent_ident>() }
             }
         }
 

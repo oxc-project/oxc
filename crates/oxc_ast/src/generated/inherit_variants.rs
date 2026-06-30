@@ -82,6 +82,19 @@ impl<'a> Expression<'a> {
     }
 }
 
+impl<'a> MemberExpression<'a> {
+    /// Convert a [`&MemberExpression`] to an [`&Expression`].
+    ///
+    /// [`&MemberExpression`]: MemberExpression
+    /// [`&Expression`]: Expression
+    #[inline]
+    pub fn as_expression(&self) -> &Expression<'a> {
+        // SAFETY: Transmute is safe because discriminants + types are identical between
+        // `parent` and `child` for the shared variants
+        unsafe { &*std::ptr::from_ref(self).cast::<Expression>() }
+    }
+}
+
 impl<'a> TryFrom<Expression<'a>> for MemberExpression<'a> {
     type Error = ();
 
@@ -237,6 +250,19 @@ impl<'a> ArrayExpressionElement<'a> {
     #[inline]
     pub fn to_expression_mut(&mut self) -> &mut Expression<'a> {
         self.as_expression_mut().unwrap()
+    }
+}
+
+impl<'a> Expression<'a> {
+    /// Convert an [`&Expression`] to an [`&ArrayExpressionElement`].
+    ///
+    /// [`&Expression`]: Expression
+    /// [`&ArrayExpressionElement`]: ArrayExpressionElement
+    #[inline]
+    pub fn as_array_expression_element(&self) -> &ArrayExpressionElement<'a> {
+        // SAFETY: Transmute is safe because discriminants + types are identical between
+        // `parent` and `child` for the shared variants
+        unsafe { &*std::ptr::from_ref(self).cast::<ArrayExpressionElement>() }
     }
 }
 
@@ -476,6 +502,19 @@ impl<'a> ArrayExpressionElement<'a> {
     }
 }
 
+impl<'a> MemberExpression<'a> {
+    /// Convert a [`&MemberExpression`] to an [`&ArrayExpressionElement`].
+    ///
+    /// [`&MemberExpression`]: MemberExpression
+    /// [`&ArrayExpressionElement`]: ArrayExpressionElement
+    #[inline]
+    pub fn as_array_expression_element(&self) -> &ArrayExpressionElement<'a> {
+        // SAFETY: Transmute is safe because discriminants + types are identical between
+        // `parent` and `child` for the shared variants
+        unsafe { &*std::ptr::from_ref(self).cast::<ArrayExpressionElement>() }
+    }
+}
+
 impl<'a> TryFrom<ArrayExpressionElement<'a>> for MemberExpression<'a> {
     type Error = ();
 
@@ -635,6 +674,19 @@ impl<'a> PropertyKey<'a> {
     #[inline]
     pub fn to_expression_mut(&mut self) -> &mut Expression<'a> {
         self.as_expression_mut().unwrap()
+    }
+}
+
+impl<'a> Expression<'a> {
+    /// Convert an [`&Expression`] to a [`&PropertyKey`].
+    ///
+    /// [`&Expression`]: Expression
+    /// [`&PropertyKey`]: PropertyKey
+    #[inline]
+    pub fn as_property_key(&self) -> &PropertyKey<'a> {
+        // SAFETY: Transmute is safe because discriminants + types are identical between
+        // `parent` and `child` for the shared variants
+        unsafe { &*std::ptr::from_ref(self).cast::<PropertyKey>() }
     }
 }
 
@@ -830,6 +882,19 @@ impl<'a> PropertyKey<'a> {
     }
 }
 
+impl<'a> MemberExpression<'a> {
+    /// Convert a [`&MemberExpression`] to a [`&PropertyKey`].
+    ///
+    /// [`&MemberExpression`]: MemberExpression
+    /// [`&PropertyKey`]: PropertyKey
+    #[inline]
+    pub fn as_property_key(&self) -> &PropertyKey<'a> {
+        // SAFETY: Transmute is safe because discriminants + types are identical between
+        // `parent` and `child` for the shared variants
+        unsafe { &*std::ptr::from_ref(self).cast::<PropertyKey>() }
+    }
+}
+
 impl<'a> TryFrom<PropertyKey<'a>> for MemberExpression<'a> {
     type Error = ();
 
@@ -985,6 +1050,19 @@ impl<'a> Argument<'a> {
     #[inline]
     pub fn to_expression_mut(&mut self) -> &mut Expression<'a> {
         self.as_expression_mut().unwrap()
+    }
+}
+
+impl<'a> Expression<'a> {
+    /// Convert an [`&Expression`] to an [`&Argument`].
+    ///
+    /// [`&Expression`]: Expression
+    /// [`&Argument`]: Argument
+    #[inline]
+    pub fn as_argument(&self) -> &Argument<'a> {
+        // SAFETY: Transmute is safe because discriminants + types are identical between
+        // `parent` and `child` for the shared variants
+        unsafe { &*std::ptr::from_ref(self).cast::<Argument>() }
     }
 }
 
@@ -1178,6 +1256,19 @@ impl<'a> Argument<'a> {
     }
 }
 
+impl<'a> MemberExpression<'a> {
+    /// Convert a [`&MemberExpression`] to an [`&Argument`].
+    ///
+    /// [`&MemberExpression`]: MemberExpression
+    /// [`&Argument`]: Argument
+    #[inline]
+    pub fn as_argument(&self) -> &Argument<'a> {
+        // SAFETY: Transmute is safe because discriminants + types are identical between
+        // `parent` and `child` for the shared variants
+        unsafe { &*std::ptr::from_ref(self).cast::<Argument>() }
+    }
+}
+
 impl<'a> TryFrom<Argument<'a>> for MemberExpression<'a> {
     type Error = ();
 
@@ -1292,6 +1383,19 @@ impl<'a> AssignmentTarget<'a> {
     #[inline]
     pub fn to_simple_assignment_target_mut(&mut self) -> &mut SimpleAssignmentTarget<'a> {
         self.as_simple_assignment_target_mut().unwrap()
+    }
+}
+
+impl<'a> SimpleAssignmentTarget<'a> {
+    /// Convert a [`&SimpleAssignmentTarget`] to an [`&AssignmentTarget`].
+    ///
+    /// [`&SimpleAssignmentTarget`]: SimpleAssignmentTarget
+    /// [`&AssignmentTarget`]: AssignmentTarget
+    #[inline]
+    pub fn as_assignment_target(&self) -> &AssignmentTarget<'a> {
+        // SAFETY: Transmute is safe because discriminants + types are identical between
+        // `parent` and `child` for the shared variants
+        unsafe { &*std::ptr::from_ref(self).cast::<AssignmentTarget>() }
     }
 }
 
@@ -1439,6 +1543,19 @@ impl<'a> AssignmentTarget<'a> {
     }
 }
 
+impl<'a> MemberExpression<'a> {
+    /// Convert a [`&MemberExpression`] to an [`&AssignmentTarget`].
+    ///
+    /// [`&MemberExpression`]: MemberExpression
+    /// [`&AssignmentTarget`]: AssignmentTarget
+    #[inline]
+    pub fn as_assignment_target(&self) -> &AssignmentTarget<'a> {
+        // SAFETY: Transmute is safe because discriminants + types are identical between
+        // `parent` and `child` for the shared variants
+        unsafe { &*std::ptr::from_ref(self).cast::<AssignmentTarget>() }
+    }
+}
+
 impl<'a> TryFrom<AssignmentTarget<'a>> for MemberExpression<'a> {
     type Error = ();
 
@@ -1556,6 +1673,19 @@ impl<'a> AssignmentTarget<'a> {
     }
 }
 
+impl<'a> AssignmentTargetPattern<'a> {
+    /// Convert an [`&AssignmentTargetPattern`] to an [`&AssignmentTarget`].
+    ///
+    /// [`&AssignmentTargetPattern`]: AssignmentTargetPattern
+    /// [`&AssignmentTarget`]: AssignmentTarget
+    #[inline]
+    pub fn as_assignment_target(&self) -> &AssignmentTarget<'a> {
+        // SAFETY: Transmute is safe because discriminants + types are identical between
+        // `parent` and `child` for the shared variants
+        unsafe { &*std::ptr::from_ref(self).cast::<AssignmentTarget>() }
+    }
+}
+
 impl<'a> TryFrom<AssignmentTarget<'a>> for AssignmentTargetPattern<'a> {
     type Error = ();
 
@@ -1669,6 +1799,19 @@ impl<'a> SimpleAssignmentTarget<'a> {
     #[inline]
     pub fn to_member_expression_mut(&mut self) -> &mut MemberExpression<'a> {
         self.as_member_expression_mut().unwrap()
+    }
+}
+
+impl<'a> MemberExpression<'a> {
+    /// Convert a [`&MemberExpression`] to a [`&SimpleAssignmentTarget`].
+    ///
+    /// [`&MemberExpression`]: MemberExpression
+    /// [`&SimpleAssignmentTarget`]: SimpleAssignmentTarget
+    #[inline]
+    pub fn as_simple_assignment_target(&self) -> &SimpleAssignmentTarget<'a> {
+        // SAFETY: Transmute is safe because discriminants + types are identical between
+        // `parent` and `child` for the shared variants
+        unsafe { &*std::ptr::from_ref(self).cast::<SimpleAssignmentTarget>() }
     }
 }
 
@@ -1798,6 +1941,19 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
     #[inline]
     pub fn to_assignment_target_mut(&mut self) -> &mut AssignmentTarget<'a> {
         self.as_assignment_target_mut().unwrap()
+    }
+}
+
+impl<'a> AssignmentTarget<'a> {
+    /// Convert an [`&AssignmentTarget`] to an [`&AssignmentTargetMaybeDefault`].
+    ///
+    /// [`&AssignmentTarget`]: AssignmentTarget
+    /// [`&AssignmentTargetMaybeDefault`]: AssignmentTargetMaybeDefault
+    #[inline]
+    pub fn as_assignment_target_maybe_default(&self) -> &AssignmentTargetMaybeDefault<'a> {
+        // SAFETY: Transmute is safe because discriminants + types are identical between
+        // `parent` and `child` for the shared variants
+        unsafe { &*std::ptr::from_ref(self).cast::<AssignmentTargetMaybeDefault>() }
     }
 }
 
@@ -1968,6 +2124,19 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
     }
 }
 
+impl<'a> SimpleAssignmentTarget<'a> {
+    /// Convert a [`&SimpleAssignmentTarget`] to an [`&AssignmentTargetMaybeDefault`].
+    ///
+    /// [`&SimpleAssignmentTarget`]: SimpleAssignmentTarget
+    /// [`&AssignmentTargetMaybeDefault`]: AssignmentTargetMaybeDefault
+    #[inline]
+    pub fn as_assignment_target_maybe_default(&self) -> &AssignmentTargetMaybeDefault<'a> {
+        // SAFETY: Transmute is safe because discriminants + types are identical between
+        // `parent` and `child` for the shared variants
+        unsafe { &*std::ptr::from_ref(self).cast::<AssignmentTargetMaybeDefault>() }
+    }
+}
+
 impl<'a> TryFrom<AssignmentTargetMaybeDefault<'a>> for SimpleAssignmentTarget<'a> {
     type Error = ();
 
@@ -2120,6 +2289,19 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
     }
 }
 
+impl<'a> MemberExpression<'a> {
+    /// Convert a [`&MemberExpression`] to an [`&AssignmentTargetMaybeDefault`].
+    ///
+    /// [`&MemberExpression`]: MemberExpression
+    /// [`&AssignmentTargetMaybeDefault`]: AssignmentTargetMaybeDefault
+    #[inline]
+    pub fn as_assignment_target_maybe_default(&self) -> &AssignmentTargetMaybeDefault<'a> {
+        // SAFETY: Transmute is safe because discriminants + types are identical between
+        // `parent` and `child` for the shared variants
+        unsafe { &*std::ptr::from_ref(self).cast::<AssignmentTargetMaybeDefault>() }
+    }
+}
+
 impl<'a> TryFrom<AssignmentTargetMaybeDefault<'a>> for MemberExpression<'a> {
     type Error = ();
 
@@ -2237,6 +2419,19 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
     }
 }
 
+impl<'a> AssignmentTargetPattern<'a> {
+    /// Convert an [`&AssignmentTargetPattern`] to an [`&AssignmentTargetMaybeDefault`].
+    ///
+    /// [`&AssignmentTargetPattern`]: AssignmentTargetPattern
+    /// [`&AssignmentTargetMaybeDefault`]: AssignmentTargetMaybeDefault
+    #[inline]
+    pub fn as_assignment_target_maybe_default(&self) -> &AssignmentTargetMaybeDefault<'a> {
+        // SAFETY: Transmute is safe because discriminants + types are identical between
+        // `parent` and `child` for the shared variants
+        unsafe { &*std::ptr::from_ref(self).cast::<AssignmentTargetMaybeDefault>() }
+    }
+}
+
 impl<'a> TryFrom<AssignmentTargetMaybeDefault<'a>> for AssignmentTargetPattern<'a> {
     type Error = ();
 
@@ -2350,6 +2545,19 @@ impl<'a> ChainElement<'a> {
     #[inline]
     pub fn to_member_expression_mut(&mut self) -> &mut MemberExpression<'a> {
         self.as_member_expression_mut().unwrap()
+    }
+}
+
+impl<'a> MemberExpression<'a> {
+    /// Convert a [`&MemberExpression`] to a [`&ChainElement`].
+    ///
+    /// [`&MemberExpression`]: MemberExpression
+    /// [`&ChainElement`]: ChainElement
+    #[inline]
+    pub fn as_chain_element(&self) -> &ChainElement<'a> {
+        // SAFETY: Transmute is safe because discriminants + types are identical between
+        // `parent` and `child` for the shared variants
+        unsafe { &*std::ptr::from_ref(self).cast::<ChainElement>() }
     }
 }
 
@@ -2477,6 +2685,19 @@ impl<'a> Statement<'a> {
     }
 }
 
+impl<'a> Declaration<'a> {
+    /// Convert a [`&Declaration`] to a [`&Statement`].
+    ///
+    /// [`&Declaration`]: Declaration
+    /// [`&Statement`]: Statement
+    #[inline]
+    pub fn as_statement(&self) -> &Statement<'a> {
+        // SAFETY: Transmute is safe because discriminants + types are identical between
+        // `parent` and `child` for the shared variants
+        unsafe { &*std::ptr::from_ref(self).cast::<Statement>() }
+    }
+}
+
 impl<'a> TryFrom<Statement<'a>> for Declaration<'a> {
     type Error = ();
 
@@ -2601,6 +2822,19 @@ impl<'a> Statement<'a> {
     #[inline]
     pub fn to_module_declaration_mut(&mut self) -> &mut ModuleDeclaration<'a> {
         self.as_module_declaration_mut().unwrap()
+    }
+}
+
+impl<'a> ModuleDeclaration<'a> {
+    /// Convert a [`&ModuleDeclaration`] to a [`&Statement`].
+    ///
+    /// [`&ModuleDeclaration`]: ModuleDeclaration
+    /// [`&Statement`]: Statement
+    #[inline]
+    pub fn as_statement(&self) -> &Statement<'a> {
+        // SAFETY: Transmute is safe because discriminants + types are identical between
+        // `parent` and `child` for the shared variants
+        unsafe { &*std::ptr::from_ref(self).cast::<Statement>() }
     }
 }
 
@@ -2767,6 +3001,19 @@ impl<'a> ForStatementInit<'a> {
     #[inline]
     pub fn to_expression_mut(&mut self) -> &mut Expression<'a> {
         self.as_expression_mut().unwrap()
+    }
+}
+
+impl<'a> Expression<'a> {
+    /// Convert an [`&Expression`] to a [`&ForStatementInit`].
+    ///
+    /// [`&Expression`]: Expression
+    /// [`&ForStatementInit`]: ForStatementInit
+    #[inline]
+    pub fn as_for_statement_init(&self) -> &ForStatementInit<'a> {
+        // SAFETY: Transmute is safe because discriminants + types are identical between
+        // `parent` and `child` for the shared variants
+        unsafe { &*std::ptr::from_ref(self).cast::<ForStatementInit>() }
     }
 }
 
@@ -2980,6 +3227,19 @@ impl<'a> ForStatementInit<'a> {
     }
 }
 
+impl<'a> MemberExpression<'a> {
+    /// Convert a [`&MemberExpression`] to a [`&ForStatementInit`].
+    ///
+    /// [`&MemberExpression`]: MemberExpression
+    /// [`&ForStatementInit`]: ForStatementInit
+    #[inline]
+    pub fn as_for_statement_init(&self) -> &ForStatementInit<'a> {
+        // SAFETY: Transmute is safe because discriminants + types are identical between
+        // `parent` and `child` for the shared variants
+        unsafe { &*std::ptr::from_ref(self).cast::<ForStatementInit>() }
+    }
+}
+
 impl<'a> TryFrom<ForStatementInit<'a>> for MemberExpression<'a> {
     type Error = ();
 
@@ -3106,6 +3366,19 @@ impl<'a> ForStatementLeft<'a> {
     #[inline]
     pub fn to_assignment_target_mut(&mut self) -> &mut AssignmentTarget<'a> {
         self.as_assignment_target_mut().unwrap()
+    }
+}
+
+impl<'a> AssignmentTarget<'a> {
+    /// Convert an [`&AssignmentTarget`] to a [`&ForStatementLeft`].
+    ///
+    /// [`&AssignmentTarget`]: AssignmentTarget
+    /// [`&ForStatementLeft`]: ForStatementLeft
+    #[inline]
+    pub fn as_for_statement_left(&self) -> &ForStatementLeft<'a> {
+        // SAFETY: Transmute is safe because discriminants + types are identical between
+        // `parent` and `child` for the shared variants
+        unsafe { &*std::ptr::from_ref(self).cast::<ForStatementLeft>() }
     }
 }
 
@@ -3268,6 +3541,19 @@ impl<'a> ForStatementLeft<'a> {
     }
 }
 
+impl<'a> SimpleAssignmentTarget<'a> {
+    /// Convert a [`&SimpleAssignmentTarget`] to a [`&ForStatementLeft`].
+    ///
+    /// [`&SimpleAssignmentTarget`]: SimpleAssignmentTarget
+    /// [`&ForStatementLeft`]: ForStatementLeft
+    #[inline]
+    pub fn as_for_statement_left(&self) -> &ForStatementLeft<'a> {
+        // SAFETY: Transmute is safe because discriminants + types are identical between
+        // `parent` and `child` for the shared variants
+        unsafe { &*std::ptr::from_ref(self).cast::<ForStatementLeft>() }
+    }
+}
+
 impl<'a> TryFrom<ForStatementLeft<'a>> for SimpleAssignmentTarget<'a> {
     type Error = ();
 
@@ -3412,6 +3698,19 @@ impl<'a> ForStatementLeft<'a> {
     }
 }
 
+impl<'a> MemberExpression<'a> {
+    /// Convert a [`&MemberExpression`] to a [`&ForStatementLeft`].
+    ///
+    /// [`&MemberExpression`]: MemberExpression
+    /// [`&ForStatementLeft`]: ForStatementLeft
+    #[inline]
+    pub fn as_for_statement_left(&self) -> &ForStatementLeft<'a> {
+        // SAFETY: Transmute is safe because discriminants + types are identical between
+        // `parent` and `child` for the shared variants
+        unsafe { &*std::ptr::from_ref(self).cast::<ForStatementLeft>() }
+    }
+}
+
 impl<'a> TryFrom<ForStatementLeft<'a>> for MemberExpression<'a> {
     type Error = ();
 
@@ -3526,6 +3825,19 @@ impl<'a> ForStatementLeft<'a> {
     #[inline]
     pub fn to_assignment_target_pattern_mut(&mut self) -> &mut AssignmentTargetPattern<'a> {
         self.as_assignment_target_pattern_mut().unwrap()
+    }
+}
+
+impl<'a> AssignmentTargetPattern<'a> {
+    /// Convert an [`&AssignmentTargetPattern`] to a [`&ForStatementLeft`].
+    ///
+    /// [`&AssignmentTargetPattern`]: AssignmentTargetPattern
+    /// [`&ForStatementLeft`]: ForStatementLeft
+    #[inline]
+    pub fn as_for_statement_left(&self) -> &ForStatementLeft<'a> {
+        // SAFETY: Transmute is safe because discriminants + types are identical between
+        // `parent` and `child` for the shared variants
+        unsafe { &*std::ptr::from_ref(self).cast::<ForStatementLeft>() }
     }
 }
 
@@ -3682,6 +3994,19 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     #[inline]
     pub fn to_expression_mut(&mut self) -> &mut Expression<'a> {
         self.as_expression_mut().unwrap()
+    }
+}
+
+impl<'a> Expression<'a> {
+    /// Convert an [`&Expression`] to an [`&ExportDefaultDeclarationKind`].
+    ///
+    /// [`&Expression`]: Expression
+    /// [`&ExportDefaultDeclarationKind`]: ExportDefaultDeclarationKind
+    #[inline]
+    pub fn as_export_default_declaration_kind(&self) -> &ExportDefaultDeclarationKind<'a> {
+        // SAFETY: Transmute is safe because discriminants + types are identical between
+        // `parent` and `child` for the shared variants
+        unsafe { &*std::ptr::from_ref(self).cast::<ExportDefaultDeclarationKind>() }
     }
 }
 
@@ -3945,6 +4270,19 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     }
 }
 
+impl<'a> MemberExpression<'a> {
+    /// Convert a [`&MemberExpression`] to an [`&ExportDefaultDeclarationKind`].
+    ///
+    /// [`&MemberExpression`]: MemberExpression
+    /// [`&ExportDefaultDeclarationKind`]: ExportDefaultDeclarationKind
+    #[inline]
+    pub fn as_export_default_declaration_kind(&self) -> &ExportDefaultDeclarationKind<'a> {
+        // SAFETY: Transmute is safe because discriminants + types are identical between
+        // `parent` and `child` for the shared variants
+        unsafe { &*std::ptr::from_ref(self).cast::<ExportDefaultDeclarationKind>() }
+    }
+}
+
 impl<'a> TryFrom<ExportDefaultDeclarationKind<'a>> for MemberExpression<'a> {
     type Error = ();
 
@@ -4104,6 +4442,19 @@ impl<'a> JSXExpression<'a> {
     #[inline]
     pub fn to_expression_mut(&mut self) -> &mut Expression<'a> {
         self.as_expression_mut().unwrap()
+    }
+}
+
+impl<'a> Expression<'a> {
+    /// Convert an [`&Expression`] to a [`&JSXExpression`].
+    ///
+    /// [`&Expression`]: Expression
+    /// [`&JSXExpression`]: JSXExpression
+    #[inline]
+    pub fn as_jsx_expression(&self) -> &JSXExpression<'a> {
+        // SAFETY: Transmute is safe because discriminants + types are identical between
+        // `parent` and `child` for the shared variants
+        unsafe { &*std::ptr::from_ref(self).cast::<JSXExpression>() }
     }
 }
 
@@ -4303,6 +4654,19 @@ impl<'a> JSXExpression<'a> {
     }
 }
 
+impl<'a> MemberExpression<'a> {
+    /// Convert a [`&MemberExpression`] to a [`&JSXExpression`].
+    ///
+    /// [`&MemberExpression`]: MemberExpression
+    /// [`&JSXExpression`]: JSXExpression
+    #[inline]
+    pub fn as_jsx_expression(&self) -> &JSXExpression<'a> {
+        // SAFETY: Transmute is safe because discriminants + types are identical between
+        // `parent` and `child` for the shared variants
+        unsafe { &*std::ptr::from_ref(self).cast::<JSXExpression>() }
+    }
+}
+
 impl<'a> TryFrom<JSXExpression<'a>> for MemberExpression<'a> {
     type Error = ();
 
@@ -4452,6 +4816,19 @@ impl<'a> TSTupleElement<'a> {
     #[inline]
     pub fn to_ts_type_mut(&mut self) -> &mut TSType<'a> {
         self.as_ts_type_mut().unwrap()
+    }
+}
+
+impl<'a> TSType<'a> {
+    /// Convert a [`&TSType`] to a [`&TSTupleElement`].
+    ///
+    /// [`&TSType`]: TSType
+    /// [`&TSTupleElement`]: TSTupleElement
+    #[inline]
+    pub fn as_ts_tuple_element(&self) -> &TSTupleElement<'a> {
+        // SAFETY: Transmute is safe because discriminants + types are identical between
+        // `parent` and `child` for the shared variants
+        unsafe { &*std::ptr::from_ref(self).cast::<TSTupleElement>() }
     }
 }
 
@@ -4628,6 +5005,19 @@ impl<'a> TSTypeQueryExprName<'a> {
     #[inline]
     pub fn to_ts_type_name_mut(&mut self) -> &mut TSTypeName<'a> {
         self.as_ts_type_name_mut().unwrap()
+    }
+}
+
+impl<'a> TSTypeName<'a> {
+    /// Convert a [`&TSTypeName`] to a [`&TSTypeQueryExprName`].
+    ///
+    /// [`&TSTypeName`]: TSTypeName
+    /// [`&TSTypeQueryExprName`]: TSTypeQueryExprName
+    #[inline]
+    pub fn as_ts_type_query_expr_name(&self) -> &TSTypeQueryExprName<'a> {
+        // SAFETY: Transmute is safe because discriminants + types are identical between
+        // `parent` and `child` for the shared variants
+        unsafe { &*std::ptr::from_ref(self).cast::<TSTypeQueryExprName>() }
     }
 }
 
