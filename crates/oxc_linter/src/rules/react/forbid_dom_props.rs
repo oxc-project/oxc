@@ -359,11 +359,11 @@ fn test() {
             ),
         ),
         (
-            r#"
+            "
                     const First = (props) => (
                       <div someProp={`some${value}`} />
                     );
-                  "#,
+                  ",
             Some(
                 serde_json::json!([ { "forbid": [ { "propName": "someProp", "disallowedValues": ["someValue"], }, ], }, ]),
             ),
@@ -451,11 +451,11 @@ fn test() {
             ),
         ),
         (
-            r#"
+            "
                     const First = (props) => (
                       <div someProp={`someValue`} />
                     );
-                  "#,
+                  ",
             Some(
                 serde_json::json!([ { "forbid": [ { "propName": "someProp", "disallowedValues": ["someValue"], }, ], }, ]),
             ),
