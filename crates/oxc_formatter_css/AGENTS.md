@@ -169,6 +169,15 @@ Deliberate divergences from Prettier (impact does not justify the matching cost)
 - A declaration swallowed by a `;`-less css-in-js placeholder (`${m}\ncolor: red`)
   - We parse it structurally and FORMAT it (spacing/hex/number normalization)
   - Prettier keeps it verbatim, postcss swallows the run as an opaque prelude string it can't format, so `color   :   red` / `#FFFFFF` survive unformatted
+- SCSS: A `;`-less custom-property rule block followed by another declaration (`--p: {color:red;} /* <- no semi */ --q: blue;`)
+  - SCSS output: we treat it as two separate declarations: format the inner block, add the missing `;`, and format `--q` normally
+  - Prettier behavior: keeps the whole run verbatim, postcss swallows everything past the `}` as an opaque prelude string until a source `;`
+  - Why SCSS only: It falls out of the AST shape `oxc-css-parser` produces
+    - SCSS parses `{...}` declaration values as `SassNestingDeclaration`, so the formatter handles them like any other nested block
+    - CSS/Less do NOT structure `{...}` in declaration value position so the token-soup fallback runs, the formatter emits verbatim, and the output incidentally matches Prettier
+    - Each mode is internally consistent with what its parser produces
+  - The value syntax `--p: { ... }` itself is valid CSS, but its only intended consumer was the `@apply --p;` at-rule from the dropped CSS Apply Rule proposal
+    - With no consumer, real-world usage is near zero, so the cross-mode behavior difference is theoretical
 
 ## Verification
 

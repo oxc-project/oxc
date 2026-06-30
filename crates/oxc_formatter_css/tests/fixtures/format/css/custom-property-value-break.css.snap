@@ -5,7 +5,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 :host {
   /* 80 columns exactly: stays flat (so does Prettier) */
   --pulse-color: var(--wa-color-border-loud, var(--wa-color-brand-border-loud));
-  /* re-parsed as a normal value: breaks like any declaration */
+  /* parsed as a normal value: breaks like any declaration */
   --slide-size: calc((100% - (var(--slides-per-page) - 1) * var(--slide-gap)) / var(--slides-per-page));
 }
 
@@ -16,7 +16,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 :host {
   /* 80 columns exactly: stays flat (so does Prettier) */
   --pulse-color: var(--wa-color-border-loud, var(--wa-color-brand-border-loud));
-  /* re-parsed as a normal value: breaks like any declaration */
+  /* parsed as a normal value: breaks like any declaration */
   --slide-size: calc(
     (100% - (var(--slides-per-page) - 1) * var(--slide-gap)) /
       var(--slides-per-page)
@@ -29,7 +29,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 :host {
   /* 80 columns exactly: stays flat (so does Prettier) */
   --pulse-color: var(--wa-color-border-loud, var(--wa-color-brand-border-loud));
-  /* re-parsed as a normal value: breaks like any declaration */
+  /* parsed as a normal value: breaks like any declaration */
   --slide-size: calc(
     (100% - (var(--slides-per-page) - 1) * var(--slide-gap)) / var(--slides-per-page)
   );

@@ -8,7 +8,7 @@
 
 use std::io::Read;
 
-use oxc_css_parser::{ParserBuilder, Syntax, ast::Stylesheet};
+use oxc_css_parser::{ParserBuilder, ParserOptions, Syntax, ast::Stylesheet};
 
 fn main() {
     let mut args = pico_args::Arguments::from_env();
@@ -30,7 +30,12 @@ fn main() {
     };
 
     let mut comments = vec![];
-    let mut parser = ParserBuilder::new(&source).syntax(syntax).comments(&mut comments).build();
+    // Mirror `format.rs`'s parser options so the dump matches what the formatter sees.
+    let mut parser = ParserBuilder::new(&source)
+        .syntax(syntax)
+        .options(ParserOptions { try_parsing_value_in_custom_property: true, ..Default::default() })
+        .comments(&mut comments)
+        .build();
     let result = parser.parse::<Stylesheet>();
     let errors = parser.recoverable_errors().to_vec();
     drop(parser);

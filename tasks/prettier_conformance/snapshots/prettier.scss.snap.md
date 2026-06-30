@@ -1,4 +1,4 @@
-scss compatibility: 83/85 (97.65%), 7 files skipped
+scss compatibility: 82/85 (96.47%), 7 files skipped
 
 # Failed
 
@@ -6,6 +6,7 @@ scss compatibility: 83/85 (97.65%), 7 files skipped
 | :-------- | :--------------: | :---------: |
 | scss/comments/4878.scss | 💥 | 89.39% |
 | scss/map/function-argument/functional-argument.scss | 💥 | 96.00% |
+| scss/variables/apply-rule.scss | 💥 | 87.88% |
 
 # Skipped (parse error, TODO: should be ignored or supported)
 
