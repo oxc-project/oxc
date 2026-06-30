@@ -62,8 +62,22 @@ fn modify_enum_impl(item: &ItemEnum) -> Result<TokenStream, &'static str> {
 
 /// Details of how `#[ast]` macro should modify a struct.
 pub struct StructDetails {
+    /// Memory order of the struct's fields.
+    ///
+    /// `field_order[n]` is the position in memory of the field which is written `n`th in source.
+    /// `#[ast]` macro re-orders the fields into this order, so the struct is packed with minimal padding.
+    ///
+    /// `None` if the fields are already in optimal order, and don't need re-ordering.
     pub field_order: Option<&'static [u8]>,
+
+    /// Whether the struct is an AST node.
+    /// i.e. it has a `node_id: Cell<NodeId>` field (and therefore an `AstKind`).
+    ///
+    /// `#[ast]` macro adds `#[non_exhaustive]` to AST node structs. That prevents them being constructed
+    /// with a struct literal outside of `oxc_ast` - consumers must use `AstBuilder` instead.
     pub is_node: bool,
+
+    /// `true` if struct has at most 1 field with non-zero size, so can be `#[repr(transparent)]`.
     pub is_transparent: bool,
 }
 
