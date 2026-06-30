@@ -64,6 +64,7 @@ fn modify_enum_impl(item: &ItemEnum) -> Result<TokenStream, &'static str> {
 pub struct StructDetails {
     pub field_order: Option<&'static [u8]>,
     pub is_node: bool,
+    pub is_transparent: bool,
 }
 
 /// Add `#[repr(C)]` / `#[repr(transparent)]`, and `#[derive(::oxc_ast_macros::Ast)]` to struct,
@@ -105,10 +106,12 @@ fn modify_struct_impl(
 
     reorder_struct_fields(item, struct_details)?;
 
-    // `#[repr(transparent)]` for structs with only one field.
-    // `#[repr(C)]` otherwise.
-    let field_count = item.fields.len();
-    let repr = if field_count == 1 { quote!(#[repr(transparent)]) } else { quote!(#[repr(C)]) };
+    // `#[repr(transparent)]` for structs with at most 1 non-zero-sized field, `#[repr(C)]` otherwise
+    let repr = if struct_details.is_transparent {
+        quote!(#[repr(transparent)])
+    } else {
+        quote!(#[repr(C)])
+    };
 
     // `#[non_exhaustive]` on AST node types
     let non_exhaustive =

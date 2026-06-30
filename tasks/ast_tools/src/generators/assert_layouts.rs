@@ -815,7 +815,26 @@ fn generate_struct_details(schema: &Schema) -> Output {
         };
 
         let is_node = struct_def.kind.has_kind;
-        let details = quote!( StructDetails { field_order: #field_order, is_node: #is_node });
+
+        // Struct can be `#[repr(transparent)]` if it has at most 1 field with non-zero size or non-trivial alignment.
+        // Zero-sized fields (e.g. `PhantomData`) don't affect layout, so don't count them.
+        let mut is_transparent = true;
+        let mut seen_non_trivial_field = false;
+
+        for field in &struct_def.fields {
+            let layout64 = field.type_def(schema).layout_64();
+            if layout64.size > 0 || layout64.align > 1 {
+                if seen_non_trivial_field {
+                    is_transparent = false;
+                    break;
+                }
+                seen_non_trivial_field = true;
+            }
+        }
+
+        let details = quote! {
+            StructDetails { field_order: #field_order, is_node: #is_node, is_transparent: #is_transparent }
+        };
 
         (struct_def.name(), details)
     }));
