@@ -50,21 +50,10 @@ fn parse_enum(item: ItemEnum, file_id: FileId) -> Option<Skeleton> {
 
 fn parse_macro(item: &ItemMacro, file_id: FileId) -> Option<Skeleton> {
     item.mac.path.get_ident().and_then(|macro_name| match macro_name.to_string().as_str() {
-        "inherit_variants" => parse_inherit_variants_macro(item, file_id),
         "define_nonmax_u32_index_type" => parse_index_type_macro(item, file_id, true),
         "define_index_type" => parse_index_type_macro(item, file_id, false),
         _ => None,
     })
-}
-
-fn parse_inherit_variants_macro(item: &ItemMacro, file_id: FileId) -> Option<Skeleton> {
-    // The body of `inherit_variants!` is a normal enum.
-    // Inheritance is expressed as `INHERIT(EnumName<'a>)` marker variants.
-    let item = item
-        .mac
-        .parse_body::<ItemEnum>()
-        .expect("Failed to parse contents of `inherit_variants!` macro");
-    parse_enum(item, file_id)
 }
 
 fn parse_index_type_macro(

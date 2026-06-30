@@ -37,7 +37,7 @@ use oxc_syntax::{
     symbol::SymbolId,
 };
 
-use super::{macros::inherit_variants, *};
+use super::*;
 
 /// Represents the root of a JavaScript abstract syntax tree (AST), containing metadata about the source,
 /// directives, top-level statements, and scope information.
@@ -67,7 +67,6 @@ pub struct Program<'a> {
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
-inherit_variants! {
 /// Represents a type for AST nodes corresponding to JavaScript's expressions.
 ///
 /// Inherits variants from [`MemberExpression`]. See [`ast` module docs] for explanation of inheritance.
@@ -164,9 +163,8 @@ pub enum Expression<'a> {
     /// See [`V8IntrinsicExpression`] for AST node details.
     V8IntrinsicExpression(Box<'a, V8IntrinsicExpression<'a>>) = 39,
 
-    // `MemberExpression` variants added here by `inherit_variants!` macro
+    // `MemberExpression` variants added here by `#[ast]` macro
     INHERIT(MemberExpression<'a>),
-}
 }
 
 /// `foo` in `let foo = 1;`
@@ -286,7 +284,6 @@ pub struct ArrayExpression<'a> {
     pub elements: Vec<'a, ArrayExpressionElement<'a>>,
 }
 
-inherit_variants! {
 /// Represents an element in an array literal.
 ///
 /// Inherits variants from [`Expression`]. See [`ast` module docs] for explanation of inheritance.
@@ -304,9 +301,8 @@ pub enum ArrayExpressionElement<'a> {
     /// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Trailing_commas#arrays>
     Elision(Box<'a, Elision>) = 65,
 
-    // `Expression` variants added here by `inherit_variants!` macro
+    // `Expression` variants added here by `#[ast]` macro
     INHERIT(Expression<'a>),
-}
 }
 
 /// empty slot in `const array = [1, , 2];`
@@ -364,7 +360,6 @@ pub struct ObjectProperty<'a> {
     pub computed: bool,
 }
 
-inherit_variants! {
 /// Property Key
 ///
 /// Inherits variants from [`Expression`]. See [`ast` module docs] for explanation of inheritance.
@@ -379,9 +374,8 @@ pub enum PropertyKey<'a> {
     /// `#a` in `class C { #a = 1; }; const c = new C(); c.#a;`
     PrivateIdentifier(Box<'a, PrivateIdentifier<'a>>) = 65,
 
-    // `Expression` variants added here by `inherit_variants!` macro
+    // `Expression` variants added here by `#[ast]` macro
     INHERIT(Expression<'a>),
-}
 }
 
 /// Represents the kind of property in an object literal or class.
@@ -617,7 +611,6 @@ pub struct SpreadElement<'a> {
     pub argument: Expression<'a>,
 }
 
-inherit_variants! {
 /// Argument
 ///
 /// Inherits variants from [`Expression`]. See [`ast` module docs] for explanation of inheritance.
@@ -630,9 +623,8 @@ pub enum Argument<'a> {
     /// `...[1, 2]` in `const arr = [...[1, 2]];`
     SpreadElement(Box<'a, SpreadElement<'a>>) = 64,
 
-    // `Expression` variants added here by `inherit_variants!` macro
+    // `Expression` variants added here by `#[ast]` macro
     INHERIT(Expression<'a>),
-}
 }
 
 /// `++i` in `let i = 0; ++i;`
@@ -734,7 +726,6 @@ pub struct AssignmentExpression<'a> {
     pub right: Expression<'a>,
 }
 
-inherit_variants! {
 /// Destructuring Assignment
 ///
 /// Inherits variants from [`SimpleAssignmentTarget`] and [`AssignmentTargetPattern`].
@@ -745,13 +736,11 @@ inherit_variants! {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum AssignmentTarget<'a> {
-    // `SimpleAssignmentTarget` and `AssignmentTargetPattern` variants added here by `inherit_variants!` macro
+    // `SimpleAssignmentTarget` and `AssignmentTargetPattern` variants added here by `#[ast]` macro
     INHERIT(SimpleAssignmentTarget<'a>),
     INHERIT(AssignmentTargetPattern<'a>),
 }
-}
 
-inherit_variants! {
 /// Simple Assignment Target
 ///
 /// Inherits variants from [`MemberExpression`]. See [`ast` module docs] for explanation of inheritance.
@@ -767,9 +756,8 @@ pub enum SimpleAssignmentTarget<'a> {
     TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>) = 3,
     TSTypeAssertion(Box<'a, TSTypeAssertion<'a>>) = 4,
 
-    // `MemberExpression` variants added here by `inherit_variants!` macro
+    // `MemberExpression` variants added here by `#[ast]` macro
     INHERIT(MemberExpression<'a>),
-}
 }
 
 #[ast(visit)]
@@ -836,7 +824,6 @@ pub struct AssignmentTargetRest<'a> {
     pub target: AssignmentTarget<'a>,
 }
 
-inherit_variants! {
 /// Assignment Target Maybe Default
 ///
 /// Inherits variants from [`AssignmentTarget`]. See [`ast` module docs] for explanation of inheritance.
@@ -848,9 +835,8 @@ inherit_variants! {
 pub enum AssignmentTargetMaybeDefault<'a> {
     AssignmentTargetWithDefault(Box<'a, AssignmentTargetWithDefault<'a>>) = 16,
 
-    // `AssignmentTarget` variants added here by `inherit_variants!` macro
+    // `AssignmentTarget` variants added here by `#[ast]` macro
     INHERIT(AssignmentTarget<'a>),
-}
 }
 
 #[ast(visit)]
@@ -978,7 +964,6 @@ pub struct ChainExpression<'a> {
     pub expression: ChainElement<'a>,
 }
 
-inherit_variants! {
 /// Chain Element
 ///
 /// Inherits variants from [`MemberExpression`]. See [`ast` module docs] for explanation of inheritance.
@@ -992,9 +977,8 @@ pub enum ChainElement<'a> {
     /// `foo?.baz!` or `foo?.[bar]!`
     TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>) = 1,
 
-    // `MemberExpression` variants added here by `inherit_variants!` macro
+    // `MemberExpression` variants added here by `#[ast]` macro
     INHERIT(MemberExpression<'a>),
-}
 }
 
 /// `(a + b)` in `const res = (a + b) / c;`
@@ -1010,7 +994,6 @@ pub struct ParenthesizedExpression<'a> {
     pub expression: Expression<'a>,
 }
 
-inherit_variants! {
 /// Statement
 ///
 /// Inherits variants from [`Declaration`] and [`ModuleDeclaration`].
@@ -1041,10 +1024,9 @@ pub enum Statement<'a> {
     WhileStatement(Box<'a, WhileStatement<'a>>) = 16,
     WithStatement(Box<'a, WithStatement<'a>>) = 17,
 
-    // `Declaration` and `ModuleDeclaration` variants added here by `inherit_variants!` macro
+    // `Declaration` and `ModuleDeclaration` variants added here by `#[ast]` macro
     INHERIT(Declaration<'a>),
     INHERIT(ModuleDeclaration<'a>),
-}
 }
 
 /// `"use strict";` in `"use strict";`
@@ -1229,7 +1211,6 @@ pub struct ForStatement<'a> {
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
-inherit_variants! {
 /// For Statement Init
 ///
 /// Inherits variants from [`Expression`]. See [`ast` module docs] for explanation of inheritance.
@@ -1241,9 +1222,8 @@ inherit_variants! {
 pub enum ForStatementInit<'a> {
     VariableDeclaration(Box<'a, VariableDeclaration<'a>>) = 64,
 
-    // `Expression` variants added here by `inherit_variants!` macro
+    // `Expression` variants added here by `#[ast]` macro
     INHERIT(Expression<'a>),
-}
 }
 
 /// For-In Statement
@@ -1260,7 +1240,6 @@ pub struct ForInStatement<'a> {
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
-inherit_variants! {
 /// For Statement Left
 ///
 /// Inherits variants from [`AssignmentTarget`]. See [`ast` module docs] for explanation of inheritance.
@@ -1272,9 +1251,8 @@ inherit_variants! {
 pub enum ForStatementLeft<'a> {
     VariableDeclaration(Box<'a, VariableDeclaration<'a>>) = 16,
 
-    // `AssignmentTarget` variants added here by `inherit_variants!` macro
+    // `AssignmentTarget` variants added here by `#[ast]` macro
     INHERIT(AssignmentTarget<'a>),
-}
 }
 
 /// For-Of Statement
@@ -2637,7 +2615,6 @@ pub struct ExportSpecifier<'a> {
     pub export_kind: ImportOrExportKind, // `export { type Foo as Bar };`
 }
 
-inherit_variants! {
 /// Export Default Declaration Kind
 ///
 /// Inherits variants from [`Expression`]. See [`ast` module docs] for explanation of inheritance.
@@ -2653,9 +2630,8 @@ pub enum ExportDefaultDeclarationKind<'a> {
 
     TSInterfaceDeclaration(Box<'a, TSInterfaceDeclaration<'a>>) = 66,
 
-    // `Expression` variants added here by `inherit_variants!` macro
+    // `Expression` variants added here by `#[ast]` macro
     INHERIT(Expression<'a>),
-}
 }
 
 /// Module Export Name

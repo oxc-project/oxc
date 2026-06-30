@@ -28,7 +28,7 @@ use oxc_span::{ContentEq, GetSpan, GetSpanMut, Span};
 use oxc_str::Str;
 use oxc_syntax::{node::NodeId, scope::ScopeId};
 
-use super::{inherit_variants, js::*, literal::*};
+use super::{js::*, literal::*};
 
 /// TypeScript `this` parameter
 ///
@@ -520,7 +520,6 @@ pub struct TSRestType<'a> {
     pub type_annotation: TSType<'a>,
 }
 
-inherit_variants! {
 /// TS Tuple Element
 ///
 /// Inherits variants from [`TSType`]. See [`ast` module docs] for explanation of inheritance.
@@ -537,9 +536,8 @@ pub enum TSTupleElement<'a> {
     TSOptionalType(Box<'a, TSOptionalType<'a>>) = 64,
     TSRestType(Box<'a, TSRestType<'a>>) = 65,
 
-    // `TSType` variants added here by `inherit_variants!` macro
+    // `TSType` variants added here by `#[ast]` macro
     INHERIT(TSType<'a>),
-}
 }
 
 /// TypeScript `any` keyword
@@ -1350,7 +1348,6 @@ pub struct TSTypeQuery<'a> {
     pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 
-inherit_variants! {
 /// TS Type Query Expr Name
 ///
 /// Inherits variants from [`TSTypeName`]. See [`ast` module docs] for explanation of inheritance.
@@ -1363,9 +1360,8 @@ pub enum TSTypeQueryExprName<'a> {
     /// `type foo = typeof import('foo')`
     TSImportType(Box<'a, TSImportType<'a>>) = 3,
 
-    // `TSTypeName` variants added here by `inherit_variants!` macro
+    // `TSTypeName` variants added here by `#[ast]` macro
     INHERIT(TSTypeName<'a>),
-}
 }
 
 /// `import('foo')` in `type Foo = import('foo');`

@@ -13,7 +13,10 @@
 //! * Methods on `Parent`: `is_child`, `into_child`, `as_child`, `as_child_mut`, `to_child`, `to_child_mut`
 //! * `impl TryFrom<Parent> for Child`
 //! * `impl From<Child> for Parent`
-//! * Compile-time assertions that the discriminants of shared variants match between the 2 enums
+//!
+//! These rely on the shared variants having identical discriminants and field types between the 2 enums.
+//! This codegen gets the details of variants from th original enum definitions, and they're inserted
+//! by `#[ast]` macro. This process is entirely automated, so they cannot get out of sync.
 //!
 //! It also generates a `match_child!` macro for each enum which is inherited by another enum.
 //! e.g. `match_expression!(ty)` expands to a match pattern covering all of `Expression`'s variants
@@ -26,12 +29,13 @@
 use itertools::Itertools;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
+use rustc_hash::FxHashMap;
 
 use crate::{
     AST_CRATE_PATH, AST_MACROS_CRATE_PATH, Codegen, Generator,
     output::{Output, output_path},
-    schema::{Def, EnumDef, Schema, VariantDef},
-    utils::{article_for, generate_phf_map},
+    schema::{Def, EnumDef, Schema, TypeDef, TypeId, VariantDef},
+    utils::{article_for, generate_phf_map, number_lit},
 };
 
 use super::define_generator;
@@ -57,12 +61,6 @@ fn generate_inherit_variants(schema: &Schema) -> Output {
         #![expect(clippy::match_wildcard_for_single_variants)]
 
         ///@@line_break
-        use std::{mem::ManuallyDrop, ptr::addr_of};
-
-        ///@@line_break
-        use oxc_allocator::ArenaBox;
-
-        ///@@line_break
         use crate::ast::*;
 
         ///@@line_break
@@ -74,25 +72,121 @@ fn generate_inherit_variants(schema: &Schema) -> Output {
     Output::Rust { path: output_path(AST_CRATE_PATH, "inherit_variants.rs"), tokens: output }
 }
 
-/// Generate `enums.rs` in `oxc_ast_macros` - the `ENUMS` data table the `#[ast]` macro reads
-/// to decide how to modify each enum, without having to derive it from the enum on every compilation.
+/// Generate `enums.rs` in `oxc_ast_macros`.
+///
+/// Contains 2 statics the `#[ast]` macro reads, so it doesn't have to derive this info from the
+/// enum on every compilation:
+///
+/// * `ENUMS` - a `phf::Map` of `EnumDetails` for each enum, keyed by name.
+/// * `INHERITED_ENUMS` - the (flattened) variants of each enum which is inherited by another enum.
+///   `EnumDetails::inherits` contains indexes into this list. `#[ast]` macro inserts these variants
+///   into enums which inherit them (replacing the `INHERIT` marker variants).
 fn generate_enum_details(schema: &Schema) -> Output {
+    // Assign an index to each enum which is inherited by another enum.
+    // This is the index into `INHERITED_ENUMS`.
+    let mut indexes = FxHashMap::<TypeId, u32>::default();
+    let mut inheritable_enums = vec![];
+    for enum_def in schema.enums() {
+        if !enum_def.inherited_by.is_empty() {
+            indexes.insert(enum_def.id, u32::try_from(inheritable_enums.len()).unwrap());
+            inheritable_enums.push(enum_def);
+        }
+    }
+
+    // Generate `ENUMS` `phf::Map`
     let map = generate_phf_map(schema.enums().map(|enum_def| {
         let is_fieldless = enum_def.is_fieldless();
-        let details = quote!( EnumDetails { is_fieldless: #is_fieldless } );
+        let inherit_indexes =
+            enum_def.inherits.iter().map(|inherited_id| number_lit(indexes[inherited_id]));
+        let details = quote! {
+            EnumDetails { is_fieldless: #is_fieldless, inherits: &[#(#inherit_indexes),*] }
+        };
         (enum_def.name(), details)
     }));
 
+    // Generate `INHERITED_ENUMS` array elements - one `InheritedEnum` per inheritable enum, in index order
+    let inherited_enums =
+        inheritable_enums.iter().map(|enum_def| generate_inherited_enum(enum_def, schema));
+    let count = number_lit(u64::try_from(inheritable_enums.len()).unwrap());
+
     let code = quote! {
-        use crate::ast::EnumDetails;
+        use crate::ast::{EnumDetails, EnumVariant, InheritedEnum};
 
         ///@@line_break
         /// Details of how `#[ast]` macro should modify enums.
         #[expect(clippy::unreadable_literal)]
         pub static ENUMS: phf::Map<&'static str, EnumDetails> = #map;
+
+        ///@@line_break
+        /// Each enum which is inherited by another enum, indexed by [`EnumDetails::inherits`].
+        /// `#[ast]` macro inserts these enums' variants into enums which inherit them
+        /// (via `oxc_ast_macros::make_inherited_variant`).
+        ///
+        /// [`EnumDetails::inherits`]: crate::ast::EnumDetails::inherits
+        pub static INHERITED_ENUMS: [InheritedEnum; #count] = [ #(#inherited_enums),* ];
     };
 
     Output::Rust { path: output_path(AST_MACROS_CRATE_PATH, "enums.rs"), tokens: code }
+}
+
+/// Generate an `InheritedEnum` describing an inheritable enum's (flattened) variants. e.g.:
+///
+/// ```ignore
+/// InheritedEnum {
+///     doc: " Inherited from [`Expression`]",
+///     variants: &[
+///         EnumVariant {
+///             name: "BooleanLiteral",
+///             inner_name: "BooleanLiteral",
+///             inner_has_lifetime: false,
+///             is_boxed: true,
+///             discriminant: 0,
+///         },
+///         // ...
+///     ],
+/// }
+/// ```
+fn generate_inherited_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
+    let enum_name = enum_def.name();
+
+    let variants = enum_def.all_variants(schema).map(|variant| {
+        let name = variant.name();
+        let discriminant = number_lit(variant.discriminant);
+
+        let field_type =
+            variant.field_type(schema).expect("Inheritable enum variants must have a field");
+        // Variants are either `Box<'a, Inner>` or a named type (`Inner` / `Inner<'a>`) directly
+        let (inner_type, is_boxed) = match field_type.as_box() {
+            Some(box_def) => (box_def.inner_type(schema), true),
+            None => (field_type, false),
+        };
+        assert!(
+            matches!(inner_type, TypeDef::Struct(_) | TypeDef::Enum(_)),
+            "Field type of inheritable enum variant `{enum_name}::{name}` is not a struct/enum",
+        );
+        let inner_name = inner_type.name();
+        let inner_has_lifetime = inner_type.has_lifetime(schema);
+
+        quote! {
+            EnumVariant {
+                name: #name,
+                inner_name: #inner_name,
+                inner_has_lifetime: #inner_has_lifetime,
+                is_boxed: #is_boxed,
+                discriminant: #discriminant,
+            }
+        }
+    });
+
+    let doc = format!(" Inherited from [`{enum_name}`]");
+    let label = format!("@ `{enum_name}`");
+    quote! {
+        #[doc = #label]
+        InheritedEnum {
+            doc: #doc,
+            variants: &[#(#variants),*],
+        }
+    }
 }
 
 /// Generate conversion methods and trait impls for all enums which inherit from other enums.
@@ -101,24 +195,7 @@ fn generate_impls(schema: &Schema) -> TokenStream {
         enum_def.all_inherits(schema).map(|child| generate_conversions(enum_def, child, schema))
     });
 
-    quote! {
-        /// Macro to get discriminant of an enum.
-        ///
-        /// # SAFETY
-        /// Enum must be `#[repr(C, u8)]` or using this macro is unsound.
-        /// <https://doc.rust-lang.org/std/mem/fn.discriminant.html>
-        macro_rules! discriminant {
-            ($ty:ident :: $variant:ident) => {{
-                #[expect(clippy::undocumented_unsafe_blocks)]
-                unsafe {
-                    let t = ManuallyDrop::new($ty::$variant(ArenaBox::dangling()));
-                    *(addr_of!(t).cast::<u8>())
-                }
-            }};
-        }
-
-        #(#impls)*
-    }
+    quote! ( #(#impls)* )
 }
 
 /// Generate a `match_child!` macro for every enum which is inherited by another enum.
@@ -189,22 +266,6 @@ fn generate_conversions(parent: &EnumDef, child: &EnumDef, schema: &Schema) -> T
     // The shared variants are all of `child`'s variants (including those `child` itself inherits)
     let variant_idents = child.all_variants(schema).map(VariantDef::ident).collect::<Vec<_>>();
 
-    // Compile-time assertions that discriminants match for all shared variants between the 2 enums.
-    // This guarantees the transmutes in `as_child` / `as_child_mut` are sound.
-    let assertions = variant_idents.iter().map(|variant_ident| {
-        let message = format!(
-            "Non-matching discriminants for `{variant_ident}` between `{}` and `{}`",
-            parent.name(),
-            child.name(),
-        );
-        quote! {
-            assert!(
-                discriminant!(#parent_ident::#variant_ident) == discriminant!(#child_ident::#variant_ident),
-                #message
-            );
-        }
-    });
-
     let is_fn = format_ident!("is_{child_snake}");
     let into_fn = format_ident!("into_{child_snake}");
     let as_fn = format_ident!("as_{child_snake}");
@@ -238,11 +299,6 @@ fn generate_conversions(parent: &EnumDef, child: &EnumDef, schema: &Schema) -> T
     let as_mut_doc3 = format!(" [`&mut {child_name}`]: {child_name}");
 
     quote! {
-        ///@@line_break
-        const _: () = {
-            #(#assertions)*
-        };
-
         ///@@line_break
         impl<'a> #parent_ident<'a> {
             #[doc = #is_doc]

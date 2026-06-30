@@ -13,7 +13,7 @@ use oxc_span::{ContentEq, GetSpan, GetSpanMut, Span};
 use oxc_str::Str;
 use oxc_syntax::node::NodeId;
 
-use super::{inherit_variants, js::*, literal::*, ts::*};
+use super::{js::*, literal::*, ts::*};
 
 // 1.2 JSX Elements
 
@@ -280,7 +280,6 @@ pub struct JSXExpressionContainer<'a> {
     pub expression: JSXExpression<'a>,
 }
 
-inherit_variants! {
 /// JSX Expression
 ///
 /// Gets wrapped by a [`JSXExpressionContainer`]. Inherits variants from [`Expression`]. See [`ast`
@@ -300,9 +299,8 @@ pub enum JSXExpression<'a> {
     /// ```
     EmptyExpression(Box<'a, JSXEmptyExpression>) = 64,
 
-    // `Expression` variants added here by `inherit_variants!` macro
+    // `Expression` variants added here by `#[ast]` macro
     INHERIT(Expression<'a>),
-}
 }
 
 /// An empty JSX expression (`{}`)
