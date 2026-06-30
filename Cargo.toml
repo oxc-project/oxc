@@ -170,6 +170,7 @@ serde = "1" # Serialization framework
 serde_json = "1" # JSON serialization
 syn = { version = "2", default-features = false } # Rust parser for macros
 unicode-id-start = "1" # Unicode identifier validation
+unicode-segmentation = "1.12.0" # Unicode grapheme segmentation
 
 #
 javascript-globals = "1.5.0" # JavaScript global definitions
@@ -201,7 +202,6 @@ handlebars = "6.4.0" # Template engine
 hashbrown = { version = "0.17.0", default-features = false } # Fast hash map
 hmac-sha1-compact = "1.1.7" # Self-contained, zero-dependency SHA-1
 humansize = "2.1.3" # Human-readable sizes
-icu_segmenter = "2.1.2" # Unicode segmentation
 ignore = "0.4.25" # Gitignore matching
 insta = "1.43.2" # Snapshot testing
 itertools = "0.15.0" # Iterator utilities
