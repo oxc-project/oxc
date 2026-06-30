@@ -130,6 +130,14 @@ pub fn snake_case(s: &str) -> String {
     result
 }
 
+/// Get the correct article ("a" / "an") that should precede a word in a doc comment.
+pub fn article_for(word: &str) -> &'static str {
+    match word.as_bytes().first().map(u8::to_ascii_uppercase) {
+        Some(b'A' | b'E' | b'I' | b'O' | b'U') => "an",
+        _ => "a",
+    }
+}
+
 /// Macro to `format!` arguments, and wrap the formatted string in a `Cow::Owned`.
 macro_rules! format_cow {
     ($($tokens:tt)+) => {
