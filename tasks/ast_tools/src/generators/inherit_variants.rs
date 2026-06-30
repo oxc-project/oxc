@@ -15,10 +15,15 @@
 //! * `impl From<Child> for Parent`
 //! * Compile-time assertions that the discriminants of shared variants match between the 2 enums
 //!
+//! It also generates a `match_child!` macro for each enum which is inherited by another enum.
+//! e.g. `match_expression!(ty)` expands to a match pattern covering all of `Expression`'s variants
+//! (`ty::BooleanLiteral(_) | ty::NullLiteral(_) | ...`), for use in `match` arms and `matches!`.
+//!
 //! Note: The actual insertion of inherited variants into enum definitions, and calculation of variant
 //! discriminants, is (currently) still handled by the `inherit_variants!` declarative macro.
 //! This generator is intended to grow to take over those responsibilities too.
 
+use itertools::Itertools;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 
@@ -39,6 +44,7 @@ define_generator!(InheritVariantsGenerator);
 impl Generator for InheritVariantsGenerator {
     fn generate(&self, schema: &Schema, _codegen: &Codegen) -> Output {
         let impls = generate_impls(schema);
+        let match_macros = generate_match_macros(schema);
 
         let output = quote! {
             //!@ Some `TryFrom` impls have a single non-shared variant left for the catch-all arm
@@ -55,6 +61,8 @@ impl Generator for InheritVariantsGenerator {
 
             ///@@line_break
             #impls
+
+            #match_macros
         };
 
         Output::Rust { path: output_path(AST_CRATE_PATH, "inherit_variants.rs"), tokens: output }
@@ -84,6 +92,64 @@ fn generate_impls(schema: &Schema) -> TokenStream {
         }
 
         #(#impls)*
+    }
+}
+
+/// Generate a `match_child!` macro for every enum which is inherited by another enum.
+fn generate_match_macros(schema: &Schema) -> TokenStream {
+    let mut output = TokenStream::new();
+
+    for enum_def in schema.enums() {
+        if !enum_def.inherited_by.is_empty() {
+            output.extend(generate_match_macro(enum_def, schema));
+        }
+    }
+
+    output
+}
+
+/// Generate a `match_child!` macro for an enum.
+///
+/// e.g. for `Expression`:
+///
+/// ```ignore
+/// macro_rules! match_expression {
+///     ($ty:ident) => {
+///         $ty::BooleanLiteral(_) | $ty::NullLiteral(_) | /* ...all other variants... */
+///     };
+/// }
+/// ```
+fn generate_match_macro(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
+    let macro_ident = format_ident!("match_{}", enum_def.snake_name());
+
+    let patterns = enum_def.all_variants(schema).map(|variant| {
+        let variant_ident = variant.ident();
+        quote!( $ty::#variant_ident(_) )
+    });
+
+    let doc = format!(" Macro for matching [`{}`]'s variants.", enum_def.name());
+    let mut inherited = enum_def.all_inherits(schema).map(EnumDef::name).peekable();
+    let inherited_doc = inherited.peek().is_some().then(|| {
+        let line = format!(" Includes variants inherited from [`{}`].", inherited.join("`], [`"));
+        quote! {
+            ///
+            #[doc = #line]
+        }
+    });
+
+    // `#[macro_export]` exports the macro at the crate root.
+    // The `pub use` makes it an item of this module too, so `crate::ast` can glob re-export it too.
+    quote! {
+        ///@@line_break
+        #[doc = #doc]
+        #inherited_doc
+        #[macro_export]
+        macro_rules! #macro_ident {
+            ($ty:ident) => {
+                #(#patterns)|*
+            };
+        }
+        pub use #macro_ident;
     }
 }
 

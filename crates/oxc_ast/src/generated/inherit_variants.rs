@@ -6650,3 +6650,199 @@ impl<'a> From<TSTypeName<'a>> for TSTypeQueryExprName<'a> {
         }
     }
 }
+
+/// Macro for matching [`Expression`]'s variants.
+///
+/// Includes variants inherited from [`MemberExpression`].
+#[macro_export]
+macro_rules! match_expression {
+    ($ty:ident) => {
+        $ty::BooleanLiteral(_)
+            | $ty::NullLiteral(_)
+            | $ty::NumericLiteral(_)
+            | $ty::BigIntLiteral(_)
+            | $ty::RegExpLiteral(_)
+            | $ty::StringLiteral(_)
+            | $ty::TemplateLiteral(_)
+            | $ty::Identifier(_)
+            | $ty::MetaProperty(_)
+            | $ty::Super(_)
+            | $ty::ArrayExpression(_)
+            | $ty::ArrowFunctionExpression(_)
+            | $ty::AssignmentExpression(_)
+            | $ty::AwaitExpression(_)
+            | $ty::BinaryExpression(_)
+            | $ty::CallExpression(_)
+            | $ty::ChainExpression(_)
+            | $ty::ClassExpression(_)
+            | $ty::ConditionalExpression(_)
+            | $ty::FunctionExpression(_)
+            | $ty::ImportExpression(_)
+            | $ty::LogicalExpression(_)
+            | $ty::NewExpression(_)
+            | $ty::ObjectExpression(_)
+            | $ty::ParenthesizedExpression(_)
+            | $ty::SequenceExpression(_)
+            | $ty::TaggedTemplateExpression(_)
+            | $ty::ThisExpression(_)
+            | $ty::UnaryExpression(_)
+            | $ty::UpdateExpression(_)
+            | $ty::YieldExpression(_)
+            | $ty::PrivateInExpression(_)
+            | $ty::JSXElement(_)
+            | $ty::JSXFragment(_)
+            | $ty::TSAsExpression(_)
+            | $ty::TSSatisfiesExpression(_)
+            | $ty::TSTypeAssertion(_)
+            | $ty::TSNonNullExpression(_)
+            | $ty::TSInstantiationExpression(_)
+            | $ty::V8IntrinsicExpression(_)
+            | $ty::ComputedMemberExpression(_)
+            | $ty::StaticMemberExpression(_)
+            | $ty::PrivateFieldExpression(_)
+    };
+}
+pub use match_expression;
+
+/// Macro for matching [`MemberExpression`]'s variants.
+#[macro_export]
+macro_rules! match_member_expression {
+    ($ty:ident) => {
+        $ty::ComputedMemberExpression(_)
+            | $ty::StaticMemberExpression(_)
+            | $ty::PrivateFieldExpression(_)
+    };
+}
+pub use match_member_expression;
+
+/// Macro for matching [`AssignmentTarget`]'s variants.
+///
+/// Includes variants inherited from [`SimpleAssignmentTarget`], [`MemberExpression`], [`AssignmentTargetPattern`].
+#[macro_export]
+macro_rules! match_assignment_target {
+    ($ty:ident) => {
+        $ty::AssignmentTargetIdentifier(_)
+            | $ty::TSAsExpression(_)
+            | $ty::TSSatisfiesExpression(_)
+            | $ty::TSNonNullExpression(_)
+            | $ty::TSTypeAssertion(_)
+            | $ty::ComputedMemberExpression(_)
+            | $ty::StaticMemberExpression(_)
+            | $ty::PrivateFieldExpression(_)
+            | $ty::ArrayAssignmentTarget(_)
+            | $ty::ObjectAssignmentTarget(_)
+    };
+}
+pub use match_assignment_target;
+
+/// Macro for matching [`SimpleAssignmentTarget`]'s variants.
+///
+/// Includes variants inherited from [`MemberExpression`].
+#[macro_export]
+macro_rules! match_simple_assignment_target {
+    ($ty:ident) => {
+        $ty::AssignmentTargetIdentifier(_)
+            | $ty::TSAsExpression(_)
+            | $ty::TSSatisfiesExpression(_)
+            | $ty::TSNonNullExpression(_)
+            | $ty::TSTypeAssertion(_)
+            | $ty::ComputedMemberExpression(_)
+            | $ty::StaticMemberExpression(_)
+            | $ty::PrivateFieldExpression(_)
+    };
+}
+pub use match_simple_assignment_target;
+
+/// Macro for matching [`AssignmentTargetPattern`]'s variants.
+#[macro_export]
+macro_rules! match_assignment_target_pattern {
+    ($ty:ident) => {
+        $ty::ArrayAssignmentTarget(_) | $ty::ObjectAssignmentTarget(_)
+    };
+}
+pub use match_assignment_target_pattern;
+
+/// Macro for matching [`Declaration`]'s variants.
+#[macro_export]
+macro_rules! match_declaration {
+    ($ty:ident) => {
+        $ty::VariableDeclaration(_)
+            | $ty::FunctionDeclaration(_)
+            | $ty::ClassDeclaration(_)
+            | $ty::TSTypeAliasDeclaration(_)
+            | $ty::TSInterfaceDeclaration(_)
+            | $ty::TSEnumDeclaration(_)
+            | $ty::TSModuleDeclaration(_)
+            | $ty::TSGlobalDeclaration(_)
+            | $ty::TSImportEqualsDeclaration(_)
+    };
+}
+pub use match_declaration;
+
+/// Macro for matching [`ModuleDeclaration`]'s variants.
+#[macro_export]
+macro_rules! match_module_declaration {
+    ($ty:ident) => {
+        $ty::ImportDeclaration(_)
+            | $ty::ExportAllDeclaration(_)
+            | $ty::ExportDefaultDeclaration(_)
+            | $ty::ExportNamedDeclaration(_)
+            | $ty::TSExportAssignment(_)
+            | $ty::TSNamespaceExportDeclaration(_)
+    };
+}
+pub use match_module_declaration;
+
+/// Macro for matching [`TSType`]'s variants.
+#[macro_export]
+macro_rules! match_ts_type {
+    ($ty:ident) => {
+        $ty::TSAnyKeyword(_)
+            | $ty::TSBigIntKeyword(_)
+            | $ty::TSBooleanKeyword(_)
+            | $ty::TSIntrinsicKeyword(_)
+            | $ty::TSNeverKeyword(_)
+            | $ty::TSNullKeyword(_)
+            | $ty::TSNumberKeyword(_)
+            | $ty::TSObjectKeyword(_)
+            | $ty::TSStringKeyword(_)
+            | $ty::TSSymbolKeyword(_)
+            | $ty::TSUndefinedKeyword(_)
+            | $ty::TSUnknownKeyword(_)
+            | $ty::TSVoidKeyword(_)
+            | $ty::TSArrayType(_)
+            | $ty::TSConditionalType(_)
+            | $ty::TSConstructorType(_)
+            | $ty::TSFunctionType(_)
+            | $ty::TSImportType(_)
+            | $ty::TSIndexedAccessType(_)
+            | $ty::TSInferType(_)
+            | $ty::TSIntersectionType(_)
+            | $ty::TSLiteralType(_)
+            | $ty::TSMappedType(_)
+            | $ty::TSNamedTupleMember(_)
+            | $ty::TSTemplateLiteralType(_)
+            | $ty::TSThisType(_)
+            | $ty::TSTupleType(_)
+            | $ty::TSTypeLiteral(_)
+            | $ty::TSTypeOperatorType(_)
+            | $ty::TSTypePredicate(_)
+            | $ty::TSTypeQuery(_)
+            | $ty::TSTypeReference(_)
+            | $ty::TSUnionType(_)
+            | $ty::TSParenthesizedType(_)
+            | $ty::JSDocNullableType(_)
+            | $ty::JSDocNonNullableType(_)
+            | $ty::JSDocUnknownType(_)
+    };
+}
+pub use match_ts_type;
+
+/// Macro for matching [`TSTypeName`]'s variants.
+#[macro_export]
+macro_rules! match_ts_type_name {
+    ($ty:ident) => {
+        $ty::IdentifierReference(_) | $ty::QualifiedName(_) | $ty::ThisExpression(_)
+    };
+}
+pub use match_ts_type_name;

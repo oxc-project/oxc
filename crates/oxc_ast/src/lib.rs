@@ -70,7 +70,7 @@ mod generated {
     mod derive_take_in;
     mod derive_unstable_address;
     mod get_id;
-    mod inherit_variants;
+    pub mod inherit_variants;
 }
 pub use generated::ast_kind;
 

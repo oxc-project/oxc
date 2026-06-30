@@ -281,51 +281,6 @@ pub enum TSType<'a> {
     JSDocUnknownType(Box<'a, JSDocUnknownType>) = 37,
 }
 
-/// Macro for matching `TSType`'s variants.
-#[macro_export]
-macro_rules! match_ts_type {
-    ($ty:ident) => {
-        $ty::TSAnyKeyword(_)
-            | $ty::TSBigIntKeyword(_)
-            | $ty::TSBooleanKeyword(_)
-            | $ty::TSIntrinsicKeyword(_)
-            | $ty::TSNeverKeyword(_)
-            | $ty::TSNullKeyword(_)
-            | $ty::TSNumberKeyword(_)
-            | $ty::TSObjectKeyword(_)
-            | $ty::TSStringKeyword(_)
-            | $ty::TSSymbolKeyword(_)
-            | $ty::TSThisType(_)
-            | $ty::TSUndefinedKeyword(_)
-            | $ty::TSUnknownKeyword(_)
-            | $ty::TSVoidKeyword(_)
-            | $ty::TSArrayType(_)
-            | $ty::TSConditionalType(_)
-            | $ty::TSConstructorType(_)
-            | $ty::TSFunctionType(_)
-            | $ty::TSImportType(_)
-            | $ty::TSIndexedAccessType(_)
-            | $ty::TSInferType(_)
-            | $ty::TSIntersectionType(_)
-            | $ty::TSLiteralType(_)
-            | $ty::TSMappedType(_)
-            | $ty::TSNamedTupleMember(_)
-            | $ty::TSTemplateLiteralType(_)
-            | $ty::TSTupleType(_)
-            | $ty::TSTypeLiteral(_)
-            | $ty::TSTypeOperatorType(_)
-            | $ty::TSTypePredicate(_)
-            | $ty::TSTypeQuery(_)
-            | $ty::TSTypeReference(_)
-            | $ty::TSUnionType(_)
-            | $ty::TSParenthesizedType(_)
-            | $ty::JSDocNullableType(_)
-            | $ty::JSDocNonNullableType(_)
-            | $ty::JSDocUnknownType(_)
-    };
-}
-pub use match_ts_type;
-
 /// TypeScript Conditional Type
 ///
 /// ## Example
@@ -821,15 +776,6 @@ pub enum TSTypeName<'a> {
     QualifiedName(Box<'a, TSQualifiedName<'a>>) = 1,
     ThisExpression(Box<'a, ThisExpression>) = 2,
 }
-
-/// Macro for matching `TSTypeName`'s variants.
-#[macro_export]
-macro_rules! match_ts_type_name {
-    ($ty:ident) => {
-        $ty::IdentifierReference(_) | $ty::QualifiedName(_) | $ty::ThisExpression(_)
-    };
-}
-pub use match_ts_type_name;
 
 /// TypeScript Qualified Name
 ///

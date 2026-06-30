@@ -192,4 +192,8 @@ pub use jsx::*;
 pub use literal::*;
 pub use ts::*;
 
+// `match_*!` macros are `#[macro_export]`ed at the crate root.
+// Re-export them here so they're also available via `crate::ast` (e.g. `use crate::ast::*`).
+pub use crate::generated::inherit_variants::*;
+
 use macros::inherit_variants;

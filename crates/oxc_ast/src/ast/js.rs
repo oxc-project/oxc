@@ -169,58 +169,6 @@ pub enum Expression<'a> {
 }
 }
 
-/// Macro for matching `Expression`'s variants.
-/// Includes `MemberExpression`'s variants.
-#[macro_export]
-macro_rules! match_expression {
-    ($ty:ident) => {
-        $ty::BooleanLiteral(_)
-            | $ty::NullLiteral(_)
-            | $ty::NumericLiteral(_)
-            | $ty::BigIntLiteral(_)
-            | $ty::RegExpLiteral(_)
-            | $ty::StringLiteral(_)
-            | $ty::TemplateLiteral(_)
-            | $ty::Identifier(_)
-            | $ty::MetaProperty(_)
-            | $ty::Super(_)
-            | $ty::ArrayExpression(_)
-            | $ty::ArrowFunctionExpression(_)
-            | $ty::AssignmentExpression(_)
-            | $ty::AwaitExpression(_)
-            | $ty::BinaryExpression(_)
-            | $ty::CallExpression(_)
-            | $ty::ChainExpression(_)
-            | $ty::ClassExpression(_)
-            | $ty::ConditionalExpression(_)
-            | $ty::FunctionExpression(_)
-            | $ty::ImportExpression(_)
-            | $ty::LogicalExpression(_)
-            | $ty::NewExpression(_)
-            | $ty::ObjectExpression(_)
-            | $ty::ParenthesizedExpression(_)
-            | $ty::SequenceExpression(_)
-            | $ty::TaggedTemplateExpression(_)
-            | $ty::ThisExpression(_)
-            | $ty::UnaryExpression(_)
-            | $ty::UpdateExpression(_)
-            | $ty::YieldExpression(_)
-            | $ty::PrivateInExpression(_)
-            | $ty::JSXElement(_)
-            | $ty::JSXFragment(_)
-            | $ty::TSAsExpression(_)
-            | $ty::TSSatisfiesExpression(_)
-            | $ty::TSTypeAssertion(_)
-            | $ty::TSNonNullExpression(_)
-            | $ty::TSInstantiationExpression(_)
-            | $ty::ComputedMemberExpression(_)
-            | $ty::StaticMemberExpression(_)
-            | $ty::PrivateFieldExpression(_)
-            | $ty::V8IntrinsicExpression(_)
-    };
-}
-pub use match_expression;
-
 /// `foo` in `let foo = 1;`
 ///
 /// Fundamental syntactic structure used for naming variables, functions, and properties.
@@ -535,17 +483,6 @@ pub enum MemberExpression<'a> {
     PrivateFieldExpression(Box<'a, PrivateFieldExpression<'a>>) = 50,
 }
 
-/// Macro for matching `MemberExpression`'s variants.
-#[macro_export]
-macro_rules! match_member_expression {
-    ($ty:ident) => {
-        $ty::ComputedMemberExpression(_)
-            | $ty::StaticMemberExpression(_)
-            | $ty::PrivateFieldExpression(_)
-    };
-}
-pub use match_member_expression;
-
 /// `ar[0]` in `const ar = [1, 2]; ar[0];`
 ///
 /// Represents a computed member access expression, which can include an object and an expression.
@@ -835,42 +772,6 @@ pub enum SimpleAssignmentTarget<'a> {
 }
 }
 
-/// Macro for matching `AssignmentTarget`'s variants.
-/// Includes `SimpleAssignmentTarget`'s and `AssignmentTargetPattern`'s variants.
-#[macro_export]
-macro_rules! match_assignment_target {
-    ($ty:ident) => {
-        $ty::AssignmentTargetIdentifier(_)
-            | $ty::ComputedMemberExpression(_)
-            | $ty::StaticMemberExpression(_)
-            | $ty::PrivateFieldExpression(_)
-            | $ty::TSAsExpression(_)
-            | $ty::TSSatisfiesExpression(_)
-            | $ty::TSNonNullExpression(_)
-            | $ty::TSTypeAssertion(_)
-            | $ty::ArrayAssignmentTarget(_)
-            | $ty::ObjectAssignmentTarget(_)
-    };
-}
-pub use match_assignment_target;
-
-/// Macro for matching `SimpleAssignmentTarget`'s variants.
-/// Includes `MemberExpression`'s variants
-#[macro_export]
-macro_rules! match_simple_assignment_target {
-    ($ty:ident) => {
-        $ty::AssignmentTargetIdentifier(_)
-            | $ty::ComputedMemberExpression(_)
-            | $ty::StaticMemberExpression(_)
-            | $ty::PrivateFieldExpression(_)
-            | $ty::TSAsExpression(_)
-            | $ty::TSSatisfiesExpression(_)
-            | $ty::TSNonNullExpression(_)
-            | $ty::TSTypeAssertion(_)
-    };
-}
-pub use match_simple_assignment_target;
-
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
@@ -878,15 +779,6 @@ pub enum AssignmentTargetPattern<'a> {
     ArrayAssignmentTarget(Box<'a, ArrayAssignmentTarget<'a>>) = 8,
     ObjectAssignmentTarget(Box<'a, ObjectAssignmentTarget<'a>>) = 9,
 }
-
-/// Macro for matching `AssignmentTargetPattern`'s variants.
-#[macro_export]
-macro_rules! match_assignment_target_pattern {
-    ($ty:ident) => {
-        $ty::ArrayAssignmentTarget(_) | $ty::ObjectAssignmentTarget(_)
-    };
-}
-pub use match_assignment_target_pattern;
 
 /// `[a, b]` in `[a, b] = arr;`
 ///
@@ -1214,23 +1106,6 @@ pub enum Declaration<'a> {
     TSGlobalDeclaration(Box<'a, TSGlobalDeclaration<'a>>) = 39,
     TSImportEqualsDeclaration(Box<'a, TSImportEqualsDeclaration<'a>>) = 40,
 }
-
-/// Macro for matching `Declaration`'s variants.
-#[macro_export]
-macro_rules! match_declaration {
-    ($ty:ident) => {
-        $ty::VariableDeclaration(_)
-            | $ty::FunctionDeclaration(_)
-            | $ty::ClassDeclaration(_)
-            | $ty::TSTypeAliasDeclaration(_)
-            | $ty::TSInterfaceDeclaration(_)
-            | $ty::TSEnumDeclaration(_)
-            | $ty::TSModuleDeclaration(_)
-            | $ty::TSGlobalDeclaration(_)
-            | $ty::TSImportEqualsDeclaration(_)
-    };
-}
-pub use match_declaration;
 
 /// `let a;` in `let a; a = 1;`
 ///
@@ -2436,20 +2311,6 @@ pub enum ModuleDeclaration<'a> {
     /// `export as namespace React;`
     TSNamespaceExportDeclaration(Box<'a, TSNamespaceExportDeclaration<'a>>) = 69,
 }
-
-/// Macro for matching `ModuleDeclaration`'s variants.
-#[macro_export]
-macro_rules! match_module_declaration {
-    ($ty:ident) => {
-        $ty::ImportDeclaration(_)
-            | $ty::ExportAllDeclaration(_)
-            | $ty::ExportDefaultDeclaration(_)
-            | $ty::ExportNamedDeclaration(_)
-            | $ty::TSExportAssignment(_)
-            | $ty::TSNamespaceExportDeclaration(_)
-    };
-}
-pub use match_module_declaration;
 
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
