@@ -108,6 +108,9 @@ impl<'c> Parser<'c> {
         // Set container IDs on type defs
         self.set_container_ids(&mut types);
 
+        // Populate `inherited_by` on enums (reverse of `inherits`)
+        Self::set_inherited_by(&mut types);
+
         // Generate `HashMap` mapping name of `#[ast_meta]` type to its `MetaId`
         let meta_names = self
             .meta_names
@@ -197,6 +200,28 @@ impl<'c> Parser<'c> {
                 TypeDef::Cell(def) => def.containers.non_null_id = Some(non_null_id),
                 TypeDef::Pointer(def) => def.containers.non_null_id = Some(non_null_id),
             }
+        }
+    }
+
+    /// Populate `inherited_by` on enums - the reverse mapping of `inherits`.
+    ///
+    /// For each enum which inherits from other enums, add it to the `inherited_by` list of each
+    /// enum it inherits from. e.g. `AssignmentTarget` inherits `SimpleAssignmentTarget`, so
+    /// `AssignmentTarget` is added to `SimpleAssignmentTarget`'s `inherited_by`.
+    fn set_inherited_by(types: &mut IndexVec<TypeId, TypeDef>) {
+        // Collect (inherited enum, inheritor enum) pairs first,
+        // to avoid borrowing `types` both immutably and mutably at the same time
+        let mut pairs = vec![];
+        for type_def in types.iter() {
+            if let TypeDef::Enum(enum_def) = type_def {
+                for &inherited_id in &enum_def.inherits {
+                    pairs.push((inherited_id, enum_def.id));
+                }
+            }
+        }
+
+        for (inherited_id, inheritor_id) in pairs {
+            types[inherited_id].as_enum_mut().unwrap().inherited_by.push(inheritor_id);
         }
     }
 

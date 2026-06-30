@@ -41,6 +41,16 @@ pub struct EnumDef {
     pub variants: Vec<VariantDef>,
     /// Enums whose variants this enum inherits (declared with `INHERIT(EnumName<'a>)` marker variants)
     pub inherits: Vec<TypeId>,
+    /// Enums which inherit this enum's variants. This is the reverse of [`inherits`].
+    ///
+    /// e.g. `Expression` is inherited by `ArrayExpressionElement`, `Argument`, and others, so all of
+    /// those appear in `Expression`'s `inherited_by`.
+    ///
+    /// Populated after all types are parsed (see `Parser::set_inherited_by`), so is empty during
+    /// parsing of attributes.
+    ///
+    /// [`inherits`]: EnumDef::inherits
+    pub inherited_by: Vec<TypeId>,
     pub builder: AstBuilderType,
     pub visit: VisitEnum,
     pub layout: Layout,
@@ -78,6 +88,7 @@ impl EnumDef {
             generated_derives,
             variants,
             inherits,
+            inherited_by: vec![],
             builder: AstBuilderType::default(),
             visit: VisitEnum::default(),
             layout: Layout::default(),
