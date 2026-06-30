@@ -1,0 +1,360 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:1]
+ 1 │ a < b < c
+   · ─────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:1]
+ 1 │ a > b > c
+   · ─────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:1]
+ 1 │ a <= b <= c
+   · ───────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:1]
+ 1 │ a >= b >= c
+   · ───────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:1]
+ 1 │ a < b <= c
+   · ──────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:1]
+ 1 │ a < b > c
+   · ─────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:1]
+ 1 │ a == b == c
+   · ───────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:1]
+ 1 │ a === b === c
+   · ─────────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:1]
+ 1 │ a != b != c
+   · ───────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:1]
+ 1 │ a !== b !== c
+   · ─────────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:1]
+ 1 │ a <= b >= c
+   · ───────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:1]
+ 1 │ a === b !== c
+   · ─────────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:1]
+ 1 │ (a < b) < c
+   · ───────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:1]
+ 1 │ (a == b) == c
+   · ─────────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:1]
+ 1 │ 0 < x < 10
+   · ──────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:1]
+ 1 │ min <= value <= max
+   · ───────────────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:1]
+ 1 │ -1 < x < 1
+   · ──────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:1]
+ 1 │ a < b.c < d
+   · ───────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:1]
+ 1 │ a < b[c] < d
+   · ────────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:1]
+ 1 │ a < b?.c < d
+   · ────────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:1]
+ 1 │ a < b + c < d
+   · ─────────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:1]
+ 1 │ a < b === c
+   · ───────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:1]
+ 1 │ a === b < c
+   · ───────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:1]
+ 1 │ (a > 0) == 0
+   · ────────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:1]
+ 1 │ (a > 0) === isEnabled
+   · ─────────────────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:1]
+ 1 │ a == b < c
+   · ──────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:1]
+ 1 │ a === b > c
+   · ───────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:1]
+ 1 │ a < f() < c
+   · ───────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:1]
+ 1 │ a < (b = c) < d
+   · ───────────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:1]
+ 1 │ a < b++ < c
+   · ───────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:1]
+ 1 │ a < /* comment */ b < c
+   · ───────────────────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:1]
+ 1 │ (a < b) < true
+   · ──────────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:1]
+ 1 │ a < b < false
+   · ─────────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:1]
+ 1 │ (a < b) < (c < d)
+   · ─────────────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:1]
+ 1 │ a < b < c < d
+   · ─────────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:1]
+ 1 │ a < b < c < d
+   · ─────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:1]
+ 1 │ foo === a < b < c
+   · ─────────────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:9]
+ 1 │ foo === a < b < c
+   ·         ─────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:1]
+ 1 │ a < b < c === foo
+   · ─────────────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:1]
+ 1 │ a < b < c === foo
+   · ─────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:5]
+ 1 │ x & a < b < c
+   ·     ─────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:6]
+ 1 │ a ?? b < c < d
+   ·      ─────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:1]
+ 1 │ foo === (a < b < c)
+   · ───────────────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:10]
+ 1 │ foo === (a < b < c)
+   ·          ─────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:6]
+ 1 │ a && b < c < d
+   ·      ─────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:6]
+ 1 │ a || b < c < d
+   ·      ─────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:1]
+ 1 │ a < b < c ? x : y
+   · ─────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:1]
+ 1 │ a < (b ?? 0) < c
+   · ────────────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:1]
+ 1 │ a < b < c
+   · ─────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:1]
+ 1 │ a < b! < c
+   · ──────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.
+
+  ⚠ unicorn(no-chained-comparison): Comparison operators cannot be chained
+   ╭─[no_chained_comparison.tsx:1:1]
+ 1 │ a < (b as number) < c
+   · ─────────────────────
+   ╰────
+  help: The inner comparison evaluates to a boolean, which is then compared instead of the operands. Compare each pair of operands separately with `&&`.

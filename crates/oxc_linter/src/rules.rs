@@ -511,6 +511,7 @@ pub(crate) mod unicorn {
     pub mod no_array_sort;
     pub mod no_await_expression_member;
     pub mod no_await_in_promise_methods;
+    pub mod no_chained_comparison;
     pub mod no_console_spaces;
     pub mod no_document_cookie;
     pub mod no_empty_file;

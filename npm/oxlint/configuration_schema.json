@@ -8767,6 +8767,9 @@
         "unicorn/no-await-in-promise-methods": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "unicorn/no-chained-comparison": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "unicorn/no-console-spaces": {
           "$ref": "#/definitions/RuleNoConfig"
         },

@@ -1528,6 +1528,7 @@ export interface DummyRuleMap {
   "unicorn/no-array-sort"?: RuleNoConfig | [AllowWarnDeny, NoArraySort];
   "unicorn/no-await-expression-member"?: RuleNoConfig;
   "unicorn/no-await-in-promise-methods"?: RuleNoConfig;
+  "unicorn/no-chained-comparison"?: RuleNoConfig;
   "unicorn/no-console-spaces"?: RuleNoConfig;
   "unicorn/no-document-cookie"?: RuleNoConfig;
   "unicorn/no-empty-file"?: RuleNoConfig;
