@@ -7,7 +7,7 @@ use oxc_cfg::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::NodeId;
+use oxc_semantic::{AstNodes, NodeId};
 use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -243,7 +243,11 @@ impl NoUselessReturn {
             );
 
             if matches!(edge.weight(), EdgeType::Unreachable)
-                && Self::unreachable_continuation_has_meaningful_code(edge.target(), cfg)
+                && Self::unreachable_continuation_has_meaningful_code(
+                    edge.target(),
+                    cfg,
+                    ctx.nodes(),
+                )
             {
                 return true;
             }
@@ -286,6 +290,7 @@ impl NoUselessReturn {
     fn unreachable_continuation_has_meaningful_code(
         start: BlockNodeId,
         cfg: &ControlFlowGraph,
+        nodes: &AstNodes,
     ) -> bool {
         let graph = cfg.graph();
         let mut stack = vec![ContinuationBlock { id: start, in_finalizer: false }];
@@ -299,7 +304,11 @@ impl NoUselessReturn {
             }
             seen[block_id.index()][seen_index] = true;
 
-            match Self::block_continuation_state(cfg.basic_block(block_id), block.in_finalizer) {
+            match Self::block_continuation_state(
+                cfg.basic_block(block_id),
+                block.in_finalizer,
+                nodes,
+            ) {
                 ContinuationState::Meaningful => return true,
                 ContinuationState::Terminal => continue,
                 ContinuationState::Passthrough => {}
@@ -331,13 +340,19 @@ impl NoUselessReturn {
         false
     }
 
-    fn block_continuation_state(block: &BasicBlock, in_finalizer: bool) -> ContinuationState {
+    fn block_continuation_state(
+        block: &BasicBlock,
+        in_finalizer: bool,
+        nodes: &AstNodes,
+    ) -> ContinuationState {
         for instruction in block.instructions() {
             match instruction.kind {
                 InstructionKind::Statement
                 | InstructionKind::Condition
                 | InstructionKind::Iteration(_) => {
-                    if !in_finalizer {
+                    if !in_finalizer
+                        && !Self::is_empty_statement_instruction(instruction.node_id, nodes)
+                    {
                         return ContinuationState::Meaningful;
                     }
                 }
@@ -360,6 +375,10 @@ impl NoUselessReturn {
         }
 
         ContinuationState::Passthrough
+    }
+
+    fn is_empty_statement_instruction(node_id: Option<NodeId>, nodes: &AstNodes) -> bool {
+        node_id.is_some_and(|node_id| matches!(nodes.kind(node_id), AstKind::EmptyStatement(_)))
     }
 }
 
@@ -633,6 +652,7 @@ fn test() {
         "function foo() { switch (bar) { case 1: if (a) { doSomething(); return; } break; default: doSomethingElse(); } }",
         "function foo() { switch (bar) { case 1: if (a) { doSomething(); return; } else { doSomething(); } break; default: doSomethingElse(); } }",
         "function foo() { switch (bar) { case 1: if (a) { doSomething(); return; } default: } }",
+        "function foo() { switch (bar) { case 1: if (a) return; ; break; default: doSomethingElse(); } }",
         // try-catch (useless return in catch)
         "function foo() { try {} catch (err) { return; } }",
         // try with useless return, catch has return value

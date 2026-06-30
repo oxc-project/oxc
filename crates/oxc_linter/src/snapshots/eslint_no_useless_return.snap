@@ -75,6 +75,13 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove this redundant `return` statement.
 
   ⚠ eslint(no-useless-return): Unnecessary return statement.
+   ╭─[no_useless_return.tsx:1:48]
+ 1 │ function foo() { switch (bar) { case 1: if (a) return; ; break; default: doSomethingElse(); } }
+   ·                                                ───────
+   ╰────
+  help: Remove this redundant `return` statement.
+
+  ⚠ eslint(no-useless-return): Unnecessary return statement.
    ╭─[no_useless_return.tsx:1:39]
  1 │ function foo() { try {} catch (err) { return; } }
    ·                                       ───────
