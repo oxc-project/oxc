@@ -6,6 +6,7 @@ use syn::{Item, parse_macro_input};
 mod ast;
 mod generated {
     pub mod derived_traits;
+    pub mod enums;
     pub mod structs;
 }
 

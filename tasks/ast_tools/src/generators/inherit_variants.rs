@@ -28,10 +28,10 @@ use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 
 use crate::{
-    AST_CRATE_PATH, Codegen, Generator,
+    AST_CRATE_PATH, AST_MACROS_CRATE_PATH, Codegen, Generator,
     output::{Output, output_path},
     schema::{Def, EnumDef, Schema, VariantDef},
-    utils::article_for,
+    utils::{article_for, generate_phf_map},
 };
 
 use super::define_generator;
@@ -42,31 +42,57 @@ pub struct InheritVariantsGenerator;
 define_generator!(InheritVariantsGenerator);
 
 impl Generator for InheritVariantsGenerator {
-    fn generate(&self, schema: &Schema, _codegen: &Codegen) -> Output {
-        let impls = generate_impls(schema);
-        let match_macros = generate_match_macros(schema);
-
-        let output = quote! {
-            //!@ Some `TryFrom` impls have a single non-shared variant left for the catch-all arm
-            #![expect(clippy::match_wildcard_for_single_variants)]
-
-            ///@@line_break
-            use std::{mem::ManuallyDrop, ptr::addr_of};
-
-            ///@@line_break
-            use oxc_allocator::ArenaBox;
-
-            ///@@line_break
-            use crate::ast::*;
-
-            ///@@line_break
-            #impls
-
-            #match_macros
-        };
-
-        Output::Rust { path: output_path(AST_CRATE_PATH, "inherit_variants.rs"), tokens: output }
+    fn generate_many(&self, schema: &Schema, _codegen: &Codegen) -> Vec<Output> {
+        vec![generate_inherit_variants(schema), generate_enum_details(schema)]
     }
+}
+
+/// Generate `inherit_variants.rs` in `oxc_ast` - conversion methods, trait impls and `match_*!` macros.
+fn generate_inherit_variants(schema: &Schema) -> Output {
+    let impls = generate_impls(schema);
+    let match_macros = generate_match_macros(schema);
+
+    let output = quote! {
+        //!@ Some `TryFrom` impls have a single non-shared variant left for the catch-all arm
+        #![expect(clippy::match_wildcard_for_single_variants)]
+
+        ///@@line_break
+        use std::{mem::ManuallyDrop, ptr::addr_of};
+
+        ///@@line_break
+        use oxc_allocator::ArenaBox;
+
+        ///@@line_break
+        use crate::ast::*;
+
+        ///@@line_break
+        #impls
+
+        #match_macros
+    };
+
+    Output::Rust { path: output_path(AST_CRATE_PATH, "inherit_variants.rs"), tokens: output }
+}
+
+/// Generate `enums.rs` in `oxc_ast_macros` - the `ENUMS` data table the `#[ast]` macro reads
+/// to decide how to modify each enum, without having to derive it from the enum on every compilation.
+fn generate_enum_details(schema: &Schema) -> Output {
+    let map = generate_phf_map(schema.enums().map(|enum_def| {
+        let is_fieldless = enum_def.is_fieldless();
+        let details = quote!( EnumDetails { is_fieldless: #is_fieldless } );
+        (enum_def.name(), details)
+    }));
+
+    let code = quote! {
+        use crate::ast::EnumDetails;
+
+        ///@@line_break
+        /// Details of how `#[ast]` macro should modify enums.
+        #[expect(clippy::unreadable_literal)]
+        pub static ENUMS: phf::Map<&'static str, EnumDetails> = #map;
+    };
+
+    Output::Rust { path: output_path(AST_MACROS_CRATE_PATH, "enums.rs"), tokens: code }
 }
 
 /// Generate conversion methods and trait impls for all enums which inherit from other enums.

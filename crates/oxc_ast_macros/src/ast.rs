@@ -5,7 +5,9 @@ use syn::{
     punctuated::Punctuated, spanned::Spanned, token::Comma,
 };
 
-use crate::generated::{derived_traits::get_trait_crate_and_generics, structs::STRUCTS};
+use crate::generated::{
+    derived_traits::get_trait_crate_and_generics, enums::ENUMS, structs::STRUCTS,
+};
 
 /// `#[ast]` macro.
 pub fn ast(item: &mut Item, args: TokenStream) -> TokenStream {
@@ -16,24 +18,46 @@ pub fn ast(item: &mut Item, args: TokenStream) -> TokenStream {
     }
 }
 
+/// Details of how `#[ast]` macro should modify an enum.
+pub struct EnumDetails {
+    /// `true` if all variants are fieldless (unit) - including any inherited variants.
+    /// Determines whether the enum is `#[repr(u8)]` (fieldless) or `#[repr(C, u8)]` (has fields).
+    pub is_fieldless: bool,
+}
+
 /// Add `#[repr(...)]` and `#[derive(::oxc_ast_macros::Ast)]` to enum,
 /// and static assertions for `#[generate_derive]`.
 fn modify_enum(item: &ItemEnum) -> TokenStream {
-    // If enum has any non-unit variant, `#[repr(C, u8)]`, otherwise `#[repr(u8)]`
-    let repr = if item.variants.iter().any(|var| !matches!(var.fields, Fields::Unit)) {
-        quote!(#[repr(C, u8)])
-    } else {
-        quote!(#[repr(u8)])
+    modify_enum_impl(item).unwrap_or_else(|message| {
+        let error = compile_error(&item.ident, message);
+        quote! {
+            #[derive(::oxc_ast_macros::Ast)]
+            #item
+            #error
+        }
+    })
+}
+
+fn modify_enum_impl(item: &ItemEnum) -> Result<TokenStream, &'static str> {
+    // Get enum data.
+    // Whether enum has any non-unit variants is calculated by `oxc_ast_tools`,
+    // rather than calculating it here on every compilation.
+    let enum_name = item.ident.to_string();
+    let Some(enum_details) = ENUMS.get(&enum_name) else {
+        return Err("Enum is unknown. Run `just ast` to re-run the codegen.");
     };
+
+    // Fieldless enums are `#[repr(u8)]`. Enums with any non-unit variant are `#[repr(C, u8)]`.
+    let repr = if enum_details.is_fieldless { quote!(#[repr(u8)]) } else { quote!(#[repr(C, u8)]) };
 
     let assertions = assert_generated_derives(&item.attrs);
 
-    quote! {
+    Ok(quote! {
         #repr
         #[derive(::oxc_ast_macros::Ast)]
         #item
         #assertions
-    }
+    })
 }
 
 /// Details of how `#[ast]` macro should modify a struct.
