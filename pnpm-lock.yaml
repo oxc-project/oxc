@@ -64,10 +64,10 @@ importers:
         version: 0.57.0(svelte@5.56.4(@typescript-eslint/types@8.62.0))(vite-plus@0.2.1(@arethetypeswrong/core@0.18.4)(@types/node@25.0.2)(@vitest/browser-playwright@4.1.9(playwright@1.61.1)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))(vitest@4.1.9))(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.4(@typescript-eslint/types@8.62.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4)))
       oxlint:
         specifier: ^1.66.0
-        version: 1.72.0(oxlint-tsgolint@0.23.0)(vite-plus@0.2.1(@arethetypeswrong/core@0.18.4)(@types/node@25.0.2)(@vitest/browser-playwright@4.1.9(playwright@1.61.1)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))(vitest@4.1.9))(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.4(@typescript-eslint/types@8.62.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4)))
+        version: 1.72.0(oxlint-tsgolint@0.24.0)(vite-plus@0.2.1(@arethetypeswrong/core@0.18.4)(@types/node@25.0.2)(@vitest/browser-playwright@4.1.9(playwright@1.61.1)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))(vitest@4.1.9))(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.4(@typescript-eslint/types@8.62.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4)))
       oxlint-tsgolint:
-        specifier: 0.23.0
-        version: 0.23.0
+        specifier: 0.24.0
+        version: 0.24.0
 
   apps/oxfmt:
     dependencies:
@@ -369,7 +369,7 @@ importers:
     dependencies:
       oxlint-tsgolint:
         specifier: '>=0.22.1'
-        version: 0.23.0
+        version: 0.24.0
       vite-plus:
         specifier: '*'
         version: 0.2.1(@arethetypeswrong/core@0.18.4)(@types/node@25.0.2)(@vitest/browser-playwright@4.1.9(playwright@1.61.1)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))(vitest@4.1.9))(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.4(@typescript-eslint/types@8.62.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))
@@ -2284,8 +2284,18 @@ packages:
     cpu: [arm64]
     os: [darwin]
 
+  '@oxlint-tsgolint/darwin-arm64@0.24.0':
+    resolution: {integrity: sha512-C2uMmwK5Bc4ri4ysZ6sA8Rcu+A5zBQTp6ml2u0CLLbRZp4kMFPV3yWk8B5DK9Aw7y9bbjogIm75tUwGLFzlsYQ==}
+    cpu: [arm64]
+    os: [darwin]
+
   '@oxlint-tsgolint/darwin-x64@0.23.0':
     resolution: {integrity: sha512-kjJ8B+7n4tB9VJdxS5A9GdJt6/bYpzbu4lXp2uO1S3sRmCB5gDEABlGoiePNApRWaW+xqL4b4xgiE727jSLhuA==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@oxlint-tsgolint/darwin-x64@0.24.0':
+    resolution: {integrity: sha512-Wgvt/1lRbDxmoNqWQKKcL+UIiqLmdJ+EWLpQa1qzoNVAfNB0PJpa82/8dH1twT/3rSs4zrP5TXPWl4juB71WuQ==}
     cpu: [x64]
     os: [darwin]
 
@@ -2294,8 +2304,18 @@ packages:
     cpu: [arm64]
     os: [linux]
 
+  '@oxlint-tsgolint/linux-arm64@0.24.0':
+    resolution: {integrity: sha512-PB1rxII7KV83+ASY4sSkXtqvpij6ME66+QCRL49uksi/ofs2Rf/UVboYr095n0Rkbl2wgvlsHGl6DHC361jQUQ==}
+    cpu: [arm64]
+    os: [linux]
+
   '@oxlint-tsgolint/linux-x64@0.23.0':
     resolution: {integrity: sha512-3bdilnyA7kmSTjK27rvjIjSxL5SIg3wt7vwNiRkouWB83ytssyKnuGvxSYJxgMEmFpSutzaBzcCUM2jDtPGcgA==}
+    cpu: [x64]
+    os: [linux]
+
+  '@oxlint-tsgolint/linux-x64@0.24.0':
+    resolution: {integrity: sha512-xcz3CxKmjTQLREtE/UShh+ruWmm9nAb7UM9zKcD65BStiuYgOakAKkPHl4YS5DztpVcDrE0+HqbOolTlRKYWmw==}
     cpu: [x64]
     os: [linux]
 
@@ -2304,8 +2324,18 @@ packages:
     cpu: [arm64]
     os: [win32]
 
+  '@oxlint-tsgolint/win32-arm64@0.24.0':
+    resolution: {integrity: sha512-A2i6ZGBec3i20S7RaxkgHc6r3HYtD5Mn7j/mb22NkTz14u0JuudvTu6JggAnbGMcv8+dBKQI//EasxSPJLD8pw==}
+    cpu: [arm64]
+    os: [win32]
+
   '@oxlint-tsgolint/win32-x64@0.23.0':
     resolution: {integrity: sha512-5MyjFuqf+g8OUPJBSGWHJtmoWnzFJYyOg4To9WMQshZYEWig/vtu7JtJ03VWnzHv9LJkAUeApY0gVCOywFR/iQ==}
+    cpu: [x64]
+    os: [win32]
+
+  '@oxlint-tsgolint/win32-x64@0.24.0':
+    resolution: {integrity: sha512-0ZbGd9qRB6zs82moekaKdEvncRANq49EAwfNX62JpTS46feXUhKAuoyVDvZMj6Rywejylrmmu79Wo6faYCo4Ew==}
     cpu: [x64]
     os: [win32]
 
@@ -4648,6 +4678,10 @@ packages:
     resolution: {integrity: sha512-3mBv3CoPbh8dFbzfDGIWa2ytZjn2v+3EX4aKRXjIhsoGFzG8GCjfRirz3rwZf1wYbZzsNLTSgpw8VjQuWdp/jA==}
     hasBin: true
 
+  oxlint-tsgolint@0.24.0:
+    resolution: {integrity: sha512-giCk5sEvG02d5tzPmFMX3hem8ndzEEu1xvGYS5OwNfO2WGl6ZVxt5LjE0yiMDoz94INI7XkXwgFAQiydPvVHDw==}
+    hasBin: true
+
   oxlint@1.70.0:
     resolution: {integrity: sha512-D6JgHtzkhRwvEC+A0Nw5AEc5bk8x5i1pHzvZIEf/a0C4hOzmAACNGtkDGPyFaxxX3ZVGxCPeig3P3rMM8XU3/g==}
     engines: {node: ^20.19.0 || >=22.12.0}
@@ -6910,19 +6944,37 @@ snapshots:
   '@oxlint-tsgolint/darwin-arm64@0.23.0':
     optional: true
 
+  '@oxlint-tsgolint/darwin-arm64@0.24.0':
+    optional: true
+
   '@oxlint-tsgolint/darwin-x64@0.23.0':
+    optional: true
+
+  '@oxlint-tsgolint/darwin-x64@0.24.0':
     optional: true
 
   '@oxlint-tsgolint/linux-arm64@0.23.0':
     optional: true
 
+  '@oxlint-tsgolint/linux-arm64@0.24.0':
+    optional: true
+
   '@oxlint-tsgolint/linux-x64@0.23.0':
+    optional: true
+
+  '@oxlint-tsgolint/linux-x64@0.24.0':
     optional: true
 
   '@oxlint-tsgolint/win32-arm64@0.23.0':
     optional: true
 
+  '@oxlint-tsgolint/win32-arm64@0.24.0':
+    optional: true
+
   '@oxlint-tsgolint/win32-x64@0.23.0':
+    optional: true
+
+  '@oxlint-tsgolint/win32-x64@0.24.0':
     optional: true
 
   '@oxlint/binding-android-arm-eabi@1.70.0':
@@ -9285,6 +9337,15 @@ snapshots:
       '@oxlint-tsgolint/win32-arm64': 0.23.0
       '@oxlint-tsgolint/win32-x64': 0.23.0
 
+  oxlint-tsgolint@0.24.0:
+    optionalDependencies:
+      '@oxlint-tsgolint/darwin-arm64': 0.24.0
+      '@oxlint-tsgolint/darwin-x64': 0.24.0
+      '@oxlint-tsgolint/linux-arm64': 0.24.0
+      '@oxlint-tsgolint/linux-x64': 0.24.0
+      '@oxlint-tsgolint/win32-arm64': 0.24.0
+      '@oxlint-tsgolint/win32-x64': 0.24.0
+
   oxlint@1.70.0(oxlint-tsgolint@0.23.0)(vite-plus@0.2.1(@arethetypeswrong/core@0.18.4)(@types/node@24.1.0)(@vitest/browser-playwright@4.1.9(playwright@1.61.1)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))(vitest@4.1.9))(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.4(@typescript-eslint/types@8.62.0))(terser@5.44.1)(tsx@4.22.4)(typescript@5.6.1-rc)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))):
     optionalDependencies:
       '@oxlint/binding-android-arm-eabi': 1.70.0
@@ -9357,7 +9418,7 @@ snapshots:
       oxlint-tsgolint: 0.23.0
       vite-plus: 0.2.1(@arethetypeswrong/core@0.18.4)(@types/node@25.0.2)(@vitest/browser-playwright@4.1.9(playwright@1.61.1)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))(vitest@4.1.9))(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.4(@typescript-eslint/types@8.62.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))
 
-  oxlint@1.72.0(oxlint-tsgolint@0.23.0)(vite-plus@0.2.1(@arethetypeswrong/core@0.18.4)(@types/node@25.0.2)(@vitest/browser-playwright@4.1.9(playwright@1.61.1)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))(vitest@4.1.9))(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.4(@typescript-eslint/types@8.62.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))):
+  oxlint@1.72.0(oxlint-tsgolint@0.24.0)(vite-plus@0.2.1(@arethetypeswrong/core@0.18.4)(@types/node@25.0.2)(@vitest/browser-playwright@4.1.9(playwright@1.61.1)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))(vitest@4.1.9))(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.4(@typescript-eslint/types@8.62.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))):
     optionalDependencies:
       '@oxlint/binding-android-arm-eabi': 1.72.0
       '@oxlint/binding-android-arm64': 1.72.0
@@ -9378,7 +9439,7 @@ snapshots:
       '@oxlint/binding-win32-arm64-msvc': 1.72.0
       '@oxlint/binding-win32-ia32-msvc': 1.72.0
       '@oxlint/binding-win32-x64-msvc': 1.72.0
-      oxlint-tsgolint: 0.23.0
+      oxlint-tsgolint: 0.24.0
       vite-plus: 0.2.1(@arethetypeswrong/core@0.18.4)(@types/node@25.0.2)(@vitest/browser-playwright@4.1.9(playwright@1.61.1)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))(vitest@4.1.9))(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.4(@typescript-eslint/types@8.62.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))
 
   p-limit@3.1.0:
