@@ -11,6 +11,7 @@ use std::borrow::Cow;
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 use oxc_syntax::number::ToJsString;
+use smallvec::SmallVec;
 
 use cow_utils::CowUtils;
 
@@ -496,7 +497,11 @@ fn try_fold_math_variadic<'a>(
     if !ctx.is_global_expr("Math", object) {
         return None;
     }
-    let mut numbers = Vec::new();
+    // Collect the (transient) operand values on the stack: this runs once per
+    // constant-foldable `Math.min/max/imul(...)` call on a hot minifier path, and
+    // foldable calls almost always have a handful of args, so a heap `Vec` here is
+    // an avoidable system allocation.
+    let mut numbers = SmallVec::<[f64; 8]>::new();
     for arg in args {
         let expr = arg.as_expression()?;
         let value = expr.get_side_free_number_value(ctx)?;
