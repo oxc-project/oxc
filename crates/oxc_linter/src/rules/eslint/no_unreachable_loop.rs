@@ -175,7 +175,7 @@ fn body_is_unreachable(
 }
 
 fn is_unreachable_node(node_id: NodeId, ctx: &LintContext<'_>, analysis: &LoopAnalysis) -> bool {
-    analysis.unreachable_blocks[ctx.nodes().cfg_id(node_id).index()]
+    analysis.unreachable[ctx.nodes().cfg_id(node_id).index()]
 }
 
 fn has_next_iteration_path(
@@ -188,7 +188,7 @@ fn has_next_iteration_path(
 
     graph.edge_references().any(|edge| {
         let source = edge.source();
-        if analysis.unreachable_blocks[source.index()] {
+        if analysis.unreachable[source.index()] {
             return false;
         }
 
@@ -216,30 +216,29 @@ fn has_next_iteration_path(
 }
 
 struct LoopAnalysis {
-    unreachable_blocks: Vec<bool>,
-    owned_blocks: Vec<Vec<NodeId>>,
-    synthetic_continuation_blocks: Vec<Vec<NodeId>>,
+    unreachable: Vec<bool>,
+    owners: Vec<Vec<NodeId>>,
+    synthetic_continuations: Vec<Vec<NodeId>>,
 }
 
 impl LoopAnalysis {
     fn new(ctx: &LintContext<'_>) -> Self {
-        let owned_blocks = collect_owned_blocks(ctx);
-        let synthetic_continuation_blocks =
-            collect_synthetic_continuation_blocks(ctx, &owned_blocks);
+        let owners = collect_owned_blocks(ctx);
+        let synthetic_continuation_blocks = collect_synthetic_continuation_blocks(ctx, &owners);
 
         Self {
-            unreachable_blocks: effective_unreachable_blocks(ctx),
-            owned_blocks,
-            synthetic_continuation_blocks,
+            unreachable: effective_unreachable_blocks(ctx),
+            owners,
+            synthetic_continuations: synthetic_continuation_blocks,
         }
     }
 
     fn owns_block(&self, block_id: oxc_cfg::BlockNodeId, loop_id: NodeId) -> bool {
-        self.owned_blocks[block_id.index()].contains(&loop_id)
+        self.owners[block_id.index()].contains(&loop_id)
     }
 
     fn is_synthetic_continuation(&self, block_id: oxc_cfg::BlockNodeId, loop_id: NodeId) -> bool {
-        self.synthetic_continuation_blocks[block_id.index()].contains(&loop_id)
+        self.synthetic_continuations[block_id.index()].contains(&loop_id)
     }
 
     fn can_continue_loop_from(&self, block_id: oxc_cfg::BlockNodeId, loop_id: NodeId) -> bool {
