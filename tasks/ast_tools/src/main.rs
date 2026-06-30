@@ -93,7 +93,7 @@
 //! Now, in the prepare phase, generators can perform any modifications to the `Schema` that require
 //! access to more than 1 [`TypeDef`] at the same time. They do this by implementing the
 //! [`Generator::prepare`] or [`Derive::prepare`] method.
-//! A good example of this is the [`AssertLayouts`] generator.
+//! A good example of this is [`AssertLayoutsGenerator`].
 //!
 //! At the end of this phase, the [`Schema`] is locked as read-only.
 //!
@@ -179,7 +179,7 @@
 //! [`FieldDef`]: schema::FieldDef
 //! [`VariantDef`]: schema::VariantDef
 //! [`MetaType`]: schema::MetaType
-//! [`AssertLayouts`]: generators::AssertLayouts
+//! [`AssertLayoutsGenerator`]: generators::AssertLayoutsGenerator
 //! [`TokenStream`]: proc_macro2::TokenStream
 //! [`AttrLocation`]: parse::attr::AttrLocation
 //! [`AttrPart`]: parse::attr::AttrPart
@@ -258,7 +258,7 @@ const DERIVES: &[&(dyn Derive + Sync)] = &[
 
 /// Code generators
 const GENERATORS: &[&(dyn Generator + Sync)] = &[
-    &generators::AssertLayouts,
+    &generators::AssertLayoutsGenerator,
     &generators::AstKindGenerator,
     &generators::AstBuilderGenerator,
     &generators::BuilderMethodsGenerator,
