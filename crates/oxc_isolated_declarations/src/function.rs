@@ -115,7 +115,9 @@ impl<'a> IsolatedDeclarations<'a> {
             return Some(FormalParameter::new(
                 param.span,
                 ArenaVec::new_in(self),
-                pattern.clone_in(self.allocator()),
+                // `pattern` is already an owned, freshly-cloned binding (see above) and is
+                // not used afterwards, so move it in directly instead of cloning again.
+                pattern,
                 type_annotation,
                 NONE,
                 optional,

@@ -2,7 +2,7 @@ use crate::generated::ancestor::Ancestor;
 use oxc_ast::ast::*;
 use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, ConstantValue};
 use oxc_span::GetSpan;
-use oxc_syntax::{scope::ScopeId, symbol::SymbolId};
+use oxc_syntax::symbol::SymbolId;
 
 use crate::TraverseCtx;
 
@@ -93,22 +93,6 @@ impl<'a> PeepholeOptimizations {
             return false;
         }
         reads.all(|read| Self::read_crosses_function_boundary(read.scope_id(), body_scope, ctx))
-    }
-
-    /// True if the scope chain from `read_scope` to `body_scope` (exclusive of
-    /// `body_scope`) crosses any `Function` scope. `substitute_single_use_symbol`
-    /// only walks adjacent statements within the same call frame, so this is
-    /// the gap our path fills.
-    fn read_crosses_function_boundary(
-        read_scope: ScopeId,
-        body_scope: ScopeId,
-        ctx: &TraverseCtx<'a>,
-    ) -> bool {
-        let scoping = ctx.scoping();
-        scoping
-            .scope_ancestors(read_scope)
-            .take_while(|&s| s != body_scope)
-            .any(|s| scoping.scope_flags(s).is_function())
     }
 
     /// Check if an expression creates a fresh value that cannot alias another binding

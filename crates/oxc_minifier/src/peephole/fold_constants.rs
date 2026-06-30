@@ -39,23 +39,30 @@ impl<'a> PeepholeOptimizations {
     pub fn fold_static_member_expr(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::StaticMemberExpression(e) = expr else { return };
         // TODO: tryFoldObjectPropAccess(n, left, name)
+        // `evaluate_value` only folds a narrow set of member accesses (currently
+        // `.length` on constant strings/arrays) and bails cheaply otherwise.
+        // Evaluate it first so the overwhelmingly common non-foldable access
+        // (e.g. `a.b.c.prop`) skips the recursive `may_have_side_effects` walk
+        // over the object's member chain.
+        let Some(value) = e.evaluate_value(ctx) else { return };
         if e.object.may_have_side_effects(ctx) {
             return;
         }
-        if let Some(changed) = e.evaluate_value(ctx).map(|value| ctx.value_to_expr(e.span, value)) {
-            ctx.replace_expression(expr, changed);
-        }
+        let changed = ctx.value_to_expr(e.span, value);
+        ctx.replace_expression(expr, changed);
     }
 
     pub fn fold_computed_member_expr(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::ComputedMemberExpression(e) = expr else { return };
         // TODO: tryFoldObjectPropAccess(n, left, name)
+        // See `fold_static_member_expr`: bail via the cheap `evaluate_value`
+        // check before walking the object and key for side effects.
+        let Some(value) = e.evaluate_value(ctx) else { return };
         if e.object.may_have_side_effects(ctx) || e.expression.may_have_side_effects(ctx) {
             return;
         }
-        if let Some(changed) = e.evaluate_value(ctx).map(|value| ctx.value_to_expr(e.span, value)) {
-            ctx.replace_expression(expr, changed);
-        }
+        let changed = ctx.value_to_expr(e.span, value);
+        ctx.replace_expression(expr, changed);
     }
 
     pub fn fold_logical_expr(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -474,11 +481,15 @@ impl<'a> PeepholeOptimizations {
                 left.span = left.span.merge_within(right_expr.span(), parent_span).unwrap_or(SPAN);
                 let last_quasi =
                     left.quasis.last_mut().expect("template literal must have at least one quasi");
-                let new_raw = last_quasi.value.raw.to_string()
-                    + &Self::escape_string_for_template_literal(&right_str);
-                last_quasi.value.raw = Str::from_str_in(&new_raw, ctx);
+                last_quasi.value.raw = Str::from_strs_array_in(
+                    [
+                        last_quasi.value.raw.as_str(),
+                        Self::escape_string_for_template_literal(&right_str).as_ref(),
+                    ],
+                    ctx,
+                );
                 let new_cooked = last_quasi.value.cooked.map(|cooked| {
-                    Str::from_str_in(&(cooked.as_str().to_string() + &right_str), ctx)
+                    Str::from_strs_array_in([cooked.as_str(), right_str.as_ref()], ctx)
                 });
                 last_quasi.value.cooked = new_cooked;
                 return Some(left_expr.take_in(ctx));
@@ -491,11 +502,15 @@ impl<'a> PeepholeOptimizations {
                     .quasis
                     .first_mut()
                     .expect("template literal must have at least one quasi");
-                let new_raw = Self::escape_string_for_template_literal(&left_str).into_owned()
-                    + first_quasi.value.raw.as_str();
-                first_quasi.value.raw = Str::from_str_in(&new_raw, ctx);
+                first_quasi.value.raw = Str::from_strs_array_in(
+                    [
+                        Self::escape_string_for_template_literal(&left_str).as_ref(),
+                        first_quasi.value.raw.as_str(),
+                    ],
+                    ctx,
+                );
                 let new_cooked = first_quasi.value.cooked.map(|cooked| {
-                    Str::from_str_in(&(left_str.into_owned() + cooked.as_str()), ctx)
+                    Str::from_strs_array_in([left_str.as_ref(), cooked.as_str()], ctx)
                 });
                 first_quasi.value.cooked = new_cooked;
                 return Some(right_expr.take_in(ctx));
