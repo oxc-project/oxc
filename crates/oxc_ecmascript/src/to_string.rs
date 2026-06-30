@@ -2,6 +2,7 @@ use std::borrow::Cow;
 
 use oxc_ast::ast::*;
 use oxc_syntax::operator::UnaryOperator;
+use smallvec::SmallVec;
 
 use crate::{
     GlobalContext, ToBoolean,
@@ -61,14 +62,32 @@ impl<'a> ToJsString<'a> for StringLiteral<'a> {
 
 impl<'a> ToJsString<'a> for TemplateLiteral<'a> {
     fn to_js_string(&self, ctx: &impl GlobalContext<'a>) -> Option<Cow<'a, str>> {
-        let mut str = String::new();
+        // Fast path: a template with no interpolations is exactly its single cooked quasi.
+        // Borrow it from the arena rather than allocating a fresh `String`.
+        if self.expressions.is_empty() {
+            return Some(Cow::Borrowed(self.quasis[0].value.cooked.as_ref()?.as_str()));
+        }
+        // Resolve the interpolated values on the stack first and bail out *before* allocating
+        // the result `String` if any of them (or any cooked quasi) isn't a constant string.
+        // The previous code allocated and pushed the first quasi on every call, even when a
+        // later interpolation turned out to be non-constant — the common case in real code,
+        // where template interpolations are usually runtime values.
+        let mut values = SmallVec::<[Cow<'a, str>; 8]>::with_capacity(self.expressions.len());
+        let mut len = 0usize;
+        for expr in &self.expressions {
+            let value = expr.to_js_string(ctx)?;
+            len += value.len();
+            values.push(value);
+        }
+        for quasi in &self.quasis {
+            len += quasi.value.cooked.as_ref()?.len();
+        }
+        let mut str = String::with_capacity(len);
         for (i, quasi) in self.quasis.iter().enumerate() {
-            str.push_str(quasi.value.cooked.as_ref()?);
-
-            if i < self.expressions.len() {
-                let expr = &self.expressions[i];
-                let value = expr.to_js_string(ctx)?;
-                str.push_str(&value);
+            // Presence of every cooked value was verified in the loop above.
+            str.push_str(quasi.value.cooked.as_ref().unwrap());
+            if let Some(value) = values.get(i) {
+                str.push_str(value);
             }
         }
         Some(Cow::Owned(str))
