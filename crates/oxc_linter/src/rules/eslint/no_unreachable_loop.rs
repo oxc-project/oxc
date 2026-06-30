@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -104,8 +106,8 @@ impl Rule for NoUnreachableLoop {
     fn run_once(&self, ctx: &LintContext) {
         let analysis = LoopAnalysis::new(ctx);
 
-        for node in ctx.nodes() {
-            self.run_on_loop(node, ctx, &analysis);
+        for loop_id in &analysis.loop_nodes {
+            self.run_on_loop(ctx.nodes().get_node(*loop_id), ctx, &analysis);
         }
     }
 }
@@ -156,7 +158,7 @@ impl NoUnreachableLoop {
             return;
         }
 
-        if !has_next_iteration_path(node.id(), ctx, analysis) {
+        if !analysis.has_next_iteration_path(node.id()) {
             ctx.diagnostic(no_unreachable_loop_diagnostic(node.kind().span()));
         }
     }
@@ -164,6 +166,10 @@ impl NoUnreachableLoop {
 
 fn is_static_false(expr: &Expression<'_>) -> bool {
     matches!(expr.without_parentheses(), Expression::BooleanLiteral(lit) if !lit.value)
+}
+
+fn is_static_true(expr: &Expression<'_>) -> bool {
+    matches!(expr.without_parentheses(), Expression::BooleanLiteral(lit) if lit.value)
 }
 
 fn body_is_unreachable(
@@ -178,118 +184,175 @@ fn is_unreachable_node(node_id: NodeId, ctx: &LintContext<'_>, analysis: &LoopAn
     analysis.unreachable[ctx.nodes().cfg_id(node_id).index()]
 }
 
-fn has_next_iteration_path(
-    loop_id: NodeId,
-    ctx: &LintContext<'_>,
-    analysis: &LoopAnalysis,
-) -> bool {
-    let cfg = ctx.cfg();
-    let graph = cfg.graph();
-
-    graph.edge_references().any(|edge| {
-        let source = edge.source();
-        if analysis.unreachable[source.index()] {
-            return false;
-        }
-
-        match edge.weight() {
-            EdgeType::Backedge => {
-                analysis.owns_block(source, loop_id)
-                    || (analysis.is_synthetic_continuation(source, loop_id)
-                        && (analysis.owns_block(edge.target(), loop_id)
-                            || edge.target() == ctx.nodes().cfg_id(loop_id)))
-            }
-            EdgeType::Jump => cfg.basic_block(source).instructions().iter().any(|instruction| {
-                match instruction.kind {
-                    InstructionKind::Continue(LabeledInstruction::Unlabeled) => {
-                        analysis.can_continue_loop_from(source, loop_id)
-                    }
-                    InstructionKind::Continue(LabeledInstruction::Labeled) => {
-                        analysis.can_continue_loop_from(edge.target(), loop_id)
-                    }
-                    _ => false,
-                }
-            }),
-            _ => false,
-        }
-    })
-}
-
 struct LoopAnalysis {
+    loop_nodes: Vec<NodeId>,
     unreachable: Vec<bool>,
-    owners: Vec<Vec<NodeId>>,
-    synthetic_continuations: Vec<Vec<NodeId>>,
+    has_next_iteration_path: Vec<bool>,
 }
 
 impl LoopAnalysis {
     fn new(ctx: &LintContext<'_>) -> Self {
-        let owners = collect_owned_blocks(ctx);
-        let synthetic_continuation_blocks = collect_synthetic_continuation_blocks(ctx, &owners);
+        let (loop_nodes, direct_owners) = collect_direct_owned_blocks(ctx);
+        let unreachable = unreachable_blocks(ctx, &loop_nodes);
+        let owners = collect_owned_blocks(ctx, &direct_owners);
+        let synthetic_continuations =
+            collect_synthetic_continuation_blocks(ctx, &unreachable, &owners);
+        let next_iteration_targets = collect_next_iteration_targets(ctx, &direct_owners, &owners);
+        let has_next_iteration_path = collect_next_iteration_paths(
+            ctx,
+            &unreachable,
+            &owners,
+            &synthetic_continuations,
+            &next_iteration_targets,
+        );
 
-        Self {
-            unreachable: effective_unreachable_blocks(ctx),
-            owners,
-            synthetic_continuations: synthetic_continuation_blocks,
-        }
+        Self { loop_nodes, unreachable, has_next_iteration_path }
     }
 
-    fn owns_block(&self, block_id: oxc_cfg::BlockNodeId, loop_id: NodeId) -> bool {
-        self.owners[block_id.index()].contains(&loop_id)
-    }
-
-    fn is_synthetic_continuation(&self, block_id: oxc_cfg::BlockNodeId, loop_id: NodeId) -> bool {
-        self.synthetic_continuations[block_id.index()].contains(&loop_id)
-    }
-
-    fn can_continue_loop_from(&self, block_id: oxc_cfg::BlockNodeId, loop_id: NodeId) -> bool {
-        self.owns_block(block_id, loop_id) || self.is_synthetic_continuation(block_id, loop_id)
+    fn has_next_iteration_path(&self, loop_id: NodeId) -> bool {
+        self.has_next_iteration_path[loop_id.index()]
     }
 }
 
-fn collect_owned_blocks(ctx: &LintContext<'_>) -> Vec<Vec<NodeId>> {
-    let mut owned_blocks = vec![Vec::new(); ctx.cfg().basic_blocks.len()];
-
-    for node in ctx.nodes() {
-        let Some(loop_id) = closest_loop_ancestor(node.id(), ctx) else {
-            continue;
-        };
-        push_loop_id(&mut owned_blocks, ctx.nodes().cfg_id(node.id()), loop_id);
+fn unreachable_blocks(ctx: &LintContext<'_>, loop_nodes: &[NodeId]) -> Vec<bool> {
+    if loop_nodes.iter().any(|loop_id| is_static_infinite_loop(ctx.nodes().kind(*loop_id))) {
+        return effective_unreachable_blocks(ctx);
     }
+
+    let mut unreachable = vec![true; ctx.cfg().basic_blocks.len()];
+    for block_id in ctx.cfg().graph().node_indices() {
+        unreachable[block_id.index()] = ctx.cfg().basic_block(block_id).is_unreachable();
+    }
+    unreachable
+}
+
+fn is_static_infinite_loop(kind: AstKind<'_>) -> bool {
+    match kind {
+        AstKind::WhileStatement(statement) => is_static_true(&statement.test),
+        AstKind::DoWhileStatement(statement) => is_static_true(&statement.test),
+        AstKind::ForStatement(statement) => {
+            statement.test.as_ref().is_none_or(|test| is_static_true(test))
+        }
+        _ => false,
+    }
+}
+
+fn collect_direct_owned_blocks(ctx: &LintContext<'_>) -> (Vec<NodeId>, Vec<Vec<NodeId>>) {
+    let (mut loop_nodes, nearest_loop_by_node) = collect_nearest_loop_by_node(ctx);
+    let mut direct_owners = vec![Vec::new(); ctx.cfg().basic_blocks.len()];
 
     for block_id in ctx.cfg().graph().node_indices() {
         for instruction in ctx.cfg().basic_block(block_id).instructions() {
             let Some(node_id) = instruction.node_id else {
                 continue;
             };
-            let Some(loop_id) = closest_loop_ancestor(node_id, ctx) else {
+            let Some(loop_id) = nearest_loop_by_node[node_id.index()] else {
                 continue;
             };
-            push_loop_id(&mut owned_blocks, block_id, loop_id);
+
+            push_loop_id(&mut direct_owners[block_id.index()], loop_id);
+            push_loop_id(&mut direct_owners[ctx.nodes().cfg_id(loop_id).index()], loop_id);
         }
     }
 
-    owned_blocks
+    loop_nodes.sort_unstable_by_key(|node_id| node_id.index());
+    (loop_nodes, direct_owners)
+}
+
+fn collect_nearest_loop_by_node(ctx: &LintContext<'_>) -> (Vec<NodeId>, Vec<Option<NodeId>>) {
+    let mut loop_nodes = Vec::new();
+    let mut nearest_loop_by_node = vec![None; ctx.nodes().len()];
+
+    for (node_id, node) in ctx.nodes().iter_enumerated() {
+        if is_loop(node.kind()) {
+            nearest_loop_by_node[node_id.index()] = Some(node_id);
+            loop_nodes.push(node_id);
+        } else if node_id != NodeId::ROOT {
+            nearest_loop_by_node[node_id.index()] =
+                nearest_loop_by_node[ctx.nodes().parent_id(node_id).index()];
+        }
+    }
+
+    (loop_nodes, nearest_loop_by_node)
+}
+
+fn collect_owned_blocks(ctx: &LintContext<'_>, direct_owners: &[Vec<NodeId>]) -> Vec<Vec<NodeId>> {
+    let mut owners = direct_owners.to_vec();
+
+    for block_id in ctx.cfg().graph().node_indices() {
+        if !ctx.cfg().basic_block(block_id).instructions().is_empty()
+            || !ctx
+                .cfg()
+                .graph()
+                .edges_directed(block_id, Direction::Incoming)
+                .any(|edge| matches!(edge.weight(), EdgeType::Backedge))
+        {
+            continue;
+        }
+
+        let mut loop_ids = Vec::new();
+        for edge in ctx
+            .cfg()
+            .graph()
+            .edges_directed(block_id, Direction::Outgoing)
+            .filter(|edge| matches!(edge.weight(), EdgeType::Backedge))
+        {
+            extend_loop_ids(&mut loop_ids, &direct_owners[edge.target().index()]);
+        }
+        extend_loop_ids(&mut owners[block_id.index()], &loop_ids);
+    }
+
+    owners
 }
 
 fn collect_synthetic_continuation_blocks(
     ctx: &LintContext<'_>,
-    owned_blocks: &[Vec<NodeId>],
+    unreachable: &[bool],
+    owners: &[Vec<NodeId>],
 ) -> Vec<Vec<NodeId>> {
     let mut continuation_blocks = vec![Vec::new(); ctx.cfg().basic_blocks.len()];
+    let mut queue = VecDeque::new();
 
-    for block_id in ctx.cfg().graph().node_indices() {
-        if !ctx.cfg().basic_block(block_id).instructions().is_empty() {
+    for edge in ctx
+        .cfg()
+        .graph()
+        .edge_references()
+        .filter(|edge| matches!(edge.weight(), EdgeType::Normal | EdgeType::Jump))
+    {
+        let source = edge.source();
+        let target = edge.target();
+
+        if unreachable[source.index()]
+            || !ctx.cfg().basic_block(target).instructions().is_empty()
+            || owners[source.index()].is_empty()
+        {
             continue;
         }
 
+        if extend_loop_ids(&mut continuation_blocks[target.index()], &owners[source.index()]) {
+            queue.push_back(target);
+        }
+    }
+
+    while let Some(source) = queue.pop_front() {
+        if unreachable[source.index()] {
+            continue;
+        }
+
+        let loop_ids = continuation_blocks[source.index()].clone();
         for edge in ctx
             .cfg()
             .graph()
-            .edges_directed(block_id, Direction::Incoming)
+            .edges_directed(source, Direction::Outgoing)
             .filter(|edge| matches!(edge.weight(), EdgeType::Normal | EdgeType::Jump))
         {
-            for loop_id in &owned_blocks[edge.source().index()] {
-                push_loop_id(&mut continuation_blocks, block_id, *loop_id);
+            let target = edge.target();
+            if !ctx.cfg().basic_block(target).instructions().is_empty() {
+                continue;
+            }
+
+            if extend_loop_ids(&mut continuation_blocks[target.index()], &loop_ids) {
+                queue.push_back(target);
             }
         }
     }
@@ -297,23 +360,120 @@ fn collect_synthetic_continuation_blocks(
     continuation_blocks
 }
 
-fn push_loop_id(
-    loop_ids_by_block: &mut [Vec<NodeId>],
-    block_id: oxc_cfg::BlockNodeId,
-    loop_id: NodeId,
+fn collect_next_iteration_targets(
+    ctx: &LintContext<'_>,
+    direct_owners: &[Vec<NodeId>],
+    owners: &[Vec<NodeId>],
+) -> Vec<Vec<NodeId>> {
+    let mut next_iteration_targets = owners.to_vec();
+
+    for block_id in ctx.cfg().graph().node_indices() {
+        if !ctx.cfg().basic_block(block_id).instructions().is_empty() {
+            continue;
+        }
+
+        let mut loop_ids = Vec::new();
+        for edge in ctx
+            .cfg()
+            .graph()
+            .edges_directed(block_id, Direction::Outgoing)
+            .filter(|edge| matches!(edge.weight(), EdgeType::Backedge))
+        {
+            extend_loop_ids(&mut loop_ids, &direct_owners[edge.target().index()]);
+        }
+        extend_loop_ids(&mut next_iteration_targets[block_id.index()], &loop_ids);
+    }
+
+    next_iteration_targets
+}
+
+fn collect_next_iteration_paths(
+    ctx: &LintContext<'_>,
+    unreachable: &[bool],
+    owners: &[Vec<NodeId>],
+    synthetic_continuations: &[Vec<NodeId>],
+    next_iteration_targets: &[Vec<NodeId>],
+) -> Vec<bool> {
+    let mut has_next_iteration_path = vec![false; ctx.nodes().len()];
+
+    for edge in ctx.cfg().graph().edge_references() {
+        let source = edge.source();
+        if unreachable[source.index()] {
+            continue;
+        }
+
+        match edge.weight() {
+            EdgeType::Backedge => {
+                mark_loop_ids(&mut has_next_iteration_path, &owners[source.index()]);
+
+                for loop_id in &synthetic_continuations[source.index()] {
+                    if next_iteration_targets[edge.target().index()].contains(loop_id) {
+                        has_next_iteration_path[loop_id.index()] = true;
+                    }
+                }
+            }
+            EdgeType::Jump => {
+                for instruction in ctx.cfg().basic_block(source).instructions() {
+                    match instruction.kind {
+                        InstructionKind::Continue(LabeledInstruction::Unlabeled) => {
+                            mark_continuable_loop_ids(
+                                &mut has_next_iteration_path,
+                                source.index(),
+                                owners,
+                                synthetic_continuations,
+                                next_iteration_targets,
+                            );
+                        }
+                        InstructionKind::Continue(LabeledInstruction::Labeled) => {
+                            mark_continuable_loop_ids(
+                                &mut has_next_iteration_path,
+                                edge.target().index(),
+                                owners,
+                                synthetic_continuations,
+                                next_iteration_targets,
+                            );
+                        }
+                        _ => {}
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+
+    has_next_iteration_path
+}
+
+fn mark_continuable_loop_ids(
+    has_next_iteration_path: &mut [bool],
+    block_index: usize,
+    owners: &[Vec<NodeId>],
+    synthetic_continuations: &[Vec<NodeId>],
+    next_iteration_targets: &[Vec<NodeId>],
 ) {
-    let loop_ids = &mut loop_ids_by_block[block_id.index()];
-    if !loop_ids.contains(&loop_id) {
-        loop_ids.push(loop_id);
+    mark_loop_ids(has_next_iteration_path, &owners[block_index]);
+    mark_loop_ids(has_next_iteration_path, &synthetic_continuations[block_index]);
+    mark_loop_ids(has_next_iteration_path, &next_iteration_targets[block_index]);
+}
+
+fn mark_loop_ids(target: &mut [bool], loop_ids: &[NodeId]) {
+    for loop_id in loop_ids {
+        target[loop_id.index()] = true;
     }
 }
 
-fn closest_loop_ancestor(node_id: NodeId, ctx: &LintContext<'_>) -> Option<NodeId> {
-    if is_loop(ctx.nodes().kind(node_id)) {
-        return Some(node_id);
+fn extend_loop_ids(target: &mut Vec<NodeId>, loop_ids: &[NodeId]) -> bool {
+    let original_len = target.len();
+    for loop_id in loop_ids {
+        push_loop_id(target, *loop_id);
     }
+    target.len() != original_len
+}
 
-    ctx.nodes().ancestor_ids(node_id).find(|id| is_loop(ctx.nodes().kind(*id)))
+fn push_loop_id(loop_ids: &mut Vec<NodeId>, loop_id: NodeId) {
+    if !loop_ids.contains(&loop_id) {
+        loop_ids.push(loop_id);
+    }
 }
 
 fn is_loop(kind: AstKind<'_>) -> bool {
