@@ -41,8 +41,8 @@
 
 use itoa::Buffer as ItoaBuffer;
 
-use oxc_allocator::TakeIn;
-use oxc_ast::{NONE, ast::*};
+use oxc_allocator::{ArenaVec, TakeIn};
+use oxc_ast::{ast::*, builder::NONE};
 use oxc_span::SPAN;
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 use oxc_traverse::Traverse;
@@ -112,12 +112,12 @@ impl ClassStaticBlock {
         let expr = Self::convert_block_to_expression(block, ctx);
 
         let key = keys.get_unique(ctx);
-        let key = ctx.ast.property_key_private_identifier(SPAN, key);
+        let key = PropertyKey::new_private_identifier(SPAN, key, ctx);
 
-        ctx.ast.class_element_property_definition(
+        ClassElement::new_property_definition(
             block.span,
             PropertyDefinitionType::PropertyDefinition,
-            ctx.ast.vec(),
+            ArenaVec::new_in(ctx),
             key,
             NONE,
             Some(expr),
@@ -129,6 +129,7 @@ impl ClassStaticBlock {
             false,
             false,
             None,
+            ctx,
         )
     }
 
@@ -254,7 +255,7 @@ impl<'a> Keys<'a> {
             i += 1;
         }
 
-        let key = ctx.ast.str_from_strs_array(["_", num_str]);
+        let key = Str::from_strs_array_in(["_", num_str], ctx);
         self.numbered.push(&key.as_str()[1..]);
 
         key

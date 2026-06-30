@@ -1,0 +1,42 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+a {
+  color: var(--baz,);
+}
+b {
+  color: var(--baz1, --baz2 , );
+}
+c {
+  margin: min(1px , );
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+a {
+  color: var(--baz,);
+}
+b {
+  color: var(--baz1, --baz2,);
+}
+c {
+  margin: min(1px);
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+a {
+  color: var(--baz,);
+}
+b {
+  color: var(--baz1, --baz2,);
+}
+c {
+  margin: min(1px);
+}
+
+===================== End =====================

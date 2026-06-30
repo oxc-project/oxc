@@ -184,7 +184,7 @@ impl<'a> ContextHost<'a> {
         options: LintOptions,
         config: Arc<LintConfig>,
     ) -> Self {
-        const DIAGNOSTICS_INITIAL_CAPACITY: usize = 512;
+        const DIAGNOSTICS_INITIAL_CAPACITY: usize = 16;
 
         assert!(
             !sub_hosts.is_empty(),

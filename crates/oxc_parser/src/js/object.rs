@@ -32,7 +32,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.state.trailing_commas.insert(span, self.end_span(comma_span));
         }
         self.expect(Kind::RCurly);
-        self.ast.alloc_object_expression(self.end_span(span), object_expression_properties)
+        ObjectExpression::boxed(self.end_span(span), object_expression_properties, self)
     }
 
     fn parse_object_expression_property(&mut self) -> ObjectPropertyKind<'a> {
@@ -76,7 +76,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 asterisk_token,
                 FunctionKind::ObjectMethod,
             );
-            return self.ast.alloc_object_property(
+            return ObjectProperty::boxed(
                 self.end_span(span),
                 PropertyKind::Init,
                 key,
@@ -84,6 +84,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 /* method */ true,
                 /* shorthand */ false,
                 computed,
+                self,
             );
         }
 
@@ -101,22 +102,23 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 // CoverInitializedName ({ foo = bar })
                 if self.eat(Kind::Eq) {
                     let right = self.parse_assignment_expression_or_higher();
-                    let left = AssignmentTarget::AssignmentTargetIdentifier(
-                        self.ast
-                            .alloc_identifier_reference(identifier_name.span, identifier_name.name),
+                    let left = AssignmentTarget::new_assignment_target_identifier(
+                        identifier_name.span,
+                        identifier_name.name,
+                        self,
                     );
-                    let expr = self.ast.assignment_expression(
+                    let expr = AssignmentExpression::new(
                         self.end_span(span),
                         AssignmentOperator::Assign,
                         left,
                         right,
+                        self,
                     );
                     self.state.cover_initialized_name.insert(span, expr);
                 }
-                let value = Expression::Identifier(
-                    self.ast.alloc_identifier_reference(identifier_name.span, identifier_name.name),
-                );
-                self.ast.alloc_object_property(
+                let value =
+                    Expression::new_identifier(identifier_name.span, identifier_name.name, self);
+                ObjectProperty::boxed(
                     self.end_span(span),
                     PropertyKind::Init,
                     PropertyKey::StaticIdentifier(identifier_name),
@@ -124,6 +126,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     /* method */ false,
                     /* shorthand */ true,
                     computed,
+                    self,
                 )
             } else {
                 self.unexpected()
@@ -139,7 +142,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let span = self.start_span();
         self.bump_any(); // advance `...`
         let argument = self.parse_assignment_expression_or_higher();
-        self.ast.alloc_spread_element(self.end_span(span), argument)
+        SpreadElement::boxed(self.end_span(span), argument, self)
     }
 
     /// `PropertyDefinition`[Yield, Await] :
@@ -152,7 +155,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> ArenaBox<'a, ObjectProperty<'a>> {
         self.expect(Kind::Colon);
         let value = self.parse_assignment_expression_or_higher();
-        self.ast.alloc_object_property(
+        ObjectProperty::boxed(
             self.end_span(span),
             PropertyKind::Init,
             key,
@@ -160,6 +163,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             /* method */ false,
             /* shorthand */ false,
             /* computed */ computed,
+            self,
         )
     }
 
@@ -224,7 +228,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             true,
             diagnostics::modifier_cannot_be_used_here,
         );
-        self.ast.alloc_object_property(
+        ObjectProperty::boxed(
             self.end_span(span),
             kind,
             key,
@@ -232,6 +236,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             /* method */ false,
             /* shorthand */ false,
             /* computed */ computed,
+            self,
         )
     }
 }

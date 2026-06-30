@@ -5,6 +5,7 @@ import { parse, parseSync } from "../src-js/index.js";
 import type {
   ExpressionStatement,
   ParserOptions,
+  Program,
   TSTypeAliasDeclaration,
   VariableDeclaration,
 } from "../src-js/index.js";
@@ -85,7 +86,7 @@ describe("parse", () => {
   describe("TS properties", () => {
     const code = "let x;";
 
-    const withTsFields = {
+    const withTsFields: Program = {
       type: "Program",
       start: 0,
       end: 6,
@@ -120,7 +121,7 @@ describe("parse", () => {
       hashbang: null,
     };
 
-    const withoutTsFields = {
+    const withoutTsFields: Program = {
       type: "Program",
       start: 0,
       end: 6,

@@ -161,7 +161,7 @@ impl<'a> AstNode<'a, ImportExpression<'a>> {
         // This allows us to reuse CallExpression's argument formatting logic when printing
         // import expressions, since import(source, options) has the same structure as
         // a function call with arguments.
-        let mut arguments = ArenaVec::new_in(self.allocator);
+        let mut arguments = ArenaVec::new_in(&self.allocator);
 
         // SAFETY: Argument inherits all Expression variants through the inherit_variants! macro,
         // so Expression and Argument have identical memory layout for shared variants.

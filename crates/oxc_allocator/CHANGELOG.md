@@ -4,6 +4,24 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.138.0] - 2026-06-29
+
+### 💥 BREAKING CHANGES
+
+- 36009dd allocator: [**BREAKING**] `GetAllocator::allocator` take `&self` (#23676) (overlookmotel)
+- bd74f9d allocator: [**BREAKING**] Rename `AllocatorAccessor` trait to `GetAllocator` (#23675) (overlookmotel)
+
+### 🚀 Features
+
+- fcbf993 allocator: Add `Vec::from_value_in` method (#23718) (overlookmotel)
+- 989ddb7 allocator: Add `Vec::from_box_in` method (#23717) (overlookmotel)
+- 9d1aa7f allocator: Improve `PartialEq` for `Vec` (#23716) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 0b3021f allocator: Remove `Vec::from_box_in` (#23873) (overlookmotel)
+- 7231d55 allocator: Fix unsound lifetime extension in `Box::new_in` (#23685) (overlookmotel)
+
 ## [0.137.0] - 2026-06-18
 
 ### 💥 BREAKING CHANGES

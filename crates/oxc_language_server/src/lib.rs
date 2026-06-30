@@ -13,6 +13,7 @@ mod position;
 #[cfg(test)]
 mod tests;
 mod tool;
+pub mod utils;
 mod worker;
 mod worker_manager;
 

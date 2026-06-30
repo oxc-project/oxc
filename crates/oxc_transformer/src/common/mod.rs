@@ -57,7 +57,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for Common<'a> {
         // Var declarations: insert var/let statements at program level.
         // Pop from the stack into a local, then build statements.
         {
-            let var_stmt = ctx.state.var_declarations.get_var_statement(ctx.ast);
+            let var_stmt = ctx.state.var_declarations.get_var_statement(&ctx.ast);
             if let Some((var_statement, let_statement)) = var_stmt {
                 let stmts: Vec<Statement<'a>> =
                     var_statement.into_iter().chain(let_statement).collect();
@@ -88,8 +88,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for Common<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let is_program_body = matches!(ctx.parent(), Ancestor::ProgramBody(_));
-        ctx.state.var_declarations.insert_into_statements(stmts, is_program_body, ctx.ast);
-        ctx.state.statement_injector.insert_into_statements(stmts, ctx.ast);
+        ctx.state.var_declarations.insert_into_statements(stmts, is_program_body, &ctx.ast);
+        ctx.state.statement_injector.insert_into_statements(stmts, &ctx.ast);
     }
 
     fn enter_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {

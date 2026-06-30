@@ -1,7 +1,7 @@
 use oxc_allocator::{Allocator, ArenaBox, ArenaVec, GetAllocator};
 use oxc_ast::{
-    AstBuilder,
     ast::{Expression, IdentifierReference, Statement},
+    builder::{AstBuilder, GetAstBuilder},
 };
 use oxc_semantic::Scoping;
 use oxc_span::Span;
@@ -129,7 +129,7 @@ impl<'a, State> TraverseCtx<'a, State> {
     /// Shortcut for `ctx.ast.alloc`.
     #[inline]
     pub fn alloc<T>(&self, node: T) -> ArenaBox<'a, T> {
-        self.ast.alloc(node)
+        ArenaBox::new_in(node, self)
     }
 
     /// Get parent of current node.
@@ -399,7 +399,7 @@ impl<'a, State> TraverseCtx<'a, State> {
     ///
     /// This is a shortcut for `ctx.scoping.generate_uid_name`.
     pub fn generate_uid_name(&mut self, name: &str) -> Ident<'a> {
-        self.scoping.generate_uid_name(name, self.ast.allocator)
+        self.scoping.generate_uid_name(name, self.allocator())
     }
 
     /// Generate UID.
@@ -518,7 +518,7 @@ impl<'a, State> TraverseCtx<'a, State> {
         flags: ReferenceFlags,
     ) -> IdentifierReference<'a> {
         let reference_id = self.create_bound_reference(symbol_id, flags);
-        self.ast.identifier_reference_with_reference_id(span, name, reference_id)
+        IdentifierReference::new_with_reference_id(span, name, reference_id, self)
     }
 
     /// Create an `Expression::Identifier` bound to a `SymbolId`.
@@ -530,7 +530,7 @@ impl<'a, State> TraverseCtx<'a, State> {
         flags: ReferenceFlags,
     ) -> Expression<'a> {
         let ident = self.create_bound_ident_reference(span, name, symbol_id, flags);
-        Expression::Identifier(self.ast.alloc(ident))
+        Expression::Identifier(ArenaBox::new_in(ident, self))
     }
 
     /// Create an unbound reference.
@@ -553,7 +553,7 @@ impl<'a, State> TraverseCtx<'a, State> {
         flags: ReferenceFlags,
     ) -> IdentifierReference<'a> {
         let reference_id = self.create_unbound_reference(name, flags);
-        self.ast.identifier_reference_with_reference_id(span, name, reference_id)
+        IdentifierReference::new_with_reference_id(span, name, reference_id, self)
     }
 
     /// Create an unbound `Expression::Identifier`.
@@ -564,7 +564,7 @@ impl<'a, State> TraverseCtx<'a, State> {
         flags: ReferenceFlags,
     ) -> Expression<'a> {
         let ident = self.create_unbound_ident_reference(span, name, flags);
-        Expression::Identifier(self.ast.alloc(ident))
+        Expression::Identifier(ArenaBox::new_in(ident, self))
     }
 
     /// Create a reference optionally bound to a `SymbolId`.
@@ -714,5 +714,14 @@ impl<'a, State> GetAllocator<'a> for TraverseCtx<'a, State> {
     #[inline]
     fn allocator(&self) -> &'a Allocator {
         self.ast.allocator()
+    }
+}
+
+impl<'a, State> GetAstBuilder<'a> for TraverseCtx<'a, State> {
+    type Builder = AstBuilder<'a>;
+
+    #[inline]
+    fn builder(&self) -> &AstBuilder<'a> {
+        &self.ast
     }
 }

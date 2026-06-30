@@ -118,11 +118,11 @@ fn try_fold_string_casing<'a>(
     };
 
     let result = match name {
-        "toLowerCase" => ctx.ast().str(&value.cow_to_lowercase()),
-        "toUpperCase" => ctx.ast().str(&value.cow_to_uppercase()),
-        "trim" => ctx.ast().str(value.trim()),
-        "trimStart" => ctx.ast().str(value.trim_start()),
-        "trimEnd" => ctx.ast().str(value.trim_end()),
+        "toLowerCase" => Str::from_str_in(&value.cow_to_lowercase(), ctx),
+        "toUpperCase" => Str::from_str_in(&value.cow_to_uppercase(), ctx),
+        "trim" => Str::from_str_in(value.trim(), ctx),
+        "trimStart" => Str::from_str_in(value.trim_start(), ctx),
+        "trimEnd" => Str::from_str_in(value.trim_end(), ctx),
         _ => return None,
     };
     Some(ConstantValue::String(Cow::Borrowed(result.as_str())))

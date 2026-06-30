@@ -83,7 +83,7 @@ impl<'a> Error<'a> {
             diagnostics
                 .into_iter()
                 .map(|diagnostic| Self::from_diagnostic_in(diagnostic, &named_source, allocator)),
-            allocator,
+            &allocator,
         )
     }
 
@@ -94,7 +94,7 @@ impl<'a> Error<'a> {
     ) -> Self {
         let labels = ArenaVec::from_iter_in(
             diagnostic.labels.iter().map(|label| ErrorLabel::from_in(label, allocator)),
-            allocator,
+            &allocator,
         );
 
         let severity = ErrorSeverity::from(diagnostic.severity);
@@ -210,7 +210,7 @@ impl<'a> FromIn<'a, ModuleRecord<'a>> for EcmaScriptModule<'a> {
                         .iter()
                         .filter(|e| e.statement_span == m.statement_span)
                         .cloned();
-                    let entries = ArenaVec::from_iter_in(entries, allocator);
+                    let entries = ArenaVec::from_iter_in(entries, &allocator);
 
                     StaticImport {
                         span: m.statement_span,
@@ -219,7 +219,7 @@ impl<'a> FromIn<'a, ModuleRecord<'a>> for EcmaScriptModule<'a> {
                     }
                 })
             });
-        let mut static_imports = ArenaVec::from_iter_in(static_imports, allocator);
+        let mut static_imports = ArenaVec::from_iter_in(static_imports, &allocator);
         static_imports.sort_unstable_by_key(|e| e.span.start);
 
         let static_exports = record
@@ -229,13 +229,13 @@ impl<'a> FromIn<'a, ModuleRecord<'a>> for EcmaScriptModule<'a> {
             .chain(&record.star_export_entries)
             .fold(FxHashMap::<Span, ArenaVec<'a, ExportEntry>>::default(), |mut acc, e| {
                 acc.entry(e.statement_span)
-                    .or_insert_with(|| ArenaVec::new_in(allocator))
+                    .or_insert_with(|| ArenaVec::new_in(&allocator))
                     .push(e.clone());
                 acc
             })
             .into_iter()
             .map(|(span, entries)| StaticExport { span, entries });
-        let mut static_exports = ArenaVec::from_iter_in(static_exports, allocator);
+        let mut static_exports = ArenaVec::from_iter_in(static_exports, &allocator);
         static_exports.sort_unstable_by_key(|e| e.span.start);
 
         Self {

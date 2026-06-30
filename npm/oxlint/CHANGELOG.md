@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.72.0] - 2026-06-29
+
+### 🚀 Features
+
+- 1c8f50c linter: Add schema for `eslint/no-restricted-import` (#23642) (Sysix)
+
+### 🐛 Bug Fixes
+
+- 742be36 refactor/node/handle-callback-err: Reject invalid regex config (#23740) (camc314)
+
 ## [1.71.0] - 2026-06-22
 
 ### 🚀 Features

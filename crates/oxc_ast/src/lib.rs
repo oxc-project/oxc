@@ -42,9 +42,9 @@
 //! [`VisitMut`]: <http://docs.rs/oxc_ast_visit>
 
 pub mod ast;
-mod ast_builder_impl;
 mod ast_impl;
 mod ast_kind_impl;
+pub mod builder;
 pub mod precedence;
 mod trivia;
 
@@ -56,7 +56,9 @@ mod generated {
 
     #[cfg(debug_assertions)]
     mod assert_layouts;
+    #[cfg(not(feature = "disable_old_builder"))]
     mod ast_builder;
+    mod builder_methods;
     mod derive_clone_in;
     mod derive_content_eq;
     mod derive_dummy;
@@ -68,13 +70,15 @@ mod generated {
     mod derive_take_in;
     mod derive_unstable_address;
     mod get_id;
+    pub mod inherit_variants;
 }
 pub use generated::ast_kind;
 
 pub use ast::comment::{Comment, CommentContent, CommentKind, CommentPosition};
-pub use ast_builder_impl::{AstBuilder, NONE};
 pub use ast_kind::{AstKind, AstType};
 pub use ast_kind_impl::{MemberExpressionKind, ModuleDeclarationKind};
+#[cfg(not(feature = "disable_old_builder"))]
+pub use builder::{AstBuilder, NONE};
 pub use trivia::{
     CommentsRange, comments_range, get_comment_at, has_comments_between, is_inside_comment,
 };

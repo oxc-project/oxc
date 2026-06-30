@@ -608,7 +608,8 @@ impl Linter {
         original_program: &mut Program<'_>,
         js_allocator_pool: &AllocatorPool,
     ) {
-        let js_allocator = js_allocator_pool.get();
+        let js_allocator_guard = js_allocator_pool.get();
+        let js_allocator = &*js_allocator_guard;
 
         // Get the original source text from the `Program`, and replace it with an empty string.
         // This avoids cloning the original source text, which can be large.
@@ -644,7 +645,7 @@ impl Linter {
         // We need to allocate the `Program` struct ITSELF in the allocator, not just its contents.
         // `clone_in` returns a value on the stack, but we need it in the allocator for raw transfer.
         let program = {
-            let mut program = original_program.clone_in(&js_allocator);
+            let mut program = original_program.clone_in(js_allocator);
             program.source_text = new_source_text;
             js_allocator.alloc(program)
         };
@@ -663,10 +664,10 @@ impl Linter {
             ctx_host,
             program,
             tokens,
-            &js_allocator,
+            js_allocator,
         );
 
-        // The `AllocatorGuard` (`js_allocator`) is dropped here, returning the allocator to the pool.
+        // The `AllocatorGuard` (`js_allocator_guard`) is dropped here, returning the allocator to the pool.
         // This ensures that we never have too many allocators in play at once, avoiding OOM.
     }
 

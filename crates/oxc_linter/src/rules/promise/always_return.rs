@@ -196,6 +196,11 @@ impl Rule for AlwaysReturn {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        match node.kind() {
+            AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {}
+            _ => return,
+        }
+
         if !is_inline_then_function_expression(node, ctx) {
             return;
         }
@@ -532,6 +537,16 @@ fn test() {
         (
             "hey.then(x => { window['x'] = x })",
             Some(serde_json::json!([{ "ignoreAssignmentVariable": ["globalThis", "window"] }])),
+        ),
+        // A `then()` callback with a loop, ending in `return <nested then-chain>`
+        (
+            r"hey.then(function (x) { while (x.next()) { collect(x); } return load().then(function (y) { return y; }); })",
+            None,
+        ),
+        // `if`/`else` where the `else` branch loops, then `return <object>`.
+        (
+            r"hey.then(x => { let n = 0; if (a) { n = 1; } else { while (cond(n)) { n++; } } return { items: x.map(i => i) }; })",
+            None,
         ),
     ];
 

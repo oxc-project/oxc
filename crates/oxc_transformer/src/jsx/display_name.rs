@@ -108,14 +108,14 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactDisplayName {
                     // whereas we also handle e.g. `{"foo-bar": React.createClass({})}`,
                     // so we diverge from Babel here, but that's probably an improvement
                     if let Some(name) = prop.key().static_name() {
-                        break ctx.ast.str(&name);
+                        break Str::from_str_in(&name, ctx);
                     }
                     return;
                 }
                 // `export default React.createClass({})`
                 // Uses the current file name as the display name.
                 Ancestor::ExportDefaultDeclarationDeclaration(_) => {
-                    break ctx.ast.str(&ctx.state.filename);
+                    break Str::from_str_in(&ctx.state.filename, ctx);
                 }
                 // Stop crawling up when hit a statement
                 _ if ancestor.is_parent_of_statement() => return,
@@ -165,14 +165,15 @@ impl<'a> ReactDisplayName {
         }
         obj_expr.properties.insert(
             0,
-            ctx.ast.object_property_kind_object_property(
+            ObjectPropertyKind::new_object_property(
                 SPAN,
                 PropertyKind::Init,
-                ctx.ast.property_key_static_identifier(SPAN, DISPLAY_NAME),
-                ctx.ast.expression_string_literal(SPAN, name, None),
+                PropertyKey::new_static_identifier(SPAN, DISPLAY_NAME, ctx),
+                Expression::new_string_literal(SPAN, name, None, ctx),
                 false,
                 false,
                 false,
+                ctx,
             ),
         );
     }
