@@ -566,8 +566,7 @@ fn generate_walk_for_enum(enum_def: &EnumDef, schema: &Schema, config: &WalkConf
     }
 
     // Inherited variants
-    for inherits_type in enum_def.inherits_types(schema) {
-        let inherited_enum = inherits_type.as_enum().unwrap();
+    for inherited_enum in enum_def.inherits_enums(schema) {
         let inherited_snake = inherited_enum.snake_name();
         let walk_inherited_fn = format_ident!("walk_{inherited_snake}");
 
@@ -613,8 +612,7 @@ fn collect_inherited_patterns(
                 let variant_ident = variant.ident();
                 patterns.push(quote!(#parent_ident::#variant_ident(_)));
             }
-            for inherits_type in enum_def.inherits_types(schema) {
-                let nested_enum = inherits_type.as_enum().unwrap();
+            for nested_enum in enum_def.inherits_enums(schema) {
                 next_queue.push(nested_enum);
             }
         }

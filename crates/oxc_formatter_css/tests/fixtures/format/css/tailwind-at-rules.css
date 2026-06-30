@@ -1,0 +1,24 @@
+/* Unknown at-rule params print VERBATIM (Prettier keeps them as a string):
+   re-spacing corrupts Tailwind variants (`dark:bg-x` -> `dark: bg-x`) and
+   glues normalized numbers (`py-1.5` -> `py-10.5`). */
+html,
+body {
+  @apply bg-white dark:bg-gray-950;
+}
+.log-entry {
+  @apply px-3 py-1.5 text-xs font-mono;
+}
+.cell {
+  @apply bg-kumo-control rounded-2xl aspect-square flex items-center justify-center
+         text-4xl cursor-pointer transition-all duration-200
+         ring ring-kumo-line hover:bg-kumo-tint hover:-translate-y-0.5;
+}
+@custom-variant dark (&:is(.dark *));
+@custom-variant dark (@media (prefers-color-scheme: dark));
+@variant dark (&:where(.dark, .dark *));
+@source "./**/*.vue";
+@source './node_modules/heroui-native/lib';
+@tailwind base;
+@theme inline {
+  --font-heading: var(--font-inter);
+}

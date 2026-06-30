@@ -4,6 +4,36 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.138.0] - 2026-06-29
+
+### 💥 BREAKING CHANGES
+
+- 94fbacb ast: [**BREAKING**] Only export `AstBuilder` and `NONE` in `builder` module (#23876) (overlookmotel)
+- 8de5122 ecmascript: [**BREAKING**] Switch to new `AstBuilder` (#23834) (overlookmotel)
+- 88f4455 str: [**BREAKING**] `Str` and `Ident` methods take `&GetAllocator` (#23781) (overlookmotel)
+- 36009dd allocator: [**BREAKING**] `GetAllocator::allocator` take `&self` (#23676) (overlookmotel)
+
+### 🚀 Features
+
+- f2091b3 ast: Unify old and new `AstBuilder`s (#23875) (overlookmotel)
+- 6883fcf minifier: Fold write-once falsy var to false in boolean context (#23540) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- da0e5bf minifier: Don't reorder a closed-over TDZ read when inlining a var (#23771) (Dunqing)
+- 3f574f5 traverse: Fix unsoundness in `Traverse` walk functions (#23745) (overlookmotel)
+
+### ⚡ Performance
+
+- e71609d minifier: Bail member-expr folding before the side-effect walk (#23924) (Lawrence Lin)
+- e1f89ab minifier: Reduce string allocations folding addition (#23846) (overlookmotel)
+- e1886a0 transformer, minifier: Use `static_ident!` macro to create static `Ident`s (#23727) (overlookmotel)
+- 3855f0c minifier: Allocate AST nodes in arena directly (#23710) (overlookmotel)
+
+### 📚 Documentation
+
+- 3d61dea all: Correct capitalization in comments (#23887) (overlookmotel)
+
 ## [0.137.0] - 2026-06-18
 
 ### 🚀 Features

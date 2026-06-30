@@ -90,7 +90,7 @@ pub struct VecBuffer<'buf, 'ast, C> {
 
 impl<'buf, 'ast, C> VecBuffer<'buf, 'ast, C> {
     pub fn new(state: &'buf mut FormatState<'ast, C>) -> Self {
-        Self::new_with_vec(state, ArenaVec::new_in(state.allocator()))
+        Self::new_with_vec(state, ArenaVec::new_in(state))
     }
 
     pub fn new_with_vec(
@@ -102,7 +102,7 @@ impl<'buf, 'ast, C> VecBuffer<'buf, 'ast, C> {
 
     /// Creates a buffer with the specified capacity
     pub fn with_capacity(capacity: usize, state: &'buf mut FormatState<'ast, C>) -> Self {
-        let elements = ArenaVec::with_capacity_in(capacity, state.allocator());
+        let elements = ArenaVec::with_capacity_in(capacity, state);
         Self { state, elements }
     }
 
@@ -310,7 +310,7 @@ fn clean_interned<'ast>(
             FormatElement::Line(LineMode::Soft | LineMode::SoftOrSpace)
             | FormatElement::Tag(Tag::StartConditionalContent(_) | Tag::EndConditionalContent)
             | FormatElement::BestFitting(_) => {
-                let cleaned = ArenaVec::from_iter_in(interned[..index].iter().cloned(), allocator);
+                let cleaned = ArenaVec::from_iter_in(interned[..index].iter().cloned(), &allocator);
                 Some((cleaned, &interned[index..]))
             }
             FormatElement::Interned(inner) => {
@@ -324,7 +324,7 @@ fn clean_interned<'ast>(
                 if &cleaned_inner == inner {
                     None
                 } else {
-                    let mut cleaned = ArenaVec::with_capacity_in(interned.len(), allocator);
+                    let mut cleaned = ArenaVec::with_capacity_in(interned.len(), &allocator);
                     cleaned.extend(interned[..index].iter().cloned());
                     cleaned.push(FormatElement::Interned(cleaned_inner));
                     Some((cleaned, &interned[index + 1..]))

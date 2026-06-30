@@ -233,7 +233,7 @@ fn transform<'a>(
 
     // Finally, sort import lines within each chunk.
     // After sorting, flatten everything back to `FormatElement`s.
-    let mut next_elements = ArenaVec::with_capacity_in(prev_elements.len(), allocator);
+    let mut next_elements = ArenaVec::with_capacity_in(prev_elements.len(), &allocator);
 
     let mut chunks_iter = chunks.into_iter().peekable();
     while let Some(chunk) = chunks_iter.next() {

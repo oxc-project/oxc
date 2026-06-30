@@ -89,8 +89,8 @@ pub mod lexer;
 
 use oxc_allocator::{Allocator, ArenaBox, ArenaVec, Dummy, GetAllocator};
 use oxc_ast::{
-    AstBuilder,
     ast::{Expression, Program, Statement},
+    builder::{AstBuilder, GetAstBuilder},
 };
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 use oxc_span::{SourceType, Span};
@@ -681,7 +681,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
                 self.error(fatal_error.error);
             }
 
-            program = Program::dummy(self.ast.allocator);
+            program = Program::dummy(self.allocator());
             program.source_type = self.source_type;
             program.source_text = self.source_text;
         }
@@ -730,11 +730,8 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             }
         }
 
-        let tokens = if panicked {
-            ArenaVec::new_in(self.ast.allocator)
-        } else {
-            self.lexer.finalize_tokens()
-        };
+        let tokens =
+            if panicked { ArenaVec::new_in(&self.ast) } else { self.lexer.finalize_tokens() };
 
         program.comments = self.lexer.trivia_builder.comments;
 
@@ -788,8 +785,8 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
 
         let span = Span::new(0, self.source_text.len() as u32);
         // Populated at the end of `parse` after `flow_error` has read from `trivia_builder.comments`.
-        let comments = self.ast.vec();
-        self.ast.program(
+        let comments = ArenaVec::new_in(self);
+        Program::new(
             span,
             self.source_type,
             self.source_text,
@@ -797,6 +794,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             hashbang,
             directives,
             statements,
+            self,
         )
     }
 
@@ -885,7 +883,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
 
     #[inline]
     fn alloc<T>(&self, value: T) -> ArenaBox<'a, T> {
-        self.ast.alloc(value)
+        ArenaBox::new_in(value, self)
     }
 }
 
@@ -893,6 +891,15 @@ impl<'a, C: ParserConfig> GetAllocator<'a> for ParserImpl<'a, C> {
     #[inline]
     fn allocator(&self) -> &'a Allocator {
         self.ast.allocator()
+    }
+}
+
+impl<'a, C: ParserConfig> GetAstBuilder<'a> for ParserImpl<'a, C> {
+    type Builder = AstBuilder<'a>;
+
+    #[inline]
+    fn builder(&self) -> &AstBuilder<'a> {
+        &self.ast
     }
 }
 

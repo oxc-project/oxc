@@ -390,7 +390,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     {
         let opening_span = self.cur_token().span();
         self.expect(open);
-        let mut list = self.ast.vec();
+        let mut list = ArenaVec::new_in(self);
         loop {
             let kind = self.cur_kind();
             if kind == close
@@ -416,7 +416,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     {
         let opening_span = self.cur_token().span();
         self.expect(open);
-        let mut list = self.ast.vec();
+        let mut list = ArenaVec::new_in(self);
         loop {
             if self.at(close) || self.has_fatal_error() {
                 break;
@@ -441,7 +441,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     where
         F: FnMut(&mut Self) -> T,
     {
-        let mut list = self.ast.vec();
+        let mut list = ArenaVec::new_in(self);
         // Cache cur_kind() to avoid redundant calls in compound checks
         let kind = self.cur_kind();
         if kind == close
@@ -538,7 +538,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         R: Fn(&mut Self) -> ArenaBox<'a, BindingRestElement<'a>>,
         D: Fn(Span) -> OxcDiagnostic,
     {
-        let mut list = self.ast.vec();
+        let mut list = ArenaVec::new_in(self);
         let mut rest: Option<ArenaBox<'a, BindingRestElement<'a>>> = None;
         let mut first = true;
         loop {

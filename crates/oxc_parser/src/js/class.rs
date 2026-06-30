@@ -113,7 +113,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             diagnostics::modifier_cannot_be_used_here,
         );
 
-        self.ast.alloc_class(
+        Class::boxed(
             self.end_span(start_span),
             r#type,
             decorators,
@@ -121,10 +121,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             type_parameters,
             super_class,
             super_type_parameters,
-            implements.map_or_else(|| self.ast.vec(), |(_, implements)| implements),
+            implements.map_or_else(|| ArenaVec::new_in(self), |(_, implements)| implements),
             body,
             modifiers.contains_abstract(),
             modifiers.contains_declare(),
+            self,
         )
     }
 
@@ -179,7 +180,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_extends_clause(&mut self) -> ArenaVec<'a, TSInterfaceHeritage<'a>> {
         self.bump_any(); // bump `extends`
 
-        let mut extends = self.ast.vec_with_capacity(1);
+        let mut extends = ArenaVec::with_capacity_in(1, self);
         loop {
             let span = self.start_span();
             let mut extend = self.parse_lhs_expression_or_higher();
@@ -195,10 +196,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 type_argument = self.try_parse_type_arguments();
             }
 
-            extends.push(self.ast.ts_interface_heritage(
+            extends.push(TSInterfaceHeritage::new(
                 self.end_span(span),
                 extend,
                 type_argument,
+                self,
             ));
 
             if !self.eat(Kind::Comma) {
@@ -221,7 +223,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
             Some(Self::parse_class_element(p))
         });
-        self.ast.alloc_class_body(self.end_span(span), class_elements)
+        ClassBody::boxed(self.end_span(span), class_elements, self)
     }
 
     fn parse_class_element(&mut self) -> ClassElement<'a> {
@@ -385,7 +387,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Context::Yield | Context::Return,
             Self::parse_block,
         );
-        self.ast.class_element_static_block(self.end_span(span), block.unbox().body)
+        ClassElement::new_static_block(self.end_span(span), block.unbox().body, self)
     }
 
     /// <https://github.com/tc39/proposal-decorators>
@@ -432,7 +434,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 1,
             )));
         }
-        self.ast.class_element_accessor_property(
+        ClassElement::new_accessor_property(
             self.end_span(span),
             r#type,
             decorators,
@@ -444,6 +446,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             modifiers.contains(ModifierKind::Override),
             definite.is_some(),
             modifiers.accessibility(),
+            self,
         )
     }
 
@@ -461,7 +464,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             false,
             FunctionKind::ClassMethod,
         );
-        let method_definition = self.ast.alloc_method_definition(
+        let method_definition = MethodDefinition::boxed(
             self.end_span(span),
             r#type,
             decorators,
@@ -473,6 +476,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             modifiers.contains(ModifierKind::Override),
             false,
             modifiers.accessibility(),
+            self,
         );
         self.check_method_definition_accessor(&method_definition);
         self.verify_modifiers(
@@ -501,7 +505,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             false,
             FunctionKind::Constructor,
         );
-        let method_definition = self.ast.alloc_method_definition(
+        let method_definition = MethodDefinition::boxed(
             self.end_span(span),
             r#type,
             decorators,
@@ -513,6 +517,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             modifiers.contains(ModifierKind::Override),
             false,
             modifiers.accessibility(),
+            self,
         );
         self.check_method_definition_constructor(&method_definition);
         ClassElement::MethodDefinition(method_definition)
@@ -633,7 +638,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             generator,
             FunctionKind::ClassMethod,
         );
-        let method_definition = self.ast.alloc_method_definition(
+        let method_definition = MethodDefinition::boxed(
             self.end_span(span),
             r#type,
             decorators,
@@ -645,6 +650,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             modifiers.contains(ModifierKind::Override),
             optional,
             modifiers.accessibility(),
+            self,
         );
         self.check_method_definition_method(&method_definition);
         ClassElement::MethodDefinition(method_definition)
@@ -723,7 +729,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.error(diagnostics::definite_assignment_assertion_not_permitted(definite_span));
             }
         }
-        self.ast.class_element_property_definition(
+        ClassElement::new_property_definition(
             self.end_span(span),
             r#type,
             decorators,
@@ -738,6 +744,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             definite.is_some(),
             modifiers.contains(ModifierKind::Readonly),
             modifiers.accessibility(),
+            self,
         )
     }
 

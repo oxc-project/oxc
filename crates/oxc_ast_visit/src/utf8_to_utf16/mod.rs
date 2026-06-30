@@ -138,11 +138,8 @@ impl Utf8ToUtf16 {
 
 #[cfg(test)]
 mod test {
-    use oxc_allocator::Allocator;
-    use oxc_ast::{
-        AstBuilder, Comment, CommentKind,
-        ast::{Expression, Statement},
-    };
+    use oxc_allocator::{Allocator, ArenaVec};
+    use oxc_ast::{ast::*, builder::AstBuilder};
     use oxc_span::{GetSpan, SourceType, Span};
 
     use super::Utf8ToUtf16;
@@ -152,20 +149,25 @@ mod test {
         let allocator = Allocator::new();
         let ast = AstBuilder::new(&allocator);
 
-        let mut program = ast.program(
+        let mut program = Program::new(
             Span::new(0, 15),
             SourceType::default(),
             ";'🤨' // 🤨",
-            ast.vec1(Comment::new(8, 15, CommentKind::Line)),
+            ArenaVec::from_value_in(Comment::new(8, 15, CommentKind::Line), &ast),
             None,
-            ast.vec(),
-            ast.vec_from_array([
-                ast.statement_empty(Span::new(0, 1)),
-                ast.statement_expression(
-                    Span::new(1, 7),
-                    ast.expression_string_literal(Span::new(1, 7), "🤨", None),
-                ),
-            ]),
+            ArenaVec::new_in(&ast),
+            ArenaVec::from_array_in(
+                [
+                    Statement::new_empty_statement(Span::new(0, 1), &ast),
+                    Statement::new_expression_statement(
+                        Span::new(1, 7),
+                        Expression::new_string_literal(Span::new(1, 7), "🤨", None, &ast),
+                        &ast,
+                    ),
+                ],
+                &ast,
+            ),
+            &ast,
         );
 
         let span_converter = Utf8ToUtf16::new(program.source_text);

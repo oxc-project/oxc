@@ -1,0 +1,54 @@
+---
+source: crates/oxc_formatter_graphql/tests/fixtures/mod.rs
+---
+==================== Input ====================
+{
+  a # same-line trailing
+  b
+  # own line before closing
+}
+
+type T {
+  a: String # trailing
+}
+
+# after last definition
+
+# blank line above me
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+{
+  a # same-line trailing
+  b
+  # own line before closing
+}
+
+type T {
+  a: String # trailing
+}
+
+# after last definition
+
+# blank line above me
+
+-------------------
+{ printWidth: 100 }
+-------------------
+{
+  a # same-line trailing
+  b
+  # own line before closing
+}
+
+type T {
+  a: String # trailing
+}
+
+# after last definition
+
+# blank line above me
+
+===================== End =====================

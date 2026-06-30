@@ -17,7 +17,7 @@ pub trait TakeIn<'a>: Dummy<'a> {
     fn take_in_box<A: GetAllocator<'a>>(&mut self, allocator_accessor: &A) -> Box<'a, Self> {
         let allocator = allocator_accessor.allocator();
         let dummy = Dummy::dummy(allocator);
-        Box::new_in(mem::replace(self, dummy), allocator)
+        Box::new_in(mem::replace(self, dummy), &allocator)
     }
 }
 
@@ -44,7 +44,7 @@ impl<'a, T: Dummy<'a>> Dummy<'a> for Box<'a, T> {
     /// Create a dummy [`Box`].
     #[inline]
     fn dummy(allocator: &'a Allocator) -> Self {
-        Box::new_in(Dummy::dummy(allocator), allocator)
+        Box::new_in(Dummy::dummy(allocator), &allocator)
     }
 }
 
@@ -60,7 +60,7 @@ impl<'a, T> Dummy<'a> for Vec<'a, T> {
     /// Create a dummy [`Vec`].
     #[inline]
     fn dummy(allocator: &'a Allocator) -> Self {
-        Vec::new_in(allocator)
+        Vec::new_in(&allocator)
     }
 }
 

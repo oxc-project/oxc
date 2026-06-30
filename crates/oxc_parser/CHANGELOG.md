@@ -4,6 +4,33 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.138.0] - 2026-06-29
+
+### 💥 BREAKING CHANGES
+
+- 94fbacb ast: [**BREAKING**] Only export `AstBuilder` and `NONE` in `builder` module (#23876) (overlookmotel)
+- 88f4455 str: [**BREAKING**] `Str` and `Ident` methods take `&GetAllocator` (#23781) (overlookmotel)
+- 36009dd allocator: [**BREAKING**] `GetAllocator::allocator` take `&self` (#23676) (overlookmotel)
+
+### 🚀 Features
+
+- f2091b3 ast: Unify old and new `AstBuilder`s (#23875) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 7537c58 ast: Fix name of `AstBuilder` method for `Expression::V8IntrinsicExpression` (#23766) (overlookmotel)
+- 585760f parser: String in AST reference arena (#23721) (overlookmotel)
+
+### ⚡ Performance
+
+- a6d8e45 parser: Avoid span lookup for arrow expression body (#23788) (camc314)
+- 1c63c66 parser: Allocate AST nodes in arena directly (#23712) (overlookmotel)
+- 10b96c6 parser: Remove string search from parsing JSX element name (#23713) (overlookmotel)
+
+### 📚 Documentation
+
+- 3d61dea all: Correct capitalization in comments (#23887) (overlookmotel)
+
 ## [0.137.0] - 2026-06-18
 
 ### 💥 BREAKING CHANGES

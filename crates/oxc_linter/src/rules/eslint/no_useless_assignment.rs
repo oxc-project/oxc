@@ -1234,6 +1234,20 @@ function useResource(unsafe: (resource: { readonly release: () => void }) => voi
 
   return resource;
 }",
+        "function collectIds(ids: readonly string[], forward: boolean): string[] {
+  const collected: string[] = [];
+  const startIndex = forward ? 0 : ids.length - 1;
+
+  for (
+    let index = startIndex;
+    forward ? index < ids.length : index >= 0;
+    forward ? index++ : index--
+  ) {
+    collected.push(ids[index]!);
+  }
+
+  return collected;
+}",
     ];
 
     let fail = vec![

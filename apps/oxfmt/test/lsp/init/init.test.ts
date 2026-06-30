@@ -39,7 +39,7 @@ describe("LSP initialization", () => {
       { "fmt.configPath": "" },
       ["**/.oxfmtrc.json", "**/.oxfmtrc.jsonc", "**/oxfmt.config.ts", ".editorconfig"],
     ],
-    [{ "fmt.configPath": "./custom-config.json" }, ["./custom-config.json", ".editorconfig"]],
+    [{ "fmt.configPath": "./custom-config.json" }, ["custom-config.json", ".editorconfig"]],
   ])(
     "should send correct dynamic watch pattern registration for config: %s",
     async (lspConfig, expectedPatterns) => {

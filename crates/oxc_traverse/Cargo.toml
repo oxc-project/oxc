@@ -1,6 +1,6 @@
 [package]
 name = "oxc_traverse"
-version = "0.137.0"
+version = "0.138.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -35,3 +35,9 @@ oxc_syntax = { workspace = true }
 
 itoa = { workspace = true }
 rustc-hash = { workspace = true }
+
+[dev-dependencies]
+# Catch usage of old `AstBuilder` APIs in tests, without affecting downstream consumers.
+# If we enabled `disable_old_builder` feature in main dependency, feature unification would
+# cause it to be activated for `oxc_ast` for the user too.
+oxc_ast = { workspace = true, features = ["disable_old_builder"] }

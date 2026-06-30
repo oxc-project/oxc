@@ -461,7 +461,7 @@ struct SlotFrequency<'a> {
 
 impl<'t> SlotFrequency<'t> {
     fn new(temp_allocator: &'t Allocator) -> Self {
-        Self { slot: 0, frequency: 0, symbol_ids: ArenaVec::new_in(temp_allocator) }
+        Self { slot: 0, frequency: 0, symbol_ids: ArenaVec::new_in(&temp_allocator) }
     }
 }
 
@@ -547,14 +547,14 @@ impl<'a, 's> SlotAssignment<'a, 's> {
         // All symbols with their assigned slots. Keyed by symbol id.
         let mut slots = ArenaVec::from_iter_in(
             iter::repeat_n(SLOT_UNASSIGNED, scoping.symbols_len()),
-            allocator,
+            &allocator,
         );
         // Stores the lived scope ids for each slot. Keyed by slot number. Symbol count is the
         // upper bound on slots.
         let mut slot_liveness =
-            ArenaVec::<BitSet>::with_capacity_in(scoping.symbols_len(), allocator);
-        let mut tmp_bindings = ArenaVec::with_capacity_in(100, allocator);
-        let mut reusable_slots = ArenaVec::new_in(allocator);
+            ArenaVec::<BitSet>::with_capacity_in(scoping.symbols_len(), &allocator);
+        let mut tmp_bindings = ArenaVec::with_capacity_in(100, &allocator);
+        let mut reusable_slots = ArenaVec::new_in(&allocator);
         // Pre-computed BitSet for ancestor membership tests - reused across iterations
         let mut ancestor_set = BitSet::new_in(scoping.scopes_len(), allocator);
 
@@ -705,7 +705,7 @@ impl<'a> SlotRanking<'a> {
         let root_scope_id = scoping.root_scope_id();
         let mut frequencies = ArenaVec::from_iter_in(
             repeat_with(|| SlotFrequency::new(allocator)).take(slots.total_slots),
-            allocator,
+            &allocator,
         );
 
         for (symbol_id, &slot) in slots.slots.iter().enumerate() {
@@ -771,7 +771,7 @@ impl<'a, const CAPACITY: usize> NameTable<'a, CAPACITY> {
         };
 
         let count = ranking.frequencies.len();
-        let mut names = ArenaVec::with_capacity_in(count, allocator);
+        let mut names = ArenaVec::with_capacity_in(count, &allocator);
         let mut candidate = 0;
         for _ in 0..count {
             let name = loop {
@@ -796,8 +796,8 @@ impl<'a, const CAPACITY: usize> NameTable<'a, CAPACITY> {
         // Yields slots hottest-first as we consume each length bucket.
         let mut freq_iter = ranking.frequencies.iter();
         // Scratch buffers in the temp arena (reused/reset across files via `new_with_temp_allocator`).
-        let mut symbols_renamed_in_this_batch = ArenaVec::with_capacity_in(100, allocator);
-        let mut slice_of_same_len_strings = ArenaVec::with_capacity_in(100, allocator);
+        let mut symbols_renamed_in_this_batch = ArenaVec::with_capacity_in(100, &allocator);
+        let mut slice_of_same_len_strings = ArenaVec::with_capacity_in(100, &allocator);
         // Names are generated shortest-first, so each `chunk_by(len)` group is one name length.
         for (_, group) in &self.names.into_iter().chunk_by(InlineString::len) {
             // Take the N hottest remaining slots to receive the N names of this length...
