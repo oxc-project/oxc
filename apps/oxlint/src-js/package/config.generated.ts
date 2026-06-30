@@ -194,6 +194,65 @@ export type AllKeyword = "all";
  * A forbidden prop, either as a plain prop name string or with options.
  */
 export type ForbidItem = string | ForbidItemObject;
+export type ForbidItemObject =
+  | {
+      /**
+       * Component names for which this prop is **allowed** (all others are
+       * forbidden).
+       */
+      allowedFor?: string[];
+      /**
+       * Glob patterns for component names where the prop is **allowed**.
+       */
+      allowedForPatterns?: string[];
+      /**
+       * Component names for which this prop is **disallowed** (all others are
+       * allowed).
+       */
+      disallowedFor?: string[];
+      /**
+       * Glob patterns for component names where the prop is **disallowed**.
+       */
+      disallowedForPatterns?: string[];
+      /**
+       * Custom message to display.
+       */
+      message?: string;
+      /**
+       * Exact prop name to forbid.
+       */
+      propName: string;
+      propNamePattern?: never;
+    }
+  | {
+      /**
+       * Component names for which this prop is **allowed** (all others are
+       * forbidden).
+       */
+      allowedFor?: string[];
+      /**
+       * Glob patterns for component names where the prop is **allowed**.
+       */
+      allowedForPatterns?: string[];
+      /**
+       * Component names for which this prop is **disallowed** (all others are
+       * allowed).
+       */
+      disallowedFor?: string[];
+      /**
+       * Glob patterns for component names where the prop is **disallowed**.
+       */
+      disallowedForPatterns?: string[];
+      /**
+       * Custom message to display.
+       */
+      message?: string;
+      propName?: never;
+      /**
+       * Glob pattern to match prop names against.
+       */
+      propNamePattern: string;
+    };
 /**
  * A forbidden prop, either as a plain prop name string or with options.
  */
@@ -4367,38 +4426,6 @@ export interface ForbidComponentPropsConfig {
    * - `["error", { "forbid": [{ "propNamePattern": "**-**", "disallowedFor": ["Foo"] }] }]`
    */
   forbid?: ForbidItem[];
-}
-export interface ForbidItemObject {
-  /**
-   * Component names for which this prop is **allowed** (all others are
-   * forbidden).
-   */
-  allowedFor: string[];
-  /**
-   * Glob patterns for component names where the prop is **allowed**.
-   */
-  allowedForPatterns: string[];
-  /**
-   * Component names for which this prop is **disallowed** (all others are
-   * allowed).
-   */
-  disallowedFor: string[];
-  /**
-   * Glob patterns for component names where the prop is **disallowed**.
-   */
-  disallowedForPatterns: string[];
-  /**
-   * Custom message to display.
-   */
-  message?: string;
-  /**
-   * Exact prop name to forbid.
-   */
-  propName?: string;
-  /**
-   * Glob pattern to match prop names against.
-   */
-  propNamePattern?: string;
 }
 /**
  * Configuration for the `forbid-dom-props` rule.
