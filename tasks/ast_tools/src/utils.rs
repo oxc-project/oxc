@@ -3,10 +3,11 @@ use std::borrow::Cow;
 use convert_case::{Case, Casing};
 use indexmap::{IndexMap, IndexSet};
 use phf::{Set as PhfSet, phf_set};
+use phf_codegen::Map as PhfMapGen;
 use proc_macro2::{Span, TokenStream};
 use quote::{format_ident, quote};
 use rustc_hash::FxBuildHasher;
-use syn::{Ident, LitInt};
+use syn::{Expr, Ident, LitInt, parse_str};
 
 pub type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;
 pub type FxIndexSet<K> = IndexSet<K, FxBuildHasher>;
@@ -136,6 +137,18 @@ pub fn article_for(word: &str) -> &'static str {
         Some(b'A' | b'E' | b'I' | b'O' | b'U') => "an",
         _ => "a",
     }
+}
+
+/// Generate code to create a `phf::Map` from an iterator of entries.
+pub fn generate_phf_map<'e>(entries: impl Iterator<Item = (&'e str, TokenStream)>) -> TokenStream {
+    let mut map = PhfMapGen::new();
+
+    for (entry_name, tokens) in entries {
+        map.entry(entry_name, tokens.to_string());
+    }
+
+    let map = parse_str::<Expr>(&map.build().to_string()).unwrap();
+    quote!( #map )
 }
 
 /// Macro to `format!` arguments, and wrap the formatted string in a `Cow::Owned`.
