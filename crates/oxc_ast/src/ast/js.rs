@@ -279,7 +279,7 @@ pub struct IdentifierReference<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(
     rename = "Identifier",
-    add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsNull),
+    add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsTypeAnnotationOrNull),
     field_order(decorators, name, optional, typeAnnotation, span),
 )]
 pub struct BindingIdentifier<'a> {
@@ -1679,7 +1679,7 @@ pub struct AssignmentPattern<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(
-    add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsNull),
+    add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsTypeAnnotationOrNull),
     field_order(decorators, properties, optional, typeAnnotation, span),
 )]
 pub struct ObjectPattern<'a> {
@@ -1714,7 +1714,7 @@ pub struct BindingProperty<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(
-    add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsNull),
+    add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsTypeAnnotationOrNull),
     field_order(decorators, elements, optional, typeAnnotation, span),
 )]
 pub struct ArrayPattern<'a> {
@@ -1739,7 +1739,7 @@ pub struct ArrayPattern<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(
     rename = "RestElement",
-    add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsNull, value = TsNull),
+    add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsTypeAnnotationOrNull, value = TsNull),
     field_order(decorators, argument, optional, typeAnnotation, value, span),
 )]
 pub struct BindingRestElement<'a> {
