@@ -12,6 +12,7 @@ mod builder_methods;
 mod estree_visit;
 mod formatter;
 mod get_id;
+mod inherit_variants;
 mod minifier_traverse;
 #[cfg(feature = "generate-js")]
 mod oxlint_envs;
@@ -34,6 +35,7 @@ pub use builder_methods::BuilderMethodsGenerator;
 pub use estree_visit::ESTreeVisitGenerator;
 pub use formatter::{FormatterAstNodesGenerator, FormatterFormatGenerator};
 pub use get_id::GetIdGenerator;
+pub use inherit_variants::InheritVariantsGenerator;
 pub use minifier_traverse::MinifierTraverseGenerator;
 #[cfg(feature = "generate-js")]
 pub use oxlint_envs::OxlintEnvsGenerator;
