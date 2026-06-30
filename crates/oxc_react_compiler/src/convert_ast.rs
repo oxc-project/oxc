@@ -2940,7 +2940,7 @@ impl<'a> ConvertCtx<'a> {
     // ============================================================
     // Helper methods for converting Expression-inheriting enums
     // These handle the case where OXC enums inherit from Expression
-    // via @inherit and each variant has a differently-typed Box.
+    // via `INHERIT(...)` and each variant has a differently-typed Box.
     // ============================================================
 
     /// Convert Argument expression variants (not SpreadElement) to Expression
@@ -2989,7 +2989,7 @@ trait ExpressionLike {
     fn convert_with(&self, ctx: &ConvertCtx) -> Expression;
 }
 
-/// Macro to implement ExpressionLike for enums that @inherit Expression.
+/// Macro to implement ExpressionLike for enums that inherit Expression (via `INHERIT(...)`).
 /// Each variant name matches the Expression variant name, so we can
 /// deref the inner Box and call the appropriate convert method.
 macro_rules! impl_expression_like {
@@ -3107,36 +3107,36 @@ macro_rules! impl_expression_like {
     };
 }
 
-// ForStatementInit: VariableDeclaration + @inherit Expression
+// ForStatementInit: VariableDeclaration + INHERIT(Expression<'a>)
 impl_expression_like!(oxc::ForStatementInit<'a>, [
     Self::VariableDeclaration(_) => unreachable!("handled separately")
 ]);
 
-// Argument: SpreadElement + @inherit Expression
+// Argument: SpreadElement + INHERIT(Expression<'a>)
 impl_expression_like!(oxc::Argument<'a>, [
     Self::SpreadElement(_) => unreachable!("handled separately")
 ]);
 
-// ArrayExpressionElement: SpreadElement + Elision + @inherit Expression
+// ArrayExpressionElement: SpreadElement + Elision + INHERIT(Expression<'a>)
 impl_expression_like!(oxc::ArrayExpressionElement<'a>, [
     Self::SpreadElement(_) => unreachable!("handled separately"),
     Self::Elision(_) => unreachable!("handled separately")
 ]);
 
-// ExportDefaultDeclarationKind: FunctionDeclaration + ClassDeclaration + TSInterfaceDeclaration + @inherit Expression
+// ExportDefaultDeclarationKind: FunctionDeclaration + ClassDeclaration + TSInterfaceDeclaration + INHERIT(Expression<'a>)
 impl_expression_like!(oxc::ExportDefaultDeclarationKind<'a>, [
     Self::FunctionDeclaration(_) => unreachable!("handled separately"),
     Self::ClassDeclaration(_) => unreachable!("handled separately"),
     Self::TSInterfaceDeclaration(_) => unreachable!("handled separately")
 ]);
 
-// PropertyKey: StaticIdentifier + PrivateIdentifier + @inherit Expression
+// PropertyKey: StaticIdentifier + PrivateIdentifier + INHERIT(Expression<'a>)
 impl_expression_like!(oxc::PropertyKey<'a>, [
     Self::StaticIdentifier(_) => unreachable!("handled separately"),
     Self::PrivateIdentifier(_) => unreachable!("handled separately")
 ]);
 
-// JSXExpression: EmptyExpression + @inherit Expression
+// JSXExpression: EmptyExpression + INHERIT(Expression<'a>)
 impl_expression_like!(oxc::JSXExpression<'a>, [
     Self::EmptyExpression(_) => unreachable!("handled separately")
 ]);

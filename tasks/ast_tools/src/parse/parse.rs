@@ -379,10 +379,22 @@ impl<'c> Parser<'c> {
 
     /// Parse [`EnumSkeleton`] to yield a [`TypeDef`].
     fn parse_enum(&mut self, type_id: TypeId, skeleton: EnumSkeleton) -> TypeDef {
-        let EnumSkeleton { name, file_id, is_foreign, item, inherits, .. } = skeleton;
+        let EnumSkeleton { name, file_id, is_foreign, item, .. } = skeleton;
         let has_lifetime = check_generics(&item.generics, &name);
-        let variants = item.variants.iter().map(|variant| self.parse_variant(variant)).collect();
-        let inherits = inherits.into_iter().map(|name| self.type_id(&name)).collect();
+
+        // Split variants into the enum's own variants and `INHERIT` markers.
+        // A marker is a variant named `INHERIT`, whose field type is the enum whose variants are
+        // inherited e.g. `INHERIT(MemberExpression<'a>)`.
+        let mut variants = vec![];
+        let mut inherits = vec![];
+        for variant in &item.variants {
+            if is_inherit_marker(variant) {
+                inherits.push(self.type_id(&inherit_marker_enum_name(variant)));
+            } else {
+                variants.push(self.parse_variant(variant));
+            }
+        }
+
         let visibility = convert_visibility(&item.vis);
         let (generated_derives, plural_name) =
             self.get_generated_derives_and_plural_name(&item.attrs, &name);
@@ -419,7 +431,15 @@ impl<'c> Parser<'c> {
         generated_derives: Derives,
     ) {
         let enum_def = type_def.as_enum_mut().unwrap();
-        for (variant_index, variant) in item.variants.iter().enumerate() {
+
+        // `INHERIT` markers are not real variants, so are skipped here.
+        // `variant_index` counts only real variants, to stay aligned with `enum_def.variants`.
+        let mut variant_index = 0;
+        for variant in &item.variants {
+            if is_inherit_marker(variant) {
+                continue;
+            }
+
             for attr in &variant.attrs {
                 if !matches!(attr.style, AttrStyle::Outer) {
                     continue;
@@ -454,6 +474,8 @@ impl<'c> Parser<'c> {
                     );
                 }
             }
+
+            variant_index += 1;
         }
     }
 
@@ -875,6 +897,34 @@ fn check_generics(generics: &Generics, name: &str) -> bool {
         1 => true,
         _ => panic!("Types with more than 1 lifetime are not supported: {name}"),
     }
+}
+
+/// Check if an enum variant is an `INHERIT` marker (e.g. `INHERIT(MemberExpression<'a>)`),
+/// rather than a real variant.
+///
+/// Such markers indicate that this enum inherits all the variants of the enum in the field type.
+fn is_inherit_marker(variant: &Variant) -> bool {
+    variant.ident == "INHERIT"
+}
+
+/// Get the name of the inherited enum from an `INHERIT(EnumName<'a>)` marker variant.
+///
+/// # Panics
+/// Panics if the marker is not of the form `INHERIT(EnumName<'a>)`.
+fn inherit_marker_enum_name(variant: &Variant) -> String {
+    let Fields::Unnamed(fields) = &variant.fields else {
+        panic!("`INHERIT` marker must be a tuple variant: `INHERIT(SomeEnum<'a>)`");
+    };
+    let mut fields = fields.unnamed.iter();
+    let (Some(field), None) = (fields.next(), fields.next()) else {
+        panic!("`INHERIT` marker must have exactly one field: `INHERIT(SomeEnum<'a>)`");
+    };
+    let Type::Path(type_path) = &field.ty else {
+        panic!("`INHERIT` marker field must be a path type: `INHERIT(SomeEnum<'a>)`");
+    };
+    let segment =
+        type_path.path.segments.last().expect("`INHERIT` marker field type has empty path");
+    ident_name(&segment.ident)
 }
 
 /// Get first segment from `TypePath`.

@@ -581,8 +581,9 @@ pub enum TSTupleElement<'a> {
     // bitwise AND operation on the discriminant (`discriminant & 63 != 0`).
     TSOptionalType(Box<'a, TSOptionalType<'a>>) = 64,
     TSRestType(Box<'a, TSRestType<'a>>) = 65,
+
     // `TSType` variants added here by `inherit_variants!` macro
-    @inherit TSType
+    INHERIT(TSType<'a>),
 }
 }
 
@@ -1415,8 +1416,9 @@ inherit_variants! {
 pub enum TSTypeQueryExprName<'a> {
     /// `type foo = typeof import('foo')`
     TSImportType(Box<'a, TSImportType<'a>>) = 3,
+
     // `TSTypeName` variants added here by `inherit_variants!` macro
-    @inherit TSTypeName
+    INHERIT(TSTypeName<'a>),
 }
 }
 

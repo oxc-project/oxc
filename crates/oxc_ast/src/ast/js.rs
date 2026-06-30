@@ -165,7 +165,7 @@ pub enum Expression<'a> {
     V8IntrinsicExpression(Box<'a, V8IntrinsicExpression<'a>>) = 39,
 
     // `MemberExpression` variants added here by `inherit_variants!` macro
-    @inherit MemberExpression
+    INHERIT(MemberExpression<'a>),
 }
 }
 
@@ -355,8 +355,9 @@ pub enum ArrayExpressionElement<'a> {
     /// Array hole for sparse arrays.
     /// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Trailing_commas#arrays>
     Elision(Box<'a, Elision>) = 65,
+
     // `Expression` variants added here by `inherit_variants!` macro
-    @inherit Expression
+    INHERIT(Expression<'a>),
 }
 }
 
@@ -429,8 +430,9 @@ pub enum PropertyKey<'a> {
     StaticIdentifier(Box<'a, IdentifierName<'a>>) = 64,
     /// `#a` in `class C { #a = 1; }; const c = new C(); c.#a;`
     PrivateIdentifier(Box<'a, PrivateIdentifier<'a>>) = 65,
+
     // `Expression` variants added here by `inherit_variants!` macro
-    @inherit Expression
+    INHERIT(Expression<'a>),
 }
 }
 
@@ -690,8 +692,9 @@ inherit_variants! {
 pub enum Argument<'a> {
     /// `...[1, 2]` in `const arr = [...[1, 2]];`
     SpreadElement(Box<'a, SpreadElement<'a>>) = 64,
+
     // `Expression` variants added here by `inherit_variants!` macro
-    @inherit Expression
+    INHERIT(Expression<'a>),
 }
 }
 
@@ -805,10 +808,9 @@ inherit_variants! {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum AssignmentTarget<'a> {
-    // `SimpleAssignmentTarget` variants added here by `inherit_variants!` macro
-    @inherit SimpleAssignmentTarget
-    // `AssignmentTargetPattern` variants added here by `inherit_variants!` macro
-    @inherit AssignmentTargetPattern
+    // `SimpleAssignmentTarget` and `AssignmentTargetPattern` variants added here by `inherit_variants!` macro
+    INHERIT(SimpleAssignmentTarget<'a>),
+    INHERIT(AssignmentTargetPattern<'a>),
 }
 }
 
@@ -827,8 +829,9 @@ pub enum SimpleAssignmentTarget<'a> {
     TSSatisfiesExpression(Box<'a, TSSatisfiesExpression<'a>>) = 2,
     TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>) = 3,
     TSTypeAssertion(Box<'a, TSTypeAssertion<'a>>) = 4,
+
     // `MemberExpression` variants added here by `inherit_variants!` macro
-    @inherit MemberExpression
+    INHERIT(MemberExpression<'a>),
 }
 }
 
@@ -952,8 +955,9 @@ inherit_variants! {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum AssignmentTargetMaybeDefault<'a> {
     AssignmentTargetWithDefault(Box<'a, AssignmentTargetWithDefault<'a>>) = 16,
+
     // `AssignmentTarget` variants added here by `inherit_variants!` macro
-    @inherit AssignmentTarget
+    INHERIT(AssignmentTarget<'a>),
 }
 }
 
@@ -1095,8 +1099,9 @@ pub enum ChainElement<'a> {
     CallExpression(Box<'a, CallExpression<'a>>) = 0,
     /// `foo?.baz!` or `foo?.[bar]!`
     TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>) = 1,
+
     // `MemberExpression` variants added here by `inherit_variants!` macro
-    @inherit MemberExpression
+    INHERIT(MemberExpression<'a>),
 }
 }
 
@@ -1143,10 +1148,10 @@ pub enum Statement<'a> {
     TryStatement(Box<'a, TryStatement<'a>>) = 15,
     WhileStatement(Box<'a, WhileStatement<'a>>) = 16,
     WithStatement(Box<'a, WithStatement<'a>>) = 17,
-    // `Declaration` variants added here by `inherit_variants!` macro
-    @inherit Declaration
-    // `ModuleDeclaration` variants added here by `inherit_variants!` macro
-    @inherit ModuleDeclaration
+
+    // `Declaration` and `ModuleDeclaration` variants added here by `inherit_variants!` macro
+    INHERIT(Declaration<'a>),
+    INHERIT(ModuleDeclaration<'a>),
 }
 }
 
@@ -1360,8 +1365,9 @@ inherit_variants! {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum ForStatementInit<'a> {
     VariableDeclaration(Box<'a, VariableDeclaration<'a>>) = 64,
+
     // `Expression` variants added here by `inherit_variants!` macro
-    @inherit Expression
+    INHERIT(Expression<'a>),
 }
 }
 
@@ -1390,8 +1396,9 @@ inherit_variants! {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum ForStatementLeft<'a> {
     VariableDeclaration(Box<'a, VariableDeclaration<'a>>) = 16,
+
     // `AssignmentTarget` variants added here by `inherit_variants!` macro
-    @inherit AssignmentTarget
+    INHERIT(AssignmentTarget<'a>),
 }
 }
 
@@ -2786,7 +2793,7 @@ pub enum ExportDefaultDeclarationKind<'a> {
     TSInterfaceDeclaration(Box<'a, TSInterfaceDeclaration<'a>>) = 66,
 
     // `Expression` variants added here by `inherit_variants!` macro
-    @inherit Expression
+    INHERIT(Expression<'a>),
 }
 }
 

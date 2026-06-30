@@ -40,7 +40,8 @@
 //!     BooleanLiteral(Box<'a, BooleanLiteral>) = 0,
 //!     NullLiteral(Box<'a, NullLiteral>) = 1,
 //!     // ...more variants
-//!     @inherit MemberExpression,
+//!
+//!     INHERIT(MemberExpression<'a>),
 //! }
 //! }
 //!

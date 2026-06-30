@@ -2,11 +2,8 @@ use std::{fs, path::Path};
 
 use quote::quote;
 use syn::{
-    Attribute, Generics, Ident, Item, ItemEnum, ItemMacro, ItemStruct, Meta, Token, Variant,
-    Visibility, WhereClause, braced,
-    parse::{Parse, ParseBuffer},
-    parse_file, parse_quote,
-    punctuated::Punctuated,
+    Attribute, Ident, Item, ItemEnum, ItemMacro, ItemStruct, Meta, Token, Visibility,
+    parse::ParseBuffer, parse_file, parse_quote, punctuated::Punctuated,
 };
 
 use crate::{schema::FileId, utils::ident_name};
@@ -18,9 +15,7 @@ use super::{
 
 /// Load file and extract structs and enums with `#[ast]` or `#[ast_meta]` attributes.
 ///
-/// Only parses enough to get:
-/// * Name of type.
-/// * Inherits of enums wrapped in `inherit_variants!` macro.
+/// Only parses enough to get the name of each type.
 ///
 /// Returns a list of [`Skeleton`]s found in the file.
 ///
@@ -49,72 +44,27 @@ fn parse_struct(item: ItemStruct, file_id: FileId) -> Option<Skeleton> {
 
 fn parse_enum(item: ItemEnum, file_id: FileId) -> Option<Skeleton> {
     let (name, is_foreign, is_meta) = get_type_name(&item.attrs, &item.ident)?;
-    let skeleton = EnumSkeleton { name, file_id, is_foreign, is_meta, item, inherits: vec![] };
+    let skeleton = EnumSkeleton { name, file_id, is_foreign, is_meta, item };
     Some(Skeleton::Enum(skeleton))
 }
 
 fn parse_macro(item: &ItemMacro, file_id: FileId) -> Option<Skeleton> {
     item.mac.path.get_ident().and_then(|macro_name| match macro_name.to_string().as_str() {
-        "inherit_variants" => Some(parse_inherit_variants_macro(item, file_id)),
+        "inherit_variants" => parse_inherit_variants_macro(item, file_id),
         "define_nonmax_u32_index_type" => parse_index_type_macro(item, file_id, true),
         "define_index_type" => parse_index_type_macro(item, file_id, false),
         _ => None,
     })
 }
 
-fn parse_inherit_variants_macro(item: &ItemMacro, file_id: FileId) -> Skeleton {
-    item.mac
-        .parse_body_with(|input: &ParseBuffer| {
-            // Because of `@inherit`s we can't use the actual `ItemEnum` parse.
-            // This closure is similar to how `ItemEnum` parser works, with the exception
-            // of how we approach parsing variants.
-            // First we try to parse as a `Variant`. If that fails, we try parsing as `@inherits`.
-            // We raise an error only if both of these fail.
-            let attrs = input.call(Attribute::parse_outer)?;
-
-            let vis = input.parse::<Visibility>()?;
-            let enum_token = input.parse::<Token![enum]>()?;
-            let ident = input.parse::<Ident>()?;
-            let generics = input.parse::<Generics>()?;
-
-            let where_clause = input.parse::<Option<WhereClause>>()?;
-            assert!(where_clause.is_none(), "Types with `where` clauses are not supported");
-
-            let Some((name, false, false)) = get_type_name(&attrs, &ident) else {
-                panic!("Enum in `inherit_variants!` macro must have `#[ast]` attr: {ident}");
-            };
-
-            let content;
-            let brace_token = braced!(content in input);
-            let mut variants = Punctuated::new();
-            let mut inherits = vec![];
-            while !content.is_empty() {
-                match Variant::parse(&content) {
-                    Ok(variant) => {
-                        variants.push_value(variant);
-                        let punct = content.parse()?;
-                        variants.push_punct(punct);
-                    }
-                    _ => {
-                        if content.parse::<Token![@]>().is_ok()
-                            && content.parse::<Ident>().is_ok_and(|id| id == "inherit")
-                        {
-                            let inherit_ident =
-                                content.parse::<Ident>().expect("Invalid `@inherits`");
-                            inherits.push(ident_name(&inherit_ident));
-                        } else {
-                            panic!("Invalid `inherit_variants!` macro usage");
-                        }
-                    }
-                }
-            }
-
-            let item = ItemEnum { attrs, vis, enum_token, ident, generics, brace_token, variants };
-            let skeleton =
-                EnumSkeleton { name, file_id, is_foreign: false, is_meta: false, item, inherits };
-            Ok(Skeleton::Enum(skeleton))
-        })
-        .expect("Failed to parse contents of `inherit_variants!` macro")
+fn parse_inherit_variants_macro(item: &ItemMacro, file_id: FileId) -> Option<Skeleton> {
+    // The body of `inherit_variants!` is a normal enum.
+    // Inheritance is expressed as `INHERIT(EnumName<'a>)` marker variants.
+    let item = item
+        .mac
+        .parse_body::<ItemEnum>()
+        .expect("Failed to parse contents of `inherit_variants!` macro");
+    parse_enum(item, file_id)
 }
 
 fn parse_index_type_macro(

@@ -39,7 +39,7 @@ pub struct EnumDef {
     pub derives: Vec<String>,
     pub generated_derives: Derives,
     pub variants: Vec<VariantDef>,
-    /// For `@inherits` inherited enum variants
+    /// Enums whose variants this enum inherits (declared with `INHERIT(EnumName<'a>)` marker variants)
     pub inherits: Vec<TypeId>,
     pub builder: AstBuilderType,
     pub visit: VisitEnum,
