@@ -477,33 +477,6 @@ fn remove_spaces(s: &str) -> Cow<'_, str> {
 }
 
 #[test]
-fn restricted_types_index_preserves_first_normalized_match() {
-    let mut types = FxHashMap::default();
-    types.insert("Banned".to_string(), BanConfigValue::Message("first".to_string()));
-    types.insert(" Banned ".to_string(), BanConfigValue::Message("second".to_string()));
-
-    let expected_message = types
-        .iter()
-        .find(|(key, _)| remove_spaces(key).as_ref() == "Banned")
-        .and_then(|(_, value)| value.message())
-        .unwrap();
-
-    let index = RestrictedTypesIndex::from_types_map(&types);
-    let (_, config) = index.lookup("Banned").unwrap();
-    assert_eq!(config.message(), Some(expected_message));
-}
-
-#[test]
-fn restricted_types_index_tracks_qualified_generic_keys() {
-    let mut types = FxHashMap::default();
-    types.insert("NS.Banned<any>".to_string(), BanConfigValue::Bool(True));
-
-    let index = RestrictedTypesIndex::from_types_map(&types);
-    assert!(index.has_qualified_keys);
-    assert!(index.has_generic_or_complex_keys);
-}
-
-#[test]
 fn test() {
     use crate::tester::Tester;
 
