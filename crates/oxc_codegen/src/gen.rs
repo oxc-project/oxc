@@ -1789,6 +1789,13 @@ impl Gen for ObjectProperty<'_> {
             }
             p.print_colon();
             p.print_soft_space();
+            // Preserve a leading comment on the value (e.g. a coverage-ignore
+            // comment surviving JSX-prop lowering: `{ key: /* c */ () => … }`).
+            // Skip `pife` arrows/functions — they print the comment inside their
+            // own `(` wrap.
+            if !is_pife_arrow_or_function(&self.value) {
+                p.print_inline_leading_comments(self.value.span().start);
+            }
         }
 
         self.value.print_expr(p, Precedence::Comma, Context::empty());
@@ -1998,6 +2005,12 @@ impl GenExpr for ConditionalExpression<'_> {
             p.print_soft_space();
             p.print_ascii_byte(b'?');
             p.print_soft_space();
+            // Skip when the consequent is a `pife` arrow/function — its own
+            // gen_expr prints the leading comment inside its `(` wrap so the
+            // source position `? ( /* c */ arrow )` is preserved.
+            if !is_pife_arrow_or_function(&self.consequent) {
+                p.print_inline_leading_comments(self.consequent.span().start);
+            }
             self.consequent.print_expr(p, Precedence::Yield, Context::empty());
             p.print_soft_space();
             p.print_colon();
@@ -2015,7 +2028,7 @@ impl GenExpr for ConditionalExpression<'_> {
 
 /// `true` if `expr` is a `pife`-marked arrow or function expression — its
 /// own `gen_expr` adds a `(` wrap and prints leading comments inside it.
-fn is_pife_arrow_or_function(expr: &Expression<'_>) -> bool {
+pub fn is_pife_arrow_or_function(expr: &Expression<'_>) -> bool {
     match expr {
         Expression::ArrowFunctionExpression(arrow) => arrow.pife,
         Expression::FunctionExpression(func) => func.pife,
@@ -2313,6 +2326,13 @@ impl Gen for TemplateLiteral<'_> {
         p.print_str_escaping_script_close_tag(first_quasi.value.raw.as_str());
         for (expr, quasi) in self.expressions.iter().zip(remaining_quasis) {
             p.print_str("${");
+            // Preserve a leading comment on the substitution expression, e.g.
+            // a coverage-ignore comment: `` `${/* c */ () => …}` ``. Skip
+            // `pife` arrows/functions — they print the comment inside their
+            // own `(` wrap.
+            if !is_pife_arrow_or_function(expr) {
+                p.print_inline_leading_comments(expr.span().start);
+            }
             p.print_expression(expr);
             p.print_ascii_byte(b'}');
             p.add_source_mapping(quasi.span);
