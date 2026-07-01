@@ -60,6 +60,12 @@ use oxc_semantic::Semantic;
 
 mod diagnostics;
 
+pub mod extension;
+pub mod project;
+pub mod tsconfig;
+pub mod tspath;
+pub mod vfsmatch;
+
 pub use crate::diagnostics::type_error;
 
 /// Options controlling how the [`TypeChecker`] behaves.
