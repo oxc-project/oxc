@@ -1,7 +1,6 @@
 use oxc_allocator::{Allocator, ArenaVec};
 
 pub mod convert_ast;
-pub mod convert_ast_reverse;
 pub mod convert_scope;
 pub mod diagnostics;
 pub mod prefilter;
