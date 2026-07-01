@@ -530,11 +530,54 @@ fn get_array_minimum_length(arr: &ArrayExpression) -> usize {
         .sum()
 }
 
+/// Whether invoking an IIFE — `(function () { ... })(args)` / `(() => { ...
+/// })(args)` — may have side effects. `None` when the callee is not a plain
+/// function/arrow literal, so the caller falls through to its other checks.
+///
+/// Calling it binds the parameters and runs the body once; the result is the
+/// caller's concern, not a side effect. So the call is side-effect-free when
+/// its arguments, parameters, and every body statement are. Conservative
+/// (`Some(true)`) for an `async`/generator callee, whose invocation differs,
+/// and for parameters that aren't bare identifiers (defaults and destructuring
+/// run user code when bound).
+fn iife_call_may_have_side_effects<'a>(
+    call: &CallExpression<'a>,
+    ctx: &impl MayHaveSideEffectsContext<'a>,
+) -> Option<bool> {
+    let (params, body) = match &call.callee {
+        Expression::FunctionExpression(f) if !f.r#async && !f.generator => {
+            (&f.params, f.body.as_deref()?)
+        }
+        Expression::ArrowFunctionExpression(f) if !f.r#async => (&f.params, &*f.body),
+        _ => return None,
+    };
+
+    // Arguments are evaluated before the call; binding the parameters must run
+    // no user code — every one a bare identifier with no default (a rest
+    // binding to an identifier is fine, it just collects an array).
+    let params_simple = params
+        .items
+        .iter()
+        .all(|item| item.pattern.is_binding_identifier() && item.initializer.is_none())
+        && params.rest.as_ref().is_none_or(|r| r.rest.argument.is_binding_identifier());
+    if !params_simple || call.arguments.iter().any(|arg| arg.may_have_side_effects(ctx)) {
+        return Some(true);
+    }
+
+    Some(body.statements.iter().any(|stmt| stmt.may_have_side_effects(ctx)))
+}
+
 // `PF` in <https://github.com/rollup/rollup/blob/master/src/ast/nodes/shared/knownGlobals.ts>
 impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         if (self.pure && ctx.annotations()) || ctx.manual_pure_functions(&self.callee) {
             return self.arguments.iter().any(|e| e.may_have_side_effects(ctx));
+        }
+
+        // An IIFE is side-effect-free when its arguments, parameters, and body
+        // are. (A `/* @__PURE__ */` IIFE was already handled above.)
+        if let Some(side_effects) = iife_call_may_have_side_effects(self, ctx) {
+            return side_effects;
         }
 
         if let Expression::Identifier(ident) = &self.callee

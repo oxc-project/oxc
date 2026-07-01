@@ -13,3 +13,17 @@ a.`PLACEHOLDER-0`:focus,a.`PLACEHOLDER-1`:hover {
 a[data-x=`PLACEHOLDER-6`] {
   color: blue;
 }
+/* A placeholder immediately glued to selector content (no space) is a
+   compound-selector piece: commas + newlines to the next placeholder
+   must NOT split the run into a bare-placeholder statement + separate rule. */
+`PLACEHOLDER-7`:hover &,
+  `PLACEHOLDER-8`:focus-within &,
+  `PLACEHOLDER-9`:after {
+  color: red;
+}
+/* But space-separated placeholders (styled-components' `${sanitize} ${fonts}`
+   mixin idiom) stay standalone; the `html` on the next line is a separate rule. */
+`PLACEHOLDER-10` `PLACEHOLDER-11`
+html {
+  margin: 0;
+}

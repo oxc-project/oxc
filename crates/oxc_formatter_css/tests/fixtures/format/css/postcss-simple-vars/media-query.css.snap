@@ -1,0 +1,48 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+.demo {
+  @media (max-width: $breakpoint-md) {
+    font-size: 12px;
+  }
+}
+
+@media (min-width: $breakpoint-sm) and (max-width: $breakpoint-lg) {
+  .a {
+    color: red;
+  }
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+.demo {
+  @media (max-width: $breakpoint-md) {
+    font-size: 12px;
+  }
+}
+
+@media (min-width: $breakpoint-sm) and (max-width: $breakpoint-lg) {
+  .a {
+    color: red;
+  }
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+.demo {
+  @media (max-width: $breakpoint-md) {
+    font-size: 12px;
+  }
+}
+
+@media (min-width: $breakpoint-sm) and (max-width: $breakpoint-lg) {
+  .a {
+    color: red;
+  }
+}
+
+===================== End =====================

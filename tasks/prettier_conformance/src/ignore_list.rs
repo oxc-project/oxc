@@ -113,4 +113,6 @@ pub const IGNORE_TESTS: &[&str] = &[
     "js/quotes/objects.js",
     // Embedded Angular template
     "typescript/decorators-ts/angular.ts",
+    // postcss-conditionals (archived: https://github.com/andyjansson/postcss-conditionals).
+    "css/atrule/if-else.css",
 ];

@@ -14,6 +14,7 @@ use crate::{
 
 pub mod at_rule;
 pub mod less;
+pub mod postcss_simple_vars;
 pub mod scss;
 pub mod selector;
 pub mod statement;

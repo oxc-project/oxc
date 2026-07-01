@@ -1028,6 +1028,9 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
     }
 
     /// Tests if the passed element fits on the current line or not.
+    // LLVM considers this dispatcher too large to inline heuristically, but the fitting loop calls
+    // it for every visited format element.
+    #[inline(always)]
     fn fits_element(&mut self, element: &'a FormatElement) -> PrintResult<Fits> {
         use Tag::{
             EndAlign, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup, EndIndent,

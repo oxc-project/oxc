@@ -18,7 +18,7 @@ use crate::{
     },
     format::to_span,
     print::{
-        CssFormatter, at_rule, format_with, less, scss, selector,
+        CssFormatter, at_rule, format_with, less, postcss_simple_vars, scss, selector,
         value::{self, ValueContext},
         write_maybe_lowercase,
     },
@@ -210,6 +210,10 @@ pub(super) fn write_statement<'a>(stmt: &Statement<'a>, f: &mut CssFormatter<'_,
         }
         Statement::SassVariableDeclaration(decl) => {
             scss::write_sass_variable_declaration(decl, f);
+            write!(f, ";");
+        }
+        Statement::PostcssSimpleVarDeclaration(decl) => {
+            postcss_simple_vars::write_postcss_simple_var_declaration(decl, f);
             write!(f, ";");
         }
         Statement::SassIfAtRule(if_rule) => scss::write_sass_if_at_rule(if_rule, f),
