@@ -128,18 +128,6 @@ impl<'a> LintContext<'a> {
         unsafe { self.parent.semantic().cfg().unwrap_unchecked() }
     }
 
-    /// Per-block reachability map for the current control flow graph, corrected
-    /// for infinite loops. See [`crate::utils::effective_unreachable_blocks`].
-    ///
-    /// Computed lazily and memoized per file entry, so repeated calls (e.g. once
-    /// per loop) reuse the same map instead of re-running a whole-CFG traversal.
-    pub fn effective_unreachable_blocks(&self) -> &[bool] {
-        self.parent
-            .current_sub_host()
-            .unreachable_blocks
-            .get_or_init(|| crate::utils::effective_unreachable_blocks(self).into_boxed_slice())
-    }
-
     /// List of all disable directives in the file being linted.
     #[inline]
     pub fn disable_directives(&self) -> &DisableDirectives {
